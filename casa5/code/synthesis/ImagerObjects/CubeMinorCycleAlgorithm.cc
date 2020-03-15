@@ -88,11 +88,11 @@ void CubeMinorCycleAlgorithm::put() {
   // applicator.put(lala);
   //returnRec_p.removeField("summaryminor");
   ////TESTOO
-  cerr << "nfield " << returnRec_p.nfields() << endl;
-  for (uInt k =0; k <  returnRec_p.nfields() ; ++k){
-    cerr << " name " << returnRec_p.name(k) << endl;
+  // cerr << "nfield " << returnRec_p.nfields() << endl;
+  //for (uInt k =0; k <  returnRec_p.nfields() ; ++k){
+  //  cerr << " name " << returnRec_p.name(k) << endl;
 
-  }
+  //}
 
   //Record laloo;
   applicator.put(returnRec_p);	
