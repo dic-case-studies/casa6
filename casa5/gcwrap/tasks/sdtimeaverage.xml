@@ -112,9 +112,9 @@ antenna -- select data by antenna name or ID
         default: '' (use all antennas)
         example: 'PM03'
 timebin -- bin width for time averaging
-           default: '' (use all )
+           default: 'all' 
            example: timebin='100s' (time averaging performed over 100 second bins)
-                    timebin='all"  (use all)
+                    timebin=''  (use all)
 timespan -- Let the timebin span across scan, state or both.
             State is equivalent to sub-scans. One scan may have several
             state ids. For ALMA MSs, the sub-scans are limited to about
@@ -122,7 +122,7 @@ timespan -- Let the timebin span across scan, state or both.
             add state to the timespan parameter. To see the number of states
             in an MS, use the msmd tool. See help msmd.
 
-        default: '' (separate time bins by both of the above)
+        default: 'scan' (separate time bins by both of the above)
         options: 'scan', 'state', 'state,scan'
 
         examples:
