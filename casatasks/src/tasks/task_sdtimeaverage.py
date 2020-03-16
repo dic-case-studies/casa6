@@ -66,21 +66,21 @@ def sdtimeaverage(
     # know existence of data-column on specified MS. 
     ex_float_data, ex_data = check_column(infile) 
  
-    # change datacolumn 'data' to 'float_data"
+    # change datacolumn 'data' to 'float_data'
     if (datacolumn == 'float_data') :
         if (ex_float_data == False)and(ex_data == True):
-            datacolumn = "data"
+            datacolumn = 'data'
             # Message to User #
-            msg = "No FLOAT_DATA column. DATA column will be used alternatively."
-            casalog.post( msg, "INFO" )
+            msg = 'No FLOAT_DATA column. DATA column will be used alternatively.'
+            casalog.post( msg, 'INFO' )
 
     # change datacolumn 'float_data' to 'data' 
     if (datacolumn == 'data') :
         if (ex_float_data == True)and(ex_data == False):
-            datacolumn = "float_data"
+            datacolumn = 'float_data'
             # Message to User # 
-            msg = "No DATA column. FLOAT_DATA column will be used alternatively."
-            casalog.post( msg, "INFO" )
+            msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
+            casalog.post( msg, 'INFO' )
 
     #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
@@ -111,7 +111,7 @@ def sdtimeaverage(
                     timebin=timebin, timespan=timespan, antenna=antenna, outfile=outfile)
 
     except Exception as e:
-        casalog.post('Exception from task_sdtimeaverage : ' + str(e), "SEVERE", origin=origin)
+        casalog.post('Exception from task_sdtimeaverage : ' + str(e), 'SEVERE', origin=origin)
         return False
     finally:
         pass
@@ -122,8 +122,8 @@ def sdtimeaverage(
 def check_column(msName):
     with open_table(msName) as tb:
         columnNames = tb.colnames()
-        exist_float_data  = "FLOAT_DATA" in columnNames 
-        exist_data        =  "DATA" in columnNames    
+        exist_float_data  = 'FLOAT_DATA' in columnNames 
+        exist_data        =  'DATA' in columnNames    
         return exist_float_data, exist_data
 
 #  Calculation range time in input MS.  
@@ -151,17 +151,17 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
 
-    intent = ""
-    correlation = ""
-    array = ""
-    uvrange = ""
-    observation = ""
-    feed = ""
+    intent = ''
+    correlation = ''
+    array = ''
+    uvrange = ''
+    observation = ''
+    feed = ''
 
     realmodelcol = False
     usewtspectrum = False
     chanbin = 1
-    mode = "channel"
+    mode = 'channel'
     start = 0
     width = 1
 
@@ -205,7 +205,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
         config['datacolumn'] = datacolumn
         dc = datacolumn.upper()            
         # Make real a virtual MODEL column in the output MS
-        if "MODEL" in dc or dc == 'ALL':
+        if 'MODEL' in dc or dc == 'ALL':
             config['realmodelcol'] = realmodelcol
 
         config['usewtspectrum'] = usewtspectrum
@@ -273,7 +273,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
                 for cmd in cmdlist:
                     # Match only spw indices, not names
                     if cmd.__contains__('spw'):
-                        cmd = cmd.strip("spw=")
+                        cmd = cmd.strip('spw=')
                         spwstr = re.search('^[^a-zA-Z]+$', cmd)
                         if spwstr != None and spwstr.string.__len__() > 0:
                             updateFlagCmd = True
@@ -284,7 +284,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print("width =", width)
+                    #print('width =', width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -326,7 +326,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
                             #except: # cmd[rownum] no longer applies.
                             except Exception as e:
                                 casalog.post(
-                                    "Error %s updating row %d of FLAG_CMD" % (e,
+                                    'Error %s updating row %d of FLAG_CMD' % (e,
                                                                               rownum),
                                              'WARN')
                                 casalog.post('sch1 = ' + sch1, 'DEBUG1')
@@ -377,4 +377,3 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
 
     return True
 #END
-   
