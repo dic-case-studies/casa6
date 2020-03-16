@@ -1,37 +1,38 @@
-import os
+# import os
 import re
-import shutil
-import string
-import copy
-import math
-import time
-import datetime
+# import shutil
+# import string
+# import copy
+# import math
+# import time
+# import datetime
 import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from . import sdutil
+    # from . import sdutil
     from casatasks import casalog
     from casatools import quanta, ms, table, mstransformer
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
-    from . import flaghelper as fh
+    # from . import flaghelper as fh
+
     from .update_spw import update_spwchan
-    from .callibrary import callibrary
+    # from .callibrary import callibrary
     # CAS-12721
-    from casatasks.private.sdutil import tbmanager  # , toolmanager, table_selector
+    # from casatasks.private.sdutil import tbmanager  # , toolmanager, table_selector
 
 else:
-    import sdutil
+    # import sdutil
     from taskinit import mttool as mstransformer
     from taskinit import mstool as ms
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
-    import flaghelper as fh
-    from update_spw import update_spwchan
-    from callibrary import callibrary
+    # import flaghelper as fh
+    # from update_spw import update_spwchan
+    # from callibrary import callibrary
 
 
 @contextlib.contextmanager
@@ -60,14 +61,14 @@ def sdtimeaverage(
     if (cap_timebin == 'ALL') or (cap_timebin == ''):
         timebin = calc_timebin(infile) + 's'
     # datacolumn alternative access
-    #  In case 'float_data' does not exists, attempt to use 'data'
 
+    # In case 'float_data' does not exists, attempt to use 'data'
     # know existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
 
     # change datacolumn 'data' to 'float_data'
     if (datacolumn == 'float_data'):
-        if (ex_float_data == False)and(ex_data == True):
+        if (not ex_float_data) and (ex_data):
             datacolumn = 'data'
             # Message to User #
             msg = 'No FLOAT_DATA column. DATA column will be used alternatively.'
@@ -75,7 +76,7 @@ def sdtimeaverage(
 
     # change datacolumn 'float_data' to 'data'
     if (datacolumn == 'data'):
-        if (ex_float_data)and(ex_data == False):
+        if (ex_float_data) and (not ex_data):
             datacolumn = 'float_data'
             # Message to User #
             msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
@@ -328,7 +329,7 @@ def do_mst(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print('width =', width)
+                    # print('width =', width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -336,7 +337,7 @@ def do_mst(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-                            #                        print('using ms.msseltoindex + a scalar width')
+                            # print('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                               spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -345,7 +346,7 @@ def do_mst(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-    #                print('widths =', widths)
+                    # print('widths =', widths)
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -357,11 +358,11 @@ def do_mst(
                             # in that case.
                             cmd = ''
                             try:
-                                #print('sch1 =', sch1)
+                                # print('sch1 =', sch1)
                                 sch2 = update_spwchan(
                                     infile, spw, sch1, truncate=True, widths=widths)
-                                #print('sch2 =', sch2)
-                                ##print('spwmatch.group() =', spwmatch.group())
+                                # print('sch2 =', sch2)
+                                # print('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
