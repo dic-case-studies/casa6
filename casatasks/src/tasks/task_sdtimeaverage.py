@@ -420,11 +420,10 @@ def add_history(
     mslocal = ms()
     # Write history to output MS, not the input ms.
     try:
-        code_object = sdtimeaverage.__code__  # CASA6
-        # CASA6
-        param_names = code_object.co_varnames[:code_object.co_argcount]
-        local_vals = locals()  # CASA6
-        param_vals = [local_vals.get(p, None) for p in param_names]  # CASA6
+        code_object = sdtimeaverage.__code__                             # CASA6
+        param_names = code_object.co_varnames[:code_object.co_argcount]  # CASA6
+        local_vals = locals()                                            # CASA6
+        param_vals = [local_vals.get(p, None) for p in param_names]      # CASA6
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
     except Exception as instance:
