@@ -55,8 +55,8 @@ def sdtimeaverage(
     #+
     #  defaut value (timebin=all) is to be handled.
     #-
-    capTimebin = timebin.upper()
-    if (capTimebin == 'ALL') or (capTimebin == ''):
+    cap_timebin = timebin.upper()
+    if (cap_timebin == 'ALL') or (cap_timebin == ''):
         timebin =  calc_timebin(infile)+'s'
     #+
     # datacolumn alternative access 
@@ -98,7 +98,8 @@ def sdtimeaverage(
         casalog.post( msg, 'WARN' )
    
     # org part
-    casalog.origin('sdtimeaverage')
+    origin = 'sdtimeaverage'
+    casalog.origin(origin)
 
     try:
         # Select Data and make Average. 
@@ -119,16 +120,16 @@ def sdtimeaverage(
     return st
 
 #  Getting Column Names
-def check_column(msName):
-    with open_table(msName) as tb:
+def check_column(msname):
+    with open_table(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data  = 'FLOAT_DATA' in columnNames 
         exist_data        =  'DATA' in columnNames    
         return exist_float_data, exist_data
 
 #  Calculation range time in input MS.  
-def calc_timebin(msName):
-    with open_table(msName) as tb:
+def calc_timebin(msname):
+    with open_table(msname) as tb:
         tm    = tb.getcol('TIME')
         iv    = tb.getcol('INTERVAL')
 
@@ -165,7 +166,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
     start = 0
     width = 1
 
-    timeaverageAct = False
+    do_timeaverage = False
     maxuvwdistance = 0.0
 
     ddistart = -1
@@ -220,8 +221,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
   
         # set config for Averaging
-        timeaverageAct = (tbin > 0)
-        if timeaverageAct:
+        do_timeaverage = (tbin > 0)
+        if do_timeaverage:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
             config['timebin'] = timebin
@@ -265,7 +266,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
             nflgcmds = mytb.nrows()
             
             if nflgcmds > 0:
-                updateFlagCmd = False
+                update_flag_cmd = False
 
                 # If spw selection is by name in FLAG_CMD, do not update, CAS-7751
                 mycmd = mytb.getcell('COMMAND', 0)
@@ -276,11 +277,11 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
                         cmd = cmd.strip('spw=')
                         spwstr = re.search('^[^a-zA-Z]+$', cmd)
                         if spwstr != None and spwstr.string.__len__() > 0:
-                            updateFlagCmd = True
+                            update_flag_cmd = True
                             break                
                 
 
-                if updateFlagCmd:
+                if update_flag_cmd:
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
