@@ -646,7 +646,7 @@ def generate_pyinit(moduledir,tasks):
             "except ImportError:",
             "    pass\n"))
         fd.write(mpi_import_str)
-        fd.write("telemetry_enabled=False\n")
+        #fd.write("telemetry_enabled=False\n")
         fd.write("from datetime import datetime as _time\n")
         fd.write("telemetry_starttime = str(_time.now())\n")
         fd.write("import platform\n")
@@ -654,7 +654,7 @@ def generate_pyinit(moduledir,tasks):
         fd.write("  if config.telemetry_enabled:\n")
         fd.write("      import casatelemetry\n")
         fd.write("      telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
-        fd.write("      telemetry_enabled=True\n")
+        #fd.write("      telemetry_enabled=True\n")
         fd.write("      variant=''\n")
         fd.write('      telemetrylogger.logger.info("Starting CASA at: " + telemetry_starttime + " Version " + version_string() + " Platform: " + platform.platform() +  " Variant: " + variant)\n') 
         fd.write("      casatelemetry.CrashReporter.init(config.logfile)\n")
