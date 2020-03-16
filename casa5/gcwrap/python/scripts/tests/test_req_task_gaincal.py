@@ -220,6 +220,22 @@ class gaincal_test(unittest.TestCase):
         if os.path.exists(tempCal2):
             shutil.rmtree(tempCal2)
 
+        if os.path.exists('testspwmap.ms'):
+            shutil.rmtree('testspwmap.ms')
+                
+        if os.path.exists('testspwmap.G0'):
+            shutil.rmtree('testspwmap.G0')
+    
+        if os.path.exists('testspwmap.G1'):
+            shutil.rmtree('testspwmap.G1')
+
+        if os.path.exists('testspwmap.G2'):
+            shutil.rmtree('testspwmap.G2')
+
+        if os.path.exists('testspwmap.G3'):
+            shutil.rmtree('testspwmap.G3')
+            
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(datacopy)
@@ -550,12 +566,6 @@ class gaincal_test(unittest.TestCase):
         tb.close()
         self.assertTrue(np.absolute(np.mean(g1-1.0))<2e-6)
 
-        # clean up
-        shutil.rmtree(tsmdata)
-        shutil.rmtree(tsmcal0)
-        shutil.rmtree(tsmcal1)
-        shutil.rmtree(tsmcal2)
-        shutil.rmtree(tsmcal3)
 
 
     
