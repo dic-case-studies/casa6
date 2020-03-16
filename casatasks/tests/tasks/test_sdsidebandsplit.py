@@ -337,7 +337,7 @@ class failureTestCase(sdsidebandsplitTestBase):
     # T-022, T-023, T-024
     def test_refval_invalid(self):
         """test failure: refval is invalid (empty, a negative freqency or not a frequency)"""
-        ref_message = ('.* cDoubleQuant type.*',
+        ref_message = ('_refval is not a dictionary',
                        'Frequency should be positive',
                        'From/to units not consistent.')
         for refval, message in zip(('', '-100GHz', '300K'), ref_message):
