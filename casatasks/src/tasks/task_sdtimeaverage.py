@@ -52,16 +52,12 @@ def sdtimeaverage(
              timebin,
              timespan,
              outfile):
-    #+
     #  defaut value (timebin=all) is to be handled.
-    #-
     cap_timebin = timebin.upper()
     if (cap_timebin == 'ALL') or (cap_timebin == ''):
         timebin =  calc_timebin(infile)+'s'
-    #+
     # datacolumn alternative access 
     #  In case 'float_data' does not exists, attempt to use 'data'
-    #-
 
     # know existence of data-column on specified MS. 
     ex_float_data, ex_data = check_column(infile) 
@@ -82,16 +78,12 @@ def sdtimeaverage(
             msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
             casalog.post( msg, 'INFO' )
 
-    #+
     # Antanna ID (add extra &&& if needed) This is Single Dish specific 
-    #-
     if (len(antenna) != 0) and (antenna.find('&') == -1):
         antenna = antenna + '&&&'
 
-    #+
     # 'scan,state' Warning 
     #    (please see CAS-12721 comments)
-    #- 
     if ('scan' in timespan)and('state' in timespan): 
         msg = "If  timescan contains 'scan' AND 'state'. You may be receiving unexpected result."
 
@@ -119,16 +111,16 @@ def sdtimeaverage(
 
     return st
 
-#  Getting Column Names
 def check_column(msname):
+    """ Getting Column Names. """
     with open_table(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data  = 'FLOAT_DATA' in columnNames 
         exist_data        =  'DATA' in columnNames    
         return exist_float_data, exist_data
 
-#  Calculation range time in input MS.  
 def calc_timebin(msname):
+    """ Calculation range time in input MS. """
     with open_table(msname) as tb:
         tm    = tb.getcol('TIME')
         iv    = tb.getcol('INTERVAL')
@@ -143,11 +135,12 @@ def calc_timebin(msname):
 
     return str(timebin)
 
-# call mstransform by provided procedure #
 def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, timespan, outfile):
-    # followings are parameters of mstransform but not used by THIS.
-    # just putting default values
-  
+    """
+      call mstransform by provided procedure 
+        followings are parameters of mstransform, but not used by THIS.
+        just putting default values
+    """
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
     tileshape = [0]
@@ -247,12 +240,11 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
         casalog.post('%s'%instance,'ERROR')
         return False
 
-    #+
-    # CAS-12721:
-    # Note: Following section were written concerning with CAS-7751 or other(s)
-    #       Program logic is copied and used without change. 
-    #-
-
+    """
+      CAS-12721:
+      Note: Following section were written concerning with CAS-7751 or other(s)
+            Program logic is copied and used without change. 
+    """
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
     
@@ -358,8 +350,9 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, antenna, timebin, ti
 
     return True
 
-# revised in CASA6 
+ 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, timespan, antenna, outfile):
+    """ partly revised for CASA6 """
     mslocal = ms( )
     # Write history to output MS, not the input ms.
     try:
