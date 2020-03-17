@@ -20,24 +20,13 @@ elif os.name == 'nt':                   # Contributed by Jeff Bauer
             home = os.environ['HOMEPATH']
 
 configrc = os.path.join(home, ".casa/config.py")
-taskrc = os.path.join(home, ".casa/taskrc.py")
 try:
     from casataskrc import *
 except:
     try:
         f = open(configrc)
     except IOError:
-        try:
-            f = open(taskrc)
-        except IOError:
-            pass
-        else:
-            f.close()
-            try:
-                exec(open(taskrc).read())
-            except:
-                import sys
-                sys.stderr.write("error: evaluation of %s failed\n" % taskrc)
+        pass
     else:
         f.close()
         try:

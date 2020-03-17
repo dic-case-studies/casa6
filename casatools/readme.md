@@ -132,9 +132,9 @@ True
 >>>
 -bash-4.2$
 ```
-CASAtools can be configured using *~/.casa/toolrc.py*. For example, extra data search paths can be added like:
+CASAtools can be configured using *~/.casa/config.py*. For example, extra data search paths can be added like:
 ```
--bash-4.2$ cat ~/.casa/toolrc.py
+-bash-4.2$ cat ~/.casa/config.py
 datapath=[ "~/develop/casa/data/unittests" ]
 -bash-4.2$
 ```
@@ -149,7 +149,7 @@ A number of tests have been brought into CASAtools from CASA. Like the rest of C
 ```
 After the checkout is complete, you must update your CASAtools RC file to indicate where the unit test data can be found. In my case it looks like:
 ```
--bash-4.2$ cat ~/.casa/toolrc.py
+-bash-4.2$ cat ~/.casa/config.py
 datapath=[ "~/develop/casa/data/unittests" ]
 -bash-4.2$
 ```
@@ -223,7 +223,7 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 
 ## Tool Initialization
 
-The user initalization and customization file for the CASAtools module is `~/.casa/toolrc.py`. If this file does not exist, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`). If the `casatoolrc` module does not exist in `PYTHONPATH`, then the default values for all initialization state is used.
+The user initalization and customization file for the CASAtools module is `~/.casa/config.py`. If this file does not exist, then an attempt is mad to import the RC values from casaconfig (i.e. `from casatoolrc import *`). If the `casatoolrc` module does not exist in `PYTHONPATH`, then the default values for all initialization state is used.
 
 ## Changes from Standard CASA
 
@@ -240,7 +240,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
-3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolrc.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
+3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/config.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
 
 ### Xml Changes
 
