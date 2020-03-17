@@ -1,15 +1,17 @@
 from casatasks import casalog as _clog
 from datetime import datetime as _time
 import casatasks
+import os 
 
 def start_log( tname, arguments ):
     spaces = ' '*(18-len(tname))
     start_time = str(_time.now())
-    try:
-        if casatasks.config.telemetry_enabled:
-            casatasks.telemetrylogger.logger.info(start_time + ' Begin Task: ' + tname + spaces)
-    except:
-        pass
+    #try:
+    #    if casatasks.config.telemetry_enabled:
+    #        casatasks.telemetrylogger.logger.info(start_time + \
+    #        " :: " + str(os.getpid()) + " :: " + tname + spaces)
+    #except:
+    #    pass
     _clog.origin(tname)
     _clog.post( '##########################################' )
     _clog.post( '##### Begin Task: ' + tname + spaces + ' #####' )
@@ -21,7 +23,10 @@ def end_log( state, tname, result ):
     end_time = str(_time.now())
     try:
         if casatasks.config.telemetry_enabled:
-            casatasks.telemetrylogger.logger.info(end_time + ' End Task: ' + tname + spaces + 'Start time: ' + state[0])
+            casatasks.telemetrylogger.logger.info(end_time + 
+            " :: " + str(os.getpid()) + " :: " + tname + " :: " +
+            "Task " + tname + " complete. Start time: " + state[0] + 
+            " End time: " + end_time)
     except:
         pass
     _clog.origin(tname)
