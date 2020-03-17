@@ -2991,6 +2991,19 @@
              "tag":"casaguide",
              "suppressEmail": false,
              "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"Sdintimaging",
+             "testScript":"test_req_task_sdintimaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@nrao.edu",
+             "priority":"4",
+             "tag":"functionalTest",
+             "suppressEmail": false,
+             "comment":""
         }
     ]
 }
