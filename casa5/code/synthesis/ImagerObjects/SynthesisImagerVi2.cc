@@ -1463,16 +1463,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		//casa::applicator.defineAlgorithm(cmc);
 		//Initialize everything to get the setup as serial
 		{
-			vi::VisBuffer2* vb=vi_p->getVisBuffer();
+                
 			vi_p->originChunks();
 			vi_p->origin();
-			if(!dopsf)itsMappers.initializeDegrid(*vb);
-			//do we need to do the BriggsWeightor here or not ?
-			itsMappers.initializeGrid(*vi_p,dopsf);
+		
 		}
 		///Break things into chunks for parallelization or memory availabbility
 		Vector<Int> startchan;
-		Vector<Int> endchan;
+		Vector<Int> endchan; 
 		Int numchunks;
 		Int fudge_factor = 15;
 		if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
@@ -1608,6 +1606,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Int rank ( 0 );
         Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
         Bool allDone ( false );
+        Vector<Bool> retvals(numchunks, False);
+        Int indexofretval=0;
         for ( Int k=0; k < numchunks; ++k ) {
             assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
             //cerr << "assigned "<< assigned << endl;
@@ -1616,6 +1616,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
+                retvals(indexofretval)=status;
+                ++indexofretval;
                 if ( status )
                     cerr << k << " rank " << rank << " successful " << endl;
                 else
@@ -1650,6 +1652,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         while ( !allDone ) {
             Bool status;
             casa::applicator.get ( status );
+            retvals(indexofretval)=status;
+            ++indexofretval;
             if ( status )
                 cerr << "remainder rank " << rank << " successful " << endl;
             else
@@ -1659,9 +1663,12 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			if(casa::applicator.isSerial())
 				allDone=true;
         }
-
-        
+        if(anyEQ(retvals, False)){
+          //cerr << retvals << endl;
+          throw(AipsError("One or more  of the cube section failed in de/gridding"));  
+        }      
         }
+       
 	  
 	  
   

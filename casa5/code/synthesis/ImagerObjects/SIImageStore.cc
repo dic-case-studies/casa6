@@ -2893,7 +2893,7 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
   Float SIImageStore::getPSFSidelobeLevel()
   {
     LogIO os( LogOrigin("SIImageStore","getPSFSidelobeLevel",WHERE) );
-    cerr << "*****PSF sidelobe "<< itsPSFSideLobeLevel << endl;
+    //cerr << "*****PSF sidelobe "<< itsPSFSideLobeLevel << endl;
     /// Calculate only once, store and return for all subsequent calls.
     if( itsPSFSideLobeLevel == 0.0 )
       {

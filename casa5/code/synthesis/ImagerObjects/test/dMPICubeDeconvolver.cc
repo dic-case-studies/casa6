@@ -151,11 +151,11 @@ int main(int argc, char **argv)
 			applicator.put(maskname);
                         // pb #8
                         applicator.put(pbname);
-                        //#9 beamset
+                        //#9 beamset...no longer used as it is in imageInfo
                         //need to use local variable for serial case
-                        beamsetRec=chanBeams[k].toRecord();
+                        //beamsetRec=chanBeams[k].toRecord();
                         //cerr << "beamsetRec " << beamsetRec << endl;
-                        applicator.put(beamsetRec);
+                        //applicator.put(beamsetRec);
                         //#9 psf lobe level
                         applicator.put(psl);
 			/// Tell worker to process it 

@@ -65,7 +65,7 @@ void CubeMinorCycleAlgorithm::get() {
         // get pb name #8
         applicator.get(pbName_p);
         //get beamsetrec #9
-        applicator.get(beamsetRec_p);
+        //applicator.get(beamsetRec_p);
         //get psfsidelobelev #10
         applicator.get(psfSidelobeLevel_p);
        
@@ -81,33 +81,58 @@ void CubeMinorCycleAlgorithm::put() {
   applicator.put(chanRange_p);
 	//cerr << "in put " << status_p << endl;
   ///#2 return record of deconvolver
+  ////TESTOOO
+
+  // cerr << "nfield " << returnRec_p.nfields() << endl;
+  // Array<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  // applicator.put(lala);
+  //returnRec_p.removeField("summaryminor");
+  ////TESTOO
+  cerr << "nfield " << returnRec_p.nfields() << endl;
+  for (uInt k =0; k <  returnRec_p.nfields() ; ++k){
+    cerr << " name " << returnRec_p.name(k) << endl;
+
+  }
+
+  //Record laloo;
   applicator.put(returnRec_p);	
 	
 }
 	
 void CubeMinorCycleAlgorithm::task(){
 	status_p = False;
-	
-	SynthesisDeconvolver subDeconv;
-	subDeconv.setupDeconvolution(decPars_p);
-	std::shared_ptr<SIImageStore> subimstor=subImageStore();
-        ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
-        subimstor->setBeamSet(bs);
-        subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
-        LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
-	subDeconv.initMinorCycle(subimstor);
-        if(autoMaskOn_p){
-          subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
-          subDeconv.setPosMask(subimstor->tempworkimage());
-          subDeconv.setAutoMask();
+	try{
+          SynthesisDeconvolver subDeconv;
+          subDeconv.setupDeconvolution(decPars_p);
+          std::shared_ptr<SIImageStore> subimstor=subImageStore();
+          //ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
+          ImageBeamSet bs=(subimstor->psf()->imageInfo()).getBeamSet();
+          subimstor->setBeamSet(bs);
+          subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
+          LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
+          subDeconv.initMinorCycle(subimstor);
+          if(autoMaskOn_p){
+            subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
+            subDeconv.setPosMask(subimstor->tempworkimage());
+            subDeconv.setAutoMask();
+          }
+          //subDeconv.setupMask();
+          returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+          writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
+          if(autoMaskOn_p){
+            writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
+            writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
+          }
         }
-        //subDeconv.setupMask();
-	returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
-        writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
-        if(autoMaskOn_p){
-          writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
-          writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
+        catch (AipsError x) {
+          cerr << "Exception: " << x.getMesg() << endl;
+          returnRec_p=Record();
         }
+        catch(...){
+          cerr << "Unknown exception" << endl;
+          returnRec_p=Record();
+        }
+        
        	status_p = True;
 }
 String&	CubeMinorCycleAlgorithm::name(){

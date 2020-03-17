@@ -132,176 +132,186 @@ void CubeMajorCycleAlgorithm::put() {
 }
 	
 void CubeMajorCycleAlgorithm::task(){
-	status_p = False;
-        //Timer tim;
-        //tim.mark();
-	//SynthesisImagerVi2 imgr;
-	//imgr.selectData(dataSel_p);
-	// We do not use chanchunking in this model
-	for (uInt k=0; k < gridSel_p.nelements(); ++k)
-		gridSel_p[k].chanchunks = 1;
-
-	//imgr.defineImage(imSel_p,gridSel_p);
-	// need to find how many subfields/outliers have been set
-	//CountedPtr<SIImageStore> imstor =imgr.imageStore(0);
-	//CountedPtr<ImageInterface<Float> > resid=imstor->residual();
-	//Int nchan = resid->shape()(3);
-	//std::shared_ptr<SIImageStore> subImStor=imstor->getSubImageStore(0, 1, chanId_p, nchan, 0,1);
-	
-	SynthesisImagerVi2 subImgr;
-	for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
-		//The original SynthesisImager would have cleared the model if it was requested
-		dataSel_p[k].incrmodel=True;
-                dataSel_p[k].freqbeg="";
-		subImgr.selectData(dataSel_p[k]);
-	}
-        //cerr <<"***Time for select data " << tim.real() << endl;
-        //tim.mark();
-        subImgr.setMovingSource(movingSource_p);
-	Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());
-        //copy as shared_ptr as we mix the usage of countedptr and sharedptr
-        Vector<std::shared_ptr<SIImageStore> > subImStorShared(imSel_p.nelements());
-        Vector<SIImageStore *> p(imSel_p.nelements());
-	//Do multifield in one process only for now 
-	//TODO if all fields have same nchan then partition all on all subcalls
-	if(chanRange_p[0]==0){
-		for (uInt k=0; k < imSel_p.nelements(); ++k){
-                  subImStorShared[k]=subImageStore(k);
-                 
-                  subImStor[k]=CountedPtr<SIImageStore>(subImStorShared[k]);
-			if(ftmRec_p.nelements()>0){
-				subImgr.defineImage(subImStor[k], ftmRec_p[k], iftmRec_p[k]);	
-			}else{
-				subImgr.defineImage(subImStor[k],  imSel_p[k], gridSel_p[k]);
-			}
-		}
-	}else{
-		subImStor.resize(1);
-                subImStorShared[0]=subImageStore(0);
-		subImStor[0]=CountedPtr<SIImageStore>(subImStorShared[0]);
-		if(ftmRec_p.nelements()>0){
-				subImgr.defineImage(subImStor[0], ftmRec_p[0], iftmRec_p[0]);
-		}else{
-			subImgr.defineImage(subImStor[0],  imSel_p[0], gridSel_p[0]);
-		}
-	}
-	subImgr.setCubeGridding(False);
-	// TO DO get weight param and set weight
-	if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural"){
-		subImgr.weight("natural");
-        }
-	else{
-          if(controlRecord_p.isDefined("weightdensity")){
-            String densName=controlRecord_p.asString("weightdensity");
-            //cerr << "Loading weightdensity " << densName << endl;
-            if(Table::isReadable(densName))
-              subImgr.setWeightDensity(densName);
+	status_p = True;
+        try{
+          //Timer tim;
+          //tim.mark();
+          //SynthesisImagerVi2 imgr;
+          //imgr.selectData(dataSel_p);
+          // We do not use chanchunking in this model
+          for (uInt k=0; k < gridSel_p.nelements(); ++k)
+            gridSel_p[k].chanchunks = 1;
+          
+          //imgr.defineImage(imSel_p,gridSel_p);
+          // need to find how many subfields/outliers have been set
+          //CountedPtr<SIImageStore> imstor =imgr.imageStore(0);
+          //CountedPtr<ImageInterface<Float> > resid=imstor->residual();
+          //Int nchan = resid->shape()(3);
+          //std::shared_ptr<SIImageStore> subImStor=imstor->getSubImageStore(0, 1, chanId_p, nchan, 0,1);
+          
+          SynthesisImagerVi2 subImgr;
+          for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
+            //The original SynthesisImager would have cleared the model if it was requested
+            dataSel_p[k].incrmodel=True;
+            dataSel_p[k].freqbeg="";
+            subImgr.selectData(dataSel_p[k]);
+          }
+          //cerr <<"***Time for select data " << tim.real() << endl;
+          //tim.mark();
+          subImgr.setMovingSource(movingSource_p);
+          Vector<CountedPtr<SIImageStore> > subImStor(imSel_p.nelements());
+          //copy as shared_ptr as we mix the usage of countedptr and sharedptr
+          Vector<std::shared_ptr<SIImageStore> > subImStorShared(imSel_p.nelements());
+          Vector<SIImageStore *> p(imSel_p.nelements());
+          //Do multifield in one process only for now 
+          //TODO if all fields have same nchan then partition all on all subcalls
+          if(chanRange_p[0]==0){
+            for (uInt k=0; k < imSel_p.nelements(); ++k){
+              subImStorShared[k]=subImageStore(k);
+              
+              subImStor[k]=CountedPtr<SIImageStore>(subImStorShared[k]);
+              if(ftmRec_p.nelements()>0){
+                subImgr.defineImage(subImStor[k], ftmRec_p[k], iftmRec_p[k]);	
+              }else{
+                subImgr.defineImage(subImStor[k],  imSel_p[k], gridSel_p[k]);
+              }
+            }
+          }else{
+            subImStor.resize(1);
+            subImStorShared[0]=subImageStore(0);
+            subImStor[0]=CountedPtr<SIImageStore>(subImStorShared[0]);
+            if(ftmRec_p.nelements()>0){
+              subImgr.defineImage(subImStor[0], ftmRec_p[0], iftmRec_p[0]);
+            }else{
+              subImgr.defineImage(subImStor[0],  imSel_p[0], gridSel_p[0]);
+            }
+          }
+          subImgr.setCubeGridding(False);
+          // TO DO get weight param and set weight
+          if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural"){
+            subImgr.weight("natural");
           }
           else{
-		subImgr.weight(weightParams_p);
+            if(controlRecord_p.isDefined("weightdensity")){
+              String densName=controlRecord_p.asString("weightdensity");
+              //cerr << "Loading weightdensity " << densName << endl;
+              if(Table::isReadable(densName))
+                subImgr.setWeightDensity(densName);
+            }
+            else{
+              subImgr.weight(weightParams_p);
+            }
           }
-        }
-	///Now do the selection tuning if needed
-	if(imSel_p[0].mode !="cubedata"){
-		//cerr << "IN RETUNING " << endl;
-          if(retuning_p)
-            subImgr.tuneSelectData();
-	}
-
-        //cerr << "***Time for all other setting " << tim.real() << endl;
-        //tim.mark();
-	if (!dopsf_p){
-		subImgr.executeMajorCycle(controlRecord_p);
-	
-                  for(uInt k=0; k < subImStor.nelements(); ++k){
-                    if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight")){
-                    {
-                      if(controlRecord_p.isDefined("normpars")){
-                        Record normpars=controlRecord_p.asRecord("normpars");
-                        SynthesisNormalizer norm;
-                         if(nterms_p[k] > 0){
-                           if(!normpars.isDefined("nterms"))
-                             normpars.define("nterms", uInt(nterms_p[k]));
-                          normpars.define("deconvolver", "mtmfs");
-                        }
-                       
-                        norm.setupNormalizer(normpars);
-                        norm.setImageStore(subImStorShared[k]);
-                        norm.divideResidualByWeight();
-                      }
-                      else{
-                        LatticeLocker lock1 (*(subImStor[k]->residual()), FileLocker::Write);
-                        LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
-                        subImStor[k]->divideResidualByWeight();
-                        //subImStor[k]->residual()->flush();
-                      }
+          ///Now do the selection tuning if needed
+          if(imSel_p[0].mode !="cubedata"){
+            //cerr << "IN RETUNING " << endl;
+            if(retuning_p)
+              subImgr.tuneSelectData();
+          }
+          
+          //cerr << "***Time for all other setting " << tim.real() << endl;
+          //tim.mark();
+          if (!dopsf_p){
+            subImgr.executeMajorCycle(controlRecord_p);
+            
+            for(uInt k=0; k < subImStor.nelements(); ++k){
+              if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight")){
+                {
+                  if(controlRecord_p.isDefined("normpars")){
+                    Record normpars=controlRecord_p.asRecord("normpars");
+                    SynthesisNormalizer norm;
+                    if(nterms_p[k] > 0){
+                      if(!normpars.isDefined("nterms"))
+                        normpars.define("nterms", uInt(nterms_p[k]));
+                      normpars.define("deconvolver", "mtmfs");
                     }
-                    subImStor[k]->residual()->unlock();
-                    if(subImStor[k]->hasModel())
-                      subImStor[k]->model()->unlock();
-                  }
-                   Int chanBeg=0; Int chanEnd=0;
-                  if(k==0){
-                    chanBeg=chanRange_p[0];
-                    chanEnd=chanRange_p[1];
+                    
+                    norm.setupNormalizer(normpars);
+                    norm.setImageStore(subImStorShared[k]);
+                    norm.divideResidualByWeight();
                   }
                   else{
-                    chanBeg=0;
-                    chanEnd=subImStor[k]->sumwt()->shape()[3]-1;
+                    LatticeLocker lock1 (*(subImStor[k]->residual()), FileLocker::Write);
+                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
+                    subImStor[k]->divideResidualByWeight();
+                    //subImStor[k]->residual()->flush();
                   }
-                  if(subImStor[k]->getType() != "multiterm"){
-                    writeBackToFullImage(residualNames_p[k], chanBeg, chanEnd, (subImStor[k]->residual()));
-                    writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
-                  }
-                    
                 }
-                
-                 
-	}
-	else{
-		subImgr.makePSF();
-		for(uInt k=0; k < subImStor.nelements(); ++k){
-                  if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
+                subImStor[k]->residual()->unlock();
+                if(subImStor[k]->hasModel())
+                  subImStor[k]->model()->unlock();
+              }
+              Int chanBeg=0; Int chanEnd=0;
+              if(k==0){
+                chanBeg=chanRange_p[0];
+                chanEnd=chanRange_p[1];
+              }
+              else{
+                chanBeg=0;
+                chanEnd=subImStor[k]->sumwt()->shape()[3]-1;
+              }
+              if(subImStor[k]->getType() != "multiterm"){
+                writeBackToFullImage(residualNames_p[k], chanBeg, chanEnd, (subImStor[k]->residual()));
+                writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
+              }
+              
+            }
+            
+            
+          }
+          else{
+            subImgr.makePSF();
+            for(uInt k=0; k < subImStor.nelements(); ++k){
+              if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
 		{
                   if(controlRecord_p.isDefined("normpars")){
-                        Record normpars=controlRecord_p.asRecord("normpars");
-                        if(nterms_p[k] > 0){
-                          if(!normpars.isDefined("nterms"))
-                             normpars.define("nterms", uInt(nterms_p[k]));
-                          normpars.define("deconvolver", "mtmfs");
-                        }
-                        //                        cerr  << k << " " << nterms_p[k] <<" NORMPARS " << normpars << endl;
-                        SynthesisNormalizer norm;
-                        norm.setupNormalizer(normpars);
-                        norm.setImageStore(subImStorShared[k]);
-                        norm.dividePSFByWeight();
-                      }
+                    Record normpars=controlRecord_p.asRecord("normpars");
+                    if(nterms_p[k] > 0){
+                      if(!normpars.isDefined("nterms"))
+                        normpars.define("nterms", uInt(nterms_p[k]));
+                      normpars.define("deconvolver", "mtmfs");
+                    }
+                    //                        cerr  << k << " " << nterms_p[k] <<" NORMPARS " << normpars << endl;
+                    SynthesisNormalizer norm;
+                    norm.setupNormalizer(normpars);
+                    norm.setImageStore(subImStorShared[k]);
+                    norm.dividePSFByWeight();
+                  }
                   else{
-			LatticeLocker lock1 (*(subImStor[k]->psf()), FileLocker::Write);
-			LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
-			subImStor[k]->dividePSFByWeight();
-			//subImStor[k]->psf()->flush();
+                    LatticeLocker lock1 (*(subImStor[k]->psf()), FileLocker::Write);
+                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
+                    subImStor[k]->dividePSFByWeight();
+                    //subImStor[k]->psf()->flush();
                   }
 		}
-                Int chanBeg=0; Int chanEnd=0;
-                if(k==0){
-                  chanBeg=chanRange_p[0];
-                  chanEnd=chanRange_p[1];
-                }
-                else{
-                  chanBeg=0;
-                  chanEnd=subImStor[k]->sumwt()->shape()[3]-1;
-                }
-                if(subImStor[k]->getType() != "multiterm"){
-                  writeBackToFullImage(psfNames_p[k], chanBeg, chanEnd, (subImStor[k]->psf()));
-                  writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
-                }
-		subImStor[k]->psf()->unlock();
-                
-		}
-	}
+              Int chanBeg=0; Int chanEnd=0;
+              if(k==0){
+                chanBeg=chanRange_p[0];
+                chanEnd=chanRange_p[1];
+              }
+              else{
+                chanBeg=0;
+                chanEnd=subImStor[k]->sumwt()->shape()[3]-1;
+              }
+              if(subImStor[k]->getType() != "multiterm"){
+                writeBackToFullImage(psfNames_p[k], chanBeg, chanEnd, (subImStor[k]->psf()));
+                writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
+              }
+              subImStor[k]->psf()->unlock();
+              
+            }
+          }
 	//cerr << "***Time gridding/ffting " << tim.real() << endl;
-	status_p = True;
+          status_p = True;
+        }
+        catch (AipsError x) {
+          cerr << "Exception: " << x.getMesg() << endl;
+          status_p=false;
+        }
+        catch(...){
+          cerr << "Unknown exception "  << endl;
+          status_p=False;
+        }
 }
 String&	CubeMajorCycleAlgorithm::name(){
 	return myName_p;
@@ -512,6 +522,7 @@ void CubeMajorCycleAlgorithm::reset(){
 	
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
     PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
+    im.lock(FileLocker::Read, 30);
     SubImage<Float> *tmpptr=nullptr;
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     subimptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));

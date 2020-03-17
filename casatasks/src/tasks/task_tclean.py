@@ -196,13 +196,10 @@ def tclean(
 #        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
 #        return
 
-    if (deconvolver=="mtmfs") and (specmode!='mfs') and (specmode!='cube' or nterms!=1) and (specmode!='cubedata' or nterms!=1):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_tclean" )
-        return
+    if (deconvolver=="mtmfs") and  (specmode=='cube' or specmode=='cubedata'):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') can only be used with specmode='mfs' not specmode='cube' or specmode='cubedata'.", "WARN", "task_tclean" )
+        return False
       
-    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
-        return
 
     #####################################################
     #### Construct ImagerParameters object
@@ -452,6 +449,10 @@ def tclean(
 
     except Exception as e:
         #print 'Exception : ' + str(e)
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
         casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
         if imager != None:
             imager.deleteTools()
