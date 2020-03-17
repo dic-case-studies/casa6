@@ -3,11 +3,20 @@ import shutil
 import numpy
 import unittest
 
-from casatools import image as iatool
-from casatools import regionmanager as rgtool
-from casatools import coordsys as cstool
-from casatools import table
-from casatools import ctsys
+try:
+    from casatools import image as iatool
+    from casatools import regionmanager as rgtool
+    from casatools import coordsys as cstool
+    from casatools import table
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 _ia = iatool( )
 _rg = rgtool( )
@@ -22,7 +31,7 @@ fail  = 0
 current_test =""
 stars = "*************"
 
-datapath = 'regression/unittest/imregrid/'
+datapath = ctsys_resolve('regression/unittest/imregrid/')
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -96,8 +105,8 @@ class ia_regrid_test(unittest.TestCase):
         """ Test regrid by velocity """
         image = "byvel.im"
         expected = "expected.im"
-        shutil.copytree(ctsys.resolve(datapath + image), image)
-        shutil.copytree(ctsys.resolve(datapath + expected), expected)
+        shutil.copytree(datapath + image, image)
+        shutil.copytree(datapath + expected, expected)
         myia = self._myia
         myia.open(expected)
         csys = myia.coordsys().torecord()
