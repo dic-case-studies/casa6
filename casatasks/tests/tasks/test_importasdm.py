@@ -2104,7 +2104,7 @@ class asdm_import7(test_base):
                     if subTypeOK:
                         subTypeCol = tblocal.getcol('SUB_TYPE')
                         tblocal.close()
-                        subTypeOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='') and (subTypeCol[2]==subTypeCol[0])
+                        subTypeOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='ALMA_RADIOMETER') and (subTypeCol[2]==subTypeCol[0])
 
                     retValue['success'] = subTypeOK and retValue['success']
                     if not subTypeOK:
@@ -2123,7 +2123,7 @@ class asdm_import7(test_base):
                     if  splitOK:
                         subTypeCol = tblocal.getcol('SUB_TYPE')
                         tblocal.close()
-                        splitOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='') and (subTypeCol[2]==subTypeCol[0])
+                        splitOK = (len(subTypeCol)==3) and (subTypeCol[0]=='ALMA_BASELINE') and (subTypeCol[1]=='ALMA_RADIOMETER') and (subTypeCol[2]==subTypeCol[0])
                     retValue['success'] = splitOK and retValue['success']
                     if not splitOK:
                         print("SUB_TYPE column in the PROCESSOR table after the split has incorrect values")
