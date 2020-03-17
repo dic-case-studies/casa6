@@ -1668,7 +1668,8 @@ class test_cube(testref_base):
           report2 = self.th.checkspecframe(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199989152e9)
           self.checkfinal(report+report2)
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Data sel with channel gaps is not supported in parallel mode")
+     # looks like it passes now....
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Data sel with channel gaps is not supported in parallel mode")
      def test_cube_21(self):
           """ [cube] Test_Cube_21  """
           # data sel with channel gap (10,11 excluded) 4~9, 12~14
@@ -1913,7 +1914,8 @@ class test_cube(testref_base):
           report = self.th.checkspecframe(self.img+'.image', 'LSRK', 0.999988750387e9, 0.049999438e9)
           self.checkfinal(report)
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Cubedata mode test in parallel is skipped temporarily until a fix is found. ")
+     # now rans OK with CAS-9386
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Cubedata mode test in parallel is skipped temporarily until a fix is found. ")
      def test_cube_D1(self):
           """ [cube] Test_Cube_D1 : specmode cubedata - No runtime doppler corrections """
           self.prepData('refim_Cband.G37line.ms')
@@ -2045,8 +2047,8 @@ class test_cube(testref_base):
           ## Pass or Fail (and why) ?
           self.checkfinal(estr+report2)
 
-
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
+     # Now works for parallel  with CAS-9396 
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
      def test_cube_chanchunks(self):
           """ [cube] Test channel chunking for large cubes """
           self.prepData('refim_point.ms')
@@ -2068,7 +2070,8 @@ class test_cube(testref_base):
           self.checkfinal(report)
 
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     # Now passes for parallel
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_cube_chanchunks_savemodel(self):
           """ [cube] Test channel chunking for large cubes and save model """
           self.prepData('refim_point.ms')
@@ -2819,7 +2822,8 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==False )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     #Passes for parallel after CAS-9386 
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_2(self):
           """ [modelpredict] Test_modelvis_2 : mfs with save model column """
           self.prepData("refim_twochan.ms")
@@ -2837,7 +2841,8 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     #Passes with parallel after CAS-9386
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_3(self):
           """ [modelpredict] Test_modelvis_3 : mfs with save virtual model """
           self.prepData("refim_twochan.ms")
@@ -2881,6 +2886,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
 
+     #tablelock issue with n=2 (mpicasa -n 3 or 4 worked) on CAS-9386
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_6(self):
           """ [modelpredict] Test_modelvis_6 : mt-mfs with save virtual model """
@@ -2896,7 +2902,8 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     # Passes after CAS-9386
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_7(self):
           """ [modelpredict] Test_modelvis_7 : cube with chan selection and save model column """
           ## check explicit channels ...
@@ -2918,7 +2925,8 @@ class test_modelvis(testref_base):
           self.checkfinal(reportcv)
 
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     #Passes after CAS-9386
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_8(self):
           """ [modelpredict] Test_modelvis_8 : cube with chan selection and save virtual model """
           ## check explicit channels ...
@@ -2935,7 +2943,8 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.checkmodel(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     # tested on CAS-9386, now seems to work...
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_9(self):
           """ [modelpredict] Test_modelvis_9 : Don't de-grid channels with zero model. Also test limited-freq mask """
           self.prepData("refim_point.ms")
@@ -2951,7 +2960,8 @@ class test_modelvis(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',startmodel=self.img+'.model',niter=0,
                        savemodel='virtual',parallel=self.parallel)
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     # tested on CAS-9386, now seems to work...
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_10(self):
           """ [modelpredict] Test_modelvis_10 : Use input model of different (narrower) freq range than data """
           self.prepData("refim_point.ms")
@@ -2977,7 +2987,8 @@ class test_modelvis(testref_base):
                        savemodel='virtual',parallel=self.parallel)
           ## cannot check anything here....  just that it runs without error
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     # mfs case but fixed? with CAS-9386
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_modelvis_11(self):
           """ [modelpredict] Test_modelvis_11 : Predict model image over channel gaps not included in imaging """
           self.prepData("refim_point.ms")
@@ -3097,6 +3108,7 @@ class test_startmodel(testref_base):
                              (self.img+'4.residual.tt1',-0.01519,[50,50,0,0])     ] )
           self.checkfinal(report)
 
+     # Now passes for n=3, 4, with CAS-9386 but table lock issue in model write for n=2
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mfs(self):
           """ [startmodel] test_startmodel_with_mask_mfs : Mask out some regions in the startmodel, before prediction """
@@ -3122,7 +3134,7 @@ class test_startmodel(testref_base):
                                 (self.img+'.3.model',0.024,[154,172,0,0])   ] )
           self.checkfinal(report)
           
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mtmfs(self):
           """ [startmodel] test_startmodel_with_mask_mtmfs : Mask out some regions in the startmodel, before prediction """
           self.prepData("refim_twopoints_twochan.ms")
