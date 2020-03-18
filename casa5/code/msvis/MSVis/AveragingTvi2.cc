@@ -412,7 +412,7 @@ public:
 
     VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vi);
 
-    void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk);
+    void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlocking);
     const Cube<Int> & counts () const;
     Bool empty () const;
     void finalizeBufferFilling ();
@@ -979,10 +979,17 @@ VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplement
  * @param baselineIndex index of the baseline being averaged into the rowAveraged
  * @param rowIdGen the rowIdGenerator of the VbAvg, which increases for every new baseline
  *        inside every chunk
+ * @param rowBlocking whether row blocking is enabled
  */
 Int
-calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen)
+calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen, bool rowBlocking)
 {
+    if (!rowBlocking) {
+        // with row blocking disabled, it doesn't seem to be possible to make sense out of
+        // rowIdgenerator_p for the purpose of this calculation.
+        return baselineIndex;
+    }
+
     auto nBasePresent = rowAveraged->nBaselinesPresent();
     // the rowIdgenerator_p that we get in rowIdGen increases +1 for every new baseline.
     // It is not really a proper (input) row id. After all baselines have been seen for a
@@ -997,7 +1004,7 @@ calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen)
 }
 
 void
-VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
+VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlocking)
 {
     if (empty_p){
         setupVbAvg (vb);
@@ -1023,7 +1030,8 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
 
         accumulateOneRow (rowInput, rowAveraged, subchunk, row);
 
-        row2AvgRow_p[row] = calcOutRowIdx(rowAveraged, baselineIndex, rowIdGenerator_p);
+        row2AvgRow_p[row] = calcOutRowIdx(rowAveraged, baselineIndex, rowIdGenerator_p,
+                                          rowBlocking);
     }
 
     delete rowAveraged;
@@ -2577,9 +2585,10 @@ AveragingTvi2::produceSubchunk ()
 
         setPhaseShiftingOptions(vb, averagingOptions_p, averagingParameters_p);
 
-        vbAvg_p->accumulate (vb, subchunk_p);
+        bool rowBlocking = block > 0;
+        vbAvg_p->accumulate (vb, subchunk_p, rowBlocking);
 
-        if (block > 0) {
+        if (rowBlocking) {
             auto app = vbToFill->appendSize();
             if (app <= block) {
                 getVii()->next();
@@ -2588,7 +2597,6 @@ AveragingTvi2::produceSubchunk ()
                 break;
             }
         } else {
-
             Int nWindows = vbAvg_p->nSpectralWindowsInBuffer ();
             if (! vbAvg_p->isUsingUvwDistance() && vbToFill->appendSize() > 0){
                 // Doing straight average and some data has been produced so
@@ -2717,8 +2725,6 @@ AveragingTvi2::average (const Cube<Float> &data, const Cube<Bool> &flags)
     return result;
 }
 
-typedef std::map< Int, std::map <Int, std::map< Int, uInt> >  > SPWAntsIndexMap;
-
 /**
  * Strategy to support different ways of propagating flags from the 'transformed' cube to
  * the original ('propagated') cube. Iterates through rows, channels, correlations.
@@ -2731,32 +2737,24 @@ typedef std::map< Int, std::map <Int, std::map< Int, uInt> >  > SPWAntsIndexMap;
  * @param flagrow per row FLAG_ROW value
  * @param flagMapped propagated FLAG_ROW
  * @param flagCubeMapped Cube of flags in which flags are to be propagated
- * @param spwAnt1Ant2IndexMap mapping: (spw, ant1, ant2) in averaged cube -> original row
- * @param orgAnt1 index for the map
- * @param orgAnt2 index for the map
- * @param orgSPW index for the map
+ * @param row2AvgRow map of input_buffer_row_index->output_buffer_row_index (this is pre-
+ *        calculated by the "VbAvg" when averaging rows and is needed here).
  */
 template <typename Functor>
 void cubePropagateFlags(const Vector<Bool> &flagRow,
                         Vector<Bool> &flagMapped,
                         Cube<Bool> &flagCubeMapped,
-                        const SPWAntsIndexMap &spwAnt1Ant2IndexMap,
-                        const Vector<Int> &orgAnt1,
-                        const Vector<Int> &orgAnt2,
-                        const Vector<Int> &orgSPW,
+                        std::vector<size_t> row2AvgRow,
                         Functor propagate)
 {
-    uInt nOriginalRows = flagMapped.shape()[0];
+    Int nRowsMapped = flagCubeMapped.shape()[2];
+    for(Int rowMapped=0; rowMapped < nRowsMapped; ++rowMapped) {
+        size_t index = row2AvgRow[rowMapped];
+        flagMapped(rowMapped) = flagRow(index);
 
-    for (uInt row=0;row<nOriginalRows;row++)
-    {
-        uInt index = spwAnt1Ant2IndexMap.at(orgSPW(row)).at(orgAnt1(row)).at(orgAnt2(row));
-        flagMapped(row) = flagRow(index);
-        for (uInt chan_i=0;chan_i<flagCubeMapped.shape()(1);chan_i++)
-        {
-            for (uInt corr_i=0;corr_i<flagCubeMapped.shape()(0);corr_i++)
-            {
-                propagate(row, chan_i, corr_i, index);
+        for (Int chan_i=0; chan_i < flagCubeMapped.shape()[1]; ++chan_i) {
+            for (Int corr_i=0; corr_i<flagCubeMapped.shape()[0]; ++corr_i) {
+                propagate(rowMapped, chan_i, corr_i, index);
             }
         }
     }
@@ -2767,21 +2765,9 @@ void cubePropagateFlags(const Vector<Bool> &flagRow,
 // -----------------------------------------------------------------------
 void AveragingTvi2::writeFlag (const Cube<Bool> & flag)
 {
-    // Create index map for averaged data
-    VisBuffer2 *avgVB = getVisBuffer();
-    Vector<Int> avgAnt1 = avgVB->antenna1();
-    Vector<Int> avgAnt2 = avgVB->antenna2();
-    Vector<Int> avgSPW = avgVB->spectralWindows();
-
-    SPWAntsIndexMap spwAnt1Ant2IndexMap;
-    for (uInt avgRow=0;avgRow<avgAnt1.size();avgRow++)
-    {
-        spwAnt1Ant2IndexMap[avgSPW(avgRow)][avgAnt1(avgRow)][avgAnt2(avgRow)] = avgRow;
-    }
-
     // Calculate FLAG_ROW from flag
     Vector<Bool> flagRow;
-    TransformingVi2::calculateFlagRowFromFlagCube(flag,flagRow);
+    TransformingVi2::calculateFlagRowFromFlagCube(flag, flagRow);
 
     const auto flagdataFlagPropagation =
         averagingOptions_p.contains(AveragingOptions::flagdataFlagPropagation);
@@ -2799,32 +2785,25 @@ void AveragingTvi2::writeFlag (const Cube<Bool> & flag)
             Cube<Bool> flagCubeMapped;
             flagCubeMapped = getVii()->getVisBuffer()->flagCube();
 
-            // Get original ant1/ant2/spw cols. to determine the mapped index
-            Vector<Int> orgAnt1 = getVii()->getVisBuffer()->antenna1();
-            Vector<Int> orgAnt2 = getVii()->getVisBuffer()->antenna2();
-            Vector<Int> orgSPW = getVii()->getVisBuffer()->spectralWindows();
-
             // Keeping two separate blocks for 'flagdataFlagPropagation' (CAS-12737,
             // CAS-12205, CAS-9985) until this issue is better settled.
             // Fill propagated flag vector/cube
             if (flagdataFlagPropagation)
             {
-                cubePropagateFlags(flagRow, flagMapped, flagCubeMapped, spwAnt1Ant2IndexMap,
-                                   orgAnt1, orgAnt2, orgSPW,
+                cubePropagateFlags(flagRow, flagMapped, flagCubeMapped, vbAvg_p->row2AvgRow(),
                                    [&flag, &flagCubeMapped]
-                                   (uInt row, uInt chan_i, uInt corr_i, uInt index) {
+                                   (uInt rowMapped, uInt chan_i, uInt corr_i, uInt index) {
                                        if (flag(corr_i,chan_i,index))
-                                           flagCubeMapped(corr_i,chan_i,row) = true;
+                                           flagCubeMapped(corr_i,chan_i,rowMapped) = true;
                                    });
             }
             else
             {
-                cubePropagateFlags(flagRow, flagMapped, flagCubeMapped, spwAnt1Ant2IndexMap,
-                                   orgAnt1, orgAnt2, orgSPW,
+                cubePropagateFlags(flagRow, flagMapped, flagCubeMapped, vbAvg_p->row2AvgRow(),
                                    [&flag, &flagCubeMapped]
-                                   (uInt row, uInt chan_i, uInt corr_i, uInt index) {
-                                       flagCubeMapped(corr_i,chan_i,row) =
-                                           flag(corr_i,chan_i,index);
+                                   (uInt rowMapped, uInt chan_i, uInt corr_i, uInt index) {
+                                       flagCubeMapped(corr_i, chan_i, rowMapped) =
+                                           flag(corr_i, chan_i, index);
                                    });
             }
 
@@ -2833,7 +2812,7 @@ void AveragingTvi2::writeFlag (const Cube<Bool> & flag)
             getVii()->writeFlagRow(flagMapped);
         }
 
-        currentBuffer += 1;
+        currentBuffer++;
         getVii()->next();
         if (currentBuffer > endBuffer_p) break;
     }
