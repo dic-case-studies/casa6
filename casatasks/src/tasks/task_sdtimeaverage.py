@@ -1,40 +1,23 @@
-# import os
 import re
-# import shutil
-# import string
-# import copy
-# import math
-# import time
-# import datetime
 import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    # from . import sdutil
     from casatasks import casalog
     from casatools import quanta, ms, table, mstransformer
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
-    # from . import flaghelper as fh
-
     from .update_spw import update_spwchan
-    # from .callibrary import callibrary
-    # CAS-12721
-    # from casatasks.private.sdutil import tbmanager  # , toolmanager, table_selector
 
     qa = quanta()  # to make compatible CASA6 / CASA5
 
 else:
-    # import sdutil
     from taskinit import mttool as mstransformer
     from taskinit import mstool as ms
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
-    # import flaghelper as fh
-    # from update_spw import update_spwchan
-    # from callibrary import callibrary
 
 
 @contextlib.contextmanager
@@ -72,7 +55,6 @@ def sdtimeaverage(
     if (datacolumn == 'float_data'):
         if (not ex_float_data) and (ex_data):
             datacolumn = 'data'
-            # Message to User #
             msg = 'No FLOAT_DATA column. DATA column will be used alternatively.'
             casalog.post(msg, 'INFO')
 
@@ -80,7 +62,6 @@ def sdtimeaverage(
     if (datacolumn == 'data'):
         if (ex_float_data) and (not ex_data):
             datacolumn = 'float_data'
-            # Message to User #
             msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
             casalog.post(msg, 'INFO')
 
@@ -90,8 +71,8 @@ def sdtimeaverage(
 
     # 'scan,state' Warning
     #    !!! revise comment here !!!
-    if ('scan' in timespan)and('state' in timespan):
-        msg = "If  timescan contains 'scan' AND 'state'. You may be receiving unexpected result."
+    if ('scan' in timespan) and ('state' in timespan):
+        msg = "Explicitly specified timescan = 'scan, state'. You might be receiving unexpected result."
         casalog.post(msg, 'WARN')
 
     # Only parse timeaverage parameters when timebin > 0s
@@ -105,7 +86,6 @@ def sdtimeaverage(
     # set averaging ON
     do_timeaverage = True
 
-    # org part
     origin = 'sdtimeaverage'
     casalog.origin(origin)
 
