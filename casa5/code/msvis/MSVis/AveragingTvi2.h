@@ -110,7 +110,7 @@ protected:
     casacore::Bool inputExceedsUvwDistance (ms::MsRow * rowInput, avg::MsRowAvg * rowAveraged);
     void produceSubchunk ();
     void processInputSubchunk (const VisBuffer2 *);
-    casacore::Bool reachedAveragingBoundary();
+    // casacore::Bool reachedAveragingBoundary();
     void captureIterationInfo (const VisBuffer2 * vb2);
     bool subchunksReady () const;
     void validateInputVi (ViImplementation2 *);

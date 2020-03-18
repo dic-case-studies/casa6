@@ -228,7 +228,7 @@ BaselineIndex::configure (Int nAntennas, Int nSpw, const VisBuffer2 * vb)
 void
 BaselineIndex::destroy ()
 {
-    // Delete all the dynaically allocated spectral window indices.
+    // Delete all the dynamically allocated spectral window indices.
     // The vector destructor will take care of index_p itself.
 
     for (Index::iterator i = index_p.begin();
@@ -330,6 +330,11 @@ private:
 
 class VbAvg;
 
+/**
+ * Holds multiple rows in a buffer. changeRow() alternates between rows. The details
+ * of how the rows are handled need to be traced to its parent class, Vbi2MsRow, and its
+ * parent MsRow.
+ */
 class MsRowAvg : public ms::Vbi2MsRow {
 
 public:
@@ -343,6 +348,10 @@ public:
     virtual ~MsRowAvg () {}
 
     Bool baselinePresent () const;
+    /// For how many of the rows reachable by changeRow() does baselinePresent(() hold?
+    /// That's equivalent to asking how many baselines are being
+    Int nBaselinesPresent () const;
+
     Vector<Bool> correlationFlagsMutable ();
     const Matrix<Int> & counts () const;
     Int countsBaseline () const;
@@ -363,6 +372,27 @@ public:
     void setNormalizationFactor(Double normalizationFactor);
     void accumulateNormalizationFactor(Double normalizationFactor);
 
+    /**
+     * For bookkeeping. Input row indices that have been added so far in the current row
+     * (set with changeRow). This is a list of input rows attached to this averaged row,
+     * needed to build the map of input->output row indices when this row is transferred to
+     * the output/averaged buffer.
+     */
+    std::vector<Int> inputRowIdxs() { return inputRowIdxs_p[row()]; }
+    /**
+     * Adds into the 'inputRowIdxs' list the index of an input row from the buffer being
+     * averaged.
+     * @param idx the index of the input row in the input buffer
+     */
+    void addInputRowIdx(Int idx) {
+        inputRowIdxs_p[row()].push_back(idx);
+    }
+    /**
+     * Clear the list of input rows attached to this row. This is used once the row is
+     * transferred to the output/averaged buffer (typically after every average interval).
+     */
+    void clearRowIdxs() { inputRowIdxs_p[row()].clear(); }
+
 private:
 
     void configureCountsCache ();
@@ -370,6 +400,8 @@ private:
     mutable CachedPlaneAvg<Int> countsCache_p;
     Vector<Double> normalizationFactor_p;
     VbAvg * vbAvg_p; // [use]
+    // map: input buffer row index -> output buffer row index
+    std::map<Int, std::vector<Int>> inputRowIdxs_p;
 };
 
 class VbAvg : public VisBufferImpl2 {
@@ -394,6 +426,8 @@ public:
     void setBufferToFill (VisBufferImpl2 *);
     void startChunk (ViImplementation2 *);
     Int getBaselineIndex (Int antenna1, Int antenna2, Int spw) const;
+    // Vector with row idx in the averaged/ooutput buffers
+    const std::vector<size_t> & row2AvgRow() const { return row2AvgRow_p; };
 
 protected:
 
@@ -635,8 +669,15 @@ protected:
 
 
     void accumulateExposure (const VisBuffer2 *);
+    /*
+     * Called once per row in the input buffer
+     * @param rowInput row from the input buffer being averaged
+     * @param rowAveraged changing "accumulator" row for the output buffer
+     * @param subchunk - hard to understand
+     * @param iidx index of the input row in the input buffer
+     */
     void accumulateOneRow (MsRow * rowInput, MsRowAvg * rowAveraged,
-                           const Subchunk & subchunk);
+                           const Subchunk & subchunk, Int iidx);
     void accumulateRowData (MsRow * rowInput, MsRowAvg * rowAveraged, Double adjustedWeight,
                             Bool rowFlagged);
     void accumulateTimeCentroid (const VisBuffer2 * input);
@@ -664,9 +705,15 @@ protected:
     Int nBaselines () const;
     void prepareIds (const VisBuffer2 * vb);
     void removeMissingBaselines ();
+
+private:
+
     void setupVbAvg (const VisBuffer2 *);
     void setupArrays (Int nCorrelations, Int nChannels, Int nBaselines);
     void setupBaselineIndices (Int nAntennas, const VisBuffer2 * vb);
+
+    /// A baseline being averaged into a MSRowAvg is put into the output/averaged buffer and
+    /// set as not present
     void transferBaseline (MsRowAvg *);
 
     template <typename T>
@@ -684,8 +731,6 @@ protected:
 
         return distanceSquared;
     }
-
-private:
 
     Double averagingInterval_p;
     AveragingOptions averagingOptions_p;
@@ -715,6 +760,8 @@ private:
     Bool usingUvwDistance_p;
     mutable PrefilledMatrix<Int> zeroInt_p;
     mutable PrefilledMatrix<Float> zeroFloat_p;
+
+    std::vector<size_t> row2AvgRow_p;
 
     LogIO logger_p;
 };
@@ -792,6 +839,13 @@ Bool
 MsRowAvg::baselinePresent () const
 {
     return vbAvg_p->baselinePresent_p (row ());
+}
+
+Int
+MsRowAvg::nBaselinesPresent () const
+{
+    return std::count(vbAvg_p->baselinePresent_p.begin(), vbAvg_p->baselinePresent_p.end(),
+                      true);
 }
 
 void
@@ -917,6 +971,30 @@ VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplement
   usingUvwDistance_p (averagingParameters.getOptions().contains (AveragingOptions::BaselineDependentAveraging))
 {}
 
+/**
+ * Calculates the row index in the output buffer
+ *
+ * @param rowAveraged "accumulator" row being produced for the output buffer
+ * @param baselineIndex index of the baseline being averaged into the rowAveraged
+ * @param rowIdGen the rowIdGenerator of the VbAvg, which increases for every new baseline
+ *        inside every chunk
+ */
+Int
+calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen)
+{
+    auto nBasePresent = rowAveraged->nBaselinesPresent();
+    // the rowIdgenerator_p that we get in rowIdGen increases +1 for every new baseline.
+    // It is not really a proper (input) row id. After all baselines have been seen for a
+    // time step, the rows of the next time steps will get the same id.
+    // And to turn it into a valid output id we need the following
+    // "divide_with_roundup + multiply + baseline_index"
+    Int rowIdG_div_baselines_roundup = 0;
+    if (nBasePresent > 0)
+        rowIdG_div_baselines_roundup = (rowIdGen + nBasePresent - 1)/ nBasePresent;
+    Int id = rowIdG_div_baselines_roundup * nBasePresent + baselineIndex;
+    return id;
+}
+
 void
 VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
 {
@@ -934,6 +1012,7 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
     MsRowAvg * rowAveraged = getRowMutable (0);
     MsRow * rowInput = vb->getRow (0);
 
+    row2AvgRow_p.resize(vb->nRows());
     for (Int row = 0; row < vb->nRows(); row ++){
 
         rowInput->changeRow (row);
@@ -941,7 +1020,9 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
 
         rowAveraged->changeRow (baselineIndex);
 
-        accumulateOneRow (rowInput, rowAveraged, subchunk);
+        accumulateOneRow (rowInput, rowAveraged, subchunk, row);
+
+        row2AvgRow_p[row] = calcOutRowIdx(rowAveraged, baselineIndex, rowIdGenerator_p);
     }
 
     delete rowAveraged;
@@ -950,7 +1031,8 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
 }
 
 void
-VbAvg::accumulateOneRow (MsRow * rowInput, MsRowAvg * rowAveraged, const Subchunk & subchunk)
+VbAvg::accumulateOneRow (MsRow * rowInput, MsRowAvg * rowAveraged, const Subchunk & subchunk,
+                         Int iidx)
 {
     finalizeBaselineIfNeeded (rowInput, rowAveraged, subchunk);
 
@@ -959,6 +1041,9 @@ VbAvg::accumulateOneRow (MsRow * rowInput, MsRowAvg * rowAveraged, const Subchun
 
         initializeBaseline (rowInput, rowAveraged, subchunk);
     }
+
+    // bookkeeping - save for later that this input row is being averaged into the output row
+    rowAveraged->addInputRowIdx(iidx);
 
     // Accumulate data that is matrix-valued (e.g., vis, visModel, etc.).
     // The computation of time centroid requires the use of the weight column
@@ -1145,7 +1230,7 @@ VbAvg::accumulateElementForCubes (AccumulationParameters & accumulationParameter
                                   Bool zeroAccumulation)
 {
 
-	// NOTE: THe channelized flag check comes from the calling ontext (continue statement)
+	// NOTE: The channelized flag check comes from the calling context (continue statement)
 	float weightCorrected = 1.0f;
 	float weightObserved = 1.0f;
 	const float One = 1.0f;
@@ -2013,6 +2098,7 @@ VbAvg::startChunk (ViImplementation2 * vi)
     empty_p = true;
 
     rowIdGenerator_p = 0;
+    row2AvgRow_p.resize(0);
     
     // See if the new MS has corrected and/or model data columns
 
@@ -2067,7 +2153,7 @@ void
 VbAvg::transferBaseline (MsRowAvg * rowAveraged)
 {
     rowAveraged->setRowId (rowIdGenerator_p ++);
-    bufferToFill_p->appendRow (rowAveraged, nBaselines (), optionalComponentsToCopy_p);
+    bufferToFill_p->appendRow (rowAveraged, nBaselines(), optionalComponentsToCopy_p);
 
     rowAveraged->setBaselinePresent(false);
 }
@@ -2474,28 +2560,28 @@ AveragingTvi2::produceSubchunk ()
              vbToFill->nRows() > 0; // some to process
 }
 
-Bool
-AveragingTvi2::reachedAveragingBoundary()
-{
-    // An average can be terminated for a variety of reasons:
-    // o the time interval has elapsed
-    // o the current MS is completed
-    // o no more input data
-    // o other (e.g, change of scan, etc.)
+// Bool
+// AveragingTvi2::reachedAveragingBoundary()
+// {
+//     // An average can be terminated for a variety of reasons:
+//     // o the time interval has elapsed
+//     // o the current MS is completed
+//     // o no more input data
+//     // o other (e.g, change of scan, etc.)
 
-    Bool reachedIt = false;
-    VisBuffer2 * vb = getVii()->getVisBuffer();
+//     Bool reachedIt = false;
+//     VisBuffer2 * vb = getVii()->getVisBuffer();
 
-    if (! getVii()->more()  && ! getVii ()->moreChunks()){
+//     if (! getVii()->more()  && ! getVii ()->moreChunks()){
 
-        reachedIt = true; // no more input data
-    }
-    else if (vb->isNewMs()){
-        reachedIt = true; // new MS
-    }
+//         reachedIt = true; // no more input data
+//     }
+//     else if (vb->isNewMs()){
+//         reachedIt = true; // new MS
+//     }
 
-    return reachedIt;
-}
+//     return reachedIt;
+// }
 
 //Bool
 //AveragingTvi2::subchunksReady() const
