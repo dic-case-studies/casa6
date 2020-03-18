@@ -2358,11 +2358,12 @@ class test_clip(test_base):
         res = flagdata(vis=self.vis, mode='summary')
         self.assertEqual(res['flagged'], 137472)
 
-    def test_timeavg1(self):
+    def test_clip_timeavg_cmp_mstransform(self):
         '''flagdata: clip with time average and compare with mstransform'''
         # Create an output with 4 rows
         split(vis=self.vis,outputvis='timeavg.ms',datacolumn='data',spw='9',scan='30',antenna='1&2',
                timerange='2010/10/16/14:45:08.50~2010/10/16/14:45:11.50')
+        flagdata('timeavg.ms', flagbackup=False, mode='unflag')
         
         # STEP 1
         # Create time averaged output in mstransform
@@ -2376,7 +2377,6 @@ class test_clip(test_base):
 
         # STEP 2
         # Clip with time averaging.
-        flagdata('timeavg.ms', flagbackup=False, mode='unflag')
         flagdata(vis='timeavg.ms', flagbackup=False, mode='clip', datacolumn='DATA', 
                  timeavg=True, timebin='2s', clipminmax=[0.0,0.08])
         
@@ -2386,20 +2386,22 @@ class test_clip(test_base):
         
         res2 = flagdata(vis='test_residual_step2_timeavg.ms', mode='summary', spwchan=True)
 
+        # Compare step1 vs step2
         self.assertEqual(res1['flagged'], res2['flagged'])
+        # Check specific channels
         self.assertEqual(res2['spw:channel']['0:21']['flagged'], 1)
         self.assertEqual(res2['spw:channel']['0:51']['flagged'], 8)
         self.assertEqual(res2['spw:channel']['0:60']['flagged'], 7)
 
-    def test_timeavg2(self):        
+    def test_timeavg_spw9_2scans(self):
         '''flagdata: clip with time averaging in spw 9'''
         
         flagdata(vis=self.vis, flagbackup=False, mode='clip', datacolumn='DATA', spw='9',
                  timeavg=True, timebin='2s', clipminmax=[0.0,0.08])
         
         res = flagdata(vis=self.vis, mode='summary', spw='9')
-        self.assertEqual(res['spw']['9']['flagged'], 42370)
-        self.assertEqual(res['flagged'], 42370)
+        self.assertEqual(res['spw']['9']['flagged'], 42106)
+        self.assertEqual(res['flagged'], 42106)
 
         
     def test_clip_no_model_col(self):
@@ -3726,7 +3728,7 @@ class test_preaveraging(test_base):
         self.setUp_data4preaveraging()
         self.corrs = ['RL', 'LL', 'LR', 'RR']
         
-    def tearDown(self):    
+    def tearDown(self):
         os.system('rm -rf test_preaveraging.ms')        
         os.system('rm -rf test_clip_timeavg*')
         os.system('rm -rf test_clip_chanavg*')
@@ -3741,8 +3743,8 @@ class test_preaveraging(test_base):
     def test_clip_timeavg(self):
         '''flagdata: clip with time average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')      
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
         
         # STEP 1: Time average with mstransform, then flagging with normal clip
         mstransform(vis=self.vis,outputvis='test_clip_timeavg_step1.ms',datacolumn='data',
@@ -3766,8 +3768,8 @@ class test_preaveraging(test_base):
     def test_clip_chanavg(self):
         '''flagdata: clip with chan average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
         
         # STEP 1: Chan average with mstransform, then flagging with normal clip
         mstransform(vis=self.vis,outputvis='test_clip_chanavg_step1.ms',datacolumn='data',
@@ -3791,8 +3793,8 @@ class test_preaveraging(test_base):
     def test_clip_time_chanavg(self):
         '''flagdata: clip with time/chan average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data  - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
         
         # STEP 1: Chan average with mstransform, then flagging with normal clip
         mstransform(vis=self.vis,outputvis='test_clip_time_chanavg_step1.ms',datacolumn='data',
@@ -3811,22 +3813,22 @@ class test_preaveraging(test_base):
         res2 = flagdata(vis='test_clip_time_chanavg_step2.ms', mode='summary', spwchan=True)
 
         # Compare results
-        self.assertEqual(res1['flagged'], res2['flagged'])  
+        self.assertEqual(res1['flagged'], res2['flagged'])
         
     def test_rflag_timeavg(self):
         '''flagdata: rflag with time average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')      
+        # # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
         
         # STEP 1: Time average with mstransform, then flagging with normal rflag
         mstransform(vis=self.vis,outputvis='test_rflag_timeavg_step1.ms',datacolumn='data',
                     timeaverage=True,timebin='2s')
         flagdata(vis='test_rflag_timeavg_step1.ms',flagbackup=False, mode='rflag',extendflags=False)
         res1 = flagdata(vis='test_rflag_timeavg_step1.ms', mode='summary', spwchan=True)
-        
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+
+        # # Unflag the original input data - not needed
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         # STEP 2: Flagging with rflag using time average, then time average with mstransform
         flagdata(vis=self.vis, flagbackup=False, mode='rflag', datacolumn='DATA', 
@@ -3836,9 +3838,11 @@ class test_preaveraging(test_base):
         res2 = flagdata(vis='test_rflag_timeavg_step2.ms', mode='summary', spwchan=True)
 
         # Compare results
-        self.assertEqual(res1['total'], res2['total'])
+        self.assertEqual(res1['flagged'], res2['flagged'])
         self.assertEqual(res1['flagged'], 27)
-        self.assertEqual(res2['flagged'], 20)
+        for cor in self.corrs:
+            self.assertEqual(res1['correlation'][cor]['flagged'],
+                             res2['correlation'][cor]['flagged'])
 
     def test_rflag_timeavg_extendflags(self):
         '''flagdata: rflag with time average + extendflags, and compare vs mstransform'''
@@ -3866,17 +3870,18 @@ class test_preaveraging(test_base):
 
         # Compare results
         self.assertEqual(res1['total'], res2['total'])
+        self.assertEqual(res1['flagged'], res2['flagged'])
         self.assertEqual(res1['flagged'], 40)
-        self.assertEqual(res2['flagged'], 24)
         for cor in self.corrs:
             self.assertEqual(res1['correlation'][cor]['flagged'],10)
-            self.assertEqual(res2['correlation'][cor]['flagged'],6)
+            self.assertEqual(res1['correlation'][cor]['flagged'],
+                             res2['correlation'][cor]['flagged'])
 
     def test_rflag_chanavg(self):
         '''flagdata: rflag with chan average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data  - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         # STEP 1: Chan average with mstransform, then flagging with normal rflag
         mstransform(vis=self.vis,outputvis='test_rflag_chanavg_step1.ms',datacolumn='data',
@@ -3902,8 +3907,9 @@ class test_preaveraging(test_base):
 
     def test_rflag_chanavg_extendflags(self):
         '''flagdata: rflag with chan average + extendflags, and compare vs mstransform'''
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+
+        # Unflag the original input data  - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         chanbin = 8
 
@@ -3936,8 +3942,8 @@ class test_preaveraging(test_base):
     def test_rflag_time_chanavg(self):
         '''flagdata: rflag with time/chan average and compare vs mstransform'''
 
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         # STEP 1: chan+time average with mstransform, then flagging with normal rflag
         mstransform(vis=self.vis,outputvis='test_rflag_time_chanavg_step1.ms',
@@ -3972,8 +3978,8 @@ class test_preaveraging(test_base):
     def test_tfcrop_timeavg(self):
         '''flagdata: tfcrop with time average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
         
         # STEP 1: Time average with mstransform, then flagging with normal tfcrop
         mstransform(vis=self.vis,outputvis='test_tfcrop_timeavg_step1.ms',datacolumn='data',
@@ -3993,14 +3999,16 @@ class test_preaveraging(test_base):
         res2 = flagdata(vis='test_tfcrop_timeavg_step2.ms', mode='summary', spwchan=True)
 
         # Check results
-        self.assertEqual(res1['flagged'], 36)
-        self.assertEqual(res2['flagged'], 60)
+        self.assertEqual(res2['flagged'], res2['flagged'])
+        for cor in self.corrs:
+            self.assertEqual(res2['correlation'][cor]['flagged'],
+                             res1['correlation'][cor]['flagged'])
 
     def test_tfcrop_timeavg_extendflags(self):
         '''flagdata: tfcrop with time average + extendflags, and compare vs mstransform'''
 
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data  - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         timebin = '2s'
 
@@ -4023,17 +4031,18 @@ class test_preaveraging(test_base):
 
         # Check results
         self.assertEqual(res1['total'], res2['total'])
+        self.assertEqual(res1['flagged'], res2['flagged'])
         self.assertEqual(res1['flagged'], 96)
-        self.assertEqual(res2['flagged'], 128)
         for cor in self.corrs:
             self.assertEqual(res1['correlation'][cor]['flagged'], 24)
-            self.assertEqual(res2['correlation'][cor]['flagged'], 32)
+            self.assertEqual(res1['correlation'][cor]['flagged'],
+                             res2['correlation'][cor]['flagged'])
 
     def test_tfcrop_chanavg(self):
         '''flagdata: tfcrop with chan average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         chanbin = 2
 
@@ -4063,8 +4072,8 @@ class test_preaveraging(test_base):
     def test_tfcrop_chanavg_extendflags(self):
         '''flagdata: tfcrop with chan average + extendflags, and compare vs mstransform'''
 
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
 
         chanbin = 4
 
@@ -4096,13 +4105,15 @@ class test_preaveraging(test_base):
     def test_tfcrop_time_chanavg(self):
         '''flagdata: tfcrop with time/chan average and compare vs mstransform'''
         
-        # Unflag the original input data
-        flagdata(self.vis, flagbackup=False, mode='unflag')
-        
+        # Unflag the original input data - alread done by setUp
+        # flagdata(self.vis, flagbackup=False, mode='unflag')
+
         # STEP 1: Chan average with mstransform, then flagging with normal tfcrop
-        mstransform(vis=self.vis,outputvis='test_tfcrop_time_chanavg_step1.ms',datacolumn='data',
-                    timeaverage=True,timebin='2s',chanaverage=True,chanbin=2)
-        flagdata(vis='test_tfcrop_time_chanavg_step1.ms',flagbackup=False, mode='tfcrop',extendflags=False)
+        mstransform(vis=self.vis,outputvis='test_tfcrop_time_chanavg_step1.ms',
+                    datacolumn='data', timeaverage=True, timebin='2s', chanaverage=True,
+                    chanbin=2)
+        flagdata(vis='test_tfcrop_time_chanavg_step1.ms',flagbackup=False, mode='tfcrop',
+                 extendflags=False)
         res1 = flagdata(vis='test_tfcrop_time_chanavg_step1.ms', mode='summary', spwchan=True)
         
         # Unflag the original input data
@@ -4117,6 +4128,9 @@ class test_preaveraging(test_base):
 
         # Compare results
         self.assertEqual(res2['flagged'], res2['flagged'])          
+        for cor in self.corrs:
+            self.assertEqual(res2['correlation'][cor]['flagged'],
+                             res1['correlation'][cor]['flagged'])
 
 
 # Motivated by CAS-11397. test_preaveraging is about datacolumn='data', and checks what
@@ -4403,9 +4417,8 @@ class test_list_modes_forbidden_with_avg(test_base):
         self.assertEqual(res, {})
         # The return from listmode is not enough to know. Let's see if there are flags
         res = flagdata(vis=self.vis, mode='summary')
-        print('res: {}'.format(res))
         self.assertEqual(res['total'], 4399104)
-        self.assertEqual(res['flagged'], 254912)
+        self.assertEqual(res['flagged'], 591808)
 
 
 @unittest.skipIf(True,
@@ -4799,7 +4812,7 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
 
         self.assertEqual(res['total'], 25600)
         # Before CAS-12727, there is some 'loss' of flags. This would be: 1490
-        self.assertEqual(res['flagged'], 10578)
+        self.assertEqual(res['flagged'], 10311)
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
@@ -4813,7 +4826,7 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
 
         self.assertEqual(res['total'], 25600)
         # Before CAS-12727, there is some 'loss' of flags. This would be: 1339
-        self.assertEqual(res['flagged'], 5146)
+        self.assertEqual(res['flagged'], 5140)
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
@@ -4827,7 +4840,7 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
         self.assertEqual(res['total'], 25600)
         # Before CAS-12727, there is some 'loss' of flags. This would be: 68
         # Instead of >= 1280  (= 5 rows x 4 pol x 64 chan)
-        self.assertEqual(res['flagged'], 3790)
+        self.assertEqual(res['flagged'], 2905)
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
@@ -4841,7 +4854,7 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
         self.assertEqual(res['total'], 25600)
         # Before CAS-12727, there is some 'loss' of flags. This would be: 756
         # Instead of >= 1280
-        self.assertEqual(res['flagged'], 1996)
+        self.assertEqual(res['flagged'], 3586)
         self.assertTrue(self.check_flags_preserved(apriori_flags, final_flags),
                         'Not all the flags set "before" are set "after"')
 
