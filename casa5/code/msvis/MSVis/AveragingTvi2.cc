@@ -972,7 +972,8 @@ VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplement
 {}
 
 /**
- * Calculates the row index in the output buffer
+ * Calculates the row index in the output buffer, given an averaged row, a baseline index
+ * corresponding to this averaged row, and the magic "rowIdGenerator" of the VbAvg.
  *
  * @param rowAveraged "accumulator" row being produced for the output buffer
  * @param baselineIndex index of the baseline being averaged into the rowAveraged
@@ -2492,6 +2493,67 @@ AveragingTvi2::originChunks (Bool forceRewind)
     subchunk_p.resetToOrigin();
 }
 
+/**
+ * Configure a VisBuffer with given averagingOptions related to phase shifting
+ *
+ * @param vb a VisBuffer to set up in terms of phase shifting
+ * @param averagingOptions averaging options enabled
+ * @param avgPars AveragingParmeters object to set into the buffer
+ */
+void
+setPhaseShiftingOptions(VisBuffer2 * vb, const AveragingOptions &averagingOptions,
+                        const AveragingParameters &avgPars)
+{
+    if (averagingOptions.contains (AveragingOptions::phaseShifting))
+    {
+        if (averagingOptions.contains (AveragingOptions::AverageObserved))
+        {
+            vb->visCube();
+        }
+
+        if (averagingOptions.contains (AveragingOptions::AverageCorrected))
+        {
+            vb->visCubeCorrected();
+        }
+
+        if (averagingOptions.contains (AveragingOptions::AverageModel))
+        {
+            vb->visCubeModel();
+        }
+
+        vb->phaseCenterShift(avgPars.getXpcOffset(),
+                             avgPars.getYpcOffset());
+    }
+}
+
+/**
+ * The iteration of this method is different depending on whether "row blocking" is used or
+ * not. The reason is that the while loop already had enough complexity embedded when fixes
+ * were done to get flagdata+time-average+row-blocking working (CAS-11910). Hopefully in the
+ * near future we can get rid of the hacky "row blocking" feature. For the time being, it is
+ * not clear how it could possibly work together with the "uvwdistance" feature. So better
+ * to keep those features separate.
+ *
+ * So the "if (block > 0)" separates iteration when using row blocking. That implies that
+ * row blocking takes precedence over (and disables) other features like
+ * "isUsingUvwDistance()".
+ * An alternative would be to add comparisons between block and vbToFill->appendSize() in
+ * the ifs below.  Something like:
+ *         if (! vbAvg_p->isUsingUvwDistance()
+ *            && (block == 0 && vbToFill->appendSize() > 0
+ *                || (block > 0 && vbToFill->appendSize() >= block)
+ *                )
+ *            ){
+ *          ...
+ *         else if ((block > 0 && vbToFill->appendSize() < block) ||
+ *                 vbToFill->appendSize() < nBaselines * nWindows){
+ *         ...
+ *         } else {
+ *
+ * But I prefer not adding more complexity to those ifs. The potential combinations would
+ * be too many to handle in a handful of if branches, and they are not well understood let
+ * alone well tested.
+ */
 void
 AveragingTvi2::produceSubchunk ()
 {
@@ -2508,45 +2570,38 @@ AveragingTvi2::produceSubchunk ()
     // jagonzal: Handle nBaselines for SD case
     if (nBaselines == 0) nBaselines = 1;
 
+    auto block = getVii()->getRowBlocking();
     while (getVii()->more()){
 
-        const VisBuffer2 * vb = getVii()->getVisBuffer();
+        VisBuffer2 * vb = getVii()->getVisBuffer();
 
-        if (averagingOptions_p.contains (AveragingOptions::phaseShifting))
-        {
-        	if (averagingOptions_p.contains (AveragingOptions::AverageObserved))
-        	{
-        		vb->visCube();
-        	}
-
-        	if (averagingOptions_p.contains (AveragingOptions::AverageCorrected))
-        	{
-        		vb->visCubeCorrected();
-        	}
-
-        	if (averagingOptions_p.contains (AveragingOptions::AverageModel))
-        	{
-        		vb->visCubeModel();
-        	}
-
-        	getVii()->getVisBuffer()->phaseCenterShift(averagingParameters_p.getXpcOffset(),averagingParameters_p.getYpcOffset());
-        }
-
+        setPhaseShiftingOptions(vb, averagingOptions_p, averagingParameters_p);
 
         vbAvg_p->accumulate (vb, subchunk_p);
-        Int nWindows = vbAvg_p->nSpectralWindowsInBuffer ();
 
-        if (! vbAvg_p->isUsingUvwDistance() && vbToFill->appendSize() > 0){
-            // Doing straight average and some data has been produced so
-            // output it to the user
-            break;
-        }
-        else if (vbToFill->appendSize() < nBaselines * nWindows){
-            getVii()->next();
-            endBuffer_p += 1;
-        }
-        else{
-            break;
+        if (block > 0) {
+            auto app = vbToFill->appendSize();
+            if (app <= block) {
+                getVii()->next();
+                endBuffer_p++;
+            } else {
+                break;
+            }
+        } else {
+
+            Int nWindows = vbAvg_p->nSpectralWindowsInBuffer ();
+            if (! vbAvg_p->isUsingUvwDistance() && vbToFill->appendSize() > 0){
+                // Doing straight average and some data has been produced so
+                // output it to the user
+                break;
+            }
+            else if (vbToFill->appendSize() < nBaselines * nWindows) {
+                getVii()->next();
+                endBuffer_p++;
+            }
+            else {
+                break;
+            }
         }
     };
 
