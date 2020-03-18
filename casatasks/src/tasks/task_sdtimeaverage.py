@@ -125,8 +125,6 @@ def sdtimeaverage(
             'SEVERE',
             origin=origin)
         return False
-    finally:
-        pass
 
     return st
 
