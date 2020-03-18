@@ -208,7 +208,8 @@ void CubeMajorCycleAlgorithm::task(){
             if(retuning_p)
               subImgr.tuneSelectData();
           }
-          
+          ///In case weightimages for mosaicft is done load it...we can get rid of this if we are using fromrecord ftm
+          subImgr.loadMosaicSensitivity();
           //cerr << "***Time for all other setting " << tim.real() << endl;
           //tim.mark();
           if (!dopsf_p){
@@ -441,7 +442,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 	}
 	shared_ptr<ImageInterface<Float> >subsumwt=nullptr;
         //	subsumwt.reset(SpectralImageUtil::getChannel(sumwt, chanBeg, chanEnd, true));
-        getSubImage(subsumwt, chanBeg, chanEnd, sumwgtname, False);
+        getSubImage(subsumwt, chanBeg, chanEnd, sumwgtname, True);
 	bool useweightimage=(subweight) ? true : false;
         shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, subweight, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr, nullptr, useweightimage));
 	if(polRep_p[imId]< 0)

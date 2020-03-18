@@ -235,6 +235,8 @@ public:
   virtual void setMiscInfo(const casacore::Int qualifier){(void)qualifier;};
   virtual void ComputeResiduals(vi::VisBuffer2&/*vb*/, casacore::Bool /*useCorrected*/) {};
 
+  //Sometimes weightimage is already calculated ...just use it
+  virtual void setWeightImage(casacore::CountedPtr<casacore::TempImage<casacore::Float> >& wgtimage);
 protected:        
 
   casacore::Int nint(casacore::Double val) {return casacore::Int(floor(val+0.5));};

@@ -720,6 +720,12 @@ void MosaicFT::finalizeToSky()
   if(pointingToImage) delete pointingToImage; pointingToImage=0;
 }
 
+void MosaicFT::setWeightImage(CountedPtr<TempImage<Float> >& wgtimage){
+  skyCoverage_p=wgtimage;
+  cerr << "IN SET " << max(wgtimage->get()) << endl;
+  pbConvFunc_p->setWeightImage(skyCoverage_p);
+  doneWeightImage_p=true;
+}
 
 Array<Complex>* MosaicFT::getDataPointer(const IPosition& centerLoc2D,
 					 Bool readonly) {

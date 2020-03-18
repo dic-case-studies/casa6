@@ -1525,8 +1525,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 				}
 			//cerr << "FTMachine name " << (itsMappers.getFTM2(imageStoreId))->name() << endl;
 			if((itsMappers.getFTM2(imageStoreId))->useWeightImage()){
-				//cerr << "Mosaic weight image " << itsMappers.imageStore(k)->weight(k)->name() << endl;
+                          //cerr << "Mosaic weight image " << max(itsMappers.imageStore(imageStoreId)->weight(k)->get()) << endl;
 				weightnames(k)=itsMappers.imageStore(imageStoreId)->weight(k)->name();
+                                
 			}
 		}
 		controlRecord.define("weightnames", weightnames);
@@ -2922,7 +2923,28 @@ void SynthesisImagerVi2::unlockMSs()
       // 	}
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void SynthesisImagerVi2::loadMosaicSensitivity(){
+    String ftmname=itsMappers.getFTM2(0)->name();
+    
+    if(ftmname.contains("Mosaic")){
+      //sumwt has been calcuated
+      Bool donesumwt=(max(itsMappers.imageStore(0)->sumwt()->get()) > 0.0);
+      //cerr << "Done sumwght " << donesumwt << max(itsMappers.imageStore(0)->sumwt()->get()) << endl;
+      if(donesumwt){
+        IPosition shp=itsMappers.imageStore(0)->weight()->shape();
+        CoordinateSystem cs=itsMappers.imageStore(0)->weight()->coordinates();
+        CountedPtr<TempImage<Float> > wgtim=new TempImage<Float>(shp, cs);
+        wgtim->copyData(*(itsMappers.imageStore(0)->weight()));
+        (static_cast<refim::MosaicFTNew &>( *(itsMappers.getFTM2(0,False)))).setWeightImage(wgtim);
+        static_cast<refim::MosaicFTNew &>( *(itsMappers.getFTM2(0,True))).setWeightImage(wgtim);
 
+      }
+
+
+    }
+
+  }
+  /////////////////////////////////////////////////
   Record SynthesisImagerVi2::apparentSensitivity() 
   {
     LogIO os(LogOrigin("SynthesisImagerVi2", "apparentSensitivity()", WHERE));
