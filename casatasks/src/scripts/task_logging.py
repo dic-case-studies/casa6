@@ -22,7 +22,9 @@ def end_log( state, tname, result ):
     spaces = ' '*(18-len(tname))
     end_time = str(_time.now())
     try:
-        if casatasks.config.telemetry_enabled:
+        # First one checks whether telemetry is on at all
+        # Second one checks if telemetrylogger disabled itself due to logfile size limit
+        if casatasks.config.telemetry_enabled and casatasks.telemetrylogger.telemetry_enabled:
             casatasks.telemetrylogger.logger.info(end_time + 
             " :: " + str(os.getpid()) + " :: " + tname + " :: " +
             "Task " + tname + " complete. Start time: " + state[0] + 
