@@ -22,6 +22,8 @@ if is_CASA6:
     # CAS-12721
     # from casatasks.private.sdutil import tbmanager  # , toolmanager, table_selector
 
+    qa = quanta()  # to make compatible CASA6 / CASA5
+
 else:
     # import sdutil
     from taskinit import mttool as mstransformer
@@ -87,11 +89,21 @@ def sdtimeaverage(
         antenna = antenna + '&&&'
 
     # 'scan,state' Warning
-    #    (please see CAS-12721 comments)
+    #    !!! revise comment here !!!
     if ('scan' in timespan)and('state' in timespan):
         msg = "If  timescan contains 'scan' AND 'state'. You may be receiving unexpected result."
-
         casalog.post(msg, 'WARN')
+
+    # Only parse timeaverage parameters when timebin > 0s
+    tbin = qa.convert(qa.quantity(timebin), 's')['value']
+    do_timeaverage = False
+    if tbin < 0:
+        raise Exception(
+              "Parameter timebin must be > '0s' to do time averaging")
+        return False
+
+    # set averaging ON
+    do_timeaverage = True
 
     # org part
     origin = 'sdtimeaverage'
@@ -109,7 +121,9 @@ def sdtimeaverage(
             antenna=antenna,
             timebin=timebin,
             timespan=timespan,
-            outfile=outfile)
+            outfile=outfile,
+            do_timeaverage=do_timeaverage)
+
         # History
         add_history(
             casalog=casalog,
@@ -138,7 +152,7 @@ def sdtimeaverage(
 
 
 def check_column(msname):
-    """ Getting Column Names. """
+    """ Check specified column if exists. """
     with open_table(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data = 'FLOAT_DATA' in columnNames
@@ -173,7 +187,8 @@ def do_mst(
         antenna,
         timebin,
         timespan,
-        outfile):
+        outfile,
+        do_timeaverage):
     """
       call mstransform by provided procedure
         followings are parameters of mstransform, but not used by THIS.
@@ -197,7 +212,6 @@ def do_mst(
     start = 0
     width = 1
 
-    do_timeaverage = False
     maxuvwdistance = 0.0
 
     ddistart = -1
@@ -255,17 +269,7 @@ def do_mst(
         config['usewtspectrum'] = usewtspectrum
         config['tileshape'] = tileshape
 
-        # Only parse timeaverage parameters when timebin > 0s
-        if is_CASA6:
-            qa = quanta()  # CASA6 needed
-
-        tbin = qa.convert(qa.quantity(timebin), 's')['value']
-        if tbin < 0:
-            raise Exception(
-                "Parameter timebin must be > '0s' to do time averaging")
-
         # set config for Averaging
-        do_timeaverage = (tbin > 0)
         if do_timeaverage:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
