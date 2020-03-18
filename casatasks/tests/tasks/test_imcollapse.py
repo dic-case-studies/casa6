@@ -165,14 +165,15 @@ class imcollapse_test(unittest.TestCase):
                         function, axes, outfile, region, box,
                         chans, stokes, mask, overwrite
                     )
-                elif len(function) == 0 or function == "bogus function" or region == "bogus_region" or \
-                     box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
+                elif len(imagename) == 0 or imagename == bogus or len(function) == 0 \
+                    or function == "bogus function" or region == "bogus_region" \
+                    or box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
                     self.assertRaises(
                         RuntimeError, run_collapse, imagename,
                         function, axes, outfile, region, box,
                         chans, stokes, mask, overwrite
                     )
-                elif len(imagename) == 0 or imagename == bogus or len(outfile) == 0:
+                elif len(outfile) == 0:
                     self.assertRaises(
                         AssertionError, run_collapse, imagename,
                         function, axes, outfile, region, box,
