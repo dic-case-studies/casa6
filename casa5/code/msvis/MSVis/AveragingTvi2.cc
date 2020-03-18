@@ -2349,8 +2349,12 @@ AveragingTvi2::next ()
 {
     subchunkExists_p = false;
 
+    startBuffer_p = endBuffer_p + 1;
+    endBuffer_p = startBuffer_p - 1;
+
     if (getVii()->more()){
         getVii()->next();
+        endBuffer_p++;
     }
 
     produceSubchunk ();
@@ -2383,7 +2387,7 @@ AveragingTvi2::origin ()
 
     getVii()->origin();
 
-    startBuffer_p = -1;
+    startBuffer_p = 0;
     endBuffer_p = -1;
 
     // Get the first subchunk ready.
@@ -2417,12 +2421,6 @@ AveragingTvi2::produceSubchunk ()
 
     // jagonzal: Handle nBaselines for SD case
     if (nBaselines == 0) nBaselines = 1;
-
-    if (getVii()->more())
-    {
-        startBuffer_p = endBuffer_p + 1;
-        endBuffer_p = startBuffer_p - 1;
-    }
 
     while (getVii()->more()){
 
@@ -2459,17 +2457,14 @@ AveragingTvi2::produceSubchunk ()
         }
         else if (vbToFill->appendSize() < nBaselines * nWindows){
             getVii()->next();
-
+            endBuffer_p += 1;
         }
         else{
             break;
         }
-
-        endBuffer_p += 1;
     };
 
     if (! getVii()->more()){
-    	endBuffer_p += 1;
         vbAvg_p->finalizeAverages ();
     }
 

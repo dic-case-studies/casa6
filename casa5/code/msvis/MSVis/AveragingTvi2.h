@@ -127,6 +127,7 @@ private:
     casacore::Bool subchunkExists_p;
     avg::VbAvg * vbAvg_p;
     WeightScaling * weightScaling_p;
+    // Bookkeeping required by writeFlag() and writeFlagRow()
     casacore::Int startBuffer_p;
     casacore::Int endBuffer_p;
 };
