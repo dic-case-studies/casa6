@@ -1,5 +1,4 @@
 import re
-import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -8,6 +7,7 @@ if is_CASA6:
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from .update_spw import update_spwchan
+    from . import sdutil
 
     qa = quanta()  # to make compatible CASA6 / CASA5
 
@@ -18,16 +18,6 @@ else:
     from taskinit import qatool as quanta
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
-
-
-@contextlib.contextmanager
-def open_table(path, nomodify=True):
-    tb = table()
-    tb.open(path, nomodify=nomodify)
-    try:
-        yield tb
-    finally:
-        tb.close()
 
 
 def sdtimeaverage(
@@ -41,14 +31,15 @@ def sdtimeaverage(
         timebin,
         timespan,
         outfile):
-    #  defaut value (timebin=all) is to be handled.
+    #  When 'all'(default) or null is specified, make timebin to cover
+    #   all the timerange from TIME and INTERVAL.
     cap_timebin = timebin.upper()
     if (cap_timebin == 'ALL') or (cap_timebin == ''):
         timebin = calc_timebin(infile) + 's'
-    # datacolumn alternative access
 
-    # In case 'float_data' does not exists, attempt to use 'data'
-    # know existence of data-column on specified MS.
+    # datacolumn alternative access
+    #  In case 'float_data' does not exists, attempt to use 'data'
+    #  know existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
 
     # change datacolumn 'data' to 'float_data'
@@ -131,7 +122,7 @@ def sdtimeaverage(
 
 def check_column(msname):
     """ Check specified column if exists. """
-    with open_table(msname) as tb:
+    with sdutil.tbmanager(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data = 'FLOAT_DATA' in columnNames
         exist_data = 'DATA' in columnNames
@@ -140,7 +131,7 @@ def check_column(msname):
 
 def calc_timebin(msname):
     """ Calculation range time in input MS. """
-    with open_table(msname) as tb:
+    with sdutil.tbmanager(msname) as tb:
         tm = tb.getcol('TIME')
         iv = tb.getcol('INTERVAL')
 
@@ -150,7 +141,11 @@ def calc_timebin(msname):
     time_last = max(tm)
 
     timebin = time_last - time_first
-    timebin += 4.0 * interval + 1.5  # ??? expand range.
+    # Expanding timebin:
+    #   due to the implicit behavioir of mstransform,
+    #   specified timespan needs to be grater than calcualated time.
+    #   following adjustment was experimentaly determined.(SN)
+    timebin += 4.0 * interval + 1.5
 
     return str(timebin)
 
