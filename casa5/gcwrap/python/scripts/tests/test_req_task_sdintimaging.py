@@ -28,52 +28,52 @@
 #Single Pointing Simulation:
 #
 #1. Wideband Multi-Term Imaging: single dish - interferometer combination (SD+INT)
-#specmode=‘mfs’, deconvolver=‘mtmfs’, gridder=‘standard’, usedata=’sdint’
+#specmode='mfs', deconvolver='mtmfs', gridder='standard', usedata='sdint'
 #testname: test_singlepointing_mfs_sdint 
 #
 #2. Wideband Multi-Term Imaging: inteferometer only (INT-only) 
-#specmode=‘mfs’, deconvolver=‘mtmfs’, gridder=‘standard’, usedata=‘int’
+#specmode='mfs', deconvolver='mtmfs', gridder='standard', usedata='int'
 #test name: test_singlepointing_mfs_intonly
 #
 #3. Wideband Multi-Term Imaging: single dish only (SD-only)
-#specmode=‘mfs’, deconvolver=‘mtmfs’, gridder=‘standard’, usedata=‘sd’
+#specmode='mfs', deconvolver='mtmfs', gridder='standard', usedata='sd'
 #testname: test_singlepointing_mfs_sdonly
 #
 #4. Cube imaging: single dish - interferometer combination (SD+INT)
-#specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘standard’, usedasta=‘sdint’
+#specmode='cube',  deconvolver='multiscale', gridder='standard', usedasta='sdint'
 #testname: test_singlepointing_cube_sdint
 #
 #5. Cube imaging: interferometer only (INT-only)
-#specmode=‘cube’, deconvolver=‘multiscale’, gridder=‘standard’, usedata=‘int’ 
+#specmode='cube', deconvolver='multiscale', gridder='standard', usedata='int' 
 #testname: test_singlepointing_cube_intonly
 #
 #6. Cube imaging: single dish only (SD-only)
-#specmode=‘cube’, deconvolver=‘multiscale’, gridder=‘standard’, usedata=‘sd’
+#specmode='cube', deconvolver='multiscale', gridder='standard', usedata='sd'
 #testname: test_singlepointing_cube_sdonly
 #
 #Mosaic Simulation:
 #7. Wideband Multi-Term Mosaic Imaging: single dish - interferometer combination (SD+INT)
-#specmode=‘mfs’,  deconvolver=‘mtmfs’, gridder=‘mosaic’, usedata=‘sdint’
+#specmode='mfs',  deconvolver='mtmfs', gridder='mosaic', usedata='sdint'
 #testname: test_mosaic_mfs_sdint
 #
 #8. Wideband Multi-Term Mosaic Imaging: interforometer only (INT-only)
-#specmode=‘mfs’,  deconvolver=‘mtmfs’, gridder=‘mosaic’, usedata=‘int’
+#specmode='mfs',  deconvolver='mtmfs', gridder='mosaic', usedata='int'
 #testname: test_mosaic_mfs_intonly
 #
 #9. Wideband Multi-Term Mosaic Imaging: single dish only (SD-only)
-#specmode=‘mfs’,  deconvolver=‘mtmfs’, gridder=‘mosaic’, usedata=‘sd’
+#specmode='mfs',  deconvolver='mtmfs', gridder='mosaic', usedata='sd'
 #testname: test_mosaic_mfs_sdonly
 #
 #10. Cube Imaging: single dish  - interferometer combination (SD+INT)
-#specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘mosaic’, usedata=‘sdint’
+#specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='sdint'
 #testname: test_mosaic_cube_sdint
 #
 #11. Cube Imaging: interferometer only (INT-only)
-#specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘mosaic’, usedata=‘int’
+#specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='int'
 #testname: test_mosaic_cube_int
 #
 #12. Cube Imaging: single dish (SD-only)
-# specmode=‘cube’,  deconvolver=‘multiscale’, gridder=‘mosaic’, usedata=‘sd’
+# specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='sd'
 #testname: test_mosaic_cube_sd
 ###########################################################################
 
