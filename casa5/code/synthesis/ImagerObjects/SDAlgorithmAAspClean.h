@@ -47,17 +47,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class SIMinorCycleController;
 
 
-  class SDAlgorithmAAspClean : public SDAlgorithmBase 
+  class SDAlgorithmAAspClean : public SDAlgorithmBase
   {
   public:
-    
+
     // Empty constructor
-    SDAlgorithmAAspClean(casacore::Vector<casacore::Float> scalesizes,
-               casacore::Int stoppointmode=-1);
+    SDAlgorithmAAspClean(casacore::Int stoppointmode=-1);
     virtual  ~SDAlgorithmAAspClean();
-    
+
   protected:
-    
+
     // Local functions to be overloaded by various algorithm deconvolvers.
     virtual void takeOneStep( casacore::Float loopgain, casacore::Int cycleNiter, casacore::Float cycleThreshold, casacore::Float &peakresidual, casacore::Float &modelflux, casacore::Int &iterdone );
     virtual void initializeDeconvolver();
@@ -78,9 +77,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     casacore::Array<casacore::Float> itsMatPsf, itsMatResidual, itsMatModel;
     casacore::Array<casacore::Float> itsMatMask;  // Make an array if we eventually use multi-term masks...
-    
+
     MatrixCleaner itsCleaner;
-    casacore::Vector<casacore::Float> itsScaleSizes;
+    std::vector<casacore::Float> itsScaleSizes;
     casacore::Int itsStopPointMode;
 
     /*

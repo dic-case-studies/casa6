@@ -61,12 +61,10 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-  SDAlgorithmAAspClean::SDAlgorithmAAspClean( Vector<Float> scalesizes,
-            Int stoppointmode ):
+  SDAlgorithmAAspClean::SDAlgorithmAAspClean( Int stoppointmode ):
     SDAlgorithmBase(),
     itsMatPsf(), itsMatResidual(), itsMatModel(),
     itsCleaner(),
-    itsScaleSizes(scalesizes),
     itsStopPointMode(stoppointmode),
     itsMCsetup(false)
   {
@@ -92,46 +90,43 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ///  ----------- do once ----------
     if( itsMCsetup == false)
     {
-      const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
-      itsCleaner.setInitScaleXfrs(itsMatPsf, width);
-      itsCleaner.defineScales( itsScaleSizes ); // genie, this goes away
-
-      // genie this is only done once
-      // FFT of 1R, 5R, 10R of psf is unchanged and only needs to be
+      // FFT of 1R, 5R, 10R of psf and masks is unchanged and only needs to be
       // computed once. This calls getPsfGaussianWidth
       // and sets the new itsInitScaleXfrs
-      //itsCleaner.setInitScaleXfrs();
+      const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
+      itsCleaner.setInitScaleXfrs(itsMatPsf, width);
+      itsCleaner.setInitScaleMasks(itsMatMask);
+      //itsCleaner.defineScales( itsScaleSizes ); // genie, this goes away
 
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
-
-      // genie move the following 4 to be done at every minor cycle
-      // it looks like they cannot be used for Asp directly
-      Matrix<Float> tempMat;
-      tempMat.reference( itsMatPsf );
-      itsCleaner.setPsf(  tempMat );
-      itsCleaner.makePsfScales();
-
-      itsMCsetup=true;
+      itsMCsetup = true;
     }
 
     // Parts to be repeated at each minor cycle start....
-    itsCleaner.setcontrol(CleanEnums::MULTISCALE,0,0,0);/// Needs to come before makeDirtyScales
+    itsCleaner.setcontrol(CleanEnums::AASP, 0, 0, 0);/// Needs to come before makeDirtyScales
+
     // genie
     // find peak to determine a scale and put the optimized scale in the active set
     // by itsScaleSizes = getActiveSetAspen which convolve
     // cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
-    // and then find the peak, scale, and optimes the obj function
+    // and then find the peak, scale, and optimizes the obj function
     // Convolve psf with the active set (using the above 4) and do the following
 
-    Matrix<Float> tempmask(itsMatMask);
-    itsCleaner.setMask( tempmask );
+    Matrix<Float> tempMat(itsMatPsf);
+    itsCleaner.setPsf(tempMat);
 
-    Matrix<Float> tempMat1;
-    tempMat1.reference( itsMatResidual );
+    Matrix<Float> tempMat1(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
-    itsCleaner.getActiveSetAspen();
 
+    // InitScaleXfrs and InitScaleMasks should already be set
+    itsScaleSizes.push_back(itsCleaner.getActiveSetAspen());
+    cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
+    Vector<Float> scaleSizes(itsScaleSizes);
+    itsCleaner.defineAspScales(scaleSizes); // genie, mod this for Asp
+
+    itsCleaner.makePsfScales();
+    itsCleaner.makeScaleMasks();
     itsCleaner.makeDirtyScales();
   }
 
@@ -146,15 +141,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setcontrol(CleanEnums::MULTISCALE, cycleNiter, loopgain, thresh);
+    itsCleaner.setcontrol(CleanEnums::AASP, cycleNiter, loopgain, thresh);
 
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model
     Matrix<Float> prevModel;
-    prevModel=itsMatModel;
+    prevModel = itsMatModel;
 
-    //cout << "SDALMS,  matrix shape : " << tempModel.shape() << " array shape : " << itsMatModel.shape() << endl;
+    cout << "AAspALMS,  matrix shape : " << tempModel.shape() << " array shape : " << itsMatModel.shape() << endl;
 
     // retval
     //  1 = converged

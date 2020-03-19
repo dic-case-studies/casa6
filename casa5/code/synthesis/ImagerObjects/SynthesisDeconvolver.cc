@@ -58,9 +58,9 @@ using namespace std;
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
-  
-  SynthesisDeconvolver::SynthesisDeconvolver() : 
-				       itsDeconvolver( ), 
+
+  SynthesisDeconvolver::SynthesisDeconvolver() :
+				       itsDeconvolver( ),
 				       itsMaskHandler( ),
                                        itsImageName(""),
 				       //                                       itsPartImageNames(Vector<String>(0)),
@@ -78,8 +78,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				       itsMaskSum(-1e+9)
   {
   }
-  
-  SynthesisDeconvolver::~SynthesisDeconvolver() 
+
+  SynthesisDeconvolver::~SynthesisDeconvolver()
   {
         LogIO os( LogOrigin("SynthesisDeconvolver","descructor",WHERE) );
 	os << LogIO::DEBUG1 << "SynthesisDeconvolver destroyed" << LogIO::POST;
@@ -94,9 +94,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImageName = decpars.imageName;
     itsStartingModelNames = decpars.startModel;
     itsDeconvolverId = decpars.deconvolverId;
-    
+
     os << "Set Deconvolution Options for [" << itsImageName << "] : " << decpars.algorithm ;
-    if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 ) 
+    if( itsStartingModelNames.nelements()>0 && itsStartingModelNames[0].length() > 0 )
       os << " , starting from model : " << itsStartingModelNames;
     os << LogIO::POST;
 
@@ -104,39 +104,39 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       {
 	if(decpars.algorithm==String("hogbom"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmHogbomClean()); 
+	    itsDeconvolver.reset(new SDAlgorithmHogbomClean());
 	  }
 	else if(decpars.algorithm==String("mtmfs"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmMSMFS( decpars.nTaylorTerms, decpars.scales, decpars.scalebias )); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmMSMFS( decpars.nTaylorTerms, decpars.scales, decpars.scalebias ));
+	  }
 	else if(decpars.algorithm==String("clark_exp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmClarkClean("clark")); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmClarkClean("clark"));
+	  }
 	else if(decpars.algorithm==String("clarkstokes_exp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmClarkClean("clarkstokes")); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmClarkClean("clarkstokes"));
+	  }
 	else if(decpars.algorithm==String("clark"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmClarkClean2("clark")); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmClarkClean2("clark"));
+	  }
 	else if(decpars.algorithm==String("clarkstokes"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmClarkClean2("clarkstokes")); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmClarkClean2("clarkstokes"));
+	  }
 	else if(decpars.algorithm==String("multiscale"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmMSClean( decpars.scales, decpars.scalebias )); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmMSClean( decpars.scales, decpars.scalebias ));
+	  }
 	else if(decpars.algorithm==String("mem"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmMEM( "entropy" )); 
-	  } 
+	    itsDeconvolver.reset(new SDAlgorithmMEM( "entropy" ));
+	  }
 	else if (decpars.algorithm==String("aasp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.scales));
+	    itsDeconvolver.reset(new SDAlgorithmAAspClean());
 	  }
 	else
 	  {
@@ -152,7 +152,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsMaskHandler.reset(new SDMaskHandler());
 	//itsMaskString = decpars.maskString;
 	itsMaskType = decpars.maskType;
-        if(itsMaskType=="auto-thresh") 
+        if(itsMaskType=="auto-thresh")
           {
             itsAutoMaskAlgorithm="thresh";
           }
@@ -161,7 +161,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             itsAutoMaskAlgorithm="thresh2";
           }
         else if(itsMaskType=="auto-multithresh")
-          { 
+          {
             itsAutoMaskAlgorithm="multithresh";
           }
         else if(itsMaskType=="auto-onebox")
@@ -173,13 +173,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
         itsPBMask = decpars.pbMask;
         itsMaskString = decpars.maskString;
-        if(decpars.maskList.nelements()==0 || 
+        if(decpars.maskList.nelements()==0 ||
             (decpars.maskList.nelements()==1 && decpars.maskList[0]==""))
           {
             itsMaskList.resize(1);
             itsMaskList[0] = itsMaskString;
           }
-        else 
+        else
           {
             itsMaskList = decpars.maskList;
           }
@@ -189,7 +189,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         itsMaskResByBeam = decpars.maskResByBeam;
         itsNMask = decpars.nMask;
         //itsAutoAdjust = decpars.autoAdjust;
-        //desable autoadjust 
+        //desable autoadjust
         itsAutoAdjust = false;
         itsSidelobeThreshold = decpars.sidelobeThreshold;
         itsNoiseThreshold = decpars.noiseThreshold;
@@ -210,7 +210,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       {
 	throw( AipsError("Error in constructing a Deconvolver : "+x.getMesg()) );
       }
-    
+
     itsAddedModel=false;
   }
 
@@ -227,15 +227,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       mem=itsDeconvolver->estimateRAM(imsize);
     return mem;
   }
-  
+
    Record SynthesisDeconvolver::initMinorCycle( )
-  { 
+  {
     LogIO os( LogOrigin("SynthesisDeconvolver","initMinorCycle",WHERE) );
     Record returnRecord;
     Timer timer;
 
     try {
-      
+
       //os << "---------------------------------------------------- Init (?) Minor Cycles ---------------------------------------------" << LogIO::POST;
 
       itsImages = makeImageStore( itsImageName );
@@ -251,7 +251,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Float masksum;
       if( ! itsImages->hasMask() ) // i.e. if there is no existing mask to re-use...
 	{ masksum = -1.0;}
-      else 
+      else
 	{
 	  masksum = itsImages->getMaskSum();
 	  itsImages->mask()->unlock();
@@ -269,15 +269,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Float nsigmathresh = 0.0;
       Bool useautomask = ( itsAutoMaskAlgorithm=="multithresh" ? true : false);
       Int iterdone = itsLoopController.getIterDone();
-      if ( itsNsigma >0.0 ) { 
+      if ( itsNsigma >0.0 ) {
         itsMaskHandler->setPBMaskLevel(itsPBMask);
         Array<Double> medians, robustrms;
         // 2 cases to use existing stats.
         // 1. automask has run and so the image statistics record has filled
         // or
         // 2. no automask but for the first cycle but already initial calcRMS has ran to avoid duplicate
-        // 
-        if ((useautomask && itsRobustStats.nfields()) || 
+        //
+        if ((useautomask && itsRobustStats.nfields()) ||
             (!useautomask && iterdone==0 && itsRobustStats.nfields()) ) {
            os <<LogIO::DEBUG1<<"automask on: check the current stats"<<LogIO::POST;
            //os<< "itsRobustStats nfield="<< itsRobustStats.nfields() << LogIO::POST;;
@@ -291,25 +291,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
              itsRobustStats.get(RecordFieldId("robustrms"), robustrms);
            }
            itsRobustStats.get(RecordFieldId("median"), medians);
-              
+
         }
        else { // do own stats calculation
           timer.mark();
           os<<LogIO::DEBUG1<<"Calling calcRobustRMS .. "<<LogIO::POST;
           robustrms = itsImages->calcRobustRMS(medians, itsPBMask, itsFastNoise);
-          os<< LogIO::NORMAL << "time for calcRobustRMS:  real "<< timer.real() << "s ( user " << timer.user() 
+          os<< LogIO::NORMAL << "time for calcRobustRMS:  real "<< timer.real() << "s ( user " << timer.user()
              <<"s, system "<< timer.system() << "s)" << LogIO::POST;
           //reset itsRobustStats
           try {
             //os<<"current content of itsRobustStats nfields=="<<itsRobustStats.nfields()<<LogIO::POST;
             itsRobustStats.define(RecordFieldId("robustrms"), robustrms);
             itsRobustStats.define(RecordFieldId("median"), medians);
-          }   
-          catch(AipsError &x) { 
+          }
+          catch(AipsError &x) {
             throw( AipsError("Error in storing the robust image statistics") );
           }
         }
- 
+
         /***
         Array<Double> robustrms =kitsImages->calcRobustRMS(medians, itsPBMask, itsFastNoise);
         // Before the first iteration the iteration parameters have not been
@@ -322,7 +322,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         IPosition minpos, maxpos;
         //Double maxrobustrms = max(robustrms);
         minMax(minval, maxval, minpos, maxpos, robustrms);
-        
+
         //Float nsigmathresh = nsigma * (Float)robustrms(IPosition(1,0));
         //nsigmathresh = itsNsigma * (Float)maxrobustrms;
         String msg="";
@@ -344,7 +344,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         Int nchan = maskshp(3);
         itsChanFlag=Vector<Bool>(nchan,False);
         initializeChanMaskFlag=True;
-        // also initialize posmask, which tracks only positive (emission) 
+        // also initialize posmask, which tracks only positive (emission)
         itsPosMask = TempImage<Float> (maskshp, itsImages->mask()->coordinates(),SDMaskHandler::memoryToUse());
         itsPosMask.set(0);
       }
@@ -357,27 +357,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //itsLoopController.setMadRMS( rmss[0] );
       */
 
-      if( itsMaskSum != masksum || masksum == 0.0 ) // i.e. mask has changed. 
-	{ 
-	  itsMaskSum = masksum; 
+      if( itsMaskSum != masksum || masksum == 0.0 ) // i.e. mask has changed.
+	{
+	  itsMaskSum = masksum;
 	  itsLoopController.setMaskSum( masksum );
 	}
       else // mask has not changed...
 	{
 	  itsLoopController.setMaskSum( -1.0 );
 	}
-      
+
 
       returnRecord = itsLoopController.getCycleInitializationRecord();
 
-      itsImages->printImageStats(); 
+      itsImages->printImageStats();
 
       os << LogIO::DEBUG2 << "Initialized minor cycle. Returning returnRec" << LogIO::POST;
 
     } catch(AipsError &x) {
       throw( AipsError("Error initializing the Minor Cycle for "  + itsImageName + " : "+x.getMesg()) );
     }
-    
+
     return returnRecord;
   }
 
@@ -385,15 +385,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisDeconvolver","interactiveGUI",WHERE) );
     Record returnRecord;
-    
+
     try {
-      
+
       // Check that required parameters are present in the iterRec.
       Int niter=0,cycleniter=0,iterdone;
       Float threshold=0.0, cyclethreshold=0.0;
-      if( iterRec.isDefined("niter") &&  
-	  iterRec.isDefined("cycleniter") &&  
-	  iterRec.isDefined("threshold") && 
+      if( iterRec.isDefined("niter") &&
+	  iterRec.isDefined("cycleniter") &&
+	  iterRec.isDefined("threshold") &&
 	  iterRec.isDefined("cyclethreshold") &&
 	  iterRec.isDefined("iterdone") )
 	{
@@ -404,9 +404,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  iterRec.get("iterdone",iterdone);
 	}
       else throw(AipsError("SD::interactiveGui() needs valid niter, cycleniter, threshold to start up."));
-      
+
       if( ! itsImages ) itsImages = makeImageStore( itsImageName );
-      
+
       //      SDMaskHandler masker;
       String strthresh = String::toString(threshold)+"Jy";
       String strcycthresh = String::toString(cyclethreshold)+"Jy";
@@ -414,18 +414,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       if( itsMaskString.length()>0 ) {
 	  itsMaskHandler->fillMask( itsImages, itsMaskString );
       }
-      
+
       Int iterleft = niter - iterdone;
       if( iterleft<0 ) iterleft=0;
-      
+
       Int stopcode = itsMaskHandler->makeInteractiveMask( itsImages, iterleft, cycleniter, strthresh, strcycthresh );
-      
+
       Quantity qa;
       casacore::Quantity::read(qa,strthresh);
       threshold = qa.getValue(Unit("Jy"));
       casacore::Quantity::read(qa,strcycthresh);
       cyclethreshold = qa.getValue(Unit("Jy"));
-      
+
       itsIsMaskLoaded=true;
 
       returnRecord.define( RecordFieldId("actioncode"), stopcode );
@@ -440,8 +440,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return returnRecord;
   }
 
-  
-  
+
+
   Record SynthesisDeconvolver::executeMinorCycle(Record& minorCycleControlRec)
   {
     LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
@@ -461,7 +461,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         automaskon=true;
       }
       //itsDeconvolver->deconvolve( itsLoopController, itsImages, itsDeconvolverId, automaskon, itsFastNoise );
-      // include robust stats rec 
+      // include robust stats rec
       itsDeconvolver->deconvolve( itsLoopController, itsImages, itsDeconvolverId, automaskon, itsFastNoise, itsRobustStats );
       returnRecord = itsLoopController.getCycleExecutionRecord();
 
@@ -540,10 +540,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SynthesisDeconvolver","setStartingModel",WHERE) );
 
     if(itsAddedModel==true) {return;}
-    
+
     try
       {
-	
+
 	if( itsStartingModelNames.nelements()>0 && itsImages )
 	  {
 	    //	    os << "Setting " << itsStartingModelNames << " as starting model for deconvolution " << LogIO::POST;
@@ -551,7 +551,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 
 	itsAddedModel=true;
-	
+
       }
     catch(AipsError &x)
       {
@@ -567,9 +567,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Bool maskchanged=False;
     //debug
     if( itsIsMaskLoaded==false ) {
-      // use mask(s) 
+      // use mask(s)
       if(  itsMaskList[0] != "" || itsMaskType == "pb" || itsAutoMaskAlgorithm != "" ) {
-        // Skip automask for non-interactive mode. 
+        // Skip automask for non-interactive mode.
         if ( itsAutoMaskAlgorithm != "") { // && itsIsInteractive) {
 	  os << "[" << itsImages->getName() << "] Setting up an auto-mask"<<  ((itsPBMask>0.0)?" within PB mask limit ":"") << LogIO::POST;
 
@@ -578,7 +578,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           if ( itsPBMask > 0.0 ) {
             itsMaskHandler->autoMaskWithinPB( itsImages, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsPBMask);
           }
-          else { 
+          else {
             cerr<<"automask by automask.."<<endl;
             itsMaskHandler->autoMask( itsImages, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam);
           }
@@ -589,7 +589,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  os << "[" << itsImages->getName() << "] Setting up a mask from " << itsMaskList  <<  ((itsPBMask>0.0)?" within PB mask limit ":"") << LogIO::POST;
 
           itsMaskHandler->fillMask( itsImages, itsMaskList);
-          if( itsPBMask > 0.0 ) {  
+          if( itsPBMask > 0.0 ) {
             itsMaskHandler->makePBMask(itsImages, itsPBMask, True);
           }
         }
@@ -602,9 +602,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       } else {
 
-        // new im statistics creates an empty mask and need to take care of that case 
+        // new im statistics creates an empty mask and need to take care of that case
         Bool emptyMask(False);
-        if( itsImages->hasMask() ) 
+        if( itsImages->hasMask() )
           {
             if (itsImages->getMaskSum()==0.0) {
               emptyMask=True;
@@ -621,11 +621,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
       }
-	
+
       // If anything other than automasking, don't re-make the mask here.
       if ( itsAutoMaskAlgorithm == "" )
         {	itsIsMaskLoaded=true; }
-   
+
 
       // Get the number of mask pixels (sum) and send to the logger.
       Float masksum = itsImages->getMaskSum();
@@ -666,26 +666,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        }
        else {
          //itsMaskHandler->autoMask( itsImages, itsPosMask, itsIterDone, itsChanFlag,itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
-        // pass robust stats 
+        // pass robust stats
         itsMaskHandler->autoMask( itsImages, itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
        }
      }
   }
 
-  // check if restoring beam is reasonable 
-  void SynthesisDeconvolver::checkRestoringBeam() 
+  // check if restoring beam is reasonable
+  void SynthesisDeconvolver::checkRestoringBeam()
   {
     LogIO os( LogOrigin("SynthesisDeconvolver","checkRestoringBeam",WHERE) );
     //check for a bad restoring beam
     GaussianBeam beam;
-    
+
     if( ! itsImages ) itsImages = makeImageStore( itsImageName );
     ImageInfo psfInfo = itsImages->psf()->imageInfo();
     if (psfInfo.hasSingleBeam()) {
-      beam = psfInfo.restoringBeam();  
+      beam = psfInfo.restoringBeam();
     }
     else if (psfInfo.hasMultipleBeams() && itsUseBeam=="common") {
-      beam = CasaImageBeamSet(psfInfo.getBeamSet()).getCommonBeam(); 
+      beam = CasaImageBeamSet(psfInfo.getBeamSet()).getCommonBeam();
     }
     Double beammaj = beam.getMajor(Unit("arcsec"));
     Double beammin = beam.getMinor(Unit("arcsec"));
@@ -697,7 +697,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     }
   }
-    
+
   // This is for interactive-clean.
   void SynthesisDeconvolver::getCopyOfResidualAndMask( TempImage<Float> &/*residual*/,
                                            TempImage<Float> &/*mask*/ )
