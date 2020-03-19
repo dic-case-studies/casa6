@@ -208,11 +208,14 @@ void CubeMajorCycleAlgorithm::task(){
             if(retuning_p)
               subImgr.tuneSelectData();
           }
-          ///In case weightimages for mosaicft is done load it...we can get rid of this if we are using fromrecord ftm
-          subImgr.loadMosaicSensitivity();
+          
           //cerr << "***Time for all other setting " << tim.real() << endl;
           //tim.mark();
           if (!dopsf_p){
+            ///In case weightimages for mosaicft is done load it...we can get rid of this if we are using fromrecord ftm
+            ///doing it for non-psf only ...psf divides it by sumwt for some reason in
+            ///SIImageStore ..so restart with psf creates havoc
+          subImgr.loadMosaicSensitivity();
             subImgr.executeMajorCycle(controlRecord_p);
             
             for(uInt k=0; k < subImStor.nelements(); ++k){

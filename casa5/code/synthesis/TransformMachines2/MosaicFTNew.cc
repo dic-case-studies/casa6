@@ -237,10 +237,16 @@ void MosaicFTNew::getWeightImage(ImageInterface<Float>& weightImage,
   
   weights.resize(sumWeight.shape());
   convertArray(weights,sumWeight);
-
-  Float inx = skyCoverage_p->shape()(0);
-  Float iny = skyCoverage_p->shape()(1);
-
+  Record rec=skyCoverage_p->miscInfo();
+  Float inx=1;
+  Float iny=1;
+  Bool isscaled=rec.isDefined("isscaled") && rec.asBool("isscaled");
+  //cerr << "isscaled " << isscaled << " max " << max(skyCoverage_p->get()) << endl;
+  if( !isscaled){
+    inx = skyCoverage_p->shape()(0);
+    iny = skyCoverage_p->shape()(1);
+  }
+  //cerr << "inx, iny " << inx << "   " << iny << endl;
   weightImage.copyData( (LatticeExpr<Float>) ( (*skyCoverage_p)*inx*iny ) );
  
    skyCoverage_p->tempClose();

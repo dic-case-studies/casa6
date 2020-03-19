@@ -722,7 +722,11 @@ void MosaicFT::finalizeToSky()
 
 void MosaicFT::setWeightImage(CountedPtr<TempImage<Float> >& wgtimage){
   skyCoverage_p=wgtimage;
-  cerr << "IN SET " << max(wgtimage->get()) << endl;
+  Record rec=skyCoverage_p->miscInfo();
+  //For mosaicFTNew it has the nx*ny factor already in
+  rec.define("isscaled", True);
+  skyCoverage_p->setMiscInfo(rec);
+  //cerr << "IN SET " << max(wgtimage->get()) << endl;
   pbConvFunc_p->setWeightImage(skyCoverage_p);
   doneWeightImage_p=true;
 }
@@ -1840,7 +1844,8 @@ void MosaicFT::getWeightImage(ImageInterface<Float>& weightImage,
 			    (*skyCoverage_p),0.0)));
   */
   weightImage.copyData(*skyCoverage_p);
-
+  //cerr << "getWeightIm " << max(sumWeight) << "    " << max(skyCoverage_p->get()) << endl;
+  
    skyCoverage_p->tempClose();
 
 }
