@@ -214,10 +214,26 @@ class applycal_test(unittest.TestCase):
         if os.path.exists(mmsfluxcopy):
             shutil.rmtree(mmsfluxcopy)
 
+        if os.path.exists('cl_fldmap_test.ms.flagversions'):
+            shutil.rmtree('cl_fldmap_test.ms.flagversions')
+                
+        if os.path.exists('mmsapplycalcopy.mms.flagversions'):
+            shutil.rmtree('mmsapplycalcopy.mms.flagversions')
+
         
     @classmethod
     def tearDownClass(cls):
-        pass
+        shutil.rmtree('cl_fldmap_test.ms')
+        shutil.rmtree('cl_fldmap_test.Gf0')
+        shutil.rmtree('cl_fldmap_test.Gf01')
+        os.remove('callib_f0.txt')
+        os.remove('callib_f01_m0.txt')
+        os.remove('callib_f01_s0.txt')
+        os.remove('callib_f01.txt')
+        os.remove('callib_f01_s01.txt')
+        os.remove('callib_f01_m01.txt')
+    
+    
     
     def test_corrected(self):
         '''
@@ -464,17 +480,6 @@ class applycal_test(unittest.TestCase):
         applycal(vis=clfldmaptest,field='0,1',docallib=True,callib=f01m01,flagbackup=False)
         cd01m01=getparam(clfldmaptest,'CORRECTED_DATA')[0:4:3,:,:]  # p-hands only
         self.assertTrue(np.isclose(np.abs(np.mean(cd01m01-cdref)),0.0))
-
-        # clean up files
-        shutil.rmtree(clfldmaptest)
-        shutil.rmtree(Gf0)
-        shutil.rmtree(Gf01)
-        os.system('rm -f '+f0)
-        os.system('rm -f '+f01m0)
-        os.system('rm -f '+f01s0)
-        os.system('rm -f '+f01)
-        os.system('rm -f '+f01s01)
-        os.system('rm -f '+f01m01)
 
         
     def test_gaintable(self):
