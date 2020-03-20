@@ -669,6 +669,11 @@ def generate_pyinit(moduledir,tasks):
         fd.write("if config.telemetry_enabled:\n")
         fd.write("  telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
         fd.write("  variant=''\n")
+        fd.write("  try:\n")
+        fd.write("    import casalith\n")
+        fd.write("    variant='casalith'\n")
+        fd.write("  except:\n")
+        fd.write("    variant='wheel'\n")
         fd.write("  def logstop():\n")
         # Telemetry may be stopped during runtime so check if it is still enabled
         fd.write('    if telemetrylogger.telemetry_enabled:\n')
