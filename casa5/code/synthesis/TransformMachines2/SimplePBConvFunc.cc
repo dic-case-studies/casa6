@@ -849,31 +849,55 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 	  
 	Int spw=vb.spectralWindows()(0);
 	bandName_p=vb.subtableColumns().spectralWindow().name()(spw);
+        Vector<Double> spwfreq=vb.subtableColumns().spectralWindow().chanFreq()(spw);
+        Double spwfreqwidth=abs(Vector<Double>(vb.subtableColumns().spectralWindow().chanWidth()(spw))(0));
 	chanMap.resize(freq.nelements());
     Vector<Double> localfreq=vb.getFrequencies(0, MFrequency::TOPO);
     Double minfreq=min(freq);
-    
-    Double origwidth=freq.nelements()==1 ? 1e12 : (max(freq)-min(freq))/(freq.nelements()-1);
+    Double maxfreq=max(freq);
+    Double origwidth=freq.nelements()==1 ? 1e12 : (maxfreq-minfreq)/(freq.nelements()-1);
     ///Fractional bandwidth which will trigger mutiple PB in one spw
-    Double tol=(max(freq))*0.5/100;
-    
-    Int nchan=Int(lround((max(freq)-min(freq))/tol));
-   
-    //cerr  << "TOLERA " << tol << " nchan " << nchan << " vb.nchan " << vb.nChannel() << endl;
-    //Number of beams that matters are the ones in the data
-    if(nchan > vb.nChannels())
-      nchan=vb.nChannels();
-
+    Double tol=(max(spwfreq))*0.5/100;
     if(tol < origwidth) tol=origwidth;
+    Double topFreq=max(spwfreq);
+    while (topFreq > maxfreq){
+      topFreq -= tol;
+    }
+    //Int nchan=Int(lround((max(freq)-min(freq))/tol));
+    Double bottomFreq=topFreq;
+    Int nchan=1;
+    //cerr << std::setprecision(12) << "bot " << bottomFreq << " minFreq " << minfreq << endl;
+     while(bottomFreq > minfreq){
+       ++nchan;
+       bottomFreq -= tol;
+     }
+     if(nchan !=1){
+       nchan-=1;
+       bottomFreq+=tol;
+     }
+     //cerr  << "TOLERA " << tol << " nchan " << nchan << " vb.nchan " << vb.nChannels() << endl;
+    //Number of beams that matters are the ones in the data
+     if(nchan > vb.nChannels()){
+      nchan=vb.nChannels();
+      tol=spwfreqwidth;
+      bottomFreq=min(localfreq);
+     }
+   
     chanFreqs.resize();
     if(nchan >= (Int)(freq.nelements()-1)) { indgen(chanMap); chanFreqs=freq; return;}
     if((nchan==0) || (freq.nelements()==1)) { chanFreqs=Vector<Double>(1, freq[0]);chanMap.set(0); return;}
 
+    chanFreqs.resize(nchan);
+    for(Int k=0; k < nchan; ++k){
+      chanFreqs[k]=k*tol+bottomFreq;
+    }
+    
     //readjust the tolerance...
-    tol=(max(freq)-min(freq)+origwidth)/Double(nchan);
+    /*tol=(max(freq)-min(freq)+origwidth)/Double(nchan);
     chanFreqs.resize(nchan);
     for (Int k=0; k < nchan; ++k)
       chanFreqs[k]=minfreq-origwidth+tol/2.0+tol*Double(k);
+    */
     Int activechan=0;
     chanMap.set(0);
     for (uInt k=0; k < chanMap.nelements(); ++k){
@@ -900,7 +924,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
       ///////////////////////////
       activechan=0;
     }
-    //cerr << chanMap << endl;
+    //cerr << "USEFULchan " << chanMap << endl;
     return;
   }
 
