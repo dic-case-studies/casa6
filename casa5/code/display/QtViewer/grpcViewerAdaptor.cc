@@ -710,13 +710,37 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::lock_guard<std::recursive_mutex> d_guard(managed_datas_mutex);
 
         datamap::iterator dmiter = managed_datas.find( id );
-        if ( dmiter == managed_datas.end( ) )
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+        if ( dmiter == managed_datas.end( ) ) {
+            std::lock_guard<std::recursive_mutex> p_guard(managed_panels_mutex);
 
-        if ( unload_data( dmiter->second->panel( ), id ) )
-            return grpc::Status::OK;
-        else
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+            // check to see if id corresponds to a panel, if it does unload all for that panel
+            panelmap::iterator dpiter = managed_panels.find( id );
+            if ( dpiter == managed_panels.end( ) ) {
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+            } else {
+                std::list<int> to_remove;
+                QtDisplayPanelGui *panel = dpiter->second->panel( );
+                for ( datamap::iterator iter = managed_datas.begin(); iter != managed_datas.end(); ++iter ) {
+                    if ( iter->second->panel( ) == panel ) to_remove.push_back(iter->second->id( ));
+                }
+                if ( to_remove.size( ) == 0 )
+                    return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+                else {
+                    std::list<bool> ok(to_remove.size( ),false);
+                    std::transform( to_remove.begin( ), to_remove.end( ), ok.begin( ), [&](int id) {return unload_data(panel,id,true);} );
+                    if ( std::all_of(ok.begin(), ok.end(), [](bool v) { return v; }) ) {
+                        return grpc::Status::OK;
+                    } else {
+                        return grpc::Status(grpc::StatusCode::NOT_FOUND, "some panel id failures");
+                    }
+                }
+            }
+        } else {
+            if ( unload_data( dmiter->second->panel( ), id ) )
+                return grpc::Status::OK;
+            else
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+        }
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
