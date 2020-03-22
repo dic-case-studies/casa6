@@ -1384,7 +1384,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         unsigned ind = 0;
         for ( auto it = clean_images.begin( ); it != clean_images.end( ); ++it, ++ind ) {
-            if ( std::get<2>(*it) ) continue;
+            if ( std::get<2>(*it) ) {
+                itsActionCodes[ind] = 3;
+                continue;
+            }
             if ( fabs(itsActionCodes[ind]) == 1.0 ) {
                 std::string imageName = std::get<0>(*it) + ".residual" + ( std::get<1>(*it) ? ".tt0" : "" );
                 std::string maskName = std::get<0>(*it) + ".mask";
