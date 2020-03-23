@@ -2360,6 +2360,36 @@ class test_clip(test_base):
 
     def test_clip_timeavg_cmp_mstransform(self):
         '''flagdata: clip with time average and compare with mstransform'''
+
+        def check_expected_flag_positions(self, msname):
+            """
+            Implements a very hand-made check on the exact positions of flags for the test
+            dataset used in these tests.
+
+            This has been crossed-checked manually, looking at the visibility values and the
+            thresholds set in clip (clipminmax). The pattern used here must be produced by
+            the (back)propagation of flags with time average if it is working correctly.
+            """
+            try:
+                tbt = table()
+                tbt.open(msname)
+                flags = tbt.getcol('FLAG')
+
+                # Indices are: correlation, channel, time:
+                exp_flags = [[ 0, 51, 0], [ 0, 51, 1], [ 0, 60, 0], [ 0, 60, 1],
+                             [ 1, 51, 0], [ 1, 51, 1], [ 1, 60, 1], [ 2, 51, 0],
+                             [ 2, 51, 1], [ 2, 60, 0], [ 2, 60, 1], [ 3 ,21, 1],
+                             [ 3, 51, 0], [ 3, 51, 1], [ 3, 60, 0], [ 3, 60, 1]]
+                expected = np.full((4, 64, 2), False)
+                for pos in exp_flags:
+                    expected[pos[0], pos[1], pos[2]] = True
+
+                np.testing.assert_equal(flags, expected,
+                                        "Flags do not match the expected, manually verified "
+                                        "pattern.")
+            finally:
+                tbt.close()
+
         # Create an output with 4 rows
         split(vis=self.vis,outputvis='timeavg.ms',datacolumn='data',spw='9',scan='30',antenna='1&2',
                timerange='2010/10/16/14:45:08.50~2010/10/16/14:45:11.50')
@@ -2367,24 +2397,26 @@ class test_clip(test_base):
         
         # STEP 1
         # Create time averaged output in mstransform
-        mstransform('timeavg.ms',outputvis='test_residual_step1_timeavg.ms',
+        ms_step1 = 'test_residual_step1_timeavg.ms'
+        mstransform('timeavg.ms',outputvis=ms_step1,
                     datacolumn='data',timeaverage=True,timebin='2s')
         
         # clip it
-        flagdata('test_residual_step1_timeavg.ms',flagbackup=False, mode='clip',
+        flagdata(ms_step1, flagbackup=False, mode='clip',
                  clipminmax=[0.0,0.08])
-        res1 = flagdata(vis='test_residual_step1_timeavg.ms', mode='summary', spwchan=True)
+        res1 = flagdata(vis=ms_step1, mode='summary', spwchan=True)
 
         # STEP 2
         # Clip with time averaging.
+        ms_step2 = 'test_residual_step2_timeavg.ms'
         flagdata(vis='timeavg.ms', flagbackup=False, mode='clip', datacolumn='DATA', 
                  timeavg=True, timebin='2s', clipminmax=[0.0,0.08])
         
         # Do another time average in mstransform to have the corrected averaged visibilities
-        mstransform('timeavg.ms',outputvis='test_residual_step2_timeavg.ms',
+        mstransform('timeavg.ms', outputvis=ms_step2,
                     datacolumn='data',timeaverage=True,timebin='2s')
         
-        res2 = flagdata(vis='test_residual_step2_timeavg.ms', mode='summary', spwchan=True)
+        res2 = flagdata(vis=ms_step2, mode='summary', spwchan=True)
 
         # Compare step1 vs step2
         self.assertEqual(res1['flagged'], res2['flagged'])
@@ -2392,6 +2424,11 @@ class test_clip(test_base):
         self.assertEqual(res2['spw:channel']['0:21']['flagged'], 1)
         self.assertEqual(res2['spw:channel']['0:51']['flagged'], 8)
         self.assertEqual(res2['spw:channel']['0:60']['flagged'], 7)
+
+        # Additional checks on the exact positions of flags, to better cover issues found
+        # in CAS-12737, CAS-12910.
+        check_expected_flag_positions(self, ms_step1)
+        check_expected_flag_positions(self, ms_step2)
 
     def test_timeavg_spw9_2scans(self):
         '''flagdata: clip with time averaging in spw 9'''
