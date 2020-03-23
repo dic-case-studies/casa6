@@ -404,6 +404,22 @@ private:
     std::map<Int, std::vector<Int>> inputRowIdxs_p;
 };
 
+/**
+ * It looks like the intended usage of this VbAvg class (from AveragingTvi2::
+ * produceSubchunk()) is as follows:
+ *
+ * // Use a "VbAvg vbAvg":
+ * VisBufferImpl2 * vbToFill = // get/create output (averaged) buffer
+ * vbToFill->setFillable(true);
+ * vbAvg.setBufferToFill(vbToFill);
+ * // we have the input buffer (to be averaged) in "VisibilityIteratorImpl2 vii;
+ * while (vii->more()) {
+ *    ...
+ *    vbAvg.accumulate(vb, subhunk);
+ * }
+ * vbAvg.finalizeAverages();
+ * vbAvg.finalizeBufferFillnig();
+ */
 class VbAvg : public VisBufferImpl2 {
 
 public:
@@ -412,7 +428,7 @@ public:
 
     VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vi);
 
-    void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlocking);
+    void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk);
     const Cube<Int> & counts () const;
     Bool empty () const;
     void finalizeBufferFilling ();
@@ -975,22 +991,28 @@ VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplement
  * Calculates the row index in the output buffer, given an averaged row, a baseline index
  * corresponding to this averaged row, and the magic "rowIdGenerator" of the VbAvg.
  *
- * @param rowAveraged "accumulator" row being produced for the output buffer
+ * @param nrows number of rows in the input buffer being averaged
  * @param baselineIndex index of the baseline being averaged into the rowAveraged
- * @param rowIdGen the rowIdGenerator of the VbAvg, which increases for every new baseline
- *        inside every chunk
- * @param rowBlocking whether row blocking is enabled
+ * @param rowAveraged "accumulator" row being produced for the output buffer
+ * @param rowIdGen the rowIdGenerator of the VbAvg, which increases (in a not so clean way)
+ *        for every new baseline inside every chunk
  */
 Int
-calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen, bool rowBlocking)
+calcOutRowIdx(Int nrows, Int baselineIndex, const MsRowAvg* rowAveraged, Int rowIdGen)
 {
-    if (!rowBlocking) {
+    auto nBasePresent = rowAveraged->nBaselinesPresent();
+    // check whether multiple time steps are being averaged into the output buffer
+    // (row blocking or similar feature is enabled)
+    const bool multitime =  nrows > nBasePresent;
+
+    if (!multitime) {
+        // There is only one time step, so the index must be simply the baseline index.
         // with row blocking disabled, it doesn't seem to be possible to make sense out of
-        // rowIdgenerator_p for the purpose of this calculation.
+        // rowIdgenerator_p for the purpose of this calculation -> skip the more general
+        // calculation from below and just use baseline index.
         return baselineIndex;
     }
 
-    auto nBasePresent = rowAveraged->nBaselinesPresent();
     // the rowIdgenerator_p that we get in rowIdGen increases +1 for every new baseline.
     // It is not really a proper (input) row id. After all baselines have been seen for a
     // time step, the rows of the next time steps will get the same id.
@@ -999,12 +1021,13 @@ calcOutRowIdx(const MsRowAvg* rowAveraged, Int baselineIndex, Int rowIdGen, bool
     Int rowIdG_div_baselines_roundup = 0;
     if (nBasePresent > 0)
         rowIdG_div_baselines_roundup = (rowIdGen + nBasePresent - 1)/ nBasePresent;
-    Int id = rowIdG_div_baselines_roundup * nBasePresent + baselineIndex;
+    const Int id = rowIdG_div_baselines_roundup * nBasePresent + baselineIndex;
+
     return id;
 }
 
 void
-VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlocking)
+VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
 {
     if (empty_p){
         setupVbAvg (vb);
@@ -1020,8 +1043,9 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlo
     MsRowAvg * rowAveraged = getRowMutable (0);
     MsRow * rowInput = vb->getRow (0);
 
-    row2AvgRow_p.resize(vb->nRows());
-    for (Int row = 0; row < vb->nRows(); row ++){
+    auto nrows = vb->nRows();
+    row2AvgRow_p.resize(nrows);
+    for (Int row = 0; row < nrows; ++row){
 
         rowInput->changeRow (row);
         Int baselineIndex = getBaselineIndex (rowInput);
@@ -1030,8 +1054,8 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk, bool rowBlo
 
         accumulateOneRow (rowInput, rowAveraged, subchunk, row);
 
-        row2AvgRow_p[row] = calcOutRowIdx(rowAveraged, baselineIndex, rowIdGenerator_p,
-                                          rowBlocking);
+        row2AvgRow_p[row] = calcOutRowIdx(nrows, baselineIndex, rowAveraged,
+                                          rowIdGenerator_p);
     }
 
     delete rowAveraged;
@@ -1506,11 +1530,11 @@ VbAvg::getBaselineIndex (const MsRow * msRow) const
     // This handles the case where the baseline ordering in the input VB might
     // shift from VB to VB.
 
-    Int antenna1 = msRow->antenna1 ();
-    Int antenna2 = msRow->antenna2 ();
-    Int spw = msRow->spectralWindow ();
+    const Int antenna1 = msRow->antenna1 ();
+    const Int antenna2 = msRow->antenna2 ();
+    const Int spw = msRow->spectralWindow ();
 
-    Int index = baselineIndex_p (antenna1, antenna2, spw);
+    const Int index = baselineIndex_p (antenna1, antenna2, spw);
 
     return index;
 }
@@ -1518,7 +1542,7 @@ VbAvg::getBaselineIndex (const MsRow * msRow) const
 Int
 VbAvg::getBaselineIndex (Int antenna1, Int antenna2, Int spw) const
 {
-    Int index = baselineIndex_p (antenna1, antenna2, spw);
+    const Int index = baselineIndex_p (antenna1, antenna2, spw);
 
     return index;
 }
@@ -2586,7 +2610,7 @@ AveragingTvi2::produceSubchunk ()
         setPhaseShiftingOptions(vb, averagingOptions_p, averagingParameters_p);
 
         bool rowBlocking = block > 0;
-        vbAvg_p->accumulate (vb, subchunk_p, rowBlocking);
+        vbAvg_p->accumulate (vb, subchunk_p);
 
         if (rowBlocking) {
             auto app = vbToFill->appendSize();
