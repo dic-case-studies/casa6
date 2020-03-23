@@ -685,7 +685,8 @@ def get_brightness_unit_from_ms(msname):
 
 
 
-def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype, outframe,
+def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype, 
+               specmode, outframe,
                gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection, 
                pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
     
@@ -788,10 +789,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             cell=_cell,#['3arcmin', '3arcmin'], 
             projection=projection,
             stokes=stokes,
-            # fix specmode to 'cubedata'
-            # output spectral coordinate will be determined based on mode, start, and width 
-            specmode='cube',
-            #specmode='cubesource',
+            specmode=specmode,
             gridder='singledish',
             # single dish specific parameters
             gridfunction=gridfunction,
