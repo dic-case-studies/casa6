@@ -139,6 +139,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 std::function< void* ( void*, grpcInteractiveCleanState& )>(
                        [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
 
+                           auto oldNiter = state.Niter;
                            /* Note it is important that niter get set first as we catch
                               negative values in the cycleniter, and set it equal to niter */
                            auto niter = iterpars.find("niter");
@@ -146,7 +147,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                state.Niter = niter->second.toInt( );
                                if ( debug ) std::cerr << " niter=" << state.Niter;
                            }
+                           auto newNiter = state.Niter;
 
+                           auto oldCycleNiter = state.CycleNiter;
                            auto cycleniter = iterpars.find("cycleniter");
                            if ( cycleniter != iterpars.end( ) ) {
                                int val = cycleniter->second.toInt( );
@@ -156,6 +159,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                    state.CycleNiter = val;
                                if ( debug ) std::cerr << " cycleniter=" << state.CycleNiter;
                            }
+                           auto newCycleNiter = state.CycleNiter;
 
                            auto interactiveniter = iterpars.find("interactiveniter");
                            if ( interactiveniter != iterpars.end( ) ) {
@@ -163,6 +167,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                if ( debug ) std::cerr << " interactiveniter=" << state.InteractiveNiter;
                            }
 
+                           auto oldThreshold = state.Threshold;
                            auto threshold = iterpars.find("threshold");
                            if ( threshold != iterpars.end( ) ) {
                                auto val = threshold->second.toDouble( );
@@ -179,7 +184,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        (state.IsThresholdAuto ? "true" : "false");
                                }
                            }
-                               
+                           auto newThreshold = state.Threshold;
+
+                           auto oldCycleThreshold = state.CycleThreshold;
                            auto cyclethreshold = iterpars.find("cyclethreshold");
                            if ( cyclethreshold != iterpars.end( ) ) {
                                state.CycleThreshold = (float) cyclethreshold->second.toDouble( );
@@ -188,9 +195,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                    std::cerr << " cyclethreshold=" << state.CycleThreshold;
                                    std::cerr << " iscyclethresholdauto=" <<
                                        (state.IsCycleThresholdAuto ? "true" : "false");
-				   fflush(stderr);
+                                   fflush(stderr);
                                }
                            }
+                           auto newCycleThreshold = state.CycleThreshold;
 
                            auto interactivethreshold = iterpars.find("interactivethreshold");
                            if ( interactivethreshold != iterpars.end( ) ) {
@@ -232,6 +240,23 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                            if ( nsigma != iterpars.end( ) ) {
                                state.Nsigma = (float) nsigma->second.toDouble( );
                                if ( debug ) std::cerr << " nsigma=" << state.Nsigma;
+                           }
+
+                           if ( debug ) {
+                               std::cerr << "-------------------------------------------" << std::endl;
+                               std::cerr << "  exported python state: " << std::endl;
+                               std::cerr << "-------------------------------------------" << std::endl;
+                               std::cerr << "    Niter            " << oldNiter <<
+                                   " ---> " << newNiter << std::endl;
+                               std::cerr << "    CycleNiter       " << oldCycleNiter <<
+                                   " ---> " << newCycleNiter << std::endl;
+                               std::cerr << "    Threshold        " << oldThreshold <<
+                                   " ---> " << newThreshold << std::endl;
+                               std::cerr << "    CycleThreshold   " << oldCycleThreshold <<
+                                   " ---> " << newCycleThreshold << std::endl;
+                               std::cerr << "-------------------------------------------" << std::endl;
+                           
+
                            }
                            return dummy;
 
@@ -325,11 +350,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
 	void grpcInteractiveCleanManager::updateCycleThreshold( grpcInteractiveCleanState &state ) {
+		static const auto debug = getenv("GRPC_DEBUG");
 
 		Float psffraction = state.MaxPsfSidelobe * state.CycleFactor;
 
 		psffraction = max(psffraction, state.MinPsfFraction);
 		psffraction = min(psffraction, state.MaxPsfFraction);
+
+		if ( debug ) {
+			std::cerr << "-------------------------------------------" << std::endl;
+			std::cerr << "  algorithmic update of cycle threshold: " << std::endl;
+			std::cerr << "    CycleThreshold   " << state.CycleThreshold <<
+			    " ---> " << (state.PeakResidual * psffraction) << std::endl;
+			std::cerr << "-------------------------------------------" << std::endl;
+		}
 
 		state.CycleThreshold = state.PeakResidual * psffraction;
 		pushDetails();
@@ -861,11 +895,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                     std::this_thread::get_id() << ")" << std::endl;
                 fflush(stderr);
             }
-            rpc::img::Id panel;
-            grpc::ClientContext context;
-            ::google::protobuf::Empty resp;
-            panel.set_id(id);
-            viewer_proxy->close( &context, panel, &resp );
+            {
+                // unload panel's images
+                rpc::img::Id panel;
+                grpc::ClientContext context;
+                ::google::protobuf::Empty resp;
+                panel.set_id(id);
+                viewer_proxy->unload( &context, panel, &resp );
+            }
+            {
+                // close panel
+                rpc::img::Id panel;
+                grpc::ClientContext context;
+                ::google::protobuf::Empty resp;
+                panel.set_id(id);
+                viewer_proxy->close( &context, panel, &resp );
+            }
         }
     }
 
@@ -995,7 +1040,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             if ( state->second.prev_image_id ){
                 if ( debug ) {
-                    std::cerr << "preparing to unload prev_image_id " << state->second.prev_image_id << " (panel " << panel << ")" <<
+                    std::cerr << "preparing to unload prev_image_id " <<
+                        state->second.prev_image_id << " (panel " << panel << ")" <<
                         " (process " << getpid( ) << ", thread " << 
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
@@ -1004,7 +1050,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }
             if ( state->second.prev_mask_id ) {
                 if ( debug ) {
-                    std::cerr << "preparing to unload prev_mask_id " << state->second.prev_mask_id << " (panel " << panel << ")" <<
+                    std::cerr << "preparing to unload prev_mask_id " <<
+                        state->second.prev_mask_id << " (panel " << panel << ")" <<
                         " (process " << getpid( ) << ", thread " << 
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
@@ -1067,6 +1114,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         cycleniter = imresult.state( ).cycleniter( );
         thresh = imresult.state( ).threshold( );
         cyclethresh = imresult.state( ).cyclethreshold( );
+
+        if ( debug ) {
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << "  gui state from interactive masking" << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << "            niter: " << niter << std::endl;
+            std::cerr << "      cycle niter: " << cycleniter << std::endl;
+            std::cerr << "        threshold: " << thresh << std::endl;
+            std::cerr << "  cycle threshold: " << cyclethresh << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+        }
 
         int result = 1;
         std::string action = imresult.action( );
@@ -1412,13 +1470,30 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         access( (void*) 0,
                 std::function< void* ( void*, grpcInteractiveCleanState& )>(
                        [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
+                           if ( debug ) {
+                               std::cerr << "-------------------------------------------" << std::endl;
+                               std::cerr << "  exporting gui state: " << std::endl;
+                               std::cerr << "-------------------------------------------" << std::endl;
+                               std::cerr << "    Niter            " << state.Niter <<
+                                   " ---> " << iterdone+iterleft << std::endl;
+                               std::cerr << "    CycleNiter       " << state.CycleNiter <<
+                                   " ---> " << cycleniter << std::endl;
+                               std::cerr << "    Threshold        " << state.Threshold <<
+                                   " ---> " << threshold << std::endl;
+                               std::cerr << "    CycleThreshold   " << oldcyclethreshold <<
+                                   ( fabs( cyclethreshold - oldcyclethreshold ) > 1e-06 &&
+                                     cyclethreshold != 0 && oldcyclethreshold != 0 ?
+                                    " ---> " : " -x-> ") << cyclethreshold << std::endl;
+                               std::cerr << "-------------------------------------------" << std::endl;
+                           }
+
                            state.Niter = iterdone+iterleft;
                            state.CycleNiter = cycleniter;
                            state.Threshold = threshold;
-
-                           if ( fabs(cyclethreshold) > 0 && fabs(oldcyclethreshold) > 0 &&
-				fabs( cyclethreshold - oldcyclethreshold ) > 1e-06 )
+                           if ( cyclethreshold != 0 && oldcyclethreshold != 0 &&
+                                fabs( cyclethreshold - oldcyclethreshold ) > 1e-06 )
                                state.CycleThreshold = cyclethreshold;
+
                            return dummy;
                        } ) );
 
