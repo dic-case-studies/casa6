@@ -84,7 +84,12 @@ void CubeMinorCycleAlgorithm::put() {
   ////TESTOOO
 
   // cerr << "nfield " << returnRec_p.nfields() << endl;
-  // Array<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  SIMinorCycleController::compressSummaryMinor(returnRec_p);
+  //Matrix<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  //cerr << "chanRange " << chanRange_p << " summaryminor " << lala.shape()   << endl;
+  //cerr << "model " << lala.row(2) << endl;
+  //cerr << "thresh " << lala.row(3) << endl;
+  //cerr << "imageid " << lala.row(5) << endl;
   // applicator.put(lala);
   //returnRec_p.removeField("summaryminor");
   ////TESTOO

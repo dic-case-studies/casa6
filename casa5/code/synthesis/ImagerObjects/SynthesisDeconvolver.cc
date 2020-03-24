@@ -730,7 +730,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       subsummaryminor=Matrix<Double>(inRec.asArrayDouble("summaryminor"));
     if(subsummaryminor.nelements() !=0){
       ///The 6th element is supposed to be the subimage id
-      subsummaryminor.row(5).set(Double(chan));
+      subsummaryminor.row(5)= subsummaryminor.row(5)+(Double(chan));
       Matrix<Double> newsummary(6, summaryminor.shape()[1]+subsummaryminor.shape()[1]);
       Int ocol=0;
       for (Int col=0; col< summaryminor.shape()[1]; ++col, ++ocol)
