@@ -19,7 +19,7 @@ if is_CASA6:
         pass
 
     # Path for data
-    datapath = ctsys.resolve("regression/unittest/flagdata")
+    datapath = ctsys.resolve("regression/unittest/flagdata/")
 else:
     from tasks import flagcmd, flagdata, flagmanager
     from taskinit import aftool
@@ -1000,7 +1000,8 @@ class test_actions(test_base):
         self.setUp_data4rflag()
         
     def tearDown(self):
-        pass
+        shutil.rmtree(self.vis, ignore_errors=True)
+        os.system('rm -rf flagcmd.txt')
 #         if os.path.exists('fourplot.png'):
 #             os.remove('fourplot.png')
         
@@ -1178,6 +1179,10 @@ class test_cmdbandpass(test_base):
     
     def setUp(self):
         self.setUp_bpass_case()
+
+    def tearDown(self):
+        shutil.rmtree(self.vis, ignore_errors=True)
+        os.system('rm -rf flagcmd.txt')
 
     def test_unsupported_mode_in_list(self):
         '''Flagcmd: elevation and shadow are not supported in cal tables'''
