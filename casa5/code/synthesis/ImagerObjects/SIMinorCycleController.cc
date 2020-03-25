@@ -364,6 +364,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //cerr << "nChans " << nChans << " " << cUniq << endl;
     Matrix<Double> outSummary(6, nChans);
     outSummary.set(0.0);
+    outSummary.row(1).set(C::dbl_max);
     outSummary.row(5)=cUniq;
     for (uInt k=0; k < chanid.nelements(); ++k){
       uInt j=0;
@@ -374,7 +375,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         //cerr << cUniq[j] << "   " << chanid[k] << endl;
         Vector<Double> col=inSummary.column(k);
         outSummary(0,j) += col(0);  //niterdone
-        outSummary(1,j) = max(col(1), outSummary(1,j)); //peak residual
+        outSummary(1,j) = min(col(1), outSummary(1,j)); //peak residual
         outSummary(2,j) += col(2); //model
         outSummary(3,j)= col(3); //cyclethreshold
         outSummary(4,j) =col(4); //deconvolver id
