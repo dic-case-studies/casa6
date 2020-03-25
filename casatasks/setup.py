@@ -270,12 +270,10 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_sdsmooth.py',
                     'src/tasks/task_tsdimaging.py',
                     'src/tasks/task_nrobeamaverage.py',
-#
                     'src/tasks/task_sdtimeaverage.py',
                     'src/tasks/task_sdpolaverage.py',
                     'src/tasks/task_sdsidebandsplit.py',
                     'src/tasks/task_plotprofilemap.py',
-#
                     'src/scripts/simutil.py',
                     'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
