@@ -174,6 +174,7 @@ class TestTcleanMemProf(unittest.TestCase):
         from collections import OrderedDict
         with open(mem_profile,'r') as mfile:
             memdict = OrderedDict()
+            maxFDSize = 0
             for line in mfile:
                 linelist = []
                 print(line.rstrip())
@@ -183,10 +184,9 @@ class TestTcleanMemProf(unittest.TestCase):
                 linelist = line.split(',')
                 tclean_step = str(linelist[-1].rstrip())
                 memdict[tclean_step.strip('[]')] = int(linelist[1])
-  
+                maxFDSize = max(maxFDSize, int(linelist[7]))
         # For information, print the memory profile
         
- 
         # Compare memory at [Set Weighting] step
         mfile.close()
         max_ref_memory = 300
@@ -209,7 +209,10 @@ class TestTcleanMemProf(unittest.TestCase):
         max_ref_memory = 1500
         (out, msg) = th.check_val_less_than(val=step_max_mem, bound=max_ref_memory, valname='Memory at ['+step_name+'] step')        
         self.assertTrue(out, msg)
-        
+
+        # compare the maximum FDSize in the whole tclean run
+        (out, msg) = th.check_val_less_than(val=maxFDSize, bound=257, valname='Maximum FDSize')
+        self.assertTrue(out, msg)
  
 ####    Suite: Required for CASA5     ####
 def suite():
