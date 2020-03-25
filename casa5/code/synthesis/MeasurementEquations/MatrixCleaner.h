@@ -368,8 +368,9 @@ private:
   casacore::Int index(const casacore::Int scale, const casacore::Int otherscale);
 
   casacore::Bool destroyScales();
+  casacore::Bool destroyInitScales();
   casacore::Bool destroyMasks();
-
+  casacore::Bool destroyInitMasks();
 
 
   casacore::Bool itsIgnoreCenterBox;

@@ -121,6 +121,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // InitScaleXfrs and InitScaleMasks should already be set
     itsScaleSizes.push_back(itsCleaner.getActiveSetAspen());
+    for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
+      cout << "getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
     Vector<Float> scaleSizes(itsScaleSizes);
     itsCleaner.defineAspScales(scaleSizes); // genie, mod this for Asp

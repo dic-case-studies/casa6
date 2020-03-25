@@ -231,6 +231,7 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
 MatrixCleaner::~MatrixCleaner()
 {
   destroyScales();
+  destroyInitMasks();
   if(!itsMask.null())
     itsMask=0;
 }
@@ -542,7 +543,8 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
 
   itsIteration = itsStartingIter; // 0
   for (Int ii=itsStartingIter; ii < itsMaxNiter; ii++)
-  {
+  { os << "cur iter " << itsIteration << " max iter is "<<
+            itsMaxNiter << LogIO::POST;
     itsIteration++;
 
     // Find the peak residual
@@ -571,9 +573,9 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
 
         // Remember to adjust the position for the window and for
         // the flux scale
-        cout << "scale " << scale << " maxPsfconvscale " << maxPsfConvScales(scale) << endl;
-        cout << "posmax " << posMaximum[scale] << " blcdir " << blcDirty << endl;
-        cout << "maxima " << maxima(scale) << " dirconvscale " << (itsDirtyConvScales[scale])(posMaximum[scale]) << endl;
+        // cout << "scale " << scale << " maxPsfconvscale " << maxPsfConvScales(scale) << endl;
+        // cout << "posmax " << posMaximum[scale] << " blcdir " << blcDirty << endl;
+        // cout << "maxima " << maxima(scale) << " dirconvscale " << (itsDirtyConvScales[scale])(posMaximum[scale]) << endl;
         maxima(scale)/=maxPsfConvScales(scale);
         maxima(scale) *= scaleBias(scale);
         maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
@@ -588,6 +590,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         optimumScale=scale;
         itsStrengthOptimum = maxima(scale);
         positionOptimum = posMaximum[scale];
+        cout << "clean: New max scale is " << scale << endl;
       }
     }
 
@@ -821,9 +824,6 @@ Bool MatrixCleaner::findMaxAbs(const Matrix<Float>& lattice,
 }
 
 
-
-
-
 Bool MatrixCleaner::findMaxAbsMask(const Matrix<Float>& lattice,
                 const Matrix<Float>& mask,
                 Float& maxAbs,
@@ -842,7 +842,6 @@ Bool MatrixCleaner::findMaxAbsMask(const Matrix<Float>& lattice,
 
   return true;
 }
-
 
 
 Bool MatrixCleaner::setscales(const Int nscales, const Float scaleInc)
@@ -898,9 +897,9 @@ void MatrixCleaner::makePsfScales(){
     throw(AipsError("Scales have to be set"));
   if(itsXfr.null())
     throw(AipsError("Psf is not defined"));
-  cout << "before destroy, size = " << itsNscales << endl;
+  cout << "before destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
   destroyScales();
-  cout << "after destroy, size = " << itsNscales << endl;
+  cout << "after destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
   itsScales.resize(itsNscales, true);
   itsScaleXfrs.resize(itsNscales, true);
   itsPsfConvScales.resize((itsNscales+1)*(itsNscales+1), true);
@@ -909,8 +908,9 @@ void MatrixCleaner::makePsfScales(){
   for(scale=0; scale<itsNscales; scale++)
   {
     itsScales[scale] = Matrix<Float>(psfShape_p);
-    cout << "scale size = " << itsScaleSizes(scale) << endl;
+    cout << "scale size[ " << scale << "] = " << itsScaleSizes(scale) << endl;
     makeScale(itsScales[scale], itsScaleSizes(scale));
+    //itsScaleXfrs[scale].resize(); //genie? which is better?
     itsScaleXfrs[scale] = Matrix<Complex> ();
     fft.fft0(itsScaleXfrs[scale], itsScales[scale]);
   }
@@ -928,7 +928,7 @@ void MatrixCleaner::makePsfScales(){
 
     cout << "psf scale " << scale << " " << max(itsPsfConvScales[scale]) << " " << min(itsPsfConvScales[scale]) << endl;
 
-    for (Int otherscale=scale;otherscale<itsNscales;otherscale++) {
+    for (Int otherscale=scale; otherscale<itsNscales; otherscale++) {
 
       AlwaysAssert(index(scale, otherscale)<Int(itsPsfConvScales.nelements()),
        AipsError);
@@ -942,7 +942,7 @@ void MatrixCleaner::makePsfScales(){
     }
   }
 
-  itsScalesValid=true;
+  itsScalesValid = true;
 
 }
 
@@ -1198,10 +1198,7 @@ Bool MatrixCleaner::destroyScales()
     //if(itsPsfConvScales[scale]) delete itsPsfConvScales[scale];
     itsPsfConvScales[scale].resize();
   }
-  for(uInt scale=0; scale < itsInitScales.nelements(); scale++)
-    itsInitScales[scale].resize();
-  for(uInt scale=0; scale < itsInitScaleXfrs.nelements(); scale++)
-    itsInitScaleXfrs[scale].resize();
+
   for(uInt scale=0; scale < itsDirtyConvInitScales.nelements(); scale++)
     itsDirtyConvInitScales[scale].resize();
 
@@ -1211,14 +1208,23 @@ Bool MatrixCleaner::destroyScales()
   itsDirtyConvScales.resize(0, true);
   itsPsfConvScales.resize(0, true);
   itsScalesValid=false;
-  itsInitScales.resize(0, true);
-  itsInitScaleXfrs.resize(0, true);
   itsDirtyConvInitScales.resize(0, true);
 
   return true;
 }
 
+Bool MatrixCleaner::destroyInitScales()
+{
+  for(uInt scale=0; scale < itsInitScales.nelements(); scale++)
+    itsInitScales[scale].resize();
+  for(uInt scale=0; scale < itsInitScaleXfrs.nelements(); scale++)
+    itsInitScaleXfrs[scale].resize();
 
+  itsInitScales.resize(0, true);
+  itsInitScaleXfrs.resize(0, true);
+
+  return true;
+}
 
 Bool MatrixCleaner::destroyMasks()
 {
@@ -1228,6 +1234,11 @@ Bool MatrixCleaner::destroyMasks()
   }
   itsScaleMasks.resize(0);
 
+  return true;
+};
+
+Bool MatrixCleaner::destroyInitMasks()
+{
   for(uInt scale=0; scale<itsInitScaleMasks.nelements();scale++)
     itsInitScaleMasks[scale].resize();
 
@@ -1260,7 +1271,6 @@ Bool MatrixCleaner::makeScaleMasks()
     os << "Scales are not yet set - cannot set scale masks"
        << LogIO::EXCEPTION;
   }
-
   destroyMasks();
 
   if(itsMask.null() || noClean_p)
@@ -1655,7 +1665,7 @@ void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumS
       work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
       maxima(scale) = 0;
       posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
-
+      cout << "makedirtyinitscale before: " << itsInitScaleMasks[0].shape() << endl;
       if (!itsMask.null())
       {
         findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
@@ -1729,9 +1739,9 @@ Float MatrixCleaner::getActiveSetAspen()
   std::cout << niter << " iterations" << std::endl;
   std::cout << "x = \n" << x.transpose() << std::endl;
   std::cout << "f(x) = " << fx << std::endl;
+  std::cout << "float " << Float(itsInitScaleSizes[optimumScale]) << endl;
 
   return Float(itsInitScaleSizes[optimumScale]);
-
 }
 
 // Define the Asp scales without doing anything else
@@ -1742,12 +1752,12 @@ void MatrixCleaner::defineAspScales(const Vector<Float>& scaleSizes)
     destroyScales();
   }
 
-  destroyMasks();*/ //genie do I need this?
+  destroyMasks();*/ //genie do I need this? prob not
   itsNscales = scaleSizes.nelements();
   itsScaleSizes.resize(itsNscales);
   itsScaleSizes = scaleSizes;  // make a copy that we can call our own
   GenSort<Float>::sort(itsScaleSizes);
-  itsScalesValid = false;
+  itsScalesValid = true;  //genie? It's false in MS clean
 }
 
 } //# NAMESPACE CASA - END
