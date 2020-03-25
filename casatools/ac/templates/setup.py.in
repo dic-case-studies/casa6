@@ -93,17 +93,22 @@ parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
+parser.add_argument('--relwithdebinfo', help='Build with -O2 and debug flags', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
 _debug_build_ = args.debug
+_rel_with_deb_info_ = args.relwithdebinfo
 print("_debug_build_: " + str(_debug_build_))
+print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
 for arg in sys.argv:
     if (arg.startswith("--version")):
         sys.argv.remove(arg)
     if (arg.startswith("--debug")):
+        sys.argv.remove(arg)
+    if (arg.startswith("--relwithdebinfo")):
         sys.argv.remove(arg)
 
 
@@ -871,8 +876,15 @@ def get_cflags():
 def debug_build():
     return _debug_build_
 
+def relwithdebinfo_build():
+    return _rel_with_deb_info_
+
 def get_optimization_flags():
-    return ['-g'] if debug_build( ) else ['-O2']
+    if debug_build( ):
+        return ['-g']
+    if relwithdebinfo_build():
+        return ['-g', '-O2']    
+    return ['-O2']
 
 def get_new_cxx_compiler_flags():
     return get_optimization_flags() + ['-std=c++11']
@@ -949,6 +961,8 @@ def customize_compiler(self):
     if debug_build( ):
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    elif relwithdebinfo_build( ):
+        pass
     else:
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cc))
