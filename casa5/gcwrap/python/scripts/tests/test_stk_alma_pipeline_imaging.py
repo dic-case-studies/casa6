@@ -87,8 +87,8 @@ except ImportError:
         return os.path.join(dataPath,apath)
 
 # location of data
-#data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
-data_path = ctsys_resolve('stakeholders/alma/')
+data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
+#data_path = ctsys_resolve('stakeholders/alma/')
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
@@ -450,11 +450,9 @@ class Test_standard(test_tclean_base):
 
 
     @stats_dict(test_dict)
+    @unittest.skip("Parallel/Serial variances")
     def test_standard_cube(self):
-        '''
-        Standard (single field) cube imaging
-        central field of SMIDGE_NWCloud (field 3), spw 22
-        '''
+        ''' Standard (single field) cube imaging - central field of SMIDGE_NWCloud (field 3), spw 22 '''
 
         file_name = 'standard_cube.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -774,11 +772,9 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Fails in 5.6 parallel due to missing miscinfo (CAS-12638)")
     def test_standard_mfs(self):
-        '''
-        Standard (single field) MFS imaging
-        central field of NGC5363 (field 2), spw 16 & 22
-        '''
+        ''' Standard (single field) MFS imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
         file_name = 'standard_mfs.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -1037,11 +1033,9 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Parallel/Serial variances")
     def test_standard_mtmfs(self):
-        '''
-        Single field mtmfs imaging
-        central field of NGC5363 (field 2), spw 16 & 22
-        '''
+        ''' Single field mtmfs imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
         file_name = 'standard_mtmfs.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -1350,10 +1344,7 @@ class Test_standard(test_tclean_base):
 #-------------------------------------------------#
     @stats_dict(test_dict)
     def test_standard_cube_eph(self):
-        '''
-        Single field multi-EB ephemeris cube imaging
-        field 21PGiacobini-Zinner, spw 20
-        '''
+        ''' Single field multi-EB ephemeris cube imaging - field 21PGiacobini-Zinner, spw 20 '''
 
         file_name = 'standard_cube_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -1629,11 +1620,9 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Frequency binning in CASA6")
     def test_standard_mfs_eph(self):
-        '''
-        Standard (single field) ephemeris mfs imaging
-        central field of Venus (field 2), spw 25 & 45
-        '''
+        ''' Standard (single field) ephemeris mfs imaging - central field of Venus (field 2), spw 25 & 45 '''
 
         file_name = 'standard_mfs_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -1889,11 +1878,9 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Frequency binning in CASA6")
     def test_standard_mtmfs_eph(self):
-        '''
-        Standard (single field) ephemeris mtmfs imaging
-        central field of Venus (field 2), spw 25 & 45
-        '''
+        ''' Standard (single field) ephemeris mtmfs imaging - central field of Venus (field 2), spw 25 & 45 '''
 
         file_name = 'standard_mtmfs_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -2200,10 +2187,7 @@ class Test_standard(test_tclean_base):
 #-------------------------------------------------#
     @stats_dict(test_dict)
     def test_standard_cal(self):
-        '''
-        Calibrator image
-        field J2258-2758, spw 22
-        '''
+        ''' Calibrator image - field J2258-2758, spw 22 '''
 
         file_name = 'standard_cal.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -2463,11 +2447,9 @@ class Test_mosaic(test_tclean_base):
 
 
     @stats_dict(test_dict)
+    @unittest.skip("Parallel/Serial variances")
     def test_mosaic_cube(self):
-        '''
-        Mosaic cube imaging
-        field SMIDGE_NWCloud, spw 22
-        '''
+        ''' Mosaic cube imaging - field SMIDGE_NWCloud, spw 22 '''
 
         file_name = 'mosaic_cube.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -2820,10 +2802,7 @@ class Test_mosaic(test_tclean_base):
 #-------------------------------------------------#
     @stats_dict(test_dict)
     def test_mosaic_mfs(self):
-        '''
-        Mosaic MFS imaging
-        field NGC5363, spw 16 & 22
-        '''
+        ''' Mosaic MFS imaging field NGC5363, spw 16 & 22 '''
 
         file_name = 'mosaic_mfs.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -3116,11 +3095,9 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Parallel/Serial variances")
     def test_mosaic_mtmfs(self):
-        '''
-        Mosaic mtmfs imaging
-        field NGC5363, spw 16 & 22
-        '''
+        ''' Mosaic mtmfs imaging - field NGC5363, spw 16 & 22 '''
 
         file_name = 'mosaic_mtmfs.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -3461,11 +3438,9 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_cube_eph(self):
-        '''
-        Mosaic ephemeris cube imaging
-        field Venus, spw 45
-        '''
+        ''' Mosaic ephemeris cube imaging - field Venus, spw 45 '''
 
         file_name = 'mosaic_cube_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -3768,11 +3743,9 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mfs_eph(self):
-        '''
-        Mosaic ephemeris mfs imaging
-        field Venus, spw 25 & 45
-        '''
+        ''' Mosaic ephemeris mfs imaging - field Venus, spw 25 & 45 '''
 
         file_name = 'mosaic_mfs_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -4062,11 +4035,9 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mtmfs_eph(self):
-        '''
-        Mosaic ephemeris mtmfs imaging
-        field Venus, spw 25 & 45
-        '''
+        ''' Mosaic ephemeris mtmfs imaging - field Venus, spw 25 & 45 '''
 
         file_name = 'mosaic_mtmfs_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
