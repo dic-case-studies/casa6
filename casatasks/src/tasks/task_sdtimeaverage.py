@@ -72,7 +72,6 @@ def sdtimeaverage(
     if tbin < 0:
         raise Exception(
               "Parameter timebin must be > '0s' to do time averaging")
-        return False
 
     # set averaging ON
     do_timeaverage = True
