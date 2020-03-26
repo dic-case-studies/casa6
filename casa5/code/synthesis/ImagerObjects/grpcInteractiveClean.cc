@@ -1449,8 +1449,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             if ( fabs(itsActionCodes[ind]) == 1.0 ) {
                 std::string imageName = std::get<0>(*it) + ".residual" + ( std::get<1>(*it) ? ".tt0" : "" );
                 std::string maskName = std::get<0>(*it) + ".mask";
+                std::string last_strcycthresh = strcycthresh;
                 itsActionCodes[ind] = gui.interactivemask( clean_panel_id, imageName, maskName, iterleft,
                                                            cycleniter, strthresh, strcycthresh );
+
+                if ( strcycthresh != last_strcycthresh ) {
+                    access( (void*) 0,
+                            std::function< void* ( void*, grpcInteractiveCleanState& )>(
+                                [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
+                                    // if this is not set to false, the users cyclethreshold
+                                    // change are recomputed...
+                                    state.IsCycleThresholdAuto = false;
+                                    return dummy;
+                                } ) );
+                }
+
                 if( itsActionCodes[ind] < 0 ) os << "[" << std::get<0>(*it) <<"] Mask changed interactively." << LogIO::POST;
                 std::get<2>(*it) = (fabs(itsActionCodes[ind])==3);
             }
