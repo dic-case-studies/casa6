@@ -142,9 +142,9 @@ def calc_timebin(msname):
 
     timebin = time_last - time_first
     # Expanding timebin:
-    #   due to the implicit behavioir of mstransform,
-    #   specified timespan needs to be grater than calcualated time.
-    #   following adjustment was experimentaly determined.(SN)
+    #   due to the implicit behavior of mstransform,
+    #   specified timespan needs to be grater than calculated time.
+    #   Following adjustment was experimentally determined.(SN)
     timebin += 4.0 * interval + 1.5
 
     return str(timebin)
@@ -163,9 +163,9 @@ def do_mst(
         outfile,
         do_timeaverage):
     """
-      call mstransform by provided procedure
-        followings are parameters of mstransform, but not used by THIS.
-        just putting default values
+      call mstransform by provided procedure.
+        Followings are parameters of mstransform, but not used by THIS,
+        just only putting default values
     """
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
@@ -270,7 +270,7 @@ def do_mst(
 
     """
       CAS-12721:
-      Note: Following section were written concerning with CAS-7751 or other(s)
+      Note: Following section were written concerning with CAS-7751 or others.
             Program logic is copied and used without change.
     """
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
@@ -289,8 +289,7 @@ def do_mst(
             if nflgcmds > 0:
                 update_flag_cmd = False
 
-                # If spw selection is by name in FLAG_CMD, do not update,
-                # CAS-7751
+                # If spw selection is by name in FLAG_CMD, do not update, CAS-7751
                 mycmd = mytb.getcell('COMMAND', 0)
                 cmdlist = mycmd.split()
                 for cmd in cmdlist:
