@@ -210,9 +210,9 @@ class TestTcleanMemProf(unittest.TestCase):
         (out, msg) = th.check_val_less_than(val=step_max_mem, bound=max_ref_memory, valname='Memory at ['+step_name+'] step')        
         self.assertTrue(out, msg)
 
-        # compare the maximum FDSize in the whole tclean run
-        (out, msg) = th.check_val_less_than(val=maxFDSize, bound=257, valname='Maximum FDSize')
-        self.assertTrue(out, msg)
+        # compare the maximum FDSize in the whole tclean run, expected to peak at 256 here
+        (out, msg) = th.check_val_less_than(val=maxFDSize, bound=257, valname='FDSize')
+        self.assertTrue(out, "number of available file descriptors exceeds the expected limit " + msg)
  
 ####    Suite: Required for CASA5     ####
 def suite():
