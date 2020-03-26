@@ -57,6 +57,11 @@ class CasaCoerce:
             return [value]
         return value
 
+    def to_str(self,value):
+        if isinstance(value,numpy.str_):
+            return str(value)
+        return value
+
     def to_strvec(self,value):
         if isinstance(value,str):
             return [value]
