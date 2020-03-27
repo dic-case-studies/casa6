@@ -61,9 +61,14 @@ def sdtimeaverage(
         antenna = antenna + '&&&'
 
     # 'scan,state' Warning
-    #    !!! revise comment here !!!
+    #   (unexpected result warning)
     if ('scan' in timespan) and ('state' in timespan):
-        msg = "Explicitly specified timescan = 'scan, state'. You might be receiving unexpected result."
+        #  WARN msg, to explain NRO specific issue.
+        msg = '\n'.join(["Explicitly both 'scan' and 'state' were specified in TIMESPAN.",
+                         "   If 'state' distinguishes OBSERVE_TARGET#ON_SOURCE / OBSERVE_TARGET#OFF_SOURCE,",
+                         "   these two states are mixed, and unexpected averaged results might be generated.",
+                         "(Suggestion) Please specify timespan = 'scan'",
+                         "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
 
     # Only parse timeaverage parameters when timebin > 0s
@@ -73,7 +78,7 @@ def sdtimeaverage(
     do_timeaverage = True
     if tbin < 0:
         raise Exception(
-              "Parameter timebin must be > '0s' to do time averaging")
+            "Parameter timebin must be > '0s' to do time averaging")
 
     # No averaging, when tbin == 0
     if tbin == 0:
@@ -401,9 +406,11 @@ def add_history(
     # Write history to output MS, not the input ms.
     try:
         code_object = sdtimeaverage.__code__                             # CASA6
-        param_names = code_object.co_varnames[:code_object.co_argcount]  # CASA6
+        # CASA6
+        param_names = code_object.co_varnames[:code_object.co_argcount]
         local_vals = locals()                                            # CASA6
-        param_vals = [local_vals.get(p, None) for p in param_names]      # CASA6
+        param_vals = [local_vals.get(p, None)
+                      for p in param_names]      # CASA6
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
     except Exception as instance:

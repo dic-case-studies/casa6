@@ -47,9 +47,14 @@ def sdtimeaverage(
         antenna = antenna + '&&&'
 
     # 'scan,state' Warning
-    #    !!! revise comment here !!!
+    #   (unexpected result warning)
     if ('scan' in timespan) and ('state' in timespan):
-        msg = "Explicitly specified timescan = 'scan, state'. You might be receiving unexpected result."
+        #  WARN msg, to explain NRO specific issue.
+        msg = '\n'.join(["Explicitly both 'scan' and 'state' were specified in TIMESPAN.",
+                         "   If 'state' distinguishes OBSERVE_TARGET#ON_SOURCE / OBSERVE_TARGET#OFF_SOURCE,",
+                         "   these two states are mixed, and unexpected averaged results might be generated.",
+                         "(Suggestion) Please specify timespan = 'scan'",
+                         "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
 
     # Only parse timeaverage parameters when timebin > 0s
