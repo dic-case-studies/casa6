@@ -68,13 +68,18 @@ def sdtimeaverage(
 
     # Only parse timeaverage parameters when timebin > 0s
     tbin = qa.convert(qa.quantity(timebin), 's')['value']
-    do_timeaverage = False
+
+    # Time average, once Enable.
+    do_timeaverage = True
     if tbin < 0:
         raise Exception(
               "Parameter timebin must be > '0s' to do time averaging")
 
-    # set averaging ON
-    do_timeaverage = True
+    # No averaging, when tbin == 0
+    if tbin == 0:
+        msg = 'Parameter timebin equals zero. No averaging will be performed.'
+        casalog.post(msg, 'WARN')
+        do_timeaverage = False
 
     origin = 'sdtimeaverage'
     casalog.origin(origin)

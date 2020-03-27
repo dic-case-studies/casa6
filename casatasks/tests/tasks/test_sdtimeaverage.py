@@ -823,6 +823,23 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task(prm))
         self.checkOutputRec(defOutputMs, 1)
+
+    def test_param115(self):
+        '''sdtimeagerage::115:: timebin='0' (No averaging, not an Error)    '''
+
+        # Run Task
+        prm = {'timebin': '0'}
+        # Run Task and check
+        self.assertTrue(self.run_task(prm))
+
+    def test_param116(self):
+        '''sdtimeagerage::115:: timebin='-1' (Error. Not acceptable)    '''
+
+        # Run Task
+        prm = {'timebin': '-1'}
+        # Run Task and check
+        self.assertFalse(self.run_task(prm))
+
 # +
 # DATACOLUMN (Testing alternative collumn select )
 # -
