@@ -76,7 +76,6 @@ from textwrap import dedent
 from shutil import copy2
 import subprocess
 import sysconfig
-import platform
 import pickle
 import errno
 import time
@@ -271,6 +270,9 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_sdsmooth.py',
                     'src/tasks/task_tsdimaging.py',
                     'src/tasks/task_nrobeamaverage.py',
+                    'src/tasks/task_sdpolaverage.py',
+                    'src/tasks/task_sdsidebandsplit.py',
+                    'src/tasks/task_plotprofilemap.py',
                     'src/scripts/simutil.py',
                     'src/tasks/task_simalma.py',
                     'src/tasks/task_simobserve.py',
@@ -400,6 +402,9 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
               'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
+              'casa-source/gcwrap/tasks/sdpolaverage.xml': 'xml/sdpolaverage.xml',
+              'casa-source/gcwrap/tasks/sdsidebandsplit.xml': 'xml/sdsidebandsplit.xml',
+              'casa-source/gcwrap/tasks/plotprofilemap.xml': 'xml/plotprofilemap.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
@@ -509,6 +514,9 @@ xml_files = [ 'xml/imhead.xml',
               'xml/plotants.xml',
               'xml/fringefit.xml',
               'xml/plotbandpass.xml',
+              'xml/sdpolaverage.xml',
+              'xml/sdsidebandsplit.xml',
+              'xml/plotprofilemap.xml',
 ]
 
 if pyversion < 3:
@@ -647,6 +655,47 @@ def generate_pyinit(moduledir,tasks):
             "except ImportError:",
             "    pass\n"))
         fd.write(mpi_import_str)
+        fd.write("from datetime import datetime as _time\n")
+        fd.write("telemetry_starttime = str(_time.now())\n")
+        fd.write("import platform\n")
+        fd.write("import os\n")
+        fd.write("if config.telemetry_enabled:\n")
+        fd.write("  try:\n")
+        fd.write("    import casatelemetry\n")
+        fd.write("  except:\n")
+        fd.write('    casalog.post("Can\'t import casatelemetry module.")\n')
+        fd.write("    config.telemetry_enabled=False\n")
+        #fd.write("  pass\n")
+        fd.write("if config.telemetry_enabled:\n")
+        fd.write("  telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
+        fd.write("  package_variant='wheel'\n")
+        fd.write("  try:\n")
+        fd.write("    import casalith\n")
+        fd.write("    package_variant='casalith'\n")
+        fd.write("  except:\n")
+        fd.write("    pass\n")
+        fd.write("  try:\n")
+        fd.write("    import pipeline\n")
+        fd.write("    package_variant='pipeline'\n")
+        fd.write("  except:\n")
+        fd.write("    pass\n")
+        fd.write("  def logstop():\n")
+        # Telemetry may be stopped during runtime so check if it is still enabled
+        fd.write('    if telemetrylogger.telemetry_enabled:\n')
+        fd.write("      telemetry_stoptime = str(_time.now())\n")            
+        fd.write('      telemetrylogger.logger.info(telemetry_stoptime + " :: " + str(os.getpid()) + " :: CASAStop :: Stopping CASA at: " + telemetry_stoptime + \n') 
+        fd.write('      " Version " + version_string() + " Platform: " + platform.platform() +  " Start time: " + telemetry_starttime + " Variant: " + package_variant)\n')
+        #fd.write('   print("mpi_env " + str(mpi_env_found))\n')
+        fd.write('  if not mpi_env_found or (mpi_env_found and MPIEnvironment.is_mpi_client):\n')
+        fd.write('    telemetrylogger.submitStatistics()\n')
+        fd.write('    if telemetrylogger.telemetry_enabled:\n')
+        fd.write('      telemetrylogger.logger.info(telemetry_starttime + " :: " + str(os.getpid()) + " :: CASAStart :: Starting CASA at: " + telemetry_starttime + \n') 
+        fd.write('      " Version " + version_string() + " Platform: " + platform.platform() + " Variant: " + package_variant)\n')
+        fd.write('    if config.crashreporter_enabled:\n')
+        fd.write("      casatelemetry.CrashReporter.init(config.logfile)\n")
+        fd.write("    import atexit\n")
+        fd.write("    atexit.register(logstop)\n")
+        
 
 class BuildCasa(build):
     description = "Description of the command"
