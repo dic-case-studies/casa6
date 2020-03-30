@@ -17,7 +17,7 @@ def sdtimeaverage(
         timebin,
         timespan,
         outfile):
-    #  When 'all'(default) or null is specified, make timebin to cover
+    #  When 'all'(default) or '' is specified, make timebin to cover
     #   all the timerange by TIME and INTERVAL data.
     cap_timebin = timebin.upper()
     if (cap_timebin == 'ALL') or (cap_timebin == ''):
@@ -62,12 +62,14 @@ def sdtimeaverage(
 
     # Time average, once Enable.
     do_timeaverage = True
+
+    # Error, raise Exception. 
     if tbin < 0:
         raise Exception(
-              "Parameter timebin must be > '0s' to do time averaging")
+            "Parameter timebin must be > '0s' to do time averaging")
 
     # No averaging, when tbin == 0
-    if tbin == 0:
+    elif tbin == 0:
         msg = 'Parameter timebin equals zero. No averaging will be performed.'
         casalog.post(msg, 'WARN')
         do_timeaverage = False
