@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from casatasks.private.casa_transition import is_CASA6
 
 import os
+import sys
 import numpy as np
 import pylab as pl
 from textwrap import wrap
@@ -58,6 +59,11 @@ def plotants( vis=None, figfile=None,
                 dialog will allow you to choose the directory, filename,
                 and format of the export.
         """
+
+        # for CASA6, check for --nogui to force showgui to be False
+        if is_CASA6 and '--nogui' in sys.argv:
+                showgui = False
+
         if not showgui:
                 pl.close()
                 pl.ioff()
