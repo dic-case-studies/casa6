@@ -5,6 +5,7 @@ import os
 import sys
 import copy
 import pprint
+import numpy as np
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -66,7 +67,7 @@ def dump_args(func):
 class FlagHelper(ParallelTaskHelper):
     def __init__(self, args={}):
         self.__args = args
-    
+
 #    @dump_args
     def setupInputFile(self, parname):
         '''Create a temporary input file with
@@ -245,8 +246,15 @@ def flagdata(vis,
             orig_locals['timedev'] = timedev
         if isinstance(freqdev, str) and freqdev != '':
             freqdev = os.path.abspath(freqdev)
-            orig_locals['freqdev'] = freqdev    
-    
+            orig_locals['freqdev'] = freqdev
+        # Conversion np.array->list if needed. np.array can be a problem with MMS, as it
+        # would require in the servers an import of np.array with the same name used by the
+        # caller
+        if isinstance(timedev, np.ndarray):
+            orig_locals['timedev'] = timedev.tolist()
+        if isinstance(freqdev, np.ndarray):
+            orig_locals['freqdev'] = freqdev.tolist()
+
         FHelper.__init__(orig_locals)
         
         # For tests only
@@ -526,10 +534,11 @@ def flagdata(vis,
             # These can be double, doubleArray, or string.
             # writeflags=False : calculate and return thresholds.
             # writeflags=True : use given thresholds for this run.
-            if( type(timedev) == str and writeflags == True):
-                timedev = fh.readRFlagThresholdFile(timedev,'timedev')
-            if( type(freqdev) == str and writeflags == True):
-                freqdev = fh.readRFlagThresholdFile(freqdev,'freqdev')
+            if writeflags == True:
+                if isinstance(timedev, str):
+                    timedev = fh.readRFlagThresholdFile(timedev,'timedev')
+                if isinstance(freqdev, str):
+                    freqdev = fh.readRFlagThresholdFile(freqdev,'freqdev')
 
             agent_pars['timedev'] = timedev
             agent_pars['freqdev'] = freqdev
