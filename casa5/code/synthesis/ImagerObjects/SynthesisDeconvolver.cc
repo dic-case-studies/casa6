@@ -75,7 +75,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        itsPBMask(0.0),
 				       //itsMaskString(String("")),
                                        itsIterDone(0.0),
-                                       itsChanFlag(Vector<Bool>(False)),
+                                       itsChanFlag(Vector<Bool>(0)),
                                        itsRobustStats(Record()),
                                        initializeChanMaskFlag(false),
                                        itsPosMask(nullptr),
@@ -301,6 +301,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // or
         // 2. no automask but for the first cycle but already initial calcRMS has ran to avoid duplicate
         //
+        cerr << "useauto " << useautomask << " nfields " << itsRobustStats.nfields() << " iterdone " << iterdone << endl;
         if ((useautomask && itsRobustStats.nfields()) || 
             (!useautomask && iterdone==0 && itsRobustStats.nfields()) ) {
            os <<LogIO::DEBUG1<<"automask on: check the current stats"<<LogIO::POST;
@@ -324,6 +325,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           os<< LogIO::NORMAL << "time for calcRobustRMS:  real "<< timer.real() << "s ( user " << timer.user() 
              <<"s, system "<< timer.system() << "s)" << LogIO::POST;
           //reset itsRobustStats
+          cerr << "medians " << medians << " pbmask " << itsPBMask << endl;
           try {
             //os<<"current content of itsRobustStats nfields=="<<itsRobustStats.nfields()<<LogIO::POST;
             itsRobustStats.define(RecordFieldId("robustrms"), robustrms);
@@ -410,6 +412,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
     
     return returnRecord;
+  }
+  void SynthesisDeconvolver::setChanFlag(const Vector<Bool>& chanflag){
+    //ignore if it has not been given a size yet in initminorcycle
+    if(itsChanFlag.nelements()==0)
+      return;
+    if(itsChanFlag.nelements() != chanflag.nelements())
+      throw(AipsError("cannot set chan flags for different number of channels"));
+    itsChanFlag =chanflag;
+
+  }
+  Vector<Bool> SynthesisDeconvolver::getChanFlag(){
+    return itsChanFlag;
   }
 
   Record SynthesisDeconvolver::interactiveGUI(Record& iterRec)
@@ -556,7 +570,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
-          //Int numchan=itsImages->residual()->shape()[3];
+          Int numchan=itsImages->residual()->shape()[3];
           Vector<Int> startchans;
           Vector<Int> endchans;
           Int numblocks=numblockchans(startchans, endchans); 
@@ -602,6 +616,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Vector<Int> chanRange(2);
           //Record beamsetRec;
           Vector<Bool> retvals(numblocks, False);
+          Vector<Bool> chanFlag(0);
+          if(itsChanFlag.nelements()==0){
+            itsChanFlag.resize(numchan);
+            itsChanFlag.set(False);
+          }
           Int indexofretval=0;
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
@@ -616,6 +635,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               Vector<Int> chanRangeProcessed;
               casa::applicator.get(chanRangeProcessed);
               //#2
+              Vector<Bool> retchanflag;
+              Record chanflagRec;
+               casa::applicator.get(chanflagRec);
+               chanflagRec.get("chanflag", retchanflag);
+               if(retchanflag.nelements() >0)
+                 itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
+              //#3
               Record retval;
               casa::applicator.get(retval);
               retvals(indexofretval)=(retval.nfields() > 0);
@@ -652,6 +678,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             applicator.put(pbname);
             //#9 psf side lobe
             applicator.put(psfsidelobelevel);
+            //# put chanflag
+            chanFlag.resize();
+            chanFlag=itsChanFlag(IPosition(1, chanRange[0]), IPosition(1, chanRange[1]));
+            Record chanflagRec;
+            chanflagRec.define("chanflag", chanFlag);
+            applicator.put(chanflagRec);
             /// Tell worker to process it
             applicator.apply(*cmc);
             
@@ -662,6 +694,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             Vector<Int> chanRangeProcessed;
             casa::applicator.get(chanRangeProcessed);
+            Vector<Bool> retchanflag;
+            Record chanflagRec;
+            casa::applicator.get(chanflagRec);
+            chanflagRec.get("chanflag", retchanflag);
+            if(retchanflag.nelements() >0)
+              itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
             Record retval;
             casa::applicator.get(retval);
             retvals(indexofretval)=(retval.nfields() > 0);
@@ -975,6 +1013,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // pass robust stats 
         itsMaskHandler->autoMask( itsImages, *itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
        }
+
      }
   }
 

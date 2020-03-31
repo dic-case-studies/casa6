@@ -68,6 +68,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           casacore::Record beamsetRec_p;
           casacore::Float psfSidelobeLevel_p;
           casacore::Bool autoMaskOn_p;
+          casacore::Vector<casacore::Bool> chanFlag_p;
 	  casacore::Bool status_p;
 	};
 	
