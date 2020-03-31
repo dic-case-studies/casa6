@@ -882,9 +882,10 @@ def relwithdebinfo_build():
 def get_optimization_flags():
     if debug_build( ):
         return ['-g']
-    if relwithdebinfo_build():
-        return ['-g', '-O2']    
-    return ['-O2']
+    elif relwithdebinfo_build():
+        return ['-g', '-O2']
+    else:    
+        return ['-O2']
 
 def get_new_cxx_compiler_flags():
     return get_optimization_flags() + ['-std=c++11']
@@ -906,10 +907,11 @@ def get_use_grpc():
 
 def get_fortran_compiler_flags(ext):
     arch = platform.architecture()[0].lower()
+    debflag = "-g"
     if (ext == ".f90"):
-        cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+        cc_args = [debflag, "-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
     if (ext == ".f"):
-        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        cc_args = [debflag, "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
