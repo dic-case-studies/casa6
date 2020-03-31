@@ -733,17 +733,13 @@ def sdintimaging(
                 deconvolver.restoreImages()
                 t1=time.time();
                 casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-                #if pbcor==True:
-                if applypb==True:
+                if pbcor==True:
+                #if applypb==True:
                     t0=time.time();
                     if specmode=='mfs':
-                        #impbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , mode='divide', cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
                         sdintlib.pbcor(imagename=decname+'.image.tt0' ,  pbimage=decname+'.pb.tt0' , cutoff=pblimit,outfile=decname+'.image.tt0.pbcor')
                     else:
-                        sdintlib.modify_with_pb(inpcube=joint_cube+'.image',
-                                        pbcube=int_cube+'.pb',
-                                        action='div', pblimit=pblimit, freqdep=False)
-
+                        sdintlib.pbcor(imagename=joint_cube+'.image' ,  pbimage=int_cube+'.pb' , cutoff=pblimit,outfile=joint_cube+'.image.pbcor')
 
                     #imager.pbcorImages()
                     t1=time.time();

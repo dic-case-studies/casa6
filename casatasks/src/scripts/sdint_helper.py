@@ -253,10 +253,11 @@ class SDINT_helper:
             _ia.putchunk(outplane, blc=[0,0,0,i])
             _ia.close()
 
-        if freqdep==True:
-            ## Set a mask based on frequency-dependent PB
-            self.addmask(inpcube,pbcube,pblimit)
-        else:
+#        if freqdep==True:
+#            ## Set a mask based on frequency-dependent PB
+#            self.addmask(inpcube,pbcube,pblimit)
+#        else:
+        if freqdep==False:
             ## Set a mask based on the PB in refchan
             self.addmask(inpcube,pbcube+'_tmpcopy',pblimit)
             shutil.rmtree(pbcube+'_tmpcopy')

@@ -28,10 +28,10 @@
 #Single Pointing Simulation:
 #
 #1. Wideband Multi-Term Imaging: single dish - interferometer combination (SD+INT)
-#specmode='mfs', deconvolver='mtmfs', gridder='tandard', usedata='sdint'
-#testname: test_singlepointing_mfs_sdint
+#specmode='mfs', deconvolver='mtmfs', gridder='standard', usedata='sdint'
+#testname: test_singlepointing_mfs_sdint 
 #
-#2. Wideband Multi-Term Imaging: inteferometer only (INT-only)
+#2. Wideband Multi-Term Imaging: inteferometer only (INT-only) 
 #specmode='mfs', deconvolver='mtmfs', gridder='standard', usedata='int'
 #test name: test_singlepointing_mfs_intonly
 #
@@ -44,7 +44,7 @@
 #testname: test_singlepointing_cube_sdint
 #
 #5. Cube imaging: interferometer only (INT-only)
-#specmode='cube', deconvolver='multiscale', gridder='standard', usedata='int'
+#specmode='cube', deconvolver='multiscale', gridder='standard', usedata='int' 
 #testname: test_singlepointing_cube_intonly
 #
 #6. Cube imaging: single dish only (SD-only)
@@ -70,11 +70,11 @@
 #
 #11. Cube Imaging: interferometer only (INT-only)
 #specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='int'
-#testname: test_mosaic_cube_intonly
+#testname: test_mosaic_cube_int
 #
 #12. Cube Imaging: single dish (SD-only)
 # specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='sd'
-#testname: test_mosaic_cube_sdonly
+#testname: test_mosaic_cube_sd
 ###########################################################################
 
 ####    Imports     ####
@@ -127,8 +127,8 @@ else:
     #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'
     #else:
     #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-    
-    # For local tests 
+
+    #For local testing
     #visdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
     #imdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
     #maskdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
@@ -352,9 +352,9 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),
-                    (outimg+'.image.tt0', 7.91, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 7.91, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 15.3, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.13, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', -0.137, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.alpha', 0.018, [300,400,0,0]) ])      # extended emission with alpha=0
 
     #Test4
@@ -391,7 +391,7 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image', 1.66, [350,433,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 0.459, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 1.07, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.16, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 0.168, [300,400,0,1]) ])      # extended emission with alpha=0
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
 
     #Test5
@@ -629,10 +629,10 @@ class test_mosaic(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 0.99, [750,750,0,0]),
                                    (outimg+'.psf', 0.99, [750,750,0,1]),
-                                   (outimg+'.image', 1.57, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.55, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.027, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.199, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.554, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.519, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.015, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.187, [650,720,0,1]) ])      # extended emission with alpha=0
 
     #Test11
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -665,10 +665,10 @@ class test_mosaic(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 2.044, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 1.023, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.175, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.05, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 2.021, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.963, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.162, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.047, [650,720,0,1]) ])      # extended emission with alpha=0
 
     #Test12
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -700,10 +700,10 @@ class test_mosaic(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 32.70, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 66.239, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 10.92, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 25.50, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 32.33, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 62.377, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 10.8, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 24.01, [650,720,0,1]) ])      # extended emission with alpha=0
 
 
 def suite():
