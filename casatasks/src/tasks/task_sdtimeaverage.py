@@ -1,4 +1,5 @@
 import re
+import numpy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -35,12 +36,12 @@ def sdtimeaverage(
     #   all the timerange from TIME and INTERVAL.
     cap_timebin = timebin.upper()
     if (cap_timebin == 'ALL') or (cap_timebin == ''):
-        timebin = calc_timebin(infile) + 's'
+        timebin = set_timebin_all() + 's'
 
     # datacolumn alternative access
-    #  In case 'float_data' does not exists, attempt to use 'data'
+    #  In case 'float_data' does not exist, attempt to use 'data'
     #  know existence of data-column on specified MS.
-    ex_float_data, ex_data = check_column(infile)
+    ex_float_data, ex_data = check_column(1infile)
 
     # change datacolumn 'data' to 'float_data'
     if (datacolumn == 'float_data'):
@@ -50,7 +51,7 @@ def sdtimeaverage(
             casalog.post(msg, 'INFO')
 
     # change datacolumn 'float_data' to 'data'
-    if (datacolumn == 'data'):
+    elif (datacolumn == 'data'):
         if (ex_float_data) and (not ex_data):
             datacolumn = 'float_data'
             msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
@@ -77,7 +78,7 @@ def sdtimeaverage(
     # Time average, once Enable.
     do_timeaverage = True
 
-    # Error, raise Exception. 
+    # Error, raise Exception.
     if tbin < 0:
         raise Exception(
             "Parameter timebin must be > '0s' to do time averaging")
@@ -140,24 +141,11 @@ def check_column(msname):
         return exist_float_data, exist_data
 
 
-def calc_timebin(msname):
+def set_timebin_all():
     """ Calculation range time in input MS. """
-    with sdutil.tbmanager(msname) as tb:
-        tm = tb.getcol('TIME')
-        iv = tb.getcol('INTERVAL')
-
-    interval = iv[0]  # interval
-
-    time_first = min(tm)
-    time_last = max(tm)
-
-    timebin = time_last - time_first
-    # Expanding timebin:
-    #   due to the implicit behavior of mstransform,
-    #   specified timespan needs to be grater than calculated time.
-    #   Following adjustment was experimentally determined.(SN)
-    timebin += 4.0 * interval + 1.5
-
+    # assign very large value to timebin
+    #  to cover 'all'.
+    timebin = numpy.finfo(float).max
     return str(timebin)
 
 
