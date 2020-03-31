@@ -32,30 +32,12 @@ def sdtimeaverage(
         timebin,
         timespan,
         outfile):
-    #  When 'all'(default) or '' is specified, make timebin to cover
-    #   all the timerange from TIME and INTERVAL.
-    cap_timebin = timebin.upper()
-    if (cap_timebin == 'ALL') or (cap_timebin == ''):
+    #  When 'all'(default) or '' is specified, make timebin to cover all the data.
+    if timebin.upper() in ['ALL', '']:
         timebin = set_timebin_all() + 's'
 
-    # datacolumn alternative access
-    #  In case 'float_data' does not exist, attempt to use 'data'
-    #  know existence of data-column on specified MS.
-    ex_float_data, ex_data = check_column(1infile)
-
-    # change datacolumn 'data' to 'float_data'
-    if (datacolumn == 'float_data'):
-        if (not ex_float_data) and (ex_data):
-            datacolumn = 'data'
-            msg = 'No FLOAT_DATA column. DATA column will be used alternatively.'
-            casalog.post(msg, 'INFO')
-
-    # change datacolumn 'float_data' to 'data'
-    elif (datacolumn == 'data'):
-        if (ex_float_data) and (not ex_data):
-            datacolumn = 'float_data'
-            msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
-            casalog.post(msg, 'INFO')
+    # Switch Alternative Column if needed.
+    active_datacolumn = use_alternative_column(infile, datacolumn)
 
     # Antanna ID (add extra &&& if needed) This is Single Dish specific
     if (len(antenna) != 0) and (antenna.find('&') == -1):
@@ -72,19 +54,17 @@ def sdtimeaverage(
                          "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
 
-    # Only parse timeaverage parameters when timebin > 0s
+    # Convert to check timebin
     tbin = qa.convert(qa.quantity(timebin), 's')['value']
 
     # Time average, once Enable.
     do_timeaverage = True
 
-    # Error, raise Exception.
-    if tbin < 0:
+    # Check timebin
+    if tbin < 0:     # Error, raise Exception.
         raise Exception(
-            "Parameter timebin must be > '0s' to do time averaging")
-
-    # No averaging, when tbin == 0
-    elif tbin == 0:
+            "Parameter timebin must be >= '0s' to do time averaging")
+    elif tbin == 0:  # No averaging, when tbin == 0
         msg = 'Parameter timebin equals zero. No averaging will be performed.'
         casalog.post(msg, 'WARN')
         do_timeaverage = False
@@ -96,7 +76,7 @@ def sdtimeaverage(
         # Select Data and make Average.
         st = do_mst(
             infile=infile,
-            datacolumn=datacolumn,
+            datacolumn=active_datacolumn,
             field=field,
             spw=spw,
             timerange=timerange,
@@ -111,7 +91,7 @@ def sdtimeaverage(
         add_history(
             casalog=casalog,
             infile=infile,
-            datacolumn=datacolumn,
+            datacolumn=active_datacolumn,
             field=field,
             spw=spw,
             timerange=timerange,
@@ -130,6 +110,30 @@ def sdtimeaverage(
         return False
 
     return st
+
+
+def use_alternative_column(infile, datacolumn):
+    """
+     Alternatively use datacolumn if specified column does not exist.
+       In case 'float_data' does not exist, attempt to use 'data'
+       and vice versa. (For user's convenience)
+    """
+    #  know existence of data-column on specified MS.
+    ex_float_data, ex_data = check_column(infile)
+
+    # alter datacolumn if available
+    if (datacolumn == 'float_data'):  # Change 'float_data' to 'data'
+        if (not ex_float_data) and (ex_data):
+            datacolumn = 'data'
+            msg = 'No FLOAT_DATA column. DATA column will be used alternatively.'
+            casalog.post(msg, 'INFO')
+    elif (datacolumn == 'data'):      # Change 'data' to 'float_data'
+        if (ex_float_data) and (not ex_data):
+            datacolumn = 'float_data'
+            msg = 'No DATA column. FLOAT_DATA column will be used alternatively.'
+            casalog.post(msg, 'INFO')
+
+    return datacolumn
 
 
 def check_column(msname):
