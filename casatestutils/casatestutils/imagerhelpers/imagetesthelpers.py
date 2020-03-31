@@ -235,7 +235,10 @@ class TestHelpers:
             else:
                 if abs(correctval - val)/abs(correctval) > epsilon:
                     out=False
-        pstr = "[ {} ] {} is {} ( {} : should be {}, Epsilon: {})\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval), str(epsilon) )
+        if exact == True:
+            pstr = "[ {} ] {} is {} ( {} : should be {}, Exact: True )\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval) )
+        else:
+            pstr = "[ {} ] {} is {} ( {} : should be {}, Epsilon: {})\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(correctval), str(epsilon) )
         logging.info(pstr)
         return out, pstr
 
@@ -412,7 +415,7 @@ class TestHelpers:
 
     def check_pixmask(self, imname, theval=True, thepos=[0, 0, 0, 0], testname="check_pixmask"):
         pstr = ''
-        readval = get_pixmask(imname, thepos)
+        readval = TestHelpers().get_pixmask(imname, thepos)
         res = True
         if readval == None:
             res = False
