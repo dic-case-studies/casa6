@@ -180,9 +180,7 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + defWorkMsTimeSpan)
         os.system('rm -rf ' + defWorkMs3NRO)
         os.system('rm -rf ' + defWorkMs3ALMA)
-
         os.system('rm -rf ' + defPrivateMs)
-
         os.system('rm -rf ' + "TEST-*.ms")
 
     @classmethod
@@ -195,9 +193,7 @@ class test_sdtimeaverage(unittest.TestCase):
         os.system('rm -rf ' + defWorkMsTimeSpan)
         os.system('rm -rf ' + defWorkMs3NRO)
         os.system('rm -rf ' + defWorkMs3ALMA)
-
         os.system('rm -rf ' + defPrivateMs)
-
         os.system('rm -rf ' + "TEST-*.ms")
 
 ##############
@@ -210,7 +206,9 @@ class test_sdtimeaverage(unittest.TestCase):
             for k in auxArgs:
                 self.args[k] = auxArgs[k]
 
-        # execution ## open
+        # Execution.
+        #  if success, returns True
+        #  if any error, returns False.
         try:
             return sdtimeaverage(**self.args)
         except Exception:
@@ -221,13 +219,21 @@ class test_sdtimeaverage(unittest.TestCase):
 #################
 
     def checkZero(self, data):
+        '''
+          check all the results must be zero.
+            See generate_data() to see Test Data.
+        '''
         print("-- checking Zero --")
 
         check = numpy.all(numpy.abs(data) < errLimit)
         self.assertTrue(check, msg='## Zero check Failed ##\n{}'.format(data))
 
     def checkNonZero(self, data):
-        print("-- checking Not Zero --")
+        '''
+          check sum of each averaged result
+            check non Zero.
+        '''
+        print("-- checking Non Zero --")
 
         check = numpy.all(numpy.abs(data) >= errLimit)
         self.assertTrue(
@@ -237,6 +243,10 @@ class test_sdtimeaverage(unittest.TestCase):
                 data))
 
     def checkZeroSum(self, data1, data2):
+        '''
+          check sum of each averaged result
+            check Zero.
+        '''
         print("-- checking ZeroSum of data1 and data2.")
 
         zSumData = numpy.abs(numpy.array(data1) + numpy.array(data2))
@@ -252,6 +262,10 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def checkTime(self, msName, row, refTime):
+        '''
+          check time of specified row
+              compare value with the reference.
+        '''
         print("-- checking Time --")
 
         # get time and inspection.
@@ -271,6 +285,10 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def checkOutputRec(self, msName, refNRow):
+        '''
+          check calculated result record count
+            compare value with the expected count.
+        '''
         print("-- checking Output Record Count --")
 
         # get time and inspection.
@@ -290,17 +308,21 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def check_scan(self, outMsName, refValue):
+        '''
+          check 'scan'
+            number of output must 1
+            compare value with expected value.
+        '''
         print("-- checking scan selection --")
         # get table and inspection.
         self. get_main(defOutputMs)
         # one output
         scan = self.sc[0]
         # check scan ID
-        self.assertTrue(len(
-            self.sc) == 1, msg='## unexpected number of output. ##\n {}'.format(len(self.sc)))
-        self.assertTrue(
-            scan == refValue,
-            msg='## unexpected scan no. in output. ##\n {}'.format(scan))
+        self.assertTrue(len(self.sc) == 1,
+                        msg='## unexpected number of output. ##\n {}'.format(len(self.sc)))
+        self.assertTrue(scan == refValue,
+                        msg='## unexpected scan no. in output. ##\n {}'.format(scan))
 
 ########################
 # check Weight/Spectra
@@ -308,6 +330,11 @@ class test_sdtimeaverage(unittest.TestCase):
 
     # Check Wait and Sigma
     def checkWeightSigma(self, msName, row, weight_ref):
+        '''
+          check Sigma and Weight
+            compare 'weight' with expected value.
+            Sigma is mathematically inspected.
+        '''
         print("-- checking Weight and Sigma --")
 
         self.get_spectra(msName, row)
@@ -324,6 +351,7 @@ class test_sdtimeaverage(unittest.TestCase):
         check4 = ((1.0 / self.wgt[1]) -
                   (self.sgm[1] * self.sgm[1]) < errLimit2)
 
+        # Assert
         self.assertTrue(
             check1, msg='## Weight[0] is unexpected. ##\n {}/{}'.format(self.wgt[0], weight_ref))
         self.assertTrue(
@@ -362,50 +390,50 @@ class test_sdtimeaverage(unittest.TestCase):
 
         return self.data
 
-################################
-# Generate Data on FLOAT_DATA
-################################
+#####################################
+# Generate Data on FLOAT_DATA column
+#####################################
     def generate_data(self, msName, stateOption=False):
         print("----- Generating MS.")
 
         # Column Name
         dataColumnName = 'FLOAT_DATA'
-        # Test Slope
-        # if specified non-zero, an Intensive Fail will be activated.
+
+        # if non-zero value is set on 'offset', an Intentional Fail is raised.
         offset = 0.0
+
+        # Value parameters
         slope = 0.5     # (tunable, but error threshold subject to be changed.)
-        # (comment)
-        baseTime = 0.0
+        baseTime = 0.0  # gives start time in JD.
+
         # Table Access (with numPy array operation)
         with tbmanager(msName, nomodify=False) as tb:
-            #
+
             # reduce MS row size if reduce size is specified.
-            #
-            if nReduce != 0:
-                print("----- reducing rows in Test-MS.")
+            if (nReduce != 0):
+                print("----- reducing rows count in Test-MS.")
                 rows = list(range(nReduce))
                 tb.removerows(rows)
 
-            # Confirm nRow
-            NN = tb.nrows()  # NN MUST BE same as  nRow
+            # show nRow in MS.
+            NN = tb.nrows()  # NN MUST BE same as nRow
             print("Nrow = {}".format(NN))
-            # -----
 
-            # change STATE_ID (option)
+            # initialize STATE_ID (option)
             if stateOption:
-                print("------ stateOption Active, using three STATE_IDs on the MS. ")
+                print("------ stateOption Active, putting three STATE_IDs on the MS. ")
                 arrayState = numpy.mod(numpy.arange(0, NN), numOfState)
                 tb.putcol("STATE_ID", arrayState)
 
-            # get array shape of Spectra data, by getcolshapestring(),
-            # returning string like:"[2,1024]" via 'list'.
-            tk = re.split(
-                r",|\[|\]",
-                tb.getcolshapestring(
-                    dataColumnName,
-                    nrow=1)[0])  # delimter = [ , ]
-            nChan = int(tk[2])   # separating to :: <zero> [<1st> ,<2nd*> ]<3rd>
-            # (not used ) separating to :: <zero> [<1st*> ,<2nd> ]<3rd>
+            # get array shape of Spectra Data, by getcolshapestring(),
+            # returned string is like:"[2,1024]", via list.
+            tk = re.split(r",|\[|\]",   # specify delimiter as; [ , ]
+                          tb.getcolshapestring(
+                              dataColumnName,
+                              nrow=1)[0])
+            # separating to :: <zero> [<1st> ,<2nd*> ]<3rd>
+            nChan = int(tk[2])
+            # separating to :: <zero> [<1st*> ,<2nd> ]<3rd>
             # nPol = int(tk[1]) (not used, reserved)
 
             # create array (time, interval)
@@ -418,7 +446,7 @@ class test_sdtimeaverage(unittest.TestCase):
             tb.putcol("TIME", arrayTime)
             tb.putcol("INTERVAL", arrayInterval)
 
-            # create Test-Data [use numpy.array]
+            # create Test-Data
             print("------ Calculating Curve.")
             NN1 = (NN - 1) / 2
             L = numpy.linspace(-NN1, NN1, NN) * slope + offset
@@ -430,8 +458,7 @@ class test_sdtimeaverage(unittest.TestCase):
             tb.putcol(dataColumnName, arrayData3)
         print("------ Done.")
 
-    # TELESCOP NAME (7-Feb-2020)
-
+    # set telescope name on MS.
     def set_telescopename(self, msName, telName):
         print("------ changing Telscope Name. ")
         msObservation = msName + '/OBSERVATION'
@@ -500,9 +527,9 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def check_averaged_result_N3TimeSpan(self, outMsName):
         '''
-        This is for TimeSpan (number of state=3)
+        This is for TimeSpan (when number of state=3)
         '''
-        #
+        # check result record count. (must be same as state count)
         self.get_main(outMsName)
         check = (len(self.tm) == 3)
         self.assertTrue(
@@ -513,12 +540,9 @@ class test_sdtimeaverage(unittest.TestCase):
         fData1 = self.get_spectra(outMsName, 1)        # row=1
         fData2 = self.get_spectra(outMsName, 2)        # row=2
 
-        # inspection #
-        # must be zero (TimeSpan test particular)
+        # inspection
+        #  The sum of three section data must be zero (particular in TimeSpan test)
         self.checkZero(fData0 + fData1 + fData2)
-
-        # check Time (No action)
-        pass
 
         # check Weight, Sigma
         self.checkWeightSigma(outMsName, 0, (nRow / 3))
@@ -527,7 +551,8 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def check_averaged_result_N61(self, outMsName):
         '''
-        This is for TiimeSpan (scan=state, 61 results are inspected.)
+        This is for TiimeSpan (when scan=state, 61 results are inspected.)
+         see numOfScan
         '''
         print("outfile ={} specified.".format(outMsName))
         # check Zero Sum
@@ -551,7 +576,10 @@ class test_sdtimeaverage(unittest.TestCase):
 # TEST FIXTURE
 ############################
 
-# TIME RANGE #
+#
+# TIME RANGE
+#
+
     def test_param00(self):
         '''sdtimeagerage::00:: timerange = 00:00:00~01:04:03 NORMAL (3843s same as in MS)'''
 
@@ -609,7 +637,10 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkZero(self.data)
         self.checkOutputRec(privateOutfile, 1)
 
-# SCAN #
+#
+# SCAN
+#
+
     def test_para10(self):
         '''sdtimeagerage::10:: scan=2 (Within the range)'''
 
@@ -639,8 +670,6 @@ class test_sdtimeaverage(unittest.TestCase):
         prm = {'timebin': '',
                'scan': '62'}  # ERROR : out of range in MS #
         self.assertFalse(self.run_task(prm))
-        # check scan
-        #    no check ...
 
     def test_param12(self):
         '''sdtimeagerage::12:: scan='' (no number) Default action. '''
@@ -659,7 +688,10 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1)
 
-# FIELD #
+#
+# FIELD
+#
+
     def test_param20(self):
         '''sdtimeaverage::20:: field = 'FLS3a*' (Exact NAME)'''
 
@@ -683,7 +715,10 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
         self.checkOutputRec(defOutputMs, 1)
 
-# SPW #
+#
+# SPW
+#
+
     def test_param30(self):
         '''sdtimeaverage::30:: spw = '1' (exist)'''
 
@@ -715,7 +750,10 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
         self.checkOutputRec(defOutputMs, 1)
 
-# ANTENNA #
+#
+# ANTENNA
+#
+
     def test_param40(self):
         '''sdtimeaverage::40:: antenna = 'GBT' (Exact name)'''
 
@@ -729,9 +767,12 @@ class test_sdtimeaverage(unittest.TestCase):
 
         prm = {'antenna': 'gBT'}
         # Run Task and check
-        self.assertFalse(self.run_task(prm))  # must be false
+        self.assertFalse(self.run_task(prm))
 
-# TIMEBIN ,make Average #
+#
+# TIMEBIN (generating Average)
+#
+
     def test_param100(self):
         '''sdtimeaverage::100:: timebin=1282(N=3)  '''
         # set timebin string and private outputMS name.
@@ -741,7 +782,7 @@ class test_sdtimeaverage(unittest.TestCase):
         prm = {'timebin': timebin_str,
                'infile': defWorkMsBasic,
                'outfile': privateOutfile}
-        # Run Task
+        # Run Task and check
         self.run_task(prm)
 
         # Check Result (zerosum check)
@@ -757,7 +798,7 @@ class test_sdtimeaverage(unittest.TestCase):
         prm = {'timebin': timebin_str,             # Immediate Value ,
                'infile': defWorkMsBasic,
                'outfile': privateOutfile}
-        # Run Task
+        # Run Task and check
         self.run_task(prm)
 
         # Check Result (zerosum check)
@@ -773,14 +814,17 @@ class test_sdtimeaverage(unittest.TestCase):
         prm = {'timebin': 'all',                # default = all is applied.
                'infile': defWorkMsBasic,
                'outfile': privateOutfile}
-        # Run Task
+        # Run Task and check
         self.run_task(prm)
 
         # Check Result (zerosum check)
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1)
 
-# TIMEBIN parameter handling #
+#
+# TIMEBIN (arguments handling)
+#
+
     def test_param110(self):
         '''sdtimeagerage::110:: timebin='all' '''
 
@@ -831,7 +875,8 @@ class test_sdtimeaverage(unittest.TestCase):
         prm = {'timebin': '0'}
         # Run Task and check
         self.assertTrue(self.run_task(prm))
-        self.checkOutputRec(defOutputMs, nRow)  # No averaging, original rows remain.
+        # No averaging, original rows remain.
+        self.checkOutputRec(defOutputMs, nRow)
 
     def test_param116(self):
         '''sdtimeagerage::115:: timebin='-1' (Error. Not acceptable)    '''
@@ -842,7 +887,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertFalse(self.run_task(prm))
 
 #
-# DATACOLUMN (Testing alternative collumn select )
+# DATACOLUMN (alternative column selection )
 #
 
     def test_param50(self):
@@ -855,24 +900,24 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
 
     def test_param51(self):
-        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' Column Swich.  '''
+        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' Column Switch.  '''
 
         prm = {'infile': defWorkMs3NRO,
                'outfile': "TEST-51.ms",
                'datacolumn': 'data'}
 
         # Run Task and check
-        self.assertTrue(self.run_task(prm))  # Alternative Use will work.
+        self.assertTrue(self.run_task(prm))
 
     def test_param52(self):
-        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' Column Swich '''
+        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' Column Switch '''
 
         prm = {'infile': defWorkMs3ALMA,
                'outfile': "TEST-52.ms",
                'datacolumn': 'float_data'}
 
         # Run Task and check
-        self.assertTrue(self.run_task(prm))  # must be false
+        self.assertTrue(self.run_task(prm))
 
     def test_param53(self):
         '''sdtimeaverage::53:: MS= 'data'    arg = 'data'   (NORMAL)  '''
@@ -882,11 +927,12 @@ class test_sdtimeaverage(unittest.TestCase):
                'datacolumn': 'data'}
 
         # Run Task and check
-        self.assertTrue(self.run_task(prm))  # must be false
+        self.assertTrue(self.run_task(prm))
 
 #
-# ALMA option in mstransform
+# ALMA specific behavior in mstransform
 #
+
     def test_param60Nobeyama(self):
         '''sdtimeaverage::60 Nobeyama:: simply 'scan' is applied  '''
 
@@ -917,7 +963,6 @@ class test_sdtimeaverage(unittest.TestCase):
 # TimeSpan
 #
 
-    # ordinary behavior #
     def test_param70(self):
         '''sdtimeaverage::70:: timespan="scan"  '''
 
@@ -929,10 +974,9 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task(prm))
         self.check_averaged_result_N3TimeSpan(privateOutfile)
-        # Averaged by each State={0,1,2} . see generate_data()
+        # Averaged by each State={0,1,2}. In detail, see generate_data()
         self.checkOutputRec(privateOutfile, numOfState)
 
-    # ordinary behavior #
     def test_param71(self):
         '''sdtimeaverage::71:: timespan="state"  '''
 
@@ -948,7 +992,6 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N61(privateOutfile)
         self.checkOutputRec(privateOutfile, numOfScan)
 
-    # ordinary behavior #
     def test_param72(self):
         '''sdtimeaverage::72:: timespan="scan,state" (WARN) in NRO '''
 
@@ -962,7 +1005,6 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1)
 
-    # ordinary behavior #
     def test_param73(self):
         '''sdtimeaverage::73:: timespan="state,scan" (WARN) in NRO '''
 
@@ -976,7 +1018,6 @@ class test_sdtimeaverage(unittest.TestCase):
         self.check_averaged_result_N1(privateOutfile)
         self.checkOutputRec(privateOutfile, 1)
 
-    # Error in sytax #
     def test_param74E(self):
         '''sdtimeaverage::74E:: timespan="hoge"  '''
 
@@ -996,8 +1037,9 @@ class test_sdtimeaverage(unittest.TestCase):
 23-Mar-2020  Reformed by autopep8 and manually formed some.
 30-Mar-2020  Added test-fixtures for tbin==0, and (-1)
              Added spelling correction and editorial change in comments.
+1-APR-2020   English correction of comment lines. (spelling, grammar...)
+             Revised/Corrected programme descriptions.
 """
-# Control #
 
 
 def suite():

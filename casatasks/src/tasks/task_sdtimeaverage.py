@@ -47,9 +47,9 @@ def sdtimeaverage(
     #   (unexpected result warning)
     if ('scan' in timespan) and ('state' in timespan):
         #  WARN msg, to explain NRO specific issue.
-        msg = '\n'.join(["Explicitly both 'scan' and 'state' were specified in TIMESPAN.",
+        msg = '\n'.join(["Explicitly both 'scan' and 'state' were specified in 'timespan'.",
                          "   If 'state' distinguishes OBSERVE_TARGET#ON_SOURCE / OBSERVE_TARGET#OFF_SOURCE,",
-                         "   these two states are mixed, and unexpected averaged results might be generated.",
+                         "   these two states are mixed, and unexpectedly averaged results might be generated.",
                          "(Suggestion) Please specify timespan = 'scan'",
                          "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
@@ -114,11 +114,11 @@ def sdtimeaverage(
 
 def use_alternative_column(infile, datacolumn):
     """
-     Alternatively use datacolumn if specified column does not exist.
-       In case 'float_data' does not exist, attempt to use 'data'
-       and vice versa. (For user's convenience)
+     Alternatively use datacolumn if the specified column does not exist.
+       In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
+       and vice versa.
     """
-    #  know existence of data-column on specified MS.
+    #  obtain the existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
 
     # alter datacolumn if available
@@ -137,7 +137,7 @@ def use_alternative_column(infile, datacolumn):
 
 
 def check_column(msname):
-    """ Check specified column if exists. """
+    """ Check the specified column if it exists. """
     with sdutil.tbmanager(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data = 'FLOAT_DATA' in columnNames
@@ -146,9 +146,10 @@ def check_column(msname):
 
 
 def set_timebin_all():
-    """ Calculation range time in input MS. """
-    # assign very large value to timebin
-    #  to cover 'all'.
+    """
+      Synthesize timebin
+        assign very large value to cover 'all'.
+    """
     timebin = numpy.finfo(float).max
     return str(timebin)
 
@@ -166,9 +167,9 @@ def do_mst(
         outfile,
         do_timeaverage):
     """
-      call mstransform by provided procedure.
-        Followings are parameters of mstransform, but not used by THIS,
-        just only putting default values
+      call mstransform by the provided procedure.
+        Followings are parameters of mstransform, but not used by sdtimeaverage,
+        just only putting default values.
     """
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
@@ -407,6 +408,7 @@ def add_history(
                       for p in param_names]      # CASA6
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
+
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
