@@ -1033,7 +1033,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		  else
 		    throw(AipsError("Attempted duplicate MSCalPatchKey!"));
 
-		  //if (iMSant==0)
+		  //if (doLinkResults)
 		  //  cout << " Patching: MS(" << ims.print() << ") --> CT(" << ici0.print() << ")" << endl;
 
 		  // Link these obs,fld,ant,spw to the correct results object
@@ -1044,12 +1044,11 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		    msFres_[imsgroup]=CLPPResult(); // this will be resized on-demand
 		    ctspw_[imsgroup]=thisCTspw;
 		    finterp_[imsgroup]=cls.finterp;
-        doLinkResults = False; // Don't do it again
 		  }
 		} // iMSint
 	      } // iMSfld
 	    } // iMSobs
-
+        doLinkResults = False; // Don't do it again
 	  } // iMSant
 	} // iMSspw
       } // iCTfld
