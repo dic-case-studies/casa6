@@ -450,7 +450,7 @@ class Test_standard(test_tclean_base):
 
 
     @stats_dict(test_dict)
-    @unittest.skip("Parallel/Serial variances")
+    # @unittest.skip("Parallel/Serial variances")
     def test_standard_cube(self):
         ''' Standard (single field) cube imaging - central field of SMIDGE_NWCloud (field 3), spw 22 '''
 
@@ -772,7 +772,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Fails in 5.6 parallel due to missing miscinfo (CAS-12638)")
+    # @unittest.skip("Fails in 5.6 parallel due to missing miscinfo (CAS-12638)")
     def test_standard_mfs(self):
         ''' Standard (single field) MFS imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
@@ -1033,7 +1033,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Parallel/Serial variances")
+    # @unittest.skip("Parallel/Serial variances")
     def test_standard_mtmfs(self):
         ''' Single field mtmfs imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
@@ -1391,7 +1391,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Test")
+    # @unittest.skip("Test")
     def test_standard_cube_eph(self):
         ''' Single field multi-EB ephemeris cube imaging - field 21PGiacobini-Zinner, spw 20 '''
 
@@ -1669,7 +1669,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Frequency binning in CASA6")
+    # @unittest.skip("Frequency binning in CASA6")
     def test_standard_mfs_eph(self):
         ''' Standard (single field) ephemeris mfs imaging - central field of Venus (field 2), spw 25 & 45 '''
 
@@ -1927,7 +1927,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Frequency binning in CASA6")
+    # @unittest.skip("Frequency binning in CASA6")
     def test_standard_mtmfs_eph(self):
         ''' Standard (single field) ephemeris mtmfs imaging - central field of Venus (field 2), spw 25 & 45 '''
 
@@ -2282,7 +2282,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Test")
+    # @unittest.skip("Test")
     def test_standard_cal(self):
         ''' Calibrator image - field J2258-2758, spw 22 '''
 
@@ -2544,7 +2544,7 @@ class Test_mosaic(test_tclean_base):
 
 
     @stats_dict(test_dict)
-    @unittest.skip("Parallel/Serial variances")
+    # @unittest.skip("Parallel/Serial variances")
     def test_mosaic_cube(self):
         ''' Mosaic cube imaging - field SMIDGE_NWCloud, spw 22 '''
 
@@ -2898,7 +2898,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Test")
+    # @unittest.skip("Test")
     def test_mosaic_mfs(self):
         ''' Mosaic MFS imaging field NGC5363, spw 16 & 22 '''
 
@@ -3193,7 +3193,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Test")
+    # @unittest.skip("Test")
     def test_mosaic_mtmfs(self):
         ''' Mosaic mtmfs imaging - field NGC5363, spw 16 & 22 '''
 
@@ -3592,7 +3592,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+    # @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_cube_eph(self):
         ''' Mosaic ephemeris cube imaging - field Venus, spw 45 '''
 
@@ -3897,7 +3897,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+    # @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mfs_eph(self):
         ''' Mosaic ephemeris mfs imaging - field Venus, spw 25 & 45 '''
 
@@ -4189,7 +4189,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+    # @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mtmfs_eph(self):
         ''' Mosaic ephemeris mtmfs imaging - field Venus, spw 25 & 45 '''
 
