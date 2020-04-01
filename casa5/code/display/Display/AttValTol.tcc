@@ -36,10 +36,6 @@
 #include <display/Display/AttVal.h>
 #include <display/Display/AttValTol.h>
 
-namespace casacore {
-	inline casacore::uInt abs(casacore::uInt Val) {return Val;}
-}
-
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 	template <class T>
