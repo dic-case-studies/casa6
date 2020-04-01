@@ -370,8 +370,10 @@ class componentlistimage_test(unittest.TestCase):
     def test_fromimage(self):
         """Test fromimage() supports reading from a componentlist image"""
         myia = self._myia
+        infile = 'simple_cl.im'
         outfile = "akd.im"
-        self.assertTrue(myia.fromimage(outfile=outfile, infile=climage))
+        shutil.copytree(climage, infile)
+        self.assertTrue(myia.fromimage(outfile=outfile, infile=infile))
         bb = myia.getchunk()
         myia.done()
         myia.open(climage)
