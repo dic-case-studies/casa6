@@ -58,7 +58,7 @@ from filecmp import dircmp
 if CASA6:
     datapath = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
     datacopy = casatools.ctsys.resolve('uid___X02_X3d737_X1_01_small.ms/')
-    calpath = casatools.ctsys.resolve(os.path.join(os.path.dirname(os.path.abspath(casatools.__file__)),'__data__/nrao/VLA/CalModels/3C138_K.im'))
+    calpath = casatools.ctsys.resolve('nrao/VLA/CalModels/3C138_K.im')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
