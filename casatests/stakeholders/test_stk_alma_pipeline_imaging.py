@@ -87,8 +87,8 @@ except ImportError:
         return os.path.join(dataPath,apath)
 
 # location of data
-data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
-#data_path = ctsys_resolve('stakeholders/alma/')
+#data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
+data_path = ctsys_resolve('stakeholders/alma/')
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
@@ -302,7 +302,7 @@ class test_tclean_base(unittest.TestCase):
                     stats_dict['fit_pix'] = [1.0, 1.0]
 
         # stats returned for .image(.tt0)
-        if img.endswith('.image') or img.endswith('.image.tt0'):
+        if 'image' in img:
             commonbeam = self._myia.commonbeam()
             stats_dict['com_bmin'] = commonbeam['minor']['value']
             stats_dict['com_bmaj'] = commonbeam['major']['value']
@@ -623,7 +623,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
-            'min_val_pos': [True, [25, 13, 0, 396]],
+            # 'min_val_pos': [True, [25, 13, 0, 396]],
             'im_rms': [False, 0.578238326026],
             'npts_0.2_0': [True, 2997],
             'npts_0.5_0': [True, 1449],
@@ -898,7 +898,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
-            'min_val_pos': [True, [33, 6, 0, 0]],
+            # 'min_val_pos': [True, [33, 6, 0, 0]],
             'im_rms': [False, 0.577629540243],
             'npts_0.2': [True, 3793],
             'npts_0.5': [True, 1813],
@@ -1116,7 +1116,7 @@ class Test_standard(test_tclean_base):
             'regn_sum': [False, 1.7745978582],
             'npts_real': [True, 6400],
             'fit': [False, [0.03820503393292664, 18.02503733453906, \
-                       9.894877124019276]],
+                            9.894877124019276]],
             'fit_loc': [True, [0, 107.84024497577988]],
             'fit_pix': [False, [40.2022706573, 40.0784833662]]}
 
@@ -1160,7 +1160,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.200896695256],
-            'min_val_pos': [True, [33, 6, 0, 0]],
+            # 'min_val_pos': [True, [33, 6, 0, 0]],
             'im_rms': [False, 0.577629540243],
             'npts_0.2': [True, 3793],
             'npts_0.5': [True, 1813],
@@ -1268,58 +1268,106 @@ class Test_standard(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt.tt0')
 
-        # .alpha report
-        alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
+
+        # .image.tt1 report
+        im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
+            'ellipse[[209.03000552deg, 5.25503742deg], [16.2902arcsec, 10.3226arcsec], 90.00000000deg]')
+
+        exp_im1_stats = {'com_bmaj': [False, 18.0536975861],
+            'com_bmin': [False, 10.3130340576],
+            'com_pa': [False, 86.4390563965],
+            'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.072932086885],
+            'max_val_pos': [True, [43, 39, 0, 0]],
+            'min_val': [False, -0.0771512910724],
+            'min_val_pos': [True, [40, 62, 0, 0]],
+            'im_rms': [False, 0.0222513486701],
+            'im_sum': [False, 3.60833236173],
+            'regn_sum': [False, 1.71812647558],
+            'npts_real': [True, 6400]}
+
+        report9 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
+
+        # .residual.tt1 report
+        resid1_stats_dict = self.image_stats(img+'.residual.tt1', fit_region = \
+            'ellipse[[209.02978056deg, 5.25512703deg], [18.0644arcsec, 11.9355arcsec], 90.00000000deg]')
+
+        exp_resid1_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 3793.0],
+            'freq_bin': [True, 15849921197.895538],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.000205082003959],
+            'max_val_pos': [True, [44, 47, 0, 0]],
+            'min_val': [False, -0.000261118228082],
+            'min_val_pos': [True, [39, 41, 0, 0]],
+            'im_rms': [False, 7.21058902237e-05],
+            'im_sum': [False, 0.000510152031676],
+            'regn_sum': [False, -0.0077287665232],
+            'npts_real': [True, 6400]}
+
+        report10 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
+            '.residual.tt1')
+
+        # .model.tt1 report
+        model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
             'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
-        exp_alpha_stats = {'npts': [True, 6400],
-            'npts_unmasked': [True, 2009.0],
+        exp_model1_stats = {'npts': [True, 6400],
+            'npts_unmasked': [True, 6400.0],
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 55.2813644409],
-            'max_val_pos': [True, [28, 15, 0, 0]],
-            'min_val': [False, -55.0754890442],
-            'min_val_pos': [True, [58, 63, 0, 0]],
-            'im_rms': [False, 16.165969128],
-            'im_sum': [False, 19177.0033636],
-            'regn_sum': [False, 2.50601291656],
-            'mask_non0': [True, 1816],
+            'max_val': [False, 0.0282121878117],
+            'max_val_pos': [True, [40, 40, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.000369540677759],
+            'im_sum': [False, 0.0370472576469],
+            'regn_sum': [False, 0.0370472576469],
+            'mask_non0': [True, 0],
             'npts_real': [True, 6400]}
 
-        report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
-            '.alpha')
+        report11 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
+            '.model.tt0')
 
-        # .alpha.error report
-        error_stats_dict = self.image_stats(img+'.alpha.error', fit_region = \
-            'ellipse[[209.02974119deg, 5.25476301deg], [2.7621arcsec, 1.8750arcsec], 90.00000000deg]')
+        # .sumwt.tt1 report
+        sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
 
-        exp_error_stats = {'npts': [True, 6400],
-            'npts_unmasked': [True, 2009.0],
+        exp_sumwt1_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
             'freq_bin': [True, 15849921197.895538],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 78.1796569824],
-            'max_val_pos': [True, [28, 15, 0, 0]],
-            'min_val': [False, 0.0372391715646],
-            'min_val_pos': [True, [20, 3, 0, 0]],
-            'im_rms': [False, 22.7563186515],
-            'im_sum': [False, 35943.3947913],
-            'regn_sum': [False, 0.745403200388],
-            'npts_real': [True, 6400]}
+            'max_val': [False, -103907.34375],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, -103907.34375],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 103907.345804],
+            'npts_real': [True, 1]}
 
-        report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
-            '.alpha.error')
-
+        report12 = self.stats_compare(exp_sumwt1_stats, sumwt1_stats_dict, \
+            '.sumwt.tt1')
+        
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8 + report9 + report10
+            report6 + report7 + report8 + report9 + report10 + report11 + report12
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -1343,6 +1391,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Test")
     def test_standard_cube_eph(self):
         ''' Single field multi-EB ephemeris cube imaging - field 21PGiacobini-Zinner, spw 20 '''
 
@@ -1470,7 +1519,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, 0.20036059618],
-            'min_val_pos': [True, [20, 15, 0, 891]],
+            # 'min_val_pos': [True, [20, 15, 0, 891]],
             'im_rms': [False, 0.57684102],
             'npts_0.2_0': [True, 3233],
             'npts_0.5_0': [True, 1549],
@@ -1744,7 +1793,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
-            'min_val_pos': [True, [114, 25, 0, 0]],
+            # 'min_val_pos': [True, [114, 25, 0, 0]],
             'im_rms': [False, 0.569403001285],
             'npts_0.2': [True, 47329],
             'npts_0.5': [True, 22365],
@@ -2003,7 +2052,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
-            'min_val_pos': [True, [114, 25, 0, 0]],
+            # 'min_val_pos': [True, [114, 25, 0, 0]],
             'im_rms': [False, 0.569403001285],
             'npts_0.2': [True, 47329],
             'npts_0.5': [True, 22365],
@@ -2111,58 +2160,105 @@ class Test_standard(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt')
 
-        # .alpha report
-        alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse [[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
+        # .image.tt1 report
+        im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
-        exp_alpha_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 29656.0],
+        exp_im1_stats = {'com_bmaj': [False, 0.875946879387],
+            'com_bmin': [False, 0.673672378063],
+            'com_pa': [False, 88.5368652344],
+            'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 93.7298202515],
-            'max_val_pos': [True, [245, 3, 0, 0]],
-            'min_val': [False, -90.3992004395],
-            'min_val_pos': [True, [42, 48, 0, 0]],
-            'im_rms': [False, 15.9100777789],
-            'im_sum': [False, -60401.9121475],
-            'regn_sum': [False, 2535.505823],
-            'mask_non0': [True, 29656],
+            'max_val': [False, 13.6926994324],
+            'max_val_pos': [True, [213, 77, 0, 0]],
+            'min_val': [False, -9.34282302856],
+            'min_val_pos': [True, [190, 160, 0, 0]],
+            'im_rms': [False, 2.9229102716],
+            'im_sum': [False, 8106.40348176],
+            'regn_sum': [False, -3094.95175185],
             'npts_real': [True, 82944]}
 
-        report9 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
-            '.alpha')
+        report9 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
 
-        # .alpha.error report
-        error_stats_dict = self.image_stats(img+'.alpha.error', fit_region = \
-            'ellipse [[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+        # .residual.tt1 report
+        resid1_stats_dict = self.image_stats(img+'.residual.tt1', \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
-        exp_error_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 29656.0],
+        exp_resid1_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
             'freq_bin': [True, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 132.553985596],
-            'max_val_pos': [True, [245, 3, 0, 0]],
-            'min_val': [False, 0.0016036973102],
-            'min_val_pos': [True, [2, 146, 0, 0]],
-            'im_rms': [False, 22.5002473865],
-            'im_sum': [False, 472110.530338],
-            'regn_sum': [False, 179381.029198],
+            'max_val': [False, 0.0125599103048],
+            'max_val_pos': [True, [162, 91, 0, 0]],
+            'min_val': [False, -0.0108835268766],
+            'min_val_pos': [True, [150, 51, 0, 0]],
+            'im_rms': [False, 0.00403524922747],
+            'im_sum': [False, -4.25091994218],
+            'regn_sum': [False, 24.7472725619],
             'npts_real': [True, 82944]}
 
-        report10 = self.stats_compare(exp_error_stats, error_stats_dict, \
-            '.alpha.error')
+        report10 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
+            '.residual.tt1')
+
+        # .model.tt1 report
+        model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
+
+        exp_model1_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report11 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
+            '.model.tt0')
+
+        # .sumwt.tt1 report
+        sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
+
+        exp_sumwt1_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 192323.671875],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 192323.671875],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 192323.673842],
+            'npts_real': [True, 1]}
+
+        report12 = self.stats_compare(exp_sumwt1_stats, sumwt1_stats_dict, \
+            '.sumwt.tt1')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8 + report9 + report10
+            report6 + report7 + report8 + report9 + report10 + report11 + report12
 
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
@@ -2186,6 +2282,7 @@ class Test_standard(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Test")
     def test_standard_cal(self):
         ''' Calibrator image - field J2258-2758, spw 22 '''
 
@@ -2307,7 +2404,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [45, 45, 0, 0]],
             'min_val': [False, 0.200092822313],
-            'min_val_pos': [True, [36, 6, 0, 0]],
+            # 'min_val_pos': [True, [36, 6, 0, 0]],
             'im_rms': [False, 0.577170049921],
             'npts_0.2': [True, 5041],
             'npts_0.5': [True, 2409],
@@ -2628,7 +2725,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [54, 54, 0, 0]],
             'min_val': [False, 0.200100466609],
-            'min_val_pos': [True, [98, 64, 0, 339]],
+            # 'min_val_pos': [True, [98, 64, 0, 339]],
             'im_rms': [False, 0.615051728939],
             'npts_0.2_0': [True, 6571],
             'npts_0.5_0': [True, 3593],
@@ -2763,7 +2860,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.393758654594],
             'max_val_pos': [True, [54, 54, 0, 0]],
             'min_val': [False, 7.45326979086e-05],
-            'min_val_pos': [True, [97, 107, 0, 170]],
+            # 'min_val_pos': [True, [97, 107, 0, 170]],
             'im_rms': [False, 0.140904168376],
             'im_sum': [False, 506828.976527],
             'npts_0.2': [True, 3338068],
@@ -2801,6 +2898,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
+    @unittest.skip("Test")
     def test_mosaic_mfs(self):
         ''' Mosaic MFS imaging field NGC5363, spw 16 & 22 '''
 
@@ -2935,7 +3033,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 0.200080364943],
-            'min_val_pos': [True, [102, 28, 0, 0]],
+            # 'min_val_pos': [True, [102, 28, 0, 0]],
             'im_rms': [False, 0.604913988836],
             'npts_0.2': [True, 8454],
             'npts_0.5': [True, 4497],
@@ -3059,7 +3157,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 4.20771575591e-05],
-            'min_val_pos': [True, [1, 24, 0, 0]],
+            # 'min_val_pos': [True, [1, 24, 0, 0]],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
             'npts_0.2': [True, 8454],
@@ -3095,7 +3193,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Parallel/Serial variances")
+    @unittest.skip("Test")
     def test_mosaic_mtmfs(self):
         ''' Mosaic mtmfs imaging - field NGC5363, spw 16 & 22 '''
 
@@ -3230,7 +3328,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 0.200080364943],
-            'min_val_pos': [True, [102, 28, 0, 0]],
+            # 'min_val_pos': [True, [102, 28, 0, 0]],
             'im_rms': [False, 0.604913988836],
             'npts_0.2': [True, 8454],
             'npts_0.5': [True, 4497],
@@ -3353,7 +3451,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 4.20771575591e-05],
-            'min_val_pos': [True, [1, 24, 0, 0]],
+            # 'min_val_pos': [True, [1, 24, 0, 0]],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
             'npts_0.2': [True, 8454],
@@ -3363,58 +3461,114 @@ class Test_mosaic(test_tclean_base):
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0')
 
-        # .alpha report
-        alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
+        # .image.tt1 report
+        im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
+            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', \
+            field_regions = \
+            ['circle[[13:56:07.210000, +05.15.17.20000], 45.9arcsec]',
+             'circle[[13:56:06.355525, +05.15.59.74129], 45.9arcsec]',
+             'circle[[13:56:04.316267, +05.15.27.41716], 45.9arcsec]',
+             'circle[[13:56:09.249291, +05.15.49.52355], 45.9arcsec]',
+             'circle[[13:56:05.170768, +05.14.44.87604], 45.9arcsec]',
+             'circle[[13:56:10.103706, +05.15.06.98201], 45.9arcsec]',
+             'circle[[13:56:08.064442, +05.14.34.65864], 45.9arcsec]'])
 
-        exp_alpha_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 1628.0],
+        exp_im1_stats = {'com_bmaj': [False, 17.6737785339],
+            'com_bmin': [False, 10.060172081],
+            'com_pa': [False, 86.6785964966],
+            'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 39.2035827637],
-            'max_val_pos': [True, [52, 71, 0, 0]],
-            'min_val': [False, -34.6691818237],
-            'min_val_pos': [True, [82, 85, 0, 0]],
-            'im_rms': [False, 11.2641311632],
-            'im_sum': [False, 8782.46312377],
-            'regn_sum': [False, -46.7235065232],
-            'mask_non0': [True, 1481],
-            'npts_real': [True, 15876]}
+            'max_val': [False, 0.0410945117474],
+            'max_val_pos': [True, [53, 72, 0, 0]],
+            'min_val': [False, -0.0436826199293],
+            'min_val_pos': [True, [70, 97, 0, 0]],
+            'im_rms': [False, 0.0119215006547],
+            'im_sum': [False, -0.99675725757],
+            'regn_sum': [False, 0.144841228408],
+            'npts_real': [True, 15876],
+            'rms_per_field': [False, [0.0118926721315, 0.0131530097001, 0.0123432407276, 0.0117928565232, 0.0110465636431, 0.0122420920176, 0.012233014507]]}
 
-        report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
-            '.alpha')
+        report10 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
 
-        # .alpha.error report
-        error_stats_dict = self.image_stats(img+'.alpha.error', fit_region = \
+        # .residual.tt1 report
+        resid1_stats_dict = self.image_stats(img+'.residual.tt1', \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]')
 
-        exp_error_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 1628.0],
+        exp_resid1_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 8454.0],
             'freq_bin': [True, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'max_val': [False, 55.4204788208],
-            'max_val_pos': [True, [52, 71, 0, 0]],
-            'min_val': [False, 0.0116222631186],
-            'min_val_pos': [True, [15, 49, 0, 0]],
-            'im_rms': [False, 15.8834614404],
-            'im_sum': [False, 19545.8077074],
-            'regn_sum': [False, 289.468003012],
+            'max_val': [False, 0.000123286881717],
+            'max_val_pos': [True, [51, 71, 0, 0]],
+            'min_val': [False, -0.000183079260751],
+            'min_val_pos': [True, [61, 63, 0, 0]],
+            'im_rms': [False, 4.57978644843e-05],
+            'im_sum': [False, -0.00662636467916],
+            'regn_sum': [False, -0.0077922191209],
             'npts_real': [True, 15876]}
 
-        report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
-            '.alpha.error')
+        report11 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
+            '.residual.tt1')
+
+        # .model.tt1 report
+        model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
+            'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
+
+        exp_model1_stats = {'npts': [True, 15876],
+            'npts_unmasked': [True, 15876.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, -0.00433648051694],
+            'min_val_pos': [True, [63, 63, 0, 0]],
+            'im_rms': [False, 3.44165120392e-05],
+            'im_sum': [False, -0.00433648051694],
+            'regn_sum': [False, -0.00433648051694],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 15876]}
+
+        report12 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
+            '.model.tt0')
+
+        # .sumwt.tt1 report
+        sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
+
+        exp_sumwt1_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 15849925874.83342],
+            'start': [True, 1.0784e+11],
+            'end': [True, 1.0784e+11],
+            'start_delta': [False, 1.0784e+11],
+            'end_delta': [False, 1.0784e+11],
+            'nchan': [True, 1],
+            'max_val': [False, -123654.40625],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, -123654.40625],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 123654.40631],
+            'npts_real': [True, 1]}
+
+        report13 = self.stats_compare(exp_sumwt1_stats, sumwt1_stats_dict, \
+            '.sumwt.tt1')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8 + report9 + report10 + report11
+            report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
 
         add_to_dict(self, output = test_dict, dataset = \
@@ -3438,7 +3592,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_cube_eph(self):
         ''' Mosaic ephemeris cube imaging - field Venus, spw 45 '''
 
@@ -3569,7 +3723,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.200000017881],
-            'min_val_pos': [True, [88, 106, 0, 596]],
+            # 'min_val_pos': [True, [88, 106, 0, 596]],
             'im_rms': [False, 0.638163448188254],
             'npts_0.2_0': [True, 110768],
             'npts_0.5_0': [True, 63987],
@@ -3704,7 +3858,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.3178490698337555],
             'max_val_pos': [True, [240, 210, 0, 9]],
             'min_val': [False, 6.582064816029742e-05],
-            'min_val_pos': [True, [0, 71, 0, 947]],
+            # 'min_val_pos': [True, [0, 71, 0, 947]],
             'im_rms': [False, 0.119822765111],
             'im_sum': [False, 13818688.5072],
             'npts_0.2': [True, 104998085],
@@ -3743,7 +3897,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mfs_eph(self):
         ''' Mosaic ephemeris mfs imaging - field Venus, spw 25 & 45 '''
 
@@ -3876,7 +4030,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.20000052452087402],
-            'min_val_pos': [True, [426, 253, 0, 0]],
+            # 'min_val_pos': [True, [426, 253, 0, 0]],
             'im_rms': [False, 0.6312907916397755],
             'npts_0.2': [True, 113589],
             'npts_0.5': [True, 64574],
@@ -3999,7 +4153,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.3335382044315338],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 9.392295760335401e-05],
-            'min_val_pos': [True, [0, 70, 0, 0]],
+            # 'min_val_pos': [True, [0, 70, 0, 0]],
             'im_rms': [False, 0.12506836881],
             'im_sum': [False, 15366.9703442],
             'npts_0.2': [True, 113589],
@@ -4035,7 +4189,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mtmfs_eph(self):
         ''' Mosaic ephemeris mtmfs imaging - field Venus, spw 25 & 45 '''
 
@@ -4169,7 +4323,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.20000052452087402],
-            'min_val_pos': [True, [426, 253, 0, 0]],
+            # 'min_val_pos': [True, [426, 253, 0, 0]],
             'im_rms': [False, 0.6312907916397755],
             'npts_0.2': [True, 113589],
             'npts_0.5': [True, 64574],
@@ -4292,7 +4446,7 @@ class Test_mosaic(test_tclean_base):
             'max_val': [False, 0.3335382044315338],
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 9.392295760335401e-05],
-            'min_val_pos': [True, [0, 70, 0, 0]],
+            # 'min_val_pos': [True, [0, 70, 0, 0]],
             'im_rms': [False, 0.12506831619046738],
             'im_sum': [False, 15366.970359400737],
             'npts_0.2': [True, 113589],
@@ -4302,58 +4456,114 @@ class Test_mosaic(test_tclean_base):
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0')
 
-        # .alpha report
-        alpha_stats_dict = self.image_stats(img+'.alpha', fit_region = \
-            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
+        # .image.tt1 report
+        im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
+            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', \
+            field_regions = \
+            ['circle[[15:57:28.454567, -16.57.49.11051], 11.5arcsec]',
+             'circle[[15:57:28.112222, -16.57.59.87434], 11.5arcsec]',
+             'circle[[15:57:29.051302, -16.58.00.17973], 11.5arcsec]',
+             'circle[[15:57:27.877217, -16.57.49.98258], 11.5arcsec]',
+             'circle[[15:57:29.755349, -16.57.50.59334], 11.5arcsec]',
+             'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
+             'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
-        exp_alpha_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 49207.0],
+        exp_im1_stats = {'com_bmaj': [False, 0.914250373840332],
+            'com_bmin': [False, 0.708504319190979],
+            'com_pa': [False, -89.3270263671875],
+            'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
             'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 65.00823211669922],
-            'max_val_pos': [True, [201, 237, 0, 0]],
-            'min_val': [False, -55.99877166748047],
-            'min_val_pos': [True, [232, 170, 0, 0]],
-            'im_rms': [False, 9.27355715823191],
-            'im_sum': [False, 39123.43190668049],
-            'regn_sum': [False, 26540.856317418948],
-            'mask_non0': [True, 49207],
-            'npts_real': [True, 201600]}
+            'max_val': [False, 14.496827125549316],
+            'max_val_pos': [True, [202, 238, 0, 0]],
+            'min_val': [False, -15.082664489746094],
+            'min_val_pos': [True, [225, 203, 0, 0]],
+            'im_rms': [False, 3.6352690257406723],
+            'im_sum': [False, 14670.480392508209],
+            'regn_sum': [False, -437.08825725317],
+            'npts_real': [True, 201600],
+            'rms_per_field': [False, [4.8419718773, 3.97862920107, 3.92391811, 4.1641374813, 3.58102697509, 3.96398521308, 3.53341315536]]}
 
-        report10 = self.stats_compare(exp_alpha_stats, alpha_stats_dict, \
-            '.alpha')
+        report10 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
 
-        # .alpha.error report
-        error_stats_dict = self.image_stats(img+'.alpha.error', fit_region = \
+        # .residual.tt1 report
+        resid1_stats_dict = self.image_stats(img+'.residual.tt1', \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
-        exp_error_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 49207.0],
+        exp_resid1_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 113589.0],
             'freq_bin': [True, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
             'start_delta': [False, 2.53574e+11],
             'end_delta': [False, 2.53574e+11],
             'nchan': [True, 1],
-            'max_val': [False, 91.9355239868164],
-            'max_val_pos': [True, [201, 237, 0, 0]],
-            'min_val': [False, 0.0002615251869428903],
-            'min_val_pos': [True, [232, 153, 0, 0]],
-            'im_rms': [False, 13.114790081803282],
-            'im_sum': [False, 463815.73462760146],
-            'regn_sum': [False, 90791.376510456],
+            'max_val': [False, 0.018855653703212738],
+            'max_val_pos': [True, [302, 155, 0, 0]],
+            'min_val': [False, -0.023053178563714027],
+            'min_val_pos': [True, [225, 203, 0, 0]],
+            'im_rms': [False, 0.006006708967196801],
+            'im_sum': [False, 47.65366425671894],
+            'regn_sum': [False, 7.861296703074515],
             'npts_real': [True, 201600]}
 
-        report11 = self.stats_compare(exp_error_stats, error_stats_dict, \
-            '.alpha.error')
+        report11 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
+            '.residual.tt1')
+
+        # .model.tt1 report
+        model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
+            'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
+
+        exp_model1_stats = {'npts': [True, 201600],
+            'npts_unmasked': [True, 201600.0],
+            'freq_bin': [True, 16762504556.453674],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 201600]}
+
+        report12 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
+            '.model.tt0')
+
+        # .sumwt.tt1 report
+        sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
+
+        exp_sumwt1_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [True, 16762504556.453674],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 213949.859375],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 213949.859375],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 213949.85580738305],
+            'npts_real': [True, 1]}
+
+        report13 = self.stats_compare(exp_sumwt1_stats, sumwt1_stats_dict, \
+            '.sumwt.tt1')
 
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
-            report6 + report7 + report8 + report9 + report10 + report11
+            report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
         add_to_dict(self, output=test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
