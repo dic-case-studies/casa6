@@ -27,7 +27,7 @@
 #ifndef TBBROWSER_H_
 #define TBBROWSER_H_
 
-#include <casaqt/QtBrowser/TBBrowser.ui.h>
+#include "ui/ui_TBBrowser.h"
 #include <casaqt/QtBrowser/TBAction.h>
 
 #include <QtGui>

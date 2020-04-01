@@ -36,7 +36,7 @@
 //#dk Be careful to put *.ui.h within X_enter/exit bracket too,
 //#   because they'll have Qt includes.
 //#   E.g. <QApplication> needs the X11 definition of 'Display'
-#  include <display/QtViewer/QtDataOptionsPanel.ui.h>
+#  include <ui/ui_QtDataOptionsPanel.h>
 #include <graphics/X11/X_exit.h>
 
 

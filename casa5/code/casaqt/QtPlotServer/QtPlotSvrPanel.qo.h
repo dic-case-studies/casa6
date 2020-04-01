@@ -32,9 +32,9 @@
 #include <QMainWindow>
 #include <QStringList>
 #include <QColor>
-#include <qwt_global.h>
-#include <qwt_plot_curve.h>
-#include <qwt_color_map.h>
+#include <qwt/qwt_global.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_color_map.h>
 #include <casaqt/QwtConfig.h>
 #include <casaqt/QtUtilities/QtId.h>
 #include <casaqt/QtUtilities/QtPanelBase.qo.h>
