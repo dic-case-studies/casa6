@@ -50,15 +50,6 @@
 # Test the imcollapse task and the ia.collapse() method upon which it is built.
 # </synopsis> 
 #
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_imcollapse[test1,test2,...]
-#
-# </example>
-#
 # <motivation>
 # To provide a test standard for the imcollapse task to ensure
 # coding changes do not break the associated bits 
@@ -72,15 +63,25 @@ import numpy
 import os
 from math import sqrt
 
-from casatools import image as iatool
-from casatools import regionmanager
-from casatools import table
-from casatools import quanta
-from casatools import ctsys
+try:
+    from casatools import image as iatool
+    from casatools import regionmanager
+    from casatools import table
+    from casatools import quanta
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
-datapath='regression/unittest/imcollapse/'
+datapath = ctsys_resolve('regression/unittest/imcollapse/')
 
 def run_collapse(
     imagename, function, axes, outfile, region, box, chans,
@@ -102,7 +103,8 @@ class ia_collapse_test(unittest.TestCase):
     def setUp(self):
         self.rg = regionmanager( )
         self.qa = quanta( )
-        shutil.copy(ctsys.resolve(datapath + good_image), good_image)
+#        shutil.copy(ctsys.resolve(datapath + good_image), good_image)
+        shutil.copy(datapath + good_image, good_image)
         self.tabular_spectral_image = datapath + "longZax"
 
     def tearDown(self):
@@ -178,7 +180,7 @@ class ia_collapse_test(unittest.TestCase):
     def test_1(self):
         """ia.collapse(): average full image collapse along axis 0"""
         expected = "collapse_avg_0.fits"
-        shutil.copy(ctsys.resolve(datapath + expected), expected)
+        shutil.copy(datapath + expected, expected)
         for axis in (0 ,"r", "right"):
             outname = "test_1_" + str(axis) + ".im"
             mytool = run_collapse(
@@ -192,7 +194,7 @@ class ia_collapse_test(unittest.TestCase):
     def test_2(self):
         """ia.collapse(): average full image collapse along axis 2"""
         expected = "collapse_avg_2.fits"
-        shutil.copy(ctsys.resolve(datapath + expected), expected)
+        shutil.copy(datapath + expected, expected)
         for axis in (2, "f", "freq"):
             outname = "test_2_" + str(axis) + ".im"
             mytool = run_collapse(
@@ -206,7 +208,7 @@ class ia_collapse_test(unittest.TestCase):
     def test_3(self):
         """ia.collapse(): average full image collapse along axis 2 and check output overwritability"""
         expected = "collapse_sum_1.fits"
-        shutil.copy(ctsys.resolve(datapath + expected), expected)
+        shutil.copy(datapath + expected, expected)
         box = "1,1,2,2"
         chans = "1~2"
         stokes = "qu"
@@ -235,7 +237,7 @@ class ia_collapse_test(unittest.TestCase):
     def test_4(self):
         """ia.collapse(): not specifying an output image is ok"""
         expected = "collapse_avg_2.fits"
-        shutil.copy(ctsys.resolve(datapath + expected), expected)
+        shutil.copy(datapath + expected, expected)
         mytool = run_collapse(
             good_image, "mean", 2, "", "", "",
             "", "", "", False
@@ -256,7 +258,7 @@ class ia_collapse_test(unittest.TestCase):
     def test_7(self):
         """ia.collapse(): verify collapsing along multiple axes works"""
         expected = "collapse_avg_0_1.fits"
-        shutil.copy(ctsys.resolve(datapath + expected), expected)
+        shutil.copy(datapath + expected, expected)
         for axes in ([0, 1], ["r", "d"], ["right", "dec"]):
             mytool = run_collapse(
                 good_image, "mean", axes, "", "", "",
