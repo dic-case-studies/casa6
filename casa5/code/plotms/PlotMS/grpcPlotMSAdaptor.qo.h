@@ -65,6 +65,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         ::grpc::Status getPlotMSPid( ::grpc::ServerContext *context,
                                      const ::google::protobuf::Empty*,
                                      ::rpc::plotms::Pid *reply );
+        ::grpc::Status getNumPlots( ::grpc::ServerContext *context,
+                                     const ::google::protobuf::Empty*,
+                                     ::rpc::plotms::NumPlots *reply );
         ::grpc::Status setShowGui( ::grpc::ServerContext *context,
                                    const ::rpc::plotms::Toggle *req,
                                    ::google::protobuf::Empty* );

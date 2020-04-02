@@ -249,6 +249,20 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    ::grpc::Status grpcPlotMS::getNumPlots( ::grpc::ServerContext *context,
+                                             const ::google::protobuf::Empty*,
+                                             ::rpc::plotms::NumPlots *reply ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cout << "received getNumPlots( ) event... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stdout);
+        }
+        reply->set_nplots(itsPlotms_->getPlotManager().numPlots());
+        return grpc::Status::OK;
+    }
+
+    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     ::grpc::Status grpcPlotMS::setShowGui( ::grpc::ServerContext *context,
                                            const ::rpc::plotms::Toggle *req,
                                            ::google::protobuf::Empty* ) {

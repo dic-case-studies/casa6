@@ -2626,9 +2626,12 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						if (yLabelRight.empty()) {
 							yLabelRight = yLabel;
 						} else if (yLabel != yLabelRightLast) {
-							// do not repeat for overplots
-							if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
-							    (yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
+							// do not repeat overlays for overplots (handled below)
+							if (!yLabel.contains("Atm") && !yLabel.contains("Tsky") && !yLabel.contains("Sideband")) {
+								yLabelRight.append( ", ");
+								yLabelRight.append(yLabel);
+							} else if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
+								(yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
 								(yLabel.contains("Sideband") && !yLabelRight.contains("Sideband"))) {
 								yLabelRight.append( ", ");
 								yLabelRight.append(yLabel);
