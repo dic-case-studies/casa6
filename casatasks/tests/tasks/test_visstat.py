@@ -1,57 +1,93 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import os
-import shutil
-import unittest
-import copy
-import numpy as np
+##########################################################################
+# test_req_task_visstat.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_visstat/about
+#
+#
+##########################################################################
 
-# get is_python3 and is_CASA6
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ctsys, table, quanta, measures
-    from casatasks import visstat, clearcal
-
-    # create local tools
-    tb = table( )
-    qa = quanta( )
-    me = measures( )
-else:
+CASA6 = False
+try:
+    import casatools
+    from casatasks import visstat
+    CASA6 = True
+    
+    tb = casatools.table()
+    qa = casatools.quanta()
+    me = casatools.measures()
+    
+except ImportError:
+    from __main__ import default
     from tasks import *
     from taskinit import *
-    from __main__ import inp
-    from __main__ import default
+import sys
+import os
+import unittest
+import copy
+import shutil
+import numpy as np
 
-    # the global tb, qa, and me tools are used
-
-# make zip and izip invocations look the same here
-if is_python3:
+if CASA6:
     loc_zip = zip
 else:
     from itertools import izip
     loc_zip = izip
-
-#     Functional tests of visstat
-
+    
+    
 epsilon = 0.0001
 
-# Path for data
-if is_CASA6:
-    datapath = ctsys.resolve('regression/unittest/visstat2')
+### Data ###
+if CASA6:
+    datapath = casatools.ctsys.resolve('visibilities/other/outlier_ut.ms/')
+    mms_data = casatools.ctsys.resolve('visibilities/other/outlier_mms.mms/')
+    selectiondata = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
+    mms_select = casatools.ctsys.resolve('visibilities/alma/uid_mms.mms')
+    singledish = casatools.ctsys.resolve('visibilities/other/analytic_spectra_tsys.ms')
+    # Data for merged test
+    merged_data_path = casatools.ctsys.resolve('regression/unittest/visstat2')
+    
 else:
-    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],"data/regression/unittest/visstat2")
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_ut.ms/'
+        mms_data = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_mms.mms/'
+        selectiondata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
+        mms_select = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid_mms.mms'
+        singledish = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
+        # Data from merged test
+        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
+        
+    else:
+        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_ut.ms/'
+        mms_data = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_mms.mms/'
+        selectiondata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
+        mms_select = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid_mms.mms'
+        singledish = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
+        # Data from merged test
+        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
+    
+axislist = ['flag', 'antenna1', 'antenna2', 'feed1', 'feed2', 'field_id', 'array_id', 'data_desc_id', 'flag_row', 'interval', 'scan', 'scan_number', 'time', 'weight_spectrum', 'amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary', 'uvrange']
+ 
+keylist = ['firstquartile', 'isMasked', 'isWeighted', 'max', 'maxDatasetIndex', 'maxIndex', 'mean', 'medabsdevmed', 'median', 'min', 'minDatasetIndex', 'minIndex', 'npts', 'rms', 'stddev', 'sum', 'sumOfWeights', 'sumsq', 'thirdquartile', 'variance']
 
-# Pick up alternative data directory to run tests on MMSs
-testmms = False
-if 'TEST_DATADIR' in os.environ:
-    DATADIR = str(os.environ.get('TEST_DATADIR'))+'/visstat2/'
-    if os.path.isdir(DATADIR):
-        testmms = True
-        datapath = DATADIR
+# NOTE: I also need to get and/or make a multimesset to test this data from. I could usr the data from listobs to do this.
 
-print('visstat tests will use data from '+datapath)
-
-if is_python3:
+if CASA6:
     ###
     ### this test uses a sort(...) "cmp" function, but python 3 uses a key function...
     ### this function from the python 3 documentation converts...
@@ -75,12 +111,17 @@ if is_python3:
                 return mycmp(self.obj, other.obj) != 0
         return K
 
-class visstat_test(unittest.TestCase):
 
-    # TODO: these setUp and tearDown look like setUpClass and tearDownClass (or there
-    # could be separate individual copies). Also, because visstat is read-only, symlinks
-    # could be enough, depending on how these tests are run (in paralllel with others).
+nostat = visstat(selectiondata)
+nostatmms = visstat(mms_select)
+
+class visstat_test(unittest.TestCase):
+     
     def setUp(self):
+        if not CASA6:
+            default(visstat)
+            
+        # Data set up from merged test
         self.msfile = "ngc5921_add_corect_model.ms"
         self.msfile2 ="OrionS_rawACSmod_calave.ms"
         self.msfile2_asap="OrionS_rawACSmod_calave.asap"
@@ -99,28 +140,31 @@ class visstat_test(unittest.TestCase):
         self.msfile13='visstat2_test10_check_on.txt'
         self.msfile14='visstat2_test10_check_off.txt'
 
-        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
-        shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2, symlinks=True)
-        shutil.copytree(os.path.join(datapath,self.msfile2_asap), self.msfile2_asap,
+        shutil.copytree(os.path.join(merged_data_path,self.msfile), self.msfile, symlinks=True)
+        shutil.copytree(os.path.join(merged_data_path,self.msfile2), self.msfile2, symlinks=True)
+        shutil.copytree(os.path.join(merged_data_path,self.msfile2_asap), self.msfile2_asap,
                         symlinks=True)
-        shutil.copytree(os.path.join(datapath,self.msfile3), self.msfile3, symlinks=True)
+        shutil.copytree(os.path.join(merged_data_path,self.msfile3), self.msfile3, symlinks=True)
         # shutil.copytree(os.path.join(datapath,self.msfile4), self.msfile4, symlinks=True)
-        shutil.copytree(os.path.join(datapath,self.msfile5), self.msfile5, symlinks=True)
+        shutil.copytree(os.path.join(merged_data_path,self.msfile5), self.msfile5, symlinks=True)
         # shutil.copytree(os.path.join(datapath,self.msfile6), self.msfile6, symlinks=True)
-        shutil.copytree(os.path.join(datapath,self.msfile_flagged_spw1),
+        shutil.copytree(os.path.join(merged_data_path,self.msfile_flagged_spw1),
                         self.msfile_flagged_spw1, symlinks=True)
-        shutil.copyfile(os.path.join(datapath,self.msfile7), self.msfile7)
-        shutil.copyfile(os.path.join(datapath,self.msfile8), self.msfile8)
-        shutil.copyfile(os.path.join(datapath,self.msfile9), self.msfile9)
-        shutil.copyfile(os.path.join(datapath,self.msfile10), self.msfile10)
-        shutil.copyfile(os.path.join(datapath,self.msfile11), self.msfile11)
-        shutil.copyfile(os.path.join(datapath,self.msfile13), self.msfile13)
-        shutil.copyfile(os.path.join(datapath,self.msfile14), self.msfile14)
-
-        if not is_CASA6:
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile7), self.msfile7)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile8), self.msfile8)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile9), self.msfile9)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile10), self.msfile10)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile11), self.msfile11)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile13), self.msfile13)
+        shutil.copyfile(os.path.join(merged_data_path,self.msfile14), self.msfile14)
+        
+        if not CASA6:
             default('visstat')
-
+            
+            
+        
     def tearDown(self):
+        # Teardown from merged test
         shutil.rmtree(self.msfile)
         shutil.rmtree(self.msfile2)
         shutil.rmtree(self.msfile2_asap)
@@ -136,15 +180,389 @@ class visstat_test(unittest.TestCase):
         os.remove(self.msfile11)
         os.remove(self.msfile13)
         os.remove(self.msfile14)
+   
+   
+    def test_axis(self):
+        '''
+            test_axis
+            ------------------------------
+            
+            Test the axis parameter values.
+            visstat should return a dict and the keys should match the provided key list.
+            
+            This test iterates over all the possible axis values
+        '''
+        for axis in axislist:
 
+            axisstat = visstat(datapath, axis=axis)
+            axismms = visstat(mms_data, axis=axis)
+            
+            self.assertTrue( type(axisstat) == type(dict()), msg='output is not a dict for axis {}'.format(axis) )
+            self.assertTrue( type(axismms) == type(dict()), msg='output is not a dict for axis {} on mms'.format(axis) )
+        
+            self.assertTrue(sorted(list(axisstat[list(axisstat.keys())[0]].keys())) == keylist, msg='keys do not match the key list for axis {}'.format(axis))
+            self.assertTrue(sorted(list(axismms[list(axismms.keys())[0]].keys())) == keylist, msg='keys do not match the key list for axis {} for mms'.format(axis))
+    
+            
+    def test_reportingaxes(self):
+        '''
+            test_reportingaxes
+            -----------------------------
+            
+            Test the reportingaxes parameter.
+            The output should be a dict and contain all the expected keys.
+            
+            Iterate over all the possible values.
+        '''
+        
+        for axes in ['ddid', 'field', 'integration']:
+            
+            reportstat = visstat(datapath, reportingaxes=axes)
+            reportmms = visstat(mms_data, reportingaxes=axes)
+            
+            self.assertTrue( type(reportstat) == type(dict()) )
+            self.assertTrue( type(reportmms) == type(dict()) )
+            
+            self.assertTrue(sorted(list(reportstat[list(reportstat.keys())[0]].keys())) == keylist)
+            self.assertTrue(sorted(list(reportmms[list(reportmms.keys())[0]].keys())) == keylist)
+            
+    def test_useflags(self):
+        '''
+            test_useflags
+            ----------------------
+            
+            Check that the useflags parameter produces different results then when useflags = False.
+        '''
+        
+        withflags = visstat(datapath, useflags=True)
+        withoutflags = visstat(datapath, useflags = False)
+        
+        flagsmms = visstat(mms_select, useflags=False)
+        noflagmms = visstat(mms_select, useflags=True)
+        
+        self.assertTrue(withflags != withoutflags)
+        self.assertTrue(flagsmms != noflagmms)
+        
+    def test_datacolumn(self):
+        '''
+            test_datacolumn
+            ----------------------------
+            
+            Check the data column parameter.
+            
+            Iterate over possible data column inputs and check that a dictionary is created by visstat
+            also check that all the keys that should be present are there.
+            
+            (This last step may not be nessisary for this test)
+        '''
+        
+        for col in [ 'data', 'corrected', 'model' ]:
+            colstat = visstat(datapath, datacolumn=col)
+            colmms = visstat(mms_data, datacolumn=col)
+            
+            self.assertTrue( type(colstat) == type(dict()), msg = 'Fails for column: {}'.format(col) )
+            self.assertTrue( type(colmms) == type(dict()), msg = 'Fails for column: {} on mms'.format(col) )
+            
+            self.assertTrue(sorted(list(colstat[list(colstat.keys())[0]].keys())) == keylist, msg = 'Fails for column: {}'.format(col))
+            self.assertTrue(sorted(list(colmms[list(colmms.keys())[0]].keys())) == keylist, msg = 'Fails for column: {} on mms'.format(col))
+            
+        floatstat = visstat(singledish, datacolumn='float_data')
+        self.assertTrue( type(floatstat) == type(dict()) )
+            
+    def test_spw(self):
+        '''
+            test_spw
+            ---------------
+            
+            Test the spectral window selection parameter.
+            
+            Assert that a selection using the spw parameter returns a different result than no selection.
+        '''
+        
+        spwstat = visstat(selectiondata, spw='0')
+        
+        spwmms = visstat(mms_select, spw='0')
+        
+        self.assertTrue(spwstat != nostat)
+        self.assertTrue(spwmms != nostatmms)
+        
+    def test_field(self):
+        '''
+            test_field
+            --------------
+            
+            Test the field selection parameter.
+            
+            Assert that a selection using the field parameter returns a different result than no selection.
+        '''
+        
+        fieldstat = visstat(selectiondata, field='0')
+        
+        fieldmms = visstat(mms_select, field='0')
+        
+        self.assertTrue( fieldstat != nostat )
+        self.assertTrue( fieldmms != nostatmms )
+        
+    def test_selectdata(self):
+        '''
+            test_selectdata
+            -----------------------
+            
+            Test the selectdata parameter
+            
+            Assert that the select data parameter prevents other selection fields from having an affect
+            
+            Assert that with selectdata=False and an active selection produces the same results as the task with no selection
+        '''
+        
+        selectstat = visstat(selectiondata, selectdata=False, antenna='DV01')
+        
+        selectmms = visstat(mms_select, selectdata=False, antenna='DV01')
+        
+        self.assertTrue( selectstat == nostat )
+        self.assertTrue( selectmms == nostatmms )
+        
+    def test_antenna(self):
+        '''
+            test_antenna
+            ---------------------------
+            
+            Test the antenna selection parameter
+            
+            Assert that selection with this parameter will return a different result than no selection.
+        '''
+        
+        antennastat = visstat(selectiondata, antenna='DV01')
+        
+        antennamms = visstat(mms_select, antenna='DV01')
+        
+        self.assertTrue( antennastat != nostat )
+        self.assertTrue( antennamms != nostatmms )
+        
+    def test_uvange(self):
+        '''
+            test_uvrange
+            --------------------
+            
+            Test the uvrange selection parameter
+            
+            Assert that the selection with this parameter will return a different value than no selection.
+        '''
+        
+        uvRangeStat = visstat(selectiondata, uvrange='0~10')
+        
+        uvRangemms = visstat(mms_select, uvrange='0~10')
+        
+        self.assertTrue( uvRangeStat != nostat )
+        self.assertTrue( uvRangemms != nostatmms)
+        
+    def test_timerange(self):
+        '''
+            test_timerange
+            ------------------
+            
+            Test the timerange selection parameter
+            
+            Assert that the selection with this parameter will return a different value than no selection.
+        '''
+        
+        timerangeStat = visstat(selectiondata, timerange='03:01:30~03:05:00')
+        
+        timerangemms = visstat(mms_select, timerange='03:01:30~03:05:00')
+        
+        self.assertTrue( timerangeStat != nostat )
+        self.assertTrue( timerangemms != nostatmms )
+        
+    def test_correlation(self):
+        '''
+            test_correlation
+            -------------------
+            
+            Test the correlation parameter
+            
+            Assert that the selection with this parameter will return a different value than no selection.
+        '''
+        
+        corrStat = visstat(selectiondata, correlation='XX')
+        
+        corrmms = visstat(mms_select, correlation='XX')
+        
+        self.assertTrue( corrStat != nostat )
+        self.assertTrue( corrmms != nostatmms )
+        
+    def test_scan(self):
+        '''
+            test_scan
+            ------------
+        
+            Test the scan selection parameter
+        
+            Assert that the selction with this parameter will return a different result than no selection.
+        '''
+    
+        scanStat = visstat(selectiondata, scan='1')
+        
+        scanmms = visstat(mms_select, scan='1')
+        
+        self.assertTrue( scanStat != nostat )
+        self.assertTrue( scanmms != nostatmms )
+        
+    def test_array(self):
+        '''
+            test_array
+            -------------
+            
+            Test the array selection parameter.
+            
+            Assert that checking an out of range array returns a NoneType, and valid selections retrun a dictionary
+        '''
+        if CASA6:
+            with self.assertRaises(RuntimeError):
+                arrayFail = visstat(selectiondata, array='1')
+            with self.assertRaises(RuntimeError):
+                arrayFailmms = visstat(mms_select, array='1')
+        else:
+            arrayFail = visstat(selectiondata, array='1')
+            arrayFailmms = visstat(mms_select, array='1')
+            
+            self.assertTrue( type(arrayFail) == type(None) )
+            self.assertTrue( type(arrayFailmms) == type(None) )
+        
+        arrayPass = visstat(selectiondata, array='0')
+        arrayPassmms = visstat(mms_select, array='0')
+        
+        self.assertTrue( type(arrayPass) == type(dict()) )
+        self.assertTrue( type(arrayPassmms) == type(dict()) )
+        
+    def test_observation(self):
+        '''
+            test_observation
+            -----------------------
+            
+            Test the observation selection parameter
+            
+            Assert that checking an out of range observation ID returns a NoneType, and valid selections return a dictionary
+        '''
+        if CASA6:
+            with self.assertRaises(RuntimeError):
+                observationFail = visstat(selectiondata, observation=1)
+            with self.assertRaises(RuntimeError):
+                observationFailmms = visstat(mms_select, observation=1)
+        else:
+            observationFail = visstat(selectiondata, observation=1)
+            observationFailmms = visstat(mms_select, observation=1)
+            self.assertTrue( type(observationFail) == type(None) )
+            self.assertTrue( type(observationFailmms) == type(None) )
+        
+        observationPass = visstat(selectiondata, observation=0)
+        observationPassmms = visstat(mms_select, observation=0)
+    
+        self.assertTrue( type(observationPass) == type(dict()) )
+        self.assertTrue( type(observationPassmms) == type(dict()) )
+        
+    def test_timeavg(self):
+        '''
+            test_timeaverage
+            ---------------------
+            
+            Test the timeaverage parameter
+            
+            Assert that the dict produced when timeaverage = True is different from the one produced when timeaverage=False
+        '''
+        
+        timeavgTrue = visstat(selectiondata, timeaverage=True)
+        timeavgFalse = visstat(selectiondata, timeaverage=False)
+        
+        timeavgTruemms = visstat(mms_select, timeaverage=True)
+        timeavgFalsemms = visstat(mms_select, timeaverage=False)
+        
+        self.assertTrue( timeavgFalse != timeavgTrue )
+        self.assertTrue( timeavgFalsemms != timeavgTruemms)
+        
+    def test_timebin(self):
+        '''
+            test_timebin
+            -------------------
+            
+            Test the timebin parameter
+            
+            Assert that the result when given a bin width for averaging is different than when none is given.
+        '''
+        
+        timebinSelect = visstat(selectiondata, timeaverage=True, timebin='10s')
+        
+        timebinmms = visstat(selectiondata, timeaverage=True, timebin='10s')
+        
+        self.assertTrue( timebinSelect != nostat )
+        self.assertTrue( timebinmms != nostatmms )
+        
+    def test_timespan(self):
+        '''
+            test_timespan
+            ------------------
+            
+            Test the timespan parameter
+            
+            Assert that all parameter settings give different results than the default output
+        '''
+        
+        scanSelect = visstat(selectiondata, timeaverage=True, timespan='scan')
+        stateSelect = visstat(selectiondata, timeaverage=True, timespan='state')
+        bothSelect = visstat(selectiondata, timeaverage=True, timespan='scan, state')
+        
+        scanSelectmms = visstat(mms_select, timeaverage=True, timespan='scan')
+        stateSelectmms = visstat(mms_select, timeaverage=True, timespan='state')
+        bothSelectmms = visstat(mms_select, timeaverage=True, timespan='scan, state')
+        
+        for item in [scanSelect, stateSelect, bothSelect]:
+            self.assertTrue( item != nostat )
+            
+        for item in [scanSelectmms, stateSelectmms, bothSelectmms]:
+            self.assertTrue( item != nostatmms )
+        
+    def test_maxuvwdistance(self):
+        '''
+            test_maxuvwdistance
+            -----------------------
+            
+            Test the maxuvwdistance parameter
+            
+            Assert that the output is a python dict. Once again this selection seems to not change the values that are returned
+        '''
+        
+        uvwSelect = visstat(selectiondata, timeaverage=True, maxuvwdistance=10.0)
+        
+        uvwSelectmms = visstat(mms_select, timeaverage=True, maxuvwdistance=10.0)
+        
+        self.assertTrue( uvwSelect != nostat )
+        self.assertTrue( uvwSelectmms != nostatmms )
+        
+    def test_intent(self):
+        '''
+            test_intent
+            -----------------
+            
+            Test the intent parameter
+            
+            Assert that the specified selection creates a different dict than the default values.
+        '''
+        
+        intentSelect = visstat(selectiondata, intent='CALIBRATE_AMPLI.ON_SOURCE')
+        
+        intentSelectmms = visstat(mms_select, intent='CALIBRATE_AMPLI.ON_SOURCE')
+        
+        self.assertTrue( intentSelect != nostat )
+        self.assertTrue( intentSelectmms != nostatmms )
+        
+    # The merged test cases from test_visstat begin here
+    
     def compare(self, a, b):
         for d1, d2 in loc_zip(a,b):
             if(d1.split(':')[0]==d2.split(':')[0]):
                 if(not np.allclose(np.array([float(d1.split(':')[1])]), np.array([float(d2.split(':')[1])]))):
                     raise Exception(d1.split(':')[0] + ' ' + 'values are not consistent!')
-
-
-    def test01(self):
+                    
+    def test_defaultValues(self):
         '''Visstat 01: Default values'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -207,10 +625,8 @@ class visstat_test(unittest.TestCase):
                         ( str(v2['DATA_DESC_ID=0'][e]), str(expected[self.msfile]['DATA_DESC_ID=0'][e]) )
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
-
-
-    def test02(self):
+        
+    def test_channelSelectFlags(self):
         '''Visstat 02: Check channel selections, useflags=True, reportingaxes='ddid',correlation=corr, datacolumn=data, axis=amp'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         for ch in [1, 2, 4, 7, 13, 62]:
@@ -230,10 +646,8 @@ class visstat_test(unittest.TestCase):
                      +"\nError:"+str(n_expected) + " points expected, but npts = " + str(n)
                 raise Exception(str(n_expected) + " points expected, but npts = " + str(n))
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
-
-
-    def test03(self):
+        
+    def test_datacolModel(self):
         '''Visstat 03: Default values with datacolum=model, reportingaxis=ddid'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -289,10 +703,8 @@ class visstat_test(unittest.TestCase):
                       (str(expected[self.msfile]['DATA_DESC_ID=0'][e]), str(v2['DATA_DESC_ID=0'][e]))
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
-
-
-    def test04(self):
+        
+    def test_special_cases(self):
         '''Visstat 04: Test of special cases'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -326,7 +738,7 @@ class visstat_test(unittest.TestCase):
 
 
 
-    def test05(self):
+    def test_reportAxisInt(self):
         '''Visstat 05: Test using reportingaxes=integration, datacolumn=float_data'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -362,12 +774,14 @@ class visstat_test(unittest.TestCase):
                         if num_tt==3:
                             break
 
-        f=open('visstat2_test5.txt','r').read()
+        with open('visstat2_test5.txt','r') as fout:
+            f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
+        
 
 
 
-    def test06(self):
+    def test_reportAxisField(self):
         '''Visstat 06: Test using reportingaxes=field'''
 
         datacolumn_list=['data', 'corrected', 'model']
@@ -402,8 +816,10 @@ class visstat_test(unittest.TestCase):
                                     for check in check_list:
                                         ax_amp.append(check+':'+str(v2['FIELD_ID='+ fd][check]))
 
-        f_scan=open('visstat2_test6_scan.txt','r').read()
-        f_amp=open('visstat2_test6_amp.txt','r').read()
+        with open('visstat2_test6_scan.txt','r') as fout:
+            f_scan = fout.read()
+        with open('visstat2_test6_amp.txt','r') as fout:
+            f_amp = fout.read()
 
         #check when ax=scan
         self.compare(np.array(ax_scan),np.array(f_scan[:-1].split(' ')))
@@ -412,7 +828,7 @@ class visstat_test(unittest.TestCase):
 
 
 
-    def test07(self):
+    def test_datacolCorrected(self):
         '''Visstat 07: Default values with datacolum=corrected, reportingaxis=ddid'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -474,11 +890,11 @@ class visstat_test(unittest.TestCase):
 
 
 
-    def test08(self):
+    def test_datacolMulti(self):
         '''Visstat 08: Test when using reportingaxes='integration, datacolumn=data,corrected,model'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
-        clearcal(self.msfile, addmodel=True)
+        #clearcal(self.msfile, addmodel=True)
         correlation_type=['','LL','RR']
         datacolumn_list=['data', 'corrected', 'model']
 
@@ -507,12 +923,13 @@ class visstat_test(unittest.TestCase):
                     if num_tt==10:
                         break
 
-        f=open('visstat2_test8.txt','r').read()
+        with open('visstat2_test8.txt','r') as fout:
+            f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
 
 
 
-    def test09(self):
+    def test_corrLLRR(self):
         '''Visstat 09: Test using reportingaxes=ddid, correlation=[LL,RR], datacolumn=float_data spw=[0,1,2,3]'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -546,12 +963,13 @@ class visstat_test(unittest.TestCase):
                         if num_tt==3:
                             break
 
-        f=open('visstat2_test7.txt','r').read()
+        with open('visstat2_test7.txt','r') as fout:
+            f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
 
 
 
-    def test10(self):
+    def test_intentOnOff(self):
         '''Visstat 10: Test using reportingaxes=field, datacolumn=corrected, intent=[on,off]'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -584,15 +1002,17 @@ class visstat_test(unittest.TestCase):
                             intent_on.append(check+':'+str(v2_intent_on['FIELD_ID='+ fd][check]))
                             intent_off.append(check+':'+str(v2_intent_off['FIELD_ID='+ fd][check]))
 
-        f_intent_on=open('visstat2_test10_check_on.txt','r').read()
+        with open('visstat2_test10_check_on.txt','r') as fout:
+            f_intent_on = fout.read()
         f_on_split=f_intent_on[:-1].split(' ')
         self.compare(np.array(f_on_split), np.array(intent_on))
 
-        f_intent_off=open('visstat2_test10_check_off.txt','r').read()
+        with open('visstat2_test10_check_off.txt','r') as fout:
+            f_intent_off = fout.read()
         f_off_split=f_intent_off[:-1].split(' ')
         self.compare(np.array(f_off_split), np.array(intent_off))
 
-    def test11(self):
+    def test_timeAvgWithinScans(self):
         '''Visstat 11: Test of time averaging within scans'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -617,7 +1037,7 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys: scan number, then time'''
-            if is_python3:
+            if CASA6:
                 x = scanTime(x)
                 y = scanTime(y)
                 return (x>y)-(x<y)
@@ -627,7 +1047,7 @@ class visstat_test(unittest.TestCase):
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
         v2_keys = v2.keys()
-        if is_python3:
+        if CASA6:
             v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
         else:
             v2_keys.sort(cmp=compareKeys)
@@ -660,7 +1080,7 @@ class visstat_test(unittest.TestCase):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-    def test12(self):
+    def test_timeAvgAcrossScans(self):
         '''Visstat 12: Test of time averaging across scans'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -679,7 +1099,7 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys by time'''
-            if is_python3:
+            if CASA6:
                 x = statTime(x)
                 y = statTime(y)
                 return (x>y)-(x<y)
@@ -689,7 +1109,7 @@ class visstat_test(unittest.TestCase):
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
         v2_keys = list(v2.keys())
-        if is_python3:
+        if CASA6:
             v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
         else:
             v2_keys.sort(cmp=compareKeys)
@@ -711,17 +1131,17 @@ class visstat_test(unittest.TestCase):
 
     def test_handle_all_flagged_groups(self):
         '''visstat 13: handle all-flagged sub-selections in reportingaxes, CAS-12857'''
-
+            
         # The MS used in this test is the result of flagging spw=1, as follows:
         # flagdata(vis='OrionS_rawACSmod_calave.ms', mode='manual', spw='1')
         res = visstat(vis=self.msfile_flagged_spw1, axis='amp', datacolumn='corrected',
                       useflags=True, reportingaxes='ddid')
-
+            
         # Check output dict for empty groups/sub-selection across reportingaxes (spw)
         flagged_spw = 'DATA_DESC_ID=1'
         self.assertEqual(res[flagged_spw]['npts'], 0)
         for entry in ['firstquartile', 'mean', 'medabsdevmed', 'median', 'rms', 'stddev',
-                      'sum', 'sumOfWeights', 'sumsq', 'thirdquartile', 'variance']:
+                        'sum', 'sumOfWeights', 'sumsq', 'thirdquartile', 'variance']:
             self.assertTrue(np.isnan(res[flagged_spw][entry]))
         for entry in ['isMasked', 'isWeighted']:
             self.assertEqual(res[flagged_spw][entry], False)
@@ -729,10 +1149,9 @@ class visstat_test(unittest.TestCase):
         for entry in ['DATA_DESC_ID=0', 'DATA_DESC_ID=2', 'DATA_DESC_ID=3']:
             self.assertEqual(res[entry]['npts'], 16384)
 
-
+        
 def suite():
-    return [visstat_test]
+    return[visstat_test]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
