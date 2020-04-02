@@ -453,6 +453,9 @@ def sdintimaging(
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_sdintimaging" )
         return
 
+    if(specmode=='mfs' and deconvolver!='mtmfs'):
+        casalog.post("Currently, only the multi-term MFS algorithm is supported for specmode=mfs. To make a single plane MFS image (while retaining the frequency dependence for the cube major cycle stage), please pick nterms=1 along with deconvolver=mtmfs. The scales parameter is still usable for multi-scale multi-term deconvolution","WARN","task_sdintimaging")
+        return;
 
     if specmode=='mfs' or specmode=='cont':
         if nchan>100:
