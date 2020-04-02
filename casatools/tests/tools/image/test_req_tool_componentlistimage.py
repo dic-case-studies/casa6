@@ -373,10 +373,10 @@ class componentlistimage_test(unittest.TestCase):
         infile = 'simple_cl.im'
         outfile = "akd.im"
         shutil.copytree(climage, infile)
-        self.assertTrue(myia.fromimage(outfile=outfile, infile=infile))
+        self.assertTrue(myia.fromimage(outfile=outfile, infile=climage))
         bb = myia.getchunk()
         myia.done()
-        myia.open(climage)
+        myia.open(infile)
         cc = myia.getchunk()
         myia.done()
         self.assertTrue((bb == cc).all())
