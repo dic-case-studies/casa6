@@ -31,144 +31,128 @@ else:
 '''''''''''''''''''''''''''
 sdtimeaverage begins
 '''''''''''''''''''''''''''
-# local import
 
-# MS name for basic test
-defInputMs = "sdimaging.ms"     # template MS
-defWorkMsBasic = "sdimaging-t.ms"   # testing MS (set up basic conditions)
-# testing MS (modified 'state' for TimeSpan)
+# Test-MS #
+
+# template MS (to copy from)
+defInputMs = "sdimaging.ms"
+
+# testing MS (set up basic conditions)
+defWorkMsBasic = "sdimaging-t.ms"
+
+# testing MS(2) (for 'state','scan' in TimeSpan)
 defWorkMsTimeSpan = "sdimaging-t2.ms"
 
-# MS name for 'float_data' and 'data'
-defInputMs3 = "Uranus1.cal.Ant0.spw34.ms"        # copied original.
-# testing MS (using 'data' instead of 'float_data' )
+# template-MS(3) (for 'float_data' and 'data') (to copy from)
+defInputMs3 = "Uranus1.cal.Ant0.spw34.ms"
+
+# testing MS ('float_data' is used)
 defWorkMs3NRO = "Uranus1.cal.Ant0.spw34-nobeyama.ms"
-# testing MS (using 'data' instead of 'float_data' )
+
+# testing MS ('data' is used instead of 'float_data' )
 defWorkMs3ALMA = "Uranus1.cal.Ant0.spw34-ALMA.ms"
 
-defOutputMs = "sdave.ms"         # (internal) output MS
-defPrivateMs = "sdave-*.ms"       # private  output MS form of each test
-defPrivateMsForm = 'sdave-{}-{}.ms'   # debug file format of each test
+# output MS #
 
-# Test Condition
+defOutputMs = "sdave.ms"        # (internal) output MS
+defPrivateMs = "sdave-*.ms"       # private  output MS-template for each test
+defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output form
+
+# Test Condition #
+
 numTune = 0                  # must be in {12,24,36...}  and 0(=no operation)
-nInScan = 63
-nReduce = nInScan * numTune    # nReduce MUST BE even number
-nRow = 3843 - nReduce     # Final Size
+nInScan = 63                 # number of scan (CONST)
+nReduce = nInScan * numTune  # nReduce MUST BE even number
+nRow = 3843 - nReduce        # Final Size
 
 # 'scan' and 'state' condition
-numOfState = 3                     # test-MS2 (for timespan)
-numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan) std=61
+
+numOfState = 3                    # test-MS2 (for timespan)
+numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan) usually =61
 
 # Numerical Error Limit
+
 errLimit = 5.0e-08   # numerical error Limit of ZeroSum
-errLimit2 = 2.0e-08   # numerical error Limit of Sigma and Weight
-testInterval = 1.0    # fundamental INTERVAL in TEST-MS (tunable)
+errLimit2 = 2.0e-08  # numerical error Limit of Sigma and Weight
+testInterval = 1.0   # fundamental INTERVAL in TEST-MS (tunable)
 
 ##############
 # Test Entry
-#############
+##############
 
 
 class test_sdtimeaverage(unittest.TestCase):
     def setUp(self):
         default(sdtimeaverage)
 
-        # copy from master
+        # parameter on self.
         self.inpMs = defInputMs
-        os.system(
-            'cp -RL ' +
-            os.path.join(
-                datapath,
-                self.inpMs) +
-            ' ' +
-            self.inpMs)
-
-        # output MS
-        '''  none '''
-
-        # parameters
         self.interval = testInterval
 
-        # default Args (based on R424)
+        # copy template
+        self._copy_remote_file(defInputMs, defInputMs)
+
+        # default Args (based on CASR-424)
         self.args = {'infile': defInputMs,
                      'outfile': defOutputMs,
-                     'datacolumn': 'float_data',   # revised CASR-474
+                     'datacolumn': 'float_data',
                      'timespan': 'scan'
                      }
 
         #
         # create TEST-MS only for the first time.
         #
-        filePath = os.path.join("./", defWorkMsBasic)
-        if not os.path.exists(filePath):
-            print("- TestMS.[{}] being created.".format(filePath))
+        if not self._if_exist(defWorkMsBasic):
+            print("- TestMS.[{}] being created on current dir.".format(defWorkMsBasic))
 
             # Copy template and generate Test-MS
-            os.system(
-                'cp -RL ' +
-                os.path.join(
-                    datapath,
-                    defInputMs) +
-                ' ' +
-                defWorkMsBasic)
+            self._copy_remote_file(defInputMs, defWorkMsBasic)
+
+            # Data Generation #
             self. generate_data(defWorkMsBasic, stateOption=False)
 
-        #
         # create TEST-MS only for the first time.
         #  (for TimeSpan test)
-        #
-        filePath = os.path.join("./", defWorkMsTimeSpan)
-        if not os.path.exists(filePath):
-            print("- TestMS(for TimeSpan.[{}] being created.".format(filePath))
+        if not self._if_exist(defWorkMsTimeSpan):
+            print("- TestMS(for TimeSpan.[{}] being created on current dir.".format(defWorkMsTimeSpan))
 
-            # Copy template and generate Test-MS
-            os.system(
-                'cp -RL ' +
-                os.path.join(
-                    datapath,
-                    defInputMs) +
-                ' ' +
-                defWorkMsTimeSpan)
+            # Copy template #
+            self._copy_remote_file(defInputMs, defWorkMsTimeSpan)
+
+            # Data Generation #
             self. generate_data(defWorkMsTimeSpan, stateOption=True)
 
-        #
-        # create TEST-MS only for the first time.
+        # create TEST-MS "Only for the first time".
         #  ( using 'data' column, instead of 'float_data' )
-        #  ( this MSs are check for ALMA special, in mstransform )
-        #
-        filePath = os.path.join("./", defWorkMs3NRO)
-        if not os.path.exists(filePath):
-            print(
-                "- TestMS(for data/float_data.[{}] being created.".format(filePath))
+        #  ( These MSs are to check for ALMA specific work in mstransform )
+        if not self._if_exist(defWorkMs3NRO):
+            print("- TestMS(for data/float_data.[{}] being created.".format(defWorkMs3NRO))
 
-            # Copy template and generate Test-MS
-            os.system(
-                'cp -RL ' +
-                os.path.join(
-                    datapath,
-                    defInputMs3) +
-                ' ' +
-                defWorkMs3NRO)  # ALMA
-            os.system(
-                'cp -RL ' +
-                os.path.join(
-                    datapath,
-                    defInputMs3) +
-                ' ' +
-                defWorkMs3ALMA)  # nobeyama
+            # Copy template #
+            self._copy_remote_file(defInputMs3, defWorkMs3NRO)
+            self._copy_remote_file(defInputMs3, defWorkMs3ALMA)
 
-            # No Data Generation, but set TelescopeName
+            # No Data Generation, but only set TelescopeName
             self.set_telescopename(defWorkMs3NRO, "Nobeyama")  # change name
             self.set_telescopename(defWorkMs3ALMA, "ALMAtest")  # change name
 
     def tearDown(self):
-
-        # delete copied in-MS and out-MS
         print("tearDown::deleting MSs.")
 
-        os.system('rm -rf ' + self.inpMs)
+        # delete copied in-MS and out-MS
+        os.system('rm -rf ' + defInputMs)
         os.system('rm -rf ' + defOutputMs)  # Comment out , for DEBUG ##
+
+# private function #
+    def _copy_remote_file(self, infile, outfile):
+        os.system('cp -RL ' + os.path.join(datapath, infile) + ' ' + outfile)
+
+    def _if_exist(self, msname):
+        _filePath = os.path.join("./", msname)
+        if os.path.exists(_filePath):
+            return True
+        else:
+            return False
 
 #
 # Class Method
@@ -900,7 +884,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
 
     def test_param51(self):
-        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' Column Switch.  '''
+        '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' (Column Switch)  '''
 
         prm = {'infile': defWorkMs3NRO,
                'outfile': "TEST-51.ms",
@@ -910,7 +894,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
 
     def test_param52(self):
-        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' Column Switch '''
+        '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' (Column Switch) '''
 
         prm = {'infile': defWorkMs3ALMA,
                'outfile': "TEST-52.ms",
@@ -960,7 +944,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.checkOutputRec(privateOutfile, 1)
 
 #
-# TimeSpan
+# TIMESPAN
 #
 
     def test_param70(self):
@@ -1029,6 +1013,21 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task(prm))
 
+    def test_param75(self):
+        '''sdtimeaverage::75:: timespan=""  '''
+
+        privateOutfile, timebin_str = self.setOutfile_Timebin(75, nRow + 3)
+        prm = {'infile': defWorkMsTimeSpan,
+               'timespan': '',
+               'outfile': privateOutfile}
+
+        # Run Task and check
+        self.assertTrue(self.run_task(prm))
+
+        # Averaged results
+        print( "numOfScan ={}, numOfState={}".format(numOfScan,numOfState) )
+        expected_count = numOfScan * numOfState
+        self.checkOutputRec(privateOutfile, expected_count)
 
 """
 5-Feb-2020   built a function to reduce the TEST-MS size to shorten execution of mstransform.
@@ -1037,8 +1036,9 @@ class test_sdtimeaverage(unittest.TestCase):
 23-Mar-2020  Reformed by autopep8 and manually formed some.
 30-Mar-2020  Added test-fixtures for tbin==0, and (-1)
              Added spelling correction and editorial change in comments.
-1-APR-2020   English correction of comment lines. (spelling, grammar...)
+2-APR-2020   English correction of comment lines. (spelling, grammar...)
              Revised/Corrected programme descriptions.
+2-APR-2020   Added timespan='' parameter
 """
 
 

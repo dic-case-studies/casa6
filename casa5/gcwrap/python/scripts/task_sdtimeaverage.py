@@ -41,6 +41,9 @@ def sdtimeaverage(
                          "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
 
+    # (Note) When timespan='' is specified.
+    #  timespan will be directly posted to mstransform.
+
     # Convert to check timebin
     tbin = qa.convert(qa.quantity(timebin), 's')['value']
 
