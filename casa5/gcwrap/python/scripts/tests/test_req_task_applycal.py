@@ -376,9 +376,9 @@ class applycal_test(unittest.TestCase):
 
         self.assertTrue(np.isclose(datamean, 0.31622877260041754+0.049053979716640904j))
 
-    def test_callib_flag(self):
+    def test_callib_missing_antenna0(self):
         '''
-            test_callib_flag
+            test_callib_missing_antenna0
             -------------
 
             Check that a callib file is taken and the calibration tables are pre-applied
