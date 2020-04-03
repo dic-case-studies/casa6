@@ -235,7 +235,7 @@ class SIImageStore
   ///Make an existing PagedImage complex the same shape as this imagestore
   ///coordsys and shape...effectively copies intersecting region data 
   casacore::Bool intersectComplexImage(const casacore::String& inputImage);
-  
+  casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
 protected:
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > makeSubImage(const casacore::Int facet, const casacore::Int nfacets,
 						  const casacore::Int chan, const casacore::Int nchanchunks,
@@ -275,7 +275,7 @@ protected:
   casacore::Double getPbMax(casacore::Int pol, casacore::Int chan);
 
   casacore::Bool createMask(casacore::LatticeExpr<casacore::Bool> &lemask, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
-  casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
+  //casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
 
   void removeMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >im);
   void rescaleResolution(casacore::Int chan, casacore::ImageInterface<casacore::Float>& subResidual, const casacore::GaussianBeam& newbeam, const casacore::GaussianBeam& oldbeam);

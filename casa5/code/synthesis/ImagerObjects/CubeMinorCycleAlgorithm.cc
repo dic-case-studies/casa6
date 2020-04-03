@@ -35,7 +35,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-  CubeMinorCycleAlgorithm::CubeMinorCycleAlgorithm() : myName_p("CubeMinorCycleAlgorithm"), autoMaskOn_p(False),status_p(False){
+  CubeMinorCycleAlgorithm::CubeMinorCycleAlgorithm() : myName_p("CubeMinorCycleAlgorithm"), autoMaskOn_p(False),chanFlag_p(0), status_p(False){
 	
 }
 CubeMinorCycleAlgorithm::~CubeMinorCycleAlgorithm() {
@@ -66,9 +66,14 @@ void CubeMinorCycleAlgorithm::get() {
         applicator.get(pbName_p);
         //get beamsetrec #9
         //applicator.get(beamsetRec_p);
-        //get psfsidelobelev #10
+        //get psfsidelobelev #9
         applicator.get(psfSidelobeLevel_p);
-       
+        //get chanflag #10
+        Record chanflagRec;
+        applicator.get(chanflagRec);
+        chanFlag_p.resize();
+        chanflagRec.get("chanflag", chanFlag_p);
+        
 	//cerr <<"GET chanRange " << chanRange_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
@@ -80,11 +85,18 @@ void CubeMinorCycleAlgorithm::put() {
   ///# 1  chanrange processed 
   applicator.put(chanRange_p);
 	//cerr << "in put " << status_p << endl;
-  ///#2 return record of deconvolver
-  ////TESTOOO
-
+  //#2 chanflag
+  Record chanflagRec;
+  chanflagRec.define("chanflag", chanFlag_p);
+  applicator.put(chanflagRec);
+  ///#3 return record of deconvolver
   // cerr << "nfield " << returnRec_p.nfields() << endl;
-  // Array<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  SIMinorCycleController::compressSummaryMinor(returnRec_p);
+  //Matrix<Double> lala(returnRec_p.asArrayDouble("summaryminor"));
+  //cerr << "chanRange " << chanRange_p << " summaryminor " << lala.shape()   << endl;
+  //cerr << "model " << lala.row(2) << endl;
+  //cerr << "thresh " << lala.row(3) << endl;
+  //cerr << "imageid " << lala.row(5) << endl;
   // applicator.put(lala);
   //returnRec_p.removeField("summaryminor");
   ////TESTOO
@@ -112,12 +124,15 @@ void CubeMinorCycleAlgorithm::task(){
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
           subDeconv.initMinorCycle(subimstor);
           if(autoMaskOn_p){
+            subDeconv.setChanFlag(chanFlag_p);
             subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
             subDeconv.setPosMask(subimstor->tempworkimage());
             subDeconv.setAutoMask();
           }
           //subDeconv.setupMask();
           returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+          chanFlag_p.resize();
+          chanFlag_p=subDeconv.getChanFlag();
           writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
           if(autoMaskOn_p){
             writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
@@ -191,6 +206,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     if(tmpptr){  
       outptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
       outptr->copyData(*tmpptr);
+      //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
       if(tmpptr->isMasked()){
 	  outptr->makeMask ("mask0", true, true, false, true);
 	  outptr->pixelMask().put(tmpptr->getMask());
@@ -227,6 +243,7 @@ void CubeMinorCycleAlgorithm::reset(){
   beamsetRec_p=Record();
   //psfSidelobeLevel_p;
   autoMaskOn_p=False;
+  chanFlag_p.resize();
   status_p=False;
                 
 	

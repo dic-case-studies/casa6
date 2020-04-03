@@ -110,6 +110,8 @@ class SynthesisDeconvolver
   void setPosMask(std::shared_ptr<casacore::ImageInterface<casacore::Float> > posmaskim);
   ////return estimate of memory usage in kB
   casacore::Long estimateRAM(const std::vector<int>& imsize);
+  void setChanFlag(const casacore::Vector<casacore::Bool>& chanflag);
+  casacore::Vector<casacore::Bool> getChanFlag();
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );

@@ -1667,7 +1667,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         if(anyEQ(retvals, False)){
           //cerr << retvals << endl;
           throw(AipsError("One or more  of the cube section failed in de/gridding"));  
-        }      
+        }
+        if(!dopsf)
+          (itsMappers.imageStore(0))->copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
+
+        
+
+        
         }
        
 	  
