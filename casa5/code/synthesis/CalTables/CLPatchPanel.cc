@@ -1074,7 +1074,7 @@ void CLPatchPanel::recordBadMSIndices(const Vector<Int>& obs, const Vector<Int>&
 	  MSCalPatchKey ims(obs[iobs],fld[ifld],ent[ient],spw[ispw],-1);  // All ants
 	  if (badmsciname_.count(ims)<1) {
 	    badmsciname_[ims]=ims.print();
-	    cout << "   Bad MS indices: " << ims.print() << endl;
+	    //cout << "   Bad MS indices: " << ims.print() << endl;
 	  }
 	}
       }
