@@ -1186,15 +1186,17 @@ VbAvg::accumulateElementForCubes (AccumulationParameters & accumulationParameter
 										One, zeroAccumulation,
 										accumulationParameters.weightSpectrumOut ());
 		}
-		else
-		{
-			// We store the accumulated weight in sigmaSpectrumOut pending of
-			// - normalization
-			// - SIGMA = 1/sqrt(WEIGHT) in-place transformation
-			accumulateElementForCube (	& weightObserved,
-										One, zeroAccumulation,
-										accumulationParameters.sigmaSpectrumOut ());
-		}
+
+        // This will always create a sigma spectrum column which is not empty.
+        // This is useful in particular if not doing_p.correctedData_p but doing_p.modelData_p,
+        // so that modelData can be properly divided by sigmaSpectrumOut in finalizeCubeData
+        // We store the accumulated weight in sigmaSpectrumOut pending of
+        // - normalization
+        // - SIGMA = 1/sqrt(WEIGHT) in-place transformation
+        accumulateElementForCube (&weightObserved,
+                                  One, zeroAccumulation,
+                                  accumulationParameters.sigmaSpectrumOut ());
+
 	}
 
 	// For model data is less clear what to do, what in order to convert to
