@@ -508,7 +508,8 @@ class PySynthesisImager:
         # since in parallel mode, runtime setting of the enviroment variable
         # currently does not work.
         # False = disable always save intermediate images mode
-        alwaysSaveIntermediateImages=False
+        # set to True now for debugging: TT 2020.04.03 
+        alwaysSaveIntermediateImages=True 
 
         # Get iteration control parameters
         iterbotrec = self.IBtool.getminorcyclecontrols()
