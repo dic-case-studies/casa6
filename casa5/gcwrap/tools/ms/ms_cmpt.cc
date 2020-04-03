@@ -1473,6 +1473,26 @@ class StatisticsAccumulator
     const set<MSMainEnums::PredefinedColumns> &mergedColumns;
     bool hideTimeAxis;
 
+
+    static void setNaN(Record &rec) {
+        const auto nan = std::numeric_limits<double>::quiet_NaN();
+        // ensure all stats inited so far are re-set to 'nan'
+        for (uInt idx=0; idx<rec.size(); ++idx) {
+            try {
+                rec.define(idx, nan);
+            } catch(const AipsError &) {
+                // Non-numeric value. There are bool fields for example.
+            }
+        }
+        // exception: the npts
+        rec.define("npts", .0);
+        // now also set as 'nan' all the statistics explicitly added by this class
+        rec.define("median", nan);
+        rec.define("firstquartile", nan);
+        rec.define("thirdquartile", nan);
+        rec.define("medabsdevmed", nan);
+    }
+
 public:
     StatisticsAccumulator(
         Record &acc, const vector<Int> &sortColumnIds,
@@ -1495,16 +1515,23 @@ public:
                 delim = ",";
             }
         }
-        Record stats = toRecord(statistics.getStatistics());
 
-        // Compute some quantiles
-        quantileToValue.clear();
-        A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
-        stats.define("median", median);
-        stats.define("firstquartile", quantileToValue[quartile1]);
-        stats.define("thirdquartile", quantileToValue[quartile3]);
-        A medianAbsDevMed = statistics.getMedianAbsDevMed();
-        stats.define("medabsdevmed", medianAbsDevMed);
+        Record stats;
+        try {
+            stats = toRecord(statistics.getStatistics());
+
+            // Compute some quantiles
+            quantileToValue.clear();
+            A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
+            stats.define("median", median);
+            stats.define("firstquartile", quantileToValue[quartile1]);
+            stats.define("thirdquartile", quantileToValue[quartile3]);
+            A medianAbsDevMed = statistics.getMedianAbsDevMed();
+            stats.define("medabsdevmed", medianAbsDevMed);
+        } catch(const AipsError &err) {
+            // Example: one individual iterationaxis group/subsel is all-flagged (CAS-12857)
+            setNaN(stats);
+        }
 
         // Record statistics, associated with key
         acc.defineRecord(keyvals, stats);

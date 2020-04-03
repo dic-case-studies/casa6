@@ -103,7 +103,7 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
                     newmax = max(ttr[1])
                     mytb.putcell('TIME_RANGE', 0, [newmin,newmax])
                     # delete the other rows
-                    mytb.removerows(range(1,nobs))
+                    mytb.removerows(list(range(1,nobs)))
                 else:
                     casalog.post('The input files stem from different telescopes. Need to give different obs id.', 'WARN')
             mytb.close()

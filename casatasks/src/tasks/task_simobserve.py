@@ -1050,7 +1050,7 @@ def simobserve(
                                stoptimes=stoptimes,
                                project=project)
 
-            sm.setdata(fieldid=range(0,nfld))
+            sm.setdata(fieldid=list(range(0,nfld)))
             if uvmode or components_only: #Interferometer only
                 sm.setvp(dovp=True,usedefaultvp=False)
                 # only use mosaic gridding for Het arrays for now - 
