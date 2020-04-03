@@ -160,7 +160,7 @@ def drop_solution_for_antenna(caltable, antenna):
     """
     tb.open(caltable, nomodify=False)
     try:
-        tsel = tb.query(f'ANTENNA1={antenna}')
+        tsel = tb.query('ANTENNA1={}'.format(antenna))
         rows = tsel.rownumbers()
         tsel.close()
         tb.removerows(rows)
