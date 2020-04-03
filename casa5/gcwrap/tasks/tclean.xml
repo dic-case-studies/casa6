@@ -1183,6 +1183,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                         but to retain the time dependent corrections required from one timestep
                         to the next. 
 
+                        Note : The default value of this parameter is [], due a programmatic constraint.
+                                   If run with this value, it will internally pick [600,600] and exercise the
+                                   option of using large tolerances (10arcmin) on both axes. Please choose
+                                   a setting explicitly for runs that need to use this parameter. 
+
 
 </description>
       <any type="variant" limittypes="intArray doubleArray"/>
