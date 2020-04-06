@@ -25,6 +25,7 @@ try:
 except:
     import tests.testutils as testutils
 
+import restfreqtool
 from tsdimaging import tsdimaging as sdimaging
 from sdutil import tbmanager, toolmanager, table_selector
 from task_tsdimaging import image_suffix
@@ -2801,7 +2802,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
         
-    def verify_scanned_region(self, phasecenter):
+    def verify_scanned_region(self, phasecenter, **kwargs):
         _phasecenter = phasecenter.strip().upper()
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
@@ -2836,9 +2837,62 @@ class sdimaging_test_ephemeris(unittest.TestCase):
                     message = 'Data x-range(' + str(xmin) + ', ' + str(xmax) + ') outside the reference border(' + str(xmin_ref) + ', ' + str(xmax_ref) + ') at y=' + str(y)
                     self.assertTrue(inside_border, msg=message)
 
-    def execute(self, phasecenter):
-        self.run_test(phasecenter=phasecenter)
-        self.verify_scanned_region(phasecenter=phasecenter)
+    def __verify_spectral_reference(self):
+        myia = iatool()
+        imagename = self.outfile + image_suffix
+        myia.open(imagename)
+        csys = myia.coordsys()
+        try:
+            refcode = csys.referencecode('spectral')
+        finally:
+            csys.done()
+            myia.close()
+
+        self.assertEqual(len(refcode), 1) 
+        self.assertEqual(refcode[0], 'REST')
+
+    def __verify_frequency_label(self):
+        vis = self.infiles
+        imagename = self.outfile + image_suffix
+        spwid = int(self.param.get('spw', 'No spw is specified'))
+        mymsmd = msmdtool()
+        mymsmd.open(vis)
+        try:
+            fieldid = mymsmd.fieldnames().index(self.param.get('field', 'No field is specified'))
+            nchanspw = mymsmd.nchan(spwid)
+        finally:
+            mymsmd.close()
+        chanstart = self.param.get('start', None)
+        self.assertIsNotNone(chanstart)
+        nchan = self.param.get('nchan', nchanspw) * self.param.get('width', 1)
+        rtol = 0.2 # 20% tolerance w.r.t. Lorentz factor
+        metadataset = restfreqtool.get_metadataset(vis, fieldid, spwid, chanstart, nchan)
+        msrange = restfreqtool.ms_freq_range(metadataset)
+        imrange = restfreqtool.image_freq_range(imagename) 
+        lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
+        fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
+        fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
+        print('Result = {}'.format((fmin_ok is True) and (fmax_ok is True)))
+        self.assertTrue(fmin_ok)
+        self.assertTrue(fmax_ok)
+
+    def verify_spectral_axis(self, **kwargs):
+        # only perform the verification when specmode is 'cubesource'
+        if kwargs.get('specmode', '') != 'cubesource':
+            return
+
+        casalog.post('Verifying spectral axis for cubesource mode')
+
+        # make sure the spectral reference is REST
+        self.__verify_spectral_reference()
+
+        # test frequency range using restfreqtool
+        self.__verify_frequency_label()
+
+    def execute(self, phasecenter, **kwargs):
+        self.run_test(phasecenter=phasecenter, **kwargs)
+        self.verify_scanned_region(phasecenter=phasecenter, **kwargs)
+        self.verify_spectral_axis(**kwargs)
         
     def test_ephemeris_notset(self):
         self.execute('')
@@ -2851,6 +2905,9 @@ class sdimaging_test_ephemeris(unittest.TestCase):
 
     def test_ephemeris_table(self):
         self.execute(self.ephtab)
+
+    def test_ephemeris_cubesource(self):
+        self.execute(phasecenter='TRACKFIELD', specmode='cubesource')
 
     
 ###

@@ -278,6 +278,9 @@ protected:
 	// Common functionality for each visBuffer (don't repeat at the row level)
 	virtual void preProcessBuffer(const vi::VisBuffer2 &visBuffer);
 
+        // Final consolidation steps after iterating through the buffer rows
+        virtual void postProcessBuffer();
+
 	// Iterate trough list of rows
 	void iterateRows();
 

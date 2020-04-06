@@ -3,12 +3,24 @@
 import os
 import sys
 import shutil
-
 import unittest
-from casatools import ctsys, sdm, ms
+
+try:
+    from casatools import ctsys, sdm, ms
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)    
+
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
+
+datapath = ctsys_resolve('regression/')
 
 _ms = ms( )
 class exportasdm_test(unittest.TestCase):
@@ -27,24 +39,26 @@ class exportasdm_test(unittest.TestCase):
     def setUp(self):    
         self.rval = False
         if(not os.path.exists(self.vis_b)):
-            os.system('cp -R '+ctsys.resolve('regression/fits-import-export/input/test.ms')+' .')
+            os.system('cp -R '+datapath+'fits-import-export/input/test.ms'+' .')
         if(not os.path.exists(self.vis_c)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
+            os.system('cp -R '+datapath+'exportasdm/input/M100-X220-shortened.ms'+' .')
         if(not os.path.exists(self.vis_d)):
-            _ms.fromfits( self.vis_d, 'regression/ngc4826/fitsfiles/ngc4826.ll.fits5' )
+            _ms.fromfits( self.vis_d, datapath+'/ngc4826/fitsfiles/ngc4826.ll.fits5' )
             _ms.close( )
         if(not os.path.exists(self.vis_e)):
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
+            os.system('cp -R '+datapath+'cvel/input/g19_d2usb_targets_line-shortened.ms'+' .')
         if(not os.path.exists(self.vis_f)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/Itziar.ms')+' .')
+            os.system('cp -R '+datapath+'exportasdm/input/Itziar.ms'+' .')
         if(not os.path.exists(self.vis_g)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M51.ms')+' .')
-
-        #> to be factored back in when sdm.toms( ) is implemented
-        #> ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- --- ---- --- ---
-        #> if(not os.path.exists(self.vis_i)):
-        #>     os.system('ln -sf '+os.environ['CASAPATH'].split()[0]+'/data/regression/asdm-import/input/uid___A002_X72bc38_X000')
-        #>     importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
+            os.system('cp -R '+datapath+'exportasdm/input/M51.ms'+' .')
+        if(not os.path.exists(self.vis_h)):
+            os.system('ln -sf '+datapath+'unittest/importevla/X_osro_013.55979.93803716435'+' .')
+            mysdm = sdm('X_osro_013.55979.93803716435')
+            mysdm.toms('xosro2ref.ms',process_flags=False,scans='0:2',ocorr_mode='co',with_pointing_correction=True)
+        if(not os.path.exists(self.vis_i)):
+            os.system('ln -sf '+datapath+'asdm-import/input/uid___A002_X72bc38_X000'+' .')
+            mysdm = sdm('uid___A002_X72bc38_X000')
+            mysdm.toms('asdm.ms', scans='0:2')
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
@@ -121,6 +135,7 @@ class exportasdm_test(unittest.TestCase):
         os.system('cp -R ' + myvis + ' myinput.ms')
         self.rval = False
         try:
+            # this should throw an exception
             mysdm = sdm(self.out)
             mysdm.fromms( )
             exportasdm()
@@ -240,7 +255,25 @@ class exportasdm_test(unittest.TestCase):
 ##        os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
 ##        self.verify_asdm(omsname, True)
 
-    @unittest.skip("waiting for sdm.toms(...)")
+    def test11(self):
+        '''Test 11: v3, EVLA MS from X_osro_013.55979.93803716435 scan 2, full pol!'''
+        myvis = self.vis_h
+        os.system('rm -rf xosro2ref-reimp.ms xosro2asdm')
+        mysdm = sdm('xosro2asdm')
+        self.rval = mysdm.fromms(myvis,apcorrected=False,verbose=True)
+        # mirroring the sdm.toms used to create the MS that was jsut exported
+        self.rval = self.rval and mysdm.toms('xosro2ref-reimp.ms',process_flags=False,verbose=True,ocorr_mode='co',with_pointing_correction=True)
+        self.rval = self.rval and th.compmsmainnumcol(myvis, 'xosro2ref-reimp.ms', 1E-5)
+        self.rval = self.rval and th.compmsmainboolcol(myvis, 'xosro2ref-reimp.ms')
+
+        self.assertNotEqual(self.rval,False)
+        omsname = "test"+str(11)+self.out
+        os.system('rm -rf '+omsname+'; mv  xosro2asdm '+omsname)
+
+    # test12 is skipped because exportasdm does additional steps to the MS before
+    # sdm.fromms can be run on the result. That test doesn't add any additional value
+    # in this tool test and so it is skipped here.
+    @unittest.skip("This is a task test, not appropriate for the sdm tool alone.")
     def test12(self):
         '''Test 12: v3, ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
         myvis = self.vis_i

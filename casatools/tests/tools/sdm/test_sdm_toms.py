@@ -28,6 +28,9 @@ reimp_msname = 'reimported-'+myms_dataset_name
 tblocal = table()
 mslocal = ms()
 
+# imported from casatasks convertephem
+# only used in test7_lazy3 which is currently disabled because that option from asdm2MS
+# is not (yet?) available in sdm.toms
 def converttopoephem2geo(tablename='', outtablename='', overwrite=True):
     """
     converttopoephem2geo
@@ -193,23 +196,30 @@ def checktable(thename, theexpectation):
     for mycell in theexpectation:
         print("%s: comparing %s" % (myname, mycell))
         value = tblocal.getcell(mycell[0], mycell[1])
-        # see if value is array
-        try:
-            isarray = value.__len__
-        except:
-            # it's not an array
-            # zero tolerance?
-            if mycell[3] == 0:
-                in_agreement = (value == mycell[2])
-            else:
-                in_agreement = ( abs(value - mycell[2]) < mycell[3])
+        in_agreement = False
+        
+        # bool and str cases
+        if type(value) is bool or type(value) is str:
+            # must be equal
+            in_agreement = (value == mycell[2])
         else:
-            # it's an array
-            # zero tolerance?
-            if mycell[3] == 0:
-                in_agreement =  (value == mycell[2]).all()
+            # see if value is array
+            try:
+                isarray = value.__len__
+            except:
+                # it's not an array
+                # zero tolerance? also works for bool and string scalar values
+                if mycell[3] == 0:
+                    in_agreement = (value == mycell[2])
+                else:
+                    in_agreement = ( abs(value - mycell[2]) < mycell[3])
             else:
-                in_agreement = (abs(value - mycell[2]) < mycell[3]).all()
+                # it's an array
+                # zero tolerance?
+                if mycell[3] == 0:
+                    in_agreement =  (value == mycell[2]).all()
+                else:
+                    in_agreement = (abs(value - mycell[2]) < mycell[3]).all()
         if not in_agreement:
             print("%s:  Error in MS subtable %s:" % (myname, thename))
             print("     column %s row %s contains %s" % (mycell[0], mycell[1], value))
@@ -299,7 +309,6 @@ class test_base(unittest.TestCase):
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
 
-
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'
         datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
@@ -346,7 +355,6 @@ class test_base(unittest.TestCase):
                 shutil.rmtree(this_asdm_name)
             shutil.copytree(os.path.join(datapath,this_asdm_name), this_asdm_name)
 
-
 ###########################
 # beginning of actual test
 class asdm_import1(test_base):
@@ -361,7 +369,7 @@ class asdm_import1(test_base):
         shutil.rmtree(msname+'.flagversions',ignore_errors=True)
         for thisdir in ['reimported-M51.ms','reimported-M51.ms.flagversions','M51.ms.asdm','myinput.ms']:
             shutil.rmtree(thisdir,ignore_errors=True)
-                
+    
     def test1(self):
         '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -475,6 +483,18 @@ class asdm_import1(test_base):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table POINTING failed'
 
+            name = "PROCESSOR"
+            expected = [ ['FLAG_ROW',            0, False, 0],
+                         ['MODE_ID',             0, 0, 0],
+                         ['TYPE',                0, 'CORRELATOR', 0],
+                         ['TYPE_ID',             0, -1, 0],
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
+                       ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs']+'Check of table PROCESSOR failed'
+                
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
         myvis = myms_dataset_name
@@ -607,8 +627,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
 
             expected = [
     # old values using TAI     ['UVW',       638, [-65.07623467,   1.05534109, -33.65801386], 1E-8],
@@ -620,8 +638,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table MAIN failed'
-            else:
-                retValue['success']=True
 
             name = "ANTENNA"
             expected = [ ['OFFSET',       1, [ 0.,  0.,  0.], 0],
@@ -632,8 +648,6 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table ANTENNA failed'
-            else:
-                retValue['success']=True
 
             name = "POINTING"
             expected = [ ['DIRECTION',       10, [[ 1.94681283],[ 1.19702955]], 1E-8],
@@ -648,9 +662,19 @@ class asdm_import2(test_base):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table POINTING failed'
-            else:
-                retValue['success']=True
 
+            name = "PROCESSOR"
+            expected = [ ['FLAG_ROW',            0, False, 0],
+                         ['MODE_ID',             0, 0, 0],
+                         ['TYPE',                0, 'CORRELATOR', 0],
+                         ['TYPE_ID',             0, -1, 0],
+                         ['SUB_TYPE',            0, 'ALMA_BASELINE', 0]
+                       ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs']+'Check of table PROCESSOR failed'
+                
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
         myvis = myms_dataset_name
@@ -1285,7 +1309,7 @@ class asdm_import7(test_base):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-    @unittest.skip("uses stand-alone executable")
+    @unittest.skip("uses --inerpolate-ephemeris option in asdm2MS not (yet?) available in sdm.toms")
     def test7_lazy3(self):
         '''Asdm-import: Test good 12 m ASDM with Ephemeris table in lazy mode'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -1804,7 +1828,7 @@ class asdm_import7(test_base):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-    @unittest.skip("uses stand-alone executable")
+    @unittest.skip("uses --checkdupints option in asdm2MS not available in sdm.toms")
     def test7_skiprows1(self):
         '''Asdm-import: Test TP asdm, comparing output when duplicate DATA rows are skipped versus not-skipped, lazy and regular, with bdflagging on'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -2368,7 +2392,8 @@ class asdm_import8(test_base):
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
 def suite():
-    ### asdm_import4 should be resurected in the importasdm task test
+    ### asdm_import4 exists in the importasdm test, it involves flagging - which is largely
+    ### only implemented in the task, not this tool
     return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7, asdm_import8]
 
 if __name__ == '__main__':

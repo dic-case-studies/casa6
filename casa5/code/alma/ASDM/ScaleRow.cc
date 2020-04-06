@@ -286,7 +286,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Scale");
 		}
 	}
@@ -412,7 +412,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Scale");
 		}
 	}
@@ -431,7 +431,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CTimeScale::name(timeScale));
+		eoss.writeString(CTimeScale::name(timeScale));
 			/* eoss.writeInt(timeScale); */
 				
 		
@@ -441,7 +441,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDataScale::name(crossDataScale));
+		eoss.writeString(CDataScale::name(crossDataScale));
 			/* eoss.writeInt(crossDataScale); */
 				
 		
@@ -451,7 +451,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDataScale::name(autoDataScale));
+		eoss.writeString(CDataScale::name(autoDataScale));
 			/* eoss.writeInt(autoDataScale); */
 				
 		
@@ -461,7 +461,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CWeightType::name(weightType));
+		eoss.writeString(CWeightType::name(weightType));
 			/* eoss.writeInt(weightType); */
 				
 		

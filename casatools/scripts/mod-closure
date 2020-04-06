@@ -23,7 +23,7 @@ $File::Fetch::BLACKLIST = [qw|lwp httptiny httplite|];
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
-$jarfile_name = "mod-closure-assembly-1.3.jar";
+$jarfile_name = "mod-closure-assembly-1.5.jar";
 @java_version = ( );
 open(JAVAVER, "$java -version 2>&1 |");
 foreach ( <JAVAVER> ) {

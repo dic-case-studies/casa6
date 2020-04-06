@@ -167,7 +167,7 @@
 #include <components/ComponentModels/PointShape.h>
 #include <components/ComponentModels/DiskShape.h>
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <casadbus/viewer/ViewerProxy.h>
 #include <casadbus/plotserver/PlotServerProxy.h>
 #include <casadbus/utilities/BusAccess.h>
@@ -203,7 +203,7 @@ Imager::Imager()
      cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
      mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
      viewer_p(0),
 #endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0), 
@@ -330,7 +330,7 @@ Imager::Imager(MeasurementSet& theMS,  Bool compress, Bool useModel)
     ft_p(0), cft_p(0), se_p(0),
     sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
     mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     viewer_p(0),
 #endif
     clean_panel_p(0), image_id_p(0), mask_id_p(0), prev_image_id_p(0), prev_mask_id_p(0),
@@ -357,7 +357,7 @@ Imager::Imager(MeasurementSet& theMS, Bool compress)
   :  msname_p(""),  vs_p(0), rvi_p(0), wvi_p(0), ft_p(0), cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
      mssFreqSel_p(), mssChanSel_p(),
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
      viewer_p(0),
 #endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0),
@@ -381,7 +381,7 @@ Imager::Imager(const Imager & other)
   :  msname_p(""), vs_p(0), rvi_p(0), wvi_p(0), 
      ft_p(0), cft_p(0), se_p(0),
      sm_p(0), vp_p(0), gvp_p(0), setimaged_p(false), nullSelect_p(false), 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
      viewer_p(0),
 #endif
      clean_panel_p(0), image_id_p(0), mask_id_p(0), prev_image_id_p(0), prev_mask_id_p(0)
@@ -489,7 +489,7 @@ Imager::~Imager()
     }
     cft_p = 0;
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     if ( viewer_p ) {
       // viewer_p->close( clean_panel_p );
       viewer_p->done();
@@ -6598,7 +6598,7 @@ Bool Imager::plotuv(const Bool rotate)
    
     if(rotate) {
     
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
       dbus::variant panel_id = plotter->panel( "UV-Coverage for "+imageName(), "U (wavelengths)", "V (wavelengths)", "UV-Plot",
 					       std::vector<int>( ), "right");
@@ -6617,7 +6617,7 @@ Bool Imager::plotuv(const Bool rotate)
 #endif
     }
     else {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
       dbus::variant panel_id = plotter->panel( "UV-Coverage for "+imageName(), "U (wavelengths)", "V (wavelengths)", "UV-Plot" ,
 					       std::vector<int>( ), "right");
@@ -6859,7 +6859,7 @@ Bool Imager::plotvis(const String& type, const Int increment)
       }
    
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
     dbus::variant panel_id = plotter->panel( "Stokes I Visibility for "+imageName(),"UVDistance (wavelengths)" , "Amplitude", "Vis-Plot",
 					     std::vector<int>( ), "right", "bottom", 0, false, false);
@@ -6983,7 +6983,7 @@ Bool Imager::plotweights(const Bool gridded, const Int increment)
       //Float vmax=Float(ny_p/2)/vscale;
 
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
       dbus::variant panel_id = plotter->panel( "Gridded weights for "+imageName(), "U (wavelengths)", "V (wavelengths)", "ImagingWeight-plot" );
       if ( panel_id.type() != dbus::variant::INT ) {
@@ -7087,7 +7087,7 @@ Bool Imager::plotweights(const Bool gridded, const Int increment)
       }
 
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
       PlotServerProxy *plotter = dbus::launch<PlotServerProxy>( );
       dbus::variant panel_id = plotter->panel( "Weights for "+imageName(), "UVDistance (wavelengths)", "Weights", "ImagingWeight-plot" );
 
@@ -7476,7 +7476,7 @@ Bool Imager::makemodelfromsd(const String& sdImage, const String& modelImage,
 }
 
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 class interactive_clean_callback {
     public:
 	interactive_clean_callback( ) { }
@@ -7509,7 +7509,7 @@ Int Imager::interactivemask(const String& image, const String& mask,
    else{
      clone(image, mask);
    }
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
    if ( viewer_p == 0 ) {
      std::list<std::string> args;
      args.push_back("--oldregions");
@@ -7816,7 +7816,7 @@ Int Imager::interactivemask(const String& image, const String& mask,
 	      }
 	    }
 	  }
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 	  ///guess we are done with the viewer
 	  if((viewer_p !=0) && (clean_panel_p != 0)){
 	    if(image_id_p !=0)

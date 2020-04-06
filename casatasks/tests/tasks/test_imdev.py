@@ -8,6 +8,7 @@ import numbers
 
 from casatools import image as iatool
 from casatools import regionmanager as rgtool
+from casatools import ctsys
 from casatools import table
 from casatasks import imdev
 
@@ -20,7 +21,7 @@ _rg = rgtool( )
 Unit tests for task ia.deviation().
 '''
 
-datapath = 'regression/unittest/ia_deviation/'
+datapath = ctsys.resolve('regression/unittest/ia_deviation/')
 
 input0 = datapath + "100x100x2.im"
 ref0 = datapath + "ref0.im"

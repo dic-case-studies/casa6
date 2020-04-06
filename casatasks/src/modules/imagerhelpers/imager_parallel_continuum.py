@@ -170,9 +170,13 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         #
         cfCacheName=self.allgridpars['0']['cfcache'];
         cfcExists=False;
-        if (not (cfCacheName == '')):
+        
+        if(self.allgridpars['0']['gridder'] == 'awproject' or self.allgridpars['0']['gridder'] == 'awprojectft'):
+            if (cfCacheName == ''):
+                cfCacheName = self.allimpars['0']['imagename'] + '.cf'
+                cfCacheName=self.allgridpars['0']['cfcache'] = cfCacheName
+ 
             cfcExists = (os.path.exists(cfCacheName) and os.path.isdir(cfCacheName));
-
             if (cfcExists):
                 nCFs = len(os.listdir(cfCacheName));
                 if (nCFs == 0):
@@ -365,7 +369,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             ## If only one field, do the get/gather/set of the weight density.
             if self.NF == 1 and self.allimpars['0']['stokes']=="I":   ## Remove after gridded wts appear for all fields correctly (i.e. new FTM).
    
-                if self.weightpars['type'] == 'briggs' :  ## For natural, this array isn't created at all.
+                if self.weightpars['type'] != 'natural' :  ## For natural, this array isn't created at all.
                                                                        ## Remove when we switch to new FTM
 
                     casalog.post("Gathering/Merging/Scattering Weight Density for PSF generation","INFO")

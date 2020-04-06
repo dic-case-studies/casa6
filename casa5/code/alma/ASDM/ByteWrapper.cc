@@ -37,7 +37,7 @@ namespace asdm {
     const char Byte::MIN_VALUE = -128;
     const char Byte::MAX_VALUE = 127;
 
-	char Byte::parseByte(const string &s) throw (NumberFormatException) {
+	char Byte::parseByte(const string &s) {
 		istringstream in; 
 		in.str(s);
 		short x;

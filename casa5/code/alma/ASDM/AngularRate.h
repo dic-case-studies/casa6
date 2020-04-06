@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an AngularRate.
 	 */
-	static AngularRate getAngularRate(StringTokenizer &st) throw(NumberFormatException);
+	static AngularRate getAngularRate(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .

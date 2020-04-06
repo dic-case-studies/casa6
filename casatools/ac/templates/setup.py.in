@@ -70,6 +70,7 @@ from collections import defaultdict
 from subprocess import call as Proc
 from subprocess import Popen, PIPE
 from datetime import datetime
+from inspect import currentframe, getframeinfo
 from textwrap import dedent
 from shutil import copy2
 import subprocess
@@ -91,16 +92,25 @@ import argparse
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
+parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
+_debug_build_ = args.debug
+print("_debug_build_: " + str(_debug_build_))
 
-print (args.version)
+# Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
+for arg in sys.argv:
+    if (arg.startswith("--version")):
+        sys.argv.remove(arg)
+    if (arg.startswith("--debug")):
+        sys.argv.remove(arg)
+
 
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.27.jar'
+xml_jar_file = 'xml-casa-assembly-1.47.jar'
 real_gnu = None
 
 if pyversion < 3:
@@ -146,18 +156,63 @@ else:
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
-        (major, minor) = args.version.split(".")
-        return(int(major), int(minor))
+        (major, minor, patch, feature) = args.version.split(".")
+        return(int(major), int(minor), int(patch), int(feature),"","","")
     else:
         proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
-        (major, minor) = out.split( )[0].split(".")
-        print((major,minor))
-        return(int(major), int(minor))
+        print(out)
+        devbranchtag = out.split(" ")[0].strip()
+        print(devbranchtag)
+        releasetag = out.split(" ")[1].strip()
+        dirty=""
+        if (len(out.split(" ")) == 3):
+            print("Latest commit doesn't have a tag. Adding -dirty flag to version string.")
+            dirty="+" + out.split(" ")[2].strip() # "+" denotes local version identifier as described in PEP440
+        print(releasetag)
+        devbranchversion = ""
+        devbranchrevision = ""
+        if (devbranchtag != releasetag):
+            devbranchrevision = devbranchtag.split("-")[-1]
+            if (devbranchtag.startswith("CAS-")):
+                devbranchversion=devbranchtag.split("-")[1]
+            else:
+                devbranchversion=100
+            devbranchrevision = devbranchtag.split("-")[-1]
+        else:
+            isDevBranch = False
+        (major, minor, patch, feature) = releasetag.split(".")
+        #print(major, minor, patch, feature, devbranchversion, devbranchrevision, dirty)
+        return(int(major), int(minor), int(patch), int(feature), devbranchversion, devbranchrevision, dirty)
 
-(casatools_major,casatools_minor) = compute_version( )
-casatools_version = '%d.%d' % (casatools_major,casatools_minor)
+(casatools_major,casatools_minor,casatools_patch,casatools_feature, devbranchversion, devbranchrevision, dirty) = compute_version( )
+print(casatools_major, casatools_minor, casatools_patch, casatools_feature, devbranchversion, devbranchrevision, dirty)
+casatools_version = '%d.%d.%d.%d%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,dirty)
+if devbranchversion !="":
+    casatools_version = '%d.%d.%d.%da%s.dev%s%s' % (casatools_major,casatools_minor,casatools_patch,casatools_feature,devbranchversion,devbranchrevision,dirty)
+print(casatools_version)
 
+
+def install_version_header( major, minor, patch, feature, verstr ):
+    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
+        for line in f:
+            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
+            out.write(l)
+
+def install_version_cc( major, minor, patch, feature,  verstr ):
+    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+        for line in f:
+            l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
+                    .replace("@CASA_VERSION_MINOR@",str(minor))\
+                    .replace("@CASA_VERSION_PATCH@",str(patch))\
+                    .replace("@CASA_VERSION_FEATURE@",str(feature))\
+                    .replace("@CASA_VARIANT@","")\
+                    .replace("@CASA_VERSION_DESC@","CASAtools:v1.0.0")
+            out.write(l)
+
+print("generating version header...")
+install_version_header(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
+install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
 ###
 ###  return string discription of the current operating system, e.g.
 ###
@@ -258,11 +313,16 @@ def sakura_files( ):
              'sakura-source/src/normalization.cc', 'sakura-source/src/numeric_operation.cc',
              'sakura-source/src/statistics.cc' ]
 
-def source_files(path,root_filter=[ ],path_filter=[ ],subdir_filter=['tests','test','apps','demo'],file_filter=[ ],file_suffix_filter=""):
+def source_files(
+    path,root_filter=[ ],path_filter=[ ],
+    subdir_filter=['tests','test','apps','demo'], file_filter=[ ],
+    file_suffix_filter="", do_apriori_exclusions=True
+):
     """
     find all of the source files to compile beneath path
     """
     result = [ ]
+    my_apriori_exclusions = a_priori_exclusions if do_apriori_exclusions else []
     for root, dirs, files in os.walk(path):
         if root in root_filter or any(map(lambda x: root.endswith(x),a_priori_directory_exclusions)):
             continue
@@ -273,7 +333,7 @@ def source_files(path,root_filter=[ ],path_filter=[ ],subdir_filter=['tests','te
         for file in files:
             if any(map(lambda x: x in root+os.sep+file, path_filter)):
                 continue
-            if file.endswith(file_suffix_filter) and not any(map(lambda s: (root + os.sep + file).endswith(s),file_filter)) and not file in a_priori_exclusions and not file in boost_exclusions:
+            if file.endswith(file_suffix_filter) and not any(map(lambda s: (root + os.sep + file).endswith(s),file_filter)) and not file in my_apriori_exclusions and not file in boost_exclusions:
                 result.append(root + os.sep + file)
     return result
 
@@ -312,12 +372,6 @@ def so_version( ):
     y=(delta>>8)&0xff
     x=(delta>>16)&0xffff
     return "%d.%d.%d" % (x,y,z)
-
-def install_version_header( major, minor, verstr ):
-    with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
-        for line in f:
-            l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_VERSION_STRING@",verstr)
-            out.write(l)
 
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
@@ -411,7 +465,12 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + [__os.path.dirname(__os.path.abspath(__file__)) + __os.sep + '__data__'] + __find_data_path( ) )
+               _dpath = [ ]
+               try:
+                   import casadata
+                   _dpath = [ casadata.datapath ]
+               except: pass
+               ctsys.initialize( __sys.executable, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -618,6 +677,18 @@ def build_grpc( prefix, srcdir, collectdir ):
                     s = s.replace('CXXFLAGS += -stdlib=libc++','')
                     ### it could be that replacing DEFAULT_CXX should be done in all cases
                     s = s.replace('$(DEFAULT_CXX)',props['build.compiler.cxx'])
+                if sys.platform =='darwin':
+                    proc = Popen( [ "/usr/bin/xcodebuild -version | grep Xcode" ], stdout=PIPE, stderr=PIPE, shell=True )
+                    out,err = pipe_decode(proc.communicate( ))
+                    print("Xcode version: " + out)
+                    xcodeversion = out.split(" ")[1].strip()
+                    xcode_parts = xcodeversion.split(".")
+                    xcodeversionmajor = xcode_parts[0];
+                    xcodeversionminor = xcode_parts[1]
+                    if int(xcodeversionmajor) >= 10:
+                        print("Xcode version is 10 or greater. Won't treat grpc build warnings as errors ")
+                        s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
+
                 with open(makefile, "w") as fd:
                     fd.write(s)
 
@@ -773,14 +844,14 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                       '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS', '-DWITHOUT_DBUS', '-Dcasacore=casa6core' ] \
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
                                       + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                        '-DUSE_THREADS', '-DCASATOOLS', '-DWITHOUT_DBUS', '-Dcasacore=casa6core' ] \
+                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
                                         + platform_cflags[sys.platform] }
 
 def get_ccache():
@@ -797,7 +868,6 @@ def get_cflags():
                                                                       ###     /usr/include (e.g. rhel6)
     return cflags
 
-_debug_build_ = False
 def debug_build():
     return _debug_build_
 
@@ -1012,9 +1082,8 @@ try:
         def initialize_options(self):
             self.version = None
             bdist_wheel.initialize_options(self)
-            if '--debug' in sys.argv:
-                global _debug_build_
-                _debug_build_ = True
+            global _debug_build_
+            if _debug_build_:
                 self.debug = 1
             else:
                 self.debug = 0
@@ -1067,9 +1136,8 @@ class casa_build_ext(build_ext):
     def initialize_options(self):
         self.version = None
         build_ext.initialize_options(self)
-        if '--debug' in sys.argv:
-            global _debug_build_
-            _debug_build_ = True
+        global _debug_build_
+        if _debug_build_:
             self.debug = 1
         else:
             self.debug = 0
@@ -1080,6 +1148,7 @@ class casa_build_ext(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
+
         global a_priori_directory_exclusions
         global a_priori_exclusions
         do_wheel_closure = doing_wheel_build
@@ -1094,10 +1163,10 @@ class casa_build_ext(build_ext):
 
         print("copying xml-casa...")
         install_xml_casa( )
-        print("generating version header...")
-        install_version_header(casatools_major,casatools_minor,casatools_version)
+
 
         build_ext.run(self)
+
         """
         if os.path.exists(cerberusdir):
             remove_tree(cerberusdir)
@@ -1127,11 +1196,6 @@ class casa_build_ext(build_ext):
         """
         generate_casac_init_py()
 
-        try:
-            spawn(["rsync", "-avz", "rsync://casa-rsync.nrao.edu/casa-data", "%s/__data__" % moduledir])
-        except:
-            print("RSYNC OF CASA DATA FROM 'rsync://casa-rsync.nrao.edu/casa-data' FAILED!")
-
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
             if isexe("scripts/mod-closure") and not os.path.isfile(".created.closure"):
@@ -1139,6 +1203,13 @@ class casa_build_ext(build_ext):
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
+
+        if sys.platform == 'darwin':
+            print("Fixing rpaths")
+            result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
+            print(result.stdout.decode('utf-8'))
+
+
 
 class casa_test(Command):
     user_options = [
@@ -1355,6 +1426,7 @@ cpp_target = "cpp_compile"
 yacc_target = "yacc_compile"
 lex_target = "lex_compile"
 c_target = "c_compile"
+# test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
 lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
@@ -1367,11 +1439,11 @@ statics_wrap_target = "statics_wrap_cc_compile"
 tool_libs_target = "tool_libs_link"
 straight_copies_target = "straight_file_copies"
 all_target = "all"
-clean_target = "clean"
 build_distutils_temp = os.path.join('build',distutils_dir_name('temp'))
 depdir = '.d'
 sep = ' '
-cc = sep.join(get_ccache() + [props['build.compiler.cxx']])
+cpp = sep.join(get_ccache() + [props['build.compiler.cxx']])
+cc = sep.join(get_ccache() + [props['build.compiler.cc']])
 f77 = props['build.compiler.fortran']
 casatools_obj_list = []
 sys_cflags = sep.join(
@@ -1379,8 +1451,7 @@ sys_cflags = sep.join(
         filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
     )
 )
-g_dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
-g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
+
 python_inc = props['build.python.include']
 sepl = " -l"
 (gldflags, gprop_libs) = get_link_props()
@@ -1398,22 +1469,37 @@ ldflags3 = sep.join(gldflags + grpath)
 # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
 
 def write_makefile_begin(targets, mode="genmake"):
+    clean_target = "clean"
     with open("makefile", "w") as mk:
         mk.write(
             "# THIS MAKEFILE IS AUTO GENERATED BY setup.py "
             + mode + ". EDIT AT YOUR OWN PERIL!\n"
         )
-        mk.write("\nCXX := " + cc)
+        mk.write("\nCXX := " + cpp)
+        mk.write("\nCC := " + cc)
         mk.write("\nF77 := " + f77)
+        mk.write("\nOPTIM_FLAGS := -O2 -Wp,-D_FORTIFY_SOURCE=2")
+
+        #mk.write("\nOPTIM_FLAGS := -O2 \n")
         mk.write("\nDEPDIR := " + depdir + "\n")
+        mk.write("# override optimization for debug builds")
+        mk.write("\ndebug: OPTIM_FLAGS := -g \n")
         mk.write("\n.PHONY: " + all_target + "\n")
         mk.write(all_target + ": " + sep.join(targets) + "\n")
+        mk.write('\ndebug: ' + all_target)
         mk.write(
             sep.join([
-                "\n", clean_target, ": \n\t @rm -rf ", build_distutils_temp, " $(DEPDIR)",
+                "\n", clean_target, ": "
+                "\n\t @rm -rf " + build_distutils_temp + " $(DEPDIR)",
                 "\n.PHONY: ", clean_target, "\n"
             ])
         )
+
+def filter_optim_debug(cmd):
+    # take out explicit optimization/debugging flags
+    cmd = cmd.replace('-g ', '')
+    cmd = re.sub('-Wp,-D_FORTIFY_SOURCE=\d+', '', cmd)
+    return re.sub('-O\d+','', cmd)
 
 def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     # c++ casacore and casacode + others but not gcwrap
@@ -1424,10 +1510,13 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
             'demo', 'casaqt', 'convert', 'Filling', 'ImagerObjects2'
         ] + additional_subdir_filters,
         file_filter=['MeasurementComponents/rGridFT.cc'],
-        path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc','TransformMachines2/AWConvFuncEPJones.cc']
+        path_filter=[
+            'MeasurementComponents/WOnlyConvFunc.cc',
+            'TransformMachines2/EVLAConvFunc.cc',
+            'TransformMachines2/AWConvFuncEPJones.cc'
+        ]
     )
-    CORE_SRC = source_files(
-        "casacore", file_suffix_filter=".cc")
+    CORE_SRC = source_files("casacore", file_suffix_filter=".cc")
     #, subdir_filter=additional_subdir_filters)
     SAKURA_SRC = sakura_files() if use_sakura else []
     CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
@@ -1441,16 +1530,18 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     # them here
     SOURCE_BINDING = source_files("binding/source", file_suffix_filter=".cc")
     obj_name = os.path.join(build_distutils_temp, "{base}.o")
-    global g_dep_name
-    # use makefile as a dependency so things get rebuilt correctly if user
-    # changes compile flags from optimized to debug by rerunning setup.py
-    cpp_obj = (
-        obj_name + ': {src} ' + g_dep_name + ' makefile \n\t$(CXX) {flags} {includes} {cflags} {dflags} -c $< -o $@'
-        + '\n\t$(POSTCOMPILE)'
-    )
-    global g_dep_targ
+    g_dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
     g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
-    src = [CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING]
+    # use makefile as a dependency
+    cpp_obj = (
+        obj_name + ': {src} ' + g_dep_name + ' makefile'\
+            + '\n\t$(CXX) $(OPTIM_FLAGS) {flags} {includes} {cflags} ' \
+            + '{dflags} -c $< -o $@' \
+            + '\n\t$(POSTCOMPILE)'
+    )
+    src = [
+        CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING
+    ]
     cflags = [
         module_cflags['/code/'], module_cflags['casacore/'],
         platform_cflags[sys.platform], module_cflags['/code/'],
@@ -1463,7 +1554,9 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     global sys_cflags
     sys_cflags = sep.join(
         list(
-            filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
+            filter(
+                lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split()
+            )
         )
     )
     grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()] if duse_grpc else []
@@ -1481,13 +1574,20 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
                 objfile = obj_name.format(base=b)
                 cpp_list.append(objfile)
                 targdirs.add(os.path.dirname(objfile))
-                mk.write(
-                    "\n\n" + cpp_obj.format(
+                targ_entry = filter_optim_debug(
+                    cpp_obj.format(
                         base=b,src=s, flags=flags, includes=myinc,
                         cflags=sys_cflags, dflags=dflags
                     )
                 )
-                mk.write("\n" + g_dep_targ.format(base=b))
+                # mk.write(
+                #    "\n\n" + cpp_obj.format(
+                #        base=b,src=s, flags=flags, includes=myinc,
+                #        cflags=sys_cflags, dflags=dflags
+                #    )
+                #)
+                mk.write('\n' + targ_entry)
+                mk.write('\n' + g_dep_targ.format(base=b))
         mk.write("\n# make directories for C++ object files\n")
         mk.write(".PHONY: " + mkdirs_cc_target + "\n")
         mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
@@ -1563,35 +1663,49 @@ def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered
 
 def write_fortran(do_code=True):
     # fortran files
-    CORE_F77 = source_files( "casacore",file_suffix_filter=".f",
-                             file_filter=[ 'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f','atmroutines.f',
-                                           'fmosft.f', 'fwproj.f', 'phasol.f' ]
+    CORE_F77 = source_files(
+        "casacore",file_suffix_filter=".f",
+        file_filter=[
+            'fgridft.f','grd2dwts.f','grd2d.f','ADDGRD.f','grdde2d.f',
+            'atmroutines.f','fmosft.f', 'fwproj.f', 'phasol.f'
+        ]
     )
     CODE_F77 = source_files(
         "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
     ) if do_code else []
-    obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+    obj_name = build_distutils_temp + os.sep + '{base}.o'
+    mkdirs_f77_target = "mk_f77_obj_dirs"
     f_obj = (
-        obj_name + ': {src} \n\t{f77} {flags} $< -o $@'
+        obj_name + ': {src} {dir} makefile' + \
+        '\n\t{f77} {flags} $< -o $@'
     )
     f_list = []
-    mkdirs_f77_target = "mk_f77_obj_dirs"
+    targdirs = set()
     with open("makefile", "a") as mk:
-        targdirs = set()
         for f in CORE_F77 + CODE_F77:
             (base, ext) = os.path.splitext(f)
             flags = sep.join(get_fortran_compiler_flags(ext))
             objfile = obj_name.format(base=base)
-            targdirs.add(os.path.dirname(objfile))
+            dir = os.path.dirname(objfile)
+            targdirs.add(dir)
             f_list.append(objfile)
-            mk.write("\n\n" + f_obj.format(base=base, src=f, f77=f77, flags=flags))
+            mk.write(
+                "\n\n"
+                + f_obj.format(base=base, src=f, f77=f77, flags=flags, dir=dir)
+            )
+        for x in targdirs:
+            mk.write(
+                '\n' + x + ': ;'
+                + '\n\tif [ ! -d ' + x + ' ]; then mkdir -p ' + x + '; fi'
+        )
         mk.write("\n# make directories for fortran object files\n")
         mk.write(".PHONY: " + mkdirs_f77_target + "\n")
         mydirs = sep.join(list(targdirs))
-        mk.write(mkdirs_f77_target + ":\n\t@mkdir -p " + mydirs + "\n")
+        mk.write(mkdirs_f77_target + ': ' + sep.join(targdirs))
         mk.write("\n# targets to compile fortran code to object files\n")
         mk.write(".PHONY: " + fortran_target + "\n")
-        mk.write(fortran_target + ": " + mkdirs_f77_target + " " + sep.join(f_list) + "\n")
+        mk.write(fortran_target + ": " + sep.join(f_list) + "\n")
+    # update casatools_obj_list
     global casatools_obj_list
     casatools_obj_list += f_list
 
@@ -1642,19 +1756,211 @@ MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
 include $(MY_DEPS)
         """)
 
+def do_testing():
+    compile_casacore_tests()
+
+def compile_casacore_tests():
+    sep = " "
+    includes = sep.join(get_new_cxx_compiler_includes())
+    # compile tests
+    CASACORE_CC = source_files(
+        "casacore", subdir_filter=['python'], file_suffix_filter='cc',
+        file_filter=[
+            'tIAU2000.cc', 'tAdios2StMan.cc', 'tLargeFilebufIO.cc',
+            'tHashMapIter.cc', 'tHashMap.cc', 'tHashMapIO.cc', 'tOrdMap.cc',
+            'tOrdMap2.cc', 'tSimOrdMap.cc', 'tStack.cc', 'tList.cc',
+            'tQueue.cc', 'tRegionManager.cc'
+        ],
+        do_apriori_exclusions=False
+    )
+    CASACORE_TESTS = list(filter(lambda x: '/test/' in x, CASACORE_CC))
+    tmp = []
+    for f in CASACORE_TESTS:
+        if re.search("^[td].*cc$", os.path.basename(f)):
+            tmp.append(f)
+    CASACORE_TESTS = tmp
+    # flags = "$(DEPFLAGS) " + sep.join(get_new_cxx_compiler_flags())
+    flags = sep.join(get_new_cxx_compiler_flags())
+    dflags = sep + sep.join(module_cflags['casacore/'])
+    libdir = casac_dir + "/lib"
+    libs = "-L" + libdir + " -lcasatools.cpython-36m-x86_64-linux-gnu "\
+        + "-lprotobuf -lgrpc -lgrpc++ -lgpr"
+    libs += " " + ldflags1
+    # remove -shared from libs because it causes a segfault
+    libs = libs.replace("-shared", "")
+    libs += ' -l' + ' -l'.join(link_libs)
+    rellibdir = libdir.replace('build', '../../../../..')
+    wflags = "-Wl,-rpath," + rellibdir
+    targdirs = set()
+    dirmap = {}
+    # test_exec_dirs_targ = "test_exe_dirs"
+    exe_list = []
+    make_tests_targ = "build_casacore_tests"
+    make_test_dirs = "make_casacore_test_dirs"
+    print("sys_cflags", sys_cflags)
+    print("dflags", dflags)
+    print("libs", libs)
+    print("wflags", wflags)
+    with open("makefile", "a") as mk:
+        for f in CASACORE_TESTS:
+            name = os.path.basename(f)
+            base = os.path.splitext(f)[0]
+            # it's just easier to keep track of if the strings are created in
+            # the loop rather than outside and then using format inside
+            exefile = build_distutils_temp + os.sep + base
+            # exefile = exe_name.format(base=base)
+            exe_list.append(exefile)
+            targdir = os.path.dirname(exefile)
+            targdirs.add(targdir)
+            dirmap[targdir] = os.path.dirname(f)
+            # dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+            location_info(mk, getframeinfo(currentframe()))
+            # excluding depname for now
+            # mk.write("\n\n" + test_targ.format(src=f, base=base))
+            mk.write("\n" + exefile + ": " + f + " makefile " + libcasatools)
+            mk.write(
+                "\n\t $(CXX) " + flags + " " + includes + " " + sys_cflags + " "
+                + libs + " "
+                # custom include to get header files in test directories
+                + '-I./' + os.path.dirname(f) + " "
+                + "-D_REENTRANT -I/usr/include/cfitsio -I/usr/include/eigen3 "
+                + "-I/opt/casa/03/include -DWITHOUT_DBUS " \
+                + "-I/usr/include/libxml2 -I/usr/include -I/usr/include/wcslib "
+                + "-fopenmp -I/opt/rh/rh-python36/root/usr/include -Wall " \
+                + "--param=ssp-buffer-size=4 -DAIPS_64B -DAIPS_AUTO_STL " \
+                + "-DAIPS_DEBUG -DAIPS_HAS_QWT -DAIPS_LINUX " \
+                + "-DAIPS_LITTLE_ENDIAN -DAIPS_STDLIB " \
+                + "-DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH -DQWT6 " \
+                + "-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE " \
+                + "-DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS " \
+                + "-DUSE_GRPC -Ibuild/binding.linux-x86_64-3.6/grpc " \
+                + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
+                # -shared causes a segfault
+                + "-lpython3.6m " + dflags + " "
+                + "-o " + exefile + " " + wflags + " "
+                + f + " "
+            )
+            # ommitting POSTCOMPILE for now
+            #  + '\n\t$(POSTCOMPILE)')
+            # mk.write(
+            #     "\n\n" + test_targ.format(src=f, base=base)
+            # )
+            # mk.write("\n" + g_dep_targ.format(base=base))
+            # mk.write("\n" + g_dep_targ.format(base=base))
+        location_info(mk, getframeinfo(currentframe()))
+        mk.write("\n# make directories for test executables\n")
+        mk.write("\n.PHONY: " + make_test_dirs)
+        r = re.compile(os.sep + 'test\.')
+        substr = os.sep + 'temp.'
+        mydirs = sep.join(
+            list(targdirs) + ["$(DEPDIR)" + os.sep + r.sub(substr, s, 1)
+            for s in targdirs]
+        )
+        mk.write("\n" + make_test_dirs + ":\n\t@mkdir -p " + mydirs + "\n")
+        cmd = []
+        make_links_targ = "create_casacore_test_links"
+        all_links = []
+        for build, orig in dirmap.items():
+            myfiles = [
+                f for f in listdir(orig)
+                if not re.search("^CMakeLists|cc$|h$", os.path.basename(f))
+            ]
+            links = [build + os.sep + f for f in myfiles]
+            all_links.extend(links)
+            n = build.count(os.sep) + 1
+            relpath = n * ('..' + os.sep) + orig + os.sep
+            cmd.extend([
+                (
+                    link + ": ;"
+                    + "\n\t if [ ! -L " + link + " ]; then ln -s " + relpath + o
+                    + " " + link + "; fi"
+                ) for (link, o) in zip(links, myfiles)
+            ])
+        mk.write('\n' + '\n\n'.join(cmd))
+        mk.write(
+            '\n' + make_links_targ + ': ' + sep.join(all_links) + ' '
+            + make_test_dirs
+        )
+        mk.write(
+            "\n" + make_tests_targ + ": " + make_test_dirs + " " \
+            + make_links_targ + " " + sep.join(exe_list) + "\n"
+        )
+
+def location_info(handle, frameinfo):
+    handle.write(
+        "\n# written from " + str(frameinfo.filename) + " line "
+        + str(frameinfo.lineno)
+    )
+
+def write_miriad():
+    # miriad c files
+    MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
+    includes = sep.join(get_new_cxx_compiler_includes())
+    flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
+    obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
+    dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
+    dflags = sep.join(module_cflags['casacore/'])
+    c_obj = (
+        obj_name + ': {src} ' + dep_name + ' makefile '
+        + '\n\t$(CC) $(OPTIM_FLAGS) {includes} {flags} {cflags} {dflags} -c $< -o $@'
+        + '\n\t$(POSTCOMPILE)'
+    )
+    c_list = []
+    mkdirs_c_target = "mk_c_obj_dirs"
+    global sys_cflags
+    g_dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
+    g_dep_targ = g_dep_name + ": ;\nPRECIOUS: " + g_dep_name
+    with open("makefile", "a") as mk:
+        targdirs = set()
+        for f in MIR_SRC:
+            name = os.path.basename(f)
+            base = os.path.splitext(f)[0]
+            objfile = obj_name.format(base=base)
+            c_list.append(objfile)
+            targdirs.add(os.path.dirname(objfile))
+            # sys_cflags same as C++
+            cmd = "\n\n" + c_obj.format(
+                base=base, src=f, includes=includes, flags=flags,
+                cflags=sys_cflags, dflags=dflags
+            )
+            cmd = filter_optim_debug(cmd)
+            mk.write(cmd)
+            #mk.write(
+            #    "\n\n" + c_obj.format(
+            #        base=base, src=f, cc=cc, includes=includes, flags=flags,
+            #        cflags=sys_cflags, dflags=dflags
+            #    )
+            #)
+            mk.write("\n" + g_dep_targ.format(base=base))
+        mk.write("\n# targets to compile C code to object files\n")
+        mk.write(".PHONY: " + c_target + "\n")
+        mk.write(c_target + ": " + mkdirs_c_target + " " + sep.join(c_list) + "\n")
+        mk.write("\n# make directories for C object files\n")
+        mk.write(".PHONY: " + mkdirs_c_target + "\n")
+        mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
+        mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
+    global casatools_obj_list
+    casatools_obj_list += c_list
+
 class create_makefile(Command):
+    """
     user_options = [
       # The format is (long option, short option, description).
 #     ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
-      ('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+      #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
     ]
 
     def initialize_options(self):
-        print("setting up options")
         global _debug_build_
         _debug_build_ = '--debug' in sys.argv
         self.debug = 1 if _debug_build_ else 0
         print("create debug build is ", _debug_build_)
+    """
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
 
     def finalize_options(self):
         pass
@@ -1671,57 +1977,16 @@ class create_makefile(Command):
             open(".built.grpc",'a').close( )
 
     def __generate_casa_makefile(self):
-        rsync_data_target = "rsync_data"
         my_targets = [
-                yacc_target, lex_target, cpp_target, c_target,
-                fortran_target, libcasatools, swig_target, statics_wrap_target,
-                tool_libs_target, straight_copies_target, rsync_data_target
-            ]
+            yacc_target, lex_target, cpp_target, c_target,
+            fortran_target, libcasatools, swig_target, statics_wrap_target,
+            tool_libs_target, straight_copies_target
+        ]
         write_makefile_begin(my_targets)
         write_make_cpp()
         write_yacc()
         write_lex()
-        # miriad c files
-        MIR_SRC =  source_files( "casacore/mirlib",file_suffix_filter=".c" )
-        includes = sep.join(get_new_cxx_compiler_includes())
-        flags = sep.join(["$(DEPFLAGS)"] + get_new_c_compiler_flags())
-        obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
-        dep_name = os.path.join("$(DEPDIR)", 'build',distutils_dir_name('temp'), '{base}.d')
-        cc = sep.join(get_ccache() + [props['build.compiler.cc']])
-        dflags = sep.join(module_cflags['casacore/'])
-        c_obj = (
-            obj_name + ': {src} ' + dep_name + ' makefile \n\t{cc} {includes} {flags} {cflags} {dflags} -c $< -o $@'
-            + '\n\t$(POSTCOMPILE)'
-        )
-        c_list = []
-        mkdirs_c_target = "mk_c_obj_dirs"
-        global sys_cflags
-        global g_dep_targ
-        with open("makefile", "a") as mk:
-            targdirs = set()
-            for f in MIR_SRC:
-                name = os.path.basename(f)
-                base = os.path.splitext(f)[0]
-                objfile = obj_name.format(base=base)
-                c_list.append(objfile)
-                targdirs.add(os.path.dirname(objfile))
-                # sys_cflags same as C++ above
-                mk.write(
-                    "\n\n" + c_obj.format(
-                        base=base, src=f, cc=cc, includes=includes, flags=flags,
-                        cflags=sys_cflags, dflags=dflags
-                    )
-                )
-                mk.write("\n" + g_dep_targ.format(base=base))
-            mk.write("\n# targets to compile C code to object files\n")
-            mk.write(".PHONY: " + c_target + "\n")
-            mk.write(c_target + ": " + mkdirs_c_target + " " + sep.join(c_list) + "\n")
-            mk.write("\n# make directories for C object files\n")
-            mk.write(".PHONY: " + mkdirs_c_target + "\n")
-            mydirs = sep.join(list(targdirs) + ["$(DEPDIR)" + os.sep + s for s in targdirs])
-            mk.write(mkdirs_c_target + ":\n\t@mkdir -p " + mydirs + "\n")
-        global casatools_obj_list
-        casatools_obj_list += c_list
+        write_miriad()
         write_fortran()
         write_casacode_linker()
         # swig *.i -> *_wrap.cpp
@@ -1751,7 +2016,8 @@ class create_makefile(Command):
         # Generation of various files. This can probably be done in make, if really
         # necessary, but it's so quick it's easiest to just do it using the existing
         # python functionality for now
-        install_version_header(casatools_major,casatools_minor,casatools_version)
+        #install_version_header(casatools_major, casatools_minor, casatools_patch, casatools_feature, casatools_version)
+        #install_version_cc(casatools_major,casatools_minor,casatools_patch,casatools_feature,casatools_version)
         generate_config(moduledir, props)
 
         # C++ tool _statics, _wrap, _cmpt, and other C++ gcwrap files
@@ -1767,7 +2033,8 @@ class create_makefile(Command):
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         obj_create = (
-            obj_name + ': {src} ' + dep_name + ' makefile \n\t$(CXX) {flags} {includes} {cflags} {dflags} -c $< -o $@'
+            obj_name + ': {src} ' + dep_name + ' makefile'
+            + '\n\t$(CXX) $(OPTIM_FLAGS) {flags} {includes} {cflags} {dflags} -c $< -o $@'
             + '\n\t$(POSTCOMPILE)'
         )
         dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
@@ -1802,12 +2069,18 @@ class create_makefile(Command):
                 objfile = obj_name.format(base=base)
                 cpp_list.append(objfile)
                 targdirs.add(os.path.dirname(objfile))
-                mk.write(
-                    "\n\n" + obj_create.format(
-                        base=base, src=s, flags=flags, includes=myinc,
-                        cflags=add_cflags, dflags=dflags
-                    )
+                cmd = obj_create.format(
+                    base=base, src=s, flags=flags, includes=myinc,
+                    cflags=add_cflags, dflags=dflags
                 )
+                cmd = filter_optim_debug(cmd)
+                mk.write('\n\n' + cmd)
+                #mk.write(
+                #    "\n\n" + obj_create.format(
+                #        base=base, src=s, flags=flags, includes=myinc,
+                #        cflags=add_cflags, dflags=dflags
+                #    )
+                # )
                 mk.write("\n" + dep_targ.format(base=base))
             mk.write("\n# make directories for statics C++ object files\n")
             mk.write(".PHONY: " + mkdirs_statics_wrap_target + "\n")
@@ -1904,7 +2177,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.27.jar"
+        assembly_jar = "xml-casa-assembly-1.47.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
@@ -1925,33 +2198,9 @@ class create_makefile(Command):
         do_cerberus()
         # casac __init__.py generation, just use the python implmentation for now, no make target yet
         generate_casac_init_py()
-        # rsync
-        with open("makefile", "a") as mk:
-            mk.write("\n# targets to rsync data repos\n")
-            mk.write(".PHONY: " + rsync_data_target + "\n")
-            mk.write(
-                rsync_data_target + ": \n\trsync -avz rsync://casa-rsync.nrao.edu/casa-data "
-                + moduledir + "/__data__"
-            )
+        # testing
+        do_testing()
         write_dependency_tracking()
-        """
-        # C++ and C dependency tracking to makefile
-        with open("makefile", "a") as mk:
-        """
-        #    mk.write("""
-        """
-$(shell mkdir -p $(DEPDIR) >/dev/null)
-# IMPORTANT: These dependency flags are for gcc. clang may use different flags for this purpose
-# DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
-
-POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
-# the include of the dependencies must come after the first target
-# so just put it at the end of the file
-MY_DEPS := $(shell find $(DEPDIR) -name '*.d' -type f)
-include $(MY_DEPS)
-        """
-        #    """)
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
             "(eg 'make -j8' or just 'make') to complete your build"
@@ -1962,19 +2211,19 @@ include $(MY_DEPS)
         self.__generate_casa_makefile( )
 
 class create_makefile_ia(Command):
+    """
     user_options = [
         # The format is (long option, short option, description).
         # ('output-regression', None, 'run the output (i.e. generated files) regression comparison'),
-      ('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
+        #('debug', None, 'Instruct make to create debugging libraries, optimized otherwise')
     ]
 
     def initialize_options(self):
         print("setting up options for CARTA ia only build")
         global _debug_build_
-        _debug_build_ = '--debug' in sys.argv
         self.debug = 1 if _debug_build_ else 0
-        print("create debug build is ", _debug_build_)
-
+        print("create debug build is ", str(_debug_build_))
+    """
     def finalize_options(self):
         pass
 
@@ -2212,4 +2461,4 @@ if __name__ == '__main__':
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
-           install_requires=[ 'numpy' ] )
+           install_requires=[ 'numpy', 'casadata' ] )

@@ -16,7 +16,7 @@
 #include <stdcasa/version.h>
 #include <utils_cmpt.h>
 #include <tools/utils/stdBaseInterface.h>
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 #include <tools/xerces/stdcasaXMLUtil.h>
 #endif
 #include <casa/Logging/LogIO.h>
@@ -61,7 +61,7 @@ utils::~utils()
   delete itsLog;
 }
 
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
 // These parameter/XML processing routines are no longer needed with
 // CASA 6 because Cereberus is used for type checking based upon
 // generated JSON parameter descriptions...
@@ -530,6 +530,8 @@ utils::toolversion( ) {
 #ifdef CASATOOLS
         ToolVersionInfo::major( ),
         ToolVersionInfo::minor( ),
+        ToolVersionInfo::patch( ),
+        ToolVersionInfo::feature( ),
 #endif
     };
     return result;

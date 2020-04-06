@@ -70,12 +70,22 @@ import unittest
 import numpy
 import os
 
-from casatools import image as iatool
-from casatools import componentlist as cltool
-from casatools import quanta as qatool
-from casatools import measures as metool
+try:
+    from casatools import image as iatool
+    from casatools import componentlist as cltool
+    from casatools import quanta as qatool
+    from casatools import measures as metool
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
-datapath='regression/unittest/ia_modify'
+datapath = ctsys_resolve('regression/unittest/ia_modify/')
 
 class ia_modify_test(unittest.TestCase):
     

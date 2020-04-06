@@ -77,7 +77,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   SDMaskHandler::SDMaskHandler()
   {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     interactiveMasker_p = new InteractiveMasking();
 #endif
     itsMax = DBL_MAX;
@@ -88,7 +88,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   
   SDMaskHandler::~SDMaskHandler()
   {
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     if (interactiveMasker_p != 0)
       delete interactiveMasker_p;
 #endif
@@ -913,7 +913,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cout << "Before interaction : niter : " << niter << " cycleniter : " << cycleniter << " thresh : " << threshold << "  cyclethresh : " << cyclethreshold << endl;
     //    ret = interactiveMasker_p->interactivemask(imageName, maskName,
     //                                            niter, ncycles, threshold);
-#if ! defined(WITHOUT_DBUS)
+#if ! defined(CASATOOLS)
     ret = interactiveMasker_p->interactivemask(imageName, maskName,
                                                niter, cycleniter, threshold, cyclethreshold);
     cout << "After interaction : niter : " << niter << " cycleniter : " << cycleniter << " thresh : " << threshold << " cyclethresh : " << cyclethreshold << "  ------ ret : " << ret << endl;
