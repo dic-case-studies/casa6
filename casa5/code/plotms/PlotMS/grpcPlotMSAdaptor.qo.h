@@ -173,6 +173,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         void clear_parameters( );
         void update_parameters( );
         void update_parameters(int index);
+        void add_overlay_axis(const PMS::Axis& overlay, int index);
         void populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel );
         enum group_tags { T_MSDATA, T_CACHE, T_AXES, T_ITER, T_DISP, T_CAN, T_HEAD };
         std::map<std::pair<int,int>,PlotMSPlotParameters::Group*> param_groups;
