@@ -90,11 +90,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ///  ----------- do once ----------
     if( itsMCsetup == false)
     {
+      Matrix<Float> tempMat(itsMatPsf);
+      itsCleaner.setPsf(tempMat);
       // FFT of 1R, 5R, 10R of psf and masks is unchanged and only needs to be
       // computed once. This calls getPsfGaussianWidth
       // and sets the new itsInitScaleXfrs
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
-      itsCleaner.setInitScaleXfrs(itsMatPsf, width);
+      //itsCleaner.setInitScaleXfrs(itsMatPsf, width);
+      itsCleaner.setInitScaleXfrs(width);
+      itsCleaner.setInitScalePsfs();
       itsCleaner.setInitScaleMasks(itsMatMask);
       //itsCleaner.defineScales( itsScaleSizes ); // genie, this goes away
 
@@ -113,17 +117,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // and then find the peak, scale, and optimizes the obj function
     // Convolve psf with the active set (using the above 4) and do the following
 
-    Matrix<Float> tempMat(itsMatPsf);
-    itsCleaner.setPsf(tempMat);
+    /*Matrix<Float> tempMat(itsMatPsf);
+    itsCleaner.setPsf(tempMat);*/
 
     Matrix<Float> tempMat1(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
 
     // InitScaleXfrs and InitScaleMasks should already be set
-    itsScaleSizes.push_back(itsCleaner.getActiveSetAspen());
+    //itsScaleSizes.push_back(itsCleaner.getActiveSetAspen()); genie old
+    itsScaleSizes.clear();
+    itsScaleSizes = itsCleaner.getActiveSetAspen();
     for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
       cout << "getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
+    itsScaleSizes.push_back(0.0); // put 0 scale
     Vector<Float> scaleSizes(itsScaleSizes);
     itsCleaner.defineAspScales(scaleSizes); // genie, mod this for Asp
 

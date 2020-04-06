@@ -261,13 +261,16 @@ public:
   // helper functions for ASP
   float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
 
-  void setInitScaleXfrs(const casacore::Array<casacore::Float> arrpsf, const casacore::Float width);
+  void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
+
+  // calculate the convolutions of the psf with the initial scales
+  void setInitScalePsfs();
 
   casacore::Bool setInitScaleMasks(const casacore::Array<casacore::Float> arrmask, const casacore::Float& maskThreshold = 0.9);
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
-  casacore::Float getActiveSetAspen();
+  std::vector<casacore::Float> getActiveSetAspen();
 
   void defineAspScales(const casacore::Vector<casacore::Float>& scales);
 
@@ -327,7 +330,6 @@ private:
   //# about the current state and implicit side-effects are not possible
   //# because all information must be supplied in the input arguments
 
-
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsDirty;
   casacore::CountedPtr<casacore::Matrix<casacore::Complex> >itsXfr;
 
@@ -339,6 +341,7 @@ private:
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvInitScales; // for Asp
   casacore::Block<casacore::Matrix<casacore::Float> > itsInitScaleMasks;
+  casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvInitScales;
 
   casacore::Int itsIteration;	// what iteration did we get to?
   casacore::Int itsStartingIter;	// what iteration did we get to?
@@ -346,7 +349,6 @@ private:
 
   casacore::Float itsMaximumResidual;
   casacore::Float itsStrengthOptimum;
-
 
   casacore::Vector<casacore::Float> itsTotalFluxScale;
   casacore::Float itsTotalFlux;
@@ -372,7 +374,6 @@ private:
   casacore::Bool destroyMasks();
   casacore::Bool destroyInitMasks();
 
-
   casacore::Bool itsIgnoreCenterBox;
   casacore::Bool itsStopAtLargeScaleNegative;
   casacore::Int itsStopPointMode;
@@ -385,8 +386,12 @@ private:
   casacore::IPosition psfShape_p;
   casacore::Bool noClean_p;
 
-  // set to 1*,5*,10*width for initial scales in Asp
+  // set to 1.5*,5*,10*width for initial scales in Asp
   std::vector<casacore::Float> itsInitScaleSizes;
+
+  std::vector<casacore::Float> itsAspScaleSizes;
+  std::vector<casacore::Float> itsAspAmplitude;
+  std::vector<casacore::IPosition> itsAspCenter;
 
 };
 

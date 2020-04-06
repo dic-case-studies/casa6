@@ -106,7 +106,9 @@ MatrixCleaner::MatrixCleaner():
   itsJustStarting(true),
   psfShape_p(0),
   noClean_p(false),
-  itsInitScaleSizes(0)
+  itsInitScaleSizes(0),
+  itsAspScaleSizes(0),
+  itsAspAmplitude(0)
 {
   itsMemoryMB=Double(HostInfo::memoryTotal()/1024)/16.0;
   itsScales.resize(0);
@@ -121,6 +123,7 @@ MatrixCleaner::MatrixCleaner():
   itsInitScaleXfrs.resize(0);
   itsDirtyConvInitScales.resize(0);
   itsInitScaleMasks.resize(0);
+  itsPsfConvInitScales.resize(0);
 }
 
 
@@ -141,7 +144,9 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   itsDidStopPointMode(false),
   itsJustStarting(true),
   noClean_p(false),
-  itsInitScaleSizes(0)
+  itsInitScaleSizes(0),
+  itsAspScaleSizes(0),
+  itsAspAmplitude(0)
 {
   AlwaysAssert(validatePsf(psf), AipsError);
   psfShape_p.resize(0, false);
@@ -176,6 +181,7 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   itsInitScaleXfrs.resize(0);
   itsDirtyConvInitScales.resize(0);
   itsInitScaleMasks.resize(0);
+  itsPsfConvInitScales.resize(0);
 }
 
 
@@ -209,6 +215,7 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
     itsDirtyConvScales = other.itsDirtyConvScales;
     itsDirtyConvInitScales = other.itsDirtyConvInitScales;
     itsScaleMasks = other.itsScaleMasks;
+    itsPsfConvInitScales = other.itsPsfConvInitScales;
     itsStartingIter = other.itsStartingIter;
     itsMaximumResidual = other.itsMaximumResidual;
     itsIgnoreCenterBox = other.itsIgnoreCenterBox;
@@ -397,6 +404,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
   // Find the peaks of the convolved Psfs
   Vector<Float> maxPsfConvScales(nScalesToClean);
   Int naxes = model.shape().nelements();
+
 #pragma omp parallel default(shared) private(scale) num_threads(nth)
   {
     #pragma omp for
@@ -564,9 +572,19 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         maxima(scale)=0;
         posMaximum[scale]=IPosition(model.shape().nelements(), 0);
 
+        //genie debug
+        Float maxVal=0;
+        IPosition posmin(vecWork_p[scale].shape().nelements(), 0);
+        Float minVal=0;
+        IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
+        minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsScaleMasks[scale]);
+        cout << "clean: ScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
+        //genie
+
         if (!itsMask.null()) {
           findMaxAbsMask(vecWork_p[scale], itsScaleMasks[scale],
               maxima(scale), posMaximum[scale]);
+          cout << "before: maxima[" << scale << "] = " << maxima(scale) << endl;
         }
         else
           findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
@@ -579,10 +597,12 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         maxima(scale)/=maxPsfConvScales(scale);
         maxima(scale) *= scaleBias(scale);
         maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
+        cout << "maxPsfconvscale[" << scale << "] = " << maxPsfConvScales(scale) << endl;
+        cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
 
         //posMaximum[scale]+=blcDirty;
       }
-    }//End parallel section
+    } //End parallel section
     for (scale=0; scale<nScalesToClean; scale++)
     {
       if(abs(maxima(scale)) > abs(itsStrengthOptimum))
@@ -590,7 +610,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         optimumScale=scale;
         itsStrengthOptimum = maxima(scale);
         positionOptimum = posMaximum[scale];
-        cout << "clean: New max scale is " << scale << endl;
+        cout << "clean: New optimum scale is " << scale << " itsStrengthOptimum " << itsStrengthOptimum << endl;
       }
     }
 
@@ -692,7 +712,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     }
 
     // Continuing: subtract the peak that we found from all dirty images
-    // Define a subregion so that that the peak is centered
+    // Define a subregion so that the peak is centered
     IPosition support(model.shape());
     support(0) = max(Int(itsScaleSizes(itsNscales-1)+0.5), support(0));
     support(1) = max(Int(itsScaleSizes(itsNscales-1)+0.5), support(1));
@@ -712,14 +732,14 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     IPosition trc(positionOptimum+support/2-1);
     LCBox::verify(blc, trc, inc, model.shape());
 
-    //cout << "blc " << blc.asVector() << " trc " << trc.asVector() << endl;
+    // cout << "verify: blc " << blc.asVector() << " trc " << trc.asVector() << endl;
 
     IPosition blcPsf(blc+itsPositionPeakPsf-positionOptimum);
     IPosition trcPsf(trc+itsPositionPeakPsf-positionOptimum);
     LCBox::verify(blcPsf, trcPsf, inc, model.shape());
     makeBoxesSameSize(blc,trc,blcPsf,trcPsf);
-    // cout << "blcPsf " << blcPsf.asVector() << " trcPsf " << trcPsf.asVector() << endl;
-    //cout << "blc " << blc.asVector() << " trc " << trc.asVector() << endl;
+    // cout << "samebox: blcPsf " << blcPsf.asVector() << " trcPsf " << trcPsf.asVector() << endl;
+    // cout << "samebox: blc " << blc.asVector() << " trc " << trc.asVector() << endl;
     //    LCBox subRegion(blc, trc, model.shape());
     //  LCBox subRegionPsf(blcPsf, trcPsf, model.shape());
 
@@ -1219,9 +1239,12 @@ Bool MatrixCleaner::destroyInitScales()
     itsInitScales[scale].resize();
   for(uInt scale=0; scale < itsInitScaleXfrs.nelements(); scale++)
     itsInitScaleXfrs[scale].resize();
+  for(uInt scale=0; scale < itsPsfConvInitScales.nelements(); scale++)
+    itsPsfConvInitScales[scale].resize();
 
   itsInitScales.resize(0, true);
   itsInitScaleXfrs.resize(0, true);
+  itsPsfConvInitScales.resize(0, true);
 
   return true;
 }
@@ -1463,19 +1486,19 @@ float MatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
   return float(ceil((xpixels + ypixels)/2));
 }
 
-void MatrixCleaner::setInitScaleXfrs(const Array<Float> arrpsf, const Float width)
+void MatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Float width)
 {
   if(itsScales.nelements() > 0)
     destroyScales();
 
-  Matrix<Float> tempMat;
+  /*Matrix<Float> tempMat;
   tempMat.reference(arrpsf);
   psfShape_p.resize(0, false);
-  psfShape_p = tempMat.shape();
+  psfShape_p = tempMat.shape();*/
 
-  // try 1width, 5width and 10width
+  // try 1.5width, 5width and 10width
   itsInitScaleSizes.resize(3, false);
-  itsInitScaleSizes = {1*width, 5*width, 10*width};
+  itsInitScaleSizes = {1.5f*width, 5.0f*width, 10.0f*width};
   itsInitScales.resize(3, false);
   itsInitScaleXfrs.resize(3, false);
   FFTServer<Float,Complex> fft(psfShape_p);
@@ -1489,7 +1512,38 @@ void MatrixCleaner::setInitScaleXfrs(const Array<Float> arrpsf, const Float widt
   }
 }
 
-// Set up the masks for the initial scales (i.e. 1width, 5width and 10width)
+// calculate the convolutions of the psf with the initial scales
+void MatrixCleaner::setInitScalePsfs()
+{
+  itsPsfConvInitScales.resize(4 * 4, false);
+  itsNscales = 3; // # initial scales. This will be updated in defineAspScales later.
+  FFTServer<Float,Complex> fft(psfShape_p);
+
+  Matrix<Complex> cWork;
+
+  for (Int scale=0; scale < 3; scale++)
+  {
+    cout << "Calculating convolutions of psf for initial scale size " << itsInitScaleSizes[scale] << endl;
+    //PSF * scale
+    itsPsfConvInitScales[scale] = Matrix<Float>(psfShape_p);
+    cWork=((*itsXfr)*(itsInitScaleXfrs[scale])*(itsInitScaleXfrs[scale]));
+    fft.fft0((itsPsfConvInitScales[scale]), cWork, false);
+    fft.flip(itsPsfConvInitScales[scale], false, false);
+
+    for (Int otherscale = scale; otherscale < 3; otherscale++)
+    {
+      AlwaysAssert(index(scale, otherscale) < Int(itsPsfConvInitScales.nelements()),
+       AipsError);
+
+      // PSF *  scale * otherscale
+      itsPsfConvInitScales[index(scale,otherscale)] = Matrix<Float>(psfShape_p);
+      cWork=((*itsXfr)*(itsInitScaleXfrs[scale])*(itsInitScaleXfrs[otherscale]));
+      fft.fft0(itsPsfConvInitScales[index(scale,otherscale)], cWork, false);
+    }
+  }
+}
+
+// Set up the masks for the initial scales (i.e. 1.5width, 5width and 10width)
 Bool MatrixCleaner::setInitScaleMasks(const Array<Float> arrmask, const Float& maskThreshold)
 {
   LogIO os(LogOrigin("MatrixCleaner", "setInitScaleMasks()", WHERE));
@@ -1653,9 +1707,36 @@ void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumS
     nth = min(nth, omp_get_max_threads());
   #endif
 
-#pragma omp parallel default(shared) private(scale) num_threads(nth)
+  //genie
+  // Find the peaks of the convolved Psfs
+  Vector<Float> maxPsfConvInitScales(3);
+  Int naxes = psfShape_p.nelements();
+
+  #pragma omp parallel default(shared) private(scale) num_threads(nth)
   {
-#pragma omp  for
+    #pragma omp for
+    for (scale=0; scale < 3; scale++)
+    {
+      IPosition positionPeakPsfConvInitScales(naxes, 0);
+
+      findMaxAbs(itsPsfConvInitScales[scale], maxPsfConvInitScales(scale),
+      positionPeakPsfConvInitScales);
+     }
+  } //End pragma parallel
+  for (scale=0; scale < 3; scale++)
+  {
+    if (maxPsfConvInitScales(scale) < 0.0)
+    {
+      os << "As Peak of PSF is negative, you should change the initial scales with a smaller scale size"
+   << LogIO::SEVERE;
+      return;
+    }
+  }
+  //genie
+
+  #pragma omp parallel default(shared) private(scale) num_threads(nth)
+  {
+    #pragma omp for
     for (scale=0; scale < 3; ++scale)
     {
       // Find absolute maximum for the dirty image
@@ -1665,7 +1746,17 @@ void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumS
       work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
       maxima(scale) = 0;
       posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
-      cout << "makedirtyinitscale before: " << itsInitScaleMasks[0].shape() << endl;
+      cout << "makedirtyinitscale before: " << itsInitScaleMasks[scale].shape() << endl;
+
+      //genie debug
+      Float maxVal=0;
+      IPosition posmin(vecWork_p[scale].shape().nelements(), 0);
+      Float minVal=0;
+      IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
+      minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsInitScaleMasks[scale]);
+      cout << "InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
+      //genie
+
       if (!itsMask.null())
       {
         findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
@@ -1673,12 +1764,22 @@ void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumS
       }
       else
         findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
+
+      // Remember to adjust the position for the window and for
+      // the flux scale
+      maxima(scale) /= maxPsfConvInitScales(scale);
+      maxima(scale) *= (itsDirtyConvInitScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in strengthOptimum for loop (next for loop).
+      cout << "maxDirty: maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
+      cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
+      //genie: it seems we need the above
     }
   }//End parallel section
 
+  // Find the peak residual among the 3 initial scales, which will be the next Aspen
   for (scale = 0; scale < 3; scale++)
   {
-    if(abs(maxima(scale)) > abs(itsStrengthOptimum))
+    if(abs(maxima(scale)) > abs(strengthOptimum)) //genie, bug was from comparing to itsStrengthOptimum
+    //if(abs(maxima(scale)) > abs(itsStrengthOptimum))
     {
       optimumScale = scale;
       strengthOptimum = maxima(scale);
@@ -1689,23 +1790,22 @@ void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumS
   AlwaysAssert(optimumScale < 3, AipsError);
 }
 
-Float MatrixCleaner::getActiveSetAspen()
+vector<Float> MatrixCleaner::getActiveSetAspen()
 {
   LogIO os(LogOrigin("MatrixCleaner", "getActiveSetAspen()", WHERE));
 
   if(int(itsInitScaleXfrs.nelements()) == 0)
     throw(AipsError("Initial scales for Asp are not defined"));
 
+  // Dirty * initial scales
   Matrix<Complex> dirtyFT;
   FFTServer<Float,Complex> fft(itsDirty->shape());
   fft.fft0(dirtyFT, *itsDirty);
-  itsDirtyConvInitScales.resize(3); //1width, 5width and 10width
+  itsDirtyConvInitScales.resize(3); //1.5width, 5width and 10width
 
-  // Dirty*initial scales
   for (unsigned int scale=0; scale < 3; scale++)
   {
     Matrix<Complex> cWork;
-    // Dirty * scale
     cout << "scale " << scale << " itsInitScaleptr " << &(itsInitScaleXfrs[scale]) << endl;
 
     itsDirtyConvInitScales[scale] = Matrix<Float>(itsDirty->shape());
@@ -1717,31 +1817,74 @@ Float MatrixCleaner::getActiveSetAspen()
   float strengthOptimum = 0.0;
   int optimumScale = 0;
   IPosition positionOptimum(itsDirty->shape().nelements(), 0);
+
   maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
   cout << "Initial maximum residual is " << abs(strengthOptimum);
   cout << " at location " << positionOptimum[0] << " " << positionOptimum[1];
   cout << " " << positionOptimum[2] << " and scale: " << optimumScale << endl;
 
-
   // lbfgs
   LBFGSParam<double> param;
-  param.epsilon = 1e-6;
-  param.max_iterations = 10;
+  //param.epsilon = 1e-6;
+  param.epsilon = 1;
+  param.max_iterations = 5;
   LBFGSSolver<double> solver(param);
-  AspObjFunc fun(*itsDirty, *itsXfr, positionOptimum);
 
-  VectorXd x(2);
-  x << abs(strengthOptimum), itsInitScaleSizes[optimumScale];
-  cout << " x = " << x << endl;
+  //genie:
+  // grab the existing Aspen from class variables, itsAspAmp and itsAspScale
+  // and also add the new Aspen
+  // abs(strengthOptimum), itsInitScaleSizes[optimumScale] to x
+  // Also, push back the new center (positionOptimum) to itsAspCenter
+  AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
+  AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
+  itsAspCenter.push_back(positionOptimum);
+  //AspObjFunc fun(*itsDirty, *itsXfr, positionOptimum); genie old
+  AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
+
+  unsigned int length = (itsAspScaleSizes.size() + 1) * 2;
+  VectorXd x(length); //genie
+  vector<Float> tempx;
+  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+  {
+    //x << itsAspAmplitude[i], itsAspScaleSizes[i];
+    tempx.push_back(itsAspAmplitude[i]);
+    tempx.push_back(itsAspScaleSizes[i]);
+  }
+  //x << abs(strengthOptimum), itsInitScaleSizes[optimumScale];
+  tempx.push_back(strengthOptimum);
+  tempx.push_back(itsInitScaleSizes[optimumScale]);
+
+  for (unsigned int i = 0; i < length; i++)
+    x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
+
+  cout << "Before: x = " << x << endl;
   double fx;
-  int niter = solver.minimize(fun, x, fx);
+  //int niter = solver.minimize(fun, x, fx); //genie epsilon needs to be fixed "nan"
 
-  std::cout << niter << " iterations" << std::endl;
+  //std::cout << niter << " iterations" << std::endl;
   std::cout << "x = \n" << x.transpose() << std::endl;
   std::cout << "f(x) = " << fx << std::endl;
-  std::cout << "float " << Float(itsInitScaleSizes[optimumScale]) << endl;
+  std::cout << "float is " << Float(x[1]) << endl;
 
-  return Float(itsInitScaleSizes[optimumScale]);
+  //genie
+  // put the updated x back to the class variables, itsAspAmp and itsAspScale
+  itsAspAmplitude.clear();
+  itsAspScaleSizes.clear();
+  for (unsigned int i = 0; i < length; i+= 2)
+  {
+    itsAspAmplitude.push_back(x[i]);
+    itsAspScaleSizes.push_back(x[i+1]);
+  }
+
+  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+  {
+    cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
+    cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
+    cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
+  }
+
+  //genie to do: update the list in SDAlgAAsp. How is Imodel calculated here
+  return itsAspScaleSizes; // return optimized scale
 }
 
 // Define the Asp scales without doing anything else

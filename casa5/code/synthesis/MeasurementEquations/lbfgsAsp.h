@@ -50,20 +50,22 @@ private:
   int n;
   int nX;
   int nY;
+  unsigned int AspLen;
   casacore::Matrix<casacore::Float> itsMatDirty;
   casacore::Matrix<casacore::Complex> itsPsfFT;
-  casacore::IPosition center;
+  std::vector<casacore::IPosition> center;
 
 public:
   AspObjFunc(const casacore::Matrix<casacore::Float>& dirty,
     const casacore::Matrix<casacore::Complex>& psf,
-    const casacore::IPosition& positionOptimum) :
+    const std::vector<casacore::IPosition>& positionOptimum) :
     itsMatDirty(dirty),
     itsPsfFT(psf),
     center(positionOptimum)
   {
     nX = itsMatDirty.shape()(0);
     nY = itsMatDirty.shape()(1);
+    AspLen = center.size();
   }
 
   ~AspObjFunc() = default;
@@ -72,62 +74,72 @@ public:
   {
     double fx = 0.0;
 
-    // x[0]: Amplitude, x[1]: scale
-    casacore::Matrix<casacore::Float> Asp(nX, nY);
-    casacore::Gaussian2D<casacore::Float> gbeam(x[0], center[0], center[1], x[1], 1, 0);
-    for (int j = 0; j < nY; ++j)
+    for (unsigned int k = 0; k < AspLen; k ++)
     {
-      for(int i = 0; i < nX; ++i)
+      // generate a gaussian for each Asp in the Aspen set
+      // x[0]: Amplitude0,       x[1]: scale0
+      // x[2]: Amplitude1,       x[3]: scale1
+      // x[i]: Amplitude(i/2), x[i+1]: scale(i/2)
+      casacore::Matrix<casacore::Float> Asp(nX, nY); //genie to do: loop on vector
+      casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
+      for (int j = 0; j < nY; ++j)
       {
-        int px = i - nX/2;
-        int py = j - nY/2;
-        Asp(i,j) = gbeam(px, py);
+        for(int i = 0; i < nX; ++i)
+        {
+          int px = i - nX/2;
+          int py = j - nY/2;
+          Asp(i,j) = gbeam(px, py);
+        }
       }
-    }
 
-    casacore::Matrix<casacore::Complex> AspFT;
-    casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
-    fft.fft0(AspFT, Asp);
+      casacore::Matrix<casacore::Complex> AspFT;
+      casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
+      fft.fft0(AspFT, Asp);
 
-    casacore::Matrix<casacore::Complex> cWork;
-    cWork = AspFT * itsPsfFT;
-    casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape());
-    fft.fft0(AspConvPsf, cWork, false);
-    //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
-    //fft.flip(AspConvPsf, false, false);
+      casacore::Matrix<casacore::Complex> cWork;
+      cWork = AspFT * itsPsfFT;
+      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape());
+      fft.fft0(AspConvPsf, cWork, false);
+      //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
+      //fft.flip(AspConvPsf, false, false);
 
-    // gradient. 0: amplitude; 1: scale
-    casacore::Matrix<casacore::Float> GradAmp(nX, nY);
-    casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[0], center[1], x[1], 1, 0);
-    for (int j = 0; j < nY; ++j)
-    {
-      for(int i = 0; i < nX; ++i)
+      // gradient. 0: amplitude; 1: scale
+      // generate derivative of amplitude
+      casacore::Matrix<casacore::Float> GradAmp(nX, nY);
+      casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
+      for (int j = 0; j < nY; ++j)
       {
-        int px = i - nX/2;
-        int py = j - nY/2;
-        GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+        for(int i = 0; i < nX; ++i)
+        {
+          int px = i - nX/2;
+          int py = j - nY/2;
+          GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+        }
       }
-    }
-    casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
+      casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
 
-    casacore::Matrix<casacore::Float> GradScale(nX, nY);
-    for (int j = 0; j < nY; ++j)
-    {
-      for(int i = 0; i < nX; ++i)
-        GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(x[1],3);
-    }
-    casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
-
-    for (int j = 0; j < nY; ++j)
-    {
-      for(int i = 0; i < nX; ++i)
+      // generate derivative of scale
+      casacore::Matrix<casacore::Float> GradScale(nX, nY);
+      for (int j = 0; j < nY; ++j)
       {
-        fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j)));
-        grad[0] = grad[0] + Grad0(i,j);
-        grad[1] = grad[1] + Grad1(i,j);
+        for(int i = 0; i < nX; ++i)
+          GradScale(i, j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
       }
+      casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
+
+      // generate objective function
+      // returns the objective function value and gradient evaluated on x
+      for (int j = 0; j < nY; ++j)
+      {
+        for(int i = 0; i < nX; ++i)
+        {
+          fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j)));
+          grad[2*k] = grad[2*k] + Grad0(i,j);
+          grad[2*k+1] = grad[2*k+1] + Grad1(i,j);
+        }
+      }
+      std::cout << "Asp# " << k << ": fx " << fx << " AspConvPsf " << AspConvPsf(100,100) << std::endl;
     }
-    std::cout << "fx " << fx << " AspConvPsf " << AspConvPsf(100,100) << std::endl;
 
     return fx;
   }
