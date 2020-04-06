@@ -1,5 +1,5 @@
 import datetime
-import re       # Regular Expr.
+import re
 import unittest
 import os
 import numpy
@@ -28,9 +28,9 @@ else:
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split(
     )[0] + "/data/regression/unittest/sdimaging/"
-'''''''''''''''''''''''''''
+"""
 sdtimeaverage begins
-'''''''''''''''''''''''''''
+"""
 
 # Test-MS #
 
@@ -55,8 +55,8 @@ defWorkMs3ALMA = "Uranus1.cal.Ant0.spw34-ALMA.ms"
 # output MS #
 
 defOutputMs = "sdave.ms"        # (internal) output MS
-defPrivateMs = "sdave-*.ms"       # private  output MS-template for each test
-defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output form
+defPrivateMs = "sdave-*.ms"           # (private) Debug output MS template
+defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output MS form
 
 # Test Condition #
 
@@ -68,12 +68,12 @@ nRow = 3843 - nReduce        # Final Size
 # 'scan' and 'state' condition
 
 numOfState = 3                    # test-MS2 (for timespan)
-numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan) usually =61
+numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan), in sdtimeimaging.ms,  numOfScan=61
 
 # Numerical Error Limit
 
-errLimit = 5.0e-08   # numerical error Limit of ZeroSum
-errLimit2 = 2.0e-08  # numerical error Limit of Sigma and Weight
+errLimit = 2.0e-09   # numerical error Limit of ZeroSum
+errLimit2 = 2.0e-09  # numerical error Limit of Sigma and Weight
 testInterval = 1.0   # fundamental INTERVAL in TEST-MS (tunable)
 
 ##############
@@ -247,7 +247,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def checkTime(self, msName, row, refTime):
         '''
-          check time of specified row
+          check time of specified row,
               compare value with the reference.
         '''
         print("-- checking Time --")
@@ -270,14 +270,14 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def checkOutputRec(self, msName, refNRow):
         '''
-          check calculated result record count
+          check calculated result record count,
             compare value with the expected count.
         '''
         print("-- checking Output Record Count --")
 
-        # get time and inspection.
+        # get time
         self. get_main(msName)
-        # one output
+        # count output rows
         nrow = len(self.tm)
         # check
         check = (nrow == refNRow)
@@ -291,16 +291,16 @@ class test_sdtimeaverage(unittest.TestCase):
 # check scan
 ######################
 
-    def check_scan(self, outMsName, refValue):
+    def check_scan(self, out_msname, refValue):
         '''
           check 'scan'
-            number of output must 1
+            number of output must 1,
             compare value with expected value.
         '''
         print("-- checking scan selection --")
-        # get table and inspection.
-        self. get_main(defOutputMs)
-        # one output
+        # get table
+        self. get_main(out_msname)
+        # get one value from row=0
         scan = self.sc[0]
         # check scan ID
         self.assertTrue(len(self.sc) == 1,
@@ -327,7 +327,7 @@ class test_sdtimeaverage(unittest.TestCase):
         print("Weight     :{0}".format(self.wgt))
         print("Sigma      :{0}".format(self.sgm))
 
-        # Check (based on fomula about Sigma and Waight) #
+        # Check (based on Formula about Sigma and Weight) #
         check1 = (self.wgt[0] == weight_ref)
         check2 = (self.wgt[1] == weight_ref)
         check3 = ((1.0 / self.wgt[0]) -
@@ -353,9 +353,9 @@ class test_sdtimeaverage(unittest.TestCase):
 # Read Data from Specified MS
 ##################################
     # MAIN #
-    def get_main(self, msName):
+    def get_main(self, msname):
         # get MAIN table data
-        with tbmanager(msName) as tb:
+        with tbmanager(msname) as tb:
 
             # Key data
             self.tm = tb.getcol('TIME')
@@ -365,8 +365,8 @@ class test_sdtimeaverage(unittest.TestCase):
             self.fd = tb.getcol('FIELD_ID')
 
     # DATA (spectra) #
-    def get_spectra(self, msName, row):
-        with tbmanager(msName) as tb:
+    def get_spectra(self, msname, row):
+        with tbmanager(msname) as tb:
             # Spectra
             self.data = tb.getcell('FLOAT_DATA', row)
             self.wgt = tb.getcell('WEIGHT', row)
@@ -1035,7 +1035,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(self.run_task(prm))
 
         # Averaged results
-        print( "numOfScan ={}, numOfState={}".format(numOfScan,numOfState) )
+        print("numOfScan ={}, numOfState={}".format(numOfScan, numOfState))
         expected_count = numOfScan * numOfState
         self.checkOutputRec(privateOutfile, expected_count)
 
