@@ -73,11 +73,21 @@ import numpy
 import os
 from numpy import isnan
 
-from casatools import functional
-from casatools import regionmanager
-from casatools import image as iatool
-from casatools import table
-from casatools import ctsys
+try:
+    from casatools import functional
+    from casatools import regionmanager
+    from casatools import image as iatool
+    from casatools import table
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+    
 
 twogauss = "specfit_multipix_2gauss.fits"
 polyim = "specfit_multipix_poly_2gauss.fits"
@@ -92,7 +102,7 @@ birdie = "birdie.im"
 
 nanvalue = 4.53345345
 
-datapath='regression/unittest/specfit/'
+datapath = ctsys_resolve('regression/unittest/specfit/')
 
 def run_fitprofile (
     imagename, box, region, chans, stokes,
@@ -135,8 +145,8 @@ def run_fitprofile (
 class ia_fitprofile_test(unittest.TestCase):
     
     def setUp(self):
-        shutil.copy(ctsys.resolve(datapath + twogauss), twogauss)
-        shutil.copy(ctsys.resolve(datapath + polyim), polyim)
+        shutil.copy(datapath + twogauss, twogauss)
+        shutil.copy(datapath + polyim, polyim)
 
     def tearDown(self):
         os.remove(twogauss)

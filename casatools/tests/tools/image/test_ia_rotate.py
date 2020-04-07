@@ -49,15 +49,6 @@
 # Test the ia.rotate() tool method
 # </synopsis> 
 #
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_rotate[test1,test2,...]
-#
-# </example>
-#
 # <motivation>
 # To provide a test standard for the ia.rotate() tool method to ensure
 # coding changes do not break the associated bits 
@@ -69,9 +60,19 @@ import shutil
 import unittest
 import numpy
 
-from casatools import image as iatool
+try:
+    from casatools import image as iatool
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
-datapath = 'regression/unittest/ia_rotate/'
+datapath = ctsys_resolve('regression/unittest/ia_rotate/')
 
 class ia_rotate_test(unittest.TestCase):
     

@@ -2,12 +2,22 @@ import shutil
 import unittest
 import math
 
-from casatools import constants
-from casatools import imagepol as potool
-from casatools import image as iatool
-from casatools import table
+try:
+    from casatools import constants
+    from casatools import imagepol as potool
+    from casatools import image as iatool
+    from casatools import table
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
-datapath='regression/unittest/po_tool/'
+datapath = ctsys_resolve('regression/unittest/po_tool/')
 eq_beams = datapath + "pol_eq_beams.fits"
 neq_beams = datapath + "pol_neq_beams.fits"
 

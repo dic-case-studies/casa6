@@ -22,7 +22,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   __init__.py
   test_admit.py
   test_agentflagger.py
-  test_applycal.py
   test_asdmsummary.py
   test_bandpass.py
   test_caltabconvert.py
@@ -31,7 +30,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cleanhelper.py
   test_clearstat.py
   test_componentlist.py
-  test_componentlistimage.py
   test_concat.py
   test_conjugatevis.py
   test_coordsys.py
@@ -201,6 +199,11 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_VLA_3C391.py
   test_VLA_IRC10216.py
   test_VLA_MG0414.py
+
+  ###
+
+  test_req_tool_componentlistimage.py
+
 
   ###
 
