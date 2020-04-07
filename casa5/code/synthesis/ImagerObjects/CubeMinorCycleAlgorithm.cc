@@ -203,8 +203,11 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     ///END of TESTOO
     
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
-    if(tmpptr){  
-      outptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
+    if(tmpptr){
+      IPosition tileshape=tmpptr->shape();
+      tileshape[2]=1; tileshape[3]=1;
+      TiledShape tshape(tmpptr->shape(),tileshape);
+      outptr.reset(new TempImage<Float>(tshape, tmpptr->coordinates()));
       outptr->copyData(*tmpptr);
       //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
       if(tmpptr->isMasked()){

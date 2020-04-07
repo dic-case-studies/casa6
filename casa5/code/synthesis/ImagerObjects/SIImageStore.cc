@@ -1399,6 +1399,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	      }
 
 	  }
+	weight()->unlock();
+	pb()->unlock();
   }
 
   void  SIImageStore::makePBImage(const Float pblimit)

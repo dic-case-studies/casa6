@@ -37,7 +37,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), movingSource_p(""),status_p(False), retuning_p(True), nterms_p(0){
+  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), weightNames_p(0), movingSource_p(""),status_p(False), retuning_p(True), nterms_p(0){
 	
 }
 CubeMajorCycleAlgorithm::~CubeMajorCycleAlgorithm() {
@@ -300,6 +300,10 @@ void CubeMajorCycleAlgorithm::task(){
               if(subImStor[k]->getType() != "multiterm"){
                 writeBackToFullImage(psfNames_p[k], chanBeg, chanEnd, (subImStor[k]->psf()));
                 writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
+		if((subImStor[k]->hasSensitivity()) && Table::isWritable(weightNames_p[k])){
+		  writeBackToFullImage(weightNames_p[k], chanBeg, chanEnd, (subImStor[k]->weight()));
+		}
+		
               }
               subImStor[k]->psf()->unlock();
               
@@ -387,11 +391,13 @@ String&	CubeMajorCycleAlgorithm::name(){
 	}
 	
 	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
-        Vector<String> weightnames(controlRecord_p.asArrayString("weightnames"));
-        if(imId >= int(weightnames.nelements()))
+        Vector<String> weightnams(controlRecord_p.asArrayString("weightnames"));
+	weightNames_p.resize();
+	weightNames_p=weightnams;
+        if(imId >= int(weightNames_p.nelements()))
           throw(AipsError("Number of weight images does not match number of image fields defined"));
-        if(Table::isReadable(workingdir+weightnames[imId])){
-		weightnames[imId]=workingdir+weightnames[imId];
+        if(Table::isReadable(workingdir+weightNames_p[imId])){
+		weightNames_p[imId]=workingdir+weightNames_p[imId];
 	}
 
 	if(dopsf_p){
@@ -426,8 +432,8 @@ String&	CubeMajorCycleAlgorithm::name(){
 				//submodel.reset(SpectralImageUtil::getChannel(model, startmodchan, endmodchan, writeisneeded));
 				getSubImage(submodel, startmodchan, endmodchan, modelnames[imId], True);
                                 //
-                                if(Table::isReadable(weightnames[imId])){
-                                  divideModelByWeight(submodel, startmodchan, endmodchan, weightnames[imId]);
+                                if(Table::isReadable(weightNames_p[imId])){
+                                  divideModelByWeight(submodel, startmodchan, endmodchan, weightNames_p[imId]);
                                 }
 				//ImageInterface<Float>* modim=new PagedImage<Float>(modelnames[imId], TableLock::UserNoReadLocking);
 				//submodel.reset(modim);
@@ -439,9 +445,10 @@ String&	CubeMajorCycleAlgorithm::name(){
 	}
 	
 	
-	if(Table::isReadable(weightnames[imId])){
-		PagedImage<Float> weight(weightnames[imId], TableLock::UserNoReadLocking);
-		subweight.reset(SpectralImageUtil::getChannel(weight, chanBeg, chanEnd, true));
+	if(Table::isReadable(weightNames_p[imId])){
+	  //PagedImage<Float> weight(weightnames[imId], TableLock::UserNoReadLocking);
+	  //subweight.reset(SpectralImageUtil::getChannel(weight, chanBeg, chanEnd, true));
+	  getSubImage(subweight, chanBeg, chanEnd, weightNames_p[imId], True); 
 	}
 	shared_ptr<ImageInterface<Float> >subsumwt=nullptr;
         //	subsumwt.reset(SpectralImageUtil::getChannel(sumwt, chanBeg, chanEnd, true));
@@ -516,6 +523,7 @@ void CubeMajorCycleAlgorithm::reset(){
                 residualNames_p.resize();
                 psfNames_p.resize();
                 sumwtNames_p.resize();
+		weightNames_p.resize();
                 movingSource_p="";
                 retuning_p=True;
                 nterms_p.resize();

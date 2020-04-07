@@ -80,6 +80,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           casacore::Vector<casacore::String> residualNames_p;
           casacore::Vector<casacore::String> psfNames_p;
           casacore::Vector<casacore::String> sumwtNames_p;
+	  casacore::Vector<casacore::String> weightNames_p;
           casacore::String movingSource_p;
 		casacore::Bool status_p;
 		casacore::Bool retuning_p; 
