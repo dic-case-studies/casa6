@@ -141,6 +141,8 @@ public:
 		       const casacore::Bool wbAWP      = true,
 		       const casacore::String cfCache  = "",
 		       const casacore::Bool usePointing = false,
+		       /* const casacore::Vector<casacore::Float> pointingOffsetSigDev=std::vector<casacore::Float>({10,10}), */
+		       const std::vector<float> pointingOffsetSigDev = {10,10},
 		       const casacore::Bool doPBCorr   = true,
 		       const casacore::Bool conjBeams  = true,
 		       const casacore::Float computePAStep   = 360.0,
@@ -153,11 +155,11 @@ public:
 		       const casacore::String imageNamePrefix="",
 		       const casacore::String &pointingDirCol=casacore::String("direction"),
 		       const casacore::Float skyPosThreshold=0.0,
-           const casacore::Int convSupport=-1,
-           const casacore::Quantity &truncateSize=casacore::Quantity(-1),
-           const casacore::Quantity &gwidth=casacore::Quantity(-1),
-           const casacore::Quantity &jwidth=casacore::Quantity(-1),
-           const casacore::Float minWeight=0.1,
+		       const casacore::Int convSupport=-1,
+		       const casacore::Quantity &truncateSize=casacore::Quantity(-1),
+		       const casacore::Quantity &gwidth=casacore::Quantity(-1),
+		       const casacore::Quantity &jwidth=casacore::Quantity(-1),
+		       const casacore::Float minWeight=0.1,
 		       const casacore::Bool clipMinMax=false,
 		       const casacore::Bool pseudoI=false);
 
@@ -176,7 +178,9 @@ public:
 			  const casacore::Bool mTermOn,      
 			  const casacore::Bool wbAWP,        
 			  const casacore::String cfCache,    
-			  const casacore::Bool usePointing,   
+			  const casacore::Bool usePointing,
+			  /* const casacore::Vector<casacore::Float> pointingOffsetSigDev, */
+			  const vector<float> pointingOffsetSigDev,
 			  const casacore::Bool doPBCorr,     
 			  const casacore::Bool conjBeams,    
 			  const casacore::Float computePAStep,

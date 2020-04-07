@@ -68,7 +68,7 @@ import os
 import unittest
 import re
 
-from casatestutils.imagehelpers import TestHelpers
+from casatestutils.imagerhelpers import TestHelpers
 th = TestHelpers()
 
 CASA6 = False
@@ -121,7 +121,7 @@ class TestTcleanMemProf(unittest.TestCase):
         os.unlink(input_ms)        
         casalog.setlogfile(str(logpath))
         os.system('rm -rf tclean_memprofile.log')
-        os.system('rm -rf casa.synthesis.imager.memprofile*') 
+#        os.system('rm -rf casa.synthesis.imager.memprofile*') 
 
  
     @classmethod
@@ -176,13 +176,17 @@ class TestTcleanMemProf(unittest.TestCase):
             memdict = OrderedDict()
             for line in mfile:
                 linelist = []
+                print(line.rstrip())
                 if line.startswith('#'):
                     continue
                  
                 linelist = line.split(',')
                 tclean_step = str(linelist[-1].rstrip())
                 memdict[tclean_step.strip('[]')] = int(linelist[1])
-   
+  
+        # For information, print the memory profile
+        
+ 
         # Compare memory at [Set Weighting] step
         mfile.close()
         max_ref_memory = 300

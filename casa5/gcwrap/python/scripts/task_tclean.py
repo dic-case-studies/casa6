@@ -100,7 +100,7 @@ def tclean(
     usepointing, #=false
     computepastep ,#=360.0,
     rotatepastep ,#=360.0,
-    pointingoffsetsigdev ,#=0.0,
+    pointingoffsetsigdev ,#=[10.0],
 
     pblimit,#=0.01,
     normtype,#='flatnoise',
@@ -232,8 +232,10 @@ def tclean(
 
     #paramList.printParameters()
     
-    if pointingoffsetsigdev!=0.0 and usepointing==False:
-        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
+    if len(pointingoffsetsigdev)>0 and pointingoffsetsigdev[0]!=0.0 and usepointing==True and gridder.count('awproj')>1:
+        casalog.post("pointingoffsetsigdev will be used for pointing corrections with AWProjection", "WARN") 
+#    elif usepointing==True and pointingoffsetsigdev[0] == 0:
+#        casalog.post("pointingoffsetsigdev is set to zero which is an unphysical value, will proceed with the native sky pixel resolution instead". "WARN")
 
 
     ##pcube may still need to be set to True for some combination of ftmachine etc...
