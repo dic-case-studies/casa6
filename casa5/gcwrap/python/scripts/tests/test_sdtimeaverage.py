@@ -63,7 +63,8 @@ defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output MS form
 numTune = 0                  # must be in {12,24,36...}  and 0(=no operation)
 nInScan = 63                 # number of scan (CONST)
 nReduce = nInScan * numTune  # nReduce MUST BE even number
-nRow = 3843 - nReduce        # Final Size
+nRowOrg = 3843
+nRow = nRowOrg - nReduce     # Final Size
 
 # 'scan' and 'state' condition
 
@@ -870,7 +871,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # Run Task and check
         self.assertTrue(self.run_task(prm))
         # No averaging, original rows remain.
-        self.checkOutputRec(defOutputMs, nRow)
+        self.checkOutputRec(defOutputMs, nRowOrg)
 
     def test_param116(self):
         '''sdtimeagerage::115:: timebin='-1' (Error. Not acceptable)    '''
