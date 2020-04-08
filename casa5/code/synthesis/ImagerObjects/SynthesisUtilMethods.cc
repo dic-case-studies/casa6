@@ -3191,6 +3191,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  	err += readVal( inrec, String("wbawp"), wbAWP );
 	err += readVal( inrec, String("cfcache"), cfCache );
 	err += readVal( inrec, String("usepointing"), usePointing );
+	err += readVal( inrec, String("pointingoffsetsigdev"), pointingOffsetSigDev );
 	err += readVal( inrec, String("dopbcorr"), doPBCorr );
 	err += readVal( inrec, String("conjbeams"), conjBeams );
 	err += readVal( inrec, String("computepastep"), computePAStep );
@@ -3211,6 +3212,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	if( ftmachine=="awprojectft" && cfCache=="" )
 	  {cfCache=imageName+".cf"; }
+
+	if( ftmachine=="awprojectft" && 
+	    usePointing==True && 
+	    pointingOffsetSigDev.nelements() != 2 )
+	  {
+	    // Set the default to a large value so that it behaves like CASA 5.6's usepointing=True.
+	    pointingOffsetSigDev.resize(2);
+	    pointingOffsetSigDev[0]=600.0;
+	    pointingOffsetSigDev[1]=600.0;
+	  }
 
 	err += verify();
 	
@@ -3269,6 +3280,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { err += "The combination of mosaicft gridding with multiple facets is not supported. "
 	  "Please use the awprojectft gridder instead, and set wprojplanes to a value > 1 to trigger AW-Projection. \n"; }
 
+    if( ftmachine=="awprojectft" && usePointing==True && pointingOffsetSigDev.nelements() != 2 )
+      {
+	err += "The pointingoffsetsigdev parameter must be a two-element vector of doubles in order to be used with usepointing=True and the AWProject gridder. Setting it to the default of \n ";
+      }
+
+
+
     // todo: any single-dish specific limitation?
 
     return err;
@@ -3311,6 +3329,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     wbAWP      = true;
     cfCache  = "";
     usePointing = false;
+    pointingOffsetSigDev.resize(0);
+    //    pointingOffsetSigDev.set(30.0);
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;
@@ -3358,6 +3378,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     gridpar.define("wbawp", wbAWP);
     gridpar.define("cfcache", cfCache);
     gridpar.define("usepointing",usePointing );
+    gridpar.define("pointingoffsetsigdev", pointingOffsetSigDev);
     gridpar.define("dopbcorr", doPBCorr);
     gridpar.define("conjbeams",conjBeams );
     gridpar.define("computepastep", computePAStep);
