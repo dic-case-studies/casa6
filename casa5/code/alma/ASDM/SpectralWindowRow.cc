@@ -1519,7 +1519,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SpectralWindow");
 		}
 	}
@@ -2260,7 +2260,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SpectralWindow");
 		}
 	}
@@ -2279,7 +2279,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CBasebandName::name(basebandName));
+		eoss.writeString(CBasebandName::name(basebandName));
 			/* eoss.writeInt(basebandName); */
 				
 		
@@ -2289,7 +2289,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CNetSideband::name(netSideband));
+		eoss.writeString(CNetSideband::name(netSideband));
 			/* eoss.writeInt(netSideband); */
 				
 		
@@ -2315,7 +2315,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSidebandProcessingMode::name(sidebandProcessingMode));
+		eoss.writeString(CSidebandProcessingMode::name(sidebandProcessingMode));
 			/* eoss.writeInt(sidebandProcessingMode); */
 				
 		
@@ -2332,7 +2332,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CWindowFunction::name(windowFunction));
+		eoss.writeString(CWindowFunction::name(windowFunction));
 			/* eoss.writeInt(windowFunction); */
 				
 		
@@ -2422,7 +2422,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCorrelationBit::name(correlationBit));
+		eoss.writeString(CCorrelationBit::name(correlationBit));
 			/* eoss.writeInt(correlationBit); */
 				
 		
@@ -2509,7 +2509,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CFrequencyReferenceCode::name(measFreqRef));
+		eoss.writeString(CFrequencyReferenceCode::name(measFreqRef));
 			/* eoss.writeInt(measFreqRef); */
 				
 		

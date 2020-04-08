@@ -2249,28 +2249,30 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 
 	if (showXLabel) {
 		// get settings for all plots
-		int pointsize(-1);              // use default if not user set
-		casacore::String freqFrame(""); // added to label if all plots have same frame
+		int pointsize(-1);                       // use default if not user set
+		casacore::String freqFrame("");          // added to label if all plots have same frame
 		casacore::String coordSysFrameLabel(""); // used for label if axis is ra/dec
-		bool averaged(true);            // added to label if all plots have this axis averaged
+		bool averaged(true);                     // added to label if all plots have this axis averaged
 		for (int i=0; i<plotcount; ++i) {
 			if (canvasParams[i]->xFontSet()) {
 				pointsize = canvasParams[i]->xAxisFont(); // use last user setting
 			}
-			if ((xAxis == PMS::FREQUENCY) && (dataParams[i]->cacheType() == PlotMSCacheBase::MS)) {
-				casacore::String plotFreqFrame(MFrequency::showType(plots[i]->cache().getFreqFrame()));
-				if (i == 0) {
-					freqFrame = plotFreqFrame;
-				} else if (plotFreqFrame != freqFrame) {
-					freqFrame = ""; // only add frame if they all have same one
-				}
-			} else if (PMS::axisIsRaDec(xAxis)) {
+
+			if (PMS::axisIsRaDec(xAxis)) {
 				auto xFrame = cacheParams[i]->xFrame();
 				coordSysFrameLabel = PMS::coordSystem(xFrame) + " ";
 				if (xAxis == PMS::RA) {
 					coordSysFrameLabel += PMS::longitudeName(xFrame);
 				} else {
 					coordSysFrameLabel += PMS::latitudeName(xFrame);
+				}
+			} else if ((dataParams[i]->cacheType() == PlotMSCacheBase::MS) &&
+					   ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY))) { 
+				casacore::String plotFreqFrame(MFrequency::showType(plots[i]->cache().getFreqFrame()));
+				if (i == 0) {
+					freqFrame = plotFreqFrame; // add frame to label
+				} else if (plotFreqFrame != freqFrame) {
+					freqFrame = "";            // only add frame if they all have same one
 				}
 			}
 			averaged &= axisIsAveraged(xAxis, dataParams[i]->averaging());
@@ -2290,7 +2292,7 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 				xLabel = coordSysFrameLabel;
 			} else {
 				xLabel = xFormat.getLabel(xAxis, xHasRef, xRefVal, xColumn, commonPolnRatio);
-				if ((xAxis == PMS::FREQUENCY) && !freqFrame.empty()) {
+				if (((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY)) && !freqFrame.empty()) {
 					xLabel += " " + freqFrame;
 				}
 				addAxisDescription(xLabel, xAxis, commonCacheType, averaged);
@@ -2584,7 +2586,8 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						}
 					} else {
 						yLabel = yFormat.getLabel(yaxis, yHasRef, yRefVal, ycol, polnRatio);
-						if (yaxis == PMS::FREQUENCY) {
+						if ((dataParams[plotindex]->cacheType() == PlotMSCacheBase::MS) &&
+							((yaxis == PMS::FREQUENCY) || (yaxis == PMS::VELOCITY))) {
 							yLabel += " " + MFrequency::showType(plots[plotindex]->cache().getFreqFrame());
 						}
 						addAxisDescription(yLabel, yaxis, cacheType, averaged);
@@ -2623,9 +2626,12 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						if (yLabelRight.empty()) {
 							yLabelRight = yLabel;
 						} else if (yLabel != yLabelRightLast) {
-							// do not repeat for overplots
-							if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
-							    (yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
+							// do not repeat overlays for overplots (handled below)
+							if (!yLabel.contains("Atm") && !yLabel.contains("Tsky") && !yLabel.contains("Sideband")) {
+								yLabelRight.append( ", ");
+								yLabelRight.append(yLabel);
+							} else if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
+								(yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
 								(yLabel.contains("Sideband") && !yLabelRight.contains("Sideband"))) {
 								yLabelRight.append( ", ");
 								yLabelRight.append(yLabel);

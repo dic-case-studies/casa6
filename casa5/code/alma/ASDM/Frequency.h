@@ -120,7 +120,7 @@ public:
 	 * @param st a reference to a StringTokenizer.
 	 * @return an Frequency.
 	 */
-	static Frequency getFrequency(StringTokenizer &st) throw(NumberFormatException);
+	static Frequency getFrequency(StringTokenizer &st);
 			
 	/**
 	 * Write the binary representation of this to an EndianOSStream .

@@ -295,6 +295,21 @@ Application-Wide Options Methods
   <returns />
 </method>
 
+<method type="function" name="getNumPlots">
+  <keyword>getNumPlots</keyword>
+
+  <shortdescription>Get the number of plots.</shortdescription>
+
+  <description />
+
+  <input />
+
+  <example />
+
+  <returns type="int">
+    <description>Number of plots, useful for determining next plot index.</description>
+  </returns>
+</method>
 
 
 <!--

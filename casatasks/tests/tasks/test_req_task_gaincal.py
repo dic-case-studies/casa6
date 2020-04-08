@@ -28,12 +28,15 @@ try:
     from casatasks import gaincal, casalog
     CASA6 = True
     tb = casatools.table()
+
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-import testhelper as th
+
+import sys
 import os
+import testhelper as th
 import unittest
 import shutil
 import numpy as np
@@ -127,7 +130,7 @@ def getparam(caltable, colname='CPARAM'):
     return outtable
 
 
-def tableComp(table1, table2, cols=[], rtol=8e-7, atol=1e-8):
+def tableComp(table1, table2, cols=[], rtol=8e-5, atol=1e-6):
     ''' Compare two caltables '''
 
     tableVal1 = {}
@@ -247,6 +250,7 @@ class gaincal_test(unittest.TestCase):
         '''
 
         self.assertTrue(np.all(tableComp(fullRangeCal, combinedRef)[:,1] == 'True'))
+        #self.assertTrue(ch.Compare.compare_CASA_tables(fullRangeCal, combinedRef))
 
 
     def test_intervalSNR(self):
@@ -341,7 +345,7 @@ class gaincal_test(unittest.TestCase):
         gAmp = getparam(tempCal)
         refs = [[np.mean(gAmp.imag[j,0,i::10]) for i in range(10)] for j in range(2)]
 
-        self.assertTrue(refs[0][1] == 0 and refs[1][1] == 0)
+        self.assertTrue(np.isclose(refs[0][1], 0) and np.isclose(refs[1][1], 0))
 
     def test_preapplyT0(self):
         '''

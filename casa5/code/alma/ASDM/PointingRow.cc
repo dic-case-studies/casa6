@@ -983,7 +983,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Pointing");
 		}
 	}
@@ -1376,7 +1376,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Pointing");
 		}
 	}
@@ -1514,7 +1514,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDirectionReferenceCode::name(sourceOffsetReferenceCode));
+		eoss.writeString(CDirectionReferenceCode::name(sourceOffsetReferenceCode));
 			/* eoss.writeInt(sourceOffsetReferenceCode); */
 				
 		

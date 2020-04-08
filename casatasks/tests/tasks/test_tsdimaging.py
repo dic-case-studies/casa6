@@ -30,6 +30,8 @@ if is_CASA6:
 
     from casatasks.private.task_tsdimaging import image_suffix
 
+    from casatasks.private import restfreqtool
+
 else:
     from __main__ import default
     from tasks import *
@@ -60,6 +62,8 @@ else:
         return os.path.join(dataRoot,apath)
 
     from task_tsdimaging import image_suffix
+
+    import restfreqtool
 
 _ia = image()
 _rg = regionmanager()
@@ -2552,6 +2556,20 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       phasecenter='J2000 00:00:00 00.00.00',
                       restfreq='',overwrite=True)
     unifval = 5.98155
+    refset = {
+        '200GHz': {
+            'beam': dict(major='30.276442arcsec',minor='30.276442arcsec'),
+            'cell': '10.091393059432447arcsec',
+        },
+        '300GHz': {
+            'beam': dict(major='20.339973arcsec',minor='20.339973arcsec'),
+            'cell': '6.727595372954963arcsec',
+        },
+        '300.5GHz': {
+            'beam': dict(major='20.303418arcsec', minor='20.303418arcsec'),
+            'cell': '6.716401370670513arcsec',
+        },
+    }
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2582,11 +2600,25 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self._checkdirax(outfile, self.param['phasecenter'],
                          cell_ref, self.param['imsize'])
 
+    def get_reference_from_restfreq(self, restfreq):
+        """Return a set of reference data associated with given rest frequency.
+        
+        Arguments:
+            restfreq {string} -- rest frequency as a string composed of value and unit
+                
+        Returns:
+           dict  -- reference data associated with given rest frequency
+        """
+        return self.refset.get(restfreq, {})
+
     def test_restfreq_param(self):
         """Rest frequency from restfreq parameter"""
         restfreq='200GHz'
-        beam_ref = dict(major='30.276442arcsec',minor='30.276442arcsec')
-        cell_ref = '10.091393059432447arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2595,8 +2627,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_source(self):
         """Rest Frequency from SOURCE table"""
         restfreq='300GHz'
-        beam_ref = dict(major='20.339973arcsec',minor='20.339973arcsec')
-        cell_ref = '6.727595372954963arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2605,8 +2640,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_mean(self):
         """Rest frequency from mean of SPW frequencies"""
         restfreq='300.5GHz'
-        beam_ref = dict(major='20.303418arcsec', minor='20.303418arcsec')
-        cell_ref = '6.716401370670513arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         # remove REST_REQUENCY in SOURCE TABLE
@@ -2620,6 +2658,34 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         tb.close()
         self.run_test(restfreq, beam_ref, cell_ref, stats,
                       restfreq='', imsize=[11,11])
+
+    def test_capital_outframe(self):
+        """test outframe='LSRK'"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        self.run_test(restfreq, beam_ref, cell_ref, stats,
+                      restfreq=restfreq,imsize=[8,8], outframe='LSRK')
+
+    def test_unallowed_outframe(self):
+        """test outframe='lSrK' (will fail)"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs) 
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        with self.assertRaises(AssertionError):
+            self.run_test(restfreq, beam_ref, cell_ref, stats,
+                          restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+        print('test_unallowed_outframe: failed as expected')
 
 ###
 #
@@ -2849,7 +2915,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
         
-    def verify_scanned_region(self, phasecenter):
+    def verify_scanned_region(self, phasecenter, **kwargs):
         _phasecenter = phasecenter.strip().upper()
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
@@ -2884,9 +2950,62 @@ class sdimaging_test_ephemeris(unittest.TestCase):
                     message = 'Data x-range(' + str(xmin) + ', ' + str(xmax) + ') outside the reference border(' + str(xmin_ref) + ', ' + str(xmax_ref) + ') at y=' + str(y)
                     self.assertTrue(inside_border, msg=message)
 
-    def execute(self, phasecenter):
-        self.run_test(phasecenter=phasecenter)
-        self.verify_scanned_region(phasecenter=phasecenter)
+    def __verify_spectral_reference(self):
+        myia = image()
+        imagename = self.outfile + image_suffix
+        myia.open(imagename)
+        csys = myia.coordsys()
+        try:
+            refcode = csys.referencecode('spectral')
+        finally:
+            csys.done()
+            myia.close()
+
+        self.assertEqual(len(refcode), 1) 
+        self.assertEqual(refcode[0], 'REST')
+
+    def __verify_frequency_label(self):
+        vis = self.infiles
+        imagename = self.outfile + image_suffix
+        spwid = int(self.param.get('spw', 'No spw is specified'))
+        mymsmd = msmetadata()
+        mymsmd.open(vis)
+        try:
+            fieldid = mymsmd.fieldnames().index(self.param.get('field', 'No field is specified'))
+            nchanspw = mymsmd.nchan(spwid)
+        finally:
+            mymsmd.close()
+        chanstart = self.param.get('start', None)
+        self.assertIsNotNone(chanstart)
+        nchan = self.param.get('nchan', nchanspw) * self.param.get('width', 1)
+        rtol = 0.2 # 20% tolerance w.r.t. Lorentz factor
+        metadataset = restfreqtool.get_metadataset(vis, fieldid, spwid, chanstart, nchan)
+        msrange = restfreqtool.ms_freq_range(metadataset)
+        imrange = restfreqtool.image_freq_range(imagename) 
+        lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
+        fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
+        fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
+        print('Result = {}'.format((fmin_ok is True) and (fmax_ok is True)))
+        self.assertTrue(fmin_ok)
+        self.assertTrue(fmax_ok)
+
+    def verify_spectral_axis(self, **kwargs):
+        # only perform the verification when specmode is 'cubesource'
+        if kwargs.get('specmode', '') != 'cubesource':
+            return
+
+        casalog.post('Verifying spectral axis for cubesource mode')
+
+        # make sure the spectral reference is REST
+        self.__verify_spectral_reference()
+
+        # test frequency range using restfreqtool
+        self.__verify_frequency_label()
+
+    def execute(self, phasecenter, **kwargs):
+        self.run_test(phasecenter=phasecenter, **kwargs)
+        self.verify_scanned_region(phasecenter=phasecenter, **kwargs)
+        self.verify_spectral_axis(**kwargs)
         
     def test_ephemeris_notset(self):
         self.execute('')
@@ -2899,6 +3018,9 @@ class sdimaging_test_ephemeris(unittest.TestCase):
 
     def test_ephemeris_table(self):
         self.execute(self.ephtab)
+
+    def test_ephemeris_cubesource(self):
+        self.execute(phasecenter='TRACKFIELD', specmode='cubesource')
 
     
 ###

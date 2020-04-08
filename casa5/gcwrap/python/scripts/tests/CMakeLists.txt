@@ -22,7 +22,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   __init__.py
   test_admit.py
   test_agentflagger.py
-  test_applycal.py
   test_asdmsummary.py
   test_bandpass.py
   test_caltabconvert.py
@@ -31,7 +30,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cleanhelper.py
   test_clearstat.py
   test_componentlist.py
-  test_componentlistimage.py
   test_concat.py
   test_conjugatevis.py
   test_coordsys.py
@@ -110,7 +108,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcontsub.py
   test_imfit.py
   test_imhead.py
-  test_imhistory.py
   test_immath.py
   test_immoments.py
   test_impbcor.py
@@ -129,7 +126,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imtrans.py
   test_imval.py
   test_initweights.py
-  test_listhistory.py
   test_listfits.py
   test_listobs.py
   test_listpartition.py
@@ -206,6 +202,12 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ###
 
+  test_req_tool_componentlistimage.py
+
+
+  ###
+
+  test_req_task_imhistory.py
   test_req_task_listcal.py
   test_req_task_accor.py
   test_req_task_applycal.py
@@ -230,6 +232,9 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+
+  ### stakeholders
+  test_stk_alma_pipeline_imaging.py
 
   ###
   test_setjy.py

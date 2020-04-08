@@ -81,7 +81,8 @@ namespace casa {
 
     PlotMSPlotParameters *grpcPlotMS::get_sysparams(int index) {
         PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
-        if ( sp == NULL && index == itsPlotms_->getPlotManager( ).numPlots( ) ) {
+        int num_plots(itsPlotms_->getPlotManager().numPlots());
+        if ( (sp == NULL) && (index == num_plots) ) {
             std::promise<bool> prom;
             qtGO( [&]( ) {
                       itsPlotms_->getPlotManager( ).addOverPlot( );
@@ -129,7 +130,7 @@ namespace casa {
         if ( param_groups.size( ) <= 0 ) return;
 
         // -----  hold all notifications
-        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+        for ( unsigned int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
             PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->holdNotification( );
@@ -145,7 +146,7 @@ namespace casa {
         }
 
         // -----  release all notifications
-        for ( int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
+        for ( unsigned int index = 0; index < itsPlotms_->getPlotManager().numPlots( ); ++index ) {
             PlotMSPlotParameters* sp = itsPlotms_->getPlotManager().plotParameters(index);
             if ( sp == NULL ) continue;
             sp->releaseNotification();
@@ -248,6 +249,20 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    ::grpc::Status grpcPlotMS::getNumPlots( ::grpc::ServerContext *context,
+                                             const ::google::protobuf::Empty*,
+                                             ::rpc::plotms::NumPlots *reply ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cout << "received getNumPlots( ) event... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stdout);
+        }
+        reply->set_nplots(itsPlotms_->getPlotManager().numPlots());
+        return grpc::Status::OK;
+    }
+
+    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     ::grpc::Status grpcPlotMS::setShowGui( ::grpc::ServerContext *context,
                                            const ::rpc::plotms::Toggle *req,
                                            ::google::protobuf::Empty* ) {
@@ -281,15 +296,15 @@ namespace casa {
         }
         auto rows = req->rows( );
         auto cols = req->cols( );
-		clear_parameters( );
         std::promise<bool> prom;
-		qtGO( [&]( ){
-				itsPlotms_->getParameters().setGridSize( rows, cols );
-				update_parameters( );
-                prom.set_value(true);
-			} );
+        qtGO( [&]( ){
+                bool changed = itsPlotms_->getParameters().setGridSize( rows, cols );
+                prom.set_value(changed);
+            } );
         auto fut = prom.get_future( );
-        fut.get( );
+        if (fut.get( )) {
+            clear_parameters( );
+        }
         return grpc::Status::OK;
     }
 
@@ -477,6 +492,9 @@ namespace casa {
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::ATM, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -509,6 +527,9 @@ namespace casa {
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::TSKY, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -541,6 +562,9 @@ namespace casa {
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
+                  if (show) add_overlay_axis(PMS::IMAGESB, index);
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -549,6 +573,37 @@ namespace casa {
 
         return grpc::Status::OK;
     }
+
+    void grpcPlotMS::add_overlay_axis(const PMS::Axis& overlay, int index) {
+        auto cache = ppcache(index);
+        auto axes = ppaxes(index);
+        auto display = ppdisp(index);
+
+        // index of axes sets
+        unsigned int new_index = cache->numXAxes();
+        unsigned int current_index = new_index - 1;
+
+        // add overlay axis vs x-axis
+        cache->setAxes(cache->xAxis(), overlay, cache->xDataColumn(0), PMS::DEFAULT_DATACOLUMN, new_index);
+
+        // set axis positions; use last x-axis position, overlay y-axis position is right
+        axes->resize(new_index + 1, true); // does not add index
+        axes->setAxes(axes->xAxis(current_index), Y_RIGHT, new_index);
+
+        // keep x-axis range setting
+        axes->setXRange(axes->xRangeSet(current_index), axes->xRange(current_index), new_index);
+
+        // set new unflagged symbol color magenta (atm, tsky) or black (image sideband)
+        std::string symbol_color = (overlay == PMS::IMAGESB ? "#000000" : "#FF00FF");
+        PlotSymbolPtr unflagged_symbol = display->unflaggedSymbol(new_index); // adds index
+        unflagged_symbol->setSymbol("circle");
+        unflagged_symbol->setSize(2,2);
+        unflagged_symbol->setColor(symbol_color);
+        display->setUnflaggedSymbol(unflagged_symbol, new_index);
+        // set new flagged symbol same as current
+        PlotSymbolPtr flagged_symbol = display->flaggedSymbol(current_index);
+        display->setFlaggedSymbol(flagged_symbol, new_index);
+    } 
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcPlotMS::populate_selection( const ::rpc::plotms::SetSelection &req, PlotMSSelection &sel ) {
@@ -942,9 +997,11 @@ namespace casa {
                   // #8  0x000000000175b07f in casa::PMS_PP_Display::PMS_PP_Display (this=0x7f9cb800ddc0, factory=...)
                   //     at casa-source/code/plotms/Plots/PlotMSPlotParameterGroups.cc:1262
                   // #9  0x00000000016d66fd in casa::grpcPlotMS::ppdisp (this=0x393efd0, index=0) at casa-source/code/plotms/PlotMS/grpcPlotMSAdaptor.cc:174
+                  // must go here else "QPixmap: It is not safe to use pixmaps outside the GUI thread"
                   auto sp = ppdisp(index);
                   sp->setXConnect(req->xconnector( ));
                   sp->setTimeConnect(req->timeconnector( ));
+
                   if (update) update_parameters(index);
                   prom.set_value(true);
               } );
@@ -1009,10 +1066,10 @@ namespace casa {
 
         auto canvas = ppcan(index);
         auto title = req->value( );
-		PlotMSLabelFormat f = canvas->titleFormat();
-		if ( title.size( ) == 0 ) f = PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT);
-		else f.format = title;
-		canvas->setTitleFormat(f);
+        PlotMSLabelFormat f = canvas->titleFormat();
+        if ( title.size( ) == 0 ) f = PlotMSLabelFormat(PMS::DEFAULT_TITLE_FORMAT);
+        else f.format = title;
+        canvas->setTitleFormat(f);
 
         std::promise<bool> prom;
         qtGO( [&]( ) {
@@ -1046,7 +1103,7 @@ namespace casa {
         bool update = req->update( );                                                                          \
                                                                                                                \
         auto canvas = ppcan(index);                                                                            \
-		int size = req->value( );                                                                              \
+        int size = req->value( );                                                                              \
         canvas->set ## SETNAME ## FontSet(size > 0);                                                           \
         canvas->set ## NAME ## Font(size);                                                                     \
                                                                                                                \
@@ -1185,16 +1242,18 @@ namespace casa {
         }                                                                                                      \
                                                                                                                \
         bool update = req->update( );                                                                          \
-                                                                                                               \
+        bool autorange = req->automatic();                                                                     \
         prange_t  minmax = prange_t(0.0, 0.0);   /* this signals auto-ranging */                               \
         /* Override default with specific numbers only if manual ranging requested, */                         \
         /* and given max is greater than the min. */                                                           \
-        if ( ! req->automatic( ) )   {                                                                         \
+        if ( !autorange )   {                                                                                  \
             double min = req->min( );                                                                          \
             double max = req->max( );                                                                          \
-            if (max>min) minmax = prange_t(min, max);                                                          \
+            if (max > min) {                                                                                   \
+                minmax = prange_t(min, max);                                                                   \
+            }                                                                                                  \
         }                                                                                                      \
-        ppaxes(index)->set ## TYPE ## Range( false , minmax );                                                 \
+        ppaxes(index)->set ## TYPE ## Range( !autorange , minmax );                                             \
                                                                                                                \
         std::promise<bool> prom;                                                                               \
         qtGO( [&]( ) {                                                                                         \
@@ -1256,6 +1315,10 @@ namespace casa {
         auto ufut = uprom.get_future( );
         ufut.get( );
 
+        if (!itsPlotms_->isOperationCompleted()) {
+            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "plot parameters failed");
+        }
+
         auto path = req->path( );
         if ( path.size( ) == 0 ) return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "path must be provided");
         bool ok = false;
@@ -1297,7 +1360,7 @@ namespace casa {
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     bool grpcPlotMS::invalid_index(int index) {
-        return index < 0 || index > itsPlotms_->getPlotManager().numPlots( );
+        return (index < 0) || (index > itsPlotms_->getPlotManager().numPlots( ));
     }
 
 }
