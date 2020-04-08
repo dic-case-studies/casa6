@@ -308,6 +308,7 @@ casa_add_library( synthesis
  TransformMachines/WOnlyConvFunc.cc
  TransformMachines/WTerm.cc
  MeasurementEquations/AntennaResponses.cc
+ MeasurementEquations/AspMatrixCleaner.cc
  MeasurementEquations/CCList.cc
  MeasurementEquations/CEMemModel.cc
  MeasurementEquations/CEMemProgress.cc
@@ -586,6 +587,7 @@ install (FILES
 install (FILES
     MeasurementEquations/AntennaResponses.h
 	MeasurementEquations/ArrayModel.h
+  MeasurementEquations/AspMatrixCleaner.h
 	MeasurementEquations/CCList.h
 	MeasurementEquations/CEMemModel.h
 	MeasurementEquations/CEMemProgress.h

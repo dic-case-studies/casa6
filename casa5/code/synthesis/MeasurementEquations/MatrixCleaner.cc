@@ -60,12 +60,8 @@
 #include <omp.h>
 #endif
 
-#include <LBFGS.h>
-#include <synthesis/MeasurementEquations/lbfgsAsp.h>
 
 using namespace casacore;
-using Eigen::VectorXd;
-using namespace LBFGSpp;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -97,18 +93,15 @@ MatrixCleaner::MatrixCleaner():
   itsMaximumResidual(0.0),
   itsStrengthOptimum(0.0),
   itsTotalFlux(0.0),
-  itsChoose(true),
-  itsDoSpeedup(false),
   itsIgnoreCenterBox(false),
   itsStopAtLargeScaleNegative(false),
   itsStopPointMode(-1),
   itsDidStopPointMode(false),
-  itsJustStarting(true),
   psfShape_p(0),
   noClean_p(false),
-  itsInitScaleSizes(0),
-  itsAspScaleSizes(0),
-  itsAspAmplitude(0)
+  itsChoose(true),
+  itsDoSpeedup(false),
+  itsJustStarting(true)
 {
   itsMemoryMB=Double(HostInfo::memoryTotal()/1024)/16.0;
   itsScales.resize(0);
@@ -119,11 +112,6 @@ MatrixCleaner::MatrixCleaner():
   itsScalesValid = false;
   itsStartingIter = 0;
   itsFracThreshold=Quantity(0.0, "%");
-  itsInitScales.resize(0);
-  itsInitScaleXfrs.resize(0);
-  itsDirtyConvInitScales.resize(0);
-  itsInitScaleMasks.resize(0);
-  itsPsfConvInitScales.resize(0);
 }
 
 
@@ -136,17 +124,14 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   itsMaximumResidual(0.0),
   itsStrengthOptimum(0.),
   itsTotalFlux(0.0),
-  itsChoose(true),
-  itsDoSpeedup(false),
   itsIgnoreCenterBox(false),
   itsStopAtLargeScaleNegative(false),
   itsStopPointMode(-1),
   itsDidStopPointMode(false),
-  itsJustStarting(true),
   noClean_p(false),
-  itsInitScaleSizes(0),
-  itsAspScaleSizes(0),
-  itsAspAmplitude(0)
+  itsChoose(true),
+  itsDoSpeedup(false),
+  itsJustStarting(true)
 {
   AlwaysAssert(validatePsf(psf), AipsError);
   psfShape_p.resize(0, false);
@@ -177,11 +162,6 @@ MatrixCleaner::MatrixCleaner(const Matrix<Float> & psf,
   itsScalesValid = false;
   itsStartingIter = 0;
   itsFracThreshold=Quantity(0.0, "%");
-  itsInitScales.resize(0);
-  itsInitScaleXfrs.resize(0);
-  itsDirtyConvInitScales.resize(0);
-  itsInitScaleMasks.resize(0);
-  itsPsfConvInitScales.resize(0);
 }
 
 
@@ -209,13 +189,9 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
     itsDirty = other.itsDirty;
     itsScales = other.itsScales;
     itsScaleXfrs = other.itsScaleXfrs;
-    itsInitScales = other.itsInitScales;
-    itsInitScaleXfrs = other.itsInitScaleXfrs;
     itsPsfConvScales = other.itsPsfConvScales;
     itsDirtyConvScales = other.itsDirtyConvScales;
-    itsDirtyConvInitScales = other.itsDirtyConvInitScales;
     itsScaleMasks = other.itsScaleMasks;
-    itsPsfConvInitScales = other.itsPsfConvInitScales;
     itsStartingIter = other.itsStartingIter;
     itsMaximumResidual = other.itsMaximumResidual;
     itsIgnoreCenterBox = other.itsIgnoreCenterBox;
@@ -230,7 +206,6 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
     psfShape_p.resize(0, false);
     psfShape_p=other.psfShape_p;
     noClean_p=other.noClean_p;
-    itsInitScaleMasks = other.itsInitScaleMasks;
   }
   return *this;
 }
@@ -238,11 +213,10 @@ MatrixCleaner & MatrixCleaner::operator=(const MatrixCleaner & other) {
 MatrixCleaner::~MatrixCleaner()
 {
   destroyScales();
-  destroyInitMasks();
+
   if(!itsMask.null())
     itsMask=0;
 }
-
 
 void MatrixCleaner::makeDirtyScales(){
   LogIO os(LogOrigin("MatrixCleaner", "makeDirtyScales()", WHERE));
@@ -285,19 +259,16 @@ void MatrixCleaner::makeDirtyScales(){
   }
 
 }
+
 void MatrixCleaner::update(const Matrix<Float> &dirty)
 {
   itsDirty->assign(dirty);
 
   LogIO os(LogOrigin("MatrixCleaner", "update()", WHERE));
 
-
-
   // Now we can redo the relevant convolutions
   makeDirtyScales();
 }
-
-
 
 // add a mask image
 void MatrixCleaner::setMask(Matrix<Float> & mask, const Float& maskThreshold)
@@ -345,7 +316,6 @@ void MatrixCleaner::speedup(const Float nDouble)
   itsNDouble = nDouble;
 }
 
-
 // Do the clean as set up
 Int MatrixCleaner::clean(Matrix<Float>& model,
                          Bool /*showProgress*/)
@@ -369,20 +339,15 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
     else
       os << LogIO::NORMAL1 << "Multi-scale clean algorithm" << LogIO::POST;
   }
-  else if (itsCleanType==CleanEnums::AASP)
-    os << LogIO::NORMAL1 << "AAsp clean algorithm" << LogIO::POST;
-
 
   Int scale;
   Vector<Float> scaleBias(nScalesToClean);
-  // scaleBias is 1.0 for AAsp for now
+
   if (nScalesToClean > 1)
   {
     for (scale=0;scale < nScalesToClean; scale++)
     {
-      if (itsCleanType==CleanEnums::AASP)
-        scaleBias(scale) = 1.0;
-      else if (itsCleanType==CleanEnums::MULTISCALE)
+      if (itsCleanType==CleanEnums::MULTISCALE)
       {
         scaleBias(scale) = 1 - itsSmallScaleBias *
     itsScaleSizes(scale)/itsScaleSizes(nScalesToClean-1);
@@ -930,7 +895,7 @@ void MatrixCleaner::makePsfScales(){
     itsScales[scale] = Matrix<Float>(psfShape_p);
     cout << "scale size[ " << scale << "] = " << itsScaleSizes(scale) << endl;
     makeScale(itsScales[scale], itsScaleSizes(scale));
-    //itsScaleXfrs[scale].resize(); //genie? which is better?
+
     itsScaleXfrs[scale] = Matrix<Complex> ();
     fft.fft0(itsScaleXfrs[scale], itsScales[scale]);
   }
@@ -968,7 +933,6 @@ void MatrixCleaner::makePsfScales(){
 
 // We calculate all the scales and the corresponding convolutions
 // and cross convolutions.
-
 Bool MatrixCleaner::setscales(const Vector<Float>& scaleSizes)
 {
   LogIO os(LogOrigin("MatrixCleaner", "setscales()", WHERE));
@@ -1219,35 +1183,16 @@ Bool MatrixCleaner::destroyScales()
     itsPsfConvScales[scale].resize();
   }
 
-  for(uInt scale=0; scale < itsDirtyConvInitScales.nelements(); scale++)
-    itsDirtyConvInitScales[scale].resize();
-
   destroyMasks();
   itsScales.resize(0, true);
   itsScaleXfrs.resize(0, true);
   itsDirtyConvScales.resize(0, true);
   itsPsfConvScales.resize(0, true);
   itsScalesValid=false;
-  itsDirtyConvInitScales.resize(0, true);
 
   return true;
 }
 
-Bool MatrixCleaner::destroyInitScales()
-{
-  for(uInt scale=0; scale < itsInitScales.nelements(); scale++)
-    itsInitScales[scale].resize();
-  for(uInt scale=0; scale < itsInitScaleXfrs.nelements(); scale++)
-    itsInitScaleXfrs[scale].resize();
-  for(uInt scale=0; scale < itsPsfConvInitScales.nelements(); scale++)
-    itsPsfConvInitScales[scale].resize();
-
-  itsInitScales.resize(0, true);
-  itsInitScaleXfrs.resize(0, true);
-  itsPsfConvInitScales.resize(0, true);
-
-  return true;
-}
 
 Bool MatrixCleaner::destroyMasks()
 {
@@ -1260,15 +1205,6 @@ Bool MatrixCleaner::destroyMasks()
   return true;
 };
 
-Bool MatrixCleaner::destroyInitMasks()
-{
-  for(uInt scale=0; scale<itsInitScaleMasks.nelements();scale++)
-    itsInitScaleMasks[scale].resize();
-
-  itsInitScaleMasks.resize(0);
-
-  return true;
-};
 
 void MatrixCleaner::unsetMask()
 {
@@ -1404,7 +1340,6 @@ Float MatrixCleaner::threshold() const
 }
 
 
-
 void MatrixCleaner::makeBoxesSameSize(IPosition& blc1, IPosition& trc1,
                   IPosition &blc2, IPosition& trc2)
 {
@@ -1451,456 +1386,6 @@ Int MatrixCleaner::findBeamPatch(const Float maxScaleSize, const Int& nx, const 
   if (psupport%2 != 0) psupport -= 1;
 
   return psupport;
-}
-
-float MatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
-{
-  GaussianBeam beam;
-  try
-  {
-      StokesImageUtil::FitGaussianPSF(psf, beam);
-  }
-  catch(AipsError &x)
-  {
-    LogIO os( LogOrigin("MatrixCleaner","getPsfGaussianWidth",WHERE) );
-    os << "Error in fitting a Gaussian to the PSF : " << x.getMesg() << LogIO::POST;
-    throw( AipsError("Error in fitting a Gaussian to the PSF" + x.getMesg()) );
-  }
-
-  CoordinateSystem cs = psf.coordinates();
-  String dirunit = cs.worldAxisUnits()(0);
-  Vector<String> unitas=cs.worldAxisUnits();
-  unitas(0)="arcsec";
-  unitas(1)="arcsec";
-  cs.setWorldAxisUnits(unitas);
-
-  cout << "major width " << beam.getMajor("arcsec") << " in " << cs.worldAxisUnits()(0) << endl;
-  cout << "minor width " << beam.getMinor("arcsec") << endl;
-  cout << " pixel sizes are " << abs(cs.increment()(0)) << " and ";
-  cout << abs(cs.increment()(1)) << endl;
-  const auto xpixels = beam.getMajor("arcsec") / abs(cs.increment()(0));
-  const auto ypixels = beam.getMinor("arcsec") / abs(cs.increment()(1));
-  cout << "xpixels " << xpixels << " ypixels " << ypixels << endl;
-  cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
-
-  return float(ceil((xpixels + ypixels)/2));
-}
-
-void MatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Float width)
-{
-  if(itsScales.nelements() > 0)
-    destroyScales();
-
-  /*Matrix<Float> tempMat;
-  tempMat.reference(arrpsf);
-  psfShape_p.resize(0, false);
-  psfShape_p = tempMat.shape();*/
-
-  // try 1.5width, 5width and 10width
-  itsInitScaleSizes.resize(3, false);
-  itsInitScaleSizes = {1.5f*width, 5.0f*width, 10.0f*width};
-  itsInitScales.resize(3, false);
-  itsInitScaleXfrs.resize(3, false);
-  FFTServer<Float,Complex> fft(psfShape_p);
-  for (unsigned int scale = 0; scale < 3; scale++)
-  {
-    itsInitScales[scale] = Matrix<Float>(psfShape_p);
-    makeScale(itsInitScales[scale], itsInitScaleSizes[scale]);
-    cout << "made itsInitScales[" << scale << "] = " << itsInitScaleSizes[scale] << endl;
-    itsInitScaleXfrs[scale] = Matrix<Complex> ();
-    fft.fft0(itsInitScaleXfrs[scale], itsInitScales[scale]);
-  }
-}
-
-// calculate the convolutions of the psf with the initial scales
-void MatrixCleaner::setInitScalePsfs()
-{
-  itsPsfConvInitScales.resize(4 * 4, false);
-  itsNscales = 3; // # initial scales. This will be updated in defineAspScales later.
-  FFTServer<Float,Complex> fft(psfShape_p);
-
-  Matrix<Complex> cWork;
-
-  for (Int scale=0; scale < 3; scale++)
-  {
-    cout << "Calculating convolutions of psf for initial scale size " << itsInitScaleSizes[scale] << endl;
-    //PSF * scale
-    itsPsfConvInitScales[scale] = Matrix<Float>(psfShape_p);
-    cWork=((*itsXfr)*(itsInitScaleXfrs[scale])*(itsInitScaleXfrs[scale]));
-    fft.fft0((itsPsfConvInitScales[scale]), cWork, false);
-    fft.flip(itsPsfConvInitScales[scale], false, false);
-
-    for (Int otherscale = scale; otherscale < 3; otherscale++)
-    {
-      AlwaysAssert(index(scale, otherscale) < Int(itsPsfConvInitScales.nelements()),
-       AipsError);
-
-      // PSF *  scale * otherscale
-      itsPsfConvInitScales[index(scale,otherscale)] = Matrix<Float>(psfShape_p);
-      cWork=((*itsXfr)*(itsInitScaleXfrs[scale])*(itsInitScaleXfrs[otherscale]));
-      fft.fft0(itsPsfConvInitScales[index(scale,otherscale)], cWork, false);
-    }
-  }
-}
-
-// Set up the masks for the initial scales (i.e. 1.5width, 5width and 10width)
-Bool MatrixCleaner::setInitScaleMasks(const Array<Float> arrmask, const Float& maskThreshold)
-{
-  LogIO os(LogOrigin("MatrixCleaner", "setInitScaleMasks()", WHERE));
-
-  destroyMasks();
-
-  Matrix<Float> mask(arrmask);
-  itsMask = new Matrix<Float>(mask.shape());
-  itsMask->assign(mask);
-  itsMaskThreshold = maskThreshold;
-  noClean_p=(max(*itsMask) < itsMaskThreshold) ? true : false;
-
-  if(itsMask.null() || noClean_p)
-    return false;
-
-  // make scale masks
-  if(itsInitScaleSizes.size() <= 1)
-  {
-    os << "Initial scales are not yet set - cannot set initial scale masks"
-       << LogIO::EXCEPTION;
-  }
-
-  AlwaysAssert((itsMask->shape() == psfShape_p), AipsError);
-  FFTServer<Float,Complex> fft(itsMask->shape());
-
-  Matrix<Complex> maskFT;
-  fft.fft0(maskFT, *itsMask);
-  itsInitScaleMasks.resize(3);
-  // Now we can do all the convolutions
-  Matrix<Complex> cWork;
-  for (int scale=0; scale < 3; scale++)
-  {
-    // Mask * scale
-    // Allow only 10% overlap by default, hence 0.9 is a default mask threshold
-    // if thresholding is not used, just extract the real part of the complex mask
-    itsInitScaleMasks[scale] = Matrix<Float>(itsMask->shape());
-    cWork=((maskFT)*(itsInitScaleXfrs[scale]));
-    fft.fft0(itsInitScaleMasks[scale], cWork, false);
-    fft.flip(itsInitScaleMasks[scale], false, false);
-    for (Int j=0 ; j < (itsMask->shape())(1); ++j)
-    {
-      for (Int k =0 ; k < (itsMask->shape())(0); ++k)
-      {
-        if(itsMaskThreshold > 0)
-          (itsInitScaleMasks[scale])(k,j) =  (itsInitScaleMasks[scale])(k,j) > itsMaskThreshold ? 1.0 : 0.0;
-      }
-    }
-    Float mysum = sum(itsInitScaleMasks[scale]);
-    if (mysum <= 0.1) {
-      os << LogIO::WARN << "Ignoring initial scale " << itsInitScaleSizes[scale] <<
-  " since it is too large to fit within the mask" << LogIO::POST;
-    }
-
-  }
-
-   Int nx = itsInitScaleMasks[0].shape()(0);
-   Int ny = itsInitScaleMasks[0].shape()(1);
-
-   /* Set the edges of the masks according to the scale size */
-   // Set the values OUTSIDE the box to zero....
-  for(Int scale=0; scale < 3; scale++)
-  {
-    Int border = (Int)(itsInitScaleSizes[scale]*1.5);
-    // bottom
-    IPosition blc1(2, 0 , 0 );
-    IPosition trc1(2, nx-1, border);
-    IPosition inc1(2, 1);
-    LCBox::verify(blc1, trc1, inc1, itsInitScaleMasks[scale].shape());
-    (itsInitScaleMasks[scale])(blc1, trc1) = 0.0;
-    // top
-    blc1[0]=0; blc1[1] = ny-border-1;
-    trc1[0] = nx-1; trc1[1] = ny-1;
-    LCBox::verify(blc1, trc1, inc1, itsInitScaleMasks[scale].shape());
-    (itsInitScaleMasks[scale])(blc1, trc1) = 0.0;
-    // left
-    blc1[0]=0; blc1[1]=border;
-    trc1[0]=border; trc1[1] = ny-border-1;
-    LCBox::verify(blc1, trc1, inc1, itsInitScaleMasks[scale].shape());
-    (itsInitScaleMasks[scale])(blc1, trc1) = 0.0;
-    // right
-    blc1[0] = nx-border-1; blc1[1]=border;
-    trc1[0] = nx; trc1[1] = ny-border-1;
-    LCBox::verify(blc1, trc1, inc1, itsInitScaleMasks[scale].shape());
-    (itsInitScaleMasks[scale])(blc1,trc1) = 0.0;
-  }
-
-  return true;
-}
-
-void MatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, IPosition& positionOptimum)
-{
-  LogIO os(LogOrigin("MatrixCleaner", "maxDirtyConvInitScales()", WHERE));
-
-  const int nx = itsDirty->shape()[0];
-  const int ny = itsDirty->shape()[1];
-  cout << "nx " << nx << " ny " << ny << endl;
-  IPosition blcDirty(itsDirty->shape().nelements(), 0);
-  IPosition trcDirty(itsDirty->shape() - 1);
-
-  if(!itsMask.null())
-  {
-    os << "Finding initial scales for Asp using given mask" << LogIO::POST;
-    if (itsMaskThreshold < 0)
-    {
-        os << LogIO::NORMAL
-           << "Mask thresholding is not used, values are interpreted as weights"
-           <<LogIO::POST;
-    }
-    else
-    {
-      // a mask that does not allow for clean was sent
-      if(noClean_p)
-        return;
-
-      os << LogIO::NORMAL
-         << "Finding initial scales with mask values above " << itsMaskThreshold
-         << LogIO::POST;
-    }
-
-    AlwaysAssert(itsMask->shape()(0) == nx, AipsError);
-    AlwaysAssert(itsMask->shape()(1) == ny, AipsError);
-    Int xbeg=nx-1;
-    Int ybeg=ny-1;
-    Int xend=0;
-    Int yend=0;
-    for (Int iy=0;iy<ny;iy++)
-    {
-      for (Int ix=0;ix<nx;ix++)
-      {
-        if((*itsMask)(ix,iy)>0.000001)
-        {
-          xbeg=min(xbeg,ix);
-          ybeg=min(ybeg,iy);
-          xend=max(xend,ix);
-          yend=max(yend,iy);
-        }
-      }
-    }
-    blcDirty(0)=xbeg;
-    blcDirty(1)=ybeg;
-    trcDirty(0)=xend;
-    trcDirty(1)=yend;
-  }
-  else
-    os << LogIO::NORMAL << "Finding initial scales using the entire image" << LogIO::POST;
-
-  // Find the peak residual
-  IPosition gip;
-  gip = IPosition(2, nx, ny);
-  casacore::Block<casacore::Matrix<casacore::Float> > vecWork_p;
-  vecWork_p.resize(3);
-
-  for (unsigned int i = 0; i < 3; i++)
-    vecWork_p[i].resize(gip);
-
-  Vector<Float> maxima(3);
-  Block<IPosition> posMaximum(3);
-  unsigned int scale;
-  int nth = 3;
-  #ifdef _OPENMP
-    nth = min(nth, omp_get_max_threads());
-  #endif
-
-  //genie
-  // Find the peaks of the convolved Psfs
-  Vector<Float> maxPsfConvInitScales(3);
-  Int naxes = psfShape_p.nelements();
-
-  #pragma omp parallel default(shared) private(scale) num_threads(nth)
-  {
-    #pragma omp for
-    for (scale=0; scale < 3; scale++)
-    {
-      IPosition positionPeakPsfConvInitScales(naxes, 0);
-
-      findMaxAbs(itsPsfConvInitScales[scale], maxPsfConvInitScales(scale),
-      positionPeakPsfConvInitScales);
-     }
-  } //End pragma parallel
-  for (scale=0; scale < 3; scale++)
-  {
-    if (maxPsfConvInitScales(scale) < 0.0)
-    {
-      os << "As Peak of PSF is negative, you should change the initial scales with a smaller scale size"
-   << LogIO::SEVERE;
-      return;
-    }
-  }
-  //genie
-
-  #pragma omp parallel default(shared) private(scale) num_threads(nth)
-  {
-    #pragma omp for
-    for (scale=0; scale < 3; ++scale)
-    {
-      // Find absolute maximum for the dirty image
-      cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirty->shape().nelements() << endl;
-      Matrix<Float> work = (vecWork_p[scale])(blcDirty, trcDirty);
-      work = 0.0;
-      work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
-      maxima(scale) = 0;
-      posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
-      cout << "makedirtyinitscale before: " << itsInitScaleMasks[scale].shape() << endl;
-
-      //genie debug
-      Float maxVal=0;
-      IPosition posmin(vecWork_p[scale].shape().nelements(), 0);
-      Float minVal=0;
-      IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
-      minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsInitScaleMasks[scale]);
-      cout << "InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
-      //genie
-
-      if (!itsMask.null())
-      {
-        findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
-          maxima(scale), posMaximum[scale]);
-      }
-      else
-        findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
-
-      // Remember to adjust the position for the window and for
-      // the flux scale
-      maxima(scale) /= maxPsfConvInitScales(scale);
-      maxima(scale) *= (itsDirtyConvInitScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in strengthOptimum for loop (next for loop).
-      cout << "maxDirty: maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
-      cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
-      //genie: it seems we need the above
-    }
-  }//End parallel section
-
-  // Find the peak residual among the 3 initial scales, which will be the next Aspen
-  for (scale = 0; scale < 3; scale++)
-  {
-    if(abs(maxima(scale)) > abs(strengthOptimum)) //genie, bug was from comparing to itsStrengthOptimum
-    //if(abs(maxima(scale)) > abs(itsStrengthOptimum))
-    {
-      optimumScale = scale;
-      strengthOptimum = maxima(scale);
-      positionOptimum = posMaximum[scale];
-    }
-  }
-
-  AlwaysAssert(optimumScale < 3, AipsError);
-}
-
-vector<Float> MatrixCleaner::getActiveSetAspen()
-{
-  LogIO os(LogOrigin("MatrixCleaner", "getActiveSetAspen()", WHERE));
-
-  if(int(itsInitScaleXfrs.nelements()) == 0)
-    throw(AipsError("Initial scales for Asp are not defined"));
-
-  // Dirty * initial scales
-  Matrix<Complex> dirtyFT;
-  FFTServer<Float,Complex> fft(itsDirty->shape());
-  fft.fft0(dirtyFT, *itsDirty);
-  itsDirtyConvInitScales.resize(3); //1.5width, 5width and 10width
-
-  for (unsigned int scale=0; scale < 3; scale++)
-  {
-    Matrix<Complex> cWork;
-    cout << "scale " << scale << " itsInitScaleptr " << &(itsInitScaleXfrs[scale]) << endl;
-
-    itsDirtyConvInitScales[scale] = Matrix<Float>(itsDirty->shape());
-    cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
-    fft.fft0((itsDirtyConvInitScales[scale]), cWork, false);
-    fft.flip((itsDirtyConvInitScales[scale]), false, false);
-  }
-
-  float strengthOptimum = 0.0;
-  int optimumScale = 0;
-  IPosition positionOptimum(itsDirty->shape().nelements(), 0);
-
-  maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
-  cout << "Initial maximum residual is " << abs(strengthOptimum);
-  cout << " at location " << positionOptimum[0] << " " << positionOptimum[1];
-  cout << " " << positionOptimum[2] << " and scale: " << optimumScale << endl;
-
-  // lbfgs
-  LBFGSParam<double> param;
-  //param.epsilon = 1e-6;
-  param.epsilon = 1;
-  param.max_iterations = 5;
-  LBFGSSolver<double> solver(param);
-
-  //genie:
-  // grab the existing Aspen from class variables, itsAspAmp and itsAspScale
-  // and also add the new Aspen
-  // abs(strengthOptimum), itsInitScaleSizes[optimumScale] to x
-  // Also, push back the new center (positionOptimum) to itsAspCenter
-  AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
-  AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
-  itsAspCenter.push_back(positionOptimum);
-  //AspObjFunc fun(*itsDirty, *itsXfr, positionOptimum); genie old
-  AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
-
-  unsigned int length = (itsAspScaleSizes.size() + 1) * 2;
-  VectorXd x(length); //genie
-  vector<Float> tempx;
-  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-  {
-    //x << itsAspAmplitude[i], itsAspScaleSizes[i];
-    tempx.push_back(itsAspAmplitude[i]);
-    tempx.push_back(itsAspScaleSizes[i]);
-  }
-  //x << abs(strengthOptimum), itsInitScaleSizes[optimumScale];
-  tempx.push_back(strengthOptimum);
-  tempx.push_back(itsInitScaleSizes[optimumScale]);
-
-  for (unsigned int i = 0; i < length; i++)
-    x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
-
-  cout << "Before: x = " << x << endl;
-  double fx;
-  //int niter = solver.minimize(fun, x, fx); //genie epsilon needs to be fixed "nan"
-
-  //std::cout << niter << " iterations" << std::endl;
-  std::cout << "x = \n" << x.transpose() << std::endl;
-  std::cout << "f(x) = " << fx << std::endl;
-  std::cout << "float is " << Float(x[1]) << endl;
-
-  //genie
-  // put the updated x back to the class variables, itsAspAmp and itsAspScale
-  itsAspAmplitude.clear();
-  itsAspScaleSizes.clear();
-  for (unsigned int i = 0; i < length; i+= 2)
-  {
-    itsAspAmplitude.push_back(x[i]);
-    itsAspScaleSizes.push_back(x[i+1]);
-  }
-
-  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-  {
-    cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
-    cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
-    cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
-  }
-
-  //genie to do: update the list in SDAlgAAsp. How is Imodel calculated here
-  return itsAspScaleSizes; // return optimized scale
-}
-
-// Define the Asp scales without doing anything else
-// user will call make makePsfScales and makeDirtyScales like an adult in the know
-void MatrixCleaner::defineAspScales(const Vector<Float>& scaleSizes)
-{
-  /*if(itsScales.nelements()>0) {
-    destroyScales();
-  }
-
-  destroyMasks();*/ //genie do I need this? prob not
-  itsNscales = scaleSizes.nelements();
-  itsScaleSizes.resize(itsNscales);
-  itsScaleSizes = scaleSizes;  // make a copy that we can call our own
-  GenSort<Float>::sort(itsScaleSizes);
-  itsScalesValid = true;  //genie? It's false in MS clean
 }
 
 } //# NAMESPACE CASA - END

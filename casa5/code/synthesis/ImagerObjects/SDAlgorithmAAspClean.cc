@@ -108,7 +108,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     // Parts to be repeated at each minor cycle start....
-    itsCleaner.setcontrol(CleanEnums::AASP, 0, 0, 0);/// Needs to come before makeDirtyScales
+    itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before makeDirtyScales
 
     // genie
     // find peak to determine a scale and put the optimized scale in the active set
@@ -150,7 +150,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setcontrol(CleanEnums::AASP, cycleNiter, loopgain, thresh);
+    itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
 
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
@@ -167,7 +167,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // -2 = not converged and either large scale hit negative or diverging
     // -3 = clean is diverging rather than converging
     itsCleaner.startingIteration( 0 );
-    Int retval = itsCleaner.clean( tempModel );
+    Int retval = itsCleaner.aspclean( tempModel );
     iterdone = itsCleaner.numberIterations();
 
     if( retval==-1 ) {os << LogIO::WARN << "AAspClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }

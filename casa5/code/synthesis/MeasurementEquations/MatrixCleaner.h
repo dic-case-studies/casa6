@@ -258,23 +258,6 @@ public:
   // Helper function to optimize adding
   //static void addTo(casacore::Matrix<casacore::Float>& to, const casacore::Matrix<casacore::Float> & add);
 
-  // helper functions for ASP
-  float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
-
-  void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
-
-  // calculate the convolutions of the psf with the initial scales
-  void setInitScalePsfs();
-
-  casacore::Bool setInitScaleMasks(const casacore::Array<casacore::Float> arrmask, const casacore::Float& maskThreshold = 0.9);
-
-  void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
-
-  std::vector<casacore::Float> getActiveSetAspen();
-
-  void defineAspScales(const casacore::Vector<casacore::Float>& scales);
-
-
 protected:
   friend class MatrixNACleaner;
   // Make sure that the peak of the Psf is within the image
@@ -321,8 +304,6 @@ protected:
   casacore::Bool itsScalesValid;
   casacore::Int itsNscales;
   casacore::Float itsMaskThreshold;
-  casacore::Block<casacore::Matrix<casacore::Complex> > itsInitScaleXfrs; //for Asp
-private:
 
   //# The following functions are used in various places in the code and are
   //# documented in the .cc file. Static functions are used when the functions
@@ -336,12 +317,8 @@ private:
   casacore::Vector<casacore::Float> itsScaleSizes;
 
   casacore::Block<casacore::Matrix<casacore::Float> > itsScales;
-  casacore::Block<casacore::Matrix<casacore::Float> > itsInitScales; //for Asp
   casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvScales;
-  casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvInitScales; // for Asp
-  casacore::Block<casacore::Matrix<casacore::Float> > itsInitScaleMasks;
-  casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvInitScales;
 
   casacore::Int itsIteration;	// what iteration did we get to?
   casacore::Int itsStartingIter;	// what iteration did we get to?
@@ -352,6 +329,22 @@ private:
 
   casacore::Vector<casacore::Float> itsTotalFluxScale;
   casacore::Float itsTotalFlux;
+
+   // Calculate index into PsfConvScales
+  casacore::Int index(const casacore::Int scale, const casacore::Int otherscale);
+
+  casacore::Bool destroyScales();
+  casacore::Bool destroyMasks();
+
+  casacore::Bool itsIgnoreCenterBox;
+  casacore::Bool itsStopAtLargeScaleNegative;
+  casacore::Int itsStopPointMode;
+  casacore::Bool itsDidStopPointMode;
+
+  casacore::IPosition psfShape_p;
+  casacore::Bool noClean_p;
+
+private:
 
   // casacore::Memory to be allocated per TempLattice
   casacore::Double itsMemoryMB;
@@ -366,32 +359,10 @@ private:
   //# Stop now?
   //#//  casacore::Bool stopnow();   Removed on 8-Apr-2004 by GvD
 
-  // Calculate index into PsfConvScales
-  casacore::Int index(const casacore::Int scale, const casacore::Int otherscale);
-
-  casacore::Bool destroyScales();
-  casacore::Bool destroyInitScales();
-  casacore::Bool destroyMasks();
-  casacore::Bool destroyInitMasks();
-
-  casacore::Bool itsIgnoreCenterBox;
-  casacore::Bool itsStopAtLargeScaleNegative;
-  casacore::Int itsStopPointMode;
-  casacore::Bool itsDidStopPointMode;
   casacore::Bool itsJustStarting;
 
   // threshold for masks. If negative, mask values are used as weights and no pixels are
   // discarded (although effectively they would be discarded if the mask value is 0.)
-
-  casacore::IPosition psfShape_p;
-  casacore::Bool noClean_p;
-
-  // set to 1.5*,5*,10*width for initial scales in Asp
-  std::vector<casacore::Float> itsInitScaleSizes;
-
-  std::vector<casacore::Float> itsAspScaleSizes;
-  std::vector<casacore::Float> itsAspAmplitude;
-  std::vector<casacore::IPosition> itsAspCenter;
 
 };
 

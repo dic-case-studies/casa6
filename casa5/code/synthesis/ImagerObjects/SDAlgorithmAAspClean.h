@@ -39,7 +39,7 @@
 #include <casa/System/PGPlotter.h>
 
 #include <synthesis/ImagerObjects/SDAlgorithmBase.h>
-#include <synthesis/MeasurementEquations/MatrixCleaner.h>
+#include <synthesis/MeasurementEquations/AspMatrixCleaner.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -78,7 +78,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Array<casacore::Float> itsMatPsf, itsMatResidual, itsMatModel;
     casacore::Array<casacore::Float> itsMatMask;  // Make an array if we eventually use multi-term masks...
 
-    MatrixCleaner itsCleaner;
+    AspMatrixCleaner itsCleaner;
     std::vector<casacore::Float> itsScaleSizes;
     casacore::Int itsStopPointMode;
 
