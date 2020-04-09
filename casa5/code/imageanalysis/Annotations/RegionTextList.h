@@ -144,14 +144,16 @@ public:
 
 private:
     casacore::Vector<AsciiAnnotationFileLine> _lines;
-    std::vector<std::shared_ptr<const casacore::WCRegion> > _regions;
+    std::vector<std::shared_ptr<const casacore::WCRegion>> _regions;
     casacore::CoordinateSystem _csys;
     casacore::IPosition _shape;
     casacore::Bool _canGetRegion;
     // if false, then the corresponding region is complementary to
     // the result of the previous region operations in the sequence
     std::vector<casacore::Bool> _union;
-    mutable std::vector<std::shared_ptr<const casacore::WCDifference> > _myDiff;
+    // _myDiff is for memory management only, it holds new pointers that
+    // aren't otherwise memory managed
+    mutable std::vector<std::shared_ptr<const casacore::WCDifference>> _myDiff;
     mutable std::shared_ptr<const casacore::WCRegion> _composite;
 };
 
