@@ -701,15 +701,17 @@ namespace casa{
   //
   int CFBuffer::getMaxCFSize()
   {
-    IPosition shp(cfCells_p.shape());
-    for (Int i=0;i < shp[0]; i++)
-      for (Int j=0; j < shp[1]; j++)
-	for (Int k=0; k < shp[2]; k++)
-	  {
-	    int cfNX = SynthesisUtils::getCFShape(getCFCacheDir(), cfCells_p(i,j,k)->fileName_p)[0];
-	    if (cfNX > maxCFSize_p) maxCFSize_p=cfNX;
-	  }
-    
+    if (maxCFSize_p < 0)
+      {
+	IPosition shp(cfCells_p.shape());
+	for (Int i=0;i < shp[0]; i++)
+	  for (Int j=0; j < shp[1]; j++)
+	    for (Int k=0; k < shp[2]; k++)
+	      {
+		int cfNX = SynthesisUtils::getCFShape(getCFCacheDir(), cfCells_p(i,j,k)->fileName_p)[0];
+		if (cfNX > maxCFSize_p) maxCFSize_p=cfNX;
+	      }
+      }
     return maxCFSize_p;
   }
   //

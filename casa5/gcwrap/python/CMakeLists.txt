@@ -83,6 +83,7 @@ scripts/predictcomp_helper.py
 scripts/regression.py
 scripts/regressframe.py
 scripts/regression_utility.py
+scripts/restfreqtool.py
 scripts/sdbeamutil.py
 scripts/sdutil.py
 scripts/setjy_helper.py
@@ -243,3 +244,4 @@ add_subdirectory( scripts/parallel )
 add_subdirectory( scripts/mpi4casa )
 add_subdirectory( scripts/imagerhelpers )
 add_subdirectory( scripts/casatasks )
+add_subdirectory( scripts/casatestutils )
