@@ -123,14 +123,15 @@ timespan -- Let the timebin span across scan, state or both.
             in an MS, use the msmd tool. See help msmd.
 
         default: 'scan' (separate time bins by both of the above)
-        options: 'scan', 'state', 'state,scan'
-
+        options: 'scan', 'state', 'state,scan', ''
+               
         examples:
              timespan = 'scan'; can be useful when the scan number
              goes up with each integration as in many WSRT MSs.
              timespan = ['scan', 'state']: disregard scan and state
              numbers when time averaging.
              timespan = 'state,scan'; same as above
+             timespan = '': averages for each combination of scan and state
 outfile -- name of output file
 
 </example>

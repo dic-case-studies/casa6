@@ -33,7 +33,7 @@ sdtimeaverage begins
 """
 
 #
-# Test-MS 
+# Test-MS
 #
 
 # template MS (to copy from)
@@ -405,7 +405,7 @@ class test_sdtimeaverage(unittest.TestCase):
             NN = tb.nrows()  # NN MUST BE same as nRow
             print("Nrow = {}".format(NN))
 
-            # initialize STATE_ID (option) 
+            # initialize STATE_ID (option)
             #  (ex)  state =0,1,...numOfState-1 ,0,1,.....
             if stateOption:
                 print("------ stateOption Active, putting three STATE_IDs on the MS. ")
@@ -751,17 +751,32 @@ class test_sdtimeaverage(unittest.TestCase):
 #
 
     def test_param40(self):
-        '''sdtimeaverage::40:: antenna = 'GBT' (Exact name)'''
+        '''sdtimeaverage::40:: antenna = 'GBT' (Exact name without &&&)'''
 
         prm = {'antenna': 'GBT'}
         # Run Task and check
         self.assertTrue(self._run_task(prm))
         self._checkOutputRec(defOutputMs, 1)
 
-    def test_param41E(self):
-        '''sdtimeaverage::41E antenna = 'gBT' (Error: Bad name) '''
+    def test_param41(self):
+        '''sdtimeaverage::41:: antenna = 'GBT&&&' (Fully given)'''
+
+        prm = {'antenna': 'GBT&&&'}
+        # Run Task and check
+        self.assertTrue(self._run_task(prm))
+        self._checkOutputRec(defOutputMs, 1)
+
+    def test_param42E(self):
+        '''sdtimeaverage::42E antenna = 'gBT' (Error: Bad name) '''
 
         prm = {'antenna': 'gBT'}
+        # Run Task and check
+        self.assertFalse(self._run_task(prm))
+
+    def test_param43E(self):
+        '''sdtimeaverage::42E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
+
+        prm = {'antenna': 'gBT&&&'}
         # Run Task and check
         self.assertFalse(self._run_task(prm))
 

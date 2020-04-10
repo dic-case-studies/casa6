@@ -26,8 +26,8 @@ def sdtimeaverage(
     # Switch Alternative Column if needed.
     active_datacolumn = use_alternative_column(infile, datacolumn)
 
-    # Antanna ID (add extra &&& if needed) This is Single Dish specific
-    if (len(antenna) != 0) and (antenna.find('&') == -1):
+    # Antenna ID (add extra &&& if needed) This is Single Dish specific.
+    if (len(antenna) != 0) and (not('&' in antenna)):
         antenna = antenna + '&&&'
 
     # 'scan,state' Warning
