@@ -215,7 +215,10 @@ void plotms::setGridSize( int rowCount, int colCount ){
                 PlotMSDBusApp::METHOD_SETPLOTMSPARAMS, params, /*true*/asyncCall);
 }
 
-
+int plotms::getNumPlots() {
+    launchApp();
+    GETSINGLEINT(GETPLOTMSPARAMS, NUMPLOTS);
+}
 
 void plotms::setPlotMSFilename(const string& msFilename,
         const bool updateImmediately, const int plotIndex ) {
