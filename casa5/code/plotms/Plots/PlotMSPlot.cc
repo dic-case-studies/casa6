@@ -2266,14 +2266,18 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 					coordSysFrameLabel += PMS::latitudeName(xFrame);
 				}
 			} else if ((dataParams[i]->cacheType() == PlotMSCacheBase::MS) &&
-					   ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY))) { 
-				casacore::String plotFreqFrame(MFrequency::showType(plots[i]->cache().getFreqFrame()));
-				if (i == 0) {
-					freqFrame = plotFreqFrame; // add frame to label
-				} else if (plotFreqFrame != freqFrame) {
-					freqFrame = "";            // only add frame if they all have same one
+					   ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY))) {
+				casacore::MFrequency::Types mfreqType = plots[i]->cache().getFreqFrame();
+                if (mfreqType < casacore::MFrequency::N_Types) {
+					casacore::String plotFreqFrame = casacore::MFrequency::showType(mfreqType);
+					if (i == 0) {
+						freqFrame = plotFreqFrame; // add frame to label
+					} else if (plotFreqFrame != freqFrame) {
+						freqFrame = ""; // only add frame if they all have same one, else reset
+					}
 				}
 			}
+
 			averaged &= axisIsAveraged(xAxis, dataParams[i]->averaging());
 		}
 
@@ -2586,7 +2590,10 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						yLabel = yFormat.getLabel(yaxis, yHasRef, yRefVal, ycol, polnRatio);
 						if ((dataParams[plotindex]->cacheType() == PlotMSCacheBase::MS) &&
 							((yaxis == PMS::FREQUENCY) || (yaxis == PMS::VELOCITY))) {
-							yLabel += " " + MFrequency::showType(plots[plotindex]->cache().getFreqFrame());
+							casacore::MFrequency::Types mfreqType = plots[plotindex]->cache().getFreqFrame();
+							if (mfreqType < casacore::MFrequency::N_Types) {
+								yLabel += " " + MFrequency::showType(mfreqType);
+							}
 						}
 						addAxisDescription(yLabel, yaxis, cacheType, averaged);
 					}
