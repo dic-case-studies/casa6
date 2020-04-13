@@ -218,7 +218,8 @@ MatrixCleaner::~MatrixCleaner()
     itsMask=0;
 }
 
-void MatrixCleaner::makeDirtyScales(){
+void MatrixCleaner::makeDirtyScales()
+{
   LogIO os(LogOrigin("MatrixCleaner", "makeDirtyScales()", WHERE));
 
   if(!itsScalesValid || itsNscales < 1 || itsDirty.null() || (itsNscales != Int(itsScaleXfrs.nelements())) )

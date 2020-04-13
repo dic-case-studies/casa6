@@ -119,8 +119,7 @@ public:
   //can be done by calling  makeDirtyScales or setscales if one want to redo the
   //psfscales too.
   void setDirty(const casacore::Matrix<casacore::Float>& dirty);
-  //Calculate the convolutions for the dirt
-  //Obviously the
+  //Calculate the convolutions of the dirty image
   void makeDirtyScales();
   // Update the dirty image only (equiv of setDirty + makeDirtyScales)
   void update(const casacore::Matrix<casacore::Float> & dirty);

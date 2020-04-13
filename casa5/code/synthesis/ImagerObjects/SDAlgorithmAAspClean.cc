@@ -128,15 +128,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsScaleSizes.clear();
     itsScaleSizes = itsCleaner.getActiveSetAspen();
     for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
-      cout << "getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;
+      cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
     itsScaleSizes.push_back(0.0); // put 0 scale
     Vector<Float> scaleSizes(itsScaleSizes);
-    itsCleaner.defineAspScales(scaleSizes); // genie, mod this for Asp
+    itsCleaner.defineAspScales(scaleSizes);
 
     itsCleaner.makePsfScales();
     itsCleaner.makeScaleMasks();
-    itsCleaner.makeDirtyScales();
+    itsCleaner.makedirtyscales();
   }
 
 
@@ -151,7 +151,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     Quantity thresh(cycleThreshold, "Jy");
     itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
-
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model

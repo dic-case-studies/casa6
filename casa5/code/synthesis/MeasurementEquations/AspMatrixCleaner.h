@@ -48,6 +48,11 @@ public:
       const casacore::Float gain, const casacore::Quantity& aThreshold,
       const casacore::Quantity& fThreshold);
 
+  // Calculate the convolutions of the dirty image
+  // this is the same as MatrixCleaner::makeDirtyScales
+  // except this doesn't check itsCleanType
+  void makedirtyscales();
+
   // Clean an image.
   //return value gives you a hint of what's happening
   //  1 = converged

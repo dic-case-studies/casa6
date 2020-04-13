@@ -95,6 +95,39 @@ AspMatrixCleaner::~AspMatrixCleaner()
     itsMask=0;
 }
 
+void AspMatrixCleaner::makedirtyscales()
+{
+  LogIO os(LogOrigin("AspMatrixCleaner", "makedirtyscales()", WHERE));
+
+  if(!itsScalesValid || itsNscales < 1 || itsDirty.null() || (itsNscales != Int(itsScaleXfrs.nelements())) )
+    return;
+
+  if( (psfShape_p) != (itsDirty->shape()))
+    throw(AipsError("PSF and Dirty array are not of the same shape"));
+
+  Matrix<Complex> dirtyFT;
+  FFTServer<Float,Complex> fft(itsDirty->shape());
+  fft.fft0(dirtyFT, *itsDirty);
+  itsDirtyConvScales.resize(itsNscales, true);
+  Int scale=0;
+  //Having problem with fftw and omp
+  // #pragma omp parallel default(shared) private(scale) firstprivate(fft)
+  {
+    //#pragma omp  for
+    // Dirty*scale
+    for (scale=0; scale<itsNscales; scale++)
+    {
+      os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
+      Matrix<Complex> cWork;
+
+      itsDirtyConvScales[scale]=Matrix<Float>(itsDirty->shape());
+      cWork=((dirtyFT)*(itsScaleXfrs[scale]));
+      fft.fft0((itsDirtyConvScales[scale]), cWork, false);
+      fft.flip((itsDirtyConvScales[scale]), false, false);
+    }
+  }
+}
+
 Bool AspMatrixCleaner::setaspcontrol(const Int niter,
            const Float gain,
            const Quantity& aThreshold,
@@ -114,8 +147,6 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   AlwaysAssert(model.shape()==itsDirty->shape(), AipsError);
 
   LogIO os(LogOrigin("AspMatrixCleaner", "aspclean()", WHERE));
-
-  Float tmpMaximumResidual = 0.0;
 
   Int nScalesToClean = itsNscales;
   os << LogIO::NORMAL1 << "AAsp clean algorithm" << LogIO::POST;
@@ -270,9 +301,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Int converged=0;
   Int stopPointModeCounter = 0;
   Int optimumScale=0;
+  Float tmpMaximumResidual = 0.0;
   itsStrengthOptimum=0.0;
   IPosition positionOptimum(model.shape().nelements(), 0);
-  os << "Starting iteration"<< LogIO::POST;
 
   Int nx=model.shape()(0);
   Int ny=model.shape()(1);
@@ -283,9 +314,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   for (Int i=0; i<nScalesToClean; i++)
     vecWork_p[i].resize(gip);
 
+  os << "Starting iteration"<< LogIO::POST;
+  vector<Float> tempScaleSizes;
   itsIteration = itsStartingIter; // 0
-  for (Int ii=itsStartingIter; ii < itsMaxNiter; ii++)
-  { os << "cur iter " << itsIteration << " max iter is "<<
+
+  for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
+  {
+    os << "cur iter " << itsIteration << " max iter is "<<
             itsMaxNiter << LogIO::POST;
     itsIteration++;
 
@@ -368,6 +403,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
       os << LogIO::POST;
     }
+    cout << "ii " << ii << " itsStrengthOptimum " << itsStrengthOptimum << " tmp " << tmpMaximumResidual << endl;
 
     // Various ways of stopping:
     //    1. stop if below threshold
@@ -411,7 +447,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     if(((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
        && !(itsStopAtLargeScaleNegative))
     {
+      cout << "Diverging due to large scale?" << endl;
       os << "Diverging due to large scale?" << LogIO::POST;
+      os << "itsStrengthOptimum " << itsStrengthOptimum << " tmp " << tmpMaximumResidual << LogIO::POST;
        //clean is diverging most probably due to the large scale
       converged=-2;
       break;
@@ -485,7 +523,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     scaleFactor = itsGain * itsStrengthOptimum;
     modelSub += scaleFactor * scaleSub;
 
-    // Now update the residual image
+    // Now update the (residual image * scale)
+    cout << "before dirtySub(100,100) = " << itsDirtyConvScales[0](100,100) << endl;
     #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
       #pragma omp  for
@@ -495,12 +534,35 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         //AlwaysAssert(itsPsfConvScales[index(scale,optimumScale)], AipsError);
         Matrix<Float> psfSub=(itsPsfConvScales[index(scale,optimumScale)])(blcPsf, trcPsf);
         dirtySub -= scaleFactor*psfSub;
-
       }
     }//End parallel
 
-     blcDirty = blc;
-     trcDirty = trc;
+    blcDirty = blc;
+    trcDirty = trc;
+
+    //genie Now update the actual residual image
+    // At this point, itsDirty is not updated. Only itsDirtyConvScales is updated.
+    cout << "after dirtySub(100,100) = " << itsDirtyConvScales[0](100,100) << endl;
+    cout << "after itsdirty(100,100) = " << (*itsDirty)(100,100) << endl;
+    setDirty(residual()); // this updates itsDirty correctly
+    cout << "after2 itsdirty(100,100) = " << (*itsDirty)(100,100) << endl;
+    // need to getActiveSetAspen, add 0 scale size
+    // and then defineAspScales, makePsfScales, makeScaleMasks, makeDirtyScales?
+    // need to re-think the logic v.s. what's done in ADAlgAAspClean.
+
+    tempScaleSizes.clear();
+    tempScaleSizes = getActiveSetAspen();
+    for (scale = 0; scale < int(tempScaleSizes.size()); scale++)
+      cout << "2. getActiveSetAspen[" << scale << "] " << tempScaleSizes[scale] << endl;
+    cout << "# tempScaleSizes " << tempScaleSizes.size() << endl;
+    tempScaleSizes.push_back(0.0); // put 0 scale
+    Vector<Float> scaleSizes(tempScaleSizes);
+    defineAspScales(scaleSizes);
+
+    makePsfScales();
+    makeScaleMasks();
+    makedirtyscales();
+    //genie
   }
   // End of iteration
 
