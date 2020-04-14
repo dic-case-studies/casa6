@@ -855,10 +855,11 @@ bool SynthesisImager::unlockImages()
 	   if(freqframe != MFrequency::REST &&  freqframe != MFrequency::Undefined)
 	     cs.setSpectralConversion("LSRK");
 	   Vector<Double> pix(4);
-           //increase edge part a bit for interpolation
-	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-1.5;
+           //increase edge part a bit  vi/vb2 is making lots of grief for selecting properly if the channel are negative
+	   // specially...
+	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-3.5;
 	   Double freq1=cs.toWorld(pix)[3];
-	   pix[3]=Double(nchannel)+0.5;
+	   pix[3]=Double(nchannel)+2.5;
 	   Double freq2=cs.toWorld(pix)[3];
 	   String units=cs.worldAxisUnits()[3];
 	   if(freq2 < freq1){
