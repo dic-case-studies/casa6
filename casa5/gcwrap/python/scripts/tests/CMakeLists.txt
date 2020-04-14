@@ -224,6 +224,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_impv.py
   test_req_task_imrebin.py
   test_req_task_imreframe.py
+  test_req_task_imtrans.py
   test_req_task_listhistory.py
   test_req_task_listobs.py
   test_req_task_listsdm.py
