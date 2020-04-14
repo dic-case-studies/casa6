@@ -123,7 +123,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imregrid.py
   test_imsmooth.py
   test_imstat.py
-  test_imtrans.py
   test_imval.py
   test_initweights.py
   test_listfits.py
