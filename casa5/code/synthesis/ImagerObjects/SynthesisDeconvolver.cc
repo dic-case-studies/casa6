@@ -292,8 +292,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Float nsigmathresh = 0.0;
       Bool useautomask = ( itsAutoMaskAlgorithm=="multithresh" ? true : false);
       Int iterdone = itsLoopController.getIterDone();
-  
-      if ( itsNsigma >0.0 ) { 
+
+      //cerr << "INIT automask " << useautomask << " alg " << itsAutoMaskAlgorithm << " sigma " << itsNsigma  << endl;
+      if ( itsNsigma >0.0) { 
         itsMaskHandler->setPBMaskLevel(itsPBMask);
         Array<Double> medians, robustrms;
         // 2 cases to use existing stats.
@@ -301,7 +302,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // or
         // 2. no automask but for the first cycle but already initial calcRMS has ran to avoid duplicate
         //
-        cerr << "useauto " << useautomask << " nfields " << itsRobustStats.nfields() << " iterdone " << iterdone << endl;
+        //cerr << "useauto " << useautomask << " nfields " << itsRobustStats.nfields() << " iterdone " << iterdone << endl;
         if ((useautomask && itsRobustStats.nfields()) || 
             (!useautomask && iterdone==0 && itsRobustStats.nfields()) ) {
            os <<LogIO::DEBUG1<<"automask on: check the current stats"<<LogIO::POST;
@@ -320,12 +321,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
        else { // do own stats calculation
           timer.mark();
+	  
           os<<LogIO::DEBUG1<<"Calling calcRobustRMS .. "<<LogIO::POST;
           robustrms = itsImages->calcRobustRMS(medians, itsPBMask, itsFastNoise);
           os<< LogIO::NORMAL << "time for calcRobustRMS:  real "<< timer.real() << "s ( user " << timer.user() 
              <<"s, system "<< timer.system() << "s)" << LogIO::POST;
           //reset itsRobustStats
-          cerr << "medians " << medians << " pbmask " << itsPBMask << endl;
+          //cerr << "medians " << medians << " pbmask " << itsPBMask << endl;
           try {
             //os<<"current content of itsRobustStats nfields=="<<itsRobustStats.nfields()<<LogIO::POST;
             itsRobustStats.define(RecordFieldId("robustrms"), robustrms);
@@ -334,6 +336,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           catch(AipsError &x) { 
             throw( AipsError("Error in storing the robust image statistics") );
           }
+
+	  //cerr << this << " DOING robust " << itsRobustStats << endl;
+	  
        }
  
         /***
@@ -424,6 +429,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
   Vector<Bool> SynthesisDeconvolver::getChanFlag(){
     return itsChanFlag;
+  }
+  void SynthesisDeconvolver::setRobustStats(const Record& rec){
+    itsRobustStats=Record();
+    itsRobustStats=rec;
+    
+  }
+  Record SynthesisDeconvolver::getRobustStats(){
+    return itsRobustStats;
   }
 
   Record SynthesisDeconvolver::interactiveGUI(Record& iterRec)
@@ -641,6 +654,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                chanflagRec.get("chanflag", retchanflag);
                if(retchanflag.nelements() >0)
                  itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
+	       Record substats=chanflagRec.asRecord("statsrec");
+	       setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
               //#3
               Record retval;
               casa::applicator.get(retval);
@@ -683,6 +698,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             chanFlag=itsChanFlag(IPosition(1, chanRange[0]), IPosition(1, chanRange[1]));
             Record chanflagRec;
             chanflagRec.define("chanflag", chanFlag);
+	    Record statrec=getSubsetRobustStats(chanRange[0], chanRange[1]);
+	    chanflagRec.defineRecord("statsrec", statrec);
             applicator.put(chanflagRec);
             /// Tell worker to process it
             applicator.apply(*cmc);
@@ -700,6 +717,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             chanflagRec.get("chanflag", retchanflag);
             if(retchanflag.nelements() >0)
               itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
+	    Record substats=chanflagRec.asRecord("statsrec");
+	    setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
             Record retval;
             casa::applicator.get(retval);
             retvals(indexofretval)=(retval.nfields() > 0);
@@ -760,7 +779,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisDeconvolver::mergeReturnRecord(const Record& inRec, Record& outRec, const Int chan){
 
     ///Something has to be done about what is done in SIIterBot_state::mergeMinorCycleSummary if it is needed
-    Matrix<Double> summaryminor;
+    Matrix<Double> summaryminor(6,0);
     if(outRec.isDefined("summaryminor"))
       summaryminor=Matrix<Double>(outRec.asArrayDouble("summaryminor"));
     Matrix<Double> subsummaryminor;
@@ -911,6 +930,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         if ( itsAutoMaskAlgorithm != "") { // && itsIsInteractive) {
 	  os << "[" << itsImages->getName() << "] Setting up an auto-mask"<<  ((itsPBMask>0.0)?" within PB mask limit ":"") << LogIO::POST;
           ////For Cubes this is done in CubeMinorCycle
+	  //cerr << this << "SETUP mask " << itsRobustStats << endl;
           if(itsImages->residual()->shape()[3] ==1)
             setAutoMask();
           /***
@@ -996,7 +1016,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
        
        Bool isThresholdReached = itsLoopController.isThresholdReached();
-
+       //cerr << this << " setAuto " << itsRobustStats << endl;
        LogIO os( LogOrigin("SynthesisDeconvolver","setAutoMask",WHERE) );
        os << "Generating AutoMask" << LogIO::POST;
        //os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
@@ -1013,7 +1033,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // pass robust stats 
         itsMaskHandler->autoMask( itsImages, *itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
        }
-
+       //cerr <<this << " SETAutoMask " << itsRobustStats << endl;
      }
   }
 
@@ -1067,6 +1087,49 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisDeconvolver::setPosMask(std::shared_ptr<ImageInterface<Float> > posmask){
     itsPosMask=posmask;
   }
+  Record SynthesisDeconvolver::getSubsetRobustStats(const Int chanBeg, const Int chanEnd){
+    Record outRec;
+    if(itsRobustStats.nfields()==0)
+      return outRec;
+    Vector<Double> tmp;
+    std::vector<String> keys={"min", "max", "rms", "medabsdevmed", "med", "robustrms", "median"};
+    for (auto it = keys.begin() ; it != keys.end(); ++it){
+      if(itsRobustStats.isDefined(*it)){
+	tmp.resize();
+	tmp=itsRobustStats.asArrayDouble(*it);
+	//	cerr << std::setprecision(12) << tmp[chanBeg] << " bool " <<(tmp[chanBeg]> (C::dbl_max-(C::dbl_max*1e-15))) << endl;
+	if(tmp[chanBeg]> (C::dbl_max-(C::dbl_max*1e-15)))
+	  return Record();
+	outRec.define(*it, tmp(IPosition(1, chanBeg), IPosition(1, chanEnd)));     
+      }
+    }
+    //cerr <<"chanbeg " << chanBeg << " chanend " << chanEnd << endl;
+    //cerr << "GETSUB " << outRec << endl; 
+    return outRec;
+  }
   
+  void SynthesisDeconvolver::setSubsetRobustStats(const Record& inrec, const Int chanBeg, const Int chanEnd, const Int numchan){
+    if(inrec.nfields()==0)
+      return ;
+    Vector<Double> tmp;
+    std::vector<String> keys={"min", "max", "rms", "medabsdevmed", "med", "robustrms", "median"};
+    for (auto it = keys.begin() ; it != keys.end(); ++it){
+      if(inrec.isDefined(*it)){
+	tmp.resize();
+	tmp=inrec.asArrayDouble(*it);
+	Vector<Double> outvec;
+	if(itsRobustStats.isDefined(*it))
+	  outvec=itsRobustStats.asArrayDouble(*it);
+	else{
+	  outvec.resize(numchan);
+	  outvec.set(C::dbl_max);
+	}
+	outvec(Slice(chanBeg, chanEnd-chanBeg+1))=tmp;
+	itsRobustStats.define(*it, outvec);     
+      }
+    }
+     
+    //cerr << "SETT::ItsRobustStats " << Vector<Double>(itsRobustStats.asArrayDouble("min")) << endl;
+  }
 } //# NAMESPACE CASA - END
 

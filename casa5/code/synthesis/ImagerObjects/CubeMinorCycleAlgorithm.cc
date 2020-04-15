@@ -73,7 +73,7 @@ void CubeMinorCycleAlgorithm::get() {
         applicator.get(chanflagRec);
         chanFlag_p.resize();
         chanflagRec.get("chanflag", chanFlag_p);
-        
+        statsRec_p=chanflagRec.asRecord("statsrec");
 	//cerr <<"GET chanRange " << chanRange_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
@@ -88,6 +88,7 @@ void CubeMinorCycleAlgorithm::put() {
   //#2 chanflag
   Record chanflagRec;
   chanflagRec.define("chanflag", chanFlag_p);
+  chanflagRec.defineRecord("statsrec", statsRec_p);
   applicator.put(chanflagRec);
   ///#3 return record of deconvolver
   // cerr << "nfield " << returnRec_p.nfields() << endl;
@@ -125,6 +126,8 @@ void CubeMinorCycleAlgorithm::task(){
           subDeconv.initMinorCycle(subimstor);
           if(autoMaskOn_p){
             subDeconv.setChanFlag(chanFlag_p);
+	    subDeconv.setRobustStats(statsRec_p);
+	    //cerr << "STATSRec " << statsRec_p << endl;
             subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
             subDeconv.setPosMask(subimstor->tempworkimage());
             subDeconv.setAutoMask();
@@ -133,6 +136,8 @@ void CubeMinorCycleAlgorithm::task(){
           returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
           chanFlag_p.resize();
           chanFlag_p=subDeconv.getChanFlag();
+	  statsRec_p=Record();
+	  statsRec_p=subDeconv.getRobustStats();
           writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
           if(autoMaskOn_p){
             writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
@@ -247,6 +252,7 @@ void CubeMinorCycleAlgorithm::reset(){
   //psfSidelobeLevel_p;
   autoMaskOn_p=False;
   chanFlag_p.resize();
+  statsRec_p=Record();
   status_p=False;
                 
 	

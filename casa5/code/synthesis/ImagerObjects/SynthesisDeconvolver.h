@@ -110,13 +110,18 @@ class SynthesisDeconvolver
   void setPosMask(std::shared_ptr<casacore::ImageInterface<casacore::Float> > posmaskim);
   ////return estimate of memory usage in kB
   casacore::Long estimateRAM(const std::vector<int>& imsize);
+  ///automask parameters that can be needed for cubes
   void setChanFlag(const casacore::Vector<casacore::Bool>& chanflag);
   casacore::Vector<casacore::Bool> getChanFlag();
+  void setRobustStats(const casacore::Record& rec);
+  casacore::Record getRobustStats();
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );
   //Merge the outputRecord from channels into one that looks like the cube one
   void mergeReturnRecord(const casacore::Record& chanRec, casacore::Record& outRec, const casacore::Int chan);
+  casacore::Record getSubsetRobustStats(const casacore::Int chanBeg, const casacore::Int chanEnd);
+  void setSubsetRobustStats(const casacore::Record& inrec, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::Int numchan);
   //for parallel cube partition in block of channels to reduce lock load on model image
   casacore::Int numblockchans(casacore::Vector<casacore::Int>& startch, casacore::Vector<casacore::Int>& endch); 
   /*
