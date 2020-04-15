@@ -27,7 +27,7 @@
 #ifndef PLOTMSCALIBRATIONTAB_QO_H_
 #define PLOTMSCALIBRATIONTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSCalibrationTab.ui.h>
+#include <ui/ui_PlotMSCalibrationTab.h>
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 
 namespace casa {

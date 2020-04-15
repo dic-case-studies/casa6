@@ -27,7 +27,7 @@
 #include <guitools/Feather/ExternalAxis.h>
 #include <QPainter>
 #include <QDebug>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_plot_canvas.h>
 
 namespace casa {
 

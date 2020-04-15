@@ -27,7 +27,7 @@
 #define PLOTMSSUMMARYDIALOG_QO_H
 
 #include <QDialog>
-#include <plotms/Gui/PlotMSSummaryDialog.ui.h>
+#include <ui/ui_PlotMSSummaryDialog.h>
 #include <plotms/PlotMS/PlotMSConstants.h>
 #include <casa/BasicSL/String.h>
 

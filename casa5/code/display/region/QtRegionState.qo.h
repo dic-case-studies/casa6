@@ -31,7 +31,7 @@
 
 #include <casa/BasicSL/String.h>
 #include <display/region/RegionEnums.h>
-#include <display/region/QtRegionState.ui.h>
+#include <ui/ui_QtRegionState.h>
 #include <display/region/QtRegionStats.qo.h>
 #include <display/Display/MouseToolState.h>
 
