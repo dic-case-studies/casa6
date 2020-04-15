@@ -28,7 +28,7 @@
 
 #include <QWidget>
 #include <casa/Utilities/CountedPtr.h>
-#include <display/region/HistogramTab.ui.h>
+#include <ui/ui_HistogramTab.h>
 
 namespace casacore{
 

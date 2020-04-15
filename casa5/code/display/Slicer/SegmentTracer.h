@@ -26,7 +26,7 @@
 #ifndef SEGMENTTRACER_H_
 #define SEGMENTTRACER_H_
 
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_plot_picker.h>
 
 class QwtPlotMarker;
 class QwtPlot;

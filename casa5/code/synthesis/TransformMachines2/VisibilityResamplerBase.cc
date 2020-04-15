@@ -57,6 +57,15 @@ namespace casa{
     vb2CFBMap_p = other.vb2CFBMap_p;
 
   }
+  
+  void VisibilityResamplerBase::setVB2CFMap(const casacore::CountedPtr<refim::VB2CFBMap>& thisMap) 
+  {
+    vb2CFBMap_p = thisMap;
+    // uInt n=vb2CFBMap_p->vbRow2BLMap_p.size();
+    // for(uInt i=0;i<n;i++)
+    //   cerr << i << " " << vb2CFBMap_p->vbRow2BLMap_p[i]<< " " << thisMap->vbRow2BLMap_p[i] << endl;
+    // return;
+  }
   //
   //-----------------------------------------------------------------------------------
   //
