@@ -34,11 +34,11 @@
 #include <QDebug>
 #include <QHBoxLayout>
 #include <QtCore/qmath.h>
-#include <qwt_plot_curve.h>
-#include <qwt_symbol.h>
-//#include <qwt_data.h>
-#include <qwt_scale_draw.h>
-//#include <qwt_legend_item.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_symbol.h>
+//#include <qwt/qwt_data.h>
+#include <qwt/qwt_scale_draw.h>
+//#include <qwt/qwt_legend_item.h>
 
 using namespace casacore;
 namespace casa {

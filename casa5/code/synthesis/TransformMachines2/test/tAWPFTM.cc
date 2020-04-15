@@ -110,10 +110,10 @@ void createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::F
 									 aTermOn,
 									 psTermOn, true, mTermOn, wbAWP,
 									 false);
-   CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
-
+   CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets();
+   po->setOverSampling(awConvFunc->getOversampling());
    po->setDoPointing(doPointing);
-   awConvFunc->setPointingOffsets(po);
+   // awConvFunc->setPointingOffsets(po);
   //
   // Construct the appropriate re-sampler.
   //
@@ -129,12 +129,13 @@ void createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::F
   // Re-sampler objects.  
   //
   Float pbLimit_l=1e-3;
+  vector<float> posigdev = {10.0,10.0};
   theFT = new refim::AWProjectWBFTNew(wprojPlane, cache/2, 
-			       cfCacheObj, awConvFunc, 
-			       visResampler,
-			       /*true */doPointing, doPBCorr, 
-			       tile, computePAStep, pbLimit_l, true,conjBeams,
-			       useDoublePrec);
+				      cfCacheObj, awConvFunc, 
+				      visResampler,
+				      /*true */doPointing, posigdev, doPBCorr, 
+				      tile, computePAStep, pbLimit_l, true,conjBeams,
+				      useDoublePrec);
   
   cfCacheObj = new refim::CFCache();
   cfCacheObj->setCacheDir(cfCache.data());

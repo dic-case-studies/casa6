@@ -26,7 +26,7 @@
 #define IMAGELOADER_QO_H
 
 #include <QDialog>
-#include <guitools/Histogram/ImageLoader.ui.h>
+#include <ui/ui_ImageLoader.h>
 
 class QFileSystemModel;
 class QKeyEvent;

@@ -35,13 +35,13 @@
 
 #include <casacore/casa/Quanta/MVAngle.h>
 
-#include <qwt_legend.h>
+#include <qwt/qwt_legend.h>
 #if QWT_VERSION >= 0x060000
-#include <qwt_plot_legenditem.h>
+#include <qwt/qwt_plot_legenditem.h>
 #endif
-#include <qwt_plot.h>
-#include <qwt_plot_grid.h>
-#include <qwt_scale_draw.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_grid.h>
+#include <qwt/qwt_scale_draw.h>
 
 #include <QObject>
 #include <QMouseEvent>

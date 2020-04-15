@@ -25,7 +25,7 @@
 #ifndef RANGEPICKER_H_
 #define RANGEPICKER_H_
 
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot_marker.h>
 
 class QPainter;
 
