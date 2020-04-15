@@ -27,7 +27,7 @@
 #ifndef TBMAIN_H_
 #define TBMAIN_H_
 
-#include <casaqt/QtBrowser/TBMain.ui.h>
+#include "ui/ui_TBMain.h"
 #include <casaqt/QtBrowser/TBBrowser.qo.h>
 
 #include <QtGui>

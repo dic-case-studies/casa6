@@ -30,7 +30,7 @@
 #include <QMap>
 #include <QThread>
 #include <QProgressDialog>
-#include <display/QtPlotter/SearchMoleculesWidget.ui.h>
+#include <ui/ui_SearchMoleculesWidget.h>
 #include <measures/Measures/MRadialVelocity.h>
 #include <measures/Measures/MDoppler.h>
 #include <coordinates/Coordinates/SpectralCoordinate.h>
