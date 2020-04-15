@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import unittest
+import itertools
 
 # is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -73,6 +74,7 @@ class Fringefit_single_tests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.msfile)
         shutil.rmtree(self.prefix + '.sbdcal', True)
+        shutil.rmtree(self.prefix + '-2.sbdcal', True)
 
     def test_single(self):
         sbdcal = self.prefix + '.sbdcal'
@@ -91,6 +93,34 @@ class Fringefit_single_tests(unittest.TestCase):
         self.assertTrue(flag[4, 0, 2])
         self.assertTrue(flag[4, 0, 3])
         self.assertTrue(flag[4, 0, 4])
+    def test_param(self):
+        sbdcal = self.prefix + '-2.sbdcal'
+        # We make a triple cartesian product of booleans
+        # to test all possible paramactive values
+        eps = 1e-20
+        for pactive in itertools.product(*3*[[False, True]]):
+            fringefit(vis=self.msfile, paramactive=pactive, caltable=sbdcal, refant='EF')
+            tblocal.open(sbdcal)
+            fparam = tblocal.getcol('FPARAM')
+            flag = tblocal.getcol('FLAG')
+            tblocal.close()
+            param_names = ['delay', 'rate', 'dispersivity']
+            print(pactive, file=sys.stderr)
+            # Loop over parameters
+            for i in range(3):
+                # Loop over stations; it seems like station 2 is the one with non zero results
+                for j in range(4):
+                    if not pactive[i]:
+                        self.assertTrue(abs(fparam[i+1, 0, j]) < eps )
+                        self.assertTrue(abs(fparam[i+5, 0, j]) < eps)
+                    else:
+                        if (abs(fparam[i+1, 0, j]) < eps) and (not flag[i+1,0,j]):
+                            name = param_names[i]
+                            v1 = fparam[i+1, 0, j]
+                            v1 = fparam[i+5, 0, j]
+                            print("   Parameter {} for antenna {} is {}, {}".format(name, j, v1, v1),
+                                  "when it doesn't have to be",
+                                  file=sys.stderr)
 
 def suite():
     return [Fringefit_tests, Fringefit_single_tests]
