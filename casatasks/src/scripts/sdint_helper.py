@@ -306,7 +306,7 @@ class SDINT_helper:
         _ia.done() 
 
 ################################################
-    def cube_to_taylor_sum(self, cubename='', mtname='',reffreq='1.5GHz',nterms=2,dopsf=False):
+    def cube_to_taylor_sum(self, cubename='', cubewt='', mtname='',reffreq='1.5GHz',nterms=2,dopsf=False):
         """
         Convert Cubes (output of major cycle) to Taylor weighted averages (inputs to the minor cycle)
         Input : Cube
@@ -332,20 +332,36 @@ class SDINT_helper:
         shp = _ia.shape()
         _ia.close()
 
-        freqlist = self.getFreqList(cubename)
-        for i in range(len(freqlist)):
-            wt = (freqlist[i] - refnu)/refnu
-            _ia.open(cubename)
-            implane = _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
-            _ia.close()
-            for tt in range(0,num_terms):
-                pix[tt] = pix[tt] + (wt**tt) * implane
+        _ia.open(cubewt)
+        cwt = _ia.getchunk()[0,0,0,:]
+        _ia.close()
 
+        freqlist = self.getFreqList(cubename)
+
+        if shp[3] != len(cwt) or len(freqlist) != len(cwt):
+            print("Nchan shape mismatch between cube and sumwt.")
+
+        sumchanwt = np.sum(cwt)
+
+        if sumchanwt==0:
+            print("Weights are all zero ! ")
+
+        else:
+            for i in range(len(freqlist)):
+                wt = (freqlist[i] - refnu)/refnu
+                _ia.open(cubename)
+                implane = _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
+                _ia.close()
+                for tt in range(0,num_terms):
+                    pix[tt] = pix[tt] + (wt**tt) * implane * cwt[i]
+
+            for tt in range(0,num_terms):
+                pix[tt] = pix[tt]/sumchanwt
 #        ia.close()
 
         for tt in range(0,num_terms):
             _ia.open(mtname+'.tt'+str(tt))
-            _ia.putchunk(pix[tt]/len(freqlist))
+            _ia.putchunk(pix[tt])
             _ia.close()
 
 ################################################

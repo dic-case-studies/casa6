@@ -711,12 +711,12 @@ def sdintimaging(
                                               residualcube=sd_cube+'.residual',  ## output
                                               psfcube=sd_cube+'.psf')
 
-                    ## Feather the residuals
-                    feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
-                    ###############
-                    ##### Placeholder code for PSF renormalization if needed
-                    #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
-                    ###############
+                ## Feather the residuals
+                feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
+                ###############
+                ##### Placeholder code for PSF renormalization if needed
+                #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
+                ###############
 
                 if specmode=='mfs':
                     ## Calculate Spectral Taylor Residuals

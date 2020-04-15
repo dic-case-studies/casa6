@@ -498,6 +498,8 @@ def sdintimaging(
 
     #paramList.printParameters()
     
+    if len(pointingoffsetsigdev)>0 and pointingoffsetsigdev[0]!=0.0 and usepointing==True and gridder.count('awproj')>1:
+        casalog.post("pointingoffsetsigdev will be used for pointing corrections with AWProjection", "WARN") 
 #    if pointingoffsetsigdev!=[] and usepointing==False:
 #        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
@@ -645,9 +647,11 @@ def sdintimaging(
             ## Calculate Spectral PSFs and Taylor Residuals
             casalog.post("Calculate spectral PSFs and Taylor Residuals...")
             sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.psf',
+                                        cubewt=int_cube+'.sumwt',
                                         mtname=joint_multiterm+'.psf',
                                         nterms=nterms, reffreq=reffreq, dopsf=True)
             sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
+                                        cubewt=int_cube+'.sumwt',
                                         mtname=joint_multiterm+'.residual',
                                         nterms=nterms, reffreq=reffreq, dopsf=False)
 
@@ -707,18 +711,19 @@ def sdintimaging(
                                               residualcube=sd_cube+'.residual',  ## output
                                               psfcube=sd_cube+'.psf')
 
-                    ## Feather the residuals
-                    feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
-                    ###############
-                    ##### Placeholder code for PSF renormalization if needed
-                    #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
-                    ###############
+                ## Feather the residuals
+                feather_residual(int_cube, sd_cube, joint_cube, applypb, inpparams )
+                ###############
+                ##### Placeholder code for PSF renormalization if needed
+                #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
+                ###############
 
                 if specmode=='mfs':
                     ## Calculate Spectral Taylor Residuals
                     sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
-                                            mtname=joint_multiterm+'.residual',
-                                            nterms=nterms, reffreq=reffreq, dopsf=False)
+                                                cubewt=int_cube+'.sumwt',
+                                                mtname=joint_multiterm+'.residual',
+                                                nterms=nterms, reffreq=reffreq, dopsf=False)
 
 
 
