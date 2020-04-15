@@ -228,7 +228,7 @@ class accor_test(unittest.TestCase):
         
         
     #CAS-12736   
-     @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_gaintable(self):
         ''' Test that providing the gaintable will yeild a different final cal table than the default '''
         
