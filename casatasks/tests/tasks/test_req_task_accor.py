@@ -247,9 +247,9 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 0.9921940355389206+0j))
 
-     #CAS-12736   
-     @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
-     def test_interp(self):
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
+    def test_interp(self):
         ''' Test that adding an interp selection to the gaintable will yeild a different cal table than gaintable with standard interp (linear, linear) '''
         accor(vlacopy, caltable='cal.B')
         
