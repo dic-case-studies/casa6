@@ -56,7 +56,6 @@ cas_2364im = "CAS-2364.im"
 def run_transpose(imagename, outfile, order):
     myia = image()
     myia.open(imagename)
-    print("*** order " + str(order))
     res = myia.transpose(outfile=outfile, order=order)
     myia.done()
     return res
@@ -107,16 +106,11 @@ class ia_transpose_test(unittest.TestCase):
         myia.close()
         count = 0
         for order in ["012", 12, ['r', 'd', 'f'], ["righ", "declin", "freq"]]:
-            code = run_transpose
             outfile = "straight_copy_" + str(count)
-            newim = code(imagename, outfile, order)
-            if (type(newim) == bool):
-                self.assertTrue(newim)
-                newim = image()
-                newim.open(outfile)
+            newim = run_transpose(imagename, outfile, order)
             gotdata = newim.getchunk()
             gotnames = newim.coordsys().names()
-            newim.done()
+            newim.done(remove=True)
             self.assertTrue((expecteddata == gotdata).all())
             self.assertTrue(expectednames == gotnames)
             count += 1
@@ -131,22 +125,16 @@ class ia_transpose_test(unittest.TestCase):
         myia.done()
         count = 0
         for order in ["120", 120, ['d', 'f', 'r'], ["declin", "freq", "righ"]]:
-            code = run_transpose
             for outname in ["transpose_" + str(count), ""]:
-                newim = code(imagename, outname, order)
-                if (type(newim) == bool):
-                    self.assertTrue(newim)
-                    newim = image()
-                    newim.open(outname)
+                newim = run_transpose(imagename, outname, order)
                 gotdata = newim.getchunk()
                 inshape = expecteddata.shape
                 for i in range(inshape[0]):
                     for j in range(inshape[1]):
                         for k in range(inshape[2]):
                             self.assertTrue(expecteddata[i][j][k] == gotdata[j][k][i])
-
                 gotnames = newim.coordsys().names()
-                newim.done()
+                newim.done(remove=False if len(outname) == 0 else True)
                 self.assertTrue(expectednames[0] == gotnames[2])
                 self.assertTrue(expectednames[1] == gotnames[0])
                 self.assertTrue(expectednames[2] == gotnames[1])
@@ -160,19 +148,18 @@ class ia_transpose_test(unittest.TestCase):
         myia = image()
         myia.open(cas_2364im)
         trans = myia.transpose(out1, order)
-        myia.done()
+        myia.done(remove=True)
         trans.done()
         self.assertTrue(len(_tb.showcache()) == 0)
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
         myia.open(out1)
         self.assertTrue(myia)
-        myia.done()
+        myia.done(remove=True)
 
     def test_history(self):
         """Test history records are written"""
         myia = image()
-        imagename = "zz.im"
-        myia.fromshape(imagename, [10,10,4,10])
+        myia.fromshape("", [10,10,4,10])
         order = "3210"
         kk = myia.transpose("",order=order)
         myia.done()

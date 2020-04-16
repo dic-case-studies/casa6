@@ -106,14 +106,11 @@ class imtrans_test(unittest.TestCase):
         count = 0
         for order in ["012", 12, ['r', 'd', 'f'], ["righ", "declin", "freq"]]:
             outfile = "straight_copy_" + str(count)
-            newim = run_imtrans(imagename, outfile, order)
-            if (type(newim) == bool):
-                self.assertTrue(newim)
-                newim = image()
-                newim.open(outfile)
-            gotdata = newim.getchunk()
-            gotnames = newim.coordsys().names()
-            newim.done()
+            self.assertTrue(run_imtrans(imagename, outfile, order))
+            myia.open(outfile)
+            gotdata = myia.getchunk()
+            gotnames = myia.coordsys().names()
+            myia.done(remove=True)
             self.assertTrue((expecteddata == gotdata).all())
             self.assertTrue(expectednames == gotnames)
             count += 1
@@ -130,16 +127,15 @@ class imtrans_test(unittest.TestCase):
         for order in ["120", 120, ['d', 'f', 'r'], ["declin", "freq", "righ"]]:
             outname = "transpose_" + str(count)
             self.assertTrue(run_imtrans(imagename, outname, order))
-            newim = image()
-            newim.open(outname)
-            gotdata = newim.getchunk()
+            myia.open(outname)
+            gotdata = myia.getchunk()
             inshape = expecteddata.shape
             for i in range(inshape[0]):
                 for j in range(inshape[1]):
                     for k in range(inshape[2]):
                         self.assertTrue(expecteddata[i][j][k] == gotdata[j][k][i])
-            gotnames = newim.coordsys().names()
-            newim.done()
+            gotnames = myia.coordsys().names()
+            myia.done(remove=True)
             self.assertTrue(expectednames[0] == gotnames[2])
             self.assertTrue(expectednames[1] == gotnames[0])
             self.assertTrue(expectednames[2] == gotnames[1])
@@ -155,7 +151,7 @@ class imtrans_test(unittest.TestCase):
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
         myia.open(out1)
         self.assertTrue(myia)
-        myia.done()
+        myia.done(remove=True)
         shutil.rmtree(cas_2364im)
 
     def test_history(self):
@@ -170,11 +166,13 @@ class imtrans_test(unittest.TestCase):
         )
         myia.open(outfile)
         msgs = myia.history()
-        myia.done()
+        myia.done(remove=True)
         teststr = "version"
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         teststr = "imtrans"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
+        myia.open(imagename)
+        myia.done(remove=True)
 
     def test_imageinfo(self):
         """Verify image info is copied"""
@@ -193,7 +191,9 @@ class imtrans_test(unittest.TestCase):
         self.assertTrue(
             myia.restoringbeam(), "restoring beam not copied"
         )
-        myia.done()
+        myia.done(remove=True)
+        myia.open(imname)
+        myia.done(remove=True)
 
 def suite():
     return [imtrans_test]
