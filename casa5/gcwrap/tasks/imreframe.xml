@@ -23,10 +23,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <value></value>
         <example>output='newframed.image'; output='' will modify input image</example>
     </param>
-    <param type="string" name="outframe"  ignorecase="true">
+    <param type="string" name="outframe">
         <description>Spectral frame in which the frequency or velocity values will be reported by default</description>
         <value>lsrk</value>
-    <allowed kind="enum">
+    <allowed kind="enum" ignorecase="true">
       <value>lsrk</value>
       <value>lsrd</value>
       <value>bary</value>

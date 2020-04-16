@@ -114,10 +114,10 @@ Hanning smoothing may not be necessary.
             <value type="int">1</value>
         </param>
 
-        <param type="string" name="interpolation" subparam="true" ignorecase="True">
+        <param type="string" name="interpolation" subparam="true">
             <description>Spectral interpolation method</description>
             <value>linear</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>nearest</value>
                <value>linear</value>
                <value>cubic</value>
@@ -137,7 +137,7 @@ Hanning smoothing may not be necessary.
             <value></value>
         </param>
         
-        <param type="string" name="outframe" ignorecase="True">
+        <param type="string" name="outframe">
                 <description>Output frame (not case-sensitive, \'\'=keep input frame)</description>
                 <value></value>
                 <allowed kind="enum" ignorecase="True">
@@ -154,10 +154,10 @@ Hanning smoothing may not be necessary.
                 </allowed>
         </param>
 
-        <param type="string" name="veltype" ignorecase="True">
+        <param type="string" name="veltype">
             <description>velocity definition</description>
             <value>radio</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>optical</value>
                <value>radio</value>
             </allowed>

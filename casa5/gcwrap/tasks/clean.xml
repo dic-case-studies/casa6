@@ -303,10 +303,10 @@ spectral line cubes.
             <value type="int">1</value>
     </param>
 <!--========================================================= -->
-    <param type="string" name="outframe" ignorecase="true" subparam="true">
+    <param type="string" name="outframe" subparam="true">
             <description>default spectral frame of output image </description>
             <value></value>
-    <allowed kind="enum">
+    <allowed kind="enum" ignorecase="true">
             <value>lsrk</value>
             <value>lsrd</value>
             <value>bary</value>
@@ -319,10 +319,10 @@ spectral line cubes.
     </allowed>
     </param>
 <!--========================================================= -->
-    <param type="string" name="veltype" ignorecase="true" subparam="true">
+    <param type="string" name="veltype" subparam="true">
             <description>velocity definition (radio, optical, true) </description>
             <value>radio</value>
-    <allowed kind="enum">
+    <allowed kind="enum" ignorecase="true">
             <value>radio</value>
             <value>optical</value>
             <value>true</value>

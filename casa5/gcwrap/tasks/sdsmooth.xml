@@ -23,10 +23,10 @@ xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/x
         <value></value>
     </param>
 
-    <param type="string" name="datacolumn" ignorecase="true">
+    <param type="string" name="datacolumn">
         <description>name of data column to be used ["data", "float_data", or "corrected"]</description>
         <value>data</value>
-        <allowed kind="enum">
+        <allowed kind="enum" ignorecase="true">
             <value>data</value>
             <value>float_data</value>
             <value>corrected</value>

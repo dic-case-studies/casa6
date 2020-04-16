@@ -94,10 +94,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             <description>Create a multi-MS output from an input MS.</description>
             <value>False</value>
         </param>
-        <param type="string" name="separationaxis" ignorecase="true" subparam="true">
+        <param type="string" name="separationaxis" subparam="true">
             <description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
             <value>auto</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum" ignorecase="true" ignorecase="true">
                 <value>auto</value>
                 <value>spw</value>
                 <value>scan</value>
@@ -182,10 +182,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <value type="string"></value>
     </param>
 
-    <param type="string" name="datacolumn" ignorecase="True">
+    <param type="string" name="datacolumn">
         <description>Which data column(s) to process.</description>
         <value>corrected</value>
-        <allowed kind="enum" ignorecase="True">
+        <allowed kind="enum" ignorecase="True" ignorecase="True">
             <value>corrected</value>
             <value>data</value>
             <value>model</value>
@@ -277,10 +277,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             <value type="int">1</value>
         </param>
 
-        <param type="string" name="interpolation" subparam="true" ignorecase="True">
+        <param type="string" name="interpolation" subparam="true">
             <description>Spectral interpolation method.</description>
             <value>linear</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>nearest</value>
                <value>linear</value>
                <value>cubic</value>
@@ -300,10 +300,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             <value></value>
         </param>
     
-        <param type="string" name="outframe" subparam="true" ignorecase="True">
+        <param type="string" name="outframe" subparam="true">
             <description>Output reference frame (''=keep input frame).</description>
             <value></value>
-            <allowed kind="enum" ignorecase="True">
+            <allowed kind="enum" ignorecase="True" ignorecase="True">
             <value>topo</value>
             <value>geo</value>
             <value>lsrk</value>
@@ -317,10 +317,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             </allowed>
         </param>
 
-        <param type="string" name="veltype" subparam="true" ignorecase="True">
+        <param type="string" name="veltype" subparam="true">
             <description>Velocity definition.</description>
             <value>radio</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>optical</value>
                <value>radio</value>
             </allowed>
