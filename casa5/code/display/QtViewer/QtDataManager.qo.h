@@ -45,9 +45,9 @@
 //#dk Be careful to put *.ui.h within X_enter/exit bracket too,
 //#   because they'll have Qt includes.
 //#   E.g. <QApplication> needs the X11 definition of 'Display'
-#include <display/QtViewer/QtDataManager.ui.h>
-#include <display/QtViewer/QtDataMgrMsSelect.ui.h>
-#include <display/QtViewer/VOParam.ui.h>
+#include <ui/ui_QtDataManager.h>
+#include <ui/ui_QtDataMgrMsSelect.h>
+#include <ui/ui_VOParam.h>
 #if ! defined(CASATOOLS)
 #include <casaqt/QtDBus/dVO.h>
 #endif

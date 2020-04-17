@@ -32,7 +32,7 @@
 #include <casaqt/QwtPlotter/QPCanvasHelpers.qo.h>
 #include <casaqt/QwtPlotter/QPPlotItem.qo.h>
 
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 #include <QPicture>
 

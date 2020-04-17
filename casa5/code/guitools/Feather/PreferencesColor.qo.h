@@ -28,7 +28,7 @@
 #include <QDialog>
 #include <QMap>
 
-#include <guitools/Feather/PreferencesColor.ui.h>
+#include <ui/ui_PreferencesColor.h>
 #include <guitools/Feather/CurveDisplay.h>
 #include <guitools/Feather/FeatherCurveType.h>
 

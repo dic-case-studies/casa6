@@ -32,7 +32,7 @@
 #include <casagrpc/types/variant.h>
 #endif
 #include <QDialog>
-#include <display/Clean/CleanGui.ui.h>
+#include <ui/ui_CleanGui.h>
 
 namespace casa {
 

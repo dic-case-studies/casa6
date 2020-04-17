@@ -27,7 +27,7 @@
 #include <guitools/Histogram/HeightSource.h>
 #include <QPainter>
 #include <QDebug>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 namespace casa {
 
