@@ -67,7 +67,6 @@ class imtrans_test(unittest.TestCase):
         self.assertTrue(len(_tb.showcache()) == 0)
         # make sure directory is clean as per verification test requirement
         cwd = os.getcwd()
-        print("cwd", cwd)
         for filename in os.listdir(cwd):
             file_path = os.path.join(cwd, filename)
             try:

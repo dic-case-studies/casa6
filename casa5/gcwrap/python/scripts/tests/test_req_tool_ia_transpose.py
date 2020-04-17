@@ -69,8 +69,20 @@ class ia_transpose_test(unittest.TestCase):
         shutil.copy(ctsys_resolve(os.path.join(datapath, good_image)), good_image)
     
     def tearDown(self):
-        os.remove(good_image)
         self.assertTrue(len(_tb.showcache()) == 0)
+        # make sure directory is clean as per verification test requirement
+        cwd = os.getcwd()
+        for filename in os.listdir(cwd):
+            file_path = os.path.join(cwd, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    # CASA 5 tests need this directory
+                    if filename != 'xml':
+                        shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     def test_exceptions(self):
         """imtrans: Test various exception cases"""
@@ -110,7 +122,7 @@ class ia_transpose_test(unittest.TestCase):
             newim = run_transpose(imagename, outfile, order)
             gotdata = newim.getchunk()
             gotnames = newim.coordsys().names()
-            newim.done(remove=True)
+            newim.done()
             self.assertTrue((expecteddata == gotdata).all())
             self.assertTrue(expectednames == gotnames)
             count += 1
@@ -134,7 +146,7 @@ class ia_transpose_test(unittest.TestCase):
                         for k in range(inshape[2]):
                             self.assertTrue(expecteddata[i][j][k] == gotdata[j][k][i])
                 gotnames = newim.coordsys().names()
-                newim.done(remove=False if len(outname) == 0 else True)
+                newim.done()
                 self.assertTrue(expectednames[0] == gotnames[2])
                 self.assertTrue(expectednames[1] == gotnames[0])
                 self.assertTrue(expectednames[2] == gotnames[1])
@@ -148,13 +160,13 @@ class ia_transpose_test(unittest.TestCase):
         myia = image()
         myia.open(cas_2364im)
         trans = myia.transpose(out1, order)
-        myia.done(remove=True)
+        myia.done()
         trans.done()
         self.assertTrue(len(_tb.showcache()) == 0)
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
         myia.open(out1)
         self.assertTrue(myia)
-        myia.done(remove=True)
+        myia.done()
 
     def test_history(self):
         """Test history records are written"""
