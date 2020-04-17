@@ -97,7 +97,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <param type="string" name="separationaxis" subparam="true">
             <description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
             <value>auto</value>
-            <allowed kind="enum" ignorecase="true" ignorecase="true">
+            <allowed kind="enum" ignorecase="true">
                 <value>auto</value>
                 <value>spw</value>
                 <value>scan</value>
@@ -185,7 +185,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     <param type="string" name="datacolumn">
         <description>Which data column(s) to process.</description>
         <value>corrected</value>
-        <allowed kind="enum" ignorecase="True" ignorecase="True">
+        <allowed kind="enum" ignorecase="True">
             <value>corrected</value>
             <value>data</value>
             <value>model</value>
@@ -303,7 +303,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <param type="string" name="outframe" subparam="true">
             <description>Output reference frame (''=keep input frame).</description>
             <value></value>
-            <allowed kind="enum" ignorecase="True" ignorecase="True">
+            <allowed kind="enum" ignorecase="True">
             <value>topo</value>
             <value>geo</value>
             <value>lsrk</value>
