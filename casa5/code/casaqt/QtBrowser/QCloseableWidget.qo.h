@@ -27,7 +27,7 @@
 #ifndef QCLOSEABLEWIDGET_H_
 #define QCLOSEABLEWIDGET_H_
 
-#include <casaqt/QtBrowser/QCloseableWidget.ui.h>
+#include "ui/ui_QCloseableWidget.h"
 
 #include <QtGui>
 

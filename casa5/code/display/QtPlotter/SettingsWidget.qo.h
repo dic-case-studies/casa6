@@ -26,7 +26,7 @@
 #define SETTINGSWIDGET_QO_H
 
 #include <QWidget>
-#include <display/QtPlotter/SettingsWidget.ui.h>
+#include <ui/ui_SettingsWidget.h>
 #include <casa/Arrays/Vector.h>
 
 namespace casacore{

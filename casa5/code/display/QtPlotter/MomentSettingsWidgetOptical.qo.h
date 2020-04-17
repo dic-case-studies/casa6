@@ -26,7 +26,7 @@
 #define MOMENTSETTINGSWIDGETOPTICAL_QO_H
 
 #include <QWidget>
-#include <display/QtPlotter/MomentSettingsWidgetOptical.ui.h>
+#include <ui/ui_MomentSettingsWidgetOptical.h>
 #include <display/QtPlotter/ProfileTaskFacilitator.h>
 #include <imageanalysis/ImageAnalysis/SpectralCollapser.h>
 namespace casa {

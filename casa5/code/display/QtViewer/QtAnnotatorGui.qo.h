@@ -39,7 +39,7 @@
 #  include <QHash>
 #include <QWidget>
 #include <QMouseEvent>
-#include <display/QtViewer/QtAnnotatorGui.ui.h>
+#include <ui/ui_QtAnnotatorGui.h>
 #include <graphics/X11/X_exit.h>
 
 
