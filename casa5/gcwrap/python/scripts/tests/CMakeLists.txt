@@ -110,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imhead.py
   test_immath.py
   test_immoments.py
-  test_impbcor.py
   test_importasap.py
   test_importasdm.py
   test_importasdm_mms.py
