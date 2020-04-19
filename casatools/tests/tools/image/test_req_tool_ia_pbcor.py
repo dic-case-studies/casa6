@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_impbcor.py
+# test_req_tool_ia_pbcor.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -27,7 +27,6 @@ import unittest
 is_CASA6 = False
 try:
     from casatools import ctsys, image, table
-    from casatasks import impbcor
     _ia = image()
     _tb = table()
     datapath = ctsys.resolve('image')
@@ -59,17 +58,22 @@ pb4 = "CAS_5096template.im"
 
 data = [im1, pb1, co1_1, co1_2, im2, pb2, co2, pb4]
 
-def run_impbcor(
+def run_pbcor(
     imagename, pbimage, outfile, overwrite, region, box, chans,
     stokes, mask, mode, cutoff
 ):
-    return impbcor(
-        imagename=imagename, pbimage=pbimage, outfile=outfile,
-        overwrite=overwrite, region=region, box=box, chans=chans,
-        stokes=stokes, mask=mask, mode=mode, cutoff=cutoff
+    myia = image()
+    myia.open(imagename)
+    res = myia.pbcor(
+        pbimage=pbimage, outfile=outfile, overwrite=overwrite,
+        region=region, box=box, chans=chans, stokes=stokes,
+        mask=mask, mode=mode, cutoff=cutoff
     )
+    myia.close()
+    myia.done()
+    return res
 
-class impbcor_test(unittest.TestCase):
+class ia_pbcor_test(unittest.TestCase):
     
     def setUp(self):
         for f in data:
@@ -125,30 +129,19 @@ class impbcor_test(unittest.TestCase):
         expected.done()
 
     def test_exceptions(self):
-        """impbcor: Test various exception cases"""
+        """ia.pbcor: Test various exception cases"""
         def testit(
             imagename, pbimage, outfile, overwrite, region,
             box, chans, stokes, mask, mode, cutoff, wantreturn
         ):
-            if is_CASA6:
-                self.assertRaises(
-                    Exception, run_impbcor, imagename=imagename,
-                    pbimage=pbimage, outfile=outfile, overwrite=overwrite,
-                    region=region, box=box, chans=chans,
-                    stokes=stokes, mask=mask, mode=mode,
-                    cutoff=cutoff
-                )
-            else:
-                self.assertFalse(
-                    run_impbcor(
-                        imagename=imagename, pbimage=pbimage,
-                        outfile=outfile, overwrite=overwrite,
-                        region=region, box=box, chans=chans,
-                        stokes=stokes, mask=mask, mode=mode,
-                        cutoff=cutoff
-                    )
-                )
-                        
+            self.assertRaises(
+                Exception, run_pbcor, imagename=imagename,
+                pbimage=pbimage, outfile=outfile, overwrite=overwrite,
+                region=region, box=box, chans=chans,
+                stokes=stokes, mask=mask, mode=mode,
+                cutoff=cutoff
+            )
+                       
         # no image name given
         testit(
             imagename="", pbimage=pb1, outfile="",
@@ -220,7 +213,7 @@ class impbcor_test(unittest.TestCase):
             if j == 1:
                 pbimage = pbpix
             outfile = outfile
-            res = run_impbcor(
+            res = run_pbcor(
                 imagename=imagename, pbimage=pbimage,
                 outfile=outfile, overwrite=overwrite,
                 region=region, box=box, chans=chans,
@@ -228,11 +221,12 @@ class impbcor_test(unittest.TestCase):
                 cutoff=cutoff
             )
             self.assertTrue(res)
+            res.done()
             self.checkImage(outfile, expected, epsilon)
             shutil.rmtree(outfile)
 
     def test_1(self):
-        """impbcor: Test full image divide"""
+        """ia.pbcor: Test full image divide"""
         self._testit(
             expected=co1_1, imagename=im1, pbimage=pb1,
             overwrite=False, region="", box="",
@@ -241,7 +235,7 @@ class impbcor_test(unittest.TestCase):
         )
 
     def test_2(self):
-        """impbcor: Test full image divide with cutoff"""
+        """ia.pbcor: Test full image divide with cutoff"""
         self._testit(
             expected=co1_2, imagename=im1, pbimage=pb1,
             overwrite=False, region="", box="",
@@ -250,7 +244,7 @@ class impbcor_test(unittest.TestCase):
         )
     
     def test_3(self):
-        """impbcor: Test full image divide with cutoff. Primary beam is 2 D, image is 4 D"""
+        """ia.pbcor: Test full image divide with cutoff. Primary beam is 2 D, image is 4 D"""
         self._testit(
             expected=co2, imagename=im2, pbimage=pb2,
             overwrite=False, region="", box="",
@@ -259,7 +253,7 @@ class impbcor_test(unittest.TestCase):
         )
 
     def test_multiply(self):
-        """impbcor: Test full image multiply with cutoff. Primary beam is 2 D, image is 4 D"""
+        """ia.pbcor: Test full image multiply with cutoff. Primary beam is 2 D, image is 4 D"""
         myia = image()
         myia.open(pb2)
         pixels = myia.getchunk()
@@ -285,34 +279,32 @@ class impbcor_test(unittest.TestCase):
         xx = yy.transpose(mymask, "0132")
         yy.done()
         xx.done()
-        # CASA6 raises an exception, CASA5 returns False
-        if is_CASA6:
-            self.assertRaises(
-                RuntimeError,
-                impbcor,
-                imagename=im2, pbimage=pb2,
-                mask=mymask + ">0", stretch=False, outfile="garbage"
-            )
-        else:
-            zz = impbcor(
-                imagename=im2, pbimage=pb2,
-                mask=mymask + ">0", stretch=False
-            )
-            self.assertFalse(zz)
-        zz = impbcor(
-            imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+        yy.open(im2)
+        self.assertRaises(
+            RuntimeError, yy.pbcor, pbimage=pb2,
+            mask=mymask + ">0", stretch=False, outfile="garbage"
         )
+        yy.open(im2)
+        zz = yy.pbcor(
+            pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+        )
+        yy.done()
         self.assertTrue(zz)
+        zz.done()
         
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""
         imagename = os.path.join(datapath, "CAS_5096target.im")
         template = pb4
         outfile = "mypb.im"
-        impbcor(
-            imagename=imagename, pbimage=template,
+        myia = image()
+        myia.open(imagename)
+        yy = myia.pbcor(
+            pbimage=template,
             outfile=outfile, mask='"' + template + '">0.21'
         )
+        myia.done()
+        yy.done()
         self.assertTrue(os.path.exists(outfile))
 
     def test_history(self):
@@ -324,13 +316,13 @@ class impbcor_test(unittest.TestCase):
         gg[:] = 1
         myia.done()
         outfile = "pb_out.im"
-        impbcor(imagename=imagename, pbimage=gg, outfile=outfile)
-        self.assertTrue(myia.open(outfile), "failed to open " + outfile)
-        msgs = myia.history()
+        myia.open(imagename)
+        yy = myia.pbcor(pbimage=gg, outfile=outfile)
         myia.done()
-        teststr = "version"
-        self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
-        teststr = "impbcor"
+        msgs = yy.history()
+        yy.done()
+        teststr = "ia.pbcor"
+        self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")    
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
 
     def test_empty_region_and_stokes(self):
@@ -344,13 +336,14 @@ class impbcor_test(unittest.TestCase):
             myia.addnoise()
             myia.done()
         outfile = "t_out.im"
-        impbcor(imagename, pbimage, outfile=outfile, stokes="I")
-        self.assertTrue(myia.open(outfile))
-        self.assertTrue((myia.shape() == [20,20,1,20]).all(), "Incorrect shape")
+        myia.open(imagename)
+        yy = myia.pbcor(pbimage, outfile=outfile, region="", stokes="I")
         myia.done()
+        self.assertTrue((yy.shape() == [20,20,1,20]).all(), "Incorrect shape")
+        yy.done()
 
 def suite():
-    return [impbcor_test]
+    return [ia_pbcor_test]
 
 if is_CASA6:
     if __name__ == '__main__':

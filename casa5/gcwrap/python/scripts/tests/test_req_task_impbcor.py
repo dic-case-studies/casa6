@@ -285,39 +285,24 @@ class impbcor_test(unittest.TestCase):
         xx = yy.transpose(mymask, "0132")
         yy.done()
         xx.done()
-        for i in [0,1]:
-            if i == 0:
-                yy.open(im2)
-                self.assertRaises(
-                    Exception,
-                    yy.pbcor, pbimage=pb2,
-                    mask=mymask + ">0", stretch=False
-                )
-                zz = yy.pbcor(
-                    pbimage=pb2, mask=mymask + ">0", stretch=True
-                )
-                self.assertTrue(type(yy) == type(zz))
-                yy.done()
-                zz.done()
-            else:
-                # CASA6 raises an exception, CASA5 returns False
-                if is_CASA6:
-                    self.assertRaises(
-                        RuntimeError,
-                        impbcor,
-                        imagename=im2, pbimage=pb2,
-                        mask=mymask + ">0", stretch=False, outfile="garbage"
-                    )
-                else:
-                    zz = impbcor(
-                        imagename=im2, pbimage=pb2,
-                        mask=mymask + ">0", stretch=False
-                    )
-                    self.assertFalse(zz)
-                zz = impbcor(
-                    imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
-                )
-                self.assertTrue(zz)
+        # CASA6 raises an exception, CASA5 returns False
+        if is_CASA6:
+            self.assertRaises(
+                RuntimeError,
+                impbcor,
+                imagename=im2, pbimage=pb2,
+                mask=mymask + ">0", stretch=False, outfile="garbage"
+            )
+        else:
+            zz = impbcor(
+                imagename=im2, pbimage=pb2,
+                mask=mymask + ">0", stretch=False
+            )
+            self.assertFalse(zz)
+        zz = impbcor(
+            imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+        )
+        self.assertTrue(zz)
         
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""
@@ -337,13 +322,7 @@ class impbcor_test(unittest.TestCase):
         myia.fromshape(imagename, [20,20])
         gg = myia.getchunk()
         gg[:] = 1
-        zz = myia.pbcor(gg, "")
         myia.done()
-        msgs = zz.history()
-        zz.done()
-        teststr = "ia.pbcor"
-        self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")    
-        self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
         outfile = "pb_out.im"
         impbcor(imagename=imagename, pbimage=gg, outfile=outfile)
         self.assertTrue(myia.open(outfile), "failed to open " + outfile)
