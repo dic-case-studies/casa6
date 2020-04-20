@@ -26,7 +26,7 @@
 #define SPECFITSETTINGSFIXEDTABLECELL_QO_H
 
 #include <QWidget>
-#include <display/QtPlotter/SpecFitSettingsFixedTableCell.ui.h>
+#include <ui/ui_SpecFitSettingsFixedTableCell.h>
 
 class SpecFitSettingsFixedTableCell : public QWidget {
 	Q_OBJECT

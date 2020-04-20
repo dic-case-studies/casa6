@@ -27,7 +27,7 @@
 #ifndef PLOTMSOPTIONSTAB_QO_H_
 #define PLOTMSOPTIONSTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSOptionsTab.ui.h>
+#include <ui/ui_PlotMSOptionsTab.h>
 
 #include <plotms/GuiTabs/PlotMSTab.qo.h>
 

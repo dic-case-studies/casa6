@@ -26,7 +26,7 @@
 #define IMAGEMANAGERDIALOG_QO_H
 
 #include <QDialog>
-#include <display/QtViewer/ImageManager/ImageManagerDialog.ui.h>
+#include <ui/ui_ImageManagerDialog.h>
 #include <display/QtViewer/ImageManager/ImageTracker.h>
 #include <display/QtViewer/ImageManager/ImageView.qo.h>
 #include <casa/BasicSL/String.h>

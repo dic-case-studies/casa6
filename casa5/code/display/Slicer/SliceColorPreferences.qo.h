@@ -27,7 +27,7 @@
 
 #include <QDialog>
 #include <QSettings>
-#include <display/Slicer/SliceColorPreferences.ui.h>
+#include <ui/ui_SliceColorPreferences.h>
 
 namespace casa {
 

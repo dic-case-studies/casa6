@@ -27,8 +27,8 @@
 
 #include <casaqt/QwtConfig.h>
 
-#include <qwt_plot_picker.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_plot_picker.h>
+#include <qwt/qwt_plot_canvas.h>
 
 namespace casa {
 

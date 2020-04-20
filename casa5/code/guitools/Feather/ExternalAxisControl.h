@@ -27,7 +27,7 @@
 #define EXTERNALAXIS_WIDGET_H_
 
 #include <QWidget>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 
 namespace casa {
