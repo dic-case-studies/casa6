@@ -61,7 +61,10 @@ def plotants( vis=None, figfile=None,
         """
 
         # for CASA6, check for --nogui to force showgui to be False
-        if is_CASA6 and '--nogui' in sys.argv:
+        # showgui is also false if --agg or --pipeline is set
+        # --pipeline also sets sets --agg, but --agg may not be used on the
+        # command line so both --pipeline and --agg need to be checked here
+        if is_CASA6 and ('--nogui' in sys.argv or '--agg' in sys.argv or '--pipeline' in sys.argv):
                 showgui = False
 
         if not showgui:
