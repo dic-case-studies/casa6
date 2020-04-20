@@ -27,7 +27,7 @@
 #ifndef TBTYPES_H_
 #define TBTYPES_H_
 
-#include <casaqt/QtBrowser/TBTypes.ui.h>
+#include "ui/ui_TBTypes.h"
 
 #include <QtGui>
 

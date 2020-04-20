@@ -26,7 +26,7 @@
 #ifndef ExternalAxis_H_
 #define ExternalAxis_H_
 
-#include <qwt_scale_draw.h>
+#include <qwt/qwt_scale_draw.h>
 
 class QPainter;
 

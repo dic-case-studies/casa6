@@ -26,7 +26,7 @@
 #define GAUSSIANESTIMATEDIALOG_QO_H_1
 
 #include <QDialog>
-#include <display/QtPlotter/GaussianEstimateDialog.ui.h>
+#include <ui/ui_GaussianEstimateDialog.h>
 #include <display/QtPlotter/SearchMoleculesDialog.qo.h>
 #include <display/QtPlotter/SpecFitGaussian.h>
 #include <coordinates/Coordinates/SpectralCoordinate.h>

@@ -2,7 +2,7 @@
 #define QTRASTERDATA_H_
  
 #include <casaqt/QwtConfig.h>
-#include <qwt_raster_data.h>
+#include <qwt/qwt_raster_data.h>
 #include <cstdio>
 
 class QwtPlotSpectrogram;

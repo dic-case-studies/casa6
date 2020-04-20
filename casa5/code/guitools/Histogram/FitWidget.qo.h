@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <QTextStream>
-#include <guitools/Histogram/FitWidget.ui.h>
+#include <ui/ui_FitWidget.h>
 #include <casa/Arrays/Vector.h>
 
 namespace casa {

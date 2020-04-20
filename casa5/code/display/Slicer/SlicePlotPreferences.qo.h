@@ -26,7 +26,7 @@
 #define SLICEPLOTPREFERENCES_QO_H
 
 #include <QDialog>
-#include <display/Slicer/SlicePlotPreferences.ui.h>
+#include <ui/ui_SlicePlotPreferences.h>
 
 namespace casa {
 

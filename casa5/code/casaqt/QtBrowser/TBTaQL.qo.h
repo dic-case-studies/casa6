@@ -27,7 +27,7 @@
 #ifndef TBTAQL_H_
 #define TBTAQL_H_
 
-#include <casaqt/QtBrowser/TBTaQL.ui.h>
+#include "ui/ui_TBTaQL.h"
 
 #include <QtGui>
 

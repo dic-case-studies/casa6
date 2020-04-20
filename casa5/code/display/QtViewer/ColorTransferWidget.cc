@@ -25,10 +25,10 @@
 #include "ColorTransferWidget.qo.h"
 #include <display/QtViewer/InvisibleAxis.h>
 #include <casaqt/QwtConfig.h>
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
-#include <qwt_color_map.h>
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_color_map.h>
+#include <qwt/qwt_scale_widget.h>
 #include <QDebug>
 
 using namespace casacore;

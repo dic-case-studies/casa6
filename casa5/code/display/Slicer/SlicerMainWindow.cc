@@ -28,7 +28,7 @@
 #include <display/Slicer/SliceColorPreferences.qo.h>
 #include <display/Slicer/SlicePlotPreferences.qo.h>
 #if QWT_VERSION >= 0x060000
-#include <qwt_plot_renderer.h>
+#include <qwt/qwt_plot_renderer.h>
 #endif
 
 #include <QDebug>
@@ -38,7 +38,7 @@
 #include <QFile>
 #include <QIntValidator>
 
-#include <qwt_plot_zoomer.h>
+#include <qwt/qwt_plot_zoomer.h>
 
 #include <limits>
 

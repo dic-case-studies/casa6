@@ -24,7 +24,7 @@
 //#
 
 #include "ExternalAxisWidgetHorizontal.h"
-#include <qwt_scale_div.h>
+#include <qwt/qwt_scale_div.h>
 #include <QDebug>
 
 using namespace casacore;

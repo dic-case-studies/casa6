@@ -28,7 +28,7 @@
 #include <QDialog>
 #include <QProgressDialog>
 #include <casa/BasicSL/String.h>
-#include <display/QtPlotter/SearchRedshiftDialog.ui.h>
+#include <ui/ui_SearchRedshiftDialog.h>
 #include <coordinates/Coordinates/SpectralCoordinate.h>
 #include <measures/Measures/MRadialVelocity.h>
 #include <measures/Measures/MFrequency.h>

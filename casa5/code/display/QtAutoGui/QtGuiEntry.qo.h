@@ -39,15 +39,15 @@
 //#dk Be careful to put ui_*.h within X_enter/exit bracket too,
 //#   because they'll have Qt includes.
 //#   E.g. <QApplication> needs the X11 definition of 'Display'
-#  include "adjustmentBottom.ui.h"
-#  include "sliderLabelItem.ui.h"
-#  include "sliderEditorItem.ui.h"
-#  include "lineEditorItem.ui.h"
-#  include "comboItem.ui.h"
-#  include "checkButtonItem.ui.h"
-#  include "pushButtonItem.ui.h"
-#  include "minMaxEditorItem.ui.h"
-#  include "pairItem.ui.h"
+#  include "ui/ui_adjustmentBottom.h"
+#  include "ui/ui_sliderLabelItem.h"
+#  include "ui/ui_sliderEditorItem.h"
+#  include "ui/ui_lineEditorItem.h"
+#  include "ui/ui_comboItem.h"
+#  include "ui/ui_checkButtonItem.h"
+#  include "ui/ui_pushButtonItem.h"
+#  include "ui/ui_minMaxEditorItem.h"
+#  include "ui/ui_pairItem.h"
 #include <graphics/X11/X_exit.h>
 
 #include <utility>
