@@ -183,6 +183,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_tsdimaging.py
   test_sdpolaverage.py
   test_sdsidebandsplit.py
+  test_sdtimeaverage.py
   test_sdsmooth.py
   test_tclean.py
 
