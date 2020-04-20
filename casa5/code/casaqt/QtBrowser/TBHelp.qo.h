@@ -27,7 +27,7 @@
 #ifndef TBHELP_H_
 #define TBHELP_H_
 
-#include <casaqt/QtBrowser/TBHelp.ui.h>
+#include "ui/ui_TBHelp.h"
 
 #include <QtGui>
 

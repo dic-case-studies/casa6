@@ -27,7 +27,7 @@
 #ifndef TBSLICER_H_
 #define TBSLICER_H_
 
-#include <casaqt/QtBrowser/TBSlicer.ui.h>
+#include "ui/ui_TBSlicer.h"
 
 #include <vector>
 

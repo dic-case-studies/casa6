@@ -61,8 +61,8 @@
 
 #include <synthesis/TransformMachines2/AWConvFunc.h>
 #include <synthesis/TransformMachines2/ATerm.h>
-#include <synthesis/TransformMachines2/PhaseGrad.h>
 #include <synthesis/TransformMachines2/VB2CFBMap.h>
+#include <synthesis/TransformMachines2/PointingOffsets.h>
 
 #include <casa/OS/Timer.h>
 
@@ -174,6 +174,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::CountedPtr<ConvolutionFunction>& cf,
 		casacore::CountedPtr<VisibilityResamplerBase>& visResampler,
 		casacore::Bool applyPointingOffset=true,
+		/* casacore::Vector<casacore::Float> PointingOffsetSigDev={10,10}, */
+		vector<float> pointingOffsetSigDev={10,10},
 		casacore::Bool doPBCorr=true,
 		casacore::Int tilesize=16, 
 		casacore::Float pbLimit=5e-4,
@@ -559,12 +561,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Double runTime1_p;
 
     PolOuterProduct::MuellerType muellerType_p;
-    PhaseGrad phaseGrad_p;
 
     casacore::Int previousSPWID_p;
 
     casacore::CountedPtr<refim::FTMachine> self_p;
     casacore::CountedPtr<refim::VB2CFBMap> vb2CFBMap_p;
+    casacore::CountedPtr<refim::PointingOffsets> po_p;
 
 #include "AWProjectFT.FORTRANSTUFF.INC"
   };

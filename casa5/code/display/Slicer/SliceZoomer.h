@@ -26,7 +26,7 @@
 #ifndef SLICEZOOMER_H_
 #define SLICEZOOMER_H_
 
-#include <qwt_plot_zoomer.h>
+#include <qwt/qwt_plot_zoomer.h>
 
 class QwtPlotCanvas;
 class QKeyEvent;

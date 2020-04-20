@@ -2,7 +2,7 @@
 
 #ifdef AIPS_HAS_QWT
 #include <casaqt/QwtPlotter/QPFactory.h>
-#include <qwt_global.h>
+#include <qwt/qwt_global.h>
 #endif
 
 #include <casa/namespace.h>
