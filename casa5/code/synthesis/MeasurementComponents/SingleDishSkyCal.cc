@@ -30,6 +30,8 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <type_traits>
+#include <set>
 
 #include <casa/OS/File.h>
 #include <casa/Arrays/MaskedArray.h>
@@ -614,8 +616,17 @@ void SingleDishSkyCal::setApply(const Record& apply)
   SolvableVisCal::setApply(applyCopy);
 }
 
-template<class Accessor>
-void SingleDishSkyCal::traverseMS(MeasurementSet const &ms) {
+void SingleDishSkyCal::fillCalibrationTable(casacore::MeasurementSet const &reference_data){
+    String dataColName = (reference_data.tableDesc().isColumn("FLOAT_DATA")) ? "FLOAT_DATA" : "DATA";
+
+    if ( dataColName == "FLOAT_DATA")
+        fillCalibrationTable<FloatDataColumnAccessor>(reference_data);
+    else
+        fillCalibrationTable<DataColumnAccessor>(reference_data);
+}
+
+template<class DataRealComponentAccessor>
+void SingleDishSkyCal::fillCalibrationTable(MeasurementSet const &ms) {
   Int cols[] = {MS::FIELD_ID, MS::ANTENNA1, MS::FEED1,
 		MS::DATA_DESC_ID};
   Int *colsp = cols;
@@ -653,7 +664,7 @@ void SingleDishSkyCal::traverseMS(MeasurementSet const &ms) {
     ScalarColumn<Double> timeCol(current, "TIME");
     ScalarColumn<Double> exposureCol(current, "EXPOSURE");
     ScalarColumn<Double> intervalCol(current, "INTERVAL");
-    Accessor dataCol(current);
+    DataRealComponentAccessor dataCol(current);
     ArrayColumn<Bool> flagCol(current, "FLAG");
     ScalarColumn<Bool> flagRowCol(current, "FLAG_ROW");
     Vector<Double> timeList = timeCol.getColumn();
@@ -1054,49 +1065,50 @@ void SingleDishSkyCal::applyCal2(vi::VisBuffer2 &vb, Cube<Complex> &Vout, Cube<F
 
 void SingleDishSkyCal::selfGatherAndSolve(VisSet& vs, VisEquation& /*ve*/)
 {
-  debuglog << "SingleDishSkyCal::selfGatherAndSolve()" << debugpost;
+    debuglog << "SingleDishSkyCal::selfGatherAndSolve()" << debugpost;
 
-  MeasurementSet const &msIn = vs.iter().ms();
+    MeasurementSet const &user_selection = vs.iter().ms();
 
-  debuglog << "nspw = " << nSpw() << debugpost;
-  fillNChanParList(MeasurementSet(msName()), nChanParList());
-  debuglog << "nChanParList=" << ::toString(nChanParList()) << debugpost;
+    debuglog << "nspw = " << nSpw() << debugpost;
+    // Get and store the number of channels per spectral window
+    fillNChanParList(MeasurementSet(msName()), nChanParList());
 
-  // set number of correlations per spw
-  setNumberOfCorrelationsPerSpw(msIn, nCorr_);
-  debuglog << "nCorr_ = " << nCorr_ << debugpost;
+    // Get and store the number of correlations per spectral window
+    setNumberOfCorrelationsPerSpw(user_selection, nCorr_);
+    debuglog << "nCorr_ = " << nCorr_ << debugpost;
 
-  // Create a new caltable to fill up
-  createMemCalTable();
+    // Create a new in-memory calibration table to fill up
+    createMemCalTable();
 
-  // Setup shape of solveAllRPar
-  nElem() = 1;
-  initSolvePar();
+    // Setup shape of solveAllRPar
+    nElem() = 1;
+    initSolvePar();
 
-  // Pick up OFF spectra using STATE_ID
-  debuglog << "configure data selection for specific calibration mode" << debugpost;
-  MeasurementSet msSel = selectMS(msIn);
-  debuglog << "msSel.nrow()=" << msSel.nrow() << debugpost;
-  if (msSel.nrow() == 0) {
-    throw AipsError("No reference integration in the data.");
-  }
-  String dataColName = (msSel.tableDesc().isColumn("FLOAT_DATA")) ? "FLOAT_DATA" : "DATA";
+    // Select from user selection reference data associated with science target
+    debuglog << "selecting reference data from user selection" << debugpost;
+    MeasurementSet reference_data = selectReferenceData(user_selection);
+    logSink() << "logSink: " << "reference_data.nrow()=" << reference_data.nrow() << LogIO::POST;
+    debuglog << "user_selection.nrow()=" << user_selection.nrow() << debugpost;
+    debuglog << "reference_data.nrow()=" << reference_data.nrow() << debugpost;
+    if (reference_data.nrow() == 0)
+        throw AipsError("No reference integration found in user-selected data. Please double-check your data selection criteria.");
 
-  if (msSel.tableDesc().isColumn("FLOAT_DATA")) {
-    traverseMS<FloatDataColumnAccessor>(msSel);
-  }
-  else {
-    traverseMS<DataColumnAccessor>(msSel);
-  }
+    // Fill observing-mode-dependent columns of the calibration table
+    // Implementation is observing-mode-specific
+    fillCalibrationTable(reference_data);
 
-  assignCTScanField(*ct_, msName());
+    // Fill remaining columns of the calibration table,
+    // which are computed the same way for all observing modes
+    // ---- 1) FIELD_ID, SCAN_NUMBER, OBSERVATION_ID columns
+    assignCTScanField(*ct_, msName());
 
-  // update weight without Tsys
-  // formula is chanWidth [Hz] * interval [sec]
-  updateWeight(*ct_);
+    // ---- 2) WEIGHT column
+    // update weight without Tsys
+    // formula is chanWidth [Hz] * interval [sec]
+    updateWeight(*ct_);
 
-  // store caltable
-  storeNCT();
+    // Store calibration table on disk
+    storeNCT();
 }
 
 void SingleDishSkyCal::initializeSky()
@@ -1188,14 +1200,163 @@ SingleDishPositionSwitchCal::~SingleDishPositionSwitchCal()
   debuglog << "SingleDishPositionSwitchCal::~SingleDishPositionSwitchCal()" << debugpost;
 }
 
-MeasurementSet SingleDishPositionSwitchCal::selectMS(MeasurementSet const &ms)
+MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet const &user_selection)
 {
-  Vector<uInt> stateIdList = getOffStateIdList(ms);
-  std::ostringstream oss;
-  oss << "SELECT FROM $1 WHERE ANTENNA1 == ANTENNA2 && STATE_ID IN "
-      << ::toString(stateIdList)
-      << " ORDER BY FIELD_ID, ANTENNA1, FEED1, DATA_DESC_ID, TIME";
-  return MeasurementSet(tableCommand(oss.str(), ms));
+    std::ostringstream qry;
+    constexpr auto eol = '\n';
+    qry << "with [" << eol
+        << "select" << eol
+        << "    [select TELESCOPE_NAME from ::OBSERVATION][OBSERVATION_ID] as TELESCOPE_NAME," << eol
+        << "    mscal.spwcol('NUM_CHAN') as NUM_CHAN" << eol
+        << "from" << eol
+        << "    $1" << eol
+        << "] as metadata" << eol
+        << "select * from $1 , metadata" << eol
+        << "where ";
+    // Data is single-dish data,
+    qry << "    ( ANTENNA1 == ANTENNA2 ) and" << eol ;
+    // belonging to a row which has not been marked as invalid,
+    qry << "    ( not(FLAG_ROW) ) and " << eol ;
+    // having observational intent: OBSERVE_TARGET#OFF_SOURCE,
+    qry << "    ( STATE_ID in [ " << eol
+        << "        select rowid() " << eol
+        << "        from ::STATE" << eol
+        << "        where " << eol
+        << "            upper(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/ " << eol
+        << "    ] ) and" << eol;
+    // excluding - for ALMA - data from Water Vapor Radiometers spectral windows, which have 4 channels
+    qry << "    (" << eol
+        << "        ( metadata.TELESCOPE_NAME != 'ALMA' ) or" << eol
+        << "        (" << eol
+        << "            ( metadata.TELESCOPE_NAME == 'ALMA' ) and" << eol
+        << "            ( metadata.NUM_CHAN != 4 )" << eol
+        << "        )" << eol
+        << "     )" << eol;
+    debuglog << "SingleDishPositionSwitchCal::selectReferenceData(): taql query:" << eol
+             << qry.str() << debugpost;
+    return MeasurementSet(tableCommand(qry.str(), user_selection));
+}
+
+void SingleDishPositionSwitchCal::fillCalibrationTable(casacore::MeasurementSet const &reference_data){
+    String dataColName = (reference_data.tableDesc().isColumn("FLOAT_DATA")) ? "FLOAT_DATA" : "DATA";
+
+    if ( dataColName == "FLOAT_DATA")
+        fillCalibrationTable<FloatDataColumnAccessor>(reference_data);
+    else
+        fillCalibrationTable<DataColumnAccessor>(reference_data);
+}
+
+template<class DataRealComponentAccessor>
+void SingleDishPositionSwitchCal::fillCalibrationTable(casacore::MeasurementSet const &reference_data)
+{
+    debuglog << "SingleDishPositionSwitchCal::fillCalibrationTable()" << debugpost;
+
+    // Sort columns define the granularity at which we average data obtained
+    // by observing the reference position associated with the science target
+    constexpr size_t nSortColumns = 8;
+    Int columns[nSortColumns] = {
+        MS::OBSERVATION_ID,
+        MS::PROCESSOR_ID,
+        MS::FIELD_ID,
+        MS::ANTENNA1,
+        MS::FEED1,
+        MS::DATA_DESC_ID,
+        MS::SCAN_NUMBER,
+        MS::STATE_ID
+    };
+    Int *columnsPtr = columns;
+    Block<Int> sortColumns(nSortColumns, columnsPtr, false);
+
+    // Iterator
+    constexpr Bool doGroupAllTimesTogether = true;
+    constexpr Double groupAllTimesTogether = doGroupAllTimesTogether ? 0.0 : -1.0;
+
+    constexpr Bool doAddDefaultSortColumns = false;
+    constexpr Bool doStoreSortedTableOnDisk = false;
+
+    MSIter msIter(reference_data, sortColumns,
+            groupAllTimesTogether, doAddDefaultSortColumns, doStoreSortedTableOnDisk);
+
+    // Main loop: compute values of calibration table's columns
+    for (msIter.origin(); msIter.more(); msIter++) {
+        const auto iterTable = msIter.table();
+        const auto iterRows = iterTable.nrow();
+        if (iterRows == 0) continue;
+
+        // TIME column of calibration table: mean of selected MAIN.TIME
+        ScalarColumn<Double> timeCol(iterTable, "TIME");
+        refTime() = mean(timeCol.getColumn());
+
+        // FIELD_ID column of calibration table
+        currSpw() = msIter.spectralWindowId();
+
+        // SPECTRAL_WINDOW_ID column of calibration table
+        currField() = msIter.fieldId();
+
+        // ANTENNA1, ANTENNA2 columns of calibration table
+        ScalarColumn<Int> antenna1Col(iterTable, "ANTENNA1");
+        currAnt_ = antenna1Col(0);
+
+        // INTERVAL column of calibration table: sum of selected MAIN.EXPOSURE
+        ScalarColumn<Double> exposureCol(iterTable, "EXPOSURE");
+        const auto exposure = exposureCol.getColumn();
+        interval_ = sum(exposure);
+
+        // SCAN_NUMBER, OBSERVATION_ID columns of calibration table
+        // Not computed/updated here
+#ifdef SDCALSKY_DEBUG
+        ScalarColumn<Int> scanNumberCol(iterTable, "SCAN_NUMBER");
+        const auto scan_number = scanNumberCol(0);
+        ScalarColumn<Int> stateIdCol(iterTable, "STATE_ID");
+        const auto state_id = stateIdCol(0);
+        cout << "field=" << currField()
+             << " ant=" << currAnt_
+             << " ddid=" << msIter.dataDescriptionId()
+             << " spw=" << currSpw()
+             << " scan_number=" << scan_number
+             << " state_id=" << state_id
+             << " nrows=" << iterRows
+             << endl;
+#endif
+
+        // FPARAM column of calibration table: weighted mean of valid data, weight = exposure
+        // + PARAMERR, FLAG, SNR
+        // ---- Get data shape from FLAG column
+        ArrayColumn<Bool> flagCol(iterTable, "FLAG");
+        const auto dataShape = flagCol.shape(0);
+        const auto nCorr = dataShape[0];
+        const auto nChannels = dataShape[1];
+        // ---- Initialize accumulators
+        Matrix<Float> weightedMean(nCorr, nChannels, 0.0f);
+        Matrix<Float> weightsSums(nCorr, nChannels, 0.0f);
+        // ---- Compute weighted mean of valid data
+        DataRealComponentAccessor dataAccessor(iterTable);
+        for (std::remove_const<decltype(iterRows)>::type iterRow = 0; iterRow < iterRows ; iterRow++){
+            Matrix<Bool> dataIsValid = not flagCol(iterRow);
+            MaskedArray<Float> validData(dataAccessor(iterRow), dataIsValid);
+            const auto rowExposure = static_cast<Float>(exposure[iterRow]);
+            weightedMean += validData * rowExposure;
+            MaskedArray<Float> validWeight(Matrix<Float>(validData.shape(), rowExposure), dataIsValid);
+            weightsSums += validWeight;
+        }
+        const Matrix<Bool> weightsSumsIsNonZero = ( weightsSums != 0.0f );
+        weightedMean /= MaskedArray<Float>(weightsSums,weightsSumsIsNonZero);
+        // ---- Update solveAll*() members
+        const Cube<Float> realParam = weightedMean.addDegenerate(1);
+        const Cube<Bool> realParamIsValid = weightsSumsIsNonZero.addDegenerate(1);
+        for (std::remove_const<decltype(nCorr)>::type corr = 0; corr < nCorr; corr++) {
+          solveAllRPar().yzPlane(corr) = realParam.yzPlane(corr); // FPARAM
+          solveAllParOK().yzPlane(corr) = realParamIsValid.yzPlane(corr);  // not FLAG
+          solveAllParErr().yzPlane(corr) = 0.1; // PARAMERR. TODO: this is tentative
+          solveAllParSNR().yzPlane(corr) = 1.0; // SNR. TODO: this is tentative
+        }
+
+        // WEIGHT column of calibration table
+        //
+
+        // Update in-memory calibration table
+        keepNCT();
+    }
 }
 
 //
@@ -1251,9 +1412,9 @@ void SingleDishRasterCal::setSolve(const Record& solve)
   SolvableVisCal::setSolve(solve);
 }
   
-MeasurementSet SingleDishRasterCal::selectMS(MeasurementSet const &ms)
+MeasurementSet SingleDishRasterCal::selectReferenceData(MeasurementSet const &ms)
 {
-  debuglog << "SingleDishRasterCal::selectMS" << debugpost;
+  debuglog << "SingleDishRasterCal::selectReferenceData" << debugpost;
   const Record specify;
   std::ostringstream oss;
   oss << "SELECT FROM $1 WHERE ";
@@ -1348,7 +1509,7 @@ SingleDishOtfCal::~SingleDishOtfCal()
   debuglog << "SingleDishOtfCal::~SingleDishOtfCal()" << debugpost;
 }
 
-MeasurementSet SingleDishOtfCal::selectMS(MeasurementSet const &ms)
+MeasurementSet SingleDishOtfCal::selectReferenceData(MeasurementSet const &ms)
 {
   PointingDirectionCalculator calc(ms);
   calc.setDirectionListMatrixShape(PointingDirectionCalculator::ROW_MAJOR);
