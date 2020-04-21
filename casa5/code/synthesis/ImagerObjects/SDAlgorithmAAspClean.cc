@@ -86,7 +86,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages->psf()->get( itsMatPsf, true );
     itsImages->mask()->get( itsMatMask, true );
 
-    //// Initialize the MatrixCleaner.
+    //// Initialize the AspMatrixCleaner.
     ///  ----------- do once ----------
     if( itsMCsetup == false)
     {

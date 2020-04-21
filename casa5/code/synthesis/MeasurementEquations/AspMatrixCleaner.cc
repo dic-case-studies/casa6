@@ -379,7 +379,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         optimumScale=scale;
         itsStrengthOptimum = maxima(scale);
         positionOptimum = posMaximum[scale];
-        cout << "clean: New optimum scale is " << scale << " itsStrengthOptimum " << itsStrengthOptimum << endl;
+        cout << "clean: New optimum scale is " << itsScaleSizes(scale) << " itsStrengthOptimum " << itsStrengthOptimum << endl;
       }
     }
 
@@ -403,7 +403,6 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
       os << LogIO::POST;
     }
-    cout << "ii " << ii << " itsStrengthOptimum " << itsStrengthOptimum << " tmp " << tmpMaximumResidual << endl;
 
     // Various ways of stopping:
     //    1. stop if below threshold
@@ -1033,13 +1032,21 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
   cout << "Before: x = " << x << endl;
   double fx;
-  //int niter = solver.minimize(fun, x, fx); //genie epsilon needs to be fixed "nan"
+  int niter = solver.minimize(fun, x, fx); //genie epsilon needs to be fixed "nan"
 
-  //std::cout << niter << " iterations" << std::endl;
+  std::cout << niter << " iterations" << std::endl;
   std::cout << "x = \n" << x.transpose() << std::endl;
   std::cout << "f(x) = " << fx << std::endl;
   std::cout << "float is " << Float(x[1]) << endl;
 
+  // x is not changing in LBFGS which causes convergence issue
+  // so we use the previous x instead. This is a hack suggested by
+  // the online community
+  if (fx == 0)
+  {
+    for (unsigned int i = 0; i < length; i++)
+      x[i] = tempx[i];
+  }
   //genie
   // put the updated x back to the class variables, itsAspAmp and itsAspScale
   itsAspAmplitude.clear();

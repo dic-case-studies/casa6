@@ -73,6 +73,7 @@ public:
   double operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad)
   {
     double fx = 0.0;
+    casacore::Matrix<casacore::Float> AspConvPsfSum(itsMatDirty.shape(), (casacore::Float)0.0);
 
     for (unsigned int k = 0; k < AspLen; k ++)
     {
@@ -81,6 +82,10 @@ public:
       // x[2]: Amplitude1,       x[3]: scale1
       // x[i]: Amplitude(i/2), x[i+1]: scale(i/2)
       casacore::Matrix<casacore::Float> Asp(nX, nY); //genie to do: loop on vector
+
+      if (isnan(x[2*k])) // LBFGS encounters convergense issue
+        return fx;
+
       casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
       for (int j = 0; j < nY; ++j)
       {
@@ -98,10 +103,10 @@ public:
 
       casacore::Matrix<casacore::Complex> cWork;
       cWork = AspFT * itsPsfFT;
-      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape());
+      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
       fft.fft0(AspConvPsf, cWork, false);
       //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
-      //fft.flip(AspConvPsf, false, false);
+      //fft.flip(AspConvPsf, false, false); //genie need this?
 
       // gradient. 0: amplitude; 1: scale
       // generate derivative of amplitude
@@ -129,16 +134,24 @@ public:
 
       // generate objective function
       // returns the objective function value and gradient evaluated on x
+      //std::cout << "before Asp# " << k << ": fx " << fx << " itsMatDirty " << itsMatDirty(0,0) << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
       for (int j = 0; j < nY; ++j)
       {
         for(int i = 0; i < nX; ++i)
         {
-          fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j)));
+          //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
+          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + AspConvPsf(i,j);
           grad[2*k] = grad[2*k] + Grad0(i,j);
           grad[2*k+1] = grad[2*k+1] + Grad1(i,j);
         }
       }
-      std::cout << "Asp# " << k << ": fx " << fx << " AspConvPsf " << AspConvPsf(100,100) << std::endl;
+      //std::cout << "after Asp# " << k << ": fx " << fx << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
+    } // end of Aspen
+
+    for (int j = 0; j < nY; ++j)
+    {
+      for(int i = 0; i < nX; ++i)
+        fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsfSum(i,j)));
     }
 
     return fx;
