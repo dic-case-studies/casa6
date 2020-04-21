@@ -152,7 +152,7 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py' ]
+public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt' ]
 
 private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/casa_transition.py',
@@ -936,6 +936,6 @@ setup( name=module_name,version=casatasks_version,
        long_description="The CASAtasks are a collection of (mostly) stateless functions for\nthe analysis of radio astronomy observations.",
        cmdclass=cmd_setup,
        package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-       package_data={'': ['*.xml']},
+       package_data={'': ['*.xml','*.txt']},
        install_requires=[ 'casatools==%s' % casatools.version_string( ), 'matplotlib', 'scipy' ]
 )
