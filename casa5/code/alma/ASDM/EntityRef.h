@@ -59,7 +59,7 @@ class EntityRef {
     friend std::ostream & operator << ( std::ostream &, const EntityRef & );
 
 public:
-	static EntityRef getEntityRef(StringTokenizer &t) throw(InvalidArgumentException);
+	static EntityRef getEntityRef(StringTokenizer &t);
 
 	EntityRef();
 	EntityRef(const std::string &s);
@@ -77,7 +77,7 @@ public:
 	bool isNull() const;
 
 	std::string toString() const;
-	std::string toXML() const throw(InvalidDataException);
+	std::string toXML() const;
 #ifndef WITHOUT_ACS
     asdmIDLTypes::IDLEntityRef toIDLEntityRef() const;
 #endif

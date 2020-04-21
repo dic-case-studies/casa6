@@ -693,7 +693,7 @@ ReceiverRow* ReceiverTable::lookup(Tag spectralWindowId, ArrayTimeInterval timeI
 		for (unsigned int i = 0; i < v.size(); ++i) {
 			try {
 				buf.append(v[i]->toXML());
-			} catch (NoSuchRow e) {
+			} catch (const NoSuchRow &e) {
 			}
 			buf.append("  ");
 		}		
@@ -760,10 +760,10 @@ ReceiverRow* ReceiverTable::lookup(Tag spectralWindowId, ArrayTimeInterval timeI
 				}
 				
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"ReceiverTable");
 			} 
-			catch (UniquenessViolationException e1) {
+			catch (const UniquenessViolationException &e1) {
 				throw ConversionException(e1.getMessage(),"ReceiverTable");	
 			}
 			catch (...) {
@@ -779,7 +779,7 @@ ReceiverRow* ReceiverTable::lookup(Tag spectralWindowId, ArrayTimeInterval timeI
 					s = xml.getElementContent("<row>","</row>");
 				}
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"ReceiverTable");
 			} 
 			catch (...) {
@@ -1046,11 +1046,11 @@ ReceiverRow* ReceiverTable::lookup(Tag spectralWindowId, ArrayTimeInterval timeI
 				checkAndAdd(aRow);
       		}
     	}
-    	catch (DuplicateKey e) {
+    	catch (const DuplicateKey &e) {
       		throw ConversionException("Error while writing binary data , the message was "
 				+ e.getMessage(), "Receiver");
     	}
-    	catch (TagFormatException e) {
+    	catch (const TagFormatException &e) {
      		 throw ConversionException("Error while reading binary data , the message was "
 				+ e.getMessage(), "Receiver");
     	}
@@ -1325,7 +1325,7 @@ void ReceiverTable::setFromXMLFile(const string& directory) {
     	xmlDocument = getContainer().getXSLTransformer()(tablePath);
     	if (getenv("ASDM_DEBUG")) cout << "About to read " << tablePath << endl;
     }
-    catch (XSLTransformerException e) {
+    catch (const XSLTransformerException &e) {
     	throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "Receiver");
     }
     

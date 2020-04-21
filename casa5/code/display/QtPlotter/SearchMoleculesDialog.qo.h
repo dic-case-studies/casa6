@@ -26,7 +26,7 @@
 #define SEARCHMOLECULES_QO_H
 
 #include <QDialog>
-#include <display/QtPlotter/SearchMoleculesDialog.ui.h>
+#include <ui/ui_SearchMoleculesDialog.h>
 #include <casa/aips.h>
 namespace casa {
 

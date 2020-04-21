@@ -248,7 +248,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Processor");
 		}
 	}
@@ -354,7 +354,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Processor");
 		}
 	}
@@ -380,7 +380,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CProcessorType::name(processorType));
+		eoss.writeString(CProcessorType::name(processorType));
 			/* eoss.writeInt(processorType); */
 				
 		
@@ -390,7 +390,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CProcessorSubType::name(processorSubType));
+		eoss.writeString(CProcessorSubType::name(processorSubType));
 			/* eoss.writeInt(processorSubType); */
 				
 		

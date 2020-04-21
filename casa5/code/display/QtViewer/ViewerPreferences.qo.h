@@ -32,7 +32,7 @@
 #include <string>
 #include <QSignalMapper>
 #include <QDialog>
-#include <display/QtViewer/ViewerPreferences.ui.h>
+#include <ui/ui_ViewerPreferences.h>
 #include <display/Utilities/Lowlevel.h>
 
 namespace casa {

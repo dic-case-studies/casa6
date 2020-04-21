@@ -28,7 +28,7 @@
 
 #include <QFrame>
 #include <casa/BasicSL/String.h>
-#include <display/Slicer/SliceSegment.ui.h>
+#include <ui/ui_SliceSegment.h>
 
 class QwtPlot;
 class QwtPlotCurve;

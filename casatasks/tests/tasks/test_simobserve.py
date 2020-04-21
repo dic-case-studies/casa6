@@ -9,13 +9,14 @@ import unittest
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys, image, ms, quanta, atmosphere
+    from casatools import ctsys, image, ms, msmetadata, quanta, atmosphere
     from casatasks import simobserve
     from casatasks.private.simutil import *
 
     # CASA5 uses the global versions of these tools
     _ia = image()
     _ms = ms()
+    _msmd = msmetadata()
     _qa = quanta()
     _at = atmosphere()
 else:
@@ -35,6 +36,7 @@ else:
     # global tools
     _ia = ia
     _ms = ms
+    _msmd = msmd
     _qa = qa
     _at = at
     
@@ -49,9 +51,9 @@ class simobserve_unittest_base(unittest.TestCase):
     graphics = "file"
     # Variables
     if is_CASA6:
-        datapath = ctsys.resolve('regression/unittest/simobserve')
+        datapath = ctsys.resolve('regression/unittest/simobserve/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/simobserve')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/simobserve/')
         
     thistask = "simobserve"
     imkeys=['max','mean','min','npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
@@ -404,6 +406,31 @@ class simobserve_sky(simobserve_unittest_base):
         currms = self.project + "/" + \
                  self._get_data_prefix(antennalist,self.project)+".ms"
         self._check_msstats(currms,self.refms_int)
+
+    def testSky_intObs_namedAntlist(self):
+        """Test skymodel simulation: observation (INT) with ACA configuration file containing an extra column to indirectly exercise readantenna method of simutil"""
+        skymodel = self.refmodel
+        setpointings = False
+        ptgfile = self.refpref_int + ".ptg.txt"
+        integration = "4s"
+        obsmode = "int"
+        antennalist = "aca.cycle7.named.cfg"
+        totaltime = "28s"
+        res = simobserve(project=self.project,skymodel=skymodel,
+                         setpointings=setpointings,ptgfile=ptgfile,
+                         integration=integration,obsmode=obsmode,
+                         antennalist=antennalist,totaltime=totaltime,
+                         thermalnoise="",graphics=self.graphics,
+                         refdate="2014/05/21",t_ground=269.)
+        self.assertTrue(res)
+        # ensure named are filled in MS
+        currms = self.project + "/" + \
+                 self._get_data_prefix(antennalist,self.project)+".ms"
+        _msmd.open(currms)
+        names = _msmd.antennanames()
+        _msmd.done()
+        self.assertEqual(names,['CM01', 'CM02', 'CM03', 'CM04', 'CM05', 
+                                'CM06', 'CM07', 'CM08', 'CM09', 'CM10'])
 
     @unittest.skip("Previously disabled for unknown reason")
     def testSky_intLeak(self):

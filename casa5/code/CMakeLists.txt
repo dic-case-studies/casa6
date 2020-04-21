@@ -1,4 +1,4 @@
-# CASA - Common Astronomy Software Applications 
+# CASA - Common Astronomy Software Applications
 # Copyright (C) 2010 by ESO (in the framework of the ALMA collaboration)
 # Copyright (C) 2010-2013 Associated Universities, Inc. Washington DC, USA.
 #
@@ -413,6 +413,8 @@ if( APPLE )
                     set ( casa_packages /opt/casa/01 )
                 elseif( EXISTS /opt/casa/02)
                     set ( casa_packages /opt/casa/02 )
+                elseif( EXISTS /opt/casa/03)
+                    set ( casa_packages /opt/casa/03 )
                 else()
                     set ( casa_packages /opt/casa/01 )
                 endif()

@@ -1299,10 +1299,10 @@ namespace asdm {
 				   tableEntity[tableName] = tabE;
 				}
 			} 
-			catch (NumberFormatException err) {
+			catch (const NumberFormatException &err) {
 				error(); // Expected to happen while parsing the number of rows.
 			}
-			catch (InvalidArgumentException err) {
+			catch (const InvalidArgumentException &err) {
 		      ; // This happens when the name of a table which is not recognized by this
 			    // version of the software. Then we simply ignore it !
 			}
@@ -4568,7 +4568,7 @@ namespace asdm {
 				version = parse.detectVersion_ ? ASDMUtils::version(directory_) : parse.version_;
 				origin = parse.detectOrigin_ ? ASDMUtils::origin(ASDMUtils::telescopeNames(directory_)) : parse.origin_;
 			}
-			catch (ASDMUtilsException e) {
+			catch (const ASDMUtilsException &e) {
 				throw ConversionException ("Caught an exception whose message is '" + e.getMessage() + "'.", "ASDM");
 			}
 			
@@ -4614,7 +4614,7 @@ namespace asdm {
 				 
 				xmlDoc = getXSLTransformer()(fileName);
 			}
-			catch (XSLTransformerException e) {
+			catch (const XSLTransformerException &e) {
 				throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "ASDM");
 			}
 			fromXML(xmlDoc);

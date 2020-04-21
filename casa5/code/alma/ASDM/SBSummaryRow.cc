@@ -791,7 +791,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SBSummary");
 		}
 	}
@@ -1152,7 +1152,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"SBSummary");
 		}
 	}
@@ -1201,7 +1201,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(frequencyBand));
+		eoss.writeString(CReceiverBand::name(frequencyBand));
 			/* eoss.writeInt(frequencyBand); */
 				
 		
@@ -1211,7 +1211,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSBType::name(sbType));
+		eoss.writeString(CSBType::name(sbType));
 			/* eoss.writeInt(sbType); */
 				
 		
@@ -1327,7 +1327,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDirectionReferenceCode::name(centerDirectionCode));
+		eoss.writeString(CDirectionReferenceCode::name(centerDirectionCode));
 			/* eoss.writeInt(centerDirectionCode); */
 				
 		

@@ -1883,7 +1883,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Source");
 		}
 	}
@@ -2748,7 +2748,7 @@ namespace asdm {
 		
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"Source");
 		}
 	}
@@ -2821,7 +2821,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDirectionReferenceCode::name(directionCode));
+		eoss.writeString(CDirectionReferenceCode::name(directionCode));
 			/* eoss.writeInt(directionCode); */
 				
 		
@@ -2970,7 +2970,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CSourceModel::name(sourceModel));
+		eoss.writeString(CSourceModel::name(sourceModel));
 			/* eoss.writeInt(sourceModel); */
 				
 		
@@ -2985,7 +2985,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CFrequencyReferenceCode::name(frequencyRefCode));
+		eoss.writeString(CFrequencyReferenceCode::name(frequencyRefCode));
 			/* eoss.writeInt(frequencyRefCode); */
 				
 		
@@ -3145,7 +3145,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CRadialVelocityReferenceCode::name(velRefCode));
+		eoss.writeString(CRadialVelocityReferenceCode::name(velRefCode));
 			/* eoss.writeInt(velRefCode); */
 				
 		
@@ -3172,7 +3172,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CRadialVelocityReferenceCode::name(dopplerReferenceSystem));
+		eoss.writeString(CRadialVelocityReferenceCode::name(dopplerReferenceSystem));
 			/* eoss.writeInt(dopplerReferenceSystem); */
 				
 		
@@ -3187,7 +3187,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CDopplerReferenceCode::name(dopplerCalcType));
+		eoss.writeString(CDopplerReferenceCode::name(dopplerCalcType));
 			/* eoss.writeInt(dopplerCalcType); */
 				
 		

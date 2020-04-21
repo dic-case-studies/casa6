@@ -27,7 +27,7 @@
 
 #include <QDialog>
 
-#include <display/QtPlotter/LegendPreferences.ui.h>
+#include <ui/ui_LegendPreferences.h>
 
 namespace casa {
 
