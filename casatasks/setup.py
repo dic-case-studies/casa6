@@ -152,7 +152,7 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py' ]
+public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt' ]
 
 private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/casa_transition.py',
@@ -270,6 +270,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_sdsmooth.py',
                     'src/tasks/task_tsdimaging.py',
                     'src/tasks/task_nrobeamaverage.py',
+                    'src/tasks/task_sdtimeaverage.py',
                     'src/tasks/task_sdpolaverage.py',
                     'src/tasks/task_sdsidebandsplit.py',
                     'src/tasks/task_plotprofilemap.py',
@@ -387,6 +388,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
               'casa-source/gcwrap/tasks/tsdimaging.xml': 'xml/tsdimaging.xml',
               'casa-source/gcwrap/tasks/nrobeamaverage.xml': 'xml/nrobeamaverage.xml',
+              'casa-source/gcwrap/tasks/sdtimeaverage.xml': 'xml/sdtimeaverage.xml',
               'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
               'casa-source/gcwrap/tasks/simobserve.xml': 'xml/simobserve.xml',
               'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
@@ -499,6 +501,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdsmooth.xml',
               'xml/tsdimaging.xml',
               'xml/nrobeamaverage.xml',
+              'xml/sdtimeaverage.xml',
               'xml/simalma.xml',
               'xml/simobserve.xml',
               'xml/simanalyze.xml',
@@ -934,6 +937,6 @@ setup( name=module_name,version=casatasks_version,
        long_description="The CASAtasks are a collection of (mostly) stateless functions for\nthe analysis of radio astronomy observations.",
        cmdclass=cmd_setup,
        package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
-       package_data={'': ['*.xml']},
+       package_data={'': ['*.xml','*.txt']},
        install_requires=[ 'casatools==%s' % casatools.version_string( ), 'matplotlib', 'scipy' ]
 )
