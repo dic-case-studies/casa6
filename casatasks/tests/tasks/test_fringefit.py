@@ -130,7 +130,7 @@ class Fringefit_dispersive_tests(unittest.TestCase):
 
     
 def suite():
-    return [Fringefit_tests, Fringefit_single_tests]
+    return [Fringefit_tests, Fringefit_single_tests, Fringefit_dispersive_tests]
 
 if __name__ == '__main__':
     unittest.main()
