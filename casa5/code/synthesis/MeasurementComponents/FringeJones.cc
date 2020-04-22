@@ -173,7 +173,6 @@ SDBListGridManager::swStartIndex(Int spw) {
     return bigFreqGridIndex(f0);
 }
 
-
    
 // DelayRateFFT is modeled on DelayFFT in KJones.{cc|h}
 DelayRateFFT::DelayRateFFT(SDBList& sdbs, Int refant, Array<Double>& delayWindow, Array<Double>& rateWindow) :
