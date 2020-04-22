@@ -27,7 +27,7 @@
 #ifndef PLOTMSAVERAGINGWIDGET_QO_H_
 #define PLOTMSAVERAGINGWIDGET_QO_H_
 
-#include <plotms/Gui/PlotMSAveragingWidget.ui.h>
+#include <ui/ui_PlotMSAveragingWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <plotms/PlotMS/PlotMSAveraging.h>

@@ -151,7 +151,6 @@ test_uvcontsub3                 ttsutsum@nrao.edu
 test_testconcat                 dpetry@eso.org
 test_virtualconcat              dpetry@eso.org
 test_vishead                    jkern@nrao.edu
-test_visstat                    jkern@nrao.edu
 test_vpmanager                  dpetry@eso.org
 test_wvrgcal                    dpetry@eso.org
 test_req_task_listcal           fpouzols@eso.org

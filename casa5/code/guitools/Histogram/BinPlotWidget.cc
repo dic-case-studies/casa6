@@ -45,19 +45,19 @@
 #include <QWidgetAction>
 #include <QSpinBox>
 #include <QtCore/qmath.h>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_marker.h>
-#include <qwt_text_label.h>
-#include <qwt_scale_div.h>
-#include <qwt_color_map.h>
-#include <qwt_scale_widget.h>
-#include <qwt_scale_engine.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_text_label.h>
+#include <qwt/qwt_scale_div.h>
+#include <qwt/qwt_color_map.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_scale_engine.h>
 
 #include <casaqt/QwtConfig.h>
 #if QWT_VERSION >= 0x060000
-#include <qwt_plot_renderer.h>
+#include <qwt/qwt_plot_renderer.h>
 #else
-#include <qwt_double_interval.h>
+#include <qwt/qwt_double_interval.h>
 #endif
 
 using namespace casacore;

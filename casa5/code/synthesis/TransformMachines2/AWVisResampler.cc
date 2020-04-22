@@ -534,6 +534,7 @@ namespace casa{
    Int vbSpw = (vbs.vb_p)->spectralWindows()(0);
    Double vbPA = vbs.paQuant_p.getValue("rad");
    //Int vbFieldID = -1;//((const Int)((vbs.vb_p)->fieldId()(0)));
+   
 
    for(Int irow=rbeg; irow< rend; irow++){   
       //      if ((vbs.uvw_p.nelements() == 0)) 
@@ -542,7 +543,8 @@ namespace casa{
       if(!(*(rowFlag_ptr+irow)))
 	{   
 	  //	  setFieldPhaseGrad(vb2CFBMap_p->phaseGradCalculator_p->getFieldPointingGrad());
-	  setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
+	  setFieldPhaseGrad((vb2CFBMap_p->vectorPhaseGradCalculator_p[vb2CFBMap_p->vbRow2BLMap_p[irow]])->field_phaseGrad_p);
+	  //setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
 	  cfb = (*vb2CFBMap_p)[irow];
 	  for(Int ichan=startChan; ichan< endChan; ichan++)
 	    {
@@ -778,7 +780,8 @@ namespace casa{
     for(Int irow=rbeg; irow<rend; irow++) {
       if(!rowFlag[irow]) {
 	//setFieldPhaseGrad(vb2CFBMap_p->phaseGradCalculator_p->getFieldPointingGrad());
-	setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
+	// setFieldPhaseGrad(vb2CFBMap_p->getCFPhaseGrad(irow));
+	setFieldPhaseGrad((vb2CFBMap_p->vectorPhaseGradCalculator_p[vb2CFBMap_p->vbRow2BLMap_p[irow]])->field_phaseGrad_p);
 	cfb = (*vb2CFBMap_p)[irow];
 	
 	for (Int ichan=0; ichan < nDataChan; ichan++) {

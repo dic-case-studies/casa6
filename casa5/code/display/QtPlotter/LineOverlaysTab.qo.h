@@ -26,7 +26,7 @@
 #define LINEOVERLAYSTAB_QO_H
 
 #include <QWidget>
-#include <display/QtPlotter/LineOverlaysTab.ui.h>
+#include <ui/ui_LineOverlaysTab.h>
 #include <display/QtPlotter/LineOverlaysSearchResultsDialog.qo.h>
 #include <display/QtPlotter/SearchRedshiftDialog.qo.h>
 #include <casa/BasicSL/String.h>

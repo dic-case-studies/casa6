@@ -27,7 +27,7 @@
 #ifndef PLOTMSAXESTAB_QO_H_
 #define PLOTMSAXESTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSAxesTab.ui.h>
+#include <ui/ui_PlotMSAxesTab.h>
 
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 

@@ -27,7 +27,7 @@
 #define RANGECONTROLSWIDGET_QO_H
 
 #include <QWidget>
-#include <guitools/Histogram/RangeControlsWidget.ui.h>
+#include <ui/ui_RangeControlsWidget.h>
 #include <casa/typeinfo.h>
 #include <casa/Utilities/CountedPtr.h>
 
