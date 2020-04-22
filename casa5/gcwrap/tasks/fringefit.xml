@@ -118,7 +118,7 @@ Previous calibrations should be applied on the fly.
                 <description>Constrain FFT rate search to a window; a two-element list, units of seconds per second</description>
                 <value></value>
         </param>
-   
+
         <param type="bool" name="append">
                 <description>Append solutions to the (existing) table</description>
                 <value>False</value>
@@ -166,6 +166,11 @@ Previous calibrations should be applied on the fly.
           <value></value>
         </param>
 
+        <param type="boolArray" name="paramactive" subparam="true">
+          <description>Control which parameters are solved for; a vector of (exactly) three booleans for delay, rate and dispersive delay</description>
+          <value></value>
+        </param>
+        
         <param type="bool" name="parang">
                 <description>Apply parallactic angle correction on the fly</description>
                 <value>False</value>
