@@ -26,7 +26,7 @@
 #ifndef FEATHERCURVE_H_
 #define FEATHERCURVE_H_
 
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 #include <limits>
 #include <casa/aipstype.h>
 #include <guitools/Feather/ColorProvider.h>

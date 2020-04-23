@@ -27,7 +27,7 @@
 #ifndef PLOTMSTRANSFORMATIONSWIDGET_QO_H_
 #define PLOTMSTRANSFORMATIONSWIDGET_QO_H_
 
-#include <plotms/Gui/PlotMSTransformationsWidget.ui.h>
+#include <ui/ui_PlotMSTransformationsWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <plotms/PlotMS/PlotMSTransformations.h>

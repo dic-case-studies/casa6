@@ -36,9 +36,9 @@
 #include <QFont>
 #include <QMutex>
 
-#include <qwt_color_map.h>
-#include <qwt_plot.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_color_map.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_symbol.h>
 
 namespace casa {
 

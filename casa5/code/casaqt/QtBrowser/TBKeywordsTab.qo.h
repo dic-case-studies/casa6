@@ -27,9 +27,9 @@
 #ifndef TBKEYWORDSTAB_H_
 #define TBKEYWORDSTAB_H_
 
-#include <casaqt/QtBrowser/TBTableKeywordsTab.ui.h>
-#include <casaqt/QtBrowser/TBFieldKeywordsTab.ui.h>
-#include <casaqt/QtBrowser/TBNewKeyword.ui.h>
+#include "ui/ui_TBTableKeywordsTab.h"
+#include "ui/ui_TBFieldKeywordsTab.h"
+#include "ui/ui_TBNewKeyword.h"
 
 #include <QtGui>
 

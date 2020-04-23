@@ -27,7 +27,7 @@
 #ifndef PLOTMSFLAGGINGWIDGET_QO_H_
 #define PLOTMSFLAGGINGWIDGET_QO_H_
 
-#include <plotms/Gui/PlotMSFlaggingWidget.ui.h>
+#include <ui/ui_PlotMSFlaggingWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <plotms/PlotMS/PlotMSFlagging.h>

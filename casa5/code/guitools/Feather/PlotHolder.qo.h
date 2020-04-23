@@ -27,8 +27,8 @@
 
 #include <QWidget>
 #include <QMenu>
-#include <qwt_plot.h>
-#include <guitools/Feather/PlotHolder.ui.h>
+#include <qwt/qwt_plot.h>
+#include "ui/ui_PlotHolder.h"
 #include <guitools/Feather/PreferencesColor.qo.h>
 #include <guitools/Feather/FeatherCurveType.h>
 #include <guitools/Feather/FeatherPlotWidget.qo.h>

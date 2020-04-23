@@ -234,6 +234,7 @@ casa_qt4_add_resources( outfiles_qrc QtViewer/QtViewer.qrc OPTIONS -name QtViewe
 casa_qt4_add_resources( outfiles_qrc region/QtRegionDock.qrc OPTIONS -name QtRegionDock )
 casa_qt4_add_resources( outfiles_qrc Slicer/Slicer.qrc OPTIONS -name Slicer )
 
+include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../guitools ) # for generated code
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/QtAutoGui ) # for generated code
 
 casa_add_library( display

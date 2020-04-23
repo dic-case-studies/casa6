@@ -27,7 +27,7 @@
 #ifndef TBOPTIONS_H_
 #define TBOPTIONS_H_
 
-#include <casaqt/QtBrowser/TBOptions.ui.h>
+#include "ui/ui_TBOptions.h"
 
 #include <QtGui>
 

@@ -26,7 +26,7 @@
 //# $Id: $
 #include <graphics/GenericPlotter/PlotTool.h>
 #include <graphics/GenericPlotter/PlotFactory.h>
-/////!!!!!  + + ++ + + + + + + + + + #include <qwt_plot_picker.h>  -- needed for draw rubber band box in different color
+/////!!!!!  + + ++ + + + + + + + + + #include <qwt/qwt_plot_picker.h>  -- needed for draw rubber band box in different color
 
 #include <iomanip>
 
@@ -331,7 +331,7 @@ void PlotSelectTool::handleMouseEvent(const PlotEvent& event)    {
     const PlotMousePressEvent* mp; const PlotMouseReleaseEvent* mr;
     if((mp = dynamic_cast<const PlotMousePressEvent*>(&event)) != NULL)  {
         m_canvas->setCursor(CROSSHAIR);
-// restore the following lines after figuring out how to make #include <qwt_plot_picker.h> compile - needs tweak of cmake files
+// restore the following lines after figuring out how to make #include <qwt/qwt_plot_picker.h> compile - needs tweak of cmake files
 ////!!!!!        QwtPlotPicker  *pp = m_canvas->getSelecter();  // http://www.qtcentre.org/threads/33160-Different-Colored-Rectangles-in-QwtPlotPicker
 ////!!!!!        pp->setRubberBandPen( QColor( Qt::blue ) );
     }
