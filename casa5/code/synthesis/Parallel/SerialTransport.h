@@ -111,7 +111,8 @@ class SerialTransport : public PTransport {
   virtual casacore::Int get(casacore::String &);
   virtual casacore::Int get(casacore::Bool &);
   virtual casacore::Int get(casacore::Record &);
-
+  ///IsFinalized is just a dummy here as no finalization is needed
+  virtual casacore::Bool isFinalized(){ return true; };
  private:
   casacore::uInt inQue;
   casacore::uInt outQue;

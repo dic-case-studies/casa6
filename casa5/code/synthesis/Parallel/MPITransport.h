@@ -114,6 +114,7 @@ class MPITransport : public PTransport {
   virtual casacore::Int get(casacore::Bool &);
   virtual casacore::Int get(casacore::Record &);
 
+  virtual casacore::Bool isFinalized();
  private:
   // Local work variables
   casacore::Int sendTo, myOp, getFrom;
