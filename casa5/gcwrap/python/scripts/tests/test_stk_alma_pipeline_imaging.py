@@ -3633,7 +3633,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_cube_eph(self):
         ''' Mosaic ephemeris cube imaging - field Venus, spw 45 '''
 
@@ -3934,7 +3934,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mfs_eph(self):
         ''' Mosaic ephemeris mfs imaging - field Venus, spw 25 & 45 '''
 
@@ -4224,7 +4224,7 @@ class Test_mosaic(test_tclean_base):
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
-    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
+#    @unittest.skip("Mosaic ephemeris offset (CAS-12661)")
     def test_mosaic_mtmfs_eph(self):
         ''' Mosaic ephemeris mtmfs imaging - field Venus, spw 25 & 45 '''
 
