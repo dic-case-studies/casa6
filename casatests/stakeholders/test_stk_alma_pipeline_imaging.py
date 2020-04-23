@@ -83,7 +83,7 @@ except ImportError:
 
     _ia = iatool()
     def ctsys_resolve(apath):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req'):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
             dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data/casa-data-req/')
         else:
             dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casa-data-req/')
