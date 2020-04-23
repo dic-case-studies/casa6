@@ -131,11 +131,12 @@ private:
   using MatrixCleaner::psfShape_p;
   using MatrixCleaner::noClean_p;
 
-  // set to 1.5*,5*,10*width for initial scales in Asp
+  // set to 0, 1.5*,5*,10*width for initial scales in Asp
   std::vector<casacore::Float> itsInitScaleSizes;
   std::vector<casacore::Float> itsAspScaleSizes;
   std::vector<casacore::Float> itsAspAmplitude;
   std::vector<casacore::IPosition> itsAspCenter;
+  casacore::Int itsNInitScales;
 
 };
 

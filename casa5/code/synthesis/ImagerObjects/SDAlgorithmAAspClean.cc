@@ -92,7 +92,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     {
       Matrix<Float> tempMat(itsMatPsf);
       itsCleaner.setPsf(tempMat);
-      // FFT of 1R, 5R, 10R of psf and masks is unchanged and only needs to be
+      // FFT of 0, 1.5, 5R, 10R of psf and masks is unchanged and only needs to be
       // computed once. This calls getPsfGaussianWidth
       // and sets the new itsInitScaleXfrs
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
