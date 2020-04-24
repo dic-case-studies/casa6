@@ -1,7 +1,7 @@
 #############################################################################
 # $Id:$
 # Test Name:                                                                #
-# flagdata-timeavg-autoplag_regression.py                                   #
+# test_e2e_time_average_and_rflag.py                                        #
 #                                                                           #
 # Test examples from CAS-11910                                              #
 #                                                                           #
@@ -9,37 +9,50 @@
 #    Need test of complete ALMA analysis chain                              #
 #                                                                           #
 # Input data:                                                               #
-#     two ASDMs                                                             #
-#     the clean masks                                                       #
+#     two MS                                                                #
+#                                                                           #
 #                                                                           #
 #############################################################################
 
-import shutil
 import time
-
-thesteps = []
-
-step_title = {0: 'flag with scale 7 for 4 flags',
-            1: 'flag with scale 3 for 4 flags',
-            2: 'flag with scale 7 for ct',
-            3: 'Checks'
-            }
+import shutil
+import unittest
+CASA6 = False
 
 try:
-    print("List of steps to be executed ... ", mysteps)
-    thesteps = mysteps
+    import casatools
+    from casatasks import flagdata, casalog
+    CASA6 = True
 except:
-    print("global variable mysteps not set.")
+    from tasks import *
+    from taskinit import *
 
-if (thesteps==[]):
-    thesteps = range(0, len(step_title))
-    print("mysteps empty. Executing all steps: ", thesteps)
+
+# TODO: Data, Need to ask where this data should go
+# this is a placeholder location
+if CASA6:
+    casapath = ''
+    datapath_four_ants = casatools.ctsys.resolve("regression/flagdata/Four_ants_3C286.ms/")
+    datapath_3ctst = casatools.ctsys.resolve("regression/flagdata/3ctst.ms")
+else:
+    casapath = os.environ['CASAPATH'].split()[0]
+    datapath = ''
+
+if 'datasets' not in (locals()):
+    myname = 'time_average_and_rflag :'
+    mydict = { 1: 'Four_ants_3C286',
+               2: '3ctst'}
+else:
+    myname = ' '
+    mydict = (locals())['datasets']
+
 
 totaltime = 0
 inittime = time.time()
 ttime = inittime
 steptime = []
 
+'''
 def timing():
     global totaltime
     global inittime
@@ -62,17 +75,18 @@ def timing():
     for i in range(0, len(steptime)):
         casalog.post('  ' + str(thesteps[i]) + '   ' + str(steptime[i]) + '  ' + str(steptime[i] / totaltime * 100.)
                      + ' [' + step_title[thesteps[i]] + ']', 'WARN')
-
+'''
 
 my_dataset_name = "Four_ants_3C286.ms"
+
 ms3ctst = "3ctst.ms"
+ms3ctst_copy = "3ctst_copy.ms"
 
-ms1 = "Four_ants_3C286.ms"
-ms2 = "Four_ants_copy.ms"
-shutil.copytree(ms1, ms2)
+ms1 = "Four_ants_copy1.ms"
+ms2 = "Four_ants_copy2.ms"
 
 
-def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms):
+def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms1):
     # Note using spw_sel also in the summary
     summary_orig = flagdata(vis=ms, spw=spw, mode='summary')
     casalog.post(' * Flagging {0}'.format(ms))
@@ -97,7 +111,7 @@ def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms)
 
     return summary_orig['flagged'], summary_after['flagged']
 
-def unflag_then_flag(scale=7.0, timebin='1min', field='', spw='', ms=ms):
+def unflag_then_flag(scale=7.0, timebin='1min', field='', spw='', ms=ms1):
     flagdata(vis=ms, mode='unflag')
     summary_unflagged = flagdata(vis=ms, spw=spw, mode='summary')
     # Note display='none', would be 'both' but that requires user interaction
@@ -113,134 +127,137 @@ def unflag_then_flag(scale=7.0, timebin='1min', field='', spw='', ms=ms):
                         timebin, scale))
 
 
-# Step 0
-mystep = 0
-if (mystep in thesteps):
-    print('Step ', mystep, step_title[mystep])
+class regression_time_average_rflag(unittest.TestCase):
 
-    flag_30s_7_1_before, flag_30s_7_1_after = flag_step(7, '30s', step_name='1', ms=ms1)
-    flag_30s_7_2_before, flag_30s_7_2_after = flag_step(7, '30s', step_name='2', ms=ms1)
-    flag_30s_7_3_before, flag_30s_7_3_after = flag_step(7, '30s', step_name='3', ms=ms1)
+    def setUp(self):
 
-    timing()
+        if not CASA6:
+            default(flagdata)
 
-# Step 1
-mystep = 1
-if (mystep in thesteps):
-    print('Step ', mystep, step_title[mystep])
+        shutil.copytree(my_dataset_name, ms1)
+        shutil.copytree(my_dataset_name, ms2)
+        shutil.copytree(ms3ctst, ms3ctst_copy)
 
-    flag_30s_3_1_before, flag_30s_3_1_after = flag_step(3, '30s', step_name='1', ms=ms2)
-    flag_30s_3_2_before, flag_30s_3_2_after = flag_step(3, '30s', step_name='2', ms=ms2)
-    flag_30s_3_3_before, flag_30s_3_3_after = flag_step(3, '30s', step_name='3', ms=ms2)
-    flag_30s_3_4_before, flag_30s_3_4_after = flag_step(3, '30s', step_name='4', ms=ms2)
-    flag_30s_3_5_before, flag_30s_3_5_after = flag_step(3, '30s', step_name='5', ms=ms2)
-    flag_30s_3_6_before, flag_30s_3_6_after = flag_step(3, '30s', step_name='6', ms=ms2)
-    flag_30s_3_7_before, flag_30s_3_7_after = flag_step(3, '30s', step_name='7', ms=ms2)
+    def tearDown(self):
 
+        shutil.rmtree(ms1)
+        shutil.rmtree(ms2)
+        shutil.rmtree(ms3ctst_copy)
 
-    timing()
+    def test_regression(self):
 
-# Step 2
-mystep = 2
-if (mystep in thesteps):
-    print('Step ', mystep, step_title[mystep])
+        flag_30s_7_1_before, flag_30s_7_1_after = flag_step(7, '30s', step_name='1', ms=ms1)
+        flag_30s_7_2_before, flag_30s_7_2_after = flag_step(7, '30s', step_name='2', ms=ms1)
+        flag_30s_7_3_before, flag_30s_7_3_after = flag_step(7, '30s', step_name='3', ms=ms1)
 
-    flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_3_before_3ct, flag_30s_3_3_after_3ct = flag_step(7, '3min', step_name='3', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_4_before_3ct, flag_30s_3_4_after_3ct = flag_step(7, '3min', step_name='4', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_5_before_3ct, flag_30s_3_5_after_3ct = flag_step(7, '3min', step_name='5', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_6_before_3ct, flag_30s_3_6_after_3ct = flag_step(7, '3min', step_name='6', field='0', spw='0:20~350', ms=ms3ctst)
-    flag_30s_3_7_before_3ct, flag_30s_3_7_after_3ct = flag_step(7, '3min', step_name='7', field='0', spw='0:20~350', ms=ms3ctst)
+        #timing()
 
+        flag_30s_3_1_before, flag_30s_3_1_after = flag_step(3, '30s', step_name='1', ms=ms2)
+        flag_30s_3_2_before, flag_30s_3_2_after = flag_step(3, '30s', step_name='2', ms=ms2)
+        flag_30s_3_3_before, flag_30s_3_3_after = flag_step(3, '30s', step_name='3', ms=ms2)
+        flag_30s_3_4_before, flag_30s_3_4_after = flag_step(3, '30s', step_name='4', ms=ms2)
+        flag_30s_3_5_before, flag_30s_3_5_after = flag_step(3, '30s', step_name='5', ms=ms2)
+        flag_30s_3_6_before, flag_30s_3_6_after = flag_step(3, '30s', step_name='6', ms=ms2)
+        flag_30s_3_7_before, flag_30s_3_7_after = flag_step(3, '30s', step_name='7', ms=ms2)
 
-    timing()
+        #timing()
 
-regstate = False
-# Step 3
-mystep = 3
-if (mystep in thesteps):
-    print('Step ', mystep, step_title[mystep])
+        flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_3_before_3ct, flag_30s_3_3_after_3ct = flag_step(7, '3min', step_name='3', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_4_before_3ct, flag_30s_3_4_after_3ct = flag_step(7, '3min', step_name='4', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_5_before_3ct, flag_30s_3_5_after_3ct = flag_step(7, '3min', step_name='5', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_6_before_3ct, flag_30s_3_6_after_3ct = flag_step(7, '3min', step_name='6', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_7_before_3ct, flag_30s_3_7_after_3ct = flag_step(7, '3min', step_name='7', field='0', spw='0:20~350', ms=ms3ctst)
 
-    lists_equal = True
+        #timing()
 
-    # Four ants outputs
-    expected_30s_7_1_before = 211894.0
-    expected_30s_7_2_before = 226824.0
-    expected_30s_7_3_before = 227004.0
+        lists_equal = True
 
-    expected_30s_7_1_after = 226824.0
-    expected_30s_7_2_after = 227004.0
-    expected_30s_7_3_after = 227004.0
+        # Four ants outputs
+        expected_30s_7_1_before = 211894.0
+        expected_30s_7_2_before = 226824.0
+        expected_30s_7_3_before = 227004.0
 
-    expected_30s_3_1_before = 211894.0
-    expected_30s_3_2_before = 471802.0
-    expected_30s_3_3_before = 602582.0
-    expected_30s_3_4_before = 687092.0
-    expected_30s_3_5_before = 736226.0
-    expected_30s_3_6_before = 776867.0
-    expected_30s_3_7_before = 817331.0
+        expected_30s_7_1_after = 226824.0
+        expected_30s_7_2_after = 227004.0
+        expected_30s_7_3_after = 227004.0
 
-    expected_30s_3_1_after = 471802.0
-    expected_30s_3_2_after = 602582.0
-    expected_30s_3_3_after = 687092.0
-    expected_30s_3_4_after = 736226.0
-    expected_30s_3_5_after = 776867.0
-    expected_30s_3_6_after = 817331.0
-    expected_30s_3_7_after = 843051.0
+        expected_30s_3_1_before = 211894.0
+        expected_30s_3_2_before = 471802.0
+        expected_30s_3_3_before = 602582.0
+        expected_30s_3_4_before = 687092.0
+        expected_30s_3_5_before = 736226.0
+        expected_30s_3_6_before = 776867.0
+        expected_30s_3_7_before = 817331.0
 
-    # 3ctst outputs
-    expected_30s_3_1_before_3ct = 9593008.0
-    expected_30s_3_2_before_3ct = 9611700.0
-    expected_30s_3_3_before_3ct = 9614850.0
-    expected_30s_3_4_before_3ct = 9615270.0
-    expected_30s_3_5_before_3ct = 9615343.0
-    expected_30s_3_6_before_3ct = 9615350.0
-    expected_30s_3_7_before_3ct = 9615354.0
+        expected_30s_3_1_after = 471802.0
+        expected_30s_3_2_after = 602582.0
+        expected_30s_3_3_after = 687092.0
+        expected_30s_3_4_after = 736226.0
+        expected_30s_3_5_after = 776867.0
+        expected_30s_3_6_after = 817331.0
+        expected_30s_3_7_after = 843051.0
 
-    expected_30s_3_1_after_3ct = 9611700.0
-    expected_30s_3_2_after_3ct = 9614850.0
-    expected_30s_3_3_after_3ct = 9615270.0
-    expected_30s_3_4_after_3ct = 9615343.0
-    expected_30s_3_5_after_3ct = 9615350.0
-    expected_30s_3_6_after_3ct = 9615354.0
-    expected_30s_3_7_after_3ct = 9615354.0
+        # 3ctst outputs
+        expected_30s_3_1_before_3ct = 9593008.0
+        expected_30s_3_2_before_3ct = 9611700.0
+        expected_30s_3_3_before_3ct = 9614850.0
+        expected_30s_3_4_before_3ct = 9615270.0
+        expected_30s_3_5_before_3ct = 9615343.0
+        expected_30s_3_6_before_3ct = 9615350.0
+        expected_30s_3_7_before_3ct = 9615354.0
+
+        expected_30s_3_1_after_3ct = 9611700.0
+        expected_30s_3_2_after_3ct = 9614850.0
+        expected_30s_3_3_after_3ct = 9615270.0
+        expected_30s_3_4_after_3ct = 9615343.0
+        expected_30s_3_5_after_3ct = 9615350.0
+        expected_30s_3_6_after_3ct = 9615354.0
+        expected_30s_3_7_after_3ct = 9615354.0
 
 
-    
-    observed_list = [flag_30s_7_1_before, flag_30s_7_2_before, flag_30s_7_3_before,
-                     flag_30s_7_1_after, flag_30s_7_2_after, flag_30s_7_3_after,
-                     flag_30s_3_1_before, flag_30s_3_2_before, flag_30s_3_3_before,
-                     flag_30s_3_4_before, flag_30s_3_5_before, flag_30s_3_6_before, flag_30s_3_7_before,
-                     flag_30s_3_1_after, flag_30s_3_2_after, flag_30s_3_3_after,
-                     flag_30s_3_4_after, flag_30s_3_5_after, flag_30s_3_6_after, flag_30s_3_7_after,
-                     flag_30s_3_1_before_3ct, flag_30s_3_2_before_3ct, flag_30s_3_3_before_3ct,
-                     flag_30s_3_4_before_3ct, flag_30s_3_5_before_3ct, flag_30s_3_6_before_3ct, flag_30s_3_7_before_3ct,
-                     flag_30s_3_1_after_3ct, flag_30s_3_2_after_3ct, flag_30s_3_3_after_3ct,
-                     flag_30s_3_4_after_3ct, flag_30s_3_5_after_3ct, flag_30s_3_6_after_3ct, flag_30s_3_7_after_3ct]
-                     
-    expected_list = [expected_30s_7_1_before, expected_30s_7_2_before, expected_30s_7_3_before,
-                     expected_30s_7_1_after, expected_30s_7_2_after, expected_30s_7_3_after,
-                     expected_30s_3_1_before, expected_30s_3_2_before, expected_30s_3_3_before,
-                     expected_30s_3_4_before, expected_30s_3_5_before, expected_30s_3_6_before, expected_30s_3_7_before,
-                     expected_30s_3_1_after, expected_30s_3_2_after, expected_30s_3_3_after,
-                     expected_30s_3_4_after, expected_30s_3_5_after, expected_30s_3_6_after, expected_30s_3_7_after,
-                     expected_30s_3_1_before_3ct, expected_30s_3_2_before_3ct, expected_30s_3_3_before_3ct,
-                     expected_30s_3_4_before_3ct, expected_30s_3_5_before_3ct, expected_30s_3_6_before_3ct, expected_30s_3_7_before_3ct,
-                     expected_30s_3_1_after_3ct, expected_30s_3_2_after_3ct, expected_30s_3_3_after_3ct,
-                     expected_30s_3_4_after_3ct, expected_30s_3_5_after_3ct, expected_30s_3_6_after_3ct, expected_30s_3_7_after_3ct]
 
-    for i in range(len(observed_list)):
-        if observed_list[i] != expected_list[i]:
-            lists_equal = False
-            print("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
+        observed_list = [flag_30s_7_1_before, flag_30s_7_2_before, flag_30s_7_3_before,
+                         flag_30s_7_1_after, flag_30s_7_2_after, flag_30s_7_3_after,
+                         flag_30s_3_1_before, flag_30s_3_2_before, flag_30s_3_3_before,
+                         flag_30s_3_4_before, flag_30s_3_5_before, flag_30s_3_6_before, flag_30s_3_7_before,
+                         flag_30s_3_1_after, flag_30s_3_2_after, flag_30s_3_3_after,
+                         flag_30s_3_4_after, flag_30s_3_5_after, flag_30s_3_6_after, flag_30s_3_7_after,
+                         flag_30s_3_1_before_3ct, flag_30s_3_2_before_3ct, flag_30s_3_3_before_3ct,
+                         flag_30s_3_4_before_3ct, flag_30s_3_5_before_3ct, flag_30s_3_6_before_3ct, flag_30s_3_7_before_3ct,
+                         flag_30s_3_1_after_3ct, flag_30s_3_2_after_3ct, flag_30s_3_3_after_3ct,
+                         flag_30s_3_4_after_3ct, flag_30s_3_5_after_3ct, flag_30s_3_6_after_3ct, flag_30s_3_7_after_3ct]
+
+        expected_list = [expected_30s_7_1_before, expected_30s_7_2_before, expected_30s_7_3_before,
+                         expected_30s_7_1_after, expected_30s_7_2_after, expected_30s_7_3_after,
+                         expected_30s_3_1_before, expected_30s_3_2_before, expected_30s_3_3_before,
+                         expected_30s_3_4_before, expected_30s_3_5_before, expected_30s_3_6_before, expected_30s_3_7_before,
+                         expected_30s_3_1_after, expected_30s_3_2_after, expected_30s_3_3_after,
+                         expected_30s_3_4_after, expected_30s_3_5_after, expected_30s_3_6_after, expected_30s_3_7_after,
+                         expected_30s_3_1_before_3ct, expected_30s_3_2_before_3ct, expected_30s_3_3_before_3ct,
+                         expected_30s_3_4_before_3ct, expected_30s_3_5_before_3ct, expected_30s_3_6_before_3ct, expected_30s_3_7_before_3ct,
+                         expected_30s_3_1_after_3ct, expected_30s_3_2_after_3ct, expected_30s_3_3_after_3ct,
+                         expected_30s_3_4_after_3ct, expected_30s_3_5_after_3ct, expected_30s_3_6_after_3ct, expected_30s_3_7_after_3ct]
 
 
-    shutil.rmtree(ms2)
-    timing()
+        for i in range(len(observed_list)):
+            if observed_list[i] != expected_list[i]:
+                lists_equal = False
+                print("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
 
-if lists_equal:
-    print("Regression PASSED")
-else:
-    print("Regression FAILED")
-print("Done")
+        #timing()
+
+        if lists_equal:
+            print("Regression PASSED")
+            self.assertTrue(True)
+        else:
+            print("Regression FAILED")
+            self.assertTrue(False)
+        print("Done")
+
+def suite():
+    return[regression_time_average_rflag]
+
+if __name__ == "__main__":
+    unittest.main()
