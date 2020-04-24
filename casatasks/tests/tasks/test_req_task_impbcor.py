@@ -231,7 +231,7 @@ class impbcor_test(unittest.TestCase):
             self.checkImage(outfile, expected, epsilon)
             shutil.rmtree(outfile)
 
-    def test_1(self):
+    def test_full_image_divide(self):
         """impbcor: Test full image divide"""
         self._testit(
             expected=co1_1, imagename=im1, pbimage=pb1,
@@ -240,7 +240,7 @@ class impbcor_test(unittest.TestCase):
             cutoff=-1.0
         )
 
-    def test_2(self):
+    def test_full_image_using_cutoff(self):
         """impbcor: Test full image divide with cutoff"""
         self._testit(
             expected=co1_2, imagename=im1, pbimage=pb1,
@@ -249,7 +249,7 @@ class impbcor_test(unittest.TestCase):
             cutoff=0.001
         )
     
-    def test_3(self):
+    def test_4d_image_with_2d_pb(self):
         """impbcor: Test full image divide with cutoff. Primary beam is 2 D, image is 4 D"""
         self._testit(
             expected=co2, imagename=im2, pbimage=pb2,
@@ -277,7 +277,7 @@ class impbcor_test(unittest.TestCase):
         )
 
     def test_stretch(self):
-        """ ia.pbcor(): Test stretch parameter"""
+        """ impbcor(): Test stretch parameter"""
         yy = image()
         mymask = "maskim"
         yy.fromshape("", [113, 76, 1, 1])

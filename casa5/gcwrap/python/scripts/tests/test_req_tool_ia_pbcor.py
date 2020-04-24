@@ -225,7 +225,7 @@ class ia_pbcor_test(unittest.TestCase):
             self.checkImage(outfile, expected, epsilon)
             shutil.rmtree(outfile)
 
-    def test_1(self):
+    def test_full_image_divide(self):
         """ia.pbcor: Test full image divide"""
         self._testit(
             expected=co1_1, imagename=im1, pbimage=pb1,
@@ -234,7 +234,7 @@ class ia_pbcor_test(unittest.TestCase):
             cutoff=-1.0
         )
 
-    def test_2(self):
+    def test_full_image_using_cutoff(self):
         """ia.pbcor: Test full image divide with cutoff"""
         self._testit(
             expected=co1_2, imagename=im1, pbimage=pb1,
@@ -243,7 +243,7 @@ class ia_pbcor_test(unittest.TestCase):
             cutoff=0.001
         )
     
-    def test_3(self):
+    def test_4d_image_with_2d_pb(self):
         """ia.pbcor: Test full image divide with cutoff. Primary beam is 2 D, image is 4 D"""
         self._testit(
             expected=co2, imagename=im2, pbimage=pb2,
