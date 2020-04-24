@@ -31,7 +31,6 @@
 #include <iomanip>
 #include <map>
 #include <type_traits>
-#include <set>
 
 #include <casa/OS/File.h>
 #include <casa/Arrays/MaskedArray.h>
@@ -1085,11 +1084,14 @@ void SingleDishSkyCal::selfGatherAndSolve(VisSet& vs, VisEquation& /*ve*/)
     initSolvePar();
 
     // Select from user selection reference data associated with science target
-    debuglog << "selecting reference data from user selection" << debugpost;
     MeasurementSet reference_data = selectReferenceData(user_selection);
-    logSink() << "logSink: " << "reference_data.nrow()=" << reference_data.nrow() << LogIO::POST;
-    debuglog << "user_selection.nrow()=" << user_selection.nrow() << debugpost;
-    debuglog << "reference_data.nrow()=" << reference_data.nrow() << debugpost;
+    logSink().origin(LogOrigin("SingleDishSkyCal","selfGatherAndSolve"));
+    std::ostringstream msg;
+    msg.imbue(std::locale("en_US"));
+    msg << "Selected: " << std::right << std::setw(10) << reference_data.nrow() << " rows of reference data" << '\n'
+        << "out of  : " << std::right << std::setw(10) << user_selection.nrow() << " rows of user-selected data";
+    logSink() << msg.str() << LogIO::POST;
+    logSink().origin(LogOrigin());
     if (reference_data.nrow() == 0)
         throw AipsError("No reference integration found in user-selected data. Please double-check your data selection criteria.");
 
