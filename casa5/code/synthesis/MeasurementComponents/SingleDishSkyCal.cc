@@ -1213,17 +1213,20 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
         << "] as metadata" << eol
         << "select * from $1 , metadata" << eol
         << "where ";
-    // Data is single-dish data,
+    // Data is single-dish data and,
     qry << "    ( ANTENNA1 == ANTENNA2 ) and" << eol ;
+    // data is auto-correlation data,
+    qry << "    ( FEED1 == FEED2 ) and" << eol ;
     // belonging to a row which has not been marked as invalid,
     qry << "    ( not(FLAG_ROW) ) and " << eol ;
     // having observational intent: OBSERVE_TARGET#OFF_SOURCE,
     qry << "    ( STATE_ID in [ " << eol
-        << "        select rowid() " << eol
-        << "        from ::STATE" << eol
-        << "        where " << eol
-        << "            upper(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/ " << eol
-        << "    ] ) and" << eol;
+        << "          select rowid() " << eol
+        << "          from ::STATE" << eol
+        << "          where " << eol
+        << "              upper(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/ " << eol
+        << "          ]" << eol
+        << "    ) and" << eol;
     // excluding - for ALMA - data from Water Vapor Radiometers spectral windows, which have 4 channels
     qry << "    (" << eol
         << "        ( metadata.TELESCOPE_NAME != 'ALMA' ) or" << eol
