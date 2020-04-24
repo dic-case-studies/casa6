@@ -122,7 +122,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imregrid.py
   test_imsmooth.py
   test_imstat.py
-  test_imtrans.py
   test_imval.py
   test_initweights.py
   test_listfits.py
@@ -182,6 +181,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_tsdimaging.py
   test_sdpolaverage.py
   test_sdsidebandsplit.py
+  test_sdtimeaverage.py
   test_sdsmooth.py
   test_tclean.py
 
@@ -203,6 +203,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   test_req_tool_componentlistimage.py
   test_req_tool_ia_pbcor.py
+  test_req_tool_ia_transpose.py
 
   ###
 
@@ -224,6 +225,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_impv.py
   test_req_task_imrebin.py
   test_req_task_imreframe.py
+  test_req_task_imtrans.py
   test_req_task_listhistory.py
   test_req_task_listobs.py
   test_req_task_listsdm.py

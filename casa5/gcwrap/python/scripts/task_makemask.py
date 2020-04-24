@@ -837,6 +837,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                                   _ia.close()
                                                   #print "tshp=",tshp
                                                   #print "tcsys.torecord=",tcsys.torecord()
+                                                  print("*** aa")
                                                   inrgn=_rg.fromtext(line, tshp, tcsys.torecord())
                                                   #print "inrgn=",inrgn
                                                   _im.regiontoimagemask(tmp_rgmaskim,region=inrgn)
@@ -860,6 +861,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                             _ia.open(tmp_rgmaskim)
                             _ia.set(pixels=0.0)
                             _ia.close()
+                            print("*** ab")
                             inrgn=_rg.fromtext(rgn, tshp, tcsys.torecord())
                             _im.regiontoimagemask(tmp_rgmaskim,region=inrgn)
                             addimagemask(tmp_allrgmaskim,tmp_rgmaskim)
