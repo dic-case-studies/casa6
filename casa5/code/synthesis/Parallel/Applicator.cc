@@ -105,7 +105,8 @@ void Applicator::initThreads(Int argc, Char *argv[]){
 #else
   (void)argc;
   (void)argv;
-
+  cerr << " doing serial "<< endl;
+  initThreads();
 #endif
 }
 

@@ -72,7 +72,8 @@ MPITransport::MPITransport(Int argc, Char *argv[]) : PTransport()
 }
 
 MPITransport::~MPITransport(){
-   MPI_Finalize();
+  if(!isFinalized())
+    MPI_Finalize();
 }
 
 
