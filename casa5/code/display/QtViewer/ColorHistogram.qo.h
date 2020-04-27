@@ -29,7 +29,7 @@
 #include <QMainWindow>
 #include <casa/aipstype.h>
 #include <casa/Arrays/Vector.h>
-#include <display/QtViewer/ColorHistogram.ui.h>
+#include <ui/ui_ColorHistogram.h>
 
 namespace casa {
 

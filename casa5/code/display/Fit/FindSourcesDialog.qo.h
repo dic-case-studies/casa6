@@ -29,7 +29,7 @@
 #include <QDialog>
 #include <QMap>
 #include <casa/Containers/Record.h>
-#include <display/Fit/FindSourcesDialog.ui.h>
+#include <ui/ui_FindSourcesDialog.h>
 #include <display/Fit/ComponentListWrapper.h>
 #include <display/Fit/PixelRangeDialog.qo.h>
 #include <display/region/QtRegionSource.qo.h>

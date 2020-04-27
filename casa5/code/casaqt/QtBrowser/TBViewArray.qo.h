@@ -27,9 +27,9 @@
 #ifndef TBVIEWARRAY_H_
 #define TBVIEWARRAY_H_
 
-#include <casaqt/QtBrowser/TBViewArray.ui.h>
-#include <casaqt/QtBrowser/TBArrayPanel.ui.h>
-#include <casaqt/QtBrowser/TBBrowser.qo.h>
+#include "ui/ui_TBViewArray.h"
+#include "ui/ui_TBArrayPanel.h"
+#include "casaqt/QtBrowser/TBBrowser.qo.h"
 
 #include <vector>
 

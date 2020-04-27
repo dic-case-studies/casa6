@@ -134,7 +134,8 @@ class PTransport {
   virtual casacore::Int get(casacore::String &) = 0;
   virtual casacore::Int get(casacore::Bool &) = 0;
   virtual casacore::Int get(casacore::Record &) = 0;
-  
+  //check if MPI layer has been finalized
+  virtual casacore::Bool isFinalized()=0;
  protected: 
   // Number of processes
   casacore::Int numprocs;

@@ -187,6 +187,9 @@ ln -s `which rm`
 ln -s `which dirname`
 ln -s `which basename`
 ln -s `which grep`
+ln -s `which sort`
+ln -s `which printf`
+ln -s `which cat`
 cd $current_directory
 
 PATH=$(dirname ${CXX}):/bin:$temporary_script_dir
@@ -205,8 +208,8 @@ AC_SUBST(CC_FORTRAN_COMPLEX)
 AC_LANG_POP([C])
 
 for pp in $(dirname ${CXX})${PATH_SEPARATOR}${PATH} ${save_PATH_save}; do
-    PATH=${pp}
-    AC_PROG_FC([gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
+    PATH=${pp}:${temporary_script_dir}
+    AC_PROG_FC([gfortran-mp-9 gfortran-mp-8 gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
     AX_PATH_TO_BINARY(${FC},FC)
     if [[ -f "$FC" -a -x "$FC" ]]; then
         AC_MSG_NOTICE([Fortran compiler ${FC}])

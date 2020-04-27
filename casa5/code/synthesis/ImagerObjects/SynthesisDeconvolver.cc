@@ -648,17 +648,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               Vector<Int> chanRangeProcessed;
               casa::applicator.get(chanRangeProcessed);
               //#2
-              Vector<Bool> retchanflag;
+              
               Record chanflagRec;
-               casa::applicator.get(chanflagRec);
-               chanflagRec.get("chanflag", retchanflag);
-               if(retchanflag.nelements() >0)
-                 itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
-	       Record substats=chanflagRec.asRecord("statsrec");
-	       setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
+	      casa::applicator.get(chanflagRec);
+               
               //#3
               Record retval;
               casa::applicator.get(retval);
+	      
+	      Vector<Bool> retchanflag;
+	      chanflagRec.get("chanflag", retchanflag);
+	      if(retchanflag.nelements() >0)
+		itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
+	      Record substats=chanflagRec.asRecord("statsrec");
+	      setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
+	      
               retvals(indexofretval)=(retval.nfields() > 0);
               ++indexofretval;
               ///might need to merge these retval
@@ -711,16 +715,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             Vector<Int> chanRangeProcessed;
             casa::applicator.get(chanRangeProcessed);
-            Vector<Bool> retchanflag;
             Record chanflagRec;
-            casa::applicator.get(chanflagRec);
-            chanflagRec.get("chanflag", retchanflag);
-            if(retchanflag.nelements() >0)
+            casa::applicator.get(chanflagRec);       	    
+            Record retval;
+            casa::applicator.get(retval);
+	    Vector<Bool> retchanflag;
+	    chanflagRec.get("chanflag", retchanflag);
+	    if(retchanflag.nelements() >0)
               itsChanFlag(Slice(chanRangeProcessed[0], chanRangeProcessed[1]-chanRangeProcessed[0]+1))=retchanflag;
 	    Record substats=chanflagRec.asRecord("statsrec");
 	    setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
-            Record retval;
-            casa::applicator.get(retval);
             retvals(indexofretval)=(retval.nfields() > 0);
             ++indexofretval;
             mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
@@ -751,6 +755,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsImages->releaseLocks();
 
     } catch(AipsError &x) {
+      //MPI_Abort(MPI_COMM_WORLD, 6);
       throw( AipsError("Error in running Minor Cycle : "+x.getMesg()) );
     }
 
@@ -1087,20 +1092,55 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisDeconvolver::setPosMask(std::shared_ptr<ImageInterface<Float> > posmask){
     itsPosMask=posmask;
   }
+
+  auto key2Mat = [](const Record& rec, const String& key, const Int npol) {
+     Matrix<Double> tmp;
+     //cerr << "KEY2mat " << rec.asArrayDouble(key).shape() << endl;
+     if(rec.asArrayDouble(key).shape().nelements()==1){
+       if(rec.asArrayDouble(key).shape()[0] != npol){
+	 tmp.resize(1,rec.asArrayDouble(key).shape()[0]);
+	 Vector<Double>tmpvec=rec.asArrayDouble(key);
+	 tmp.row(0)=tmpvec;
+       }
+       else{
+	 tmp.resize(rec.asArrayDouble(key).shape()[0],1);
+	 Vector<Double>tmpvec=rec.asArrayDouble(key);
+	 tmp.column(0)=tmpvec;
+       }
+	 
+     }
+     else{
+       tmp=rec.asArrayDouble(key);
+     }
+     return tmp;
+   };
+  
   Record SynthesisDeconvolver::getSubsetRobustStats(const Int chanBeg, const Int chanEnd){
     Record outRec;
     if(itsRobustStats.nfields()==0)
       return outRec;
-    Vector<Double> tmp;
+    Matrix<Double> tmp;
     std::vector<String> keys={"min", "max", "rms", "medabsdevmed", "med", "robustrms", "median"};
     for (auto it = keys.begin() ; it != keys.end(); ++it){
       if(itsRobustStats.isDefined(*it)){
 	tmp.resize();
-	tmp=itsRobustStats.asArrayDouble(*it);
+	tmp=key2Mat(itsRobustStats, *it, itsImages->residual()->shape()[2]);
+	/*
+	cerr << "size of " << *it << "   " << itsRobustStats.asArrayDouble(*it).shape() << endl;
+	if(itsRobustStats.asArrayDouble(*it).shape().nelements()==1){
+	  tmp.resize(1, itsRobustStats.asArrayDouble(*it).shape()[0]);
+	  Vector<Double>tmpvec=itsRobustStats.asArrayDouble(*it);
+	  tmp.row(0)=tmpvec;
+
+	}
+	else
+	  tmp=itsRobustStats.asArrayDouble(*it);
+	*/
 	//	cerr << std::setprecision(12) << tmp[chanBeg] << " bool " <<(tmp[chanBeg]> (C::dbl_max-(C::dbl_max*1e-15))) << endl;
-	if(tmp[chanBeg]> (C::dbl_max-(C::dbl_max*1e-15)))
+	if(tmp(0,chanBeg)> (C::dbl_max-(C::dbl_max*1e-15)))
 	  return Record();
-	outRec.define(*it, tmp(IPosition(1, chanBeg), IPosition(1, chanEnd)));     
+	//cerr << "GETSUB blc "<< IPosition(2, 0, chanBeg)<<  " trc " << IPosition(2, tmp.shape()[0]-1, chanEnd) << " shape " << tmp.shape() << endl;
+	outRec.define(*it, tmp(IPosition(2, 0, chanBeg), IPosition(2, tmp.shape()[0]-1, chanEnd)));     
       }
     }
     //cerr <<"chanbeg " << chanBeg << " chanend " << chanEnd << endl;
@@ -1111,20 +1151,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisDeconvolver::setSubsetRobustStats(const Record& inrec, const Int chanBeg, const Int chanEnd, const Int numchan){
     if(inrec.nfields()==0)
       return ;
-    Vector<Double> tmp;
+    Matrix<Double> tmp;
     std::vector<String> keys={"min", "max", "rms", "medabsdevmed", "med", "robustrms", "median"};
+   
     for (auto it = keys.begin() ; it != keys.end(); ++it){
       if(inrec.isDefined(*it)){
 	tmp.resize();
-	tmp=inrec.asArrayDouble(*it);
-	Vector<Double> outvec;
-	if(itsRobustStats.isDefined(*it))
-	  outvec=itsRobustStats.asArrayDouble(*it);
+	tmp=key2Mat(inrec, *it,itsImages->residual()->shape()[2] );
+	Matrix<Double> outvec;
+	if(itsRobustStats.isDefined(*it)){
+	  outvec=key2Mat(itsRobustStats, *it, itsImages->residual()->shape()[2]);	 
+	}
 	else{
-	  outvec.resize(numchan);
+	  outvec.resize(itsImages->residual()->shape()[2], numchan);
 	  outvec.set(C::dbl_max);
 	}
-	outvec(Slice(chanBeg, chanEnd-chanBeg+1))=tmp;
+	
+	
+	outvec(IPosition(2, 0, chanBeg), IPosition(2,outvec.shape()[0]-1, chanEnd))=tmp;
 	itsRobustStats.define(*it, outvec);     
       }
     }

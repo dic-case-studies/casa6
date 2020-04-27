@@ -28,7 +28,7 @@
 
 #include <QWidget>
 #include <QSettings>
-#include <display/QtPlotter/ColorSummaryWidget.ui.h>
+#include <ui/ui_ColorSummaryWidget.h>
 
 namespace casa {
 

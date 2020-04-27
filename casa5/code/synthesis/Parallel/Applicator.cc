@@ -61,7 +61,7 @@ Applicator::~Applicator()
 //  
   if (comm) {
     // If controller, then stop all worker processes
-    if (isController()) {
+    if (isController() && !(comm->isFinalized())) {
       comm->setTag(STOP);
       for (Int i=0; i<nProcs; i++) {
 	if (i != comm->controllerRank()) {
@@ -105,7 +105,8 @@ void Applicator::initThreads(Int argc, Char *argv[]){
 #else
   (void)argc;
   (void)argv;
-
+  cerr << " doing serial "<< endl;
+  initThreads();
 #endif
 }
 
@@ -120,20 +121,20 @@ void Applicator::destroyThreads(){
   if(initialized_p){
     if (comm) {
     // If controller, then stop all worker processes
-      if (isController() && !isSerial()) {
-        //comm->setTag(STOP);
-      for (Int i=0; i<nProcs; i++) {
-	if (i != comm->controllerRank()) {
-	  comm->connect(i);
-          comm->setTag(STOP);
-	  put(STOP);
+      if (isController() && !isSerial() && !(comm->isFinalized())) {
+              //comm->setTag(STOP);
+	for (Int i=0; i<nProcs; i++) {
+	  if (i != comm->controllerRank()) {
+	    comm->connect(i);
+	    comm->setTag(STOP);
+	    put(STOP);
 
+	  }
 	}
       }
-    }
       //delete comm; ///leaking this for now as if initialized from python..it brings down the whole house
       //comm=nullptr;
-  }
+    }
 
   }
 

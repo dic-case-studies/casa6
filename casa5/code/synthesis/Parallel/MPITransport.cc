@@ -72,9 +72,15 @@ MPITransport::MPITransport(Int argc, Char *argv[]) : PTransport()
 }
 
 MPITransport::~MPITransport(){
-   MPI_Finalize();
+  if(!isFinalized())
+    MPI_Finalize();
 }
 
+
+Bool  MPITransport::isFinalized(){
+
+    return MPI::Is_finalized();
+  }
 Int MPITransport::anyTag() 
 {
 // Return the value which indicates an unset tag
