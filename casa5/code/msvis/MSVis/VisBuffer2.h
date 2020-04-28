@@ -555,7 +555,7 @@ public:
     // the VisBuffer and the row IDs in the underlying casacore::MS main
     // virtual table:  mainTableID [i] = rowIds () [ i] = 0;
 
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const = 0; // [nR]
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const = 0; // [nR]
 
     // Returns the spectral window ID for the specified row.
 

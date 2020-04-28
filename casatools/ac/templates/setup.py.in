@@ -89,6 +89,8 @@ from os.path import isfile, join, islink
 from itertools import chain
 import argparse
 
+lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
@@ -837,21 +839,21 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                  '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
                                  '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
-                                 '-DCASATOOLS', '-Dcasacore=casa6core', '-DIMPLICIT_CTDS_32BIT' ] + platform_cflags[sys.platform],
+                                 '-DCASATOOLS', '-Dcasacore=casa6core' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-DIMPLICIT_CTDS_32BIT' ] \
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
                                       + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-DIMPLICIT_CTDS_32BIT' ] \
+                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core' ] \
                                         + platform_cflags[sys.platform] }
 
 def get_ccache():
@@ -1401,10 +1403,26 @@ def get_tp_libs():
             'fftw3','lapack','wcs','cfitsio','rpfits','blas'
         ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
 
+def get_gfortran_lib_path( ):
+    proc = Popen([ props['build.compiler.fortran'], "-print-search-dirs"], stdout=PIPE, stderr=PIPE )
+    out,err = pipe_decode(proc.communicate( ))
+    exit_code = proc.wait( )
+    if exit_code != 0:
+        sys.exit('failed to find libgfortran')
+
+    for line in out.split('\n'):
+        if line.startswith('libraries: ='):
+            for path in line[12:].split(':'):
+                if os.path.exists('%s/libgfortran.%s' % (path,lib_ext)):
+                    return os.path.abspath(path)
+
+    print("failed to locate gfortran using default path...")
+    return third_party_lib_path + '/lib/gcc5'
+
 # get architecture specific data used for linking
 def get_arch_link():
     if sys.platform == 'darwin':
-        archflags = ['-L' + third_party_lib_path + '/lib/gcc5']
+        archflags = ['-L' + get_gfortran_lib_path( )]
         archlibs = [ ]
     else:
         archflags = [ ]
@@ -1429,7 +1447,6 @@ c_target = "c_compile"
 # test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
-lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
 casac_dir = get_casac_dir()
 output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
 libcasatools = output_lib.format(libname='casatools')

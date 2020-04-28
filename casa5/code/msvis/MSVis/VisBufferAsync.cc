@@ -1007,7 +1007,7 @@ VisBufferAsync::setReceptor0Angle (const Vector<Float> & angles)
 }
 
 void
-VisBufferAsync::setRowIds (const Vector<uInt> & rowIds)
+VisBufferAsync::setRowIds (const Vector<casacore::rownr_t> & rowIds)
 {
     rowIds_p = rowIds;
 }

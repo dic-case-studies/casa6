@@ -640,7 +640,7 @@ void StatWtTVI::_weightSpectrumFlagsSlidingTimeWindow(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags
 ) const {
     // fish out the rows relevant to this subchunk
-    Vector<uInt> rowIDs;
+    Vector<casacore::rownr_t> rowIDs;
     getRowIds(rowIDs);
     auto start = _rowIDInMSTorowIndexInChunk.find(*rowIDs.begin());
     ThrowIf(
@@ -898,7 +898,7 @@ void StatWtTVI::_weightSingleChanBinBlockTimeProcessing(
 void StatWtTVI::_weightSingleChanBinSlidingTimeWindow(
     Matrix<Float>& wtmat, Int nrows
 ) const {
-    Vector<uInt> rowIDs;
+    Vector<casacore::rownr_t> rowIDs;
     getRowIds(rowIDs);
     auto start = _rowIDInMSTorowIndexInChunk.find(*rowIDs.begin());
     ThrowIf(
