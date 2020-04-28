@@ -70,6 +70,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           casacore::Bool autoMaskOn_p;
           casacore::Vector<casacore::Bool> chanFlag_p;
 	  casacore::Record statsRec_p;
+	  casacore::Record chanFlagRec_p;
 	  casacore::Bool status_p;
 	};
 	

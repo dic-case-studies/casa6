@@ -634,6 +634,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             itsChanFlag.resize(numchan);
             itsChanFlag.set(False);
           }
+	  Record chanflagRec;
           Int indexofretval=0;
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
@@ -700,7 +701,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             //# put chanflag
             chanFlag.resize();
             chanFlag=itsChanFlag(IPosition(1, chanRange[0]), IPosition(1, chanRange[1]));
-            Record chanflagRec;
+           
             chanflagRec.define("chanflag", chanFlag);
 	    Record statrec=getSubsetRobustStats(chanRange[0], chanRange[1]);
 	    chanflagRec.defineRecord("statsrec", statrec);
