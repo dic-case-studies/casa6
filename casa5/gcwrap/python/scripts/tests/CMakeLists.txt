@@ -110,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imhead.py
   test_immath.py
   test_immoments.py
-  test_impbcor.py
   test_importasap.py
   test_importasdm.py
   test_importasdm_mms.py
@@ -203,6 +202,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   ###
 
   test_req_tool_componentlistimage.py
+  test_req_tool_ia_pbcor.py
   test_req_tool_ia_transpose.py
 
   ###
@@ -220,6 +220,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_fluxscale.py
   test_req_task_gaincal.py
   test_req_task_imhead.py
+  test_req_task_impbcor.py
   test_req_task_importuvfits.py
   test_req_task_impv.py
   test_req_task_imrebin.py
