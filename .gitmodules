@@ -3,4 +3,4 @@
 	url = https://github.com/grpc/grpc
 [submodule "casatools/casacore"]
 	path = casatools/casacore
-	url = https://github.com/schiebel/casacore.git
+	url = https://github.com/casacore/casacore.git
