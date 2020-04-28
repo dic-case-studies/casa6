@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_imstat.py
+# test_req_tool_ia_statistics.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -33,7 +33,6 @@ import numbers
 
 try:
     from casatools import ctsys, image, table, quanta, regionmanager
-    from casatasks import imstat
     _tb = table()
     _qa = quanta()
     _rg = regionmanager()
@@ -44,7 +43,6 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
-    image = iatool
     # not a local tool
     _tb = tbtool()
     _qa = qatool()
@@ -61,9 +59,9 @@ except ImportError:
 datapath = 'image'
 
 '''
-Unit tests for task imstat.
+Unit tests for tool method ia.statistics().
 '''
-class imstat_test(unittest.TestCase):
+class ia_statistics_test(unittest.TestCase):
     
     # Input and output names
     moment = 'moment_map.im'
@@ -137,10 +135,12 @@ class imstat_test(unittest.TestCase):
     def test_moment_map_flux(self):
         """Test 1: verify moment maps can have flux densities computed in statistics"""
         shutil.copytree(os.path.join(self.datapath, self.moment), self.moment)
-        stats = imstat(imagename=self.moment)
+        _myia = image()
+        self.assertTrue(_myia.open(self.moment), "Failed to open image") 
+        stats = _myia.statistics()
+        _myia.done()
         mean = stats['mean']
         npts = stats['npts']
-        _myia = image()
         _myia.open(self.moment)
         summary = _myia.summary()
         _myia.close()
@@ -156,20 +156,16 @@ class imstat_test(unittest.TestCase):
         expected = (mean*npts/pixperbeam)[0]
         self.assertTrue(abs(got - expected) < 1e-11)
  
-    def test_box_param_can_have_spaces(self):
-        """ test that box parameter can have spaces, CAS-2050 """
-        shutil.copytree(os.path.join(self.datapath,self.s0_00015), self.s0_00015)
-        box = '0, 0,  1 ,   1'
-        stats = imstat(imagename=self.s0_00015, box=box)
-        self.assertTrue(stats['npts'] == 4) 
-        
     def test_CAS_2195_image_can_have_linear_rather_than_direction_coordinate(self):
         """ verify fix for CAS-2195, image has linear, not direction, coordinate"""
         myim = self.linear_coords
         shutil.copy(os.path.join(self.datapath,myim), myim)
         expected_max = [3, 10]
         expected_min = [4, 0]
-        stats = imstat(myim)
+        _myia = image()
+        self.assertTrue(_myia.open(myim), "Failed to open image")
+        stats = _myia.statistics()
+        _myia.done()
         self.assertTrue((stats['maxpos'] == expected_max).all())
         self.assertTrue((stats['minpos'] == expected_min).all())
             
@@ -220,13 +216,16 @@ class imstat_test(unittest.TestCase):
                     ]
                 ]
             ]
+        _myia = image()
         for i in range(len(axes)):
-            stats = imstat(myim, axes=axes[i])
+            self.assertTrue(_myia.open(myim), "Failed to open image")
+            stats = _myia.statistics(axes=axes[i])
+            _myia.done()
             self.assertTrue((stats['mean'] == expected_mean[i]).all())
             self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
             
     def test_stretch(self):
-        """ imstat: Test stretch parameter"""
+        """Test stretch parameter"""
         yy = image()
         mymask = "maskim"
         yy.fromshape(mymask, [200, 200, 1, 1])
@@ -237,32 +236,37 @@ class imstat_test(unittest.TestCase):
         yy.fromshape(imagename, shape)
         yy.addnoise()
         yy.done()
+        self.assertTrue(yy.open(imagename), "Failed to open image")
+        exception_thrown = False
         try:
-            OK = False
-            zz = imstat(
-                imagename=imagename, mask=mymask + ">0", stretch=False
-            )
+            zz = yy.statistics(mask=mymask + ">0", stretch=False)
         except:
-            OK = True
-        # CASA 5 returns False, CASA 6 returns exception
-        self.assertTrue(OK == is_CASA6)
-        zz = imstat(
-            imagename=imagename, mask=mymask + ">0", stretch=True
-        )
-        self.assertTrue(type(zz) == type({}) and (not zz == {}))
+            exception_thrown = True
+        finally:
+            yy.done()
+        self.assertTrue(exception_thrown)
+        self.assertTrue(yy.open(imagename), "Failed to open image")
+        zz = yy.statistics(mask=mymask + ">0", stretch=True)
         yy.done()
+        self.assertTrue(type(zz) == type({}) and (not zz == {}))
    
     def test_logfile_param(self):
         """test logfile """
-        logfile = "imstat.log"
+        logfile = "ia_statistics.log"
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
         i = 1
+        myia = self._myia
         for append in [False, True]:
-            stats = imstat(myim, axes=[0], logfile=logfile, append=append)
+            self.assertTrue(myia.open(myim), "Failed to open image")
+            stats = myia.statistics(
+                robust=True, axes=[0], logfile=logfile, append=append
+            )
+            myia.done()
             size = os.path.getsize(logfile)
             # appending, second time through size should double
-            self.assertTrue(size > 1.2e4*i and size < 1.3e4*i )
+            print("i",i)
+            self.assertTrue(size > 1.1e4*i and size < 1.2e4*i )
             i = i+1
 
     def test_multiple_region_support(self):
@@ -272,7 +276,11 @@ class imstat_test(unittest.TestCase):
         myia.fromshape("test011.im", shape)
         box = "0, 0, 2, 2, 4, 4, 6, 6"
         chans = "0~4, 6, >8"
-        bb = imstat(imagename=myia.name(), chans=chans, box=box)
+        reg = _rg.frombcs(
+            csys=myia.coordsys().torecord(), shape=myia.shape(),
+            box=box, chans=chans
+        )
+        bb = myia.statistics(region=reg)
         myia.done()
         self.assertTrue(bb["npts"][0] == 126)
             
@@ -282,10 +290,10 @@ class imstat_test(unittest.TestCase):
         myia = self._myia
         imagename = "hftest.im"
         myia.fromarray(imagename, data)
+        classic = myia.statistics(algorithm="cl")
+        hfall = myia.statistics(algorithm="h")
+        hf0 = myia.statistics(robust=True, algorithm="h", fence=0)
         myia.done()
-        classic = imstat(imagename, algorithm="cl")
-        hfall = imstat(imagename=imagename, algorithm="h")
-        hf0 = imstat(imagename=imagename, algorithm="h", fence=0)
         for k in classic.keys():
             if type(classic[k]) == np.ndarray:
                 if k == 'sigma':
@@ -308,10 +316,11 @@ class imstat_test(unittest.TestCase):
         myia.done()
         for center in ["mean", "median", "zero"]:
             for lside in [True, False]:
-                res = imstat(
-                    imagename=imagename, algorithm="f",
-                    center=center, lside=lside
+                self.assertTrue(myia.open(imagename), "Failed to open image")
+                res = myia.statistics(
+                    robust=True, algorithm="f", center=center, lside=lside
                 )
+                myia.done()
                 if (lside):
                     if (center == "mean"):
                         self.assertTrue(res['npts'][0] == 116)
@@ -390,7 +399,10 @@ class imstat_test(unittest.TestCase):
         myia.done()
         for zscore in [3.5, -1]:
             for maxiter in [0, 1, -1]:
-                stats = imstat(imagename=imagename, algorithm="ch", zscore=zscore, maxiter=maxiter)
+                self.assertTrue(myia.open(imagename), "Failed to open image")
+                stats = myia.statistics(
+                    algorithm="ch", zscore=zscore, maxiter=maxiter
+                )
                 if zscore == 3.5:
                     if maxiter == 0:
                         enpts = 106
@@ -420,9 +432,12 @@ class imstat_test(unittest.TestCase):
         imagename = "internally_excluded_region.im"
         myia.fromshape(imagename, [100, 200, 110, 4])
         myia.addnoise()
+        reg = _rg.frombcs(
+            csys=myia.coordsys().torecord(), shape=myia.shape(),
+            chans="10~20;60~90", stokes="IV"
+        )
+        zz = myia.statistics(axes=[0, 1], region=reg)
         myia.done()
-        zz = imstat(imagename, axes=[0, 1], chans="10~20;60~90", stokes="IV")
-        print("shape", zz['npts'].shape)
         self.assertTrue((zz['npts'].shape == (42, 2)))
         self.assertTrue(np.min(zz['npts']) > 0)
 
@@ -431,7 +446,9 @@ class imstat_test(unittest.TestCase):
         myia = image()
         imagename = os.path.join(self.datapath,"biweight_test.im")
         for niter in (20, 2, -1):
-            res = imstat(imagename=imagename, algorithm='b', niter=niter)
+            self.assertTrue(myia.open(imagename), "Failed to open image")
+            res = myia.statistics(algorithm='b', niter=niter)
+            myia.done()
             self.assertAlmostEqual(res['min'][0], -5.48938513)
             self.assertAlmostEqual(res['max'][0], 104.80391693)
             self.assertEqual(res['npts'][0], 1.25000000e+08)
@@ -446,7 +463,7 @@ class imstat_test(unittest.TestCase):
                 self.assertAlmostEqual(res['mean'][0], 0.00284497)
 
 def suite():
-    return [imstat_test]
+    return [ia_statistics_test]
     
 if __name__ == '__main__':
     unittest.main()

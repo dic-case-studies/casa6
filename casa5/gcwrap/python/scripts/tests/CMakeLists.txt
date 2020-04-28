@@ -122,7 +122,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_importvla.py
   test_imregrid.py
   test_imsmooth.py
-  test_imstat.py
   test_imval.py
   test_initweights.py
   test_listfits.py
@@ -204,6 +203,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   test_req_tool_componentlistimage.py
   test_req_tool_ia_transpose.py
+  test_req_tool_ia_statistics.py
 
   ###
 
