@@ -134,13 +134,12 @@ class imstat_test(unittest.TestCase):
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-    def test001(self):
+    def test_moment_map_flux(self):
         """Test 1: verify moment maps can have flux densities computed in statistics"""
         shutil.copytree(os.path.join(self.datapath, self.moment), self.moment)
         stats = imstat(imagename=self.moment)
         mean = stats['mean']
         npts = stats['npts']
-
         _myia = image()
         _myia.open(self.moment)
         summary = _myia.summary()
@@ -157,34 +156,25 @@ class imstat_test(unittest.TestCase):
         expected = (mean*npts/pixperbeam)[0]
         self.assertTrue(abs(got - expected) < 1e-11)
  
-    def test007(self):
-        """ Test 7: test that box parameter can have spaces, CAS-2050 """
+    def test_box_param_can_have_spaces(self):
+        """ test that box parameter can have spaces, CAS-2050 """
         shutil.copytree(os.path.join(self.datapath,self.s0_00015), self.s0_00015)
         box = '0, 0,  1 ,   1'
         stats = imstat(imagename=self.s0_00015, box=box)
         self.assertTrue(stats['npts'] == 4) 
         
-    def test008(self):
-        """ Test 8: verify fix for CAS-2195"""
-       
-        def test_imstat(im):
-            return imstat(im)
-            
+    def test_CAS_2195_image_can_have_linear_rather_than_direction_coordinate(self):
+        """ verify fix for CAS-2195, image has linear, not direction, coordinate"""
         myim = self.linear_coords
         shutil.copy(os.path.join(self.datapath,myim), myim)
         expected_max = [3, 10]
         expected_min = [4, 0]
-        for code in [test_imstat]:
-            stats = code(myim)
-            self.assertTrue((stats['maxpos'] == expected_max).all())
-            self.assertTrue((stats['minpos'] == expected_min).all())
+        stats = imstat(myim)
+        self.assertTrue((stats['maxpos'] == expected_max).all())
+        self.assertTrue((stats['minpos'] == expected_min).all())
             
-    def test009(self):
-        """ Test 9: choose axes works"""
-       
-        def test_imstat(image, axes):
-            return imstat(image, axes=axes)
-            
+    def test_specifying_axes_param(self):
+        """choose axes works"""
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
         axes = [-1, [0, 1, 2], [0, 1], 3]
@@ -231,10 +221,9 @@ class imstat_test(unittest.TestCase):
                 ]
             ]
         for i in range(len(axes)):
-            for code in [test_imstat]:
-                stats = code(myim, axes[i])
-                self.assertTrue((stats['mean'] == expected_mean[i]).all())
-                self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
+            stats = imstat(myim, axes=axes[i])
+            self.assertTrue((stats['mean'] == expected_mean[i]).all())
+            self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
             
     def test_stretch(self):
         """ imstat: Test stretch parameter"""
@@ -263,36 +252,26 @@ class imstat_test(unittest.TestCase):
         self.assertTrue(type(zz) == type({}) and (not zz == {}))
         yy.done()
    
-    def test010(self):
+    def test_logfile_param(self):
         """test logfile """
-        def test_imstat(image, axes, logfile, append):
-            return imstat(image, axes=axes, logfile=logfile, append=append, verbose=True)
-            
         logfile = "imstat.log"
-        i = 1
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
-        for code in [test_imstat]:
-            append = False
-            if i == 2:
-                append = True
-            stats = code(myim, [0], logfile, append)
+        i = 1
+        for append in [False, True]:
+            stats = imstat(myim, axes=[0], logfile=logfile, append=append)
             size = os.path.getsize(logfile)
             # appending, second time through size should double
             self.assertTrue(size > 1.2e4*i and size < 1.3e4*i )
             i = i+1
 
-    def test011(self):
+    def test_multiple_region_support(self):
         """ test multiple region support"""
         shape = [10, 10, 10]
         myia = self._myia
         myia.fromshape("test011.im", shape)
         box = "0, 0, 2, 2, 4, 4, 6, 6"
         chans = "0~4, 6, >8"
-        reg = _rg.frombcs(
-            myia.coordsys().torecord(), shape,
-            box=box, chans=chans
-        )
         bb = imstat(imagename=myia.name(), chans=chans, box=box)
         myia.done()
         self.assertTrue(bb["npts"][0] == 126)
