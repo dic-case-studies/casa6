@@ -912,7 +912,7 @@ void MatrixCleaner::makePsfScales(){
     fft.fft0((itsPsfConvScales[scale]), cWork, false);
     fft.flip(itsPsfConvScales[scale], false, false);
 
-    cout << "psf scale " << scale << " " << max(itsPsfConvScales[scale]) << " " << min(itsPsfConvScales[scale]) << endl;
+    //cout << "psf scale " << scale << " " << max(itsPsfConvScales[scale]) << " " << min(itsPsfConvScales[scale]) << endl;
 
     for (Int otherscale=scale; otherscale<itsNscales; otherscale++) {
 

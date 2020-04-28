@@ -79,7 +79,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsInitScaleSizes(0),
   itsAspScaleSizes(0),
   itsAspAmplitude(0),
-  itsNInitScales(4)
+  itsNInitScales(4),
+  itsPrevLBFGSGrad(0.0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -1005,10 +1006,13 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   {
     // lbfgs optimization
     LBFGSParam<double> param;
-    param.epsilon = 1e-4;
+    param.epsilon = 1e-2;
     //param.epsilon = 1;
+    param.max_linesearch = 10;
     param.min_step = 1e-30;
     param.max_iterations = 2;
+    param.gclip = itsPrevLBFGSGrad;
+      
     //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE; genie: doesn't work
     LBFGSSolver<double> solver(param);
 
@@ -1041,9 +1045,13 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
     //cout << "Before: x = " << x << endl;
     double fx;
-    int niter = solver.minimize(fun, x, fx); //genie epsilon needs to be fixed "nan"
+    double gclip;
+    int niter = solver.minimize(fun, x, fx, gclip); //genie epsilon needs to be fixed "nan"
 
     std::cout << niter << " iterations" << std::endl;
+    if (itsPrevLBFGSGrad == 0.0)
+      itsPrevLBFGSGrad = gclip;
+    std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
     //std::cout << "x = \n" << x.transpose() << std::endl;
     //std::cout << "f(x) = " << fx << std::endl;
     //std::cout << "float is " << Float(x[1]) << endl;

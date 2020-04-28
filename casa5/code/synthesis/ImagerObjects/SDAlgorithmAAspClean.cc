@@ -127,8 +127,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //itsScaleSizes.push_back(itsCleaner.getActiveSetAspen()); genie old
     itsScaleSizes.clear();
     itsScaleSizes = itsCleaner.getActiveSetAspen();
-    for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
-      cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;
+    /*for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
+      cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;*/
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
     itsScaleSizes.push_back(0.0); // put 0 scale
     Vector<Float> scaleSizes(itsScaleSizes);
