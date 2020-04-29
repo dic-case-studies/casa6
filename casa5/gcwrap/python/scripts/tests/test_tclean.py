@@ -136,7 +136,7 @@ else:
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube,test_hetarray_imaging]
+#     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube,test_hetarray_imaging]
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
@@ -3773,6 +3773,7 @@ class test_mosaic_mtmfs(testref_base):
 ###########################################################
 class test_mosaic_cube(testref_base):
      def test_cube_standard_onefield(self):
+          """ [mosaic_cube] Test_cube_standard_onefield : One field, standard gridder  """
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = ''
           field='0'
@@ -3798,6 +3799,7 @@ class test_mosaic_cube(testref_base):
           self.checkfinal(report1+report2+report3+report4)
      
      def test_cube_standard_twofield(self):
+          """ [mosaic_cube] Test_cube_standard_twofield : two field, cube imaging with standard gridder  """
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
@@ -4141,6 +4143,88 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+
+######
+# wprojecton tests 
+     def test_cube_wproj_onefield(self):
+          """ [test_mosaic_cube] test_cube_wproj_onefield : One field, widefield cube imaging with wprojection gridder """
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = ''
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10409939289,[512,596,0,0]),(self.img+'.image.pbcor',0.983174622059,[512,596,0,1]),(self.img+'.image.pbcor',0.896172583103,[512,596,0,2])])
+
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
+
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10441792011,[512,596,0,0]),(self.img+'.image.pbcor',0.98375672102,[512,596,0,1]),(self.img+'.image.pbcor',0.897617280483,[512,596,0,2])])
+
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+
+     def test_cube_wproj_onefield_autowprojplanes(self):
+          """ [test_mosaic_cube] test_cube_wproj_onefield_auotwprojplanes : One field, widefield cube imaging, gridder='wproject', automaticalluy calculate wprojplanes  """
+          # reduce the imsize to 512 so for faster excution
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = '' 
+          field='0'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=512, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=-1, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.09958565,[256,340,0,0]),(self.img+'.image.pbcor',0.97893494,[256,340,0,1]),(self.img+'.image.pbcor',0.89169014,[256,340,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
+          
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=512, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=-1, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10441792011,[256,340,0,0]),(self.img+'.image.pbcor',0.98375672102,[256,340,0,1]),(self.img+'.image.pbcor',0.897617280483,[256,340,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
+          self.checkfinal(report1+report2+report3+report4)
+          
+     def test_cube_wproj_twofield(self):
+          """ [test_mosaic_cube] test_cube_wproj_twofield : Two fields, widefield cube imaging with wprojection """
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4,  pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',0.894496798515,[512,596,0,0]),(self.img+'.image.pbcor',0.701376080513,[512,596,0,1]),(self.img+'.image.pbcor',0.539906442165,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report2 = self.th.checkval(spectral_index,-1.24515141863, valname='Spectral flux', exact=False)
+
+          tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
+ 
+          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',0.894754827023,[512,596,0,0]),(self.img+'.image.pbcor',0.701884686947,[512,596,0,1]),(self.img+'.image.pbcor',0.540905594826,[512,596,0,2])])
+          
+          source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
+          source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
+          v0 = 1.2 #In GHz
+          v2 = 1.8 #In GHz
+          spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
+          report4 = self.th.checkval(spectral_index, -1.24130281995, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
 
 ###########################################################
