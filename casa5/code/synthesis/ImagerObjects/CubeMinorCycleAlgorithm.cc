@@ -86,10 +86,9 @@ void CubeMinorCycleAlgorithm::put() {
   applicator.put(chanRange_p);
 	//cerr << "in put " << status_p << endl;
   //#2 chanflag
-  Record chanflagRec;
-  chanflagRec.define("chanflag", chanFlag_p);
-  chanflagRec.defineRecord("statsrec", statsRec_p);
-  applicator.put(chanflagRec);
+  chanFlagRec_p.define("chanflag", chanFlag_p);
+  chanFlagRec_p.defineRecord("statsrec", statsRec_p);
+  applicator.put(chanFlagRec_p);
   ///#3 return record of deconvolver
   // cerr << "nfield " << returnRec_p.nfields() << endl;
   SIMinorCycleController::compressSummaryMinor(returnRec_p);
@@ -253,6 +252,7 @@ void CubeMinorCycleAlgorithm::reset(){
   autoMaskOn_p=False;
   chanFlag_p.resize();
   statsRec_p=Record();
+  chanFlagRec_p=Record();
   status_p=False;
                 
 	
