@@ -316,7 +316,7 @@
         {
              "testNumber":"3171",
              "testName":"Statwt",
-             "testScript":"test_statwt",
+             "testScript":"test_req_task_statwt",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",

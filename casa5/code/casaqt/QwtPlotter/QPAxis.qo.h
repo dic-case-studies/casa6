@@ -39,7 +39,7 @@
 #include <casaqt/QwtPlotter/AxisListener.h>
 #include <casaqt/QwtPlotter/QPPlotItem.qo.h>
 
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_plot_picker.h>
 
 #include <QtGui>
 

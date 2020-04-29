@@ -33,7 +33,7 @@
 #include <QVariantMap>
 #include <QString>
 #include <casaqt/QtPlotServer/QtPlotServer.qo.h>
-#include <qwt_plot_spectrogram.h>
+#include <qwt/qwt_plot_spectrogram.h>
 
 class QwtPlotItem;
 class QDockWidget;

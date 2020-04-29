@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <QProgressDialog>
-#include <display/QtPlotter/SpecFitSettingsWidgetRadio.ui.h>
+#include <ui/ui_SpecFitSettingsWidgetRadio.h>
 #include <display/QtPlotter/ProfileTaskFacilitator.h>
 #include <display/QtPlotter/GaussianEstimateDialog.qo.h>
 #include <casa/Containers/Record.h>

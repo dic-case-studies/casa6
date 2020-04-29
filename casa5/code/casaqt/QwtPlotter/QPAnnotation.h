@@ -32,7 +32,7 @@
 #include <graphics/GenericPlotter/PlotAnnotation.h>
 #include <casaqt/QwtPlotter/QPPlotItem.qo.h>
 
-#include <qwt_text.h>
+#include <qwt/qwt_text.h>
 
 namespace casa {
 

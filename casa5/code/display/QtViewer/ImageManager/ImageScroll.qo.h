@@ -26,7 +26,7 @@
 #define IMAGESCROLL_QO_H
 
 #include <display/QtViewer/ImageManager/ImageView.qo.h>
-#include <display/QtViewer/ImageManager/ImageScroll.ui.h>
+#include <ui/ui_ImageScroll.h>
 #include <QWidget>
 
 class QDragMoveEvent;
