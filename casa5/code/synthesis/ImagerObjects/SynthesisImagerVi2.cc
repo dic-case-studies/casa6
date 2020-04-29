@@ -1669,15 +1669,18 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
           //cerr << retvals << endl;
           throw(AipsError("One or more  of the cube section failed in de/gridding"));  
         }
-        if(!dopsf)
-          (itsMappers.imageStore(0))->copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
-
-        
-
-        
+        if(!dopsf){
+          try{
+            (itsMappers.imageStore(0))->copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
+          }
+          catch(AipsError &x) {
+            if(!String(x.getMesg()).contains("T/F"))
+              throw(AipsError(x.getMesg()));
+            ///ignore copy mask error and proceed as this happens with interactive
+          }
         }
-       
-	  
+
+        }  
 	  
   
 	return true;
