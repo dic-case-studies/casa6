@@ -221,6 +221,8 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
         ## Take initial INT_dirty image to flat-sky. 
         sdintlib.modify_with_pb(inpcube=int_cube+'.residual',
                                     pbcube=int_cube+'.pb',
+                                    cubewt=int_cube+'.sumwt',
+                                chanwt=inparm['chanwt'],
                                     action='div',
                                     pblimit=inparm['pblimit'],
                                     freqdep=True)
@@ -231,7 +233,8 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
                                 jointcube=joint_cube+'.residual', ## output
                                 sdgain=inparm['sdgain'],
                                 dishdia=inparm['dishdia'],
-                                usedata=inparm['usedata'])
+                                usedata=inparm['usedata'],
+                                chanwt = inparm['chanwt'])
 
     if applypb==True:
         if inparm['specmode'].count('cube')>0:
@@ -242,6 +245,8 @@ def feather_residual(int_cube, sd_cube, joint_cube, applypb, inparm):
             fdep_pb = False
         sdintlib.modify_with_pb(inpcube=joint_cube+'.residual',
                                 pbcube=int_cube+'.pb',
+                                cubewt=int_cube+'.sumwt',
+                                chanwt=inparm['chanwt'],
                                 action='mult',
                                 pblimit=inparm['pblimit'],
                                 freqdep=fdep_pb)
@@ -457,9 +462,6 @@ def sdintimaging(
         casalog.post("Currently, only the multi-term MFS algorithm is supported for specmode=mfs. To make a single plane MFS image (while retaining the frequency dependence for the cube major cycle stage), please pick nterms=1 along with deconvolver=mtmfs. The scales parameter is still usable for multi-scale multi-term deconvolution","WARN","task_sdintimaging")
         return;
 
-    if specmode=='mfs' or specmode=='cont':
-        if nchan>100:
-            casalog.post("For wideband continuum imaging, it may be possible to reduce the number of channels in the grid step to (say) one per spectral window instead of the chosen nchan of "+str(nchan)+". This will reduce compute time used for feathering each plane separately.", "WARN", "task_sdintimaging")
 
     if parallel==True:
         casalog.post("Cube parallelization (all major cycles) is currently not supported via task_sdintimaging. This will be enabled after a cube parallelization rework.")
@@ -574,51 +576,30 @@ def sdintimaging(
         ####now is the time to check estimated memory
         # need to move to somewhere below???
         imager.estimatememory()
-            
-        ##if niter>0:
-        ##    t0=time.time();
-        ##    imager.initializeIterationControl()
-        ##    t1=time.time();
-        ##    casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-            
-        #### MOVE THIS SECTION to setup_imager ....for sdint
-        ## Make PSF
-        #if calcpsf==True:
-        #    t0=time.time();
-             
-        #    imager.makePSF()
-        #    if((psfphasecenter != '') and (gridder=='mosaic')):
-        #        print("doing with different phasecenter psf")
-        #        imager.unlockimages(0)
-        #        psfParameters=paramList.getAllPars()
-        #        psfParameters['phasecenter']=psfphasecenter
-        #        psfParamList=ImagerParameters(**psfParameters)
-        #        psfimager=imagerInst(params=psfParamList)
-        #        psfimager.initializeImagers()
-        #        psfimager.setWeighting()
-        #        psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
-        #    t1=time.time();
-        #    casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
-        #    imager.makePB()
+        ## Do sanity checks on INT and SD cubes
+        ### Frequency range of cube, data selection range. mtmfs reffreq.
+        ### nchan too small or too large
+        ### sumwt : flagged channels in int cubes
+        ### sd cube empty channels ? Weight image ? 
+        validity, inpparams = sdintlib.check_coords(intres=int_cube+'.residual', intpsf=int_cube+'.psf', 
+                                         intwt = int_cube+'.sumwt', 
+                                         sdres=sd_cube+'.residual', sdpsf=sd_cube+'.psf',
+                                         sdwt = '',
+                                         pars=inpparams)
 
-        #    t2=time.time();
-        #    casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
+        if validity==False:
+            casalog.post('Exiting from the sdintimaging task due to inconsistencies found between the interferometer-only and singledish-only image and psf cubes. Please modify inputs as needed','WARN')
+            if imager != None:
+                imager.deleteTools()
+            if deconvolver != None:
+                deconvolver.deleteTools()
+            deleteTmpFiles()
+            return
 
-        # Done inside setup_imager
-        #if niter >=0 : 
-
-            ## Make dirty image
-        #    if calcres==True:
-        #        t0=time.time();
-        #        imager.runMajorCycle()
-        #        t1=time.time();
-        #        casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean"); 
-
-            ## In case of no deconvolution iterations....
-        #    if niter==0 and calcres==False:
-        #        if savemodel != "none":
-        #            imager.predictModel()
+        #### inpparams now has a new parameter "chanwt" with ones and zeros to indicate chans
+        ####  that have data from both INT and SD cubes (they are the 'ones'). This is to be used in 
+        ####  feathering and in the cube-to-taylor sum and modify_with_pb. 
 
         #### END MOVE THIS SECTION to setup_imager ....for sdint
 
@@ -631,7 +612,8 @@ def sdintimaging(
                                 jointcube=joint_cube+'.psf',
                                 sdgain=sdgain,
                                 dishdia=dishdia,
-                                usedata=usedata)
+                                usedata=usedata,
+                                chanwt = inpparams['chanwt'])
 
         ###############
         ##### Placeholder code for PSF renormalization if needed
@@ -648,12 +630,14 @@ def sdintimaging(
             casalog.post("Calculate spectral PSFs and Taylor Residuals...")
             sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.psf',
                                         cubewt=int_cube+'.sumwt',
+                                        chanwt=inpparams['chanwt'],
                                         mtname=joint_multiterm+'.psf',
-                                        nterms=nterms, reffreq=reffreq, dopsf=True)
+                                        nterms=nterms, reffreq=inpparams['reffreq'], dopsf=True)
             sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
                                         cubewt=int_cube+'.sumwt',
+                                        chanwt=inpparams['chanwt'],
                                         mtname=joint_multiterm+'.residual',
-                                        nterms=nterms, reffreq=reffreq, dopsf=False)
+                                        nterms=nterms, reffreq=inpparams['reffreq'], dopsf=False)
 
 
         if niter>0 :
@@ -673,7 +657,7 @@ def sdintimaging(
                     ## Convert Taylor model coefficients into a model cube : int_cube.model
                     sdintlib.taylor_model_to_cube(cubename=int_cube, ## output 
                                               mtname=joint_multiterm,  ## input
-                                              nterms=nterms, reffreq=reffreq)
+                                              nterms=nterms, reffreq=inpparams['reffreq'])
                 else:
                     ## Copy the joint_model cube to the int_cube.model
                     shutil.rmtree(int_cube+'.model',ignore_errors=True)
@@ -684,8 +668,10 @@ def sdintimaging(
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
                     sdintlib.modify_with_pb(inpcube=int_cube+'.model',
-                                        pbcube=int_cube+'.pb',
-                                        action='div', pblimit=pblimit,freqdep=False)
+                                            pbcube=int_cube+'.pb',
+                                            cubewt=int_cube+'.sumwt',
+                                            chanwt=inpparams['chanwt'],
+                                            action='div', pblimit=pblimit,freqdep=False)
 
                 if usedata!="int":
                     ## copy the int_cube.model to the sd_cube.model
@@ -695,8 +681,10 @@ def sdintimaging(
                 if applypb==True:
                     ## Multiply flat-sky model with freq-dep PB
                     sdintlib.modify_with_pb(inpcube=int_cube+'.model',
-                                        pbcube=int_cube+'.pb',
-                                        action='mult', pblimit=pblimit, freqdep=True)
+                                            pbcube=int_cube+'.pb',
+                                            cubewt=int_cube+'.sumwt',
+                                            chanwt=inpparams['chanwt'],
+                                            action='mult', pblimit=pblimit, freqdep=True)
 
                 ## Major cycle for interferometer data
                 t0=time.time();
@@ -722,8 +710,9 @@ def sdintimaging(
                     ## Calculate Spectral Taylor Residuals
                     sdintlib.cube_to_taylor_sum(cubename=joint_cube+'.residual',
                                                 cubewt=int_cube+'.sumwt',
+                                                chanwt=inpparams['chanwt'],
                                                 mtname=joint_multiterm+'.residual',
-                                                nterms=nterms, reffreq=reffreq, dopsf=False)
+                                                nterms=nterms, reffreq=inpparams['reffreq'], dopsf=False)
 
 
 

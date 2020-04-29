@@ -73,7 +73,7 @@ class SDINT_helper:
         
 ################################################
 
-    def feather_int_sd(self,sdcube='', intcube='', jointcube='',sdgain=1.0,dishdia=100.0, usedata='sdint'): 
+    def feather_int_sd(self,sdcube='', intcube='', jointcube='',sdgain=1.0,dishdia=100.0, usedata='sdint', chanwt=''): 
 #, pbcube='',applypb=False, pblimit=0.2):
         """
         Run the feather task to combine the SD and INT Cubes. 
@@ -99,34 +99,36 @@ class SDINT_helper:
             _ib = image()
             
             _ia.open(jointcube)
+            _ia.set(0.0) ## Initialize this to zero for all planes
            
             for i in range(len(freqlist)):	
-                freqdishdia = dishdia ## * (freqlist[0] / freqlist[i]) # * 0.5
+                if chanwt[i] != 0.0 : ## process only the nonzero channels
+                    freqdishdia = dishdia ## * (freqlist[0] / freqlist[i]) # * 0.5
                 
-                os.system('rm -rf tmp_*')
-                #imsubimage(imagename = sdcube, outfile = 'tmp_sdplane', chans = str(i));
-                #imsubimage(imagename = intcube, outfile = 'tmp_intplane', chans = str(i));
-                self.createplaneimage(imagename=sdcube, outfile='tmp_sdplane', chanid = str(i));
-                self.createplaneimage(imagename=intcube, outfile='tmp_intplane', chanid = str(i));
+                    os.system('rm -rf tmp_*')
+                    #imsubimage(imagename = sdcube, outfile = 'tmp_sdplane', chans = str(i));
+                    #imsubimage(imagename = intcube, outfile = 'tmp_intplane', chans = str(i));
+                    self.createplaneimage(imagename=sdcube, outfile='tmp_sdplane', chanid = str(i));
+                    self.createplaneimage(imagename=intcube, outfile='tmp_intplane', chanid = str(i));
 
-                #feather(imagename = 'tmp_jointplane', highres = 'tmp_intplane', lowres = 'tmp_sdplane', sdfactor = sdgain, effdishdiam=freqdishdia)
-                # feathering via toolkit
-                try: 
-                    print("start Feathering.....")
-                    imFea=imager( )
-                    imFea.setvp(dovp=True)
-                    imFea.setsdoptions(scale=sdgain)
-                    imFea.feather(image='tmp_jointplane',highres='tmp_intplane',lowres='tmp_sdplane', effdishdiam=freqdishdia)
-                    imFea.done( )
-                    del imFea
-                except Exception as instance:
-                    print('*** Error *** %s' % instance)
-                    raise 
+                    #feather(imagename = 'tmp_jointplane', highres = 'tmp_intplane', lowres = 'tmp_sdplane', sdfactor = sdgain, effdishdiam=freqdishdia)
+                    # feathering via toolkit
+                    try: 
+                        casalog.post("start Feathering.....")
+                        imFea=imager( )
+                        imFea.setvp(dovp=True)
+                        imFea.setsdoptions(scale=sdgain)
+                        imFea.feather(image='tmp_jointplane',highres='tmp_intplane',lowres='tmp_sdplane', effdishdiam=freqdishdia)
+                        imFea.done( )
+                        del imFea
+                    except Exception as instance:
+                        print('*** Error *** %s' % instance)
+                        raise 
 
-                _ib.open('tmp_jointplane')
-                pixjoint = _ib.getchunk()
-                _ib.close()
-                _ia.putchunk(pixjoint, blc=[0,0,0,i])
+                    _ib.open('tmp_jointplane')
+                    pixjoint = _ib.getchunk()
+                    _ib.close()
+                    _ia.putchunk(pixjoint, blc=[0,0,0,i])
             
             _ia.close()
 
@@ -197,13 +199,14 @@ class SDINT_helper:
 
 ################################################
 
-    def modify_with_pb(self, inpcube='', pbcube='', action='mult',pblimit=0.2, freqdep=True):
+    def modify_with_pb(self, inpcube='', pbcube='',cubewt='', chanwt='', action='mult',pblimit=0.2, freqdep=True):
         """
         Multiply or divide by the PB
 
         freqdep = True :  Channel by channel
         freqdep = False : Before/After deconvolution, use a freq-independent PB from the middle of the list
         """
+        casalog.post('Modify with PB : ' + action + ' with frequency dependence ' + str(freqdep))
 
         freqlist = self.getFreqList(inpcube)
 
@@ -211,12 +214,45 @@ class SDINT_helper:
         shp=_ia.shape()
         _ia.close()
 
-        #midchan = int(len(freqlist)/2)
-        #refchan = len(freqlist)-1   ## This assumes ascending frequency ordering in chans.
+        ##############
+        ### Calculate a reference Primary Beam
+        ### Weighted sum of pb cube
+
+        ##midchan = int(len(freqlist)/2)
+        ##refchan = len(freqlist)-1   ## This assumes ascending frequency ordering in chans.
         refchan=0
         _ia.open(pbcube)
         pbplane = _ia.getchunk(blc=[0,0,0,refchan],trc=[shp[0],shp[1],0,refchan])
         _ia.close()
+        pbplane.fill(0.0)
+
+#        pbplane = np.zeros( (shp[0],shp[1]), 'float')
+
+        if freqdep==False:
+            _ia.open(cubewt)
+            cwt = _ia.getchunk()[0,0,0,:]
+            _ia.close()
+
+            if shp[3] != len(cwt) or len(freqlist) != len(cwt):
+                raise Exception("Modify with PB : Nchan shape mismatch between cube and sumwt.")
+
+            cwt = cwt * chanwt  ## Merge the weights and flags
+
+            sumchanwt = np.sum(cwt)
+
+            if sumchanwt==0:
+                raise Exception("Weights are all zero ! ")
+                
+            for i in range(len(freqlist)):
+                ## Read the pb per plane
+                _ia.open(pbcube)
+                pbplane = pbplane + cwt[i] * _ia.getchunk(blc=[0,0,0,i],trc=[shp[0],shp[1],0,i])
+                _ia.close()
+                
+            pbplane = pbplane / sumchanwt
+
+        ##############
+
 
         ## Special-case for setting the PBmask to be same for all freqs
         if freqdep==False:
@@ -306,7 +342,7 @@ class SDINT_helper:
         _ia.done() 
 
 ################################################
-    def cube_to_taylor_sum(self, cubename='', cubewt='', mtname='',reffreq='1.5GHz',nterms=2,dopsf=False):
+    def cube_to_taylor_sum(self, cubename='', cubewt='', chanwt='', mtname='',reffreq='1.5GHz',nterms=2,dopsf=False):
         """
         Convert Cubes (output of major cycle) to Taylor weighted averages (inputs to the minor cycle)
         Input : Cube
@@ -314,6 +350,8 @@ class SDINT_helper:
         """
 
         refnu = _qa.convert( _qa.quantity(reffreq) ,'Hz' )['value']
+
+        #print("&&&&&&&&& REF FREQ : " + str(refnu))
 
         pix=[]
 
@@ -336,17 +374,20 @@ class SDINT_helper:
         cwt = _ia.getchunk()[0,0,0,:]
         _ia.close()
 
+
         freqlist = self.getFreqList(cubename)
 
         if shp[3] != len(cwt) or len(freqlist) != len(cwt):
-            print("Nchan shape mismatch between cube and sumwt.")
+            raise Exception("Nchan shape mismatch between cube and sumwt.")
 
-        sumchanwt = np.sum(cwt)
+        cwt = cwt * chanwt  ## Merge the weights and flags. 
+
+        sumchanwt = np.sum(cwt)  ## This is a weight
 
         if sumchanwt==0:
-            print("Weights are all zero ! ")
-
+            raise Exception("Weights are all zero ! ")
         else:
+
             for i in range(len(freqlist)):
                 wt = (freqlist[i] - refnu)/refnu
                 _ia.open(cubename)
@@ -496,12 +537,13 @@ class SDINT_helper:
 
         _myia.open(imagename)
         casalog.post("imagename="+imagename)
-        
+
+
         try:
             outia=_myia.regrid(outfile=outfile, 
                    shape=shape,
                    csys=csys.torecord(),
-                   axes=[0,1],
+                               axes=[0,1],
                    overwrite=True,
                    asvelocity=False)
         except Exception as instance:
@@ -607,6 +649,102 @@ class SDINT_helper:
                 raise Exception("the center of the psf different from the int psf by (diffRA, diffDec)=(%s,%s)" % (diff_ra, diff_dec))
 
         else:
-            print(" the center of psf coincide with int psf: (diffRA,diffDec)=( %s, %s)" % (diff_ra, diff_dec))            
+            casalog.post(" The center of psf coincides with int psf: (diffRA,diffDec)=( %s, %s)" % (diff_ra, diff_dec))            
+
+        #### Add a check for frequency axis
+        _ia.open(inpsf)
+        sdshape = _ia.shape()
+        _ia.close()
+        _ia.open(refpsf)
+        tshape = _ia.shape()
+        _ia.close()
+        if sdshape[3] != tshape[3]:
+            raise Exception("The frequency axis of the input SD image and the interferometer template do not match and cannot be regridded. This is because when there are per-plane restoring beams, a regrid along the frequency axis cannot be defined at optimal accuracy. Please re-evaluate the SD image and psf onto a frequency grid that matches the interferometer frequency grid, and then retry.")
 
         #return modpsf 
+
+    def check_coords(self, intres='', intpsf='', intwt = '', sdres='', sdpsf='',sdwt = '', pars=None):
+        """
+        ### (1) Frequency range of cube, data selection range. mtmfs reffreq.
+        ### (2) nchan too small or too large
+        ### (3) sumwt : flagged channels in int cubes
+        ### (4) sd cube empty channels ? Weight image ? 
+        """
+        validity=True
+
+        freqlist = self.getFreqList(intres)
+        chanwt = np.ones( len(freqlist), 'float')
+        if pars['usedata']=='int':
+            pars['chanwt'] = chanwt
+            return validity, pars
+        
+        ## get shapes and gather stats
+        _ia.open(intres)
+        int_shp = _ia.shape()
+        int_stat = _ia.statistics(axes=[0,1])
+        _ia.close()
+
+        _ia.open(sdres)
+        sd_shp = _ia.shape()
+        sd_stat = _ia.statistics(axes=[0,1])
+        _ia.close()
+
+        _ia.open(intwt)
+        sumwt = _ia.getchunk()
+        _ia.close()
+
+            
+        ### For mtmfs minor cycle only
+        if pars['specmode'] in ['mfs','cont'] and pars['deconvolver']=='mtmfs':
+            ##casalog.post('DOING EXTRA CHECKS##############','WARN')
+            #(1) # Check reference frequency w.r.to cube freq range. 
+            if pars['reffreq']=='':
+                reffreq =str( ( freqlist[0] + freqlist[ len(freqlist)-1 ] )/2.0 ) + 'Hz'
+                casalog.post('The reference frequency for MFS is calculated as the middle of the cube frequency range, irrespective of flagged channels : '+reffreq,'INFO', "task_sdintimaging")
+                ## Modified parameters : 
+                pars['reffreq'] = reffreq
+            else:
+                refval = qa.convert(qa.quantity( pars['reffreq'] ), 'Hz') ['value']
+                if refval < freqlist[0] or refval >  freqlist[ len(freqlist)-1 ] :
+                    casalog.post('The specified reffreq for MFS imaging is outside the frequency range of the specified Cube image for the major cycle. Please specify a reffreq within the cube frequency range or leave it as an empty string to auto-calculate the middle of the range.','WARN', "task_sdintimaging")
+                    validity=False
+        
+
+            #(2.1)# Too many channels
+            if len(freqlist) > 50:
+                casalog.post('The cube for major cycles has '+str(len(freqlist))+' channels.  For wideband continuum imaging, it may be possible to reduce the number of channels to (say) one per spectral window to preserve frequency dependent intensity and weight information but also minimize the number of channels in the image cubes. MFS imaging will be performed within each channel. This will reduce the sizes of the image cubes as well as the compute time used for feathering each plane separately. Note that a minimum of nterms=' + str(pars['nterms']) + ' channels is required for an accurate polynomial fit, but where possible at least 5 to 10 channels that span the frequency range are prefered in order to properly encode frequency dependent intensity and weights.', "WARN", "task_sdintimaging")
+
+            #(2.2)# Too few channels        
+            if len(freqlist) < 5:
+                casalog.post('The cube for the major cycle has only '+str(len(freqlist))+' channels. A minimum of nterms = ' + str(pars['nterms']) + ' channels is required for an accurate polynomial fit, but where possible at least 5 to 10 channels that span the frequency range are prefered in order to properly encode frequency dependent intensity and weights.','WARN', "task_sdintimaging")
+                if len(freqlist) < pars['nterms']:
+                    validity=False
+
+        ### For both cube and mtmfs 
+        #(3) ## If there are channels filled with zeros.... create a chanflag to use during 'cube_to_taylor' and 'feathering' 
+
+        ## INT : If some chans are zero, check that sumwt reflects it too. 
+        zerochans =  np.count_nonzero( int_stat['sum']==0.0 )
+        if zerochans>0:
+            casalog.post('There are '+str(zerochans)+' empty channels in the interferometer cube. These channels will be excluded from the feathering step.')
+            chanwt[ int_stat['sum']==0.0 ] = 0.0
+
+        ## SD : If some chans are zero. 
+        ## Set the wt to zero and use the logical AND of int_wt and sd_wt for feathering?
+        zerochans =  np.count_nonzero( sd_stat['sum']==0.0 )
+        if zerochans>0:
+            casalog.post('There are '+str(zerochans)+' empty channels in the single dish image cube. These channels will be excluded from the feathering step. NOTE : We do not yet use SD weights. ')
+            chanwt[ sd_stat['sum']==0.0 ] = 0.0
+
+        ### If there are channels to flag.... list them. 
+        if np.count_nonzero( chanwt==0.0 ):
+            casalog.post('The following channel weights/flags will be used in the feather step and minor cycle. Zero indicates channels that are empty in either the INT or SD input cubes and which will be excluded from the joint reconstruction. : ' + str(chanwt), 'INFO') 
+            casalog.post('There are channels that are filled with zeros either in the INT cube or the SD cube or both, and they will be ignored from the joint reconstruction. Please search the log file for the string "channel weights/flags" to find a listing of channels that are being used','WARN')
+
+
+        if np.count_nonzero( chanwt != 0.0 ) == 0:
+            casalog.post("There are no channels with data in both the INT and the SD cubes. Cannot proceed","WARN")
+            validity=False
+
+        pars['chanwt'] = chanwt
+        return validity, pars

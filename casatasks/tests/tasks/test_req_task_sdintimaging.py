@@ -75,6 +75,14 @@
 #12. Cube Imaging: single dish (SD-only)
 # specmode='cube',  deconvolver='multiscale', gridder='mosaic', usedata='sd'
 #testname: test_mosaic_cube_sd
+#
+#Special Cases
+#13. Single Pointing Test with SD+INT data, with different channels flagged in SD and INT
+#testname: test_singlepointing_mfs_sdint_flagged
+#
+#14. Single Pointing Test with SD+INT data, with different channels flagged in SD and INT
+#testname: test_singlepointing_cube_sdint_flagged
+#
 ###########################################################################
 
 ####    Imports     ####
@@ -113,11 +121,10 @@ if CASA6:
     imdatapath = ctsys.resolve('image') 
     maskdatapath = ctsys.resolve('text') 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-    #refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdintimaging/'
-        visdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'
-        imdatapath = os.environ.get('CASAPATH').split()[0] +'/data/casa-data-req/image/' 
-        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/'
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/casa-data-req'):
+        visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
+        imdatapath = os.environ.get('CASAPATH').split()[0] +'/casa-data-req/image/' 
+        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
     else:
         visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
         imdatapath = os.environ.get('CASAPATH').split()[0] +'/image/' 
@@ -158,9 +165,9 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        self.delData()
+        #self.delData()
         # leave for input and output (e.g. for debugging)
-        #self.delData(delinput=False, deloutput=False)
+        self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -218,6 +225,14 @@ class testref_base(unittest.TestCase):
                 os.system('rm -rf ' + self.mask)
         if deloutput:
             os.system('rm -rf ' + self.img+'*')
+
+
+    def checkfinal(self,pstr=""):
+          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
+          casalog.post(pstr,'INFO')
+          if( pstr.count("( Fail") > 0 ):
+              print(pstr)
+              self.fail("\n"+pstr)
 
 ### functional tests for sdintimaging start here ####
 
@@ -283,6 +298,7 @@ class test_singlepointing(testref_base):
                                    (outimg+'.alpha', -0.956, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.alpha', 0.179, [300,400,0,0]) ])      # extended emission with alpha=0
         
+        self.checkfinal(pstr=report)
 
     #Test 2
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -315,11 +331,13 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 2.25, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.21, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.819, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', -3.6, [300,400,0,0]) ])      # extended emission with alpha=0 ( will be steep for intonly)
+                                   (outimg+'.image.tt0', 1.09, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.1, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.996, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', -2.35, [300,400,0,0]) ])      # extended emission with alpha=0 ( will be steep for intonly)
         ## Since this is int_only, the values will be wrong.
+        self.checkfinal(pstr=report)
+
 
     # Test 3
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -356,6 +374,8 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image.tt0', 15.3, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -0.137, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.alpha', 0.018, [300,400,0,0]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test4
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -393,6 +413,8 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image', 1.07, [350,433,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 0.168, [300,400,0,1]) ])      # extended emission with alpha=0
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
+        self.checkfinal(pstr=report)
+
 
     #Test5
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -430,6 +452,8 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image', 0.59, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 1.424, [350,433,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', -0.03, [300,400,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test6
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -467,6 +491,92 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image', 64.11, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 10.76, [350,433,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 22.64, [300,400,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
+    # Test 13
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    def test_singlepointing_mfs_sdint_flagged(self):
+        """ [singlePointing] Test_singlepointing_mfs_sdint_flagged """
+        ######################################################################################
+        # Test single field imaging for sd+int combination - mfs 
+        # main parameters to be tested: specmode='mfs', usedata='sdint', gridder='standard'
+        # with the default weighting (='natural')
+        ######################################################################################
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'msname':'papersky_standard.ms',
+                   'sdimage':'papersky_standard.sdimage',
+                   'sdpsf':'papersky_standard.sdpsf',
+                   'mask':'papersky_standard.true.im.masklist'}
+        # data specific parameters 
+        # imsize, cell, phasecenter, reffreq, nchan, scales 
+        # set to the default values for sdgain (1.0) and dishdia (100.0)
+        #
+        # Other secondary non-default parameters: 
+        deconvolver='mtmfs'
+        # iterations may need to be shorten for the final version of test
+        self.prepData(inputdata=inputdata)
+
+        ## Flag some data
+        flagdata(vis=self.msfile, spw='0:2')  ## Last channel of interferometer data
+
+        imname=self.img+'.sp_mfs_sdint'
+
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+
+        outimg = imname+'.joint.multiterm'
+        report=th.checkall(imgexist=[outimg+'.psf.tt0', 
+                                     outimg+'.residual.tt0', outimg+'.image.tt0', 
+                                     outimg+'.image.tt1',outimg+'.alpha'], 
+                           imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
+                                   (outimg+'.image.tt0', 1.138, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.374, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -1.303, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.075, [300,400,0,0]) ])      # extended emission with alpha=0
+        
+        self.checkfinal(pstr=report)
+
+    #Test 14
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    def test_singlepointing_cube_sdint_flagged(self):
+        """ [singlePointing] Test_singlepointing_cube_sdint_flagged """
+        ######################################################################################
+        # Test single field imaging for sdint - cube 
+        # main parameters to be tested: specmode='cube', usedata='sdint', gridder='standard'
+        # with the default weighting (='natural')
+        ######################################################################################
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'msname':'papersky_standard.ms',
+                   'sdimage':'papersky_standard.sdimage',
+                   'sdpsf':'papersky_standard.sdpsf',
+                   'mask':'papersky_standard.true.im.masklist'}
+        # data specific parameters 
+        # imsize, cell, phasecenter, reffreq, nchan, scales 
+        # set to the default values for sdgain (1.0) and dishdia (100.0)
+        #
+        # Other secondary non-default parameters: 
+        deconvolver='multiscale'
+        # iterations may need to be shorten for the final version of test
+        self.prepData(inputdata=inputdata)
+
+        ## Flag some data
+        flagdata(vis=self.msfile, spw='0:2')  ## Last channel of interferometer data
+
+
+        imname=self.img+'.sp_cube_sdint'
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+
+        outimg = imname+'.joint.cube'
+        report=th.checkall(imgexist=[outimg+'.psf', 
+                                     outimg+'.residual', outimg+'.image'], 
+                           imgval=[(outimg+'.psf', 0.99, [400,400,0,0]),
+                                   (outimg+'.psf', 0, [400,400,0,2]),
+                                   (outimg+'.image', 1.66, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.459, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 0, [350,433,0,2]),    # point source of 1 Jy
+                                   (outimg+'.image', 0, [300,400,0,2]) ])      # extended emission with alpha=0
+        ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
+        self.checkfinal(pstr=report)
+
 
 
 class test_mosaic(testref_base):
@@ -522,10 +632,12 @@ class test_mosaic(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.9905, [750,750,0,0]),
-                                   (outimg+'.image.tt0', 1.106, [700,783,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.264, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.949, [700,783,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.231, [650,720,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.098, [700,783,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.268, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.95, [700,783,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.248, [650,720,0,0]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test8
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -558,10 +670,12 @@ class test_mosaic(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 1.0, [750,750,0,0]),
-                                   (outimg+'.image.tt0', 2.021, [700,783,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.63, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.962, [700,783,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', -1.02, [650,720,0,0]) ])      # extended emission with alpha=0 (steep with intonly)
+                                   (outimg+'.image.tt0', 1.05, [700,783,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.14, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -1.016, [700,783,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', -0.78, [650,720,0,0]) ])      # extended emission with alpha=0 (steep with intonly)
+        self.checkfinal(pstr=report)
+
 
     #Test9
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -597,6 +711,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.image.tt0', 15.68, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -0.12, [700,783,0,0]),    # point source with alpha=-1
                                    (outimg+'.alpha', 0.013, [650,720,0,0]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test10
 #    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -633,6 +749,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.image', 0.519, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 1.015, [700,783,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 0.187, [650,720,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test11
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -669,6 +787,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.image', 0.963, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 1.162, [700,783,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 0.047, [650,720,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
     #Test12
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
@@ -704,6 +824,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.image', 62.377, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 10.8, [700,783,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 24.01, [650,720,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
 
 
 def suite():
