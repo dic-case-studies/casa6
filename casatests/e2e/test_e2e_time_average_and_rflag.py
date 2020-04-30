@@ -6,7 +6,9 @@
 # Test examples from CAS-11910                                              #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
-#    Need test of complete ALMA analysis chain                              #
+#    test autoflagging (rflag) with on-the-fly time average                 #
+#    and backpropagation of flags, when the MS has pre-existing flags       #
+#    and other tricky traits.                                               #
 #                                                                           #
 # Input data:                                                               #
 #     two MS                                                                #
@@ -52,8 +54,8 @@ inittime = time.time()
 ttime = inittime
 steptime = []
 
-'''
-def timing():
+
+def timing(stepname=''):
     global totaltime
     global inittime
     global ttime
@@ -67,15 +69,15 @@ def timing():
     totaltime += dtime
     ttime = thetime
     casalog.origin('TIMING')
-    casalog.post( 'Step '+str(mystep)+': '+step_title[mystep], 'WARN')
+    casalog.post( 'Step '+stepname, 'WARN')
     casalog.post( 'Time now: '+str(ttime), 'WARN')
     casalog.post( 'Time used this step: '+str(dtime), 'WARN')
     casalog.post( 'Total time used so far: ' + str(totaltime), 'WARN')
     casalog.post( 'Step  Time used (s)     Fraction of total time (percent) [description]', 'WARN')
     for i in range(0, len(steptime)):
-        casalog.post('  ' + str(thesteps[i]) + '   ' + str(steptime[i]) + '  ' + str(steptime[i] / totaltime * 100.)
-                     + ' [' + step_title[thesteps[i]] + ']', 'WARN')
-'''
+        casalog.post('  ' + stepname + '   ' + str(steptime[i]) + '  ' + str(steptime[i] / totaltime * 100.)
+                     + ' [' + stepname + ']', 'WARN')
+
 
 my_dataset_name = "Four_ants_3C286.ms"
 
@@ -101,30 +103,9 @@ def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms1
                         summary_orig['flagged'], 100.0 * summary_orig['flagged'] / summary_orig['total'],
                         summary_after['flagged'], 100.0 * summary_after['flagged'] / summary_after['total'],
                         timebin, scale))
-    print(' * Step {0}. Total flagged before: {1} ({2:.3f}%), after: {3} ({4:.3f}%). '
-                 'Used timebin: {5}, scale: {6}'.format(step_name,
-                                                        summary_orig['flagged'],
-                                                        100.0 * summary_orig['flagged'] / summary_orig['total'],
-                                                        summary_after['flagged'],
-                                                        100.0 * summary_after['flagged'] / summary_after['total'],
-                                                        timebin, scale))
 
     return summary_orig['flagged'], summary_after['flagged']
 
-def unflag_then_flag(scale=7.0, timebin='1min', field='', spw='', ms=ms1):
-    flagdata(vis=ms, mode='unflag')
-    summary_unflagged = flagdata(vis=ms, spw=spw, mode='summary')
-    # Note display='none', would be 'both' but that requires user interaction
-    flagdata(vis=ms, mode='rflag', field=field, spw=spw, timeavg=True,
-             timebin=timebin, freqdevscale=scale, timedevscale=scale, datacolumn='data',
-             extendflags=False, correlation='',combinescans=True, display='none',
-             action='apply', flagbackup=False)
-    summary_reflag = flagdata(vis=ms, spw=spw, mode='summary')
-    casalog.post(' * Total flagged after unflagging: {0} ({1:.3f}%), and then after flagging from scratch: {2} ({3:.3f}%). '
-                 'Used timebin: {4}, scale: {5}'.
-                 format(summary_unflagged['flagged'], 100.0 * summary_unflagged['flagged']/summary_unflagged['total'],
-                        summary_reflag['flagged'], 100.0 *summary_reflag['flagged'] / summary_reflag['total'],
-                        timebin, scale))
 
 
 class regression_time_average_rflag(unittest.TestCase):
@@ -150,7 +131,7 @@ class regression_time_average_rflag(unittest.TestCase):
         flag_30s_7_2_before, flag_30s_7_2_after = flag_step(7, '30s', step_name='2', ms=ms1)
         flag_30s_7_3_before, flag_30s_7_3_after = flag_step(7, '30s', step_name='3', ms=ms1)
 
-        #timing()
+        timing('0')
 
         flag_30s_3_1_before, flag_30s_3_1_after = flag_step(3, '30s', step_name='1', ms=ms2)
         flag_30s_3_2_before, flag_30s_3_2_after = flag_step(3, '30s', step_name='2', ms=ms2)
@@ -160,7 +141,7 @@ class regression_time_average_rflag(unittest.TestCase):
         flag_30s_3_6_before, flag_30s_3_6_after = flag_step(3, '30s', step_name='6', ms=ms2)
         flag_30s_3_7_before, flag_30s_3_7_after = flag_step(3, '30s', step_name='7', ms=ms2)
 
-        #timing()
+        timing('1')
 
         flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst)
         flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst)
@@ -170,7 +151,7 @@ class regression_time_average_rflag(unittest.TestCase):
         flag_30s_3_6_before_3ct, flag_30s_3_6_after_3ct = flag_step(7, '3min', step_name='6', field='0', spw='0:20~350', ms=ms3ctst)
         flag_30s_3_7_before_3ct, flag_30s_3_7_after_3ct = flag_step(7, '3min', step_name='7', field='0', spw='0:20~350', ms=ms3ctst)
 
-        #timing()
+        timing('2')
 
         lists_equal = True
 
@@ -244,17 +225,20 @@ class regression_time_average_rflag(unittest.TestCase):
         for i in range(len(observed_list)):
             if observed_list[i] != expected_list[i]:
                 lists_equal = False
+                casalog.post("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
                 print("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
 
-        #timing()
+        timing('3')
 
         if lists_equal:
+            casalog.post("Regression PASSED")
             print("Regression PASSED")
             self.assertTrue(True)
         else:
+            casalog.post("Regression FAILED")
             print("Regression FAILED")
             self.assertTrue(False)
-        print("Done")
+        casalog.post("Done")
 
 def suite():
     return[regression_time_average_rflag]
