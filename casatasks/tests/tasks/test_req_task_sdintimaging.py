@@ -165,9 +165,9 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        #self.delData()
+        self.delData()
         # leave for input and output (e.g. for debugging)
-        self.delData(delinput=False, deloutput=False)
+        #self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
