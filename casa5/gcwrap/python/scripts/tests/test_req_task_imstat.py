@@ -44,7 +44,6 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
-    image = iatool
     # not a local tool
     _tb = tbtool()
     _qa = qatool()
