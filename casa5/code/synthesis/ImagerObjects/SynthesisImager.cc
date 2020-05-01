@@ -984,7 +984,7 @@ bool SynthesisImager::unlockImages()
 
     try
       {
-	if( itsMaxShape[3] > 1 && doingCubeGridding_p ){/// and valid ftmachines
+	if( (itsMaxShape[3] > 1 || impars_p.mode.contains("cube"))&& doingCubeGridding_p ){/// and valid ftmachines
 		runMajorCycleCube(false, lastcycle);
 	}
 	else{
@@ -1014,7 +1014,7 @@ bool SynthesisImager::unlockImages()
     
       try
       {
-	if(  itsMaxShape[3] >1 && doingCubeGridding_p){///and valid ftmachines
+	if(  (itsMaxShape[3] >1 || impars_p.mode.contains("cube")) && doingCubeGridding_p){///and valid ftmachines
 		runMajorCycleCube(true, false);
 	}
 	else{
