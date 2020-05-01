@@ -55,7 +55,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <param type="any" name="timebin">
             <description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</description>
             <any type="variant" limittypes="string int" />
-            <value type="string">0.001s</value>
+            <value type="int">1</value>
             <example>5 or "100s"</example>
         </param>
         <param type="bool" name="slidetimebin">
