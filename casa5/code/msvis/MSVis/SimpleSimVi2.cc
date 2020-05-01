@@ -868,6 +868,10 @@ Int SimpleSimVi2::nRowsViWillSweep () const { SSVi2NotYetImplemented() } // numb
 
 Int SimpleSimVi2::nSpectralWindows () const { return pars_.nSpw_; }
 
+Int SimpleSimVi2::nTimes() const {
+    SSVi2NotYetImplemented();
+}
+
 
 void SimpleSimVi2::configureNewSubchunk() {
 
@@ -1076,8 +1080,6 @@ ViImplementation2 * SimpleSimVi2Factory::createVi () const {
   return vii;
   
 }
-
-
 
 SimpleSimVi2LayerFactory::SimpleSimVi2LayerFactory(const SimpleSimVi2Parameters& pars)
   : ViiLayerFactory(),

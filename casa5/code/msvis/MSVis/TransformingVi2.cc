@@ -494,6 +494,10 @@ TransformingVi2::nSpectralWindows ()  const
     return getVii()->nSpectralWindows ();
 }
 
+Int TransformingVi2::nTimes() const {
+    return getVii()->nTimes();
+}
+
 void
 TransformingVi2::nextChunk ()
 {
