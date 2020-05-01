@@ -1,4 +1,3 @@
-//# tStatWtTVI: This file contains the unit tests of the StatWtTVI class.
 //#
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
 //#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
@@ -20,36 +19,33 @@
 //#  MA 02111-1307  USA
 //# $Id: $
 
-#ifndef TSTATWTTVI_H_
-#define TSTATWTTVI_H_
+#ifndef STATWTVARIANCEANDWEIGHTCALCULATOR_H_
+#define STATWTVARIANCEANDWEIGHTCALCULATOR_H_
 
-#include <msvis/MSVis/test/TestUtilsTVI.h>
-#include <mstransform/TVI/StatWtTVI.h>
+#include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
+
+// Google test
+#include <gtest/gtest.h>
+
+// casacore containers
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 using namespace std;
 using namespace casa;
-using namespace casa::vi;
 
-class StatWtTVITest: public FreqAxisTVITest {
+class StatWtVarianceAndWeightCalculatorTest:  public ::testing::Test {
 
 public:
 
-	StatWtTVITest();
-	StatWtTVITest(casacore::Record configuration);
+    StatWtVarianceAndWeightCalculatorTest();
+
+    ~StatWtVarianceAndWeightCalculatorTest();
 
     void TestBody();
-    void testCompareTransformedData();
 
 protected:
 
-    void propagateFlags();
-    void generateTestFile();
-    void generateReferenceFile();
-    void initTestConfiguration(casacore::Record &configuration);
-    void initReferenceConfiguration(casacore::Record &configuration);
-
-private:
-    casacore::String _dataDir;
 
 };
 

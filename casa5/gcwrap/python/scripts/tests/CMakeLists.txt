@@ -110,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imhead.py
   test_immath.py
   test_immoments.py
-  test_impbcor.py
   test_importasap.py
   test_importasdm.py
   test_importasdm_mms.py
@@ -202,6 +201,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   ###
 
   test_req_tool_componentlistimage.py
+  test_req_tool_ia_pbcor.py
   test_req_tool_ia_transpose.py
   test_req_tool_ia_statistics.py
 
@@ -220,6 +220,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_fluxscale.py
   test_req_task_gaincal.py
   test_req_task_imhead.py
+  test_req_task_impbcor.py
   test_req_task_importuvfits.py
   test_req_task_impv.py
   test_req_task_imrebin.py
@@ -231,6 +232,8 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_statwt.py
+  test_req_tool_ms_statwt.py
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
@@ -249,7 +252,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_split.py
   test_spxfit.py
   test_oldstatwt.py
-  test_statwt.py
   test_testconcat.py
   test_uvcontsub.py
   test_uvcontsub3.py
