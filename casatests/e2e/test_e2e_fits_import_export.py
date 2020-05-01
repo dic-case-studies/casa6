@@ -28,17 +28,25 @@ import os
 import unittest
 import shutil
 import sys
-CASA6 = True
+CASA6 = False
 try:
-    import casatools
+    from casatools import ctsys, image, regionmanager
+    _rg = regionmanager
     CASA6 = True
     print("In CASA6")
-except:
-    pass
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    image = iatool
+    _rg = rgtool
+
+ia = image()
+rg = _rg()
 
 if CASA6:
     casapath = ''
-    datapath = casatools.ctsys.resolve("regression/fits-import-export/input/")
+    datapath = ctsys.resolve("regression/fits-import-export/input/")
     print("DATAPATH: {}".format(datapath))
 else:
     casapath = os.environ['CASAPATH'].split()[0]
@@ -94,7 +102,8 @@ def checkimage(myfitsimage_name, maxpos_expect, maxposf_expect):
         datapath = casapath + "/data/regression/fits-import-export/input/"
 
     # import the image
-    default('importfits')
+#    if not CASA6:
+#        default('importfits')
     try:
         print(myname, ' Importing ', datapath+myfitsimage_name+'.fits', ' ...')
         importfits(fitsimage = datapath+myfitsimage_name+'.fits',
@@ -125,7 +134,8 @@ def checkimage(myfitsimage_name, maxpos_expect, maxposf_expect):
             print(myname, ' imported image ', myfitsimage_name, ' as expected.')
 
             # export the image
-            default('exportfits')
+#            if not CASA6:
+#                default('exportfits')
             try:
                 print('Exporting ', myfitsimage_name, '...')
                 exportfits(fitsimage = myfitsimage_name + 'exp.fits',
@@ -137,7 +147,8 @@ def checkimage(myfitsimage_name, maxpos_expect, maxposf_expect):
             else:
                 print(myname, ' No exceptions raised! Now comparing exported image with original by re-importing it ...')
                 # re-import the image
-                default('importfits')
+#                if not CASA6:
+#                    default('importfits')
                 try:
                     print(myname, ' Re-importing ', myfitsimage_name+'exp.fits', ' ...')
                     importfits(fitsimage = myfitsimage_name+'exp.fits',
@@ -173,7 +184,8 @@ def checkimageb(myfitsimage_name):
     subtest_passed = True
 
     # import the image
-    default('importfits')
+#    if not CASA6:
+#        default('importfits')
     try:
         print(myname, ' Importing ', myfitsimage_name+'.fits', ' ...')
         importfits(fitsimage = datapath+myfitsimage_name+'.fits',
@@ -186,7 +198,8 @@ def checkimageb(myfitsimage_name):
         print(myname, ' No exceptions raised!')
         mystat = imstat(imagename = myfitsimage_name)
         # export the image
-        default('exportfits')
+        if not CASA6:
+            default('exportfits')
         try:
             print('Exporting ', myfitsimage_name, ' with bitpix=16 ...')
             exportfits(fitsimage = myfitsimage_name + 'exp.fits',
@@ -198,7 +211,8 @@ def checkimageb(myfitsimage_name):
         else:
             print(myname, ' No exceptions raised! Now testing minimum and maximum values ...')
             # re-import the image
-            default('importfits')
+            if not CASA6:
+                default('importfits')
             try:
                 print(myname, ' Re-importing ', myfitsimage_name+'exp.fits', ' ...')
                 importfits(fitsimage = myfitsimage_name+'exp.fits',
@@ -245,6 +259,7 @@ class regression_fits_import_export_test(unittest.TestCase):
                 os.remove("{}/{}".format(os.getcwd(), listfile))
             if (listfile.endswith(".im")) or ( listfile.endswith(".image")):
                 shutil.rmtree("{}/{}".format(os.getcwd(),listfile))
+
     def test_regression(self):
         failed_tests = []
         passed_tests = []
