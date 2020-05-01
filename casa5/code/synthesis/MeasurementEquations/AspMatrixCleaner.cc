@@ -965,6 +965,77 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
 
+
+bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Float threshold)
+{
+  const int nX = itsDirty->shape()(0);
+  const int nY = itsDirty->shape()(1);
+
+  Matrix<Float> Asp(nX, nY);
+  Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+    {
+      int px = i - nX/2;
+      int py = j - nY/2;
+      Asp(i,j) = gbeam(px, py);
+    }
+  }
+
+  // gradient. 0: amplitude; 1: scale
+  // generate derivative of amplitude
+  Matrix<Float> GradAmp(nX, nY);
+  Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+    {
+      int px = i - nX/2;
+      int py = j - nY/2;
+      GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+    }
+  }
+  Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
+
+  // generate derivative of scale
+  Matrix<Float> GradScale(nX, nY);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+      GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
+  }
+  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);
+
+  // calculate the length of the direvative vector
+  Float lenDirVec = 0.0;
+  for (int j = 0; j < Grad0.shape()(1); ++j)
+  {
+    for(int i = 0; i < Grad0.shape()(0); ++i)
+    {
+      lenDirVec += sqrt(pow(Grad0(i,j), 2));
+    }
+  }
+
+  for (int j = 0; j < Grad1.shape()(1); ++j)
+  {
+    for(int i = 0; i < Grad1.shape()(0); ++i)
+    {
+      lenDirVec += sqrt(pow(Grad1(i,j), 2));
+    }
+  }
+
+  if (lenDirVec >= threshold)
+  {
+    cout << "lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+    return true;
+  }
+
+  return false;
+
+}
+
+
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
 {
   LogIO os(LogOrigin("AspMatrixCleaner", "getActiveSetAspen()", WHERE));
@@ -1007,12 +1078,11 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // lbfgs optimization
     LBFGSParam<double> param;
     param.epsilon = 1e-2;
-    //param.epsilon = 1;
     param.max_linesearch = 10;
     param.min_step = 1e-30;
     param.max_iterations = 2;
     param.gclip = itsPrevLBFGSGrad;
-      
+
     //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE; genie: doesn't work
     LBFGSSolver<double> solver(param);
 
@@ -1023,22 +1093,58 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // Also, push back the new center (positionOptimum) to itsAspCenter
     AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
     AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
-    itsAspCenter.push_back(positionOptimum);
-    //AspObjFunc fun(*itsDirty, *itsXfr, positionOptimum); genie old
-    AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
 
-    unsigned int length = (itsAspScaleSizes.size() + 1) * 2;
-    VectorXd x(length);
+    // heuristiclly determine active set for speed up
+    itsAspAmplitude.push_back(strengthOptimum);
+    itsAspScaleSizes.push_back(itsInitScaleSizes[optimumScale]);
+    itsAspCenter.push_back(positionOptimum);
+
+    Float resArea = 0.0;
+    Int nX = itsDirty->shape()(0);
+    Int nY = itsDirty->shape()(1);
+
+    for (Int j = 0; j < nY; ++j)
+    {
+      for(Int i = 0; i < nX; ++i)
+        resArea += abs((*itsDirty)(i,j));
+    }
+    const Float lamda = 2e4;
+    const Float threshold = lamda * resArea;
     vector<Float> tempx;
+    vector<IPosition> activeSetCenter;
+
     for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
     {
-      //x << itsAspAmplitude[i], itsAspScaleSizes[i];
+      //cout << "scale " << i << " heuristic: " << endl;
+      if (isGoodAspen(itsAspAmplitude[i], itsAspScaleSizes[i], itsAspCenter[i], threshold))
+      {
+        tempx.push_back(itsAspAmplitude[i]);
+        tempx.push_back(itsAspScaleSizes[i]);
+        activeSetCenter.push_back(itsAspCenter[i]);
+
+        itsAspAmplitude.erase(itsAspAmplitude.begin() + i);
+        itsAspScaleSizes.erase(itsAspScaleSizes.begin() + i);
+        itsAspCenter.erase(itsAspCenter.begin() + i);
+      }
+    }
+    //
+    //unsigned int length = (itsAspScaleSizes.size() + 1) * 2;  //genie recon
+    //VectorXd x(length); //genie recon
+    unsigned int length = tempx.size();
+    VectorXd x(length);
+
+    /*vector<Float> tempx;
+    for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+    {
       tempx.push_back(itsAspAmplitude[i]);
       tempx.push_back(itsAspScaleSizes[i]);
-    }
-    //x << abs(strengthOptimum), itsInitScaleSizes[optimumScale];
-    tempx.push_back(strengthOptimum);
-    tempx.push_back(itsInitScaleSizes[optimumScale]);
+    }*/
+    //tempx.push_back(strengthOptimum);
+    //tempx.push_back(itsInitScaleSizes[optimumScale]);
+    //itsAspCenter.push_back(positionOptimum);
+
+    //AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
+    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter);
 
     for (unsigned int i = 0; i < length; i++)
       x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
@@ -1046,9 +1152,11 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "Before: x = " << x << endl;
     double fx;
     double gclip;
-    int niter = solver.minimize(fun, x, fx, gclip); //genie epsilon needs to be fixed "nan"
+    int niter = solver.minimize(fun, x, fx, gclip);
 
     std::cout << niter << " iterations" << std::endl;
+    // use the initial gradient as a roll back gradient if there is
+    // gradient exploding in lbfgs
     if (itsPrevLBFGSGrad == 0.0)
       itsPrevLBFGSGrad = gclip;
     std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
@@ -1064,14 +1172,15 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       for (unsigned int i = 0; i < length; i++)
         x[i] = tempx[i];
     }
-    //genie
+
     // put the updated x back to the class variables, itsAspAmp and itsAspScale
-    itsAspAmplitude.clear();
-    itsAspScaleSizes.clear();
+    //itsAspAmplitude.clear(); //cannot
+    //itsAspScaleSizes.clear(); //cannot
     for (unsigned int i = 0; i < length; i+= 2)
     {
       itsAspAmplitude.push_back(x[i]);
       itsAspScaleSizes.push_back(x[i+1]);
+      itsAspCenter.push_back(activeSetCenter[i/2]);
     }
   } // end of LBFGS optimization
 

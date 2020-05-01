@@ -81,7 +81,7 @@ public:
       // x[0]: Amplitude0,       x[1]: scale0
       // x[2]: Amplitude1,       x[3]: scale1
       // x[i]: Amplitude(i/2), x[i+1]: scale(i/2)
-      casacore::Matrix<casacore::Float> Asp(nX, nY); //genie to do: loop on vector
+      casacore::Matrix<casacore::Float> Asp(nX, nY);
 
       if (isnan(x[2*k])) // LBFGS encounters convergense issue
         return fx;

@@ -74,6 +74,8 @@ public:
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
+  bool isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center, casacore::Float threshold);
+
   std::vector<casacore::Float> getActiveSetAspen();
 
   void defineAspScales(const casacore::Vector<casacore::Float>& scales);
@@ -133,7 +135,7 @@ private:
 
   // set to 0, 1.5*,5*,10*width for initial scales in Asp
   std::vector<casacore::Float> itsInitScaleSizes;
-  std::vector<casacore::Float> itsAspScaleSizes;
+  std::vector<casacore::Float> itsAspScaleSizes; // permanent list for making model image
   std::vector<casacore::Float> itsAspAmplitude;
   std::vector<casacore::IPosition> itsAspCenter;
   casacore::Int itsNInitScales;
