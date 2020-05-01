@@ -421,7 +421,6 @@ class imstat_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         zz = imstat(imagename, axes=[0, 1], chans="10~20;60~90", stokes="IV")
-        print("shape", zz['npts'].shape)
         self.assertTrue((zz['npts'].shape == (42, 2)))
         self.assertTrue(np.min(zz['npts']) > 0)
 

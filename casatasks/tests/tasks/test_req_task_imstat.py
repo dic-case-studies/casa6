@@ -44,7 +44,6 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
-    image = iatool
     # not a local tool
     _tb = tbtool()
     _qa = qatool()
@@ -282,7 +281,8 @@ class imstat_test(unittest.TestCase):
         myia = self._myia
         imagename = "hftest.im"
         myia.fromarray(imagename, data)
-        classic = myia.statistics(robust=True, algorithm="cl")
+        myia.done()
+        classic = imstat(imagename, algorithm="cl")
         hfall = imstat(imagename=imagename, algorithm="h")
         hf0 = imstat(imagename=imagename, algorithm="h", fence=0)
         for k in classic.keys():
@@ -421,7 +421,6 @@ class imstat_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         zz = imstat(imagename, axes=[0, 1], chans="10~20;60~90", stokes="IV")
-        print("shape", zz['npts'].shape)
         self.assertTrue((zz['npts'].shape == (42, 2)))
         self.assertTrue(np.min(zz['npts']) > 0)
 
