@@ -27,7 +27,7 @@
 #ifndef TBDATATAB_H_
 #define TBDATATAB_H_
 
-#include <casaqt/QtBrowser/TBDataTab.ui.h>
+#include "ui/ui_TBDataTab.h"
 
 #include <vector>
 

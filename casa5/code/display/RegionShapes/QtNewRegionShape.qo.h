@@ -33,7 +33,7 @@
 #include <QRadioButton>
 #include <QLabel>
 
-#include <display/RegionShapes/QtNewRegionShape.ui.h>
+#include <ui/ui_QtNewRegionShape.h>
 #include <display/RegionShapes/RegionShapes.h>
 
 #include <casa/namespace.h>

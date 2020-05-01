@@ -25,7 +25,7 @@
 //#
 //# $Id: $
 #include <plotms/Gui/PlotMSAxisWidget.qo.h>
-#include <plotms/Gui/PlotMSAxisWidget.ui.h>
+#include <ui/ui_PlotMSAxisWidget.h>
 
 
 #include <plotms/Gui/PlotRangeWidget.qo.h>

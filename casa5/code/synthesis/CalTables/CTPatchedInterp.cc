@@ -958,7 +958,8 @@ void CTPatchedInterp::makeInterpolators() {
       for (Int iMSSpw=0;iMSSpw<nMSSpw_;++iMSSpw) { 
 	
 	// Only if the required CT spw is available
-	if (this->spwOK(spwMap_(iMSSpw))) {
+	//  (spwmap applied in spwOK method)
+	if (this->spwOK(iMSSpw)) {
 	  
 	  // Size up the timeResult_ Cube (NB: channel shape matches Cal Table)
 	  if (timeResult_(iMSSpw,iMSFld,iMSObs).nelements()==0) {
@@ -1023,7 +1024,8 @@ void CTPatchedInterp::makeInterpolators() {
   if (reportBadSpw) {
     cout << "The following MS spws have no corresponding cal spws in " << tabname << ": ";
     for (Int iMSSpw=0;iMSSpw<nMSSpw_;++iMSSpw)
-      if (!this->spwOK(spwMap_(iMSSpw))) cout << iMSSpw << " ";
+      //  (spwmap applied in spwOK method)
+      if (!this->spwOK(iMSSpw)) cout << iMSSpw << " ";
     cout << endl;
   }
 

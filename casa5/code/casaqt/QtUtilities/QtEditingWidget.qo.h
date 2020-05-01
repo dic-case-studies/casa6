@@ -27,8 +27,8 @@
 #ifndef QTEDITINGWIDGET_QO_H_
 #define QTEDITINGWIDGET_QO_H_
 
-#include <casaqt/QtUtilities/PlotFileWidget.ui.h>
-#include <casaqt/QtUtilities/PlotLabelWidget.ui.h>
+#include <ui/ui_PlotFileWidget.h>
+#include <ui/ui_PlotLabelWidget.h>
 
 #include <casa/BasicSL/String.h>
 

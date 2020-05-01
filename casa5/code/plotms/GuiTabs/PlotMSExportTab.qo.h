@@ -27,7 +27,7 @@
 #ifndef PLOTMSEXPORTTAB_QO_H_
 #define PLOTMSEXPORTTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSExportTab.ui.h>
+#include <ui/ui_PlotMSExportTab.h>
 #include <plotms/PlotMS/PlotMSExportParam.h>
 #include <graphics/GenericPlotter/PlotOptions.h>
 
