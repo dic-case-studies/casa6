@@ -196,9 +196,19 @@ def tclean(
 #        casalog.post( "The MTMFS deconvolution algorithm (deconvolver='mtmfs') needs nterms>1.Please set nterms=2 (or more). ", "WARN", "task_tclean" )
 #        return
 
-    if (deconvolver=="mtmfs") and  (specmode=='cube' or specmode=='cubedata'):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') can only be used with specmode='mfs' not specmode='cube' or specmode='cubedata'.", "WARN", "task_tclean" )
-        return False
+    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata')):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube' is not supported", "WARN", "task_tclean" )
+        return
+
+    if(chanchunks!=-1):
+        casalog.post( "The parameter chanchunks is no longer used by tclean. It will be removed in CASA 6.2", "WARN", "task_tclean" )
+
+    if((specmode=='cube' or specmode=='cubedata') and parallel==False and mpi_available):
+        casalog.post( "Setting parameter parallel=False with specmode='cube' when launching CASA with mpi has no effect.", "WARN", "task_tclean" )
+        
+    if((specmode=='cube' or specmode=='cubedata') and gridder=='awproject'):
+        casalog.post( "The awproject gridder does not currently work with specmode='cube'.", "WARN", "task_tclean" )
+        return
       
 
     #####################################################
