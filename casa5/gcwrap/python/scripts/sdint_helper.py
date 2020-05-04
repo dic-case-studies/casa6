@@ -704,7 +704,7 @@ class SDINT_helper:
                 ## Modified parameters : 
                 pars['reffreq'] = reffreq
             else:
-                refval = qa.convert(qa.quantity( pars['reffreq'] ), 'Hz') ['value']
+                refval = _qa.convert(_qa.quantity( pars['reffreq'] ), 'Hz') ['value']
                 if refval < freqlist[0] or refval >  freqlist[ len(freqlist)-1 ] :
                     casalog.post('The specified reffreq for MFS imaging is outside the frequency range of the specified Cube image for the major cycle. Please specify a reffreq within the cube frequency range or leave it as an empty string to auto-calculate the middle of the range.','WARN', "task_sdintimaging")
                     validity=False
