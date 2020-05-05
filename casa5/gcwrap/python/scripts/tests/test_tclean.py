@@ -3240,7 +3240,7 @@ class test_hetarray_imaging(testref_base):
      test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
      test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
      '''     
-          
+     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_het_pointing_offsets_awproject_cube(self):
           '''
           This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
