@@ -1,6 +1,6 @@
 
 #include <casaqt/QtPlotServer/QtRasterData.h>
-#include <qwt_plot_spectrogram.h>
+#include <qwt/qwt_plot_spectrogram.h>
 #include <limits>
 
 namespace casa {

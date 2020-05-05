@@ -826,11 +826,11 @@ void MSCache::loadChunks(vi::VisibilityIterator2& vi,
 	}
 
 	nAnt_ = vb->nAntennas();  // needed to set up indexer
-	// set frame; VB2 does not handle N_Types, just passes it along
-	// and fails check in MFrequency so handle it here
+	// set frame
 	freqFrame_ = transformations_.frame();
-	if (freqFrame_ == MFrequency::N_Types)
-		freqFrame_ = static_cast<MFrequency::Types>(vi.getReportingFrameOfReference());
+	if (freqFrame_ == MFrequency::N_Types) {
+		freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
+	}
 
 	Int chunk(0), lastscan(0), thisscan(0), lastspw(-1), thisspw(0);
 	chshapes_.resize(4,nChunk_);
@@ -972,12 +972,11 @@ void MSCache::loadChunks(vi::VisibilityIterator2& vi,
 	vi.originChunks();
 	vi.origin();
 	nAnt_ = vb->nAntennas();  // needed to set up indexer
-
-	// set frame; VB2 does not handle N_Types, just passes it along
-	// and fails check in MFrequency so handle it here
+	// set frame
 	freqFrame_ = transformations_.frame();
-	if (freqFrame_ == MFrequency::N_Types)
-		freqFrame_ = static_cast<MFrequency::Types>(vi.getReportingFrameOfReference());
+	if (freqFrame_ == MFrequency::N_Types) {
+		freqFrame_ = static_cast<MFrequency::Types>(vi_p->getReportingFrameOfReference());
+	}
 
 	chshapes_.resize(4, nChunk_);
 	goodChunk_.resize(nChunk_);

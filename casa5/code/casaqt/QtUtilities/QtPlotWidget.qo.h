@@ -27,11 +27,11 @@
 #ifndef QTPLOTWIDGET_QO_H_
 #define QTPLOTWIDGET_QO_H_
 
-#include <casaqt/QtUtilities/PlotColorWidget.ui.h>
-#include <casaqt/QtUtilities/PlotFillWidget.ui.h>
-#include <casaqt/QtUtilities/PlotLineWidget.ui.h>
-#include <casaqt/QtUtilities/PlotSymbolWidget.ui.h>
-#include <casaqt/QtUtilities/PlotFontWidget.ui.h>
+#include <ui/ui_PlotColorWidget.h>
+#include <ui/ui_PlotFillWidget.h>
+#include <ui/ui_PlotLineWidget.h>
+#include <ui/ui_PlotSymbolWidget.h>
+#include <ui/ui_PlotFontWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <graphics/GenericPlotter/PlotFactory.h>

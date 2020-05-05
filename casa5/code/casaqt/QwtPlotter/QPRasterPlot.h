@@ -33,8 +33,8 @@
 #include <casaqt/QwtPlotter/QPData.h>
 #include <casaqt/QwtPlotter/QPPlotItem.qo.h>
 
-#include <qwt_color_map.h>
-#include <qwt_plot_spectrogram.h>
+#include <qwt/qwt_color_map.h>
+#include <qwt/qwt_plot_spectrogram.h>
 
 namespace casa {
 

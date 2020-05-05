@@ -26,7 +26,7 @@
 #define OVERWRITEFILEDIALOG_QO_H
 
 #include <QDialog>
-#include <guitools/Feather/OverWriteFileDialog.ui.h>
+#include "ui/ui_OverWriteFileDialog.h"
 
 namespace casa {
 

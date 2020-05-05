@@ -33,8 +33,8 @@
 #include <casaqt/QtUtilities/QtLayeredLayout.h>
 #include <casaqt/QwtPlotter/QPCanvas.qo.h>
 
-#include <qwt_painter.h>
-#include <qwt_scale_engine.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_engine.h>
 
 #include <QPainter>
 

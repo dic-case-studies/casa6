@@ -26,7 +26,7 @@
 #ifndef SLICEPLOT_H_
 #define SLICEPLOT_H_
 
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 #include <QMap>
 #include <casa/Arrays/Vector.h>
 #include <display/region/RegionEnums.h>

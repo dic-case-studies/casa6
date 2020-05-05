@@ -27,7 +27,7 @@
 #ifndef TBCONNECTION_H_
 #define TBCONNECTION_H_
 
-#include <casaqt/QtBrowser/TBConnection.ui.h>
+#include "ui/ui_TBConnection.h"
 
 #include <QtGui>
 #include <casa/BasicSL/String.h>

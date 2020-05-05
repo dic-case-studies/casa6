@@ -110,7 +110,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imhead.py
   test_immath.py
   test_immoments.py
-  test_impbcor.py
   test_importasap.py
   test_importasdm.py
   test_importasdm_mms.py
@@ -123,7 +122,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imregrid.py
   test_imsmooth.py
   test_imstat.py
-  test_imtrans.py
   test_imval.py
   test_initweights.py
   test_listfits.py
@@ -183,6 +181,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_tsdimaging.py
   test_sdpolaverage.py
   test_sdsidebandsplit.py
+  test_sdtimeaverage.py
   test_sdsmooth.py
   test_tclean.py
 
@@ -203,7 +202,8 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   ###
 
   test_req_tool_componentlistimage.py
-
+  test_req_tool_ia_pbcor.py
+  test_req_tool_ia_transpose.py
 
   ###
 
@@ -220,15 +220,19 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_fluxscale.py
   test_req_task_gaincal.py
   test_req_task_imhead.py
+  test_req_task_impbcor.py
   test_req_task_importuvfits.py
   test_req_task_impv.py
   test_req_task_imrebin.py
   test_req_task_imreframe.py
+  test_req_task_imtrans.py
   test_req_task_listhistory.py
   test_req_task_listobs.py
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_statwt.py
+  test_req_tool_ms_statwt.py
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
@@ -247,7 +251,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_split.py
   test_spxfit.py
   test_oldstatwt.py
-  test_statwt.py
   test_testconcat.py
   test_uvcontsub.py
   test_uvcontsub3.py
@@ -255,7 +258,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_viewer.py
   test_virtualconcat.py
   test_vishead.py
-  test_visstat.py
   test_vpmanager.py
   test_wvrgcal.py
   test_imview.py

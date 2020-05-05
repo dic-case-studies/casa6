@@ -27,7 +27,7 @@
 #ifndef TBVALIDITYCHECKER_H_
 #define TBVALIDITYCHECKER_H_
 
-#include <casaqt/QtBrowser/TBValidityChecker.ui.h>
+#include "ui/ui_TBValidityChecker.h"
 
 #include <casa/BasicSL/String.h>
 
