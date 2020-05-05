@@ -29,7 +29,7 @@
 #ifndef DISPLAY_SLICERGEN_H_
 #define DISPLAY_SLICERGEN_H_
 
-#include <display/QtViewer/SlicerGen.ui.h>
+#include <ui/ui_SlicerGen.h>
 #include <casa/Arrays/Vector.h>
 
 namespace casa {

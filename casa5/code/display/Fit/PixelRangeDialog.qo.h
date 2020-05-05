@@ -25,7 +25,7 @@
 #ifndef PIXEL_RANGE_DIALOG_QO_H_1
 #define PIXEL_RANGE_DIALOG_QO_H_1
 
-#include <display/Fit/PixelRangeDialog.ui.h>
+#include <ui/ui_PixelRangeDialog.h>
 #include <casa/aips.h>
 #include <casa/Utilities/CountedPtr.h>
 #include <utility>

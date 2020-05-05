@@ -47,6 +47,10 @@ protected:
     void generateReferenceFile();
     void initTestConfiguration(casacore::Record &configuration);
     void initReferenceConfiguration(casacore::Record &configuration);
+
+private:
+    casacore::String _dataDir;
+
 };
 
 #endif

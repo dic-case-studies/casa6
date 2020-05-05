@@ -99,6 +99,7 @@ sdgaincal.xml
 sdimaging.xml
 tsdimaging.xml
 sdpolaverage.xml
+sdtimeaverage.xml
 sdsidebandsplit.xml
 sdsmooth.xml
 setjy.xml

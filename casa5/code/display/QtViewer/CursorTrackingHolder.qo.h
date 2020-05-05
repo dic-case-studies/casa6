@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <display/QtViewer/InActiveDock.qo.h>
-#include <display/QtViewer/CursorTrackingHolder.ui.h>
+#include <ui/ui_CursorTrackingHolder.h>
 #include <vector>
 
 namespace casacore{

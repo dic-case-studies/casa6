@@ -31,7 +31,7 @@
 #include <casaqt/QwtPlotter/QPCanvas.qo.h>
 #include <casaqt/QwtPlotter/QPFactory.h>
 
-#include <qwt_text_label.h>
+#include <qwt/qwt_text_label.h>
 
 using namespace casacore;
 namespace casa {

@@ -38,7 +38,7 @@
 #include <QPainter>
 #include <QThread>
 
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 #include <casaqt/QwtConfig.h>
 
 namespace casa {

@@ -1837,6 +1837,7 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 		return;
 	}
 
+
 	canvas->showAllAxes(false);
 	canvas->clearAxesLabels();
 	canvas->setAxesAutoRescale(true);
@@ -2150,7 +2151,7 @@ void PlotMSPlot::setXAxisRange(
 
 	// x range min/max for all plots
 	double xming(DBL_MAX), xmaxg(-DBL_MAX);  // global xmin/xmax
-	for (size_t plotindex=0; plotindex<axesParams.size(); ++plotindex) {
+	for (size_t plotindex=0; plotindex<plots.size(); ++plotindex) {
 		for (unsigned int xindex=0; xindex < axesParams[plotindex]->numXAxes(); ++xindex) {
 			// Set axis scale, direction for Ra/Dec
 			auto xFrame = cacheParams[plotindex]->xFrame();
@@ -2171,22 +2172,20 @@ void PlotMSPlot::setXAxisRange(
 				xmin = axesParams[plotindex]->xRange(xindex).first;
 				xmax = axesParams[plotindex]->xRange(xindex).second;
 			} else if ((xAxis == PMS::TIME) || (xAxis == PMS::RA) || (PMS::axisIsUV(xAxis))) {
-				// set range manually: get min/max from cache indexer
+				// set range manually: get min/max for each plot from cache indexer
 				PlotMSIndexer indexer;
-				if (plots.size() == 1) {
-					indexer = itsCache_->indexer(xindex, iteration);
-				} else {
+				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(xindex, iteration);
-				}
-				double ymin, ymax;
-				bool displayUnflagged = (displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				bool displayFlagged = (displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
-					indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
-					indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else {                                          // get range of all data
-					indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					double ymin, ymax;
+					bool displayUnflagged = (displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					bool displayFlagged = (displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
+						indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
+						indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else {                                          // get range of all data
+						indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					}
 				}
 			}
 
@@ -2249,22 +2248,16 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 
 	if (showXLabel) {
 		// get settings for all plots
-		int pointsize(-1);              // use default if not user set
-		casacore::String freqFrame(""); // added to label if all plots have same frame
+		int pointsize(-1);                       // use default if not user set
+		casacore::String freqFrame("");          // added to label if all plots have same frame
 		casacore::String coordSysFrameLabel(""); // used for label if axis is ra/dec
-		bool averaged(true);            // added to label if all plots have this axis averaged
+		bool averaged(true);                     // added to label if all plots have this axis averaged
 		for (int i=0; i<plotcount; ++i) {
 			if (canvasParams[i]->xFontSet()) {
 				pointsize = canvasParams[i]->xAxisFont(); // use last user setting
 			}
-			if ((xAxis == PMS::FREQUENCY) && (dataParams[i]->cacheType() == PlotMSCacheBase::MS)) {
-				casacore::String plotFreqFrame(MFrequency::showType(plots[i]->cache().getFreqFrame()));
-				if (i == 0) {
-					freqFrame = plotFreqFrame;
-				} else if (plotFreqFrame != freqFrame) {
-					freqFrame = ""; // only add frame if they all have same one
-				}
-			} else if (PMS::axisIsRaDec(xAxis)) {
+
+			if (PMS::axisIsRaDec(xAxis)) {
 				auto xFrame = cacheParams[i]->xFrame();
 				coordSysFrameLabel = PMS::coordSystem(xFrame) + " ";
 				if (xAxis == PMS::RA) {
@@ -2272,7 +2265,19 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 				} else {
 					coordSysFrameLabel += PMS::latitudeName(xFrame);
 				}
+			} else if ((dataParams[i]->cacheType() == PlotMSCacheBase::MS) &&
+					   ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY))) {
+				casacore::MFrequency::Types mfreqType = plots[i]->cache().getFreqFrame();
+                if (mfreqType < casacore::MFrequency::N_Types) {
+					casacore::String plotFreqFrame = casacore::MFrequency::showType(mfreqType);
+					if (i == 0) {
+						freqFrame = plotFreqFrame; // add frame to label
+					} else if (plotFreqFrame != freqFrame) {
+						freqFrame = ""; // only add frame if they all have same one, else reset
+					}
+				}
 			}
+
 			averaged &= axisIsAveraged(xAxis, dataParams[i]->averaging());
 		}
 
@@ -2290,7 +2295,7 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 				xLabel = coordSysFrameLabel;
 			} else {
 				xLabel = xFormat.getLabel(xAxis, xHasRef, xRefVal, xColumn, commonPolnRatio);
-				if ((xAxis == PMS::FREQUENCY) && !freqFrame.empty()) {
+				if (((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY)) && !freqFrame.empty()) {
 					xLabel += " " + freqFrame;
 				}
 				addAxisDescription(xLabel, xAxis, commonCacheType, averaged);
@@ -2394,7 +2399,7 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
 	bool hasOverlay(false), hasAtmCurve(false);
 
-	for (size_t plotindex=0; plotindex < axesParams.size(); ++plotindex) {
+	for (size_t plotindex=0; plotindex < plots.size(); ++plotindex) {
 		for (size_t yindex=0; yindex < cacheParams[plotindex]->numYAxes(); ++yindex) {
 			PMS::Axis yaxis = cacheParams[plotindex]->yAxis(yindex);
 			PlotAxis yPlotAxis = axesParams[plotindex]->yAxis(yindex);
@@ -2448,29 +2453,28 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 					   (PMS::axisIsUV(yaxis)) || PMS::axisIsOverlay(yaxis)) {
 				// explicitly set range for these axes; do not autorange
 				PlotMSIndexer indexer;
-				if (plots.size() == 1) {
-					indexer = itsCache_->indexer(yindex, iteration);
-				} else {
+				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(yindex, iteration);
-				}
-				bool displayUnflagged =
-					(displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				bool displayFlagged =
-					(displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
-				double xmin, xmax;
-				if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
-					indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
-					indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
-				} else {                                          // get range of all data
-					indexer.minsMaxes(xmin, xmax, ymin, ymax);
-				}
+					bool displayUnflagged =
+						(displayParams[plotindex]->unflaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					bool displayFlagged =
+						(displayParams[plotindex]->flaggedSymbol()->symbol() != PlotSymbol::NOSYMBOL);
+					double xmin, xmax;
+					if (displayUnflagged && !displayFlagged) {        // get range of unflagged data only
+						indexer.unmaskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else if (displayFlagged && !displayUnflagged) { // get range of flagged data only
+						indexer.maskedMinsMaxes(xmin, xmax, ymin, ymax);
+					} else {                                          // get range of all data
+						indexer.minsMaxes(xmin, xmax, ymin, ymax);
+					}
 
-				if (yaxis == PMS::TIME) {
-					getAxisBoundsForTime(ymin, ymax);
-				} else if (PMS::axisIsUV(yaxis)) {
-					getAxisBoundsForUV(ymin, ymax);
-				} else if (PMS::axisIsOverlay(yaxis)) {
+					if (yaxis == PMS::TIME) {
+						getAxisBoundsForTime(ymin, ymax);
+					} else if (PMS::axisIsUV(yaxis)) {
+						getAxisBoundsForUV(ymin, ymax);
+					}
+				}
+				if (PMS::axisIsOverlay(yaxis)) {
 					hasOverlay = true;
 					hasAtmCurve |= (yaxis == PMS::ATM);
 				}
@@ -2584,8 +2588,12 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						}
 					} else {
 						yLabel = yFormat.getLabel(yaxis, yHasRef, yRefVal, ycol, polnRatio);
-						if (yaxis == PMS::FREQUENCY) {
-							yLabel += " " + MFrequency::showType(plots[plotindex]->cache().getFreqFrame());
+						if ((dataParams[plotindex]->cacheType() == PlotMSCacheBase::MS) &&
+							((yaxis == PMS::FREQUENCY) || (yaxis == PMS::VELOCITY))) {
+							casacore::MFrequency::Types mfreqType = plots[plotindex]->cache().getFreqFrame();
+							if (mfreqType < casacore::MFrequency::N_Types) {
+								yLabel += " " + MFrequency::showType(mfreqType);
+							}
 						}
 						addAxisDescription(yLabel, yaxis, cacheType, averaged);
 					}
@@ -2623,9 +2631,12 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 						if (yLabelRight.empty()) {
 							yLabelRight = yLabel;
 						} else if (yLabel != yLabelRightLast) {
-							// do not repeat for overplots
-							if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
-							    (yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
+							// do not repeat overlays for overplots (handled below)
+							if (!yLabel.contains("Atm") && !yLabel.contains("Tsky") && !yLabel.contains("Sideband")) {
+								yLabelRight.append( ", ");
+								yLabelRight.append(yLabel);
+							} else if ((yLabel.contains("Atm") && !yLabelRight.contains("Atm")) ||
+								(yLabel.contains("Tsky") && !yLabelRight.contains("Tsky")) ||
 								(yLabel.contains("Sideband") && !yLabelRight.contains("Sideband"))) {
 								yLabelRight.append( ", ");
 								yLabelRight.append(yLabel);
