@@ -51,9 +51,9 @@ class simobserve_unittest_base(unittest.TestCase):
     graphics = "file"
     # Variables
     if is_CASA6:
-        datapath = ctsys.resolve('regression/unittest/simobserve')
+        datapath = ctsys.resolve('regression/unittest/simobserve/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/simobserve')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/simobserve/')
         
     thistask = "simobserve"
     imkeys=['max','mean','min','npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']

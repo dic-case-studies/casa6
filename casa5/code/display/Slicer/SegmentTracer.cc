@@ -26,10 +26,10 @@
 #include "SegmentTracer.h"
 #include <display/Slicer/SlicePlot.qo.h>
 #include <casaqt/QwtConfig.h>
-#include <qwt_plot_marker.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_plot.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_symbol.h>
 #include <QDebug>
 
 using namespace casacore;

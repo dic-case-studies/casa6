@@ -49,14 +49,6 @@
 # Test the po.complexfraclinpol() tool method
 # </synopsis> 
 #
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_po_complexfraclinpol[test1,test2,...]
-#
-# </example>
 #
 # <motivation>
 # To provide a test standard for the ia.tofits() tool method to ensure
@@ -68,9 +60,19 @@
 import shutil
 import unittest
 
-from casatools import imagepol as potool
+try:
+    from casatools import imagepol as potool
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
-datapath='regression/unittest/po_tool/'
+datapath = ctsys_resolve('regression/unittest/po_tool/')
 eq_beams = datapath + "pol_eq_beams.fits"
 neq_beams = datapath + "pol_neq_beams.fits"
 
