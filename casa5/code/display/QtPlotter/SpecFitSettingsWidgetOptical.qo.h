@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <display/QtPlotter/ProfileTaskFacilitator.h>
-#include <display/QtPlotter/SpecFitSettingsWidgetOptical.ui.h>
+#include <ui/ui_SpecFitSettingsWidgetOptical.h>
 
 namespace casa {
 

@@ -28,8 +28,8 @@
 #define QTPROGRESSWIDGET_QO_H_
 
 #include <graphics/GenericPlotter/ProgressMonitor.h>
-#include <casaqt/QtUtilities/QtProgressCompactWidget.ui.h>
-#include <casaqt/QtUtilities/QtProgressWidget.ui.h>
+#include <ui/ui_QtProgressCompactWidget.h>
+#include <ui/ui_QtProgressWidget.h>
 
 #include <QMutex>
 

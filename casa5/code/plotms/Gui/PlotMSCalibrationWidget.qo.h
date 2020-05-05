@@ -27,7 +27,7 @@
 #ifndef PLOTMSCALIBRATIONWIDGET_QO_H_
 #define PLOTMSCALIBRATIONWIDGET_QO_H_
 
-#include <plotms/Gui/PlotMSCalibrationWidget.ui.h>
+#include <ui/ui_PlotMSCalibrationWidget.h>
 #include <plotms/PlotMS/PlotMSCalibration.h>
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 
