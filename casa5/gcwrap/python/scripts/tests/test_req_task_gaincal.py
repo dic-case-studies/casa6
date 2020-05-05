@@ -25,7 +25,7 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import gaincal, casalog, mstransform
+    from casatasks import gaincal, mstransform, casalog
     CASA6 = True
     tb = casatools.table()
 
@@ -225,6 +225,22 @@ class gaincal_test(unittest.TestCase):
             shutil.rmtree('testcorrdepflagsF.G')
         if os.path.exists('testcorrdepflagsT.G'):
             shutil.rmtree('testcorrdepflagsT.G')
+
+        if os.path.exists('testspwmap.ms'):
+            shutil.rmtree('testspwmap.ms')
+                
+        if os.path.exists('testspwmap.G0'):
+            shutil.rmtree('testspwmap.G0')
+    
+        if os.path.exists('testspwmap.G1'):
+            shutil.rmtree('testspwmap.G1')
+
+        if os.path.exists('testspwmap.G2'):
+            shutil.rmtree('testspwmap.G2')
+
+        if os.path.exists('testspwmap.G3'):
+            shutil.rmtree('testspwmap.G3')
+            
 
     @classmethod
     def tearDownClass(cls):
@@ -486,6 +502,78 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(np.all(tableComp(tempCal, spwMapCal)[:,1] == 'True'))
         
+
+
+        # Add more interesting test, including test of CAS-12591 fix
+
+        tsmdata='testspwmap.ms'
+
+        # slice out just scan 2
+        mstransform(vis=datacopy,outputvis=tsmdata,scan='2',datacolumn='data')
+
+        # Run gaincal w/ solint='inf' to get solutions for all spws
+        tsmcal0='testspwmap.G0'
+        gaincal(vis=tsmdata,caltable=tsmcal0,solint='inf',refant='0',smodel=[1,0,0,0])
+
+        # change spws in tsmcal0 [0,1,2,3] to [2,3,0,1], so we can use spwmap non-trivially
+        tb.open(tsmcal0,nomodify=False)
+        spwid=tb.getcol('SPECTRAL_WINDOW_ID')
+        spwid = [(i+2)%4 for i in spwid]
+        tb.putcol('SPECTRAL_WINDOW_ID',spwid)
+        tb.close()
+
+        # Solve for gains using tsmcal0 with spwmap=[2,3,0,1], which should "undo"
+        #  spwid change made above, expecting all solutions ~= (1,0)
+        tsmcal1='testspwmap.G1'
+        gaincal(vis=tsmdata,caltable=tsmcal1,solint='inf',refant='0',smodel=[1,0,0,0],
+                gaintable=[tsmcal0],spwmap=[2,3,0,1])
+
+        # test that output calibration is ~(1,0)
+        #  gains-1.0 ~ zero (to within precision and solve convergence fuzz
+        tb.open(tsmcal1)
+        g1=tb.getcol('CPARAM')
+        tb.close()
+        self.assertTrue(np.absolute(np.mean(g1-1.0))<2e-6)
+
+
+        # Run gaincal to get solutions for spw=0,1
+        tsmcal2='testspwmap.G2'
+        gaincal(vis=tsmdata,caltable=tsmcal2,spw='0,1',solint='inf',refant='0',smodel=[1,0,0,0])
+
+        # Reset spwid  0,1->3,2 so we can exercise spwmap=[3,2,0,1]
+        # also fix FLAG_ROW in SPECTRAL_WINDOW subtable
+        tb.open(tsmcal2,nomodify=False)
+        spwid=tb.getcol('SPECTRAL_WINDOW_ID')
+        spwid[spwid==0]=3
+        spwid[spwid==1]=2
+        tb.putcol('SPECTRAL_WINDOW_ID',spwid)
+        tb.close()
+        tb.open(tsmcal2+'/SPECTRAL_WINDOW',nomodify=False)
+        fr=tb.getcol('FLAG_ROW')
+        fr=[1,1,0,0]
+        tb.putcol('FLAG_ROW',fr)
+        tb.close()
+
+        # solve again with unselected spws all mapped to unavailable solutions
+        #  this tests the fix for CAS-12591, wherein the solution-availability check
+        #  was applying the spwmap twice, causing a mysterious exception and 
+        #  failure to calibrate
+        #  (In this case, if spw 2,3 are mapped twice (to 0,1), the availability check
+        #   would fail)
+        #  (expecting g~=(1,0) if applied solutions mapped correctly)
+        tsmcal3='testspwmap.G3'
+        gaincal(vis=tsmdata,caltable=tsmcal3,spw='0,1',solint='inf',refant='0',smodel=[1,0,0,0],
+                gaintable=[tsmcal2],spwmap=[3,2,0,1])
+
+        # test that output calibration is ~(1,0)
+        #  gains-1.0 ~ zero (to within precision and solve convergence fuzz
+        tb.open(tsmcal3)
+        g3=tb.getcol('CPARAM')
+        tb.close()
+        self.assertTrue(np.absolute(np.mean(g1-1.0))<2e-6)
+
+
+
     
     def test_mergedCreatesGainTable(self):
         ''' Gaincal 1a: Default values to create a gain table '''

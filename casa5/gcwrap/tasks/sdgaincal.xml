@@ -81,7 +81,19 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
   </param>
 
   <param type="intArray" name="spwmap" subparam="true">
-    <description>Spectral windows combinations to form for gaintables(s)</description>
+    <shortdescription>Spectral window mappings to form for applytable(s)</shortdescription>
+    <description>Spectral window mappings to form for applytable(s)
+                     Only used if callib=False
+                     default: [] (apply solutions from each calibration spw to
+                     the same MS spw only)
+                     Any available calibration spw can be mechanically mapped to any 
+                      MS spw. 
+                     Examples:
+                        spwmap=[0,0,1,1] means apply calibration 
+                          from cal spw = 0 to MS spw 0,1 and cal spw 1 to MS spws 2,3.
+                        spwmap=[[0,0,1,1],[0,1,0,1]] (use a list of lists for multiple
+                          applytables)
+    </description>
     <type>any</type>
     <value></value>
   </param>

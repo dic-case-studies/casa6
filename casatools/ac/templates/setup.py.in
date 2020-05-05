@@ -89,6 +89,8 @@ from os.path import isfile, join, islink
 from itertools import chain
 import argparse
 
+lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
@@ -110,7 +112,7 @@ for arg in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.38.jar'
+xml_jar_file = 'xml-casa-assembly-1.47.jar'
 real_gnu = None
 
 if pyversion < 3:
@@ -1401,10 +1403,26 @@ def get_tp_libs():
             'fftw3','lapack','wcs','cfitsio','rpfits','blas'
         ] + get_grpc_libs() + ['readline', 'gfortran', 'dl']
 
+def get_gfortran_lib_path( ):
+    proc = Popen([ props['build.compiler.fortran'], "-print-search-dirs"], stdout=PIPE, stderr=PIPE )
+    out,err = pipe_decode(proc.communicate( ))
+    exit_code = proc.wait( )
+    if exit_code != 0:
+        sys.exit('failed to find libgfortran')
+
+    for line in out.split('\n'):
+        if line.startswith('libraries: ='):
+            for path in line[12:].split(':'):
+                if os.path.exists('%s/libgfortran.%s' % (path,lib_ext)):
+                    return os.path.abspath(path)
+
+    print("failed to locate gfortran using default path...")
+    return third_party_lib_path + '/lib/gcc5'
+
 # get architecture specific data used for linking
 def get_arch_link():
     if sys.platform == 'darwin':
-        archflags = ['-L' + third_party_lib_path + '/lib/gcc5']
+        archflags = ['-L' + get_gfortran_lib_path( )]
         archlibs = [ ]
     else:
         archflags = [ ]
@@ -1429,7 +1447,6 @@ c_target = "c_compile"
 # test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
-lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
 casac_dir = get_casac_dir()
 output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
 libcasatools = output_lib.format(libname='casatools')
@@ -2177,7 +2194,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.38.jar"
+        assembly_jar = "xml-casa-assembly-1.47.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []

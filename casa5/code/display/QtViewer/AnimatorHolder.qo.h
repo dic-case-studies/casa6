@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <display/QtViewer/InActiveDock.qo.h>
-#include <display/QtViewer/AnimatorHolder.ui.h>
+#include <ui/ui_AnimatorHolder.h>
 #include <display/QtViewer/AnimatorWidget.qo.h>
 
 namespace casa {

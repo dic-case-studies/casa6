@@ -32,8 +32,8 @@
 
 #include <casaqt/QwtPlotter/QPAnnotation.h>
 
-#include <qwt_plot_picker.h>
-#include <qwt_plot_panner.h>
+#include <qwt/qwt_plot_picker.h>
+#include <qwt/qwt_plot_panner.h>
 
 namespace casa {
 

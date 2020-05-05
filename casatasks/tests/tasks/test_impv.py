@@ -70,15 +70,19 @@ import shutil
 import numpy
 import unittest
 
-from casatasks import impv
-
-from casatools import image as iatool
-from casatools import quanta
-from casatools import table
-
+try:
+    from casatasks import impv
+    from casatools import image as iatool
+    from casatools import quanta
+    from casatools import table, ctsys
+    datapath = ctsys.resolve('regression/unittest/imageanalysis/ImageAnalysis/')
+except ImportError:
+    from tasks import *
+    from taskinit import *   
+    datapath = 'regression/unittest/imageanalysis/ImageAnalysis/'
+    
 _tb = table( )
 
-datapath = 'regression/unittest/imageanalysis/ImageAnalysis/'
 
 def run_impv(
     imagename, outfile, start, end, width,

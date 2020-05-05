@@ -1,5 +1,22 @@
-import unittest
-from casatools import measures
+##########################################################################
+# test_measures.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+#
+##########################################################################
 
 '''
 Unit tests for the measures tool.
@@ -8,6 +25,21 @@ Features tested:
   1. me.cometdist
   2. me.cometangdiam
 '''
+
+import unittest
+
+try:
+    # CASA 6
+    from casatools import  ctsys, measures
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    from tests.test_split import check_eq, datapath
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -39,7 +71,7 @@ class Ganymede(unittest.TestCase):
     """
     def setUp(self):
         self.me = measures( )
-        cometdir = "ephemerides/JPL-Horizons/"
+        cometdir = ctsys_resolve("ephemerides/JPL-Horizons/")
         self.me.framecomet(cometdir + "Ganymede_55437-56293dUTC.tab")
         self.me.doframe(self.me.epoch("utc", "2011/01/03/17:00:00"))
         self.me.doframe(self.me.observatory("ALMA"))

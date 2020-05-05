@@ -69,7 +69,7 @@
 #include <QHash>
 #include <QHashIterator>
 #include <graphics/X11/X_exit.h>
-#include <display/QtPlotter/QtProfileGUI.ui.h>
+#include <ui/ui_QtProfileGUI.h>
 
 inline void initPlotterResource() {
 	Q_INIT_RESOURCE(QtPlotter);

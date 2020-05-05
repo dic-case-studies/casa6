@@ -66,7 +66,7 @@
 #include <QHashIterator>
 #include <graphics/X11/X_exit.h>
 
-#include <display/QtPlotter/QtProfilePrefsGUI.ui.h>
+#include <ui/ui_QtProfilePrefsGUI.h>
 
 namespace casa {
 
