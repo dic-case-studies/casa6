@@ -231,6 +231,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_simanalyze.py
   test_req_task_statwt.py
   test_req_tool_ms_statwt.py
   test_req_task_uvmodelfit.py
