@@ -3473,9 +3473,9 @@ in spectral window 1.
      </param>
 
      <param type="any" name="timebin">
-     <description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units.</description>
+     <description>Size of the time window that is used to determine the statistics of a weight. Can be an integer number of timestamps or a time interval in time units.</description>
      <any type="variant" limittypes="string int"/>
-     <value type="string">0.001s</value>
+     <value type="int">1</value>
      <example>4</example>
      <example>"300s"</example>
      </param>
@@ -3583,10 +3583,28 @@ in spectral window 1.
        one set is composed solely of the real part of the data values,
        the other set is composed solely of the imaginary part of the
        data values.
-    2. Compute the variance of each of these sets, vr and vi.
-    3. Compute veq = (vr + vi)/2.
-    4. The associated weight is just the reciprocal of veq. The weight
-       will have unit of (data unit)^(-2), eg Jy^(-2).
+    2. Compute the weighted (by exposure time) variance of each of
+       these sets, v_r and v_i. The weighted variance per unit
+       inverse eposure time, v, is computed using
+
+       v = sum(e_i * (V_i - &lt;V&gt;)^2)/N,
+
+       where e_i is the exposure time for real/imaginary part of
+       visibility V_i and
+
+       &lt;V&gt; = sum(e_i * V_i)/sum(e_i)
+
+       is the weighted mean of all the visibilities in the set, and N
+       is the number of (unflagged) visibilities.
+    3. Compute v_eq = (v_r + v_i)/2.
+    4. Compute the normalized variance, v_norm = v_eq * &lt;e&gt;, where
+
+       &lt;e&gt; = sum(e_i)/N
+
+       is the mean of the exposure times. The associated weight of
+       visibility V_i is e_i/v_eq. The weight will have unit of (data
+       unit)^(-2), e.g., Jy^(-2). The visibility weights are what this
+       application computes and writes.
 
     Data are aggregated on a per-baseline, per-data description ID
     basis. Data are aggregated in bins determined by the specified
@@ -3615,7 +3633,25 @@ in spectral window 1.
        written to the WEIGHT column; the WEIGHT_SPECTRUM column will
        not be added if it doesn't already exist, and if it does, it
        will remain uninitialized (no values will be written to it).
-            
+           
+    In cases where columns are added and initialized, the
+    WEIGHT_SPECTRUM values will be set equal to the corresponding
+    WEIGHT values, and the SIGMA_SPECTRUM values will be set to the
+    corresponding SIGMA values.
+ 
+    CAUTION: For some cases when only a subset of data is selected
+    and the WEIGHT_SPECTRUM and/or SIGMA_SPECTRUM columns are created,
+    there is a known code issue in which these columns are not properly
+    created and initialized for the specified subset of data, although
+    they are properly initialized for the entire dataset. In such cases,
+    an exception will be thrown. Because the columns are created for the
+    entire dataset, the user simply needs to rerun the statwt task using
+    the same parameters and the task should complete as expected. Should
+    this condition occur when the user is using the ms.statwt() tool
+    method, the user should close the ms tool, and then reopen it using
+    the same data set and configure the same selection, and rerun
+    ms.statwt(). The tool method should then complete as expected.
+
     RULES FOR MODIFYING WEIGHT, WEIGHT_SPECTRUM, SIGMA, and SIGMA_SPECTRUM
 
     1. If datacolum='corrected' or 'residual' then values are written
@@ -3644,60 +3680,80 @@ in spectral window 1.
     intensive and take longer than the block processing algorithm. Each
     algorithm is discussed in detail below.
             
-    If the value of timebin is an integer, it means that the specified
-    value should be multiplied by the representative integration time
-    in the MS. This integration is the median value of all the values
-    in the INTERVAL column. Flags are not considered in the integration
-    time computation. If either extrema in the INTERVAL column differs
-    from the median by more than 25%, the application will fail because
-    the values vary too much for there to be a single, representative,
-    integration time. The timebin parameter can also be specified as a
-    quantity (string) that must have time conformant units.
-            
+    If the value of timebin is an integer, this value represents the
+    number of contiguous, unique time stamps (from the MS TIME column)
+    that should be used for averaging. 
+
     Block Time Processing
-            
-    The data are processed in blocks. This means that all weight
-    spectrum values will be set to the same value for all points within
-    the same time bin/channel bin/correlation bin (see the section on
-    channel binning and description of combine="corr" for more details
-    on channel binning and correlation binning). The time bins are not
-    necessarily contiguous and are not necessarily the same width. The
-    start of a bin is always coincident with a value from the TIME
-    column, So for example, if values from the time column are [20, 60,
-    100, 140, 180, 230], and the width of the bins is chosen to be
-    110s, the first bin would start at 20s and run to 130s, so that
-    data from timestamps 20, 60, and 100 will be included in the first
-    bin. The second bin would start at 140s, so that data for
-    timestamps 140, 180, and 230 would be included in the second bin.
-    Also, time binning does not span scan boundaries, so that data
-    associated with different scan numbers will always be binned
-    separately; changes in SCAN_NUMBER will cause a new time bin to be
-    created, with its starting value coincident with the time of the
-    new SCAN_NUMBER. Similar behavior can be expected for changes in
-    FIELD_ID and ARRAY_ID. One can override this behavior for some
-    columns by specifying the combine parameter (see below).
-            
+
+    The data are processed in contiguous time blocks in this case. This
+    means that all WEIGHT_SPECTRUM values will be set to the same value
+    for all data within the same time bin/channel bin/correlation bin
+    (see the section on channel binning and description of combine="corr"
+    for more details on channel binning and correlation binning).
+
+    If timebin is specified as a time quantity (eg, '110s'), then the
+    time bins are not necessarily contiguous and are not necessarily the
+    same width. The start of a bin is always coincident with a value
+    from the TIME column, So for example, if values from the TIME column
+    are [20s, 60s, 100s, 140s, 180s, 230s], and timebin = 110s, the
+    first bin would start at 20s and run to 130s, so that data from
+    timestamps 20s, 60s, and 100s will be included in the first bin. The
+    second bin would start at 140s, so that data for timestamps 140s,
+    180s, and 230s would be included in the second bin.
+
+    In the case where timebin is an integer, this denotes the number of 
+    contigous timestamps that should be binned together. Note that, in
+    this case, for rows "left over" in the upper edge of the bin, their
+    values are computed using timebin that would include rows with times
+    earlier than them. For example, in an MS with 8 rows in one block
+    to be processed and timebin=3, timestamps 1, 2, and 3 would be used
+    to compute the weights of the first three three rows, and rows 4, 5,
+    and 6 would be used to compute weights for the next three rows as
+    expected. Rows 7 and 8 are "left over" rows, but three rows (as per
+    the integer timebin specification) are still used to compute them.
+    Row 7 and 8 weights are computed by combining data in rows 6, 7, and 8.            
+           
     Sliding Time Window Processing
             
-    In this case, the time window is always centered on the timestamp
-    of the row in question and extends +/-timebin/2 around that
-    timestamp, subject the the time block boundaries. Rows with the
-    same baselines and data description IDs which are included in that
-    window are used for determining the weight of that row. The
+    In the sliding time window case, in the case where timebin is a time
+    quantity, the time window is always centered on the timestamp of the
+    row in question and extends +/-timebin/2 around that timestamp, subject
+    the the time block boundaries.
+    
+    In the case where timebin is an integer, there are two cases to
+    consider:
+
+    timebin is odd: In this case the target row's data and the data from
+    the +/-(n-1)/2 rows around the target row are also used.
+
+    timebin is even: In this case, the target row's data and the data from
+    the n/2 rows after the target row and the n/2 - 1 rows before the target
+    row are used.
+
+    When timebin is an int, for "edge" rows, the timebin extends from the
+    edge of the block to the corresponding timebin value of rows away from
+    the edge, so that the timebin is not symmetrical around the target rows,
+    but includes the number of rows specified by the timebin value.
+
+    OVERRIDING DEFAULT BLOCK BOUNDARIES
+
+    Rows with the same baselines and data description IDs which are included
+    in that window are used for determining the weight of that row. The
     boundaries of the time block to which the window is restricted are
-    determined by changes in FIELD_ID, ARRAY_ID, and SCAN_NUMBER. One
-    can override this behavior for FIELD_ID and/or SCAN_NUMBER by
-    specifying the combine parameter (see below). Unlike the time block
-    processing algorithm, this sliding time window algorithm requires
-    that details all rows for the time block in question are kept in
-    memory, and thus the sliding window algorithm in general requires
-    more memory than the  block processing method. Also, unlike the
-    block processing method which computes a single value for all
-    weights within a single bin, the sliding window method requires
-    that each row (along with each channel and correlation bin) be
-    processed individually, so in general the sliding window method
-    will take longer than the block processing method.
-            
+    determined by changes in FIELD_ID, ARRAY_ID, and SCAN_NUMBER. One can
+    override this behavior for FIELD_ID and/or SCAN_NUMBER by specifying the
+    combine parameter (see below). Unlike the time block processing algorithm,
+    this sliding time window algorithm requires that details of all rows for
+    the time window in question are kept in memory, and thus the sliding
+    window algorithm in general and the block processing row when timebin is
+    an int, requires more memory than the block processing method when
+    timebin is a quantity. Also, unlike the block processing method which
+    computes a single value for all weights within a single bin, the sliding
+    window method requires that each row (along with each channel and
+    correlation bin) be processed individually, so in general the sliding
+    window method will take longer than the block processing method.           
+
     CHANNEL BINNING
             
     The width of channel bins is specified via the chanbin parameter.
