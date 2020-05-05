@@ -6,10 +6,10 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <casa/BasicSL/String.h>
-#include <display/region/QtImageRegionStats.ui.h>
-#include <display/region/QtMsRegionStats.ui.h>
-#include <display/region/SlicerStats.ui.h>
-#include <display/region/PVLineStats.ui.h>
+#include <ui/ui_QtImageRegionStats.h>
+#include <ui/ui_QtMsRegionStats.h>
+#include <ui/ui_SlicerStats.h>
+#include <ui/ui_PVLineStats.h>
 #include <display/region/RegionInfo.h>
 
 

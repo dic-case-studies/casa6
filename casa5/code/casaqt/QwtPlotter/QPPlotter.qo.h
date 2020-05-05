@@ -30,7 +30,7 @@
 #ifdef AIPS_HAS_QWT
 
 #include <graphics/GenericPlotter/Plotter.h>
-#include <casaqt/QwtPlotter/QPPlotter.ui.h>
+#include <ui/ui_QPPlotter.h>
 
 #include <casaqt/QwtPlotter/QtPageHeaderDataModel.h>
 #include <casaqt/QwtPlotter/QPHeaderTableWidget.qo.h>

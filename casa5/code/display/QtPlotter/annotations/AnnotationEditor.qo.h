@@ -2,7 +2,7 @@
 #define ANNOTATIONEDITOR_QO_H
 
 #include <QDialog>
-#include <display/QtPlotter/annotations/AnnotationEditor.ui.h>
+#include <ui/ui_AnnotationEditor.h>
 
 namespace casa {
 

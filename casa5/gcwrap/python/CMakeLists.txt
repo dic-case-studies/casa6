@@ -193,6 +193,7 @@ scripts/task_tsdimaging.py
 scripts/task_sdpolaverage.py
 scripts/task_sdsidebandsplit.py
 scripts/task_sdsmooth.py
+scripts/task_sdtimeaverage.py 
 scripts/task_setjy.py
 scripts/task_simalma.py
 scripts/task_simobserve.py
@@ -244,3 +245,4 @@ add_subdirectory( scripts/parallel )
 add_subdirectory( scripts/mpi4casa )
 add_subdirectory( scripts/imagerhelpers )
 add_subdirectory( scripts/casatasks )
+add_subdirectory( scripts/casatestutils )

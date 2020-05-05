@@ -68,6 +68,21 @@
 import shutil
 import unittest
 
+try:
+    from casatools import image as iatool
+    from casatools import regionmanager as rgtool
+    from casatools import table, ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
+datapath = ctsys_resolve('regression/unittest/ia_fft/')
+
 from casatools import image as iatool
 from casatools import table
 
@@ -138,7 +153,7 @@ class ia_fft_test(unittest.TestCase):
         testname = 'regression/unittest/ia_fft/test_image'
         myia = iatool()
         testim = iatool()
-        testim.open(testname)
+        testim.open(ctsys_resolve(testname))
         self.assertTrue(testim)
         testshape = testim.shape()
         self.assertTrue(len(testshape) == 3)
@@ -179,7 +194,7 @@ class ia_fft_test(unittest.TestCase):
         # FFT whole image
         #
         ndim = len(testim.shape())
-        axes = range(ndim)
+        axes = list(range(ndim))
         ok = testim.fft(real=rname, imag=iname, phase=pname, amp=aname, axes=axes)
         self.assertTrue(ok)
         im1 = myia.newimage(rname)

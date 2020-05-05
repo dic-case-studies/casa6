@@ -27,8 +27,8 @@
 #define FEATHERPLOT_H_
 
 #include <QList>
-#include <qwt_plot.h>
-#include <qwt_legend.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_legend.h>
 
 class QwtPlotCurve;
 class QGridLayout;

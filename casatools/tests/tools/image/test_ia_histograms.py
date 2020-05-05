@@ -70,8 +70,18 @@ import unittest
 import numpy
 import os
 
-from casatools import image as iatool
-from casatools import regionmanager
+try:
+    from casatools import image as iatool
+    from casatools import regionmanager
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -104,7 +114,7 @@ def alleqnum(x,num,tolerance=0):
         stop('unhandled array shape in alleq')
     return True
 
-datapath = 'regression/unittest/ia_histograms/'
+datapath = ctsys_resolve('regression/unittest/ia_histograms/')
 
 class ia_histograms_test(unittest.TestCase):
     
