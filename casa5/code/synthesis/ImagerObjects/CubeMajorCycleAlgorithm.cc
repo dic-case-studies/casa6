@@ -540,7 +540,7 @@ void CubeMajorCycleAlgorithm::reset(){
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
     PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
     //PagedImage<Float> im(imagename, TableLock::AutoNoReadLocking);
-    im.lock(FileLocker::Read);
+    im.lock(FileLocker::Read, 1000);
     SubImage<Float> *tmpptr=nullptr;
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     subimptr.reset(new TempImage<Float>(TiledShape(tmpptr->shape(), tmpptr->niceCursorShape()), tmpptr->coordinates()));
