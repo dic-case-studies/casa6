@@ -182,7 +182,6 @@ class PyParallelContSynthesisImager(PySynthesisImager):
                 if (nCFs == 0):
                     casalog.post(cfCacheName + " exists, but is empty.  Attempt is being made to fill it now.","WARN")
                     cfcExists = False;
-
         # print("##########################################")
         # print("CFCACHE = ",cfCacheName,cfcExists)
         # print("##########################################")
@@ -368,8 +367,8 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 
             ## If only one field, do the get/gather/set of the weight density.
             if self.NF == 1 and self.allimpars['0']['stokes']=="I":   ## Remove after gridded wts appear for all fields correctly (i.e. new FTM).
-   
-                if self.weightpars['type'] != 'natural' :  ## For natural, this array isn't created at all.
+                
+                if not ( (self.weightpars['type'] ==  'natural') or (self.weightpars['type'] == 'radial'))   :  ## For natural and radial, this array isn't created at all.
                                                                        ## Remove when we switch to new FTM
 
                     casalog.post("Gathering/Merging/Scattering Weight Density for PSF generation","INFO")

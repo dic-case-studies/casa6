@@ -202,7 +202,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     
     SubImage<Float> *tmpptr=nullptr;
     if(writelock)
-      im.lock(FileLocker::Write, 30);
+      im.lock(FileLocker::Write, 1000);
     ////TESTOO
     //outptr.reset(SpectralImageUtil::getChannel(im, chanBeg, chanEnd, writelock));
     
