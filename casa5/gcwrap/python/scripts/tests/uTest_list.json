@@ -2991,6 +2991,32 @@
              "tag":"casaguide",
              "suppressEmail": false,
              "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"STK VLASS TEST",
+             "testScript":"test_stk_vlass_pipeline_imaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
+             "priority":"4",
+             "tag":"stakeholder",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"STK ALMA TEST",
+             "testScript":"test_stk_alma_pipeline_imaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
+             "priority":"4",
+             "tag":"stakeholder",
+             "suppressEmail": false,
+             "comment":""
         }
     ]
 }
