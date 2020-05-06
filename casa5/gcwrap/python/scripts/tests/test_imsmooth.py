@@ -38,7 +38,7 @@ import math
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, image, regionmanager, componentlist, table, quanta
-    from casatasks import imsmooth, casalog
+    from casatasks import imsmooth, casalog, imsubimage
 
     _ia = image()
     _rg = regionmanager()
@@ -52,14 +52,13 @@ else:
 
     componentlist = cltool
     image = iatool
-
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
     _ia = iatool( )
-    _rg = rgtool( )
+    _rg = rgtool()
 
     # not local tools
     _tb = tb
@@ -1017,45 +1016,43 @@ class imsmooth_test(unittest.TestCase):
         myia = self.ia
         imname = "test_image2dconvolver_multibeam.im"
         shutil.copytree(ctsys_resolve(os.path.join(self.datapath, imname)), imname)
-        # myia.open(ctsys_resolve(os.path.join(self.datapath,"test_image2dconvolver_multibeam.im")))
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
         gotname = 'convolve2d_multibeam.im'
-        # got = myia.convolve2d(axes=[0, 1], major=major, minor=minor, pa=pa)
         self.assertTrue(
             imsmooth(
-                imname=imname, axes=[0, 1], major=major, minor=minor, pa=pa,
-                outname=gotname
+                imagename=imname, major=major, minor=minor, pa=pa,
+                outfile=gotname
             ), 'imsmooth failed'
         )
         myia.open(imname)
         shape = myia.shape()
         myia.done()
         got = image()
+        expec = image()
         for i in range(5):
             blc=[0, 0, i]
             trc=[shape[0]-1, shape[1]-1, i]
             reg = _rg.box(blc=blc, trc=trc)
-            # xx = myia.subimage(region=reg)
             subname = 'subi' + str(i) + '.im'
-            imsubimage(imagename=imname, region=reg, outname=subname)
-            # exp = xx.convolve2d(axes=[0, 1], major=major, minor=minor, pa=pa)
+            myia.open(imname)
+            xx = myia.subimage(region=reg, outfile=subname)
+            myia.done()
+            xx.done()
             outname = 'convolve' + str(i) + '.im'
             imsmooth(
-                subname, axes=[0, 1], major=major, minor=minor,
-                pa=pa, outname=outname
+                subname, major=major, minor=minor, pa=pa, outfile=outname
             )
-            exp.open(outname)
-            expbeam = myia.restoringbeam()
-            myia.open(gotname)
+            expec.open(outname)
+            expbeam = expec.restoringbeam()
+            got.open(gotname)
             gotbeam = got.restoringbeam(channel=i)
             for j in ["major", "minor", "positionangle"]:
                 self.assertTrue(_near(gotbeam[j], expbeam[j], 2e-7))
-            self.assertTrue(abs(got.getchunk(blc=blc, trc=trc) - exp.getchunk()).max() < 3e-5)
+            self.assertTrue(abs(got.getchunk(blc=blc, trc=trc) - expec.getchunk()).max() < 3e-5)
             got.done()
-            exp.done()
-            # xx.done()
+            expec.done()
         myia.done()
         got.done()
                             
@@ -1085,7 +1082,6 @@ class imsmooth_test(unittest.TestCase):
             expected = make_gauss2d(shape, 5.0, 10.0)
             if (unit == "K"):
                 expected *= 3.0*6.0/5.0/10.0
-            # for code in (run_convolve2d, run_imsmooth):
             for targetres in [False, True]:
                 if not targetres:
                     major = "8arcsec"
@@ -1164,11 +1160,10 @@ class imsmooth_test(unittest.TestCase):
     
                     ebeam.append(gotbeam)
                     convim.done()
-                # for code in [run_convolve2d, run_imsmooth]:
                 if targetres:
-                    outfile = "tres3" + unit[0] + str(code)
+                    outfile = "tres3" + unit[0]
                 else:
-                    outfile = "tres4" + unit[0] + str(code)
+                    outfile = "tres4" + unit[0]
                 run_imsmooth(
                      imagename=imagename, kernel="gaussian",
                      major=major, minor=minor, pa=pa, targetres=targetres,
@@ -1188,7 +1183,6 @@ class imsmooth_test(unittest.TestCase):
             major="6arcsec", minor="3arcsec", pa="0deg"
         )
         myia.done()
-        # for code in [run_convolve2d, run_imsmooth]:
         outfile = "tres6"
         self.assertFalse(
             run_imsmooth(
@@ -1235,7 +1229,6 @@ class imsmooth_test(unittest.TestCase):
         shape = myia.shape()
         myia.putchunk(make_gauss2d(shape, 3.0, 6.0))
         expected = make_gauss2d(shape, 5.0, 10.0)
-        # for code in (run_convolve2d, run_imsmooth):
         for beam in [
             {"major": "8arcsec", "minor": "4arcsec", "pa": "0deg"},
             {
@@ -1269,7 +1262,6 @@ class imsmooth_test(unittest.TestCase):
         myia.setrestoringbeam(major="6arcsec", minor="3arcsec", pa="0deg")
         shape = myia.shape()
         values = make_gauss2d(shape, 3.0, 6.0)
-        #expected = make_gauss2d(shape, 5.0, 10.0)
         myia.putchunk(values)
         for unit in ("K", "cm-2"):
             myia.setbrightnessunit(unit)
@@ -1421,14 +1413,7 @@ class imsmooth_test(unittest.TestCase):
         major = "2arcmin"
         minor = "2arcmin"
         pa = "0deg"
-        bb = myia.convolve2d("", major=major,  minor=minor, pa=pa)        
         myia.done()
-        msgs = bb.history()
-        bb.done()
-        teststr = "ia.convolve2d"
-        self.assertTrue(teststr in msgs[-4], "'" + teststr + "' not found")     
-        self.assertTrue(teststr in msgs[-3], "'" + teststr + "' not found")
-        
         outfile = "zz_out.im"
         self.assertTrue(
             imsmooth(
@@ -1444,10 +1429,10 @@ class imsmooth_test(unittest.TestCase):
         teststr = "imsmooth"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
 
-    def test_CAS_12904(self):
-        """Test fix of CAS-12904 bug"""
+    def test_copying_of_input_mask(self):
+        """CAS-12904: copy input mask to output image"""
         imname = 'orig.im'
-        yy = iatool()
+        yy = image()
         yy.fromshape(imname, [100, 100, 3])
         pix = yy.getchunk()
         for i in range(3):
@@ -1456,11 +1441,10 @@ class imsmooth_test(unittest.TestCase):
         yy.done()
         outname = 'mysub.im'
         imsubimage(imagename=imname, outfile=outname, mask=imname + '>0')
-        subi = iatool()
+        subi = image()
         subi.open(outname)
-        rg = rgtool()
         for i in range(3):
-            reg = rg.box([0, 0, i], [99, 99, i])
+            reg = _rg.box([0, 0, i], [99, 99, i])
             npts = subi.statistics(region=reg)['npts']
             expec = 0 if i == 0 else 1
             self.assertEqual(npts.size, expec, 'wrong length npts array')
@@ -1475,7 +1459,7 @@ class imsmooth_test(unittest.TestCase):
         )
         yy.open(outname)
         for i in range(3):
-            reg = rg.box([0, 0, i], [99, 99, i])
+            reg = _rg.box([0, 0, i], [99, 99, i])
             npts = yy.statistics(region=reg)['npts']
             expec = 1 if i == 1 else 0
             self.assertEqual(npts.size, expec, 'wrong length npts array')
