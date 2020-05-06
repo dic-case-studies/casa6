@@ -168,8 +168,8 @@ void CubeMajorCycleAlgorithm::task(){
           if(chanRange_p[0]==0){
             for (uInt k=0; k < imSel_p.nelements(); ++k){
               subImStorShared[k]=subImageStore(k);
-              
               subImStor[k]=CountedPtr<SIImageStore>(subImStorShared[k]);
+	     
               if(ftmRec_p.nelements()>0){
                 subImgr.defineImage(subImStor[k], ftmRec_p[k], iftmRec_p[k]);	
               }else{
@@ -180,6 +180,7 @@ void CubeMajorCycleAlgorithm::task(){
             subImStor.resize(1);
             subImStorShared[0]=subImageStore(0);
             subImStor[0]=CountedPtr<SIImageStore>(subImStorShared[0]);
+
             if(ftmRec_p.nelements()>0){
               subImgr.defineImage(subImStor[0], ftmRec_p[0], iftmRec_p[0]);
             }else{
@@ -361,7 +362,9 @@ String&	CubeMajorCycleAlgorithm::name(){
 		throw(AipsError("Programmer error: sumwt disk image is non existant")); 
 	else
 		workingdir="";
+	///Use user locking to make sure locks are compliant
 	PagedImage<Float> sumwt(sumwgtname, TableLock::UserNoReadLocking);
+	//PagedImage<Float> sumwt(sumwgtname, TableLock::AutoNoReadLocking);
         if(sumwtNames_p.nelements() <= uInt(imId)){
           sumwtNames_p.resize(imId+1, True);
           psfNames_p.resize(imId+1, True);
@@ -460,7 +463,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 	StokesImageUtil::PolRep polrep=(StokesImageUtil::PolRep)polRep_p[imId];
 	subimstor->setDataPolFrame(polrep);
 	if(startmodel_p[imId].nelements() >0){
-		LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
+	  LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
 		subimstor->setModelImage(startmodel_p[imId]);	
 	}
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
@@ -495,6 +498,8 @@ String&	CubeMajorCycleAlgorithm::name(){
                         norm.setupNormalizer(normpars);
                         shared_ptr<ImageInterface<Float> > subweight=nullptr;
                         getSubImage(subweight, startchan, endchan, weightname, True);
+			LatticeLocker lock1(*(subweight), FileLocker::Read);
+			LatticeLocker lock2(*(submodel), FileLocker::Read);
                         std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, nullptr, nullptr, subweight, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, True));
                         norm.setImageStore(subimstor);
                         norm.divideModelByWeight();
@@ -534,10 +539,12 @@ void CubeMajorCycleAlgorithm::reset(){
 	
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
     PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
-    im.lock(FileLocker::Read, 30);
+    //PagedImage<Float> im(imagename, TableLock::AutoNoReadLocking);
+    im.lock(FileLocker::Read);
     SubImage<Float> *tmpptr=nullptr;
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
-    subimptr.reset(new TempImage<Float>(tmpptr->shape(), tmpptr->coordinates()));
+    subimptr.reset(new TempImage<Float>(TiledShape(tmpptr->shape(), tmpptr->niceCursorShape()), tmpptr->coordinates()));
+    
     if(copy)
       subimptr->copyData(*tmpptr);
     //subimptr->flush();
@@ -547,11 +554,14 @@ void CubeMajorCycleAlgorithm::reset(){
 
   void CubeMajorCycleAlgorithm::writeBackToFullImage(const String imagename, const Int chanBeg, const Int chanEnd, std::shared_ptr<ImageInterface<Float> > subimptr){
     PagedImage<Float> im(imagename, TableLock::UserLocking);
-    im.lock(FileLocker::Write, 30);
-    SubImage<Float> *tmpptr=nullptr; 
-    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
-    tmpptr->set(0.0);
-    tmpptr->copyData(*(subimptr));
+    //PagedImage<Float> im(imagename, TableLock::AutoLocking);
+    SubImage<Float> *tmpptr=nullptr;
+    {
+      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
+      LatticeLocker lock1 (*(tmpptr), FileLocker::Write);
+      tmpptr->set(0.0);
+      tmpptr->copyData(*(subimptr));
+    }
     im.flush();
     im.unlock();
     delete tmpptr;

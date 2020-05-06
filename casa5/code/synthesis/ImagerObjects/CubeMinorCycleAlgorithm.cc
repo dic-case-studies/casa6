@@ -121,7 +121,7 @@ void CubeMinorCycleAlgorithm::task(){
           ImageBeamSet bs=(subimstor->psf()->imageInfo()).getBeamSet();
           subimstor->setBeamSet(bs);
           subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
-          LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write);
+          LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
           subDeconv.initMinorCycle(subimstor);
           if(autoMaskOn_p){
             subDeconv.setChanFlag(chanFlag_p);
@@ -196,10 +196,13 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	return subimstor;
 }
   void CubeMinorCycleAlgorithm::makeTempImage(std::shared_ptr<ImageInterface<Float> >& outptr,  const String& imagename, const Int chanBeg, const Int chanEnd, const Bool writelock){
+    //For testing that locks are placed in the right places use userlocking
     PagedImage<Float> im(imagename, writelock ? TableLock::UserLocking : TableLock::UserNoReadLocking);
+    //PagedImage<Float> im(imagename, writelock ? TableLock::AutoLocking : TableLock::AutoNoReadLocking);
+    
     SubImage<Float> *tmpptr=nullptr;
     if(writelock)
-              im.lock(FileLocker::Write, 30);
+      im.lock(FileLocker::Write, 30);
     ////TESTOO
     //outptr.reset(SpectralImageUtil::getChannel(im, chanBeg, chanEnd, writelock));
     
@@ -226,12 +229,15 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     im.unlock();
   }
  void CubeMinorCycleAlgorithm::writeBackToFullImage(const String imagename, const Int chanBeg, const Int chanEnd, std::shared_ptr<ImageInterface<Float> > subimptr){
-    PagedImage<Float> im(imagename, TableLock::UserLocking);
-    im.lock(FileLocker::Write, 30);
+   PagedImage<Float> im(imagename, TableLock::UserLocking);
+   //PagedImage<Float> im(imagename, TableLock::AutoLocking);
     SubImage<Float> *tmpptr=nullptr; 
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
-    tmpptr->copyData(*(subimptr));
-                 
+    {
+    
+      LatticeLocker lock1 (*(tmpptr), FileLocker::Write);
+      tmpptr->copyData(*(subimptr));
+    }        
     im.unlock();
     delete tmpptr;
                  

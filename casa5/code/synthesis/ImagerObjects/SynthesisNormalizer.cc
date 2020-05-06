@@ -206,6 +206,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	try{
 	    LatticeExpr<Float> thepb( *(itsPartImages[0]->pb()) );
+	    LatticeLocker lock1(*(itsImages->pb()), FileLocker::Write);
 	    itsImages->pb()->copyData(thepb);
 
 	  }
