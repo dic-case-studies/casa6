@@ -1,98 +1,92 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="immoments" category="analysis">
+<task category="analysis" name="immoments" type="function">
 <shortdescription>Compute moments from an image</shortdescription>
 
 <description>
 </description>
 
 <input>
-    <param type="string" name="imagename" kind="image" mustexist="true" >
-        <description>Name of the input image</description>
-        <value></value>
+    <param mustexist="true" kind="image" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        
+        <value/>
         <example>imagename=ngc5921_task.image</example>
     </param>
 
-    <param type="intArray" name="moments">
-        <description>List of moments you would like to compute</description>
+    <param name="moments" type="intArray"><shortdescription>List of moments you would like to compute</shortdescription><description>List of moments you would like to compute</description>
+        
         <value>0</value>
         <example>moments=1</example>
     </param>
 
-    <param type="any" name="axis" >
-    <description>The momement axis: ra, dec, lat, long, spectral, or stokes</description>
-    <any type='variant' limittypes='string int'/>
-        <value type='string'>spectral</value>
+    <param name="axis" type="any"><shortdescription>The momement axis: ra, dec, lat, long, spectral, or stokes</shortdescription><description>The momement axis: ra, dec, lat, long, spectral, or stokes</description>
+    
+    <any limittypes="string int" type="variant"/>
+        <value type="string">spectral</value>
         <example>axis=&quot;ra&quot;</example>
     </param>
 
-    <param type="any" name="region">
-        <description>Region selection. Default is to use the full image.</description>
-    <any type='variant' limittypes='string stringArray'/>
-        <value type='string'/>
+    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        
+    <any limittypes="string stringArray" type="variant"/>
+        <value type="string"/>
         <example>region=&quot;myregion.crtf&quot;</example>
     </param>
 
-    <param type="string" name="box">
-        <description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+        
         <value/>
         <example>box=&quot;40,40,120,120&quot;</example>
     </param>
 
-    <param type="string" name="chans" >
-    <description>Channels to use. Default is to use all channels.</description>
+    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    
         <value/>
         <example>chans=&quot;1~4&quot;</example>
     </param>
 
-    <param type="string" name="stokes">
-        <description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+        
         <value/>
         <example>stokes=&quot;IQ&quot;</example>
     </param>
 
-    <param type="string" name="mask">
-        <description>Mask to use. Default is none.</description>
+    <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        
         <any type="variant"/>
-        <value type="stringArray"></value>
-        <example>mask=&quot;my.im > 5&quot;</example>
+        <value type="stringArray"/>
+        <example>mask=&quot;my.im &gt; 5&quot;</example>
     </param>
 
-    <param type="any" name="includepix">
-        <description>Range of pixel values to include</description>
-    <any type="variant" limittypes="int doubleArray intArray"/>
+    <param name="includepix" type="any"><shortdescription>Range of pixel values to include</shortdescription><description>Range of pixel values to include</description>
+        
+    <any limittypes="int doubleArray intArray" type="variant"/>
     <value type="int">-1</value>
     <example>includepix=[4, 5]</example>
     </param>
 
-    <param type="any" name="excludepix">
-        <description>Range of pixel values to exclude</description>
-    <any type="variant" limittypes="int doubleArray intArray"/>
+    <param name="excludepix" type="any"><shortdescription>Range of pixel values to exclude</shortdescription><description>Range of pixel values to exclude</description>
+        
+    <any limittypes="int doubleArray intArray" type="variant"/>
     <value type="int">-1</value>
     <example>excludepix=[-10, 0]</example>
     </param>
 
-    <param type="string" name="outfile">
-        <description>Output image file name (or root for multiple moments) </description>
+    <param name="outfile" type="string"><shortdescription>Output image file name (or root for multiple moments) </shortdescription><description>Output image file name (or root for multiple moments) </description>
+        
     <value/>
     <example>outfile=&quot;mymoments.im&quot;</example>
     </param>
     
-    <param type="bool" direction="in" name="stretch" subparam="true">
-        <description>Stretch the mask if necessary and possible? </description>
+    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+        
         <value>False</value>
         <example>stretch=true</example>
     </param>
     <constraints>
         <when param="mask">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
@@ -186,7 +180,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         data used to calculate the 0-moments, integrated values.  In
         this case the mask is from the calibrated.im file and all values
         that have a value greater than 0.5 will be positive in the mask..
-        immoments( &quot;clean.image&quot;, axis=&quot;spec&quot;, mask=&quot;calibrated.im>0.5&quot;, outfile=&quot;mom_withmask.im&quot; )
+        immoments( &quot;clean.image&quot;, axis=&quot;spec&quot;, mask=&quot;calibrated.im&gt;0.5&quot;, outfile=&quot;mom_withmask.im&quot; )
         
 If an image has multiple (per-channel beams) and the moment axis is equal to the
 spectral axis, each channel will be convolved with a beam that is equal to the beam
