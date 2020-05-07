@@ -80,7 +80,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsAspScaleSizes(0),
   itsAspAmplitude(0),
   itsNInitScales(4),
-  itsPrevLBFGSGrad(0.0)
+  itsPrevLBFGSGrad(0.0),
+  itsNumIterNoGoodAspen(0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -106,6 +107,15 @@ void AspMatrixCleaner::makedirtyscales()
 
   if( (psfShape_p) != (itsDirty->shape()))
     throw(AipsError("PSF and Dirty array are not of the same shape"));
+
+  // "only" have 0 scale size -> switch to hogbom
+  if (itsNscales == 1)
+  {
+    itsDirtyConvScales.resize(1, true);
+    itsDirtyConvScales[0] = Matrix<Float>(itsDirty->shape());
+    itsDirtyConvScales[0] = *itsDirty;
+    return;
+  }
 
   Matrix<Complex> dirtyFT;
   FFTServer<Float,Complex> fft(itsDirty->shape());
@@ -541,6 +551,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     blcDirty = blc;
     trcDirty = trc;
 
+    //genie If we switch to hogbom (i.e. only have 0 scale size)
+    // there is no need to do the following Aspen update
+    if (nScalesToClean == 1)
+      continue;
+
     //genie Now update the actual residual image
     // At this point, itsDirty is not updated. Only itsDirtyConvScales is updated.
     //cout << "after dirtySub(100,100) = " << itsDirtyConvScales[0](100,100) << endl;
@@ -915,7 +930,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     for (scale=0; scale < itsNInitScales; ++scale)
     {
       // Find absolute maximum for the dirty image
-      cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirty->shape().nelements() << endl;
+      //cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirty->shape().nelements() << endl;
       Matrix<Float> work = (vecWork_p[scale])(blcDirty, trcDirty);
       work = 0.0;
       work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
@@ -1043,6 +1058,15 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   if(int(itsInitScaleXfrs.nelements()) == 0)
     throw(AipsError("Initial scales for Asp are not defined"));
 
+  // if there is no "good" aspen put into the active-set
+  // for more than 10 consecutive iterations, we switch
+  // from Asp to hogbom
+  if (itsNumIterNoGoodAspen > 10)
+  {
+    cout << "Switch to hogbom." << endl;
+    return {};
+  }
+
   // Dirty * initial scales
   Matrix<Complex> dirtyFT;
   FFTServer<Float,Complex> fft(itsDirty->shape());
@@ -1113,6 +1137,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<Float> tempx;
     vector<IPosition> activeSetCenter;
 
+    bool hasGoodAspen = false;
     for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
     {
       //cout << "scale " << i << " heuristic: " << endl;
@@ -1125,8 +1150,16 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
         itsAspAmplitude.erase(itsAspAmplitude.begin() + i);
         itsAspScaleSizes.erase(itsAspScaleSizes.begin() + i);
         itsAspCenter.erase(itsAspCenter.begin() + i);
+
+        hasGoodAspen = true;
       }
     }
+
+    if (hasGoodAspen)
+      itsNumIterNoGoodAspen = 0;
+    else
+      itsNumIterNoGoodAspen += 1;
+
     //
     //unsigned int length = (itsAspScaleSizes.size() + 1) * 2;  //genie recon
     //VectorXd x(length); //genie recon
@@ -1152,14 +1185,14 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "Before: x = " << x << endl;
     double fx;
     double gclip;
-    int niter = solver.minimize(fun, x, fx, gclip);
+    /*int niter =*/ solver.minimize(fun, x, fx, gclip);
 
-    std::cout << niter << " iterations" << std::endl;
+    //std::cout << niter << " iterations" << std::endl;
     // use the initial gradient as a roll back gradient if there is
     // gradient exploding in lbfgs
     if (itsPrevLBFGSGrad == 0.0)
       itsPrevLBFGSGrad = gclip;
-    std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
+    //std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
     //std::cout << "x = \n" << x.transpose() << std::endl;
     //std::cout << "f(x) = " << fx << std::endl;
     //std::cout << "float is " << Float(x[1]) << endl;
@@ -1187,9 +1220,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   // debug info
   /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
   {
-    cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
-    cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
-    cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
+    //cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
+    //cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
+    //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
+    cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
 
   return itsAspScaleSizes; // return optimized scale

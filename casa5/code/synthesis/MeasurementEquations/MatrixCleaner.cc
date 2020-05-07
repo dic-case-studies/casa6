@@ -247,7 +247,7 @@ void MatrixCleaner::makeDirtyScales()
     // Dirty*scale
     for (scale=0; scale<itsNscales; scale++)
     {
-      os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
+      //os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
       Matrix<Complex> cWork;
       // Dirty * scale
       //      cout << "scale " << scale << " itsScaleptr " << &(itsScaleXfrs[scale]) << "\n"<< endl;
@@ -531,7 +531,7 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
       for (scale=0; scale<nScalesToClean; ++scale)
       {
         // Find absolute maximum for the dirty image
-        cout << "clean: in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
+        //cout << "clean: in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
         Matrix<Float> work = (vecWork_p[scale])(blcDirty,trcDirty);
         work = 0.0;
         work = work + (itsDirtyConvScales[scale])(blcDirty,trcDirty);
@@ -544,13 +544,13 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         Float minVal=0;
         IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
         minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsScaleMasks[scale]);
-        cout << "clean: ScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
+        //cout << "clean: ScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
         //genie
 
         if (!itsMask.null()) {
           findMaxAbsMask(vecWork_p[scale], itsScaleMasks[scale],
               maxima(scale), posMaximum[scale]);
-          cout << "before: maxima[" << scale << "] = " << maxima(scale) << endl;
+          //cout << "before: maxima[" << scale << "] = " << maxima(scale) << endl;
         }
         else
           findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
@@ -563,8 +563,8 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         maxima(scale)/=maxPsfConvScales(scale);
         maxima(scale) *= scaleBias(scale);
         maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
-        cout << "maxPsfconvscale[" << scale << "] = " << maxPsfConvScales(scale) << endl;
-        cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
+        //cout << "maxPsfconvscale[" << scale << "] = " << maxPsfConvScales(scale) << endl;
+        //cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
 
         //posMaximum[scale]+=blcDirty;
       }
@@ -883,9 +883,9 @@ void MatrixCleaner::makePsfScales(){
     throw(AipsError("Scales have to be set"));
   if(itsXfr.null())
     throw(AipsError("Psf is not defined"));
-  cout << "before destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
+  //cout << "before destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
   destroyScales();
-  cout << "after destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
+  //cout << "after destroy, size = " << itsNscales << " valid " << itsScalesValid << endl;
   itsScales.resize(itsNscales, true);
   itsScaleXfrs.resize(itsNscales, true);
   itsPsfConvScales.resize((itsNscales+1)*(itsNscales+1), true);
@@ -904,7 +904,7 @@ void MatrixCleaner::makePsfScales(){
 
   for (scale=0; scale<itsNscales; scale++)
   {
-    os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
+    //os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
     //PSF * scale
     itsPsfConvScales[scale] = Matrix<Float>(psfShape_p);
     cWork=((*itsXfr)*(itsScaleXfrs[scale])*(itsScaleXfrs[scale]));
@@ -990,7 +990,7 @@ Bool MatrixCleaner::setscales(const Vector<Float>& scaleSizes)
   // Now we can do all the convolutions
   Matrix<Complex> cWork;
   for (scale=0; scale<itsNscales;scale++) {
-    os << "Calculating convolutions for scale " << scale << LogIO::POST;
+    //os << "Calculating convolutions for scale " << scale << LogIO::POST;
 
     // PSF * scale
      itsPsfConvScales[scale] = Matrix<Float>(itsDirty->shape());
@@ -1247,7 +1247,7 @@ Bool MatrixCleaner::makeScaleMasks()
   Matrix<Complex> cWork;
   for (scale=0; scale<itsNscales;scale++) {
     //AlwaysAssert(itsScaleXfrs[scale], AipsError);
-    os << "Calculating mask convolution for scale size " << itsScaleSizes(scale) << LogIO::POST;
+    //os << "Calculating mask convolution for scale size " << itsScaleSizes(scale) << LogIO::POST;
 
     // Mask * scale
      // Allow only 10% overlap by default, hence 0.9 is a default mask threshold
