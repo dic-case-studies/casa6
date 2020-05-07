@@ -1215,12 +1215,18 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
         << "] as metadata" << eol
         << "select * from $1 , metadata" << eol
         << "where " << eol;
-    // Data is single-dish auto-correlation data,
+    // Row contains single-dish auto-correlation data,
     qry << "    ( ANTENNA1 == ANTENNA2 ) and" << eol ;
     qry << "    ( FEED1 == FEED2 ) and" << eol ;
-    // belonging to a row which has not been marked as invalid,
+
+    // has not been marked as invalid,
     qry << "    ( not(FLAG_ROW) ) and " << eol ;
-    // having observational intent: OBSERVE_TARGET#OFF_SOURCE,
+    // holds at least 1 data marked as valid,
+    qry << "    ( not(all(FLAG)) ) and " << eol;
+    // ---- Note: both conditions above are required because FLAG and FLAG_ROW are not synchronized:
+    //            a valid row (FLAG_ROW=False) may contain only invalid data: all(FLAG)=True
+
+    // has observational intent: OBSERVE_TARGET#OFF_SOURCE,
     qry << "    ( STATE_ID in [ " << eol
         << "          select rowid() " << eol
         << "          from ::STATE" << eol
@@ -1228,7 +1234,7 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
         << "              upper(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/ " << eol
         << "          ]" << eol
         << "    ) and" << eol;
-    // excluding - for ALMA - data from Water Vapor Radiometers spectral windows, which have 4 channels
+    // excluding - for ALMA - rows from Water Vapor Radiometers spectral windows, which have 4 channels
     qry << "    (" << eol
         << "        ( metadata.TELESCOPE_NAME != 'ALMA' ) or" << eol
         << "        (" << eol
