@@ -1087,7 +1087,7 @@ void SingleDishSkyCal::selfGatherAndSolve(VisSet& vs, VisEquation& /*ve*/)
     MeasurementSet reference_data = selectReferenceData(user_selection);
     logSink().origin(LogOrigin("SingleDishSkyCal","selfGatherAndSolve"));
     std::ostringstream msg;
-    msg.imbue(std::locale("en_US"));
+    msg.imbue(std::locale("en_US")); // Display numbers of rows using commas as thousands separators
     msg << "Selected: " << std::right << std::setw(10) << reference_data.nrow() << " rows of reference data" << '\n'
         << "out of  : " << std::right << std::setw(10) << user_selection.nrow() << " rows of user-selected data";
     logSink() << msg.str() << LogIO::POST;
