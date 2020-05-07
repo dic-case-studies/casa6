@@ -306,7 +306,6 @@ protected:
     // Fill calibration table by processing reference data found within user selection
     virtual void fillCalibrationTable(casacore::MeasurementSet const &reference_data);
 
-protected:
     // Fill calibration table by processing reference data found within user selection,
     // using DataRealComponentAccessor to access real component of data
     // stored either in DATA or FLOAT_DATA column
