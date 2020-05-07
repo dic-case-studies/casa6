@@ -93,6 +93,7 @@ import unittest
 import shutil
 import numpy as np
 from casatestutils.imagerhelpers import TestHelpers 
+import inspect
 
 CASA6 = False
 try: 
