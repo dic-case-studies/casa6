@@ -794,11 +794,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(image=img+'.image', range_list=[0.3, 1.0])
-            self.mom8_creator(image=img+'.residual', range_list=[0.3, 1.0])
-            test_dict['test_standard_cube']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(image=img+'.image', range_list=[0.3, 1.0])
+        self.mom8_creator(image=img+'.residual', range_list=[0.3, 1.0])
+        test_dict['test_standard_cube']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         test_dict['test_standard_cube']['images'].append(img+'.image.profile.png')
 
@@ -1058,11 +1057,10 @@ class Test_standard(test_tclean_base):
 
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-0.003, 0.04])
-            self.mom8_creator(img+'.residual', range_list=[-0.003, 0.04])
-            test_dict['test_standard_mfs']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[-0.003, 0.04])
+        self.mom8_creator(img+'.residual', range_list=[-0.003, 0.04])
+        test_dict['test_standard_mfs']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -1416,11 +1414,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_mtmfs']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image.tt0', range_list=[-0.005, 0.04])
-            self.mom8_creator(img+'.residual.tt0', range_list=[-0.005, 0.04])
-            test_dict['test_standard_mtmfs']['images'].extend( \
-                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
+        self.mom8_creator(img+'.image.tt0', range_list=[-0.005, 0.04])
+        self.mom8_creator(img+'.residual.tt0', range_list=[-0.005, 0.04])
+        test_dict['test_standard_mtmfs']['images'].extend( \
+            (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -1690,11 +1687,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube_eph']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[0.0, 3.25])
-            self.mom8_creator(img+'.residual', range_list=[0.0, 3.25])
-            test_dict['test_standard_cube_eph']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[0.0, 3.25])
+        self.mom8_creator(img+'.residual', range_list=[0.0, 3.25])
+        test_dict['test_standard_cube_eph']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         test_dict['test_standard_cube_eph']['images'].append(img+'.image.profile.png')
 
@@ -1949,11 +1945,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_mfs_eph']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-1.05, 1.05])
-            self.mom8_creator(img+'.residual', range_list=[-1.05, 1.05])
-            test_dict['test_standard_mfs_eph']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[-1.05, 1.05])
+        self.mom8_creator(img+'.residual', range_list=[-1.05, 1.05])
+        test_dict['test_standard_mfs_eph']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2303,11 +2298,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_mtmfs_eph']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image.tt0', range_list=[-1.05, 1.05])
-            self.mom8_creator(img+'.residual.tt0', range_list=[-1.05, 1.05])
-            test_dict['test_standard_mtmfs_eph']['images'].extend( \
-                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
+        self.mom8_creator(img+'.image.tt0', range_list=[-1.05, 1.05])
+        self.mom8_creator(img+'.residual.tt0', range_list=[-1.05, 1.05])
+        test_dict['test_standard_mtmfs_eph']['images'].extend( \
+            (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2560,11 +2554,10 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cal']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-0.015, 2.5])
-            self.mom8_creator(img+'.residual', range_list=[-0.015, 2.5])
-            test_dict['test_standard_cal']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[-0.015, 2.5])
+        self.mom8_creator(img+'.residual', range_list=[-0.015, 2.5])
+        test_dict['test_standard_cal']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -2924,11 +2917,10 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube']['report'] = report
         test_dict['test_mosaic_cube']['images'] = []
 
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[0.15, 1.2])
-            self.mom8_creator(img+'.residual', range_list=[0.15, 1.2])
-            test_dict['test_mosaic_cube']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[0.15, 1.2])
+        self.mom8_creator(img+'.residual', range_list=[0.15, 1.2])
+        test_dict['test_mosaic_cube']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         test_dict['test_mosaic_cube']['images'].append(img+'.image.profile.png')
 
@@ -3220,11 +3212,10 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-0.002, 0.035])
-            self.mom8_creator(img+'.residual', range_list=[-0.002, 0.035])
-            test_dict['test_mosaic_mfs']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[-0.002, 0.035])
+        self.mom8_creator(img+'.residual', range_list=[-0.002, 0.035])
+        test_dict['test_mosaic_mfs']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -3619,11 +3610,10 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mtmfs']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image.tt0', range_list=[-0.003, 0.035])
-            self.mom8_creator(img+'.residual.tt0', range_list=[-0.003, 0.035])
-            test_dict['test_mosaic_mtmfs']['images'].extend( \
-                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
+        self.mom8_creator(img+'.image.tt0', range_list=[-0.003, 0.035])
+        self.mom8_creator(img+'.residual.tt0', range_list=[-0.003, 0.035])
+        test_dict['test_mosaic_mtmfs']['images'].extend( \
+            (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
@@ -3917,11 +3907,10 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube_eph']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-0.01, 0.1])
-            self.mom8_creator(img+'.residual', range_list=[-0.01, 0.1])
-            test_dict['test_mosaic_cube_eph']['images'].extend( \
-                (img+'.image.moment8.png',img+'.residual.moment8.png'))
+        self.mom8_creator(img+'.image', range_list=[-0.01, 0.1])
+        self.mom8_creator(img+'.residual', range_list=[-0.01, 0.1])
+        test_dict['test_mosaic_cube_eph']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         test_dict['test_mosaic_cube_eph']['images'].append(img+'.image.profile.png')
 
@@ -4209,10 +4198,9 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs_eph']['images'] = []
 
         img = shutil._basename(img)
-        if not CASA6:
-            self.mom8_creator(img+'.image', range_list=[-2.2, 2.1])
-            self.mom8_creator(img+'.residual', range_list=[-2.2, 2.1])
-            test_dict['test_mosaic_mfs_eph']['images'].extend( \
+        self.mom8_creator(img+'.image', range_list=[-2.2, 2.1])
+        self.mom8_creator(img+'.residual', range_list=[-2.2, 2.1])
+        test_dict['test_mosaic_mfs_eph']['images'].extend( \
                 (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -4605,11 +4593,10 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mtmfs_eph']['report'] = report
         test_dict['test_mosaic_mtmfs_eph']['images'] = []
 
-        if not CASA6:
-            self.mom8_creator(img+'.image.tt0', range_list=[-2.2, 2.1])
-            self.mom8_creator(img+'.residual.tt0', range_list=[-2.2, 2.1])
-            test_dict['test_mosaic_mtmfs_eph']['images'].extend( \
-                (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
+        self.mom8_creator(img+'.image.tt0', range_list=[-2.2, 2.1])
+        self.mom8_creator(img+'.residual.tt0', range_list=[-2.2, 2.1])
+        test_dict['test_mosaic_mtmfs_eph']['images'].extend( \
+            (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = report)
