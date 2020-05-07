@@ -395,7 +395,16 @@ def tclean(
             if niter==0 and calcres==False:
                 if savemodel != "none":
                     imager.predictModel()
-
+            ### alma-stk-tests require the automask to be generated even if
+            ### niter=0
+            ### and for cubes in CAS-9386 ..automask happen in runMinorCycle
+            if (niter==0) and ('cube' in specmode) and (type(usemask)==str and 'auto' in usemask):
+                if(restoration==False):
+                    imager.initializeDeconvolvers()
+                imager.initializeIterationControl()
+                imager.hasConverged()
+                imager.updateMask()
+                imager.runMinorCycle()
             ## Do deconvolution and iterations
             if niter>0 :
 

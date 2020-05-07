@@ -508,6 +508,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    itsImages->printImageStats();
     SynthesisUtilMethods::getResource("Start Deconvolver");
     ///if cube execute cube deconvolution...check on residual shape as itsimagestore return 0 shape sometimes
+    if(!itsImages)
+      throw(AipsError("Initminor Cycle has not been called yet"));
     if(itsImages->residual()->shape()[3]> 1){
      return  executeCubeMinorCycle(minorCycleControlRec);
     }
@@ -926,7 +928,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ////Remembet this has to be called only after initMinorCycle
     LogIO os( LogOrigin("SynthesisDeconvolver","setupMask",WHERE) );
-    
+    if(!itsImages)
+      throw(AipsError("Initminor Cycle has not been called yet"));
     Bool maskchanged=False;
     //debug
     if( itsIsMaskLoaded==false ) {
