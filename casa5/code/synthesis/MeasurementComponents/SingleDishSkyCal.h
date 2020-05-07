@@ -218,19 +218,19 @@ public:
 
     // Determine and apply flux density scaling
     virtual void fluxscale(const casacore::String& outfile,
-                         const casacore::Vector<casacore::Int>& refFieldIn,
-             const casacore::Vector<casacore::Int>& tranFieldIn,
-             const casacore::Vector<casacore::Int>& inRefSpwMap,
-             const casacore::Vector<casacore::String>& fldNames,
-                         const casacore::Float& inGainThres,
-                         const casacore::String& antSel,
-                         const casacore::String& timerangeSel,
-                         const casacore::String& scanSel,
-             fluxScaleStruct& oFluxScaleStruct,
-             const casacore::String& oListFile,
-                         const casacore::Bool& incremental,
-                         const casacore::Int& fitorder,
-                         const casacore::Bool& display);
+        const casacore::Vector<casacore::Int>& refFieldIn,
+        const casacore::Vector<casacore::Int>& tranFieldIn,
+        const casacore::Vector<casacore::Int>& inRefSpwMap,
+        const casacore::Vector<casacore::String>& fldNames,
+        const casacore::Float& inGainThres,
+        const casacore::String& antSel,
+        const casacore::String& timerangeSel,
+        const casacore::String& scanSel,
+        fluxScaleStruct& oFluxScaleStruct,
+        const casacore::String& oListFile,
+        const casacore::Bool& incremental,
+        const casacore::Int& fitorder,
+        const casacore::Bool& display);
 
     // Use generic data gathering mechanism for solve
     virtual casacore::Bool useGenericGatherForSolve() { return false; }
@@ -380,62 +380,62 @@ private:
     void fillCalibrationTable(casacore::MeasurementSet const &reference_data);
 
 };
-  
+
 class SingleDishRasterCal : public SingleDishSkyCal 
 {
 public:
 
-  // Constructor
-  SingleDishRasterCal(VisSet& vs);
-  SingleDishRasterCal(const MSMetaInfoForCal& msmc);  // preferred ctor
-  SingleDishRasterCal(const casacore::Int& nAnt);
+    // Constructor
+    SingleDishRasterCal(VisSet& vs);
+    SingleDishRasterCal(const MSMetaInfoForCal& msmc);  // preferred ctor
+    SingleDishRasterCal(const casacore::Int& nAnt);
 
-  // Destructor
-  virtual ~SingleDishRasterCal();
+    // Destructor
+    virtual ~SingleDishRasterCal();
 
-  // Return type name as string (ditto)
-  virtual casacore::String typeName()     { return "SDSKY_RASTER"; }
-  virtual casacore::String longTypeName() { return "SDSKY_RASTER (position switch sky subtraction specific to OTF raster observation)"; }
+    // Return type name as string (ditto)
+    virtual casacore::String typeName()     { return "SDSKY_RASTER"; }
+    virtual casacore::String longTypeName() { return "SDSKY_RASTER (position switch sky subtraction specific to OTF raster observation)"; }
 
-  // local setSolve
-  virtual void setSolve(const casacore::Record& solve);
-  
-  // Reference data selection, specific to the otf raster observing mode
-  virtual casacore::MeasurementSet selectReferenceData(casacore::MeasurementSet const &ms);
+    // local setSolve
+    virtual void setSolve(const casacore::Record& solve);
+
+    // Reference data selection, specific to the otf raster observing mode
+    virtual casacore::MeasurementSet selectReferenceData(casacore::MeasurementSet const &ms);
 
 private:
-  // edge detection parameter for otfraster mode
-  casacore::Float fraction_;
-  casacore::Int numEdge_;
+    // edge detection parameter for otfraster mode
+    casacore::Float fraction_;
+    casacore::Int numEdge_;
 };
 
 class SingleDishOtfCal : public SingleDishSkyCal 
 {
 public:
 
-  // Constructor
-  SingleDishOtfCal(VisSet& vs);
-  //  SingleDishOtfCal(const MSMetaInfoForCal& msmc);  // preferred ctor   ****ctor needs an MS!
-  // Renaud: disabledSingleDishOtfCal(const casacore::Int& nAnt);
+    // Constructor
+    SingleDishOtfCal(VisSet& vs);
+    //  SingleDishOtfCal(const MSMetaInfoForCal& msmc);  // preferred ctor   ****ctor needs an MS!
+    // Renaud: disabledSingleDishOtfCal(const casacore::Int& nAnt);
 
-  // Destructor
-  virtual ~SingleDishOtfCal();
+    // Destructor
+    virtual ~SingleDishOtfCal();
 
-  // Return type name as string (ditto)
-  virtual casacore::String typeName()     { return "SDSKY_OTF"; }
-  virtual casacore::String longTypeName() { return "SDSKY_OTF (position switch sky subtraction specific to OTF fast scan)"; }
+    // Return type name as string (ditto)
+    virtual casacore::String typeName()     { return "SDSKY_OTF"; }
+    virtual casacore::String longTypeName() { return "SDSKY_OTF (position switch sky subtraction specific to OTF fast scan)"; }
 
-  // Reference data selection, specific to the on-the-fly fast scan observing mode
-  virtual casacore::MeasurementSet selectReferenceData(casacore::MeasurementSet const &user_selection);
-  virtual void setSolve(const casacore::Record& solve);
+    // Reference data selection, specific to the on-the-fly fast scan observing mode
+    virtual casacore::MeasurementSet selectReferenceData(casacore::MeasurementSet const &user_selection);
+    virtual void setSolve(const casacore::Record& solve);
 
 private:
-  // Edge detection parameters for otf mode
-  casacore::Float fraction_;
-  casacore::Float pixel_scale_;
+    // Edge detection parameters for otf mode
+    casacore::Float fraction_;
+    casacore::Float pixel_scale_;
 
-  // casacore::MeasurementSet filtered with user-specified selection
-  const casacore::MeasurementSet & msSel_ ;
+    // casacore::MeasurementSet filtered with user-specified selection
+    const casacore::MeasurementSet & msSel_ ;
 
 };
 
