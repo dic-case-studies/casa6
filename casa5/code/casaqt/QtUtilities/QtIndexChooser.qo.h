@@ -27,7 +27,7 @@
 #ifndef QTINDEXCHOOSER_QO_H_
 #define QTINDEXCHOOSER_QO_H_
 
-#include <casaqt/QtUtilities/QtIndexChooser.ui.h>
+#include <ui/ui_QtIndexChooser.h>
 
 #include <casa/BasicSL/String.h>
 

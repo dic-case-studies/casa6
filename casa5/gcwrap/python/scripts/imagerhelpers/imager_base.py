@@ -211,6 +211,10 @@ class PySynthesisImager:
 #         print('no cluster to delete')
         return
 
+    def deleteWorkDir(self):
+        # No .workdirectory to delete
+        return
+
     def initDefaults(self):
         # Reset globals/members
          self.NF=1
@@ -228,6 +232,7 @@ class PySynthesisImager:
          self.deleteDeconvolvers()
          self.deleteNormalizers()
          self.deleteIterBot()
+         self.deleteWorkDir()
          self.initDefaults()
          self.deleteCluster()
 

@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include <casa/Arrays/Vector.h>
-#include <display/QtPlotter/SmoothPreferences.ui.h>
+#include <ui/ui_SmoothPreferences.h>
 #include <scimath/Mathematics/VectorKernel.h>
 namespace casa {
 

@@ -29,7 +29,7 @@
 
 #include <QWidget>
 #include <casa/Utilities/CountedPtr.h>
-#include <display/region/HistogramGraph.ui.h>
+#include <ui/ui_HistogramGraph.h>
 
 namespace casacore{
 

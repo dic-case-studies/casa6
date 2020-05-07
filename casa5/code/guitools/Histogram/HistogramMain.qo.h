@@ -28,7 +28,7 @@
 #include <QMainWindow>
 #include <images/Images/PagedImage.h>
 #include <casa/aipstype.h>
-#include <guitools/Histogram/HistogramMain.ui.h>
+#include <ui/ui_HistogramMain.h>
 #include <guitools/Histogram/ImageLoader.qo.h>
 #include <guitools/Histogram/SaveHistogramWidget.qo.h>
 

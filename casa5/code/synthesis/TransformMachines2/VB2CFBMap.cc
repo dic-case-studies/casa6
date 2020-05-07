@@ -211,19 +211,24 @@ namespace casa{
 	      unsigned int cachedPOShape_X = cachedAntPO_l.shape()[0];
 	      unsigned int cachedPOShape_Y = cachedAntPO_l(0).shape()[0];
 
-	      Vector<Double> sumResPO_l, sumAntPO_l, sumPO_l;
+	      Vector<Double> sumResPO_l(2,0), sumAntPO_l(2,0), sumPO_l(2,0);
 	      double avgResPO_l = 0.0;
-	      sumResPO_l.resize(2,0);
-	      sumAntPO_l.resize(2,0);
-	      sumPO_l.resize(2,0);
+// 	      sumResPO_l.resize(2,0);
+// 	      sumAntPO_l.resize(2,0);
+// 	      sumPO_l.resize(2,0);
 
-	      // cerr << "cachedAntPO_l : " << cachedAntPO_l << endl;
-	      // cerr << "po_l : " << po_l << endl;
+//  	      cerr << "cachedAntPO_l : " << cachedAntPO_l << endl;
+//  	      cerr << "po_l : " << po_l << endl;
 
-	      
+// 	      cerr << " After initialization sumResPO_l "<< sumResPO_l[0] << " sumAntPO_l " << sumAntPO_l[0] <<" sumPO_l " << sumPO_l[0] << endl;
+
+// 	      cerr << " After initialization sumResPO_l "<< sumResPO_l[1] << " sumAntPO_l " << sumAntPO_l[1] << " sumPO_l " << sumPO_l[1] << endl;
+
 	      if(poShape_X == cachedPOShape_X && poShape_Y == cachedPOShape_Y)
 		{
 		  Vector < Vector <Double> > residualPointingOffsets_l = cachedAntPO_l - po_l;
+// 		  cerr << "residualPointingOffsets_l : " << residualPointingOffsets_l << endl;
+// 		  cerr <<"___________________________________________________________________"<<endl;
 		  for(unsigned int ii=0; ii < poShape_X; ii++) 
 		    {
 		      for (unsigned int jj=0; jj < poShape_Y; jj++)
@@ -232,8 +237,9 @@ namespace casa{
 			  sumAntPO_l[ii] = sumAntPO_l[ii] + cachedAntPO_l[ii][jj];
 			  sumPO_l[ii] = sumPO_l[ii] + po_l[ii][jj];
 			}
+// 		      cerr << " ii " << ii << " sumResPO_l " << sumResPO_l[ii] << " sumAntPO_l " << sumAntPO_l[ii] << " sumPO_l " << sumPO_l[ii] << endl;
 		    }
-		  
+// 		  cerr <<"___________________________________________________________________"<<endl;		  
 
 		  avgResPO_l = sqrt(sumResPO_l[0]*sumResPO_l[0] + sumResPO_l[1]*sumResPO_l[1])/poShape_Y; // The units are in pixels here
 
@@ -363,7 +369,7 @@ namespace casa{
 					      const double& /*sigmaDev*/)
     {
       int myrow=row;
-      int idx;
+      int idx = 0;
       if(doPointing_p)
 	{
 	  vector<int> uniqueVbRow2BLMap_p = vbRow2BLMap_p;
