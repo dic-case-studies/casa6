@@ -521,11 +521,11 @@ class test_onefield(testref_base):
           checkims = [self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0',self.img+'.model.tt0']  
           
           ## For parallel run, check sub workdirectory images also.
-          if self.parallel==True:
-               checkims = checkims + self.th.getNParts( imprefix=self.img, 
-                                                        imexts=['residual.tt0','residual.tt1',
-                                                                'psf.tt0','psf.tt1',
-                                                                'model.tt0','model.tt1']) 
+          #if self.parallel==True:
+          #     checkims = checkims + self.th.getNParts( imprefix=self.img, 
+          #                                              imexts=['residual.tt0','residual.tt1',
+          #                                                      'psf.tt0','psf.tt1',
+          #                                                      'model.tt0','model.tt1']) 
           report = self.th.checkall(ret=ret, 
                                      peakres=0.409, modflux=0.764, iterdone=10, nmajordone=2,
                                      imexist=checkims, 
