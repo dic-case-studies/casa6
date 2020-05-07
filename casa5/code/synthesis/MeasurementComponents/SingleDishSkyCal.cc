@@ -1214,10 +1214,9 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
         << "    $1" << eol
         << "] as metadata" << eol
         << "select * from $1 , metadata" << eol
-        << "where ";
-    // Data is single-dish data and,
+        << "where " << eol;
+    // Data is single-dish auto-correlation data,
     qry << "    ( ANTENNA1 == ANTENNA2 ) and" << eol ;
-    // data is auto-correlation data,
     qry << "    ( FEED1 == FEED2 ) and" << eol ;
     // belonging to a row which has not been marked as invalid,
     qry << "    ( not(FLAG_ROW) ) and " << eol ;
