@@ -8,10 +8,11 @@ import numpy as np
 import numbers
 
 try:
-    from casatools import ctsys, table
+    from casatools import ctsys, table, msmetadata
     from casatasks import exportuvfits, importuvfits
     _tb = table()
     ctsys_resolve = ctsys.resolve
+    _msmd = msmetadata()
     is_CASA6 = True
 except ImportError:
     from tasks import *
@@ -19,6 +20,7 @@ except ImportError:
     import casac
     from __main__ import *
     _tb = tbtool()
+    _msmd = msmdtool()
     is_CASA6 = False
     data_root = os.environ.get('CASAPATH').split()[0] + '/data'
     def ctsys_resolve(apath):
@@ -76,6 +78,43 @@ class exportuvfits_test(unittest.TestCase):
             "exportuvfits failed but should have succeeded because "
             + "overwrite=True"
         )
+
+    def test_no_rest_freqs(self):
+        """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
+        msname = "rest_freq_test.ms"
+        shutil.copytree(os.path.join(self.datapath, msname), msname)
+        fitsname = "no_rest_freqs.uvfits"
+        self.assertTrue(
+            exportuvfits(vis=msname, fitsfile=fitsname),
+            "Failed exportuvfits with no rest freqs"
+        ) 
+        # import and check the rest freqs
+        # importuvfits doesn't return anything, so we cannot test the
+        # return value for success
+        msname = "imported_no_restfreqs.ms"
+        importuvfits(fitsfile=fitsname, vis=msname)
+        _msmd.open(msname)
+        restfreqs = _msmd.restfreqs()
+        _msmd.done()
+        expec = {
+            '0': {
+                'type': 'frequency', 'm0': {'value': 0.0, 'unit': 'Hz'},
+                'refer': 'LSRK'
+            }
+        }
+        self.assertEqual(
+            restfreqs, expec, "Got wrong restfreqs from re-imported dataset"
+        )
+
+    def test_no_source_table(self):
+        """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
+        msname = "no_source_table.ms"
+        shutil.copytree(os.path.join(self.datapath, msname), msname)
+        fitsname = "no_source_table.uvfits"
+        self.assertTrue(
+            exportuvfits(vis=msname, fitsfile=fitsname),
+            "Failed exportuvfits with no SOURCE table"
+        ) 
             
 def suite():
     return [exportuvfits_test]        
