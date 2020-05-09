@@ -34,7 +34,7 @@ else:
 
     import string
     from odict import odict
-
+    from taskinit import *
     ###some helper tools
     from  casac import *
     ms = casac.ms()
@@ -45,7 +45,7 @@ else:
     ia = casac.image()
     im = casac.imager()
     msmd=casac.msmetadata()
-    default_casalog = casac.logsink()
+    default_casalog = casalog
 
 class cleanhelper:
     def __init__(self, imtool='', vis='', usescratch=False, casalog=default_casalog):

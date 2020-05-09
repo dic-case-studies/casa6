@@ -11,9 +11,10 @@ if is_CASA6:
     from casatools import quanta, ms, table, componentlist, measures, calibrater, msmetadata
     from collections import OrderedDict as odict
 else:
+    from taskinit import *
     from casac import casac
     from odict import odict
-    default_casalog = casac.logsink()
+    default_casalog = casalog
 
 class ss_setjy_helper:
     def __init__(self,imtool, vis, casalog=None):
