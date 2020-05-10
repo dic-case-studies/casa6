@@ -103,6 +103,8 @@ class accor_test(unittest.TestCase):
         shutil.rmtree(vlacopy)
         rmtables(cal_default)
     
+    
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_makesTable(self):
         ''' Test that when accor is run it creates a calibration table '''
         
@@ -110,6 +112,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(os.path.exists(caltab))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_fieldSelect(self):
         ''' Test that a calibration table generated with a field selection is different than one generated with no selection parameters '''
         
@@ -120,6 +123,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.all(fields == 1))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_spwSelect(self):
         ''' Test that a calibration table generated with a spectral window selection is different than one generated with no selection parameters '''
         
@@ -130,6 +134,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.all(spws == 1))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_intentSelect(self):
         ''' Test that a calibration table generated with an intent selection is different than one generated with no selection parameters '''
         
@@ -138,6 +143,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean,1.1453650693098703+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_selectData(self):
         ''' Test when selectdata = True selections may be used, and while selectdata = False they may not be used '''
         
@@ -155,6 +161,7 @@ class accor_test(unittest.TestCase):
         
         self.assertFalse(numpy.shape(data1) == numpy.shape(data2))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_timeRangeSelect(self):
         ''' Test that a calibration table generated with a timerange selection is different than one generated with no selection parameters '''
         
@@ -163,6 +170,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.1656893293062844+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_antennaSelect(self):
         ''' Test that a calibration table generated with an antenna selection is different than one generated with no selection parameters '''
         
@@ -171,6 +179,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.075232790576087+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_scanSelect(self):
         ''' Test that a calibration table generated with a scan selection is different than one generated with no selection parameters '''
         
@@ -179,12 +188,15 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.1453650693098703+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_obsSelect(self):
         ''' Test that a calibration table generated with an observation selection is different than one generated with no seletion parameters '''
         
         accor(vis=datacopy, caltable=caltab, observation='0')
         self.assertTrue(os.path.exists(caltab))
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_solint(self):
         ''' Test that the solint parameter changes he solution interval (?) '''
         
@@ -193,6 +205,8 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.1667321394651364+0j))
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_combineSelect(self):
         ''' Test that a calibration table generated with a combine selection is different than one generated with no selection parameteres '''
         
@@ -201,6 +215,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.136721501747767+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_append(self):
         ''' Generates a cal table and then attempts to append to it '''
         
@@ -212,6 +227,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(after_append > before_append)
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_docallib(self):
         ''' Test that the do callib parameter allows for the selection of caltables '''
 
@@ -222,6 +238,8 @@ class accor_test(unittest.TestCase):
         self.assertTrue(numpy.isclose(datamean, 1.0017881503811588+0j))
         
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_gaintable(self):
         ''' Test that providing the gaintable will yeild a different final cal table than the default '''
         
@@ -231,6 +249,7 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.0017881503811588+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_gainfield(self):
         ''' Test that adding a field selection to the gaintable will yeild a different cal table than gaintable with no field selection '''
         
@@ -239,7 +258,9 @@ class accor_test(unittest.TestCase):
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 0.9921940355389206+0j))
-        
+
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_interp(self):
         ''' Test that adding an interp selection to the gaintable will yeild a different cal table than gaintable with standard interp (linear, linear) '''
         accor(vlacopy, caltable='cal.B')
@@ -253,6 +274,7 @@ class accor_test(unittest.TestCase):
         
         rmtables('cal.C')
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_spwmap(self):
         ''' Test that adding a spwmap selection to the gaintable will yeild a different cal table than gaintable with no spwmap '''
         

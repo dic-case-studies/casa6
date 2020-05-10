@@ -28,7 +28,7 @@
 #include <QMainWindow>
 #include <QProgressDialog>
 
-#include <guitools/Feather/FeatherMain.ui.h>
+#include "ui/ui_FeatherMain.h"
 #include <guitools/Feather/FileLoader.qo.h>
 #include <guitools/Feather/FeatherPreferences.qo.h>
 #include <guitools/Feather/PreferencesColor.qo.h>

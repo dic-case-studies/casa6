@@ -71,10 +71,19 @@ import shutil
 import unittest
 import numpy
 
-from casatools import regionmanager as rgtool
-from casatools import image as iatool
-from casatools import quanta
-from casatools import ctsys
+try:
+    from casatools import regionmanager as rgtool
+    from casatools import image as iatool
+    from casatools import quanta
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)    
 
 image = "imregion.fits"
 text1 = "goodfile1.txt"
@@ -86,7 +95,7 @@ cas_3259r = "CAS-3259.rgn"
 cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
 
-datapath='regression/unittest/rg.fromtextfile/'
+datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
@@ -124,8 +133,6 @@ def deep_equality(a, b):
         return True
     return a == b
 
-datapath='regression/unittest/rg.fromtextfile/'
-
 
 class rg_fromtextfile_test(unittest.TestCase):
     
@@ -136,7 +143,7 @@ class rg_fromtextfile_test(unittest.TestCase):
     
     def setUp(self):
         for im in self._fixtures:
-            shutil.copy(ctsys.resolve(datapath + im), im)
+            shutil.copy(datapath + im, im)
         self.ia = iatool()
         self.rg = rgtool()
     

@@ -42,8 +42,8 @@
 
 /*
 #ifdef AIPS_HAS_QWT
-#include <qwt_plot_curve.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_symbol.h>
 #endif
 */
 #include <graphics/GenericPlotter/PlotFactory.h>

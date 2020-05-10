@@ -27,7 +27,7 @@
 #ifndef QPROGRESSPANEL_H_
 #define QPROGRESSPANEL_H_
 
-#include <casaqt/QtBrowser/QProgressPanel.ui.h>
+#include "ui/ui_QProgressPanel.h"
 
 #include <QtGui>
 

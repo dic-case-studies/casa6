@@ -31,7 +31,7 @@
 #include <casa/BasicSL/String.h>
 #include <casa/Containers/Record.h>
 #include <measures/Measures/MDoppler.h>
-#include <display/QtViewer/ImageManager/ImageView.ui.h>
+#include <ui/ui_ImageView.h>
 
 class QSpacerItem;
 

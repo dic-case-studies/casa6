@@ -27,7 +27,7 @@
 #ifndef PLOTMSCANVASTAB_QO_H_
 #define PLOTMSCANVASTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSCanvasTab.ui.h>
+#include <ui/ui_PlotMSCanvasTab.h>
 
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 

@@ -3,12 +3,24 @@
 import os
 import sys
 import shutil
-
 import unittest
-from casatools import ctsys, sdm, ms
+
+try:
+    from casatools import ctsys, sdm, ms
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)    
+
 ### for testhelper import
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import testhelper as th
+
+datapath = ctsys_resolve('regression/')
 
 _ms = ms( )
 class exportasdm_test(unittest.TestCase):
@@ -27,24 +39,24 @@ class exportasdm_test(unittest.TestCase):
     def setUp(self):    
         self.rval = False
         if(not os.path.exists(self.vis_b)):
-            os.system('cp -R '+ctsys.resolve('regression/fits-import-export/input/test.ms')+' .')
+            os.system('cp -R '+datapath+'fits-import-export/input/test.ms'+' .')
         if(not os.path.exists(self.vis_c)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
+            os.system('cp -R '+datapath+'exportasdm/input/M100-X220-shortened.ms'+' .')
         if(not os.path.exists(self.vis_d)):
-            _ms.fromfits( self.vis_d, 'regression/ngc4826/fitsfiles/ngc4826.ll.fits5' )
+            _ms.fromfits( self.vis_d, datapath+'/ngc4826/fitsfiles/ngc4826.ll.fits5' )
             _ms.close( )
         if(not os.path.exists(self.vis_e)):
-            os.system('cp -R '+ctsys.resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
+            os.system('cp -R '+datapath+'cvel/input/g19_d2usb_targets_line-shortened.ms'+' .')
         if(not os.path.exists(self.vis_f)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/Itziar.ms')+' .')
+            os.system('cp -R '+datapath+'exportasdm/input/Itziar.ms'+' .')
         if(not os.path.exists(self.vis_g)):
-            os.system('cp -R '+ctsys.resolve('regression/exportasdm/input/M51.ms')+' .')
+            os.system('cp -R '+datapath+'exportasdm/input/M51.ms'+' .')
         if(not os.path.exists(self.vis_h)):
-            os.system('ln -sf '+ctsys.resolve('regression/unittest/importevla/X_osro_013.55979.93803716435')+' .')
+            os.system('ln -sf '+datapath+'unittest/importevla/X_osro_013.55979.93803716435'+' .')
             mysdm = sdm('X_osro_013.55979.93803716435')
             mysdm.toms('xosro2ref.ms',process_flags=False,scans='0:2',ocorr_mode='co',with_pointing_correction=True)
         if(not os.path.exists(self.vis_i)):
-            os.system('ln -sf '+ctsys.resolve('regression/asdm-import/input/uid___A002_X72bc38_X000')+' .')
+            os.system('ln -sf '+datapath+'asdm-import/input/uid___A002_X72bc38_X000'+' .')
             mysdm = sdm('uid___A002_X72bc38_X000')
             mysdm.toms('asdm.ms', scans='0:2')
 
