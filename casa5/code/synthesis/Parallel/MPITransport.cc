@@ -76,11 +76,13 @@ MPITransport::~MPITransport(){
     MPI_Finalize();
 }
 
+Bool MPITransport::isFinalized()
+{
+    int flag;
+    MPI_Finalized(&flag);
+    return Bool(flag);
+}
 
-Bool  MPITransport::isFinalized(){
-
-    return MPI::Is_finalized();
-  }
 Int MPITransport::anyTag() 
 {
 // Return the value which indicates an unset tag
@@ -456,13 +458,13 @@ Int MPITransport::get(Record &r){
    MPI_Status status;
    (void) status; // warning: unused status
    setSourceAndTag(getFrom, myOp);
-      // Get the size of the record in bytes
+   // Get the size of the record in bytes
    uInt bytesSent;
    MPI_Recv(&bytesSent, 1, MPI_UNSIGNED, getFrom, myOp, MPI_COMM_WORLD, &status);
-      // Now fill the buffer full of bytes from the record
-   uChar *buffer = new uChar[bytesSent];
+   // Now fill the buffer full of bytes from the record
+   uChar buffer[bytesSent];
    MPI_Recv(buffer, bytesSent, MPI_UNSIGNED_CHAR, getFrom, myOp, MPI_COMM_WORLD, &status);
-   MemoryIO nBuf(buffer, bytesSent);
+   MemoryIO nBuf(&buffer, bytesSent);
    AipsIO rBuf(&nBuf);
    uInt version = rBuf.getstart("MPIRecord");
    (void)version; // warning: unused version
