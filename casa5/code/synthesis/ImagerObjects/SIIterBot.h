@@ -106,8 +106,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
 			/* --- Functions for interacting with Minor Cycle Control --- */
 			virtual casacore::Record getMinorCycleControls();
-			virtual void   mergeCycleInitializationRecord(casacore::Record&);
-			virtual void   mergeCycleExecutionRecord(casacore::Record&);
+			virtual void   mergeCycleInitializationRecord(const casacore::Record&);
+			virtual void   mergeCycleExecutionRecord(const casacore::Record&);
     
 
 			//void mergeSubIterBot(SISubIterBot& subIterBot);
@@ -147,7 +147,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			   - loopgain
 			   - cyclefactor
 			*/
-			void setControlsFromRecord(casacore::Record &recordIn);
+			void setControlsFromRecord(const casacore::Record &recordIn);
          	        casacore::Float readThreshold( casacore::Record recordIn, casacore::String id );
 
 			virtual casacore::Record getDetailsRecord();
