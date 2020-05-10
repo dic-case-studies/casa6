@@ -1460,7 +1460,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         casa::applicator.init ( argc, argv );
 	  //For serial or master only
 	if ( applicator.isController() ) {
-		CubeMajorCycleAlgorithm *cmc = new CubeMajorCycleAlgorithm();
+		CubeMajorCycleAlgorithm cmc;
 		//casa::applicator.defineAlgorithm(cmc);
 		//Initialize everything to get the setup as serial
 		{
@@ -1611,10 +1611,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         Vector<Bool> retvals(numchunks, False);
         Int indexofretval=0;
         for ( Int k=0; k < numchunks; ++k ) {
-            assigned=casa::applicator.nextAvailProcess ( *cmc, rank );
+            assigned=casa::applicator.nextAvailProcess ( cmc, rank );
             //cerr << "assigned "<< assigned << endl;
             while ( !assigned ) {
-                rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+                rank = casa::applicator.nextProcessDone ( cmc, allDone );
                 //cerr << "while rank " << rank << endl;
                 Bool status;
                 casa::applicator.get ( status );
@@ -1624,7 +1624,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                     cerr << k << " rank " << rank << " successful " << endl;
                 else
                     cerr << k << " rank " << rank << " failed " << endl;
-                assigned = casa::applicator.nextAvailProcess ( *cmc, rank );
+                assigned = casa::applicator.nextAvailProcess ( cmc, rank );
 
             }
 
@@ -1646,11 +1646,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			// weighting scheme #7
 			applicator.put( weightParams_p);
             /// Tell worker to process it
-            applicator.apply ( *cmc );
+            applicator.apply ( cmc );
 
         }
         // Wait for all outstanding processes to return
-        rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+        rank = casa::applicator.nextProcessDone ( cmc, allDone );
         while ( !allDone ) {
             Bool status;
             casa::applicator.get ( status );
@@ -1661,7 +1661,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             else
                 cerr << "remainder rank " << rank << " failed " << endl;
 
-            rank = casa::applicator.nextProcessDone ( *cmc, allDone );
+            rank = casa::applicator.nextProcessDone ( cmc, allDone );
 			if(casa::applicator.isSerial())
 				allDone=true;
         }
