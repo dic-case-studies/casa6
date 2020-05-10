@@ -90,7 +90,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		   Long icachesize, Int itilesize, 
 		     Bool usezero, Bool useDoublePrec)
   : FTMachine(), sj_p(sj),
-    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(0),
+    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(nullptr),
     isTiled(false),
     maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
     mspc(0), msac(0), pointingToImage(0), usezero_p(usezero), convSampling(1),
@@ -158,13 +158,13 @@ MosaicFT& MosaicFT::operator=(const MosaicFT& other)
     else
       convWeightImage_p=nullptr;
     if(other.gridder==0)
-      gridder=0;
+      gridder.reset(nullptr);
     else{
       uvScale=other.uvScale;
       uvOffset=other.uvOffset;
-      gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						     uvScale, uvOffset,
-						     "SF");
+      gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                         uvScale, uvOffset,
+                                                         "SF"));
     }
     
   };
@@ -218,10 +218,9 @@ void MosaicFT::init() {
   uvOffset(0)=nx/2;
   uvOffset(1)=ny/2;
   
-  if(gridder) delete gridder; gridder=0;
-  gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						 uvScale, uvOffset,
-						 "SF");
+  gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                     uvScale, uvOffset,
+                                                     "SF"));
 
   // Set up image cache needed for gridding. 
   if(imageCache) delete imageCache; imageCache=0;
@@ -1973,8 +1972,8 @@ Bool MosaicFT::fromRecord(String& error,
   else{
     pbConvFunc_p=0;
   }
-  gridder=nullptr;
-   return retval;
+  gridder.reset(nullptr);
+  return retval;
 }
 
 void MosaicFT::ok() {

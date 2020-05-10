@@ -271,7 +271,7 @@ protected:
   casacore::Int tilesize;
 
   // Gridder
-  casacore::ConvolveGridder<casacore::Double, casacore::Complex>* gridder;
+  std::unique_ptr<casacore::ConvolveGridder<casacore::Double, casacore::Complex>> gridder;
 
   // Is this tiled?
   casacore::Bool isTiled;
