@@ -140,8 +140,8 @@ void TestAlgorithm::task(){
 // etc.
 int main(Int argc, Char *argv[]){
 
-   TestAlgorithm testMe(casa::applicator.numProcs() > 1);
-   casa::applicator.defineAlgorithm(&testMe);
+   TestAlgorithm *testMe = new TestAlgorithm(casa::applicator.numProcs() > 1);
+   casa::applicator.defineAlgorithm(testMe);
    casa::applicator.init(argc, argv);
 
    cout << "Number of procs: " << casa::applicator.numProcs() << '\n';

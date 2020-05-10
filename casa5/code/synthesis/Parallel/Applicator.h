@@ -106,7 +106,7 @@ class Applicator {
   // tells you if initThreads(argc,  argv) version has been called already
   // MPI does not like more than 1 call to MPI_Init or MPI_InitThread
   bool initialized();
-  // define an Algorithm if we need too;
+  // define an Algorithm if we need too; takes ownership of the alg pointer
   void defineAlgorithm(Algorithm *);
 
   // Status functions to indicate whether this Applicator is
