@@ -392,12 +392,15 @@ protected:
 
   casacore::LogIO& logIO();
 
+  casacore::Bool isSD_p; // CAS-10893
+
   casacore::ImageInterface<casacore::Complex>* image;
 
   casacore::UVWMachine* uvwMachine_p;
   casacore::CountedPtr<casacore::UVWMachine> phaseShifter_p;
 
   casacore::MeasFrame mFrame_p;
+
 
   // Direction of desired tangent plane
   casacore::Bool tangentSpecified_p;

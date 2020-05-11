@@ -92,6 +92,7 @@ SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
     minWeight_p(0.), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(false)
 {
+  isSD_p=true;
   lastIndex_p=0;
 }
 
@@ -105,6 +106,7 @@ SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize
     minWeight_p(minweight), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
+  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }
@@ -119,6 +121,7 @@ SDGrid::SDGrid(Int icachesize, Int itilesize,
     minWeight_p(0.), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(false)
 {
+  isSD_p=true;
   lastIndex_p=0;
 }
 
@@ -133,6 +136,7 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
     msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
+  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }
@@ -148,6 +152,7 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
     minWeight_p(minweight), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
+  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }

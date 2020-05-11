@@ -88,7 +88,7 @@ using namespace casacore;
 using namespace casa::refim;
 using namespace casacore;
 using namespace casa::vi;
-  FTMachine::FTMachine() : isDryRun(false), image(0), uvwMachine_p(0), 
+  FTMachine::FTMachine() : isDryRun(false), isSD_p(false), image(0), uvwMachine_p(0), 
 			   tangentSpecified_p(false), fixMovingSource_p(false), 
                            ephemTableName_p(""), 
 			   movingDirShift_p(0.0), 
@@ -110,7 +110,7 @@ using namespace casa::vi;
   }
   
   FTMachine::FTMachine(CountedPtr<CFCache>& cfcache,CountedPtr<ConvolutionFunction>& cf):
-    isDryRun(false), image(0), uvwMachine_p(0), 
+    isDryRun(false), isSD_p(false), image(0), uvwMachine_p(0), 
     tangentSpecified_p(false), fixMovingSource_p(false), 
     ephemTableName_p(""), 
     movingDirShift_p(0.0),
@@ -203,6 +203,7 @@ using namespace casa::vi;
       cfwts2_p = other.cfwts2_p;
       canComputeResiduals_p = other.canComputeResiduals_p;
 
+      isSD_p = other.isSD_p;
       pop_p = other.pop_p;
       toVis_p = other.toVis_p;
       spwFreqSel_p.resize();
@@ -2513,7 +2514,7 @@ using namespace casa::vi;
       {
 	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
 	
-	if( useWeightImage() && dopsf ) { 
+	if(( useWeightImage() && dopsf )||(isSD_p)) { 
 	  getWeightImage( *(imstore->weight())  , sumWeights); 
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.
