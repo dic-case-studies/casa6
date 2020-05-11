@@ -201,7 +201,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     //PagedImage<Float> im(imagename, writelock ? TableLock::AutoLocking : TableLock::AutoNoReadLocking);
     
     SubImage<Float> *tmpptr=nullptr;
-    LatticeLocker lockread (im, FileLocker::Read);
+    //LatticeLocker lockread (im, FileLocker::Read);
     //if(writelock)
     //  im.lock(FileLocker::Write, 1000);
     ////TESTOO
@@ -209,8 +209,12 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     
 
     ///END of TESTOO
-    
-    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    if(writelock){
+      im.lock(FileLocker::Write, 1000);
+      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    }
+    else
+      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     if(tmpptr){
       IPosition tileshape=tmpptr->shape();
       tileshape[2]=1; tileshape[3]=1;
@@ -226,6 +230,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	}
       }
       else{
+	LatticeLocker lock1 (*(tmpptr), FileLocker::Read);
 	outptr->copyData(*tmpptr);
       //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
 	if(tmpptr->isMasked()){
