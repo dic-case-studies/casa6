@@ -262,10 +262,11 @@ class PySynthesisImager:
              stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
              casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
 
-             # revert the current automask to the previous one 
+             # revert the current automask to the previous one
+             # not for cubes as of CAS-9386 this is not necessary
              #if self.iterpars['interactive']:
              for immod in range(0,self.NF):
-                     if self.alldecpars[str(immod)]['usemask'].count('auto')>0:
+                     if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) and (not ('cube' in self.allimpars[str(immod)]['specmode'])) :
                         prevmask = self.allimpars[str(immod)]['imagename']+'.prev.mask'
                         if os.path.isdir(prevmask):
                           # Try to force rmtree even with an error as an nfs mounted disk gives an error 
@@ -547,8 +548,9 @@ class PySynthesisImager:
                 # Some what duplicated as above but keep a copy of the previous mask
                 # for interactive automask to revert to it if the current mask
                 # is not used (i.e. reached deconvolution stopping condition).
+                ## no longer needed as of CAS-9386 for cubes.
                 #if self.iterpars['interactive'] and self.alldecpars[str(immod)]['usemask']=='auto-thresh':
-                if self.alldecpars[str(immod)]['usemask'].count('auto')>0:
+                if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) and (not ('cube' in self.allimpars[str(immod)]['specmode'])):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     prevmaskname=self.allimpars[str(immod)]['imagename']+'.prev.mask'
                     if os.path.isdir(maskname):
