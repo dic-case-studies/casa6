@@ -281,7 +281,7 @@ void MosaicFT::findConvFunction(const ImageInterface<Complex>& iimage,
   if(pbConvFunc_p.null())
     pbConvFunc_p=new SimplePBConvFunc();
   if(sj_p)
-    pbConvFunc_p->setSkyJones(sj_p);
+    pbConvFunc_p->setSkyJones(sj_p.get());
   ////TEST for HetArray only for now
   if(pbConvFunc_p->name()=="HetArrayConvFunc"){
     if(convSampling <10) 
@@ -1962,7 +1962,7 @@ Bool MosaicFT::fromRecord(String& error,
     String pbname;
     PBMath::whichCommonPBtoUse(tel, freq, band, pbtype, pbname);
     if(pbtype != PBMath::UNKNOWN)
-      sj_p=new VPSkyJones(tel,pbtype); 
+      sj_p.reset(new VPSkyJones(tel,pbtype));
   }
 
   inRec.get("name", machineName_p);
