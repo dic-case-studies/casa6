@@ -131,8 +131,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;*/
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
     itsScaleSizes.push_back(0.0); // put 0 scale
-    Vector<Float> scaleSizes(itsScaleSizes);
-    itsCleaner.defineAspScales(scaleSizes);
+    //Vector<Float> scaleSizes(itsScaleSizes);
+    //itsCleaner.defineAspScales(scaleSizes);
+    // try speed up here
+    itsCleaner.defineAspScales(itsScaleSizes);
 
     itsCleaner.makePsfScales();
     itsCleaner.makeScaleMasks();

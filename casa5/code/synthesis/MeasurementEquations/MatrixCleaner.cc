@@ -914,8 +914,8 @@ void MatrixCleaner::makePsfScales(){
 
     //cout << "psf scale " << scale << " " << max(itsPsfConvScales[scale]) << " " << min(itsPsfConvScales[scale]) << endl;
 
-    for (Int otherscale=scale; otherscale<itsNscales; otherscale++) {
-
+    for (Int otherscale=scale; otherscale<itsNscales; otherscale++)
+    {
       AlwaysAssert(index(scale, otherscale)<Int(itsPsfConvScales.nelements()),
        AipsError);
 

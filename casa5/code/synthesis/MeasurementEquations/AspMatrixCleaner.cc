@@ -572,8 +572,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       cout << "2. getActiveSetAspen[" << scale << "] " << tempScaleSizes[scale] << endl;
     cout << "# tempScaleSizes " << tempScaleSizes.size() << endl;*/
     tempScaleSizes.push_back(0.0); // put 0 scale
-    Vector<Float> scaleSizes(tempScaleSizes);
-    defineAspScales(scaleSizes);
+    //Vector<Float> scaleSizes(tempScaleSizes);
+    //defineAspScales(scaleSizes);
+    defineAspScales(tempScaleSizes);
 
     makePsfScales();
     makeScaleMasks();
@@ -1231,17 +1232,26 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
 // Define the Asp scales without doing anything else
 // user will call make makePsfScales and makeDirtyScales like an adult in the know
-void AspMatrixCleaner::defineAspScales(const Vector<Float>& scaleSizes)
+void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 {
   /*if(itsScales.nelements()>0) {
     destroyAspScales();
   }
 
   destroyMasks();*/ //genie do I need this? prob not
-  itsNscales = scaleSizes.nelements();
+
+  // try speed up here by removing duplicated scale sizes
+  /*itsNscales = scaleSizes.nelements();
   itsScaleSizes.resize(itsNscales);
   itsScaleSizes = scaleSizes;  // make a copy that we can call our own
-  GenSort<Float>::sort(itsScaleSizes);
+  GenSort<Float>::sort(itsScaleSizes);*/
+  sort(scaleSizes.begin(), scaleSizes.end());
+  scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end());
+
+  itsNscales = Int(scaleSizes.size());
+  itsScaleSizes.resize(itsNscales);
+  itsScaleSizes = Vector<Float>(scaleSizes);  // make a copy that we can call our own
+
   itsScalesValid = true;  //genie? It's false in MS clean
 }
 

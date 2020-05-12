@@ -78,7 +78,8 @@ public:
 
   std::vector<casacore::Float> getActiveSetAspen();
 
-  void defineAspScales(const casacore::Vector<casacore::Float>& scales);
+  //void defineAspScales(const casacore::Vector<casacore::Float>& scales);
+  void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
 
 //protected:
