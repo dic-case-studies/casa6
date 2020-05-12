@@ -201,25 +201,42 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
     //PagedImage<Float> im(imagename, writelock ? TableLock::AutoLocking : TableLock::AutoNoReadLocking);
     
     SubImage<Float> *tmpptr=nullptr;
-    if(writelock)
-      im.lock(FileLocker::Write, 1000);
+    //LatticeLocker lockread (im, FileLocker::Read);
+    //if(writelock)
+    //  im.lock(FileLocker::Write, 1000);
     ////TESTOO
     //outptr.reset(SpectralImageUtil::getChannel(im, chanBeg, chanEnd, writelock));
     
 
     ///END of TESTOO
-    
-    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    if(writelock){
+      im.lock(FileLocker::Write, 1000);
+      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    }
+    else
+      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     if(tmpptr){
       IPosition tileshape=tmpptr->shape();
       tileshape[2]=1; tileshape[3]=1;
       TiledShape tshape(tmpptr->shape(),tileshape);
       outptr.reset(new TempImage<Float>(tshape, tmpptr->coordinates()));
-      outptr->copyData(*tmpptr);
+      if(writelock){
+	LatticeLocker lock1 (*(tmpptr), FileLocker::Write);
+	outptr->copyData(*tmpptr);
       //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
-      if(tmpptr->isMasked()){
+	if(tmpptr->isMasked()){
 	  outptr->makeMask ("mask0", true, true, false, true);
 	  outptr->pixelMask().put(tmpptr->getMask());
+	}
+      }
+      else{
+	LatticeLocker lock1 (*(tmpptr), FileLocker::Read);
+	outptr->copyData(*tmpptr);
+      //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
+	if(tmpptr->isMasked()){
+	  outptr->makeMask ("mask0", true, true, false, true);
+	  outptr->pixelMask().put(tmpptr->getMask());
+	}
       }
       ImageInfo iinfo=tmpptr->imageInfo();
       outptr->setImageInfo(iinfo);

@@ -241,6 +241,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     if(!itsImages)
       itsImages=makeImageStore(itsImageName);
+    //For cubes as we are not doing a post major cycle residual automasking
+    //Force recalculation of robust stats to update nsigmathreshold with
+    //most recent residual
+   
+    if(itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3] >1 && itsNsigma > 0.0){
+      Record retval;
+      Record backupRobustStats=itsRobustStats;
+      itsRobustStats=Record();
+      retval=initMinorCycle(itsImages);
+      itsRobustStats=backupRobustStats;
+      return retval;
+    }
     return initMinorCycle(itsImages);
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )

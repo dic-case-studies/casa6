@@ -162,6 +162,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   robuststats.get(RecordFieldId("robustrms"), robustrms);
                   robuststats.get(RecordFieldId("median"), medians);
                   statsexists=True;
+		  
                 }
                 else if(robuststats.isDefined("medabsdevmed")) {
                   Array<Double> mads;
@@ -169,8 +170,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   robuststats.get(RecordFieldId("median"), medians);
                   robustrms = mads * 1.4826; // convert to rms
                   statsexists=True;
+		  
                 }
-                statsindex=IPosition(1,chanid); // this only support for npol =1, need to fix this
+                //statsindex=IPosition(1,chanid); // this only support for npol =1, need to fix this
+		if((robustrms.shape().nelements() ==2) && (robustrms.shape()[0] > polid) &&  (robustrms.shape()[1] > chanid) )
+		  statsindex=IPosition(2,polid,chanid);
+		else if((robustrms.shape().nelements() ==1) && (robustrms.shape()[0] > chanid))
+		  statsindex=IPosition(1,chanid);
+		else ///no idea what got passed in the record
+		  statsexists=False;
+		
               }
               if (statsexists) {
                 os<<LogIO::DEBUG1<<"Using the existing robust image statatistics!"<<LogIO::POST;

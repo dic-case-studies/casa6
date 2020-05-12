@@ -4413,7 +4413,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int npol = maskthreshold.nrow();
     Int nchan = maskthreshold.ncolumn(); 
     os << LogIO::DEBUG1 << "npol="<<npol<< " nchan="<<nchan<<LogIO::POST;
-    
     IPosition statshp = rmss.shape();
     // Note: stats record collapse the axis with 1
     os<<LogIO::DEBUG1 <<"rmss shape="<< String::toString(statshp) <<LogIO::POST;
@@ -4423,13 +4422,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //Int nchan = maskthreshold.nelements(); 
     for (uInt ich = 0; ich < (uInt) nchan; ich++) {
-        if (npol == 1 ) {
+      if (chanidx.nelements()==1 ) {
           chanidx(0) = ich;
         }
-        else if(npol > 1 and nchan > 1) {
+      else if(chanidx.nelements()==2) {
           // to include stats in all stokes in a single line
           chanidx(1) = ich;
-        }
+	  chanidx(0) =0;
+      }
         Vector<Double> peaks(npol);
         for (uInt ipol = 0; ipol < (uInt) npol; ipol++) {
         //Double peak = abs(maxs(chanidx))> abs( mins(chanidx))? maxs(chanidx): mins(chanidx);
