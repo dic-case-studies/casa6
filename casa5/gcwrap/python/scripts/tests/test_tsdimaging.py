@@ -3592,9 +3592,9 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                              projection=projection)
 
 
-class sdimaging_test_misc(sdimaging_unittest_base):
+class sdimaging_test_output(sdimaging_unittest_base):
     """
-    Tests to check if only appropriate images are output from tsdimaging
+    Tests to check if only appropriate images are output
     """
     datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
     params = dict(infiles = ['selection_misc.ms'],
@@ -3632,17 +3632,17 @@ class sdimaging_test_misc(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
 
-    # a test to verify CAS-10893 and CAS-10891        
-    def test_output_no_psf_no_sumwt(self):
-        """test_no_psf_no_sumwt: Check if only .image and .weight images are output."""
+    # a test to verify CAS-10893
+    def test_output_no_psf(self):
+        """test_no_psf: Check if .psf is no longer output."""
         os.system('rm -rf %s*'%(self.outfile))
         self.run_test()
 
         # check data that must be output
-        for suffix in ['.image', '.weight']:
+        for suffix in ['.image', '.weight', '.sumwt']:
             self.assertTrue(os.path.exists(self.outfile+suffix), msg=suffix+' not found.')
         # check data that must not be output
-        for suffix in ['.sumwt', '.psf']:
+        for suffix in ['.psf']:
             self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
     
     
@@ -3742,5 +3742,5 @@ def suite():
             sdimaging_test_interp,
             sdimaging_test_clipping,
             sdimaging_test_projection,
-            sdimaging_test_misc
+            sdimaging_test_output
             ]

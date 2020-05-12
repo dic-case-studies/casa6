@@ -902,6 +902,3 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     # the following line should/can be removed once the
     # 'correct' SD PSF image based on primary beam can be generated
     shutil.rmtree(outfile + '.psf')
-
-    # CAS-10891
-    shutil.rmtree(outfile + '.sumwt')
