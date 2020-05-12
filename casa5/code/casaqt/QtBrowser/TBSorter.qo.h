@@ -27,7 +27,7 @@
 #ifndef TBSORTER_H_
 #define TBSORTER_H_
 
-#include <casaqt/QtBrowser/TBSorter.ui.h>
+#include "ui/ui_TBSorter.h"
 
 #include <QtGui>
 

@@ -146,7 +146,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // 				const casacore::Vector<casacore::Double>& pointingOffset);
 
     void setFieldPhaseGrad(const casacore::Matrix<casacore::Complex>& phaseGrad) {cached_phaseGrad_p.reference(phaseGrad);};
-    void setVB2CFMap(const casacore::CountedPtr<refim::VB2CFBMap>& thisMap) {vb2CFBMap_p = thisMap;}
+    void setVB2CFMap(const casacore::CountedPtr<refim::VB2CFBMap>& thisMap);
 
     casacore::Double runTimeG_p, runTimeDG_p, runTimeG1_p, runTimeG2_p, runTimeG3_p, runTimeG4_p, runTimeG5_p, runTimeG6_p, runTimeG7_p;
     casacore::Timer timer_p;

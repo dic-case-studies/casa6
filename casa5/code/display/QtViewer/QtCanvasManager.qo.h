@@ -29,8 +29,8 @@
 #include <casa/aips.h>
 #include <display/QtAutoGui/QtAutoGui.qo.h>
 #include <display/QtViewer/QtDisplayPanel.qo.h>
-#include <display/QtViewer/QtCanvasManager.ui.h>
-#include <display/QtViewer/CursorLink.ui.h>
+#include <ui/ui_QtCanvasManager.h>
+#include <ui/ui_CursorLink.h>
 #include <casa/Containers/Record.h>
 
 #include <graphics/X11/X_enter.h>

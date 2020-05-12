@@ -25,13 +25,13 @@
 
 #include "SliceZoomer.h"
 
-#include <qwt_plot_canvas.h>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_plot.h>
 #include <QKeyEvent>
 #include <QDebug>
 #include <QCursor>
 #if QWT_VERSION >= 0x060000
-#include <qwt_picker_machine.h>
+#include <qwt/qwt_picker_machine.h>
 #endif
 
 namespace casa {

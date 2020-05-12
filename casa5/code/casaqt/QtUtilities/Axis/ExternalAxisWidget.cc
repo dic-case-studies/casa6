@@ -27,8 +27,8 @@
 #include <QPainter>
 #include <QDebug>
 #include <QtCore/qmath.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_scale_div.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_div.h>
 #include <casaqt/QwtPlotter/QPCanvasHelpers.qo.h>
 
 using namespace casacore;

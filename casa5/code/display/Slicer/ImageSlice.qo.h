@@ -26,7 +26,7 @@
 #ifndef IMAGE_SLICE_QO_H_
 #define IMAGE_SLICE_QO_H_
 
-#include <display/Slicer/ImageSlice.ui.h>
+#include <ui/ui_ImageSlice.h>
 #include <casacore/images/Images/ImageInterface.h>
 #include <display/Slicer/SliceStatisticsFactory.h>
 #include <display/Slicer/SliceStatistics.h>

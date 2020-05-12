@@ -26,9 +26,9 @@
 #ifndef LEGENDITEMRECT_H_
 #define LEGENDITEMRECT_H_
 
-#include <qwt_global.h>
+#include <qwt/qwt_global.h>
 #if QWT_VERSION < 0x060000
-#include <qwt_legend_item.h>
+#include <qwt/qwt_legend_item.h>
 #include <QPainter>
 #include <QRect>
 namespace casa {

@@ -1,17 +1,63 @@
+########################################################################
+# test_req_task_imstat.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# CAS-12997
+#
+# Based on the requirements listed in plone found here:
+# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imstat/about
+#
+#
+##########################################################################
+
+from __future__ import absolute_import
+from __future__ import print_function
 import os
-import sys
 import shutil
 import unittest
 import math
-import numpy
+import numpy as np
 import numbers
 
-from casatools import ctsys, image, table, quanta, regionmanager
-from casatasks import imstat
+try:
+    from casatools import ctsys, image, table, quanta, regionmanager
+    from casatasks import imstat
+    _tb = table()
+    _qa = quanta()
+    _rg = regionmanager()
+    ctsys_resolve = ctsys.resolve
+    is_CASA6 = True
+except ImportError:
+    from tasks import *
+    from taskinit import *
+    import casac
+    from __main__ import *
+    # not a local tool
+    _tb = tbtool()
+    _qa = qatool()
+    _rg = rgtool()
+    image = iatool
+    is_CASA6 = False
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        data_root = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
+    else:
+        data_root = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+    def ctsys_resolve(apath):
+        return os.path.join(data_root, apath)
 
-_tb = table( )
-_qa = quanta( )
-_rg = regionmanager( )
+datapath = 'image'
 
 '''
 Unit tests for task imstat.
@@ -36,7 +82,7 @@ class imstat_test(unittest.TestCase):
         if mytype == dict:
             for k in resold.keys():
                 self._compare(resold[k], resnew[k], helpstr)
-        elif mytype == numpy.ndarray:
+        elif mytype == np.ndarray:
             oldarray = resold.ravel()
             newarray = resnew.ravel()
             self.assertTrue(
@@ -50,7 +96,7 @@ class imstat_test(unittest.TestCase):
                 resold == resnew,
                 helpstr + ": string inequality, old = " + resold + ", new = " + resnew
             )
-        elif isinstance(resold, numbers.Integral) or mytype == numpy.int32:
+        elif isinstance(resold, numbers.Integral) or mytype == np.int32:
             self.assertTrue(
                 resold == resnew,
                 helpstr + ": integral inequality, old = " + str(resold) + ", new = " + str(resnew)
@@ -68,27 +114,31 @@ class imstat_test(unittest.TestCase):
     def setUp(self):
         self.res = None
         self._myia = image()
-        self.datapath = ctsys.resolve('regression/unittest/imstat')
+        self.datapath = ctsys_resolve(datapath)
     
     def tearDown(self):
         self._myia.done()
-        for dir in [
-            self.moment, self.s150, self.s15, self.s0_015, self.s0_0015,
-            self.s0_00015, self.linear_coords, self.fourdim
-        ]:
-            if os.path.isfile(dir):
-                os.remove(dir)
-            elif (os.path.exists(dir)):
-                shutil.rmtree(dir)
         self.assertTrue(len(_tb.showcache()) == 0)
+        # make sure directory is clean as per verification test requirement
+        cwd = os.getcwd()
+        for filename in os.listdir(cwd):
+            file_path = os.path.join(cwd, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    # CASA 5 tests need this directory
+                    if filename != 'xml':
+                        shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-    def test001(self):
+    def test_moment_map_flux(self):
         """Test 1: verify moment maps can have flux densities computed in statistics"""
-        shutil.copytree(os.path.join(self.datapath,self.moment), self.moment)
+        shutil.copytree(os.path.join(self.datapath, self.moment), self.moment)
         stats = imstat(imagename=self.moment)
         mean = stats['mean']
         npts = stats['npts']
-
         _myia = image()
         _myia.open(self.moment)
         summary = _myia.summary()
@@ -105,34 +155,25 @@ class imstat_test(unittest.TestCase):
         expected = (mean*npts/pixperbeam)[0]
         self.assertTrue(abs(got - expected) < 1e-11)
  
-    def test007(self):
-        """ Test 7: test that box parameter can have spaces, CAS-2050 """
+    def test_box_param_can_have_spaces(self):
+        """ test that box parameter can have spaces, CAS-2050 """
         shutil.copytree(os.path.join(self.datapath,self.s0_00015), self.s0_00015)
         box = '0, 0,  1 ,   1'
         stats = imstat(imagename=self.s0_00015, box=box)
         self.assertTrue(stats['npts'] == 4) 
         
-    def test008(self):
-        """ Test 8: verify fix for CAS-2195"""
-       
-        def test_imstat(im):
-            return imstat(im)
-            
+    def test_CAS_2195_image_can_have_linear_rather_than_direction_coordinate(self):
+        """ verify fix for CAS-2195, image has linear, not direction, coordinate"""
         myim = self.linear_coords
         shutil.copy(os.path.join(self.datapath,myim), myim)
         expected_max = [3, 10]
         expected_min = [4, 0]
-        for code in [test_imstat]:
-            stats = code(myim)
-            self.assertTrue((stats['maxpos'] == expected_max).all())
-            self.assertTrue((stats['minpos'] == expected_min).all())
+        stats = imstat(myim)
+        self.assertTrue((stats['maxpos'] == expected_max).all())
+        self.assertTrue((stats['minpos'] == expected_min).all())
             
-    def test009(self):
-        """ Test 9: choose axes works"""
-       
-        def test_imstat(image, axes):
-            return imstat(image, axes=axes)
-            
+    def test_specifying_axes_param(self):
+        """choose axes works"""
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
         axes = [-1, [0, 1, 2], [0, 1], 3]
@@ -179,13 +220,12 @@ class imstat_test(unittest.TestCase):
                 ]
             ]
         for i in range(len(axes)):
-            for code in [test_imstat]:
-                stats = code(myim, axes[i])
-                self.assertTrue((stats['mean'] == expected_mean[i]).all())
-                self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
+            stats = imstat(myim, axes=axes[i])
+            self.assertTrue((stats['mean'] == expected_mean[i]).all())
+            self.assertTrue((stats['sumsq'] == expected_sumsq[i]).all())
             
     def test_stretch(self):
-        """ ia.statistics(): Test stretch parameter"""
+        """ imstat: Test stretch parameter"""
         yy = image()
         mymask = "maskim"
         yy.fromshape(mymask, [200, 200, 1, 1])
@@ -203,43 +243,34 @@ class imstat_test(unittest.TestCase):
             )
         except:
             OK = True
-        self.assertTrue(OK)
+        # CASA 5 returns False, CASA 6 returns exception
+        self.assertTrue(OK == is_CASA6)
         zz = imstat(
             imagename=imagename, mask=mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type({}) and (not zz == {}))
         yy.done()
    
-    def test010(self):
+    def test_logfile_param(self):
         """test logfile """
-        def test_imstat(image, axes, logfile, append):
-            return imstat(image, axes=axes, logfile=logfile, append=append, verbose=True)
-            
         logfile = "imstat.log"
-        i = 1
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
-        for code in [test_imstat]:
-            append = False
-            if i == 2:
-                append = True
-            stats = code(myim, [0], logfile, append)
+        i = 1
+        for append in [False, True]:
+            stats = imstat(myim, axes=[0], logfile=logfile, append=append)
             size = os.path.getsize(logfile)
             # appending, second time through size should double
             self.assertTrue(size > 1.2e4*i and size < 1.3e4*i )
             i = i+1
 
-    def test011(self):
+    def test_multiple_region_support(self):
         """ test multiple region support"""
         shape = [10, 10, 10]
         myia = self._myia
         myia.fromshape("test011.im", shape)
         box = "0, 0, 2, 2, 4, 4, 6, 6"
         chans = "0~4, 6, >8"
-        reg = _rg.frombcs(
-            myia.coordsys().torecord(), shape,
-            box=box, chans=chans
-        )
         bb = imstat(imagename=myia.name(), chans=chans, box=box)
         myia.done()
         self.assertTrue(bb["npts"][0] == 126)
@@ -250,11 +281,12 @@ class imstat_test(unittest.TestCase):
         myia = self._myia
         imagename = "hftest.im"
         myia.fromarray(imagename, data)
-        classic = myia.statistics(robust=True, algorithm="cl")
+        myia.done()
+        classic = imstat(imagename, algorithm="cl")
         hfall = imstat(imagename=imagename, algorithm="h")
         hf0 = imstat(imagename=imagename, algorithm="h", fence=0)
         for k in classic.keys():
-            if type(classic[k]) == numpy.ndarray:
+            if type(classic[k]) == np.ndarray:
                 if k == 'sigma':
                     self.assertTrue((abs(hfall[k]/classic[k] - 1) < 1e-15).all())
                 else:
@@ -267,7 +299,7 @@ class imstat_test(unittest.TestCase):
     
     def test_fithalf(self):
         """Test fit to half algorithm"""
-        data = numpy.array(range(100))
+        data = np.array(range(100))
         data = data*data
         myia = self._myia
         imagename = "fhtest.im"
@@ -389,9 +421,8 @@ class imstat_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         zz = imstat(imagename, axes=[0, 1], chans="10~20;60~90", stokes="IV")
-        print("shape", zz['npts'].shape)
         self.assertTrue((zz['npts'].shape == (42, 2)))
-        self.assertTrue(numpy.min(zz['npts']) > 0)
+        self.assertTrue(np.min(zz['npts']) > 0)
 
     def test_biweight(self):
         """Test biweight algorithm CAS-11100"""

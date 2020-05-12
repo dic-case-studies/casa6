@@ -13,6 +13,7 @@
 #  test_widefield                # facets, wprojection, imagemosaic, mosaicft, awproject
 #  test_mask                      # input mask options : regridding, mask file, automasking, etc
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
+#  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
 # To run from within casapy :  
 #
@@ -81,6 +82,7 @@
 #  refim_mawproject_offcenter.ms : Two pointing wideband mosaic with 1 point source at center of one pointing
 #  refim_point_stokes.ms : RR=1.0, LL=0.8, RL and LR are zero. Stokes I=0.9, V=0.1, U,Q=0.0
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
+#  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
 #
 ##########################################################################
 
@@ -110,7 +112,7 @@ if is_CASA6:
      _qa = quanta( )
      _me = measures( )
      
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager')
+     refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 else:
@@ -128,13 +130,14 @@ else:
      _qa = qa
      _me = me
 
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube,test_hetarray_imaging]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
 ## Base Test class with Utility functions
@@ -519,11 +522,11 @@ class test_onefield(testref_base):
           checkims = [self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0',self.img+'.model.tt0']  
           
           ## For parallel run, check sub workdirectory images also.
-          if self.parallel==True:
-               checkims = checkims + self.th.getNParts( imprefix=self.img, 
-                                                        imexts=['residual.tt0','residual.tt1',
-                                                                'psf.tt0','psf.tt1',
-                                                                'model.tt0','model.tt1']) 
+          #if self.parallel==True:
+          #     checkims = checkims + self.th.getNParts( imprefix=self.img, 
+          #                                              imexts=['residual.tt0','residual.tt1',
+          #                                                      'psf.tt0','psf.tt1',
+          #                                                      'model.tt0','model.tt1']) 
           report = self.th.checkall(ret=ret, 
                                      peakres=0.409, modflux=0.764, iterdone=10, nmajordone=2,
                                      imexist=checkims, 
@@ -3376,6 +3379,243 @@ class test_pbcor(testref_base):
 
           self.checkfinal(report1+report2)
 
+
+#####################################################
+#####################################################
+#####################################################
+#####################################################
+### Heterogeneous array imaging
+class test_hetarray_imaging(testref_base):
+     '''
+     Tests for all kinds of heterogeneous imaging.
+
+     Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
+     Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
+
+     Current Test list : 
+     test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
+     test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
+
+     Tests to add later : 
+     test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
+     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
+     '''     
+          
+     def test_het_pointing_offsets_awproject_cube(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '5'
+               os.environ['ATerm_CONVSIZE'] = '512'
+               os.environ['PO_DEBUG'] = '0'
+
+          ## No corrections :  usepointing=False : PB goes to location of MS field phasecenter (middle of the image)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspF', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspF.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,2]) ] )
+
+          ## Note : Test for PB location in the following tests. Pick the expected location (for a single PB) and test that the value is 1.0
+
+          ## Average correction : usepointing=True, pointingoffsetsigdev=[2000,2000] :  PB goes to the average location of all antennas, for first timestep. PB[-100,0] 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspT', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,2000.0],parallel=self.parallel)
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspT.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr0_uspT.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspT.pb' ,1.0,[924,1024,0,0]) ] )   
+
+
+
+          ## Antenna/time correction : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1' : PB = PB[-100,+100] in the top left corner. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_grp1', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1']+ ' & ' ,parallel=self.parallel)
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.09,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,1.0,[924,1124,0,0]) ] )   
+          
+          
+          ## Cross baselines only : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1 & grp2' : PB = PB[-100,0].  Note : THIS IS WRONG. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_cross', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1'] + ' & ' + self.baselines['grp2'],parallel=self.parallel)
+          report4=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,1.0,[924,1024,0,0]) ] )   
+          report4 = report4 + "This test checks for cross-baseline PB values that are known to be incorrect. Edit these values/test once the algorithm for cross-baseline PBs is fixed.\n"
+          
+          ## Four corners : usepointing=True, pointingoffsetsigdev=[20,20], timerange='*', antenna='grp1,grp2' : PB = Sum of PB in all 4 corners (with no cross-terms). Flux/alpha are correct. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr2_4corners', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0], antenna=self.baselines['grp1']+' & ; '+self.baselines['grp2']+ ' &',parallel=self.parallel)
+          report5=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr2_4corners.image' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.17,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.17,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[924,1124,0,0]),  
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[924,924,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[1124,1124,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[1124,924,0,0]) ] )   
+          report5 = report5 + "This test leaves out cross-baselines. Edit later to include them, once the algorithm for cross-baseline PBs is fixed.\n"
+        
+          #### Note : Add a run with all antennas ONLY after the cross-baselines imaging is correct.  
+          #### grp1 has 14 ants. grp2 has 13.  But, the PBs for grp1 have the peak of 1.0 whereas grp2 has 0.93.  Needs to be understood. But, image and pb values match, so flux is ok. 
+
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '20'
+               os.environ['ATerm_CONVSIZE'] = '2048'
+
+          self.checkfinal(report1+report2+report3+report4+report5)
+
+     ###########################
+
+     def test_het_pointing_offsets_awproject_mtmfs(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '5'
+               os.environ['ATerm_CONVSIZE'] = '512'
+               os.environ['PO_DEBUG'] = '0'
+
+          ######################
+          ## Top Left : Grp 1 and Time 1.  
+
+          im_pcorr2 = 'try_mt_pcorr1_grp1_time1'  # Apply antenna grouping corrections and time-dependence corrections
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &' , timerange='<21:40:00.0',parallel=self.parallel)
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] +' &' , timerange='<21:40:00.0',parallel=self.parallel)
+          
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &'  , timerange='<21:40:00.0', calcpsf=False, calcres=False,parallel=self.parallel)
+          
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_grp1_time1.image.tt0' ,0.2,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_grp1_time1.pb.tt0' ,0.2,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr1_grp1_time1.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ######################
+          ## 4 corners : All baselines and both timesteps ( leave out cross baselines for now ).
+          
+          im_pcorr2 = 'try_mt_pcorr2_4corners'  # Apply antenna grouping corrections and time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &', calcres=False, calcpsf=False,parallel=self.parallel)
+          
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr2_4corners.image.tt0' ,0.38,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr2_4corners.pb.tt0' ,0.38,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr2_4corners.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ######################
+          ## Apply only time-dependent corrections :  Pick only one group of antennas, and both timesteps
+          ##  The PB should be separate per timestep, but should appear at the average location of all antennas => [-100,100] and [+100,100] locations, 
+          
+          im_pcorr2 = 'try_mt_pcorr1_onlytime'  # Apply only time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &',parallel=self.parallel)
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' ,parallel=self.parallel)
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, cycleniter=15, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' , calcres=False, calcpsf=False,parallel=self.parallel)
+
+          ## This is a hard-ish case where it's a joint mosaic and the PSF is made very far from the PB peak. It's the problem in CAS-12436. So, put a high tolerance.
+          ## Serial and parallel runs are also different for alpha due to slightly different MS subsets seen by each process.  
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_onlytime.image.tt0' ,0.28,[1024,1024,0,0]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_onlytime.pb.tt0' ,0.28,[1024,1024,0,0]) ])
+
+                                          ## Do not check alpha
+                                          ## ('try_mt_pcorr1_onlytime.alpha' ,0.13,[1024,1024,0,0]) ] ) ## Too much variation between serial and parallel. Eval after 6.1. 
+           
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '20'
+               os.environ['ATerm_CONVSIZE'] = '2048'
+
+          self.checkfinal(report1+report2+report3)
+
+     ###########################
+
 #####################################################
 #####################################################
 #####################################################
@@ -4043,6 +4283,191 @@ class test_mosaic_cube(testref_base):
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
+
+###########################################################
+###########################################################
+###########################################################
+class test_ephemeris(testref_base):
+
+     def test_onefield_mfs_eph(self):
+          " [ephemeris] test_onefield_mfs_eph : single field (standard gridder), mfs mode "
+
+          self.prepData('venus_ephem_test.ms')
+          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=False)
+
+          # Retrieve original image and test image statistics
+          _ia.open(refdatapath+'venus_sf_ephem_test.residual')
+          orig_stats = _ia.statistics()
+          orig_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          _ia.open(self.img+'.residual')
+          test_stats = _ia.statistics()
+          test_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          # Determine metrics for testing
+          # Check 1: tests flux stays within 1% of original image
+          if (test_stats['sum'] - orig_stats['sum'])/orig_stats['sum'] < 0.01:
+               result = True
+          else:
+               result = False
+          report1 = self.th.checkval(result, True, valname='Flux within 1% of original', exact=True)
+
+          # Check 2: tests positions shifts stays within 1% of original image
+          if np.sum(np.absolute(test_freqavg - orig_freqavg)) / np.sum(np.absolute(orig_freqavg)) < 0.01:
+               result = True
+          else:
+               result = False
+          report2 = self.th.checkval(result, True, valname='Position shift within 1% of original', exact=True)
+
+          # Check 3: tests position shifts are less than 10% of angular resolution; distance in pixels multiplied by cell size in arcsecs; PSF beam width calculated using lambda/max_baseline
+          psf_beam_width = 1.176
+          distance = np.sqrt((orig_stats['maxpos'][0] - test_stats['maxpos'][0])**2 + (orig_stats['maxpos'][1] - test_stats['maxpos'][1])**2)*0.14
+          if distance/psf_beam_width < 0.1:
+               result = True
+          else:
+               result = False
+          report3 = self.th.checkval(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
+
+          report = report1 + report2 + report3
+          self.checkfinal(pstr=report)
+
+
+     def test_onefield_cube_eph(self):
+          " [ephemeris] test_onefield_cube_eph : single field (standard gridder), cubesource mode "
+
+          self.prepData('venus_ephem_test.ms')
+          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='cubesource', gridder='standard', niter=0, interactive=0, parallel=False)
+
+          # Retrieve original image and test image statistics
+          _ia.open(refdatapath+'venus_sf_ephem_test.residual')
+          orig_stats = _ia.statistics()
+          orig_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          _ia.open(self.img+'.residual')
+          test_stats = _ia.statistics()
+          test_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          # Determine metrics for testing
+          # Check 1: tests flux stays within 1% of original image
+          if (test_stats['sum'] - orig_stats['sum'])/orig_stats['sum'] < 0.01:
+               result = True
+          else:
+               result = False
+          report1 = self.th.checkval(result, True, valname='Flux within 1% of original', exact=True)
+
+          # Check 2: tests positions shifts stays within 1% of original image
+          if np.sum(np.absolute(test_freqavg - orig_freqavg)) / np.sum(np.absolute(orig_freqavg)) < 0.01:
+               result = True
+          else:
+               result = False
+          report2 = self.th.checkval(result, True, valname='Position shift within 1% of original', exact=True)
+
+          # Check 3: tests position shifts are less than 10% of angular resolution; distance in pixels multiplied by cell size in arcsecs; PSF beam width calculated using lambda/max_baseline
+          psf_beam_width = 1.176
+          distance = np.sqrt((orig_stats['maxpos'][0] - test_stats['maxpos'][0])**2 + (orig_stats['maxpos'][1] - test_stats['maxpos'][1])**2)*0.14
+          if distance/psf_beam_width < 0.1:
+               result = True
+          else:
+               result = False
+          report3 = self.th.checkval(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
+
+          report = report1 + report2 + report3
+          self.checkfinal(pstr=report)
+
+
+     def test_multifield_mfs_eph(self):
+          " [ephemeris] test_multifield_mfs_eph : multifield (mosaic gridder), mfs mode "
+
+          self.prepData('venus_ephem_test.ms')
+          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=False)
+
+          # Retrieve original image and test image statistics
+          _ia.open(refdatapath+'venus_mos_ephem_test.residual')
+          orig_stats = _ia.statistics()
+          orig_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          _ia.open(self.img+'.residual')
+          test_stats = _ia.statistics()
+          test_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          # Determine metrics for testing
+          # Check 1: tests flux stays within 1% of original image
+          if (test_stats['sum'] - orig_stats['sum'])/orig_stats['sum'] < 0.01:
+               result = True
+          else:
+               result = False
+          report1 = self.th.checkval(result, True, valname='Flux within 1% of original', exact=True)
+
+          # Check 2: tests positions shifts stays within 1% of original image
+          if np.sum(np.absolute(test_freqavg - orig_freqavg)) / np.sum(np.absolute(orig_freqavg)) < 0.01:
+               result = True
+          else:
+               result = False
+          report2 = self.th.checkval(result, True, valname='Position shift within 1% of original', exact=True)
+
+          # Check 3: tests position shifts are less than 10% of angular resolution; distance in pixels multiplied by cell size in arcsecs; PSF beam width calculated using lambda/max_baseline
+          psf_beam_width = 1.176
+          distance = np.sqrt((orig_stats['maxpos'][0] - test_stats['maxpos'][0])**2 + (orig_stats['maxpos'][1] - test_stats['maxpos'][1])**2)*0.14
+          if distance/psf_beam_width < 0.1:
+               result = True
+          else:
+               result = False
+          report3 = self.th.checkval(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
+
+          report = report1 + report2 + report3
+          self.checkfinal(pstr=report)
+
+
+     def test_multifield_cube_eph(self):
+          " [ephemeris] test_multifield_cube_eph : multifield (mosaic gridder), cubesource mode "
+
+          self.prepData('venus_ephem_test.ms')
+          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='cubesource', gridder='mosaic', niter=0, interactive=0, parallel=False)
+
+          # Retrieve original image and test image statistics
+          _ia.open(refdatapath+'venus_mos_ephem_test.residual')
+          orig_stats = _ia.statistics()
+          orig_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          _ia.open(self.img+'.residual')
+          test_stats = _ia.statistics()
+          test_freqavg = _ia.statistics(axes=[2])['sum']
+          _ia.close()
+
+          # Determine metrics for testing
+          # Check 1: tests flux stays within 1% of original image
+          if (test_stats['sum'] - orig_stats['sum'])/orig_stats['sum'] < 0.01:
+               result = True
+          else:
+               result = False
+          report1 = self.th.checkval(result, True, valname='Flux within 1% of original', exact=True)
+
+          # Check 2: tests positions shifts stays within 1% of original image
+          if np.sum(np.absolute(test_freqavg - orig_freqavg)) / np.sum(np.absolute(orig_freqavg)) < 0.01:
+               result = True
+          else:
+               result = False
+          report2 = self.th.checkval(result, True, valname='Position shift within 1% of original', exact=True)
+
+          # Check 3: tests position shifts are less than 10% of angular resolution; distance in pixels multiplied by cell size in arcsecs; PSF beam width calculated using lambda/max_baseline
+          psf_beam_width = 1.176
+          distance = np.sqrt((orig_stats['maxpos'][0] - test_stats['maxpos'][0])**2 + (orig_stats['maxpos'][1] - test_stats['maxpos'][1])**2)*0.14
+          if distance/psf_beam_width < 0.1:
+               result = True
+          else:
+               result = False
+          report3 = self.th.checkval(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
+
+          report = report1 + report2 + report3
+          self.checkfinal(pstr=report)
+
 
 if is_CASA6:
      if __name__ == '__main__':

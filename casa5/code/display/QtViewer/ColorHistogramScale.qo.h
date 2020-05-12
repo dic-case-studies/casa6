@@ -28,7 +28,7 @@
 
 #include <QVector>
 #include <casaqt/QwtConfig.h>
-#include <qwt_color_map.h>
+#include <qwt/qwt_color_map.h>
 #include <casa/BasicSL/String.h>
 
 namespace casa {
