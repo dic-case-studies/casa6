@@ -30,8 +30,8 @@
 #include <msvis/MSVis/UtilJ.h>
 #include <QDebug>
 #include <casaqt/QwtConfig.h>
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_curve.h>
 
 using namespace casacore;
 namespace casa {

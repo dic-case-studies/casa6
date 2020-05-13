@@ -27,7 +27,7 @@
 #ifndef TBFORMAT_H_
 #define TBFORMAT_H_
 
-#include <casaqt/QtBrowser/TBFormat.ui.h>
+#include "ui/ui_TBFormat.h"
 #include <casaqt/QtBrowser/TBConstants.h>
 
 #include <QtGui>
