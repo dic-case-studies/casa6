@@ -435,7 +435,7 @@ class TestHelpers:
         retres = True
         _ia.open(imname)
         csys = _ia.coordsys()
-        _ia.close()
+        _ia.done()
         reffreq = csys.referencevalue()['numeric'][3]
         csys.close()
         if  abs(reffreq - theval)/theval > epsilon:
