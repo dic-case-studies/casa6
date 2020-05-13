@@ -434,6 +434,7 @@ class TestHelpers():
           csys = _ia.coordsys()
           _ia.close()
           reffreq = csys.referencevalue()['numeric'][3]
+          csys.close()
           if  abs(reffreq - theval)/theval > self.epsilon :
               retres=False
           else:
@@ -489,10 +490,15 @@ class TestHelpers():
           return pstr
         
      def getcoordsys(self,imname):
-         _ia.open(imname)
-         csys = _ia.coordsys().torecord()
-         _ia.close()
-         return csys
+         try:
+             _ia.open(imname)
+             csys = _ia.coordsys()
+             csys_rec = csys.torecord()
+             csys.close()
+         finally:
+             _ia.close()
+
+         return csys_rec
 
      def check_keywords(self, imlist):
          """
