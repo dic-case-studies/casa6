@@ -1208,8 +1208,10 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
     constexpr auto eol = '\n';
     qry << "with [" << eol
         << "select" << eol
-        << "    [select TELESCOPE_NAME from ::OBSERVATION][OBSERVATION_ID] as TELESCOPE_NAME," << eol
-        << "    mscal.spwcol('NUM_CHAN') as NUM_CHAN" << eol
+        << "    [select TELESCOPE_NAME from ::OBSERVATION][OBSERVATION_ID] as TELESCOPE_NAME," << eol;
+    // Purposively not using TAQL's default mscal UDF library alias for derivedmscal
+    // to workaround a bug in casacore UDFBase::createUDF
+    qry << "    derivedmscal.spwcol('NUM_CHAN') as NUM_CHAN" << eol
         << "from" << eol
         << "    $1" << eol
         << "] as metadata" << eol
