@@ -1206,6 +1206,7 @@ MeasurementSet SingleDishPositionSwitchCal::selectReferenceData(MeasurementSet c
 {
     std::ostringstream qry;
     constexpr auto eol = '\n';
+    qry << "using style python" << eol;
     qry << "with [" << eol
         << "select" << eol
         << "    [select TELESCOPE_NAME from ::OBSERVATION][OBSERVATION_ID] as TELESCOPE_NAME," << eol;
