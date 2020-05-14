@@ -35,6 +35,7 @@
 #include <alma/Enumerations/CAntennaMake.h>
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
 #include <alma/Enumerations/CCorrelationMode.h>
+#include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
 #include <alma/Enumerations/CFrequencyReferenceCode.h>
 #include <alma/Enumerations/CScanIntent.h>
@@ -2341,6 +2342,9 @@ namespace casac {
             ProcessorRow* r = 0;
             int nProcessor = processorT.size();
 
+            CorrelatorModeTable & correlatorModeT = ds->getCorrelatorMode();
+            CorrelatorModeRow* cmrow = 0;
+
             infostream.str("");
             infostream << "The dataset has " << nProcessor << " processor(s)...";
             info(infostream.str());
@@ -2354,12 +2358,30 @@ namespace casac {
 
                 string processorType    = CProcessorType::name(r->getProcessorType());
                 string processorSubType = CProcessorSubType::name(r->getProcessorSubType());
-      
+
+                // fetch correlator name where appropriate and possible
+                // note that this replaces processorSubType in this case
+
+                if (r->getProcessorType() == ProcessorTypeMod::CORRELATOR) {
+                    // default to an empty string
+                    processorSubType = "";
+                    // modeId is a correlator mode id
+                    if ((cmrow=correlatorModeT.getRowByKey(r->getModeId())) != 0) {
+                        // a row has been found
+                        processorSubType = CCorrelatorName::name(cmrow->getCorrelatorName());
+                    } else {
+                        // a row should have been found but was not, warn
+                        infostream.str("");
+                        infostream << "Problem while reading the CorrelatorMode table, the row with key = " << r->getModeId() << " does not exist, SDM_CORRELATOR_MODE will remain unset for this PROCESSOR row" << endl;
+                        warning(infostream.str());
+                    }
+                }
+
                 for ( map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                       iter != msFillers.end(); ++iter ) {
                     iter->second->addProcessor( processorType, processorSubType,
                                                 -1,    // Since there is no typeId in the ASDM.
-                                                r->getModeId().getTagValue() );
+                                                r->getModeId().getTagValue());
                 }  
             }
             if (nProcessor) {
@@ -3536,7 +3558,7 @@ namespace casac {
     }
 
     void sdm::error(const string& message, int status) const {
-        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::SEVERE));
         //os << LogIO::POST;
         // cout << message << endl;
         throw casacore::AipsError(message);
@@ -3550,7 +3572,7 @@ namespace casac {
     }
 
     void sdm::warning (const string& message) const {
-        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::NORMAL));
+        casacore::LogSink::postGlobally(casacore::LogMessage(message, casacore::LogOrigin("sdm",WHERE), casacore::LogMessage::WARN));
     }
 
     /** 

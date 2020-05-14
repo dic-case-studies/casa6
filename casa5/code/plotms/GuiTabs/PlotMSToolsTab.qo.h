@@ -27,7 +27,7 @@
 #ifndef PLOTMSTOOLSTAB_QO_H_
 #define PLOTMSTOOLSTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSToolsTab.ui.h>
+#include <ui/ui_PlotMSToolsTab.h>
 
 #include <graphics/GenericPlotter/PlotTool.h>
 #include <plotms/GuiTabs/PlotMSTab.qo.h>

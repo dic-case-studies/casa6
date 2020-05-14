@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <casa/Arrays/Vector.h>
-#include <display/QtPlotter/GaussianEstimateWidget.ui.h>
+#include <ui/ui_GaussianEstimateWidget.h>
 #include <display/QtPlotter/SpecFitGaussian.h>
 #include <display/QtPlotter/conversion/Converter.h>
 

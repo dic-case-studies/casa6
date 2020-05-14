@@ -27,7 +27,7 @@
 #define AboutDialogVIEWER_QO_H_VIEWER
 
 #include <QDialog>
-#include <display/QtViewer/AboutDialogViewer.ui.h>
+#include <ui/ui_AboutDialogViewer.h>
 
 namespace casa {
 

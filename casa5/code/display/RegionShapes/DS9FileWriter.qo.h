@@ -29,7 +29,7 @@
 
 #include <QTextStream>
 
-#include <display/RegionShapes/QtDS9WriteOptions.ui.h>
+#include <ui/ui_QtDS9WriteOptions.h>
 #include <display/RegionShapes/RSFileReaderWriter.h>
 #include <display/RegionShapes/DS9FileReader.h>
 

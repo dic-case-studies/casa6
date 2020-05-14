@@ -29,9 +29,9 @@
 #include <msvis/MSVis/UtilJ.h>
 #include <QDebug>
 #include <QtCore/qmath.h>
-#include <qwt_plot_curve.h>
-#include <qwt_symbol.h>
-//#include <qwt_legend_item.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_symbol.h>
+//#include <qwt/qwt_legend_item.h>
 
 using namespace casacore;
 namespace casa {

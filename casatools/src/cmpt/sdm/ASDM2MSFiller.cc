@@ -1576,7 +1576,7 @@ namespace casac {
     void ASDM2MSFiller::addProcessor( string& type_,
                                       string& sub_type_,
                                       int  type_id_,
-                                      int  mode_id_ ) {
+                                      int  mode_id_) {
         uInt crow;
         MSProcessor msproc = itsMS -> processor();
         MSProcessorColumns msprocCol(msproc);

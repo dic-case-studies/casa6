@@ -26,7 +26,7 @@
 #ifndef LEGENDCURVE_H_
 #define LEGENDCURVE_H_
 
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_plot_curve.h>
 #include <guitools/Feather/ColorProvider.h>
 namespace casa {
 

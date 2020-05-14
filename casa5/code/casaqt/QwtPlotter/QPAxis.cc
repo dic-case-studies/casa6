@@ -40,7 +40,7 @@
 #include <casaqt/QwtPlotter/QPRasterPlot.h>
 #include <casaqt/QwtPlotter/QPShape.h>
 
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_scale_widget.h>
 
 using namespace std;
 
