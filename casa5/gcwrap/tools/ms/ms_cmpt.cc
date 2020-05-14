@@ -91,6 +91,9 @@
 #include <mstransform/MSTransform/StatWtColConfig.h>
 #include <mstransform/TVI/StatWtTVI.h>
 
+#include <components/ComponentModels/C11Timer.h>
+
+
 #include <ms_cmpt.h>
 #include <msmetadata_cmpt.h>
 #include <tools/ms/Statistics.h>
@@ -1519,7 +1522,6 @@ public:
         Record stats;
         try {
             stats = toRecord(statistics.getStatistics());
-
             // Compute some quantiles
             quantileToValue.clear();
             A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
@@ -1554,22 +1556,34 @@ doStatistics(
     bool hideTimeAxis,
     DataProvider *dataProvider)
 {
+    vector<C11Timer> ta(4);
+    ta[0].start();
     Record result;
     std::unique_ptr<DataProvider> dp(dataProvider);
+    ta[0].stop();
+    ta[1].start();
     Statistics<typename DataProvider::AccumType,
                typename DataProvider::DataIteratorType,
                typename DataProvider::MaskIteratorType,
                typename DataProvider::WeightsIteratorType>
         statistics;
-
+    ta[1].stop();
+    ta[2].start();
     StatisticsAccumulator<typename DataProvider::AccumType,
                           typename DataProvider::DataIteratorType,
                           typename DataProvider::WeightsIteratorType,
                           typename DataProvider::MaskIteratorType>
         accumulateStatistics(result, sortColumnIds, mergedColumns,
                              hideTimeAxis);
-
+    ta[2].stop();
+    ta[3].start();
     dp->foreachDataset(statistics, accumulateStatistics);
+    ta[3].stop();
+    uInt i = 0;
+    for (const auto& t: ta) {
+        cout << i << ": " << t.totalDuration() << " s" << endl;
+        ++i;
+    }
     return fromRecord(result);
 }
 
@@ -1701,7 +1715,8 @@ ms::statistics(const std::string& column,
                const std::string& timespan,
                double maxuvwdistance)
 {
-
+    vector<C11Timer> timer(20); 
+    timer[0].start();
     // const std::array<Int,6> validSortColumnIds = {
     //  MSMainEnums::PredefinedColumns::ARRAY_ID,
     //  MSMainEnums::PredefinedColumns::FIELD_ID,
@@ -1806,6 +1821,8 @@ ms::statistics(const std::string& column,
             // Set chunkInterval and modify sortColumnIds to support the call to
             // doStatistics.
             vector<Int>::const_iterator endIter = sortColumnIds.cend();
+            timer[0].stop();
+            timer[1].start();
             if (find(sortColumnIds.cbegin(), endIter,
                      MSMainEnums::PredefinedColumns::TIME) == endIter) {
                 chunkInterval = allTimesInOneChunkSec;
@@ -1817,6 +1834,8 @@ ms::statistics(const std::string& column,
             } else {
                 chunkInterval = positiveButShorterThanEveryIntegrationSec;
             }
+            timer[1].stop();
+            timer[2].start();
             if (timeaverage) {
                 hideTimeAxis = false;
                 averagingInterval =
@@ -1873,6 +1892,8 @@ ms::statistics(const std::string& column,
             };
             // don't ignore column boundaries in sortColumnIds
             auto mergedEnd = mergedColumns.end();
+            timer[2].stop();
+            timer[3].start();
             for (auto &&c : sortColumnIds)
                 mergedEnd = std::remove(mergedColumns.begin(), mergedEnd, c);
             std::set<MSMainEnums::PredefinedColumns> mergedColumnIds;
@@ -1975,7 +1996,8 @@ ms::statistics(const std::string& column,
                 vi::AveragingVi2Factory factory(params, sel_p);
                 vi2 = new vi::VisibilityIterator2(factory);
             }
-
+            timer[3].stop();
+            timer[4].start();
             /* Apply selection */
             vi::FrequencySelectionUsingChannels freqSelection;
             freqSelection.add(mssel, itsMS);
@@ -1989,15 +2011,18 @@ ms::statistics(const std::string& column,
             // Vi2DataProvider for the requested MS column (and data
             // transformation for visibilities), followed by a call to
             // doStatistics().
+            timer[4].stop();
             if (mycolumn == "DATA") {
-                if (complex_value == "amplitude" || complex_value == "amp")
+                if (complex_value == "amplitude" || complex_value == "amp") {
+                    timer[5].start();
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
                         hideTimeAxis,
                         new Vi2ObservedVisAmplitudeProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
+                    timer[5].stop();
+                }
                 else if (complex_value == "phase")
                     retval = doClassicalStatistics(
                         sortColumnIds,
@@ -2216,7 +2241,7 @@ ms::statistics(const std::string& column,
                 ss << "Unsupported column name: " << column;
                 throw AipsError(ss.str());
             }
-
+            timer[6].start();
         } // end if !detached
     } catch (AipsError x) {
         *itsLog <<
@@ -2228,6 +2253,12 @@ ms::statistics(const std::string& column,
         RETHROW(x);
     }
     Table::relinquishAutoLocks(true);
+    uInt count = 0;
+    timer[6].stop();
+    for (const auto& t: timer) {
+        cout << count << ": " << t.totalDuration() << " s" << endl;
+        ++count;
+    }
     return retval;
 }
 

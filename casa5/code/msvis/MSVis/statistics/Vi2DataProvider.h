@@ -261,11 +261,14 @@ public:
 
 		datasetIndex = -1;
 		followingChunkDatasetIndex = 0;
-		while (nextDataset()) {
-			std::unique_ptr<std::unordered_map<int,std::string> >
+        int i = 0;
+        while (nextDataset()) {
+            std::cout << "ds number " << i << std::endl;
+            std::unique_ptr<std::unordered_map<int,std::string> >
 				columnValues(mkColumnValues());
 			statistics.setDataProvider(this);
 			iteratee.nextDataset(statistics, columnValues.get());
+            ++i;
 		};
 	}
 
