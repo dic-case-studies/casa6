@@ -67,6 +67,7 @@
 
 #include <LBFGS.h>
 #include <synthesis/MeasurementEquations/lbfgsAsp.h>
+#include <synthesis/MeasurementEquations/lbfgsAspZhang.h>
 
 using namespace casacore;
 using Eigen::VectorXd;
@@ -81,7 +82,9 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsAspAmplitude(0),
   itsNInitScales(4),
   itsPrevLBFGSGrad(0.0),
-  itsNumIterNoGoodAspen(0)
+  itsNumIterNoGoodAspen(0),
+  itsPsfWidth(0.0),
+  itsUseZhang(true)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -674,7 +677,9 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
   cout << "xpixels " << xpixels << " ypixels " << ypixels << endl;
   cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
 
-  return float(ceil((xpixels + ypixels)/2));
+  itsPsfWidth = float(ceil((xpixels + ypixels)/2));
+
+  return itsPsfWidth;
 }
 
 void AspMatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Float width)
@@ -1062,7 +1067,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   // if there is no "good" aspen put into the active-set
   // for more than 10 consecutive iterations, we switch
   // from Asp to hogbom
-  if (itsNumIterNoGoodAspen > 10)
+  if (itsNumIterNoGoodAspen  > 10)
   {
     cout << "Switch to hogbom." << endl;
     return {};
@@ -1177,8 +1182,11 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //tempx.push_back(itsInitScaleSizes[optimumScale]);
     //itsAspCenter.push_back(positionOptimum);
 
-    //AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
-    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter);
+    //if (itsUseZhang)
+    AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
+    //else
+      //AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
+
 
     for (unsigned int i = 0; i < length; i++)
       x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
@@ -1186,9 +1194,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "Before: x = " << x << endl;
     double fx;
     double gclip;
-    /*int niter =*/ solver.minimize(fun, x, fx, gclip);
+    solver.minimize(fun, x, fx, gclip);
 
-    //std::cout << niter << " iterations" << std::endl;
     // use the initial gradient as a roll back gradient if there is
     // gradient exploding in lbfgs
     if (itsPrevLBFGSGrad == 0.0)
@@ -1251,6 +1258,17 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsNscales = Int(scaleSizes.size());
   itsScaleSizes.resize(itsNscales);
   itsScaleSizes = Vector<Float>(scaleSizes);  // make a copy that we can call our own
+
+  // analytically calculate component scale by Asp 2016
+  if (itsUseZhang)
+  {
+    for (Int i = 0; i < itsNscales; i++)
+    {
+      if (itsScaleSizes[i] >= itsPsfWidth)
+        itsScaleSizes[i] = sqrt(pow(itsScaleSizes[i], 2) - pow(Float(itsPsfWidth), 2));
+    }
+  }
+  // end Asp 2016
 
   itsScalesValid = true;  //genie? It's false in MS clean
 }

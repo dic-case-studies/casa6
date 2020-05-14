@@ -140,8 +140,10 @@ private:
   std::vector<casacore::Float> itsAspAmplitude;
   std::vector<casacore::IPosition> itsAspCenter;
   casacore::Int itsNInitScales;
-  double itsPrevLBFGSGrad; // flor gradient clipping if LBFGS gradient explodes
+  double itsPrevLBFGSGrad; // for gradient clipping if LBFGS gradient explodes
   unsigned int itsNumIterNoGoodAspen;
+  float itsPsfWidth;
+  bool itsUseZhang;
 };
 
 } //# NAMESPACE CASA - END

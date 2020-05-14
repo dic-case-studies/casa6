@@ -610,6 +610,7 @@ install (FILES
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/lbfgsAsp.h
+  MeasurementEquations/lbfgsAspZhang.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h
