@@ -303,7 +303,7 @@ class TestHelpers():
                          ok = thisval < val[2]
                     else:
                          ok=False
-                    pstr =  "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
+                    pstr = pstr + "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
 
           print(pstr)
           return pstr
