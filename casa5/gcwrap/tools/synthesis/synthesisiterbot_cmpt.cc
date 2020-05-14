@@ -51,7 +51,7 @@ casac::record* synthesisiterbot::setupiteration(const casac::record& iterpars)
 
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( iterpars ));
+      const std::unique_ptr<const casacore::Record> recpars(toRecord( iterpars ));
       itsIterBot->setupIteration( *recpars );
     } 
   catch  (AipsError x) 
@@ -202,7 +202,7 @@ bool synthesisiterbot::mergeinitrecord(const casac::record& initrecord)
   
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( initrecord ));
+      const std::unique_ptr<casacore::Record> recpars(toRecord( initrecord ));
       itsIterBot->startMinorCycle( *recpars );
      } 
   catch  (AipsError x) 
@@ -219,7 +219,7 @@ bool synthesisiterbot::mergeexecrecord(const casac::record& execrecord)
   
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( execrecord ));
+      const std::unique_ptr<casacore::Record> recpars(toRecord( execrecord ));
       itsIterBot->endMinorCycle(*recpars);
      } 
   catch  (AipsError x) 
