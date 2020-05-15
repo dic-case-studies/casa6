@@ -50,7 +50,14 @@ logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'
 
-expectedKeys = ['beammajor', 'beamminor', 'beampa', 'bunit', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4', 'crpix1', 'crpix2', 'crpix3', 'crpix4', 'crval1', 'crval2', 'crval3', 'crval4', 'ctype1', 'ctype2', 'ctype3', 'ctype4', 'cunit1', 'cunit2', 'cunit3', 'cunit4', 'datamax', 'datamin', 'date-obs', 'equinox', 'imtype', 'masks', 'maxpixpos', 'maxpos', 'minpixpos', 'minpos', 'object', 'observer', 'projection', 'reffreqtype', 'restfreq', 'shape', 'telescope']
+expectedKeys = [
+    'beammajor', 'beamminor', 'beampa', 'bunit', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4',
+    'crpix1', 'crpix2', 'crpix3', 'crpix4', 'crval1', 'crval2', 'crval3', 'crval4',
+    'ctype1', 'ctype2', 'ctype3', 'ctype4', 'cunit1', 'cunit2', 'cunit3', 'cunit4',
+    'datamax', 'datamin', 'date-obs', 'equinox', 'imtype', 'masks', 'maxpixpos',
+    'maxpos', 'minpixpos', 'minpos', 'object', 'observer', 'projection', 'reffreqtype',
+    'restfreq', 'shape', 'telescope'
+]
 
 class imhead_test(unittest.TestCase):
     @classmethod
@@ -122,7 +129,9 @@ class imhead_test(unittest.TestCase):
         '''
         casalog.setlogfile(testlog)
         imhead(datacopy, mode='history')
-        self.assertTrue('INFO' in open(testlog).read())
+        # this is a history entry in the image
+        msg = 'Tue Aug 7 20:48:18 2012  HISTORY imager::clean() [] Using Clark clean'
+        self.assertTrue(msg in open(testlog).read())
         
     def test_historyHdkeyVal(self):
         '''
@@ -141,26 +150,36 @@ class imhead_test(unittest.TestCase):
         '''
             test_del
             ---------------
-            
-            This checks that the result of running the delete mode on all the hd keys has the effect that we expected
-            
+            This checks that the result of running the delete mode on all the hd keys has the
+            effect that we expected
             Certain values should be removed where others will remain unchanged.
-            
             The assertion checks that the image header after removal looks like the expected dictionary
-        '''
-        
-        endDict = {'bunit': '', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05, 'cdelt3': 1.0, 'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0, 'crpix4': 0.0, 'crval1': 4.022983925846928, 'crval2': 0.08843001543437938, 'crval3': 1.0, 'crval4': 1412787144.0812755, 'ctype1': 'Right Ascension', 'ctype2': 'Declination', 'ctype3': 'Stokes', 'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': '', 'observer': '', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]), 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': ''}
-        
+        ''' 
+        endDict = {
+            'bunit': '', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05, 'cdelt3': 1.0,
+            'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0, 'crpix4': 0.0,
+            'crval1': 4.022983925846928, 'crval2': 0.08843001543437938, 'crval3': 1.0,
+            'crval4': 1412787144.0812755, 'ctype1': 'Right Ascension', 'ctype2': 'Declination',
+            'ctype3': 'Stokes', 'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '',
+            'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
+            'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity',
+            'masks': np.array([], dtype='<U16'),
+            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
+            'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
+            'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': '', 'observer': '',
+            'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]),
+            'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': ''
+        }
         for key in expectedKeys:
             imhead(datacopy, mode='del', hdkey=key)
-            #print(key, imhead(datacopy, mode='list')[key] == endDict[key])
-        #for key in endDict.keys():
-            #print(key, np.all(imhead(datacopy, mode='list')[key] == endDict[key]))
-            
-        #self.assertDictEqual(endDict, imhead(datacopy, mode='list'))
-        
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
-        self.assertTrue(np.all([np.all(imhead(datacopy, mode='list')[key]==endDict[key]) for key in imhead(datacopy, mode='list').keys()]))
+        self.assertTrue(
+            np.all([
+                np.all(imhead(datacopy, mode='list')[key]==endDict[key]) 
+                for key in imhead(datacopy, mode='list').keys()
+            ])
+        )
         
     def test_add(self):
         '''
@@ -180,16 +199,42 @@ class imhead_test(unittest.TestCase):
         # There are fields you can add to but can't delete from?
         # How are you supposed to use add when add requires th field to be empty
     
-        endDict = {'beammajor': {'unit': 'arcsec', 'value': 51.7}, 'beamminor': {'unit': 'arcsec', 'value': 51.7}, 'beampa': {'unit': 'deg', 'value': 0.0}, 'bunit': 'Jy/beam', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05, 'cdelt3': 1.0, 'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0, 'crpix4': 0.0, 'crval1': 4.022983925846928, 'crval2': 0.08843001543437938, 'crval3': 1.0, 'crval4': 1412787144.0812755, 'ctype1': 'Right Ascension', 'ctype2': 'Declination', 'ctype3': 'Stokes', 'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_2', 'observer': 'TEST', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]), 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'VLA'}
-        
+        endDict = {
+            'beammajor': {'unit': 'arcsec', 'value': 51.7},
+            'beamminor': {'unit': 'arcsec', 'value': 51.7},
+            'beampa': {'unit': 'deg', 'value': 0.0},
+            'bunit': 'Jy/beam', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05,
+            'cdelt3': 1.0, 'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0,
+            'crpix3': 0.0, 'crpix4': 0.0, 'crval1': 4.022983925846928,
+            'crval2': 0.08843001543437938, 'crval3': 1.0, 'crval4': 1412787144.0812755,
+            'ctype1': 'Right Ascension', 'ctype2': 'Declination', 'ctype3': 'Stokes',
+            'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '',
+            'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
+            'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity',
+            'masks': np.array([], dtype='<U16'),
+            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
+            'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
+            'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_2',
+            'observer': 'TEST', 'projection': 'SIN', 'reffreqtype': 'LSRK',
+            'restfreq': np.array([1420405752.0]),
+            'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'VLA'
+        }
         for key in expectedKeys:
             imhead(datacopy, mode='del', hdkey=key)
             
         for key in expectedKeys:
             imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
         
-        self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
-        self.assertTrue(np.all([np.all(imhead(datacopy, mode='list')[key]==endDict[key]) for key in imhead(datacopy, mode='list').keys()]))
+        self.assertTrue(
+            len(endDict.keys()) == len(imhead(datacopy, mode='list').keys())
+        )
+        self.assertTrue(
+            np.all([
+                np.all(imhead(datacopy, mode='list')[key]==endDict[key])
+                for key in imhead(datacopy, mode='list').keys()
+            ])
+        )
         
     def test_put(self):
         '''
@@ -202,16 +247,61 @@ class imhead_test(unittest.TestCase):
             At the end we assert that the final header looks like the dictionary we expected to see.
         '''
         
-        endDict = {'beammajor': {'unit': 'arcsec', 'value': 59.2}, 'beamminor': {'unit': 'arcsec', 'value': 42.2}, 'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam', 'cdelt1': float('-8.27220521664304e-05'), 'cdelt2': float('7.17220521664304e-05'), 'cdelt3': float('1.0'), 'cdelt4': float('24413.0625'), 'crpix1': float(127.0), 'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0), 'crval1': 3.02, 'crval2': 0.078, 'crval3': 0.0, 'crval4': 1412787143.0812755, 'ctype1': 'Declination', 'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes', 'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '00:12:04.661 +00.04.42.607 ?? 1.41369e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '00:12:02.755 +00.04.08.009 ?? 1.41313e+09Hz', 'object': 'N5921_22', 'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1.3]), 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'EVLA'}
+        endDict = {
+            'beammajor': {'unit': 'arcsec', 'value': 59.2},
+            'beamminor': {'unit': 'arcsec', 'value': 42.2},
+            'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam',
+            'cdelt1': float('-8.27220521664304e-05'), 'cdelt2': float('7.17220521664304e-05'),
+            'cdelt3': float('1.0'), 'cdelt4': float('24413.0625'), 'crpix1': float(127.0),
+            'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0), 'crval1': 3.02,
+            'crval2': 0.078, 'crval3': 0.0, 'crval4': 1412787143.0812755, 'ctype1': 'Declination',
+            'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes',
+            'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz',
+            'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
+            'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity',
+            'masks': np.array([], dtype='<U16'),
+            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
+            'maxpos': '00:12:04.661 +00.04.42.607 ?? 1.41369e+09Hz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
+            'minpos': '00:12:02.755 +00.04.08.009 ?? 1.41313e+09Hz', 'object': 'N5921_22',
+            'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK',
+            'restfreq': np.array([1.3]), 'shape': np.array([256, 256,   1,  46], dtype='int32'),
+            'telescope': 'EVLA'
+        }
         
-        InDict = {'beammajor': {'unit': 'arcsec', 'value': 59.2}, 'beamminor': {'unit': 'arcsec', 'value': 42.2}, 'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam', 'cdelt1': '-8.27220521664304e-05deg', 'cdelt2': '7.17220521664304e-05deg', 'cdelt3': '1.0', 'cdelt4': '24413.0625', 'crpix1': float(127.0), 'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0), 'crval1': '3.02deg', 'crval2': '0.078deg', 'crval3': '0.0', 'crval4': '1412787143.0812755', 'ctype1': 'Declination', 'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes', 'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_22', 'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': '1.3', 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'EVLA'}
-
+        InDict = {
+            'beammajor': {'unit': 'arcsec', 'value': 59.2},
+            'beamminor': {'unit': 'arcsec', 'value': 42.2},
+            'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam',
+            'cdelt1': '-8.27220521664304e-05deg', 'cdelt2': '7.17220521664304e-05deg',
+            'cdelt3': '1.0', 'cdelt4': '24413.0625', 'crpix1': float(127.0),
+            'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0),
+            'crval1': '3.02deg', 'crval2': '0.078deg', 'crval3': '0.0',
+            'crval4': '1412787143.0812755', 'ctype1': 'Declination',
+            'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes',
+            'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz',
+            'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
+            'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity',
+            'masks': np.array([], dtype='<U16'),
+            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
+            'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
+            'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_22',
+            'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK',
+            'restfreq': '1.3', 'shape': np.array([256, 256,   1,  46], dtype='int32'),
+            'telescope': 'EVLA'
+        }
         for key in expectedKeys:
             imhead(datacopy, mode='put', hdkey=key, hdvalue=InDict[key])
             
         
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
-        self.assertTrue(np.all([np.all(imhead(datacopy, mode='list')[key]==endDict[key]) for key in imhead(datacopy, mode='list').keys()]))
+        self.assertTrue(
+            np.all([
+                np.all(imhead(datacopy, mode='list')[key]==endDict[key])
+                for key in imhead(datacopy, mode='list').keys()
+        ])
+        )
         
     def test_get(self):
         '''
@@ -225,10 +315,16 @@ class imhead_test(unittest.TestCase):
         '''
         ###NOTE: ask further questions about what exactly this should be testing. Is checking the datatypes good enough?
         
-        typeList = [type({}), type({}), type({}), type(''), type({}), type({}), type({}), type({}), type(0.00), type(0.00), type(0.00), type(0.00), type({}), type({}), type(np.ndarray([])), type({}), type(''), type(''), type(''), type(''), type(''), type(''), type(''), type(''), type(0.00), type(0.00), type(''), type(''), type(''), type(np.ndarray([])), type(np.ndarray([])), type(''), type(np.ndarray([])), type(''), type(''), type(''), type(''), type(''), type({}), type(np.ndarray([])), type('')]
-        
+        typeList = [
+            type({}), type({}), type({}), type(''), type({}), type({}), type({}), type({}),
+            type(0.00), type(0.00), type(0.00), type(0.00), type({}), type({}),
+            type(np.ndarray([])), type({}), type(''), type(''), type(''), type(''), type(''),
+            type(''), type(''), type(''), type(0.00), type(0.00), type(''), type(''),
+            type(''), type(np.ndarray([])), type(np.ndarray([])), type(''),
+            type(np.ndarray([])), type(''), type(''), type(''), type(''), type(''), type({}),
+            type(np.ndarray([])), type('')
+        ]
         getTypes = [type(imhead(datacopy, mode='get', hdkey=x)) for x in expectedKeys]
-        
         self.assertTrue(getTypes == typeList)
             
     def test_summary(self):
@@ -239,8 +335,22 @@ class imhead_test(unittest.TestCase):
         
         ###NOTE: to test the function of the verbose parameter an image with multiple beams is required
         
-        summaryDictnoV = {'axisnames': np.array(['Right Ascension', 'Declination', 'Stokes', 'Frequency'],
-      dtype='<U16'), 'axisunits': np.array(['rad', 'rad', '', 'Hz'], dtype='<U16'), 'defaultmask': '', 'hasmask': False, 'imagetype': 'Intensity', 'incr': np.array([-7.27220521664304e-05,  7.27220521664304e-05,  1.00000000e+00,  24414.0625]), 'masks': np.array([], dtype='<U16'), 'messages': np.array([], dtype='<U16'), 'ndim': 4, 'refpix': np.array([128., 128.,   0.,   0.]), 'refval': np.array([4.022983925846928, 0.08843001543437938, 1.00000000e+00, 1412787144.0812755]), 'restoringbeam': {'major': {'unit': 'arcsec', 'value': 51.7}, 'minor': {'unit': 'arcsec', 'value': 47.2}, 'positionangle': {'unit': 'deg', 'value': -171.0}}, 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'tileshape': np.array([64, 64,  1,  8], dtype='int32'), 'unit': 'Jy/beam'}
+        summaryDictnoV = {
+            'axisnames': np.array(['Right Ascension', 'Declination', 'Stokes', 'Frequency'], dtype='<U16'),
+            'axisunits': np.array(['rad', 'rad', '', 'Hz'], dtype='<U16'), 'defaultmask': '',
+            'hasmask': False, 'imagetype': 'Intensity',
+            'incr': np.array([
+                -7.27220521664304e-05,  7.27220521664304e-05,  1.00000000e+00,  24414.0625
+            ]), 'masks': np.array([], dtype='<U16'), 'messages': np.array([], dtype='<U16'),
+            'ndim': 4, 'refpix': np.array([128., 128.,   0.,   0.]),
+            'refval': np.array([
+                4.022983925846928, 0.08843001543437938, 1.00000000e+00, 1412787144.0812755
+            ]), 'restoringbeam': {
+                'major': {'unit': 'arcsec', 'value': 51.7}, 'minor': {'unit': 'arcsec', 'value': 47.2},
+                'positionangle': {'unit': 'deg', 'value': -171.0}
+            }, 'shape': np.array([256, 256,   1,  46], dtype='int32'),
+            'tileshape': np.array([64, 64,  1,  8], dtype='int32'), 'unit': 'Jy/beam'
+        }
         
         compared = imhead(datacopy, mode='summary')
         
