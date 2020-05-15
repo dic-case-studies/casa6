@@ -89,11 +89,8 @@ class imhead_test(unittest.TestCase):
         '''
             test_listkeys
             ------------------------
-            
             This test checks that the list mode displays all the expected keys from the imhead function
-            
             A list is generated and the keys of that list are compared to what is expected.
-            
             All items in the expected keys must be in the listed keys to pass.
             The length of the expected and recieved keys must also be the same.
         '''
@@ -105,9 +102,7 @@ class imhead_test(unittest.TestCase):
         '''
             test_listkeysHdkeyVal
             ------------------------------
-            
             This test checks to make sure that hdkey and hdvalue have no effect on the output of mode list
-            
             A key and value is provided and then the keys are checked to make sure they are the expected values.
             The lists of expected values and recived ones must also be of equal length.
         '''
@@ -119,13 +114,9 @@ class imhead_test(unittest.TestCase):
         '''
             test_history
             ---------------------
-            
             This checks to make sure that when the mode is history a log is populated
-            
             When the function is ran with mode history a logfile is populated with information
             Check that info is written to the file.
-            
-            
         '''
         casalog.setlogfile(testlog)
         imhead(datacopy, mode='history')
@@ -137,9 +128,7 @@ class imhead_test(unittest.TestCase):
         '''
             test_historyHdkeyVal
             ------------------------
-            
             This checks to make sure this task still functions when provided with Hdkey and value.
-            
             These parameters should have no effect, so it should have the identical output to test_history.
         '''
         casalog.setlogfile(testlog)
@@ -185,12 +174,11 @@ class imhead_test(unittest.TestCase):
         '''
             test_add
             ---------------
-            
             This test makes sure that add can add to all the keys specified in the documentation
-            
             The endDict is the dictionary we expect out of the list function.
             we first delete all the values we can, and then try to add them back.
-            Upon failing to add a section back the dictionaries will become differnt, so my asserting the dictionary is the same as it started assures add worked.
+            Upon failing to add a section back the dictionaries will become differnt, so my
+            asserting the dictionary is the same as it started assures add worked.
             This relies on del working as well, however if that fails so will the test_del function.
             
             imtype and restfreq cannot be tested, because there is no way to remove the values for them.
@@ -240,10 +228,9 @@ class imhead_test(unittest.TestCase):
         '''
             test_put
             ----------------
-            
             This test checks to see that the put mode will place values into the specified slots.
-            
-            In this case we remove from each slot if we can. Some will be added anew while other values will be replaced by the end Dict value
+            In this case we remove from each slot if we can. Some will be added anew while other
+            values will be replaced by the end Dict value
             At the end we assert that the final header looks like the dictionary we expected to see.
         '''
         
@@ -268,7 +255,6 @@ class imhead_test(unittest.TestCase):
             'restfreq': np.array([1.3]), 'shape': np.array([256, 256,   1,  46], dtype='int32'),
             'telescope': 'EVLA'
         }
-        
         InDict = {
             'beammajor': {'unit': 'arcsec', 'value': 59.2},
             'beamminor': {'unit': 'arcsec', 'value': 42.2},
@@ -293,25 +279,23 @@ class imhead_test(unittest.TestCase):
         }
         for key in expectedKeys:
             imhead(datacopy, mode='put', hdkey=key, hdvalue=InDict[key])
-            
-        
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
         self.assertTrue(
             np.all([
                 np.all(imhead(datacopy, mode='list')[key]==endDict[key])
                 for key in imhead(datacopy, mode='list').keys()
-        ])
+            ])
         )
         
     def test_get(self):
         '''
             test_get
             --------------
-            
                 This test makes sure that the get function returns the datatypes(?) at the given keys
-                The documentation makes it seem like it should only return the data type, or that only the datatype should be checked
-                
-                This test creates a list of all the data types that get returns and then compares to a list of the expected datatypes
+                The documentation makes it seem like it should only return the data type, or that
+                only the datatype should be checked
+                This test creates a list of all the data types that get returns and then compares to a
+                list of the expected datatypes
         '''
         ###NOTE: ask further questions about what exactly this should be testing. Is checking the datatypes good enough?
         
@@ -332,9 +316,7 @@ class imhead_test(unittest.TestCase):
             test_summary
             -----------------
         '''
-        
         ###NOTE: to test the function of the verbose parameter an image with multiple beams is required
-        
         summaryDictnoV = {
             'axisnames': np.array(['Right Ascension', 'Declination', 'Stokes', 'Frequency'], dtype='<U16'),
             'axisunits': np.array(['rad', 'rad', '', 'Hz'], dtype='<U16'), 'defaultmask': '',
@@ -351,15 +333,19 @@ class imhead_test(unittest.TestCase):
             }, 'shape': np.array([256, 256,   1,  46], dtype='int32'),
             'tileshape': np.array([64, 64,  1,  8], dtype='int32'), 'unit': 'Jy/beam'
         }
-        
         compared = imhead(datacopy, mode='summary')
-        
-        #difference = [summaryDictnoV[key] == compared[key] for key in summaryDictnoV.keys()]
-        
-        #self.assertTrue(str(summaryDictnoV) == str(compared))
-        #self.assertDictEqual(summaryDictnoV, imhead(datacopy, mode='summary'))
         self.assertTrue(len(compared.keys()) == len(summaryDictnoV.keys()))
         self.assertTrue(np.all([np.all(compared[key]==summaryDictnoV[key]) for key in compared.keys()]))
+
+    def test_bad_mode(self):
+        """Test unupported mode fails"""
+        if CASA6:
+            self.assertRaises(Exception, imhead, datacopy, mode='bogus')
+        else:
+            self.assertFalse(
+                imhead(datacopy, mode='bogus'),
+                'application did not fail as expected for bad mode test'
+            )
         
 def suite():
     return[imhead_test]
