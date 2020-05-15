@@ -10,13 +10,15 @@ import numpy
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
-    from casatasks import setjy
+    from casatasks import setjy, partition
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     mslocal = ms()
     ctsys_resolve = ctsys.resolve
 else:
     from tasks import *
     from taskinit import *
     from taskinit import tbtool as table
+    from parallel.parallel_task_helper import ParallelTaskHelper
     from casa_stack_manip import stack_frame_find
     from __main__ import default
     mslocal = mstool()
@@ -70,12 +72,16 @@ class SetjyUnitTestBase(unittest.TestCase):
         # Create a new fresh copy of the MS
         print("\nCreate a new local copy of the MS...")
         #print(" setjydatapath=",setjydatapath, " inpms=",self.inpms)
+        #print(" setjydatapath=",datapath, " inpms=",self.inpms)
         if testmms:
             os.system('cp -rH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
-        elif ismms:
-            os.system('cp -rH ' + os.path.join(datapath+'/mms',self.inpms) + ' ' + self.inpms)
+        #elif ismms:
+        #    os.system('cp -rH ' + os.path.join(datapath+'/mms',self.inpms) + ' ' + self.inpms)
         else:
             os.system('cp -rf ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+        
+        if ismms:
+            self.createMMS(self.inpms)
 
     def resetMS(self):
 
@@ -83,6 +89,11 @@ class SetjyUnitTestBase(unittest.TestCase):
             print("\nRemoving a local copy of MS from the previous test...")
             #ret = os.system('rm -rf unittest/setjy/*')
             shutil.rmtree(self.inpms)
+        
+        if hasattr(self, 'inpmms') and os.path.exists(self.inpmms):
+            print("\nRemoving a local copy of MMS from the previous test...")
+            shutil.rmtree(self.inpmms)
+   
 
     def get_last_history_line(self,vis, origin='setjy::imager::setjy()',
                               nback=0, maxnback=20, hint=''):
@@ -159,6 +170,24 @@ class SetjyUnitTestBase(unittest.TestCase):
             except Exception:
                 print("Error comparing", val, "to", expval)
                 raise
+    
+    def createMMS(self, msname):
+        '''Create MMSs for tests with input MMS'''
+        prefix = msname.rstrip('.ms')
+        if not os.path.exists(msname):
+            os.system('cp -RL '+os.path.join(datapath,msname)+' '+ msname)
+        
+        # Create an MMS for the tests
+        self.inpmms = prefix + ".test.mms"
+        #default(partition)
+        
+        if os.path.exists(self.inpmms):
+            os.system("rm -rf " + self.inpmms)
+        if os.path.exists(self.inpmms+'.flagversions'):
+            os.system("rm -rf " + self.inpmms +'.flagversions')
+            
+        print("................. Creating test MMS ..................")
+        partition(vis=msname, outputvis=self.inpmms, flagbackup=False, separationaxis='auto')        
 
 
 class test_SingleObservation(SetjyUnitTestBase):
@@ -1199,10 +1228,11 @@ class test_newStandards(SetjyUnitTestBase):
         self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
         self.assertTrue(ret)
-        print("ret=%s" % sjran)
+        #print("ret=%s" % sjran)
     
 class test_newStandards_MMS(SetjyUnitTestBase):
     """Test simple Stnadard Scaling with MMS data"""
+    # can be just mpicasa specific tests but for now it will be tested for serial
     def setUp(self):
         # MMS version of the data is stored in the subdirectory, mms
         prefix = 'n1333_1'
@@ -1217,7 +1247,7 @@ class test_newStandards_MMS(SetjyUnitTestBase):
 
     def test_PB2013_MMS(self):
         self.modelim = ""
-        sjran = setjy(vis=self.inpms,
+        sjran = setjy(vis=self.inpmms,
                       field=self.field,
                       modimage=self.modelim,
                       standard='Perley-Butler 2013',
@@ -1242,7 +1272,7 @@ class test_newStandards_MMS(SetjyUnitTestBase):
 
     def test_PB2017_MMS(self):
         self.modelim = ""
-        sjran = setjy(vis=self.inpms,
+        sjran = setjy(vis=self.inpmms,
                       field=self.field,
                       modimage=self.modelim,
                       standard='Perley-Butler 2017',
