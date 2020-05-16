@@ -358,6 +358,7 @@ def tclean(
                 psfimager.initializeImagers()
                 psfimager.setWeighting()
                 psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
+                psfimager.deleteTools()
                 mytb.open(psfname, nomodify=False)
                 mytb.putkeyword('imageinfo',iminf)
                 mytb.putkeyword('miscinfo',miscinf)
