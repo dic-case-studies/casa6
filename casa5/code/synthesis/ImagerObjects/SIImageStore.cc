@@ -218,68 +218,73 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     itsImageName = imagename;
 
-    // The PSF or Residual images must exist. ( TODO : and weight )
+    // Since this constructor creates an ImStore from images on disk, it needs at least one of the
+    // images to actually be present on disk, from which it can retrieve shape and coordsys information.
+
     if( doesImageExist(itsImageName+String(".residual")) || 
 	doesImageExist(itsImageName+String(".psf")) ||
-	//	doesImageExist(itsImageName+String(".model")) ||
+	doesImageExist(itsImageName+String(".model")) ||
 	doesImageExist(itsImageName+String(".gridwt"))  )
       {
 	std::shared_ptr<ImageInterface<Float> > imptr;
 	if( doesImageExist(itsImageName+String(".psf")) )
 	  {
-	    //	    imptr.reset( new PagedImage<Float> (itsImageName+String(".psf")) );
 	    buildImage( imptr, (itsImageName+String(".psf")) );
-            itsObjectName=imptr->imageInfo().objectName();
-	    itsMiscInfo=imptr->miscInfo();
+	    //            itsObjectName=imptr->imageInfo().objectName();
+	    //	    itsMiscInfo=imptr->miscInfo();
 	  }
 	else if ( doesImageExist(itsImageName+String(".residual")) ){
-	  //imptr.reset( new PagedImage<Float> (itsImageName+String(".residual")) );
 	  buildImage( imptr, (itsImageName+String(".residual")) );
-          itsObjectName=imptr->imageInfo().objectName();
-	  itsMiscInfo=imptr->miscInfo();
+	  //          itsObjectName=imptr->imageInfo().objectName();
+	  //	  itsMiscInfo=imptr->miscInfo();
+	}
+	else if ( doesImageExist(itsImageName+String(".model")) ){
+	  buildImage( imptr, (itsImageName+String(".model")) );
+	  //          itsObjectName=imptr->imageInfo().objectName();
+	  //	  itsMiscInfo=imptr->miscInfo();
 	}
 	else
 	  {
-	  //imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
+	    // How can this be right ? 
 	    buildImage( imptr, (itsImageName+String(".gridwt")) );
 	  }
 
+	itsObjectName=imptr->imageInfo().objectName();
 	itsImageShape=imptr->shape();
 	itsCoordSys = imptr->coordinates();
+	itsMiscInfo=imptr->miscInfo();
 	
       }
     else
       {
-	throw( AipsError( "PSF or Residual Image (or sumwt) do not exist. Please create one of them." ) );
+	throw( AipsError( "PSF, Residual, Model Image (or sumwt) do not exist. Please create one of them." ) );
       }
     
     if( doesImageExist(itsImageName+String(".residual")) || 
 	doesImageExist(itsImageName+String(".psf")) )
       {
-
-	
-    if( doesImageExist(itsImageName+String(".sumwt")) )
-      {
-	std::shared_ptr<ImageInterface<Float> > imptr;
-	//imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
-	buildImage( imptr, (itsImageName+String(".sumwt")) );
-	itsNFacets = imptr->shape()[0];
-	itsFacetId = 0;
-	itsUseWeight = getUseWeightImage( *imptr );
-	itsPBScaleFactor=1.0; ///// No need to set properly here as it will be calc'd in ()
-	/////redo this here as psf may have different coordinates
-	itsCoordSys = imptr->coordinates();
-	itsMiscInfo=imptr->miscInfo();
-	if( itsUseWeight && ! doesImageExist(itsImageName+String(".weight")) )
+	if( doesImageExist(itsImageName+String(".sumwt")) )
 	  {
-	    throw(AipsError("Internal error : Sumwt has a useweightimage=True but the weight image does not exist."));
+	    std::shared_ptr<ImageInterface<Float> > imptr;
+	    //imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
+	    buildImage( imptr, (itsImageName+String(".sumwt")) );
+	    itsNFacets = imptr->shape()[0];
+	    itsFacetId = 0;
+	    itsUseWeight = getUseWeightImage( *imptr );
+	    itsPBScaleFactor=1.0; ///// No need to set properly here as it will be calc'd in ()
+	    /////redo this here as psf may have different coordinates
+	    itsCoordSys = imptr->coordinates();
+	    itsMiscInfo=imptr->miscInfo();
+	    if( itsUseWeight && ! doesImageExist(itsImageName+String(".weight")) )
+	      {
+		throw(AipsError("Internal error : Sumwt has a useweightimage=True but the weight image does not exist."));
+	      }
 	  }
-      }
-    else
-      {
-	  throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
-      }
-
+	else
+	  {
+	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	  }
+	
       }// if psf or residual exist...
 
     if( ignorefacets==True ) itsNFacets= 1;
@@ -523,21 +528,35 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			  oo1 << useShape; oo2 << imPtr->shape();
 			  throw( AipsError( "There is a shape mismatch between existing images ("+oo2.str()+") and current parameters ("+oo1.str()+"). If you are attempting to restart a run with a new image shape, please change imagename and supply the old model or mask as inputs (via the startmodel or mask parameters) so that they can be regridded to the new shape before continuing." ) );
 			}
-		     
-		      if( itsParentCoordSys.nCoordinates()>0 &&  checkCoordSys && ! itsParentCoordSys.near( imPtr->coordinates() ) )
-			{
 
-			  /// Implement an exception to get CAS-9977 to work.
+		      
+		     
+		      if( itsParentCoordSys.nCoordinates()>0 &&  checkCoordSys && ! itsParentCoordSys.near( imPtr->coordinates()) )
+			{
+			  /// Implement an exception to get CAS-9977 to work. Modify the current coordsys to match the parent.
 			  /// "The DirectionCoordinates have differing latpoles"
 			  if( itsParentCoordSys.errorMessage().contains("differing latpoles") )
 			    {
-			      LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
-			      os << LogIO::DEBUG1 << " !!!! WARNING !!!!! Mismatch in Csys between existing image on disk and current parameters : " << itsParentCoordSys.errorMessage() << LogIO::POST;
+			      DirectionCoordinate dcord = itsParentCoordSys.directionCoordinate();
+			      //cout << "Latpole from parent : " << dcord.longLatPoles() << endl;
+			      
+			      DirectionCoordinate dcord2 = imPtr->coordinates().directionCoordinate();
+			      //cout << "Latpole from imPtr : " << dcord2.longLatPoles() << endl;
+		      
+			    LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
+			    os  << " Mismatch in Csys latpoles between existing image on disk (" << dcord2.longLatPoles() <<  ") and current imaging run (" << dcord.longLatPoles() << ") : " << itsParentCoordSys.errorMessage() << " -- Resetting to match image on disk" << LogIO::WARN << LogIO::POST;
+			    //			     cout << "Set the coordinate from the Parent value" << endl;
+			    //imPtr->setCoordinateInfo( itsParentCoordSys );
+			    itsParentCoordSys = imPtr->coordinates();
 			    }
-			  else
+			  
+			  // Check again. 
+			  if ( ! itsParentCoordSys.near( imPtr->coordinates() ) )
 			    {
+			      //cout << " Still different..." << endl;
 			      throw( AipsError( "There is a coordinate system mismatch between existing images on disk and current parameters ("+itsParentCoordSys.errorMessage()+"). If you are attempting to restart a run, please change imagename and supply the old model or mask as inputs (via the startmodel or mask parameters) so that they can be regridded to the new coordinate system before continuing. " ) );
 			    }
+			      //}
 			}
 		    }// not dosumwt
 		}
@@ -1068,10 +1087,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    //cout << "Opening image : " << itsImageName+label << " of shape " << ptr->shape() << endl;
 	  }
       }
-    
+
     //cerr << "ACCIM2 ptr " << ptr.get() << " lock " << itsReadLock.get() << endl;
     //itsReadLock.reset(new LatticeLocker(*ptr, FileLocker::Read));
     
+    //    DirectionCoordinate dcord = ptr->coordinates().directionCoordinate();
+    //    cout << "Latpole from " << label << " : " << dcord.longLatPoles() << endl;
+
   }
 
 
@@ -1084,7 +1106,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::residual(uInt /*nterm*/)
   {
     accessImage( itsResidual, itsParentResidual, imageExts(RESIDUAL) );
-    //    cout << "read residual : " << itsResidual << endl;
+    //    Record mi = itsResidual->miscInfo(); ostringstream oss;mi.print(oss);cout<<"MiscInfo(res) : " << oss.str() << endl;
     return itsResidual;
   }
   std::shared_ptr<ImageInterface<Float> > SIImageStore::weight(uInt /*nterm*/)

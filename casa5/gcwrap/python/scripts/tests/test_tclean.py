@@ -3062,6 +3062,7 @@ class test_startmodel(testref_base):
           # start with full model
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',interactive=0,
                         startmodel=[self.img+'1.model.tt0',self.img+'1.model.tt1'],parallel=self.parallel)
+
           # start with model only for tt0
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',interactive=0,
                         startmodel=self.img+'1.model.tt0',parallel=self.parallel)
@@ -3077,9 +3078,168 @@ class test_startmodel(testref_base):
                              (self.img+'2.residual.tt1',-0.01519,[50,50,0,0]),
                              (self.img+'3.residual.tt1',-0.04358,[50,50,0,0]),
                              (self.img+'4.residual.tt1',-0.01519,[50,50,0,0])     ] )
+
           self.checkfinal(report)
 
+     ## Run this test only in parallel mode as it tests combinations of serial and parallel runs. 
+     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_csys_startmodel_restart_mfs(self):
+          """ [startmodel] test_csys_startmodel_restart_cube
+
+          Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
+          This sequence, coupled with the algorithm options listed below in tests #1 through #6 trigger three different errors that
+          have been fixed in this branch, and one that will be addressed via CAS-9386 (cube refactor). 
+
+          tclean call sequence : 
+          --- (a) Parallel run for niter=0
+          --- (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+          --- (c) Serial model-predict run (without/with startmodel) : in one case it reuses prev image-set. in other case it reuses only 'model'. 
+          --- (d) Impbcor on the output of (b)
+
+          Note that this is not a full fix of the various instances of the 'latpole' inconsistency, but only a workaround. 
+          Hence it needs a test to ensure this keeps working. 
+          """
+          self.prepData('refim_point.ms')
+
+          specmode='mfs'
+          runpar=self.parallel
+
+          # Test 1 :  mfs + hogbom/mtmfs + usestartmod=False : Triggers both the latpole errors 
+          #                                                                      (a) when the serial modelpredict runs on the output of the prev parallel run.
+          #                                                                      (b) when the ouput of a parallel run is used by impbcor.
+          # Test 2 : mfs + hogbom/mtmfs + usestartmod=True : Triggers the problem of 'model' being insufficient to create a valid ImStore. 
+          # Run for deconvolver='hogbom' and 'mtmfs' because it exercises both SIImageStore and SIImageStoreMultiTerm 
+          #      where some infrastructure code is re-implemented for multi-term vs single-term. 
+
+          report = ''
+
+          for runtype in ['serial','parallel']:
+               for deconvolver in ['hogbom','mtmfs']:
+                    for usestartmod in [False,True]:
+                         infostr = 'Run with '+specmode +' - ' + deconvolver + ' - usestartmodel = ' + str(usestartmod) + ' - imaging in ' + runtype 
+                         print(infostr)
+                         report = report + infostr+'\n'
+
+                         # Clear the model column.
+                         self.th.delmodels(msname=self.msfile,modcol='reset0')
+
+                         os.system('rm -rf savemod*')
+
+                         ## (a) Always parallel run for niter=0
+                         tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19',   niter=0,  imsize=100, cell='10.0arcsec', deconvolver=deconvolver,  specmode=specmode,  parallel=True)
+                         
+                         ## (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+                         if runtype=='serial':
+                              runpar=False
+                         else:
+                              runpar=True
+                         tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19', niter=10, imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode,  calcpsf=False, calcres=False,  parallel=runpar)
+                         
+                         # (c) Serial model-predict run (without/with startmodel) : 
+                         if usestartmod==False:    # Do the restart by re-using the same image name as before.
+                              imname2 = 'savemod.par'
+                              startmodel=[]
+                         else:
+                              imname2 = 'savemod.ser'  # Do the restart with a new imagename, and using 'startmodel'
+                              if deconvolver=='mtmfs':
+                                   startmodel=['savemod.par.model.tt0', 'savemod.par.model.tt1']
+                              else:
+                                   startmodel= ['savemod.par.model']
+
+                         tclean( vis=self.msfile, imagename=imname2, spw='0:0~5,0:15~19', niter=0,  imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode, savemodel='modelcolumn', startmodel=startmodel, calcres=False,  calcpsf= False, restoration=False, parallel=False)
+                         
+                         # Check the values of the model column
+                         report = report + self.th.checkchanvals(self.msfile,[(0,">",0.5),(19,"<",0.9)])
+                         
+                         ## (d) Impbcor on the output of (b) + check the output of pbcor
+                         if deconvolver=='hogbom':
+                              impbcor(imagename='savemod.par'+'.image', pbimage='savemod.par'+'.pb', outfile='savemod.par'+'.impbcor',overwrite=True)
+                              report=report +self.th.checkall(imexist=['savemod.par.impbcor'], imval=[  ('savemod.par.impbcor',1.1,[50,50,0,0]) ])
+                         else:
+                              impbcor(imagename='savemod.par'+'.image.tt0', pbimage='savemod.par'+'.pb.tt0', outfile='savemod.par'+'.impbcor.tt0',overwrite=True)
+                              report=report +self.th.checkall(imexist=['savemod.par.impbcor.tt0'], imval=[  ('savemod.par.impbcor.tt0',1.1,[50,50,0,0]) ])
+
+          self.checkfinal(report)
+
+
+
+     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_csys_startmodel_restart_cube(self):
+          """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
+
+          Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
+          This sequence, coupled with the algorithm options listed below in tests #1 through #6 trigger three different errors that
+          have been fixed in this branch, and one that will be addressed via CAS-9386 (cube refactor). 
+
+          tclean call sequence : 
+          --- (a) Parallel run for niter=0
+          --- (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+          --- (c) Serial model-predict run (without/with startmodel) : in one case it reuses prev image-set. in other case it reuses only 'model'. 
+          --- (d) Impbcor on the output of (b)
+
+          Note that this is not a full fix of the various instances of the 'latpole' inconsistency, but only a workaround. 
+          Hence it needs a test to ensure this keeps working. 
+          """
+          self.prepData('refim_point.ms')
+
+          specmode='cube'
+          deconvolver='hogbom'
+          runpar=self.parallel
+
+          report=''
+
+          # Test  : cube + hogbom + usestartmod=True/False :  Triggers the problem of refconcat image outputs being incompatible with restarts in serial later.
+          ####for runtype in ['serial','parallel']:     ## This will fail in 'serial' because we cannot mix and match refconcat images with regular ones. 
+          ####                                                                 This must be revisited after CAS-9386. 
+          for runtype in ['parallel']:
+               for usestartmod in [False,True]:
+                    print('Run with '+specmode +' - ' + deconvolver + ' - ' + str(usestartmod))
+                    
+                    infostr = 'Run with '+specmode +' - ' + deconvolver + ' - usestartmodel = ' + str(usestartmod) + ' - imaging in ' + runtype 
+                    print(infostr)
+                    report = report + infostr+'\n'
+                    
+                    # Clear the model column.
+                    self.th.delmodels(msname=self.msfile,modcol='reset0')
+                    
+                    os.system('rm -rf savemod*')
+                    
+                    ## (a) Always parallel run for niter=0
+                    tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19',   niter=0,  imsize=100, cell='10.0arcsec', deconvolver=deconvolver,  specmode=specmode,  parallel=True)
+                    
+                    ## (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+                    if runtype=='serial':
+                         runpar=False
+                    else:
+                         runpar=True
+                    tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19', niter=10, imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode,  calcpsf=False, calcres=False,  parallel=runpar)
+                         
+                    # (c) Serial model-predict run (without/with startmodel) : 
+                    if usestartmod==False:    # Do the restart by re-using the same image name as before.
+                         imname2 = 'savemod.par'
+                         startmodel=[]
+                    else:
+                         imname2 = 'savemod.ser'  # Do the restart with a new imagename, and using 'startmodel'
+                         if deconvolver=='mtmfs':
+                              startmodel=['savemod.par.model.tt0', 'savemod.par.model.tt1']
+                         else:
+                              startmodel= ['savemod.par.model']
+                              
+                    tclean( vis=self.msfile, imagename=imname2, spw='0:0~5,0:15~19', niter=0,  imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode, savemodel='modelcolumn', startmodel=startmodel, calcres=False,  calcpsf= False, restoration=False, parallel=False)
+                              
+                    # Check the values of the model column
+                    report = report + self.th.checkchanvals(self.msfile,[(0,">",0.5),(19,"<",0.9)])
+                    
+                    ## (d) Impbcor on the output of (b) + check the output of pbcor (first channel)
+                    impbcor(imagename='savemod.par'+'.image', pbimage='savemod.par'+'.pb', outfile='savemod.par'+'.impbcor',overwrite=True)
+                    report=report +self.th.checkall(imexist=['savemod.par.impbcor'], imval=[  ('savemod.par.impbcor',1.5,[50,50,0,0]) ])
+
+
+          self.checkfinal(report)
+
+
      # Now passes for n=3, 4, with CAS-9386 but table lock issue in model write for n=2
+
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mfs(self):
           """ [startmodel] test_startmodel_with_mask_mfs : Mask out some regions in the startmodel, before prediction """
