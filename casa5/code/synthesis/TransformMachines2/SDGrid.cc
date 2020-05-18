@@ -84,7 +84,7 @@ namespace refim {//# namespace for imaging refactor
 
 SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Bool useImagingWeight)
-  : FTMachine(), sj_p(&sj), imageCache(0), wImageCache(0),
+  : FTMachine(true), sj_p(&sj), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -92,13 +92,12 @@ SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
     minWeight_p(0.), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(false)
 {
-  isSD_p=true;
   lastIndex_p=0;
 }
 
 SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(),  sj_p(&sj), imageCache(0), wImageCache(0),
+  : FTMachine(true), sj_p(&sj), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -106,14 +105,13 @@ SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize
     minWeight_p(minweight), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
-  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }
 
 SDGrid::SDGrid(Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Bool useImagingWeight)
-  : FTMachine(), sj_p(0), imageCache(0), wImageCache(0),
+  : FTMachine(true), sj_p(0), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -121,13 +119,12 @@ SDGrid::SDGrid(Int icachesize, Int itilesize,
     minWeight_p(0.), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(false)
 {
-  isSD_p=true;
   lastIndex_p=0;
 }
 
 SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(), sj_p(0), imageCache(0), wImageCache(0),
+  : FTMachine(true), sj_p(0), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -136,7 +133,6 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
     msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
-  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }
@@ -144,7 +140,7 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
 SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
 	       String iconvType, Float truncate, Float gwidth, Float jwidth,
 	       Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(), sj_p(0), imageCache(0), wImageCache(0),
+  : FTMachine(true), sj_p(0), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(-1),
@@ -152,7 +148,6 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
     minWeight_p(minweight), lastIndexPerAnt_p(), useImagingWeight_p(useImagingWeight), lastAntID_p(-1), msId_p(-1),
     isSplineInterpolationReady(false), interpolator(0), clipminmax_(clipminmax)
 {
-  isSD_p=true;
   mLocation_p=mLocation;
   lastIndex_p=0;
 }

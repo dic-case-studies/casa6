@@ -3201,13 +3201,13 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
             shutil.rmtree(outfile)
             shutil.rmtree(self.outfile + '.weight')
             shutil.rmtree(self.outfile + '.sumwt')
-            #shutil.rmtree(self.outfile + '.psf') #CAS-10893: uncomment once true PSF image is available
+            #shutil.rmtree(self.outfile + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
         outfile_ref = self.outfile_ref + image_suffix
         if os.path.exists(outfile_ref):
             shutil.rmtree(outfile_ref)
             shutil.rmtree(self.outfile_ref + '.weight')
             shutil.rmtree(self.outfile_ref + '.sumwt')
-            #shutil.rmtree(self.outfile_ref + '.psf') #CAS-10893: uncomment once true PSF image is available
+            #shutil.rmtree(self.outfile_ref + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
     
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):

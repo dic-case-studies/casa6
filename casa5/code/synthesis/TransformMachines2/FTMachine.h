@@ -135,10 +135,10 @@ public:
     DEFAULT=OBSERVED
   };
 
-  FTMachine();
+  FTMachine(casacore::Bool isSD=false);
 
 
-  FTMachine(casacore::CountedPtr<CFCache>& cfcache,casacore::CountedPtr<ConvolutionFunction>& cfctor);
+  FTMachine(casacore::CountedPtr<CFCache>& cfcache,casacore::CountedPtr<ConvolutionFunction>& cfctor,casacore::Bool isSD=false);
 
   FTMachine(const FTMachine& other);
 
@@ -392,7 +392,7 @@ protected:
 
   casacore::LogIO& logIO();
 
-  casacore::Bool isSD_p;
+  casacore::Bool isSD_p = false;
 
   casacore::ImageInterface<casacore::Complex>* image;
 
