@@ -228,89 +228,130 @@ class imhead_test(unittest.TestCase):
         '''
             test_put
             ----------------
-            This test checks to see that the put mode will place values into the specified slots.
-            In this case we remove from each slot if we can. Some will be added anew while other
-            values will be replaced by the end Dict value
-            At the end we assert that the final header looks like the dictionary we expected to see.
+            This test checks to see that the put mode will replace the specified key with the specified
+            value. Not all keys are replacable, and the test checks for that. The put values are all different
+            from the initial values to enable more robust testing, except for non-mutable keys in which case
+            they are the same values
         '''
-        
-        endDict = {
-            'beammajor': {'unit': 'arcsec', 'value': 59.2},
-            'beamminor': {'unit': 'arcsec', 'value': 42.2},
-            'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam',
-            'cdelt1': float('-8.27220521664304e-05'), 'cdelt2': float('7.17220521664304e-05'),
-            'cdelt3': float('1.0'), 'cdelt4': float('24413.0625'), 'crpix1': float(127.0),
-            'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0), 'crval1': 3.02,
-            'crval2': 0.078, 'crval3': 0.0, 'crval4': 1412787143.0812755, 'ctype1': 'Declination',
-            'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes',
-            'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz',
-            'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
-            'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity',
-            'masks': np.array([], dtype='<U16'),
-            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
-            'maxpos': '00:12:04.661 +00.04.42.607 ?? 1.41369e+09Hz',
-            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
-            'minpos': '00:12:02.755 +00.04.08.009 ?? 1.41313e+09Hz', 'object': 'N5921_22',
-            'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK',
-            'restfreq': np.array([1.3]), 'shape': np.array([256, 256,   1,  46], dtype='int32'),
-            'telescope': 'EVLA'
-        }
-        InDict = {
-            'beammajor': {'unit': 'arcsec', 'value': 59.2},
-            'beamminor': {'unit': 'arcsec', 'value': 42.2},
-            'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam',
-            'cdelt1': '-8.27220521664304e-05deg', 'cdelt2': '7.17220521664304e-05deg',
-            'cdelt3': '1.0', 'cdelt4': '24413.0625', 'crpix1': float(127.0),
-            'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0),
-            'crval1': '3.02deg', 'crval2': '0.078deg', 'crval3': '0.0',
-            'crval4': '1412787143.0812755', 'ctype1': 'Declination',
-            'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes',
-            'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz',
-            'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682,
-            'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity',
-            'masks': np.array([], dtype='<U16'),
-            'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'),
-            'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz',
-            'minpixpos': np.array([230,   0,   0,  15], dtype='int32'),
-            'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_22',
-            'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK',
-            'restfreq': '1.3', 'shape': np.array([256, 256,   1,  46], dtype='int32'),
-            'telescope': 'EVLA'
-        }
-        for key in expectedKeys:
-            imhead(datacopy, mode='put', hdkey=key, hdvalue=InDict[key])
-        self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
-        self.assertTrue(
-            np.all([
-                np.all(imhead(datacopy, mode='list')[key]==endDict[key])
-                for key in imhead(datacopy, mode='list').keys()
-            ])
-        )
-        
+        # axis 3 is the stokes axis and those values cannot be changed because its a Stokes axis
+        immutable = [
+            'maxpixpos', 'minpos', 'minpixpos', 'maxpos', 'masks', 'datamax',
+            'shape', 'datamin', 'cdelt3', 'crpix3', 'cunit3'
+        ] 
+        myDict = {
+            'crpix4': 1.0, 'equinox': 'B1950', 'crpix1': 129.0, 'crpix2': 129.0, 'crpix3': 0.0,
+            'maxpixpos': np.array([134, 134,   0,  38], dtype=np.int32),
+            # minpos will change not because we change its value directly but because we muck with
+            # axes metadata
+            'minpos': '00:11:59.709 +00.19.25.824 U 1.41414e+09kHz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype=np.int32),
+            # you can put the Stokes axis name, but it remains Stokes
+            'ctype4': 'Freq', 'ctype3': 'Stokes', 'ctype2': 'Dec',
+            'ctype1': 'RA', 'beamminor': {'value': 51.5, 'unit': 'arcsec'},
+            # maxpos will change not because we change its value directly but because we muck with
+            # axes metadata
+            'maxpos': '00:12:00.683 +00.19.46.197 U 1.41473e+09kHz',
+            'projection': 'TAN', 'observer': 'FRED', 'telescope': 'ALMA',
+            'date-obs': '1995/04/15/09:33:00', 'restfreq': {'value': 1520405752.0, 'unit': 'kHz'},
+            'imtype': 'Optical Depth',
+            'crval4': {'value': 1413787144.0812755, 'unit': 'kHz'},
+            'crval2': {'value': 0.08943001543437938, 'unit': 'crad'},
+            'crval3': np.array(['U']),
+            'crval1': {'value': 4.122983925846928, 'unit': 'crad'},
+            'beampa': {'value': 11.0, 'unit': 'deg'}, 'object': 'N5921_2_bogus',
+            'masks': np.array([], dtype='|S1'),
+            'cunit4': 'kHz', 'cunit1': 'crad', 'datamax': 0.054880399256944656,
+            'cunit3': '', 'cunit2': 'crad',
+            'beammajor': {'value': 55.7, 'unit': 'arcsec'}, 'reffreqtype': 'BARY',
+            'cdelt1': {'value': -7.372e-05, 'unit': 'crad'},
+            'cdelt2': {'value': 7.3722e-05, 'unit': 'crad'},
+            'cdelt3': {'value': 1.0, 'unit': ''}, 'cdelt4': {'value': 25414.0625, 'unit': 'kHz'},
+            'shape': np.array([256, 256,   1,  46], dtype=np.int32),
+            'bunit': 'mJy/beam', 'datamin': -0.011138656176626682
+        }        
+        for k in myDict.keys():
+            if k in immutable:
+                self.assertFalse(
+                    imhead(
+                        datacopy, mode='put', hdkey=k, hdvalue=myDict[k]
+                    ), "Incorrectly put hdkey " + k
+                )
+            else:
+                self.assertTrue(
+                    imhead(datacopy, mode='put', hdkey=k, hdvalue=myDict[k]),
+                    "Did not put hdkey " + k
+                )
+        # do after first loop because we are not gauranteed the order things
+        # are put, so everything must be put before we can check values
+        for k in myDict.keys():
+            # check the value is correct
+            x = imhead(datacopy, mode='get', hdkey=k)
+            msg = "Failed get for hdkey " + k + " got " + str(x) + " expected " + str(myDict[k])
+            if type(x) == np.ndarray:
+                try:
+                    self.assertEqual(np.all(x, myDict[k]), msg)
+                except:
+                    # string arrays can throw "Cannot reduce flexible type" exceptions
+                    self.assertEqual(list(x), list(myDict[k]), msg)
+            else:
+                if k == 'cdelt1':
+                    # because its annoying
+                    self.assertTrue(
+                        np.isclose(x['value'], myDict[k]['value']),
+                        "got wrong value for key " + k + " expected "
+                        + str(myDict[k]) + " got " + str(x)
+                    )
+                    self.assertEqual(x['unit'], myDict[k]['unit'], 'wrong unit cdelt1')
+                else:
+                    self.assertEqual(x, myDict[k], msg)
+       
     def test_get(self):
         '''
             test_get
             --------------
-                This test makes sure that the get function returns the datatypes(?) at the given keys
-                The documentation makes it seem like it should only return the data type, or that
-                only the datatype should be checked
-                This test creates a list of all the data types that get returns and then compares to a
-                list of the expected datatypes
+            Test test_get to verify mode='get' works and returns correct values
         '''
-        ###NOTE: ask further questions about what exactly this should be testing. Is checking the datatypes good enough?
-        
-        typeList = [
-            type({}), type({}), type({}), type(''), type({}), type({}), type({}), type({}),
-            type(0.00), type(0.00), type(0.00), type(0.00), type({}), type({}),
-            type(np.ndarray([])), type({}), type(''), type(''), type(''), type(''), type(''),
-            type(''), type(''), type(''), type(0.00), type(0.00), type(''), type(''),
-            type(''), type(np.ndarray([])), type(np.ndarray([])), type(''),
-            type(np.ndarray([])), type(''), type(''), type(''), type(''), type(''), type({}),
-            type(np.ndarray([])), type('')
-        ]
-        getTypes = [type(imhead(datacopy, mode='get', hdkey=x)) for x in expectedKeys]
-        self.assertTrue(getTypes == typeList)
-            
+        exp_dict = {
+            'crpix4': 0.0, 'equinox': 'J2000', 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0,
+            'maxpixpos': np.array([134, 134,   0,  38], dtype=np.int32),
+            'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz',
+            'minpixpos': np.array([230,   0,   0,  15], dtype=np.int32),
+            'ctype4': 'Frequency', 'ctype3': 'Stokes', 'ctype2': 'Declination',
+            'ctype1': 'Right Ascension', 'beamminor': {'value': 47.2, 'unit': 'arcsec'},
+            'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'projection': 'SIN',
+            'observer': 'TEST', 'telescope': 'VLA', 'date-obs': '1995/04/13/09:33:00',
+            'restfreq': {'value': 1420405752.0, 'unit': 'Hz'}, 'imtype': 'Intensity',
+            'crval4': {'value': 1412787144.0812755, 'unit': 'Hz'},
+            'crval2': {'value': 0.08843001543437938, 'unit': 'rad'},
+            'crval3': np.array(['I']),
+            'crval1': {'value': 4.022983925846928, 'unit': 'rad'},
+            'beampa': {'value': 9.0, 'unit': 'deg'}, 'object': 'N5921_2',
+            'masks': np.array([], dtype='|S1'), 'cunit4': 'Hz', 'cunit1': 'rad',
+            'datamax': 0.054880399256944656, 'cunit3': '', 'cunit2': 'rad',
+            'beammajor': {'value': 51.7, 'unit': 'arcsec'}, 'reffreqtype': 'LSRK',
+            'cdelt1': {'value': -7.27220521664304e-05, 'unit': 'rad'},
+            'cdelt2': {'value': 7.27220521664304e-05, 'unit': 'rad'},
+            'cdelt3': {'value': 1.0, 'unit': ''},
+            'cdelt4': {'value': 24414.0625, 'unit': 'Hz'},
+            'shape': np.array([256, 256,   1,  46], dtype=np.int32), 'bunit': 'Jy/beam',
+            'datamin': -0.011138656176626682
+        }
+        for k in expectedKeys:
+            x = imhead(datacopy, mode='get', hdkey=k)
+            print(k, x, exp_dict[k])
+            msg = "Failed get for hdkey " + k + " got " + str(x) + " expected " + str(exp_dict[k])
+            if type(x) == np.ndarray:
+                try:
+                    self.assertEqual(np.all(x, exp_dict[k]), msg)
+                except:
+                    # string arrays can throw "Cannot reduce flexible type" exceptions
+                    self.assertEqual(list(x), list(exp_dict[k]), msg)
+            else:
+                self.assertEqual(x, exp_dict[k], msg)
+        # test bogus key fails
+        k = 'boguskey'
+        self.assertFalse(imhead(datacopy, mode='get', hdkey=k), 'Incorrectly found bogus key')
+
     def test_summary(self):
         '''
             test_summary
