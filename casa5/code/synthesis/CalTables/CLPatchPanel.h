@@ -138,6 +138,9 @@ public:
 
   // Algorithmic ctor that uses casacore::MS and CT meta info
   FieldCalMap(const casacore::String fieldcalmap, const casacore::MeasurementSet& ms, const NewCalTable& ct);
+  FieldCalMap(const casacore::String fieldcalmap, 
+	      const casacore::MeasurementSet& ms, const NewCalTable& ct,
+	      casacore::String& extfldsel);
 
 private:
 
@@ -149,6 +152,9 @@ private:
   // Parse field selection map
   void setSelectedFieldMap(const casacore::String& fieldsel,
 			   const casacore::MeasurementSet& ms,const NewCalTable& ct);
+  void setSelectedFieldMap(const casacore::String& fieldsel,
+			   const casacore::MeasurementSet& ms,const NewCalTable& ct,
+			   casacore::String& extfldsel);
 
   // User's specification
   casacore::String fieldcalmap_;
@@ -185,7 +191,11 @@ public:
   // Extract as a record
   casacore::Record asRecord();
 
+  // Report maps
   casacore::String state();
+
+  // Support external field selection (for trimming in-focus caltable)
+  casacore::String extfldsel;
 
 };
 
