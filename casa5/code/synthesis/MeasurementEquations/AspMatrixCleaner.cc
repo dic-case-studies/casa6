@@ -84,7 +84,7 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsPrevLBFGSGrad(0.0),
   itsNumIterNoGoodAspen(0),
   itsPsfWidth(0.0),
-  itsUseZhang(true)
+  itsUseZhang(false)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -163,32 +163,33 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
   LogIO os(LogOrigin("AspMatrixCleaner", "aspclean()", WHERE));
 
-  Int nScalesToClean = itsNscales;
+  //Int nScalesToClean = itsNscales;
+  //cout << "Enter aspclean, itsNscales " << itsNscales << endl;
   os << LogIO::NORMAL1 << "AAsp clean algorithm" << LogIO::POST;
 
 
   Int scale;
-  Vector<Float> scaleBias(nScalesToClean);
+  Vector<Float> scaleBias(itsNscales);
   // scaleBias is 1.0 for AAsp for now
-  for (scale=0; scale < nScalesToClean; scale++)
+  for (scale=0; scale < itsNscales; scale++)
     scaleBias(scale) = 1.0;
 
   AlwaysAssert(itsScalesValid, AipsError);
   ////no need to use all cores if possible
-  Int nth = nScalesToClean;
+  Int nth = itsNscales;
 #ifdef _OPENMP
 
     nth = min(nth, omp_get_max_threads());
 
 #endif
   // Find the peaks of the convolved Psfs
-  Vector<Float> maxPsfConvScales(nScalesToClean);
+  Vector<Float> maxPsfConvScales(itsNscales);
   Int naxes = model.shape().nelements();
 
 #pragma omp parallel default(shared) private(scale) num_threads(nth)
   {
     #pragma omp for
-    for (scale=0; scale<nScalesToClean; scale++)
+    for (scale=0; scale<itsNscales; scale++)
     {
       IPosition positionPeakPsfConvScales(naxes, 0);
 
@@ -200,7 +201,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       //      << endl;
      }
   } //End pragma parallel
-  for (scale=0; scale<nScalesToClean; scale++)
+  for (scale=0; scale<itsNscales; scale++)
   {
     if (maxPsfConvScales(scale) < 0.0)
     {
@@ -299,18 +300,18 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   }
   LCBox centerBox(blcDirty, trcDirty, model.shape());
 
-  Block<Matrix<Float> > scaleMaskSubs;
+  /*Block<Matrix<Float> > scaleMaskSubs;
   if (!itsMask.null())
   {
     scaleMaskSubs.resize(itsNscales);
     for (Int is=0; is < itsNscales; is++)
       scaleMaskSubs[is] = ((itsScaleMasks[is]))(blcDirty, trcDirty);
-  }
+  }*/
 
   // Start the iteration
-  Vector<Float> maxima(nScalesToClean);
-  Block<IPosition> posMaximum(nScalesToClean);
-  Vector<Float> totalFluxScale(nScalesToClean);
+  Vector<Float> maxima(itsNscales);
+  Block<IPosition> posMaximum(itsNscales);
+  Vector<Float> totalFluxScale(itsNscales);
   totalFluxScale=0.0;
   Float totalFlux=0.0;
   Int converged=0;
@@ -325,9 +326,10 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   IPosition gip;
   gip = IPosition(2, nx, ny);
   casacore::Block<casacore::Matrix<casacore::Float> > vecWork_p;
-  vecWork_p.resize(nScalesToClean);
-  for (Int i=0; i<nScalesToClean; i++)
+  vecWork_p.resize(itsNscales);
+  for (Int i=0; i<itsNscales; i++)
     vecWork_p[i].resize(gip);
+  bool isNumAspenChanged = false;
 
   os << "Starting iteration"<< LogIO::POST;
   vector<Float> tempScaleSizes;
@@ -335,18 +337,53 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
-    os << "cur iter " << itsIteration << " max iter is "<<
-            itsMaxNiter << LogIO::POST;
+    cout << "cur iter " << itsIteration << " max iter is "<<
+            itsMaxNiter << endl;
     itsIteration++;
+
+    // resize since Aspen is changed genie
+    if (isNumAspenChanged)
+    {
+      maxima.resize(itsNscales);
+      posMaximum.resize(itsNscales);
+      totalFluxScale.resize(itsNscales);
+      vecWork_p.resize(itsNscales);
+      scaleBias.resize(itsNscales);
+      for (Int i=0; i<itsNscales; i++)
+      {
+        vecWork_p[i].resize(gip);
+        scaleBias(i) = 1.0;
+      }
+
+      // Find the peaks of the convolved Psfs
+      maxPsfConvScales.resize(itsNscales);
+      #pragma omp parallel default(shared) private(scale) num_threads(nth)
+      {
+        #pragma omp for
+        for (scale=0; scale<itsNscales; scale++)
+        {
+          IPosition positionPeakPsfConvScales(naxes, 0);
+
+          findMaxAbs(itsPsfConvScales[scale], maxPsfConvScales(scale),
+          positionPeakPsfConvScales);
+        }
+      } //End pragma parallel
+
+      isNumAspenChanged = false;
+    }
 
     // Find the peak residual
     itsStrengthOptimum = 0.0;
     optimumScale = 0;
 
+    /*cout << "itsNscales" << itsNscales << " vecWork# " << vecWork_p.nelements() << endl;
+    for (Int k = 0; k < itsNscales; k++)
+      cout << "itsScaleSizes[" << k << "] = " << itsScaleSizes[k] << endl;*/
+
 #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
 #pragma omp  for
-      for (scale=0; scale<nScalesToClean; ++scale)
+      for (scale=0; scale<itsNscales; ++scale)
       {
         // Find absolute maximum for the dirty image
         //cout << "clean: in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
@@ -387,7 +424,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         //posMaximum[scale]+=blcDirty;
       }
     } //End parallel section
-    for (scale=0; scale<nScalesToClean; scale++)
+    for (scale=0; scale<itsNscales; scale++)
     {
       if(abs(maxima(scale)) > abs(itsStrengthOptimum))
       {
@@ -401,7 +438,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     itsStrengthOptimum /= scaleBias(optimumScale);
     itsStrengthOptimum /=  (itsDirtyConvScales[optimumScale])(posMaximum[optimumScale]);
 
-    AlwaysAssert(optimumScale < nScalesToClean, AipsError);
+    AlwaysAssert(optimumScale < itsNscales, AipsError);
 
     // Now add to the total flux
     totalFlux += (itsStrengthOptimum*itsGain);
@@ -430,8 +467,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       break;
     }
     //    2. negatives on largest scale?
-    if ((nScalesToClean > 1) && itsStopAtLargeScaleNegative  &&
-        optimumScale == (nScalesToClean-1) &&
+    if ((itsNscales > 1) && itsStopAtLargeScaleNegative  &&
+        optimumScale == (itsNscales-1) &&
         itsStrengthOptimum < 0.0)
     {
       os << "Reached negative on largest scale" << LogIO::POST;
@@ -542,7 +579,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
       #pragma omp  for
-      for (scale=0; scale<nScalesToClean; ++scale)
+      for (scale=0; scale<itsNscales; ++scale)
       {
         Matrix<Float> dirtySub=(itsDirtyConvScales[scale])(blc,trc);
         //AlwaysAssert(itsPsfConvScales[index(scale,optimumScale)], AipsError);
@@ -556,7 +593,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     //genie If we switch to hogbom (i.e. only have 0 scale size)
     // there is no need to do the following Aspen update
-    if (nScalesToClean == 1)
+    if (itsNscales == 1)
       continue;
 
     //genie Now update the actual residual image
@@ -582,11 +619,15 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     makePsfScales();
     makeScaleMasks();
     makedirtyscales();
+
+    //nScalesToClean = itsNscales; // this is important since Asp updates aspen in each iteration
+    //cout << "2. itsNscales " << itsNscales << endl;
+    isNumAspenChanged = true;
     //genie
   }
   // End of iteration
 
-  for (scale=0; scale<nScalesToClean; scale++) {
+  for (scale=0; scale<itsNscales; scale++) {
     os << LogIO::NORMAL
        << "  " << scale << "    " << totalFluxScale(scale)
        << LogIO::POST;
@@ -1183,9 +1224,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //itsAspCenter.push_back(positionOptimum);
 
     //if (itsUseZhang)
-    AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
+    //AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
     //else
-      //AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
+    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
 
 
     for (unsigned int i = 0; i < length; i++)
@@ -1254,6 +1295,9 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   GenSort<Float>::sort(itsScaleSizes);*/
   sort(scaleSizes.begin(), scaleSizes.end());
   scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end());
+
+  //for (unsigned int i = 0; i < scaleSizes.size(); i++)
+    //cout << "defineAspScales scaleSizes[" << i << "] = " << scaleSizes[i] << endl;
 
   itsNscales = Int(scaleSizes.size());
   itsScaleSizes.resize(itsNscales);
