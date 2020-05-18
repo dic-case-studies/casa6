@@ -504,7 +504,7 @@ class PySynthesisImager:
 #############################################
 
     def runMinorCycle(self):
-        self.runMinorCycleCore()
+        return self.runMinorCycleCore()
 #############################################
 
     def runMinorCycleCore(self):
@@ -525,6 +525,7 @@ class PySynthesisImager:
         #
         # Run minor cycle
         self.ncycle+=1
+        retval=False
         for immod in range(0,self.NF):  
             if self.stopMinor[str(immod)]<3 :
 
@@ -537,7 +538,8 @@ class PySynthesisImager:
 
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
 
-                #print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
+                ##print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
+                retval= retval or exrec['iterdone'] > 0
                 self.IBtool.mergeexecrecord( exrec )
                 if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
@@ -557,6 +559,7 @@ class PySynthesisImager:
                         if os.path.isdir(prevmaskname):
                             shutil.rmtree(prevmaskname)
                         shutil.copytree(maskname, prevmaskname)
+        return retval
 
 #############################################
     def runMajorMinorLoops(self):

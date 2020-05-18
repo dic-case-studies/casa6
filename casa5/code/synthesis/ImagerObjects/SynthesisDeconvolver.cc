@@ -80,7 +80,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        initializeChanMaskFlag(false),
                                        itsPosMask(nullptr),
 				       itsIsMaskLoaded(false),
-				       itsMaskSum(-1e+9)
+				       itsMaskSum(-1e+9),
+				       itsPreviousFutureRes(0.0)
   {
   }
   
@@ -253,6 +254,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsRobustStats=backupRobustStats;
       return retval;
     }
+    else if (itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3]){
+      ///As the automask for cubes pre-CAS-9386...
+      /// was tuned to look for threshold in future mask
+      ///It is as good as somewhere in between no mask and mask
+      //      Record backupRobustStats=itsRobustStats;
+      Record retval=initMinorCycle(itsImages);
+      //cerr << "INITMINOR " << itsRobustStats << endl;
+      //itsRobustStats=backupRobustStats;
+      if(retval.isDefined("peakresidualnomask")){
+	Float futureRes=Float((retval.asFloat("peakresidualnomask")+retval.asFloat("peakresidual"))/2.0);
+	if(futureRes != itsPreviousFutureRes){
+	  //itsLoopController.setPeakResidual(retval.asFloat("peakresidualnomask"));
+	  retval.define("peakresidual", futureRes);
+	  itsPreviousFutureRes=futureRes;
+	}
+      }
+      return retval;
+      }
     return initMinorCycle(itsImages);
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )
@@ -263,7 +282,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Timer tim;
     tim.mark();
     try {
-      
+
       //os << "---------------------------------------------------- Init (?) Minor Cycles ---------------------------------------------" << LogIO::POST;
 
       itsImages = imstor;
@@ -360,7 +379,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // Use nsigma pass to SynthesisDeconvolver directly for now...
         //Float nsigma = itsLoopController.getNsigma();
         ***/
-
         Double minval, maxval;
         IPosition minpos, maxpos;
         //Double maxrobustrms = max(robustrms);
@@ -427,7 +445,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     } catch(AipsError &x) {
       throw( AipsError("Error initializing the Minor Cycle for "  + itsImageName + " : "+x.getMesg()) );
     }
-    
     return returnRecord;
   }
   void SynthesisDeconvolver::setChanFlag(const Vector<Bool>& chanflag){
@@ -842,13 +859,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // cerr << "OPTCHAN" << optchan  << endl;
     if(optchan < 10) optchan=10;
     Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
-    /*if(nproc==1){
+    if(nproc==1){
       startchans.resize(1);
       endchans.resize(1);
       startchans[0]=0;
       endchans[0]=nchan-1;
       return 1;
-      }*/
+    }
     Int blksize= nchan/nproc > optchan ? optchan : Int( std::floor(Float(nchan)/Float(nproc)));
     if(blksize< 1) blksize=1;
     Int nblk=Int(nchan/blksize);
@@ -1111,7 +1128,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   auto key2Mat = [](const Record& rec, const String& key, const Int npol) {
      Matrix<Double> tmp;
-     //cerr << "KEY2mat " << rec.asArrayDouble(key).shape() << endl;
+     //cerr << "KEY2mat " << key <<"  "<< rec.asArrayDouble(key).shape() << endl;
      if(rec.asArrayDouble(key).shape().nelements()==1){
        if(rec.asArrayDouble(key).shape()[0] != npol){
 	 tmp.resize(1,rec.asArrayDouble(key).shape()[0]);
@@ -1133,6 +1150,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   
   Record SynthesisDeconvolver::getSubsetRobustStats(const Int chanBeg, const Int chanEnd){
     Record outRec;
+    //cerr << "getSUB " << itsRobustStats << endl;
     if(itsRobustStats.nfields()==0)
       return outRec;
     Matrix<Double> tmp;
@@ -1188,7 +1206,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsRobustStats.define(*it, outvec);     
       }
     }
-     
+
+    //cerr << "SETT " << itsRobustStats << endl;
     //cerr << "SETT::ItsRobustStats " << Vector<Double>(itsRobustStats.asArrayDouble("min")) << endl;
   }
 } //# NAMESPACE CASA - END

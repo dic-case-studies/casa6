@@ -74,7 +74,7 @@ void CubeMinorCycleAlgorithm::get() {
         chanFlag_p.resize();
         chanflagRec.get("chanflag", chanFlag_p);
         statsRec_p=chanflagRec.asRecord("statsrec");
-	//cerr <<"GET chanRange " << chanRange_p << endl;
+	//cerr <<"GET statsRec " << statsRec_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
 	
@@ -87,6 +87,7 @@ void CubeMinorCycleAlgorithm::put() {
 	//cerr << "in put " << status_p << endl;
   //#2 chanflag
   chanFlagRec_p.define("chanflag", chanFlag_p);
+  //cerr << "PUT statsRec "<< statsRec_p << endl; 
   chanFlagRec_p.defineRecord("statsrec", statsRec_p);
   applicator.put(chanFlagRec_p);
   ///#3 return record of deconvolver
@@ -115,6 +116,7 @@ void CubeMinorCycleAlgorithm::task(){
 	status_p = False;
 	try{
           SynthesisDeconvolver subDeconv;
+	  Bool writeBackAutomask=True;
           subDeconv.setupDeconvolution(decPars_p);
           std::shared_ptr<SIImageStore> subimstor=subImageStore();
           //ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
@@ -124,13 +126,18 @@ void CubeMinorCycleAlgorithm::task(){
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
           subDeconv.initMinorCycle(subimstor);
           if(autoMaskOn_p){
-            subDeconv.setChanFlag(chanFlag_p);
+	    subDeconv.setChanFlag(chanFlag_p);
 	    subDeconv.setRobustStats(statsRec_p);
 	    //cerr << "STATSRec " << statsRec_p << endl;
-            subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
-            subDeconv.setPosMask(subimstor->tempworkimage());
-            subDeconv.setAutoMask();
-          }
+	    subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
+	    subDeconv.setPosMask(subimstor->tempworkimage());
+	    subDeconv.setAutoMask();
+	    Record resRec=subDeconv.initMinorCycle(subimstor);
+	    //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
+	    if(resRec.isDefined("peakresidual") && iterBotRec_p.isDefined("cyclethreshold") && (resRec.asFloat("peakresidual") < iterBotRec_p.asFloat("cyclethreshold")))
+	      writeBackAutomask=False;
+	    
+	  }
           //subDeconv.setupMask();
           returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
           chanFlag_p.resize();
@@ -138,7 +145,7 @@ void CubeMinorCycleAlgorithm::task(){
 	  statsRec_p=Record();
 	  statsRec_p=subDeconv.getRobustStats();
           writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
-          if(autoMaskOn_p){
+          if(autoMaskOn_p && writeBackAutomask){
             writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
             writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
           }

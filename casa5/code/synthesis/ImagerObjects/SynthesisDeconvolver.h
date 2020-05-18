@@ -209,6 +209,7 @@ protected:
 
   casacore::Float itsNsigma;
   SynthesisParamsDeconv itsDecPars;
+  casacore::Float itsPreviousFutureRes;
 };
 
 
