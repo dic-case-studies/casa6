@@ -74,9 +74,9 @@ both_model_image_sd = both_component_list[:-3]+'_rebin.im'
 ####    interferometric    ####
 class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         if not is_CASA6: # needs similar branch condition for casalith
+            default(simanalyze)
             default(simobserve)
             default(tclean)
 
@@ -84,10 +84,6 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
                    mapsize='', maptype='square', pointingspacing='',caldirection='',calflux='1Jy',obsmode='int', 
                    refdate='2020/02/13', hourangle='transit', totaltime='100s', antennalist=configpath_int,
                    outframe='LSRK', thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
-
-    def setUp(self):
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simanalyze)
 
     def tearDown(self):
         os.system("rm -rf {}".format(int_project))
@@ -154,12 +150,12 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 ####    Single Dish     ####
 class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        '''Called before tests in this class of test cases are run. Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel'].'''
+    def setUp(self):
+        """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
         if not is_CASA6: # needs similar branch condition for casalith
             default(simobserve)
-            default(tclean)
+            default(tclean
+            default(simanalyze)
 
         # create reference image > 2.5*PB to use for SD sim
         tclean(vis=mspath_sd, imagename=imagepath_sd.split('.')[0],
@@ -173,10 +169,6 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
                    refdate='2020/02/13', hourangle='transit', totaltime='100s', 
                    antennalist=configpath_sd, sdantlist=configpath_sd, sdant=0, 
                    outframe='LSRK', thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
-
-    def setUp(self):
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simanalyze)
 
     def tearDown(self):
         os.system("rm -rf {}*".format(imagepath_sd[:-5]))
@@ -235,12 +227,12 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 ####    both Interferometric and Single Dish    ####
 class simanalyze_main_usage_modes_test_both(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        '''Called before tests in this class of test cases are run. Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel'].'''
-        if not is_CASA6: # needs similar branch condition for tests to run in casalith
+    def setUp(self):
+        """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
+        if not is_CASA6:
             default(simobserve)
             default(tclean)
+            default(simanalyze)
 
         ## create image to serve as skymodel inputs to reference simulations
         # build a point source component and convert to image
@@ -331,11 +323,6 @@ class simanalyze_main_usage_modes_test_both(unittest.TestCase):
                     graphics='none',
                     verbose=False, 
                     overwrite=True)
-
-    def setUp(self):
-        if not is_CASA6:
-            default(simobserve)
-            default(tclean)
 
     def tearDown(self):
         os.system("rm -rf {}".format(both_project))
