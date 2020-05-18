@@ -27,7 +27,7 @@
 #ifndef TBTABLEINFO_H_
 #define TBTABLEINFO_H_
 
-#include <casaqt/QtBrowser/TBTableInfo.ui.h>
+#include "ui/ui_TBTableInfo.h"
 
 #include <QtGui>
 

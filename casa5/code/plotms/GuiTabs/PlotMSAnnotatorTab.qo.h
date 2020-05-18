@@ -27,7 +27,7 @@
 #ifndef PLOTMSANNOTATORTAB_QO_H_
 #define PLOTMSANNOTATORTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSAnnotatorTab.ui.h>
+#include <ui/ui_PlotMSAnnotatorTab.h>
 
 #include <plotms/GuiTabs/PlotMSTab.qo.h>
 

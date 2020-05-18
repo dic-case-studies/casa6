@@ -31,7 +31,7 @@
 
 #include <qglobal.h>
 #include <qcolor.h>
-#include <qwt_plot_item.h>
+#include <qwt/qwt_plot_item.h>
 #include <casaqt/QwtConfig.h>
 
 class QtPlotHistogram: public QwtPlotItem {

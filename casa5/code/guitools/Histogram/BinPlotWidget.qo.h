@@ -27,14 +27,14 @@
 
 #include <QWidget>
 
-#include <guitools/Histogram/BinPlotWidget.ui.h>
+#include "ui/ui_BinPlotWidget.h"
 #include <guitools/Histogram/HeightSource.h>
 #include <guitools/Histogram/FootPrintWidget.qo.h>
 #include <images/Regions/ImageRegion.h>
 #include <casa/aips.h>
 #include <casa/aipstype.h>
-#include <qwt_plot.h>
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_picker.h>
 #include <vector>
 #include <QDebug>
 #include <QMenu>
