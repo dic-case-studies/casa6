@@ -29,8 +29,8 @@
 
 #include <QWidget>
 
-#include <display/RegionShapes/QtSingleRegionShape.ui.h>
-#include <display/RegionShapes/QtEditRegionShape.ui.h>
+#include <ui/ui_QtSingleRegionShape.h>
+#include <ui/ui_QtEditRegionShape.h>
 
 #include <display/RegionShapes/RegionShape.h>
 #include <display/RegionShapes/RSUtils.qo.h>

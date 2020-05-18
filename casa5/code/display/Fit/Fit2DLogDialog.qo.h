@@ -26,7 +26,7 @@
 #define FIT2DLOGDIALOG_QO_H
 
 #include <QDialog>
-#include <display/Fit/Fit2DLogDialog.ui.h>
+#include <ui/ui_Fit2DLogDialog.h>
 
 /**
  * Displays the log from a fit.

@@ -1,12 +1,12 @@
 #pragma once
-#include <qwt_global.h>
-#include <qwt_scale_widget.h>
-#include <qwt_plot_curve.h>
-#include <qwt_color_map.h>
+#include <qwt/qwt_global.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_color_map.h>
 #if QWT_VERSION >= 0x060000
-#include <qwt_compat.h>
-#include <qwt_series_data.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_compat.h>
+#include <qwt/qwt_series_data.h>
+#include <qwt/qwt_plot_canvas.h>
 
 typedef QwtIntervalSeriesData qwt_interval_t;
 inline void set_data(QwtPlotCurve *curve, const QVector<double> &x, const QVector<double> &y) {
@@ -24,7 +24,7 @@ template<class T> inline void set_symbol( T *qwt_thing, const QwtSymbol &sym ) {
   qwt_thing->setSymbol(&sym);
 }
 #else
-#include <qwt_interval_data.h>
+#include <qwt/qwt_interval_data.h>
 typedef QwtIntervalData qwt_interval_t;
 inline void set_data(QwtPlotCurve *curve, const QVector<double> &x, const QVector<double> &y) {
   curve->setData(x,y);

@@ -27,7 +27,7 @@
 #ifndef TBROWLOCATE_H_
 #define TBROWLOCATE_H_
 
-#include <casaqt/QtBrowser/TBRowLocate.ui.h>
+#include "ui/ui_TBRowLocate.h"
 
 #include <QtGui>
 
