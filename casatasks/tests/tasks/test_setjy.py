@@ -179,7 +179,6 @@ class SetjyUnitTestBase(unittest.TestCase):
         
         # Create an MMS for the tests
         self.inpmms = prefix + ".test.mms"
-        #default(partition)
         
         if os.path.exists(self.inpmms):
             os.system("rm -rf " + self.inpmms)
