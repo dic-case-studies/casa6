@@ -118,7 +118,7 @@ namespace refim { //# namespace for imaging refactor
 // <ul> Deal with large VLA spectral line case 
 // </todo>
 
-class SDGrid : public FTMachine {
+class SDGrid final : public FTMachine {
 public:
 
   // Constructor: cachesize is the size of the cache in words
