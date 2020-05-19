@@ -95,7 +95,7 @@ parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
-parser.add_argument('--relwithdebinfo', help='Build with -O2 and debug flags', action='store_true')
+parser.add_argument('--relwithdebinfo', help='Build with optimization and debug flags', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
