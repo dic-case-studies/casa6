@@ -36,6 +36,7 @@ import os
 import unittest
 import shutil
 import numpy as np
+import re
 
     #DATA#
 if CASA6:
@@ -160,8 +161,37 @@ class imhead_test(unittest.TestCase):
             'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]),
             'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': ''
         }
+        undeletable = [
+            'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4', 'crpix1', 'crpix2', 'crpix3',
+            'crpix4', 'crval1', 'crval2', 'crval3', 'crval4', 'ctype1', 'ctype2',
+            'ctype3', 'ctype4', 'cunit1', 'cunit2', 'cunit3', 'cunit4', 'datamax',
+            'datamin', 'date-obs', 'equinox', 'imtype', 'maxpixpos', 'maxpos',
+            'minpixpos', 'minpos', 'projection', 'reffreqtype', 'restfreq', 'shape'
+        ]
+        beam = ['beammajor', 'beamminor', 'beampa']
+        deleted_beam = False
         for key in expectedKeys:
-            imhead(datacopy, mode='del', hdkey=key)
+            if key in undeletable or (deleted_beam and key in beam):
+                self.assertFalse(
+                    imhead(datacopy, mode='del', hdkey=key),
+                    'Unexpectedly deleted hdkey ' + key
+                )
+            else:
+                self.assertTrue(
+                    imhead(datacopy, mode='del', hdkey=key),
+                    'Did not delete hdkey ' + key
+                )
+                if key in ['bunit', 'object', 'observer', 'telescope']:
+                    self.assertTrue(imhead(datacopy, mode='get', hdkey=key) == '',
+                    'Unexpected value after del ' + key
+                )
+                if key == 'masks':
+                    self.assertTrue(
+                        len(imhead(datacopy, mode='get', hdkey=key)) == 0,
+                        'Unexpected value after del ' + key
+                )
+                if key in beam:
+                    deleted_beam = True
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
         self.assertTrue(
             np.all([
@@ -169,7 +199,21 @@ class imhead_test(unittest.TestCase):
                 for key in imhead(datacopy, mode='list').keys()
             ])
         )
-        
+       
+    def test_types(self):
+        '''CAS-3285: Test the types of the values'''
+        typeList = [
+            type({}), type({}), type({}), type(''), type({}), type({}), type({}), type({}),
+            type(0.00), type(0.00), type(0.00), type(0.00), type({}), type({}),
+            type(np.ndarray([])), type({}), type(''), type(''), type(''), type(''), type(''),
+            type(''), type(''), type(''), type(0.00), type(0.00), type(''), type(''),
+            type(''), type(np.ndarray([])), type(np.ndarray([])), type(''),
+            type(np.ndarray([])), type(''), type(''), type(''), type(''), type(''), type({}),
+            type(np.ndarray([])), type('')
+        ]
+        getTypes = [type(imhead(datacopy, mode='get', hdkey=x)) for x in expectedKeys]
+        self.assertTrue(getTypes == typeList)
+ 
     def test_add(self):
         '''
             test_add
@@ -376,6 +420,25 @@ class imhead_test(unittest.TestCase):
         compared = imhead(datacopy, mode='summary')
         self.assertTrue(len(compared.keys()) == len(summaryDictnoV.keys()))
         self.assertTrue(np.all([np.all(compared[key]==summaryDictnoV[key]) for key in compared.keys()]))
+
+    def test_list_log(self):
+        '''Imhead: CAS-3300 Test the printing of some keywords in list mode'''
+        logfile = datacopy + ".log"
+        open(logfile,'w').close()
+        casalog.setlogfile(logfile)
+        self.assertTrue(imhead(datacopy, mode='list', verbose=True))
+        # restore logfile
+        casalog.setlogfile('casa.log')
+        with open(logfile) as f:
+            data = f.readlines()
+        for k in ['cdelt1', 'crval1', 'ctype1', 'cunit1', 'shape']:
+            found = False
+            for line in data:
+                line = line.rstrip()
+                found = re.search(k, line)
+                if found:
+                    break
+            self.assertTrue(found, 'The keyword ' + k + ' is not listed')
 
     def test_bad_mode(self):
         """Test unupported mode fails"""
