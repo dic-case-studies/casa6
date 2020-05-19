@@ -230,7 +230,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         else:
             # This takes almost 30s/GB.  (lustre, 8/2011)
             casalog.post('Copying ' + vis + ' to ' + csvis + ' with cp.')
-            copy_tree(vis, csvis)
+            copy_tree(vis, csvis, preserve_symlinks=True)
 
         # It is less confusing if we write the history now that the "root" MS
         # is made, but before cb adds its messages.
