@@ -221,6 +221,7 @@ public:
   virtual casacore::String name() const;
 
 private:
+  casacore::Bool isSD() const override {return true;}
 
   // Find the Primary beam and convert it into a convolution buffer
   void findPBAsConvFunction(const casacore::ImageInterface<casacore::Complex>& image,

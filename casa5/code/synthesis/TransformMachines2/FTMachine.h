@@ -135,10 +135,10 @@ public:
     DEFAULT=OBSERVED
   };
 
-  FTMachine(casacore::Bool isSD=false);
+  FTMachine();
 
 
-  FTMachine(casacore::CountedPtr<CFCache>& cfcache,casacore::CountedPtr<ConvolutionFunction>& cfctor,casacore::Bool isSD=false);
+  FTMachine(casacore::CountedPtr<CFCache>& cfcache,casacore::CountedPtr<ConvolutionFunction>& cfctor);
 
   FTMachine(const FTMachine& other);
 
@@ -392,8 +392,6 @@ protected:
 
   casacore::LogIO& logIO();
 
-  casacore::Bool isSD_p = false;
-
   casacore::ImageInterface<casacore::Complex>* image;
 
   casacore::UVWMachine* uvwMachine_p;
@@ -549,6 +547,8 @@ protected:
   FFT2D ft_p;
 
  private:
+  virtual casacore::Bool isSD() const {return false;}
+
   //Some temporary wasteful function for swapping axes because we don't 
   //Interpolation along the second axis...will need to implement 
   //interpolation on y axis of a cube. 
