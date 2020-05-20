@@ -50,6 +50,7 @@ else:
 logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'
+newlog = 'casa_new.log'
 
 expectedKeys = [
     'beammajor', 'beamminor', 'beampa', 'bunit', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4',
@@ -78,8 +79,9 @@ class imhead_test(unittest.TestCase):
  
     def tearDown(self):
         rmtables(datacopy)
-        if os.path.exists(testlog):
-            os.remove(testlog)
+        for x in [testlog, newlog]:
+            if os.path.exists(x):
+                os.remove(x)
  
     @classmethod
     def tearDownClass(cls):
@@ -254,10 +256,26 @@ class imhead_test(unittest.TestCase):
         }
         for key in expectedKeys:
             imhead(datacopy, mode='del', hdkey=key)
-            
+           
+        unaddable = [
+            'beampa', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4', 'crpix1', 'crpix2',
+            'crpix3', 'crpix4', 'crval1', 'crval2', 'crval3', 'crval4', 'ctype1',
+            'ctype2', 'ctype3', 'ctype4', 'cunit1', 'cunit2', 'cunit3', 'cunit4',
+            'datamax', 'datamin', 'date-obs', 'equinox', 'imtype', 'masks',
+            'maxpixpos', 'minpixpos', 'maxpos', 'minpos', 'projection',
+            'reffreqtype', 'restfreq', 'shape'
+        ]
+        beam_done = False;
+        beam = ['beammajor', 'beamminor']
         for key in expectedKeys:
-            imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
-        
+            res = imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
+            if key in unaddable or (beam_done and key in beam): 
+                self.assertFalse(res, 'unexpectedly added hdkey ' + key)
+            else:        
+                self.assertTrue(res, 'unable to add hdkey ' + key)
+                if key in beam:
+                    beam_done = True
+
         self.assertTrue(
             len(endDict.keys()) == len(imhead(datacopy, mode='list').keys())
         )
@@ -267,6 +285,20 @@ class imhead_test(unittest.TestCase):
                 for key in imhead(datacopy, mode='list').keys()
             ])
         )
+        # add a user-specified key
+        hdkey = 'mykey'
+        hdval = 'myval'
+        self.assertTrue(
+            imhead(datacopy, mode='add', hdkey=hdkey, hdvalue=hdval),
+            'Unable to add user-specific key ' + hdkey
+        )
+        gotval = imhead(datacopy, mode='get', hdkey=hdkey)
+        self.assertTrue(
+            gotval == hdval,
+            'got unexpected value for user-specific key ' + hdkey
+            + ' got value ' + gotval + ' expected value ' + hdval
+        )
+
         
     def test_put(self):
         '''
@@ -423,13 +455,12 @@ class imhead_test(unittest.TestCase):
 
     def test_list_log(self):
         '''Imhead: CAS-3300 Test the printing of some keywords in list mode'''
-        logfile = datacopy + ".log"
-        open(logfile,'w').close()
-        casalog.setlogfile(logfile)
+        # logfile = datacopy + ".log"
+        casalog.setlogfile(testlog)
         self.assertTrue(imhead(datacopy, mode='list', verbose=True))
         # restore logfile
-        casalog.setlogfile('casa.log')
-        with open(logfile) as f:
+        casalog.setlogfile(newlog)
+        with open(testlog) as f:
             data = f.readlines()
         for k in ['cdelt1', 'crval1', 'ctype1', 'cunit1', 'shape']:
             found = False
