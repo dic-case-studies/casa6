@@ -1,20 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="initweights" category="calibration">
+<task category="calibration" name="initweights" type="function">
       <shortdescription>Initializes weight information in the MS</shortdescription>
 
 <input>
-      <param type="string" name="vis" mustexist="true">
-            <description>Name of input visibility file (MS)</description>
-            <value></value>
+      <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+            
+            <value/>
       </param>
-      <param type="string" name="wtmode">
-            <description>Initialization mode</description>
+      <param name="wtmode" type="string"><shortdescription>Initialization mode</shortdescription><description>Initialization mode</description>
+            
             <value>nyq</value>
                 <allowed kind="enum">
                        <value>nyq</value>
@@ -27,28 +22,28 @@
                        <value>tinttsys</value>
                 </allowed>
       </param>
-      <param type="string" name="tsystable" mustexist="false"  subparam="true">
-            <description>Tsys calibration table to apply on the fly</description>
-            <value></value>
+      <param subparam="true" mustexist="false" name="tsystable" type="string"><shortdescription>Tsys calibration table to apply on the fly</shortdescription><description>Tsys calibration table to apply on the fly</description>
+            
+            <value/>
       </param>
 
-      <param type="string" name="gainfield" subparam="true">
-            <description>Select a subset of calibrators from Tsys table</description>
-            <value></value>
+      <param subparam="true" name="gainfield" type="string"><shortdescription>Select a subset of calibrators from Tsys table</shortdescription><description>Select a subset of calibrators from Tsys table</description>
+            
+            <value/>
       </param>
 
-      <param type="string" name="interp" subparam="true">
-            <description>Interpolation type in time[,freq]. default==\'linear,linear\'</description>
-            <value></value>
+      <param subparam="true" name="interp" type="string"><shortdescription>Interpolation type in time[,freq]. default==\'linear,linear\'</shortdescription><description>Interpolation type in time[,freq]. default==\'linear,linear\'</description>
+            
+            <value/>
       </param>
 
-      <param type="intArray" name="spwmap" subparam="true">
-            <description>Spectral windows combinations to form for gaintable(s)</description>
-            <value></value>
+      <param subparam="true" name="spwmap" type="intArray"><shortdescription>Spectral windows combinations to form for gaintable(s)</shortdescription><description>Spectral windows combinations to form for gaintable(s)</description>
+            
+            <value/>
       </param>
 
-      <param type="bool" name="dowtsp">
-            <description>Initialize the WEIGHT_SPECTRUM column</description>
+      <param name="dowtsp" type="bool"><shortdescription>Initialize the WEIGHT_SPECTRUM column</shortdescription><description>Initialize the WEIGHT_SPECTRUM column</description>
+            
             <value>False</value>
       </param>
 
