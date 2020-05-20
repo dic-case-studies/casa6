@@ -124,22 +124,48 @@ void CubeMinorCycleAlgorithm::task(){
           subimstor->setBeamSet(bs);
           subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
-          subDeconv.initMinorCycle(subimstor);
+          Record prevresrec=subDeconv.initMinorCycle(subimstor);
+	  //cerr << "PREVRESREC " << prevresrec << endl;
+	  Bool doDeconv=True;
           if(autoMaskOn_p){
 	    subDeconv.setChanFlag(chanFlag_p);
 	    subDeconv.setRobustStats(statsRec_p);
-	    //cerr << "STATSRec " << statsRec_p << endl;
+	    Int automaskflag=iterBotRec_p.asInt("onlyautomask");
+	    if(automaskflag==1)
+	      doDeconv=False;
+	    //cerr << "ITERDONE " << iterBotRec_p.asInt("iterdone")<< endl;
 	    subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
-	    subDeconv.setPosMask(subimstor->tempworkimage());
-	    subDeconv.setAutoMask();
-	    Record resRec=subDeconv.initMinorCycle(subimstor);
-	    //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
-	    if(resRec.isDefined("peakresidual") && iterBotRec_p.isDefined("cyclethreshold") && (resRec.asFloat("peakresidual") < iterBotRec_p.asFloat("cyclethreshold")))
+	    if(automaskflag !=0){
+	      subDeconv.setPosMask(subimstor->tempworkimage());
+	      subDeconv.setAutoMask();
+	      
+	      Record resRec=subDeconv.initMinorCycle(subimstor);
+	      //cerr << "POST resrec " << resRec << endl;
+	      //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
+	      if(resRec.isDefined("peakresidual") && iterBotRec_p.isDefined("cyclethreshold")){
+		Float peakresidual=resRec.asFloat("peakresidual");
+		/*if(iterBotRec_p.isDefined("psffraction")){
+		  Float cyclethreshold=iterBotRec_p.asFloat("psffraction")*peakresidual;	
+		  cyclethreshold= max(cyclethreshold, iterBotRec_p.asFloat("threshold"));
+		  //		cerr << "old cyclethreshold " <<iterBotRec_p.asFloat("cyclethreshold") << " new " << cyclethreshold << endl;
+		  iterBotRec_p.removeField("cyclethreshold");
+		  iterBotRec_p.define("cyclethreshold", cyclethreshold);
+		  }
+		*/
+		if(peakresidual < iterBotRec_p.asFloat("cyclethreshold"))
+		  writeBackAutomask=False;
+	      }
+	    }
+	    else{
 	      writeBackAutomask=False;
+	    }
 	    
 	  }
           //subDeconv.setupMask();
-          returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+	  if(doDeconv)
+	    returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+	  else
+	    returnRec_p.define("doneautomask", True);
           chanFlag_p.resize();
           chanFlag_p=subDeconv.getChanFlag();
 	  statsRec_p=Record();

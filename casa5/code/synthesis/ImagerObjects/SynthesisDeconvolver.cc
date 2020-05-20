@@ -81,7 +81,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        itsPosMask(nullptr),
 				       itsIsMaskLoaded(false),
 				       itsMaskSum(-1e+9),
-				       itsPreviousFutureRes(0.0)
+				       itsPreviousFutureRes(0.0),
+				       itsPreviousIterBotRec_p(Record())
   {
   }
   
@@ -254,7 +255,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsRobustStats=backupRobustStats;
       return retval;
     }
-    else if (itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3]){
+    
+    /*else if (itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3]){
       ///As the automask for cubes pre-CAS-9386...
       /// was tuned to look for threshold in future mask
       ///It is as good as somewhere in between no mask and mask
@@ -263,7 +265,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //cerr << "INITMINOR " << itsRobustStats << endl;
       //itsRobustStats=backupRobustStats;
       if(retval.isDefined("peakresidualnomask")){
-	Float futureRes=Float((retval.asFloat("peakresidualnomask")+retval.asFloat("peakresidual"))/2.0);
+	Float futureRes=Float(retval.asFloat("peakresidualnomask")-(retval.asFloat("peakresidualnomask")-retval.asFloat("peakresidual"))/1000.0);
 	if(futureRes != itsPreviousFutureRes){
 	  //itsLoopController.setPeakResidual(retval.asFloat("peakresidualnomask"));
 	  retval.define("peakresidual", futureRes);
@@ -271,7 +273,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
       }
       return retval;
-      }
+      }*/
     return initMinorCycle(itsImages);
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )
@@ -578,17 +580,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     return returnRecord;
   }
-  Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec)
+  Record SynthesisDeconvolver::executeCubeMinorCycle(Record& minorCycleControlRec, const Int AutoMaskFlag)
   {
         LogIO os( LogOrigin("SynthesisDeconvolver","executeCubeMinorCycle",WHERE) );
     Record returnRecord;
-
+    Int doAutoMask=AutoMaskFlag;
 
     SynthesisUtilMethods::getResource("Start Deconvolver");
 
     try {
       //      if ( !itsIsInteractive ) setAutoMask();
-      itsLoopController.setCycleControls(minorCycleControlRec);
+      if(doAutoMask < 1){
+	itsLoopController.setCycleControls(minorCycleControlRec);
+      }
+      else if(doAutoMask==1){
+	minorCycleControlRec=itsPreviousIterBotRec_p;
+      }
       CubeMinorCycleAlgorithm *cmc=new CubeMinorCycleAlgorithm();
       //casa::applicator.defineAlgorithm(cmc);
       ///argv and argc are needed just to callthe right overloaded init
@@ -608,10 +615,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // Add itsIterdone to be sent to child processes ...needed for automask
         //cerr << "before record " << itsIterDone << " loopcontroller " << itsLoopController.getIterDone() << endl;
         minorCycleControlRec.define("iterdone", itsIterDone);
+	if(doAutoMask < 0 && itsPreviousIterBotRec_p.nfields() >0)
+	  doAutoMask=0;
+	minorCycleControlRec.define("onlyautomask",doAutoMask); 
         if(itsPosMask){
           minorCycleControlRec.define("posmaskname", itsPosMask->name());
         }
-          Int numprocs = applicator.numProcs(); 
+	Int numprocs = applicator.numProcs(); 
           cerr << "Number of procs: " << numprocs << endl;
           
           Int numchan=itsImages->residual()->shape()[3];
@@ -698,7 +708,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               retvals(indexofretval)=(retval.nfields() > 0);
               ++indexofretval;
               ///might need to merge these retval
-              mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
+	      if(doAutoMask <1)
+		mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
               /*if(retval.nfields())
                 cerr << k << "deconv rank " << rank << " successful " << endl;
                else
@@ -759,21 +770,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    setSubsetRobustStats(substats, chanRangeProcessed[0], chanRangeProcessed[1], numchan);
             retvals(indexofretval)=(retval.nfields() > 0);
             ++indexofretval;
-            mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
+	    if(doAutoMask < 1)
+	      mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
             if(retval.nfields() >0)
               cerr << "deconv remainder rank " << rank << " successful " << endl;
             else
               cerr << "deconv remainder rank " << rank << " failed " << endl;
             
             rank = casa::applicator.nextProcessDone(*cmc, allDone);
-			if(casa::applicator.isSerial())
-                          allDone=true;
+	    if(casa::applicator.isSerial())
+	      allDone=true;
+	    
           }
 
           if(anyEQ(retvals, False))
             throw(AipsError("one of more section of the cube failed in deconvolution"));
-          itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
-          itsIterDone+=returnRecord.asInt("iterdone");
+	  if(doAutoMask < 1){
+	    itsLoopController.incrementMinorCycleCount(returnRecord.asInt("iterdone"));
+	    itsIterDone+=returnRecord.asInt("iterdone");
+	  }
+	  itsPreviousIterBotRec_p=Record();
+	  itsPreviousIterBotRec_p=minorCycleControlRec;
           /*{///TO BE REMOVED
           LatticeExprNode le( sum( *(itsImages->mask()) ) );
           os << LogIO::WARN << "#####Sum of mask AFTER minor cycle " << le.getFloat()  << "loopcontroller iterdeconv " << itsLoopController.getIterDone() << endl;
@@ -859,13 +876,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // cerr << "OPTCHAN" << optchan  << endl;
     if(optchan < 10) optchan=10;
     Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
-    if(nproc==1){
+    /*if(nproc==1){
       startchans.resize(1);
       endchans.resize(1);
       startchans[0]=0;
       endchans[0]=nchan-1;
       return 1;
-    }
+      }*/
     Int blksize= nchan/nproc > optchan ? optchan : Int( std::floor(Float(nchan)/Float(nproc)));
     if(blksize< 1) blksize=1;
     Int nblk=Int(nchan/blksize);
@@ -971,6 +988,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  //cerr << this << "SETUP mask " << itsRobustStats << endl;
           if(itsImages->residual()->shape()[3] ==1)
             setAutoMask();
+	  else if((itsImages->residual()->shape()[3] >1) && itsPreviousIterBotRec_p.nfields() > 0){
+	    Record dummy;
+	    executeCubeMinorCycle(dummy, 1);
+	  }
           /***
           if ( itsPBMask > 0.0 ) {
             itsMaskHandler->autoMaskWithinPB( itsImages, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsPBMask);
