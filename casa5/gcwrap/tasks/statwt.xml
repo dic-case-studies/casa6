@@ -1,158 +1,153 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="statwt" category="manipulation">
+<task category="manipulation" name="statwt" type="function">
     <shortdescription>Compute and set weights based on variance of data.</shortdescription>
 
     <input>
-        <param type="string" name="vis" mustexist="true">
-            <description>Name of measurement set</description>
+        <param mustexist="true" name="vis" type="string"><shortdescription>Name of measurement set</shortdescription><description>Name of measurement set</description>
+            
             <value/>
         </param>
-        <param type="bool" name="selectdata">
-           <description>Enable data selection parameters</description>
+        <param name="selectdata" type="bool"><shortdescription>Enable data selection parameters</shortdescription><description>Enable data selection parameters</description>
+           
            <value type="bool">True</value>
         </param>
-        <param type="string" name="field" subparam="true">
-            <description>Selection based on field names or field index numbers. Default is all.</description>
+        <param subparam="true" name="field" type="string"><shortdescription>Selection based on field names or field index numbers. Default is all.</shortdescription><description>Selection based on field names or field index numbers. Default is all.</description>
+            
             <value/>
-            <example>"0~2", or "3C286"</example>
+            <example>&quot;0~2&quot;, or &quot;3C286&quot;</example>
         </param>
-        <param type="string" name="spw" subparam="true">
-            <description>Selection based on spectral windows:channels. Default is all.</description>
+        <param subparam="true" name="spw" type="string"><shortdescription>Selection based on spectral windows:channels. Default is all.</shortdescription><description>Selection based on spectral windows:channels. Default is all.</description>
+            
             <value/>
-            <example>"3"</example>
+            <example>&quot;3&quot;</example>
         </param>
-        <param type="string" name="intent" subparam="true">
-            <description>Selection based on intents. Default is all.</description>
+        <param subparam="true" name="intent" type="string"><shortdescription>Selection based on intents. Default is all.</shortdescription><description>Selection based on intents. Default is all.</description>
+            
             <value/>
-            <example>"my_intent"</example>
+            <example>&quot;my_intent&quot;</example>
         </param>
-        <param type="string" name="array" subparam="true">
-            <description>Selection based on array IDs. Default is all.</description>
+        <param subparam="true" name="array" type="string"><shortdescription>Selection based on array IDs. Default is all.</shortdescription><description>Selection based on array IDs. Default is all.</description>
+            
             <value/>
-            <example>"1"</example>
+            <example>&quot;1&quot;</example>
         </param>
-        <param type="string" name="observation" subparam="true">
-            <description>Selection based on observation IDs. Default is all.</description>
+        <param subparam="true" name="observation" type="string"><shortdescription>Selection based on observation IDs. Default is all.</shortdescription><description>Selection based on observation IDs. Default is all.</description>
+            
             <value/>
-            <example>"1"</example>
+            <example>&quot;1&quot;</example>
         </param>
-        <param type="string" name="scan" subparam="true">
-            <description>Select data by scan numbers.</description>
+        <param subparam="true" name="scan" type="string"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
+            
             <value/>
-            <example>"5"</example>
+            <example>&quot;5&quot;</example>
         </param>
-        <param type="string" name="combine">
-            <description>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value "corr" is also supported to aggregate samples across correlations.</description>
+        <param name="combine" type="string"><shortdescription>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</shortdescription><description>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</description>
+            
             <value/>
-            <example>"scan,field"</example>
+            <example>&quot;scan,field&quot;</example>
         </param>
-        <param type="any" name="timebin">
-            <description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</description>
-            <any type="variant" limittypes="string int" />
+        <param name="timebin" type="any"><shortdescription>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</shortdescription><description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</description>
+            
+            <any limittypes="string int" type="variant"/>
             <value type="int">1</value>
-            <example>5 or "100s"</example>
+            <example>5 or &quot;100s&quot;</example>
         </param>
-        <param type="bool" name="slidetimebin">
-            <description>Use a sliding window for time binning, as opposed to time block processing?</description>
+        <param name="slidetimebin" type="bool"><shortdescription>Use a sliding window for time binning, as opposed to time block processing?</shortdescription><description>Use a sliding window for time binning, as opposed to time block processing?</description>
+            
             <value>False</value>
             <example>True</example>
         </param>
-        <param type="any" name="chanbin">
-            <any type="variant" limittypes="string int"/>
-            <description>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string "spw" or quantity with frequency units.</description>
+        <param name="chanbin" type="any"><shortdescription>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</shortdescription><description>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</description>
+            <any limittypes="string int" type="variant"/>
+            
             <value type="string">spw</value>
-            <example>5 or "1.5MHz"</example>
+            <example>5 or &quot;1.5MHz&quot;</example>
         </param>
-        <param type="int" name="minsamp">
-            <description>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</description>
+        <param name="minsamp" type="int"><shortdescription>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</shortdescription><description>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</description>
+            
             <value>2</value>
             <example>10</example>
         </param>
-        <param type="string" name="statalg">
-            <description>Statistics algorithm to use for computing variances. Supported values are "chauvenet", "classic", "fit-half", and "hinges-fences". Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</description>
+        <param name="statalg" type="string"><shortdescription>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</shortdescription><description>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</description>
+            
             <value>classic</value>
-            <example>"cl", "ch", "f", or "h"</example>
+            <example>&quot;cl&quot;, &quot;ch&quot;, &quot;f&quot;, or &quot;h&quot;</example>
         </param>
-        <param type="double" name="fence" subparam="true">
-            <description>Fence value for statalg="hinges-fences". A negative value means use the entire data set (ie default to the "classic" algorithm). Ignored if statalg is not "hinges-fences".</description>
+        <param subparam="true" name="fence" type="double"><shortdescription>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</description>
+            
             <value>-1</value>
             <example>0.2</example>
         </param>
-        <param type="string" name="center" subparam="true">
-            <description>Center to use for statalg="fit-half". Valid choices are "mean", "median", and "zero". Ignored if statalg is not "fit-half".</description>
+        <param subparam="true" name="center" type="string"><shortdescription>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</description>
+            
             <value>mean</value>
-            <example>"mean", "median", or "zero"</example>
+            <example>&quot;mean&quot;, &quot;median&quot;, or &quot;zero&quot;</example>
         </param>
-        <param type="bool" name="lside" subparam="true">
-            <description>For statalg="fit-half", real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not "fit-half".</description>
+        <param subparam="true" name="lside" type="bool"><shortdescription>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</description>
+            
             <value>True</value>
             <example>True</example>
         </param>
-        <param type="double" name="zscore" subparam="true">
-            <description>For statalg="chauvenet", this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not "chauvenet".</description>
+        <param subparam="true" name="zscore" type="double"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</description>
+            
             <value>-1</value>
             <example>3.5</example>
         </param>
-        <param type="int" name="maxiter" subparam="true">
-            <description>For statalg="chauvenet", this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not "chauvenet".</description>
+        <param subparam="true" name="maxiter" type="int"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</description>
+            
             <value>-1</value>
             <example>10</example>
         </param>
-        <param type="string" name="fitspw">
-            <description>Channels to include in the computation of weights. Specified as an MS select channel selection string.</description>
+        <param name="fitspw" type="string"><shortdescription>Channels to include in the computation of weights. Specified as an MS select channel selection string.</shortdescription><description>Channels to include in the computation of weights. Specified as an MS select channel selection string.</description>
+            
             <value/>
-            <example>"0:5~30"</example>
+            <example>&quot;0:5~30&quot;</example>
         </param>
-        <param type="bool" name="excludechans">
-            <description>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</description>
+        <param name="excludechans" type="bool"><shortdescription>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</shortdescription><description>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</description>
+            
             <value>False</value>
             <example>True</example>
         </param>
-        <param type="doubleArray" name="wtrange">
-            <description>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</description>
+        <param name="wtrange" type="doubleArray"><shortdescription>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</shortdescription><description>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</description>
+            
             <value/>
             <example>[0.1, 10]</example>
         </param>
-        <param type="bool" name="flagbackup">
-            <description>Back up the state of flags before the run?</description>
+        <param name="flagbackup" type="bool"><shortdescription>Back up the state of flags before the run?</shortdescription><description>Back up the state of flags before the run?</description>
+            
             <value>True</value>
             <example>True, False</example>
         </param>
-        <param type="bool" name="preview">
-            <description>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</description>
+        <param name="preview" type="bool"><shortdescription>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</shortdescription><description>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</description>
+            
             <value>False</value>
             <example>True or False</example>
         </param>
-        <param type="string" name="datacolumn">
-            <description>Data column to use to compute weights. Supported values are "data", "corrected", "residual", and "residual_data" (case insensitive, minimum match supported).</description>
+        <param name="datacolumn" type="string"><shortdescription>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</shortdescription><description>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</description>
+            
             <value>corrected</value>
-            <example>"data" or "corrected"</example>
+            <example>&quot;data&quot; or &quot;corrected&quot;</example>
         </param>
         <constraints>
             <when param="selectdata">
-                <equals type="bool" value="True">
-                    <default param="field"><value>""</value></default>
-                    <default param="spw"><value>""</value></default>
-                    <default param="observation"><value>""</value></default>
-                    <default param="intent"><value>""</value></default>
-                    <default param="array"><value>""</value></default>
-                    <default param="scan"><value>""</value></default>
+                <equals value="True" type="bool">
+                    <default param="field"><value>&quot;&quot;</value></default>
+                    <default param="spw"><value>&quot;&quot;</value></default>
+                    <default param="observation"><value>&quot;&quot;</value></default>
+                    <default param="intent"><value>&quot;&quot;</value></default>
+                    <default param="array"><value>&quot;&quot;</value></default>
+                    <default param="scan"><value>&quot;&quot;</value></default>
                 </equals>
             </when>
             <when param="statalg">
-                <equals type="string" value="classic"/>
-                <equals type="string" value="hinges-fences">
+                <equals value="classic" type="string"/>
+                <equals value="hinges-fences" type="string">
                     <default param="fence">
                         <value>-1</value>
                     </default>
                 </equals>
-                <equals type="string" value="fit-half">
+                <equals value="fit-half" type="string">
                     <default param="center">
                         <value type="string">mean</value>
                     </default>
@@ -160,7 +155,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                         <value>True</value>
                     </default>
                 </equals>
-                <equals type="string" value="chauvenet">
+                <equals value="chauvenet" type="string">
                     <default param="zscore">
                         <value>-1</value>
                     </default>
@@ -191,7 +186,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         Data are aggregated on a per-baseline, per-data description ID basis. Data are aggregated
         in bins determined by the specified values of the timebin and chanbin parameters. By default,
         data for separate correlations are aggregated separately. This behavior can be overriden
-        by specifying combine="corr" (see below).
+        by specifying combine=&quot;corr&quot; (see below).
 
         RULES REGARDING CREATING/INITIALIZING WEIGHT_SPECTRUM COLUMN
 
@@ -199,7 +194,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         2. Else if the MS already has a WEIGHT_SPECTRUM and this column has been initialized (has values),
            it will always be populated with the new weights.  The WEIGHT column will be populated with
            the corresponding median values of the associated WEIGHT_SPECTRUM array.
-        3. Else if the frequency range specified for the sample is not the default ("spw"), the
+        3. Else if the frequency range specified for the sample is not the default (&quot;spw&quot;), the
            WEIGHT_SPECTRUM column will be created (if it doesn't already exist) and the new weights
            will be written to it.  The WEIGHT column should be populated with the corresponding median
            values of the WEIGHT_SPECTRUM array.
@@ -227,7 +222,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
         The data are processed in blocks. This means that all weight spectrum values will be set to
         the same value for all points within the same time bin/channel bin/correlation bin (
-        see the section on channel binning and description of combine="corr" for more details on
+        see the section on channel binning and description of combine=&quot;corr&quot; for more details on
         channel binning and correlation binning).
         The time bins are not necessarily contiguous and are not necessarily the same width. The start
         of a bin is always coincident with a value from the TIME column, So for example, if values
@@ -263,11 +258,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         individual spectral windows; bins never span multiple spectral windows. Each channel will
         be included in exactly one bin.
 
-        The default value "spw" indicates that all channels in each spectral window are to be
+        The default value &quot;spw&quot; indicates that all channels in each spectral window are to be
         included in a single bin.
 
         Any other string value is interpreted as a quantity, and so should have frequency units, eg
-        "1MHz". In this case, the channel frequencies from the CHAN_FREQ column of the SPECTRAL_WINDOW
+        &quot;1MHz&quot;. In this case, the channel frequencies from the CHAN_FREQ column of the SPECTRAL_WINDOW
         subtable of the MS are used to determine the bins. The first bin starts at the channel frequency
         of the 0th channel in the spectral window. Channels with frequencies that differ by less than
         the value specified by the chanbin parameter are included in this bin. The next bin starts at
@@ -292,14 +287,14 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         By default, data are not aggregated across changes in values in the columns ARRAY_ID,
         SCAN_NUMBER, STATE_ID, FIELD_ID, and DATA_DESC_ID. One can override this behavior for
         SCAN_NUMBER, STATE_ID, and FIELD_ID by specifying the combine parameter. For example,
-        specifying combine="scan" will ignore scan boundaries when aggregating data. Specifying
-        combine="field, scan" will ignore both scan and field boundaries when aggregating data.
+        specifying combine=&quot;scan&quot; will ignore scan boundaries when aggregating data. Specifying
+        combine=&quot;field, scan&quot; will ignore both scan and field boundaries when aggregating data.
 
         Also by default, data for separate correlations are aggregated separately. Data for all
         correlations within each spectral window can be aggregated together by specifying
-        "corr" in the combine parameter.
+        &quot;corr&quot; in the combine parameter.
 
-        Any combination and permutation of "scan", "field", "state", and "corr" are supported
+        Any combination and permutation of &quot;scan&quot;, &quot;field&quot;, &quot;state&quot;, and &quot;corr&quot; are supported
         by the combine parameter. Other values will be silently ignored.
 
         STATISTICS ALGORITHMS
@@ -325,14 +320,14 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
         PREVIEW MODE
 
-        By setting preview=True, the application is run in "preview" mode. In this mode, no data
+        By setting preview=True, the application is run in &quot;preview&quot; mode. In this mode, no data
         in the input MS are changed, although the amount of data that the application would have
         flagged is reported.
 
         DATA COLUMN
 
         The datacolumn parameter can be specified to indicate which data column should be used
-        for computing the weights. The values "corrected" for the CORRECTED_DATA column and "data"
+        for computing the weights. The values &quot;corrected&quot; for the CORRECTED_DATA column and &quot;data&quot;
         for the DATA column are supported (minimum match, case insensitive).
 
         OTHER CONSIDERATIONS
@@ -346,7 +341,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         EXAMPLE
 
         # update the weights of an MS using time binning of 300s
-        statwt("my.ms", timebin="300s")
+        statwt(&quot;my.ms&quot;, timebin=&quot;300s&quot;)
     </example>
 </task>
 </casaxml>
