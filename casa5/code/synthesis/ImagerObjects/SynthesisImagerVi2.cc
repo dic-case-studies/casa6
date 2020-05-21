@@ -1723,10 +1723,15 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	      vb->setVisCubeModel(Complex(0.0, 0.0));
 	      itsMappers.degrid(*vb, savevirtualmodel);
 
-	      if(savemodelcolumn && writeAccess_p )
+	      if(savemodelcolumn && writeAccess_p ){
+
+		const_cast<MeasurementSet& >((vi_p->ms())).lock(true);
+
 		vi_p->writeVisModel(vb->visCubeModel());
 
 	      //cerr << "nRows "<< vb->nRows() << "   " << max(vb->visCubeModel()) <<  endl;
+		const_cast<MeasurementSet& >((vi_p->ms())).unlock();
+	      }
 
 	      cohDone += vb->nRows();
 	      pm.update(Double(cohDone));
@@ -2089,6 +2094,26 @@ void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
       thisms.weather().lock(false);
 	
 }
+///////////////////////
+  
+  Vector<SynthesisParamsSelect> SynthesisImagerVi2::tuneSelectData(){
+    vi_p->originChunks();
+    vi_p->origin();
+    vi::VisBuffer2* vb=vi_p->getVisBuffer();
+    Int spwnow=vb->spectralWindows()[0];
+    Int nchaninms=MSColumns(vb->ms()).spectralWindow().numChan()(spwnow);
+    //For some small number of channels in the ms vi/vb2 retuning the selection
+    //will sometimes return more channels than what is in the ms...this is a
+    //kludge here to bypass it...mostly seen in test_tclean
+    /// write to the test !!  till someboody fixes this is vi2 or wait for cngi
+    //if savescratch column we have tune...otherwise some channel may be 0
+    // when chunking or in parallel
+    if(nchaninms <30 && !(!readOnly_p && useScratch_p))
+      return dataSel_p;
+    
+    return SynthesisImager::tuneSelectData();
+  }
+//////////////////////
 void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","unlockMSs",WHERE) );

@@ -51,6 +51,7 @@ public:
   using SynthesisImager::selectData;
   virtual casacore::Bool selectData(const SynthesisParamsSelect& selpars);
   virtual casacore::Bool defineImage(SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
+  virtual casacore::Vector<SynthesisParamsSelect> tuneSelectData();
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, const casacore::String& ftmachine);
   //Define image via a predefined SIImageStore object and ftmachines
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 

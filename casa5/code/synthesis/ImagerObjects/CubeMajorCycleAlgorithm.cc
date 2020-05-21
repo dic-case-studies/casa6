@@ -375,11 +375,8 @@ String&	CubeMajorCycleAlgorithm::name(){
         }
         Int nchannels=sumwt.shape()[3];
 
-        ////For some small channel ms's retuning trigger a vi2/vb2 bug in nChannels
-        ///avoid retuning for small images
-        if(nchannels < 10 && imId==0){
-          retuning_p=False;
-        }
+       
+       
 	//Should be partitioning for main image only
 	//chanRange
 	Int chanBeg=0;
@@ -392,7 +389,13 @@ String&	CubeMajorCycleAlgorithm::name(){
 		chanBeg=0;
 		chanEnd=sumwt.shape()[3]-1;
 	}
-	
+	////For some small channel ms's retuning trigger a vi2/vb2 bug in nChannels
+	///avoid retuning for small images
+	////Skipping this here..
+	//overloaded SynthesisImagerVi2::retune to do this check
+	//if(nchannels < 30 && imId==0 && ((chanEnd-chanBeg) < 10)){
+        //  retuning_p=False;
+        //}
 	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
         Vector<String> weightnams(controlRecord_p.asArrayString("weightnames"));
 	weightNames_p.resize();
@@ -427,7 +430,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 				///Pass some extra channels for interpolation while degridding
 				Int startmodchan=(chanBeg-2) >0 ? chanBeg-2 : 0;
 				Int endmodchan=(chanEnd+2) < nchannels ? chanEnd+2 : nchannels-1 ;
-				//cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;
+				cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;
 				//Darn has to lock it as writable because overlap in SIMapperCollection code 
 				//wants that...though we are not really modifying it here
 				//Bool writeisneeded=(imSel_p.nelements()!=1 || startmodel_p[imId].nelements() >0);

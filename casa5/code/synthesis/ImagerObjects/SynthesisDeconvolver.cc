@@ -256,7 +256,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       return retval;
     }
     
-    /*else if (itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3]){
+    /* else if (itsAutoMaskAlgorithm=="multithresh" && itsImages->residual()->shape()[3]){
       ///As the automask for cubes pre-CAS-9386...
       /// was tuned to look for threshold in future mask
       ///It is as good as somewhere in between no mask and mask
@@ -273,7 +273,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
       }
       return retval;
-      }*/
+      }
+    */
     return initMinorCycle(itsImages);
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )

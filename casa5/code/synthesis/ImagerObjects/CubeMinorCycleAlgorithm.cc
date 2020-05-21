@@ -126,6 +126,7 @@ void CubeMinorCycleAlgorithm::task(){
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
           Record prevresrec=subDeconv.initMinorCycle(subimstor);
 	  //cerr << "PREVRESREC " << prevresrec << endl;
+	  Float prevPeakRes=prevresrec.asFloat("peakresidual");
 	  Bool doDeconv=True;
           if(autoMaskOn_p){
 	    subDeconv.setChanFlag(chanFlag_p);
@@ -144,17 +145,23 @@ void CubeMinorCycleAlgorithm::task(){
 	      //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
 	      if(resRec.isDefined("peakresidual") && iterBotRec_p.isDefined("cyclethreshold")){
 		Float peakresidual=resRec.asFloat("peakresidual");
-		/*if(iterBotRec_p.isDefined("psffraction")){
-		  Float cyclethreshold=iterBotRec_p.asFloat("psffraction")*peakresidual;	
+		Float peakresidualnomask=resRec.asFloat("peakresidualnomask");
+		Float cyclethreshold=iterBotRec_p.asFloat("cyclethreshold");
+		if(iterBotRec_p.isDefined("psffraction")){
+		  cyclethreshold=iterBotRec_p.asFloat("psffraction")*peakresidualnomask;	
 		  cyclethreshold= max(cyclethreshold, iterBotRec_p.asFloat("threshold"));
 		  //		cerr << "old cyclethreshold " <<iterBotRec_p.asFloat("cyclethreshold") << " new " << cyclethreshold << endl;
-		  iterBotRec_p.removeField("cyclethreshold");
-		  iterBotRec_p.define("cyclethreshold", cyclethreshold);
+		  //iterBotRec_p.removeField("cyclethreshold");
+		  //iterBotRec_p.define("cyclethreshold", cyclethreshold);
 		  }
-		*/
-		if(peakresidual < iterBotRec_p.asFloat("cyclethreshold"))
+		
+		  //if(peakresidual < iterBotRec_p.asFloat("cyclethreshold"))
+		if(peakresidual < cyclethreshold)
 		  writeBackAutomask=False;
+		//cerr << "chanRange " << chanRange_p << endl;
+		//cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << endl;
 	      }
+	     
 	    }
 	    else{
 	      writeBackAutomask=False;
