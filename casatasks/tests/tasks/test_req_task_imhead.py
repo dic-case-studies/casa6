@@ -22,15 +22,22 @@
 #
 ##########################################################################
 
-CASA6 = False
 try:
     import casatools
     from casatasks import casalog, imhead, rmtables
+    image = casatools.image
+    _qa = casatools.quanta()
+    _tb = casatools.table()
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    image = iatool
+    _qa = qatool()
+    _tb = tbtool()
+    CASA6 = False
+
 import sys
 import os
 import unittest
@@ -40,17 +47,32 @@ import re
 
     #DATA#
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    ctsys_resolve = casatools.ctsys.resolve
 else:
+    def ctsys_resolve(data):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
+        else:
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+    """
+    datapath = 
+
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
-
+    """
+datapath = ctsys_resolve('image/ngc5921.clean.image')
 logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'
 newlog = 'casa_new.log'
+cas4355 = 'cas4355.im'
+cas6352 = 'CAS-6352.im'
+cas5901 = 'CAS-5901.im'
+ncpim = os.path.join('image', 'ncp_proj.im')
+cas6727 = 'CAS-6727.im'
+cas8095 = 'CAS-8095.im'
 
 expectedKeys = [
     'beammajor', 'beamminor', 'beampa', 'bunit', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4',
@@ -78,7 +100,10 @@ class imhead_test(unittest.TestCase):
                 os.chmod(os.path.join(root, f), 493)
  
     def tearDown(self):
-        rmtables(datacopy)
+        self.assertTrue(len(_tb.showcache()) == 0, 'Found table left open in cache')
+        for x in [cas4355, datacopy, cas6352, cas5901, ncpim, cas6727, cas8095]:
+            if os.path.exists(x):
+                rmtables(x)
         for x in [testlog, newlog]:
             if os.path.exists(x):
                 os.remove(x)
@@ -480,7 +505,136 @@ class imhead_test(unittest.TestCase):
                 imhead(datacopy, mode='bogus'),
                 'application did not fail as expected for bad mode test'
             )
-        
+
+    def test_put_sexigesimal(self):
+        """ verify mode=put can take sesigimal values where appropriate (CAS-4355)"""
+        myia = image()
+        myim = "cas4355.im"
+        myia.fromshape(myim, [10,10])
+        myia.done()
+        ra = "14:33:10.5"
+        key = "crval1"
+        self.assertTrue(
+            imhead(imagename=myim, mode="put", hdkey=key, hdvalue=ra),
+            'Failed to put hdkey ' + key + ' value=' + ra
+        )
+        got = imhead(imagename=myim, mode="get", hdkey=key)
+        self.assertTrue(got, 'Failed to get new ra value')
+        got = _qa.canon(got)
+        exp = _qa.canon(_qa.toangle(ra))
+        self.assertEqual(_qa.getunit(got), _qa.getunit(exp), 'got incorrect unit')
+        self.assertTrue(
+            np.isclose(_qa.getvalue(got), _qa.getvalue(exp)),
+            'got incorrect value for ra'
+        )
+        dec = "-22.44.55.66"
+        key = "crval2"
+        self.assertTrue(
+            imhead(imagename=myim, mode="put", hdkey=key, hdvalue=dec),
+            'Failed to put hdkey ' + key + ' value=' + dec
+        )
+        got = imhead(imagename=myim, mode="get", hdkey=key)
+        self.assertTrue(got, 'Failed to get new value for dec')
+        got = _qa.canon(got)
+        exp = _qa.canon(_qa.toangle(dec))
+        self.assertEqual(_qa.getunit(got), _qa.getunit(exp), 'got incorrect unit')
+        self.assertTrue(
+            np.isclose(_qa.getvalue(got), _qa.getvalue(exp)),
+            'got incorrect value for dec'
+        )
+
+    def test_put_crval_stokes(self):
+        """Test updating stokes, CAS-6352"""
+        myia = image()
+        myia.fromshape(cas6352, [1, 1, 3])
+        myia.done()
+        self.assertFalse(
+            imhead(
+                cas6352, mode="put", hdkey="crval3", hdvalue="I"
+            ), 'Incorrectly put a length 1 array, should need three elements'
+        )
+        expec = ["Q", "XX", "LL"]
+        self.assertTrue(
+            imhead(
+                cas6352, mode="put", hdkey="crval3", hdvalue=expec
+            ), 'Failed to put length three array for stokes'
+        )
+        self.assertTrue(
+            (
+                imhead(cas6352, mode="get", hdkey="crval3") == expec
+            ).all(), 'Put and got values for stokes are not the same'
+        )
+
+    def test_restfreq_failure_modes(self):
+        """
+        Test rest frequency failure modes, CAS-5901. The image doesn't have a spectral axis,
+        so it cannot have a restfreq.
+        """
+        myia = image()
+        myia.fromshape(cas5901, [1, 1])
+        myia.done()
+        a = imhead(cas5901, mode="list")
+        self.assertTrue(
+            not 'restfreq' in a.keys() and len(a.keys()) > 0,
+            'dictionary incorrectly has key restfreq'
+        )
+        self.assertFalse(
+            imhead(cas5901, mode="get", hdkey="restfreq"),
+            'Incorrectly found key restfreq'
+        )
+        self.assertFalse(
+            imhead(cas5901, mode="put", hdkey="restfreq", hdvalue="4GHz"),
+            'Incorrectly put restfreq in an image that does not have a spectral axis'
+        )
+
+    def test_ncp(self):
+        """Test NCP projection is reported, CAS-6568"""
+        imagename = ctsys_resolve(ncpim)
+        res = imhead(imagename, mode="list")
+        proj = res['projection']
+        self.assertTrue(proj.count("NCP") == 1, 'Failed to get NCP projection')
+
+    def test_median_area_beam(self):
+        """Test median area beam is returned when there are multiple beams, CAS-6727"""
+        myia = image()
+        myia.fromshape(cas6727, [1,1,4,3])
+        myia.setrestoringbeam(
+            major="2arcsec", minor="2arcsec", pa="0deg",
+            channel=0, polarization=0
+        )
+        count = 1
+        for i in range(4):
+            for j in range(3):
+                radius = str(count) + "arcsec"
+                myia.setrestoringbeam(
+                    major=radius, minor=radius, pa="0deg",
+                    channel=j, polarization=i
+                )
+                count += 1 
+        myia.done()
+        zz = imhead(cas6727, mode="list")
+        self.assertTrue(
+            'median area beam' in zz['perplanebeams'].keys(),
+            'median area beam not found in perplanebeams dictionary'
+        )
+        self.assertTrue(
+            zz['perplanebeams']["median area beam"]
+            == {
+                'major': {'value': 7.0, 'unit': 'arcsec'},
+                'positionangle': {'value': 0.0, 'unit': 'deg'},
+                'minor': {'value': 7.0, 'unit': 'arcsec'}
+            }, 'Incorrect median area beam found'
+        )
+
+    def test_dict_return(self):
+        """Verify imhead returns a dictionary for mode=summary"""
+        myia = image()
+        myia.fromshape(cas8095, [1,1,4,3])
+        myia.done()
+        ret = imhead(cas8095, mode="summary")
+        self.assertTrue(type(ret) == dict)
+
+
 def suite():
     return[imhead_test]
  
