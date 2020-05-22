@@ -145,14 +145,18 @@ public:
           grad[2*k+1] = grad[2*k+1] + Grad1(i,j);
         }
       }
-      //std::cout << "after Asp# " << k << ": fx " << fx << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
     } // end of Aspen
 
     for (int j = 0; j < nY; ++j)
     {
       for(int i = 0; i < nX; ++i)
-        fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsfSum(i,j)));
+      {
+        //std::cout << "after Asp fx " << fx << " double " << double(pow(itsMatDirty(i,j) - AspConvPsfSum(i,j),2)) << " MatDirty " << itsMatDirty(i,j) << " PsfSum " << AspConvPsfSum(i,j) << std::endl;
+        //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsfSum(i,j))); //abs returns int
+        fx = fx + double(pow(itsMatDirty(i, j) - AspConvPsfSum(i,j),2));
+      }
     }
+    //std::cout << "after Asp fx " << fx << " AspConvPsfSum " << AspConvPsfSum(0,0) << std::endl;
 
     return fx;
   }

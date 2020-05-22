@@ -144,6 +144,7 @@ private:
   unsigned int itsNumIterNoGoodAspen;
   float itsPsfWidth;
   bool itsUseZhang;
+  bool itsSwitchedToHogbom;
 };
 
 } //# NAMESPACE CASA - END
