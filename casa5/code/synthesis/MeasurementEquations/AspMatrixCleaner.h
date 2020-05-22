@@ -142,6 +142,7 @@ private:
   casacore::Int itsNInitScales;
   double itsPrevLBFGSGrad; // flor gradient clipping if LBFGS gradient explodes
   unsigned int itsNumIterNoGoodAspen;
+  bool itsSwitchedToHogbom;
 };
 
 } //# NAMESPACE CASA - END

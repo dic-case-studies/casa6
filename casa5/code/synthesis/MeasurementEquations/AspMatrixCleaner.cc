@@ -63,6 +63,7 @@
 #endif
 
 // Additional include files
+#include <algorithm>
 #include<synthesis/MeasurementEquations/AspMatrixCleaner.h>
 
 #include <LBFGS.h>
@@ -81,7 +82,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsAspAmplitude(0),
   itsNInitScales(4),
   itsPrevLBFGSGrad(0.0),
-  itsNumIterNoGoodAspen(0)
+  itsNumIterNoGoodAspen(0),
+  itsSwitchedToHogbom(false)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -332,8 +334,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
-    os << "cur iter " << itsIteration << " max iter is "<<
-            itsMaxNiter << LogIO::POST;
+    cout << "cur iter " << itsIteration << " max iter is "<<
+            itsMaxNiter << endl;
     itsIteration++;
 
     // Find the peak residual
@@ -343,7 +345,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
 #pragma omp  for
-      for (scale=0; scale<nScalesToClean; ++scale)
+      for (scale=0; scale < min(nScalesToClean,itsNscales); ++scale)
       {
         // Find absolute maximum for the dirty image
         //cout << "clean: in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirtyConvScales.nelements() << endl;
@@ -384,7 +386,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         //posMaximum[scale]+=blcDirty;
       }
     } //End parallel section
-    for (scale=0; scale<nScalesToClean; scale++)
+    for (scale=0; scale < min(nScalesToClean,itsNscales); scale++)
     {
       if(abs(maxima(scale)) > abs(itsStrengthOptimum))
       {
@@ -539,7 +541,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     #pragma omp parallel default(shared) private(scale) num_threads(nth)
     {
       #pragma omp  for
-      for (scale=0; scale<nScalesToClean; ++scale)
+      for (scale=0; scale < min(nScalesToClean,itsNscales); ++scale)
       {
         Matrix<Float> dirtySub=(itsDirtyConvScales[scale])(blc,trc);
         //AlwaysAssert(itsPsfConvScales[index(scale,optimumScale)], AipsError);
@@ -553,7 +555,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     //genie If we switch to hogbom (i.e. only have 0 scale size)
     // there is no need to do the following Aspen update
-    if (nScalesToClean == 1)
+    //if (nScalesToClean == 1)
+    if (itsSwitchedToHogbom && itsNscales == 1)
       continue;
 
     //genie Now update the actual residual image
@@ -583,7 +586,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   }
   // End of iteration
 
-  for (scale=0; scale<nScalesToClean; scale++) {
+  for (scale=0; scale < min(nScalesToClean,itsNscales); scale++) {
     os << LogIO::NORMAL
        << "  " << scale << "    " << totalFluxScale(scale)
        << LogIO::POST;
@@ -1041,9 +1044,10 @@ bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Flo
     }
   }
 
+  cout << "scale " << scale << " amp " << amp << " center " << center << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
   if (lenDirVec >= threshold)
   {
-    cout << "lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+    //cout << "lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     return true;
   }
 
@@ -1065,6 +1069,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   if (itsNumIterNoGoodAspen > 10)
   {
     cout << "Switch to hogbom." << endl;
+    itsSwitchedToHogbom = true;
     return {};
   }
 
@@ -1100,17 +1105,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     return itsAspScaleSizes;
   else
   {
-    // lbfgs optimization
-    LBFGSParam<double> param;
-    param.epsilon = 1e-2;
-    param.max_linesearch = 10;
-    param.min_step = 1e-30;
-    param.max_iterations = 2;
-    param.gclip = itsPrevLBFGSGrad;
-
-    //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE; genie: doesn't work
-    LBFGSSolver<double> solver(param);
-
     //genie:
     // grab the existing Aspen from class variables, itsAspAmp and itsAspScale
     // and also add the new Aspen
@@ -1119,11 +1113,26 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
     AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
 
-    // heuristiclly determine active set for speed up
-    itsAspAmplitude.push_back(strengthOptimum);
-    itsAspScaleSizes.push_back(itsInitScaleSizes[optimumScale]);
-    itsAspCenter.push_back(positionOptimum);
+    // avoid duplicated (i.e. same location, Amp and size) Aspen for speed up
+    if (find(itsAspAmplitude.begin(), itsAspAmplitude.end(), strengthOptimum) != itsAspAmplitude.end() &&
+        find(itsAspScaleSizes.begin(), itsAspScaleSizes.end(), itsInitScaleSizes[optimumScale]) != itsAspScaleSizes.end() &&
+        find(itsAspCenter.begin(), itsAspCenter.end(), positionOptimum) != itsAspCenter.end())
+    {
+      return itsAspScaleSizes;
+    }
+    else //i.e. add the unique apsen to the permanent list
+    {
+      itsAspAmplitude.push_back(strengthOptimum);
+      itsAspScaleSizes.push_back(itsInitScaleSizes[optimumScale]);
+      itsAspCenter.push_back(positionOptimum);
+    }
 
+    // test scale up genie
+    for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+      itsAspAmplitude[i] = itsAspAmplitude[i] * 1e8;
+
+
+    // heuristiclly determine active set for speed up
     Float resArea = 0.0;
     Int nX = itsDirty->shape()(0);
     Int nY = itsDirty->shape()(1);
@@ -1133,7 +1142,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       for(Int i = 0; i < nX; ++i)
         resArea += abs((*itsDirty)(i,j));
     }
-    const Float lamda = 2e4;
+    //const Float lamda = 2e4; //M31
+    const Float lamda = 7.65e-1; //G55
+    //const Float lamda = 1.5; //G55
     const Float threshold = lamda * resArea;
     vector<Float> tempx;
     vector<IPosition> activeSetCenter;
@@ -1177,13 +1188,29 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //tempx.push_back(itsInitScaleSizes[optimumScale]);
     //itsAspCenter.push_back(positionOptimum);
 
-    //AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
-    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter);
-
     for (unsigned int i = 0; i < length; i++)
       x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
 
-    //cout << "Before: x = " << x << endl;
+    cout << "Before: x = " << x.transpose() << endl;
+
+    // lbfgs optimization
+    LBFGSParam<double> param;
+    param.epsilon = 1e-2;
+    param.max_linesearch = 10;
+    param.min_step = 1e-30;
+    param.max_iterations = 2; //M31
+    /*param.epsilon = 1e-5;
+    param.max_linesearch = 10;
+    param.min_step = 1e-30;
+    param.max_iterations = 2;
+    param.delta = 1e-15;*/ //G55
+    param.gclip = itsPrevLBFGSGrad;
+    //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE; genie: doesn't work
+    LBFGSSolver<double> solver(param);
+
+    //AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
+    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter);
+
     double fx;
     double gclip;
     /*int niter =*/ solver.minimize(fun, x, fx, gclip);
@@ -1194,7 +1221,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     if (itsPrevLBFGSGrad == 0.0)
       itsPrevLBFGSGrad = gclip;
     //std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
-    //std::cout << "x = \n" << x.transpose() << std::endl;
+    std::cout << "After: x = " << x.transpose() << std::endl;
     //std::cout << "f(x) = " << fx << std::endl;
     //std::cout << "float is " << Float(x[1]) << endl;
 
@@ -1226,6 +1253,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
+  // test scale back genie
+  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;
 
   return itsAspScaleSizes; // return optimized scale
 }
@@ -1245,8 +1275,10 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsScaleSizes.resize(itsNscales);
   itsScaleSizes = scaleSizes;  // make a copy that we can call our own
   GenSort<Float>::sort(itsScaleSizes);*/
+
   sort(scaleSizes.begin(), scaleSizes.end());
   scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end());
+  //scaleSizes.erase(unique(scaleSizes.begin(),scaleSizes.end(),[](Float l, Float r) { return abs(l - r) < 1e-5; }), scaleSizes.end());
 
   itsNscales = Int(scaleSizes.size());
   itsScaleSizes.resize(itsNscales);
