@@ -245,7 +245,6 @@ DelayRateFFT::DelayRateFFT(SDBList& sdbs, Int refant, Array<Double>& delayWindow
     }
 
     nElem_ =  1 + *(allActiveAntennas_.rbegin()) ;
-
     IPosition aggregateDim(2, nCorr_, nElem_);
     xcount_.resize(aggregateDim);
     sumw_.resize(aggregateDim);
