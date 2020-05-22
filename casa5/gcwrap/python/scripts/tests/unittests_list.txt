@@ -195,3 +195,8 @@ test_stk_alma_pipeline_imaging.py  scastro@eso.org
 #test_VLA_IRC10216                    awells@nrao.edu
 #test_VLA_MG0414                      awells@nrao.edu
 
+# Stakeholders List
+test_stk_vlass_pipeline_imaging       scastro@eso.org
+test_stk_alma_pipeline_imaging        scastro@eso.org
+
+

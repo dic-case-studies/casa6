@@ -1399,6 +1399,25 @@ casac::record* calibrater::parsecallibfile(const std::string& filein )
 
 //----------------------------------------------------------------------------
 
+bool
+calibrater::setcorrdepflags(const bool corrdepflags)
+{
+
+ bool rstat(false);
+ try {
+
+   rstat=itsCalibrater->setCorrDepFlags(corrdepflags);
+
+ } catch  (AipsError x) {
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    RETHROW(x);
+ }
+ return rstat;
+};
+
+
+//----------------------------------------------------------------------------
+
 bool calibrater::setvi(const bool old, const bool quiet)
 {
 

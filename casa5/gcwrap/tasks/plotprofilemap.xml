@@ -1,12 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-
-<task type="function" name="plotprofilemap" category="visualization">
+<task category="visualization" name="plotprofilemap" type="function">
 
   <shortdescription>Makes profile map.</shortdescription>
       
@@ -16,79 +10,79 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
   </description>
 
   <input>
-    <param type="string" name="imagename" mustexist="true">
-      <description>Input image name (CASA image or FITS)</description>
-      <value></value>
+    <param mustexist="true" name="imagename" type="string"><shortdescription>Input image name (CASA image or FITS)</shortdescription><description>Input image name (CASA image or FITS)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="figfile">
-      <description>Output figure name</description>
-      <value></value>
+    <param name="figfile" type="string"><shortdescription>Output figure name</shortdescription><description>Output figure name</description>
+      
+      <value/>
     </param>
 
-    <param type="bool" name="overwrite" subparam="true">
-      <description>Overwrite existing figfile</description>
+    <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite existing figfile</shortdescription><description>Overwrite existing figfile</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="transparent" subparam="true">
-      <description>Output transparent figure</description>
+    <param subparam="true" name="transparent" type="bool"><shortdescription>Output transparent figure</shortdescription><description>Output transparent figure</description>
+      
       <value>False</value>
     </param>
     
-    <param type="int" name="pol">
-      <description>Polarization component to be plotted</description>
+    <param name="pol" type="int"><shortdescription>Polarization component to be plotted</shortdescription><description>Polarization component to be plotted</description>
+      
       <value>0</value>
     </param>
     
-    <param type="string" name="spectralaxis">
-      <description>Type of spectral axis</description>
-      <value></value>
+    <param name="spectralaxis" type="string"><shortdescription>Type of spectral axis</shortdescription><description>Type of spectral axis</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value></value>
+        <value/>
         <value>frequency</value>
         <value>channel</value>
         <value>velocity</value>
       </allowed>
     </param>
     
-    <param type="string" name="restfreq" subparam="true">
-      <description>Rest frequency</description>
-      <value></value>
+    <param subparam="true" name="restfreq" type="string"><shortdescription>Rest frequency</shortdescription><description>Rest frequency</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="plotrange">
-      <description>Spectral axis range to plot</description>
-      <value></value>
+    <param name="plotrange" type="string"><shortdescription>Spectral axis range to plot</shortdescription><description>Spectral axis range to plot</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="title">
-      <description>Title of the plot</description>
-      <value></value>
+    <param name="title" type="string"><shortdescription>Title of the plot</shortdescription><description>Title of the plot</description>
+      
+      <value/>
     </param>
     
-  <param type="string" name="linecolor">
-    <description>Line color</description>
+  <param name="linecolor" type="string"><shortdescription>Line color</shortdescription><description>Line color</description>
+    
     <value>b</value>
   </param>
   
-  <param type="string" name="linestyle">
-    <description>Line style</description>
+  <param name="linestyle" type="string"><shortdescription>Line style</shortdescription><description>Line style</description>
+    
     <value>-</value>
   </param>
   
-  <param type="double" name="linewidth">
-    <description>Line width in points</description>
+  <param name="linewidth" type="double"><shortdescription>Line width in points</shortdescription><description>Line width in points</description>
+    
     <value>0.2</value>
   </param>
 
-    <param type="bool" name="separatepanel">
-      <description>Separate plots</description>
+    <param name="separatepanel" type="bool"><shortdescription>Separate plots</shortdescription><description>Separate plots</description>
+      
       <value>True</value>
     </param>
     
-    <param type="string" name="plotmasked">
-      <description>Masked data handling</description>
+    <param name="plotmasked" type="string"><shortdescription>Masked data handling</shortdescription><description>Masked data handling</description>
+      
       <value>empty</value>
       <allowed kind="enum">
         <value>empty</value>
@@ -99,68 +93,68 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       </allowed>
     </param>
     
-    <param type="string" name="maskedcolor" subparam="true">
-      <description>Line color for masked data</description>
+    <param subparam="true" name="maskedcolor" type="string"><shortdescription>Line color for masked data</shortdescription><description>Line color for masked data</description>
+      
       <value>gray</value>
     </param>
     
-    <param type="bool" name="showaxislabel">
-      <description>Show axis labels on the bottom left panel</description>
+    <param name="showaxislabel" type="bool"><shortdescription>Show axis labels on the bottom left panel</shortdescription><description>Show axis labels on the bottom left panel</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="showtick">
-      <description>Show axis ticks</description>
+    <param name="showtick" type="bool"><shortdescription>Show axis ticks</shortdescription><description>Show axis ticks</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="showticklabel" subparam="true">
-      <description>Show axis tick labels on the bottom left panel</description>
+    <param subparam="true" name="showticklabel" type="bool"><shortdescription>Show axis tick labels on the bottom left panel</shortdescription><description>Show axis tick labels on the bottom left panel</description>
+      
       <value>False</value>
     </param>
 
-    <param type="string" name="figsize">
-      <description>Size of the figure</description>
-      <value></value>
+    <param name="figsize" type="string"><shortdescription>Size of the figure</shortdescription><description>Size of the figure</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="numpanels">
-      <description>Number of panels</description>
-      <value></value>
+    <param name="numpanels" type="string"><shortdescription>Number of panels</shortdescription><description>Number of panels</description>
+      
+      <value/>
     </param>
     
     <constraints>
       <when param="figfile">
-        <notequals type="string" value="">
+        <notequals value="" type="string">
           <default param="overwrite"><value type="bool">False</value></default>
           <default param="transparent"><value type="bool">False</value></default>
         </notequals>
       </when>
       <when param="spectralaxis">
-        <equals type="string" value=""/>
-        <equals type="string" value="velocity">
-          <default param="restfreq"><value type="string"></value></default>
+        <equals value="" type="string"/>
+        <equals value="velocity" type="string">
+          <default param="restfreq"><value type="string"/></default>
         </equals>
       </when>
       <when param="plotmasked">
-        <equals type="string" value="empty"/>
-        <equals type="string" value="plot">
+        <equals value="empty" type="string"/>
+        <equals value="plot" type="string">
           <default param="maskedcolor"><value type="string">gray</value></default>
         </equals>
-        <equals type="string" value="zero">
+        <equals value="zero" type="string">
           <default param="maskedcolor"><value type="string">gray</value></default>
         </equals>
       </when>
       <when param="showtick">
-        <equals type="bool" value="False"/>
-        <equals type="bool" value="True">
+        <equals value="False" type="bool"/>
+        <equals value="True" type="bool">
           <default param="showticklabel"><value type="bool">False</value></default>
         </equals>
       </when>
     </constraints>
   </input>
 
-  <returns type="variant" limittypes="void record">
+  <returns limittypes="void record" type="variant">
   </returns>
 
   <example>

@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="fringefit" category="calibration" visibility="experimental">
+<task visibility="experimental" category="calibration" name="fringefit" type="function">
 <shortdescription>Fringe fit delay and rates</shortdescription>
 <description>
 Phase offsets, groups delays and delay rates are calculated with
@@ -16,139 +11,163 @@ Previous calibrations should be applied on the fly.
 
 </description>
 <input>
-        <param type="string" name="vis" mustexist="true">
-                <description>Name of input visibility file</description>
-                <value></value>
+        <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="caltable">
-                <description>Name of output gain calibration table</description>
-                <value></value>
+        <param name="caltable" type="string"><shortdescription>Name of output gain calibration table</shortdescription><description>Name of output gain calibration table</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="field">
-                <description>Select field using field id(s) or field name(s)</description>
-                <value></value>
+        <param name="field" type="string"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="spw">
-                <description>Select spectral window/channels</description>
-                <value></value>
+        <param name="spw" type="string"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="intent">
-                <description>Select observing intent</description>
-                <value></value>
+        <param name="intent" type="string"><shortdescription>Select observing intent</shortdescription><description>Select observing intent</description>
+                
+                <value/>
         </param>
 
-        <param type="bool" name="selectdata">
-                <description>Other data selection parameters</description>
+        <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+                
                 <value>True</value>
         </param>
 
-        <param type="string" name="timerange" subparam="true">
-                <description>Select data based on time range</description>
-                <value></value>
+        <param subparam="true" name="timerange" type="string"><shortdescription>Select data based on time range</shortdescription><description>Select data based on time range</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="antenna" subparam="true">
-                <description>Select data based on antenna/baseline</description>
-                <value></value>
+        <param subparam="true" name="antenna" type="string"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
+                
+                <value/>
         </param>
 
-        <param type="string" name="scan" subparam="true">
-                <description>Scan number range</description>
-                <value></value>
+        <param subparam="true" name="scan" type="string"><shortdescription>Scan number range</shortdescription><description>Scan number range</description>
+                
+                <value/>
         </param>
 
-        <param type="any" name="observation" subparam="true">
-               <description>Select by observation ID(s)</description>
-               <any type="variant" limittypes="string int"/>
-               <value type="string"></value>
+        <param subparam="true" name="observation" type="any"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
+               
+               <any limittypes="string int" type="variant"/>
+               <value type="string"/>
         </param>
 
-        <param type="string" name="msselect" subparam="true">
-                <description>Optional complex data selection (ignore for now)</description>
-                <value></value>
+        <param subparam="true" name="msselect" type="string"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
+                
+                <value/>
         </param>
 
-        <param type="any" name="solint">
-                <description>Solution interval: egs. \'inf\', \'60s\' (see help)</description>
+        <param name="solint" type="any"><shortdescription>Solution interval: egs. \'inf\', \'60s\' (see help)</shortdescription><description>Solution interval: egs. \'inf\', \'60s\' (see help)</description>
+                
                 <any type="variant"/>
                 <value type="string">inf</value>
         </param>
 
-        <param type="string" name="combine">
-               <description>Data axes which to combine for solve (obs, scan, spw, and/or field)</description>
-               <value></value>
+        <param name="combine" type="string"><shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription><description>Data axes which to combine for solve (obs, scan, spw, and/or field)</description>
+               
+               <value/>
         </param>
    
-        <param type="string" name="refant">
-                <description>Reference antenna name(s)</description>
-                <value></value>
+        <param name="refant" type="string"><shortdescription>Reference antenna name(s)</shortdescription><description>Reference antenna name(s)</description>
+                
+                <value/>
         </param>
 
-        <param type="double" name="minsnr">
-                <description>Reject solutions below this signal-to-noise ratio (at the FFT stage)</description>
+        <param name="minsnr" type="double"><shortdescription>Reject solutions below this signal-to-noise ratio (at the FFT stage)</shortdescription><description>Reject solutions below this signal-to-noise ratio (at the FFT stage)</description>
+                
                 <value>3.0</value>
         </param>
 
-        <param type="bool" name="zerorates">
-                <description>Zero delay-rates in solution table</description>
+        <param name="zerorates" type="bool"><shortdescription>Zero delay-rates in solution table</shortdescription><description>Zero delay-rates in solution table</description>
+                
                 <value>False</value>
         </param>
 
-   <param type="bool" name="globalsolve">
-                <description>Refine estimates of delay and rate with global least-squares solver</description>
+   <param name="globalsolve" type="bool"><shortdescription>Refine estimates of delay and rate with global least-squares solver</shortdescription><description>Refine estimates of delay and rate with global least-squares solver</description>
+                
                 <value>True</value>
         </param>
 
-   <param type="int" name="niter">
-                <description>Maximum number of iterations for least-squares solver</description>
+   <param name="niter" type="int"><shortdescription>Maximum number of iterations for least-squares solver</shortdescription><description>Maximum number of iterations for least-squares solver</description>
+                
 		          <value>100</value>
 	</param>
    
 
-   <param type="doubleArray" name="delaywindow">
-                <description>Constrain FFT delay search to a window; a two-element list, units of nanoseconds</description>
-                <value></value>
+   <param name="delaywindow" type="doubleArray"><shortdescription>Constrain FFT delay search to a window; a two-element list, units of nanoseconds</shortdescription><description>Constrain FFT delay search to a window; a two-element list, units of nanoseconds</description>
+                
+                <value/>
         </param>
 
-   <param type="doubleArray" name="ratewindow">
-                <description>Constrain FFT rate search to a window; a two-element list, units of seconds per second</description>
-                <value></value>
+   <param name="ratewindow" type="doubleArray"><shortdescription>Constrain FFT rate search to a window; a two-element list, units of seconds per second</shortdescription><description>Constrain FFT rate search to a window; a two-element list, units of seconds per second</description>
+                
+                <value/>
         </param>
    
-        <param type="bool" name="append">
-                <description>Append solutions to the (existing) table</description>
-                <value>False</value>
-        </param>
-        <param type="bool" name="docallib" >
-                <description>Use callib or traditional cal apply parameters</description>
+        <param name="append" type="bool"><shortdescription>Append solutions to the (existing) table</shortdescription><description>Append solutions to the (existing) table</description>
+                
                 <value>False</value>
         </param>
 
-        <param type="string" name="callib" subparam="true" >
-                <description>Cal Library filename</description>
-                <value type="string"></value>
+    <param name="corrdepflags" type="bool">
+      <shortdescription>Respect correlation-dependent flags</shortdescription>
+      <description> If False (default), if any correlation is flagged, treat all correlations in
+        the visibility vector as flagged when solving (per channel, per baseline).
+        If True, use unflagged correlations in a visibility vector, even if one or more
+        other correlations are flagged.
+              
+        Default: False (treat correlation vectors with one or more correlations flagged as entirely flagged)
+  
+        Traditionally, CASA has observed a strict interpretation of 
+        correlation-dependent flags: if one or more correlations 
+        (for any baseline and channel) is flagged, then all available 
+        correlations for the same baseline and channel are 
+        treated as flagged.  However, it is desirable in some 
+        circumstances to relax this stricture, e.g., to preserve use
+        of data from antennas with only one good polarization (e.g., one polarization
+        is bad or entirely absent).  Solutions for the bad or missing polarization 
+        will be rendered as flagged.
+
+      </description>
+      <value>False</value>
+    </param>
+
+        <param name="docallib" type="bool"><shortdescription>Use callib or traditional cal apply parameters</shortdescription><description>Use callib or traditional cal apply parameters</description>
+                
+                <value>False</value>
         </param>
 
-        <param type="stringArray" name="gaintable" subparam="true">
-                <description>Gain calibration table(s) to apply on the fly</description>
-                <value></value>
+        <param subparam="true" name="callib" type="string"><shortdescription>Cal Library filename</shortdescription><description>Cal Library filename</description>
+                
+                <value type="string"/>
         </param>
 
-        <param type="stringArray" name="gainfield" subparam="true">
-                <description>Select a subset of calibrators from gaintable(s)</description>
-                <value></value>
+        <param subparam="true" name="gaintable" type="stringArray"><shortdescription>Gain calibration table(s) to apply on the fly</shortdescription><description>Gain calibration table(s) to apply on the fly</description>
+                
+                <value/>
         </param>
 
-        <param type="stringArray" name="interp" subparam="true">
-                <description>Temporal interpolation for each gaintable (''=linear)</description>
-                <value></value>
+        <param subparam="true" name="gainfield" type="stringArray"><shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription><description>Select a subset of calibrators from gaintable(s)</description>
+                
+                <value/>
         </param>
 
-        <param type="intArray" name="spwmap" subparam="true">
+        <param subparam="true" name="interp" type="stringArray"><shortdescription>Temporal interpolation for each gaintable (''=linear)</shortdescription><description>Temporal interpolation for each gaintable (''=linear)</description>
+                
+                <value/>
+        </param>
+
+        <param subparam="true" name="spwmap" type="intArray">
 	  <shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
 	  <description>Spectral window mappings to form for gaintable(s)
                      Only used if callib=False
@@ -163,17 +182,17 @@ Previous calibrations should be applied on the fly.
                           gaintables)
 	  </description>
           <type>any</type>
-          <value></value>
+          <value/>
         </param>
 
-        <param type="bool" name="parang">
-                <description>Apply parallactic angle correction on the fly</description>
+        <param name="parang" type="bool"><shortdescription>Apply parallactic angle correction on the fly</shortdescription><description>Apply parallactic angle correction on the fly</description>
+                
                 <value>False</value>
         </param>
    
    <constraints>
         <when param="selectdata">
-                <equals type="bool" value="True">
+                <equals value="True" type="bool">
                         <default param="timerange"><value type="string"/></default>
                         <default param="uvrange"><value type="string"/></default>
                         <default param="antenna"><value type="string"/></default>
@@ -181,16 +200,16 @@ Previous calibrations should be applied on the fly.
                         <default param="observation"><value type="string"/></default>
                         <default param="msselect"><value type="string"/></default>
                 </equals>
-                <equals type="bool" value="False"/>
+                <equals value="False" type="bool"/>
         </when>
         <when param="docallib">
-                <equals type="bool" value="False">
+                <equals value="False" type="bool">
                         <default param="gaintable"><value type="stringArray"/></default>
                         <default param="gainfield"><value type="stringArray"/></default>
                         <default param="interp"><value type="stringArray"/></default>
                         <default param="spwmap"><value type="intArray"/></default>
                 </equals>
-                <equals type="bool" value="True">
+                <equals value="True" type="bool">
                         <default param="callib"><value type="string"/></default>
                 </equals>
         </when>
@@ -275,9 +294,9 @@ Previous calibrations should be applied on the fly.
               Options: 'inf' (~infinite), 
                        'int' (per integration)
                        any float or integer value with or without units
-              examples: solint='1min'; solint='60s'; solint=60 --> 1 minute
-                        solint='0s'; solint=0; solint='int' --> per integration
-                        solint-'-1s'; solint='inf' --> ~infinite, up to boundaries
+              examples: solint='1min'; solint='60s'; solint=60 --&gt; 1 minute
+                        solint='0s'; solint=0; solint='int' --&gt; per integration
+                        solint-'-1s'; solint='inf' --&gt; ~infinite, up to boundaries
                         interacts with combine
       combine -- Data axes to combine for solving
               default: '' --&gt; solutions will break at obs, scan, field, and spw
@@ -311,7 +330,7 @@ Previous calibrations should be applied on the fly.
                  or be non-overlapping.
               default: False; overwrite existing table or make new table
       zerorates -- Write a solution table with delay-rates zeroed, for
-      the case of "manual phase calibration".
+      the case of &quot;manual phase calibration&quot;.
                 default: False
 
       globalsolve -- Refine fringefit solutions with global least-squares solver.
@@ -348,7 +367,7 @@ Previous calibrations should be applied on the fly.
                 Specifications for frequency are ignored when the
                 calibration table has no channel-dependence.
                 Time-dependent interp options ending in 'PD' enable a
-                "phase delay" correction per spw for non-channel-dependent
+                &quot;phase delay&quot; correction per spw for non-channel-dependent
                 calibration types.
                 For multi-obsId datasets, 'perobs' can be appended to
                 the time-dependent interpolation specification to
