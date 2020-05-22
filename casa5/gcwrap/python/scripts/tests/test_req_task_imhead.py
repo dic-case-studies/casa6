@@ -24,10 +24,11 @@
 
 try:
     import casatools
-    from casatasks import casalog, imhead, rmtables
+    from casatasks import casalog, imhead, rmtables, immoments
     image = casatools.image
     _qa = casatools.quanta()
     _tb = casatools.table()
+    ctsys_resolve = casatools.ctsys.resolve
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -36,6 +37,12 @@ except ImportError:
     image = iatool
     _qa = qatool()
     _tb = tbtool()
+    def ctsys_resolve(data):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
+        else:
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+
     CASA6 = False
 
 import sys
@@ -45,23 +52,6 @@ import shutil
 import numpy as np
 import re
 
-    #DATA#
-if CASA6:
-    ctsys_resolve = casatools.ctsys.resolve
-else:
-    def ctsys_resolve(data):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
-        else:
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
-    """
-    datapath = 
-
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
-    """
 datapath = ctsys_resolve('image/ngc5921.clean.image')
 logfile = casalog.logfile()
 datacopy = 'clean.image'
@@ -73,6 +63,10 @@ cas5901 = 'CAS-5901.im'
 ncpim = os.path.join('image', 'ncp_proj.im')
 cas6727 = 'CAS-6727.im'
 cas8095 = 'CAS-8095.im'
+myfits = "reorder_in.fits"
+cas8500 = 'CAS-8500.im'
+cas8500mom = 'CAS-8500_mom.im'
+zz = 'zz.im'
 
 expectedKeys = [
     'beammajor', 'beamminor', 'beampa', 'bunit', 'cdelt1', 'cdelt2', 'cdelt3', 'cdelt4',
@@ -101,10 +95,13 @@ class imhead_test(unittest.TestCase):
  
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0, 'Found table left open in cache')
-        for x in [cas4355, datacopy, cas6352, cas5901, ncpim, cas6727, cas8095]:
+        for x in [
+            cas4355, datacopy, cas6352, cas5901, ncpim, cas6727,
+            cas8095, cas8500, cas8500mom, zz
+        ]:
             if os.path.exists(x):
                 rmtables(x)
-        for x in [testlog, newlog]:
+        for x in [testlog, newlog, myfits]:
             if os.path.exists(x):
                 os.remove(x)
  
@@ -626,7 +623,7 @@ class imhead_test(unittest.TestCase):
             }, 'Incorrect median area beam found'
         )
 
-    def test_dict_return(self):
+    def test_summary_dict_return(self):
         """Verify imhead returns a dictionary for mode=summary"""
         myia = image()
         myia.fromshape(cas8095, [1,1,4,3])
@@ -634,10 +631,60 @@ class imhead_test(unittest.TestCase):
         ret = imhead(cas8095, mode="summary")
         self.assertTrue(type(ret) == dict)
 
+    def test_open_fits(self):
+        """Verify running on fits file works"""
+        shutil.copy(ctsys_resolve(os.path.join('image', myfits)), myfits)
+        self.assertTrue(imhead(myfits, mode='list'))
+
+    def test_masked(self):
+        """CAS-8500 test imhead on completely masked image does not segfault"""
+        myia = image()
+        ary = myia.makearray(v=2.5, shape=[2,2,1,2])
+        self.assertTrue(
+            myia.fromarray(outfile=cas8500, pixels=ary, overwrite=True),
+            "Failed to create image from array"
+        )
+        myia.done()
+        # excludepix causes the entire image to be masked
+        immoments(cas8500 ,outfile=cas8500mom, excludepix=[-10,10])
+        self.assertTrue(
+            imhead(cas8500mom, mode='list'),
+            "Failed to run imhead on totally masked image"
+        )
+
+    def test_image_history_writing(self):
+        """verify history is written to image on applicable modes"""
+        myia = image()
+        myia.fromshape(zz, [20, 20]) 
+        myia.done()
+        hdkey = "mykey"
+        for mode in ["add", "put", "del"]:
+            if mode == "add":
+                hdvalue = "Jy/beam"
+            elif mode == "put":
+                hdvalue = "K"
+            else:
+                hdvalue = "" 
+            self.assertTrue(
+                imhead(zz, mode=mode, hdkey=hdkey, hdvalue=hdvalue),
+                'Failed to run imhead mode=' + mode
+            )
+            myia.open(zz)
+            msgs = myia.history()
+            myia.done()
+            teststr = "version"
+            self.assertTrue(
+                teststr in msgs[-2],
+                "'" + teststr + "' not found in image history."
+            )
+            teststr = 'mode="' + mode + '"'
+            self.assertTrue(
+                teststr in msgs[-1],
+                "'" + teststr + "' not found in image history."
+            )    
 
 def suite():
     return[imhead_test]
  
-# Main #
 if __name__ == '__main__':
     unittest.main()
