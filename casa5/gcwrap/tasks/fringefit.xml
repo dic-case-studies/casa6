@@ -11,7 +11,7 @@ Previous calibrations should be applied on the fly.
 
 </description>
 <input>
-  <param mustexist="true" name="vis" type="path">
+  <param mustexist="true" name="vis" type="string">
     <shortdescription>Name of input visibility file</shortdescription>
     <description>Name of input visibility file
     Default: none
