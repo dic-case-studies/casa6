@@ -264,16 +264,16 @@ Previous calibrations should be applied on the fly.
     <value>100</value>
   </param>
 
-  <param name="delaywindow" type="doubleVec">
+  <param name="delaywindow" type="doubleArray">
     <shortdescription>Constrain FFT delay search to a window</shortdescription>
     <description>Constrain FFT delay search to a window specified as a two-element list with units of nanoseconds
     Default: [None, None]
     Examples: [-10, 10]
     </description>
-    <value/>
+    <value type="vector"/>
   </param>
 
-  <param name="ratewindow" type="doubleVec">
+  <param name="ratewindow" type="doubleArray">
     <shortdescription>Constrain FFT rate search to a window</shortdescription>
     <description>Constrain FFT rate search to a window specified as a two-element list with units of seconds per second
       Default: [None, None]
@@ -317,7 +317,7 @@ Previous calibrations should be applied on the fly.
     <value type="string"/>
   </param>
 
-  <param subparam="true" name="gaintable" type="stringVec">
+  <param subparam="true" name="gaintable" type="stringArray">
     <shortdescription>Gain calibration table(s) to apply on the fly</shortdescription>
     <description>Gain calibration table(s) to apply on the fly
     Default: '' (none)
@@ -329,7 +329,7 @@ Previous calibrations should be applied on the fly.
     <value/>
   </param>
 
-  <param subparam="true" name="gainfield" type="stringVec">
+  <param subparam="true" name="gainfield" type="stringArray">
     <shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription>
     <description>Select a subset of calibrators from gaintable(s)
     Default: '' (all sources on the sky)
@@ -347,7 +347,7 @@ Previous calibrations should be applied on the fly.
     <value/>
   </param>
 
-  <param subparam="true" name="interp" type="stringVec">
+  <param subparam="true" name="interp" type="stringArray">
     <shortdescription>Temporal interpolation for each gaintable (''=linear)</shortdescription>
     <description>Interpolation parameters (in time[,freq]) for each gaintable, as a list of strings.
     Default: '' --&gt; 'linear,linear' for all gaintable(s)
@@ -393,7 +393,7 @@ Previous calibrations should be applied on the fly.
     <value/>
   </param>
 
-  <param subparam="true" name="spwmap" type="intVec">
+  <param subparam="true" name="spwmap" type="intArray">
     <shortdescription>Spectral windows combinations to form for gaintables(s)</shortdescription>
     <description>Spectral windows combinations to form for gaintables(s)
     Subparameter of callib=False
@@ -411,7 +411,7 @@ Previous calibrations should be applied on the fly.
     <value/>
   </param>
 
-  <param subparam="true" name="paramactive" type="boolVec">
+  <param subparam="true" name="paramactive" type="boolArray">
     <shortdescription>Control which parameters are solved for</shortdescription>
     <description>Control which parameters are solved for; a vector of (exactly) three booleans for delay, delay-rate and dispersive delay (in that order)</description>
     Default: [True, True, False]
@@ -453,10 +453,10 @@ Previous calibrations should be applied on the fly.
         </when>
         <when param="docallib">
                 <equals value="False" type="bool">
-                        <default param="gaintable"><value type="stringVec"/></default>
-                        <default param="gainfield"><value type="stringVec"/></default>
-                        <default param="interp"><value type="stringVec"/></default>
-                        <default param="spwmap"><value type="intVec"/></default>
+                        <default param="gaintable"><value type="stringArray"/></default>
+                        <default param="gainfield"><value type="stringArray"/></default>
+                        <default param="interp"><value type="stringArray"/></default>
+                        <default param="spwmap"><value type="intArray"/></default>
                 </equals>
                 <equals value="True" type="bool">
                         <default param="callib"><value type="string"/></default>
