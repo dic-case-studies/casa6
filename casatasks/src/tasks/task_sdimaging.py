@@ -486,6 +486,11 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         csys.done()
         my_ia.close()
 
+        # CAS-12984 set brightness unit for weight image to ''
+        my_ia.open(weightfile)
+        my_ia.setbrightnessunit('')
+        my_ia.close()
+
         # Mask image pixels whose weight are smaller than minweight.
         # Weight image should have 0 weight for pixels below < minweight
         casalog.post("Start masking the map using minweight = %f" % \
