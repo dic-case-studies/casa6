@@ -185,11 +185,10 @@ Previous calibrations should be applied on the fly.
           <value/>
         </param>
 
-        <param name="parang" type="bool"><shortdescription>Apply parallactic angle correction on the fly</shortdescription><description>Apply parallactic angle correction on the fly</description>
-                
-                <value>False</value>
-        </param>
-   
+        <param name="parang" type="bool"><shortdescription>Apply
+        parallactic angle correction on the fly</shortdescription>
+        <description>Apply parallactic angle correction on the fly.
+        
     Write a solution table with delay-rates zeroed, for the case of
     &quot;manual phase calibration&quot;, so that the calibration table can be
     applied to the full dataset without the extrapolation of a non-zero delay-rate term
