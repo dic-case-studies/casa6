@@ -34,6 +34,7 @@
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
 #include <measures/Measures/Stokes.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <map>
 #include <vector>
@@ -41,21 +42,17 @@
 //Forward declarations
 namespace casacore{
 
-template <typename T> class Array;
-template <typename T> class Block;
-template <typename T> class Cube;
-template <typename T> class Matrix;
 class MDirection;
 class MeasurementSet;
 class MEpoch;
 class MPosition;
 class MSDerivedValues;
 class RecordInterface;
-template <typename T, Int n> class RigidVector;
+
 class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
-template <typename T> class Vector;
+
 class MSAntennaColumns;
 class MSDataDescColumns;
 class MSFeedColumns;
