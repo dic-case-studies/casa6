@@ -18,7 +18,7 @@
 
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Arrays/Vector.h>
-#include <casacore/casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casacore/casa/Quanta/Quantum.h>
 #include <casacore/casa/Quanta/QuantumHolder.h>
 #include <casacore/casa/Utilities/Assert.h>

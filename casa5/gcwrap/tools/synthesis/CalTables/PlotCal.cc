@@ -39,12 +39,12 @@
 #include <casa/BasicSL/Complex.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/Cube.h>
 #include <casa/Arrays/MaskedArray.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayLogical.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Containers/Record.h>
 #include <casa/Utilities/Assert.h>
 #include <casa/Utilities/GenSort.h>

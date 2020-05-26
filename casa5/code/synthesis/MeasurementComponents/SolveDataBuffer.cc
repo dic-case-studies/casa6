@@ -31,7 +31,7 @@
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayPartMath.h>
 #include <casa/Arrays/MaskArrMath.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/iomanip.h>
 #include <casa/Exceptions/Error.h>
 #include <casa/Containers/Block.h>
