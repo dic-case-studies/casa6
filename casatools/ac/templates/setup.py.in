@@ -1226,7 +1226,14 @@ class casa_build_ext(build_ext):
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-
+        
+        if relwithdebinfo_build():
+           print("Extracting debug symbols")
+           if not os.path.exists('./debugsymbols'):
+                os.makedirs('./debugsymbols')
+           result = subprocess.run(['perl', 'scripts/extract_symbols.pl', 'ws=./debugsymbols', 'binaries=./build', 'version='+casatools_version ], stdout=subprocess.PIPE)
+           print(result.stdout.decode('utf-8'))
+        
 
 
 class casa_test(Command):
