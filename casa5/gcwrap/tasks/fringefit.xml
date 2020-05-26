@@ -193,7 +193,7 @@ Previous calibrations should be applied on the fly.
     &quot;manual phase calibration&quot;, so that the calibration table can be
     applied to the full dataset without the extrapolation of a non-zero delay-rate term
     affecting the data
-    </description>
+    </description> 
     <value>False</value>
   </param>
 
