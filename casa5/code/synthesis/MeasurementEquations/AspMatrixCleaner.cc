@@ -85,8 +85,11 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsPrevLBFGSGrad(0.0),
   itsNumIterNoGoodAspen(0),
   itsPsfWidth(0.0),
-  itsUseZhang(true),
-  itsSwitchedToHogbom(false)
+  itsUseZhang(false),
+  itsSwitchedToHogbom(false),
+  itsNumIterPassed(0),
+  itsNumHogbomIter(0),
+  itsNthHogbom(0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -560,7 +563,17 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // there is no need to do the following Aspen update
     //if (nScalesToClean == 1)
     if (itsSwitchedToHogbom && itsNscales == 1)
+    {
+      if (itsNumHogbomIter == 0)
+      {
+        itsSwitchedToHogbom = false;
+        cout << "switched back to Asp." << endl;
+      }
+      else
+        itsNumHogbomIter -= 1;
+
       continue;
+    }
 
     //genie Now update the actual residual image
     // At this point, itsDirty is not updated. Only itsDirtyConvScales is updated.
@@ -990,7 +1003,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 }
 
 
-bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Float threshold)
+/*bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Float threshold)
 {
   const int nX = itsDirty->shape()(0);
   const int nY = itsDirty->shape()(1);
@@ -1057,9 +1070,70 @@ bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Flo
   }
 
   return false;
+}*/
+
+Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
+{
+  const int nX = itsDirty->shape()(0);
+  const int nY = itsDirty->shape()(1);
+
+  Matrix<Float> Asp(nX, nY);
+  Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+    {
+      int px = i - nX/2;
+      int py = j - nY/2;
+      Asp(i,j) = gbeam(px, py);
+    }
+  }
+
+  // gradient. 0: amplitude; 1: scale
+  // generate derivative of amplitude
+  Matrix<Float> GradAmp(nX, nY);
+  Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+    {
+      int px = i - nX/2;
+      int py = j - nY/2;
+      GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+    }
+  }
+  Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
+
+  // generate derivative of scale
+  Matrix<Float> GradScale(nX, nY);
+  for (int j = 0; j < nY; ++j)
+  {
+    for(int i = 0; i < nX; ++i)
+      GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
+  }
+  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);
+
+  // calculate the length of the direvative vector
+  Float lenDirVec = 0.0;
+  for (int j = 0; j < Grad0.shape()(1); ++j)
+  {
+    for(int i = 0; i < Grad0.shape()(0); ++i)
+    {
+      lenDirVec += sqrt(pow(Grad0(i,j), 2));
+    }
+  }
+
+  for (int j = 0; j < Grad1.shape()(1); ++j)
+  {
+    for(int i = 0; i < Grad1.shape()(0); ++i)
+    {
+      lenDirVec += sqrt(pow(Grad1(i,j), 2));
+    }
+  }
+
+  return lenDirVec;
 
 }
-
 
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
 {
@@ -1071,12 +1145,28 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   // if there is no "good" aspen put into the active-set
   // for more than 10 consecutive iterations, we switch
   // from Asp to hogbom
-  if (itsNumIterNoGoodAspen  > 10)
+  /*if (itsNumIterNoGoodAspen  > 10)
   {
     cout << "Switch to hogbom." << endl;
     itsSwitchedToHogbom = true;
     return {};
+  }*/
+  if (itsSwitchedToHogbom)
+    return {};
+
+  if (!itsSwitchedToHogbom && itsNumIterNoGoodAspen >= 5 && itsNumIterPassed >= 10)
+  {
+    cout << "Switch to hogbom." << endl;
+    itsSwitchedToHogbom = true;
+    itsNthHogbom += 1;
+    itsNumIterPassed = 0;
+    itsNumIterNoGoodAspen = 0;
+    itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
+    cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
+    return {};
   }
+
+  itsNumIterPassed ++;
 
   // Dirty * initial scales
   Matrix<Complex> dirtyFT;
@@ -1107,7 +1197,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   // initial scale size = 0 gives the peak res, so we don't
   // need to do the LBFGS optimization for it
   if (optimumScale == 0)
+  {
+    itsNumIterNoGoodAspen += 1; //genie Zhang 2018 fused-Asp approach
     return itsAspScaleSizes;
+  }
   else
   {
     //genie:
@@ -1148,13 +1241,13 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
         resArea += abs((*itsDirty)(i,j));
     }
     //const Float lamda = 2e4; //M31
-    const Float lamda = 7.65e-1; //G55
+    //const Float lamda = 13020.0; //G55 laptop
     //const Float lamda = 1.5; //G55
-    const Float threshold = lamda * resArea;
+    //const Float threshold = lamda * resArea;
     vector<Float> tempx;
     vector<IPosition> activeSetCenter;
 
-    bool hasGoodAspen = false;
+    /*bool hasGoodAspen = false;
     for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
     {
       //cout << "scale " << i << " heuristic: " << endl;
@@ -1175,7 +1268,39 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     if (hasGoodAspen)
       itsNumIterNoGoodAspen = 0;
     else
-      itsNumIterNoGoodAspen += 1;
+      itsNumIterNoGoodAspen += 1;*/
+    // New way to determine good aspen without the use of threshold
+    // i.e. pick the top 5 apsen that has the highest length of derivatives
+    vector<pair<Float,int>> vp; //(LenDev, idx)
+    for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+    {
+      vp.push_back({isGoodAspen(itsAspAmplitude[i], itsAspScaleSizes[i], itsAspCenter[i]), i});
+      //cout << "push back to vp[" << i << "] = " << vp[i].first << " " << vp[i].second << endl;
+    }
+    sort(vp.begin(),vp.end(), [](const pair<Float,int> &l, const pair<Float,int> &r) {return l.first > r.first;});
+    //cout << "vp size " << vp.size() << endl;
+
+    // select the top 5
+    vector<int> goodvp;
+    for (unsigned int i = 0; i < vp.size(); i++)
+    {
+      if (i >= 5)
+        break;
+      goodvp.push_back(vp[i].second);
+      //cout << "Select aspen " << vp[i].second << endl;
+    }
+    sort(goodvp.begin(), goodvp.end(), [](const int &l, const int &r) {return l > r;});
+
+    for (unsigned int i = 0; i < goodvp.size(); i++)
+    {
+      tempx.push_back(itsAspAmplitude[goodvp[i]]);
+      tempx.push_back(itsAspScaleSizes[goodvp[i]]);
+      activeSetCenter.push_back(itsAspCenter[goodvp[i]]);
+      //cout << "temp erase aspen " << goodvp[i] << endl;
+      itsAspAmplitude.erase(itsAspAmplitude.begin() + goodvp[i]);
+      itsAspScaleSizes.erase(itsAspScaleSizes.begin() + goodvp[i]);
+      itsAspCenter.erase(itsAspCenter.begin() + goodvp[i]);
+    }
 
     //
     //unsigned int length = (itsAspScaleSizes.size() + 1) * 2;  //genie recon
@@ -1192,12 +1317,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //tempx.push_back(strengthOptimum);
     //tempx.push_back(itsInitScaleSizes[optimumScale]);
     //itsAspCenter.push_back(positionOptimum);
-
-
-    //if (itsUseZhang)
-    //AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
-    //else
-    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
 
     for (unsigned int i = 0; i < length; i++)
       x[i] = tempx[i]; //Eigen::VectorXd needs to be assigned in this way
@@ -1219,8 +1338,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE; genie: doesn't work
     LBFGSSolver<double> solver(param);
 
-    //AspObjFunc fun(*itsDirty, *itsXfr, itsAspCenter);
-    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter);
+    //if (itsUseZhang)
+    //AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
+    //else
+    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
 
     double fx;
     double gclip;

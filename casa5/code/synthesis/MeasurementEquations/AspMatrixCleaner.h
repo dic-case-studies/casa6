@@ -74,7 +74,8 @@ public:
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
-  bool isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center, casacore::Float threshold);
+  //bool isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center, casacore::Float threshold);
+  casacore::Float isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center);
 
   std::vector<casacore::Float> getActiveSetAspen();
 
@@ -145,6 +146,9 @@ private:
   float itsPsfWidth;
   bool itsUseZhang;
   bool itsSwitchedToHogbom;
+  unsigned int itsNumIterPassed;
+  unsigned int itsNumHogbomIter;
+  unsigned int itsNthHogbom;
 };
 
 } //# NAMESPACE CASA - END
