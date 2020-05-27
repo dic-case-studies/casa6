@@ -1349,6 +1349,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         imsize = [shape[0], shape[1]]
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
         self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
         self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
