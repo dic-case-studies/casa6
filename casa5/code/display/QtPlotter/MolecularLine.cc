@@ -28,7 +28,7 @@
 #include <QPainter>
 #include <QTextDocument>
 #include <QTextStream>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_scale_map.h>
 
 using namespace casacore;
 namespace casa {

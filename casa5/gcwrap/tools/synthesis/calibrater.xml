@@ -2813,6 +2813,34 @@ TBD
 </method>
 
 
+<method type="function" name="setcorrdepflags">
+   <shortdescription>Control use of correlation-dependent flags</shortdescription>
+   
+<input>
+     <param type="bool" direction="in" name="corrdepflags">
+     <description>Turn correlation dependent flags on/off (true/false)</description>
+     </param>
+</input>
+
+<returns type="bool">
+   <description>
+   </description>
+</returns>
+
+<description>
+
+TBD
+
+</description>
+
+<example>
+
+TBD
+
+</example>
+</method>
+
+
 
 <method type="function" name="setvi">
 <shortdescription>TEMPORARY method to control use of new VI2 regime</shortdescription>

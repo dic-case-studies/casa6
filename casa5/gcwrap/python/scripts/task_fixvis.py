@@ -60,6 +60,16 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
           will set the phase center for field '0925+0512' to the given direction and recalculate
           the UVW coordinates.
     """
+
+    # Note: this is duplicated in task_cvel, and really needing CASA-wide harmonization
+    # (CAS-12871)
+    def copy_ms(src, dest):
+        """ This is a MMS-safe copy of an MMS tree directory.
+        :param src: path to the source MS
+        :param dest: path to the destination MS
+        """
+        shutil.copytree(src, dest, symlinks=True)
+
     casalog.origin('fixvis')
     retval = True
     try:
@@ -68,8 +78,9 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
             outputvis = vis
         else:
             casalog.post('Copying original MS to outputvis ...', 'NORMAL')
+
             shutil.rmtree(outputvis, ignore_errors=True)
-            shutil.copytree(vis, outputvis)
+            copy_ms(vis, outputvis)
 
         if is_CASA6:
             tbt = table( )

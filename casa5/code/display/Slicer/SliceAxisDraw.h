@@ -26,8 +26,8 @@
 #ifndef SLICEAXISDRAW_H_
 #define SLICEAXISDRAW_H_
 
-#include <qwt_scale_draw.h>
-#include <qwt_text.h>
+#include <qwt/qwt_scale_draw.h>
+#include <qwt/qwt_text.h>
 
 namespace casa {
 

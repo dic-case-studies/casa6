@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <casa/Arrays/Vector.h>
-#include <display/QtViewer/ColorTransferWidget.ui.h>
+#include <ui/ui_ColorTransferWidget.h>
 
 class QwtPlot;
 class QwtPlotCurve;

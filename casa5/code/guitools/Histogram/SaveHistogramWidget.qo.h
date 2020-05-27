@@ -26,7 +26,7 @@
 #define SAVEHISTOGRAMWIDGET_QO_H
 
 #include <QDialog>
-#include <guitools/Histogram/SaveHistogramWidget.ui.h>
+#include <ui/ui_SaveHistogramWidget.h>
 
 class QFileSystemModel;
 

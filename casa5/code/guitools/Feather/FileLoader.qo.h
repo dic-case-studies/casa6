@@ -26,7 +26,7 @@
 #define FILELOADER_QO_H
 
 #include <QDialog>
-#include <guitools/Feather/FileLoader.ui.h>
+#include "ui/ui_FileLoader.h"
 
 class QFileSystemModel;
 class QKeyEvent;

@@ -600,6 +600,7 @@ class mstool_test_transform(mstool_test_base):
         self.assertAlmostEqual(centers[30], 1414142124.5500255)
         print
 
+    """
     def test_statwt(self): 
         """test ms.statwt"""
         self.ms.close()
@@ -615,7 +616,7 @@ class mstool_test_transform(mstool_test_base):
         self.assertAlmostEqual(rec['weight'][0][0], .0101575451)
         self.assertAlmostEqual(rec['sigma'][0][0], 9.9221458)
         print
-
+    """
     def test_continuum_uv_cont_sub(self): 
         """test ms.continuumsub, uvsub, contsub"""
         # Make writable ms

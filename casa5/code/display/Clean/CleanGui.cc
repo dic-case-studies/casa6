@@ -77,7 +77,7 @@ namespace casa {
     };
 }
 #endif
-#include <display/Clean/ConfirmStop.ui.h>
+#include <ui/ui_ConfirmStop.h>
 #include <display/Clean/CleanGui.qo.h>
 #include <iostream>
 #include <iomanip>
