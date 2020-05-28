@@ -3024,8 +3024,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   mode=mode, nchan=nchan, start=start, width=width,
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=True)
-        self._checkfile(self.outfile)
-        self._check_weight_image(self.outfile)
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
         if is_clip_effective == True:
             # pre-flag the data to be clipped
@@ -3110,8 +3110,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   mode=mode, nchan=nchan, start=start, width=width,
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=False)
-        self._checkfile(self.outfile_ref)
-        self._check_weight_image(self.outfile_ref)
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
         # compare
         myia = image()
