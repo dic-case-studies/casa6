@@ -276,7 +276,7 @@ Previous calibrations should be applied on the fly.
           <value/>
         </param>
 
-  <param subparam="true" name="paramactive" type="boolArray">
+  <param name="paramactive" type="boolArray">
     <shortdescription>Control which parameters are solved for</shortdescription>
     <description>Control which parameters are solved for; a vector of (exactly) three booleans for delay, delay-rate and dispersive delay (in that order)</description>
     Default: [True, True, False]
@@ -287,22 +287,17 @@ Previous calibrations should be applied on the fly.
     [False, True, False] solves only for delay-rates
 
     It is not possible to turn off solution for the phase offset
-    ("secular phase").  The choice of parameters is used in the
+    (secular phase).  The choice of parameters is used in the
     least-squares solver; it does not affect the operation of the FFT
     stage, although it will affect the results in the calibration table
     if the globalsolve option is set to False.
     <value/>
   </param>
 
-    <param name="parang" type="bool"><shortdescription>Apply
-        parallactic angle correction on the fly</shortdescription>
+    <param name="parang" type="bool">
+      <shortdescription>Apply parallactic angle correction on the fly</shortdescription>
         <description>Apply parallactic angle correction on the fly.
-        
-    Write a solution table with delay-rates zeroed, for the case of
-    &quot;manual phase calibration&quot;, so that the calibration table can be
-    applied to the full dataset without the extrapolation of a non-zero delay-rate term
-    affecting the data
-    </description> 
+            </description> 
     <value>False</value>
   </param>
 
