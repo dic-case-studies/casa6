@@ -190,7 +190,6 @@ class sdimaging_unittest_base(unittest.TestCase):
             self.assertTrue(kw in misc, 'Miscinfo should have %s' % kw)
 
     def _check_weight_image(self, imagename):
-        print('Examining weight image...')
         # weight image name is imagename + '.weight'
         weight_image = imagename.rstrip('/') + '.weight'
 

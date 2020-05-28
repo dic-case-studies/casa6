@@ -214,7 +214,6 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
                          msg='output file %s was not created because of the task failure'%(name))
 
     def _check_weight_image(self, imagename):
-        print('Examining weight image...')
         # weight image name is imagename + '.weight'
         weight_image = os.path.splitext(imagename.rstrip('/'))[0] + '.weight'
 
