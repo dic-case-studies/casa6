@@ -134,10 +134,11 @@ void CubeMinorCycleAlgorithm::task(){
 	    Int automaskflag=iterBotRec_p.asInt("onlyautomask");
 	    if(automaskflag==1)
 	      doDeconv=False;
-	    //cerr << "ITERDONE " << iterBotRec_p.asInt("iterdone")<< endl;
+	    //cerr << "ITERDONE " << iterBotRec_p.asInt("iterdone")<< " itermask flag " << automaskflag << endl;
 	    subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
 	    if(automaskflag !=0){
-	      subDeconv.setPosMask(subimstor->tempworkimage());
+	      //this is already sent in as part of subimstor
+	      //subDeconv.setPosMask(subimstor->tempworkimage());
 	      subDeconv.setAutoMask();
 	      
 	      Record resRec=subDeconv.initMinorCycle(subimstor);
@@ -159,7 +160,7 @@ void CubeMinorCycleAlgorithm::task(){
 		if(peakresidual < cyclethreshold)
 		  writeBackAutomask=False;
 		//cerr << "chanRange " << chanRange_p << endl;
-		//cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << endl;
+		//cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << " nomask " << peakresidualnomask << endl;
 	      }
 	     
 	    }
@@ -177,7 +178,10 @@ void CubeMinorCycleAlgorithm::task(){
           chanFlag_p=subDeconv.getChanFlag();
 	  statsRec_p=Record();
 	  statsRec_p=subDeconv.getRobustStats();
-          writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
+	  if(doDeconv){
+	    writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
+
+	  }
           if(autoMaskOn_p && writeBackAutomask){
             writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
             writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));

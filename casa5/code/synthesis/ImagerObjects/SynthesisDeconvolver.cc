@@ -415,8 +415,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         if(!itsPosMask){
           //itsPosMask = TempImage<Float> (maskshp, itsImages->mask()->coordinates(),SDMaskHandler::memoryToUse());
           itsPosMask=itsImages->tempworkimage();
-          itsPosMask->set(0);
-          itsPosMask->unlock();
+	  //you don't want to modify this here...
+	  //It is set to 0.0 in SIImageStore first time it is created.
+          //itsPosMask->set(0);
+          //itsPosMask->unlock();
         }
       }
       os<<LogIO::DEBUG1<<"itsChanFlag.shape="<<itsChanFlag.shape()<<LogIO::POST;
@@ -558,7 +560,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Record returnRecord;
     try {
       //      if ( !itsIsInteractive ) setAutoMask();
-      
+      //cerr << "MINORCYCLE control Rec " << minorCycleControlRec << endl;
       itsLoopController.setCycleControls(minorCycleControlRec);
       bool automaskon (false);
       if (itsAutoMaskAlgorithm=="multithresh") {
@@ -1084,7 +1086,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        //os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;
        
        //os << "itsMinPercentChnage = " << itsMinPercentChange<< LogIO::POST;
-
+       //cerr << "SUMa of chanFlag before " << ntrue(itsChanFlag) << endl;
        if ( itsPBMask > 0.0 ) {
          //itsMaskHandler->autoMaskWithinPB( itsImages, itsPosMask, itsIterDone, itsChanFlag, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust,  itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold,itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached, itsPBMask);
          //pass robust stats
@@ -1096,6 +1098,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         itsMaskHandler->autoMask( itsImages, *itsPosMask, itsIterDone, itsChanFlag, itsRobustStats, itsAutoMaskAlgorithm, itsMaskThreshold, itsFracOfPeak, itsMaskResolution, itsMaskResByBeam, itsNMask, itsAutoAdjust, itsSidelobeThreshold, itsNoiseThreshold, itsLowNoiseThreshold, itsNegativeThreshold, itsCutThreshold, itsSmoothFactor, itsMinBeamFrac, itsGrowIterations, itsDoGrowPrune, itsMinPercentChange, itsVerbose, itsFastNoise, isThresholdReached );
        }
        //cerr <<this << " SETAutoMask " << itsRobustStats << endl;
+       //cerr << "SUM of chanFlag AFTER " << ntrue(itsChanFlag) << endl;
      }
   }
 
@@ -1147,7 +1150,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
   }
   void SynthesisDeconvolver::setPosMask(std::shared_ptr<ImageInterface<Float> > posmask){
-    itsPosMask=posmask;
+    itsPosMask=posmask;									      
+									      
   }
 
   auto key2Mat = [](const Record& rec, const String& key, const Int npol) {

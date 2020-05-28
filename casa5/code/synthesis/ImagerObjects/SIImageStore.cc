@@ -1176,6 +1176,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::tempworkimage(uInt /*term*/){
     if(itsTempWorkIm) return itsTempWorkIm;
     itsTempWorkIm.reset(new PagedImage<Float>(itsImageShape, itsCoordSys, itsImageName+ ".work.temp"));
+    static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->set(0.0);
     static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->table().markForDelete();
     return itsTempWorkIm;
   }
@@ -2876,7 +2877,7 @@ Float SIImageStore::getPeakResidual()
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
-    // Float minresmask, maxresmask, minres, maxres;
+    //Float minresmask, maxresmask, minres, maxres;
     //findMinMax( residual()->get(), mask()->get(), minres, maxres, minresmask, maxresmask );
 
     ArrayLattice<Bool> pixelmask(residual()->getMask());
