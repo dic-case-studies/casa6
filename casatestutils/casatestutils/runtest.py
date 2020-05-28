@@ -42,7 +42,7 @@ try:
 except ImportError:
     HAVE_ROBOT = False
 
-#### PYTEST IMPORT 
+#### PYTEST IMPORT
 HAVE_PYTEST = True
 try:
     import pytest
@@ -61,7 +61,7 @@ CASA6 = False
 HAVE_CASA6 = False
 try:
     import casatools
-    from casatasks import applycal, casalog
+    import casatasks
     CASA6 = True
     IS_CASA6 = True
     HAVE_CASA6 = True
@@ -76,7 +76,7 @@ if not IS_CASA6:
     from testwrapper import UnitTest
     
 
-# Use Nose attribute Functionality 
+# Use Nose attribute Functionality
 RUN_SUBTEST = False
 
 # Dry run of Tests
@@ -85,7 +85,122 @@ DRY_RUN = False
 # Define which tests to run
 whichtests = 0
 
-###### 
+######
+def main(testnames, verbose = True, DRY_RUN = False):
+    if IS_CASA6:
+        #sys.path.append(os.path.abspath(os.path.basename(__file__)))
+        if HAVE_PYTEST:
+            cwd = os.getcwd() + "/"
+            workpath = os.getcwd() +"/nosedir/"
+            workdir = os.getcwd() +"/nosedir/"
+
+            clean_working_directory(workpath)
+            # Copy Tests to Working Directory
+            os.makedirs(workdir)
+            print("Tests: {}".format(testnames))
+            gittest = True
+
+            
+            for testname in testnames:
+                nonlocalTest = False
+                cmd = []
+                if testname.startswith("../") or testname.startswith("/"):
+                    try:
+                        real_path = os.path.realpath(testname)
+                        testname = testname.split("/")[-1]
+                        nonlocalTest = True
+                    except:
+                        traceback.print_exc()
+                        
+                # Copy Test To nosedir Directory if in cwd
+                if testname.startswith("test"):
+                    test = testname
+                    # Check if specific tests are requested
+                    if "[" and "]" in test:
+                        testname = getname(test)
+                        tests = gettests(test)
+                        #print(testname)
+                        #print(tests)
+
+                        teststring = ""
+                        #print(len(tests))
+                        if len(tests) == 1:
+                            teststring = tests[0]
+                        elif len(tests) > 1:
+                            print(tests)
+                            teststring = " or ".join(tests)
+                        #workdir = os.getcwd() +"/workdir/nosedir/{}/".format(testname)
+                        #os.makedirs(workdir)
+                        #cmd = [ workdir ]
+                        #cmd = [ ".".join([testname,'py']), "-k {}".format(teststring)]
+                        cmd = ["-k {}".format(teststring)] + cmd
+                        test = testname
+                        
+                    # Set up Test Working Directory
+                    if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
+                        print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                        os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
+                        
+
+                        
+                    # Check to see if tests need to be pulled from git. Only needs to be done once
+                    if not test.endswith(".py") and gittest == True:
+                        print("Fetching Tests From Git Since No Local Test is Given")
+                        git_fetch_casa_tests( workpath + 'casa6')
+                        os.makedirs(workdir + "tests/")
+                        gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                        gittest = False
+                        
+                    if test.endswith(".py"):
+                        
+                        try:
+                            if nonlocalTest:
+                                if "[" in real_path:
+                                    real_path = real_path.split("[")[0]
+                                print("Copying: {} to {}".format(real_path, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                                shutil.copy2(real_path, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                            else:
+                                print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                                shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        except:
+                            traceback.print_exc()
+                    else:
+                        try:
+                            print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                            shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        except:
+                            traceback.print_exc()
+                            
+                    if verbose:
+                        cmd = ["--verbose"] + cmd
+
+
+                    if DRY_RUN:
+                        cmd = ["--collect-only"] + cmd
+                    
+                    if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
+                        os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
+                    xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
+
+                    #########
+                    #============================================================ warnings summary =====================================================
+                    # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436
+                    # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436:
+                    # PytestDeprecationWarning: The 'junit_family' # default value will change to 'xunit2' in pytest 6.0.
+                    # Add 'junit_family=xunit1' to your pytest.ini file to keep the current format in future versions of pytest and silence thiswarning.
+                    #  _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
+                    #########
+                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + cmd
+                    #print("Running Command: pytest {}".format(cmd))
+                    #print("Work Path: {}".format(workpath))
+                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
+                        print("No Tests to Run")
+                        sys.exit()
+                    else:
+                        print("Running Command: pytest {}".format(cmd))
+                        pytest.main(cmd)
+                        
 def readfile(FILE):
     # It will skip lines that contain '#' and
     # it will only read words starting with test
@@ -110,11 +225,12 @@ def list_tests():
     print('Full list of unit tests')
     print('-----------------------')
     if IS_CASA6:
-        git_fetch_casa_tests(os.getcwd() +"/workdir/casa6")
-        gather_all_tests(os.getcwd() +"/workdir/casa6",os.getcwd() +"/workdir/")
-        tests = sorted(os.listdir(os.getcwd() +"/workdir/"))
+        git_fetch_casa_tests(os.getcwd() +"/testlist/casa6")
+        gather_all_tests(os.getcwd() +"/testlist/casa6",os.getcwd() +"/testlist/")
+        tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
         for test in tests:
-            print(test)
+            if test.startswith("test"):
+                print(test)
     else:
         for t in readfile(LISTofTESTS):
             print(t)
@@ -136,6 +252,7 @@ def git_fetch_casa_tests(path):
     subprocess.call(["git","config","core.sparseCheckout","true"])
 
     print("casatasks/tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    
     print("casatools/tests/tools/agentflagger", file=open(".git/info/sparse-checkout", "a"))
     print("casatools/tests/tools/calanalysis", file=open(".git/info/sparse-checkout", "a"))
     print("casatools/tests/tools/componentlist", file=open(".git/info/sparse-checkout", "a"))
@@ -148,6 +265,12 @@ def git_fetch_casa_tests(path):
     print("casatools/tests/tools/regionmanager", file=open(".git/info/sparse-checkout", "a"))
     print("casatools/tests/tools/sdm", file=open(".git/info/sparse-checkout", "a"))
     print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
+
+    print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
 
     subprocess.call(["git","pull","--quiet","origin","master"])
     os.chdir(cwd)
@@ -176,7 +299,7 @@ def print_test_classes(testnames):
     for test in testnames:
         if verbose:
             pytest.main(["--collect-only", "-q", "-v", test])
-        else: 
+        else:
             pytest.main(["--collect-only", test])
 
 def clean_working_directory(workdir):
