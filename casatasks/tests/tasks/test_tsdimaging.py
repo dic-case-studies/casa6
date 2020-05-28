@@ -3628,7 +3628,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.task_param.update(dict(projection=projection, spw=spw))
         msg = 'unallowed'
         self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
-        self.assertFalse(os.path.exists(self.outfile))
+        outfile = self.task_param['outfile'].rstrip('/') + '.image'
+        self.assertFalse(os.path.exists(outfile))
 
     def test_projection_SIN(self):
         """test_projection_SIN: create image with SIN (Slant Orthographic) projection"""
