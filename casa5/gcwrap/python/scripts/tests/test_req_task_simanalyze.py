@@ -154,7 +154,7 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
         """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
         if not is_CASA6: # needs similar branch condition for casalith
             default(simobserve)
-            default(tclean
+            default(tclean)
             default(simanalyze)
 
         # create reference image > 2.5*PB to use for SD sim
