@@ -909,11 +909,16 @@ def get_use_grpc():
 
 def get_fortran_compiler_flags(ext):
     arch = platform.architecture()[0].lower()
-    debflag = "-g"
     if (ext == ".f90"):
-        cc_args = [debflag, "-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+        cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
     if (ext == ".f"):
-        cc_args = [debflag, "-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
+   
+    
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
