@@ -344,11 +344,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         # gridfunction
 
         # outfile
-        if os.path.exists(self.outfile) and self.overwrite:
-            os.system('rm -rf %s'%(self.outfile))
-        if os.path.exists(self.outfile+'.weight') and self.overwrite:
-            os.system('rm -rf %s'%(self.outfile+'.weight'))
-
 
         # cell
         cell = self.cell
@@ -548,6 +543,12 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
     def execute(self):
         # imaging
         casalog.post("Start imaging...", "INFO")
+
+        # remove existing images if overwrite is True
+        if os.path.exists(self.outfile) and self.overwrite:
+            os.system('rm -rf %s'%(self.outfile))
+        if os.path.exists(self.outfile+'.weight') and self.overwrite:
+            os.system('rm -rf %s'%(self.outfile+'.weight'))
 
         # configure image
         #self.configure_image()
