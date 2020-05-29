@@ -88,8 +88,14 @@ Previous calibrations should be applied on the fly.
                 <value>3.0</value>
         </param>
 
-        <param name="zerorates" type="bool"><shortdescription>Zero delay-rates in solution table</shortdescription><description>Zero delay-rates in solution table</description>
-                
+        <param name="zerorates" type="bool"><shortdescription>Zero delay-rates in solution table</shortdescription><description>Zero delay-rates in solution table
+
+        Write a solution table with delay-rates zeroed, for the case of
+    &quot;manual phase calibration&quot;, so that the calibration table can be
+    applied to the full dataset without the extrapolation of a non-zero delay-rate term
+    affecting the data
+    </description> 
+
                 <value>False</value>
         </param>
 
