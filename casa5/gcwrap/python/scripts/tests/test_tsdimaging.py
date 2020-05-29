@@ -184,6 +184,30 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         self.assertTrue(isinstance(bunit, str))
         self.assertTrue(len(bunit) == 0)
 
+        # check if wcs related information is identical
+        # between science and weight images
+        _ia.open(imagename)
+        csys_science = _ia.coordsys()
+        _ia.close()
+        _ia.open(weight_image)
+        csys_weight = _ia.coordsys()
+        _ia.close()
+        try:
+            for name in ['referencepixel', 'referencevalue', 'increment']:
+                v0 = getattr(csys_science, name)()
+                v1 = getattr(csys_weight, name)()
+                for key in ['ar_type', 'pw_type']:
+                    self.assertTrue(key in v0)
+                    self.assertTrue(key in v1)
+                    self.assertEqual(v0[key], v1[key])
+                key = 'numeric'
+                self.assertTrue(key in v0)
+                self.assertTrue(key in v1)
+                self.assertTrue(numpy.all(v0[key] == v1[key]))
+        finally:
+            csys_science.done()
+            csys_weight.done()
+
     def _checkframe(self, name):
         _ia.open(name)
         csys = _ia.coordsys()
