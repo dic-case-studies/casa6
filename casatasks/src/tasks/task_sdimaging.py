@@ -6,7 +6,7 @@ import numpy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import quanta, ms, image, imager, table, msmetadata
+    from casatools import quanta, ms, image, table, msmetadata
     from casatasks import casalog
     from . import sdutil
     from . import sdbeamutil
@@ -18,7 +18,6 @@ else:
     from taskinit import mstool as ms
     from taskinit import iatool as image
     from taskinit import qatool as quanta
-    from taskinit import imtool as imager
     import sdutil
     import sdbeamutil
     from cleanhelper import cleanhelper
@@ -325,15 +324,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 #                 self.antenna = self.antenna + '&&&'
 
     def _configure_map_property(self):
-        # this method should be called only once
-        keys = [
-            'stokes', 'cellx', 'celly',
-            'nx', 'ny', 'phasecenter', 'movingsource',
-            'start', 'step', 'nchan', 'projection'
-        ]
-        #if all([k in self.imager_param for k in keys]):
-        #    return
-
         selection_ids = self.get_selection_idx_for_ms(self.sorted_idx[0])
 
         # stokes
@@ -420,50 +410,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.imager_param['start'] = startval
         self.imager_param['step'] = widthval
         self.imager_param['nchan'] = imnchan #self.nchan
-        casalog.post('imnchan = {}'.format(imnchan))
 
         self.imager_param['projection'] = self.projection
-
-    def configure_image(self):
-        # imaging
-        if len(self.infiles) == 1:
-            self.open_imager(self.infiles[0])
-            selection_ids = self.get_selection_idx_for_ms(0)
-            spwsel = self.get_selection_param_for_ms(0, self.spw)
-            if spwsel.strip() in ['', '*']: spwsel = selection_ids['spw']
-            ### TODO: channel selection based on spw
-            ok = self.imager.selectvis(field=selection_ids['field'],
-                                       #spw=selection_ids['spw'],
-                                       spw=spwsel,
-                                       nchan=-1, start=0, step=1,
-                                       baseline=selection_ids['baseline'],
-                                       scan=selection_ids['scan'],
-                                       intent=selection_ids['intent'])
-            if not ok:
-                raise ValueError("Selection is empty: you may want to review this MS selection")
-        else:
-            self.close_imager()
-            #self.sorted_idx.reverse()
-            for idx in self.sorted_idx.__reversed__():
-                name = self.infiles[idx]
-                selection_ids = self.get_selection_idx_for_ms(idx)
-                spwsel = self.get_selection_param_for_ms(idx, self.spw)
-                if spwsel.strip() in ['', '*']: spwsel = selection_ids['spw']
-                ### TODO: channel selection based on spw
-                self.imager.selectvis(vis=name, field=selection_ids['field'],
-                                      #spw=selection_ids['spw'],
-                                      spw = spwsel,
-                                      nchan=-1, start=0, step=1,
-                                      baseline=selection_ids['baseline'],
-                                      scan=selection_ids['scan'],
-                                      intent=selection_ids['intent'])
-                # need to do this
-                self.is_imager_opened = True
-
-        # it should be called after infiles are registered to imager
-        self._configure_map_property()
-
-        self.close_imager()
 
     def makeimage(self, imagetype):
         """
@@ -512,8 +460,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 
         casalog.post("Using phasecenter \"%s\""%(self.imager_param['phasecenter']), "INFO")
 
-        print(self.outfile)
-        print('imager_param: {}'.format(self.imager_param))
         self.imager.defineimage(**self.imager_param)#self.__get_param())
         self.imager.setoptions(ftmachine='sd', gridfunction=self.gridfunction)
         self.imager.setsdoptions(pointingcolumntouse=self.pointingcolumn, convsupport=self.convsupport, truncate=self.truncate, gwidth=self.gwidth, jwidth=self.jwidth, minweight = 0., clipminmax=self.clipminmax)
@@ -528,9 +474,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         else: # imagetype.lower() == 'weight':
             casalog.post('Weight imaging')
             weightfile = self.outfile+".weight"
-            #print('######## Generating Weight Image ########')
-            #import sys
-            #sys.stdout.flush()
             self.imager.makeimage(type='coverage', image=weightfile)
             if not os.path.exists(weightfile):
                 raise RuntimeError("Failed to generate weight image '%s'" % weightfile)
@@ -549,9 +492,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             os.system('rm -rf %s'%(self.outfile))
         if os.path.exists(self.outfile+'.weight') and self.overwrite:
             os.system('rm -rf %s'%(self.outfile+'.weight'))
-
-        # configure image
-        #self.configure_image()
 
         # make science image
         outfile = self.makeimage(imagetype='science')
@@ -573,7 +513,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         my_ia.close()
 
         # CAS-12984 set brightness unit for weight image to ''
-        my_ia = image()
         my_ia.open(weightfile)
         my_ia.setbrightnessunit('')
         my_ia.close()
