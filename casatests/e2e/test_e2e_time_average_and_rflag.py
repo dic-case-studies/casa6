@@ -23,7 +23,7 @@ CASA6 = False
 
 try:
     import casatools
-    from casatasks import flagdata, casalog
+    from casatasks import flagdata, casalog, mstransform
     CASA6 = True
 except:
     from tasks import *
@@ -107,6 +107,50 @@ def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms1
     return summary_orig['flagged'], summary_after['flagged']
 
 
+def mstransform_flag_step(scale=7.0, timebin='1min', step_name=''):
+    """
+    Flags with time averge, following two alternative approaches. And checks (crude assert)
+    that both produce identical results.
+
+    Approach "step 1": command 1: mstransform with timeavg =>
+       command 2: flagdata applied on the averaged MS (without timeavg).
+
+    Approach "step 2": command 1: flagdata with timeavg on the fly =>
+       command 2: mstransform with timeavg to match the dimensions of A).
+    """
+    summary_orig = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
+    casalog.post(' * Flagging {0}'.format(ms3ctst_copy))
+
+    ms_step1 = 'ms_CAS-11910_mstransform_step_name{}_methodA.ms'.format(step_name)
+    mstransform(vis=ms3ctst_copy, outputvis=ms_step1, datacolumn='data', timeaverage=True,
+                timebin=timebin)
+    flagdata(vis=ms_step1, mode='rflag', field='', spw='', freqdevscale=scale,
+             timedevscale=scale, datacolumn='data', extendflags=False, correlation='',
+             combinescans=True, display='none', action='apply', flagbackup=False)
+    res1 = flagdata(vis=ms_step1, mode='summary')
+
+    flagdata(vis=ms3ctst_copy, mode='rflag', field='', spw='', timeavg=True,
+             timebin=timebin, freqdevscale=scale, timedevscale=scale, datacolumn='data',
+             extendflags=False, correlation='', combinescans=True, display='none',
+             action='apply', flagbackup=False)
+    summary_after = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
+    ms_step2 = 'ms_CAS-11910_mstransform_step_name{}_methodB.ms'.format(step_name)
+    mstransform(vis=ms3ctst_copy, outputvis=ms_step2, datacolumn='data', timeaverage=True, timebin=timebin)
+    res2 = flagdata(vis=ms_step2, mode='summary')
+
+    print('* Step {}. ResultA: {}'.format(step_name, res1))
+    print('* Step {}. ResultB: {}'.format(step_name, res2))
+    # Check reslts from flagdata-timeavg and mstransform-timeavg are identical
+    assert res1 == res2
+    summary_after = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
+    casalog.post(' * Step {0}. Total flagged before: {1} ({2:.3f}%), after: {3} ({4:.3f}%). '
+                 'Used timebin: {5}, scale: {6}'.
+                 format(step_name,
+                        summary_orig['flagged'], 100.0 * summary_orig['flagged'] / summary_orig['total'],
+                        summary_after['flagged'], 100.0 * summary_after['flagged'] / summary_after['total'],
+                        timebin, scale))
+
+
 
 class regression_time_average_rflag(unittest.TestCase):
 
@@ -124,6 +168,11 @@ class regression_time_average_rflag(unittest.TestCase):
         shutil.rmtree(ms1)
         shutil.rmtree(ms2)
         shutil.rmtree(ms3ctst_copy)
+        shutil.rmtree("ms_CAS-11910_mstransform_step_name1_methodA.ms/")
+        shutil.rmtree("ms_CAS-11910_mstransform_step_name1_methodB.ms/")
+
+        shutil.rmtree("ms_CAS-11910_mstransform_step_name2_methodA.ms/")
+        shutil.rmtree("ms_CAS-11910_mstransform_step_name2_methodB.ms/")
 
     def test_regression(self):
 
@@ -143,13 +192,13 @@ class regression_time_average_rflag(unittest.TestCase):
 
         timing('1')
 
-        flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_3_before_3ct, flag_30s_3_3_after_3ct = flag_step(7, '3min', step_name='3', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_4_before_3ct, flag_30s_3_4_after_3ct = flag_step(7, '3min', step_name='4', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_5_before_3ct, flag_30s_3_5_after_3ct = flag_step(7, '3min', step_name='5', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_6_before_3ct, flag_30s_3_6_after_3ct = flag_step(7, '3min', step_name='6', field='0', spw='0:20~350', ms=ms3ctst)
-        flag_30s_3_7_before_3ct, flag_30s_3_7_after_3ct = flag_step(7, '3min', step_name='7', field='0', spw='0:20~350', ms=ms3ctst)
+        flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_3_before_3ct, flag_30s_3_3_after_3ct = flag_step(7, '3min', step_name='3', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_4_before_3ct, flag_30s_3_4_after_3ct = flag_step(7, '3min', step_name='4', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_5_before_3ct, flag_30s_3_5_after_3ct = flag_step(7, '3min', step_name='5', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_6_before_3ct, flag_30s_3_6_after_3ct = flag_step(7, '3min', step_name='6', field='0', spw='0:20~350', ms=ms3ctst_copy)
+        flag_30s_3_7_before_3ct, flag_30s_3_7_after_3ct = flag_step(7, '3min', step_name='7', field='0', spw='0:20~350', ms=ms3ctst_copy)
 
         timing('2')
 
@@ -221,6 +270,14 @@ class regression_time_average_rflag(unittest.TestCase):
                          expected_30s_3_1_after_3ct, expected_30s_3_2_after_3ct, expected_30s_3_3_after_3ct,
                          expected_30s_3_4_after_3ct, expected_30s_3_5_after_3ct, expected_30s_3_6_after_3ct, expected_30s_3_7_after_3ct]
 
+        ### mstransform test case
+
+        #hutil.rmtree(ms3ctst_copy)
+        #shutil.copytree(ms3ctst, ms3ctst_copy)
+
+        #mstransform_flag_step(step_name='1', timebin='2min', scale=7)
+        #mstransform_flag_step(step_name='2', timebin='6min', scale=7)
+
 
         for i in range(len(observed_list)):
             if observed_list[i] != expected_list[i]:
@@ -238,6 +295,17 @@ class regression_time_average_rflag(unittest.TestCase):
             casalog.post("Regression FAILED")
             print("Regression FAILED")
             self.assertTrue(False)
+
+        shutil.rmtree(ms3ctst_copy)
+        shutil.copytree(ms3ctst, ms3ctst_copy)
+
+        mstransform_flag_step(step_name='1', timebin='2min', scale=7)
+
+        shutil.rmtree(ms3ctst_copy)
+        shutil.copytree(ms3ctst, ms3ctst_copy)
+
+        mstransform_flag_step(step_name='2', timebin='6min', scale=7)
+
         casalog.post("Done")
 
 def suite():
