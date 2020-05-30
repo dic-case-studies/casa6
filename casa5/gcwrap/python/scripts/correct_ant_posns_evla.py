@@ -199,6 +199,9 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
             if print_offsets:
                 print("Offsets for antenna %4s on pad %3s: %8.5f  %8.5f  %8.5f" % \
                       (ant_num_sta[1], ant_num_sta[2], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
+            else:
+                casalog.post("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
+                      (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
             ants.append(ant_num_sta[1])
             parms.append(ant_num_sta[3])
             parms.append(ant_num_sta[4])
