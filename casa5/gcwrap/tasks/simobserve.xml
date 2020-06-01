@@ -414,18 +414,27 @@ observation?
 
     <param type="string" name="antennalist" subparam="true">
 <shortdescription>Interferometer antenna position file</shortdescription>
-<description>Ascii file containing antenna positions.
+<description>Text file containing antenna positions.
                      Subparameter of obsmode='int|""'
 
-                     Each row has x y z coordinates and antenna
-                     diameter; header lines are required to specify
+                     Each row has x y z coordinates and antenna diameter
+		     with optional station name and antenna name.
+		     Header lines are required to specify:
                      # observatory=ALMA
                      # coordsys=UTM
+
+		     If the Universal Transverse Mercator projection is
+		     specified, then other keywords are required:
                      # datum=WGS84
                      # zone=19
+		     # hemisphere=S
 
-                   * Standard arrays are found in your CASA data
-                     repository,
+		     If the observatory keyword is not defined, then the
+		     COFA keyword should be, using a coordinate pair:
+		     #COFA=-67.75,-23.02
+
+                   * Standard array configurations are found in your
+		     CASA data repository,
                    * If "", simobserve will not not produce an
                      interferometric MS 
                    * A string of the form "alma;0.5arcsec" will be

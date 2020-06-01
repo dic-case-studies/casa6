@@ -143,6 +143,9 @@ ln -s `which rm`
 ln -s `which dirname`
 ln -s `which basename`
 ln -s `which grep`
+ln -s `which sort`
+ln -s `which printf`
+ln -s `which cat`
 cd $current_directory
 
 PATH=$(dirname ${CXX}):/bin:$temporary_script_dir
@@ -161,8 +164,8 @@ AC_SUBST(CC_FORTRAN_COMPLEX)
 AC_LANG_POP([C])
 
 for pp in $(dirname ${CXX})${PATH_SEPARATOR}${PATH} ${save_PATH_save}; do
-    PATH=${pp}
-    AC_PROG_FC([gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
+    PATH=${pp}:${temporary_script_dir}
+    AC_PROG_FC([gfortran-mp-9 gfortran-mp-8 gfortran-mp-5 gfortran-mp-4.9 gfortran-mp-4.8 gfortran])
     AX_PATH_TO_BINARY(${FC},FC)
     if [[ -f "$FC" -a -x "$FC" ]]; then
         AC_MSG_NOTICE([Fortran compiler ${FC}])
@@ -229,25 +232,25 @@ AX_RPFITS
 AX_GSL(2.0)
 AX_SWIG(3.0.0)
 
-AC_MSG_CHECKING([for casa version number])
-read -a full_version <<< "`scripts/version | perl -pe 's|^(\d+).(\d+).*?$|$1 $2 0 0|'`"
-CASA_VERSION_MAJOR=${full_version[[0]]}
-CASA_VERSION_MINOR=${full_version[[1]]}
-CASA_VERSION_PATCH=${full_version[[2]]}
-CASA_VERSION_FEATURE=${full_version[[3]]}
-CASA_VERSION_DESC="CASAtools:v1.0.0"
-CASA_VERSION="${CASA_VERSION_MAJOR}.${CASA_VERSION_MINOR}.${CASA_VERSION_PATCH}-${CASA_VERSION_FEATURE}"
-CASA_VARIANT="none"
-AC_MSG_RESULT($CASA_VERSION)
+#AC_MSG_CHECKING([for casa version number])
+#read -a full_version <<< "`scripts/version | perl -pe 's|^(\d+).(\d+).*?$|$1 $2 0 0|'`"
+#CASA_VERSION_MAJOR=${full_version[[0]]}
+#CASA_VERSION_MINOR=${full_version[[1]]}
+#CASA_VERSION_PATCH=${full_version[[2]]}
+#CASA_VERSION_FEATURE=${full_version[[3]]}
+#CASA_VERSION_DESC="CASAtools:v1.0.0"
+#CASA_VERSION="${CASA_VERSION_MAJOR}.${CASA_VERSION_MINOR}.${CASA_VERSION_PATCH}-${CASA_VERSION_FEATURE}"
+#CASA_VARIANT="none"
+#AC_MSG_RESULT($CASA_VERSION)
 
 
-AC_SUBST(CASA_VERSION_MAJOR)
-AC_SUBST(CASA_VERSION_MINOR)
-AC_SUBST(CASA_VERSION_PATCH)
-AC_SUBST(CASA_VERSION_FEATURE)
-AC_SUBST(CASA_VERSION_DESC)
-AC_SUBST(CASA_VARIANT)
-AC_SUBST(CASA_VERSION)
+#AC_SUBST(CASA_VERSION_MAJOR)
+#AC_SUBST(CASA_VERSION_MINOR)
+#AC_SUBST(CASA_VERSION_PATCH)
+#AC_SUBST(CASA_VERSION_FEATURE)
+#AC_SUBST(CASA_VERSION_DESC)
+#AC_SUBST(CASA_VARIANT)
+#AC_SUBST(CASA_VERSION)
 
 AX_LIBXML
 AX_EIGEN
@@ -276,6 +279,6 @@ if [[ -d "$temporary_script_dir" ]] ; then
 fi
 
 AC_CONFIG_FILES(build.properties:ac/templates/build.in)
-AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)
+#AC_CONFIG_FILES(binding/source/version.cc:casa-source/code/stdcasa/version.cc.in)
 AC_CONFIG_FILES([setup.py:ac/templates/setup.py.in],[chmod +x setup.py])
 AC_OUTPUT( )

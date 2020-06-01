@@ -1,34 +1,29 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="plotweather" category="visualization">
+<task category="visualization" name="plotweather" type="function">
 <shortdescription>Plot elements of the weather table; estimate opacity.</shortdescription>
 
 <input>
 
-<param type="string" name="vis" kind="ms" mustexist="true">
-<description>MS name</description>
-<value></value>
+<param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>MS name</shortdescription><description>MS name</description>
+
+<value/>
 </param>
 
-<param type="double" name="seasonal_weight">
-<description>weight of the seasonal model</description>
+<param name="seasonal_weight" type="double"><shortdescription>weight of the seasonal model</shortdescription><description>weight of the seasonal model</description>
+
 <value>0.5</value>
 </param>
 
-<param type="bool" name="doPlot">
-<description>set this to True to create a plot</description>
+<param name="doPlot" type="bool"><shortdescription>set this to True to create a plot</shortdescription><description>set this to True to create a plot</description>
+
 <value>True</value>
 </param>
 
-<param type="string" name="plotName">
-<description>(Optional) the name of the plot file</description>
-<value></value>
+<param name="plotName" type="string"><shortdescription>(Optional) the name of the plot file</shortdescription><description>(Optional) the name of the plot file</description>
+
+<value/>
 </param>
 
 

@@ -1,44 +1,39 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<!-- This is the parameter set for makemask -->
 
-<task type="function" name="widebandpbcor" category="imaging" visibility="experimental">
+
+<task visibility="experimental" category="imaging" name="widebandpbcor" type="function">
 
   <shortdescription>Wideband PB-correction on the output of the MS-MFS algorithm</shortdescription>
 
-  <description>WideBand Primary-beam correction. It computes a set of PBs at the specified frequencies, calculates Taylor-coefficient images that represent the PB spectrum, performs a polynomial division to PB-correct the output Taylor-coefficient images from clean(nterms>1), and recompute spectral index (and curvature) using the PB-corrected Taylor-coefficient images </description>
+  <description>WideBand Primary-beam correction. It computes a set of PBs at the specified frequencies, calculates Taylor-coefficient images that represent the PB spectrum, performs a polynomial division to PB-correct the output Taylor-coefficient images from clean(nterms&gt;1), and recompute spectral index (and curvature) using the PB-corrected Taylor-coefficient images </description>
 
   <input>
 
-    <!-- MAIN PARAMETERS -->
+    
 
-    <param type="string" name="vis"  kind="ms" mustexist="true">
-      <description>Name of measurement set. </description>
-      <value></value>
+    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of measurement set. </shortdescription><description>Name of measurement set. </description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="imagename" >
-      <description>Name-prefix of multi-termimages to operate on. </description>
-      <value></value>
+    <param name="imagename" type="string"><shortdescription>Name-prefix of multi-termimages to operate on. </shortdescription><description>Name-prefix of multi-termimages to operate on. </description>
+      
+      <value/>
     </param>
 
-    <param type="int" name="nterms">
-      <description>Number of taylor terms to use</description>
+    <param name="nterms" type="int"><shortdescription>Number of taylor terms to use</shortdescription><description>Number of taylor terms to use</description>
+      
       <value>2</value>
     </param>
 
-    <param type="string" name="threshold">
-      <description>Intensity above which to re-calculate spectral index </description>
-      <value></value>
+    <param name="threshold" type="string"><shortdescription>Intensity above which to re-calculate spectral index </shortdescription><description>Intensity above which to re-calculate spectral index </description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="action" >
-      <description>PB-correction (pbcor) or only calc spectral-index (calcalpha)</description>
+    <param name="action" type="string"><shortdescription>PB-correction (pbcor) or only calc spectral-index (calcalpha)</shortdescription><description>PB-correction (pbcor) or only calc spectral-index (calcalpha)</description>
+      
       <value>pbcor</value>
       <allowed kind="enum">
       <value>pbcor</value>
@@ -46,63 +41,59 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       </allowed>
     </param>
 
-    <!-- SUB-PARAMETERS -->
+    
 
-            <!-- pbcor = True -->
-      <param type="string" name="reffreq" subparam="true" >
-        <description>Reference frequency (if specified in clean)</description>
-        <value></value>
+            
+      <param subparam="true" name="reffreq" type="string"><shortdescription>Reference frequency (if specified in clean)</shortdescription><description>Reference frequency (if specified in clean)</description>
+        
+        <value/>
       </param>
 
-            <param type="double" name="pbmin" subparam="true">
-              <description>PB threshold below which to not correct</description>
+            <param subparam="true" name="pbmin" type="double"><shortdescription>PB threshold below which to not correct</shortdescription><description>PB threshold below which to not correct</description>
+              
               <value>0.2</value>
             </param>
         
-            <param type="string" name="field" subparam="true">
-              <description>Fields to include in the PB calculation</description>
-              <value></value>
+            <param subparam="true" name="field" type="string"><shortdescription>Fields to include in the PB calculation</shortdescription><description>Fields to include in the PB calculation</description>
+              
+              <value/>
             </param>
         
-            <param type="intArray" name="spwlist" subparam="true">
-              <description>List of N spw ids</description>
+            <param subparam="true" name="spwlist" type="intArray"><shortdescription>List of N spw ids</shortdescription><description>List of N spw ids</description>
+              
               <value type="vector">
-    <value></value>
+    <value/>
         </value>
             </param>
         
-            <param type="intArray" name="chanlist" subparam="true">
-              <description>List of N channel ids</description>
+            <param subparam="true" name="chanlist" type="intArray"><shortdescription>List of N channel ids</shortdescription><description>List of N channel ids</description>
+              
               <value type="vector">
-    <value></value>
+    <value/>
         </value>
             </param>
         
-            <param type="doubleArray" name="weightlist" subparam="true">
-              <description>List of N weights (relative)</description>
+            <param subparam="true" name="weightlist" type="doubleArray"><shortdescription>List of N weights (relative)</shortdescription><description>List of N weights (relative)</description>
+              
               <value type="vector">
-    <value></value>
+    <value/>
         </value>
             </param>
         
-      <!-- calcalpha = True 
-      <param type="bool" name="calcerror" subparam="true">
-              <description>Re-calculate spectral-index error image </description>
-              <value>False</value>
-            </param> -->
+      
 
-    <!-- CONSTRAINTS FOR SUB-PARAMETERS -->
+    
 
             <constraints>                    
 
                 <when param="action">
-      <equals type="string" value="pbcor">
-                        <default param="reffreq"><value type="string"></value></default>
+      <equals value="pbcor" type="string">
+                        <default param="reffreq"><value type="string"/></default>
                         <default param="pbmin"><value type="double">0.2</value></default>
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spwlist"><value type="intArray"></value></default>
-                        <default param="chanlist"><value type="intArray"></value></default>
-                        <default param="weightlist"><value type="doubleArray"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spwlist"><value type="intArray"/></default>
+                        <default param="chanlist"><value type="intArray"/></default>
+                        <default param="weightlist"><value type="doubleArray"/></default>
                     </equals>
     </when>
 
@@ -120,7 +111,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     (1) Compute a set of Primary Beams at the specified frequencies
     (2) Calculate Taylor-coefficient images that represent the PB spectrum
     (3) Perform a polynomial division to PB-correct the output Taylor-coefficient
-          images from the MS-MFS algorithm ( clean(nterms>1) )
+          images from the MS-MFS algorithm ( clean(nterms&gt;1) )
     (4) Recompute spectral index (and curvature) using the corrected Taylor-coefficient images.
 
    [ Optionally, skip PB-correction, and only recalculate spectral index

@@ -525,7 +525,7 @@ PulsarRow* PulsarTable::lookup(ArrayTime refTime, Frequency refPulseFreq, double
 		for (unsigned int i = 0; i < v.size(); ++i) {
 			try {
 				buf.append(v[i]->toXML());
-			} catch (NoSuchRow e) {
+			} catch (const NoSuchRow &e) {
 			}
 			buf.append("  ");
 		}		
@@ -592,10 +592,10 @@ PulsarRow* PulsarTable::lookup(ArrayTime refTime, Frequency refPulseFreq, double
 				}
 				
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"PulsarTable");
 			} 
-			catch (UniquenessViolationException e1) {
+			catch (const UniquenessViolationException &e1) {
 				throw ConversionException(e1.getMessage(),"PulsarTable");	
 			}
 			catch (...) {
@@ -611,7 +611,7 @@ PulsarRow* PulsarTable::lookup(ArrayTime refTime, Frequency refPulseFreq, double
 					s = xml.getElementContent("<row>","</row>");
 				}
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"PulsarTable");
 			} 
 			catch (...) {
@@ -887,11 +887,11 @@ PulsarRow* PulsarTable::lookup(ArrayTime refTime, Frequency refPulseFreq, double
 				checkAndAdd(aRow);
       		}
     	}
-    	catch (DuplicateKey e) {
+    	catch (const DuplicateKey &e) {
       		throw ConversionException("Error while writing binary data , the message was "
 				+ e.getMessage(), "Pulsar");
     	}
-    	catch (TagFormatException e) {
+    	catch (const TagFormatException &e) {
      		 throw ConversionException("Error while reading binary data , the message was "
 				+ e.getMessage(), "Pulsar");
     	}
@@ -1166,7 +1166,7 @@ void PulsarTable::setFromXMLFile(const string& directory) {
     	xmlDocument = getContainer().getXSLTransformer()(tablePath);
     	if (getenv("ASDM_DEBUG")) cout << "About to read " << tablePath << endl;
     }
-    catch (XSLTransformerException e) {
+    catch (const XSLTransformerException &e) {
     	throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "Pulsar");
     }
     

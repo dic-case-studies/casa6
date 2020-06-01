@@ -412,7 +412,7 @@ void SingleDishMSFiller<T>::initialize() {
   casacore::String ref_string = casacore::MDirection::showType(direction_frame);
   meas_info.define("Ref", ref_string);
   record.defineRecord("MEASINFO", meas_info);
-  
+
   POST_END;
 }
 
@@ -666,8 +666,8 @@ void SingleDishMSFiller<T>::fillPreProcessTables() {
   fillSpectralWindow();
 
   // Generate optional tables if necessary
-  T::OptionalTables::Generate(*ms_, *reader_);
-  
+  OptionalTables::Generate(*ms_, *reader_);
+
   POST_END;
 }
 

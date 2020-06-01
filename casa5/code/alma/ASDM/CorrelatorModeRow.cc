@@ -516,7 +516,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CorrelatorMode");
 		}
 	}
@@ -726,7 +726,7 @@ namespace asdm {
 	
 	
 		
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CorrelatorMode");
 		}
 	}
@@ -785,7 +785,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAccumMode::name(accumMode));
+		eoss.writeString(CAccumMode::name(accumMode));
 			/* eoss.writeInt(accumMode); */
 				
 		
@@ -845,7 +845,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCorrelatorName::name(correlatorName));
+		eoss.writeString(CCorrelatorName::name(correlatorName));
 			/* eoss.writeInt(correlatorName); */
 				
 		

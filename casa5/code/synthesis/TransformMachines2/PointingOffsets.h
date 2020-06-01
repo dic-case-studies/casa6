@@ -46,11 +46,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class PointingOffsets 
   {
   public:
-    PointingOffsets(const int& convOversampling):thePix_p(), pixFieldGrad_p(), imageObsInfo_p(), nx_p(0), ny_p(0), nchan_p(0), npol_p(0), directionIndex_p(0), csys_p(), dc_p(), pointFrame_p(), timeMType_p(), timeUnit_p(), direction1_p(), direction2_p(), doPointing_p(false), vbUtils_p()
+
+    PointingOffsets():thePix_p(), pixFieldGrad_p(), imageObsInfo_p(), nx_p(0), ny_p(0), nchan_p(0), npol_p(0), directionIndex_p(0), csys_p(), dc_p(), pointFrame_p(), timeMType_p(), timeUnit_p(), direction1_p(), direction2_p(), doPointing_p(false), vbUtils_p(), cachedAntGridPointingOffsets_p()
     {
-      convOversampling_p = convOversampling;
       PO_DEBUG_P = SynthesisUtils::getenv("PO_DEBUG",0);
-      cerr << "PO_DEBUG = " << PO_DEBUG_P << endl;
+      //cerr << "PO_DEBUG = " << PO_DEBUG_P << endl;
    }
     ~PointingOffsets() {};
     PointingOffsets& operator=(const PointingOffsets& other);
@@ -62,15 +62,28 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     virtual casacore::Vector<casacore::Vector<casacore::Double> >findAntennaPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
 									 const vi::VisBuffer2& vb, const casacore::Bool& doPointing=true);
 
-    virtual casacore::Vector<casacore::Vector<casacore::Double> >findPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
-								  const vi::VisBuffer2& vb, const casacore::Bool doPointing=false);
+    virtual void fetchPointingOffset(const casacore::ImageInterface<casacore::Complex>& image,
+				     const vi::VisBuffer2& vb, const casacore::Bool doPointing=false);
 
     casacore::Vector<double> gradPerPixel(const casacore::Vector<double>& p);
     casacore::Vector<casacore::Double>& toPix(const vi::VisBuffer2& vb, 
 					      const casacore::MDirection& dir1, const casacore::MDirection& dir2);
+
+    std::vector<std::vector<double> > fetchAntOffsetToPix(const vi::VisBuffer2& vb, const casacore::Bool doPointing);
+
     void storeImageParams(const casacore::ImageInterface<casacore::Complex>& iimage, const vi::VisBuffer2& vb);
 
     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
+    bool getDoPointing(){return doPointing_p;};
+
+    void setOverSampling(const int& os) {convOversampling_p=os;}
+
+    void setAntGridPointingOffsets(const casacore::Vector<casacore::Vector<casacore::Double> >& antGridPointingOffsets){cachedAntGridPointingOffsets_p.reference(antGridPointingOffsets);};
+
+    casacore::Vector<casacore::Vector<casacore::Double> > pullPointingOffsets(){return cachedPointingOffsets_p;};
+    casacore::Vector<casacore::Vector<casacore::Double> > pullAntGridPointingOffsets(){return cachedAntGridPointingOffsets_p;};
+    // casacore::Vector<casacore::Vector<casacore::Double> > pullAntGridPointingOffsets(const int& row){return cachedAntGridPointingOffsets_p(row);};
+    casacore::Vector<casacore::Double> getIncrement(){return dc_p.increment();}
 
   private:
 
@@ -89,6 +102,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::CountedPtr<SolvableVisJones> epJ_p;
     bool doPointing_p;
     VisBufferUtil vbUtils_p;
+    casacore::Vector<casacore::Vector<casacore::Double> > cachedPointingOffsets_p, cachedAntGridPointingOffsets_p;
 
     int PO_DEBUG_P;
   };

@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the param set for sdimaging -->
 
-<task type="function" name="sdimaging" category="single dish">
+
+<task category="single dish" name="sdimaging" type="function">
 
   <shortdescription>SD task: imaging for total power and spectral data</shortdescription>
 
@@ -47,55 +42,55 @@ values. See description below for details of gridfunction available.
   </description>
 
   <input>
-    <param type="stringArray" name="infiles"  mustexist="true">
-            <description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
-            <value></value>
+    <param mustexist="true" name="infiles" type="stringArray"><shortdescription>a list of names of input SD Measurementsets (only MS is allowed for this task)</shortdescription><description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
+            
+            <value/>
     </param>
 
-    <param type="string" name="outfile">
-            <description>name of output image</description>
-            <value></value>
+    <param name="outfile" type="string"><shortdescription>name of output image</shortdescription><description>name of output image</description>
+            
+            <value/>
     </param>
 
-    <param type="bool" name="overwrite">
+    <param name="overwrite" type="bool">
             <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
             <description>overwrite the output file if already exists [True, False]</description>
             <value>False</value>
     </param>
 
-    <param type="any" name="field">
-            <description>select data by field IDs and names, e.g. "3C2*" (""=all)</description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+    <param name="field" type="any"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
+            <value type="string"/>
     </param>
 
-    <param type="any" name="spw">
-            <description>select data by IF IDs (spectral windows), e.g. "3,5,7" (""=all)</description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+    <param name="spw" type="any"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
+            <value type="string"/>
     </param>
 
-    <param type="any" name="antenna">
-            <description>select data by antenna names or IDs, e.g, "PM03" ("" = all antennas)</description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+    <param name="antenna" type="any"><shortdescription>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</shortdescription><description>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
+            <value type="string"/>
     </param>
 
-    <param type="any" name="scan">
-            <description>select data by scan numbers, e.g. "21~23" (""=all)</description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+    <param name="scan" type="any"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
+            <value type="string"/>
     </param>
     
-    <param type="any" name="intent">
-            <description>select data by observational intent, e.g. "*ON_SOURCE*" (""=all)</description>
-            <any type="variant" limittypes="string stringArray"/>
+    <param name="intent" type="any"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
             <value type="string">OBSERVE_TARGET#ON_SOURCE</value>
     </param>
 
-    <param type="string" name="mode">
+    <param name="mode" type="string">
             <description>spectral gridding type</description>
-            <shortdescription>spectral gridding type ["channel", "frequency", "velocity"]</shortdescription>
+            <shortdescription>spectral gridding type [&quot;channel&quot;, &quot;frequency&quot;, &quot;velocity&quot;]</shortdescription>
             <value>channel</value> 
             <allowed kind="enum">
                     <value>channel</value>
@@ -104,25 +99,25 @@ values. See description below for details of gridfunction available.
            </allowed>
     </param>
 
-    <param type="int" name="nchan" subparam="true">
-            <description> number of channels (planes) in output image (-1=all)</description>
+    <param subparam="true" name="nchan" type="int"><shortdescription> number of channels (planes) in output image (-1=all)</shortdescription><description> number of channels (planes) in output image (-1=all)</description>
+            
             <value>-1</value>
     </param>
 
-    <param type="any" name="start" subparam="true">
-            <description>start of output spectral dimension, e.g. "0", "110GHz", "-20km/s"</description>
-            <any type="variant" limittypes="string int"/>
+    <param subparam="true" name="start" type="any"><shortdescription>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</shortdescription><description>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</description>
+            
+            <any limittypes="string int" type="variant"/>
             <value type="int">0</value>
     </param>
 
-    <param type="any" name="width" subparam="true">
-            <description>width of output spectral channels</description>
-            <any type="variant"  limittypes="string int"/>
+    <param subparam="true" name="width" type="any"><shortdescription>width of output spectral channels</shortdescription><description>width of output spectral channels</description>
+            
+            <any limittypes="string int" type="variant"/>
             <value type="int">1</value>
     </param>
 
-    <param type="string" name="veltype" ignorecase="true"  subparam="true">
-            <shortdescription>velocity definition ["radio", "optical", "true" or "relativistic"] </shortdescription>
+    <param subparam="true" name="veltype" type="string">
+            <shortdescription>velocity definition [&quot;radio&quot;, &quot;optical&quot;, &quot;true&quot; or &quot;relativistic&quot;] </shortdescription>
             <description>velocity definition</description>
             <value>radio</value>
             <allowed kind="enum">
@@ -130,13 +125,17 @@ values. See description below for details of gridfunction available.
                     <value>optical</value>
                     <value>true</value>
                     <value>relativistic</value>
+                    <value>RADIO</value>
+                    <value>OPTICAL</value>
+                    <value>TRUE</value>
+                    <value>RELATIVISTIC</value>
            </allowed>
     </param>
 
-    <param type="string" name="outframe" ignorecase="true">
-            <shortdescription>velocity frame of output image ["lsrk", "lsrd", "bary", "geo", "topo", "galacto", "lgroup", "cmb"] (""=current frame or LSRK for multiple-MS inputs) </shortdescription>
-            <description>velocity frame of output image (""=current frame or LSRK for multiple-MS inputs)</description>
-            <value></value>
+    <param name="outframe" type="string">
+            <shortdescription>velocity frame of output image [&quot;lsrk&quot;, &quot;lsrd&quot;, &quot;bary&quot;, &quot;geo&quot;, &quot;topo&quot;, &quot;galacto&quot;, &quot;lgroup&quot;, &quot;cmb&quot;] (&quot;&quot;=current frame or LSRK for multiple-MS inputs) </shortdescription>
+            <description>velocity frame of output image (&quot;&quot;=current frame or LSRK for multiple-MS inputs)</description>
+            <value/>
             <allowed kind="enum">
                     <value>lsrk</value>
                     <value>lsrd</value>
@@ -146,12 +145,20 @@ values. See description below for details of gridfunction available.
                     <value>galacto</value>
                     <value>lgroup</value>
                     <value>cmb</value>
-                    <value></value>
+                    <value>LSRK</value>
+                    <value>LSRD</value>
+                    <value>BARY</value>
+                    <value>GEO</value>
+                    <value>TOPO</value>
+                    <value>GALACTO</value>
+                    <value>LGROUP</value>
+                    <value>CMB</value>
+                    <value/>
            </allowed>
     </param>
 
-    <param type="string" name ="gridfunction">
-            <shortdescription>gridding function for imaging ["BOX", "SF", "PB", "GAUSS" or "GJINC"] (see description in help)</shortdescription>
+    <param name="gridfunction" type="string">
+            <shortdescription>gridding function for imaging [&quot;BOX&quot;, &quot;SF&quot;, &quot;PB&quot;, &quot;GAUSS&quot; or &quot;GJINC&quot;] (see description in help)</shortdescription>
             <description>gridding function for imaging (see description in help)</description>
             <value>BOX</value>
             <allowed kind="enum">
@@ -168,105 +175,114 @@ values. See description below for details of gridfunction available.
             </allowed>
     </param>
 
-    <param type="int" name="convsupport" subparam="true">
-            <description>convolution support for gridding</description>
+    <param subparam="true" name="convsupport" type="int"><shortdescription>convolution support for gridding</shortdescription><description>convolution support for gridding</description>
+            
             <value>-1</value>
     </param>
 
-    <param type="any" name="truncate" subparam="true">
-            <description>truncation radius for gridding</description>
-            <any type="variant" limittypes="string int double"/>
+    <param subparam="true" name="truncate" type="any"><shortdescription>truncation radius for gridding</shortdescription><description>truncation radius for gridding</description>
+            
+            <any limittypes="string int double" type="variant"/>
             <value type="int">-1</value>
     </param>
 
-    <param type="any" name="gwidth" subparam="true">
-            <description>HWHM for gaussian</description>
-            <any type="variant" limittypes="string int double"/>
+    <param subparam="true" name="gwidth" type="any"><shortdescription>HWHM for gaussian</shortdescription><description>HWHM for gaussian</description>
+            
+            <any limittypes="string int double" type="variant"/>
             <value type="int">-1</value>
     </param>
 
-    <param type="any" name="jwidth" subparam="true">
-            <description>c-parameter for jinc function</description>
-            <any type="variant" limittypes="string int double"/>
+    <param subparam="true" name="jwidth" type="any"><shortdescription>c-parameter for jinc function</shortdescription><description>c-parameter for jinc function</description>
+            
+            <any limittypes="string int double" type="variant"/>
             <value type="int">-1</value>
     </param>
 
-    <param type="any" name="imsize">
-            <description>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</description>
-            <any type="variant" limittypes="intArray doubleArray"/>
+    <param name="imsize" type="any"><shortdescription>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</shortdescription><description>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</description>
+            
+            <any limittypes="intArray doubleArray" type="variant"/>
             <value type="intArray"/>
     </param>
 
-    <param type="any" name="cell">
-    <description>x and y cell size, (e.g., ["8arcsec","8arcsec"]. default unit arcmin. ("" = 1/3 of FWHM of primary beam)</description>
-    <any type="variant" limittypes="string stringArray doubleArray"/>
-    <value type="string"></value>
+    <param name="cell" type="any"><shortdescription>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</shortdescription><description>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</description>
+    
+    <any limittypes="string stringArray doubleArray" type="variant"/>
+    <value type="string"/>
     </param>
 
-    <param type="any" name="phasecenter">
-            <description>image center direction: position or field index, e.g., "J2000 17:30:15.0 -25.30.00.0". ("" = the center of pointing directions in MSes)</description>
+    <param name="phasecenter" type="any"><shortdescription>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</shortdescription><description>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</description>
+            
             <any type="variant"/>
-            <value type="string"></value>
+            <value type="string"/>
     </param>
 
-        <param type="string" name="projection">
-            <description>map projection type</description>
+        <param name="projection" type="string"><shortdescription>map projection type</shortdescription><description>map projection type</description>
+            
             <value>SIN</value>
-            <allowed kind="enum" ignorecase="true">
+            <allowed kind="enum">
                 <value>SIN</value>
                 <value>CAR</value>
                 <value>TAN</value>
                 <value>SFL</value>
+                <value>sin</value>
+                <value>car</value>
+                <value>tan</value>
+                <value>sfl</value>
             </allowed>
         </param>
 
-    <param type="string" name="ephemsrcname">
-            <description>ephemeris source name, e.g. "MARS"</description>
-            <value></value>
+    <param name="ephemsrcname" type="string"><shortdescription>ephemeris source name, e.g. &quot;MARS&quot;</shortdescription><description>ephemeris source name, e.g. &quot;MARS&quot;</description>
+            
+            <value/>
     </param>
 
-    <param type="string" name="pointingcolumn">
-            <shortdescription>pointing data column to use ["direction", "target", "pointing_offset", "source_offset" or "encoder"]</shortdescription>
+    <param name="pointingcolumn" type="string">
+            <shortdescription>pointing data column to use [&quot;direction&quot;, &quot;target&quot;, &quot;pointing_offset&quot;, &quot;source_offset&quot; or &quot;encoder&quot;]</shortdescription>
             <description>pointing data column to use</description>
             <value>direction</value>
-            <allowed kind="enum" ignorecase="True">
+            <allowed kind="enum">
                 <value>target</value>
                 <value>pointing_offset</value>
                 <value>source_offset</value>
                 <value>encoder</value>
                 <value>direction</value>
+                <value>TARGET</value>
+                <value>POINTING_OFFSET</value>
+                <value>SOURCE_OFFSET</value>
+                <value>ENCODER</value>
+                <value>DIRECTION</value>
             </allowed>
     </param>
 
-    <param type="any" name="restfreq">
-            <description>rest frequency to assign to image, e.g., "114.5GHz"</description>
-            <any type="variant" limittypes="string double"/>
+    <param name="restfreq" type="any"><shortdescription>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</shortdescription><description>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</description>
+            
+            <any limittypes="string double" type="variant"/>
             <value type="string"/>
     </param>
 
-    <param type="string" name="stokes">
-            <description>stokes parameters or polarization types to image, e.g. "I", "XX"</description>
-            <value></value>
+    <param name="stokes" type="string"><shortdescription>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</shortdescription><description>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</description>
+            
+            <value/>
     </param>
 
-    <param type="double" name="minweight">
+    <param name="minweight" type="double">
             <shortdescription>Minimum weight ratio to use</shortdescription>
             <description>Minimum weight ratio to the median of weight used in weight correction and weight beased masking</description>
             <allowed kind="range"> <value range="min">0</value> </allowed>
             <value>0.1</value>
     </param>
    
-    <param type="string" name="brightnessunit">
-            <description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
-            <value></value>
-            <allowed kind="enum" ignorecase="True">
-                <value></value>
+    <param name="brightnessunit" type="string"><shortdescription>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</shortdescription><description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
+            
+            <value/>
+            <allowed kind="enum">
+                <value/>
                 <value>K</value>
                 <value>Jy/beam</value>
             </allowed>
     </param>
 
-        <param type="bool" name="clipminmax">
+        <param name="clipminmax" type="bool">
                         <shortdescription>Clip minimum and maximum value from each pixel</shortdescription>
                         <description>Clip minimum and maximum value from each pixel. Note the benefit of clipping is lost when the number of integrations contributing to each gridded pixel is small, or where the incidence of spurious datapoints is approximately or greater than the number of beams (in area) encompassed by expected image.</description>
                         <value>False</value>
@@ -276,58 +292,58 @@ values. See description below for details of gridfunction available.
             <when param="mode">
                 <equals value="channel">
                     <default param="nchan"><value>-1</value></default>
-                    <default param="start"><value type="string"></value>
+                    <default param="start"><value type="string"/>
                         <description>Begin the output cube at the frequency of this channel in the MS</description>
                     </default>
-                    <default param="width"><value type="string"></value>
-                        <description>Width of output channel relative to MS channel (# to average)("" = 1 channel) </description>
+                    <default param="width"><value type="string"/>
+                        <description>Width of output channel relative to MS channel (# to average)(&quot;&quot; = 1 channel) </description>
                     </default>
                 </equals>
                 <equals value="frequency">
                     <default param="nchan"><value>-1</value></default>
-                    <default param="start"><value type="string"></value>
-                        <description>Frequency of first channel: e.g. "1.4GHz" (""= first channel in first SpW of MS)</description>
+                    <default param="start"><value type="string"/>
+                        <description>Frequency of first channel: e.g. &quot;1.4GHz&quot; (&quot;&quot;= first channel in first SpW of MS)</description>
                     </default>
-                    <default param="width"><value type="string"></value>
-                        <description>Channel width: e.g "1.0kHz"(""=width of first channel in first SpW of MS)</description>
+                    <default param="width"><value type="string"/>
+                        <description>Channel width: e.g &quot;1.0kHz&quot;(&quot;&quot;=width of first channel in first SpW of MS)</description>
                     </default>
                 </equals>
                 <equals value="velocity">
                     <default param="nchan"><value>-1</value></default>
-                    <default param="start"><value type="string"></value>
-                        <description>Velocity of first channel: e.g "0.0km/s"(""=first channel in first SpW of MS)</description>
+                    <default param="start"><value type="string"/>
+                        <description>Velocity of first channel: e.g &quot;0.0km/s&quot;(&quot;&quot;=first channel in first SpW of MS)</description>
                     </default>
-                    <default param="width"><value type="string"></value>
-                        <description>Channel width e.g "-1.0km/s" (""=width of first channel in first SpW of MS)</description>
+                    <default param="width"><value type="string"/>
+                        <description>Channel width e.g &quot;-1.0km/s&quot; (&quot;&quot;=width of first channel in first SpW of MS)</description>
                     </default>
                     <default param="veltype"><value type="string">radio</value></default>
                 </equals>
             </when>
             <when param="gridfunction">
-                <equals type="string" value="BOX"/>
-                <equals type="string" value="box"/>
-                <equals type="string" value="SF">
+                <equals value="BOX" type="string"/>
+                <equals value="box" type="string"/>
+                <equals value="SF" type="string">
                     <default param="convsupport"><value type="int">-1</value></default>
                 </equals>
-                <equals type="string" value="sf">
+                <equals value="sf" type="string">
                     <default param="convsupport"><value type="int">-1</value></default>
                 </equals>
-                <equals type="string" value="PB"/>
-                <equals type="string" value="pb"/>
-                <equals type="string" value="GAUSS">
+                <equals value="PB" type="string"/>
+                <equals value="pb" type="string"/>
+                <equals value="GAUSS" type="string">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals type="string" value="gauss">
+                <equals value="gauss" type="string">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals type="string" value="GJINC">
+                <equals value="GJINC" type="string">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                     <default param="jwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals type="string" value="gjinc">
+                <equals value="gjinc" type="string">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                     <default param="jwidth"><value type="int">-1</value></default>
@@ -444,7 +460,7 @@ mode -- spectral gridding type
                  channels. In this case, please specify the desired width.
                When specifying the width, one must give units
                examples: width='1.0km/s', or width='24.2kHz'.
-               Setting width>0 gives channels of increasing frequency for 
+               Setting width&gt;0 gives channels of increasing frequency for 
                mode='frequency', and increasing velocity for mode='velocity'.
        veltype -- Velocity definition
            Options: 'radio','optical','true','relativistic'

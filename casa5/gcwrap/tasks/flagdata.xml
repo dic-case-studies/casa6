@@ -735,18 +735,16 @@ visibilities for flagging.
             </param>
 
             <param type="any" name="quackmode" subparam="true">
-<shortdescription>Quack mode. beg: first n seconds of scan; endb: last n seconds of scan; end: all but first n seconds of scan; tail: all but last n seconds of scan.</shortdescription>
-<description>Quack mode. beg: first n seconds of scan; endb: last n
-seconds of scan; end: all but first n seconds of scan; tail: all but
-last n seconds of scan.
+<shortdescription>Quack mode. Flag intervals of the scan according to given mode.</shortdescription>
+<description>Quack mode flags the region of the scan given by one of the
+options below using the time set at quackinterval.
                      Subparameter of mode='quack'
                      Default: 'beg'
                      Options: 
-                   * 'beg': flag an interval at the beginning of scan
-                   * 'endb': flag an interval at the end of scan 
-                   * 'tail': flag all but an interval at the beginning
-                             of scan
-                   * 'end': flag all but an interval at end of scan
+                     'beg' : flag an interval at the beginning of scan
+                     'endb': flag an interval at the end of scan
+                     'tail': flag all but an interval at the beginning of scan
+                     'end' : flag all but an interval at end of scan
 
                      Visual representation of quack mode flagging one
                      scan with 1s duration. The following diagram

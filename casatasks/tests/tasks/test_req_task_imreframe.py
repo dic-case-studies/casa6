@@ -143,7 +143,7 @@ class imreframe_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         
         for frame in outframeList:
-            imreframe(imagename=imcopy, outframe=frame)
+            imreframe(imagename=imcopy, outframe=frame.lower())
             self.assertTrue(len(filecmp.dircmp(imcopy, imfile).diff_files) >= 0)
             
             imhead(imcopy, verbose=True)
@@ -158,15 +158,15 @@ class imreframe_test(unittest.TestCase):
             Test that the epoch paramter gives the epoch to be associated with the final image only works for outframe = geo and topo
         '''
         
-        for frame in ['GEO', 'TOPO']:
+        for frame in ['geo', 'topo']:
             
             imreframe(imagename=imcopy, output=outfile ,outframe=frame)
             imreframe(imagename=imcopy, output=outfile2, outframe=frame, epoch='2000/12/25/18:30:00')
             
             self.assertFalse(compTables(outfile, outfile2))
             
-        imreframe(imagename=imcopy, output=outfile ,outframe='LSRK')
-        imreframe(imagename=imcopy, output=outfile2, outframe='LSRK', epoch='2000/12/25/18:30:00')
+        imreframe(imagename=imcopy, output=outfile ,outframe='lsrk')
+        imreframe(imagename=imcopy, output=outfile2, outframe='lsrk', epoch='2000/12/25/18:30:00')
         
         self.assertTrue(compTables(outfile, outfile2))
             

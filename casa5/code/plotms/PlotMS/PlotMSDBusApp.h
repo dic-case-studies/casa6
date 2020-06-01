@@ -87,6 +87,7 @@ public:
     static const casacore::String PARAM_HEIGHT; // int or uInt
     static const casacore::String PARAM_ITERATE; // casacore::Record (see PlotMSIterParam)
     static const casacore::String PARAM_PLOTINDEX; // int or uInt
+    static const casacore::String PARAM_NUMPLOTS; // int or uInt
     static const casacore::String PARAM_PRIORITY; // String
     static const casacore::String PARAM_SELECTION; // casacore::Record (see PlotMSSelection)
     static const casacore::String PARAM_TRANSFORMATIONS; // casacore::Record (see PlotMSTransformations)

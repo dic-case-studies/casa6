@@ -1,6 +1,7 @@
 //#
 //#  CASA - Common Astronomy Software Applications (http://casa.nrao.edu/)
-//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All rights reserved.
+//#  Copyright (C) Associated Universities, Inc. Washington DC, USA 2011, All
+//#  rights reserved.
 //#  Copyright (C) European Southern Observatory, 2011, All rights reserved.
 //#
 //#  This library is free software; you can redistribute it and/or
@@ -65,14 +66,6 @@ void StatWt::setTimeBinWidth(Double binWidth) {
     _timeBinWidth = binWidth;
 }
 
-void StatWt::setTimeBinWidthUsingInterval(uInt n) {
-    _timeBinWidth = vi::StatWtTVI::getTimeBinWidthUsingInterval(_ms, n);
-    _log << LogOrigin("StatWt", __func__) << LogIO::NORMAL
-        << "Determined representative integration time of "
-        << (_timeBinWidth/(Double)n) << "s. Setting time bin width to "
-        << _timeBinWidth << "s" << LogIO::POST;
-}
-
 void StatWt::setCombine(const String& combine) {
     _combine = downcase(combine);
 }
@@ -113,7 +106,7 @@ Record StatWt::writeWeights() {
                     ThrowIf(
                         x.empty(),
                         "WEIGHT_SPECTRUM is only partially initialized. "
-                        "StatWt2 cannot deal with such an MS"
+                        "StatWt cannot deal with such an MS"
                     );
                     vb->setWeightSpectrum(x);
                 }
@@ -159,11 +152,15 @@ void StatWt::_constructVi(
     std::shared_ptr<vi::VisibilityIterator2>& vi,
     std::shared_ptr<vi::StatWtTVILayerFactory>& factory
 ) const {
-    // default sort columns are from MSIter and are ARRAY_ID, FIELD_ID, DATA_DESC_ID, and TIME
-    // I'm adding scan and state because, according to the statwt requirements, by default, scan
-    // and state changes should mark boundaries in the weights computation
+    // default sort columns are from MSIter and are ARRAY_ID, FIELD_ID,
+    // DATA_DESC_ID, and TIME. I'm adding scan and state because, according to
+    // the statwt requirements, by default, scan and state changes should mark
+    // boundaries in the weights computation.
+    // ORDER MATTERS. Columns are sorted in the order they appear in the vector.
     std::vector<Int> scs;
     scs.push_back(MS::ARRAY_ID);
+    scs.push_back(MS::DATA_DESC_ID);
+    scs.push_back(MS::TIME);
     if (! _combine.contains("scan")) {
         scs.push_back(MS::SCAN_NUMBER);
     }
@@ -173,8 +170,6 @@ void StatWt::_constructVi(
     if (! _combine.contains("field")) {
         scs.push_back(MS::FIELD_ID);
     }
-    scs.push_back(MS::DATA_DESC_ID);
-    scs.push_back(MS::TIME);
     Block<int> sort(scs.size());
     uInt i = 0;
     for (const auto& col: scs) {

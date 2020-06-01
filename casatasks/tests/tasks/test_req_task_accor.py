@@ -59,6 +59,8 @@ else:
 
 caltab = 'cal.A'
 cal_default = 'cal.default'
+datacopy = 'uid_copy.ms'
+vlacopy = 'vla_copy.ms'
 
 def cal_size(cal):
     '''
@@ -83,7 +85,8 @@ class accor_test(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        pass
+        shutil.copytree(datapath, datacopy)
+        shutil.copytree(vladata, vlacopy)
     
     def setUp(self):
         if not CASA6:
@@ -96,53 +99,61 @@ class accor_test(unittest.TestCase):
     
     @classmethod
     def tearDownClass(cls):
+        shutil.rmtree(datacopy)
+        shutil.rmtree(vlacopy)
         rmtables(cal_default)
     
+    
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_makesTable(self):
         ''' Test that when accor is run it creates a calibration table '''
         
-        accor(vis=datapath, caltable=caltab)
+        accor(vis=datacopy, caltable=caltab)
         
         self.assertTrue(os.path.exists(caltab))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_fieldSelect(self):
         ''' Test that a calibration table generated with a field selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, field='1')
+        accor(vis=datacopy, caltable=caltab, field='1')
         tb.open(caltab)
         fields = tb.getcol('FIELD_ID')
         tb.close()
         
         self.assertTrue(numpy.all(fields == 1))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_spwSelect(self):
         ''' Test that a calibration table generated with a spectral window selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, spw='1')
+        accor(vis=datacopy, caltable=caltab, spw='1')
         tb.open(caltab)
         spws = tb.getcol('SPECTRAL_WINDOW_ID')
         tb.close()
         
         self.assertTrue(numpy.all(spws == 1))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_intentSelect(self):
         ''' Test that a calibration table generated with an intent selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, intent='*AMPLI*')
+        accor(vis=datacopy, caltable=caltab, intent='*AMPLI*')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean,1.1453650693098703+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_selectData(self):
         ''' Test when selectdata = True selections may be used, and while selectdata = False they may not be used '''
         
-        accor(vis=datapath, caltable=caltab, selectdata=False, scan='2')
+        accor(vis=datacopy, caltable=caltab, selectdata=False, scan='2')
         tb.open(caltab)
         data1 = tb.getcol('CPARAM')
         tb.close()
         rmtables(caltab)
         
-        accor(vis=datapath, caltable=caltab, selectdata=True, scan='2')
+        accor(vis=datacopy, caltable=caltab, selectdata=True, scan='2')
         tb.open(caltab)
         data2 = tb.getcol('CPARAM')
         tb.close()
@@ -150,97 +161,112 @@ class accor_test(unittest.TestCase):
         
         self.assertFalse(numpy.shape(data1) == numpy.shape(data2))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_timeRangeSelect(self):
         ''' Test that a calibration table generated with a timerange selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, timerange='03:01:32.7~03:04:59.5')
+        accor(vis=datacopy, caltable=caltab, timerange='03:01:32.7~03:04:59.5')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.1656893293062844+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_antennaSelect(self):
         ''' Test that a calibration table generated with an antenna selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, antenna='1&&')
+        accor(vis=datacopy, caltable=caltab, antenna='1&&')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.075232790576087+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_scanSelect(self):
         ''' Test that a calibration table generated with a scan selection is different than one generated with no selection parameters '''
         
-        accor(vis=datapath, caltable=caltab, scan='2')
+        accor(vis=datacopy, caltable=caltab, scan='2')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.1453650693098703+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_obsSelect(self):
         ''' Test that a calibration table generated with an observation selection is different than one generated with no seletion parameters '''
         
-        accor(vis=datapath, caltable=caltab, observation='0')
+        accor(vis=datacopy, caltable=caltab, observation='0')
         self.assertTrue(os.path.exists(caltab))
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_solint(self):
-        ''' Test that the solint parameter changes he solutin interval (?) '''
+        ''' Test that the solint parameter changes he solution interval (?) '''
         
-        accor(vis=datapath, caltable=caltab, solint='10s')
+        accor(vis=datacopy, caltable=caltab, solint='10s')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.1667321394651364+0j))
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_combineSelect(self):
         ''' Test that a calibration table generated with a combine selection is different than one generated with no selection parameteres '''
         
-        accor(vis=datapath, caltable=caltab, combine='scan, spw')
+        accor(vis=datacopy, caltable=caltab, combine='scan, spw')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.136721501747767+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_append(self):
         ''' Generates a cal table and then attempts to append to it '''
         
-        accor(datapath, caltab)
+        accor(datacopy, caltab)
         before_append = cal_size(caltab)
         
-        accor(datapath, caltab, append=True)
+        accor(datacopy, caltab, append=True)
         after_append = cal_size(caltab)
         
         self.assertTrue(after_append > before_append)
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_docallib(self):
         ''' Test that the do callib parameter allows for the selection of caltables '''
 
-        accor(datapath, caltable='cal.B')
-        accor(vis=datapath, caltable=caltab, docallib=True, callib=libpath)
+        accor(datacopy, caltable='cal.B')
+        accor(vis=datacopy, caltable=caltab, docallib=True, callib=libpath)
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.0017881503811588+0j))
         
         
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_gaintable(self):
         ''' Test that providing the gaintable will yeild a different final cal table than the default '''
         
-        accor(datapath, caltable='cal.B')
-        accor(vis=datapath, caltable=caltab, gaintable='cal.B')
+        accor(datacopy, caltable='cal.B')
+        accor(vis=datacopy, caltable=caltab, gaintable='cal.B')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.0017881503811588+0j))
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_gainfield(self):
         ''' Test that adding a field selection to the gaintable will yeild a different cal table than gaintable with no field selection '''
         
-        accor(datapath, caltable='cal.B')
-        accor(vis=datapath, caltable=caltab, gaintable='cal.B', gainfield='1')
+        accor(datacopy, caltable='cal.B')
+        accor(vis=datacopy, caltable=caltab, gaintable='cal.B', gainfield='1')
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 0.9921940355389206+0j))
-        
+
+    #CAS-12736   
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_interp(self):
         ''' Test that adding an interp selection to the gaintable will yeild a different cal table than gaintable with standard interp (linear, linear) '''
-        accor(vladata, caltable='cal.B')
+        accor(vlacopy, caltable='cal.B')
         
-        accor(vladata, caltable='cal.A', gaintable=['cal.B'])
-        accor(vladata, caltable='cal.C', gaintable=['cal.B'],  interp='nearest')
+        accor(vlacopy, caltable='cal.A', gaintable=['cal.B'])
+        accor(vlacopy, caltable='cal.C', gaintable=['cal.B'],  interp='nearest')
         
         print(len(filecmp.dircmp('cal.A', 'cal.C').diff_files),(filecmp.dircmp('cal.A', 'cal.C').diff_files))
         
@@ -248,11 +274,12 @@ class accor_test(unittest.TestCase):
         
         rmtables('cal.C')
         
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
     def test_spwmap(self):
         ''' Test that adding a spwmap selection to the gaintable will yeild a different cal table than gaintable with no spwmap '''
         
-        accor(datapath, caltable='cal.B')
-        accor(vis=datapath, caltable=caltab, gaintable='cal.B', spwmap=[0,0])
+        accor(datacopy, caltable='cal.B')
+        accor(vis=datacopy, caltable=caltab, gaintable='cal.B', spwmap=[0,0])
         datamean = getmean(caltab)
         
         self.assertTrue(numpy.isclose(datamean, 1.282986655279442+0j))

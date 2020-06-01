@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the param set for sdsidebandsplit -->
 
-<task type="function" name="sdsidebandsplit" category="single dish" visibility="experimental">
+
+<task visibility="experimental" category="single dish" name="sdsidebandsplit" type="function">
 
   <shortdescription>[EXPERIMENTAL] invoke sideband separation using FFT</shortdescription>
 
@@ -17,70 +12,65 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 </description>
 
   <input>
-<!--
-    <param type="stringArray" name="infiles"  mustexist="True">
-    <description>list of names of input SD Measurementset</description>
-    <value></value>
-    </param>
- -->
 
-    <param type="stringArray" name="imagename"  mustexist="True">
+
+    <param mustexist="True" name="imagename" type="stringArray">
     <shortdescription>a list of names of input images</shortdescription>
     <description>a list of names of input images. At least two valid images are required for processing</description>
-    <value></value>
+    <value/>
     </param>
 
-    <param type="string" name="outfile">
+    <param name="outfile" type="string">
       <shortdescription>Prefix of output image name</shortdescription>
       <description>Prefix of output image name.
-      A suffix, ".signalband" or ".imageband" is added to 
+      A suffix, &quot;.signalband&quot; or &quot;.imageband&quot; is added to 
       output image name depending on the side band side being solved.</description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="bool" name="overwrite">
-      <description>overwrite option</description>
+    <param name="overwrite" type="bool"><shortdescription>overwrite option</shortdescription><description>overwrite option</description>
+      
       <value>False</value>
     </param>
 
-<!-- separation parameters -->
-    <param type="doubleArray" name="signalshift">
+
+    <param name="signalshift" type="doubleArray">
       <shortdescription>a list of channel number shifts in signal side band</shortdescription>
       <description>a list of channel number shifts in signal side band.
       The number of elements must be equal to that of imagename</description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="doubleArray" name="imageshift">
+    <param name="imageshift" type="doubleArray">
       <shortdescription>a list of channel number shifts in image side band</shortdescription>
       <description> a list of channel number shifts in image side band.
       The number of elements must be either zero or equal to that of imagename.
       In case of zero length array, the values are obtained from signalshift
       assuming the shifts are the same magnitude in opposite direction.</description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="bool" name="getbothside">
-      <description>sideband separation (True) or supression (False)</description>
+    <param name="getbothside" type="bool"><shortdescription>sideband separation (True) or supression (False)</shortdescription><description>sideband separation (True) or supression (False)</description>
+      
             <value>False</value>
     </param>
 
-    <param type="double" name="refchan" subparam="true">
-        <description>reference channel of spectral axis in image sideband</description>
+    <param subparam="true" name="refchan" type="double"><shortdescription>reference channel of spectral axis in image sideband</shortdescription><description>reference channel of spectral axis in image sideband</description>
+        
         <value>0.0</value>
     </param>
 
-     <param type="string" name="refval" subparam="true">
-        <description>frequency at the reference channel of spectral axis in image sideband (e.g., "100GHz")</description>
-        <value></value>
+     <param subparam="true" name="refval" type="string"><shortdescription>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</shortdescription><description>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</description>
+        
+        <value/>
     </param>
  
-    <param type="bool" name="otherside">
-      <description>solve the solution of the other side band side and subtract the solution</description>
+    <param name="otherside" type="bool"><shortdescription>solve the solution of the other side band side and subtract the solution</shortdescription><description>solve the solution of the other side band side and subtract the solution</description>
+      
             <value>False</value>
     </param>
 
-    <param type="double" name="threshold">
+    <param name="threshold" type="double">
       <shortdescription>Rejection limit of solution</shortdescription>
       <description>Rejection limit of solution. The value must be greater than 0.0 and less than 1.0.</description>
       <value>0.2</value>
@@ -90,13 +80,13 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     </allowed>
     </param>
 
-<!-- CONSTRAINTS -->
+
     <constraints>
             <when param="getbothside">
-                <equals type="bool" value="False"/>
-                <equals type="bool" value="True">
+                <equals value="False" type="bool"/>
+                <equals value="True" type="bool">
                     <default param="refchan"><value>0.0</value></default>
-                    <default param="refval"><value type="string"></value></default>
+                    <default param="refval"><value type="string"/></default>
                 </equals>
             </when>
     </constraints>

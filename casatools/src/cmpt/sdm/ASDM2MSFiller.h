@@ -354,7 +354,7 @@ namespace casac {
         void addProcessor( std::string& type_,
                            std::string& sub_type_,
                            int  type_id_,
-                           int  mode_id_ );
+                           int  mode_id_);
 
         void addSource( int             source_id_,
                         double          time_,

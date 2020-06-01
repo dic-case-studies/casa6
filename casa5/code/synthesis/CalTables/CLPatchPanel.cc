@@ -58,7 +58,7 @@ CalPatchKey::CalPatchKey(IPosition keyids) :
 Bool CalPatchKey::operator<(const CalPatchKey& other) const {
 
   // This method does a lexigraphical less-than, wherein negative
-  //  elements in either operand behave as equal (reflexively not 
+  //  elements in either operand behave as equal (reflexively not
   //  less than)
 
   // Loop over elements in precendence order
@@ -102,20 +102,20 @@ String CTCalPatchKey::print() const {
 
 
 CalMap::CalMap() :
-  vcalmap_() 
+  vcalmap_()
 {}
 
 CalMap::CalMap(const Vector<Int>& calmap) :
   vcalmap_(calmap)
 {
-  //  cout << "calmap addresses: " << calmap.data() << " " << vcalmap_.data() 
+  //  cout << "calmap addresses: " << calmap.data() << " " << vcalmap_.data()
   //       << " nrefs= " << calmap.nrefs() << " " << vcalmap_.nrefs() << endl;
 }
 
-Int CalMap::operator()(Int msid) const { 
+Int CalMap::operator()(Int msid) const {
   // TBD: reconsider algorithm (maybe just return msid if over-run?)
-  Int ncalmap=vcalmap_.nelements(); 
-  return (msid<ncalmap ? vcalmap_(msid) : 
+  Int ncalmap=vcalmap_.nelements();
+  return (msid<ncalmap ? vcalmap_(msid) :
 	  (ncalmap>0 ? vcalmap_(ncalmap-1) : msid) ); // Avoid going off end
 }
 
@@ -133,7 +133,7 @@ Vector<Int> CalMap::ctids(const Vector<Int>& msids) const {
   if (msids.nelements()==1 &&
       msids[0]<0)
     // MS ids indefinite, so all are ok
-    calmask.set(true);  
+    calmask.set(true);
   else {
     // just do the ones that are requested
     for (uInt i=0;i<msids.nelements();++i) {
@@ -183,8 +183,24 @@ FieldCalMap::FieldCalMap(const Vector<Int>& calmap) :
   fieldcalmap_("")
 {}
 
-FieldCalMap::FieldCalMap(const String fieldcalmap, 
+FieldCalMap::FieldCalMap(const String fieldcalmap,
 			 const MeasurementSet& ms, const NewCalTable& ct) :
+  CalMap(),
+  fieldcalmap_(fieldcalmap)
+{
+
+  if (fieldcalmap_=="nearest")
+    // Calculate nearest map
+    setNearestFieldMap(ms,ct);
+  else
+    // Attempt field selection
+    setSelectedFieldMap(fieldcalmap,ms,ct);
+
+}
+
+FieldCalMap::FieldCalMap(const String fieldcalmap, 
+			 const MeasurementSet& ms, const NewCalTable& ct,
+			 String& extfldsel) :
   CalMap(),
   fieldcalmap_(fieldcalmap)
 {
@@ -194,7 +210,7 @@ FieldCalMap::FieldCalMap(const String fieldcalmap,
     setNearestFieldMap(ms,ct);
   else 
     // Attempt field selection
-    setSelectedFieldMap(fieldcalmap,ms,ct);
+    setSelectedFieldMap(fieldcalmap,ms,ct,extfldsel);
 
 }
 
@@ -244,16 +260,16 @@ void FieldCalMap::setNearestFieldMap(const MSFieldColumns& msfc, const ROCTColum
       // Sort separations
       Vector<uInt> ord;
       Int nsep=genSort(ord,sep,Sort::Ascending,Sort::QuickSort);
-      
+
       //cout << iMSFld << ":" << endl;
       //cout << "    ord=" << ord << endl;
       //cout << "   nsep=" << nsep << endl;
       //cout << "    sep=" << sep << " " << sep*(180.0/C::pi)<< endl;
-      
+
       // Trap case of duplication of nearest separation
       if (nsep>1 && sep(ord(1))==sep(ord(0)))
 	throw(AipsError("Found more than one field at minimum distance, can't decide!"));
-      
+
       vcalmap_(iMSFld)=ctFlds(ord(0));
     }
   }
@@ -286,14 +302,59 @@ void FieldCalMap::setSelectedFieldMap(const String& fieldsel,
 
 }
 
+void FieldCalMap::setSelectedFieldMap(const String& fieldsel,
+				      const MeasurementSet& ms,
+				      const NewCalTable& ct,
+				      String& extfldsel) {
+
+  
+  try {
+
+    CTInterface cti(ct);
+    MSSelection mss;
+    mss.setFieldExpr(fieldsel);
+    TableExprNode ten=mss.toTableExprNode(&cti);
+    Vector<Int> fieldlist=mss.getFieldList();
+
+    // Nominally, don't apply selection externally
+    extfldsel="";
+
+    if (fieldlist.nelements()>1)
+      // trigger external selection (multi-field case; see old gainfield)
+      extfldsel=fieldsel;
+    else if (fieldlist.nelements()==1) {
+      // exactly 1 means fldmap=[f]*nfld
+
+      // Nominally, this many fields need a map
+      Int nMSFlds=ms.field().nrow();
+      vcalmap_.resize(nMSFlds);
+      vcalmap_.set(fieldlist[0]);
+    }
+    else
+      // Field selection found no indices
+      throw(AipsError(fieldsel+" matches no fields."));
+
+  }
+  catch ( AipsError err ) {
+
+    throw(AipsError("Field mapping by selection failure: "+err.getMesg()));
+
+  }
+
+
+  //  cout << "FCM::setSelectedFieldMap:***************  vcalmap_ = " << vcalmap_ << endl;
+
+  return;
+}
+
 
 CalLibSlice::CalLibSlice(String obs,String fld, String ent, String spw,
 			 String tinterp,String finterp,
-			 Vector<Int> obsmap, Vector<Int> fldmap, 
+			 Vector<Int> obsmap, Vector<Int> fldmap,
 			 Vector<Int> spwmap, Vector<Int> antmap) :
   obs(obs),fld(fld),ent(ent),spw(spw),
   tinterp(tinterp),finterp(finterp),
-  obsmap(obsmap),fldmap(fldmap),spwmap(spwmap),antmap(antmap)
+  obsmap(obsmap),fldmap(fldmap),spwmap(spwmap),antmap(antmap),extfldsel("")
 {}
 
 // Construct from a Record
@@ -302,7 +363,8 @@ CalLibSlice::CalLibSlice(const Record& clslice,
 			 const NewCalTable& ct) :
   obs(),fld(),ent(),spw(),
   tinterp(),finterp(),
-  obsmap(),fldmap(),spwmap(),antmap()
+  obsmap(),fldmap(),spwmap(),antmap(),
+  extfldsel("")
 {
 
   if (clslice.isDefined("obs")) {
@@ -334,13 +396,12 @@ CalLibSlice::CalLibSlice(const Record& clslice,
       obsmap=CalMap(Vector<Int>(clslice.asArrayInt("obsmap")));
   }
   if (clslice.isDefined("fldmap")) {
-    //    cout << "fldmap.dataType() = " << clslice.dataType("fldmap") << endl;
     if (clslice.dataType("fldmap")==TpArrayInt)
       fldmap=FieldCalMap(clslice.asArrayInt("fldmap"));
     if (clslice.dataType("fldmap")==TpString)
-      fldmap=FieldCalMap(clslice.asString("fldmap"),ms,ct);
+      fldmap=FieldCalMap(clslice.asString("fldmap"),ms,ct,extfldsel);
   }
-  if (clslice.isDefined("spwmap")) { 
+  if (clslice.isDefined("spwmap")) {
     //    cout << "spwmap.dataType() = " << clslice.dataType("spwmap") << endl;
     if (clslice.dataType("spwmap")==TpArrayInt)
       spwmap=CalMap(clslice.asArrayInt("spwmap"));
@@ -369,7 +430,7 @@ Record CalLibSlice::asRecord() {
   rec.define("fldmap",fldmap.vmap());
   rec.define("spwmap",spwmap.vmap());
   rec.define("antmap",antmap.vmap());
-  
+
   return rec;
 }
 
@@ -416,7 +477,14 @@ String CalLibSlice::state() {
   o << "     MS: obs="+obs+" fld="+fld+" intent="+ent+" spw="+spw << endl
     << "     CT: tinterp="+tinterp << " finterp="+finterp << endl
     << "         obsmap=" << obsmap.vmap()
-    << "         fldmap=" << fldmap.vmap() << endl
+    << "         fldmap=";
+
+  if (extfldsel=="")
+    o << fldmap.vmap();
+  else
+    o << extfldsel+" (by selection)";
+
+  o << endl
     << "         spwmap=" << spwmap.vmap()
     << "         antmap=" << antmap.vmap()
     << endl;
@@ -424,7 +492,7 @@ String CalLibSlice::state() {
   return String(o);
 }
 
-  
+
 CLPPResult::CLPPResult() :
   result_(),resultFlag_()
 {}
@@ -521,17 +589,17 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
   CTSpWindowColumns ctspw(ct_.spectralWindow());
   ctspw.numChan().getColumn(nChanIn_);
   freqIn_.resize(nCTSpw_);
-  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) 
+  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw)
     ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
   ctspw.refFrequency().getColumn(refFreqIn_);
- 
+
   // Initialize maps
   //  (ctids, msids, result arrays)
   // TBD
 
   //void CLPatchPanel::unpackCLinstance(CalLibSlice cls) {
 
-  // Loop over callib slices 
+  // Loop over callib slices
   //  (a callib slice is one MS selection and interp setup for the present caltable)
   uInt nkey=callib.nfields();
   Int icls=-1;
@@ -540,7 +608,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
     // skip
     if (callib.type(ikey)!=TpRecord)
       continue;
-    
+
     ++icls;
 
     // The current callib slice
@@ -548,7 +616,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     logsink_ << LogIO::NORMAL << ".   " << icls << ":" << endl
 	     << cls.state() << LogIO::POST;
-    
+
     // Apply callib instance MS selection to the "MS" (in this case it is a CT)
     NewCalTable clsms(ctasms_);
     this->selectOnCT(clsms,ctasms_,cls.obs,cls.fld,cls.spw,"");
@@ -574,7 +642,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
     //    cout << "theseMSint = " << theseMSint << endl;
 
     // WE DO TIME-ISH (OBS,FLD) AXES IN OUTER LOOPS
-    
+
     // The net CT obs required for the MS obs according to the obsmap
     //  (in principle, this may contain CT obs ids that aren't available)
     Vector<Int> reqCTobs=cls.obsmap.ctids(reqMSobs);
@@ -588,12 +656,12 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
       // Apply thisCTobs selection to the CT
       //   (only if a meaningful obsid is specified)
-      if (thisCTobs!=-1) 
+      if (thisCTobs!=-1)
 	this->selectOnCT(obsselCT,ct_,String::toString(thisCTobs),"","","");
 
       // The MS obss to be calibrated by thisCTobs (limited by the req superset)
       //  (could be [-1], which means all)
-      Vector<Int> theseMSobs=cls.obsmap.msids(thisCTobs,reqMSobs); 
+      Vector<Int> theseMSobs=cls.obsmap.msids(thisCTobs,reqMSobs);
       if (theseMSobs.nelements()==1 && theseMSobs[0]<0)
 	theseMSobs.reference(reqMSobs);
       //      cout << " thisCTobs = " << thisCTobs << ": theseMSobs = " << theseMSobs << endl;
@@ -613,9 +681,9 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       NewCalTable fldselCT(obsselCT);
       for (uInt iCTfld=0;iCTfld<reqCTfld.nelements();++iCTfld) {
 	Int& thisCTfld=reqCTfld(iCTfld);   // TBD: generalize to multiple fields?
-	
+
 	// Apply thisCTfld selection to the CT
-	if (thisCTfld!=-1) 
+	if (thisCTfld!=-1)
 	  this->selectOnCT(fldselCT,obsselCT,"",String::toString(thisCTfld),"","");
 
 
@@ -624,13 +692,13 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	Vector<int> theseMSfld=cls.fldmap.msids(thisCTfld,reqMSfld);
 	if (theseMSfld.nelements()==1 && theseMSfld[0]<0)
 	  theseMSfld.reference(reqMSfld);
-	
+
 
 	//	cout << "  thisCTfld = " << thisCTfld << ": theseMSfld = " << theseMSfld << endl;
 
 	// Apply theseMSfld selection to the MS
 	// TBD: reqMSspw = ...
-	
+
 	//  ...AND HARDWARE AXES (SPW,ANT) IN INNER LOOPS
 
 	// For each required _MS_ spw:
@@ -639,14 +707,14 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	  Int& thisMSspw=reqMSspw(iMSspw);
 	  Int thisCTspw=cls.spwmap(thisMSspw);
 	  if (thisCTspw<0) thisCTspw=thisMSspw; // MUST BE DEFINITE!
-	  
+
 	  // Apply thisCTspw selection to CT
 	  this->selectOnCT(spwselCT,fldselCT,"","",String::toString(thisCTspw),"");
 
 	  // Create time-dep interp result container
 	  CTCalPatchKey iclTres(icls,thisCTobs,thisCTfld,thisMSspw,-1);
 	  clTres_[iclTres]=CLPPResult(nPar_,nFPar_,nChanIn_[thisCTspw],nMSElem_);
-	  
+
 	  NewCalTable antselCT(spwselCT);
 	  for (uInt iMSant=0;iMSant<reqMSant.nelements();++iMSant) {
 	    Int& thisMSant=reqMSant(iMSant);
@@ -657,12 +725,12 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	    this->selectOnCT(antselCT,spwselCT,"","","",String::toString(thisCTant));
 
 	    //  (if null, warn and continue, or throw?)
-	    
+
 	    // Make the Cal Interpolator (icls is the CL slice index):
 	    CTCalPatchKey ici0(icls,thisCTobs,thisCTfld,thisCTspw,thisCTant);  // all CT indices
 	    CTCalPatchKey ici1(icls,thisCTobs,thisCTfld,thisMSspw,thisMSant);  // spw,ant are MS indices
 	    //   (NB: Must use thisMSspw,thisMSant above to avoid duplication in resolved spwmap,antmap)
-	    
+
 	    if (ci_.count(ici1)<1) {
 	      ciname_[ici1]=ici0.print()+" rows="+String::toString(antselCT.nrow());
 	      Array<Float> r(clTres_[iclTres].result(thisMSant));
@@ -682,7 +750,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		Int& thisMSfld=theseMSfld(iMSfld);
 		for (uInt iMSint=0;iMSint<theseMSint.nelements();++iMSint) {
 		  Int& thisMSint=theseMSint(iMSint);
-		  
+
 		  MSCalPatchKey ims(thisMSobs,thisMSfld,thisMSint,thisMSspw,thisMSant);
 		  if (msci_.count(ims)<1) {
 		    msciname_[ims]=ciname_[ici1];
@@ -692,7 +760,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		    throw(AipsError("Attempted duplicate MSCalPatchKey!"));
 
 		  //		  cout << " Patching: MS(" << ims.print() << ") --> CT(" << ici0.print() << ")" << endl;
-		  
+
 		  // Link these obs,fld,ant,spw to the correct results object
 		  //  (as a group over antennas; should move this out of ant loop, really)
 		  if (iMSant==0) {
@@ -710,7 +778,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	} // iMSspw
       } // iCTfld
     } // iCTobs
-    
+
   } // icls
 
 } // ctor
@@ -756,6 +824,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
   //  ia1dmethod_=ftype(freqType_);
   //  cout << "ia1dmethod_ = " << ia1dmethod_ << endl;
 
+    
   switch(mtype_) {
   case VisCalEnum::GLOBAL: {
 
@@ -786,21 +855,24 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
   CTSpWindowColumns ctspw(ct_.spectralWindow());
   ctspw.numChan().getColumn(nChanIn_);
   freqIn_.resize(nCTSpw_);
-  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) 
+  for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw)
     ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
   ctspw.refFrequency().getColumn(refFreqIn_);
- 
+
   // Initialize maps
   //  (ctids, msids, result arrays)
   // TBD
 
   //void CLPatchPanel::unpackCLinstance(CalLibSlice cls) {
 
-  // Loop over callib slices 
+  // Loop over callib slices
   //  (a callib slice is one MS selection and interp setup for the present caltable)
   uInt nkey=callib.nfields();
   Int icls=-1;
   for (uInt ikey=0;ikey<nkey;++ikey) {
+
+    // CalTable name might be needed below (eg, for log messages)
+    String ctname=Path(ct_.getPartNames()[0]).baseName().before(".tempMemCalTable");
 
     // Ignore non-Record members in the callib
     if (callib.type(ikey)!=TpRecord)
@@ -810,6 +882,20 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     // The current callib slice
     CalLibSlice cls(callib.asRecord(ikey),ms_,ct_);
+
+
+    // Reference to the cal table that we'll use below
+    NewCalTable ct0(ct_);
+    if (cls.extfldsel!="") {
+      // Select on the reference table
+      try {
+	this->selectOnCT(ct0,ct_,"",cls.extfldsel,"","");
+      } catch ( MSSelectionError err ) {
+	// Selection failed somehow:
+	throw(AipsError("Problem selecting for multi-field field mapping ('"+cls.extfldsel+"') in caltable="+ctname+":  "+err.getMesg()));
+      }
+
+    }
 
     // Apply callib instance MS selection to the incoming (selected MS)
     MeasurementSet clsms(ms_);
@@ -824,7 +910,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       //  in the selected MS
       //String msname=Path(ms_.tableName()).baseName();
       String msname=Path(ms_.getPartNames()[0]).baseName();
-      logsink_ << LogIO::WARN 
+      logsink_ << LogIO::WARN
 	       << ".   The following callib entry matches no data" << endl
 	       << ".   in the selected MS ("+msname+") and will be ignored:" << endl
 	       << ".   " << icls << ":" << endl
@@ -849,7 +935,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     // OBS Ids in selected MS to be calibrated by this cl instance
     Vector<Int> reqMSobs(1,-1); // assume all, indescriminately
-    if (cls.obs.length()>0)     
+    if (cls.obs.length()>0)
       // if CL is obs-specific, we must not be indescriminate
       reqMSobs.reference(this->getMSuniqueIds(clsms,"obs"));
     //cout << "reqMSobs = " << reqMSobs << endl;
@@ -867,7 +953,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       reqMSint.reference(this->getMSuniqueIds(clsms,"intent"));
     //cout << "reqMSint = " << reqMSint << endl;
     Vector<Int> theseMSint(reqMSint);
-    
+
     // SPW Ids in selected MS to be calibrated by this cl instance
     // We are never indescriminate about spw
     Vector<Int> reqMSspw(this->getMSuniqueIds(clsms,"spw"));
@@ -885,10 +971,8 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 
     // WE DO TIME-ISH (OBS,FLD) AXES IN OUTER LOOPS
 
-    // CalTable name might be needed below
-    String ctname=Path(ct_.getPartNames()[0]).baseName().before(".tempMemCalTable");
-    
-    NewCalTable obsselCT(ct_);
+    NewCalTable obsselCT(ct0);
+
     // The net CT obs required for the MS obs according to the obsmap
     //   We will create separate interpolator groups for each
     Vector<Int> reqCTobs=cls.obsmap.ctids(reqMSobs);
@@ -897,9 +981,9 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
     for (uInt iCTobs=0;iCTobs<reqCTobs.nelements();++iCTobs) {
       Int& thisCTobs=reqCTobs(iCTobs);
 
-      // The MS OBSs (subset of reqMSobs) to be calibrated by thisCTobs 
+      // The MS OBSs (subset of reqMSobs) to be calibrated by thisCTobs
       //  (could be [-1], which means all)
-      Vector<Int> theseMSobs=cls.obsmap.msids(thisCTobs,reqMSobs); 
+      Vector<Int> theseMSobs=cls.obsmap.msids(thisCTobs,reqMSobs);
       if (theseMSobs.nelements()==1 && theseMSobs[0]<0)
 	theseMSobs.reference(reqMSobs);
       //cout << " thisCTobs = " << thisCTobs << ": theseMSobs = " << theseMSobs << endl;
@@ -908,10 +992,10 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       //   (only if a meaningful obsid is specified)
       try {
 	if (thisCTobs!=-1) 
-	  this->selectOnCT(obsselCT,ct_,String::toString(thisCTobs),"","","");
+	  this->selectOnCT(obsselCT,ct0,String::toString(thisCTobs),"","","");
       }
       catch (...) {  //  MSSelectionNullSelection x ) {
-	
+
 	// Required CT obs does not exist in the caltable
 	recordBadMSIndices(theseMSobs,reqMSfld,reqMSint,Vector<Int>(1,-1));  // all spws
 	continue;  // jump to next CT obs
@@ -924,21 +1008,21 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
       //cout << " reqCTfld = " << reqCTfld << endl;
 
       // For each required CT fld:
-      NewCalTable fldselCT(obsselCT);   
+      NewCalTable fldselCT(obsselCT);
       for (uInt iCTfld=0;iCTfld<reqCTfld.nelements();++iCTfld) {
 	Int& thisCTfld=reqCTfld(iCTfld);   // TBD: generalize to multiple fields?
-	
+
 	// The MS flds to be calibrated by thisCTfld
 	//  (could be [-1], which means all)
 	Vector<int> theseMSfld=cls.fldmap.msids(thisCTfld,reqMSfld);
 	if (theseMSfld.nelements()==1 && theseMSfld[0]<0)
 	  theseMSfld.reference(reqMSfld);
-	
+
 	//cout << "  thisCTfld = " << thisCTfld << ": theseMSfld = " << theseMSfld << endl;
 
 	// Apply thisCTfld selection to the CT
 	try {
-	  if (thisCTfld!=-1) 
+	  if (thisCTfld!=-1)
 	    this->selectOnCT(fldselCT,obsselCT,"",String::toString(thisCTfld),"","");
 	}
 	catch (...) {  //  MSSelectionNullSelection x ) {
@@ -958,7 +1042,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	  if (thisCTspw<0) thisCTspw=thisMSspw; // MUST BE DEFINITE!
 
 	  //cout << "   thisCTspw=" << thisCTspw << "--> thisMSspw="<<thisMSspw<<endl;
-	  
+
 	  // Apply thisCTspw selection to CT
 	  try {
 	    this->selectOnCT(spwselCT,fldselCT,"","",String::toString(thisCTspw),"");
@@ -966,23 +1050,24 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	  catch (...) {  //  MSSelectionNullSelection x ) {
 
 	    // Required CT spw does not exist in the caltable (for current CT obs, fld)
-	    recordBadMSIndices(theseMSobs,theseMSfld,reqMSint,Vector<Int>(1,thisMSspw));  // current spw	    
+	    recordBadMSIndices(theseMSobs,theseMSfld,reqMSint,Vector<Int>(1,thisMSspw));  // current spw
 	    continue;  // jump to next spw
 	  }
 
 	  // If this selection fails (zero rows), and exception is thrown.
-	  //  What is the state of antselCT?  
-	  //       Is it still the unselected-upon spwselCT? 
+	  //  What is the state of antselCT?
+	  //       Is it still the unselected-upon spwselCT?
 	  //       Or is an empty table?
-	  
+
 
 
 	  // Create time-dep interp result container
 	  //  Indexed by CTobs, CTfld, MSspw (for all antennas)
 	  CTCalPatchKey iclTres(icls,thisCTobs,thisCTfld,thisMSspw,-1);
 	  clTres_[iclTres]=CLPPResult(nPar_,nFPar_,nChanIn_[thisCTspw],nMSElem_);
-	  
+
 	  NewCalTable antselCT(spwselCT);
+    Bool doLinkResults(true);  // initialize true, so it will happen if relevant code reached
 	  for (uInt iMSant=0;iMSant<reqMSant.nelements();++iMSant) {
 	    Int& thisMSant=reqMSant(iMSant);
 	    Int thisCTant=cls.antmap(thisMSant);
@@ -1005,8 +1090,8 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 	    CTCalPatchKey ici0(icls,thisCTobs,thisCTfld,thisCTspw,thisCTant);  // all CT indices
 	    CTCalPatchKey ici1(icls,thisCTobs,thisCTfld,thisMSspw,thisMSant);  // spw,ant are MS indices
 	    //   (NB: Must use thisMSspw,thisMSant above to avoid duplication in resolved spwmap,antmap)
-	    
-	    if (ci_.count(ici1)<1) { 
+
+	    if (ci_.count(ici1)<1) {
 	      ciname_[ici1]=ici0.print()+" rows="+String::toString(antselCT.nrow());
 	      Array<Float> r(clTres_[iclTres].result(thisMSant));
 	      Array<Bool> rf(clTres_[iclTres].resultFlag(thisMSant));
@@ -1023,7 +1108,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		Int& thisMSfld=theseMSfld(iMSfld);
 		for (uInt iMSint=0;iMSint<theseMSint.nelements();++iMSint) {
 		  Int& thisMSint=theseMSint(iMSint);
-		  
+
 		  MSCalPatchKey ims(thisMSobs,thisMSfld,thisMSint,thisMSspw,thisMSant);
 		  if (msci_.count(ims)<1) {
 		    msciname_[ims]=ciname_[ici1];
@@ -1032,12 +1117,12 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		  else
 		    throw(AipsError("Attempted duplicate MSCalPatchKey!"));
 
-		  //if (iMSant==0)
+		  //if (doLinkResults)
 		  //  cout << " Patching: MS(" << ims.print() << ") --> CT(" << ici0.print() << ")" << endl;
-		  
+
 		  // Link these obs,fld,ant,spw to the correct results object
 		  //  (as a group over antennas; should move this out of ant loop, really)
-		  if (iMSant==0) {
+      if (doLinkResults) {
 		    MSCalPatchKey imsgroup(thisMSobs,thisMSfld,thisMSint,thisMSspw,-1);
 		    msTres_[imsgroup]=clTres_[iclTres];
 		    msFres_[imsgroup]=CLPPResult(); // this will be resized on-demand
@@ -1047,7 +1132,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 		} // iMSint
 	      } // iMSfld
 	    } // iMSobs
-
+        doLinkResults = False; // Don't do it again
 	  } // iMSant
 	} // iMSspw
       } // iCTfld
@@ -1063,7 +1148,7 @@ CLPatchPanel::CLPatchPanel(const String& ctname,
 void CLPatchPanel::recordBadMSIndices(const Vector<Int>& obs, const Vector<Int>& fld,
 				      const Vector<Int>& ent, const Vector<Int>& spw) {
 
-  
+
   // Record bad _MS_ indices
   for (uInt iobs=0;iobs<obs.nelements();++iobs) {
     for (uInt ifld=0;ifld<fld.nelements();++ifld) {
@@ -1084,7 +1169,7 @@ void CLPatchPanel::recordBadMSIndices(const Vector<Int>& obs, const Vector<Int>&
 
 
 void CLPatchPanel::selectOnCT(NewCalTable& ctout,const NewCalTable& ctin,
-			      const String& obs, const String& fld, 
+			      const String& obs, const String& fld,
 			      const String& spw, const String& ant1) {
 
   String taql("");
@@ -1100,7 +1185,7 @@ void CLPatchPanel::selectOnCT(NewCalTable& ctout,const NewCalTable& ctin,
 }
 
 void CLPatchPanel::selectOnMS(MeasurementSet& msout,const MeasurementSet& msin,
-			      const String& obs, const String& fld, 
+			      const String& obs, const String& fld,
 			      const String& ent,
 			      const String& spw, const String& ant) {
 
@@ -1110,7 +1195,7 @@ void CLPatchPanel::selectOnMS(MeasurementSet& msout,const MeasurementSet& msin,
 
 }
 void CLPatchPanel::selectOnCTorMS(Table& ctout,MSSelectableTable& msst,
-				  const String& obs, const String& fld, 
+				  const String& obs, const String& fld,
 				  const String& ent,
 				  const String& spw, const String& ant,
 				  const String& taql) {
@@ -1143,17 +1228,17 @@ Vector<Int> CLPatchPanel::getCLuniqueIds(NewCalTable& ct, String vcol) {
   Vector<Int> colv;
   if (vcol=="obs")
     ctmc.obsId().getColumn(colv);
-  else if (vcol=="fld") 
+  else if (vcol=="fld")
     ctmc.fieldId().getColumn(colv);
-  else if (vcol=="spw") 
+  else if (vcol=="spw")
     ctmc.spwId().getColumn(colv);
   else
     throw(AipsError("Unsupported column in CLPatchPanel::getCLuniqueIds"));
-      
+
   // Reduce to a unique list
   uInt nuniq=genSort(colv,Sort::Ascending,(Sort::QuickSort | Sort::NoDuplicates));
   colv.resize(nuniq,true);
-  
+
   return colv;
 
 }
@@ -1166,19 +1251,19 @@ Vector<Int> CLPatchPanel::getMSuniqueIds(MeasurementSet& ms, String which) {
   Vector<Int> colv;
   if (which=="obs")
     msc.observationId().getColumn(colv);
-  else if (which=="fld") 
+  else if (which=="fld")
     msc.fieldId().getColumn(colv);
-  else if (which=="intent") 
+  else if (which=="intent")
     msc.stateId().getColumn(colv);
-  else if (which=="spw") 
+  else if (which=="spw")
     msc.dataDescId().getColumn(colv);  // these are actually ddids!
   else
     throw(AipsError("Unsupported column in CLPatchPanel::getCLuniqueIds"));
-      
+
   // Reduce to a unique list
   uInt nuniq=genSort(colv,Sort::Ascending,(Sort::QuickSort | Sort::NoDuplicates));
   colv.resize(nuniq,true);
-  
+
   // In case of spw, translate from ddid
   if (which=="spw") {
     Vector<Int> spwids;
@@ -1206,7 +1291,7 @@ CLPatchPanel::~CLPatchPanel() {
 }
 
 // Is specific calibration explicitly available for a obs,fld,intent,spw,ant combination?
-Bool CLPatchPanel::calAvailable(casacore::Int msobs, casacore::Int msfld, casacore::Int msent, 
+Bool CLPatchPanel::calAvailable(casacore::Int msobs, casacore::Int msfld, casacore::Int msent,
 				casacore::Int msspw, casacore::Int msant) {
 
   const MSCalPatchKey key(msobs,msfld,msent,msspw,msant);
@@ -1225,14 +1310,14 @@ Bool CLPatchPanel::calAvailable(casacore::Int msobs, casacore::Int msfld, casaco
 //   the callibrary specification.  Expected-but-absent occurs when a CL entry
 //   indicates (even implicitly) that the MS index combination is supported but
 //   the required CalTable indices (via *map params) are not actually available
-//   in the CalTable, e.g., a missing spw.  
+//   in the CalTable, e.g., a missing spw.
 //  Such data cannot be calibrated and this CL cannot be agnostic about it...
-// Note that MSIndicesOK can return true for MS index combinations for which 
-//  calibration is not actually available, if the CL entry does not purport 
-//  to support calibrating them.  In such cases, calAvailable() returns false, and 
+// Note that MSIndicesOK can return true for MS index combinations for which
+//  calibration is not actually available, if the CL entry does not purport
+//  to support calibrating them.  In such cases, calAvailable() returns false, and
 //  this CL is agnostic w.r.t. such data and lets it pass thru unchanged.
 //  Returns TRUE when the specified MS indices are calibrateable or passable.
-Bool CLPatchPanel::MSIndicesOK(casacore::Int msobs, casacore::Int msfld, casacore::Int msent, 
+Bool CLPatchPanel::MSIndicesOK(casacore::Int msobs, casacore::Int msfld, casacore::Int msent,
 			       casacore::Int msspw, casacore::Int msant) {
 
   const MSCalPatchKey key(msobs,msfld,msent,msspw,msant);
@@ -1247,7 +1332,7 @@ Bool CLPatchPanel::MSIndicesOK(casacore::Int msobs, casacore::Int msfld, casacor
 }
 
 Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
-			       Int msobs, Int msfld, Int msent, Int msspw, 
+			       Int msobs, Int msfld, Int msent, Int msspw,
 			       Double time, Double freq) {
 
   Bool newcal(false);
@@ -1255,7 +1340,7 @@ Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
   // resultC and resFlag will be unchanged if newcal remains false
   Cube<Float> f; // temporary to reference Float interpolation result
   newcal=interpolate(f,resFlag,msobs,msfld,msent,msspw,time,freq);
-  if (newcal) 
+  if (newcal)
     // convert to complex and have resultC take over ownership
     resultC.reference(RIorAPArray(f).c());
 
@@ -1264,7 +1349,7 @@ Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
 }
 
 Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
-			       Int msobs, Int msfld, Int msent, Int msspw, 
+			       Int msobs, Int msfld, Int msent, Int msspw,
 			       Double time, const Vector<Double>& freq) {
 
   Bool newcal(false);
@@ -1273,7 +1358,7 @@ Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
   Cube<Float> f; // temporary to reference Float interpolation result
   newcal=interpolate(f,resFlag,msobs,msfld,msent,msspw,time,freq);
 
-  if (newcal) 
+  if (newcal)
     // convert to complex and have resultC take over ownership
     resultC.reference(RIorAPArray(f).c());
 
@@ -1283,7 +1368,7 @@ Bool CLPatchPanel::interpolate(Cube<Complex>& resultC, Cube<Bool>& resFlag,
 
 
 Bool CLPatchPanel::interpolate(Cube<Float>& resultR, Cube<Bool>& resFlag,
-			       Int msobs, Int msfld, Int msent, Int msspw, 
+			       Int msobs, Int msfld, Int msent, Int msspw,
 			       Double time, Double freq) {
 
   if (CTPATCHPANELVERB) cout << "CLPatchPanel::interpolate(...)" << endl;
@@ -1330,7 +1415,7 @@ Bool CLPatchPanel::interpolate(Cube<Float>& resultR, Cube<Bool>& resFlag,
 
 
 Bool CLPatchPanel::interpolate(Cube<Float>& resultR, Cube<Bool>& resFlag,
-			       Int msobs, Int msfld, Int msent, Int msspw, 
+			       Int msobs, Int msfld, Int msent, Int msspw,
 			       Double time, const Vector<Double>& freq) {
 
   if (CTPATCHPANELVERB) cout << "CLPatchPanel::interpolate(Cube<F>,...,Vector<D>)" << endl;
@@ -1371,11 +1456,11 @@ Bool CLPatchPanel::interpolate(Cube<Float>& resultR, Cube<Bool>& resFlag,
   // Loop over _output_ antennas
   for (Int iMSElem=0;iMSElem<nMSElem_;++iMSElem) {
     // Call time interpolation calculation; resample in freq if new
-    //   (fills msTRes_ implicitly) 
-    
+    //   (fills msTRes_ implicitly)
+
     MSCalPatchKey ims(msobs,msfld,msent,msspw,iMSElem);
     if (msci_.count(ims)>0) {
-      if (msci_[ims]->interpolate(time) || forceFinterp) { 
+      if (msci_[ims]->interpolate(time) || forceFinterp) {
 
 	// Resample in frequency
 	Matrix<Float>   fR( msFres_[ires].result(iMSElem) );
@@ -1383,13 +1468,13 @@ Bool CLPatchPanel::interpolate(Cube<Float>& resultR, Cube<Bool>& resFlag,
 	Matrix<Float>   tR( msTres_[ires].result(iMSElem) );
 	Matrix<Bool> tRflg( msTres_[ires].resultFlag(iMSElem) );
 	resampleInFreq(fR,fRflg,freq,tR,tRflg,freqIn_(ctspw_[ires]),finterp_[ires]);
-	
+
 	// Calibration is new
 	newcal=true;
       }
     }
   }
-    
+
   if (newcal) {
     // Supplied arrays to reference the result
     resultR.reference(msFres_[ires].result_);
@@ -1408,8 +1493,8 @@ Bool CLPatchPanel::getTresult(Cube<Float>& resultR, Cube<Bool>& resFlag,
     throw(AipsError("No calibration arranged for "+mskey.print()+
 		    " in callib for caltable="+
 		    Path(ct_.tableName()).baseName().before(".tempMemCalTable") ));
-  
-  // Reference the requested Cube 
+
+  // Reference the requested Cube
   resultR.reference(msTres_[mskey].result_);
   resFlag.reference(msTres_[mskey].resultFlag_);
 
@@ -1529,7 +1614,7 @@ void CLPatchPanel::resampleInFreq(Matrix<Float>& fres,Matrix<Bool>& fflg,const V
     //      (i.e., flag gaps larger than user's "freach")
     // For now,just unset them
     fflgi.set(false);
-    
+
 
     // Set flags carefully
     resampleFlagsInFreq(fflgi,fout,tflgi,fin,finterp);

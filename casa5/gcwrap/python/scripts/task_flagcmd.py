@@ -522,7 +522,7 @@ def readFromTable(
         if len(myflagrows) > 0:
             rowlist = myflagrows
         else:
-            rowlist = range(nrows)
+            rowlist = list(range(nrows))
         # Prune rows if needed
         if not useapplied:
             rowl = []
@@ -817,7 +817,7 @@ def readFromFile(
 #                    if xkey == 'reason':
 #                        if reasonlist.count(xval) > 0
 #    else:
-    rowlist = range(nrows)
+    rowlist = list(range(nrows))
 
     # Now read the only the commands from the file that satisfies the reason selection
 
@@ -990,7 +990,7 @@ def updateTable(
         rowlist = myrowlist
     else:
 
-        rowlist = range(nrows)
+        rowlist = list(range(nrows))
         nlist = nrows
 
     if nlist > 0:
@@ -1490,7 +1490,7 @@ def clearFlagCmd(msfile, myrowlist=[]):
         if len(myrowlist) > 0:
             rowlist = myrowlist
         else:
-            rowlist = range(nrows)
+            rowlist = list(range(nrows))
         try:
             tblocal.removerows(rowlist)
             casalog.post('Deleted ' + str(len(rowlist))

@@ -1,14 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<!-- Documentation here.                                                -->
 
-<task type="function" name="vishead" category="information, manipulation">
+<task category="information, manipulation" name="vishead" type="function">
 
 <shortdescription>List, summary, get, and put metadata in a measurement set</shortdescription>
 <description>
@@ -53,22 +47,21 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 
 <input>
-    <param type="string" name="vis" kind="ms" mustexist="true">
-        <description>Name of input visibility file</description>
-        <value></value>
+    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+        
+        <value/>
         <example>vis='ngc5921.ms'</example>
     </param>
 
-    <param type="string" name="mode">
-        <description>Mode of operation for vishead</description>
+    <param name="mode" type="string"><shortdescription>Mode of operation for vishead</shortdescription><description>Mode of operation for vishead</description>
+        
         <allowed kind="enum">
             <value>list</value>
             <value>summary</value>
             <value>get</value>
             <value>put</value>
-            <value></value> 
-        <!--<value>add</value>
-            <value>del</value>-->
+            <value/> 
+        
         </allowed>
         <value>summary</value>
         <example>
@@ -77,7 +70,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
            To get a field name (string),
                        hdvalue=vishead(vis = '3C84C.ms', mode = 'get', hdkey = 'field', hdindex = '2'); 
-                       print(hdvalue[0]) -> the name for field='2'                    
+                       print(hdvalue[0]) -&gt; the name for field='2'                    
                 
            To get an phase center (number)
                        hdvalue = vishead(vis = '3C84C.ms', mode = 'get', hdkey = 'ptcs', hdindex = '1');
@@ -89,8 +82,8 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
          </example>
     </param>
 
-    <param type="stringArray" name="listitems" subparam="true">
-      <description>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</description>
+    <param subparam="true" name="listitems" type="stringArray"><shortdescription>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</shortdescription><description>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</description>
+      
          <value type="stringArray">
                    <value type="string">telescope</value>
                    <value type="string">observer</value>
@@ -105,28 +98,28 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       <example>listitems = ['field', 'ptcs']; see description for list of keywords</example>
     </param>
 
-    <param type="string" name="hdkey" subparam="true">
-        <description>Keyword to get/put</description>
-        <value type="stringArray"></value>
+    <param subparam="true" name="hdkey" type="string"><shortdescription>Keyword to get/put</shortdescription><description>Keyword to get/put</description>
+        
+        <value type="stringArray"/>
         <example>hdkey='telescope'; see description for list of keywords</example>
     </param>
 
-    <param type="string" name="hdindex" subparam="true">
-        <description>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</description>
-        <value></value>
+    <param subparam="true" name="hdindex" type="string"><shortdescription>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</shortdescription><description>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</description>
+        
+        <value/>
         <example>hdindex='3'; see description for list of keywords</example>
     </param>
 
-    <param type="any" name="hdvalue" subparam="true">
+    <param subparam="true" name="hdvalue" type="any"><shortdescription>Value of the keywords to be put in the MS (used in put mode only)</shortdescription><description>Value of the keywords to be put in the MS (used in put mode only)</description>
         <any type="variant"/>
-        <description>Value of the keywords to be put in the MS (used in put mode only)</description>
-        <value type="string"></value>
+        
+        <value type="string"/>
         <example>hdvalue=['VLA','BIMA']</example>
     </param>
 
     <constraints>
           <when param="mode">
-             <equals type="string" value="list">
+             <equals value="list" type="string">
            <default param="listitems">
          <value type="stringArray">
            <value type="string">'telescope'</value>
@@ -141,12 +134,12 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
          </value>
            </default>
          </equals>
-             <equals type="string" value="summary"/>
-             <equals type="string" value="get">
+             <equals value="summary" type="string"/>
+             <equals value="get" type="string">
                    <default param="hdkey"><value type="string"/></default>
                    <default param="hdindex"><value type="string"/></default>
              </equals>
-             <equals type="string" value="put">
+             <equals value="put" type="string">
                    <default param="hdkey"><value type="string"/></default>
                    <default param="hdindex"><value type="string"/></default>
                    <default param="hdvalue"><value type="string"/></default>
