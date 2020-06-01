@@ -95,17 +95,22 @@ parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
+parser.add_argument('--relwithdebinfo', help='Build with optimization and debug flags', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
 _debug_build_ = args.debug
+_rel_with_deb_info_ = args.relwithdebinfo
 print("_debug_build_: " + str(_debug_build_))
+print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
 for arg in sys.argv:
     if (arg.startswith("--version")):
         sys.argv.remove(arg)
     if (arg.startswith("--debug")):
+        sys.argv.remove(arg)
+    if (arg.startswith("--relwithdebinfo")):
         sys.argv.remove(arg)
 
 
@@ -882,8 +887,16 @@ def get_cflags():
 def debug_build():
     return _debug_build_
 
+def relwithdebinfo_build():
+    return _rel_with_deb_info_
+
 def get_optimization_flags():
-    return ['-g'] if debug_build( ) else ['-O2']
+    if debug_build( ):
+        return ['-g']
+    elif relwithdebinfo_build():
+        return ['-g', '-O2']
+    else:    
+        return ['-O2']
 
 def get_new_cxx_compiler_flags():
     return get_optimization_flags() + ['-std=c++11']
@@ -907,8 +920,14 @@ def get_fortran_compiler_flags(ext):
     arch = platform.architecture()[0].lower()
     if (ext == ".f90"):
         cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
     if (ext == ".f"):
         cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
+   
+    
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
@@ -960,6 +979,8 @@ def customize_compiler(self):
     if debug_build( ):
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    elif relwithdebinfo_build( ):
+        pass
     else:
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cc))
@@ -1219,7 +1240,14 @@ class casa_build_ext(build_ext):
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-
+        
+        if relwithdebinfo_build():
+           print("Extracting debug symbols")
+           if not os.path.exists('./debugsymbols'):
+                os.makedirs('./debugsymbols')
+           result = subprocess.run(['perl', 'scripts/extract_symbols.pl', 'ws=./debugsymbols', 'binaries=./build', 'version='+casatools_version ], stdout=subprocess.PIPE)
+           print(result.stdout.decode('utf-8'))
+        
 
 
 class casa_test(Command):
