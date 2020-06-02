@@ -276,7 +276,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     */
     Record retval= initMinorCycle(itsImages);
-    //cerr << "INITMINOR retval" << retval << endl;
+    //    cerr << "INITMINOR retval" << retval << endl;
+
     return retval;
   }
   Record SynthesisDeconvolver::initMinorCycle(std::shared_ptr<SIImageStore> imstor )
@@ -418,7 +419,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  //you don't want to modify this here...
 	  //It is set to 0.0 in SIImageStore first time it is created.
           //itsPosMask->set(0);
-          //itsPosMask->unlock();
+          itsPosMask->unlock();
         }
       }
       os<<LogIO::DEBUG1<<"itsChanFlag.shape="<<itsChanFlag.shape()<<LogIO::POST;
@@ -440,7 +441,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  itsLoopController.setMaskSum( -1.0 );
 	}
       
-  
       returnRecord = itsLoopController.getCycleInitializationRecord();
       //cerr << "INIT record " << returnRecord << endl;
 
@@ -622,7 +622,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         minorCycleControlRec.define("iterdone", itsIterDone);
 	if(doAutoMask < 0 && itsPreviousIterBotRec_p.nfields() >0)
 	  doAutoMask=0;
-	minorCycleControlRec.define("onlyautomask",doAutoMask); 
+	minorCycleControlRec.define("onlyautomask",doAutoMask);
         if(itsPosMask){
           minorCycleControlRec.define("posmaskname", itsPosMask->name());
         }

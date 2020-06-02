@@ -1177,6 +1177,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(itsTempWorkIm) return itsTempWorkIm;
     itsTempWorkIm.reset(new PagedImage<Float>(itsImageShape, itsCoordSys, itsImageName+ ".work.temp"));
     static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->set(0.0);
+    itsTempWorkIm->flush();
     static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->table().markForDelete();
     return itsTempWorkIm;
   }

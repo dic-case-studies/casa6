@@ -430,7 +430,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 				///Pass some extra channels for interpolation while degridding
 				Int startmodchan=(chanBeg-2) >0 ? chanBeg-2 : 0;
 				Int endmodchan=(chanEnd+2) < nchannels ? chanEnd+2 : nchannels-1 ;
-				cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;
+				//cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;
 				//Darn has to lock it as writable because overlap in SIMapperCollection code 
 				//wants that...though we are not really modifying it here
 				//Bool writeisneeded=(imSel_p.nelements()!=1 || startmodel_p[imId].nelements() >0);
