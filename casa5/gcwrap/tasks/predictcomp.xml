@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="predictcomp" category="modeling, calibration">
+<task category="modeling, calibration" name="predictcomp" type="function">
   <shortdescription>Make a component list for a known calibrator</shortdescription>
   <description>
           Writes a component list named clist to disk and returns a dict of
@@ -20,12 +15,12 @@
           or False on error.
   </description>
   <input>
-    <param type="string" name="objname">
-      <description>Object name</description>
-      <value></value>
+    <param name="objname" type="string"><shortdescription>Object name</shortdescription><description>Object name</description>
+      
+      <value/>
     </param>
-    <param type="string" name="standard">
-      <description>Flux density standard</description>
+    <param name="standard" type="string"><shortdescription>Flux density standard</shortdescription><description>Flux density standard</description>
+      
       <value>Butler-JPL-Horizons 2010</value>
       <allowed kind="enum">
         <value>Perley-Butler 2017</value>
@@ -39,64 +34,61 @@
         <value>Butler-JPL-Horizons 2012</value>
       </allowed>
     </param>
-    <!-- <param type="bool" name="listknownobjs">
-           <description>List the objects known to standard.</description>
-           <value>False</value>
-         </param> -->
-    <param type="string" name="epoch">
-      <description>Epoch</description>
-      <value></value>
+    
+    <param name="epoch" type="string"><shortdescription>Epoch</shortdescription><description>Epoch</description>
+      
+      <value/>
     </param>
-    <param type="string" name="minfreq">
-      <description>Minimum frequency</description>
-      <value></value>
+    <param name="minfreq" type="string"><shortdescription>Minimum frequency</shortdescription><description>Minimum frequency</description>
+      
+      <value/>
     </param>
-    <param type="string" name="maxfreq">
-      <description>Maximum frequency</description>
-      <value></value>
+    <param name="maxfreq" type="string"><shortdescription>Maximum frequency</shortdescription><description>Maximum frequency</description>
+      
+      <value/>
     </param>
-    <param type="int" name="nfreqs">
-      <description>Number of frequencies</description>
+    <param name="nfreqs" type="int"><shortdescription>Number of frequencies</shortdescription><description>Number of frequencies</description>
+      
       <value>2</value>
     </param>
-    <param type="string" name="prefix" mustexist="false">
-      <description>Prefix for the component list directory name.</description>
-      <value></value>
+    <param mustexist="false" name="prefix" type="string"><shortdescription>Prefix for the component list directory name.</shortdescription><description>Prefix for the component list directory name.</description>
+      
+      <value/>
     </param>
-    <param type="string" name="antennalist">
-      <description>Plot for this configuration</description>
-      <value></value>
+    <param name="antennalist" type="string"><shortdescription>Plot for this configuration</shortdescription><description>Plot for this configuration</description>
+      
+      <value/>
     </param>
-    <param type="bool" name="showplot" subparam="True">
-      <description>Plot S vs |u| to the screen?</description>
+    <param subparam="True" name="showplot" type="bool"><shortdescription>Plot S vs |u| to the screen?</shortdescription><description>Plot S vs |u| to the screen?</description>
+      
       <value>False</value>
     </param>
-    <param type="string" name="savefig" subparam="true">
-      <description>Save a plot of S vs |u| to this filename</description>
-      <value></value>
+    <param subparam="true" name="savefig" type="string"><shortdescription>Save a plot of S vs |u| to this filename</shortdescription><description>Save a plot of S vs |u| to this filename</description>
+      
+      <value/>
     </param>
-          <param type="string" name="symb">
-      <description>A matplotlib plot symbol code</description>
+          <param name="symb" type="string"><shortdescription>A matplotlib plot symbol code</shortdescription><description>A matplotlib plot symbol code</description>
+      
       <value>.</value>
           </param>
-    <param type="bool" name="include0amp" subparam="True">
-      <description>Force the amplitude axis to start at 0?</description>
+    <param subparam="True" name="include0amp" type="bool"><shortdescription>Force the amplitude axis to start at 0?</shortdescription><description>Force the amplitude axis to start at 0?</description>
+      
       <value>False</value>
     </param>
-    <param type="bool" name="include0bl" subparam="True">
-      <description>Force the baseline axis to start at 0?</description>
+    <param subparam="True" name="include0bl" type="bool"><shortdescription>Force the baseline axis to start at 0?</shortdescription><description>Force the baseline axis to start at 0?</description>
+      
       <value>False</value>
     </param>
-    <param type="string" name="blunit" subparam="True">
-      <description>unit of the baseline axis</description>
-      <value></value>
+    <param subparam="True" name="blunit" type="string"><shortdescription>unit of the baseline axis</shortdescription><description>unit of the baseline axis</description>
+      
+      <value/>
       <allowed kind="enum">
-      <value></value>
+      <value/>
       <value>klambda</value>
       </allowed>
     </param>
-    <param type="bool" name="showbl0flux" subparam="True">
-      <description>Print the zero baseline flux ?</description>
+    <param subparam="True" name="showbl0flux" type="bool"><shortdescription>Print the zero baseline flux ?</shortdescription><description>Print the zero baseline flux ?</description>
+      
       <value>False</value>
     </param>
 
@@ -104,11 +96,11 @@
       <when param="antennalist">
         <notequals value="">
     <default param="showplot"><value>True</value></default>
-    <default param="savefig"><value type="string"></value></default>
+    <default param="savefig"><value type="string"/></default>
                 <default param="symb"><value type="string">.</value></default>
     <default param="include0amp"><value>False</value></default>
     <default param="include0bl"><value>False</value></default>
-    <default param="blunit"><value type="string"></value></default>
+    <default param="blunit"><value type="string"/></default>
     <default param="showbl0flux"><value>False</value></default>
         </notequals>
       </when>
@@ -148,7 +140,7 @@
     prefix: The component list will be saved to
                prefix + 'spw0_&lt;objname&gt;_&lt;minfreq&gt;&lt;epoch&gt;.cl'
             Default: '' 
-            Example: "Bands3to7_"
+            Example: &quot;Bands3to7_&quot;
                      (which could produce 'Bands3to7_Uranus_spw0_100GHz55877d.cl',
                       depending on the other parameters)
     antennalist: 'Observe' and plot the visibility amplitudes for this
