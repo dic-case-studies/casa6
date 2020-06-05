@@ -139,6 +139,7 @@ class Calibrater
        const casacore::Int niter=100,
        const casacore::Vector<casacore::Double>& delaywindow=casacore::Vector<casacore::Double>(), 
        const casacore::Vector<casacore::Double>& ratewindow=casacore::Vector<casacore::Double>(),
+       const casacore::Vector<casacore::Bool>& paramactive=casacore::Vector<casacore::Bool>(),
 		 const casacore::String& solmode="",
 		 const casacore::Vector<casacore::Double>& rmsthresh=casacore::Vector<casacore::Double>()
 );
@@ -174,6 +175,9 @@ class Calibrater
 
   // Unset the solved-for calibration component
   casacore::Bool unsetsolve();
+
+  // Set corrDepFlags toggle
+  casacore::Bool setCorrDepFlags(const casacore::Bool& corrDepFlags = false);
 
   // Reset the VisCal lists in the Calibrator object
   casacore::Bool reset(const casacore::Bool& apply=true, 
@@ -396,6 +400,11 @@ class Calibrater
   casacore::Table historytab_p;
 
   casacore::Bool usingCalLibrary_;
+
+  // Toggle for correlation-dependent flags
+  //  (if false, when one correlation is flagged, all will be treated as flagged, per-antenna, per-channel)
+  //  (CASA tradition is false; use cases where some antennas may only have one polarization, e.g., VLBI need true)
+  casacore::Bool corrDepFlags_;
 
   // Activity record
   casacore::Record actRec_;

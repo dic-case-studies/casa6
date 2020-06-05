@@ -241,6 +241,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py
+  test_stk_vlass_pipeline_imaging.py
 
   ###
   test_setjy.py
