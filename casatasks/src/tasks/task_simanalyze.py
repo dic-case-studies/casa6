@@ -20,6 +20,9 @@ else:
     from sdimaging import sdimaging
     from imregrid import imregrid
     from immath import immath
+    from concat import concat
+    from feather import feather
+    import sdbeamutil
     from casa_stack_manip import stack_frame_find
 
     # the global tb, ia, and im tools are used

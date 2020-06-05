@@ -105,7 +105,6 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
         self.assertTrue(val)
         
-    @unittest.skip("ModuleNotFoundError: No module named clean")
     def test_imaging_True_interferometric_analysis_False(self):
         '''test_imaging_True_interferometric_analysis_False:
         ----------------------------------------------------
