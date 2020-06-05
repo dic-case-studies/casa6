@@ -130,6 +130,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     /*for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
       cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;*/
     cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
+    if (!itsCleaner.getterSwitchedHogbom() && itsScaleSizes.size() == 0) // hack to make nScalesToClean at least 3
+    {
+      itsScaleSizes.push_back(itsCleaner.getterPsfWidth() * 5); // put init scales
+      itsScaleSizes.push_back(itsCleaner.getterPsfWidth() * 10); // put init scales
+    }  
     itsScaleSizes.push_back(0.0); // put 0 scale
     //Vector<Float> scaleSizes(itsScaleSizes);
     //itsCleaner.defineAspScales(scaleSizes);

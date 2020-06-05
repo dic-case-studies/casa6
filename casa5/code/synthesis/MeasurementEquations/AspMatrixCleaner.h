@@ -32,6 +32,7 @@
 //# Includes
 #include <scimath/Mathematics/FFTServer.h>
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
+#include <deque>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -81,6 +82,12 @@ public:
 
   //void defineAspScales(const casacore::Vector<casacore::Float>& scales);
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
+
+  void switchedToHogbom();
+
+  // setter/getter
+  float getterPsfWidth() { return itsPsfWidth; }
+  bool getterSwitchedHogbom() { return itsSwitchedToHogbom; }
 
 
 //protected:
@@ -140,13 +147,13 @@ private:
   std::vector<casacore::Float> itsAspScaleSizes; // permanent list for making model image
   std::vector<casacore::Float> itsAspAmplitude;
   std::vector<casacore::IPosition> itsAspCenter;
+  std::vector<bool> itsAspGood;
   casacore::Int itsNInitScales;
   double itsPrevLBFGSGrad; // for gradient clipping if LBFGS gradient explodes
-  unsigned int itsNumIterNoGoodAspen;
+  std::deque<int> itsNumIterNoGoodAspen;
   float itsPsfWidth;
   bool itsUseZhang;
   bool itsSwitchedToHogbom;
-  unsigned int itsNumIterPassed;
   unsigned int itsNumHogbomIter;
   unsigned int itsNthHogbom;
 };

@@ -75,24 +75,55 @@ public:
     double fx = 0.0;
     casacore::Matrix<casacore::Float> AspConvPsfSum(itsMatDirty.shape(), (casacore::Float)0.0);
 
+    const int refi = nX/2;
+    const int refj = nY/2;
+
+    /*int minX = nX - 1;
+    int maxX = 0;
+    int minY = nY - 1;
+    int maxY = 0;*/
+    int maxX = nX - 1;
+    int minX = 0;
+    int maxY = nY - 1;
+    int minY = 0;
+
     for (unsigned int k = 0; k < AspLen; k ++)
     {
+      if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue
+      { 
+        std::cout << "nan? " << x[2*k] << " neg scale? " << x[2*k+1] << std::endl; 
+        fx = -999.0;
+        return fx;
+      }
+
       // generate a gaussian for each Asp in the Aspen set
       // x[0]: Amplitude0,       x[1]: scale0
       // x[2]: Amplitude1,       x[3]: scale1
       // x[i]: Amplitude(i/2), x[i+1]: scale(i/2)
       casacore::Matrix<casacore::Float> Asp(nX, nY);
+      Asp = 0.0;
 
-      if (isnan(x[2*k])) // LBFGS encounters convergense issue
-        return fx;
+      const double sigma5 = 5 * x[2*k+1] / 2;
+      /*const int minI = std::max(0, (int)(refi - sigma5));
+      const int maxI = std::min(nX-1, (int)(refi + sigma5));
+      const int minJ = std::max(0, (int)(refj - sigma5));
+      const int maxJ = std::min(nY-1, (int)(refj + sigma5));*/
+      const int minI = std::max(0, (int)(refi + center[k][0] - sigma5));
+      const int maxI = std::min(nX-1, (int)(refi + center[k][0] + sigma5));
+      const int minJ = std::max(0, (int)(refj + center[k][1] - sigma5));
+      const int maxJ = std::min(nY-1, (int)(refj + center[k][1] + sigma5));
 
       casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
-      for (int j = 0; j < nY; ++j)
+      /*for (int j = 0; j < nY; ++j)
       {
         for(int i = 0; i < nX; ++i)
+        {*/
+      for (int j = minJ; j <= maxJ; j++)
+      {
+        for (int i = minI; i <= maxI; i++)
         {
-          int px = i - nX/2;
-          int py = j - nY/2;
+          const int px = i - refi;
+          const int py = j - refj;
           Asp(i,j) = gbeam(px, py);
         }
       }
@@ -109,35 +140,46 @@ public:
       //fft.flip(AspConvPsf, false, false); //genie need this?
 
       // gradient. 0: amplitude; 1: scale
-      // generate derivative of amplitude
+      // generate derivatives of amplitude
       casacore::Matrix<casacore::Float> GradAmp(nX, nY);
+      GradAmp = 0.0;
+      casacore::Matrix<casacore::Float> GradScale(nX, nY);
+      GradScale = 0.0;
       casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
-      for (int j = 0; j < nY; ++j)
+      /*for (int j = 0; j < nY; ++j)
       {
         for(int i = 0; i < nX; ++i)
+        {*/
+      for (int j = minJ; j <= maxJ; j++)
+      {
+        for (int i = minI; i <= maxI; i++)
         {
-          int px = i - nX/2;
-          int py = j - nY/2;
+          const int px = i - refi;
+          const int py = j - refj;
+          // generate derivatives of amplitude
           GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+          // generate derivative of scale
+          GradScale(i, j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
         }
       }
       casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
 
       // generate derivative of scale
-      casacore::Matrix<casacore::Float> GradScale(nX, nY);
+      /*casacore::Matrix<casacore::Float> GradScale(nX, nY);
+      GradScale = 0.0;
       for (int j = 0; j < nY; ++j)
       {
         for(int i = 0; i < nX; ++i)
           GradScale(i, j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
-      }
+      }*/
       casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
 
       // generate objective function
       // returns the objective function value and gradient evaluated on x
       //std::cout << "before Asp# " << k << ": fx " << fx << " itsMatDirty " << itsMatDirty(0,0) << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
-      for (int j = 0; j < nY; ++j)
+      for (int j = minJ; j <= maxJ; j++)
       {
-        for(int i = 0; i < nX; ++i)
+        for (int i = minI; i <= maxI; i++)
         {
           //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
           AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + AspConvPsf(i,j);
@@ -145,11 +187,32 @@ public:
           grad[2*k+1] = grad[2*k+1] + Grad1(i,j);
         }
       }
+
+      /*if (minI < minX)
+        minX = minI;
+      if (maxI > maxX)
+        maxX = maxI;
+      if (minJ < minY)
+        minY = minJ;
+      if (maxJ > maxY)
+        maxY = maxJ;*/
+      if (minI > minX)
+        minX = minI;
+      if (maxI < maxX)
+        maxX = maxI;
+      if (minJ > minY)
+        minY = minJ;
+      if (maxJ < maxY)
+        maxY = maxJ;
     } // end of Aspen
 
-    for (int j = 0; j < nY; ++j)
+    /*for (int j = 0; j < nY; ++j)
     {
       for(int i = 0; i < nX; ++i)
+      {*/
+    for (int j = minY; j < maxY; ++j)
+    {
+      for(int i = minX; i < maxX; ++i)
       {
         //std::cout << "after Asp fx " << fx << " double " << double(pow(itsMatDirty(i,j) - AspConvPsfSum(i,j),2)) << " MatDirty " << itsMatDirty(i,j) << " PsfSum " << AspConvPsfSum(i,j) << std::endl;
         //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsfSum(i,j))); //abs returns int
