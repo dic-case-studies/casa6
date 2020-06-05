@@ -170,7 +170,7 @@ namespace casa {
         grpcInteractiveCleanManager( ) : clean_panel_id(-1) { }
 
         casacore::Record getMinorCycleControls( );
-        casacore::Record getDetailsRecord( bool includeSummary=false );
+        casacore::Record getDetailsRecord( bool includeSummary=true );
         casacore::Record getSummaryRecord( ) { return getDetailsRecord(true); }
         int cleanComplete( bool lastcyclecheck=false );
         /* Note:  Incrementing the Major cycle will reset the cycleIterDone */

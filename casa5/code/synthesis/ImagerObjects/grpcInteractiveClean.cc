@@ -102,6 +102,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         MaskSum = -1.0;
         MadRMS = 0.0;
         NSummaryFields = 6;
+        SummaryMinor.reformOrResize(casacore::IPosition(2,6,0));
+        SummaryMajor.reformOrResize(casacore::IPosition(1,0));
+        SummaryMinor = 0;
+        SummaryMajor = 0;
     }
 
     void grpcInteractiveCleanManager::setControls( int niter, int ncycle, float threshold ) {
@@ -140,6 +144,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                        [&]( void *dummy, grpcInteractiveCleanState &state ) -> void* {
 
                            auto oldNiter = state.Niter;
+                           auto oldCycleNiter = state.CycleNiter;
+                           auto oldThreshold = state.Threshold;
+                           auto oldCycleThreshold = state.CycleThreshold;
+
+                           state.reset( );
+
                            /* Note it is important that niter get set first as we catch
                               negative values in the cycleniter, and set it equal to niter */
                            auto niter = iterpars.find("niter");
@@ -149,7 +159,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                            }
                            auto newNiter = state.Niter;
 
-                           auto oldCycleNiter = state.CycleNiter;
                            auto cycleniter = iterpars.find("cycleniter");
                            if ( cycleniter != iterpars.end( ) ) {
                                int val = cycleniter->second.toInt( );
@@ -167,7 +176,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                if ( debug ) std::cerr << " interactiveniter=" << state.InteractiveNiter;
                            }
 
-                           auto oldThreshold = state.Threshold;
                            auto threshold = iterpars.find("threshold");
                            if ( threshold != iterpars.end( ) ) {
                                auto val = threshold->second.toDouble( );
@@ -186,7 +194,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                            }
                            auto newThreshold = state.Threshold;
 
-                           auto oldCycleThreshold = state.CycleThreshold;
                            auto cyclethreshold = iterpars.find("cyclethreshold");
                            if ( cyclethreshold != iterpars.end( ) ) {
                                state.CycleThreshold = (float) cyclethreshold->second.toDouble( );
