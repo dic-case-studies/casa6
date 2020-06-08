@@ -200,6 +200,7 @@ void AnnotationBase::_init() {
 		&& _directionRefFrame != MDirection::GALACTIC
 		&& _directionRefFrame != MDirection::J2000
 		&& _directionRefFrame != MDirection::SUPERGAL
+		&& _directionRefFrame != MDirection::ICRS
 	) {
 		throw AipsError(preamble
 			+ "Unsupported coordinate frame for regions "
