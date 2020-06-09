@@ -88,7 +88,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsUseZhang(false),
   itsSwitchedToHogbom(false),
   itsNumHogbomIter(0),
-  itsNthHogbom(0)
+  itsNthHogbom(0),
+  itsSwitchedToMS(false)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -96,6 +97,7 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsInitScaleMasks.resize(0);
   itsPsfConvInitScales.resize(0);
   itsNumIterNoGoodAspen.resize(0);
+  itsGoodAspActiveSet.resize(0);
 }
 
 AspMatrixCleaner::~AspMatrixCleaner()
@@ -407,7 +409,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //genie
     // triiger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
-    if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value
+    //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
+    if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
+    //if (!itsSwitchedToHogbom && itsStrengthOptimum < 4) // M31 value
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough." << endl;
 	    switchedToHogbom();
@@ -593,6 +597,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         itsNumHogbomIter -= 1;
 
       continue;
+    }
+
+    // if we switched to MS, no need to do the following Aspen update
+    if (itsSwitchedToMS)
+    {
+    	cout << "switched to MS." << endl; 
+    	continue;
     }
 
 
@@ -1180,6 +1191,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     itsSwitchedToHogbom = true;
     return {};
   }*/
+  if (itsSwitchedToMS)
+  	return itsGoodAspActiveSet; 
+
   if (itsSwitchedToHogbom)
     return {};
 
@@ -1275,12 +1289,14 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
         resArea += abs((*itsDirty)(i,j));
     }
     //const Float lamda = 2e4; //M31
+    //const Float lamda = 5e3; //M31 gold2
+
     //const Float lamda = 13000.0; //G55 
     //const Float lamda = 1120.0; //G55 tesla, 1e8, spw2
     //const Float lamda = 520.0; //G55 tesla, 1e8, spw3 used to be good
     //const Float lamda = 450.0; //G55 tesla, 1e8, spw3 nScales3
-    const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7
-    //const Float lamda = 1.5; //G55
+    const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7/8
+    
     const Float threshold = lamda * resArea;
     vector<Float> tempx;
     vector<IPosition> activeSetCenter;
@@ -1520,6 +1536,13 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsNscales = Int(scaleSizes.size());
   itsScaleSizes.resize(itsNscales);
   itsScaleSizes = Vector<Float>(scaleSizes);  // make a copy that we can call our own
+
+  // trial: switch to MS for speed up if # active aspen is > 6
+  if (itsNscales > 6)
+  {
+  	itsGoodAspActiveSet = scaleSizes;
+    itsSwitchedToMS = true;
+  }
 
   // analytically calculate component scale by Asp 2016
   if (itsUseZhang)

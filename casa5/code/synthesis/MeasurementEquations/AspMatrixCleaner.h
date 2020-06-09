@@ -156,6 +156,8 @@ private:
   bool itsSwitchedToHogbom;
   unsigned int itsNumHogbomIter;
   unsigned int itsNthHogbom;
+  bool itsSwitchedToMS;
+  std::vector<casacore::Float> itsGoodAspActiveSet;
 };
 
 } //# NAMESPACE CASA - END
