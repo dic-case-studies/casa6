@@ -247,7 +247,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.ia.fromshape("",[200, 200])
         csys = self.ia.coordsys()
         yval = "-3611.1455480499999arcmin"
-        xwidth = _qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
+        xwidth = _qa.tos(_qa.mul(_qa.quantity("104.48212727000009arcmin"),_qa.cos(yval)))
         xx = self.rg.fromtext(
             "centerbox[[5781.9970685749995arcmin, " + yval + "],[" + xwidth + ", 131.55903791999981arcmin]] coord=GALACTIC",
             csys=csys.torecord(), shape=self.ia.shape()
