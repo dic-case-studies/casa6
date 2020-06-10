@@ -77,10 +77,12 @@ try:
     from casatools import quanta
     from casatools import ctsys
     ctsys_resolve = ctsys.resolve
+    _qa = quanta()
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    _qa = qatool()
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)    
@@ -245,8 +247,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.ia.fromshape("",[200, 200])
         csys = self.ia.coordsys()
         yval = "-3611.1455480499999arcmin"
-        qa = quanta( )
-        xwidth = qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
+        xwidth = _qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
         xx = self.rg.fromtext(
             "centerbox[[5781.9970685749995arcmin, " + yval + "],[" + xwidth + ", 131.55903791999981arcmin]] coord=GALACTIC",
             csys=csys.torecord(), shape=self.ia.shape()

@@ -66,13 +66,26 @@
 #
 
 ###########################################################################
+import os
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
 import numpy
+
+try:
+    from casatools import regionmanager as rgtool
+    from casatools import image as iatool
+    from casatools import quanta
+    from casatools import ctsys
+    ctsys_resolve = ctsys.resolve
+    _qa = quanta()
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    _qa = qatool()
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)    
 
 image = "imregion.fits"
 text1 = "goodfile1.txt"
@@ -84,15 +97,15 @@ cas_3259r = "CAS-3259.rgn"
 cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/rg.fromtextfile/'
+datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
-        print "types don't match, a is a " + str(type(a)) + " b is a " + str(type(b))
+        print("types don't match, a is a " + str(type(a)) + " b is a " + str(type(b)))
         return False
     if (type(a) == dict):
         if (a.keys() != b.keys()):
-            print "keys don't match, a is " + str(a.keys()) + " b is " + str(b.keys())
+            print("keys don't match, a is " + str(a.keys()) + " b is " + str(b.keys()))
             return False
         for k in a.keys():
             if (
@@ -101,28 +114,26 @@ def deep_equality(a, b):
             ):
                 continue
             elif (not deep_equality(a[k], b[k])):
-                print "dictionary member inequality a[" + str(k) \
-                    + "] is " + str(a[k]) + " b[" + str(k) + "] is " + str(b[k])
+                print("dictionary member inequality a[" + str(k) \
+                    + "] is " + str(a[k]) + " b[" + str(k) + "] is " + str(b[k]))
                 return False
         return True
     if (type(a) == float):
         if not (a == b or abs((a-b)/a) <= 1e-6):
-            print "float mismatch, a is " + str(a) + ", b is " + str(b)
+            print("float mismatch, a is " + str(a) + ", b is " + str(b))
         return a == b or abs((a-b)/a) <= 1e-6
     if (type(a) == numpy.ndarray):
         if (a.shape != b.shape):
-            print "shape mismatch a is " + str(a.shape) + " b is " + str(b.shape)
+            print("shape mismatch a is " + str(a.shape) + " b is " + str(b.shape))
             return False
         x = a.tolist()
         y = b.tolist()
         for i in range(len(x)):
             if (not deep_equality(x[i], y[i])):
-                print "array element mismatch, x is " + str(x[i]) + " y is " + str(y[i])
+                print("array element mismatch, x is " + str(x[i]) + " y is " + str(y[i]))
                 return False
         return True
     return a == b
-
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/rg.fromtextfile/'
 
 
 class rg_fromtextfile_test(unittest.TestCase):
@@ -196,7 +207,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         increment[2] = -increment[2]
         csys.setincrement(increment)
         self.ia.setcoordsys(csys.torecord())
-        zz = rg.fromtext(
+        zz = self.rg.fromtext(
             "circle[[20pix,20pix],6pix],range=[1pix,3pix]",
             shape, csys.torecord()
         )
@@ -207,12 +218,12 @@ class rg_fromtextfile_test(unittest.TestCase):
         shape = [100, 100, 80]
         self.ia.fromshape("", shape)
         csys = self.ia.coordsys()
-        zz = rg.fromtext("box[[30pix, 30pix], [39pix, 39pix]], range=[55pix,59pix]", shape, csys.torecord())
+        zz = self.rg.fromtext("box[[30pix, 30pix], [39pix, 39pix]], range=[55pix,59pix]", shape, csys.torecord())
         self.assertTrue(self.ia.statistics(region=zz)["npts"] == 500)
-        zz = rg.fromtext("box[[30pix, 30pix], [39pix, 39pix]], range=[59pix,55pix]", shape, csys.torecord())
+        zz = self.rg.fromtext("box[[30pix, 30pix], [39pix, 39pix]], range=[59pix,55pix]", shape, csys.torecord())
         self.assertTrue(self.ia.statistics(region=zz)["npts"] == 500)
         self.assertRaises(
-            Exception, rg.fromtext, "box[[30pix, 30pix], [39pix, 39pix]], range=[59,55]",
+            Exception, self.rg.fromtext, "box[[30pix, 30pix], [39pix, 39pix]], range=[59,55]",
             shape, csys.torecord()
         )
          
@@ -221,7 +232,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.ia.fromshape("",[200, 200])
         csys = self.ia.coordsys()
         # rectangular box
-        xx = rg.fromtext(
+        xx = self.rg.fromtext(
             "box[[5834.23813221arcmin, -3676.92506701arcmin],[5729.75600494arcmin, -3545.36602909arcmin]] coord=GALACTIC",
             csys=csys.torecord(), shape=self.ia.shape()
         )
@@ -236,8 +247,8 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.ia.fromshape("",[200, 200])
         csys = self.ia.coordsys()
         yval = "-3611.1455480499999arcmin"
-        xwidth = qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
-        xx = rg.fromtext(
+        xwidth = _qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
+        xx = self.rg.fromtext(
             "centerbox[[5781.9970685749995arcmin, " + yval + "],[" + xwidth + ", 131.55903791999981arcmin]] coord=GALACTIC",
             csys=csys.torecord(), shape=self.ia.shape()
         )
@@ -253,7 +264,7 @@ class rg_fromtextfile_test(unittest.TestCase):
     def test_rotbox(self):
         """Test rotbox when specified in pixels (CAS-5723)"""
         self.ia.fromshape("",[200,200])
-        reg = rg.fromtext(
+        reg = self.rg.fromtext(
             "rotbox [ [ 60pix , 50pix ] , [ 30pix , 30pix ] , 30deg ]",
             csys=self.ia.coordsys().torecord(),shape=self.ia.shape()
         )
@@ -261,7 +272,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         csys = self.ia.coordsys()
         csys.setreferencevalue([800,70*60])
         self.ia.setcoordsys(csys.torecord())
-        reg = rg.fromtext(
+        reg = self.rg.fromtext(
             "rotbox [ [ 60pix , 50pix ] , [ 30pix , 30pix ] , 30deg ]",
             csys=self.ia.coordsys().torecord(),shape=self.ia.shape()
         )
@@ -270,7 +281,7 @@ class rg_fromtextfile_test(unittest.TestCase):
     def test_ellipse(self):
         """Test ellipse for image in GALACTIC and file in J2000"""
         self.ia.open(datapath + "gal.im")
-        reg = rg.fromtextfile(
+        reg = self.rg.fromtextfile(
             datapath + "testEllipse90deg.crtf",
             csys = self.ia.coordsys().torecord(),
             shape=self.ia.shape()
@@ -294,28 +305,28 @@ class rg_fromtextfile_test(unittest.TestCase):
         """Verify rest frequency precision issue has been fixed"""
         self.ia.fromshape("",[20,20,200])
         self.ia.addnoise()
-        reg = reg = rg.fromtext(
+        reg = reg = self.rg.fromtext(
             "box [[0pix,0pix], [19pix,19pix]], range=[1140km/s, 1142km/s], restfreq=1.42040575e+09Hz",
             csys = self.ia.coordsys().torecord(), shape=self.ia.shape()
         )
-        reg1 = rg.fromtext(
+        reg1 = self.rg.fromtext(
             "box [[0pix,0pix], [19pix,19pix]], range=[1140km/s, 1142km/s]",
             csys = self.ia.coordsys().torecord(), shape=self.ia.shape()
         )        
         # no comma delimiters should throw exception
         self.assertRaises(
-            Exception, rg.fromtext,
+            Exception, self.rg.fromtext,
             "global coord=B1950 frame=LSRK veltype=RADIO restfreq=1.42040575e+09Hz"
             + "\nbox [[0pix,0pix], [19pix,19pix]], range=[1140km/s, 1142km/s]",
             csys = self.ia.coordsys().torecord(), shape=self.ia.shape()
         )
-        reg3 = rg.fromtext(
+        reg3 = self.rg.fromtext(
             "global coord=J2000, frame=LSRK, veltype=RADIO, restfreq=1.42040575e+09Hz"
             + "\nbox [[0pix,0pix], [19pix,19pix]], range=[1140km/s, 1142km/s]",
             csys = self.ia.coordsys().torecord(), shape=self.ia.shape()
         )
         # different global rest freq
-        reg4 = rg.fromtext(
+        reg4 = self.rg.fromtext(
             "global coord=J2000, frame=LSRK, veltype=RADIO, restfreq=1.42050575e+09Hz"
             + "\nbox [[0pix,0pix], [19pix,19pix]], range=[1140km/s, 1142km/s]",
             csys = self.ia.coordsys().torecord(), shape=self.ia.shape()
@@ -336,3 +347,6 @@ class rg_fromtextfile_test(unittest.TestCase):
 
 def suite():
     return [rg_fromtextfile_test]
+
+if __name__ == '__main__':
+    unittest.main()
