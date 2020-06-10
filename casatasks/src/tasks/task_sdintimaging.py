@@ -193,19 +193,27 @@ def setup_sdimaging(template='',output='', inparms=None, sdparms=None):
         raise RuntimeError("Internal Error: missing sdimage parameter") 
     if 'pblimit' in inparms:
         pblimit = inparms['pblimit']
-    ## check the coordinates of psf with int psf
-    sdintlib.checkpsf(sdpsf, template+'.psf') 
+
+    if sdpsf !="":
+        ## check the coordinates of psf with int psf
+        sdintlib.checkpsf(sdpsf, template+'.psf') 
 
     ## Regrid the input SD image and PSF cubes to the target coordinate system. 
-    #imregrid(imagename=sdpsf, template=template+'.psf',
-    #         output=output+'.psf',overwrite=True,axes=[0,1])
-    sdintlib.regridimage(imagename=sdpsf, template=template+'.psf', outfile=output+'.psf')
     #imregrid(imagename=sdimage, template=template+'.residual',
     #         output=output+'.residual',overwrite=True,axes=[0,1])
     sdintlib.regridimage(imagename=sdimage, template=template+'.residual', outfile=output+'.residual')
     #imregrid(imagename=sdimage, template=template+'.residual',
     #         output=output+'.image',overwrite=True,axes=[0,1])
     sdintlib.regridimage(imagename=sdimage, template=template+'.residual', outfile=output+'.image')
+
+    if sdpsf !="":
+        #imregrid(imagename=sdpsf, template=template+'.psf',
+        #         output=output+'.psf',overwrite=True,axes=[0,1])
+        sdintlib.regridimage(imagename=sdpsf, template=template+'.psf', outfile=output+'.psf')
+    else:
+        ## Make an internal sdpsf image if the user has not supplied one. 
+        casalog.post("Constructing a SD PSF cube by evaluating Gaussians based on the restoring beam information in the regridded SD Image Cube")
+        sdintlib.create_sd_psf(sdimage=output+'.residual', sdpsfname=output+'.psf')
 
     ## Apply the pbmask from the INT image cube, to the SD cubes.
     #TTB: Create *.mask cube  

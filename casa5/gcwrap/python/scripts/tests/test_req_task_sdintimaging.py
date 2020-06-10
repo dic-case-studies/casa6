@@ -83,6 +83,9 @@
 #14. Single Pointing Test with SD+INT data, with different channels flagged in SD and INT
 #testname: test_singlepointing_cube_sdint_flagged
 #
+#15. Single Pointing Test with SD+INT data, with sdpsf="" and internal auto-calculation.
+#testname: test_singlepointing_mfs_sdint_autopsf
+#
 ###########################################################################
 
 ####    Imports     ####
@@ -578,6 +581,44 @@ class test_singlepointing(testref_base):
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
         self.checkfinal(pstr=report)
 
+    #Test 15 
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    def test_singlepointing_mfs_sdint_autopsf(self):
+        # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
+        """ [singlePointing] Test_singlepointing_mfs_sdint_autopsf """
+        ########################
+        # Same as Test1, but with auto SD PSF calculation.
+        ###########################
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'msname':'papersky_standard.ms',
+                   'sdimage':'papersky_standard.sdimage',
+                   'sdpsf':'papersky_standard.sdpsf',
+                   'mask':'papersky_standard.true.im.masklist'}
+        # data specific parameters 
+        # imsize, cell, phasecenter, reffreq, nchan, scales 
+        # set to the default values for sdgain (1.0) and dishdia (100.0)
+        #
+        # Other secondary non-default parameters: 
+        deconvolver='mtmfs'
+        # iterations may need to be shorten for the final version of test
+        self.prepData(inputdata=inputdata)
+
+        imname=self.img+'.sp_mfs_sdint'
+
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf="", vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+
+
+        outimg = imname+'.joint.multiterm'
+        report=th.checkall(imgexist=[outimg+'.psf.tt0', 
+                                     outimg+'.residual.tt0', outimg+'.image.tt0', 
+                                     outimg+'.image.tt1',outimg+'.alpha'], 
+                           imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
+                                   (outimg+'.image.tt0', 1.186, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.28, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.958, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.121, [300,400,0,0]) ])      # extended emission with alpha=0
+        
+        self.checkfinal(pstr=report)
 
 
 class test_mosaic(testref_base):

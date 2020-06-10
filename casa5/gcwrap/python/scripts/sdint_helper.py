@@ -604,7 +604,7 @@ class SDINT_helper:
         in returned psf
         """    
         tol=0.001
-        allowshift=False
+        allowshift=True
         _ia.open(inpsf)
         incsys  = _ia.coordsys().torecord()
         _ia.close()
@@ -629,7 +629,7 @@ class SDINT_helper:
         if diff_dec/refdir['crval'][1] > tol:
             decmismatch = True
         if ramismatch or decmismatch:
-            casalog.post("The position of psf different from the int psf by (diffRA,diffDec)=( %s, %s)." % (diff_ra, diff_dec)
+            casalog.post("The position of SD psf is different from the the psf by (diffRA,diffDec)=( %s, %s)." % (diff_ra, diff_dec)
 ,'WARN')    
             if allowshift:
                 modsdpsf=inpsf+'_mod'
@@ -662,6 +662,57 @@ class SDINT_helper:
             raise Exception("The frequency axis of the input SD image and the interferometer template do not match and cannot be regridded. This is because when there are per-plane restoring beams, a regrid along the frequency axis cannot be defined at optimal accuracy. Please re-evaluate the SD image and psf onto a frequency grid that matches the interferometer frequency grid, and then retry.")
 
         #return modpsf 
+
+    def create_sd_psf(self, sdimage, sdpsfname ):
+        """
+        If sdpsf="", create an SD_PSF cube using restoringbeam information from the sd image. 
+        Start from the regridded SD_IMAGE cube
+        """
+        sdintlib = SDINT_helper()
+        _ia = iatool()
+        _cl = cltool()
+        _rg = rgtool()
+
+        ## Get restoringbeam info for all channels
+        _ia.open(sdimage)
+        restbeams = _ia.restoringbeam()
+        shp = _ia.shape()
+        csys = _ia.coordsys()
+        _ia.close()
+
+        ## If no restoring beam, or if global restoringbeam, return with error.
+        ## Also return if the number of beams doesn't match nchan...
+        if not restbeams.has_key('nChannels') or restbeams['nChannels'] != shp[3]:
+            raise(Exception("The input SD cube must have per plane restoring beams"))
+    
+        cdir = csys.torecord()['direction0']
+        compdir = [cdir['system'] , str(cdir['crval'][0])+cdir['units'][0] , str(cdir['crval'][1])+cdir['units'][1] ]
+
+        ## Make empty SD psf cube from SD image cube
+        os.system('rm -rf '+sdpsfname)
+        os.system('cp -r '+ sdimage + ' ' + sdpsfname)
+        
+        ## Iterate through PSF cube and replace pixels with Gaussians matched to restoringbeam info
+
+        _ia.open(sdpsfname)
+        for ch in range(0,shp[3]):
+            os.system('rm -rf tmp_sdplane')
+            rbeam = restbeams['beams']['*'+str(ch)]['*0']
+            
+            _cl.close()
+            _cl.addcomponent(flux=1.0, fluxunit='Jy',polarization='Stokes', dir=compdir, 
+                            shape='Gaussian', majoraxis=rbeam['major'], 
+                        minoraxis=rbeam['minor'], positionangle=rbeam['positionangle'],
+                        spectrumtype='constant') #, freq=str(freqs[ch])+'Hz')
+
+
+            implane = _ia.getchunk(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch])
+            implane.fill(0.0)
+            _ia.putchunk(implane, blc=[0,0,0,ch])
+            _ia.modify(model=_cl.torecord(), subtract=False, region=_rg.box(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch]))
+
+        _ia.close()
+            
 
     def check_coords(self, intres='', intpsf='', intwt = '', sdres='', sdpsf='',sdwt = '', pars=None):
         """

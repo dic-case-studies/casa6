@@ -39,14 +39,31 @@ Output image type: 'int' - use interferometric data only;
    <param subparam="true" type="string" name="sdimage">
      <shortdescription>Input single dish image</shortdescription>
 <description>Input single dish image
+This single dish Image cube must contain images per frequency channel (blanked for empty
+or flagged channels).
+
+If the associated sdpsf parameter is set to an empty string to signal an automatic
+calculation of the SD PSF cube,  this SD image cube must contain per-plane 
+restoringbeams that represent the effect SDbeam per frequency.   
 </description>
       <value type="any"/>
     </param>
 
     <param subparam="true" type="string" name="sdpsf">
      <shortdescription>Input single dish PSF image</shortdescription>
-<description>Input single dish PSF image. Or if float is given, it is taken as
-the dish diameter in m and calculate PSF assuminy Airy beam.
+<description>Input single dish PSF image. 
+
+This single dish PSF cube must contain the effective SD beam in the center of the image,
+for each frequency channel, normalized to peak 1.  The coordinate system should ideally 
+be the same as the SD image cube and contain per-plane restoringbeams that represent the
+effect SD beam per frequency. 
+
+If the sdpsf is set to a blank string (sdpsf="") an approximate PSF cube will be automatically 
+calculated internally by using per-plane restoring-beam information from the regridded sdimage
+to evaluate 2D Gaussians. 
+
+In the future, we will provide an option to auto-generate Airy disk beams derived from 
+the specified dish diameter. 
 </description>
       <type>string</type><type>double</type>
       <value type="string"/>
