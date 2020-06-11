@@ -1,5 +1,5 @@
 ##########################################################################
-# imfit_test.py
+# test_rg_fromtextfile.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -25,46 +25,6 @@
 #                        520 Edgemont Road
 #                        Charlottesville, VA 22903-2475 USA
 #
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA method rg.fromtextfile
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_rg_fromtextfile.py:description">rg.fromtextfile</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the rg.fromtextile method
-# </etymology>
-#
-# <synopsis>
-# Test the rg.fromtextfile method
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_rg_fromtextfile[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the rg.fromtextfile method to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
 ###########################################################################
 import os
 import shutil
@@ -76,13 +36,16 @@ try:
     from casatools import image as iatool
     from casatools import quanta
     from casatools import ctsys
+    from casatools import imagemetadata
     ctsys_resolve = ctsys.resolve
     _qa = quanta()
+    _imd = imagemetadata()
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
     _qa = qatool()
+    _imd = imdtool()
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)    
@@ -96,6 +59,7 @@ cas_3259t = "CAS-3259.txt"
 cas_3259r = "CAS-3259.rgn"
 cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
+icrs_image = "icrs.im"
 
 datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
 
@@ -135,13 +99,14 @@ def deep_equality(a, b):
         return True
     return a == b
 
-
 class rg_fromtextfile_test(unittest.TestCase):
     
     _fixtures = [
         image, text1, res1, cas_3258t, cas_3258r, cas_3259t, cas_3259r,
         cas_3260t, cas_3260r
     ]
+
+    _created = [icrs_image]
     
     def setUp(self):
         for im in self._fixtures:
@@ -150,8 +115,12 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.rg = rgtool()
     
     def tearDown(self):
-        for im in self._fixtures:
-            os.remove(im)
+        for im in self._fixtures + self._created:
+            if os.path.exists(im):
+                if os.path.isdir(im):
+                    shutil.rmtree(im)
+                else:
+                    os.remove(im)
         self.ia.done()
         del self.ia
         self.rg.done()
@@ -344,6 +313,45 @@ class rg_fromtextfile_test(unittest.TestCase):
             # be the same
             self.assertTrue((stats0[k] != stats4[k]).any())
 
+    def test_ICRS(self):
+        """
+        CAS-13074, verify that coord=ICRS works correctly
+        create image with GALACTIC refernce frame, set center pixel with value of 1,
+        run ia.statistics() using ICRS in region file to specify a box on that pixel
+        and test that the max that ia.statistics() finds is 1
+        """
+        self.ia.fromshape(icrs_image, shape=[100, 100])
+        csys = self.ia.coordsys()
+        csys.setconversiontype("GALACTIC")
+        self.ia.setcoordsys(csys.torecord())
+        csys.done()
+        pix = self.ia.getchunk()
+        pix[:] = 0
+        pix[50, 50] = 1
+        self.ia.putchunk(pix)
+        self.ia.done()
+        # muck with the image's coordinate system more
+        self.assertTrue(
+            _imd.open(icrs_image), 'Unable to open imagemetadata object'
+        )
+        self.assertTrue(
+            _imd.set('equinox', 'GALACTIC'), 'Failed to set equinox'
+        )
+        self.assertTrue(
+            _imd.set('ctype1', 'LONGITUDE'), 'Failed to set ctype1'
+        )
+        self.assertTrue(
+            _imd.set('ctype2', 'LATITUDE'), 'Failed to set ctype2'
+        )
+        _imd.done()
+        icrs = 'box[[-1.63412rad, -0.50561rad], [-1.63296rad, -0.50445rad]] coord=ICRS\n'
+        rg = rgtool()
+        self.ia.open(icrs_image)
+        reg = rg.fromtext(icrs, csys=self.ia.coordsys().torecord(), shape=self.ia.shape())
+        rg.done()
+        stats = self.ia.statistics(region=reg)
+        self.ia.done() 
+        self.assertEqual(stats['max'][0], 1, 'Incorrect value for max')
 
 def suite():
     return [rg_fromtextfile_test]
