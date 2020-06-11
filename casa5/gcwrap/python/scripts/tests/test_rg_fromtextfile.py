@@ -316,9 +316,26 @@ class rg_fromtextfile_test(unittest.TestCase):
     def test_ICRS(self):
         """
         CAS-13074, verify that coord=ICRS works correctly
-        create image with GALACTIC refernce frame, set center pixel with value of 1,
-        run ia.statistics() using ICRS in region file to specify a box on that pixel
-        and test that the max that ia.statistics() finds is 1
+
+        1. Create a 100x100 image using the default coordinate system provided by ia.shape()
+
+        2. Modify the coordinate system of the image from J2000 to GALACTIC ref frame,
+           since the difference between J2000 and ICRS seems to be only about 10 marcsec,
+           so we need to use a coordinate system where the values in the two systems differ
+           more to get a convincing test.
+
+        3. Set all pixels to 0, except the reference pixel 50, 50 which is set to 1.
+
+        4. Create a CRTF region string using coords='ICRS' and a box that is centered at
+           GALACTIC long=0, lat=0 (the ref direction in the image) but using ICRS coords
+           of course. The hardcoded ICRS coords were determined using me.measure() to
+           convert from GALACTIC to ICRS.
+
+        5. Run ia.statistics() using region=the CRTF text string previously created.
+
+        6. Test that the max pixel value found in the region is 1. This indicates that
+           the region was applied correctly.
+
         """
         self.ia.fromshape(icrs_image, shape=[100, 100])
         csys = self.ia.coordsys()
@@ -346,7 +363,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         _imd.done()
         icrs = 'box[[-1.63412rad, -0.50561rad], [-1.63296rad, -0.50445rad]] coord=ICRS\n'
         rg = rgtool()
-        self.ia.open(icrs_image)
+        self.assertTrue(self.ia.open(icrs_image), 'Failed to open image')
         reg = rg.fromtext(icrs, csys=self.ia.coordsys().torecord(), shape=self.ia.shape())
         rg.done()
         stats = self.ia.statistics(region=reg)
