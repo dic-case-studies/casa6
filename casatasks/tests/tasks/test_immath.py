@@ -87,19 +87,33 @@ import os
 import shutil
 import random
 import time
-import numpy
+import numpy as np
 import glob
 import struct
 import unittest
 
-from casatools import ctsys, table, image, regionmanager, measures
-from casatasks import casalog, immath
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, regionmanager, table
+    from casatasks import immath, casalog
+    myia = image()
+    _rg = regionmanager()
+    mytb = table()
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    myia = iatool()
+    _rg = rgtool()
+    mytb = tbtool()
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
 
-_ia = image( )
-_rg = regionmanager( )
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 sep = os.sep
-datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
+datapath = ctsys_resolve(os.path.join('regression','unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -154,7 +168,7 @@ def _getPixelValue( imageName, point ):
     if len( retValue ) < 1 :
         # Create an exception
         msg = str( "Unable to obtain value at: " ) + str(point) + str( " from file " ) + imageName
-        raise ValueError(str)
+        raise ValueError(msg)
     else:
         retValue = retValue['value']['value']
 
@@ -171,7 +185,7 @@ def _exceptionInfo( maxLevel=5 ):
     return(excName, excArgs, excTb)
 
 def make_data(imshape):
-    data = _ia.makearray(0, imshape)
+    data = myia.makearray(0, imshape)
     for i in range(imshape[0]):
         data[i] = list(data[i])
         for j in range(imshape[1]):
@@ -206,20 +220,18 @@ def make_data(imshape):
 class immath_test1(unittest.TestCase):
     
     def setUp(self):
-        self._tb = table( )
         if(os.path.exists(imageList[0])):
             for img in imageList:
                 os.system('rm -rf ' +img)
             
         for img in imageList:
-            os.system('cp -RL '+os.path.join(datapath,img)+' '+img)
-            
+            os.system('cp -RL ' + os.path.join(datapath, img) + ' ' + img)
 
     def tearDown(self):
         for img in imageList:
             os.system('rm -rf ' +img)
             os.system('rm -rf input_test*')
-        self.assertTrue(len(self._tb.showcache()) == 0)
+        self.assertTrue(len(mytb.showcache()) == 0)
                        
     def test_input2(self):
         '''Immath 2: Test bad input file'''
@@ -376,7 +388,7 @@ class immath_test1(unittest.TestCase):
                               +"\nError: Bad region file, 'garbage.rgn', was not reported as missing."+"\nREsults: "+str(results)
     
         try:
-            filename = os.path.join(os.getcwd(),'garbage.rgn')
+            filename = os.path.join(os.getcwd(), 'garbage.rgn')
             fp=open( filename, 'w' )
             fp.writelines('This file does NOT contain a valid CASA region specification\n')
             fp.close()
@@ -411,8 +423,10 @@ class immath_test1(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         results = None
         print("ARG")
-        print("immath( imagename="+imageList[1]+", expr='IM0', "\
-                        +"region="+imageList[2]+", outfile='input_test12' )")
+        print(
+            "immath( imagename=" + imageList[1] + ", expr='IM0', "
+            + "region=" + imageList[2] + ", outfile='input_test12' )"
+        )
         try:
             rec = _rg.fromfiletorecord(imageList[2])
             results=immath( imagename=imageList[1], expr='IM0', \
@@ -693,7 +707,10 @@ class immath_test1(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         results = None            
         try:
-            print("immath( imagename="+imageList[0]+", varnames='A', expr='A', chans='22~35', outfile='input_test14' )")
+            print(
+                " immath( imagename=" + imageList[0] + ", varnames='A', "
+                + "expr='A', chans='22~35', outfile='input_test14' )"
+            )
             results = immath( imagename=imageList[0], chans='22~35', expr='A', varnames='A', outfile='input_test14' )
         except:
             retValue['success']=False
@@ -794,18 +811,18 @@ class immath_test1(unittest.TestCase):
 class immath_test2(unittest.TestCase):   
 
     def setUp(self):
-        self._tb = table( )
-        for img in imageList2:
-            if os.path.exists(img):
+        if(os.path.exists(imageList2[0])):
+            for img in imageList2:
                 shutil.rmtree(img)
                 
         # FIXME: add links to repository
         for img in imageList2:
-            self.assertTrue(os.path.exists(os.path.join(datapath,img)), os.path.join(datapath,img) + " does not exist")
-            if os.path.isdir(os.path.join(datapath,img)):
-                shutil.copytree(os.path.join(datapath,img), img)
+            orig = os.path.join(datapath, img)
+            self.assertTrue(os.path.exists(orig), orig + " does not exist")
+            if os.path.isdir(orig):
+                shutil.copytree(orig, img)
             else:
-                shutil.copy(os.path.join(datapath,img), img)
+                shutil.copy(orig, img)
 
 
     def tearDown(self):
@@ -819,15 +836,13 @@ class immath_test2(unittest.TestCase):
                 shutil.rmtree(img)
             else:
                 os.remove(img)
-        # FIXME need to figure out how to close this table correctly
-        #me.done()
-        cache_tables = self._tb.showcache()
+        cache_tables = mytb.showcache()
         self.assertTrue(len(cache_tables) == 0)
                        
     def copy_img(self):
         '''Copy images to local disk'''
         for img in imageList3:
-            os.system('cp -r '+os.path.join(datapath,img)+' '+img)
+            os.system('cp -r ' + os.path.join(datapath, img) + ' ' + img)
 
     def rm_img(self):
         '''Remove images from disk'''
@@ -868,7 +883,6 @@ class immath_test2(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: outfile 'expr_test1' was not created."
         else:
-            myia = image()
             myia.open(imageList2[0])
             expected = 2*myia.getchunk()
             myia.done()
@@ -922,9 +936,9 @@ class immath_test2(unittest.TestCase):
         else:
             # Verify the size of the output image, and check to make sure
             # the values are copied over correctly
-            _ia.open( outimage );
-            size = _ia.shape();
-            _ia.close()
+            myia.open( outimage );
+            size = myia.shape();
+            myia.close()
             if ( len(size) < 4 or size[0]!=256 or size[1]!=256 or \
                     size[2]!=1 or size[3]!=1 ):
                 retValue['success']=False
@@ -933,7 +947,6 @@ class immath_test2(unittest.TestCase):
                        + size + ".\nExpected the resulting image to"\
                        + "be 256x256x1x1 pixels."
             else:
-                myia = image()
                 myia.open(imageList2[0])
                 expected = myia.getchunk()[:,:,:,5:5]
                 myia.done()
@@ -963,9 +976,9 @@ class immath_test2(unittest.TestCase):
         # function, however, we are assuming that its a 256x256x1x46 image.
         size=[]
         try:
-            _ia.open( outimage )
-            size=_ia.shape()
-            _ia.done()
+            myia.open( outimage )
+            size = myia.shape()
+            myia.done()
         except Exception as e:
             casalog.post( "Exception occured getting image shape ... "+str(e), 'DEBUG1')
             retValue['success']=False
@@ -974,7 +987,6 @@ class immath_test2(unittest.TestCase):
         
         self.assertTrue((size == [256, 256, 1, 46]).all())
         
-        myia = image()
         myia.open("expr_test2")
         chunk1 = myia.getchunk()
         myia.done()
@@ -1008,7 +1020,7 @@ class immath_test2(unittest.TestCase):
         errors = ''
     #    retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         casalog.post( "Starting immath INPUT/OUTPUT tests.", 'NORMAL2' )
-        self.assertTrue(len(self._tb.showcache()) == 0)
+        self.assertTrue(len(mytb.showcache()) == 0)
         # First make the I, Q, U, and V files.  This step may not be
         # needed if immath learns to do this for the user.
         immath( imageList2[3], expr='IM0', stokes='I', outfile='pol_test_I.im' )
@@ -1017,7 +1029,6 @@ class immath_test2(unittest.TestCase):
         immath( imageList2[3], expr='IM0', stokes='U', outfile='pol_test_U.im' )
         immath( imageList2[3], expr='IM0', stokes='V', outfile='pol_test_V.im' )
         imList = ['pol_test_Q.im', 'pol_test_U.im', 'pol_test_V.im']
-        myia = image()
         # total polarization intensity
         outfile = 'pol_test1'
         self.assertTrue(immath( imagename=imList, outfile=outfile, mode='poli' ))
@@ -1047,12 +1058,11 @@ class immath_test2(unittest.TestCase):
             'immath6.im', 'immath7.im', 'immath8.im', 'immath9.im','immath10.im'
         ]
         expr = 'IM0+IM1+IM2+IM3+IM4+IM5+IM6+IM7+IM8+IM9+IM10'
-        myia = image()
         try:
             # full image test
             outfile = 'full_image_sum.im'
             if (immath(imagename=imagename, expr=expr, outfile=outfile)):
-                expected = numpy.ndarray([2,2])
+                expected = np.ndarray([2,2])
                 expected.put(range(expected.size),66)
                 myia.open(outfile)
                 got = myia.getchunk()
@@ -1072,7 +1082,7 @@ class immath_test2(unittest.TestCase):
             # subimage image test
             outfile = 'subimage_sum.im'
             if (immath(imagename=imagename, expr=expr, outfile=outfile, box='0,0,0,0')):
-                expected = numpy.ndarray([1,1])
+                expected = np.ndarray([1,1])
                 expected.put(range(expected.size), 66)
                 myia.open(outfile)
                 got = myia.getchunk()
@@ -1119,9 +1129,9 @@ class immath_test2(unittest.TestCase):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         funcs = ['sin', 'SIN', 'Sin']
         imagename = cas1452_1_im
-        _ia.open(imagename)
-        expected = numpy.sin(_ia.getchunk())
-        _ia.close()
+        myia.open(imagename)
+        expected = np.sin(myia.getchunk())
+        myia.close()
         #try:
         for f in funcs:
             try:
@@ -1137,10 +1147,10 @@ class immath_test2(unittest.TestCase):
                     mode='evalexpr', expr=expr
                 )
             )
-            _ia.open(outfile)
-            got = _ia.getchunk()
-            _ia.close()
-            maxdiff = numpy.abs(got - expected).max()
+            myia.open(outfile)
+            got = myia.getchunk()
+            myia.close()
+            maxdiff = np.abs(got - expected).max()
             self.assertTrue( maxdiff <= 1e-7)
             os.system('rm -rf ' + outfile)
     
@@ -1167,7 +1177,6 @@ class immath_test2(unittest.TestCase):
                 else:
                     res = immath(expr=expr, chans='22', outfile=outfile)
                 self.assertTrue(res)
-                myia = image()
                 myia.open(outfile)
                 self.assertTrue((myia.shape() == expected).all())
                 myia.close()
@@ -1178,7 +1187,6 @@ class immath_test2(unittest.TestCase):
 class immath_test3(unittest.TestCase):
 
     def setUp(self):
-        self._tb = table( )
         for img in imageList4:
             shutil.copytree(os.path.join(datapath,img), img)
     
@@ -1189,7 +1197,7 @@ class immath_test3(unittest.TestCase):
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
         # FIXME need to figure out how to close this table correctly
-        cache_tables = self._tb.showcache()
+        cache_tables = mytb.showcache()
         if (len(cache_tables) > 0):
             for table in cache_tables:
                 self.assertTrue(table.rfind("/IERSeop97") >= 0)
@@ -1198,14 +1206,14 @@ class immath_test3(unittest.TestCase):
     def _comp(self, imagename, mode, outfile, expected, epsilon, polithresh=''):
         self.assertTrue(immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh))
         self.assertTrue(os.path.exists(outfile))
-        _ia.open(outfile)
-        got = _ia.getchunk()
-        _ia.done()
+        myia.open(outfile)
+        got = myia.getchunk()
+        myia.done()
         diff = expected - got
         if (epsilon == 0):
             #<debug>
-            maxdiff = numpy.abs(numpy.max(got - expected))
-            maxdiffrel = numpy.abs(numpy.max(diff/got))
+            maxdiff = np.abs(np.max(got - expected))
+            maxdiffrel = np.abs(np.max(diff/got))
             if (maxdiff > 0):
                 print("maxdiff " + str(maxdiff))
                 print("maxdiffrel " + str(maxdiffrel))
@@ -1213,7 +1221,7 @@ class immath_test3(unittest.TestCase):
                 
             self.assertTrue((diff == 0).all())     
         else:
-            self.assertTrue((numpy.abs(diff)/got < epsilon).all())        
+            self.assertTrue((np.abs(diff)/got < epsilon).all())        
 
     def test_CAS2120(self):
         '''immath: verification of old functionality and similar new functionality introduced by CAS-2120'''
@@ -1225,8 +1233,6 @@ class immath_test3(unittest.TestCase):
         # POLA
         mode = 'pola'
         
-        myia = image()
-
         myia.open(POLA_im)
         expected = myia.getchunk()
         myia.done()
@@ -1277,10 +1283,9 @@ class immath_test3(unittest.TestCase):
         # with a linear polarization threshold applied
         outfile = 'pola_8.im'
         self._comp(QU_im, mode, outfile, expected, epsilon, polithresh='30uJy/beam')
-        mask_tbl = os.path.join(outfile,'mask0')
+        mask_tbl = os.path.join(outfile, 'mask0')
         self.assertTrue(os.path.exists(mask_tbl))
         
-        mytb = table()
         mytb.open(thresh_mask)
         col = 'PagedArray'
         maskexp = mytb.getcell(col, 0)
@@ -1338,7 +1343,6 @@ class immath_test3(unittest.TestCase):
 
     def test_CAS2943(self):
         """Test the stretch parameter"""
-        myia = image()
         myia.fromshape("myim.im", [10, 20, 4, 40])
         myia.done()
         myia.fromshape("mask1.im", [10, 20, 4, 40])
@@ -1356,10 +1360,18 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask2.im > 5", stretch=False
-        )
+        if is_CASA6:
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask2.im > 5", stretch=False
+            )
+        else:
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask2.im > 5", stretch=False
+                )
+            )
         outfile = "out3.im"
         immath(
             imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1369,15 +1381,22 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask3.im > 5", stretch=False
-        )
+        if is_CASA6:
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask3.im > 5", stretch=False
+            )
+        else:
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask3.im > 5", stretch=False
+                )
+            )
         
     def test21(self):
         """Test moved from imagetest regreesion"""
         
-        myia = image()
         # Define some arrays to be stored in the test images.
         # Define 2 local symbols to hold the results.
         # Delete the image files in case they are still present.
@@ -1509,7 +1528,6 @@ class immath_test3(unittest.TestCase):
       
     def test_precision(self):
         """Test ia.imagecalc() support for various precisions"""
-        myia = image()
         myreal = 1.2345678901234567890123456789
         mycomplex = myreal * (1 + 1j)
         expec = {}
@@ -1551,17 +1569,16 @@ class immath_test3(unittest.TestCase):
                 expecv = 2*mycomplex
             if mytype == 'f' or mytype == 'c':
                 self.assertTrue(
-                    numpy.isclose(cc, expecv, 1e-8).all(),
+                    np.isclose(cc, expecv, 1e-8).all(),
                     "wrong values for " + mytype
                 )
             else:
                 self.assertTrue(
                     (cc == expecv).all(), "wrong values for " + mytype
                 )
-       
+        
     def test_8(self):
         """Tests moved from imagetest regression, some are probably useless"""
-        myia = image()
         imname = 'ia.fromarray1.image'
         imname2 = 'ia.fromshape2.image'
         imname3 = 'imagecalc.image'
@@ -1605,7 +1622,6 @@ class immath_test3(unittest.TestCase):
         
     def test_complex_calc(self):
         """Test ia.calc on complex images"""
-        myia = image()
         shape = [4, 4]
         im1 = 'complex_calc1.im'
         im2 = 'complex_calc2.im'
@@ -1619,14 +1635,14 @@ class immath_test3(unittest.TestCase):
         myia.calc(im1 + '+' + im2)
         data = myia.getchunk()
         myia.done()
-        self.assertTrue(type(data[0,0]) == numpy.complex128)
+        self.assertTrue(type(data[0,0]) == np.complex128)
 
         #myia.fromshape(im4, shape, type='f')
         #self.assertRaises(Exception, myia.calc, im1 + '+' + im2)
         
     def test_CAS6896(self):
         """Verify CAS-6896, user can choose from which image to copy metadata"""
-        myia = image()
+        global myia
         myia.fromshape("a.im",[20, 20, 20])
         abeam = {
                  'major': {'value': 20.0, 'unit': 'arcsec'},
@@ -1679,7 +1695,6 @@ class immath_test3(unittest.TestCase):
         """Test that history records are added"""
         im1 = "hist1.im"
         im2 = "hist2.im"
-        myia = image()
         myia.fromshape(im1, [20, 20])
         myia.fromshape(im2, [20, 20])
         myia.done()
@@ -1714,7 +1729,6 @@ class immath_test3(unittest.TestCase):
         
     def test_flush(self):
         """CAS-8570: ensure image is flushed to disk when it is created"""
-        myia = image()
         myia.fromshape("jj.im", [20,20,20])
         myia.fromshape("kk.im", [20,20,20])
         outfile = "CAS-8570.im"
@@ -1727,24 +1741,25 @@ class immath_test3(unittest.TestCase):
         """Verify poli sigma fix, CAS-8880"""
         snumeric = 0.0044
         sigma = str(snumeric) + "Jy/beam"
-        imagename = os.path.join(datapath,"poli_sigma_test.im")
+        imagename = os.path.join(datapath, "poli_sigma_test.im")
         outfile = "myout.im"
-        immath(imagename=imagename, outfile=outfile, mode='poli', sigma=sigma)
-        myia = image()
+        self.assertTrue(
+            immath(imagename=imagename, outfile=outfile, mode='poli', sigma=sigma),
+            'immath mode="poli" failed'
+        )
         myia.open(imagename)
         pix = myia.getchunk()
-        expec = numpy.sqrt(pix[:,:,1]**2 + pix[:,:,2]**2 + pix[:,:,3]**2 - snumeric**2)
+        expec = np.sqrt(pix[:,:,1]**2 + pix[:,:,2]**2 + pix[:,:,3]**2 - snumeric**2)
         expec = expec.reshape([20, 20, 1])
         myia.open(outfile)
         got = myia.getchunk()
         myia.done()
         rtol = 1e-5
-        self.assertTrue(numpy.all(numpy.isclose(expec, got, rtol)), "Failed poli sigma test")
+        self.assertTrue(np.all(np.isclose(expec, got, rtol)), "Failed poli sigma test")
 
     def test_tlpol(self):
         """CAS-12116 test various polarization modes"""
         imagename = "mypol.im"
-        myia = image()
         myia.fromshape(imagename, [4, 4, 4])
         bb = myia.getchunk()
         bb[:,:,0] = 0
@@ -1754,9 +1769,9 @@ class immath_test3(unittest.TestCase):
         myia.putchunk(bb)
         myia.done()
         expec = {}
-        expec['poli'] = numpy.sqrt(56.0) 
+        expec['poli'] = np.sqrt(56.0) 
         expec['tpoli'] = expec['poli'] 
-        expec['lpoli'] = numpy.sqrt(52.0) 
+        expec['lpoli'] = np.sqrt(52.0) 
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'out' + mode + '.im'
             immath(imagename=imagename, outfile=outfile, mode=mode)
@@ -1764,7 +1779,7 @@ class immath_test3(unittest.TestCase):
             bb = myia.getchunk()
             myia.done()
             self.assertTrue(
-                numpy.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
+                np.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
         subi = 'noV.im'
         myia.open(imagename)
@@ -1772,20 +1787,26 @@ class immath_test3(unittest.TestCase):
         myia.done()
         zz.done()
         expec['poli'] = expec['lpoli'] 
-        expec['lpoli'] = numpy.sqrt(52.0) 
+        expec['lpoli'] = np.sqrt(52.0) 
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                self.assertRaises(
-                    Exception, immath, imagename=subi, outfile=outfile, mode=mode
-                )
+                if is_CASA6:
+                    self.assertRaises(
+                        Exception, immath, imagename=subi, outfile=outfile,
+                        mode=mode
+                    )
+                else: 
+                    self.assertFalse(
+                        immath(imagename=subi, outfile=outfile, mode=mode)
+                    )
                 continue
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
             bb = myia.getchunk()
             myia.done()
             self.assertTrue(
-                numpy.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
+                np.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
 
 def suite():
@@ -1793,3 +1814,5 @@ def suite():
     
 if __name__ == '__main__':
     unittest.main()
+        
+    
