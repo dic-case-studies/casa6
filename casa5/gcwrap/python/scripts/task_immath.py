@@ -162,13 +162,33 @@
 # </todo>
 ########################################################################3
 
-import os
-import shutil
-from taskinit import *
-import re
-from ialib import write_image_history
+from __future__ import absolute_import
 
-_rg = rgtool()
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, regionmanager, coordsys, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history
+    _myia = image()
+    outia = image()
+    mypo = imagepol()
+    _qa = quanta()
+    _rg = regionmanger()
+    myrg = regionmanager()
+else:
+    from taskinit import *
+    from ialib import write_image_history
+    _myia = iatool()
+    outia = iatool()
+    mypo = potool()
+    _qa = qatool()
+    _rg = rgtool()
+    myrg = rgtool()
+  
+import os
+import re
+import shutil
+import sys
 
 def immath(
     imagename, mode, outfile, expr, varnames, sigma,
@@ -178,9 +198,7 @@ def immath(
     # Tell CASA who will be reporting
     casalog.origin('immath')
     tmpFilePrefix='_immath_tmp' + str(os.getpid()) + '_'
-    _myia = iatool()
     _myia.dohistory(False)
-    outia = iatool()
     try:
         _immath_initial_cleanup(tmpFilePrefix)
         outfile = _immath_check_outfile(outfile)
@@ -198,7 +216,7 @@ def immath(
         expr = expr.replace(' ', '')
         if mode == 'spix':
             expr = _immath_dospix(len(filenames), varnames)
-        elif mode == 'pola':
+        if mode == 'pola':
             _immath_new_pola(
                 filenames, outfile, tmpFilePrefix, mask, region,
                 box, chans, stokes, stretch, polithresh, _myia
@@ -210,7 +228,7 @@ def immath(
                 box, chans, stokes, stretch, sigma, _myia, mode
             )
             return True
-        elif mode == 'evalexpr':
+        elif mode == 'evalexpr' or mode == 'spix':
             if box or chans or stokes or region or mask:
                 (subImages, file_map) = _immath_createsubimages(
                     box, chans, stokes, region, mask,
@@ -241,16 +259,17 @@ def immath(
         else:
             raise(Exception, "Unsupported mode " + str(mode))
         try:
-            param_names = immath.func_code.co_varnames[:immath.func_code.co_argcount]
-            param_vals = [eval(p) for p in param_names]   
+            vars = locals()
+            param_names = immath.__code__.co_varnames[:immath.__code__.co_argcount]
+            param_vals = [vars[p] for p in param_names]
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
             )
-        except Exception, instance:
+        except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         return True
-    except Exception, error:
+    except Exception as error:
         if mode == 'evalexpr':
             casalog.post("Unable to process expression " + expr, 'SEVERE')
         else:
@@ -260,8 +279,9 @@ def immath(
     finally:
         if _myia:
             _myia.done()
+        global outia
         if outia:
-           outia.done() 
+            outia.done()
         _immath_cleanup(tmpFilePrefix)
 
 def _immath_concat_stokes(filenames, target, _myia):
@@ -277,7 +297,6 @@ def _immath_concat_stokes(filenames, target, _myia):
 def _immath_getregion(region, box, chans, stokes, mode, _myia, target):
     myreg = region
     if (type(region) != type({})):
-        myrg = rgtool()
         if stokes:
             casalog.post(
                 "Ignoring stokes parameters selection for mode='"
@@ -303,24 +322,22 @@ def _immath_new_pola(
         target = tmpFilePrefix + "_concat_for_pola"
         _immath_concat_stokes(filenames, target, _myia)
     myreg = _immath_getregion(region, box, chans, stokes, "pola", _myia, target)
-    mypo = potool()
     if (polithresh):
         if (mask != ""):
             mask = ""
             casalog.post("Ignoring mask parameter in favor of polithresh parameter", 'WARN')
-        if (qa.getunit(polithresh) != ""):
-            initUnit = qa.getunit(polithresh)
-            _myia = iatool()
+        if (_qa.getunit(polithresh) != ""):
+            initUnit = _qa.getunit(polithresh)
             _myia.dohistory(False)
             _myia.open(filenames[0])
             bunit = _myia.brightnessunit()
-            polithresh = qa.convert(polithresh, bunit)
+            polithresh = _qa.convert(polithresh, bunit)
             _myia.done()
-            if (qa.getunit(polithresh) != bunit):
-                raise Exception, "Units of polithresh " + initUnit \
+            if (_qa.getunit(polithresh) != bunit):
+                raise Exception("Units of polithresh " + initUnit \
                 + " do not conform to input image units of " + bunit \
-                + " so cannot perform thresholding. Please correct units and try again."
-            polithresh = qa.getvalue(polithresh)[0]
+                + " so cannot perform thresholding. Please correct units and try again.")
+            polithresh = _qa.getvalue(polithresh)[0]
             lpol = tmpFilePrefix + "_lpol"
             mypo.open(target)
             _myia = mypo.linpolint(debias=False, outfile=lpol, region=myreg)
@@ -364,24 +381,27 @@ def _immath_new_poli(
     debias = False
     newsigma = 0
     if sigma:
-        qsigma = qa.quantity(sigma)
-        if qa.getvalue(qsigma)[0] > 0:
+        qsigma = _qa.quantity(sigma)
+        if _qa.getvalue(qsigma)[0] > 0:
             debias = True
-            sigmaunit = qa.getunit(qsigma)
+            sigmaunit = _qa.getunit(qsigma)
             try:
                 _myia.open(filenames[0])
                 iunit = _myia.brightnessunit()
                 _myia.done()
             except:
-                raise Exception, 'Unable to get brightness unit from image file ' + filenames[0]
+                raise Exception('Unable to get brightness unit from image file ' + filenames[0])
             if sigmaunit != iunit:
-                newsigma = qa.convert(qsigma,iunit)
+                newsigma = _qa.convert(qsigma,iunit)
             else:
                 newsigma = sigma
     myreg = _immath_getregion(region, box, chans, stokes, "poli", _myia, target)
-    mypo = potool()
     mypo.open(target)
-    numeric_sigma = qa.getvalue(qa.quantity(newsigma))
+    if is_CASA6:
+        # for some annoying reason, qa.getvalue() returns an array in this context
+        numeric_sigma = _qa.getvalue(_qa.quantity(newsigma))[0]
+    else:
+        numeric_sigma = _qa.getvalue(_qa.quantity(newsigma))
     if mode == 'tpoli' or mode == 'poli':
         _myia = mypo.totpolint(
             debias=debias, sigma=numeric_sigma, outfile=outfile,
@@ -423,7 +443,7 @@ def _immath_updateexpr(expr, varnames, subImages, filenames, file_map):
     # Put the subimage names into the expression
     try:
         expr = _immath_expr_from_varnames(expr, varnames, subImages)
-    except Exception, e:
+    except Exception as e:
         casalog.post(
             "Unable to construct pixel expression aborting immath: " + str(e),
             'SEVERE'
@@ -454,7 +474,7 @@ def _immath_createsubimages(
             subImages.append(tmpFile)
             _myia.done()
             i = i + 1
-        except Exception, e:
+        except Exception as e:
             raise Exception(
                 'Unable to apply region to file: ' + image
             )
@@ -473,7 +493,7 @@ def _immath_dofull(
 
 def _immath_dospix(nfiles, varnames):
     if nfiles != 2:
-        raise Exception, 'Requires two images at different frequencies'
+        raise Exception('Requires two images at different frequencies')
     return 'spectralindex(' + varnames[0] + ', ' + varnames[1] + ')'
 
 def _immath_filenames(filenames, tmpfilenames, varnames, mode):
@@ -485,7 +505,7 @@ def _immath_filenames(filenames, tmpfilenames, varnames, mode):
             # check if it is one of varnames, if not check the files in expr exist 
             if(not varnamesSet.issuperset(imname)):
                if( not os.path.exists(imname)):
-                   raise Exception, 'Image data set not found - please verify ' + imname
+                   raise Exception('Image data set not found - please verify ' + imname)
                else:
                    count = count + 1            
         if len(tmpfilenames) == count:
@@ -495,7 +515,7 @@ def _immath_filenames(filenames, tmpfilenames, varnames, mode):
         for i in range(len(filenames)):
             if not os.path.exists(filenames[i]):
                 casalog.post("Image data set not found - please verify " +filenames[i], "SEVERE")
-                raise Exception, 'Image data set not found - please verify '+filenames[i]
+                raise Exception('Image data set not found - please verify '+filenames[i])
     return filenames
 
 def _immath_varnames(varnames, filenames, tmpfilenames):
@@ -515,9 +535,9 @@ def _immath_varnames(varnames, filenames, tmpfilenames):
 def _immath_initial_cleanup(tmpFilePrefix):
     try:
         _immath_cleanup(tmpFilePrefix)
-    except Exception, e:
+    except Exception as e:
         casalog.post( 'Unable to cleanup working directory '+os.getcwd()+'\n'+str(e), 'SEVERE' )
-        raise Exception, str(e)
+        raise
 
 def _immath_check_outfile(outfile):
     if not outfile:
@@ -575,7 +595,8 @@ def _immath_expr_from_varnames(expr, varnames, filenames):
         tmpfiles = {}
         for i in range(len(filenames)):
                 tmpfiles[varnames[i]] = filenames[i]
-        tmpvars = tmpfiles.keys()
+        # python 3 requires explicit list conversion
+        tmpvars = list(tmpfiles.keys())
 
         tmpvars.sort()
         tmpvars.reverse()

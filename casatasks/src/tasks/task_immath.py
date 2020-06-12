@@ -162,17 +162,33 @@
 # </todo>
 ########################################################################3
 
+from __future__ import absolute_import
+
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import image, regionmanager, coordsys, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history
+    _myia = image()
+    outia = image()
+    mypo = imagepol()
+    _qa = quanta()
+    _rg = regionmanger()
+    myrg = regionmanager()
+else:
+    from taskinit import *
+    from ialib import write_image_history
+    _myia = iatool()
+    outia = iatool()
+    mypo = potool()
+    _qa = qatool()
+    _rg = rgtool()
+    myrg = rgtool()
+  
 import os
 import re
-import sys
 import shutil
-from .ialib import write_image_history
-
-from casatools import quanta, regionmanager, image, imagepol
-from casatasks import casalog
-
-_rg = regionmanager()
-_qa = quanta( )
+import sys
 
 def immath(
     imagename, mode, outfile, expr, varnames, sigma,
@@ -182,9 +198,7 @@ def immath(
     # Tell CASA who will be reporting
     casalog.origin('immath')
     tmpFilePrefix='_immath_tmp' + str(os.getpid()) + '_'
-    _myia = image()
     _myia.dohistory(False)
-    outia = image()
     try:
         _immath_initial_cleanup(tmpFilePrefix)
         outfile = _immath_check_outfile(outfile)
@@ -202,7 +216,7 @@ def immath(
         expr = expr.replace(' ', '')
         if mode == 'spix':
             expr = _immath_dospix(len(filenames), varnames)
-        elif mode == 'pola':
+        if mode == 'pola':
             _immath_new_pola(
                 filenames, outfile, tmpFilePrefix, mask, region,
                 box, chans, stokes, stretch, polithresh, _myia
@@ -214,7 +228,7 @@ def immath(
                 box, chans, stokes, stretch, sigma, _myia, mode
             )
             return True
-        elif mode == 'evalexpr':
+        elif mode == 'evalexpr' or mode == 'spix':
             if box or chans or stokes or region or mask:
                 (subImages, file_map) = _immath_createsubimages(
                     box, chans, stokes, region, mask,
@@ -245,7 +259,7 @@ def immath(
         else:
             raise(Exception, "Unsupported mode " + str(mode))
         try:
-            vars = locals( )
+            vars = locals()
             param_names = immath.__code__.co_varnames[:immath.__code__.co_argcount]
             param_vals = [vars[p] for p in param_names]
             write_image_history(
@@ -265,8 +279,9 @@ def immath(
     finally:
         if _myia:
             _myia.done()
+        global outia
         if outia:
-           outia.done() 
+            outia.done()
         _immath_cleanup(tmpFilePrefix)
 
 def _immath_concat_stokes(filenames, target, _myia):
@@ -282,7 +297,6 @@ def _immath_concat_stokes(filenames, target, _myia):
 def _immath_getregion(region, box, chans, stokes, mode, _myia, target):
     myreg = region
     if (type(region) != type({})):
-        myrg = regionmanager()
         if stokes:
             casalog.post(
                 "Ignoring stokes parameters selection for mode='"
@@ -308,14 +322,12 @@ def _immath_new_pola(
         target = tmpFilePrefix + "_concat_for_pola"
         _immath_concat_stokes(filenames, target, _myia)
     myreg = _immath_getregion(region, box, chans, stokes, "pola", _myia, target)
-    mypo = imagepol()
     if (polithresh):
         if (mask != ""):
             mask = ""
             casalog.post("Ignoring mask parameter in favor of polithresh parameter", 'WARN')
         if (_qa.getunit(polithresh) != ""):
             initUnit = _qa.getunit(polithresh)
-            _myia = image()
             _myia.dohistory(False)
             _myia.open(filenames[0])
             bunit = _myia.brightnessunit()
@@ -365,7 +377,7 @@ def _immath_new_poli(
             if stokes.count(p) == 0:
                 raise Exception(
                     "Stokes " + p + " is required for mode tpoli but was not found"
-                )   
+                )       
     debias = False
     newsigma = 0
     if sigma:
@@ -384,10 +396,12 @@ def _immath_new_poli(
             else:
                 newsigma = sigma
     myreg = _immath_getregion(region, box, chans, stokes, "poli", _myia, target)
-    mypo = imagepol()
     mypo.open(target)
-    # for some annoying reason, qa.getvalue() returns an array in this context
-    numeric_sigma = _qa.getvalue(_qa.quantity(newsigma))[0]
+    if is_CASA6:
+        # for some annoying reason, qa.getvalue() returns an array in this context
+        numeric_sigma = _qa.getvalue(_qa.quantity(newsigma))[0]
+    else:
+        numeric_sigma = _qa.getvalue(_qa.quantity(newsigma))
     if mode == 'tpoli' or mode == 'poli':
         _myia = mypo.totpolint(
             debias=debias, sigma=numeric_sigma, outfile=outfile,
@@ -474,7 +488,7 @@ def _immath_dofull(
 ):
     expr = _immath_expr_from_varnames(expr, varnames, filenames)    
     return _immath_compute(
-        imagename, expr, outfile, imagemd, _myia, prec=prec
+        imagename, expr, outfile, imagemd, _myia, prec
     )
 
 def _immath_dospix(nfiles, varnames):
@@ -581,6 +595,7 @@ def _immath_expr_from_varnames(expr, varnames, filenames):
         tmpfiles = {}
         for i in range(len(filenames)):
                 tmpfiles[varnames[i]] = filenames[i]
+        # python 3 requires explicit list conversion
         tmpvars = list(tmpfiles.keys())
 
         tmpvars.sort()
