@@ -409,13 +409,24 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //genie
     // triiger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
-    //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
+    /*if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
+    //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 4) // M31 value
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough." << endl;
 	    switchedToHogbom();
-    }
+    }*/
+    // try switch to MS if itsStrengthOptimum is small enough and # aspen is >=5
+    /*if (itsStrengthOptimum < 7e-7 && itsGoodAspActiveSet.size() >= 5)
+    {
+      itsSwitchedToMS = true;
+    }*/ // newMS box4/5...the logic here is wrong since itsGoodAspActiveSet is not set here
+    // try switch to MS when itsStrengthOptimum is small
+    /*if (!itsSwitchedToHogbom && !itsSwitchedToMS && itsStrengthOptimum < 5.5e-7)
+    {
+    	cout << "Switch to MS b/c optimum strength is small enough." << endl;
+      itsSwitchedToMS = true;
+    }*/ //newMS2
 
     /*if (!itsSwitchedToHogbom)
     {
@@ -450,8 +461,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // Various ways of stopping:
     //    1. stop if below threshold
-    if (abs(itsStrengthOptimum) < threshold())
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < threshold())
     {
+    	cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
             ii << LogIO::POST;
       os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
@@ -1427,6 +1439,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //unsigned int length = (itsAspScaleSizes.size() + 1) * 2;  //genie recon
     //VectorXd x(length); //genie recon
     unsigned int length = tempx.size();
+    if (length == 0) // if there is no active set, we return to save time
+    	return itsAspScaleSizes;
     VectorXd x(length);
 
     /*vector<Float> tempx;
@@ -1538,10 +1552,12 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsScaleSizes = Vector<Float>(scaleSizes);  // make a copy that we can call our own
 
   // trial: switch to MS for speed up if # active aspen is > 6
-  if (itsNscales > 6)
+  //if (itsNscales > 6)
+  // newMS2, set itsGoodAspActiveSet when # active aspen is >=4
+  if (itsNscales >= 4)
   {
   	itsGoodAspActiveSet = scaleSizes;
-    itsSwitchedToMS = true;
+    //itsSwitchedToMS = true;
   }
 
   // analytically calculate component scale by Asp 2016
