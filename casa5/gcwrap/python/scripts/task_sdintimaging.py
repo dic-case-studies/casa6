@@ -163,11 +163,11 @@ def setup_deconvolver(imagename,parallel,specmode,inparams):
     deconvolvertool.makePSF() ## Make this to get a coordinate system
     #deconvolvertool.makeImage('psf', imagename+'.psf')
     deconvolvertool.makePB()  ## Make this to turn .weight into .pb maps
-    deconvolvertool.runMajorCycle() ## Make this to make template residual images.
 
         ## Initialize deconvolvers. ( Order is important. This cleans up a leftover tablecache image.... FIX!)
     deconvolvertool.initializeDeconvolvers()
-    deconvolvertool.initializeIterationControl()
+    deconvolvertool.initializeIterationControl() # This needs to be run before runMajorCycle
+    deconvolvertool.runMajorCycle() ## Make this to make template residual images.
  
     return deconvolvertool
 

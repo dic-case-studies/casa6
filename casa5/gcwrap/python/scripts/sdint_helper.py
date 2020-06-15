@@ -529,6 +529,7 @@ class SDINT_helper:
 ##########################################
 
     def regridimage(self, imagename, template, outfile):
+        outia = None
         _myia = image()
         _myia.open(template)
         csys = _myia.coordsys()
@@ -552,7 +553,8 @@ class SDINT_helper:
 
         finally:
             csys.done()
-            outia.done()
+            if outia != None and outia.isopen():
+                outia.done()
             _myia.done()
 
  
@@ -576,7 +578,8 @@ class SDINT_helper:
         _tmpia.close()
         _tmpia.done()
         _tmprg.done()
-        outia.done()
+        if outia != None and outia.isopen():
+            outia.done()
      
     def pbcor(self, imagename, pbimage, cutoff, outfile):
         """
@@ -594,7 +597,8 @@ class SDINT_helper:
 
         finally:
             _myia.done()
-            outia.done()
+            if outia != None and outia.isopen():
+                outia.done()
 
  
     def checkpsf(self, inpsf, refpsf):
