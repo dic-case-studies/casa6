@@ -9,7 +9,7 @@ import time
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import image, quanta, table, image, regionmanager, imager
+    from casatools import quanta, table, image, regionmanager, imager
     from casatasks import casalog, imsubimage, feather
 else:
     from taskinit import *
@@ -529,6 +529,7 @@ class SDINT_helper:
 ##########################################
 
     def regridimage(self, imagename, template, outfile):
+        outia = None
         _myia = image()
         _myia.open(template)
         csys = _myia.coordsys()
@@ -552,7 +553,8 @@ class SDINT_helper:
 
         finally:
             csys.done()
-            outia.done()
+            if outia != None and outia.isopen():
+                outia.done()
             _myia.done()
 
  
@@ -576,7 +578,8 @@ class SDINT_helper:
         _tmpia.close()
         _tmpia.done()
         _tmprg.done()
-        outia.done()
+        if outia != None and outia.isopen():
+            outia.done()
      
     def pbcor(self, imagename, pbimage, cutoff, outfile):
         """
@@ -594,7 +597,8 @@ class SDINT_helper:
 
         finally:
             _myia.done()
-            outia.done()
+            if outia != None and outia.isopen():
+                outia.done()
 
  
     def checkpsf(self, inpsf, refpsf):
@@ -669,9 +673,16 @@ class SDINT_helper:
         Start from the regridded SD_IMAGE cube
         """
         sdintlib = SDINT_helper()
-        _ia = iatool()
-        _cl = cltool()
-        _rg = rgtool()
+        if is_CASA6:
+            from casatools import image, componentlist, regionmanager
+        else:
+            image = iatool
+            componentlist = cltool
+            regionmanger = rgtool
+             
+        _ia = image()
+        _cl = componentlist()
+        _rg = regionmanager()
 
         ## Get restoringbeam info for all channels
         _ia.open(sdimage)
@@ -682,7 +693,8 @@ class SDINT_helper:
 
         ## If no restoring beam, or if global restoringbeam, return with error.
         ## Also return if the number of beams doesn't match nchan...
-        if not restbeams.has_key('nChannels') or restbeams['nChannels'] != shp[3]:
+        ###if not restbeams.has_key('nChannels') or restbeams['nChannels'] != shp[3]:
+        if not 'nChannels' in restbeams or restbeams['nChannels'] != shp[3]:
             raise(Exception("The input SD cube must have per plane restoring beams"))
     
         cdir = csys.torecord()['direction0']
@@ -830,7 +842,8 @@ class SDINT_helper:
         print("width = " + width  ) 
         ## Test for restoringbeams
         rbeams = _ia.restoringbeam()
-        if not rbeams.has_key('nChannels') or rbeams['nChannels']!= shp[3]:
+        #if not rbeams.has_key('nChannels') or rbeams['nChannels']!= shp[3]:
+        if not 'nChannels' in rbeams or rbeams['nChannels']!= shp[3]:
             print("The SD Cube needs to have per-plane restoringbeams")
             _ia.close()
             return False
