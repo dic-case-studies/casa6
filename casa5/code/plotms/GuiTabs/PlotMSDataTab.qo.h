@@ -27,7 +27,7 @@
 #ifndef PLOTMSDATATAB_QO_H_
 #define PLOTMSDATATAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSDataTab.ui.h>
+#include <ui/ui_PlotMSDataTab.h>
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 
 namespace casa {

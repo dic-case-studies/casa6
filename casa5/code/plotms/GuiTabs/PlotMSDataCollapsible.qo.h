@@ -28,7 +28,7 @@
 
 #include <QWidget>
 #include <casa/BasicSL/String.h>
-#include <plotms/GuiTabs/PlotMSDataCollapsible.ui.h>
+#include <ui/ui_PlotMSDataCollapsible.h>
 #include <plotms/Plots/PlotMSPlotParameters.h>
 #include <plotms/PlotMS/PlotMS.h>
 

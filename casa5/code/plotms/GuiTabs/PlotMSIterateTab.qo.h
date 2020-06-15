@@ -27,7 +27,7 @@
 #ifndef PLOTMSITERATETAB_QO_H_
 #define PLOTMSITERATETAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSIterateTab.ui.h>
+#include <ui/ui_PlotMSIterateTab.h>
 
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 #include <plotms/Plots/PlotMSPlotParameterGroups.h>

@@ -179,7 +179,15 @@ def cvel(vis, outputvis,
                  default = False
     
     """
-    
+
+    # Note: this is duplicated in task_cvel, and really needing CASA-wide harmonization
+    # (CAS-12871)
+    def copy_ms(src, dest):
+        """ This is a MMS-safe copy of an MMS tree directory.
+        :param src: path to the source MS
+        :param dest: path to the destination MS
+        """
+        shutil.copytree(src, dest, symlinks=True)
 
     #Python script
 
@@ -399,7 +407,7 @@ def cvel(vis, outputvis,
             if(hanning):
                 casalog.post("Creating working copy for Hanning-smoothing ...", 'INFO')
                 shutil.rmtree(outputvis+'TMP',ignore_errors=True)
-                shutil.copytree(vis,outputvis+'TMP')
+                copy_ms(vis, outputvis+'TMP')
                 _ms.open(outputvis+'TMP', nomodify=False)
                 _ms.hanningsmooth(datacolumn=datacolumn)
                 _ms.close()
@@ -449,7 +457,7 @@ def cvel(vis, outputvis,
             # no selection or preaveraging necessary, just copy
             casalog.post("Creating working copy ...", 'INFO')
             shutil.rmtree(outputvis,ignore_errors=True)
-            shutil.copytree(vis,outputvis)
+            copy_ms(vis, outputvis)
 
         # Combine and if necessary regrid it
         _ms.open(outputvis, nomodify=False)

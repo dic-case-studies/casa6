@@ -50,10 +50,13 @@ public:
 
     // It is the caller's responsibility to ensure that the input
     // ms represents the entire MS, and is not an MS that has had
-    // a selection applied to it.
+    // a selection applied to it. The full MS is specified by the ms parameter,
+    // the selected MS is specified by the selMS parameter.
+    // The caller is responsible for pointer management.
 	StatWtColConfig(
-	    casacore::MeasurementSet* ms, casacore::Bool preview,
-	    const casacore::String& dataColumn, const casac::variant& chanbin
+	    casacore::MeasurementSet* ms, casacore::MeasurementSet* selMS,
+	    casacore::Bool preview, const casacore::String& dataColumn,
+	    const casac::variant& chanbin
 	);
 
     ~StatWtColConfig();
@@ -63,10 +66,9 @@ public:
         casacore::Bool& mustWriteSig, casacore::Bool& mustWriteSigSp
     ) const;
 
-    void initSpecColsIfNecessary();
-
 private:
     casacore::MeasurementSet* _ms;
+    casacore::MeasurementSet* _selMS;
     casacore::Bool _mustWriteWt = false;
     casacore::Bool _mustWriteWtSp = false;
     casacore::Bool _mustInitWtSp = false;
@@ -96,6 +98,10 @@ private:
 
     void _initSpecColsIfNecessary();
 
+    static void _setEqual(
+        casacore::Cube<casacore::Float>& newsp, 
+        const casacore::Matrix<casacore::Float>& col
+    );
 };
 
 }

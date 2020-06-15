@@ -151,7 +151,7 @@ class TestHelpers:
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
         """Check Peak Res"""
-        peakres = get_peak_res(summ)
+        peakres = TestHelpers().get_peak_res(summ)
         out = True
         if correctres == None and peakres != None:
             out = False
@@ -176,7 +176,7 @@ class TestHelpers:
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
         """Check Mod Flux"""
-        modflux = get_mod_flux(summ)
+        modflux = TestHelpers().get_mod_flux(summ)
         out = True
         if correctmod == None and modflux != None:
             out = False
@@ -435,8 +435,9 @@ class TestHelpers:
         retres = True
         _ia.open(imname)
         csys = _ia.coordsys()
-        _ia.close()
+        _ia.done()
         reffreq = csys.referencevalue()['numeric'][3]
+        csys.close()
         if  abs(reffreq - theval)/theval > epsilon:
             retres = False
         else:
@@ -535,9 +536,9 @@ class TestHelpers:
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    pstr += TestHelpers().check_val(val=get_peak_res(ret), correctval=peakres, valname="peak res")
+                    pstr += TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res")
                 if modflux != None:
-                    pstr += TestHelpers().check_val(val=get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    pstr += TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux")
                 if iterdone != None:
                     pstr += TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
                 if nmajordone != None:

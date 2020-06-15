@@ -177,7 +177,7 @@ void CalSolVi2Organizer::addCalForSolving(Float calfactor) {
 }
 
 //
-void CalSolVi2Organizer::addCalForSolving(VisEquation& ve) {
+void CalSolVi2Organizer::addCalForSolving(VisEquation& ve, const Bool& corrDepFlags) {
 
   // Must not have added one already!
   AlwaysAssert(!cal_, AipsError);
@@ -186,7 +186,7 @@ void CalSolVi2Organizer::addCalForSolving(VisEquation& ve) {
   AlwaysAssert(factories_.nelements()>0, AipsError);
 
   // Make the layer factory
-  cal_= new CalSolvingVi2LayerFactoryByVE(&ve);
+  cal_= new CalSolvingVi2LayerFactoryByVE(&ve,corrDepFlags);
 
   // Add it to the list...
   this->appendFactory(cal_);

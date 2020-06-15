@@ -28,7 +28,7 @@
 #include <casaqt/QwtPlotter/QPPlotter.qo.h>
 #include <casaqt/QwtPlotter/QPExportCanvas.h>
 #include <casaqt/QwtPlotter/QPOptions.h>
-#include <qwt_text.h>
+#include <qwt/qwt_text.h>
 
 using namespace casacore;
 namespace casa {

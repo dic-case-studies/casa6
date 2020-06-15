@@ -547,6 +547,8 @@ protected:
   FFT2D ft_p;
 
  private:
+  virtual casacore::Bool isSD() const {return false;}
+
   //Some temporary wasteful function for swapping axes because we don't 
   //Interpolation along the second axis...will need to implement 
   //interpolation on y axis of a cube. 
