@@ -803,3 +803,43 @@ class SDINT_helper:
 
         pars['chanwt'] = chanwt
         return validity, pars
+
+
+    def setup_cube_params(self,sdcube=''):
+        """
+        Read coordinate system from the SD cube
+        Decide parameters to input into sdintimaging for the INT cube to match. 
+
+        This is a helper method, not currently used in the sdintimaging task.
+        We will add this later (after 6.1), and also remove some parameters from the task level.
+        """
+        _ia.open(sdcube)
+        csys = _ia.coordsys()
+        shp = _ia.shape()
+        ctypes = csys.axiscoordinatetypes()
+        print("Shape of SD cube : "+str(shp))
+        print("Coordinate ordering : "+str(ctypes))
+        if len(ctypes) !=4 or ctypes[3] != 'Spectral':
+            print("The SD cube needs to have 4 axes, in the RA/DEC/Stokes/Spectral order")
+            _ia.close()
+            return False
+        nchan = shp[3]
+        start = str( csys.referencevalue()['numeric'][3] ) + csys.units()[3]
+        width = str( csys.increment()['numeric'][3]) + csys.units()[3] 
+        ## Number of channels
+        print("nchan = "+str(nchan))
+        ## Start Frequency
+        print("start = " + start  )
+        ## Width
+        print("width = " + width  ) 
+        ## Test for restoringbeams
+        rbeams = _ia.restoringbeam()
+        if not rbeams.has_key('nChannels') or rbeams['nChannels']!= shp[3]:
+            print("The SD Cube needs to have per-plane restoringbeams")
+            _ia.close()
+            return False
+        else:
+            print("Found " + str(rbeams['nChannels']) + " per-plane restoring beams")
+        print("\n(For specmode='mfs' in sdintimaging, please remember to set 'reffreq' to a value within the freq range of the cube)\n")
+        _ia.close()
+        return {'nchan':nchan, 'start':start, 'width':width}
