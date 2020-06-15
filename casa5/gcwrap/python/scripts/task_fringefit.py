@@ -13,7 +13,7 @@ def fringefit(vis=None,caltable=None,
               delaywindow=None,ratewindow=None,append=None,
 	      corrdepflags=None,
 	      docallib=None, callib=None, gaintable=None,gainfield=None,interp=None,spwmap=None,
-	      parang=None):
+              paramactive=None, parang=None):
 	#Python script
 	casalog.origin('fringefit')
 	try: 
@@ -51,7 +51,14 @@ def fringefit(vis=None,caltable=None,
 			mycallib.read(callib)
 			mycb.setcallib(mycallib.cld)
 		else:
-
+                        if paramactive is None or paramactive==[]:
+                                paramactive=[True, True, False]
+                        else:
+                                if len(paramactive)!=3:
+                                        print >>sys.stderr, "paramactive", paramactive
+                                        raise Exception, 'Error: paramactive vector must have exactly three entries'
+                        # Have to solve for peculiar phase!
+                        paramactive.insert(0, True)
 			# by traditional parameters
 			ngaintab = 0;
 			if (gaintable!=['']):
@@ -109,6 +116,7 @@ def fringefit(vis=None,caltable=None,
                               niter=niter,
                               delaywindow=delaywindow,
                               ratewindow=ratewindow,
+                              paramactive=paramactive,
                 	      table=caltable,append=append)
 		mycb.solve()
 		reportsolvestats(mycb.activityrec());
