@@ -437,6 +437,10 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
   // system used in the POINTING table.
   {
     uInt row=0;
+
+    // reset lastAntID_p to use correct antenna position
+    lastAntID_p = -1;
+
     const MSPointingColumns& act_mspc = vb.msColumns().pointing();
     Bool nullPointingTable=(act_mspc.nrow() < 1);
     // uInt pointIndex=getIndex(*mspc, vb.time()(row), vb.timeInterval()(row), vb.antenna1()(row));
@@ -486,6 +490,10 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
     else {
       mFrame_p.resetEpoch(epoch);
       if(lastAntID_p != vb.antenna1()(row)){
+        logIO_p << LogIO::DEBUGGING
+          << "updating antenna position. MS ID " << msId_p
+          << ", last antenna ID " << lastAntID_p
+          << " new antenna ID " << vb.antenna1()(row) << LogIO::POST;
 	MPosition pos;
 	lastAntID_p=vb.antenna1()(row);
 	pos=vb.msColumns().antenna().positionMeas()(lastAntID_p);
@@ -571,6 +579,11 @@ void SDGrid::initializeToVis(ImageInterface<Complex>& iimage,
   if(convType=="pb") {
     findPBAsConvFunction(*image, vb);
   }
+
+  // reset msId_p and lastAntID_p to -1
+  // this is to ensure correct antenna position in getXYPos
+  msId_p = -1;
+  lastAntID_p = -1;
 
   // Initialize the maps for polarization and channel. These maps
   // translate visibility indices into image indices
@@ -668,6 +681,11 @@ void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
   if(convType=="pb") {
     findPBAsConvFunction(*image, vb);
   }
+
+  // reset msId_p and lastAntID_p to -1
+  // this is to ensure correct antenna position in getXYPos
+  msId_p = -1;
+  lastAntID_p = -1;
 
   // Initialize the maps for polarization and channel. These maps
   // translate visibility indices into image indices
