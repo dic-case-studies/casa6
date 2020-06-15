@@ -141,7 +141,7 @@ void CubeMinorCycleAlgorithm::task(){
 	      //subDeconv.setPosMask(subimstor->tempworkimage());
 	     
 	      subDeconv.setAutoMask();
-	      
+	      /*
 	      Record resRec=subDeconv.initMinorCycle(subimstor);
 	      //cerr << "POST resrec " << resRec << endl;
 	      //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
@@ -161,13 +161,21 @@ void CubeMinorCycleAlgorithm::task(){
 		  }
 		}
 		
+		
 		  //if(peakresidual < iterBotRec_p.asFloat("cyclethreshold"))
 		if(peakresidual < cyclethreshold)
 		  writeBackAutomask=False;
+		
+		writeBackAutomask=False;
+		//Its better to always write the automask 
 		//cerr << "chanRange " << chanRange_p << endl;
-		//		cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << " nomask " << peakresidualnomask << endl;
+		//cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << " nomask " << peakresidualnomask << endl;
 		
 	      }
+	      */
+
+	      writeBackAutomask=True;
+	      //Its better to always write the automask 
 	     
 	    }
 	    else{

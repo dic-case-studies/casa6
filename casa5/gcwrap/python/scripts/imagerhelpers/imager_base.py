@@ -247,7 +247,8 @@ class PySynthesisImager:
          time0=time.time()
          self.IBtool.resetminorcycleinfo() 
          for immod in range(0,self.NF):
-              initrec =  self.SDtools[immod].initminorcycle() 
+              initrec =  self.SDtools[immod].initminorcycle()
+              #print('INIT Minor cycle dict {}'.format(initrec))
               self.IBtool.mergeinitrecord( initrec );
 
 #         # Run interactive masking (and threshold/niter editors)
@@ -256,6 +257,7 @@ class PySynthesisImager:
          # Check with the iteration controller about convergence.
          #print("check convergence")
          stopflag = self.IBtool.cleanComplete()
+         #print('STOPFLAG {}'.format(stopflag))
          #print('Converged : ', stopflag)
          if( stopflag>0 ):
              #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
@@ -263,10 +265,9 @@ class PySynthesisImager:
              casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
 
              # revert the current automask to the previous one
-             # not for cubes as of CAS-9386 this is not necessary
              #if self.iterpars['interactive']:
              for immod in range(0,self.NF):
-                     if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) and (not ('cube' in self.allimpars[str(immod)]['specmode'])) :
+                     if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) :
                         prevmask = self.allimpars[str(immod)]['imagename']+'.prev.mask'
                         if os.path.isdir(prevmask):
                           # Try to force rmtree even with an error as an nfs mounted disk gives an error 
@@ -374,7 +375,6 @@ class PySynthesisImager:
             self.runMajorCycleCore(lastcycle)
             if self.IBtool != None:
                 self.IBtool.endmajorcycle()
-        
             return
        
         for immod in range(0,self.NF):
@@ -535,6 +535,10 @@ class PySynthesisImager:
                     tempresname = self.allimpars[str(immod)]['imagename']+'.inputres'+str(self.ncycle)
                     if os.path.isdir(resname):
                         shutil.copytree(resname, tempresname)
+                    modname = self.allimpars[str(immod)]['imagename']+'.model'
+                    tempmodname = self.allimpars[str(immod)]['imagename']+'.inputmod'+str(self.ncycle)
+                    if os.path.isdir(modname):
+                        shutil.copytree(modname, tempmodname)
 
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
 

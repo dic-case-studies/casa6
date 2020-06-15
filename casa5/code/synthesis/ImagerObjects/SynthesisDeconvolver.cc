@@ -608,7 +608,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       char **argv=nullptr;
       applicator.init(argc, argv);
       if(applicator.isController()){
-        os << "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" << LogIO::POST;
+        os << ((AutoMaskFlag != 1) ? "---------------------------------------------------- Run Minor Cycle Iterations  ---------------------------------------------" : "---------------------------------------------------- Run Automask  ---------------------------------------------" )<< LogIO::POST;
         /*{///TO BE REMOVED
           LatticeExprNode le( sum( *(itsImages->mask()) ) );
           os << LogIO::WARN << "#####Sum of mask BEFORE minor cycle " << le.getFloat() << endl;
@@ -620,7 +620,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // Add itsIterdone to be sent to child processes ...needed for automask
         //cerr << "before record " << itsIterDone << " loopcontroller " << itsLoopController.getIterDone() << endl;
         minorCycleControlRec.define("iterdone", itsIterDone);
-	if(doAutoMask < 0 && itsPreviousIterBotRec_p.nfields() >0)
+	if(doAutoMask < 0) // && itsPreviousIterBotRec_p.nfields() >0)
 	  doAutoMask=0;
 	minorCycleControlRec.define("onlyautomask",doAutoMask);
         if(itsPosMask){
@@ -993,7 +993,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  //cerr << this << "SETUP mask " << itsRobustStats << endl;
           if(itsImages->residual()->shape()[3] ==1)
             setAutoMask();
-	  else if((itsImages->residual()->shape()[3] >1) && itsPreviousIterBotRec_p.nfields() > 0){
+	  else if((itsImages->residual()->shape()[3] >1)){
 	    Record dummy;
 	    executeCubeMinorCycle(dummy, 1);
 	  }
