@@ -98,6 +98,7 @@ Calibrater::Calibrater():
   histLockCounter_p(), 
   hist_p(0),
   usingCalLibrary_(false),
+  corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
   simdata_p(false),
   ssvp_p()
@@ -118,6 +119,7 @@ Calibrater::Calibrater(String msname):
   histLockCounter_p(), 
   hist_p(0),
   usingCalLibrary_(false),
+  corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
   simdata_p(false),
   ssvp_p()
@@ -157,6 +159,7 @@ Calibrater::Calibrater(const vi::SimpleSimVi2Parameters& ssvp):
   histLockCounter_p(), 
   hist_p(0),
   usingCalLibrary_(false),
+  corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
   simdata_p(true),
   ssvp_p(ssvp)
@@ -1147,6 +1150,22 @@ Bool Calibrater::unsetsolve() {
   }
   return false;
 }
+
+Bool
+Calibrater::setCorrDepFlags(const Bool& corrDepFlags) 
+{
+
+  logSink() << LogOrigin("Calibrater","setCorrDepFlags") << LogIO::NORMAL;
+
+  // Set it
+  corrDepFlags_=corrDepFlags;
+
+  logSink() << "Setting correlation dependent flags = " << (corrDepFlags_ ? "True" : "False") << LogIO::POST;
+
+  return true;
+
+}
+
 
 Bool
 Calibrater::correct2(String mode)
@@ -3165,7 +3184,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   }
 
   // Add pre-cal layer, using the VisEquation
-  vi2org.addCalForSolving(*ve_p);
+  //  (include control for corr-dep flags)
+  vi2org.addCalForSolving(*ve_p,corrDepFlags_);
 
 
   // Add the freq-averaging layer, if needed
@@ -3409,7 +3429,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
         VisCalSolver2 vcs(svc_p->solmode(),svc_p->rmsthresh());
 
         // Guess from the data                                                                                              
-        svc_p->guessPar(sdbs);
+        svc_p->guessPar(sdbs,corrDepFlags_);
 
         Bool totalGoodSol(False);  // Will be set True if any channel is good                                               
         //for (Int ich=0;ich<nChanSol;++ich) {
