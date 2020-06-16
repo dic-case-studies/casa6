@@ -556,7 +556,7 @@ class PySynthesisImager:
                 # is not used (i.e. reached deconvolution stopping condition).
                 ## no longer needed as of CAS-9386 for cubes.
                 #if self.iterpars['interactive'] and self.alldecpars[str(immod)]['usemask']=='auto-thresh':
-                if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) and (not ('cube' in self.allimpars[str(immod)]['specmode'])):
+                if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) :
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     prevmaskname=self.allimpars[str(immod)]['imagename']+'.prev.mask'
                     if os.path.isdir(maskname):
