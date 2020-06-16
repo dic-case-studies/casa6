@@ -39,11 +39,11 @@
 #include <casaqt/QtPlotServer/QtRasterData.h>
 #include <casaqt/QwtConfig.h>
 #if QWT_VERSION >= 0x060000
-#include <qwt_compat.h>
+#include <qwt/qwt_compat.h>
 #endif
-#include <qwt_plot_spectrogram.h>
-#include <qwt_legend.h>
-#include <qwt_plot_zoomer.h>
+#include <qwt/qwt_plot_spectrogram.h>
+#include <qwt/qwt_legend.h>
+#include <qwt/qwt_plot_zoomer.h>
 #include <QDockWidget>
 #include <QSlider>
 #include <QPushButton>

@@ -43,7 +43,7 @@ public:
 	 * @return a double.
 	 * @throws NumberFormatException.
 	 */
-	static double parseDouble(const std::string &s) throw (NumberFormatException);
+	static double parseDouble(const std::string &s);
 
 	/**
 	 * Encode a double value into its string representation.

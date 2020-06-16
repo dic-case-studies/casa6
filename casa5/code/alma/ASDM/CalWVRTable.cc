@@ -115,6 +115,8 @@ namespace asdm {
 		
 			, "water"
 				
+		
+			, "tauBaseline"
 				
 	};
 	
@@ -130,7 +132,7 @@ namespace asdm {
     
     	 "antennaName" , "calDataId" , "calReductionId" , "startValidTime" , "endValidTime" , "wvrMethod" , "numInputAntennas" , "inputAntennaNames" , "numChan" , "chanFreq" , "chanWidth" , "refTemp" , "numPoly" , "pathCoeff" , "polyFreqLimits" , "wetPath" , "dryPath" , "water" 
     	,
-    	
+    	 "tauBaseline" 
     
 	};
 	        			
@@ -612,7 +614,7 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
 		for (unsigned int i = 0; i < v.size(); ++i) {
 			try {
 				buf.append(v[i]->toXML());
-			} catch (NoSuchRow e) {
+			} catch (const NoSuchRow &e) {
 			}
 			buf.append("  ");
 		}		
@@ -679,10 +681,10 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
 				}
 				
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"CalWVRTable");
 			} 
-			catch (UniquenessViolationException e1) {
+			catch (const UniquenessViolationException &e1) {
 				throw ConversionException(e1.getMessage(),"CalWVRTable");	
 			}
 			catch (...) {
@@ -698,7 +700,7 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
 					s = xml.getElementContent("<row>","</row>");
 				}
 			}
-			catch (DuplicateKey e1) {
+			catch (const DuplicateKey &e1) {
 				throw ConversionException(e1.getMessage(),"CalWVRTable");
 			} 
 			catch (...) {
@@ -757,6 +759,7 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
 		oss << "<dryPath/>\n"; 
 		oss << "<water/>\n"; 
 
+		oss << "<tauBaseline/>\n"; 
 		oss << "</Attributes>\n";		
 		oss << "</CalWVRTable>\n";
 
@@ -908,6 +911,8 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
     	 
     attributesSeq.push_back("water") ; 
     	
+    	 
+    attributesSeq.push_back("tauBaseline") ; 
     	
      
     
@@ -992,11 +997,11 @@ CalWVRRow* CalWVRTable::lookup(std::string antennaName, Tag calDataId, Tag calRe
 				checkAndAdd(aRow);
       		}
     	}
-    	catch (DuplicateKey e) {
+    	catch (const DuplicateKey &e) {
       		throw ConversionException("Error while writing binary data , the message was "
 				+ e.getMessage(), "CalWVR");
     	}
-    	catch (TagFormatException e) {
+    	catch (const TagFormatException &e) {
      		 throw ConversionException("Error while reading binary data , the message was "
 				+ e.getMessage(), "CalWVR");
     	}
@@ -1271,7 +1276,7 @@ void CalWVRTable::setFromXMLFile(const string& directory) {
     	xmlDocument = getContainer().getXSLTransformer()(tablePath);
     	if (getenv("ASDM_DEBUG")) cout << "About to read " << tablePath << endl;
     }
-    catch (XSLTransformerException e) {
+    catch (const XSLTransformerException &e) {
     	throw ConversionException("Caugth an exception whose message is '" + e.getMessage() + "'.", "CalWVR");
     }
     

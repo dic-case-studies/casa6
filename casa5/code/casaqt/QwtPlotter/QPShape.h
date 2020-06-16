@@ -33,8 +33,8 @@
 #include <casaqt/QwtPlotter/QPOptions.h>
 #include <casaqt/QwtPlotter/QPPlotItem.qo.h>
 
-#include <qwt_plot_item.h>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot_item.h>
+#include <qwt/qwt_plot_marker.h>
 
 namespace casa {
 

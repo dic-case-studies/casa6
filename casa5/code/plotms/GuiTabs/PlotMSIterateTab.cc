@@ -419,16 +419,21 @@ void PlotMSIterateTab::setGridIndices( int rowIndex, int colIndex ){
 	if ( 0<= rowIndex && rowIndex <= maxRows ){
 		gridRowSpin->setValue( rowIndex );
 	}
+	/* Maximum not set for script client (used for GUI).
+	 * Remove these messages, shown in casa6 console
 	else {
 	    qDebug() << "PlotMSIterateTab::setValue maxRows="<<maxRows<<" rowIndex="<<rowIndex;
 	}
+	*/
 	int maxCols = gridColSpin->maximum();
 	if ( 0 <= colIndex && colIndex <= maxCols ){
 		gridColSpin->setValue( colIndex );
 	}
+	/*
 	else {
 		 qDebug() << "PlotMSIterateTab::setValue maxCols="<<maxCols<<" colIndex="<<colIndex;
 	}
+	*/
 	gridRow = rowIndex;
 	gridCol = colIndex;
 }

@@ -128,8 +128,8 @@ spectral windows
         </param>
 
         <param type="double" name="gainthreshold">
-<shortdescription>Threshold (% deviation from the median) on gain amplitudes to be used in the flux scale calculation</shortdescription>
-<description>Threshold in the input gain solutions to be used in % deviation from median values.
+<shortdescription>Threshold (fractional deviation from the median) on gain amplitudes to be used in the flux scale calculation</shortdescription>
+<description>Threshold in the input gain solutions to be used in fractional deviation from median values.
                      Default: -1 (no threshold)
 
                         Example: gainthreshold=0.15 (only used the

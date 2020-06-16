@@ -1357,7 +1357,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalBandpass");
 		}
 	}
@@ -1925,7 +1925,7 @@ namespace asdm {
 
 	
 
-		} catch (IllegalAccessException err) {
+		} catch (const IllegalAccessException &err) {
 			throw ConversionException (err.getMessage(),"CalBandpass");
 		}
 	}
@@ -1937,7 +1937,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CBasebandName::name(basebandName));
+		eoss.writeString(CBasebandName::name(basebandName));
 			/* eoss.writeInt(basebandName); */
 				
 		
@@ -1947,7 +1947,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CNetSideband::name(sideband));
+		eoss.writeString(CNetSideband::name(sideband));
 			/* eoss.writeInt(sideband); */
 				
 		
@@ -1957,7 +1957,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
+		eoss.writeString(CAtmPhaseCorrection::name(atmPhaseCorrection));
 			/* eoss.writeInt(atmPhaseCorrection); */
 				
 		
@@ -1967,7 +1967,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CCalCurveType::name(typeCurve));
+		eoss.writeString(CCalCurveType::name(typeCurve));
 			/* eoss.writeInt(typeCurve); */
 				
 		
@@ -1977,7 +1977,7 @@ namespace asdm {
 	
 		
 					
-			eoss.writeString(CReceiverBand::name(receiverBand));
+		eoss.writeString(CReceiverBand::name(receiverBand));
 			/* eoss.writeInt(receiverBand); */
 				
 		

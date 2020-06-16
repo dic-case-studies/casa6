@@ -97,7 +97,7 @@ SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
 
 SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(),  sj_p(&sj), imageCache(0), wImageCache(0),
+  : FTMachine(), sj_p(&sj), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -466,7 +466,9 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
     if (!pointingToImage) {
       lastAntID_p = vb.antenna1()(row);
       MPosition pos = vb.subtableColumns().antenna().positionMeas()(lastAntID_p);
-      mFrame_p = MeasFrame(epoch, pos);
+      //mFrame_p = MeasFrame(epoch, pos);
+      (!mFrame_p.epoch()) ?  mFrame_p.set(epoch) : mFrame_p.resetEpoch(epoch);
+      (!mFrame_p.position()) ? mFrame_p.set(pos) : mFrame_p.resetPosition(pos);
       if (!nullPointingTable) {
 	worldPosMeas = directionMeas(act_mspc, pointIndex);
       } else {
@@ -1563,7 +1565,8 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
     // Set the frame
     lastAntID_p = vb.antenna1()(row);
     MPosition pos = vb.subtableColumns().antenna().positionMeas()(lastAntID_p);
-    mFrame_p = MeasFrame(epoch, pos);
+    (!mFrame_p.epoch()) ?  mFrame_p.set(epoch) : mFrame_p.resetEpoch(epoch);
+    (!mFrame_p.position()) ? mFrame_p.set(pos) : mFrame_p.resetPosition(pos);
     if (!nullPointingTable) {
       if (dointerp) {
         worldPosMeas = directionMeas(act_mspc, pointIndex, vb.time()(row));

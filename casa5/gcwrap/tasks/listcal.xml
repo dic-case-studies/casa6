@@ -1,15 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the param set for listcal -->
-<!-- This does the equivalent of -->
 
-<task type="function" name="listcal" category="information, calibration">
+
+
+<task category="information, calibration" name="listcal" type="function">
 
   <shortdescription>List antenna gain solutions</shortdescription>
 
@@ -60,66 +55,66 @@ caltable    Name of input calibration table
             default: none; example: caltable='ngc5921.gcal'
 
 field       Select data based on field ID(s) or name(s)
-            default: ''==>all; example: field='1'
+            default: ''==&gt;all; example: field='1'
             field='0~2' field ids inclusive from 0 to 2
             field='3C*' all field names starting with 3C
 
 antenna     Select calibration data based on antenna
-            default: ''-->all; example: antenna='5'
+            default: ''--&gt;all; example: antenna='5'
             antenna='5,6' antenna index 5 and 6 solutions
             antenna='VA05','VA06'  VLA antenna 5 and 6
 
 spw         Select spectral window, channel to list
-            default: '' --> All spws and channels;
+            default: '' --&gt; All spws and channels;
             spw='2:34' spectral window 2, channel 34
             will only list one spw, one channel at a time
 
 listfile    write output to disk; will not overwrite
-            default: '' --> write to screen
+            default: '' --&gt; write to screen
 
 pagerows    rows per page of listing
-            default: 50; 0 --> do not paginate
+            default: 50; 0 --&gt; do not paginate
 
   </description>
 
   <input>
 
-    <param type="string" name="vis" kind="ms" mustexist="true">
-          <description>Name of input visibility file</description>
-          <value></value>
+    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+          
+          <value/>
     </param>
 
-    <param type="string" name="caltable" mustexist="true">
-      <description>Input calibration table to list</description>
-      <value></value>
+    <param mustexist="true" name="caltable" type="string"><shortdescription>Input calibration table to list</shortdescription><description>Input calibration table to list</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="field">
-          <description>Field name or index</description>
-          <value></value>
-          <example>''==>all</example>
+    <param name="field" type="string"><shortdescription>Field name or index</shortdescription><description>Field name or index</description>
+          
+          <value/>
+          <example>''==&gt;all</example>
     </param>
 
-    <param type="string" name="antenna">
-      <description>Antenna name or index</description>
-      <value></value>
-        <example>''==>all; antenna='3'</example>
+    <param name="antenna" type="string"><shortdescription>Antenna name or index</shortdescription><description>Antenna name or index</description>
+      
+      <value/>
+        <example>''==&gt;all; antenna='3'</example>
     </param>
 
-    <param type="string" name="spw">
-      <description>Spectral window and channel</description>
-      <value></value>
-        <example>''==>all; spw='5:0~10'</example>
+    <param name="spw" type="string"><shortdescription>Spectral window and channel</shortdescription><description>Spectral window and channel</description>
+      
+      <value/>
+        <example>''==&gt;all; spw='5:0~10'</example>
     </param>
 
-    <param type="string" name="listfile">
-          <description>Disk file to write output</description>
-          <value></value>
-          <example>''==>to terminal</example>
+    <param name="listfile" type="string"><shortdescription>Disk file to write output</shortdescription><description>Disk file to write output</description>
+          
+          <value/>
+          <example>''==&gt;to terminal</example>
     </param>
 
-    <param type="int" name="pagerows">
-          <description>Rows per page</description>
+    <param name="pagerows" type="int"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
+          
           <value>50</value>
     </param>
 
@@ -174,27 +169,27 @@ caltable    Name of input calibration table
             default: none; example: caltable='ngc5921.gcal'
 
 field       Select data based on field ID(s) or name(s)
-            default: ''==>all; example: field='1'
+            default: ''==&gt;all; example: field='1'
             field='0~2' field ids inclusive from 0 to 2
             field='3C*' all field names starting with 3C
 
 antenna     Select calibration data based on antenna name
-            default: ''-->all; example: antenna='5';
+            default: ''--&gt;all; example: antenna='5';
             antenna='5,6' antenna index 5 and 6 solutions
             antenna='VA05','VA06'  VLA antenna 5 and 6
 
 spw         Select spectral window(s), channel(s) to list
-            default: '' --> All spws and channels;
+            default: '' --&gt; All spws and channels;
             spw='2:34' spectral window 2, channel 34;
             spw='1:5,3~5:7~9' spectral window 1, channel
             5 and spectral windows 3 thru 5, channels
             7 thru 9.
 
 listfile    write output to disk; will not overwrite
-            default: '' --> write to screen
+            default: '' --&gt; write to screen
 
 pagerows    rows per page of listing
-            default: 50; 0 --> do not paginate
+            default: 50; 0 --&gt; do not paginate
 
 Example:
 

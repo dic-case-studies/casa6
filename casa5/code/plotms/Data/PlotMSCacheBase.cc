@@ -153,8 +153,8 @@ PlotMSCacheBase::PlotMSCacheBase(PlotMSApp* parent, PlotMSPlot* plot):
 	loadedAxesData_.clear();
 	this->iterAxis = PMS::NONE;
 
-	// Default frequency frame
-	freqFrame_ = MFrequency::N_Types;
+    // Undefined until set during cache loading
+	freqFrame_ = MFrequency::Undefined;
 }
 
 PlotMSCacheBase::~PlotMSCacheBase() {

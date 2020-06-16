@@ -309,8 +309,8 @@ FlagCalTableHandler::nextChunk()
 			calIter_p->reset();
 			chunksInitialized_p = true;
 			buffersInitialized_p = false;
-			chunkNo++;
-			bufferNo = 0;
+			chunkNo_p++;
+			bufferNo_p = 0;
 			moreChunks = true;
 		}
 		else
@@ -321,8 +321,8 @@ FlagCalTableHandler::nextChunk()
 			{
 				buffersInitialized_p = false;
 				moreChunks = true;
-				chunkNo++;
-				bufferNo = 0;
+				chunkNo_p++;
+				bufferNo_p = 0;
 			}
 		}
 	}
@@ -358,7 +358,7 @@ FlagCalTableHandler::nextBuffer()
 			buffersInitialized_p = true;
 			flushFlags_p = false;
 			flushFlagRow_p = false;
-			bufferNo++;
+			bufferNo_p++;
 
 			moreBuffers = true;
 		}
@@ -391,10 +391,10 @@ FlagCalTableHandler::nextBuffer()
 		msCounts_p += currentBufferCounts;
 
 		// Print chunk characteristics
-		if (bufferNo == 1)
+		if (bufferNo_p == 1)
 		{
 			// jagonzal: This is correct because in CalTables there is only one iteration level
-			processedRows += visibilityBuffer_p->nRows();
+			processedRows_p += visibilityBuffer_p->nRows();
 
 			if (printChunkSummary_p)
 			{
@@ -408,12 +408,12 @@ FlagCalTableHandler::nextBuffer()
 				}
 				corrs += "]";
 
-				Double progress  = 100.0* ((Double) processedRows / (Double) selectedCalTable_p->nrow());
+				Double progress  = 100.0* ((Double) processedRows_p / (Double) selectedCalTable_p->nrow());
 
 				*logger_p << LogIO::NORMAL <<
 						"------------------------------------------------------------------------------------ " << LogIO::POST;
 				*logger_p << LogIO::NORMAL <<
-						"Chunk = " << chunkNo << " [progress: " << (Int)progress << "%]"
+						"Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
 						", Observation = " << observation[0] << "~" << observation[observation.size()-1] <<
 						", Scan = " << scan[0] << "~" << scan[scan.size()-1] <<
 						", Field = " << visibilityBuffer_p->fieldId()(0) << " (" << fieldNames_p->operator()(visibilityBuffer_p->fieldId()) << ")"
@@ -573,7 +573,7 @@ FlagCalTableHandler::getTableName()
 bool
 FlagCalTableHandler::summarySignal()
 {
-	Double progress = 100.0* ((Double) processedRows / (Double) selectedCalTable_p->nrow());
+	Double progress = 100.0* ((Double) processedRows_p / (Double) selectedCalTable_p->nrow());
 	if ((progress >= summaryThreshold_p) or (logger_p->priority() >= LogMessage::DEBUG1))
 	{
 		summaryThreshold_p += 10;

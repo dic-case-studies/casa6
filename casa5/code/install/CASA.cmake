@@ -111,6 +111,9 @@ MACRO (CASA_QT4_WRAP_UI outfiles )
 # the exact version where this cuts over could be somewhere 
 # in between; it's hard to track down.
 
+  message( STATUS "ADD INCLUDE DIRECTORY >>>>>>>>>>>>>>>>>>>>>>>>>>>> ${CMAKE_CURRENT_BINARY_DIR}" )
+  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
   if (CMAKE_VERSION VERSION_LESS 2.8.12)
     QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
   else ()
@@ -124,12 +127,13 @@ MACRO (CASA_QT4_WRAP_UI outfiles )
 
     string(REGEX REPLACE "^implement/" "" _path ${_path})
 
-    SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${_path}/${outfile}.ui.h)
+    SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_${outfile}.h)
 
     GET_FILENAME_COMPONENT(_path ${outfile} PATH)
 
     ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
       COMMAND mkdir -p ${_path}
+      COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/ui
       COMMAND ${QT_UIC_EXECUTABLE}
       ARGS ${ui_options} -o ${outfile} ${infile}
       MAIN_DEPENDENCY ${infile})

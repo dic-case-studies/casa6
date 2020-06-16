@@ -25,15 +25,19 @@ CASA6 = False
 try:
     print("Importing CASAtools")
     import casatools
+    from casatools import ctsys
+    from casatools.platform import bytes2str
     from casatasks import listhistory, casalog
     CASA6 = True
 except ImportError:
     print ("Cannot import CASAtools using taskinit")
+    import commands
     from __main__ import default
     from tasks import *
     from taskinit import *
 import sys
 import os
+import subprocess
 import unittest
 import shutil
 
@@ -64,7 +68,7 @@ class listhistory_test(unittest.TestCase):
     
     def tearDown(self):
         casalog.setlogfile(logpath)
-        if os.path.exists('testlog,log'):
+        if os.path.exists('testlog.log'):
             os.remove('testlog.log')
     
     def test_takesMS(self):
@@ -87,9 +91,64 @@ class listhistory_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         listhistory(datapath)
         self.assertTrue('History table entries' in open('testlog.log').read())
+        
+    # Here is the start of the merged test cases
+    # -----------------------------------------------
+    
+    def test_emptyInput(self):
+        '''Test 1: Empty input should return False'''
+        # CASA5 tasks return False, casatasks throw exceptions
+        myms = ''
+        if CASA6:
+            self.assertRaises(Exception,listhistory,myms)
+        else:
+            res = listhistory(myms)
+            self.assertFalse(res)
+            
+    def test_returnNone(self):
+        '''Test 2: Good input should return None'''
+        res = listhistory(datapath)
+        self.assertEqual(res,None)
+        
+    def test_listLen(self):
+        '''Test 3: Compare length of reference and new lists'''
+        logfile= "testlog.log"
+
+        open(logfile,"w").close( )
+        casalog.setlogfile(logfile)
+        res = listhistory(datapath)
+
+        # Get the number of lines in file
+        # the number of expected lines differs
+        if CASA6:
+            refnum=17
+            
+        else:
+            # for CASA5, get only the relevant lines in the logfile
+            newfile= "newlisth.log"
+            cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
+            print(cmd)
+            os.system(cmd)
+            logfile = newfile
+
+            refnum = 13
+            
+
+        if CASA6:
+            cmd=['wc', '-l', logfile]
+            print(cmd)
+            output = bytes2str(subprocess.check_output(cmd))
+        else:
+            cmd="wc -l %s" % logfile
+            print(cmd)
+            output=commands.getoutput(cmd)
+
+        num = int(output.split()[0])
+        self.assertEqual(refnum,num)
     
 def suite():
     return[listhistory_test]
 
 if __name__ == '__main__':
     unittest.main()
+

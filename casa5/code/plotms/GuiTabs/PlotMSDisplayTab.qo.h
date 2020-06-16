@@ -27,7 +27,7 @@
 #ifndef PLOTMSDISPLAYTAB_QO_H_
 #define PLOTMSDISPLAYTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSDisplayTab.ui.h>
+#include <ui/ui_PlotMSDisplayTab.h>
 
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 #include <plotms/Plots/PlotMSPlotParameterGroups.h>

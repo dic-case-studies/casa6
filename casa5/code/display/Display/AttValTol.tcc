@@ -38,6 +38,11 @@
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
+	namespace viewer {
+		template<class T> T abs(T val) {return casacore::abs(val);}
+		inline casacore::uInt abs(casacore::uInt Val) {return Val;}
+	}
+
 	template <class T>
 	AttributeValueTol<T>::AttributeValueTol(const T &value, const T &tolerance,
 	                                        const casacore::Bool strict)
@@ -94,14 +99,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			if (thisValue.nelements() != otherValue.nelements()) return false;
 			//if( !allTrue(nearAbs(thisValue, otherValue, itsValueTolerance))) return false;
 			for (casacore::uInt i = 0; i < thisValue.nelements(); i++) {
-				if ( (T) casacore::abs(thisValue(i) - otherValue(i)) > itsValueTolerance) return false;
+				if ( (T) viewer::abs(thisValue(i) - otherValue(i)) > itsValueTolerance) return false;
 			}
 			return true;
 		} else {
 			//if(anyTrue(nearAbs(thisValue, otherValue, itsValueTolerance))) return true;
 			for (casacore::uInt i = 0; i < thisValue.nelements(); i++) {
 				for (casacore::uInt j = 0; j < otherValue.nelements(); j++) {
-					if ( (T) casacore::abs(thisValue(i) - otherValue(j)) <= itsValueTolerance) return true;
+					if ( (T) viewer::abs(thisValue(i) - otherValue(j)) <= itsValueTolerance) return true;
 				}
 			}
 		}

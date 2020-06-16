@@ -33,10 +33,10 @@
 #include <graphics/GenericPlotter/PlotData.h>
 
 #if QWT_VERSION < 0x060000
-#include <qwt_data.h>
+#include <qwt/qwt_data.h>
 #endif
 
-#include <qwt_raster_data.h>
+#include <qwt/qwt_raster_data.h>
 
 namespace casa {
 

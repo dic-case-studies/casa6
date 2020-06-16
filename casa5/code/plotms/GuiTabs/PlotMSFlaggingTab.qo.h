@@ -27,7 +27,7 @@
 #ifndef PLOTMSFLAGGINGTAB_QO_H_
 #define PLOTMSFLAGGINGTAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSFlaggingTab.ui.h>
+#include <ui/ui_PlotMSFlaggingTab.h>
 
 #include <plotms/GuiTabs/PlotMSTab.qo.h>
 

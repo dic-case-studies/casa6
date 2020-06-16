@@ -27,7 +27,7 @@
 #define SLICER_MAINWINDOW_QO_H
 
 #include <QMainWindow>
-#include <display/Slicer/SlicerMainWindow.ui.h>
+#include <ui/ui_SlicerMainWindow.h>
 #include <display/Slicer/SlicePlot.qo.h>
 
 class QCursor;
