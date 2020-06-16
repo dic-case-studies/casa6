@@ -678,7 +678,7 @@ class SDINT_helper:
         else:
             image = iatool
             componentlist = cltool
-            regionmanger = rgtool
+            regionmanager = rgtool
              
         _ia = image()
         _cl = componentlist()
