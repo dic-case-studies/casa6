@@ -146,16 +146,28 @@ UV_im = '3C129UV.im'
 V_im = '3C129V.im'
 thresh_mask = '30uJy_thresh_mask.tbl'
 
-imageList =['ngc5921.clean.image', 'n1333_both.image', 'n1333_both.image.rgn', '3C129BC.clean.image']
+spix0 = 'spectral_index_0.im'
+spix1 = 'spectral_index_1.im'
+spix_out = 'spectral_index_out.im'
 
-imageList2 =['ngc5921.clean.image', 'n1333_both.image', 'n1333_both.image.rgn', '3C129BC.clean.image',
-cas1910_im,cas1452_1_im, cas1830_im]
+imageList = [
+    'ngc5921.clean.image', 'n1333_both.image', 'n1333_both.image.rgn', '3C129BC.clean.image'
+]
 
-imageList3 =['immath0.im', 'immath1.im', 'immath2.im', 'immath3.im', 'immath4.im', 'immath5.im',
-'immath6.im', 'immath7.im', 'immath8.im', 'immath9.im','immath10.im']
+imageList2 = [
+    'ngc5921.clean.image', 'n1333_both.image', 'n1333_both.image.rgn',
+    '3C129BC.clean.image', cas1910_im,cas1452_1_im, cas1830_im
+]
 
-imageList4 = [IQU_im, IQUV_im, POLA_im, POLL_im, POLT_im, Q_im, QU_im, U_im, UV_im, V_im, thresh_mask]
+imageList3 = [
+    'immath0.im', 'immath1.im', 'immath2.im', 'immath3.im', 'immath4.im', 'immath5.im',
+    'immath6.im', 'immath7.im', 'immath8.im', 'immath9.im','immath10.im'
+]
 
+imageList4 = [
+    IQU_im, IQUV_im, POLA_im, POLL_im, POLT_im, Q_im, QU_im, U_im, UV_im, V_im,
+    thresh_mask, spix0, spix1
+]
 
 ################      HELPER FUNCTIONS      ###################
 
@@ -1191,17 +1203,14 @@ class immath_test3(unittest.TestCase):
             shutil.copytree(os.path.join(datapath,img), img)
     
     def tearDown(self):
-        for img in imageList4:
-            shutil.rmtree(img)     
+        for img in imageList4 + [spix_out]:
+            if os.path.exists(img):
+                shutil.rmtree(img)     
         
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
-        # FIXME need to figure out how to close this table correctly
         cache_tables = mytb.showcache()
-        if (len(cache_tables) > 0):
-            for table in cache_tables:
-                self.assertTrue(table.rfind("/IERSeop97") >= 0)
-        
+        self.assertEqual(len(cache_tables), 0, 'tables left open in cache')
 
     def _comp(self, imagename, mode, outfile, expected, epsilon, polithresh=''):
         self.assertTrue(immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh))
@@ -1808,6 +1817,29 @@ class immath_test3(unittest.TestCase):
             self.assertTrue(
                 np.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
+
+    def test_spix(self):
+        '''
+            CAS-13079: Verify mode="spix" works as expected
+        '''
+        fixture = os.path.join(datapath, spix_out)
+        self.assertTrue(
+            myia.open(fixture), 'Failed to open fixture ' + fixture
+        )
+        expec = myia.getchunk()
+        myia.done()
+        self.assertTrue(
+            immath(imagename=[spix0, spix1], mode='spix', outfile=spix_out),
+            'Failed immath mode="spix"'
+        )
+        self.assertTrue(
+            myia.open(spix_out), 'Failed to open output image ' + spix_out
+        )
+        got = myia.getchunk()
+        myia.done()
+        self.assertTrue(
+            np.isclose(got, expec).all(), 'Failed spectral index comparison'
+        )
 
 def suite():
     return [immath_test1, immath_test2, immath_test3]
