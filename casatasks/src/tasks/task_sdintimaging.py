@@ -430,11 +430,11 @@ def sdintimaging(
     #print("inpparams.keys()=",inpparams.keys())
     locvis=inpparams.pop('vis')
     #print("LOCVIS====",locvis)
-    #print("type(LOCVIS)====",type(locvis))
-     
-    inpparams['msname']=locvis.lstrip()
-    #inpparams['msname']=inpparams.pop('vis')
-    #print("msname====",inpparams['msname'])
+    if type(locvis)==list:
+        llocvis = [v.lstrip() for v in locvis]
+    else:
+        llocvis = locvis.lstrip()
+    inpparams['msname']=llocvis
     inpparams['timestr']= inpparams.pop('timerange')
     inpparams['uvdist']= inpparams.pop('uvrange')
     inpparams['obs']= inpparams.pop('observation')
