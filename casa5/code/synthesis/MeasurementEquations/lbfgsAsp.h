@@ -41,6 +41,7 @@
 
 
 #include <Eigen/Core>
+#include <chrono>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -89,9 +90,11 @@ public:
 
     for (unsigned int k = 0; k < AspLen; k ++)
     {
-      if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue
-      { 
-        std::cout << "nan? " << x[2*k] << " neg scale? " << x[2*k+1] << std::endl; 
+      ////auto start = std::chrono::high_resolution_clock::now();
+
+      if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue or scale < 0
+      {
+        std::cout << "nan? " << x[2*k] << " neg scale? " << x[2*k+1] << std::endl;
         fx = -999.0;
         return fx;
       }
@@ -128,6 +131,12 @@ public:
         }
       }
 
+      ////auto stop = std::chrono::high_resolution_clock::now();
+      ////auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      ////std::cout << "minI " << minI << " maxI " << maxI << " minJ " << minJ << " maxJ " << maxJ << std::endl;
+      ////std::cout << "LBFGS 1st Asp runtime " << duration.count() << " ms" << std::endl;
+
+      ////start = std::chrono::high_resolution_clock::now();
       casacore::Matrix<casacore::Complex> AspFT;
       casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
       fft.fft0(AspFT, Asp);
@@ -136,16 +145,23 @@ public:
       cWork = AspFT * itsPsfFT;
       casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
       fft.fft0(AspConvPsf, cWork, false);
+      ////stop = std::chrono::high_resolution_clock::now();
+      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      ////std::cout << "LBFGS 2st AspFFT runtime " << duration.count() << " ms" << std::endl;
       //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
       //fft.flip(AspConvPsf, false, false); //genie need this?
 
       // gradient. 0: amplitude; 1: scale
       // generate derivatives of amplitude
-      casacore::Matrix<casacore::Float> GradAmp(nX, nY);
+      ////start = std::chrono::high_resolution_clock::now();
+      /*casacore::Matrix<casacore::Float> GradAmp(nX, nY);
       GradAmp = 0.0;
       casacore::Matrix<casacore::Float> GradScale(nX, nY);
-      GradScale = 0.0;
+      GradScale = 0.0;*/
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
       casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
+
       /*for (int j = 0; j < nY; ++j)
       {
         for(int i = 0; i < nX; ++i)
@@ -159,21 +175,30 @@ public:
           // generate derivatives of amplitude
           GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
           // generate derivative of scale
-          GradScale(i, j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
+          GradScale(i,j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
         }
       }
-      casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
+      ////stop = std::chrono::high_resolution_clock::now();
+      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      ////std::cout << "LBFGS 3rd Grad runtime " << duration.count() << " ms" << std::endl;
 
-      // generate derivative of scale
-      /*casacore::Matrix<casacore::Float> GradScale(nX, nY);
-      GradScale = 0.0;
-      for (int j = 0; j < nY; ++j)
-      {
-        for(int i = 0; i < nX; ++i)
-          GradScale(i, j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
-      }*/
-      casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
+      ////start = std::chrono::high_resolution_clock::now();
+      casacore::Bool ddel;
+      const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
+      //double *ddptr = reinterpret_cast<double*>(&dptr); // seg fault
+      //double *ddptr = const_cast<double*>(reinterpret_cast<const double *>(dptr)); // reinterpret_cast returns wrong value
+      float *ddptr = const_cast<float*>(dptr);
+      Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
+      //casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
+      //casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
+      itsMatDirty.freeStorage(dptr, ddel);
+      ////stop = std::chrono::high_resolution_clock::now();
+      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      ////std::cout << "LBFGS 4th product runtime " << duration.count() << " ms" << std::endl;
 
+      ////start = std::chrono::high_resolution_clock::now();
       // generate objective function
       // returns the objective function value and gradient evaluated on x
       //std::cout << "before Asp# " << k << ": fx " << fx << " itsMatDirty " << itsMatDirty(0,0) << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
@@ -183,8 +208,8 @@ public:
         {
           //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
           AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + AspConvPsf(i,j);
-          grad[2*k] = grad[2*k] + Grad0(i,j);
-          grad[2*k+1] = grad[2*k+1] + Grad1(i,j);
+          grad[2*k] = grad[2*k] + double(Grad0(i,j));
+          grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
         }
       }
 
@@ -204,8 +229,13 @@ public:
         minY = minJ;
       if (maxJ < maxY)
         maxY = maxJ;
+
+      ////stop = std::chrono::high_resolution_clock::now();
+      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      ////std::cout << "LBFGS 5th sum up runtime " << duration.count() << " ms" << std::endl;
     } // end of Aspen
 
+    ////auto start = std::chrono::high_resolution_clock::now();
     /*for (int j = 0; j < nY; ++j)
     {
       for(int i = 0; i < nX; ++i)
@@ -219,6 +249,10 @@ public:
         fx = fx + double(pow(itsMatDirty(i, j) - AspConvPsfSum(i,j),2));
       }
     }
+    ////auto stop = std::chrono::high_resolution_clock::now();
+    ////auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    ////std::cout << "minX " << minX << " maxX " << maxX << " minY " << minY << " maxY " << maxY << std::endl;
+    ////std::cout << "LBFGS 6th runtime " << duration.count() << " ms" << std::endl;
     //std::cout << "after Asp fx " << fx << " AspConvPsfSum " << AspConvPsfSum(0,0) << std::endl;
 
     return fx;

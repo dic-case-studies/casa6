@@ -64,6 +64,8 @@
 
 // Additional include files
 #include <algorithm>
+#include <chrono>
+
 #include<synthesis/MeasurementEquations/AspMatrixCleaner.h>
 
 #include <LBFGS.h>
@@ -73,6 +75,7 @@
 using namespace casacore;
 using Eigen::VectorXd;
 using namespace LBFGSpp;
+using namespace std::chrono;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -443,15 +446,15 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     }
 
     //genie
-    // triiger hogbom when itsStrengthOptimum is small enough
+    // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
-    /*if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
+    if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 4) // M31 value
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough." << endl;
 	    switchedToHogbom();
-    }*/
+    }
     // try switch to MS if itsStrengthOptimum is small enough and # aspen is >=5
     /*if (itsStrengthOptimum < 7e-7 && itsGoodAspActiveSet.size() >= 5)
     {
@@ -1194,11 +1197,13 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
 
   // gradient. 0: amplitude; 1: scale
   // generate derivative of amplitude
-  Matrix<Float> GradAmp(nX, nY);
+  /*Matrix<Float> GradAmp(nX, nY);
   GradAmp = 0.0;
   // generate derivative of scale
   Matrix<Float> GradScale(nX, nY);
-  GradScale = 0.0;
+  GradScale = 0.0;*/
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
   Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
   for (int j = minJ; j <= maxJ; j++)
   {
@@ -1210,8 +1215,19 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
       GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
     }
   }
-  Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
-  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);
+  /*Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
+  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);*/
+  Bool ddel;
+  const Float *dptr = itsDirty->getStorage(ddel);
+  //double *ddptr = reinterpret_cast<double*>(&dptr); // seg fault
+  //double *ddptr = const_cast<double*>(reinterpret_cast<const double *>(dptr)); // reinterpret_cast returns wrong value
+  float *ddptr = const_cast<float*>(dptr);
+  Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
+  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M.transpose() * GradAmp; // M = T(itsDirty)
+  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M.transpose() * GradScale;
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
+  itsDirty->freeStorage(dptr, ddel);
 
   // calculate the length of the direvative vector
   Float lenDirVec = 0.0;
@@ -1386,7 +1402,12 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       if (!itsAspGood[i])
       	continue;
 
+      auto start = high_resolution_clock::now();
+
       const Float lenDirVec = isGoodAspen(itsAspAmplitude[i], itsAspScaleSizes[i], itsAspCenter[i]);
+      auto stop = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>(stop - start);
+      cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
       cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	if (lenDirVec >= threshold)
     	{
@@ -1519,9 +1540,15 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //else
     AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
 
+    auto start = high_resolution_clock::now();
+
     double fx;
     double gclip;
     solver.minimize(fun, x, fx, gclip);
+
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    cout << "lbfgs runtime " << duration.count() << " ms" << endl;
 
     // use the initial gradient as a roll back gradient if there is
     // gradient exploding in lbfgs
@@ -1596,12 +1623,12 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsScaleSizes = Vector<Float>(scaleSizes);  // make a copy that we can call our own
 
   // trial: switch to MS for speed up if # active aspen is > 6
-  //if (itsNscales > 6)
+  if (itsNscales > 6)
   // newMS2, set itsGoodAspActiveSet when # active aspen is >=4
-  if (itsNscales >= 4)
+  //if (itsNscales >= 4)
   {
   	itsGoodAspActiveSet = scaleSizes;
-    //itsSwitchedToMS = true;
+    itsSwitchedToMS = true;
   }
 
   // analytically calculate component scale by Asp 2016
