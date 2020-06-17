@@ -2,6 +2,7 @@
 #include <casatools/Config/State.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <images/Images/PagedImage.h>
+#include <stdcasa/StdCasa/CasacSupport.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -178,7 +179,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            auto threshold = iterpars.find("threshold");
                            if ( threshold != iterpars.end( ) ) {
-                               auto val = threshold->second.toDouble( );
+                               auto val = casaQuantity(threshold->second).getValue(Unit("Jy"));
                                if ( val == -1.0 ) {
                                    state.Threshold = 0.0;
                                    state.IsThresholdAuto = true;
@@ -196,7 +197,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            auto cyclethreshold = iterpars.find("cyclethreshold");
                            if ( cyclethreshold != iterpars.end( ) ) {
-                               state.CycleThreshold = (float) cyclethreshold->second.toDouble( );
+                               state.CycleThreshold = casaQuantity(cyclethreshold->second).getValue(Unit("Jy"));
                                state.IsCycleThresholdAuto = false;
                                if ( debug ) {
                                    std::cerr << " cyclethreshold=" << state.CycleThreshold;
@@ -209,7 +210,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            auto interactivethreshold = iterpars.find("interactivethreshold");
                            if ( interactivethreshold != iterpars.end( ) ) {
-                               state.InteractiveThreshold = (float) interactivethreshold->second.toDouble( );
+                               state.InteractiveThreshold = casaQuantity(interactivethreshold->second).getValue(Unit("Jy"));
                                if ( debug ) std::cerr << " interactivethreshold=" << state.InteractiveThreshold;
                            }
 
@@ -248,6 +249,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                state.Nsigma = (float) nsigma->second.toDouble( );
                                if ( debug ) std::cerr << " nsigma=" << state.Nsigma;
                            }
+                           if ( debug ) std::cerr << std::endl;
 
                            if ( debug ) {
                                std::cerr << "-------------------------------------------" << std::endl;
