@@ -1,9 +1,20 @@
-###############################################
-# Regression Script for simdata of a 2d image #
-###############################################
+#############################################################################
+# $Id:$                                                                     #
+# Test Name: test_e2e_simanalyze_m51_3sim_alma.py                           #
+#    Regression Test Script for simobserve/simanalyze                       #
+#                                                                           #
+# Rationale for Inclusion:                                                  #
+#    Test the use of simobserve and simanalyze on simdata of a 2d image     #
+#    Exercise simobserve of IF, TP and ACA simdata                          #
+#                                                                           #
+#                                                                           #
+#                                                                           #
+# Input data:                                                               #
+#    simdata of M51 (ALMA-12m INT + ACA-7m INT + 12m TP)                    #
+#                                                                           #
+#############################################################################
  
 import os
-import time
 import shutil
 import unittest
 
@@ -12,7 +23,6 @@ CASA6 = False
 try:
     from casatools import ctsys
     from casatasks import simobserve, simanalyze
-    from casatestutils import testhelper as th
     CASA6 = True
     
     def default(atask):
@@ -20,11 +30,9 @@ try:
 except ImportError:
     from tasks import simobserve, simanalyze
     from __main__ import default
-    import testhelper as th
 
 if CASA6:
     ctsys_resolve = ctsys.resolve
-#    repodir = ctsys.resolve('regression/')
     datadir = ctsys.resolve('regression/simdata/')
     cfgdir = ctsys.resolve('alma/simmos/')
     regdir = ctsys.resolve('regression/sim_m51c/reference/m51c/')
@@ -35,66 +43,12 @@ else:
     cfgdir = repodir + 'alma/simmos/'
     regdir = repodir + 'regression/sim_m51c/reference/m51c/'
 
-#    def ctsys_resolve(apath):
-#    dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-#    return os.path.join(dataPath,apath)
-noise=False # add noise
-my_verbose=True
+from casatestutils import testhelper as th
+
+noise = False # add noise
+my_verbose = True
 
 projname = "m51c"
-
-# Helper functions
-def findTemplate(testname,refimage,copy=False):
-    """
-    find a template image (or MS - it does assume its a directory)
-    look in order in:
-    REGRESSION_DATA/regression/testname/refimage
-    CASAPATH/data/regression/testname/refimage
-    REGRESSION_DATA/regression/testname/reference/refimage/
-    CASAPATH/data/regression/testname/reference/refimage
-    if copy=True, copy what's found to cwd
-    """
-    
-    from os import F_OK
-    try:
-        datapaths = regdir
-    except:
-        datapaths=[]
-#    datapaths.append(os.environ.get('CASAPATH').split()[0]+"/data/")
-#    possibilities=map(lambda x: x+'/regression/'+testname+'/'+refimage,datapaths)+map(lambda x: x+'/regression/'+testname+'/reference/'+refimage,datapaths) 
-#    possibilities=map(lambda x: x+testname+'/'+refimage,datapaths)+map(lambda x: x+testname+'/reference/'+refimage,datapaths) 
-    possibilities=list(lambda x: x+'/regression/'+testname+'/'+refimage,datapaths)+list(lambda x: x+'/regression/'+testname+'/reference/'+refimage,datapaths) 
-
-
-    print('******************************** FIND TEMPLATE *********************************')
-    print(possibilities)
-    from itertools import dropwhile
-    try:
-        found = dropwhile( lambda x: not os.access(x,F_OK),possibilities).next()
-    except:
-        raise IOError(" ERROR: "+refimage+" not found")
-    if copy:
-        msname = 'copy_'+found
-        shutil.copytree(found, msname)
-        print("Copying to "+msname)
-
-    return found
-
-
-#print('--Running simulation of M51 (ALMA-12m INT + ACA-7m INT + 12m TP) --')
-# configs are in the repository
-
-#l=locals() 
-#if not l.has_key("repodir"): 
-#    repodir=os.getenv("CASAPATH").split(' ')[0]
-
-#print(casa['build'])
-#print('I think the data repository is at '+repodir)
-#datadir = repodir + 'regression/simdata/'
-#cfgdir = repodir + 'alma/simmos/'
-#datadir=repodir+"/data/regression/simdata/"
-#cfgdir=repodir+"/data/alma/simmos/"
-#importfits(fitsimage=datadir+modelname,imagename="m51.image")
 
 class regression_m51_3sim_test(unittest.TestCase):
 
@@ -107,30 +61,27 @@ class regression_m51_3sim_test(unittest.TestCase):
 
  
     def tearDown(self):
-        pass
+        shutil.rmtree(projname)
+        shutil.rmtree(self.modelname)
 
     def test_regression(self):
         '''test 12m IF, TP'''
         
         ############################  12m IF  ############################
         print('12m - Interferometry simobserve')
-        startTime = time.time()
-        startProc = time.clock()
 
         if noise:
             thermalnoise = 'tsys-atm'  #w/ noise 
-            user_pwv=3.0
+#            user_pwv=3.0
         else:
             thermalnoise=""
 
         simobserve(project = projname, skymodel = self.modelname, inbright = '0.004', indirection = 'B1950 23h59m59.96 -34d59m59.50',
                    incell = '0.1arcsec',incenter = '330.076GHz' , inwidth = '50MHz', setpointings = True,integration = '10s',
                     mapsize = '1arcmin',maptype = "hex", pointingspacing = '9arcsec',obsmode = "int", refdate='2012/11/21/20:00:00',
-                    totaltime = '3600s', antennalist="alma;0.5arcsec", thermalnoise = thermalnoise,graphics="file", verbose=True,
-                    overwrite = True)
+                    totaltime = '3600s', antennalist="alma;0.5arcsec", thermalnoise = thermalnoise, 
+                    graphics="file", verbose=False, overwrite = True)
 
-        endTime = time.time()
-        endProc = time.clock()
 
         ############################ 12m TP  ############################
         print('12m - Total Power simobserve')
@@ -139,15 +90,15 @@ class regression_m51_3sim_test(unittest.TestCase):
         
         if noise:
             thermalnoise = 'tsys-atm'  #w/ noise 
-            user_pwv=3.0
+#            user_pwv=3.0
         else:
             thermalnoise=""
 
         simobserve(project = projname, skymodel = self.modelname, inbright = '0.004', indirection = 'B1950 23h59m59.96 -34d59m59.50',
                    incell = '0.1arcsec',incenter = '330.076GHz' , inwidth = '50MHz', setpointings = True,integration = '10s',
                     mapsize = '1arcmin',maptype = "square", pointingspacing = '9arcsec',obsmode = "sd", refdate='2012/11/21/20:00:00',
-                    totaltime = '2h', sdantlist = cfgdir+'aca.tp.cfg', sdant = 0, thermalnoise = thermalnoise,graphics="file", verbose=True,
-                    overwrite = True)
+                    totaltime = '2h', sdantlist = cfgdir+'aca.tp.cfg', sdant = 0, thermalnoise = thermalnoise, 
+                    graphics="file", verbose=False, overwrite = True)
                 
 
 
@@ -156,15 +107,15 @@ class regression_m51_3sim_test(unittest.TestCase):
         default(simobserve)
         if noise:
             thermalnoise = 'tsys-atm'  #w/ noise 
-            user_pwv=3.0
+#            user_pwv=3.0
         else:
             thermalnoise=""
 
         simobserve(project = projname, skymodel = self.modelname, inbright = '0.004', indirection = 'B1950 23h59m59.96 -34d59m59.50',
                    incell = '0.1arcsec',incenter = '330.076GHz' , inwidth = '50MHz', setpointings = True, integration = '10s',
                     mapsize = '1arcmin',maptype = "hex", pointingspacing = '15arcsec',obsmode = "int", refdate='2012/11/21/20:00:00',
-                    totaltime = '3', antennalist="aca.i.cfg", thermalnoise = thermalnoise, graphics="file", verbose=True,
-                    overwrite = True)
+                    totaltime = '3', antennalist="aca.i.cfg", thermalnoise = thermalnoise, graphics="file", 
+                    verbose=False, overwrite = True)
 
 
         ############################ clean ACA with SD model  ############################
@@ -194,19 +145,16 @@ class regression_m51_3sim_test(unittest.TestCase):
         # Regression
         print('Regression Results')
 
-        print("**************************** Do REGRESSION ************************")
         # It seems that it will compare what is created by the regression inside m51c with
         # what is available in casa-data/regression/sim_m51c/reference/m51c
         
         regstate=True
         verbose=my_verbose
-        #import testhelper as th
         
         # test SD first so that we can check that indep. from INT
         # Compare  newMS with templateMS
         newMS=project+"/"+project+".aca.tp.sd.ms"
         if verbose: print (newMS)
-#        templateMS=findTemplate("sim_m51c",newMS)
         # templateMS is /casa-data/regression/sim_m51c/reference/m51c/m51c.aca.tp.sd.ms
         templateMS = regdir + project + ".aca.tp.sd.ms"        
         regstate=regstate and th.compMS(newMS,templateMS,verbose=verbose)
@@ -214,7 +162,6 @@ class regression_m51_3sim_test(unittest.TestCase):
         # Compare newImage with templateImage
         newImage=project+"/"+project + '.sd.image'
         if verbose: print (newImage)
-#        templateImage=findTemplate("sim_m51c",newImage)
         # templateImage is /casa-data/regression/sim_m51c/reference/m51c/m51c.sd.image
         templateImage = regdir + project + ".sd.image"
         regstate=regstate and th.compImages(newImage,templateImage,verbose=verbose)
@@ -223,21 +170,18 @@ class regression_m51_3sim_test(unittest.TestCase):
         # Compare  newMS with templateMS
         newMS=project+"/"+project+".alma_0.5arcsec.ms"
         if verbose: print (newMS)
-#        templateMS=findTemplate("sim_m51c",newMS)
         templateMS = regdir + project + ".alma_0.5arcsec.ms"
         regstate=regstate and th.compMS(newMS,templateMS,verbose=verbose)
         
         # Compare newImage with tempateImage
         newImage=project+"/"+project + '.alma_0.5arcsec.image'
         if verbose: print (newImage)
-#        templateImage=findTemplate("sim_m51c",newImage)
         templateImage = regdir + project + ".alma_0.5arcsec.image"
         regstate=regstate and th.compImages(newImage,templateImage,verbose=verbose)
         
         # Compare newImage with templateImage
         newImage=project+"/"+project + '.alma_0.5arcsec.diff'
         if verbose: print (newImage)
-#       templateImage=findTemplate("sim_m51c",newImage)
         templateImage = regdir + project + '.alma_0.5arcsec.diff'
         regstate=regstate and th.compImages(newImage,templateImage,verbose=verbose)
 
