@@ -21,7 +21,7 @@ def bandpass(vis=None,caltable=None,
              observation=None,msselect=None,
              solint=None,combine=None,refant=None,minblperant=None,
              minsnr=None,solnorm=None,
-             bandtype=None,smodel=None,
+             bandtype=None,smodel=None,corrdepflags=None,
              append=None,fillgaps=None,
              degamp=None,degphase=None,visnorm=None,
              maskcenter=None,maskedge=None,
@@ -66,6 +66,9 @@ def bandpass(vis=None,caltable=None,
                                        observation='', baseline='',uvrange='',chanmode='none',
                                        msselect='ANTENNA1!=ANTENNA2');
 
+                # signal use of correlation-dependent flags, if requested
+                if corrdepflags:
+                        mycb.setcorrdepflags(True)
 
                 # set the model, if specified
                 if (len(smodel)>0):
@@ -73,7 +76,6 @@ def bandpass(vis=None,caltable=None,
                 
 
                 # Arrange applies....
-
                 if docallib:
                         # by cal library from file
                         mycallib=callibrary()

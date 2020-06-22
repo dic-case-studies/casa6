@@ -329,7 +329,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		return returnRecord;
 	}
 
-	void SIIterBot_state::mergeCycleInitializationRecord(Record& initRecord){
+	void SIIterBot_state::mergeCycleInitializationRecord(const Record& initRecord){
 		//FOR DEBUG - TT 2018/04/16
                 LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);  
@@ -374,7 +374,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
 
-	void SIIterBot_state::mergeCycleExecutionRecord( Record& execRecord ){
+	void SIIterBot_state::mergeCycleExecutionRecord(const Record& execRecord ){
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);  
 
 		LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
@@ -727,7 +727,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		itsNsigma = nsigma;
 	}
 
-	void SIIterBot_state::setControlsFromRecord( Record &recordIn ) {
+	void SIIterBot_state::setControlsFromRecord(const Record &recordIn ) {
 		LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);
 

@@ -1451,6 +1451,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
@@ -2513,7 +2515,7 @@ using namespace casa::vi;
       {
 	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
 	
-	if( useWeightImage() && dopsf ) { 
+	if((useWeightImage() && dopsf) || isSD()) { 
 	  getWeightImage( *(imstore->weight())  , sumWeights); 
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.
