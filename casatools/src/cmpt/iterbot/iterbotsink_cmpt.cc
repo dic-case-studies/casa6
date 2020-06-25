@@ -47,7 +47,16 @@ namespace casac {
     }
 
     casac::record* iterbotsink::pauseforinteraction( ) {
-        return fromRecord( state.pauseForUserInteraction() );
+        static const auto debug = getenv("GRPC_DEBUG");
+        auto ret = state.pauseForUserInteraction( );
+        if ( debug ) {
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << "--- pauseforinteraction result:         ---" << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << ret << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+        }
+        return fromRecord( ret );
     }
 
     casac::record* iterbotsink::getiterationsummary( ) {

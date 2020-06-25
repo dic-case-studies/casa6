@@ -131,7 +131,7 @@ namespace casa {
         ~grpcInteractiveCleanGui( );
 
         bool alive( );
-        int open_panel( std::list<std::tuple<std::string,bool,bool>> images );
+        int open_panel( std::list<std::tuple<std::string,bool,bool,int>> images );
         void close_panel( int );
         int interactivemask( int panel, const std::string &image, const std::string &mask,
                              int &niter, int &cycleniter, std::string &thresh,
@@ -147,8 +147,8 @@ namespace casa {
 
         // filled at start of interaction... zero out after interactive clean completes...
         int clean_panel_id;
-        // image name, multiterm, finished
-        std::list<std::tuple<std::string,bool,bool>> clean_images;
+        // image name, multiterm, finished, exit code (if finished)
+        std::list<std::tuple<std::string,bool,bool,int>> clean_images;
 
     protected:
         template<typename T> T access( T data, std::function< T ( T, grpcInteractiveCleanState & )> csect ) {

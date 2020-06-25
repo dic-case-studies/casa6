@@ -326,7 +326,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                         auto img_multiterm = oneimg.find("multiterm");
                         if ( img_name != oneimg.end( ) && img_multiterm != oneimg.end( ) ) {
                             clean_images.push_back( std::make_tuple( img_name->second.getString(),
-                                                                     img_multiterm->second.toBool( ), false) );
+                                                                     img_multiterm->second.toBool( ), false, 0) );
                         }
                     }
                 } else {
@@ -923,7 +923,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
     }
 
-    int grpcInteractiveCleanGui::open_panel( std::list<std::tuple<std::string,bool,bool>> images ) {
+    int grpcInteractiveCleanGui::open_panel( std::list<std::tuple<std::string,bool,bool,int>> images ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if ( viewer_started == false ) {
             if ( launch( ) == false ) return -1;
@@ -1123,11 +1123,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         cycleniter = imresult.state( ).cycleniter( );
         thresh = imresult.state( ).threshold( );
         cyclethresh = imresult.state( ).cyclethreshold( );
+        int result = 1;
+        std::string action = imresult.action( );
 
         if ( debug ) {
             std::cerr << "-------------------------------------------" << std::endl;
             std::cerr << "  gui state from interactive masking" << std::endl;
             std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << "           action: " << action << std::endl;
             std::cerr << "            niter: " << niter << std::endl;
             std::cerr << "      cycle niter: " << cycleniter << std::endl;
             std::cerr << "        threshold: " << thresh << std::endl;
@@ -1135,8 +1138,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             std::cerr << "-------------------------------------------" << std::endl;
         }
 
-        int result = 1;
-        std::string action = imresult.action( );
         if ( action == "stop" ) result = 3;
         else if ( action == "no more" ) result = 2;
         else if ( action == "continue" ) result = 1;
@@ -1452,7 +1453,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         unsigned ind = 0;
         for ( auto it = clean_images.begin( ); it != clean_images.end( ); ++it, ++ind ) {
             if ( std::get<2>(*it) ) {
-                itsActionCodes[ind] = 3;
+                itsActionCodes[ind] = std::get<3>(*it);
                 continue;
             }
             if ( fabs(itsActionCodes[ind]) == 1.0 ) {
@@ -1474,7 +1475,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 }
 
                 if( itsActionCodes[ind] < 0 ) os << "[" << std::get<0>(*it) <<"] Mask changed interactively." << LogIO::POST;
-                std::get<2>(*it) = (fabs(itsActionCodes[ind])==3);
+                if( fabs(itsActionCodes[ind])==3 || fabs(itsActionCodes[ind])==2 ) {
+                    // fabs(itsActionCodes[ind])==3   -->   stop
+                    // fabs(itsActionCodes[ind])==2   -->   no more
+                    std::get<2>(*it) = true;
+                    std::get<3>(*it) = fabs(itsActionCodes[ind]);
+                }
             }
         }
 
