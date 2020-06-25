@@ -24,7 +24,7 @@ FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR}
                      "/usr/include/eigen3"
-                     "/export/home/genie-rhel/mhsieh/work/dev/lbfgspp/include")
+                     "/home/ftp/staff/mhsieh/lbfgspp/include")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc
@@ -610,7 +610,7 @@ install (FILES
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/lbfgsAsp.h
-  MeasurementEquations/lbfgsAspZhang.h
+  #MeasurementEquations/lbfgsAspZhang.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h

@@ -92,7 +92,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsSwitchedToHogbom(false),
   itsNumHogbomIter(0),
   itsNthHogbom(0),
-  itsSwitchedToMS(false)
+  itsSwitchedToMS(false),
+  itsStrenThres(5e-7)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -142,13 +143,14 @@ void AspMatrixCleaner::makedirtyscales()
     // Dirty*scale
     for (scale=0; scale<itsNscales; scale++)
     {
-      //os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
+      os << "Calculating convolutions for scale size " << itsScaleSizes(scale) << LogIO::POST;
       Matrix<Complex> cWork;
 
       itsDirtyConvScales[scale]=Matrix<Float>(itsDirty->shape());
       cWork=((dirtyFT)*(itsScaleXfrs[scale]));
       fft.fft0((itsDirtyConvScales[scale]), cWork, false);
       fft.flip((itsDirtyConvScales[scale]), false, false);
+      cout << "Calculating itsDirtyConvScales for scale size " << itsScaleSizes(scale) << endl;
     }
   }
 }
@@ -174,15 +176,35 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   LogIO os(LogOrigin("AspMatrixCleaner", "aspclean()", WHERE));
 
   //Int nScalesToClean = itsNscales;
-  //cout << "Enter aspclean, itsNscales " << itsNscales << endl;
+  cout << "Enter aspclean, itsNscales " << itsNscales << endl;
   os << LogIO::NORMAL1 << "AAsp clean algorithm" << LogIO::POST;
 
 
   Int scale;
-  Vector<Float> scaleBias(itsNscales);
+  /*Vector<Float> scaleBias(itsNscales);
   // scaleBias is 1.0 for AAsp for now
   for (scale=0; scale < itsNscales; scale++)
-    scaleBias(scale) = 1.0;
+    scaleBias(scale) = 1.0;*/
+  Vector<Float> scaleBias(6); // hack
+  scaleBias(0) = 1.0; 
+  /*scaleBias(1) = 9.0; 
+  scaleBias(2) = 6.0; 
+  scaleBias(3) = 2.5; 
+  scaleBias(4) = 2.0; scaleBias*/
+  /*scaleBias(1) = 4.0; 
+  scaleBias(2) = 3.0; 
+  scaleBias(3) = 2.5; 
+  scaleBias(4) = 2.0; scaleBias2*/  
+  /*scaleBias(1) = 0.15; 
+  scaleBias(2) = 1.0; 
+  scaleBias(3) = 1.0; 
+  scaleBias(4) = 1.0;
+  scaleBias(5) = 1.0;*/ //scaleBias3
+  scaleBias(1) = 1.0; 
+  scaleBias(2) = 1.0; 
+  scaleBias(3) = 1.0; 
+  scaleBias(4) = 1.0;
+  scaleBias(5) = 1.0; //scaleBias4
 
   AlwaysAssert(itsScalesValid, AipsError);
   ////no need to use all cores if possible
@@ -353,16 +375,16 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // resize since Aspen is changed genie
     if (isNumAspenChanged)
-    {
+    { cout << " NumAspenChanged called " << endl;
       maxima.resize(itsNscales);
       posMaximum.resize(itsNscales);
       totalFluxScale.resize(itsNscales);
       vecWork_p.resize(itsNscales);
-      scaleBias.resize(itsNscales);
+      //scaleBias.resize(itsNscales);
       for (Int i=0; i<itsNscales; i++)
       {
         vecWork_p[i].resize(gip);
-        scaleBias(i) = 1.0;
+        //scaleBias(i) = 1.0;
       }
 
       // Find the peaks of the convolved Psfs
@@ -390,9 +412,18 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     for (Int k = 0; k < itsNscales; k++)
       cout << "itsScaleSizes[" << k << "] = " << itsScaleSizes[k] << endl;*/
 
-#pragma omp parallel default(shared) private(scale) num_threads(nth)
-    {
-#pragma omp  for
+    /*if (itsNscales >= 3) // scaleBias3
+  	{
+  		scaleBias(1) = 9.0; 
+      scaleBias(2) = 9.0; 
+      scaleBias(3) = 9.0; 
+      scaleBias(4) = 4.0;
+  	}*/
+
+// pragma here sometimes makes findMaxAbs(Mask) return wrong value to maxima on tesla
+//#pragma omp parallel default(shared) private(scale) num_threads(nth)
+//    {
+//#pragma omp  for
       for (scale=0; scale<itsNscales; ++scale)
       {
         // Find absolute maximum for the dirty image
@@ -409,7 +440,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         Float minVal=0;
         IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
         minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsScaleMasks[scale]);
-        cout << "clean: ScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;*/
+        cout << "clean: ScaleVal " << scale << ": min " << minVal << " max " << maxVal << " posmax " << posmax << endl;*/
         //genie
 
         if (!itsMask.null()) {
@@ -424,16 +455,21 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         // the flux scale
         // cout << "scale " << scale << " maxPsfconvscale " << maxPsfConvScales(scale) << endl;
         // cout << "posmax " << posMaximum[scale] << " blcdir " << blcDirty << endl;
-        // cout << "maxima " << maxima(scale) << " dirconvscale " << (itsDirtyConvScales[scale])(posMaximum[scale]) << endl;
+        //cout << "posMaximum[] " << scale << "] = " << posMaximum[scale] << endl;
+        //cout << "maxima " << maxima(scale) << " dirconvscale " << (itsDirtyConvScales[scale])(posMaximum[scale]) << endl;
+        //cout << "maxima[" << scale << "] = " << maxima(scale) << " vecWork_p " << (vecWork_p[scale])(posMaximum[scale]) << endl;
         maxima(scale)/=maxPsfConvScales(scale);
-        maxima(scale) *= scaleBias(scale);
-        maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
-        //cout << "maxPsfconvscale[" << scale << "] = " << maxPsfConvScales(scale) << endl;
+        //maxima(scale)/=sqrt(maxPsfConvScales(scale)); //scaleBias4
+        if (itsNscales <= 6)
+          maxima(scale) *= scaleBias(scale);
+        //maxima(scale) *= (itsDirtyConvScales[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
+        maxima(scale) *= (vecWork_p[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in itsStrengthOptimum for loop (next for loop).
+        //cout << "maxPsfconvscale[" << scale << "] = " << maxPsfConvScales(scale) << " scaleBias[" << scale << "] = " << scaleBias(scale) << endl;
         //cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
 
         //posMaximum[scale]+=blcDirty;
       }
-    } //End parallel section
+    //} //End parallel section
     for (scale=0; scale<itsNscales; scale++)
     {
       if(abs(maxima(scale)) > abs(itsStrengthOptimum))
@@ -448,11 +484,14 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //genie
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
-    if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
+    //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
+    if (!itsSwitchedToHogbom && itsStrengthOptimum < itsStrenThres) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 4) // M31 value
     {
-	    cout << "Switch to hogbom b/c optimum strength is small enough." << endl;
+	    //cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
+	    //itsStrenThres = itsStrenThres/3.0; //box3
+	    //itsStrenThres = itsStrenThres/1.5; //box4
 	    switchedToHogbom();
     }
     // try switch to MS if itsStrengthOptimum is small enough and # aspen is >=5
@@ -466,6 +505,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     	cout << "Switch to MS b/c optimum strength is small enough." << endl;
       itsSwitchedToMS = true;
     }*/ //newMS2
+    /*if (!itsSwitchedToHogbom && !itsSwitchedToMS && itsStrengthOptimum < 2e-7)
+    {
+    	cout << "Switch to MS b/c optimum strength is small enough." << endl;
+      itsSwitchedToMS = true;
+    }*/ //eigen box5
 
     /*if (!itsSwitchedToHogbom)
     {
@@ -477,8 +521,10 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 	      itsNumIterNoGoodAspen.push_back(0);
     }*/
 
-    itsStrengthOptimum /= scaleBias(optimumScale);
-    itsStrengthOptimum /=  (itsDirtyConvScales[optimumScale])(posMaximum[optimumScale]);
+    if (itsNscales <= 6)
+      itsStrengthOptimum /= scaleBias(optimumScale);
+    //itsStrengthOptimum /=  (itsDirtyConvScales[optimumScale])(posMaximum[optimumScale]);
+    itsStrengthOptimum /= (vecWork_p[optimumScale])(posMaximum[optimumScale]);
 
     AlwaysAssert(optimumScale < itsNscales, AipsError);
 
@@ -1270,7 +1316,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   	  itsNumIterNoGoodAspen.size()>= 10 && 
   	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
   {
-    cout << "Switch to hogbom b/c frequent small components." << endl;
+    //cout << "Switch to hogbom b/c frequent small components." << endl;
     /*itsSwitchedToHogbom = true;
     itsNthHogbom += 1;
     itsNumIterNoGoodAspen.resize(0);
@@ -1364,7 +1410,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 1120.0; //G55 tesla, 1e8, spw2
     //const Float lamda = 520.0; //G55 tesla, 1e8, spw3 used to be good
     //const Float lamda = 450.0; //G55 tesla, 1e8, spw3 nScales3
-    const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7/8
+    //const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7/8/gold
+    const Float lamda = 485.8; // G55 tesla, 1e8, spw3 fixedScale, lamda
     
     const Float threshold = lamda * resArea;
     vector<Float> tempx;
@@ -1396,21 +1443,22 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<pair<Float,int>> vp; //(LenDev, idx)
     for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
     {
-    	if (vp.size() >= 3) // limit the # active set to 3
-    		break;
+    	//if (vp.size() >= 3) // limit the # active set to 3
+    	//	break;
 
       if (!itsAspGood[i])
       	continue;
 
-      auto start = high_resolution_clock::now();
+      //auto start = high_resolution_clock::now();
 
       const Float lenDirVec = isGoodAspen(itsAspAmplitude[i], itsAspScaleSizes[i], itsAspCenter[i]);
-      auto stop = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>(stop - start);
-      cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
-      cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+      //auto stop = high_resolution_clock::now();
+      //auto duration = duration_cast<microseconds>(stop - start);
+      //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
+      //cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	if (lenDirVec >= threshold)
     	{
+    		cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     		vp.push_back({lenDirVec, i});
 	    }
 	    else
@@ -1540,15 +1588,15 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //else
     AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
 
-    auto start = high_resolution_clock::now();
+    //auto start = high_resolution_clock::now();
 
     double fx;
     double gclip;
     solver.minimize(fun, x, fx, gclip);
 
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    cout << "lbfgs runtime " << duration.count() << " ms" << endl;
+    //auto stop = high_resolution_clock::now();
+    //auto duration = duration_cast<microseconds>(stop - start);
+    //cout << "lbfgs runtime " << duration.count() << " ms" << endl;
 
     // use the initial gradient as a roll back gradient if there is
     // gradient exploding in lbfgs
@@ -1566,6 +1614,13 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     { cout << "fx == -999; has convergence issue?" << endl;
       for (unsigned int i = 0; i < length; i++)
         x[i] = tempx[i];
+    }
+
+    // remove scales that get larger
+    for (unsigned int i = 0; i < length; i+= 2)
+    {
+    	if (x[i+1] > tempx[i+1])
+    		x[i+1] = tempx[i+1];
     }
 
     // put the updated x back to the class variables, itsAspAmp and itsAspScale
@@ -1624,11 +1679,12 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 
   // trial: switch to MS for speed up if # active aspen is > 6
   if (itsNscales > 6)
+  //if (itsNscales >= 6) // box5
   // newMS2, set itsGoodAspActiveSet when # active aspen is >=4
   //if (itsNscales >= 4)
   {
   	itsGoodAspActiveSet = scaleSizes;
-    itsSwitchedToMS = true;
+    //itsSwitchedToMS = true;
   }
 
   // analytically calculate component scale by Asp 2016
@@ -1647,12 +1703,13 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 
 void AspMatrixCleaner::switchedToHogbom()
 {
-	itsSwitchedToHogbom = true;
+	//itsSwitchedToHogbom = true;
+	itsSwitchedToHogbom = false;
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
   itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
-  cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
+  //cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 
 } //# NAMESPACE CASA - END

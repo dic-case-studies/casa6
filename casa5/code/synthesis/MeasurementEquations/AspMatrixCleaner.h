@@ -158,6 +158,7 @@ private:
   unsigned int itsNthHogbom;
   bool itsSwitchedToMS;
   std::vector<casacore::Float> itsGoodAspActiveSet;
+  float itsStrenThres;
 };
 
 } //# NAMESPACE CASA - END
