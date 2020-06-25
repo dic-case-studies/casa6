@@ -25,8 +25,7 @@
 CASA6 = False
 try:
     import casatools
-    from casatasks import rerefant, casalog, fringefit
-
+    from casatasks import rerefant, casalog, fringefit, flagdata
     CASA6 = True
     tb = casatools.table()
 except ImportError:
@@ -39,15 +38,15 @@ import unittest
 import shutil
 import numpy as np
 
-# import pyfits
+#import pyfits
 
-## DATA ##
+## DATA ## 
 
 if CASA6:
     casavis = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
     casacal = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
     # old test path
-    # datadir = casatools.ctsys.resolve('/data/regression/evn/')
+    #datadir = casatools.ctsys.resolve('/data/regression/evn/')
     src = casatools.ctsys.resolve('visibilities/other/n08c1.ms')
 
 else:
@@ -61,12 +60,11 @@ else:
         casacal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal'
         # old test path
         src = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/n08c1.ms'
-
+        
 copyvis = 'vis.ms'
 copycal = 'copycal.gcal'
 
 logpath = casalog.logfile()
-
 
 def file_copy(filename, perm):
     os.chmod(filename, perm)
@@ -75,14 +73,13 @@ def file_copy(filename, perm):
             os.chmod(os.path.join(root, d), perm)
         for f in files:
             os.chmod(os.path.join(root, f), perm)
-
-
+        
 class rerefant_test(unittest.TestCase):
-
+    
     @classmethod
     def setUpClass(cls):
         pass
-
+    
     def setUp(self):
         if not CASA6:
             default(rerefant)
@@ -90,12 +87,12 @@ class rerefant_test(unittest.TestCase):
         shutil.copytree(casacal, copycal)
         file_copy(copyvis, 493)
         file_copy(copycal, 493)
-
+    
     def tearDown(self):
         shutil.rmtree(copyvis)
         shutil.rmtree(copycal)
         casalog.setlogfile(logpath)
-
+        
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
         if os.path.exists('out.cal'):
@@ -106,118 +103,82 @@ class rerefant_test(unittest.TestCase):
             shutil.rmtree("fringe.cal")
         if os.path.exists("reref.cal"):
             shutil.rmtree("reref.cal")
-
+    
     @classmethod
     def tearDownClass(cls):
         pass
 
-    def test_takesms(self):
-        '''
-            test_taskesms
-            ---------------
+    def test_listPrioritizedFlex(self):
+        ''' Test that the first item in refants is used with no drop out '''
 
-            Test that the task takes a valid ms.
-
-            To operate this task also required a tablein to be given as well but this test only checks valid vs invalid ms
-        '''
-
-        casalog.setlogfile('testlog.log')
-
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
-        shutil.rmtree('out.cal')
-
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
-
-    def test_takestablein(self):
-        '''
-            test_takestablein
-            -------------------
-
-            Test that the task takes a valid caltable
-
-            Check that the invalid inputs will raise a sever error
-
-            TODO once the multiple antenna option is fixed test further
-        '''
-
-        casalog.setlogfile('testlog.log')
-
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
-        shutil.rmtree('out.cal')
-
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
-
-    def test_modeflex(self):
-        '''
-            test_modeflex
-            ------------------
-
-            Check that the flex parameter doesn't raise any SEVERE errors
-
-            Check that it takes multiple antenna (and can switch antennas and back)
-
-            TODO Need to be able to check if the antenna drops out and back in but it's not working with multiple antenna right now
-        '''
-
-        casalog.setlogfile('testlog.log')
-
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA02', refantmode='flex')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
+        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01', refantmode='flex')
 
         tb.open('out.cal')
-        antennacol = tb.getcol('ANTENNA2')
-        self.assertTrue(np.all(antennacol == 1))
+        antennaCol = tb.getcol('ANTENNA2')
         tb.close()
+
+        self.assertTrue(np.all(0 == antennaCol))
+
+    def test_listPrioritizedDropsFlex(self):
+        ''' Test that the next item in refants is used if the first antenna drops out '''
+
+        flagdata(copycal, antenna='VA01')
 
         rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01,VA02', refantmode='flex')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
 
         tb.open('out.cal')
-        antennacol = tb.getcol('ANTENNA2')
-        self.assertTrue(np.all(antennacol == 0))
+        antennaCol = tb.getcol('ANTENNA2')
         tb.close()
 
-    def test_modestrict(self):
-        '''
-            test_modestrict
-            -----------------
+        self.assertTrue(np.all(1 == antennaCol))
 
-                This mode will flag all antennas if the current refant is absent for a solution
+    def test_listDropOutDropInFlex(self):
+        ''' Test that when an antenna drops out and drops back in '''
 
-                If a list is provided only use the first element of that list
+        flagdata(copycal, scan='1~3', antenna='VA01')
 
-                TODO come back to this one (It may be that the muti antenna problem has to be solved before I can test this fully)
-        '''
+        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01,VA02', refantmode='flex')
 
-        casalog.setlogfile('testlog.log')
+        tb.open('out.cal')
+        antennaCol = tb.getcol('ANTENNA2')
+        tb.close()
+
+        self.assertFalse(np.all(1 == antennaCol))
+
+    def test_refantPreferredStrict(self):
+        ''' Test the strict application of a reference antenna '''
 
         rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01', refantmode='strict')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
 
         tb.open('out.cal')
-        # print(tb.getcol('FLAG'))
+        antennaCol = tb.getcol('ANTENNA2')
         tb.close()
 
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01,VA02', refantmode='strict')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
+        self.assertTrue(np.all(0 == antennaCol))
+        
+    def test_absentRefantFlagAllStrict(self):
+        ''' Test that all antennas are flagged when the refant drops out in mode strict '''
+        flagdata(copycal, antenna='VA01')
 
-    def test_takescaltable(self):
-        '''
-            test_takescaltable
-            --------------------
+        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01', refantmode='strict')
 
-            Test that the tasks makes an output caltable when ran
-        '''
+        tb.open('out.cal')
+        antennaCol = tb.getcol('ANTENNA2')
+        tb.close()
 
-        casalog.setlogfile('testlog.log')
+        self.assertTrue(np.all(-1 == antennaCol))
 
-        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01')
-        self.assertTrue('SEVERE' not in open('testlog.log').read())
-        self.assertTrue(os.path.exists('out.cal'))
+    def test_listStrict(self):
+        ''' Test that only the first refant is used when mode is strict '''
+        flagdata(copycal, antenna='VA01')
+
+        rerefant(vis=copyvis, tablein=copycal, caltable='out.cal', refant='VA01, VA02', refantmode='strict')
+
+        tb.open('out.cal')
+        antennaCol = tb.getcol('ANTENNA2')
+        tb.close()
+
+        self.assertTrue(np.all(-1 == antennaCol))
 
     # old test case
 
@@ -238,10 +199,10 @@ class rerefant_test(unittest.TestCase):
 
         # Check original calibration table.
         tb.open(calfile)
-        ant2 = tb.getcol('ANTENNA2')
-        taql = "ANTENNA1 == 3 && ANTENNA2 == 0"
-        tsel = tb.query(taql)
-        fparam = tsel.getcol('FPARAM')
+        ant2=tb.getcol('ANTENNA2')
+        taql="ANTENNA1 == 3 && ANTENNA2 == 0"
+        tsel=tb.query(taql)
+        fparam=tsel.getcol('FPARAM')
         tb.close()
         # Reference anttena is EF, aka antenna number 0.
         self.assertTrue(len(set(ant2)) == 1)
@@ -249,10 +210,10 @@ class rerefant_test(unittest.TestCase):
 
         # Check rereferenced calibration table.
         tb.open(recalfile)
-        ant2 = tb.getcol('ANTENNA2')
-        taql = "ANTENNA1 == 0 && ANTENNA2 == 3"
-        tsel = tb.query(taql)
-        refparam = tsel.getcol('FPARAM')
+        ant2=tb.getcol('ANTENNA2')
+        taql="ANTENNA1 == 0 && ANTENNA2 == 3"
+        tsel=tb.query(taql)
+        refparam=tsel.getcol('FPARAM')
         tb.close()
         # Reference anttena is ON, aka antenna number 3.
         self.assertTrue(len(set(ant2)) == 1)
@@ -263,25 +224,23 @@ class rerefant_test(unittest.TestCase):
 
         # Rereferenced parameters for ON should all be zero.
         tb.open(recalfile)
-        taql = "ANTENNA1 == 3 && ANTENNA2 == 3"
-        tsel = tb.query(taql)
-        refparam = tsel.getcol('FPARAM')
+        taql="ANTENNA1 == 3 && ANTENNA2 == 3"
+        tsel=tb.query(taql)
+        refparam=tsel.getcol('FPARAM')
         tb.close()
         self.assertTrue(not refparam.any())
 
         # Rereferenced parameters for EF should not be zero.
         tb.open(recalfile)
-        taql = "ANTENNA1 == 0 && ANTENNA2 == 3"
-        tsel = tb.query(taql)
-        refparam = tsel.getcol('FPARAM')
+        taql="ANTENNA1 == 0 && ANTENNA2 == 3"
+        tsel=tb.query(taql)
+        refparam=tsel.getcol('FPARAM')
         tb.close()
         self.assertTrue(refparam.any())
-
-
+        
 def suite():
-    return [rerefant_test]
-
+    return[rerefant_test]
 
 if __name__ == '__main__':
     unittest.main()
-
+        
