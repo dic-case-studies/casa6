@@ -30,7 +30,7 @@ using namespace casa;
 using namespace casacore;
 namespace casac {
 
-    iterbotsink::iterbotsink( ): state(NULL) {
+    iterbotsink::iterbotsink( ): state(nullptr) {
         cb.reset(new SIIterBot_callback( ));
         state = new SIIterBot_state( cb );
     }
@@ -42,9 +42,8 @@ namespace casac {
     }
 
     casac::record* iterbotsink::setupiteration(const casac::record& iterpars) {
-        // ****memory leak here???****
-        casacore::Record recpars = *toRecord( iterpars );
-        state->setControlsFromRecord( recpars );
+        const std::unique_ptr<const casacore::Record> recpars(toRecord(iterpars));
+        state->setControlsFromRecord(*recpars);
         return getiterationdetails();
     }
 
@@ -81,16 +80,14 @@ namespace casac {
     }  
 
     bool iterbotsink::mergeinitrecord(const casac::record& initrecord) {
-        // ****memory leak here???****
-        casacore::Record recpars = *toRecord( initrecord );
-        state->mergeCycleInitializationRecord(recpars);
+        const std::unique_ptr<const casacore::Record> recpars(toRecord(initrecord));
+        state->mergeCycleInitializationRecord(*recpars);
         return false;
     }
 
     bool iterbotsink::mergeexecrecord(const casac::record& execrecord) {
-        // ****memory leak here???****
-        casacore::Record recpars = *toRecord(execrecord);
-        state->mergeCycleExecutionRecord(recpars);
+        const std::unique_ptr<const casacore::Record> recpars(toRecord(execrecord));
+        state->mergeCycleExecutionRecord(*recpars);
         return false;
     }
 

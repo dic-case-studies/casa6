@@ -1,53 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="virtualconcat" category="utility, manipulation">
+<task category="utility, manipulation" name="virtualconcat" type="function">
 <shortdescription>Concatenate several visibility data sets into a multi-MS</shortdescription>
 
 <input>
-  <param type="stringArray" name="vis" mustexist="true">
-    <description>List of names of input visibility files to be concatenated</description>
-    <value></value>
+  <param mustexist="true" name="vis" type="stringArray"><shortdescription>List of names of input visibility files to be concatenated</shortdescription><description>List of names of input visibility files to be concatenated</description>
+    
+    <value/>
   </param>
 
-  <param type="string" name="concatvis">
-    <description>Name of the output visibility file (a multi-MS)</description>
-    <value></value>
+  <param name="concatvis" type="string"><shortdescription>Name of the output visibility file (a multi-MS)</shortdescription><description>Name of the output visibility file (a multi-MS)</description>
+    
+    <value/>
   </param>
   
-  <param type="any" name="freqtol" >
-    <description>Frequency shift tolerance for considering data as the same spwid</description>
+  <param name="freqtol" type="any"><shortdescription>Frequency shift tolerance for considering data as the same spwid</shortdescription><description>Frequency shift tolerance for considering data as the same spwid</description>
+    
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="any" name="dirtol">
-    <description>Direction shift tolerance for considering data as the same field</description>
+  <param name="dirtol" type="any"><shortdescription>Direction shift tolerance for considering data as the same field</shortdescription><description>Direction shift tolerance for considering data as the same field</description>
+    
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="bool" name="respectname" >
-    <description>If true, fields with a different name are not merged even if their direction agrees</description>
+  <param name="respectname" type="bool"><shortdescription>If true, fields with a different name are not merged even if their direction agrees</shortdescription><description>If true, fields with a different name are not merged even if their direction agrees</description>
+    
     <value>True</value>
   </param>
 
-  <param type="doubleArray" name="visweightscale">
-    <description>List of the weight scaling factors to be applied to the individual MSs</description>
-    <value></value>
+  <param name="visweightscale" type="doubleArray"><shortdescription>List of the weight scaling factors to be applied to the individual MSs</shortdescription><description>List of the weight scaling factors to be applied to the individual MSs</description>
+    
+    <value/>
   </param>
 
-  <param type="bool" name="keepcopy">
-    <description>If true, a copy of the input MSs is kept in their original place.</description>
+  <param name="keepcopy" type="bool"><shortdescription>If true, a copy of the input MSs is kept in their original place.</shortdescription><description>If true, a copy of the input MSs is kept in their original place.</description>
+    
     <value>False</value>
   </param>
 
-  <param type="bool" name="copypointing">
-    <description>If true, keep the POINTING table information in the output MMS. If false, don\'t.</description>
+  <param name="copypointing" type="bool"><shortdescription>If true, keep the POINTING table information in the output MMS. If false, don\'t.</shortdescription><description>If true, keep the POINTING table information in the output MMS. If false, don\'t.</description>
+    
     <value>True</value>
   </param>
 
@@ -126,7 +121,7 @@ respectname -- If true, fields with a different name are not merged even if thei
 
 visweightscale -- The weights of the individual MSs will be scaled in the concatenated
         output MS by the factors in this list. Useful for handling heterogeneous arrays.
-        Use plotms to inspect the "Wt" column as a reference for determining the scaling 
+        Use plotms to inspect the &quot;Wt&quot; column as a reference for determining the scaling 
         factors. See the cookbook for more details.
         example: [1.,3.,3.] - scale the weights of the second and third MS by a factor 3.
         default: [] (empty list) - no scaling
