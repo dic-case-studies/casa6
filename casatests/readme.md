@@ -61,7 +61,7 @@ The following is the naming convention for tests added to the directories inside
    * e.g. test\_perf\_tclean\_mem\_setweighting.py
    * e.g. test\_perf\_tclean\_runtime\_cube\_model\_write.py   
 
-#### stakeholders: Tests exercising specific stakeholders use-cases
+#### stakeholder: Tests exercising specific stakeholders use-cases
    * test\_stk\_[stakeholder]\_[taskname]\_[description].py
    * e.g. test\_stk\_alma\_pipeline\_tclean\_cycle8.py
 
@@ -75,7 +75,7 @@ The following is the naming convention for tests added to the directories inside
    * e.g. test\_pipe\_vlass\_calib\_[...].py
    * e.g. test\_pipe\_alma\_full\_ephem.py
 
-#### benchmarks: Tests measuring benchmarks of CASA tasks/tools
+#### benchmark: Tests measuring benchmarks of CASA tasks/tools
    * test\_bench\_[description]\_[...].py
    
 
