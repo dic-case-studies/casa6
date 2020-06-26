@@ -39,6 +39,24 @@ synthesisutils::~synthesisutils()
   done();
 }
 
+::casac::record* synthesisutils::advisechansel(const double freqstart, const double freqend, const double freqstep, const std::string& freqframe, const std::string& msname, 
+				       const int fieldid, const bool getfreqrange, const std::string& spwselection){
+  casac::record* retval=0;
+try 
+    {
+      
+      //retval
+    } 
+  catch  (AipsError x) 
+    {
+      RETHROW(x);
+    }
+
+
+    return retval;
+
+  }
+  
   casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const int npart)
 {
   casac::record* rstat(0);
