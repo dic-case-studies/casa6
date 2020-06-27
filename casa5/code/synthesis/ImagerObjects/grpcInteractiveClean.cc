@@ -1259,10 +1259,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // will adopt the simple...
 
         int argc = 3;
+        if ( distro_data_path_arg.size( ) > 0 ) ++argc;
         int logarg = argc;    // if a log file is specfied it comes last...
         std::string log_path = casatools::get_state( ).logPath( );
         if ( log_path.size( ) > 0 ) ++argc;
-        if ( distro_data_path_arg.size( ) > 0 ) ++argc;
 
 	    char **arguments = (char**) malloc(sizeof(char*) * (argc + 1));
         arguments[argc] = 0;
