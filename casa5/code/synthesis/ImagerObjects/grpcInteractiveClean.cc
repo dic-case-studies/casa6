@@ -1234,6 +1234,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::string viewer_path = get_viewer_path( );
         if ( viewer_path.size( ) == 0 ) return false;
 
+        // To minimize package size for distribution via pypi.org, the
+        // data repo has been moved out of the viewer appImage/app and
+        // into a separate package. The path to this needs to be specified
+        // when starting the viewer now...
+        std::string distro_data_path_arg = get_distro_data_path( );
+
         // sanity check on viewer path...
         struct stat statbuf;
         if ( stat( viewer_path.c_str( ), &statbuf ) < 0 ) {
@@ -1256,6 +1262,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         int logarg = argc;    // if a log file is specfied it comes last...
         std::string log_path = casatools::get_state( ).logPath( );
         if ( log_path.size( ) > 0 ) ++argc;
+        if ( distro_data_path_arg.size( ) > 0 ) ++argc;
 
 	    char **arguments = (char**) malloc(sizeof(char*) * (argc + 1));
         arguments[argc] = 0;
@@ -1263,6 +1270,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         arguments[1] = (char*) malloc(sizeof(char) * (fifo.size( ) + 12));
         sprintf( arguments[1], "--server=%s", fifo.c_str( ) );
         arguments[2] = strdup("--oldregions");
+        if ( distro_data_path_arg.size( ) > 0 ) {
+            distro_data_path_arg = std::string("--datapath=") + distro_data_path_arg;
+            arguments[3] = strdup(distro_data_path_arg.c_str( ));
+        }
         if ( log_path.size( ) > 0 ) {
             arguments[logarg] = (char*) malloc(sizeof(char) * (log_path.size( ) + 17));
             sprintf( arguments[logarg], "--casalogfile=%s", log_path.c_str( ) );
@@ -1372,6 +1383,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     std::string grpcInteractiveCleanGui::get_python_path( ) {
         return casatools::get_state( ).pythonPath( );
+    }
+
+    std::string grpcInteractiveCleanGui::get_distro_data_path( ) {
+        static bool initialized = false;
+        static std::string result;
+        if ( initialized == false ) {
+            initialized = true;
+            result = casatools::get_state( ).distroDataPath( );
+            struct stat statbuf;
+            if ( stat( result.c_str( ), &statbuf ) < 0 ) {
+                // file (or dir) does not exist...
+                result = "";
+            }
+        }
+        return result;
     }
 
     std::string grpcInteractiveCleanGui::get_viewer_path( ) {

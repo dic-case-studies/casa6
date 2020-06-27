@@ -33,19 +33,21 @@ elif os.name == 'nt':                   # Contributed by Jeff Bauer
         else:
             home = os.environ['HOMEPATH']
 
-toolrc = os.path.join(home, ".casa/toolrc.py")
-try:
-    from casatoolrc import *
-except:
+import sys as _sys
+if not "-m" in _sys.argv:
+    toolrc = os.path.join(home, ".casa/toolrc.py")
     try:
-        f = open(toolrc)
-    except IOError:
-        pass
-    else:
-        f.close()
+        from casatoolrc import *
+    except:
         try:
-            exec(open(toolrc).read( ))
-        except:
-            import sys
-            sys.stderr.write("error: evaluation of %s failed\n" % toolrc)
+            f = open(toolrc)
+        except IOError:
+            pass
+        else:
+            f.close()
+            try:
+                exec(open(toolrc).read( ))
+            except:
+                import sys
+                sys.stderr.write("error: evaluation of %s failed\n" % toolrc)
 

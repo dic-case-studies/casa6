@@ -54,6 +54,10 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             return python_path;
         }
 
+        virtual std::string distroDataPath( ) const {
+            return distro_data_path;
+        }
+
         virtual std::string logPath( ) const {
             return log_path;
         }
@@ -97,6 +101,12 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             python_path = pypath;
         }
 
+        void setDistroDataPath(const std::string &path) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            distro_data_path = path;
+        }
+
         void setLogPath(const std::string &logpath) {
             // protect critical section...
             std::lock_guard<std::mutex> guard(data_path_mutex);
@@ -128,6 +138,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::list<std::string> data_path;
         std::string python_path;
         std::string log_path;
+        std::string distro_data_path;			// path to data as provide by casadata pkg
         Registrar registrar;
     };
 

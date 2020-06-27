@@ -114,6 +114,7 @@ namespace casa {
         std::map<int,CleanState> clean_state;
 
     protected:
+        std::string get_distro_data_path( );
         std::string get_python_path( );
         std::string get_viewer_path( );
         std::string get_fifo( );

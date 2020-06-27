@@ -481,12 +481,14 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
+               _distro_dpath = ""
                _dpath = [ ]
                try:
                    import casadata
-                   _dpath = [ casadata.datapath ]
+                   _distro_dpath = casadata.datapath
+                   _dpath = [ _distro_dpath ]
                except: pass
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
