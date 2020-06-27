@@ -118,6 +118,7 @@ class SynthesisDeconvolver
   casacore::Vector<casacore::Bool> getChanFlag();
   void setRobustStats(const casacore::Record& rec);
   casacore::Record getRobustStats();
+  void setMinorCycleControl(const casacore::Record& minorCycleControlRec);
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );

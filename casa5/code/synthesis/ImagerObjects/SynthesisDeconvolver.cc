@@ -534,8 +534,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return returnRecord;
   }
 
+  void SynthesisDeconvolver::setMinorCycleControl(const Record& minorCycleControlRec){
+    //Don't know what itsloopcontroller does not need a const record;
+    Record lala=minorCycleControlRec;
+    itsLoopController.setCycleControls(lala);
+
+  }
   
-  
+
   Record SynthesisDeconvolver::executeMinorCycle(Record& minorCycleControlRec)
   {
     // LogIO os( LogOrigin("SynthesisDeconvolver","executeMinorCycle",WHERE) );
@@ -1080,7 +1086,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
        
        Bool isThresholdReached = itsLoopController.isThresholdReached();
-       //cerr << this << " setAuto " << itsRobustStats << endl;
+             //cerr << this << " setAuto " << itsRobustStats << endl;
        LogIO os( LogOrigin("SynthesisDeconvolver","setAutoMask",WHERE) );
        os << "Generating AutoMask" << LogIO::POST;
        //os << LogIO::WARN << "#####ItsIterDone value " << itsIterDone << endl;

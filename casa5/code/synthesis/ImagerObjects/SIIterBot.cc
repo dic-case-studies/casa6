@@ -311,9 +311,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		Float cycleThreshold     = itsCycleThreshold;
                 //os<<"SIIterBot getMinorCycleControls cycleThreshold init ="<<cycleThreshold<<LogIO::POST;
 		maxCycleIterations = min(maxCycleIterations, itsNiter - itsIterDone);
+		Bool thresholdReached = (cycleThreshold <= itsThreshold)? True : False;
+	
 		cycleThreshold = max(cycleThreshold, itsThreshold);
                 //os<<"SIIterBot getMinorCycleControls cycleThreshold="<<cycleThreshold<<LogIO::POST;
-                Bool thresholdReached = (cycleThreshold==itsThreshold)? True : False;
+                //Bool thresholdReached = (cycleThreshold==itsThreshold)? True : False;
 		/*
 		if (itsInteractiveMode) {
 			maxCycleIterations = min(maxCycleIterations, itsInteractiveNiter);
@@ -568,8 +570,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		psffraction = max(psffraction, itsMinPsfFraction);
 		psffraction = min(psffraction, itsMaxPsfFraction);
     
-                //cerr<<"updateCycleThresh: itsMinPsfFraction="<<itsMinPsfFraction<<" itsMaxPsfFraction="<<itsMaxPsfFraction<<endl;
-                //cerr<<"updateCycleThresh: itsCycleFactor="<<itsCycleFactor<<" psffraction="<<psffraction<<endl;
+		//cerr<<"updateCycleThresh: itsMinPsfFraction="<<itsMinPsfFraction<<" itsMaxPsfFraction="<<itsMaxPsfFraction<<endl;
+		// cerr<<"updateCycleThresh: itsCycleFactor="<<itsCycleFactor<<" psffraction="<<psffraction<<endl;
                 //cerr<<"updateCycleThresh: itsPeakRes ="<<itsPeakResidual<<endl;
 		itsCycleThreshold = itsPeakResidual * psffraction;
                 //cerr<<"updateCycleThresh: itsCycleThreshold ="<<itsCycleThreshold<<endl;

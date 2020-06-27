@@ -132,8 +132,11 @@ void CubeMinorCycleAlgorithm::task(){
 	    subDeconv.setChanFlag(chanFlag_p);
 	    subDeconv.setRobustStats(statsRec_p);
 	    Int automaskflag=iterBotRec_p.asInt("onlyautomask");
-	    if(automaskflag==1)
+	    if(automaskflag==1){
 	      doDeconv=False;
+	      if(iterBotRec_p.isDefined("cycleniter"))
+		 subDeconv.setMinorCycleControl(iterBotRec_p);
+	    }
 	    //cerr << "ITERDONE " << iterBotRec_p.asInt("iterdone")<< " itermask flag " << automaskflag << endl;
 	    subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
 	    if(automaskflag !=0){
