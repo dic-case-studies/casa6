@@ -50,7 +50,7 @@ my_verbose = True
 
 projname = "m51c"
 
-class regression_m51_3sim_test(unittest.TestCase):
+class regression_sim_multiarrays_test(unittest.TestCase):
 
     def setUp(self):
         self.modelname="m51ha.model"
@@ -196,9 +196,11 @@ class regression_m51_3sim_test(unittest.TestCase):
             print ('')
             print ('Regression FAILED')
             print ('')
+	
+        self.assertTrue(regstate)
 
 def suite():
-    return[regression_m51_3sim_test]
+    return[regression_sim_multiarrays_test]
 
 
 if __name__ == '__main__':
