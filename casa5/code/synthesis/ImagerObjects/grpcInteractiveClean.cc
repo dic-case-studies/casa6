@@ -179,7 +179,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                            auto threshold = iterpars.find("threshold");
                            if ( threshold != iterpars.end( ) ) {
-                               auto val = casaQuantity(threshold->second).getValue(Unit("Jy"));
+                               auto quant = casaQuantity(threshold->second);
+                               if ( quant.getUnit( ) == "" ) quant.setUnit("Jy");
+                               auto val = quant.getValue(Unit("Jy"));
                                if ( val == -1.0 ) {
                                    state.Threshold = 0.0;
                                    state.IsThresholdAuto = true;
