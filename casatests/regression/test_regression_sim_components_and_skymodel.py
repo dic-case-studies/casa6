@@ -1,0 +1,170 @@
+#############################################################################
+# $Id:$                                                                     #
+# Test Name: test_regression_sim_components_and_skymodel.py                           #
+#    Regression Test Script for simobserve/simanalyze                       #
+#                                                                           #
+# Rationale for Inclusion:                                                  #
+#                                                                           #                                                                       #
+#                                                                           #
+# Input data:                                                               #
+#    protoplanetary disks                                                   #
+#                                                                           #
+#############################################################################
+
+import os
+import shutil
+import unittest
+
+CASA6 = False
+try:
+    from casatools import ctsys, image, componentlist
+    from casatasks import simobserve, simanalyze
+    CASA6 = True
+    
+    _cl = componentlist()
+    _ia = image()
+    def default(atask):
+        pass
+except ImportError:
+    from tasks import simobserve, simanalyze
+    from taskinit import cltool, iatool
+    from __main__ import default
+    
+    _cl = cltool()
+    _ia = iatool()
+
+if CASA6:
+    ctsys_resolve = ctsys.resolve
+    datadir = ctsys.resolve('regression/simdata/')
+    cfgdir = ctsys.resolve('alma/simmos/')
+
+else:
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
+    datadir = repodir + 'regression/simdata/'
+    cfgdir = repodir + 'alma/simmos/'
+
+print ('--Running simdata of input672GHz_50pc.image--')
+
+#projname = "psim2"
+#my_modelimage="diskmodel.im2"
+class regression_components_skymodel_test(unittest.TestCase):
+
+    def setUp(self):
+        default("simanalyze")
+        default("simobserve")
+        self.projname = "psim2"
+        self.modelimage = datadir + "/input50pc_672GHz.fits"
+        self.antennalist = cfgdir + "/alma.out20.cfg"
+        self.complist = "star672GHz.cl"
+        if os.path.exists(self.complist):
+            shutil.rmtree(self.complist)
+
+        # NOTE: it will create the modelimage in the local directory, not in the project directory
+        self.direction = "J2000 18h00m00.031s -22d59m59.6s"
+        _cl.done()
+        _cl.addcomponent(dir=self.direction,flux=0.0003,freq="672GHz")
+        _cl.rename("star672GHz.cl")
+        _cl.done()
+                           
+#        shutil.copytree(datadir+self.modelimage, self.modelimage)
+
+ 
+    def tearDown(self):
+        pass
+ #       shutil.rmtree(projname)
+ #       shutil.rmtree(self.modelname)
+
+    def test_regression(self):
+        '''Test components and skymodel...'''
+        
+        # Check if modelimage and antennalist are being read from original repository
+        simobserve(project=self.projname, skymodel=self.modelimage, direction=self.direction, complist=self.complist,
+                   setpointings=True, mapsize="0.76arcsec", pointingspacing="0.5arcsec", integration="10s", obsmode="int",
+                   antennalist=self.antennalist, refdate="2012/06/21/03:25:00", totaltime="1200s",
+                   thermalnoise="tsys-atm", user_pwv=0.5, maptype="ALMA2012",  graphics="file", verbose=True)
+
+        # Analyze and clean  results of project created above
+        default(simanalyze)
+        simanalyze(project=self.projname, skymodel=self.modelimage, image=True, cell="", niter=1000, 
+                   threshold="1e-7Jy", imsize=[192, 192], stokes="I", weighting="natural", analyze=True, interactive=False,
+                   graphics="file", verbose=True)
+
+
+        # Regression
+
+        test_name_ppd = """simdata observation of Wolf & D'Angelo's protoplanetary disk"""
+
+        ppdso_im= _ia.open(self.projname+"/"+self.projname + '.alma.out20.noisy.image')
+        ppdso_stats = _ia.statistics(list=True, verbose=True)
+        _ia.close()
+
+        #refstats = { 'flux': 0.0359,
+        #             'max': 6.1e-04,
+        #             'min': -1.6e-04, 
+        #             'rms': 1.9e-04,
+        #             'sigma': 1.4e-04 }
+        # r38847
+        refstats = { 'flux': 0.036714,
+                    'max': 0.00061958,
+                    'min': -0.0001894,
+                    'rms': 0.0001925,
+                    'sigma': 0.00013576 }
+
+
+        reftol   = {'flux':  0.01,
+                    'max':   0.02,
+                    'min':   0.02,
+                    'rms':   0.01,
+                    'sigma': 0.01}
+
+        import datetime
+        datestring = datetime.datetime.isoformat(datetime.datetime.today())        
+        
+        loghdr = """
+        ********** Simulation Summary *********
+        
+        The disk input image is a simulation done by Wolf and D'Angelo, converted from
+        900 GHz to 672 GHz
+        
+        ********** Regression *****************
+        """
+                
+        regstate = True
+        rskes = list(refstats.keys())
+        rskes.sort()
+        for ke in rskes:
+            adiff=abs(ppdso_stats[ke][0] - refstats[ke])/abs(refstats[ke])
+            if adiff < reftol[ke]:
+                print("* Passed %-5s test, got % -11.5g , expected % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
+            else:
+                print("* FAILED %-5s test, got % -11.5g instead of % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
+                regstate = False
+        
+        print ('---')
+        if regstate:
+            print ('Passed')
+            print ('')
+            print ('Regression PASSED')
+            print ('')
+        else:
+            print ('FAILED')
+            print ('')
+            print ('Regression FAILED')
+            print ('')
+        
+        print ('---')
+        print ('*********************************')
+            
+        
+        print ('--Finished simdata of input672GHz_50pc.image regression--')
+        self.assertTrue(regstate)
+        
+def suite():
+    return[regression_components_skymodel_test]
+
+
+if __name__ == '__main__':
+    unittest.main()
+       
+        
+        
