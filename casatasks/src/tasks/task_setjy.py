@@ -132,7 +132,7 @@ def setjy(vis=None, field=None, spw=None,
 
                 # Remove the subMS names from the returned dictionary
                 #print("remove subms names ...retval=",retval)
-                if (any(isinstance(v,dict) for v in retval.itervalues())):
+                if (any(isinstance(v,dict) for v in retval.values())):
                     for subMS in retval:
                         dict_i = retval[subMS]
                         if isinstance(dict_i,dict):

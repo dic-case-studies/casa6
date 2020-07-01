@@ -69,10 +69,10 @@ class SynthesisIterBot
 #endif
 
   // make all pure-inputs const
-  void setupIteration(casacore::Record iterpars);
+  void setupIteration(const casacore::Record &iterpars);
 
   void setInteractiveMode(casacore::Bool interactiveMode);
-  virtual void   setIterationDetails(casacore::Record iterpars);
+  virtual void   setIterationDetails(const casacore::Record &iterpars);
   casacore::Record getIterationDetails();
   casacore::Record getIterationSummary();
 
@@ -80,8 +80,8 @@ class SynthesisIterBot
 
   casacore::Record getSubIterBot();
 
-  void startMinorCycle(casacore::Record& initializationRecord);
-  void endMinorCycle(casacore::Record& executionRecord);
+  void startMinorCycle(const casacore::Record& initializationRecord);
+  void endMinorCycle(const casacore::Record& executionRecord);
 
   void endMajorCycle();
   void resetMinorCycleInfo();
@@ -123,7 +123,7 @@ protected:
   SynthesisIterBotWithOldGUI();
   ~SynthesisIterBotWithOldGUI(){};
 
-  void   setIterationDetails(casacore::Record iterpars);
+  void   setIterationDetails(const casacore::Record &iterpars);
   casacore::Record pauseForUserInteractionOld();
 
 protected:
