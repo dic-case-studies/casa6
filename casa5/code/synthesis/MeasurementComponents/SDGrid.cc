@@ -1632,10 +1632,17 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
   } else {
     mFrame_p.resetEpoch(epoch);
     if (lastAntID_p != vb.antenna1()(row)) {
-      logIO_p << LogIO::DEBUGGING
-        << "updating antenna position. MS ID " << msId_p
-        << ", last antenna ID " << lastAntID_p
-        << " new antenna ID " << vb.antenna1()(row) << LogIO::POST;
+      if (lastAntID_p == -1) {
+        // antenna ID is unset
+        logIO_p << LogIO::DEBUGGING
+          << "update antenna position for conversion: new MS ID " << msId_p
+          << ", antenna ID " << vb.antenna1()(row) << LogIO::POST;
+      } else {
+        logIO_p << LogIO::DEBUGGING
+          << "update antenna position for conversion: MS ID " << msId_p
+          << ", last antenna ID " << lastAntID_p
+          << ", new antenna ID " << vb.antenna1()(row) << LogIO::POST;
+      }
       MPosition pos;
       lastAntID_p = vb.antenna1()(row);
       pos = vb.msColumns().antenna().positionMeas()(lastAntID_p);
