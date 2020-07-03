@@ -164,12 +164,19 @@ template <class T> SPIIT Image2DConvolver<T>::convolve() {
     ThrowIf(
         nDim < 2, "The image axes must have at least 2 pixel axes"
     );
-    SPIIT outImage(new casacore::TempImage<T>(
-        subImage->shape(), subImage->coordinates())
+    shared_ptr<TempImage<T>> outImage(
+        new casacore::TempImage<T>(
+            subImage->shape(), subImage->coordinates()
+        )
      );
     _convolve(
         outImage, *subImage, _type
     );
+    if (subImage->isMasked()) {
+        TempLattice<Bool> mask(outImage->shape());
+        ImageTask<T>::_copyMask(mask, *subImage);
+        outImage->attachMask(mask);
+    }
     return this->_prepareOutputImage(*outImage);
 }
 

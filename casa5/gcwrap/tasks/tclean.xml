@@ -2268,6 +2268,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                        column on disk may be too much extra disk I/O, when the
                                        gridder is simple enough that on-the-fly recomputing of the
                                        model visibilities is quicker than disk I/O.
+                                       For e.g. that gridder='awproject' does not support virtual model. 
 
                           modelcolumn : In the last major cycle, save predicted model visibilities
                                       in the MODEL_DATA column of the MS. This mode is useful when
@@ -2286,6 +2287,9 @@ to use the correct direction in which the antenna is pointing with respect to th
                                       as well as a model_data column, but under normal operation,
                                       the last used mode will get triggered.  Use the delmod task to
                                       clear out existing models from an MS if confusion arises.
+                       Note 3:    when parallel=True, use savemodel='none'; Other options are not yet ready 
+                                  for use in parallel. If model visibilities need to be saved (virtual or modelcolumn):
+                                  please run tclean in serial mode with niter=0; after the parallel run
 
 </description>
       <value type="string">none</value>
