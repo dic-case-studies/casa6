@@ -218,6 +218,7 @@ void MSTransformManager::initialize()
 	inputWeightSpectrumAvailable_p = false;
 	weightSpectrumFromSigmaFilled_p = false;
 	correctedToData_p = false;
+	bothDataColumnsAreOutput_p = false;
 	doingData_p = false;
 	doingCorrected_p = false;
 	doingModel_p = false;
@@ -5101,6 +5102,9 @@ void MSTransformManager::checkDataColumnsToFill()
 			timeAvgOptions_p |= vi::AveragingOptions::AverageCorrected;
 			timeAvgOptions_p |= vi::AveragingOptions::CorrectedFlagWeightAvgFromWEIGHT;
 		}
+        if (dataColumnAvailable_p && correctedDataColumnAvailable_p)
+            bothDataColumnsAreOutput_p = true;
+
 
 		if (modelDataColumnAvailable_p)
 		{
@@ -5185,6 +5189,8 @@ void MSTransformManager::checkDataColumnsToFill()
 			timeAvgOptions_p |= vi::AveragingOptions::CorrectedFlagWeightAvgFromWEIGHT;
 		}
 
+        if (dataColumnAvailable_p && correctedDataColumnAvailable_p)
+            bothDataColumnsAreOutput_p = true;
 		if (modelDataColumnAvailable_p)
 		{
 			if (!mainColSet)
@@ -5938,174 +5944,201 @@ void MSTransformManager::initFrequencyTransGrid(vi::VisBuffer2 *vb)
 // ----------------------------------------------------------------------------------------
 void MSTransformManager::fillIdCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 {
-	// Declare common auxiliary variables
-	RefRows absoluteRefRows(rowRef.firstRow(),rowRef.firstRow()+nRowsToAdd_p-1);
-	Vector<Int> tmpVectorInt(nRowsToAdd_p,0);
-	Vector<Double> tmpVectorDouble(nRowsToAdd_p,0.0);
-	Vector<Bool> tmpVectorBool(nRowsToAdd_p,false);
+    // Declare common auxiliary variables
+    RefRows absoluteRefRows(rowRef.firstRow(),rowRef.firstRow()+nRowsToAdd_p-1);
+    Vector<Int> tmpVectorInt(nRowsToAdd_p,0);
+    Vector<Double> tmpVectorDouble(nRowsToAdd_p,0.0);
+    Vector<Bool> tmpVectorBool(nRowsToAdd_p,false);
 
-	// Special case for Data description Id
-	if (transformDDIVector(vb->dataDescriptionIds(),tmpVectorInt))
-	{
-		outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,tmpVectorInt);
-	}
-	else
-	{
-		outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,vb->dataDescriptionIds());
-	}
+    // Special case for Data description Id
+    if (transformDDIVector(vb->dataDescriptionIds(),tmpVectorInt))
+    {
+        outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,tmpVectorInt);
+    }
+    else
+    {
+        outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,vb->dataDescriptionIds());
+    }
 
-	// Re-indexable Columns
-	transformAndWriteReindexableVector(	vb->observationId(),tmpVectorInt,true,
-										inputOutputObservationIndexMap_p,
-										outputMsCols_p->observationId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->arrayId(),tmpVectorInt,true,
-										inputOutputArrayIndexMap_p,
-										outputMsCols_p->arrayId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->fieldId(),tmpVectorInt,!timespan_p.contains("field"),
-										inputOutputFieldIndexMap_p,
-										outputMsCols_p->fieldId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->stateId(),tmpVectorInt,!timespan_p.contains("state"),
-										inputOutputScanIntentIndexMap_p,
-										outputMsCols_p->stateId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->antenna1(),tmpVectorInt,false,
-										inputOutputAntennaIndexMap_p,
-										outputMsCols_p->antenna1(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->antenna2(),tmpVectorInt,false,
-										inputOutputAntennaIndexMap_p,
-										outputMsCols_p->antenna2(),absoluteRefRows);
+    // Re-indexable Columns
+    transformAndWriteReindexableVector(vb->observationId(),tmpVectorInt,true,
+                                       inputOutputObservationIndexMap_p,
+                                       outputMsCols_p->observationId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->arrayId(),tmpVectorInt,true,
+                                       inputOutputArrayIndexMap_p,
+                                       outputMsCols_p->arrayId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->fieldId(),tmpVectorInt,!timespan_p.contains("field"),
+                                       inputOutputFieldIndexMap_p,
+                                       outputMsCols_p->fieldId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->stateId(),tmpVectorInt,!timespan_p.contains("state"),
+                                       inputOutputScanIntentIndexMap_p,
+                                       outputMsCols_p->stateId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->antenna1(),tmpVectorInt,false,
+                                       inputOutputAntennaIndexMap_p,
+                                       outputMsCols_p->antenna1(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->antenna2(),tmpVectorInt,false,
+                                       inputOutputAntennaIndexMap_p,
+                                       outputMsCols_p->antenna2(),absoluteRefRows);
 
-	// Not Re-indexable Columns
-	transformAndWriteNotReindexableVector(vb->scan(),tmpVectorInt,!timespan_p.contains("scan"),outputMsCols_p->scanNumber(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->processorId(),tmpVectorInt,false,outputMsCols_p->processorId(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->feed1(),tmpVectorInt,false,outputMsCols_p->feed1(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->feed2(),tmpVectorInt,false,outputMsCols_p->feed2(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->time(),tmpVectorDouble,false,outputMsCols_p->time(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->timeCentroid(),tmpVectorDouble,false,outputMsCols_p->timeCentroid(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->timeInterval(),tmpVectorDouble,false,outputMsCols_p->interval(),absoluteRefRows);
+    // Not Re-indexable Columns
+    transformAndWriteNotReindexableVector(vb->scan(),tmpVectorInt,!timespan_p.contains("scan"),outputMsCols_p->scanNumber(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->processorId(),tmpVectorInt,false,outputMsCols_p->processorId(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->feed1(),tmpVectorInt,false,outputMsCols_p->feed1(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->feed2(),tmpVectorInt,false,outputMsCols_p->feed2(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->time(),tmpVectorDouble,false,outputMsCols_p->time(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->timeCentroid(),tmpVectorDouble,false,outputMsCols_p->timeCentroid(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->timeInterval(),tmpVectorDouble,false,outputMsCols_p->interval(),absoluteRefRows);
 
-	// Special case for vectors that have to be averaged
-	if (combinespws_p)
-	{
-		mapAndAverageVector(vb->flagRow(),tmpVectorBool);
-		outputMsCols_p->flagRow().putColumnCells(absoluteRefRows, tmpVectorBool);
+    // Special case for vectors that have to be averaged
+    if (combinespws_p)
+    {
+        mapAndAverageVector(vb->flagRow(),tmpVectorBool);
+        outputMsCols_p->flagRow().putColumnCells(absoluteRefRows, tmpVectorBool);
 
-		// jagonzal: We average exposures by default, if they are the same we obtain the same results
-		mapAndAverageVector(vb->exposure(),tmpVectorDouble);
-		outputMsCols_p->exposure().putColumnCells(absoluteRefRows, tmpVectorDouble);
-	}
-	else
-	{
-		transformAndWriteNotReindexableVector(vb->flagRow(),tmpVectorBool,false,outputMsCols_p->flagRow(),absoluteRefRows);
-		transformAndWriteNotReindexableVector(vb->exposure(),tmpVectorDouble,false,outputMsCols_p->exposure(),absoluteRefRows);
-	}
+        // jagonzal: We average exposures by default, if they are the same we obtain the same results
+        mapAndAverageVector(vb->exposure(),tmpVectorDouble);
+        outputMsCols_p->exposure().putColumnCells(absoluteRefRows, tmpVectorDouble);
+    }
+    else
+    {
+        transformAndWriteNotReindexableVector(vb->flagRow(),tmpVectorBool,false,outputMsCols_p->flagRow(),absoluteRefRows);
+        transformAndWriteNotReindexableVector(vb->exposure(),tmpVectorDouble,false,outputMsCols_p->exposure(),absoluteRefRows);
+    }
 
-	if (combinespws_p)
-	{
-		Matrix<Double> tmpUvw(IPosition(2,3,rowRef.nrows()),0.0);
-		Matrix<Float> tmpMatrixFloat(IPosition(2,vb->nCorrelations(),rowRef.nrows()),0.0);
+    if (combinespws_p)
+    {
+        Matrix<Double> tmpUvw(IPosition(2,3,rowRef.nrows()),0.0);
+        Matrix<Float> tmpMatrixFloat(IPosition(2,vb->nCorrelations(),rowRef.nrows()),0.0);
 
-		mapMatrix(vb->uvw(),tmpUvw);
-		writeMatrix(tmpUvw,outputMsCols_p->uvw(),rowRef,nspws_p);
+        mapMatrix(vb->uvw(),tmpUvw);
+        writeMatrix(tmpUvw,outputMsCols_p->uvw(),rowRef,nspws_p);
 
-		// WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
-		if (not spectrumTransformation_p)
-		{
-			if (newWeightFactorMap_p.size() > 0)
-			{
-				mapAndScaleMatrix(vb->weight(),tmpMatrixFloat,newWeightFactorMap_p,vb->spectralWindows());
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
-			}
-			else
-			{
-				// jagonzal: According to dpetry we have to copy weights from the first SPW
-				// This is justified since the rows to be combined _must_ be from the
-				// same baseline and therefore have the same UVW coordinates in the MS (in meters).
-				// They could therefore be regarded to also have the same WEIGHT, at least to
-				// a good approximation.
-				mapMatrix(vb->weight(),tmpMatrixFloat);
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
-			}
+        // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
+        if (not spectrumTransformation_p)
+        {
+            if (newWeightFactorMap_p.size() > 0)
+            {
+                mapAndScaleMatrix(vb->weight(),tmpMatrixFloat,newWeightFactorMap_p,vb->spectralWindows());
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
+            }
+            else
+            {
+                // jagonzal: According to dpetry we have to copy weights from the first SPW
+                // This is justified since the rows to be combined _must_ be from the
+                // same baseline and therefore have the same UVW coordinates in the MS (in meters).
+                // They could therefore be regarded to also have the same WEIGHT, at least to
+                // a good approximation.
+                mapMatrix(vb->weight(),tmpMatrixFloat);
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
+            }
 
 
-			// Sigma must be redefined to 1/weight when corrected data becomes data
-			if (correctedToData_p)
-			{
-				arrayTransformInPlace(tmpMatrixFloat, vi::AveragingTvi2::weightToSigma);
-				outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-			else
-			{
-				if (newSigmaFactorMap_p.size() > 0)
-				{
-					mapAndScaleMatrix(vb->sigma(),tmpMatrixFloat,newSigmaFactorMap_p,vb->spectralWindows());
-					outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
-					writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-				}
-				else
-				{
-					// jagonzal: According to dpetry we have to copy weights from the first SPW
-					// This is justified since the rows to be combined _must_ be from the
-					// same baseline and therefore have the same UVW coordinates in the MS (in meters).
-					// They could therefore be regarded to also have the same WEIGHT, at least to
-					// a good approximation.
-					mapMatrix(vb->sigma(),tmpMatrixFloat);
-					writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-				}
-			}
-		}
+            // Sigma must be redefined to 1/weight when corrected data becomes data
+            if (correctedToData_p)
+            {
+                arrayTransformInPlace(tmpMatrixFloat, vi::AveragingTvi2::weightToSigma);
+                outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+            }
+            else
+            {
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    mapAndScaleMatrix(vb->sigma(),tmpMatrixFloat,newSigmaFactorMap_p,vb->spectralWindows());
+                    outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
+                    writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+                }
+                else
+                {
+                    // jagonzal: According to dpetry we have to copy weights from the first SPW
+                    // This is justified since the rows to be combined _must_ be from the
+                    // same baseline and therefore have the same UVW coordinates in the MS (in meters).
+                    // They could therefore be regarded to also have the same WEIGHT, at least to
+                    // a good approximation.
+                    mapMatrix(vb->sigma(),tmpMatrixFloat);
+                    writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+                }
+            }
+        }
 
-	}
-	else
-	{
-	    writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
+    }
+    else
+    {
+        writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
 
-	    // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
-	    if (not spectrumTransformation_p)
-	    {
+        // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
+        if (not spectrumTransformation_p)
+        {
+            if (correctedToData_p) {
 
-	        if (correctedToData_p) {
+              // weight -> weight
+                Matrix<Float> weights = vb->weight();
+                if (newWeightFactorMap_p.size() > 0)
+                {
+                    if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
+                            (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                         weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
 
-	            // weight -> weight
-	            Matrix<Float> weights = vb->weight();
-	            if (newWeightFactorMap_p.size() > 0)
-	            {
-	                if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
-	                        (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
-	                {
-	                    weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
-	                }
-	            }
-	            writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
+                // weight -> sigma
+                arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
+                writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
 
-	            // weight -> sigma
-	            arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
-	            writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
-
-	        }
-	        else
-	        {
-	            // sigma -> sigma
+            }
+            else if(!bothDataColumnsAreOutput_p)
+            {
+                // sigma -> sigma
                 Matrix<Float> sigma = vb->sigma();
-	            if (newSigmaFactorMap_p.size() > 0)
-	            {
-	                if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
-	                        (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
-	                {
-	                    sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
-	                }
-	            }
-	            writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
+                            (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                        sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
 
                 // sigma -> weight
                 arrayTransformInPlace(sigma, vi::AveragingTvi2::sigmaToWeight);
                 writeMatrix(sigma, outputMsCols_p->weight(), rowRef, nspws_p);
-	        }
-	    }
+            }
+            // If both DATA and DATA_CORRECTED are input and output then
+            // SIGMA(_SPECTRUM) and WEIGHT(_SPECTRUM) should maintain their alignment
+            // with DATA and CORRECTED_DATA, respectively and nothing is done. See CAS-11139
+            else
+            {
+                // weight -> weight
+                Matrix<Float> weights = vb->weight();
+                if (newWeightFactorMap_p.size() > 0)
+                {
+                    if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
+                            (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                         weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
 
-	}
+                // sigma -> sigma
+                Matrix<Float> sigma = vb->sigma();
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
+                            (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                        sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
+            }
+        }
+    }
 
-	return;
+    return;
 }
 
 // ------------------------------------------------------------------------------------
