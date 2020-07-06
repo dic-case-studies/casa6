@@ -84,13 +84,13 @@ namespace casac {
 
     bool iterbotsink::mergeinitrecord(const casac::record& initrecord) {
         const std::unique_ptr<const casacore::Record> recpars(toRecord(initrecord));
-        state->mergeCycleInitializationRecord(*recpars);
+        state.mergeCycleInitializationRecord( *recpars );
         return false;
     }
 
     bool iterbotsink::mergeexecrecord(const casac::record& execrecord) {
         const std::unique_ptr<const casacore::Record> recpars(toRecord(execrecord));
-        state->mergeCycleExecutionRecord(*recpars);
+        state.mergeCycleExecutionRecord( *recpars );
         return false;
     }
 
