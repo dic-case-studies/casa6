@@ -21,7 +21,7 @@
 //# Queries concerning CASA should be submitted at
 //#        https://help.nrao.edu
 //#
-//#        Postal address: CASA Project Manager 
+//#        Postal address: CASA Project Manager
 //#                        National Radio Astronomy Observatory
 //#                        520 Edgemont Road
 //#                        Charlottesville, VA 22903-2475 USA
@@ -30,6 +30,7 @@
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Vector.h>
+#include <casa/Arrays/Slice.h>
 #include <casa/Containers/Record.h>
 #include<msvis/MSVis/VisImagingWeight.h>
 #include <msvis/MSVis/VisBuffer2.h>
@@ -66,10 +67,10 @@ using namespace casa::vi;
 
 
   BriggsCubeWeightor::BriggsCubeWeightor(vi::VisibilityIterator2& vi,
-				       const String& rmode, const Quantity& noise,
-				       const Double robust,
+                       const String& rmode, const Quantity& noise,
+                       const Double robust,
                                          const ImageInterface<Complex>& templateimage, const RecordInterface& inrec,
-					 const Int superUniformBox, const Bool multiField){
+                     const Int superUniformBox, const Bool multiField){
     rmode_p=rmode;
     noise_p=noise;
     robust_p=robust;
@@ -84,9 +85,9 @@ using namespace casa::vi;
 
 
   }
-				       
+                       
  void BriggsCubeWeightor::init(vi::VisibilityIterator2& vi,
-			       const ImageInterface<Complex>& templateimage, const RecordInterface& inRec)
+                   const ImageInterface<Complex>& templateimage, const RecordInterface& inRec)
  {
   LogIO os(LogOrigin("BriggsCubeWeightor", "constructor", WHERE));
 
@@ -111,15 +112,15 @@ using namespace casa::vi;
       String key=String::toString(vb->msId())+"_"+String::toString(vb->fieldId()(0));
       Int index=0;
       if(multiField_p){
-	//find how many indices will be needed
-	index=multiFieldMap_p.size();
-	if(multiFieldMap_p.count(key) < 1)
-	  multiFieldMap_p[key]=index;
-	nIndices=multiFieldMap_p.size();
+    //find how many indices will be needed
+    index=multiFieldMap_p.size();
+    if(multiFieldMap_p.count(key) < 1)
+      multiFieldMap_p[key]=index;
+    nIndices=multiFieldMap_p.size();
       }
       else{
-	multiFieldMap_p[key]=0;
-	nIndices=1;
+    multiFieldMap_p[key]=0;
+    nIndices=1;
       }
 
     }
@@ -162,13 +163,13 @@ using namespace casa::vi;
     ft_p[index]->modifyConvFunc(convFunc, superUniformBox_p, 1);
     for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
       for (vi.origin(); vi.more(); vi.next()) {
-	
-	key=String::toString(vb->msId())+"_"+String::toString(vb->fieldId()(0));
+    
+    key=String::toString(vb->msId())+"_"+String::toString(vb->fieldId()(0));
       
-	//cerr << "key and index "<< key << "   " << index << "   " << multiFieldMap_p[key] << endl; 
-	if(multiFieldMap_p[key]==index){
-	  ft_p[index]->put(*vb, -1, true, FTMachine::PSF);
-	}
+    //cerr << "key and index "<< key << "   " << index << "   " << multiFieldMap_p[key] << endl;
+    if(multiFieldMap_p[key]==index){
+      ft_p[index]->put(*vb, -1, true, FTMachine::PSF);
+    }
       
       }
     }
@@ -181,7 +182,7 @@ using namespace casa::vi;
     //clear the ftmachine
     ft_p[index]->finalizeToSky();
   }
-  ////Lets reset vi before returning 
+  ////Lets reset vi before returning
   vi.originChunks();
   vi.origin();
   
@@ -197,27 +198,27 @@ using namespace casa::vi;
       grids_p[index]->getSlice(arr, start, shape, True);
       Matrix<Float> gwt(arr);
       if (rmode_p=="norm" && (sumWgts[index](0,chan)> 0.0)) {
-	//os << "Normal robustness, robust = " << robust << LogIO::POST;
-	Double sumlocwt = 0.;
-	for(Int vgrid=0;vgrid<ny_p;vgrid++) {
-	  for(Int ugrid=0;ugrid<nx_p;ugrid++) {
-	    if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
-	  }
-	}
-	f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts[index](0,chan));
-	d2_p[index][chan] = 1.0;
+    //os << "Normal robustness, robust = " << robust << LogIO::POST;
+    Double sumlocwt = 0.;
+    for(Int vgrid=0;vgrid<ny_p;vgrid++) {
+      for(Int ugrid=0;ugrid<nx_p;ugrid++) {
+        if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
+      }
+    }
+    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts[index](0,chan));
+    d2_p[index][chan] = 1.0;
 
       }
       else if (rmode_p=="abs") {
-	//os << "Absolute robustness, robust = " << robust << ", noise = "
-	//   << noise.get("Jy").getValue() << "Jy" << LogIO::POST;
-	f2_p[index][chan] = square(robust_p);
-	d2_p[index][chan] = 2.0 * square(noise_p.get("Jy").getValue());
-	
+    //os << "Absolute robustness, robust = " << robust << ", noise = "
+    //   << noise.get("Jy").getValue() << "Jy" << LogIO::POST;
+    f2_p[index][chan] = square(robust_p);
+    d2_p[index][chan] = 2.0 * square(noise_p.get("Jy").getValue());
+    
       }
       else {
-	f2_p[index][chan] = 1.0;
-	d2_p[index][chan] = 0.0;
+    f2_p[index][chan] = 1.0;
+    d2_p[index][chan] = 0.0;
       }
       
       
@@ -231,10 +232,30 @@ using namespace casa::vi;
   initialized_p=True;
  }
 
-  void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuffer2& vb){
+//MaskedArray<Int> marr (, (flag(Slice(0,nvischan,1),row) > 5));
+//cout << "1. The flag slice is " << flag(Slice(0,nvischan,1),0) << endl;
+//cout << "2. The flag slice is " << flag(Slice(),0) << endl;
+//MaskedArray<Double> masked_freq(vb.getFrequencies(row), (flag(Slice(),row) = 1));
+//cout << "Maked array " << masked_freq << endl;
+
+Double BriggsCubeWeightor::calcFractionalBandwidth(const Vector<Double>& freqs, int nvischan, const Matrix<Bool>& flag){
+    Double centerFreq, fracBW;
+    
+    Int chn_f1 = 0;
+    while((flag(chn_f1,0) == 1) && (chn_f1 < (nvischan-1))) chn_f1++;
+    
+    Int chn_f2 = nvischan-1;
+    while((flag(chn_f2,0) == 1) && (chn_f2 >= 0)) chn_f2--;
+
+    centerFreq = (freqs(chn_f1) + freqs(chn_f2))/2;
+    fracBW = abs((freqs(chn_f2) - freqs(chn_f1))/centerFreq);
+    return fracBW;
+}
+
+void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuffer2& vb){
 
     if(multiFieldMap_p.size()==0)
-      throw(AipsError("BroggsCubeWeightor has not been initialized"));
+      throw(AipsError("BriggsCubeWeightor has not been initialized"));
     String key=String::toString(vb.msId())+"_"+String::toString(vb.fieldId()(0));
     Int index=multiFieldMap_p[key];
     Vector<Int> chanMap=ft_p[0]->channelMap(vb);
@@ -252,51 +273,62 @@ using namespace casa::vi;
     VisImagingWeight::unPolChanWeight(weight, vb.weightSpectrum());
     Matrix<Bool> flag;
     cube2Matrix(vb.flagCube(), flag);
+      
+    //#############
+    bool uvDisWeight = True;
+    //#############
 
     Int nChanWt=weight.shape()(0);
     Double sumwt=0.0;
     Float u, v;
+    Double fracBW, uvDistanceFactor;
     IPosition pos(4,0);
-    for (Int row=0; row<nRow; row++) {
-	for (Int chn=0; chn<nvischan; chn++) {
-	  if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
-	    pos(3)=chanMap(chn);
-	    Float f=vb.getFrequency(0,chn)/C::c;
-	    u=-uvw(0, row)*f;
-	    v=-uvw(1, row)*f;
-	    Int ucell=Int(std::round(uscale_p*u+uorigin_p));
-	    Int vcell=Int(std::round(vscale_p*v+vorigin_p));
-	    pos(0)=ucell; pos(1)=vcell;
-	    ////TESTOO
-	    //if(row==0){
-	     
-	    //  ofstream myfile;
-	    //  myfile.open ("briggsLoc.txt", ios::out | ios::app | ios::ate );
-	    //  myfile << vb.rowIds()(0) << " uv " << uvw.column(0) << " loc " << pos[0] << ", " << pos[1] << "\n"<< endl;
-	    //  myfile.close();
-  
-
-	    //}
-	    //////
-	    imweight(chn,row)=0.0;
-	    if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p)) {
-	      Float gwt=grids_p[index]->getAt(pos);
-	      if(gwt >0){
-		imweight(chn,row)=weight(chn%nChanWt,row);
-		imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
-		sumwt+=imweight(chn,row);
-	      }
-	    }
-	    //else {
-	    // imweight(chn,row)=0.0;
-	      //ndrop++;
-	    //}
-	  }
-	  else{
-	    imweight(chn,row)=0.0;
-	  }
     
-	}
+    cout << "fracBW row 0 of vb " << calcFractionalBandwidth(vb.getFrequencies(0), nvischan, flag(Slice(),0)) << endl;
+    cout << "f2_p " << f2_p[index][pos[3]] << endl;
+    
+    for (Int row=0; row<nRow; row++) {
+    
+    if(uvDisWeight) fracBW = calcFractionalBandwidth(vb.getFrequencies(row), nvischan, flag(Slice(),row));
+
+    for (Int chn=0; chn<nvischan; chn++) {
+      if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
+        pos(3)=chanMap(chn);
+        Float f=vb.getFrequency(0,chn)/C::c;
+        u=-uvw(0, row)*f;
+        v=-uvw(1, row)*f;
+        Int ucell=Int(std::round(uscale_p*u+uorigin_p));
+        Int vcell=Int(std::round(vscale_p*v+vorigin_p));
+        pos(0)=ucell; pos(1)=vcell;
+          
+        imweight(chn,row)=0.0;
+        if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p)) {
+          Float gwt=grids_p[index]->getAt(pos);
+          if(gwt >0){
+              imweight(chn,row)=weight(chn%nChanWt,row);
+              //#############
+              if(uvDisWeight){
+                  //uvDistanceFactor = fracBW*square(pow(uscale_p*u,2) + pow(vscale_p*v,2)) + 0.5;
+                  //cout << "using uv_weight " << endl;
+                  uvDistanceFactor = fracBW*square(pow(std::round(uscale_p*u),2) + pow(std::round(vscale_p*v),2)) + 0.5;
+                  
+                  if(uvDistanceFactor < 1.5) uvDistanceFactor = (4 - uvDistanceFactor)/(4 - 2*uvDistanceFactor);
+                  
+                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]/uvDistanceFactor +d2_p[index][pos[3]];
+              }
+              else{
+                  imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
+              }
+              //#############
+              sumwt+=imweight(chn,row);
+          }
+        }
+      }
+      else{
+        imweight(chn,row)=0.0;
+      }
+    
+    }
     }
 
    
@@ -333,25 +365,26 @@ void BriggsCubeWeightor::initializeFTMachine(const uInt index, const ImageInterf
 }
 void BriggsCubeWeightor::cube2Matrix(const Cube<Bool>& fcube, Matrix<Bool>& fMat)
   {
-	  fMat.resize(fcube.shape()[1], fcube.shape()[2]);
-	  Bool deleteIt1;
-	  Bool deleteIt2;
-	  const Bool * pcube = fcube.getStorage (deleteIt1);
-	  Bool * pflags = fMat.getStorage (deleteIt2);
-	  for (uInt row = 0; row < fcube.shape()[2]; row++) {
-		  for (Int chn = 0; chn < fcube.shape()[1]; chn++) {
-			  *pflags = *pcube++;
-			  for (Int pol = 1; pol < fcube.shape()[0]; pol++, pcube++) {
-				  *pflags = *pcube ? *pcube : *pflags;
-			  }
-			  pflags++;
-		  }
-	  }
-	  fcube.freeStorage (pcube, deleteIt1);
-	  fMat.putStorage (pflags, deleteIt2);
+      fMat.resize(fcube.shape()[1], fcube.shape()[2]);
+      Bool deleteIt1;
+      Bool deleteIt2;
+      const Bool * pcube = fcube.getStorage (deleteIt1);
+      Bool * pflags = fMat.getStorage (deleteIt2);
+      for (uInt row = 0; row < fcube.shape()[2]; row++) {
+          for (Int chn = 0; chn < fcube.shape()[1]; chn++) {
+              *pflags = *pcube++;
+              for (Int pol = 1; pol < fcube.shape()[0]; pol++, pcube++) {
+                  *pflags = *pcube ? *pcube : *pflags;
+              }
+              pflags++;
+          }
+      }
+      fcube.freeStorage (pcube, deleteIt1);
+      fMat.putStorage (pflags, deleteIt2);
   }
 
 
   }//# namespace refim ends
 }//namespace CASA ends
+
 

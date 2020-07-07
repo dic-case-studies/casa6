@@ -68,6 +68,7 @@ class BriggsCubeWeightor{
   private:
     void initializeFTMachine(const casacore::uInt index, const casacore::ImageInterface<casacore::Complex>& templateimage, const casacore::RecordInterface& inrec);
     void cube2Matrix(const casacore::Cube<casacore::Bool>& fcube, casacore::Matrix<casacore::Bool>& fMat);
+    casacore::Double calcFractionalBandwidth(const casacore::Vector<casacore::Double>& freqs, int nvischan, const casacore::Matrix<casacore::Bool>& flag);
     casacore::Block<casacore::CountedPtr<casacore::ImageInterface<casacore::Float> > > grids_p;
     
     casacore::Block<casacore::CountedPtr<refim::GridFT> >  ft_p;
