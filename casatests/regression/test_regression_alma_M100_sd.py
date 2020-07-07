@@ -3,11 +3,11 @@
 # Test Name:                                                                #
 # alma-m100-analysis-hpc-regression.py                                      #
 # An ALMA Science Verification Data Analysis Regression                     #
-# using observation of M100 from September 2011                             # 
-#                                                                           # 
+# using observation of M100 from September 2011                             #
+#                                                                           #
 # Rationale for Inclusion:                                                  #
 #    Need test of complete ALMA analysis chain                              #
-#                                                                           # 
+#                                                                           #
 # Input data:                                                               #
 #     two ASDMs                                                             #
 #     the clean masks                                                       #
@@ -198,15 +198,9 @@ class regression_alma_m100_test(unittest.TestCase):
         os.remove("raw_spectrum_Spw1,3,5,7,9,11,13,15.png")
         for target in ['9', '11', '13', '15']:
             for antname  in ['PM03', 'PM04', 'CM03', 'CM05']:
-                try:
-                    os.remove("baselined_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target))
-                except:
-                    print("No PNG generated for: {}".format("baselined_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target)))
-                try:
-                    os.remove("calibrated_spectrum.{}.spw{}.png".format(antname,target))
-                except:
-                    print("No PNG generated for: {}".format("calibrated_spectrum.{}.spw{}.png".format(antname,target)))
-                    
+                os.remove("baselined_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target))
+                os.remove("calibrated_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target))
+                
         for antname  in ['PM03', 'PM04', 'CM03', 'CM05']:
             os.remove("raw_spectrum.{}.spw15_Scan2,3,4,5,6,8,9,10,11.png".format(antname))
             
@@ -217,6 +211,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 shutil.rmtree(f)
                 
         for f in glob.glob("M100_SD_cube_*"):
+            if f.endswith(".log"): continue
             try:
                 os.remove(f)
             except:
@@ -261,8 +256,8 @@ class regression_alma_m100_test(unittest.TestCase):
 
 
 
-            # Initial inspection of the data with plotms task. 
-            # First plot amplitude versus channel, 
+            # Initial inspection of the data with plotms task.
+            # First plot amplitude versus channel,
             # averaging over time in order to speed up the plotting process.
 
             plotms(
@@ -353,8 +348,8 @@ class regression_alma_m100_test(unittest.TestCase):
             sdbaselineproc = time.clock()
             sdbaselinetime = time.time()
 
-            # Plot the calibrated spectra, using the plotms task. 
-            # The commands below will plot one spectrum per scan, spw and polarization. 
+            # Plot the calibrated spectra, using the plotms task.
+            # The commands below will plot one spectrum per scan, spw and polarization.
 
             for i in range(len(target_spws)):
                 org_spw = target_spws[i]
@@ -366,7 +361,7 @@ class regression_alma_m100_test(unittest.TestCase):
                         yaxis ='real',
                         averagedata = True,
                         avgtime = '1e8',
-                        spw = str(i),
+                        spw = org_spw,
                         antenna = antname + '&&&',
                         intent='OBSERVE_TARGET#ON_SOURCE',
                         iteraxis = 'scan',
@@ -469,7 +464,7 @@ class regression_alma_m100_test(unittest.TestCase):
 
 
 
-            ## Export data as fits  
+            ## Export data as fits
 
             os.system('rm -rf M100_SD_*.fits')
             exportfits(imagename='M100_SD_cube_PM_03_04.image', fitsimage='M100_SD_cube_PM_03_04.image.fits')
@@ -592,7 +587,7 @@ class regression_alma_m100_test(unittest.TestCase):
             print >>logfile,' *  diff_immax',diff_immax
             print >>logfile,' *  diff_immin',diff_immin
             print >>logfile,' *  diff_imrms',diff_imrms
-            print >>logfile,' *  diff_imflux',diff_imflux 
+            print >>logfile,' *  diff_imflux',diff_imflux
             print >>logfile,' *  diff_immean',diff_immean
             print >>logfile,' *  diff_immedian',diff_immedian
             print >>logfile,' *  diff_imnpts',diff_imnpts
@@ -623,21 +618,21 @@ class regression_alma_m100_test(unittest.TestCase):
                 print('* FAILED image minpos test')
             print('*  Image minpos', thistest_imminpos, file=logfile)
 
-            if (diff_immax < 0.01): 
+            if (diff_immax < 0.01):
                 print('* Passed image max test ')
             else:
                 test_status = False
                 print('* FAILED image max test ')
             print('*  Image max ',thistest_immax, file=logfile)
 
-            if (diff_immin < 0.01): 
+            if (diff_immin < 0.01):
                 print('* Passed image min test ')
             else:
                 test_status = False
                 print('* FAILED image min test ')
             print('*  Image min ',thistest_immin, file=logfile)
 
-            if (diff_imrms < 0.01): 
+            if (diff_imrms < 0.01):
                 print('* Passed image rms test ')
             else:
                 test_status = False
@@ -670,7 +665,7 @@ class regression_alma_m100_test(unittest.TestCase):
             else:
                 print('* FAILED image npts test ')
                 test_status = False
-            print('*  Image npts ',thistest_imnpts, file=logfile) 
+            print('*  Image npts ',thistest_imnpts, file=logfile)
 
             if (diff_imsum< 0.01):
                 print('* Passed image sum test ')
@@ -716,7 +711,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 print('')
                 print('Regression PASSED')
                 print('')
-            else: 
+            else:
                 regstate=False
                 print('')
                 print('Regression FAILED')
@@ -750,7 +745,7 @@ class regression_alma_m100_test(unittest.TestCase):
 
         except:
             formatted_traceback = traceback.format_exc()
-            casalog.post("Exception running regression: %s" % str(formatted_traceback),"WARN") 
+            casalog.post("Exception running regression: %s" % str(formatted_traceback),"WARN")
             self.assertTrue(False, msg="Exception running regression: %s" % str(formatted_traceback))
 
 def suite():
