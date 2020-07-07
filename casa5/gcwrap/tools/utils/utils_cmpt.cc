@@ -418,6 +418,7 @@ bool utils::initialize( const std::string &pypath,
 // CASA 5
 bool utils::initialize(const std::vector<std::string> &default_path) {
     std::string pypath;
+    std::string distro_data;
 #endif
     static bool initialized = false;
     if ( initialized ) return false;
