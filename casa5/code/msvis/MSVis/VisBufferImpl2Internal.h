@@ -518,7 +518,8 @@ public:
             capacity_p = desiredShape.last();
 
             if (! copyValues){
-                this->getItem() = typename T::value_type();
+                //this->getItem() = typename T::value_type();
+                std::fill(this->getItem().begin( ),this->getItem().end( ),typename T::value_type());
             }
 
         }
@@ -711,7 +712,7 @@ public:
     VbCacheItem <casacore::Int> polFrame_p;
     VbCacheItem <casacore::Int> polarizationId_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > processorId_p;
-    VbCacheItemArray <casacore::Vector<casacore::uInt> > rowIds_p;
+    VbCacheItemArray <casacore::RowNumbers> rowIds_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > scan_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > sigma_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > sigmaMat_p;

@@ -65,8 +65,8 @@ public:
     virtual casacore::Vector<casacore::Float> parang(casacore::Double time) const;
     virtual casacore::Float parang0(casacore::Double time) const;
     virtual casacore::Int polarizationId() const;
-    virtual casacore::Vector<casacore::uInt>& rowIds(){throw(casacore::AipsError("rowIds() not implemented for VBA."));}
-    virtual const casacore::Vector<casacore::uInt>& rowIds() const {throw(casacore::AipsError("rowIds() const not implemented for VBA."));}
+    virtual casacore::RowNumbers& rowIds(){throw(casacore::AipsError("rowIds() not implemented for VBA."));}
+    virtual const casacore::RowNumbers& rowIds() const {throw(casacore::AipsError("rowIds() const not implemented for VBA."));}
     virtual void setCorrectedVisCube(casacore::Complex c);
     virtual void setCorrectedVisCube (const casacore::Cube<casacore::Complex> & vis);
     virtual void setModelVisCube(casacore::Complex c);
@@ -129,7 +129,7 @@ protected:
     void setPolarizationId (casacore::Int);
     void setNRowChunk (casacore::Int);
     void setReceptor0Angle (const casacore::Vector<casacore::Float> & receptor0Angle);
-    void setRowIds (const casacore::Vector<casacore::uInt> & rowIds);
+    void setRowIds (const casacore::RowNumbers & rowIds);
     void setSelectedNVisibilityChannels (const casacore::Vector<casacore::Int> & nVisibilityChannels);
     void setSelectedSpectralWindows (const casacore::Vector<casacore::Int> & spectralWindows);
     void setTopoFreqs (const casacore::Vector<casacore::Double> & lsrFreq, const casacore::Vector<casacore::Double> & selFreq_p);

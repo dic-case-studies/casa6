@@ -597,7 +597,7 @@ Bool SimpleSimVi2::existsColumn (VisBufferComponent2 id) const
   // to find correspondance between a given row in this iteration to the
   // original ms row
 
-void SimpleSimVi2::getRowIds (Vector<uInt> &) const {
+void SimpleSimVi2::getRowIds (casacore::RowNumbers &) const {
   SSVi2NotYetImplemented()
   /*
   rowids.resize(nRows());

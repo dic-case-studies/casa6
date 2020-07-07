@@ -350,7 +350,7 @@ TransformingVi2::getReportingFrameOfReference ()  const
 }
 
 void
-TransformingVi2::getRowIds (Vector<uInt> & rowids)  const
+TransformingVi2::getRowIds (casacore::RowNumbers & rowids)  const
 {
      getVii()->getRowIds (rowids);
 }

@@ -1150,7 +1150,7 @@ VisibilityIteratorReadImpl::getReceptor0Angle ()
     return receptor0Angle;
 }
 
-Vector<uInt>
+casacore::RowNumbers
 VisibilityIteratorReadImpl::getRowIds () const
 {
     update_rowIds ();
@@ -1159,8 +1159,8 @@ VisibilityIteratorReadImpl::getRowIds () const
 }
 
 
-Vector<uInt> &
-VisibilityIteratorReadImpl::rowIds (Vector<uInt> & rowids) const
+casacore::RowNumbers&
+VisibilityIteratorReadImpl::rowIds (casacore::RowNumbers & rowids) const
 {
     /* Calculate the row numbers in the original MS only when needed,
      i.e. when this function is called */

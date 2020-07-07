@@ -519,8 +519,8 @@ template <class T> void MomentsBase<T>::_setIncludeExclude(
     }
     else if (include.nelements() == 2) {
         range.resize(2);
-        range(0) = casacore::min(include(0),include(1));
-        range(1) = casacore::max(include(0),include(1));
+        range(0) = std::min(include(0),include(1));
+        range(1) = std::max(include(0),include(1));
         noInclude = false;
     }
     else {
@@ -538,8 +538,8 @@ template <class T> void MomentsBase<T>::_setIncludeExclude(
     }
     else if (exclude.nelements() == 2) {
         range.resize(2);
-        range(0) = casacore::min(exclude(0),exclude(1));
-        range(1) = casacore::max(exclude(0),exclude(1));
+        range(0) = std::min(exclude(0),exclude(1));
+        range(1) = std::max(exclude(0),exclude(1));
         noExclude = false;
     }
     else {

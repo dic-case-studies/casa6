@@ -58,7 +58,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     virtual const casacore::ArrayColumn<casacore::Bool>& flag() {return ctCols_p->flag();}
 
-    virtual casacore::Bool flagRow(const casacore::Int& i) {return allTrue(ctCols_p->flag()(i));}
+    virtual casacore::Bool flagRow(casacore::rownr_t i) {return allTrue(ctCols_p->flag()(i));}
     
     // For now, return timeEPQuant() even for exposureQuant.
     virtual const casacore::ROScalarQuantColumn<casacore::Double>& exposureQuant() {return ctCols_p->timeEPQuant();};

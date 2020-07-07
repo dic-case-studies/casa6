@@ -5865,7 +5865,7 @@ Bool OldCalibrater::genericGatherAndSolve() {
 
 	    // Kludge for 3.4 to reset corr-indep flag to correct channel axis shape
 	    // (because we use vb.flag() below, rather than vb.flagCube())
-	    vb.flag().assign(operator>(partialNTrue(vb.flagCube(),IPosition(1,0)),uInt(0)));
+	    vb.flag().assign(operator>(partialNTrue(vb.flagCube(),IPosition(1,0)),0UL));
 
 	    if (verb(spw)) {
 	      logSink() << " to " 

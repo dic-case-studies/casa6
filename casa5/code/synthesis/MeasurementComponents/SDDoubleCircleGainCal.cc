@@ -96,7 +96,7 @@ casacore::MeasurementSet const &ms) {
   casacore::String taqlForState(
       "SELECT FLAG_ROW FROM $1 WHERE UPPER(OBS_MODE) ~ m/^OBSERVE_TARGET#ON_SOURCE/");
   casacore::Table stateSel = casacore::tableCommand(taqlForState, ms.state());
-  casacore::Vector<casacore::uInt> stateIdList = stateSel.rowNumbers();
+  auto stateIdList = stateSel.rowNumbers();
   debuglog << "stateIdList = " << stateIdList << debugpost;
   std::ostringstream oss;
   oss << "SELECT FROM $1 WHERE ANTENNA1 == ANTENNA2 && STATE_ID IN "
@@ -273,7 +273,7 @@ void SDDoubleCircleGainCal::globalPostSolveTinker() {
   //col[3] = "FEED1";
   CTIter ctiter(sorted,col);
 
-  Vector<uInt> to_be_removed;
+  Vector<rownr_t> to_be_removed;
   while (!ctiter.pastEnd()) {
     Int const thisAntenna = ctiter.thisAntenna1();
     Quantity antennaDiameterQuant = antennaDiameterColumn(thisAntenna); // nominal
@@ -313,7 +313,7 @@ void SDDoubleCircleGainCal::globalPostSolveTinker() {
     // number of data points), go to next iteration step
     if (preal.empty()) {
       // add row numbers to the "TO-BE-REMOVED" list
-      Vector<uInt> rows = ctiter.table().rowNumbers();
+      auto rows = ctiter.table().rowNumbers();
       size_t nelem = to_be_removed.nelements();
       size_t nelem_add = rows.nelements();
       to_be_removed.resize(nelem + nelem_add, True);

@@ -35,6 +35,8 @@
 #include <measures/Measures/Stokes.h>
 #include <measures/Measures/Stokes.h>
 #include <casacore/casa/Arrays/ArrayFwd.h>
+#include <casacore/scimath/Mathematics/RigidVector.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 #include <map>
 #include <vector>
@@ -226,7 +228,7 @@ public:
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const = 0;
+    virtual void getRowIds (casacore::RowNumbers & rowids) const = 0;
 
     virtual VisBuffer2 * getVisBuffer () const = 0;
 

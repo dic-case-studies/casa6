@@ -226,8 +226,8 @@ Int FiltrationTVI<Filter>::nRows() const {
 }
 
 template<class Filter>
-void FiltrationTVI<Filter>::getRowIds(Vector<uInt> &rowids) const {
-  Vector<uInt> org;
+void FiltrationTVI<Filter>::getRowIds(casacore::RowNumbers &rowids) const {
+  casacore::RowNumbers org;
   getVii()->getRowIds(org);
   ::FiltrateVector(org, is_filtrate_p, rowids);
 }

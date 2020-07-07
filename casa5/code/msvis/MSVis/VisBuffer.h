@@ -686,9 +686,9 @@ public:
 
     // Return the row Ids from the original ms. If the ms used is a subset of
     // another ms then rowIds() return the row ids of the original ms.
-    virtual casacore::Vector<casacore::uInt>& rowIds();
+    virtual casacore::RowNumbers& rowIds();
 
-    virtual const casacore::Vector<casacore::uInt>& rowIds() const {
+    virtual const casacore::RowNumbers& rowIds() const {
         return This->rowIds();
     };
 
@@ -1124,7 +1124,7 @@ bool item ## OK_p;
     casacore::MDirection phaseCenter_p;
     casacore::Int polFrame_p;
     casacore::Vector<casacore::Int> processorId_p;
-    casacore::Vector<casacore::uInt> rowIds_p;
+    casacore::RowNumbers rowIds_p;
     casacore::Vector<casacore::Int> scan_p;
     casacore::Vector<casacore::Float> sigma_p;
     casacore::Matrix<casacore::Float> sigmaMat_p;

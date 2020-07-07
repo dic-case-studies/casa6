@@ -604,7 +604,7 @@ public:
   // Return the row ids as from the original root table. This is useful 
   // to find correspondance between a given row in this iteration to the 
   // original ms row
-  virtual casacore::Vector<casacore::uInt>& rowIds(casacore::Vector<casacore::uInt>& rowids) const;
+  virtual casacore::RowNumbers& rowIds(casacore::RowNumbers& rowids) const;
   // Return the numbers of rows in the current chunk
   casacore::Int nRowChunk() const;
   // Return the number of sub-intervals in the current chunk
@@ -729,7 +729,7 @@ public:
   ///////////////casacore::MPosition getObservatoryPosition () const;
   ///////////////casacore::MDirection getPhaseCenter () const;
   casacore::Vector<casacore::Float> getReceptor0Angle ();
-  casacore::Vector<casacore::uInt> getRowIds () const;
+  casacore::RowNumbers getRowIds () const;
 
   // Returns the columns that the VisibilityIterator is sorting by.
   const casacore::Block<casacore::Int>& getSortColumns() const;

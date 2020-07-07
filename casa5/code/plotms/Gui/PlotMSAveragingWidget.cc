@@ -30,6 +30,7 @@
 
 #include <QDoubleValidator>
 #include <QSet>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -61,7 +62,7 @@ PlotMSAveragingWidget::PlotMSAveragingWidget(QWidget* parent) :
     QSet<PlotMSAveraging::Field> seenFields;
     foreach(PlotMSAveraging::Field f, itsFlags_.keys()) {
         if(seenFields.contains(f)) continue;
-        const vector<PlotMSAveraging::Field>& group =
+        const std::vector<PlotMSAveraging::Field>& group =
             PlotMSAveraging::fieldMutuallyExclusiveGroup(f);
         if(group.size() > 0) {
             buttonGroup = new QtButtonGroup(this);
@@ -99,7 +100,7 @@ PlotMSAveragingWidget::~PlotMSAveragingWidget() { }
 PlotMSAveraging PlotMSAveragingWidget::getValue() const {
     PlotMSAveraging val;
     
-    const vector<PlotMSAveraging::Field>& f = PlotMSAveraging::fields();
+    const std::vector<PlotMSAveraging::Field>& f = PlotMSAveraging::fields();
     double d;
     bool ok;
     for(unsigned int i = 0; i < f.size(); i++) {
@@ -123,7 +124,7 @@ void PlotMSAveragingWidget::setValue(const PlotMSAveraging& val) {
     itsFlag_ = false;
     bool averaging (false);
     
-    const vector<PlotMSAveraging::Field>& f = PlotMSAveraging::fields();
+    const std::vector<PlotMSAveraging::Field>& f = PlotMSAveraging::fields();
     for(unsigned int i = 0; i < f.size(); i++) {
         if(!itsFlags_.contains(f[i])) continue;
         bool flag = val.getFlag(f[i]);

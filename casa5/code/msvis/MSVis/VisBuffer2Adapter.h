@@ -346,9 +346,9 @@ public:
 
     // Return the row Ids from the original ms. If the ms used is a subset of
     // another ms then rowIds() return the row ids of the original ms.
-    virtual casacore::Vector<casacore::uInt>& rowIds(){ IllegalOperation(); }
+    virtual casacore::RowNumbers& rowIds(){ IllegalOperation(); }
 
-    virtual const casacore::Vector<casacore::uInt>& rowIds() const { return vb2_p-> rowIds(); };
+    virtual const casacore::RowNumbers& rowIds() const { return vb2_p-> rowIds(); };
 
     //</group>
 

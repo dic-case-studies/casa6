@@ -665,15 +665,15 @@ Vector<Double> PointingDirectionCalculator::getDirection(uInt i) {
     return direction;
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowId() {
+RowNumbers PointingDirectionCalculator::getRowId() {
     return selectedMS_->rowNumbers();
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowIdForOriginalMS() {
+RowNumbers PointingDirectionCalculator::getRowIdForOriginalMS() {
     return selectedMS_->rowNumbers(*originalMS_, True);
 }
 
-uInt PointingDirectionCalculator::getRowId(uInt i) {
+rownr_t PointingDirectionCalculator::getRowId(uInt i) {
     return selectedMS_->rowNumbers()[i];
 }
 

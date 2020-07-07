@@ -25,6 +25,7 @@
 
 #include <mstransform/TVI/StatWtTypes.h>
 #include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 #include <map>
 
@@ -89,7 +90,7 @@ public:
         const casacore::Vector<casacore::Int>& ant2,
         const casacore::Vector<casacore::Int>& spws,
         const casacore::Vector<casacore::Double>& exposures,
-        const casacore::Vector<casacore::uInt>& rowIDs
+        const casacore::RowNumbers& rowIDs
     ) const = 0;
 
     virtual void weightSingleChanBin(

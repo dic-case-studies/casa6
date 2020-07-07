@@ -26,16 +26,17 @@
 
 #include <imageanalysis/Regions/CasacRegionManager.h>
 
-#include <casa/Containers/Record.h>
-#include <casa/OS/File.h>
-#include <images/Images/TempImage.h>
-#include <images/Images/SubImage.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/OS/File.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Images/SubImage.h>
+#include <casacore/casa/Utilities/Regex.h>
 
-#include <images/Regions/ImageRegion.h>
-#include <images/Regions/WCBox.h>
-#include <lattices/LRegions/LCBox.h>
-#include <measures/Measures/Stokes.h>
-#include <tables/Tables/TableRecord.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/images/Regions/WCBox.h>
+#include <casacore/lattices/LRegions/LCBox.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/tables/Tables/TableRecord.h>
 
 #include <imageanalysis/Annotations/AnnRegion.h>
 #include <imageanalysis/Annotations/RegionTextList.h>
@@ -43,9 +44,9 @@
 #include <imageanalysis/ImageAnalysis/ImageMetaData.h>
 #include <imageanalysis/ImageAnalysis/SubImageFactory.h>
 
-#include <lattices/LRegions/LCSlicer.h>
+#include <casacore/lattices/LRegions/LCSlicer.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 #include <memory>
 
 using namespace casacore;
@@ -107,7 +108,7 @@ vector<uInt> CasacRegionManager::_setPolarizationRanges(
     // First split on commas and semi-colons.
     // in the past for polarization specification.
 
-    Vector<String> parts = stringToVector(specification, Regex("[,;]"));
+    Vector<String> parts = stringToVector(specification, std::regex("[,;]"));
     Vector<String> polNames = Stokes::allNames(false);
     uInt nNames = polNames.size();
     Vector<uInt> nameLengths(nNames);

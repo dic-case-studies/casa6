@@ -1454,7 +1454,7 @@ Array<Complex> HetArrayConvFunc::resample(const Array<Complex>& inarray, const D
     Int newNx=shp(0);
     Int newNy=shp(1);
     
-    Array<Complex> out(shp, 0.0);
+    Array<Complex> out(shp, Complex(0.0));
    // cerr << "SHP " << shp << endl;
     
    IPosition incursor=IPosition(inarray.shape().nelements(),1);

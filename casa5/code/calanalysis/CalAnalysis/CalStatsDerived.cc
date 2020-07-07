@@ -38,6 +38,7 @@ Modification history:
 // -----------------------------------------------------------------------------
 
 #include <calanalysis/CalAnalysis/CalStatsDerived.h>
+#include <casacore/casa/Utilities/GenSort.h>
 
 // -----------------------------------------------------------------------------
 // Start of casa namespace

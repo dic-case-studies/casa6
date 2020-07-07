@@ -442,7 +442,7 @@ void MsAverager::setAverager(
             Int field = vb.fieldId();
             Int arry = vb.arrayId();
 
-            Vector<uInt> rowNumber = vb.rowIds();
+            auto rowNumber = vb.rowIds();
             //cout << "rowIds=" << rowNumber << endl;
             for (int row = 0; row < nRow; row++) {
                //skip flagged rows when selecting good data

@@ -28,12 +28,12 @@
 
 #include <spectrallines/Splatalogue/SplatalogueTable.h>
 
-#include <casa/Exceptions/Error.h>
-#include <casa/Quanta/MVTime.h>
-#include <tables/TaQL/ExprNode.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/tables/TaQL/ExprNode.h>
 
-#include <tables/Tables/ScaColDesc.h>
-#include <tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/ScaColDesc.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
 #include <iomanip>
 
 #include <iostream>
@@ -152,12 +152,12 @@ class Kluge {
 
 public:
 
-typedef Array<T> (TableExprNode::* Extractor) (const Vector<uInt>& rownrs) const;
+typedef Array<T> (TableExprNode::* Extractor) (const RowNumbers& rownrs) const;
 
 static Array<T>
 extract (const TableExprNode & col, Extractor extractor)
 {
-  Vector<uInt> rownrs (col.nrow());
+  RowNumbers rownrs (col.nrow());
   indgen (rownrs);
 
   return ((& col) ->* extractor) (rownrs);

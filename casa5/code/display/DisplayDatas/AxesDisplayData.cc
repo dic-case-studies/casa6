@@ -25,17 +25,18 @@
 //#
 //# $Id$
 
-#include <casa/aips.h>
-#include <casa/Exceptions.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Exceptions.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Record.h>
 #include <display/DisplayEvents/WCRefreshEvent.h>
 #include <display/Display/WorldCanvas.h>
 #include <display/Display/WorldCanvasHolder.h>
 #include <display/DisplayDatas/AxesDisplayData.h>
 #include <display/DisplayDatas/AxesDisplayMethod.h>
 #include <display/DisplayCanvas/WCAxisLabeller.h>
-#include <casa/System/AipsrcValue.h>
+#include <casacore/casa/System/AipsrcValue.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
