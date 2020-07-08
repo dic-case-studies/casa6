@@ -232,11 +232,6 @@ using namespace casa::vi;
   initialized_p=True;
  }
 
-//MaskedArray<Int> marr (, (flag(Slice(0,nvischan,1),row) > 5));
-//cout << "1. The flag slice is " << flag(Slice(0,nvischan,1),0) << endl;
-//cout << "2. The flag slice is " << flag(Slice(),0) << endl;
-//MaskedArray<Double> masked_freq(vb.getFrequencies(row), (flag(Slice(),row) = 1));
-//cout << "Maked array " << masked_freq << endl;
 
 Double BriggsCubeWeightor::calcFractionalBandwidth(const Vector<Double>& freqs, int nvischan, const Matrix<Bool>& flag){
     Double centerFreq, fracBW;
@@ -281,11 +276,8 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     Int nChanWt=weight.shape()(0);
     Double sumwt=0.0;
     Float u, v;
-    Double fracBW, uvDistanceFactor;
+    Double fracBW, nCellsBW, uvDistanceFactor;
     IPosition pos(4,0);
-    
-    cout << "fracBW row 0 of vb " << calcFractionalBandwidth(vb.getFrequencies(0), nvischan, flag(Slice(),0)) << endl;
-    cout << "f2_p " << f2_p[index][pos[3]] << endl;
     
     for (Int row=0; row<nRow; row++) {
     
@@ -308,16 +300,13 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
               imweight(chn,row)=weight(chn%nChanWt,row);
               //#############
               if(uvDisWeight){
-                  //uvDistanceFactor = fracBW*square(pow(uscale_p*u,2) + pow(vscale_p*v,2)) + 0.5;
-                  //cout << "using uv_weight " << endl;
-                  uvDistanceFactor = fracBW*square(pow(std::round(uscale_p*u),2) + pow(std::round(vscale_p*v),2)) + 0.5;
-                  
-                  if(uvDistanceFactor < 1.5) uvDistanceFactor = (4 - uvDistanceFactor)/(4 - 2*uvDistanceFactor);
-                  
-                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]/uvDistanceFactor +d2_p[index][pos[3]];
+                  nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
+                  uvDistanceFactor = nCellsBW + 0.5;
+                  if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
+                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]*2/uvDistanceFactor +d2_p[index][pos[3]];
               }
               else{
-                  imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
+                  imweight(chn,row)/=gwt*f2_p[index][pos[3]]*2+d2_p[index][pos[3]];
               }
               //#############
               sumwt+=imweight(chn,row);
