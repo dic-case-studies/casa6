@@ -27,7 +27,7 @@
 #ifndef PLOTMSPLOTTER_QO_H_
 #define PLOTMSPLOTTER_QO_H_
 
-#include <plotms/Gui/PlotMSPlotter.ui.h>
+#include <ui/ui_PlotMSPlotter.h>
 
 #include <casaqt/QtUtilities/QtActionGroup.qo.h>
 #include <graphics/GenericPlotter/PlotFactory.h>

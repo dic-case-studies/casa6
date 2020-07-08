@@ -30,7 +30,7 @@
 #include <casaqt/QwtPlotter/QPFactory.h>
 
 #if QWT_VERSION < 0x060000
-#include <qwt_legend_item.h>
+#include <qwt/qwt_legend_item.h>
 #endif
 
 #include <QPainter>

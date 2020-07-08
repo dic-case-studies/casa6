@@ -258,11 +258,15 @@ class PyParallelImagerHelper():
 #        for aname in namelist:
 #            shutil.rmtree( dirname + "/" + aname )
 #############################################
-    def deletepartimages(self, imagename, node):
+    def deletepartimages(self, imagename, node, deldir=False):
         namelist = shutil.fnmatch.filter( os.listdir(self.getworkdir(imagename, node)), "*" )
-        #print("Deleting : ", namelist, ' from ', dirname, ' starting with ', imname)
+        #print("Deleting : ", namelist, ' from ',self.getworkdir(imagename, node) , ' starting with ', imagename)
         for aname in namelist:
               shutil.rmtree( os.path.join(self.getworkdir(imagename, node), aname) )
+        if deldir==True:
+            #print("Deleting workdirectory : "+self.getworkdir(imagename, node))
+            shutil.rmtree( self.getworkdir(imagename, node) )
+
 #############################################
     def getworkdir(self, imagename, nodeid):
         workdir = ''

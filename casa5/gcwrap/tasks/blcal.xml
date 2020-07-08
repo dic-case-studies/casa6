@@ -342,18 +342,17 @@ with closure errors, use blcal.
         </param>
 
         <param type="intArray" name="spwmap">
-<shortdescription>Spectral windows combinations to form for gaintables(s)</shortdescription>
-<description>Spectral windows combinations to form for gaintables(s)
-                     Subparameter of callib=False
-                     default: [] (apply solutions from each spw to
-                     that spw only)
-
-                        Examples:
-                        spwmap=[0,0,1,1] means apply the caltable
-                        solutions from spw = 0 to the spw 0,1 and spw
-                        1 to spw 2,3.
-                        spwmap=[[0,0,1,1],[0,1,0,1]] (for multiple
-                        gaintables)
+<shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
+<description>Spectral window mappings to form for gaintable(s)
+                     default: [] (apply solutions from each calibration spw to
+                     the same MS spw only)
+                     Any available calibration spw can be mechanically mapped to any 
+                      MS spw. 
+                     Examples:
+                        spwmap=[0,0,1,1] means apply calibration 
+                          from cal spw = 0 to MS spw 0,1 and cal spw 1 to MS spws 2,3.
+                        spwmap=[[0,0,1,1],[0,1,0,1]] (use a list of lists for multiple
+                          gaintables)
 </description>
                 <type>any</type>
                 <value></value>

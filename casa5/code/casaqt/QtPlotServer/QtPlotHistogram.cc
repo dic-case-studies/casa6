@@ -27,8 +27,8 @@
 
 #include <qstring.h>
 #include <qpainter.h>
-#include <qwt_painter.h>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 // #include <casaqt/QtPlotServer/QtPlotHistogram.h>
 #include "QtPlotHistogram.h"
 

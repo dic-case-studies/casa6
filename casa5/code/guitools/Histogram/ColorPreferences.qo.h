@@ -27,7 +27,7 @@
 
 #include <QDialog>
 
-#include <guitools/Histogram/ColorPreferences.ui.h>
+#include <ui/ui_ColorPreferences.h>
 
 class QSettings;
 

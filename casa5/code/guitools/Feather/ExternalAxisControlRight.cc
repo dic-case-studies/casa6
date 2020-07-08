@@ -26,10 +26,10 @@
 #include "ExternalAxisControlRight.h"
 #include <QDebug>
 #include <QPainter>
-#include <qwt_plot.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_scale_div.h>
-#include <qwt_text_label.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_div.h>
+#include <qwt/qwt_text_label.h>
 
 namespace casa {
 

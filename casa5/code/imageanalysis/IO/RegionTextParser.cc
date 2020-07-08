@@ -208,7 +208,7 @@ void RegionTextParser::_determineVersion(
 void RegionTextParser::_parse(const String& contents, const String& fileDesc, bool requireImageRegion) {
     _log->origin(LogOrigin("AsciiRegionFileParser", __func__));
     static const Regex startAnn("^ann[[:space:]]+");
-    static const Regex startDiff("^-[[:space:]]+");
+    static const Regex startDiff("^-[[:space:]]*");
     static const Regex startGlobal("^global[[:space:]]+");
     AnnotationBase::unitInit();
     /*Vector<String>*/ auto lines = stringToVector(contents, '\n');

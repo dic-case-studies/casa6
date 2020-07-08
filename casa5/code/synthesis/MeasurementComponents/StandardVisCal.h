@@ -139,7 +139,7 @@ public:
 
   // Hazard a guess at parameters
   virtual void guessPar(VisBuffer& vb);
-  virtual void guessPar(SDBList& sdbs);  //  VI2
+  virtual void guessPar(SDBList& sdbs,const casacore::Bool& corrDepFlags=false);  //  VI2
 
   // Set up corruptor
   virtual void createCorruptor(const VisIter& vi, const casacore::Record& simpar, const casacore::Int nSim);
@@ -256,7 +256,7 @@ public:
 
   // Hazard a guess at parameters
   virtual void guessPar(VisBuffer& vb);
-  virtual void guessPar(SDBList& sdbs);   // VI2
+  virtual void guessPar(SDBList& sdbs,const casacore::Bool& corrDepFlags=false);  //  VI2
 
   virtual void createCorruptor(const VisIter& vi, const casacore::Record& simpar, const casacore::Int nSim);
 

@@ -316,7 +316,7 @@
         {
              "testNumber":"3171",
              "testName":"Statwt",
-             "testScript":"test_statwt",
+             "testScript":"test_req_task_statwt",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -2994,8 +2994,18 @@
         },
         {
              "testNumber":"0000",
+<<<<<<< HEAD
+             "testName":"Sdintimaging",
+             "testScript":"test_req_task_sdintimaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@nrao.edu",
+             "priority":"4",
+             "tag":"functionalTest",
+=======
              "testName":"STK VLASS TEST",
-             "testScript":"test_stk_vlass_pipeline_imaging.py",
+             "testScript":"test_stk_vlass_pipeline_imaging",
              "testType":"functionalTest",
              "testLevel":"accepted",
              "Maintainer":"Sandra Castro",
@@ -3008,7 +3018,7 @@
         {
              "testNumber":"0000",
              "testName":"STK ALMA TEST",
-             "testScript":"test_stk_alma_pipeline_imaging.py",
+             "testScript":"test_stk_alma_pipeline_imaging",
              "testType":"functionalTest",
              "testLevel":"accepted",
              "Maintainer":"Sandra Castro",
