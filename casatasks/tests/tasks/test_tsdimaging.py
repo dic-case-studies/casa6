@@ -3764,7 +3764,7 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('singledish/alma')
+    datapath = ctsys_resolve('visibilities/almasd')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move'
 

@@ -3288,7 +3288,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('casa-data-req/singledish/alma')
+    datapath = ctsys_resolve('casa-data-req/visibilities/almasd')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move.im'
 
