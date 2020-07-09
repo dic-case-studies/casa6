@@ -44,7 +44,13 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
 
         State( ) { }
 
-        virtual bool initialized( ) const { return true; }
+        virtual bool initialized( ) const {
+#if defined(CASATOOLS)
+            return true;
+#else
+            return false;
+#endif
+        }
 
         virtual std::list<std::string> dataPath( ) const {
             return data_path;
