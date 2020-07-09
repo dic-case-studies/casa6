@@ -100,7 +100,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsCleaner.setInitScaleXfrs(width);
       itsCleaner.setInitScalePsfs();
       itsCleaner.setInitScaleMasks(itsMatMask);
-      //itsCleaner.defineScales( itsScaleSizes ); // genie, this goes away
 
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
@@ -116,9 +115,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
     // and then find the peak, scale, and optimizes the obj function
     // Convolve psf with the active set (using the above 4) and do the following
-
-    /*Matrix<Float> tempMat(itsMatPsf);
-    itsCleaner.setPsf(tempMat);*/
 
     Matrix<Float> tempMat1(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
@@ -140,10 +136,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //itsCleaner.defineAspScales(scaleSizes);
     // try speed up here
     itsCleaner.defineAspScales(itsScaleSizes);
-
-    itsCleaner.makePsfScales();
-    itsCleaner.makeScaleMasks();
-    itsCleaner.makedirtyscales();
+    // now active-set itsScaleSizes is ready for cleanning
+    itsCleaner.makePsfScales(); 
+    //itsCleaner.makeScaleMasks(); it doesn't seem I need this. Mask is used for InitScales only
+    //itsCleaner.makedirtyscales(); //it doesn't seem I need this. 
+                                    //Asp is different from MS on Asp is substracting from dirty directly
   }
 
 
@@ -181,9 +178,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( retval==-3 ) {os << LogIO::WARN << "AAspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
     ////This is going to be wrong if there is no 0 scale;
+    // residual() takes the difference of the models before/after clean
     Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
     // account for mask as well
     peakresidual = max(abs(residual*itsMatMask));
+    cout << "SDAlg: peakres " << peakresidual << endl;
     modelflux = sum( itsMatModel );
   }
 

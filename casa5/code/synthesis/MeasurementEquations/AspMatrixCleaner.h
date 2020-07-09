@@ -49,10 +49,13 @@ public:
       const casacore::Float gain, const casacore::Quantity& aThreshold,
       const casacore::Quantity& fThreshold);
 
-  // Calculate the convolutions of the dirty image
-  // this is the same as MatrixCleaner::makeDirtyScales
+  // Calculate the convolutions of the dirty image 
+  // the concept is almost the same as MatrixCleaner::makeDirtyScales
   // except this doesn't check itsCleanType
   void makedirtyscales();
+
+  // Calculate the convolution of the dirty image with the optimum scale
+  void makedirtyscale();
 
   // Clean an image.
   //return value gives you a hint of what's happening
@@ -66,6 +69,12 @@ public:
   // helper functions for ASP
   float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
 
+  // Make an image of the specified scale by Gaussian
+  void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
+
+  // Make images of the Asp scales in the active-set 
+  void makeAspScales();
+
   void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
 
   // calculate the convolutions of the psf with the initial scales
@@ -78,9 +87,11 @@ public:
   //bool isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center, casacore::Float threshold);
   casacore::Float isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center);
 
+  // returns the active-set aspen for cleaning
   std::vector<casacore::Float> getActiveSetAspen();
 
   //void defineAspScales(const casacore::Vector<casacore::Float>& scales);
+  // Juat define the active-set aspen scales 
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
   void switchedToHogbom();
@@ -104,15 +115,15 @@ private:
   using MatrixCleaner::itsMask;
   using MatrixCleaner::itsPositionPeakPsf;
   using MatrixCleaner::itsSmallScaleBias;
-  using MatrixCleaner::itsScaleMasks;
-  using MatrixCleaner::itsScaleXfrs;
+  //using MatrixCleaner::itsScaleMasks;
+  //using MatrixCleaner::itsScaleXfrs;
   using MatrixCleaner::itsScalesValid;
   using MatrixCleaner::itsNscales;
   using MatrixCleaner::itsMaskThreshold;
   using MatrixCleaner::itsDirty;
   using MatrixCleaner::itsXfr;
   using MatrixCleaner::itsScaleSizes;
-  using MatrixCleaner::itsScales;
+  //using MatrixCleaner::itsScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsInitScales;
   casacore::Block<casacore::Matrix<casacore::Complex> > itsInitScaleXfrs;
   using MatrixCleaner::itsPsfConvScales;
@@ -157,8 +168,12 @@ private:
   unsigned int itsNumHogbomIter;
   unsigned int itsNthHogbom;
   bool itsSwitchedToMS;
-  std::vector<casacore::Float> itsGoodAspActiveSet;
+  std::vector<casacore::Float> itsGoodAspActiveSet; // avtice-set of aspens
+  std::vector<casacore::Float> itsGoodAspAmplitude; // amplitude of avtice-set of aspens
   float itsStrenThres;
+  casacore::Int itsOptimumScale;
+  casacore::IPosition itsPositionOptimum;
+  casacore::Float itsOptimumScaleSize;
 };
 
 } //# NAMESPACE CASA - END
