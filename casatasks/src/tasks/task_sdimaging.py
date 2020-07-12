@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import re
 import numpy
+import shutil
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -22,6 +23,7 @@ else:
     import sdbeamutil
     from cleanhelper import cleanhelper
 
+
 @sdutil.sdtask_decorator
 def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
               mode, nchan, start, width, veltype, outframe,
@@ -33,11 +35,20 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
         worker.execute()
         worker.finalize()
 
+
 def is_string_type(val):
     """
     Returns True if the argument is string type.
     """
     return type(val) in [str, numpy.string_]
+
+
+def smart_remove(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        os.remove(path)
+
 
 class sdimaging_worker(sdutil.sdtask_template_imaging):
     def __init__(self, **kwargs):
@@ -489,9 +500,9 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 
         # remove existing images if overwrite is True
         if os.path.exists(self.outfile) and self.overwrite:
-            os.system('rm -rf %s'%(self.outfile))
-        if os.path.exists(self.outfile+'.weight') and self.overwrite:
-            os.system('rm -rf %s'%(self.outfile+'.weight'))
+            smart_remove(self.outfile)
+        if os.path.exists(self.outfile + '.weight') and self.overwrite:
+            smart_remove(self.outfile + '.weight')
 
         # make science image
         outfile = self.makeimage(imagetype='science')
