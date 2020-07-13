@@ -19,19 +19,21 @@ elif os.name == 'nt':                   # Contributed by Jeff Bauer
         else:
             home = os.environ['HOMEPATH']
 
-taskrc = os.path.join(home, ".casa/taskrc.py")
-try:
-    from casataskrc import *
-except:
+import sys as _sys
+if not "-m" in _sys.argv:
+    taskrc = os.path.join(home, ".casa/taskrc.py")
     try:
-        f = open(taskrc)
-    except IOError:
-        pass
-    else:
-        f.close()
+        from casataskrc import *
+    except:
         try:
-            exec(open(taskrc).read())
-        except:
-            import sys
-            sys.stderr.write("error: evaluation of %s failed\n" % taskrc)
+            f = open(taskrc)
+        except IOError:
+            pass
+        else:
+            f.close()
+            try:
+                exec(open(taskrc).read())
+            except:
+                import sys
+                sys.stderr.write("error: evaluation of %s failed\n" % taskrc)
 
