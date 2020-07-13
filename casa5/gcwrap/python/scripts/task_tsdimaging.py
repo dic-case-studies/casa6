@@ -899,9 +899,9 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     do_weight_mask(imagename, weightimage, minweight)
 
     # CAS-10891
-    shutil.rmtree(outfile + '.sumwt')
+    _remove_image(outfile + '.sumwt')
 
     # CAS-10893
     # TODO: remove the following line once the 'correct' SD 
     # PSF image based on primary beam can be generated
-    shutil.rmtree(outfile + '.psf')
+    _remove_image(outfile + '.psf')
