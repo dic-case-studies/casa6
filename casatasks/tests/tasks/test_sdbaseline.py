@@ -573,6 +573,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
     test050 --- existing file as outfile with overwrite=False (raises an exception)
     test051 --- no data after selection (raises an exception)
+    test060 --- blparam file (infile+'_blparam.txt') should be removed if it exists
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -806,6 +807,23 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             sdbaseline(infile=infile, outfile=outfile, spw=spw, maskmode=mode)
         except Exception as e:
             self.assertIn('Spw Expression: No match found for 10,', str(e))
+
+    def test060(self):
+        """Basic Test 060: blparam file (infile+'_blparam.txt') should be removed if it exists"""
+        tid = '060'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+        try:
+            #first run
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+            #keep blparam.txt, and remove outfile only
+            shutil.rmtree(outfile)
+            #second run. it must run successfully
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            raise
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):

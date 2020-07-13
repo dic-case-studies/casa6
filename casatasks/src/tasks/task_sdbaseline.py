@@ -48,6 +48,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (blfunc == 'variable' and not os.path.exists(blparam)):
             raise ValueError("input file '%s' does not exists" % blparam)
+        blparam_file = infile + '_blparam.txt'
+        if os.path.exists(blparam_file) and os.path.isfile(blparam_file):
+            os.remove(blparam_file)  # CAS-11781
         
         if (spw == ''): spw = '*'
 
