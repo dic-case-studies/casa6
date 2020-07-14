@@ -765,16 +765,16 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         tb.close()
         variance_orig_pol1 = numpy.var(orig_pol1_value)
         
-        #open the MS after sdbaseline
+        # open the MS after sdbaseline
         tb.open(outfile)
         pol1_value = numpy.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
         tb.close()
         variance_pol1 = numpy.var(pol1_value)
 
-        #assert pol1_value < orig_pol1_value
+        # assert pol1_value < orig_pol1_value
         self.assertTrue((pol1_value<orig_pol1_value).all())
         
-        #assert variance of pol1_value < variance of orig_pol1_value
+        # assert variance of pol1_value < variance of orig_pol1_value
         self.assertLess(variance_pol1**0.5, variance_orig_pol1**0.5)
 
         #print '1sigma before cspline (pol1)', variance_orig_pol1**0.5 
@@ -816,20 +816,20 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         overwrite = False
         datacolumn = 'float_data'
 
-        #first run
+        # First run
         try:
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
             print('first run failed')
             raise e
 
-        #keep blparam.txt, and remove outfile only
+        # Keep blparam.txt, and remove outfile only
         shutil.rmtree(outfile)
         self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
         blparamfile = infile + '_blparam.txt'
         self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
 
-        #second run, which must be successful
+        # Second run, which must be successful
         try:
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
@@ -2032,12 +2032,12 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc])
                 self.assertEqual(tb.getcell('FUNC_PARAM', irow)[ipol], order)
                 ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
-                #tolerance value in the next line is temporarily set a bit large 
-                #since rms in bltable is smaller than expected because it is
-                #calculated based on masklist currently stored in bltable, which 
-                #is after an extra clipping.
-                #this bug is already fixed in trunk of Sakura, so once libsakura
-                #is updated we can set smaller tolerance value. (2015/4/22 WK)
+                # tolerance value in the next line is temporarily set a bit large 
+                # since rms in bltable is smaller than expected because it is
+                # calculated based on masklist currently stored in bltable, which 
+                # is after an extra clipping.
+                # this bug is already fixed in trunk of Sakura, so once libsakura
+                # is updated we can set smaller tolerance value. (2015/4/22 WK)
                 self._checkValue(ref[0]['rms'], tb.getcell('RMS', irow)[ipol][0], 2.0e-2)
         tb.close()
 
@@ -2164,7 +2164,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         for i in range(len(blfunc)):
             for j in range(len(testmode)):
                 print('testing blfunc='+blfunc[i]+', testmode='+testmode[j]+'...')
-                #prepare input data
+                # prepare input data
                 if os.path.exists(infile):
                     shutil.rmtree(infile)
                 shutil.copytree(os.path.join(self.datapath,self.infile), infile)
@@ -2190,7 +2190,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                     nrow_bltable = tb.nrows()
                 self.assertTrue((nrow_bltable == nrow_data - 1), 
                                 msg="The baseline table is not shortened...")
-                #delete used data
+                # delete used data
                 if (os.path.exists(self.infile)):
                     shutil.rmtree(self.infile)
                 os.system('rm -rf '+self.outroot+'*')
@@ -2212,7 +2212,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         polval = ['', 'RR', 'LL']
         for j in range(len(testmode)):
             print('testing blfunc='+blfunc+', testmode='+testmode[j]+'...')
-            #prepare input data
+            # prepare input data
             if os.path.exists(self.infile):
                 shutil.rmtree(self.infile)
             shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
@@ -2239,7 +2239,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 nrow_bltable = tb.nrows()
             self.assertTrue((nrow_bltable == nrow_data - 1), 
                             msg="The baseline table is not shortened...")
-            #delete used data
+            # delete used data
             if (os.path.exists(self.infile)):
                 shutil.rmtree(self.infile)
             os.system('rm -rf '+self.outroot+'*')
@@ -2280,7 +2280,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
         
-        #create baseline table
+        # create baseline table
         blparam = self.outroot+'.blparam'
         self._createBlparamFile(blparam, self.blparam_order, self.blparam_dic, '')
         result = sdbaseline(infile=self.infile,datacolumn='float_data',
@@ -2602,7 +2602,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 Basic unit tests for task sdbaseline. No interactive testing.
 
     List of tests:
-    #'poly'
+    # 'poly'
     test000 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table']
     test001 --- blformat=['text','csv','table'], bloutput=['test.txt','test.csv','test.table'] 
     test002 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','test.csv']
@@ -2619,7 +2619,7 @@ Basic unit tests for task sdbaseline. No interactive testing.
     test012 --- blformat='',                     bloutput='test.csv'
 
 
-    #'cspline'
+    # 'cspline'
     test016 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table']
     test017 --- blformat=['text','csv','table'], bloutput=['test.txt','test.csv','test.table'] 
     test018 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','test.csv']
@@ -2635,7 +2635,7 @@ Basic unit tests for task sdbaseline. No interactive testing.
     test028 --- blformat='',                     bloutput='test.csv'
 
 
-    #'variable'
+    # 'variable'
     test013 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table'] 
     test014 --- blformat=['table','text','csv'], bloutput=['test.table','','test.csv'] 
     test015 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','']
@@ -4512,7 +4512,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
     csplstat = {'rms': 0.20181625130943376, 'min': -0.42370939254760742,
                 'max': 2.0274257659912109, 'median': 0.0038695335388183594,
                 'stddev': 0.20181625130943376}
-#     sinustat = {'max': , 'min': , 'median': , 'rms': , 'stddev': }
+    #sinustat = {'max': , 'min': , 'median': , 'rms': , 'stddev': }
 
     def setUp(self):
         for prevout in glob.glob(self.outroot+'*'):
@@ -4681,9 +4681,9 @@ class sdbaseline_selection(unittest.TestCase):
             raise ValueError("Invalid selection parameter %s" % key)
         pols = [0,1]
         rows = [0,1]
-        if key == 'pol':  #self.selection stores pol ids
+        if key == 'pol':  # self.selection stores pol ids
             pols = self.selections[key][1]
-        else: #self.selection stores row ids
+        else: # self.selection stores row ids
             rows = self.selections[key][1]
         return (rows, pols)
 
@@ -4726,7 +4726,7 @@ class sdbaseline_selection(unittest.TestCase):
         poltest = (sel_param == "pol")
         if dcol.startswith("float"):
             testcolumn = "FLOAT_DATA"
-        else: #output is in DATA column
+        else: # output is in DATA column
             testcolumn = "DATA"
         tb.open(msname)
         try:
