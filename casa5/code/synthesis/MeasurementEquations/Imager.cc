@@ -172,6 +172,8 @@
 #include <casadbus/plotserver/PlotServerProxy.h>
 #include <casadbus/utilities/BusAccess.h>
 #include <casadbus/session/DBusSession.h>
+#else
+#include <synthesis/ImagerObjects/grpcInteractiveClean.h>
 #endif
 
 #include <casa/OS/HostInfo.h>
@@ -7659,6 +7661,10 @@ Int Imager::interactivemask(const String& image, const String& mask,
     // return 2 if "stop"
     return result;
 #else
+   Quantity thr;
+   if ( ! Quantity::read(thr,thresh) ) thr = Quantity(0,"Jy");
+   float thold = (float) thr.get("Jy").getValue( );
+   grpcInteractiveClean::getManager( ).setControls( niter, ncycles, thold);
    return false;
 #endif
 }
