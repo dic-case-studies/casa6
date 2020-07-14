@@ -815,15 +815,25 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         outfile = self.outroot+tid+'.ms'
         overwrite = False
         datacolumn = 'float_data'
+
+        #first run
         try:
-            #first run
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
-            #keep blparam.txt, and remove outfile only
-            shutil.rmtree(outfile)
-            #second run. it must run successfully
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
-            raise
+            print('first run failed')
+            raise e
+
+        #keep blparam.txt, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        blparamfile = infile + '_blparam.txt'
+        self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+
+        #second run, which must be successful
+        try:
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            raise e
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):

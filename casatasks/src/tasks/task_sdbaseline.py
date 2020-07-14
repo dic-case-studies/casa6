@@ -49,8 +49,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if (blfunc == 'variable' and not os.path.exists(blparam)):
             raise ValueError("input file '%s' does not exists" % blparam)
         blparam_file = infile + '_blparam.txt'
-        if os.path.exists(blparam_file) and os.path.isfile(blparam_file):
-            os.remove(blparam_file)  # CAS-11781
+        if os.path.exists(blparam_file):
+            remove_data(blparam_file)  # CAS-11781
         
         if (spw == ''): spw = '*'
 
@@ -154,6 +154,16 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 blformat_item = ['csv', 'text', 'table']
 blformat_ext  = ['csv', 'txt',  'bltable']
 
+
+def remove_data(filename):
+    if os.path.exists(filename):
+        if os.path.isdir(filename):
+            shutil.rmtree(filename)
+        elif os.path.isfile(filename):
+            os.remove(filename)
+        else:
+            # could be a symlink
+            os.remove(filename)
 
 def check_fftthresh(fftthresh):
     has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)
