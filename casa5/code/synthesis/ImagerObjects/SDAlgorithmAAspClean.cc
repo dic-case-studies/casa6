@@ -137,7 +137,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // try speed up here
     itsCleaner.defineAspScales(itsScaleSizes);
     // now active-set itsScaleSizes is ready for cleanning
-    itsCleaner.makePsfScales(); 
+    //itsCleaner.makePsfScales(); it doesn't seem I need this.
     //itsCleaner.makeScaleMasks(); it doesn't seem I need this. Mask is used for InitScales only
     //itsCleaner.makedirtyscales(); //it doesn't seem I need this. 
                                     //Asp is different from MS on Asp is substracting from dirty directly
