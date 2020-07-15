@@ -40,9 +40,13 @@ casa_add_library( mstransform
  TVI/UVContSubTVI.cc
  TVI/PolAverageTVI.cc
  TVI/PointingInterpolationTVI.cc
+ TVI/StatWtClassicalDataAggregator.cc
+ TVI/StatWtDataAggregator.cc
+ TVI/StatWtFloatingWindowDataAggregator.cc
  TVI/StatWtTVI.cc
  TVI/StatWtTVIFactory.cc
  TVI/StatWtTVILayerFactory.cc
+ TVI/StatWtVarianceAndWeightCalculator.cc
 )
 
 install (FILES
@@ -79,15 +83,22 @@ install (FILES
     TVI/StatWtTVI.h
     TVI/StatWtTVIFactory.h
     TVI/StatWtTVILayerFactory.h
+    TVI/StatWtTypes.h
+    TVI/StatWtClassicalDataAggregator.h
+    TVI/StatWtDataAggregator.h
+    TVI/StatWtFloatingWindowDataAggregator.h
+    TVI/StatWtVarianceAndWeightCalculator.h
 	DESTINATION include/casacode/mstransform/TVI
 	)
 	
 casa_add_assay( mstransform MSTransform/test/tMSBin.cc )
 #casa_add_assay( mstransform MSTransform/test/tStatWt.cc )
 casa_add_executable( mstransform msuvbin apps/msuvbin/msuvbin.cc )
-casa_add_executable( mstransform fixspwbackport apps/fixspwbackport/fixspwbackport.cc )
+#casa_add_executable( mstransform fixspwbackport apps/fixspwbackport/fixspwbackport.cc )
 
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/tRecursiveVi2Layers_GT.cc )
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/PolAverageTVI_GTest.cc )
 #casa_add_google_test( MODULES mstransform SOURCES TVI/test/tChannelAverageTransformEngine_GT.cc )
-casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtTVI.cc  ../msvis/MSVis/test/TestUtilsTVI.cc ../msvis/MSVis/test/MsFactory.cc)
+#casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtTVI.cc  ../msvis/MSVis/test/TestUtilsTVI.cc ../msvis/MSVis/test/MsFactory.cc)
+casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtVarianceAndWeightCalculator.cc)
+

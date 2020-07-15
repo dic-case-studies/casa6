@@ -1,62 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+                                              --&gt;
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-                                              -->
-
-<task type="function" name="rmfit" category="analysis">
+<task category="analysis" name="rmfit" type="function">
 
 <shortdescription>Calculate rotation measure.</shortdescription>
 
 <input>
-    <param type="any" name="imagename" mustexist="true">
-        <description>Name(s) of the input image(s). Must be specified.</description>
-        <any type='variant' limittype='string stringArray'/>
-        <value type='string'/>
+    <param mustexist="true" name="imagename" type="any"><shortdescription>Name(s) of the input image(s). Must be specified.</shortdescription><description>Name(s) of the input image(s). Must be specified.</description>
+        
+        <any limittype="string stringArray" type="variant"/>
+        <value type="string"/>
         <value/>
         <example>imagename='ngc5921.im'</example>
     </param>
-    <param type="string" direction="in" name="rm">
-        <description>Output rotation measure image name. If not specified, no image is written.</description>
+    <param name="rm" direction="in" type="string"><shortdescription>Output rotation measure image name. If not specified, no image is written.</shortdescription><description>Output rotation measure image name. If not specified, no image is written.</description>
+        
         <value/>
     </param>
-    <param type="string" direction="in" name="rmerr">
-        <description>Output rotation measure error image name. If not specified, no image is written.</description>
+    <param name="rmerr" direction="in" type="string"><shortdescription>Output rotation measure error image name. If not specified, no image is written.</shortdescription><description>Output rotation measure error image name. If not specified, no image is written.</description>
+        
         <value/>
     </param>
-    <param type="string" direction="in" name="pa0">
-        <description>Output position angle (degrees) at zero wavelength image name. If not specified, no image is written.</description>
+    <param name="pa0" direction="in" type="string"><shortdescription>Output position angle (degrees) at zero wavelength image name. If not specified, no image is written.</shortdescription><description>Output position angle (degrees) at zero wavelength image name. If not specified, no image is written.</description>
+        
         <value/>
     </param>
-    <param type="string" direction="in" name="pa0err">
-        <description>Output position angle (degrees) at zero wavelength error image name. If not specified, no image is written.</description>
+    <param name="pa0err" direction="in" type="string"><shortdescription>Output position angle (degrees) at zero wavelength error image name. If not specified, no image is written.</shortdescription><description>Output position angle (degrees) at zero wavelength error image name. If not specified, no image is written.</description>
+        
         <value/>
     </param>
-    <param type="string" direction="in" name="nturns">
-        <description>Output number of turns image name. If not specified, no image is written.</description>
+    <param name="nturns" direction="in" type="string"><shortdescription>Output number of turns image name. If not specified, no image is written.</shortdescription><description>Output number of turns image name. If not specified, no image is written.</description>
+        
      <value/>
      </param>
-        <param type="string" direction="in" name="chisq">
-        <description>Output reduced chi squared image name. If not specified, no image is written.</description>
+        <param name="chisq" direction="in" type="string"><shortdescription>Output reduced chi squared image name. If not specified, no image is written.</shortdescription><description>Output reduced chi squared image name. If not specified, no image is written.</description>
+        
         <value/>
      </param>
-     <param type="double" direction="in" name="sigma">
-         <description>Estimate of the thermal noise.  A value less than 0 means auto estimate.</description>
+     <param name="sigma" direction="in" type="double"><shortdescription>Estimate of the thermal noise.  A value less than 0 means auto estimate.</shortdescription><description>Estimate of the thermal noise.  A value less than 0 means auto estimate.</description>
+         
          <value>-1</value>
      </param>
-     <param type="double" direction="in" name="rmfg">
-         <description>Foreground rotation measure in rad/m/m to subtract.</description>
+     <param name="rmfg" direction="in" type="double"><shortdescription>Foreground rotation measure in rad/m/m to subtract.</shortdescription><description>Foreground rotation measure in rad/m/m to subtract.</description>
+         
         <value>0.0</value>
      </param>
-     <param type="double" direction="in" name="rmmax">
-        <description>Maximum rotation measure in rad/m/m for which to solve. IMPORTANT TO SPECIFY.</description>
+     <param name="rmmax" direction="in" type="double"><shortdescription>Maximum rotation measure in rad/m/m for which to solve. IMPORTANT TO SPECIFY.</shortdescription><description>Maximum rotation measure in rad/m/m for which to solve. IMPORTANT TO SPECIFY.</description>
+        
         <value>0.0</value>
      </param>
-     <param type="double" direction="in" name="maxpaerr">
-        <description>Maximum input position angle error in degrees to allow in solution determination.</description>
+     <param name="maxpaerr" direction="in" type="double"><shortdescription>Maximum input position angle error in degrees to allow in solution determination.</shortdescription><description>Maximum input position angle error in degrees to allow in solution determination.</description>
+        
         <value>1e30</value>
      </param>
 
@@ -140,12 +134,12 @@ is the basic problem with rotation measure algorithms.
 EXAMPLES
 
 # Calculate the rotation measure for a single polarization image
-rmfit(imagename="mypol.im", rm="myrm.im", rmmax=50.0)
+rmfit(imagename=&quot;mypol.im&quot;, rm=&quot;myrm.im&quot;, rmmax=50.0)
 
 # calculate the rotation measure using a set of polarization images from
 # different spectral windows or bands.
 
-rmfit(imagename=["pol1.im", "pol2.im", "pol3.im", rm="myrm2.im", rmmax=50.0)
+rmfit(imagename=[&quot;pol1.im&quot;, &quot;pol2.im&quot;, &quot;pol3.im&quot;, rm=&quot;myrm2.im&quot;, rmmax=50.0)
 
 </example>
 

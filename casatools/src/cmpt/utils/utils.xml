@@ -215,6 +215,12 @@ returns true if initalization was performed; returns false if initialization was
 </input>
 
 <input>
+  <param type="string" name="distro_data_path">
+	<description>path to the data provided by the casadata pkg</description>
+  </param>
+</input>
+
+<input>
   <param type="stringArray" name="default_path">
 	<description>directories that should constitute the default data path</description>
   </param>

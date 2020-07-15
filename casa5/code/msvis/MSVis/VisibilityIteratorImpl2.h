@@ -84,8 +84,11 @@ class VisibilityIteratorImpl2 : public ViImplementation2 {
 
 public:
 
-	typedef VisibilityIterator2::DataColumn DataColumn;
-	typedef std::tuple <casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > ChannelInfo;
+	using DataColumn = VisibilityIterator2::DataColumn;
+	using ChannelInfo = std::tuple<
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>,
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>
+	>;
 
 	// Default constructor - useful only to assign another iterator later
 	////VisibilityIteratorImpl2 ();
@@ -523,6 +526,9 @@ public:
 	virtual casacore::Int
 	nRowsInChunk() const override;
 
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const override;
+ 
 	// Return the number of sub-intervals in the current chunk
 
 	//virtual casacore::Int nSubInterval() const;

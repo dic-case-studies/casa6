@@ -107,7 +107,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
                              char *&server_string, bool &do_dbus, bool &inital_run,
                              bool &server_startup, bool &daemon,
                              bool &without_gui, bool &persistent, bool &casapy_start,
-                             char *&logfile_path );
+                             char *&logfile_path, char *&data_path, bool &do_not_fork );
 static void start_manager_root( const char *origname, int numargs, char **args,
                                 const char *dbusname, bool without_gui, pid_t root_pid );
 static void launch_server( const char *origname, int numargs, char **args,
@@ -254,6 +254,7 @@ int main( int argc, const char *argv[] ) {
 #endif
 
 	bool server_startup = false;
+    bool do_not_fork = false;
     bool daemon = false;
 	bool without_gui = false;
 	bool persistent = false;
@@ -261,6 +262,7 @@ int main( int argc, const char *argv[] ) {
 	char *server_string = 0;
 	bool with_dbus = false;
 	char *logfile_path = 0;
+	char *command_line_data_path = 0;
 	bool initial_run = false;
 
 	char **args;
@@ -285,7 +287,7 @@ int main( int argc, const char *argv[] ) {
 
 	preprocess_args( argc, argv, numargs, args, server_string, with_dbus,
 	                 initial_run, server_startup, daemon, without_gui,
-                     persistent, casapy_start, logfile_path );
+                     persistent, casapy_start, logfile_path, command_line_data_path, do_not_fork );
 
 	//
 	// configure datapath for casacore and colormaps...
@@ -302,16 +304,19 @@ int main( int argc, const char *argv[] ) {
 		// initialize CASAviewer app data...
 		if ( ! casacore::AppStateSource::fetch( ).initialized( ) ) {
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			// Mac OSX  --  path is specific to package format
+			// Mac OSX	--	path is specific to package format
 			// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 			// initialize CASAviewer app data...
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 			// generate path to data...
-			std::string datapath(exepath);
-			datapath.erase( datapath.end( ) -  16, datapath.end( ) );
-			std::string pgplotpath = datapath;             // save for later...
-			std::string pluginpath = datapath;             // save for later...
-			datapath += "Resources/casa-data";
+			std::string datapath;
+			if ( command_line_data_path ) 
+				datapath = command_line_data_path;
+			else {
+				datapath = exepath;
+				datapath.erase( datapath.end( ) -  16, datapath.end( ) );
+				datapath += "Resources/casa-data";
+			}
 			// initialize casacore...
 			std::list<std::string> datadirs;
 			datadirs.push_back(datapath);
@@ -320,6 +325,9 @@ int main( int argc, const char *argv[] ) {
 			// initialize CASAviewer app data...
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 			// configure pgpplot...
+			std::string pgplotpath(exepath);
+			pgplotpath.erase( pgplotpath.end( ) -  16, pgplotpath.end( ) );
+			std::string pluginpath = pgplotpath;			 // save for later...
 			std::string rgbpath = std::string("PGPLOT_RGB=") + pgplotpath + "Resources/pgplot/rgb.txt";
 			std::string fontpath = std::string("PGPLOT_FONT=") + pgplotpath + "Resources/pgplot/grfont.dat";
 			putenv(strdup(rgbpath.c_str( )));
@@ -347,13 +355,16 @@ int main( int argc, const char *argv[] ) {
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// generate path to data...
 		bool packed_app = ends_with(exepath, "/AppRun");
-		std::string datapath(exepath);
-		//     packed_app -> .../AppRun
-		// not packed_app -> .../usr/bin/CASAviewer
-		datapath.erase( datapath.end( ) -  (packed_app ? 6 : 18), datapath.end( ) );
-		std::string pgplotpath = datapath;			   // save for later...
-		std::string pluginpath = datapath;			   // save for later...
-		datapath += "data";
+		std::string datapath;
+		if ( command_line_data_path ) 
+			datapath = command_line_data_path;
+		else {
+			datapath = exepath;
+			//     packed_app -> .../AppRun
+			// not packed_app -> .../usr/bin/CASAviewer
+			datapath.erase( datapath.end( ) -  (packed_app ? 6 : 18), datapath.end( ) );
+			datapath += "data";
+		}
 		// initialize casacore...
 		std::list<std::string> datadirs;
 		datadirs.push_back(datapath);
@@ -362,6 +373,11 @@ int main( int argc, const char *argv[] ) {
 		// initialize CASAviewer app data...
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// configure pgpplot...
+		std::string pgplotpath(exepath);
+		//     packed_app -> .../AppRun
+		// not packed_app -> .../usr/bin/CASAviewer
+		pgplotpath.erase( pgplotpath.end( ) -  (packed_app ? 6 : 18), pgplotpath.end( ) );
+		std::string pluginpath = pgplotpath;			   // save for later...
 		std::string rgbpath = std::string("PGPLOT_RGB=") + pgplotpath + "usr/lib/pgplot/rgb.txt";
 		std::string fontpath = std::string("PGPLOT_FONT=") + pgplotpath + "usr/lib/pgplot/grfont.dat";
 		putenv(strdup(rgbpath.c_str( )));
@@ -385,7 +401,7 @@ int main( int argc, const char *argv[] ) {
 		}
 	}
 
-	if ( (server_startup || without_gui) && initial_run ) {
+	if ( (server_startup || without_gui) && initial_run && ! do_not_fork ) {
         if ( daemon ) {
             launch_server( argv[0], numargs, args, server_string, without_gui,
                            persistent, casapy_start );
@@ -573,12 +589,13 @@ int main( int argc, const char *argv[] ) {
 static void preprocess_args( int argc, const char *argv[], int &numargs, char **&args,
                              char *&server_string, bool &with_dbus, bool &initial_run,
                              bool &server_startup, bool &daemon, bool &without_gui, bool &persistent,
-                             bool &casapy_start, char *&logfile_path ) {
+                             bool &casapy_start, char *&logfile_path, char *&data_path, bool &do_not_fork ) {
 
 	without_gui = false;
 	persistent = false;
 	casapy_start = false;
 	server_string = 0;
+	data_path = 0;
 
 	initial_run = (isdigit(argv[0][0]) ? false : true);
 
@@ -598,7 +615,9 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 					server_string = name;
 				}
 			}
-		} else if ( ! strncmp(argv[x],"--server",8) ) {
+		} else if ( ! strcmp(argv[x],"--nofork") ) {
+            do_not_fork = true;
+        } else if ( ! strncmp(argv[x],"--server",8) ) {
 			server_startup = true;
 			if ( argv[x][8] == '=' ) {
 				char *name = strdup( &argv[x][9] );
@@ -613,7 +632,30 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 					server_string = name;
 				}
 			}
-#if ! defined(CASATOOLS)
+#if defined(CASATOOLS)
+		} else if ( ! strncmp(argv[x],"--datapath",10) ) {
+			if ( argv[x][10] == '=' ) {
+				char *path = strdup( &argv[x][11] );
+				if ( strlen(path) <= 0 ) {
+					free( path );
+					qWarning("no path provided with '--datapath=...'");
+					qFatal("exiting...");
+					exit(1);
+				} else {
+					struct stat statbuf;
+					if ( stat( path, &statbuf ) == -1 ) {
+						qWarning("path provided with '--datapath=...' does not exist");
+						qFatal("exiting...");
+						exit(1);
+					}
+					data_path = path;
+				}
+			} else {
+				qWarning("path must be provided with '--datapath=...'");
+				qFatal("exiting...");
+				exit(1);
+			}
+#else
         } else if ( ! strncmp(argv[x],"--dbusname",10) ) {
 			if ( argv[x][10] == '=' ) {
 				char *name = strdup( &argv[x][11] );

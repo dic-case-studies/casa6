@@ -23,6 +23,8 @@
 #ifndef FlagAgentSummary_H_
 #define FlagAgentSummary_H_
 
+#include <unordered_map>
+
 #include <flagging/Flagging/FlagAgentBase.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -45,17 +47,17 @@ class FlagAgentSummary : public FlagAgentBase {
 			accumTotalCount = 0;
 		}
 
-		std::map<std::string, std::map<std::string, casacore::uInt64> > accumflags;
-		std::map<std::string, std::map<std::string, casacore::uInt64> > accumtotal;
+		std::unordered_map<std::string, std::unordered_map<std::string, casacore::uInt64> > accumflags;
+		std::unordered_map<std::string, std::unordered_map<std::string, casacore::uInt64> > accumtotal;
 
-		std::map<casacore::Int, std::map<casacore::uInt, casacore::uInt64> > accumChannelflags;
-		std::map<casacore::Int, std::map<casacore::uInt, casacore::uInt64> > accumChanneltotal;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::uInt, casacore::uInt64> > accumChannelflags;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::uInt, casacore::uInt64> > accumChanneltotal;
 
-		std::map<casacore::Int, std::map<std::string, casacore::uInt64> > accumPolarizationflags;
-		std::map<casacore::Int, std::map<std::string, casacore::uInt64> > accumPolarizationtotal;
+		std::unordered_map<casacore::Int, std::unordered_map<std::string, casacore::uInt64> > accumPolarizationflags;
+		std::unordered_map<casacore::Int, std::unordered_map<std::string, casacore::uInt64> > accumPolarizationtotal;
 
-		std::map<casacore::Int, std::map<casacore::Int, casacore::uInt64> > accumAntScanflags;
-		std::map<casacore::Int, std::map<casacore::Int, casacore::uInt64> > accumAntScantotal;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::Int, casacore::uInt64> > accumAntScanflags;
+		std::unordered_map<casacore::Int, std::unordered_map<casacore::Int, casacore::uInt64> > accumAntScantotal;
 
 		casacore::uInt64 accumTotalFlags, accumTotalCount;
 	};
@@ -71,6 +73,9 @@ protected:
 
 	// Common functionality for each visBuffer (don't repeat at the row level)
 	void preProcessBuffer(const vi::VisBuffer2 &visBuffer);
+
+        // Add flags sum into summary fields
+        void postProcessBuffer();
 
 	// Compute flags for a given mapped visibility point
 	bool computeRowFlags(const vi::VisBuffer2 &visBuffer, FlagMapper &flags, casacore::uInt row);
@@ -88,7 +93,7 @@ private:
 
 	// Build simple plot-reports from the summary dictionary
 	FlagReport buildFlagCountPlots();
-	std::map<casacore::Int , std::vector<casacore::Double> > frequencyList;
+	std::unordered_map<casacore::Int , std::vector<casacore::Double> > frequencyList;
 
 	casacore::Bool spwChannelCounts;
 	casacore::Bool spwPolarizationCounts;
@@ -96,18 +101,21 @@ private:
 	casacore::Bool fieldCounts;
 	casacore::String display_p;
 
-	std::map<std::string, summary* > fieldSummaryMap;
+	std::unordered_map<std::string, summary* > fieldSummaryMap;
 	summary *currentSummary;
 	casacore::Int arrayId;
 	casacore::Int fieldId;
 	casacore::Int spw;
 	casacore::Int scan;
 	casacore::Int observationId;
+        // to count total flags (whether on/off) in the current buffer
+        size_t bufferTotal = 0;
+        // to count total flags (on) in the current buffer
+        size_t bufferFlags = 0;
 
-	string arrayId_str;
-	string fieldId_str;
+        string arrayId_str;
+        string fieldId_str;
 	string spw_str;
-	string scan_str;
 	string observationId_str;
 
 };

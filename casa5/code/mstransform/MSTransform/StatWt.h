@@ -71,13 +71,6 @@ public:
     // binWidth must be in seconds
     void setTimeBinWidth(casacore::Double binWidth);
 
-    // set the time bin width using an integral number of integration time.
-    // For this purpose, the integration time is defined as the median value
-    // of the INTERVAL column. If either extrema in this column is more than
-    // 25% different from the median, an exception will be thrown because
-    // there is no single representative value of the integration time.
-    void setTimeBinWidthUsingInterval(casacore::uInt n);
-
     // set the StatWtTVI config record
     void setTVIConfig(const casacore::Record& config);
 
@@ -89,14 +82,14 @@ private:
     // time bin width in seconds
     casacore::Double _timeBinWidth = 1;
     casacore::LogIO _log;
-    std::unique_ptr<casacore::Int> _chanBinWidthInt = nullptr;
-    std::unique_ptr<casacore::Record> _chanBinWidthQ = nullptr;
+    std::unique_ptr<casacore::Int> _chanBinWidthInt  {};
+    std::unique_ptr<casacore::Record> _chanBinWidthQ = {};
     casacore::String _combine = "";
     casacore::StatisticsAlgorithmFactory<
         casacore::Double, casacore::Array<casacore::Float>::const_iterator,
         casacore::Array<casacore::Bool>::const_iterator
     > _saf;
-    std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange = nullptr;
+    std::unique_ptr<std::pair<casacore::Double, casacore::Double>> _wtrange {};
     casacore::Record _tviConfig;
     casacore::Bool _preview = false;
     const StatWtColConfig* _statwtColConfig = nullptr;

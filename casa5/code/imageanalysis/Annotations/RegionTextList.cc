@@ -29,6 +29,7 @@
 #include <casa/OS/File.h>
 #include <imageanalysis/Annotations/AnnRegion.h>
 #include <images/Regions/WCDifference.h>
+#include <casacore/casa/BasicSL/STLIO.h>
 
 using namespace casacore;
 namespace casa {
@@ -146,11 +147,10 @@ CountedPtr<const WCRegion> RegionTextList::getRegion() const {
         _composite = _regions[0];
         return _composite;
     }
-    vector<Bool>::const_iterator iter = _union.begin();
-    vector<Bool>::const_iterator end = _union.end();
-    vector<Bool>::const_iterator foundDifference = std::find(iter, end, false);
+    const auto end = _union.cend();
+    const auto foundDifference = std::find(_union.cbegin(), end, false) != end;
     PtrBlock<const WCRegion *> unionRegions;
-    if (foundDifference == end) {
+    if (! foundDifference) {
         // no complementary regions, just union the whole lot
         unionRegions.resize(_regions.size());
         for (uInt i=0; i<_regions.size(); ++i) {
@@ -160,26 +160,30 @@ CountedPtr<const WCRegion> RegionTextList::getRegion() const {
         return _composite;
     }
     uInt count = 0;
-    while(iter != end) {
-        if (*iter) {
-            unionRegions.resize(unionRegions.size() + 1);
-            unionRegions[_regions.size() - 1] = _regions[count].get();
+    for (const auto isUnion: _union) {
+        if (isUnion) {
+            auto newSize = unionRegions.size() + 1;
+            unionRegions.resize(newSize);
+            unionRegions[newSize - 1] = _regions[count].get();
         }
         else {
             WCUnion myUnion(false, unionRegions);
             const WCDifference *myDiff = new WCDifference(myUnion, *_regions[count]);
+            // _myDiff is used solely for pointer management, so that the pointers are
+            // deleted when this object goes out of scope, because PtrBlocks do no
+            // memory management
             _myDiff.push_back(std::shared_ptr<const WCDifference>(myDiff));
             unionRegions.resize(1);
             unionRegions[0] = myDiff;
         }
         ++count;
-        ++iter;
     }
-    _composite.reset(
-        (unionRegions.size() == 1)
-        ? unionRegions[0]
-        : new WCUnion(false, unionRegions)
-    );
+    if (unionRegions.size() == 1) {
+        _composite = _myDiff[_myDiff.size() - 1];
+    }
+    else {
+        _composite.reset(new WCUnion(false, unionRegions));
+    }
     return _composite;
 }
 

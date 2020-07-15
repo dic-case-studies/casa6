@@ -34,13 +34,15 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/TransformMachines2/CFBuffer.h>
 #include <synthesis/TransformMachines2/CFStore2.h>
-#include <synthesis/TransformMachines2/PhaseGrad.h>
+#include <synthesis/TransformMachines2/BaselineType.h>
 #include <casa/Utilities/CountedPtr.h>
 #include <coordinates/Coordinates/DirectionCoordinate.h>
 #include <images/Images/ImageInterface.h>
 #include <images/Images/TempImage.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <synthesis/MeasurementComponents/SolvableVisCal.h>
+#include <synthesis/TransformMachines2/Utils.h>
+#include <casa/OS/Timer.h>
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
  namespace refim{
@@ -50,33 +52,63 @@ namespace casa { //# NAMESPACE CASA - BEGIN
    public:
      VB2CFBMap();
      
-     ~VB2CFBMap() {};
+     ~VB2CFBMap() 
+     {
+       LogIO log_l(LogOrigin("VB2CFBMap", "~VB2CFMap[R&D]"));
+
+       log_l << "Total extra cost of heterogeneous array pointing correction = " << totalCost_p << "sec.  Total VBs processed =  " << totalVB_p << 
+	 ". The pointingoffsetsigdev used was = "<< sigmaDev <<LogIO::POST;
+       
+     };
      
      VB2CFBMap& operator=(const VB2CFBMap& other);
      const casacore::CountedPtr<CFBuffer >& operator[](const int& i) {return vb2CFBMap_p[i];};
      
      inline casacore::Vector<casacore::CountedPtr<CFBuffer>>& getVBRow2CFBMap() {return vb2CFBMap_p;};	
      inline int nelements() {return vb2CFBMap_p.nelements();}
+     
+     virtual void setBLNeedsNewPOPG(vector<int>& vbRow2BLMap_p);
 
      virtual casacore::Int mapAntIDToAntType(const casacore::Int& /*ant*/) {return 0;};
      virtual casacore::Int makeVBRow2CFBMap(CFStore2& cfs,
      					    const VisBuffer2& vb, const casacore::Quantity& dPA,
      					    const casacore::Vector<casacore::Int>& dataChan2ImChanMap,
      					    const casacore::Vector<casacore::Int>& dataPol2ImPolMap,
-     					    const casacore::Vector<casacore::Vector<casacore::Double>>& pointingOffset);
-     void setPhaseGradPerRow(const casacore::Vector< casacore::Vector<double> >& pointingOffset,
-			     const casacore::CountedPtr<CFBuffer>& cfb,
-			     const vi::VisBuffer2& vb,
-			     const int& row);
+     					    const casacore::CountedPtr<PointingOffsets>& po_p);
+     /* void setPhaseGradPerRow(const casacore::CountedPtr<PointingOffsets>& po_p, */
+     /* 			     const casacore::CountedPtr<CFBuffer>& cfb, */
+     /* 			     const vi::VisBuffer2& vb, */
+     /* 			     const int& row); */
+     /* const Matrix<vector<int> >& antennaGroups); */
      inline casacore::Matrix<casacore::Complex>& getCFPhaseGrad(const int& row)//, const int& ant0, const int& ant1)
      {return cfPhaseGrad_p(row);}
-     void setDoPointing(const bool& dop=false) {doPointing_p = dop;newPhaseGradComputed_p=false;}
+     virtual casacore::Matrix<casacore::Complex> setBLPhaseGrad(const casacore::CountedPtr<PointingOffsets>& pointingOffsets_p ,
+								const vi::VisBuffer2& vb,
+								const int& row,
+								const double& sigmaDev);
+
+
+     void setDoPointing(const bool& dop=false) {doPointing_p = dop;}
+     void setPOSigmaDev(const vector<float>& sigdev) {sigmaDev = sigdev;}
   //   protected:
      casacore::Vector<casacore::CountedPtr<CFBuffer > > vb2CFBMap_p;
      casacore::Vector<casacore::Matrix<casacore::Complex> > cfPhaseGrad_p;
-     casacore::CountedPtr<PhaseGrad> phaseGradCalculator_p;
-     bool doPointing_p, newPhaseGradComputed_p;
-     
+     casacore::CountedPtr<BaselineType> baselineType_p;
+     casacore::Vector< casacore::CountedPtr<PhaseGrad> >vectorPhaseGradCalculator_p;
+     bool doPointing_p, needsNewPOPG_p, needsNewFieldPG_p;
+     casacore::Int PO_DEBUG_P, cachedFieldId_p;
+     /* casacore::Matrix< vector<int> > antennaGroups_p, cachedAntennaGroups_p; */
+     /* casacore::Matrix< vector<float> > antennaPO_p, cachedAntennaPO_p; */
+     vector<int> vbRow2BLMap_p;
+     vector<bool> blNeedsNewPOPG_p;
+     int blType_p;
+     int vbRows_p;
+     /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
+     vector<float> sigmaDev = {0.0,0.0};
+     casacore::CountedPtr<CFBuffer> cachedCFBPtr_p;
+     Vector<int> maxCFShape_p;
+     casacore::Timer timer_p;
+     float totalCost_p, totalVB_p;
    };
  }
 }

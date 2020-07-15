@@ -7,7 +7,6 @@
 # Do not include the suffix .py
 
 test_agentflagger               scastro@eso.org
-test_applycal                   scastro@eso.org
 test_bandpass                   gmoellen@aoc.nrao.edu
 test_calanalysis                gmoellen@aoc.nrao.edu
 test_caltabconvert              gmoellen@aoc.nrao.edu
@@ -146,14 +145,12 @@ test_specfit                    dmehring@nrao.edu
 test_splattotable               dmehring@nrao.edu
 test_split                      scastro@eso.org
 test_spxfit                     dmehring@nrao.edu
-test_statwt                     ttsutsum@nrao.edu
 test_tclean                     ttsutsum@nrao.edu
 test_uvcontsub                  ttsutsum@nrao.edu
 test_uvcontsub3                 ttsutsum@nrao.edu
 test_testconcat                 dpetry@eso.org
 test_virtualconcat              dpetry@eso.org
 test_vishead                    jkern@nrao.edu
-test_visstat                    jkern@nrao.edu
 test_vpmanager                  dpetry@eso.org
 test_wvrgcal                    dpetry@eso.org
 test_req_task_listcal           fpouzols@eso.org
@@ -180,6 +177,9 @@ test_req_task_listsdm           nschweig@nrao.edu
 test_req_task_rmfit             nschweig@nrao.edu
 test_req_task_gaincal           nschweig@nrao.edu
 test_req_task_impv              nschweig@nrao.edu
+test_req_task_sdintimaging      ttsutsum@nrao.edu
+test_req_task_statwt            dmehring@nrao.edu
+test_stk_alma_pipeline_imaging.py  scastro@eso.org
 
 # Casaguide List
 #test_FirstLook_Imaging               awells@nrao.edu
@@ -194,4 +194,9 @@ test_req_task_impv              nschweig@nrao.edu
 #test_VLA_3C391                       awells@nrao.edu
 #test_VLA_IRC10216                    awells@nrao.edu
 #test_VLA_MG0414                      awells@nrao.edu
+
+# Stakeholders List
+test_stk_vlass_pipeline_imaging       scastro@eso.org
+test_stk_alma_pipeline_imaging        scastro@eso.org
+
 

@@ -30,11 +30,11 @@
 
 #include <casaqt/QwtPlotter/QPCanvas.qo.h>
 
-#include <qwt_painter.h>
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_widget.h>
 
 #if QWT_VERSION >= 0x060000
-#include <qwt_plot_renderer.h>
+#include <qwt/qwt_plot_renderer.h>
 #endif
 
 using namespace casacore;

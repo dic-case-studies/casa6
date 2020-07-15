@@ -27,7 +27,7 @@
 
 #include <QWidget>
 #include <casa/Containers/Record.h>
-#include <display/QtPlotter/SearchMoleculesResultsWidget.ui.h>
+#include <ui/ui_SearchMoleculesResultsWidget.h>
 #include <display/QtPlotter/SearchMoleculesResultDisplayer.h>
 namespace casa {
 

@@ -27,7 +27,7 @@
 #ifndef TBPLOTTER_H_
 #define TBPLOTTER_H_
 
-#include <casaqt/QtBrowser/TBPlotter.ui.h>
+#include "ui/ui_TBPlotter.h"
 #include <casaqt/QtBrowser/TBPlotCanvas.qo.h>
 #include <casaqt/QtBrowser/TBConstants.h>
 #include <graphics/GenericPlotter/PlotFactory.h>
