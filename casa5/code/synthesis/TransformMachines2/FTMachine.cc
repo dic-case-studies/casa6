@@ -2515,7 +2515,7 @@ using namespace casa::vi;
       {
 	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
 	
-	if( useWeightImage() && dopsf ) { 
+	if((useWeightImage() && dopsf) || isSD()) { 
 	  getWeightImage( *(imstore->weight())  , sumWeights); 
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.

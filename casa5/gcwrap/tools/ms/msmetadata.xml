@@ -1605,7 +1605,7 @@ windows in the dataset and close the tool.
         <method type="function" name="scansforfield">
             <shortdescription>Get an array of the unique scan numbers associated with the specified field, observation ID, and array ID.</shortdescription>
              <input>
-                <param type="any" direction="in" name="intent">
+                <param type="any" direction="in" name="field">
                     <description>Field ID or field name (case sensitive) for which to return the scan numbers.</description>
                      <value type="string"/>
                     <any type="variant" limittypes="string int"/>

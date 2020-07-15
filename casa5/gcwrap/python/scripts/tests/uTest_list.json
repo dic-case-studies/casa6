@@ -2994,6 +2994,16 @@
         },
         {
              "testNumber":"0000",
+<<<<<<< HEAD
+             "testName":"Sdintimaging",
+             "testScript":"test_req_task_sdintimaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@nrao.edu",
+             "priority":"4",
+             "tag":"functionalTest",
+=======
              "testName":"STK VLASS TEST",
              "testScript":"test_stk_vlass_pipeline_imaging",
              "testType":"functionalTest",

@@ -412,17 +412,21 @@ static std::vector<std::string> default_data_path;
 static std::string python_path;
 #ifdef CASATOOLS
 // CASA 6
-bool utils::initialize(const std::string &pypath, const std::vector<std::string> &default_path) {
+bool utils::initialize( const std::string &pypath, 
+                        const std::string &distro_data,
+                        const std::vector<std::string> &default_path ) {
 #else
 // CASA 5
 bool utils::initialize(const std::vector<std::string> &default_path) {
     std::string pypath;
+    std::string distro_data;
 #endif
     static bool initialized = false;
     if ( initialized ) return false;
     default_data_path = default_path;
     python_path = pypath;
     casatools::get_state( ).setDataPath(default_data_path);
+    casatools::get_state( ).setDistroDataPath(distro_data);
     casatools::get_state( ).setPythonPath(python_path);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );

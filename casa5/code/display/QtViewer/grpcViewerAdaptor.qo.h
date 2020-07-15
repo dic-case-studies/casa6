@@ -254,6 +254,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                              const ::google::protobuf::Empty*,
                              ::google::protobuf::Empty* );
 
+        ::grpc::Status interactivemask( ::grpc::ServerContext*,
+                                        const ::rpc::img::InteractiveMaskOptions *opt,
+                                        ::rpc::img::InteractiveMaskResult *reply );
+
         int get_id( QtDisplayPanelGui* );
         int get_id( QtDisplayPanelGui *, QtDisplayData *, const std::string &path, const std::string &type );
 
