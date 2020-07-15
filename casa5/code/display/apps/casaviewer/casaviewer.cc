@@ -304,7 +304,7 @@ int main( int argc, const char *argv[] ) {
 		// initialize CASAviewer app data...
 		if ( ! casacore::AppStateSource::fetch( ).initialized( ) ) {
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			// Mac OSX	--	path is specific to package format
+			// Mac OSX  --  path is specific to package format
 			// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 			// initialize CASAviewer app data...
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
