@@ -49,8 +49,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     ::grpc::Status grpcPing::now( ::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if ( debug ) {
-            std::cout << "received ping event..." << std::endl;
-            fflush(stdout);
+            std::cerr << "received ping event..." << std::endl;
+            fflush(stderr);
         }
         return grpc::Status::OK;
     }
@@ -64,8 +64,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ::grpc::Status grpcShutdown::now( ::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty* ) {
         if (getenv("GRPC_DEBUG")) {
-            std::cout << "received shutdown notification..." << std::endl;
-            fflush(stdout);
+            std::cerr << "received shutdown notification..." << std::endl;
+            fflush(stderr);
         }
         static auto bye_bye = std::async( std::launch::async, [&]( ) { sleep(2); emit exit_now( ); } );
         return grpc::Status::OK;
@@ -187,8 +187,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcImageViewer::handle_destroyed_panel( QObject *panel ) {
         if (getenv("GRPC_DEBUG")) {
-            std::cout << "received qt handle_destroyed_panel( ) signal..." << std::endl;
-            fflush(stdout);
+            std::cerr << "received qt handle_destroyed_panel( ) signal..." << std::endl;
+            fflush(stderr);
         }
         std::lock_guard<std::recursive_mutex> p_guard(managed_panels_mutex);
         std::lock_guard<std::recursive_mutex> d_guard(managed_datas_mutex);
@@ -196,8 +196,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 iter != managed_panels.end(); ++iter ) {
             if ( iter->second->panel( ) == panel ) {
                 if (getenv("GRPC_DEBUG")) {
-                    std::cout << "found destroyed panel..." << std::endl;
-                    fflush(stdout);
+                    std::cerr << "found destroyed panel..." << std::endl;
+                    fflush(stderr);
                 }
                 for ( std::list<int>::iterator diter = iter->second->data().begin();
                         diter != iter->second->data().end(); ++diter ) {
@@ -233,9 +233,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");
 
         if (debug) {
-            std::cout << "received grpc panel( " << req->type( ) << " ) event... (thread " <<
+            std::cerr << "received grpc panel( " << req->type( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         std::string type = req->type( );
@@ -245,9 +245,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         qtGO( [&]( ) {
                   if (debug) {
-                      std::cout << "creating qt panel ( " << req->type( ) << " )... (thread " <<
+                      std::cerr << "creating qt panel ( " << req->type( ) << " )... (thread " <<
                           std::this_thread::get_id() << ")" << std::endl;
-                      fflush(stdout);
+                      fflush(stderr);
                   }
 
                   if ( type == "clean" ) {
@@ -287,18 +287,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
         if (debug) {
-            std::cout << "waiting for grpc panel( " << req->type( ) << " ) result... (thread " <<
+            std::cerr << "waiting for grpc panel( " << req->type( ) << " ) result... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         auto fut = prom.get_future( );
         fut.wait( );
         auto ret = fut.get( );
         if (debug) {
-            std::cout << "returning grpc panel( " << req->type( ) << " ) result: " <<
+            std::cerr << "returning grpc panel( " << req->type( ) << " ) result: " <<
                 ret << " (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         reply->set_id(ret);
         return grpc::Status::OK;
@@ -313,9 +313,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");                                                \
                                                                                                        \
         if (debug) {                                                                                   \
-            std::cout << "received grpc " #NAME "( " << req->id( ) << " ) event... (thread " <<        \
+            std::cerr << "received grpc " #NAME "( " << req->id( ) << " ) event... (thread " <<        \
                 std::this_thread::get_id() << ")" << std::endl;                                        \
-            fflush(stdout);                                                                            \
+            fflush(stderr);                                                                            \
         }                                                                                              \
                                                                                                        \
         int id = req->id( );                                                                           \
@@ -329,26 +329,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                                                                                        \
         qtGO( [&]( ) {                                                                                 \
                   if (debug) {                                                                         \
-                      std::cout << #ACTIVE_DESC " qt panel ( " << id << " )... (thread " <<            \
+                      std::cerr << #ACTIVE_DESC " qt panel ( " << id << " )... (thread " <<            \
                           std::this_thread::get_id() << ")" << std::endl;                              \
-                      fflush(stdout);                                                                  \
+                      fflush(stderr);                                                                  \
                   }                                                                                    \
                   panel->PANELFUNC( );                                                                 \
                   prom.set_value(true);                                                                \
             } );                                                                                       \
                                                                                                        \
         if (debug) {                                                                                   \
-            std::cout << "waiting for panel to be " #PAST_DESC " ( " << id << " )... (thread " <<      \
+            std::cerr << "waiting for panel to be " #PAST_DESC " ( " << id << " )... (thread " <<      \
                 std::this_thread::get_id() << ")" << std::endl;                                        \
-            fflush(stdout);                                                                            \
+            fflush(stderr);                                                                            \
         }                                                                                              \
         auto fut = prom.get_future( );                                                                 \
         fut.wait( );                                                                                   \
         auto ret = fut.get( );                                                                         \
         if (debug) {                                                                                   \
-            std::cout << "completed " #ACTIVE_DESC " ( " << ret << " )" <<                             \
+            std::cerr << "completed " #ACTIVE_DESC " ( " << ret << " )" <<                             \
                 " (thread " << std::this_thread::get_id() << ")" << std::endl;                         \
-            fflush(stdout);                                                                            \
+            fflush(stderr);                                                                            \
         }                                                                                              \
         return grpc::Status::OK;                                                                       \
     }
@@ -373,10 +373,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto z = req->z( );
 
         if (debug) {
-            std::cout << "received grpc axes( " << panel << ", " << x << ", " << y << ", " << z <<
+            std::cerr << "received grpc axes( " << panel << ", " << x << ", " << y << ", " << z <<
                 req->panel( ).id( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         casacore::Record rec;
@@ -451,10 +451,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");
 
         if (debug) {
-            std::cout << "received grpc popup( " << req->name( ) << ", " <<
+            std::cerr << "received grpc popup( " << req->name( ) << ", " <<
                 req->panel( ).id( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int id  = req->panel( ).id( );
@@ -469,9 +469,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             qtGO( [&]( ) {
                   if (debug) {
-                      std::cout << " opening qt data options for panel ( " << id << " )... (thread " <<
+                      std::cerr << " opening qt data options for panel ( " << id << " )... (thread " <<
                           std::this_thread::get_id() << ")" << std::endl;
-                      fflush(stdout);
+                      fflush(stderr);
                   }
                   panel->showDataManager( );
                   prom.set_value(true);
@@ -495,11 +495,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");
 
         if (debug) {
-            std::cout << "received grpc load( " << req->path( ) << ", " <<
+            std::cerr << "received grpc load( " << req->path( ) << ", " <<
                 req->type( ) << ", " << req->type( ) << ", " << req->scale( ) <<
                 req->panel( ).id( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         auto id = req->panel( ).id( );
@@ -528,9 +528,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cout << " opening qt data ( " << path << ", " << id << " )... (thread " <<
+                    std::cerr << " opening qt data ( " << path << ", " << id << " )... (thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
-                    fflush(stdout);
+                    fflush(stderr);
                 }
 
                 viewer::DisplayDataOptions ddo;
@@ -575,9 +575,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
                 qtGO( [&]( ) {
                         if (debug) {
-                            std::cout << " qt data load ( " << path << ", " << displaytype << " )... (thread " <<
+                            std::cerr << " qt data load ( " << path << ", " << displaytype << " )... (thread " <<
                                 std::this_thread::get_id() << ")" << std::endl;
-                            fflush(stdout);
+                            fflush(stderr);
                         }
 
                         QtDisplayData *dp = 0;
@@ -635,9 +635,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto id = req->id( );
 
         if (debug) {
-            std::cout << "received grpc reload( " << id << " ) event... (thread " <<
+            std::cerr << "received grpc reload( " << id << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         std::promise<bool> prom;
@@ -648,9 +648,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
             qtGO( [&]( ) {
                     if (debug) {
-                        std::cout << "qt reload of data ( " << id << " )... (thread " <<
+                        std::cerr << "qt reload of data ( " << id << " )... (thread " <<
                             std::this_thread::get_id() << ")" << std::endl;
-                        fflush(stdout);
+                        fflush(stderr);
                     }
                     QtDisplayPanel::panel_state state = dpiter->second->panel( )->displayPanel( )->getPanelState( );
                     dpiter->second->panel( )->displayPanel()->hold( );
@@ -702,21 +702,45 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto id = req->id( );
 
         if (debug) {
-            std::cout << "received grpc unload( " << id << " ) event... (thread " <<
+            std::cerr << "received grpc unload( " << id << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         std::lock_guard<std::recursive_mutex> d_guard(managed_datas_mutex);
 
         datamap::iterator dmiter = managed_datas.find( id );
-        if ( dmiter == managed_datas.end( ) )
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+        if ( dmiter == managed_datas.end( ) ) {
+            std::lock_guard<std::recursive_mutex> p_guard(managed_panels_mutex);
 
-        if ( unload_data( dmiter->second->panel( ), id ) )
-            return grpc::Status::OK;
-        else
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+            // check to see if id corresponds to a panel, if it does unload all for that panel
+            panelmap::iterator dpiter = managed_panels.find( id );
+            if ( dpiter == managed_panels.end( ) ) {
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+            } else {
+                std::list<int> to_remove;
+                QtDisplayPanelGui *panel = dpiter->second->panel( );
+                for ( datamap::iterator iter = managed_datas.begin(); iter != managed_datas.end(); ++iter ) {
+                    if ( iter->second->panel( ) == panel ) to_remove.push_back(iter->second->id( ));
+                }
+                if ( to_remove.size( ) == 0 )
+                    return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+                else {
+                    std::list<bool> ok(to_remove.size( ),false);
+                    std::transform( to_remove.begin( ), to_remove.end( ), ok.begin( ), [&](int id) {return unload_data(panel,id,true);} );
+                    if ( std::all_of(ok.begin(), ok.end(), [](bool v) { return v; }) ) {
+                        return grpc::Status::OK;
+                    } else {
+                        return grpc::Status(grpc::StatusCode::NOT_FOUND, "some panel id failures");
+                    }
+                }
+            }
+        } else {
+            if ( unload_data( dmiter->second->panel( ), id ) )
+                return grpc::Status::OK;
+            else
+                return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such data id");
+        }
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
@@ -730,9 +754,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto path = req->path( );
 
         if (debug) {
-            std::cout << "received grpc restore( " << path << ", " << id <<
+            std::cerr << "received grpc restore( " << path << ", " << id <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         struct stat buf;
@@ -770,9 +794,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto map = req->map( );
 
         if (debug) {
-            std::cout << "received grpc colormap( " << panel_or_data << ", " << map <<
+            std::cerr << "received grpc colormap( " << panel_or_data << ", " << map <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         QtDisplayData *dd = finddata(panel_or_data);
@@ -830,9 +854,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto show = req->state( );
 
         if (debug) {
-            std::cout << "received grpc colorwedge( " << panel_or_data << ", " << show <<
+            std::cerr << "received grpc colorwedge( " << panel_or_data << ", " << show <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         QtDisplayData *dd = finddata(panel_or_data);
@@ -884,9 +908,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         value(1) = req->max( );
 
         if (debug) {
-            std::cout << "received grpc datarange( " << value(0) << ", " << value(1) << ", " << data <<
+            std::cerr << "received grpc datarange( " << value(0) << ", " << value(1) << ", " << data <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         casacore::Record rec;
@@ -899,8 +923,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         if ( dd == 0 ) {
 
             if ( debug ) {
-                std::cout << "searching for data id..." << std::endl;
-                fflush(stdout);
+                std::cerr << "searching for data id..." << std::endl;
+                fflush(stderr);
             }
 
             // if we have a "id-less" panel (INT_MAX), see if we can
@@ -930,8 +954,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
 
         if ( debug ) {
-            std::cout << "found data id (" << dd << ")..." << std::endl;
-            fflush(stdout);
+            std::cerr << "found data id (" << dd << ")..." << std::endl;
+            fflush(stderr);
         }
 
         qtGO( [=]( ){ dd->setOptions(rec,true); } );
@@ -950,9 +974,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto panel_or_data = req->id( ).id( );
 
         if (debug) {
-            std::cout << "received grpc contourlevels( " << panel_or_data << ", ..." <<
+            std::cerr << "received grpc contourlevels( " << panel_or_data << ", ..." <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         casacore::Record rec;
@@ -1027,9 +1051,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto thickness = req->thickness( );
 
         if (debug) {
-            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << thickness <<
+            std::cerr << "received grpc contourthickness( " << panel_or_data << ", " << thickness <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         if ( thickness <= 0 || thickness > 5 ) {
@@ -1083,9 +1107,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto color = req->color( );
 
         if (debug) {
-            std::cout << "received grpc contourthickness( " << panel_or_data << ", " << color <<
+            std::cerr << "received grpc contourthickness( " << panel_or_data << ", " << color <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         casacore::Record rec;
@@ -1248,9 +1272,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         auto id = req->panel( ).id( );
 
         if (debug) {
-            std::cout << "received grpc output( " << id <<
+            std::cerr << "received grpc output( " << id <<
                 " ) event... (thread " << std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         auto dpg = findpanel( id );
@@ -1368,13 +1392,128 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         static const auto debug = getenv("GRPC_DEBUG");
 
         if (debug) {
-            std::cout << "received grpc done( ) event... (thread " <<
+            std::cerr << "received grpc done( ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         static auto bye_bye = std::async( std::launch::async, [&]( ) { sleep(2); emit exit_now( ); } );
         return grpc::Status::OK;
+    }
+
+    // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
+    ::grpc::Status grpcImageViewer::interactivemask( ::grpc::ServerContext *c,
+                                                     const ::rpc::img::InteractiveMaskOptions *opt,
+                                                     ::rpc::img::InteractiveMaskResult *reply ) {
+
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cerr << "received grpc interactivemask( ) event... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+
+        int id = opt->panel( ).id( );
+
+        QMap<QString,QVariant> options;
+        options["niter"] = opt->niter( );
+        options["cycleniter"] = opt->cycleniter( );
+        options["threshold"] = QString(opt->threshold( ).c_str( ));
+        options["cyclethreshold"] = QString(opt->cyclethreshold( ).c_str( ));
+        
+        QtDisplayPanelGui *panel = 0;
+
+        managed_panels_mutex.lock( );
+        panelmap::iterator dpiter = managed_panels.find( id );
+        if ( dpiter != managed_panels.end( ) ) {
+            panel = dpiter->second->panel( );
+            managed_panels_mutex.unlock( );
+        } else {
+            managed_panels_mutex.unlock( );
+            std::lock_guard<std::recursive_mutex> d_guard(managed_datas_mutex);
+
+            datamap::iterator dmiter = managed_datas.find( id );
+            if ( dmiter != managed_datas.end( ) ) {
+                panel = dmiter->second->panel();
+                id = get_id(panel);
+            }
+        }
+
+        if (debug) {
+            std::cerr << "grpc interactivemask( ) found panel " << panel << " (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+
+
+        std::promise<QVariant> prom;
+        auto fut = prom.get_future( );
+        if ( panel ) {
+
+            qtGO( [&]( ) {
+                    if (debug) {
+                        std::cerr << "interactivemask begin start_interact... (thread " <<
+                            std::this_thread::get_id() << ")" << std::endl;
+                        fflush(stderr);
+                    }
+                    // must set options separately because 'start_interact(...)'
+                    // ignores the options object...
+                    panel->setoptions(options,0);
+                    // start_interact accepts prom rvalue and sets future value
+                    panel->start_interact( std::move(prom), options, id );
+                    if (debug) {
+                        std::cerr << "interactivemask running... (thread " <<
+                            std::this_thread::get_id() << ")" << std::endl;
+                        fflush(stderr);
+                    }
+                } );
+
+            if (debug) {
+                std::cerr << "awaiting interactivemask completion... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            // must wait otherwise our stack state (upon which the lambda depends) will disappear...
+            fut.wait( );
+            auto ret = fut.get( );
+
+            if (debug) {
+                std::cerr << "interactivemask completed... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+
+            if ( ret.canConvert(QVariant::Map) ) {
+                auto m = ret.toMap( );
+                if ( m.contains("panel") && m["panel"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->mutable_panel( )->set_id(m["panel"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no panel returned");
+                if ( m.contains("action") && m["action"].canConvert(QVariant::String) )
+                    reply->set_action(m["action"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no action returned");
+                if ( m.contains("niter") && m["niter"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->set_niter(m["niter"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no niter returned");
+                if ( m.contains("cycleniter") && m["cycleniter"].canConvert(QVariant::Int) )
+                    reply->mutable_state( )->set_cycleniter(m["cycleniter"].toInt( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no cycleniter returned");
+                if ( m.contains("threshold") && m["threshold"].canConvert(QVariant::String) )
+                    reply->mutable_state( )->set_threshold(m["threshold"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no threshold returned");
+                if ( m.contains("cyclethreshold") && m["cyclethreshold"].canConvert(QVariant::String) )
+                    reply->mutable_state( )->set_cyclethreshold(m["cyclethreshold"].toString( ).toUtf8( ));
+                else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no cyclethreshold returned");
+            } else return grpc::Status(grpc::StatusCode::NOT_FOUND, "no map returned");
+
+            return grpc::Status::OK;
+
+        } else {
+
+            reply->set_action("OK WE GOT THERE");
+            return grpc::Status(grpc::StatusCode::NOT_FOUND, "no such panel id");
+
+        }
+
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----

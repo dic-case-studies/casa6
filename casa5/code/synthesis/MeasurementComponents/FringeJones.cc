@@ -801,7 +801,9 @@ public:
     get_param_corr_param_index(size_t iant0, size_t ipar) {
         if (iant0 == refant) return -1;
         int iant1 = antennaIndexMap[iant0];
-        if (iant1 > refant) iant1 -= 1;
+        if (iant1 > antennaIndexMap[refant]) {
+            iant1 -= 1;
+        }
         int ipar1;
         auto p = parameterMap.find(ipar);
         if (p==parameterMap.end()) {
