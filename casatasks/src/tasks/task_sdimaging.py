@@ -345,6 +345,10 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         # gridfunction
 
         # outfile
+        if os.path.exists(self.outfile) and self.overwrite:
+            smart_remove(self.outfile)
+        if os.path.exists(self.outfile + '.weight') and self.overwrite:
+            smart_remove(self.outfile + '.weight')
 
         # cell
         cell = self.cell
@@ -417,21 +421,16 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             startval = int(self.start)
             widthval = int(self.width)
 
-        #if self.nchan < 0: self.nchan = self.allchannels
+        if self.nchan < 0: self.nchan = self.allchannels
         self.imager_param['start'] = startval
         self.imager_param['step'] = widthval
         self.imager_param['nchan'] = imnchan #self.nchan
 
         self.imager_param['projection'] = self.projection
 
-    def makeimage(self, imagetype):
-        """
-        Make single dish image.
-
-        Arguments:
-            imagetype {str} -- 'science' or 'weight'
-        """
+    def execute(self):
         # imaging
+        casalog.post("Start imaging...", "INFO")
         if len(self.infiles) == 1:
             self.open_imager(self.infiles[0])
             selection_ids = self.get_selection_idx_for_ms(0)
@@ -474,43 +473,15 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.imager.defineimage(**self.imager_param)#self.__get_param())
         self.imager.setoptions(ftmachine='sd', gridfunction=self.gridfunction)
         self.imager.setsdoptions(pointingcolumntouse=self.pointingcolumn, convsupport=self.convsupport, truncate=self.truncate, gwidth=self.gwidth, jwidth=self.jwidth, minweight = 0., clipminmax=self.clipminmax)
-
-        assert imagetype.lower() in ('science', 'weight')
-        if imagetype.lower() == 'science':
-            casalog.post('Science imaging')
-            self.imager.makeimage(type='singledish', image=self.outfile)
-            if not os.path.exists(self.outfile):
-                raise RuntimeError("Failed to generate output image '%s'" % self.outfile)
-            imagename = self.outfile
-        else: # imagetype.lower() == 'weight':
-            casalog.post('Weight imaging')
-            weightfile = self.outfile+".weight"
-            self.imager.makeimage(type='coverage', image=weightfile)
-            if not os.path.exists(weightfile):
-                raise RuntimeError("Failed to generate weight image '%s'" % weightfile)
-            imagename = weightfile
-
+        self.imager.makeimage(type='singledish', image=self.outfile)
+        weightfile = self.outfile+".weight"
+        self.imager.makeimage(type='coverage', image=weightfile)
         self.close_imager()
 
-        return imagename
-
-    def execute(self):
-        # imaging
-        casalog.post("Start imaging...", "INFO")
-
-        # remove existing images if overwrite is True
-        if os.path.exists(self.outfile) and self.overwrite:
-            smart_remove(self.outfile)
-        if os.path.exists(self.outfile + '.weight') and self.overwrite:
-            smart_remove(self.outfile + '.weight')
-
-        # make science image
-        outfile = self.makeimage(imagetype='science')
-        assert outfile == self.outfile
-
-        # make weight image
-        weightfile = self.makeimage(imagetype='weight')
-
+        if not os.path.exists(self.outfile):
+            raise RuntimeError("Failed to generate output image '%s'" % self.outfile)
+        if not os.path.exists(weightfile):
+            raise RuntimeError("Failed to generate weight image '%s'" % weightfile)
         # Convert output images to proper output frame and set brightness unit (if necessary)
         my_ia = image()
         my_ia.open(self.outfile)
