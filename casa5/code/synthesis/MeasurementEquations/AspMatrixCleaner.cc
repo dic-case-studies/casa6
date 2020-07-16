@@ -406,8 +406,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Matrix<Complex>itsScaleXfr0 = Matrix<Complex> ();
   fft.fft0(itsScaleXfr0, itsScale0);
 
-  //Matrix<Float> itsScale = Matrix<Float>(psfShape_p); // with hogbom
-  //Matrix<Complex>itsScaleXfr = Matrix<Complex> (); // with hogbom
+  Matrix<Float> itsScale = Matrix<Float>(psfShape_p); // with hogbom
+  Matrix<Complex>itsScaleXfr = Matrix<Complex> (); // with hogbom
 
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
@@ -419,16 +419,16 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // make single optimized scale
     //FFTServer<Float,Complex> fft(psfShape_p);
     //Matrix<Float> itsScale0 = Matrix<Float>(psfShape_p);
-    Matrix<Float> itsScale = Matrix<Float>(psfShape_p);
+    //Matrix<Float> itsScale = Matrix<Float>(psfShape_p);
     cout << "clean: making scale " << itsOptimumScaleSize << endl;
     //makeScale(itsScale0, 0.0);
-    makeScale(itsScale, itsOptimumScaleSize);
+    //makeScale(itsScale, itsOptimumScaleSize);
     //Matrix<Complex>itsScaleXfr0 = Matrix<Complex> ();
     //fft.fft0(itsScaleXfr0, itsScale0);
-    Matrix<Complex>itsScaleXfr = Matrix<Complex> ();
-    fft.fft0(itsScaleXfr, itsScale);
+    //Matrix<Complex>itsScaleXfr = Matrix<Complex> ();
+    //fft.fft0(itsScaleXfr, itsScale);
     
-    /*if (itsSwitchedToHogbom)
+    if (itsSwitchedToHogbom)
     {
     	itsScale = 0.0;
     	itsScale = itsScale0;
@@ -440,7 +440,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       makeScale(itsScale, itsOptimumScaleSize);
       itsScaleXfr.resize();
       fft.fft0(itsScaleXfr, itsScale);	
-    } */ //with hogbom
+    }  //with hogbom
 	    
     
 
@@ -1492,10 +1492,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     return {};
   } */
 
-  /*if (itsSwitchedToHogbom)
+  if (itsSwitchedToHogbom)
   	itsNInitScales = 1;
   else
-  	itsNInitScales = itsInitScaleSizes.size();*/ // with hogbom
+  	itsNInitScales = itsInitScaleSizes.size(); // with hogbom
 
   cout << "# itsNInitScales " << itsNInitScales << endl;
   // Dirty * initial scales
