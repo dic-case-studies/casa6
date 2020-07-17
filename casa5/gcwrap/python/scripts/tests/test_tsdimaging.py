@@ -83,6 +83,7 @@ def remove_table(filename):
         else: # file or symlink
             os.remove(filename)
 
+
 ###
 # Base class for sdimaging unit test
 ###
