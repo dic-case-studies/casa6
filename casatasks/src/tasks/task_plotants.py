@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from casatasks.private.casa_transition import is_CASA6
 
 import os
+import sys
 import numpy as np
 import pylab as pl
 from textwrap import wrap
@@ -58,6 +59,14 @@ def plotants( vis=None, figfile=None,
                 dialog will allow you to choose the directory, filename,
                 and format of the export.
         """
+
+        # for CASA6, check for --nogui to force showgui to be False
+        # showgui is also false if --agg or --pipeline is set
+        # --pipeline also sets sets --agg, but --agg may not be used on the
+        # command line so both --pipeline and --agg need to be checked here
+        if is_CASA6 and ('--nogui' in sys.argv or '--agg' in sys.argv or '--pipeline' in sys.argv):
+                showgui = False
+
         if not showgui:
                 pl.close()
                 pl.ioff()
