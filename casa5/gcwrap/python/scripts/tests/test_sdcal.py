@@ -74,6 +74,9 @@ except Casa5InitError as e:
         runUnitTestDataReqRoot = os.path.join(runUnitTestDataRoot,'casa-data-req')
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     dataReqRoot = os.path.join(dataRoot,'casa-data-req')
+    if not os.path.exists(dataReqRoot):
+        dataRoot2 = os.environ.get('CASAPATH').split()[0]
+        dataReqRoot = os.path.join(dataRoot2,'casa-data-req')
     def ctsys_resolve(rel_path):
         "Resolve absolute path of a unit test data directory given as a relative path"
         data_roots = [runUnitTestDataRoot, runUnitTestDataReqRoot, dataRoot, dataReqRoot]
