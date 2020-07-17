@@ -62,6 +62,15 @@ qa = quanta()
 tb = table()
 ms = mstool()
 
+
+def get_data_req_path():
+    data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'casa-data-req/')
+    if not os.path.exists(data_path):
+        data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'data/casa-data-req')
+    print('CASA_DATA_REQ_PATH="{}"'.format(data_path))
+    return data_path
+
+
 #
 # Unit test of sdimaging task.
 #
@@ -3288,12 +3297,14 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('casa-data-req/visibilities/almasd')
+    datapath = os.path.join(get_data_req_path(), 'visibilities/almasd')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move.im'
 
     def setUp(self):
         self.__clear_files()
+
+        self.assertTrue(os.path.exists(self.datapath))
 
         for infile in self.infiles:
             shutil.copytree(os.path.join(self.datapath, infile), infile)
