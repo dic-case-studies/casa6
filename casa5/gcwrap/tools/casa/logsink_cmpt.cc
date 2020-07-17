@@ -32,6 +32,8 @@
 #include <mutex>
 #include <sys/file.h>
 
+#include <casatools/Config/State.h>
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -368,6 +370,7 @@ bool logsink::setlogfile(const std::string& filename)
    //
    // Also set for any watchers.
    CasapyWatcher::logChanged_(logname);
+   casatools::get_state( ).setLogPath(logname);
 
    return rstat;
 }
