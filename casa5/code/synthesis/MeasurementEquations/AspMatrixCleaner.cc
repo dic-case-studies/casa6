@@ -105,6 +105,7 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumIterNoGoodAspen.resize(0);
   itsGoodAspActiveSet.resize(0);
   itsGoodAspAmplitude.resize(0);
+  itsUsedMemoryMB = double(HostInfo::memoryUsed()/2014);
 }
 
 AspMatrixCleaner::~AspMatrixCleaner()
@@ -556,7 +557,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < itsStrenThres) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // M31 value
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << abs(itsStrengthOptimum) << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -706,7 +709,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     LCBox::verify(blcPsf, trcPsf, inc, model.shape());
     makeBoxesSameSize(blc, trc, blcPsf, trcPsf);
     //cout << "samebox: blcPsf " << blcPsf.asVector() << " trcPsf " << trcPsf.asVector() << endl;
-    cout << "samebox: blc " << blc.asVector() << " trc " << trc.asVector() << endl;
+    //cout << "samebox: blc " << blc.asVector() << " trc " << trc.asVector() << endl;
     //    LCBox subRegion(blc, trc, model.shape());
     //  LCBox subRegionPsf(blcPsf, trcPsf, model.shape());
 
@@ -814,6 +817,10 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //isNumAspenChanged = true;
   }
   // End of iteration
+
+  // memory used
+  //itsUsedMemoryMB = double(HostInfo::memoryUsed()/1024);
+  //cout << "Memory allocated in aspclean " << itsUsedMemoryMB << " MB." << endl;
 
   // Finish off the plot, etc.
   /*
@@ -1497,7 +1504,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   else
   	itsNInitScales = itsInitScaleSizes.size(); // with hogbom
 
-  cout << "# itsNInitScales " << itsNInitScales << endl;
   // Dirty * initial scales
   Matrix<Complex> dirtyFT;
   FFTServer<Float,Complex> fft(itsDirty->shape());
@@ -1525,6 +1531,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   cout << "Initial maximum residual is " << strengthOptimum;
   cout << " at location " << positionOptimum[0] << " " << positionOptimum[1];
   cout << " " << positionOptimum[2] << " and scale: " << optimumScale << endl;
+
+  // memory used
+  //itsUsedMemoryMB = double(HostInfo::memoryUsed()/1024);
+  //cout << "Memory allocated in getActiveSetAspen " << itsUsedMemoryMB << " MB." << endl;
 
   itsStrengthOptimum = strengthOptimum;
   itsPositionOptimum = positionOptimum;
@@ -1612,7 +1622,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //auto stop = high_resolution_clock::now();
       //auto duration = duration_cast<microseconds>(stop - start);
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
-      cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+      //cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	if (/*itsAspScaleSizes[i] == itsInitScaleSizes[optimumScale] || */lenDirVec >= threshold)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
@@ -1810,12 +1820,13 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 
 void AspMatrixCleaner::switchedToHogbom()
 {
-	//itsSwitchedToHogbom = true;
-	itsSwitchedToHogbom = false;
+	itsSwitchedToHogbom = true;
+	//itsSwitchedToHogbom = false;
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
+  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
+  itsNumHogbomIter = 10000; //fake it
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 

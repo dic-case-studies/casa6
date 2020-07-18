@@ -174,6 +174,7 @@ private:
   casacore::Int itsOptimumScale;
   casacore::IPosition itsPositionOptimum;
   casacore::Float itsOptimumScaleSize;
+  double itsUsedMemoryMB;
 };
 
 } //# NAMESPACE CASA - END

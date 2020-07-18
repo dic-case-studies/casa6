@@ -213,22 +213,22 @@ public:
         }
       }
 
-      /*if (minI < minX)
+      if (minI < minX)
         minX = minI;
       if (maxI > maxX)
         maxX = maxI;
       if (minJ < minY)
         minY = minJ;
       if (maxJ > maxY)
-        maxY = maxJ;*/
-      if (minI > minX)
+        maxY = maxJ;
+      /*if (minI > minX)
         minX = minI;
       if (maxI < maxX)
         maxX = maxI;
       if (minJ > minY)
         minY = minJ;
       if (maxJ < maxY)
-        maxY = maxJ;
+        maxY = maxJ;*/
 
       ////stop = std::chrono::high_resolution_clock::now();
       ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -254,6 +254,9 @@ public:
     ////std::cout << "minX " << minX << " maxX " << maxX << " minY " << minY << " maxY " << maxY << std::endl;
     ////std::cout << "LBFGS 6th runtime " << duration.count() << " ms" << std::endl;
     //std::cout << "after Asp fx " << fx << " AspConvPsfSum " << AspConvPsfSum(0,0) << std::endl;
+
+    // memory used
+    //std::cout << "Memory allocated in lbfgs " << double(casacore::HostInfo::memoryUsed()/1024) << " MB." << std::endl;
 
     return fx;
   }
