@@ -1,3 +1,4 @@
+import glob
 import os
 import sys
 import shutil
@@ -29,6 +30,15 @@ import restfreqtool
 from tsdimaging import tsdimaging as sdimaging
 from sdutil import tbmanager, toolmanager, table_selector
 from task_tsdimaging import image_suffix
+
+
+def get_data_req_path():
+    data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'casa-data-req/')
+    if not os.path.exists(data_path):
+        data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'data/casa-data-req')
+    print('CASA_DATA_REQ_PATH="{}"'.format(data_path))
+    return data_path
+
 
 #
 # Unit test of sdimaging task.
@@ -3706,6 +3716,52 @@ class sdimaging_test_output(sdimaging_unittest_base):
             self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
 
 
+class sdimaging_antenna_move(sdimaging_unittest_base):
+    datapath = os.path.join(get_data_req_path(), 'visibilities/almasd')
+    infiles = ['PM04_A108.ms', 'PM04_T704.ms']
+    outfile = 'antenna_move'
+
+    def setUp(self):
+        self.__clear_files()
+
+        self.assertTrue(os.path.exists(self.datapath))
+
+        for infile in self.infiles:
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
+
+    def tearDown(self):
+        self.__clear_files()
+
+    def __clear_files(self):
+        files = self.infiles + glob.glob('{}*'.format(self.outfile))
+        for f in files:
+            if os.path.exists(f):
+                shutil.rmtree(f)
+
+    def test_antenna_move(self):
+        imsize = 11
+        params = {
+            'infiles': self.infiles,
+            'antenna': '2',
+            'spw': '18',
+            'phasecenter': 2,
+            'outfile': self.outfile,
+            'overwrite': False,
+            'imsize': imsize,
+            'cell': '10arcsec'
+        }
+        center = [imsize // 2, imsize // 2, 0, 0]
+        ref = {
+            'npts': [1],
+            'max': [1],
+            'min': [1],
+            'maxpos': center,
+            'minpos': center,
+            'sum': [1]
+        }
+        self.run_test_common(params, refstats=ref, shape=(imsize, imsize, 1, 1), ignoremask=False)
+
+
 """
 # utility for sdimaging_test_mapextent
 # commented out since sd tool is no longer available in CASA (CAS-10301)
@@ -3802,5 +3858,6 @@ def suite():
             sdimaging_test_interp,
             sdimaging_test_clipping,
             sdimaging_test_projection,
-            sdimaging_test_output
+            sdimaging_test_output,
+            sdimaging_antenna_move
             ]
