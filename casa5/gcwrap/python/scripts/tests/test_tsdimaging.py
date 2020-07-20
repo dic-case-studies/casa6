@@ -197,7 +197,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
-        self._checkfile(outprefix+".weight")
+        self._check_weight_image(outfile)
         self._checkframe(outfile)
         self._checkshape(outfile, shape[0], shape[1],shape[2],shape[3])
         self._checkstats(outfile, refstats, compstats=compstats,
@@ -209,6 +209,44 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         isthere=os.path.exists(name)
         self.assertEqual(isthere,True,
                          msg='output file %s was not created because of the task failure'%(name))
+
+    def _check_weight_image(self, imagename):
+        # weight image name is imagename + '.weight'
+        weight_image = os.path.splitext(imagename.rstrip('/'))[0] + '.weight'
+
+        # check if weight image exists
+        self._checkfile(weight_image)
+
+        # check if brightness unit is empty
+        _ia.open(weight_image)
+        bunit = _ia.brightnessunit().strip()
+        _ia.close()
+        self.assertTrue(isinstance(bunit, str))
+        self.assertTrue(len(bunit) == 0)
+
+        # check if wcs related information is identical
+        # between science and weight images
+        _ia.open(imagename)
+        csys_science = _ia.coordsys()
+        _ia.close()
+        _ia.open(weight_image)
+        csys_weight = _ia.coordsys()
+        _ia.close()
+        try:
+            for name in ['referencepixel', 'referencevalue', 'increment']:
+                v0 = getattr(csys_science, name)()
+                v1 = getattr(csys_weight, name)()
+                for key in ['ar_type', 'pw_type']:
+                    self.assertTrue(key in v0)
+                    self.assertTrue(key in v1)
+                    self.assertEqual(v0[key], v1[key])
+                key = 'numeric'
+                self.assertTrue(key in v0)
+                self.assertTrue(key in v1)
+                self.assertTrue(numpy.all(v0[key] == v1[key]))
+        finally:
+            csys_science.done()
+            csys_weight.done()
 
     def _checkframe(self, name):
         _ia.open(name)
@@ -1173,7 +1211,7 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
-        self._checkfile(outprefix+".weight")
+        self._check_weight_image(outfile)
         self._checkshape(outfile,shape[0],shape[1],shape[2],shape[3])
         self._checkdirax(outfile,dirax[0], dirax[1], dirax[2])
 
@@ -1310,6 +1348,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         imsize = [shape[0], shape[1]]
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
         self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
         self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
@@ -2141,6 +2181,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,self.imsize[0],self.imsize[1],1,self.nchan)
         self._set_data_ranges()
         self._check_data()
@@ -2152,6 +2194,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self.assertEqual(res,None,
                          msg='Any error occurred during imaging')
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
         self._set_data_ranges(True)
         self._check_data(True)
@@ -2320,6 +2364,8 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         # Tests
         imsize = [shape[0], shape[1]]
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
         self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
         self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
@@ -2457,6 +2503,8 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             refstats = self.refstats
         res=sdimaging(**task_param)
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
         self._checkdirax(outfile,self.phasecenter,self.cell,self.imsize)
         self._checkstats(outfile,refstats,atol=1.e-5)
@@ -2537,6 +2585,8 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         sdimaging(**self.param)
         stats.pop('sumsq')
         outfile = self.outfile + image_suffix
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
         self._checkstats(outfile, stats, atol=1.e-3, rtol=1.e-3)
         self._check_beam(outfile, beam_ref)
         # check restfreq
@@ -2589,7 +2639,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 # Test case for automatic phasecenter calculation
 #
 ###
-class sdimaging_test_mapextent(unittest.TestCase):
+class sdimaging_test_mapextent(sdimaging_unittest_base):
     """
     Unit test for task sdimaging
 
@@ -2647,7 +2697,8 @@ class sdimaging_test_mapextent(unittest.TestCase):
         status = sdimaging(**self.param)
         self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
-        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
     def verify_mapextent(self, npix_ref, blc_ref, trc_ref):
         outfile = self.outfile + image_suffix
@@ -2734,7 +2785,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
 # Test case for moving object
 #
 ###
-class sdimaging_test_ephemeris(unittest.TestCase):
+class sdimaging_test_ephemeris(sdimaging_unittest_base):
     """
     Tests if tracking moving object works correctly
 
@@ -2802,7 +2853,8 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         status = sdimaging(**self.param)
         self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
-        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
     def verify_scanned_region(self, phasecenter, **kwargs):
         _phasecenter = phasecenter.strip().upper()
@@ -2917,7 +2969,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
 # Test case for checking if spline interpolation works for fast scan data
 #
 ###
-class sdimaging_test_interp(unittest.TestCase):
+class sdimaging_test_interp(sdimaging_unittest_base):
     """
     tests:
     test_spline_interp_single_infiles: check if spline interpolation works for single MS
@@ -2979,7 +3031,9 @@ class sdimaging_test_interp(unittest.TestCase):
 
         status = sdimaging(infiles=infiles, outfile=outfile, **self.params)
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
-        self.assertTrue(os.path.exists(outfile+'.image'), msg='output image is not created.')
+        outfile = outfile.rstrip('/') + '.image'
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
@@ -3067,7 +3121,7 @@ class sdimaging_test_interp(unittest.TestCase):
         self.check_images_identical(outfile12, outfile21, True)
 
 
-class sdimaging_test_interp_old(unittest.TestCase):
+class sdimaging_test_interp_old(sdimaging_unittest_base):
     """
     The test data 'pointing6.ms' contains 1000 rows for TP data, while only 10 rows given
     for POINTING data. The pointing data is given as corner points of a hexagon centered at
@@ -3112,7 +3166,8 @@ class sdimaging_test_interp_old(unittest.TestCase):
         status = sdimaging(**self.params)
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
         outfile = self.outfile + image_suffix
-        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+        self._checkfile(outfile)
+        self._check_weight_image(outfile)
 
     def test_spline_interp(self):
         """test_spline_interp: Check if spline interpolation works for fast scan data."""
@@ -3224,7 +3279,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=True)
         _outfile = outfile + image_suffix
-        self.assertTrue(os.path.exists(_outfile))
+        self._checkfile(_outfile)
+        self._check_weight_image(_outfile)
 
         if is_clip_effective == True:
             # pre-flag the data to be clipped
@@ -3308,7 +3364,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=False)
         _outfile_ref = outfile + image_suffix
-        self.assertTrue(os.path.exists(_outfile_ref))
+        self._checkfile(_outfile_ref)
+        self._check_weight_image(_outfile_ref)
 
         # compare
         myia = gentools(['ia'])[0]
@@ -3466,7 +3523,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.task_param.update(dict(projection=projection, spw=spw))
         res=sdimaging(**self.task_param)
         self.assertFalse(res)
-        self.assertFalse(os.path.exists(self.outfile))
+        outfile = self.task_param['outfile'].rstrip('/') + '.image'
+        self.assertFalse(os.path.exists(outfile))
 
     def test_projection_SIN(self):
         """test_projection_SIN: create image with SIN (Slant Orthographic) projection"""
