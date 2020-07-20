@@ -69,7 +69,13 @@ def merge_dict(d1, d2):
 def remove_tables_starting_with(filename):
     """
     Remove files/directories/symlinks 'filename*'.
+    For filename, '', '.' and those starting with '..' are not allowed.
     """
+    if filename == '.' or filename[:2] == '..':
+        raise Exception("Dangerous! Attempting to remove '" + filename + "*'!!")
+    elif filename == '':
+        raise Exception("The parameter 'filename' must not be a null string.")
+
     import glob
     filenames = glob.glob(filename+'*')
 
@@ -77,6 +83,13 @@ def remove_tables_starting_with(filename):
         remove_table(filename)
 
 def remove_table(filename):
+    """
+    Remove a single directory.
+    For filename, '.' and those starting with '..' are not allowed.
+    """
+    if filename == '.' or filename[:2] == '..':
+        raise Exception("Dangerous! Attempting to remove '" + filename + "'!!")
+    
     if os.path.exists(filename):
         if os.path.isdir(filename):
             shutil.rmtree(filename)
