@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import glob
 import os
 import sys
 import shutil
@@ -75,7 +76,7 @@ ms = mstool()
 
 #
 # Unit test of sdimaging task.
-# 
+#
 def construct_refstat_uniform(fluxval, blc_data, trc_data):
     """
     Return a dictionary of analytic reference statistics of uniform image
@@ -120,7 +121,7 @@ def remove_tables_starting_with(filename):
         raise Exception("The parameter 'filename' must not be a null string.")
 
     import glob
-    filenames = glob.glob(filename+'*')
+    filenames = glob.glob('{}*'.format(filename))
 
     for filename in filenames:
         remove_table(filename)
@@ -153,7 +154,7 @@ class sdimaging_standard_paramset(object):
     mode='channel'
     nchan=40
     start=400
-    width=10    
+    width=10
 
 class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     """
@@ -182,7 +183,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     tbc.close()
 
     Furthermore, SYSCAL and POINTING tables are downsized.
-    
+
     """
     taskname='sdimaging'
     datapath=ctsys_resolve('regression/unittest/sdimaging')
@@ -242,7 +243,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         isthere=os.path.exists(name)
         self.assertEqual(isthere,True,
                          msg='output file %s was not created because of the task failure'%(name))
-        
+
     def _checkframe(self, name):
         _ia.open(name)
         csys = _ia.coordsys()
@@ -345,7 +346,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         self.assertTrue(abs(ref_y-cen_y) < tol_val,
                         msg="center_y = %f %s (expected: %f)" % \
                         (ref_x, ra_unit, cen_x))
-        
+
         # cell (imager seems to set negative incr for dx)
         dx = - qa.convert(cell[0], ra_unit)['value']
         dy = qa.convert(cell[1], dec_unit)['value']
@@ -376,7 +377,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         min_asec_ref = qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec'))[0]
         self.assertAlmostEqual(abs(maj_asec-maj_asec_ref)/max(maj_asec_ref,1.e-12), 0., places=3, msg="major axis = %f arcsec (expected: %f)" % (maj_asec, maj_asec_ref))
         self.assertAlmostEqual(abs(min_asec-min_asec_ref)/max(min_asec_ref,1.e-12), 0., places=3, msg="minor axis = %f arcsec (expected: %f)" % (min_asec, min_asec_ref))
-    
+
     def _check_restfreq(self, imagename, restfreq):
         """ Test image rest frequency"""
         self.assertTrue(qa.compare(restfreq, 'Hz'))
@@ -389,7 +390,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         csys.done()
         ret=numpy.allclose(testval,refval, atol=1.e-5, rtol=1.e-5)
         self.assertTrue(ret)
-        
+
     def run_exception_case(self, task_param, expected_msg, expected_type=RuntimeError):
         with self.assertRaises(expected_type) as cm:
             res=sdimaging(**task_param)
@@ -397,8 +398,8 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         pos=str(the_exception).find(expected_msg)
         self.assertNotEqual(pos,-1,
                             msg='Unexpected exception was thrown: {0}'.format(str(the_exception)))
-        
-        
+
+
 ###
 # Test on bad parameter settings
 ###
@@ -432,14 +433,14 @@ class sdimaging_test0(sdimaging_unittest_base):
         remove_tables_starting_with(self.prefix)
         
         self.assertTrue(self.cache_validator.validate())
-        
+
     def test000(self):
         """Test 000: Default parameters"""
         # argument verification error
         task_param = {}
         msg = 'list index out of range'
         self.run_exception_case(task_param, msg, expected_type=IndexError)
-    
+
     def test001(self):
         """Test001: Bad mode"""
         # argument verification error
@@ -464,14 +465,14 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.task_param['antenna'] = self.badid
         msg = 'No match found for the antenna specificion'
         self.run_exception_case(self.task_param, msg)
-        
+
     def test005(self):
         """Test005: Bad stokes parameter"""
         # argument verification error
         self.task_param['stokes'] = 'BAD'
         msg = 'unallowed'
         self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
-        
+
     def test006(self):
         """Test006: Bad gridfunction"""
         # argument verification error
@@ -509,7 +510,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.task_param['phasecenter'] = false_phasecenter
         msg = 'Invalid Image Parameter set : Error in converting \'{0}\' to MDirection.'.format(false_phasecenter)
         self.run_exception_case(self.task_param, msg)
-#         # default for unknown direction frame is J2000 
+#         # default for unknown direction frame is J2000
 #         refimage=self.outfile+'2'
 #         sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter.replace('J2000','J3000'),minweight=self.minweight0)
 #         sdimaging(infiles=self.rawfile,outfile=refimage,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
@@ -574,7 +575,7 @@ class sdimaging_test1(sdimaging_unittest_base):
        - two polarization imaging (XX and YY, default is Stokes I)
        - empty phasecenter
        - settting minweight = 0.2
-       
+
     """
     # Input and output names
     prefix=sdimaging_unittest_base.taskname+'Test1'
@@ -638,7 +639,7 @@ class sdimaging_test1(sdimaging_unittest_base):
         self.run_test_common(self.task_param, refstats, outshape, compstats=self.keys,
                              ignoremask=True)
 
-        
+
     def test102(self):
         """Test 102: Full channel image"""
         tb.open(self.rawfile)
@@ -648,7 +649,7 @@ class sdimaging_test1(sdimaging_unittest_base):
             nchan=tb.getcell('DATA').shape[1]
         tb.close()
         self.task_param.update(dict(nchan=nchan,start=0,width=1))
-        # for testing 
+        # for testing
         #self.task_param['gridfunction'] = 'BOX'
         for (k,v) in self.task_param.items():
             casalog.post('test102: {0} = \'{1}\' (type {2})'.format(k,v,type(v)))
@@ -903,7 +904,7 @@ class sdimaging_test2(sdimaging_unittest_base):
 
        - integrated image
        - selected frequency image
-       
+
     """
     # Input and output names
     prefix=sdimaging_unittest_base.taskname+'Test2'
@@ -939,18 +940,18 @@ class sdimaging_test2(sdimaging_unittest_base):
         spwinfo =  ms.getspectralwindowinfo()
         ms.close()
         spwid0 = list(spwinfo.keys())[0]
-        start = '%fHz' % (spwinfo[spwid0]['Chan1Freq']+0.5*(spwinfo[spwid0]['TotalWidth']-spwinfo[spwid0]['ChanWidth'])) 
+        start = '%fHz' % (spwinfo[spwid0]['Chan1Freq']+0.5*(spwinfo[spwid0]['TotalWidth']-spwinfo[spwid0]['ChanWidth']))
         width = '%fHz' % (spwinfo[spwid0]['TotalWidth'])
         self.task_param.update(dict(nchan=nchan,start=start,width=width))
         outshape = (self.imsize[0],self.imsize[1],1,nchan)
         self.run_test_common(self.task_param, self.statsinteg, outshape,
                              compstats=self.keys, ignoremask=True)
-        
+
     def test201(self):
         """Test 201: Full channel image (mode='frequency', nchan = -1)"""
         self.task_param.update(dict(nchan = -1, start = '', width = ''))
         # workaround for new imager framework
-        # New imager looks SPECTRAL_WINDOW table to get whole frequency range 
+        # New imager looks SPECTRAL_WINDOW table to get whole frequency range
         # regardless of whether associating data exist in the MAIN table or not.
         # As a result, resulting image has 2048 channels instead of 1024.
         # To proceed this test, spw is explicitly specified here.
@@ -1001,7 +1002,7 @@ class sdimaging_test2(sdimaging_unittest_base):
                   'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
-        
+
     def test203(self):
         """Test 203: Selected frequency image with other frequency unit"""
         nchan=100
@@ -1028,7 +1029,7 @@ class sdimaging_test2(sdimaging_unittest_base):
                   'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
-        
+
 ###
 # Test velocity imaging
 ###
@@ -1038,7 +1039,7 @@ class sdimaging_test3(sdimaging_unittest_base):
 
        - integrated image
        - selected velocity image
-       
+
     """
     # Input and output names
     prefix=sdimaging_unittest_base.taskname+'Test3'
@@ -1091,13 +1092,13 @@ class sdimaging_test3(sdimaging_unittest_base):
         end_vel = me.todoppler('radio', end_freq, restfreq)
         start = qa.tos(cent_vel['m0'])
         width = qa.tos(qa.sub(start_vel['m0'],end_vel['m0']))
-        
+
         self.task_param.update(dict(restfreq=restfreq,spw=spwid,
                                     nchan=nchan,start=start,width=width))
         outshape = (self.imsize[0],self.imsize[1],1,1)
         self.run_test_common(self.task_param, self.statsinteg, outshape,
                              compstats=self.keys, ignoremask=True)
-        
+
     def test301(self):
         """Test 301: Selected velocity image"""
         nchan=100
@@ -1275,7 +1276,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     # default task parameters
     mode_def = "channel"
     kernel = "BOX"
-    # 
+    #
     # auto calculation result of imsize
     cell_auto = "6.7275953729549656arcsec"
     imsize_auto = [21, 21]
@@ -1316,7 +1317,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     @property
     def task(self):
         return sdimaging
-    
+
     @property
     def spw_channel_selection(self):
         return True
@@ -1356,7 +1357,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         if box is not None:
             self._checkstats_box(outfile,refstats,box=box,
                                  atol=atol,rtol=rtol)
-        
+
 
     ####################
     # Additional tests
@@ -1447,7 +1448,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
     ####################
     # intent
-    ####################        
+    ####################
     def test_intent_value_default(self):
         """test intent selection (intent='')"""
         intent = ''
@@ -1460,7 +1461,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
         outfile = self.outfile + image_suffix
         self._checkstats(outfile,refstats,atol=1.e-5)
-        
+
     def test_intent_value_exact(self):
         """test intent selection (intent='OBSERVE_TARGET.ON_SOURCE')"""
         intent = 'OBSERVE_TARGET.ON_SOURCE'
@@ -1612,7 +1613,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
 
     ####################
-    # spw 
+    # spw
     ####################
     def test_spw_id_default(self):
         """test spw selection (spw='')"""
@@ -1777,7 +1778,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
-    
+
     def test_spw_id_default_frequency(self):
         """test spw selection w/ channel selection (spw=':300.4749~300.5251GHz')"""
 #         spw = ':300.4749~300.5251GHz'   #chan=2-7 in spw=1 should be selected
@@ -1797,12 +1798,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     @unittest.expectedFailure
     def test_spw_id_default_velocity(self):
         """test spw selection w/ channel selection (spw='X~Ykm/s') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     def test_spw_id_default_list(self):
         """test spw selection w/ channel selection (spw=':6~7;2~5')"""
         spw = ':6~7;2~5'   #chan=2-7 in all spws should be selected
@@ -1816,7 +1817,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
-        
+
     def test_spw_id_exact_channel(self):
         """test spw selection w/ channel selection (spw='2:2~7')"""
         spw = '2:2~7'   #chan=2-7 of spw=2 should be selected
@@ -1830,7 +1831,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     def test_spw_id_exact_frequency(self):
         """test spw selection w/ channel selection (spw='1:300.4749~300.5251GHz')"""
         spw = '1:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
@@ -1844,12 +1845,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     @unittest.expectedFailure
     def test_spw_id_exact_velocity(self):
         """test spw selection w/ channel selection (spw='0:X~Ykm/s') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     def test_spw_id_exact_list(self):
         """test spw selection w/ channel selection (spw='2:6~7;2~5')"""
         spw = '2:6~7;2~5'   #chan=2-7 of spw=2 should be selected
@@ -1863,7 +1864,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     def test_spw_id_pattern_channel(self):
         """test spw selection w/ channel selection (spw='*:2~7')"""
         spw = '*:2~7'
@@ -1897,12 +1898,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
- 
+
     @unittest.expectedFailure
     def test_spw_id_pattern_velocity(self):
         """test spw selection w/ channel selection (spw='*:X~Ykm/s') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     def test_spw_id_pattern_list(self):
         """test spw selection w/ channel selection (spw='*:6~7;2~5')"""
         spw = '*:6~7;2~5'
@@ -1916,7 +1917,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
-        
+
     def test_spw_value_frequency_channel(self):
         """test spw selection w/ channel selection (spw='300.4~300.5GHz:2~7')"""
         spw = '300.4~300.5GHz:2~7'
@@ -1930,7 +1931,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     def test_spw_value_frequency_frequency(self):
         """test spw selection w/ channel selection (spw='300.4~300.5GHz:300.4749~300.5251GHz')"""
         spw = '300.4~300.5GHz:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected'
@@ -1944,12 +1945,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
-        
+
     @unittest.expectedFailure
     def test_spw_value_frequency_velocity(self):
         """test spw selection w/ channel selection (spw='A~BHz:X~Ykm/s') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     @unittest.expectedFailure
     def test_spw_value_frequency_list(self):
         """test spw selection w/ channel selection (spw='299.9~300.1GHz:6~7;2~5')"""
@@ -1964,27 +1965,27 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
-        
+
     @unittest.expectedFailure
     def test_spw_value_velocity_channel(self):
         """test spw selection w/ channel selection (spw='X~Ykm/s:A~B') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     @unittest.expectedFailure
     def test_spw_value_velocity_frequency(self):
         """test spw selection w/ channel selection (spw='X~Ykm/s:A~BHz') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     @unittest.expectedFailure
     def test_spw_value_velocity_velocity(self):
         """test spw selection w/ channel selection (spw='X~Ykm/s:Z~Wkm/s') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     @unittest.expectedFailure
     def test_spw_value_velocity_list(self):
         """test spw selection w/ channel selection (spw='X~Ykm/s:A~B;C~D') NOT SUPPORTED YET"""
         self._default_test()
-        
+
     def test_spw_id_list_channel(self):
         """test spw selection w/ channel selection (spw='1:2~7,2:2~7')"""
         spw = '0:2~7,2:2~7'
@@ -1998,7 +1999,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
-        
+
     ####################
     # Helper functions
     ####################
@@ -2045,7 +2046,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 class sdimaging_test_flag(sdimaging_unittest_base):
     """
     Test to verify if flag information is handled properly
-       
+
        - If a channel is flagged, the data of the channel must not be
          added to the output CASA image.
        - If all channels of a spectrum are flagged (i.e., row-flagged
@@ -2054,11 +2055,11 @@ class sdimaging_test_flag(sdimaging_unittest_base):
        - Flagged channels must not be modified by sdimaging.
 
        The input data: sdimaging_flagtest.ms
-       - this data contains 768 spectra covering 32x24 grid-like points 
+       - this data contains 768 spectra covering 32x24 grid-like points
          with interval of 10^-5 radian (the position of the bottom-right
          corner is (00:00:00.0, 00.00.00.0) in (RA, Dec)). Amongst the
          spectra, 32x8 spectra corresponding to the middle 1/3 of
-         the survey area, all channels are flagged, and for the half of 
+         the survey area, all channels are flagged, and for the half of
          the rest spectra at the smaller side in RA (16x8x2 spectra) are
          flagged at channels 2 to 6 (5 out of 10 channels are flagged).
          The rest (16x8x2 spectra) have no flagged channels (see below).
@@ -2069,7 +2070,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
          Row index
          ---------
-         
+
           767, 766, 765, ..., 752, 751, ..., 738, 737, 736,
            ...............................................
           543, 542, 541, ..., 528, 527, ..., 514, 513, 512,
@@ -2079,7 +2080,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
           255, 254, 253, ..., 240, 239, ..., 226, 225, 224,
            ...............................................
            31,  30,  29, ...,  16,  15, ...,   2,   1,   0
-         
+
          Data Value
          ----------
          (A:6.00171, B, 5.00143, C:3.00088)
@@ -2116,7 +2117,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
            A, A, A, ..., A, B, ..., B, B, B
      -----|                |               |-----
           |   16 points    |   16 points   |
-          
+
 
     """
     rawfile='sdimaging_flagtest.ms'
@@ -2124,7 +2125,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     outfile=prefix+sdimaging_unittest_base.postfix
     maskfile = outfile + image_suffix + '/mask0'
     weightfile = outfile + '.weight'
-    
+
     gridfunction = "BOX"
     imsize = [32, 24]
     cellarcsec = 2.062648 #= 0.00001*180.0/3.1415926535897932384*3600.0
@@ -2142,7 +2143,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         default(sdimaging)
         with tbmanager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
-            
+
         # fix timestamp issue
         self.fix_timestamp()
 
@@ -2151,12 +2152,12 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
-       
+
     def fix_timestamp(self):
         # fix duplicated timestamp issue
-        # data taken by three spws have essentially same timestamp 
-        # but they are intended to be allocated to different pointing 
-        # directions. to enable it, timestamps are artificially shifted 
+        # data taken by three spws have essentially same timestamp
+        # but they are intended to be allocated to different pointing
+        # directions. to enable it, timestamps are artificially shifted
         # by a value significantly larger than integration time.
         with tbmanager(self.rawfile, nomodify=False) as tb:
             nrow = tb.nrows()
@@ -2172,9 +2173,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                 ito = (ichunk+1) * nrow_chunk
                 tshift[ifrom:ito] = torig[ifrom:ito] + ichunk * max_interval
             tb.putcol('TIME', tshift)
-            
+
         with tbmanager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
-            tb.putcol('TIME', tshift) 
+            tb.putcol('TIME', tshift)
 
     def testFlag01(self):
         """testFlag01: """
@@ -2198,7 +2199,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self._check_data(True)
         self._check_mask(True)
         self._check_weight(True)
-    
+
     def _set_data_ranges(self, chanmerge=False):
         xn = 2
         xw = self.imsize[0]//xn
@@ -2249,7 +2250,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                     for k in k_range:
                         res.append(tb.getcell('PagedArray', 0)[i][j][0][k].real)
         return res
-            
+
     def _get_refweight(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
@@ -2259,7 +2260,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                     for k in k_range:
                         res.append(tb.getcell('map', 0)[i][j][0][k].real)
         return res
-            
+
     def _get_refvalues(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
@@ -2310,7 +2311,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
     # default task parameters
     mode = "channel"
     kernel = "BOX"
-    # 
+    #
     # auto calculation result of imsize
     cell_auto = "6.7275953729549656arcsec"
     imsize_auto = [21, 21]
@@ -2378,7 +2379,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(0.0, self.region_all['blc'], self.region_all['trc']) )
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-        
+
     def test_pseudo_i(self):
         """test pseudo stokes I: image constructed by unflagged YY pol"""
         self.task_param['stokes'] = 'pseudoI'
@@ -2386,7 +2387,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
         out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
         self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-       
+
 
     def test_xx(self):
         """test stokes='XX' (flagged): image weights all zero"""
@@ -2430,7 +2431,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 class sdimaging_test_mslist(sdimaging_unittest_base):
     """
     Test more than one MSes as inputs
-    
+
     """
     prefix = sdimaging_unittest_base.taskname+'TestListMS'
     outfile = prefix+sdimaging_unittest_base.postfix
@@ -2453,7 +2454,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     # selection
     field_list = ['8,6', '7,5']
     scan_list = ['15', '16,17']
-    spw = '0'    
+    spw = '0'
     # Reference Statistics
     # blcf and trcf => qa.formxxx(+-qa.mul(cell_auto, 10.), "hms"/"dms", prec=3)
     # --- for "selection_misc.ms"
@@ -2465,7 +2466,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     # 'sigma': [0.], 'mean': [unif_flux], 'npts': [nvalid],
     # 'sum': [unif_flux*nvalid], 'sumsq': [unif_flux**2*nvalid],
     # 'blc': blc,'trc': trc, 'blcf': blcf, 'trcf': trcf}
-    
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
@@ -2518,14 +2519,14 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
         self.default_param['scan'] = str(',').join(self.scan_list)
         self.default_param['spw'] = self.spw
         self.run_test()
-        
+
     def test_1elemlist_selection(self):
         """Test data selection by single element list (2 MS inputs)"""
         self.default_param['field'] = [str(',').join(self.field_list)]
         self.default_param['scan'] = [str(',').join(self.scan_list)]
         self.default_param['spw'] = [self.spw]
         self.run_test()
-        
+
     def test_2elemlist_selection(self):
         """Test data selection by 2 elements list (2 MS inputs)"""
         self.default_param['field'] = self.field_list
@@ -2540,14 +2541,14 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 ###
 class sdimaging_test_restfreq(sdimaging_unittest_base):
     """
-    Unit test for task sdimaging 
-    
+    Unit test for task sdimaging
+
     Test 3 different ways to define image rest frequency.
     (1) defined by parameter restfreq (test_restfreq_param)
     (2) obtain a value in REST_FREQUENCY column in SOURCE subtable
         (test_restfreq_source)
     (3) define as mean frequency of representative SPW (test_restfreq_mean)
-    
+
     The rest frequency value will affect three numbers in image:
     - the rest frequency of the image
     - the default cell size of the image
@@ -2583,7 +2584,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
         default(sdimaging)
         self.param = self.param_base.copy()
-        
+
     def tearDown(self):
         remove_table(self.infiles)
         remove_tables_starting_with(self.outfile)
@@ -2605,10 +2606,10 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
     def get_reference_from_restfreq(self, restfreq):
         """Return a set of reference data associated with given rest frequency.
-        
+
         Arguments:
             restfreq {string} -- rest frequency as a string composed of value and unit
-                
+
         Returns:
            dict  -- reference data associated with given rest frequency
         """
@@ -2619,20 +2620,20 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         restfreq='200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
-        self.assertTrue('cell' in refs) 
+        self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
                       restfreq=restfreq,imsize=[8,8])
-        
+
     def test_restfreq_source(self):
         """Rest Frequency from SOURCE table"""
         restfreq='300GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
-        self.assertTrue('cell' in refs) 
+        self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
@@ -2645,7 +2646,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         restfreq='300.5GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
-        self.assertTrue('cell' in refs) 
+        self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
@@ -2667,7 +2668,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         restfreq='200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
-        self.assertTrue('cell' in refs) 
+        self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
@@ -2680,7 +2681,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         restfreq='200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
-        self.assertTrue('cell' in refs) 
+        self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
@@ -2697,15 +2698,15 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 ###
 class sdimaging_test_mapextent(unittest.TestCase):
     """
-    Unit test for task sdimaging 
-    
-    This test case defines automatic calculation of phasecenter and 
-    imsize. Basic tests has already been defined in test109 and test402 
+    Unit test for task sdimaging
+
+    This test case defines automatic calculation of phasecenter and
+    imsize. Basic tests has already been defined in test109 and test402
     so that some specific tests are defined here:
-    
-        test_azel_pointing -- Verify phasecenter in J2000 is properly calculated 
+
+        test_azel_pointing -- Verify phasecenter in J2000 is properly calculated
                               from AZELGEO pointing direction
-        test_data_selection -- Verify phasecenter is properly calculated from 
+        test_data_selection -- Verify phasecenter is properly calculated from
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
@@ -2715,14 +2716,14 @@ class sdimaging_test_mapextent(unittest.TestCase):
     infiles_selection = 'selection_misc.ms'
     infiles_azel = 'azelpointing.ms'
     outfile = 'sdimaging_test_mapextent.im'
-    
+
     scan = '16'
     region_topright = {'blc': [9, 9, 0, 0], 'trc': [20, 20, 0, 0]}
-    
+
     param_base = {'mode': 'channel',
                   'start': 0,
                   'nchan': 1,
-                  'width': 1, 
+                  'width': 1,
                   'cell': '6.7arcsec',
                   'gridfunction': 'BOX',
                   'outfile': outfile,
@@ -2732,13 +2733,13 @@ class sdimaging_test_mapextent(unittest.TestCase):
     def __copy_table(self, f):
         remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
-        
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
         default(sdimaging)
         self.param = self.param_base.copy()
-        
+
     def tearDown(self):
         for infile in self.infiles_ephem:
             remove_table(infile)
@@ -2755,7 +2756,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
         self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
-        
+
     def verify_mapextent(self, npix_ref, blc_ref, trc_ref):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
@@ -2778,9 +2779,9 @@ class sdimaging_test_mapextent(unittest.TestCase):
         print('trc', trc, 'trc_ref', trc_ref)
         print('extent', extent)
         # check if map area covers whole pointing data
-        # this is done by comparing blc and trc with their references 
-        # that are usually computed from actual distribution of 
-        # pointing direction (which is calculated by sdsave task) 
+        # this is done by comparing blc and trc with their references
+        # that are usually computed from actual distribution of
+        # pointing direction (which is calculated by sdsave task)
         self.assertTrue(all(npix == npix_ref), msg='Unexpected image pixel number')
         self.assertTrue(blc[0] >= blc_ref[0], msg='Unexpected coordinate (blc RA is too narrow)')
         self.assertTrue(blc[1] <= blc_ref[1], msg='Unexpected coordinate (blc DEC is too narrow)')
@@ -2792,8 +2793,8 @@ class sdimaging_test_mapextent(unittest.TestCase):
         self.assertTrue(blc[0] < blc_ref[0] + margin * extent[0], msg='Unexpected coordinate (blc RA is too wide)')
         self.assertTrue(blc[1] > blc_ref[1] - margin * extent[1], msg='Unexpected coordinate (blc DEC is too wide)')
         self.assertTrue(trc[0] > trc_ref[0] - margin * extent[0], msg='Unexpected coordinate (trc RA is too wide)')
-        self.assertTrue(trc[1] < trc_ref[1] + margin * extent[1], msg='Unexpected coordinate (trc DEC is too wide)')              
-        
+        self.assertTrue(trc[1] < trc_ref[1] + margin * extent[1], msg='Unexpected coordinate (trc DEC is too wide)')
+
     def test_azel_pointing(self):
         # test_azel_pointing: Verify phasecenter in J2000 is properly calculated from AZELGEO pointing direction
         self.__copy_table(self.infiles_azel)
@@ -2803,14 +2804,14 @@ class sdimaging_test_mapextent(unittest.TestCase):
         blc_ref = numpy.array([-85.2565977,  -13.87524395]) #CAS-10301
         trc_ref = numpy.array([-85.30504227, -13.80972133]) #CAS-10301
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
-    
+
     def test_data_selection(self):
         self.__copy_table(self.infiles_selection)
-        # here imsize is explicitly set to 13 
-        # this is because that auto-calculated imsize is 12 (even number) 
-        # it is known that phasecenter will not be a map center when 
-        # imsize is even number so that expected map coverage is shifted 
-        # by an order of 0.5 pixel 
+        # here imsize is explicitly set to 13
+        # this is because that auto-calculated imsize is 12 (even number)
+        # it is known that phasecenter will not be a map center when
+        # imsize is even number so that expected map coverage is shifted
+        # by an order of 0.5 pixel
         # this effect causes unexpected failure of the test
         self.run_test(infiles=self.infiles_selection, scan='16', imsize=13)
         npix_ref = numpy.array([13,13])
@@ -2825,8 +2826,8 @@ class sdimaging_test_mapextent(unittest.TestCase):
         #self.run_test(infiles=self.infiles_ephem, ephemsrcname='Uranus', restfreq='230GHz')
         self.run_test(infiles=self.infiles_ephem, phasecenter='URANUS', restfreq='230GHz') #CAS-11955
         npix_ref = numpy.array([37,26])
-        # set reference value manually since expected map area for 
-        # ephemeris object is difficult to calculate 
+        # set reference value manually since expected map area for
+        # ephemeris object is difficult to calculate
         #blcf_ref = '00:46:43.672 +04.14.51.504'
         #trcf_ref = '00:46:27.547 +04.17.39.004'
         blcf_ref = '00:47:09.795 +04.17.10.435' #CAS-11955
@@ -2835,7 +2836,7 @@ class sdimaging_test_mapextent(unittest.TestCase):
         trc_ref = numpy.fromiter(map(lambda x: qa.quantity(x)['value'], trcf_ref.split()), dtype=float)
         #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
-    
+
 ###
 #
 # Test case for moving object
@@ -2844,28 +2845,28 @@ class sdimaging_test_mapextent(unittest.TestCase):
 class sdimaging_test_ephemeris(unittest.TestCase):
     """
     Tests if tracking moving object works correctly
-    
-        test_ephemeris_notset -- Verify scanned area in the output image is 
+
+        test_ephemeris_notset -- Verify scanned area in the output image is
                                  distorted from rectangle
-        test_ephemeris_sun -- Verify image center is fixed to the center of the 
+        test_ephemeris_sun -- Verify image center is fixed to the center of the
                               Sun and the scanned area is off the image center
         test_ephemeris_trackf -- Verify image center is fixed to the positions
                                  written in ephemeris table attached to the input MS
                                  without explicitly specifying ephemeris table name
         test_ephemeris_table -- Verify image center is fixed to the positions
-                                 written in ephemeris table by explicitly specifying 
+                                 written in ephemeris table by explicitly specifying
                                  its name
 
     Data:
-        The test data 'Sun.spw18.ms' is a raster-scanned dataset of the Sun, with an 
-        ephemeris table 'EPHEM0_Sol_58327.6.tab' attached (in the FIELD directory). 
-        The data is taken so that the scanned points are enclosed in a rectangle 
-        region if the moving target position (off the solar center) is fixed in the 
-        output image. If moving object tracking does not work, the data points will 
-        be distributed in a parallelogram-like region. FYI, the data is generated 
+        The test data 'Sun.spw18.ms' is a raster-scanned dataset of the Sun, with an
+        ephemeris table 'EPHEM0_Sol_58327.6.tab' attached (in the FIELD directory).
+        The data is taken so that the scanned points are enclosed in a rectangle
+        region if the moving target position (off the solar center) is fixed in the
+        output image. If moving object tracking does not work, the data points will
+        be distributed in a parallelogram-like region. FYI, the data is generated
         using the following command:
-        mstransform(vis='uid___A002_Xd01cd7_X3f35.ms', outputvis='ephemtest.spw18.ms', 
-                    reindex=False, spw='18', intent='OBSERVE_TARGET#ON_SOURCE', 
+        mstransform(vis='uid___A002_Xd01cd7_X3f35.ms', outputvis='ephemtest.spw18.ms',
+                    reindex=False, spw='18', intent='OBSERVE_TARGET#ON_SOURCE',
                     datacolumn='float_data')
     """
 
@@ -2873,14 +2874,14 @@ class sdimaging_test_ephemeris(unittest.TestCase):
     infiles = 'ephemtest.spw18.ms'
     ephtab  = infiles + '/FIELD/EPHEM0_Sol_58327.6.tab'
     outfile = 'sdimaging_test_ephemeris.im'
-    
+
     param_base = {'infiles': infiles,
                   'field': 'Sol',
                   'spw': '18',
                   'mode': 'channel',
                   'start': 0,
                   'nchan': 1,
-                  'width': 1, 
+                  'width': 1,
                   'cell': '4arcsec',
                   'imsize': 1000,
                   'gridfunction': 'BOX',
@@ -2891,14 +2892,14 @@ class sdimaging_test_ephemeris(unittest.TestCase):
     def __copy_table(self, f):
         remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
-        
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
         default(sdimaging)
         self.param = self.param_base.copy()
         self.__copy_table(self.infiles)
-        
+
     def tearDown(self):
         remove_table(self.infiles)
         remove_tables_starting_with(self.outfile)
@@ -2911,7 +2912,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
-        
+
     def verify_scanned_region(self, phasecenter, **kwargs):
         _phasecenter = phasecenter.strip().upper()
         outfile = self.outfile + image_suffix
@@ -2938,7 +2939,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
                     xmin_ref = 438.0
                 xmax_ref = xmin_ref + 129.0
 
-                # check if (xmin, xmax) inside (xmin_ref, xmax_ref) 
+                # check if (xmin, xmax) inside (xmin_ref, xmax_ref)
                 # for each y (=raster-scan row)
                 # but ignore the lowest raw in the phasecenter=='' case
                 ignore_case = (_phasecenter == '') and (y == 436)
@@ -2958,7 +2959,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
             csys.done()
             myia.close()
 
-        self.assertEqual(len(refcode), 1) 
+        self.assertEqual(len(refcode), 1)
         self.assertEqual(refcode[0], 'REST')
 
     def __verify_frequency_label(self):
@@ -2978,7 +2979,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         rtol = 0.2 # 20% tolerance w.r.t. Lorentz factor
         metadataset = restfreqtool.get_metadataset(vis, fieldid, spwid, chanstart, nchan)
         msrange = restfreqtool.ms_freq_range(metadataset)
-        imrange = restfreqtool.image_freq_range(imagename) 
+        imrange = restfreqtool.image_freq_range(imagename)
         lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
         fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
         fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
@@ -3003,7 +3004,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
         self.run_test(phasecenter=phasecenter, **kwargs)
         self.verify_scanned_region(phasecenter=phasecenter, **kwargs)
         self.verify_spectral_axis(**kwargs)
-        
+
     def test_ephemeris_notset(self):
         self.execute('')
 
@@ -3019,7 +3020,7 @@ class sdimaging_test_ephemeris(unittest.TestCase):
     def test_ephemeris_cubesource(self):
         self.execute(phasecenter='TRACKFIELD', specmode='cubesource')
 
-    
+
 ###
 #
 # Test case for checking if spline interpolation works for fast scan data
@@ -3032,15 +3033,15 @@ class sdimaging_test_interp(unittest.TestCase):
     test_spline_interp_multiple_infiles: check if spline interpolation works for multiple MSs
 
     data:
-    Both 'pointing6.ms' and 'pointing6-2.ms' contain 1000 rows for TP data, while only 10 
-    rows given for POINTING data. 
-    The pointing data is given as corner points of a hexagon centered at (RA, Dec) = 
-    (0h00m00s, 0d00m00s) and with side of 0.001 radian and 0.0008 radian for 'pointing6.ms' 
+    Both 'pointing6.ms' and 'pointing6-2.ms' contain 1000 rows for TP data, while only 10
+    rows given for POINTING data.
+    The pointing data is given as corner points of a hexagon centered at (RA, Dec) =
+    (0h00m00s, 0d00m00s) and with side of 0.001 radian and 0.0008 radian for 'pointing6.ms'
     and 'pointing6-2.ms', respectively.
     The resulting pattern of weight image should be nearly circular if spline interpolation
     does work, while it should be hexagonal if linear interpolation, the old algorithm, is
     applied.
-    Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'. 
+    Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
     datapath=ctsys_resolve('regression/unittest/sdimaging')
     params = dict(antenna = "0",
@@ -3059,14 +3060,14 @@ class sdimaging_test_interp(unittest.TestCase):
     def __copy_table(self, f):
         remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
-        
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
         self.infiles = []
         self.outfiles = []
         default(sdimaging)
-        
+
     def tearDown(self):
         for infile in self.infiles:
             remove_table(infile)
@@ -3089,7 +3090,7 @@ class sdimaging_test_interp(unittest.TestCase):
         status = sdimaging(infiles=infiles, outfile=outfile, **self.params)
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
         self.assertTrue(os.path.exists(outfile+'.image'), msg='output image is not created.')
-        
+
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
         with tbmanager(weightfile) as tb:
@@ -3135,7 +3136,7 @@ class sdimaging_test_interp(unittest.TestCase):
             value (103.132), while linear interpolation will result in a wider
             range (94.240 +- 4.281) and depart from the answer value at 2-sigma
             level.
-            FYI, [dist_llim[1], dist_ulim[1]] and dist_answer[1] will be 
+            FYI, [dist_llim[1], dist_ulim[1]] and dist_answer[1] will be
             (81.609 - 83.151) and (82.506), respectively.
             """
             self.assertTrue(((dist_llim[i] < dist_answer[i]) and (dist_answer[i] < dist_ulim[i])),
@@ -3202,14 +3203,14 @@ class sdimaging_test_interp_old(unittest.TestCase):
     def __copy_table(self, f):
         remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
-        
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
         for infile in self.params['infiles']:
             self.__copy_table(infile)
         default(sdimaging)
-        
+
     def tearDown(self):
         for infile in self.params['infiles']:
             remove_table(infile)
@@ -3223,10 +3224,10 @@ class sdimaging_test_interp_old(unittest.TestCase):
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
-        
+
     def test_spline_interp(self):
         """test_spline_interp: Check if spline interpolation works for fast scan data."""
-        
+
         self.run_test()
 
         weightfile = self.outfile + '.weight'
@@ -3265,8 +3266,8 @@ class sdimaging_test_interp_old(unittest.TestCase):
         """
         self.assertTrue(((dist_llim < dist_answer) and (dist_answer < dist_ulim)),
                         msg = 'spline interpolation seems not working.')
-    
-    
+
+
 class sdimaging_test_clipping(sdimaging_unittest_base):
     """
     test_1row: check if clipping is not activated (1 spectrum)
@@ -3275,10 +3276,10 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
     test_multivis: check if clipping properly handles multiple ms inputs
     test_clip: check if clipping is applied to every image pixel separately
     test_clip2: check if clipping is activated on one pixel but is not on others
-    test_suprious: check if clipping properly handles suprious data 
+    test_suprious: check if clipping properly handles suprious data
     test_multichan: check if clipping handles multi-channel data properly
     """
-    data_list = ['clipping_1row.ms', 'clipping_2rows.ms', 'clipping_3rows.ms', 
+    data_list = ['clipping_1row.ms', 'clipping_2rows.ms', 'clipping_3rows.ms',
                  'clipping_3rows_suprious.ms', 'clipping_3rows_2chans.ms']
     outfile = 'sdimaging_test_clipping.im'
     outfile_ref = 'sdimaging_test_clipping.ref.im'
@@ -3286,14 +3287,14 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         default(sdimaging)
-        
+
         # clear up test data
         self.__clear_up()
-    
+
     def tearDown(self):
         # remove test data
         self.__clear_up()
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def __clear_up(self):
@@ -3312,12 +3313,12 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         if isinstance(infiles, str):
             self._test_clipping([infiles], is_clip_effective)
             return
-        
+
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
             copytree_ignore_subversion(self.datapath, infile)
-            
+
         # image with clipping
         outfile = self.outfile
         overwrite = False
@@ -3329,13 +3330,13 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         imsize = 3
         cell = '1arcmin'
         phasecenter = 'J2000 0h0m0s 0d0m0s'
-        sdimaging(infiles=infiles, outfile=outfile, overwrite=overwrite, 
-                  mode=mode, nchan=nchan, start=start, width=width, 
+        sdimaging(infiles=infiles, outfile=outfile, overwrite=overwrite,
+                  mode=mode, nchan=nchan, start=start, width=width,
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=True)
         _outfile = outfile + image_suffix
         self.assertTrue(os.path.exists(_outfile))
-        
+
         if is_clip_effective == True:
             # pre-flag the data to be clipped
             myme = measures()
@@ -3375,7 +3376,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                         gridmeta[min_ra][min_dec].append((infile, irow))
                 finally:
                     mymsmd.close()
-            
+
             print('### gridmeta', gridmeta)
             for ira in range(imsize):
                 for idec in range(imsize):
@@ -3388,7 +3389,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                         finally:
                             mytb.close()
                         grid[ira][idec].append(data)
-            
+
             for ira in range(imsize):
                 for idec in range(imsize):
                     data = numpy.asarray(grid[ira][idec], dtype=numpy.float64)
@@ -3413,34 +3414,34 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                                 mytb.putcell('FLAG', irow, flag)
                             finally:
                                 mytb.close()
-                    
+
         outfile = self.outfile_ref
-        sdimaging(infiles=infiles, outfile=outfile, overwrite=overwrite, 
-                  mode=mode, nchan=nchan, start=start, width=width, 
+        sdimaging(infiles=infiles, outfile=outfile, overwrite=overwrite,
+                  mode=mode, nchan=nchan, start=start, width=width,
                   gridfunction=gridfunction, imsize=imsize, cell=cell,
                   phasecenter=phasecenter, clipminmax=False)
         _outfile_ref = outfile + image_suffix
         self.assertTrue(os.path.exists(_outfile_ref))
-            
+
         # compare
         myia = image()
         myia.open(_outfile)
         result = myia.getchunk()
         result_mask = myia.getchunk(getmask=True)
         myia.close()
-        
+
         myia.open(_outfile_ref)
         reference = myia.getchunk()
         reference_mask = myia.getchunk(getmask=True)
         myia.close()
-        
+
         print('### result', result.flatten())
         print('### mask', result_mask.flatten())
         print('### reference', reference.flatten())
         print('### mask', reference_mask.flatten())
-        
+
         self.assertTrue(numpy.all(result_mask == reference_mask))
-        
+
         mresult = result[result_mask]
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
@@ -3450,74 +3451,74 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         err = vdiff(mresult, mreference)
         eps = 1.0e-6
         print('err = %s (max %s min %s)'%(err, err.max(), err.min()))
-        self.assertTrue(numpy.all(err < eps)) 
-    
+        self.assertTrue(numpy.all(err < eps))
+
     def test_1row(self):
         """test_1row: check if clipping is not activated (1 spectrum)"""
         infile = 'clipping_1row.ms'
         self._test_clipping(infile, is_clip_effective=False)
-    
+
     def test_2rows(self):
         """test_2rows: check if clipping is not activated (2 spectra)"""
         infile = 'clipping_2rows.ms'
         self._test_clipping(infile, is_clip_effective=False)
-    
+
     def test_3rows(self):
         """test_3rows: check if clipping is activated (3 spectra)"""
         infile = 'clipping_3rows.ms'
         self._test_clipping(infile, is_clip_effective=True)
-    
+
     def test_multivis(self):
         """test_multivis: check if clipping properly handles multiple ms inputs"""
         infiles = ['clipping_1row.ms', 'clipping_2rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
-        
+
     def test_clip(self):
         """test_clip: check if clipping is applied to every image pixel separately"""
         infiles = ['clipping_1row.ms', 'clipping_2rows.ms', 'clipping_3rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
-        
+
     def test_clip2(self):
         """test_clip2: check if clipping is activated on one pixel but is not on others"""
         infiles = ['clipping_1row.ms', 'clipping_3rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
-        
+
     def test_suprious(self):
         """test_suprious: check if clipping properly handles suprious data"""
         # This test is defined to verify new clipping algorithm
         #
-        # Test data contains suprious. It is 10 orders of magnitude larger 
-        # than orginary data so that ordinary data will disappear due to 
+        # Test data contains suprious. It is 10 orders of magnitude larger
+        # than orginary data so that ordinary data will disappear due to
         # the loss of trailing digits when suprious data is accumulated to grid.
         # (NOTE: grid data is signle-precision)
         #
-        # Old algorithm keeps track of minimum and maximum data during accumulation. 
-        # However, it accumulates whole data once, then subtract minimum and maximum 
-        # from accumulated result. In this procedure, suprious data must be accumulated 
+        # Old algorithm keeps track of minimum and maximum data during accumulation.
+        # However, it accumulates whole data once, then subtract minimum and maximum
+        # from accumulated result. In this procedure, suprious data must be accumulated
         # to grid. Thus, the result is suffered from the loss of trailing digits.
-        #  
-        # On the other hand, new algorithm doesn't accumulate mininum and maximum. 
-        # If clipping cannot apply (i.e., number of accumulated data is less than 
+        #
+        # On the other hand, new algorithm doesn't accumulate mininum and maximum.
+        # If clipping cannot apply (i.e., number of accumulated data is less than
         # 3), these values are accumulated at the post-accumulation step.
         infile = 'clipping_3rows_suprious.ms'
         self._test_clipping(infile, is_clip_effective=True)
-        
+
     def test_multichan(self):
         """test_multichan: check if clipping handles multi-channel data properly"""
         infile = 'clipping_3rows_2chans.ms'
         self._test_clipping(infile, is_clip_effective=True)
-        
+
 
 class sdimaging_test_projection(sdimaging_unittest_base):
     """
     Test projection
 
        - test_projection_GSL: unsupported projection type
-       - test_projection_SIN: create image with SIN (Slant Orthographic) projection 
+       - test_projection_SIN: create image with SIN (Slant Orthographic) projection
        - test_projection_TAN: create image with TAN (Gnomonic) projection
        - test_projection_CAR: create image with CAR (Plate Caree) projection
        - test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection
-       
+
     """
     # Input and output names
     prefix=sdimaging_unittest_base.taskname+'ProjectionTest'
@@ -3532,7 +3533,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
     keys=['max','maxpos','maxposf','mean','min','minpos','minposf',
           'npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
-    
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
@@ -3553,12 +3554,12 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
-        
+
     def run_test_common(self, task_param, refstats, shape, refbeam=None,
                         atol=1.e-8, rtol=1.e-5, compstats=None, ignoremask=True,
                         projection='SIN'):
-        
-        # call super class's run_test_common 
+
+        # call super class's run_test_common
         super(sdimaging_test_projection, self).run_test_common(task_param, refstats, shape, refbeam,
                                                                atol, rtol, compstats, ignoremask)
 
@@ -3570,7 +3571,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         finally:
             _ia.close()
         self.assertEqual(projection, result_projection)
-        
+
     def test_projection_GSL(self):
         """test_projection_GSL: unsupported projection type"""
         projection = 'GSL'
@@ -3607,7 +3608,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=False,
                              projection=projection)
-        
+
     def test_projection_TAN(self):
         """test_projection_TAN: create image with TAN (Gnomonic) projection"""
         projection = 'TAN'
@@ -3663,7 +3664,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=False,
                              projection=projection)
-        
+
     def test_projection_SFL(self):
         """test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection"""
         projection = 'SFL'
@@ -3707,14 +3708,14 @@ class sdimaging_test_output(sdimaging_unittest_base):
     def __copy_table(self, f):
         remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
-        
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
         for infile in self.params['infiles']:
             self.__copy_table(infile)
         default(sdimaging)
-        
+
     def tearDown(self):
         for infile in self.params['infiles']:
             remove_table(infile)
@@ -3741,8 +3742,52 @@ class sdimaging_test_output(sdimaging_unittest_base):
         # check data that must not be output
         for suffix in ['.sumwt', '.psf']:
             self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
-    
-    
+
+
+class sdimaging_antenna_move(sdimaging_unittest_base):
+    datapath = ctsys_resolve('visibilities/almasd')
+    infiles = ['PM04_A108.ms', 'PM04_T704.ms']
+    outfile = 'antenna_move'
+
+    def setUp(self):
+        self.__clear_files()
+
+        for infile in self.infiles:
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
+
+    def tearDown(self):
+        self.__clear_files()
+
+    def __clear_files(self):
+        files = self.infiles + glob.glob('{}*'.format(self.outfile))
+        for f in files:
+            if os.path.exists(f):
+                shutil.rmtree(f)
+
+    def test_antenna_move(self):
+        imsize = 11
+        params = {
+            'infiles': self.infiles,
+            'antenna': '2',
+            'spw': '18',
+            'phasecenter': 2,
+            'outfile': self.outfile,
+            'overwrite': False,
+            'imsize': imsize,
+            'cell': '10arcsec'
+        }
+        center = [imsize // 2, imsize // 2, 0, 0]
+        ref = {
+            'npts': [1],
+            'max': [1],
+            'min': [1],
+            'maxpos': center,
+            'minpos': center,
+            'sum': [1]
+        }
+        self.run_test_common(params, refstats=ref, shape=(imsize, imsize, 1, 1), ignoremask=False)
+
+
 """
 # utility for sdimaging_test_mapextent
 # commented out since sd tool is no longer available in CASA (CAS-10301)
@@ -3803,7 +3848,7 @@ def calc_statistics(imagename):
     with toolmanager(imagename, image) as ia:
         s = ia.statistics()
     return s
-    
+
 def calc_mapproperty(statistics):
     ra_in_deg = lambda x: qa.quantity(x.split(',')[0])['value']
     dec_in_deg = lambda x: qa.quantity(x.split(',')[1])['value']
@@ -3833,13 +3878,14 @@ def suite():
             sdimaging_test_flag,
             sdimaging_test_polflag,
             sdimaging_test_mslist,
-            sdimaging_test_restfreq, 
+            sdimaging_test_restfreq,
             sdimaging_test_mapextent,
             sdimaging_test_ephemeris,
             sdimaging_test_interp,
             sdimaging_test_clipping,
-            sdimaging_test_projection, 
-            sdimaging_test_output
+            sdimaging_test_projection,
+            sdimaging_test_output,
+            sdimaging_antenna_move
             ]
 
 if is_CASA6:
