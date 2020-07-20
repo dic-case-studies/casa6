@@ -38,6 +38,7 @@
 #include <casatools/Config/State.h>
 #ifdef CASATOOLS
 #include <asdmstman/AsdmStMan.h>
+#include <casacore/derivedmscal/DerivedMC/Register.h>
 #include <toolversion.h>
 #endif
 
@@ -431,6 +432,7 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 #ifdef CASATOOLS
     casa::AsdmStMan::registerClass( );
+    register_derivedmscal();
 #endif
     initialized = true;
     return true;
