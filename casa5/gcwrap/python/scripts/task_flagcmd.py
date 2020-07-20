@@ -1903,10 +1903,11 @@ def newplotflags(
     casalog.post('Plotted %d flags' % nplotted)
 
     figs = []
+    figsize = (8, 6)
     # maximum number of antennas per plot page (CAS-5187)
     antlimit = 28
     if len(myants) <= antlimit:
-        figs.append(pl.figure())
+        figs.append(pl.figure(figsize=figsize))
         _plotants(figs[0], plotflagperant, myants, readict)
     else:
         # prefer DA on first page
@@ -1918,12 +1919,12 @@ def newplotflags(
             da = da[:antlimit]
 
         if da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, da, readict)
 
         # stuff the rest on other figures
         while no_da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, no_da[:antlimit], readict)
             no_da = no_da[antlimit:]
 
