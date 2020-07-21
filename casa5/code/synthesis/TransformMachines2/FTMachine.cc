@@ -1464,6 +1464,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
@@ -2553,11 +2555,12 @@ using namespace casa::vi;
         }
 	theim->unlock();
         
-	if( useWeightImage() && dopsf ) {
+	if( (useWeightImage() && dopsf) || isSD() ) {
           
           LatticeLocker lock1 (*(imstore->weight()), FileLocker::Write);
 	  getWeightImage( *(imstore->weight())  , sumWeights);
           imstore->weight()->unlock();
+
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.
 	}

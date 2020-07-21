@@ -7,6 +7,7 @@ from numpy import unique
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
        from casatools import calibrater
+       from casatasks import casalog
        _cb = calibrater( )
 else:
        from taskinit import *
@@ -141,7 +142,13 @@ def accum(vis=None,tablein=None,incrtable=None,caltable=None,field=None,calfield
 
        """
 
+
        #Python script
+
+       # Log upcoming deprecation/removal as warning
+       casalog.origin('accum')
+       casalog.post("NOTE: THE ACCUM TASK HAS BEEN DEPRECATED, AND WILL BE REMOVED IN CASA 5.8/6.2.","WARN")
+
        try:
               if(tablein != '') :
                      accumtime=-1.0

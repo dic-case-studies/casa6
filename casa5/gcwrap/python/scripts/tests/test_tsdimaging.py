@@ -3201,13 +3201,13 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
             shutil.rmtree(outfile)
             shutil.rmtree(self.outfile + '.weight')
             shutil.rmtree(self.outfile + '.sumwt')
-            shutil.rmtree(self.outfile + '.psf')
+            #shutil.rmtree(self.outfile + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
         outfile_ref = self.outfile_ref + image_suffix
         if os.path.exists(outfile_ref):
             shutil.rmtree(outfile_ref)
             shutil.rmtree(self.outfile_ref + '.weight')
             shutil.rmtree(self.outfile_ref + '.sumwt')
-            shutil.rmtree(self.outfile_ref + '.psf')
+            #shutil.rmtree(self.outfile_ref + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
     
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):
@@ -3592,6 +3592,61 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=False,
                              projection=projection)
+
+
+class sdimaging_test_output(sdimaging_unittest_base):
+    """
+    Tests to check if only appropriate images are output
+    """
+    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdimaging/'
+    params = dict(infiles = ['selection_misc.ms'],
+                  outfile = "outmisc",
+                  imsize = [80,80], # to suppress warning messages
+                  intent = '')
+    outfile = params['outfile']
+
+    def __remove_table(self, f):
+        if os.path.exists(f):
+            shutil.rmtree(f)
+    
+    def __copy_table(self, f):
+        self.__remove_table(f)
+        testutils.copytree_ignore_subversion(self.datapath, f)
+        
+    def setUp(self):
+        self.cache_validator = testutils.TableCacheValidator()
+
+        for infile in self.params['infiles']:
+            self.__copy_table(infile)
+        default(sdimaging)
+        
+    def tearDown(self):
+        for infile in self.params['infiles']:
+            self.__remove_table(infile)
+        os.system('rm -rf %s*'%(self.outfile))
+        
+        self.assertTrue(self.cache_validator.validate())
+
+    def run_test(self, **kwargs):
+        self.params.update(**kwargs)
+        status = sdimaging(**self.params)
+        self.assertIsNone(status, msg = 'sdimaging failed to execute')
+        outfile = self.outfile + image_suffix
+        self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
+
+    # a test to verify CAS-10893
+    def test_output_no_psf(self):
+        """test_no_psf: Check if .psf is no longer output."""
+        os.system('rm -rf %s*'%(self.outfile))
+        self.run_test()
+
+        # check data that must be output
+        for suffix in ['.image', '.weight', '.sumwt']:
+            self.assertTrue(os.path.exists(self.outfile+suffix), msg=suffix+' not found.')
+        # check data that must not be output
+        for suffix in ['.psf']:
+            self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
+    
     
 """
 # utility for sdimaging_test_mapextent
@@ -3688,5 +3743,6 @@ def suite():
             sdimaging_test_ephemeris,
             sdimaging_test_interp,
             sdimaging_test_clipping,
-            sdimaging_test_projection
+            sdimaging_test_projection,
+            sdimaging_test_output
             ]
