@@ -558,7 +558,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < itsStrenThres) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << abs(itsStrengthOptimum) << endl;
@@ -958,7 +959,7 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     const Int maxi = min(nx-1, (Int)(refi + scaleSize));
     const Int minj = max(0, (Int)(refj - scaleSize));
     const Int maxj = min(ny-1, (Int)(refj + scaleSize));
-    cout << "makeScaleImage: scalesize " << scaleSize << " mini " << mini << " maxi " << maxi << " minj " << minj << " maxj " << maxj << endl; 
+    //cout << "makeScaleImage: scalesize " << scaleSize << " mini " << mini << " maxi " << maxi << " minj " << minj << " maxj " << maxj << endl; 
 
     Gaussian2D<Float> gbeam(1, refi, refj, scaleSize, 1, 0);
     Float volume=0.0;
@@ -979,7 +980,7 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     iscale /= volume;   
   }
 
-  cout << "max iscale " << max(abs(iscale)) << endl;
+  //cout << "max iscale " << max(abs(iscale)) << endl;
 }
 
 void AspMatrixCleaner::makeAspScales()
@@ -1237,7 +1238,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   //genie
   // Find the peaks of the convolved Psfs
-  Vector<Float> maxPsfConvInitScales(itsNInitScales);
+  /*Vector<Float> maxPsfConvInitScales(itsNInitScales);
   Int naxes = psfShape_p.nelements();
 
   #pragma omp parallel default(shared) private(scale) num_threads(nth)
@@ -1259,7 +1260,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
    << LogIO::SEVERE;
       return;
     }
-  }
+  }*/
   //genie
 
   //#pragma omp parallel default(shared) private(scale) num_threads(nth)
@@ -1295,10 +1296,15 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
       // Remember to adjust the position for the window and for
       // the flux scale
-      maxima(scale) /= maxPsfConvInitScales(scale);
-      float normalization;
-      normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2);
-      //maxima(scale) /= normalization;
+      //maxima(scale) /= maxPsfConvInitScales(scale);
+      if (scale > 0)
+      {
+	      float normalization;
+	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
+	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good
+	      normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1);
+	      maxima(scale) /= normalization;
+      }
       //maxima(scale) *= (vecWork_p[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in strengthOptimum for loop (next for loop).
       //cout << "maxDirty: maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       //cout << "maxDirty: itsDirtyConvInitScales[" << scale << "] = " << (itsDirtyConvInitScales[scale])(posMaximum[scale]) << endl;

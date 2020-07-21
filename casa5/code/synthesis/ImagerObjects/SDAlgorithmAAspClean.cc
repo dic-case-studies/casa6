@@ -96,9 +96,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       // computed once. This calls getPsfGaussianWidth
       // and sets the new itsInitScaleXfrs
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
-      //itsCleaner.setInitScaleXfrs(itsMatPsf, width);
       itsCleaner.setInitScaleXfrs(width);
-      itsCleaner.setInitScalePsfs();
+      ////itsCleaner.setInitScalePsfs();
       itsCleaner.setInitScaleMasks(itsMatMask);
 
       itsCleaner.stopPointMode( itsStopPointMode );
