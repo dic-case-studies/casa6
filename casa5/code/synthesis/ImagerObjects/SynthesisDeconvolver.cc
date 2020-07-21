@@ -887,13 +887,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // cerr << "OPTCHAN" << optchan  << endl;
     if(optchan < 10) optchan=10;
     Int nproc= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
-    if(nproc==1){
+    /*if(nproc==1){
       startchans.resize(1);
       endchans.resize(1);
       startchans[0]=0;
       endchans[0]=nchan-1;
       return 1;
       }
+    */
     Int blksize= nchan/nproc > optchan ? optchan : Int( std::floor(Float(nchan)/Float(nproc)));
     if(blksize< 1) blksize=1;
     Int nblk=Int(nchan/blksize);

@@ -427,7 +427,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 			if(Table::isReadable(modelnames[imId])){
                           	
 				
-				///Pass some extra channels for interpolation while degridding
+				///Pass some extra channels for interpolation while degridding..should match or be less than in SynthesisImager::tuneSelect
 				Int startmodchan=(chanBeg-2) >0 ? chanBeg-2 : 0;
 				Int endmodchan=(chanEnd+2) < nchannels ? chanEnd+2 : nchannels-1 ;
 				//cerr << "START END mod " << startmodchan << "  " << endmodchan << endl;

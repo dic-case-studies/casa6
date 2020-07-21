@@ -1,5 +1,5 @@
 //# SimplePBConvFunc.cc: implementation of SimplePBConvFunc
-//# Copyright (C) 2007-2016
+//# Copyright (C) 2007-2020
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This library is free software; you can redistribute it and/or modify it
@@ -844,7 +844,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     sj_p=sj;
   }
   
-  /*
+  
   void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
     
 	  
@@ -923,8 +923,8 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     //cerr << "USEFULchan " << chanMap << endl;
     return;
   }
-*/
 
+  /*
     void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
     
 	  
@@ -984,7 +984,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     //cerr << chanMap << endl;
     return;
   }
-
+  */
   Bool SimplePBConvFunc::checkPBOfField(const vi::VisBuffer2& vb){
     //Int fieldid=vb.fieldId();
     String msid=vb.msName(true);
@@ -1035,6 +1035,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
 
   }
+  
 
   ImageInterface<Float>&  SimplePBConvFunc::getFluxScaleImage(){
 
