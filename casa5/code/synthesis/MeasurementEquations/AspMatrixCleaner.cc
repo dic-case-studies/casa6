@@ -407,8 +407,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Matrix<Complex>itsScaleXfr0 = Matrix<Complex> ();
   fft.fft0(itsScaleXfr0, itsScale0);
 
-  Matrix<Float> itsScale = Matrix<Float>(psfShape_p); // with hogbom
-  Matrix<Complex>itsScaleXfr = Matrix<Complex> (); // with hogbom
+  Matrix<Float> itsScale = Matrix<Float>(psfShape_p); 
+  Matrix<Complex>itsScaleXfr = Matrix<Complex> (); 
 
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
@@ -441,7 +441,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       makeScale(itsScale, itsOptimumScaleSize);
       itsScaleXfr.resize();
       fft.fft0(itsScaleXfr, itsScale);	
-    }  //with hogbom
+    }  
 	    
     
 
@@ -559,8 +559,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.002) // G55 value, new Asp, old normalization
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << abs(itsStrengthOptimum) << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -579,15 +580,15 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       itsSwitchedToMS = true;
     }*/ //newMS2
 
-    /*if (!itsSwitchedToHogbom)
+    if (!itsSwitchedToHogbom)
     {
 	    if (itsNumIterNoGoodAspen.size() >= 10)
 	  	  itsNumIterNoGoodAspen.pop_front(); // only track the past 10 iters
-	    if (optimumScale == 0)
+	    if (itsOptimumScaleSize == 0)
 	      itsNumIterNoGoodAspen.push_back(1); //genie Zhang 2018 fused-Asp approach
 	    else 
 	      itsNumIterNoGoodAspen.push_back(0);
-    }*/
+    }
 
 
     //itsStrengthOptimum /= scaleBias(optimumScale);
@@ -1238,7 +1239,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   //genie
   // Find the peaks of the convolved Psfs
-  /*Vector<Float> maxPsfConvInitScales(itsNInitScales);
+  Vector<Float> maxPsfConvInitScales(itsNInitScales);
   Int naxes = psfShape_p.nelements();
 
   #pragma omp parallel default(shared) private(scale) num_threads(nth)
@@ -1260,7 +1261,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
    << LogIO::SEVERE;
       return;
     }
-  }*/
+  }
   //genie
 
   //#pragma omp parallel default(shared) private(scale) num_threads(nth)
@@ -1296,15 +1297,15 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
       // Remember to adjust the position for the window and for
       // the flux scale
-      //maxima(scale) /= maxPsfConvInitScales(scale);
-      if (scale > 0)
+      maxima(scale) /= maxPsfConvInitScales(scale);
+      /*if (scale > 0)
       {
 	      float normalization;
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good
 	      normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1);
 	      maxima(scale) /= normalization;
-      }
+      }*/
       //maxima(scale) *= (vecWork_p[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in strengthOptimum for loop (next for loop).
       //cout << "maxDirty: maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       //cout << "maxDirty: itsDirtyConvInitScales[" << scale << "] = " << (itsDirtyConvInitScales[scale])(posMaximum[scale]) << endl;
@@ -1505,10 +1506,17 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     return {};
   } */
 
+  if (!itsSwitchedToHogbom &&
+  	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
+  {
+  	cout << "Switched to hogbom because of frequent small components." << endl;
+    switchedToHogbom();
+  }
+
   if (itsSwitchedToHogbom)
   	itsNInitScales = 1;
   else
-  	itsNInitScales = itsInitScaleSizes.size(); // with hogbom
+  	itsNInitScales = itsInitScaleSizes.size(); 
 
   // Dirty * initial scales
   Matrix<Complex> dirtyFT;
@@ -1549,12 +1557,12 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
   // initial scale size = 0 gives the peak res, so we don't
   // need to do the LBFGS optimization for it
-  if (itsNumIterNoGoodAspen.size() >= 10)
-  	itsNumIterNoGoodAspen.pop_front(); // only track the past 10 iters
-  if (optimumScale == 0)
+  //if (itsNumIterNoGoodAspen.size() >= 10)
+  //	itsNumIterNoGoodAspen.pop_front(); // only track the past 10 iters
+  if (itsOptimumScale == 0)
   {
-  	if (!itsSwitchedToHogbom)
-      itsNumIterNoGoodAspen.push_back(1); //genie Zhang 2018 fused-Asp approach
+  	//if (!itsSwitchedToHogbom)
+      //itsNumIterNoGoodAspen.push_back(1); //genie Zhang 2018 fused-Asp approach, handled by aspclean instead
     //return itsAspScaleSizes;
     return {};
   }
@@ -1582,8 +1590,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }*/
 
     // test scale up genie
-    /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-      itsAspAmplitude[i] = itsAspAmplitude[i] * 1e8;*/
+    for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+      itsAspAmplitude[i] = itsAspAmplitude[i] * 1e8;
 
 
     // heuristiclly determine active set for speed up
@@ -1599,8 +1607,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 2e4; //M31
     //const Float lamda = 5e3; //M31 gold2
     //const Float lamda = 7e3; //M31 all fixed
-    const Float lamda = 318; //M31 new Asp - 100 doesn't evolve
     //const Float lamda = 200; //M31 new Asp
+    //const Float lamda = 318; //M31 new Asp - gold 
 
     //const Float lamda = 13000.0; //G55 
     //const Float lamda = 1120.0; //G55 tesla, 1e8, spw2
@@ -1608,6 +1616,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 450.0; //G55 tesla, 1e8, spw3 nScales3
     //const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7/8/gold
     //const Float lamda = 485.8; // G55 tesla, 1e8, spw3 fixedScale, eigen
+    //const Float lamda = 485800; // G55 tesla, 1e8, spw3, new asp, new norm
+    //const Float lamda = 9600000; // G55 tesla, 1e8, spw3, new asp, old norm
+    const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp, old norm
+    //const Float lamda = 240000; // G55 tesla, 1e8, spw3, new asp
     
     const Float threshold = lamda * resArea;
     vector<Float> tempx;
@@ -1628,8 +1640,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //auto stop = high_resolution_clock::now();
       //auto duration = duration_cast<microseconds>(stop - start);
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
-      //cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
-    	if (/*itsAspScaleSizes[i] == itsInitScaleSizes[optimumScale] || */lenDirVec >= threshold)
+      cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+    	if (lenDirVec >= threshold)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     		vp.push_back({lenDirVec, i});
@@ -1662,13 +1674,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsAspGood.erase(itsAspGood.begin() + goodvp[i]); 
     }
 
-    /*if (goodvp.size() == 0)
-      itsNumIterNoGoodAspen.push_back(1); // this iter has no good apsen
-    else
-      itsNumIterNoGoodAspen.push_back(0);*/
-
     // the new aspen is always added to the active-set 
-    tempx.push_back(strengthOptimum);
+    // remember to scale up the strength for G55
+    tempx.push_back(strengthOptimum * 1e8);
     tempx.push_back(itsInitScaleSizes[optimumScale]);
     activeSetCenter.push_back(positionOptimum);
 
@@ -1775,8 +1783,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
   // test scale back genie
-  /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;*/
+  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;
 
   //return itsAspScaleSizes; // this returns permanent list 
   return itsGoodAspActiveSet; // return optimized scale
@@ -1798,10 +1806,10 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   itsScaleSizes = scaleSizes;  // make a copy that we can call our own
   GenSort<Float>::sort(itsScaleSizes);*/
 
-  // this is good but commented because we need to use itsGoodAspAmplitude
-  /*sort(scaleSizes.begin(), scaleSizes.end());
+  // this is good but needs to be reconsidered when we need to use itsGoodAspAmplitude
+  sort(scaleSizes.begin(), scaleSizes.end());
   //scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end()); // remove the duplicated scales
-  scaleSizes.erase(unique(scaleSizes.begin(),scaleSizes.end(),[](Float l, Float r) { return abs(l - r) < 1e-3; }), scaleSizes.end());*/
+  scaleSizes.erase(unique(scaleSizes.begin(),scaleSizes.end(),[](Float l, Float r) { return abs(l - r) < 1e-3; }), scaleSizes.end());
 
   for (unsigned int i = 0; i < scaleSizes.size(); i++)
     cout << "defineAspScales scaleSizes[" << i << "] = " << scaleSizes[i] << endl;
@@ -1831,8 +1839,8 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
-  itsNumHogbomIter = 10000; //fake it
+  itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
+  //itsNumHogbomIter = 10000; //fake it for M31
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 
