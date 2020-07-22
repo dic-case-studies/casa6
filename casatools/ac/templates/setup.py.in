@@ -1255,6 +1255,9 @@ class casa_build_ext(build_ext):
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
+                if isexe("scripts/find-glibc-private"):
+                    if Proc(["scripts/find-glibc-private", "--delete", module_path]) != 0:
+                        sys.exit("\tGLIBC_PRIVATE cleanup failed...")
 
         if sys.platform == 'darwin':
             print("Fixing rpaths")
