@@ -106,7 +106,7 @@ class Fringefit_single_tests(unittest.TestCase):
         refant = 0
         refant_s = str(refant) 
         for pactive in itertools.product(*3*[[False, True]]):
-            fringefit(vis=self.msfile, paramactive=pactive, caltable=sbdcal, refant=refant_s)
+            fringefit(vis=self.msfile, paramactive=list(pactive), caltable=sbdcal, refant=refant_s)
             tblocal.open(sbdcal)
             fparam = tblocal.getcol('FPARAM')
             flag = tblocal.getcol('FLAG')
