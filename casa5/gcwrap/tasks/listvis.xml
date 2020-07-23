@@ -1,16 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<!-- This is the param set for listvis -->
-<!-- This does the equivalent of -->
-<!-- ms.open('anyfile.ms'); -->
-<!-- ms.lister(); -->
 
-<task type="function" name="listvis" category="information, analysis">
+
+
+
+
+<task category="information, analysis" name="listvis" type="function">
 
   <shortdescription>List measurement set visibilities.</shortdescription>
 
@@ -23,7 +18,7 @@ and residual (corrected - model) data.
 
 The output table format is dynamic.  Field, Spectral Window, and
 Channel columns are not displayed if the column contents are uniform.
-For example, if "spw = '1'" is specified, the spw column will not be
+For example, if &quot;spw = '1'&quot; is specified, the spw column will not be
 displayed.  When a column is not displayed, a message is sent to the
 logger and terminal indicating that the column values are uniform and
 listing the uniform value.
@@ -59,12 +54,12 @@ datacolumn  Visibility file data column:
             data, float_data, corrected, model, residual (corrected-model)
 
 field       Select data based on field id(s) or name(s)
-            default: ''==>all; example: field='1'
+            default: ''==&gt;all; example: field='1'
             field='0~2' field ids inclusive from 0 to 2
             field='3C*' all field names starting with 3C
 
 spw         Select spectral window, channel to list
-            default: '0:0' --> spw=0, chan=0
+            default: '0:0' --&gt; spw=0, chan=0
             spw='2:34' spectral window 2, channel 34
 
 selectdata  Toggle the following 7 selection parameters.
@@ -73,24 +68,24 @@ selectdata  Toggle the following 7 selection parameters.
             to default values.
 
       antenna     Select calibration data based on antenna
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   antenna = '5,6'; antenna index 5 and 6 solutions
                   antenna = '05,06'; antenna names '05' and '06 solutions
 
       timerange   Select time range to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   timerange='10:37:50.1'; list data for this sampling interval
                   timerange='&lt;10:37:25'; list data before 10:37:25
 
       correlation Select polarization correlations to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   correlation='RR LL'; list RR and LL correlations
                   correlation='XX XY'; list XX and XY correlations
 
       scan        Select scans to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   scan='2'; list scan 2
-                  scan='>2'; list scan numbers greater than 2
+                  scan='&gt;2'; list scan numbers greater than 2
 
       feed        (not yet implemented)
 
@@ -99,7 +94,7 @@ selectdata  Toggle the following 7 selection parameters.
       observation Select by observation ID.
 
       uvrange     Select baseline lengths to list.
-                  default: ''--> all; examples:
+                  default: ''--&gt; all; examples:
                   uvrange='&lt;5klambda'; less than 5 kilo-wavelengths
                   Caution: Input units default to meters.
                   Listed units are always wavelengths.
@@ -109,28 +104,28 @@ average     (not yet implemented)
 showflags   (not yet implemented)
 
 pagerows    rows per page of listing
-            default: 50; 0 --> do not paginate
+            default: 50; 0 --&gt; do not paginate
 
 listfile    write output to disk; will not overwrite
-            default: '' --> write to screen
+            default: '' --&gt; write to screen
             listfile = 'solutions.txt'
 
   </description>
 
   <input>
 
-    <param type="string" name="vis" kind="ms" mustexist="true">
-          <description>Name of input visibility file</description>
-          <value></value>
+    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+          
+          <value/>
     </param>
 
-    <param type="string" name="options">
-          <description>List options: ap only </description>
+    <param name="options" type="string"><shortdescription>List options: ap only </shortdescription><description>List options: ap only </description>
+          
           <value>ap</value>
     </param>
 
-    <param type="string" name="datacolumn">
-          <description>Column to list: data, float_data, corrected, model, residual</description>
+    <param name="datacolumn" type="string"><shortdescription>Column to list: data, float_data, corrected, model, residual</shortdescription><description>Column to list: data, float_data, corrected, model, residual</description>
+          
           <value>data</value>
           <allowed kind="enum">
                 <value>data</value>
@@ -141,100 +136,100 @@ listfile    write output to disk; will not overwrite
           </allowed>
     </param>
 
-    <param type="string" name="field">
-          <description>Field names or index to be listed</description>
-          <value></value>
-          <example>''==>all</example>
+    <param name="field" type="string"><shortdescription>Field names or index to be listed</shortdescription><description>Field names or index to be listed</description>
+          
+          <value/>
+          <example>''==&gt;all</example>
     </param>
 
-    <param type="string" name="spw">
-    <description>Spectral window channels </description>
+    <param name="spw" type="string"><shortdescription>Spectral window channels </shortdescription><description>Spectral window channels </description>
+    
     <value>*</value>
-    <example>'*'==>all, spw='1:5~57'</example>
+    <example>'*'==&gt;all, spw='1:5~57'</example>
     </param>
 
-    <param type="bool" name="selectdata">
-          <description>Other data selection parameters</description>
+    <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+          
           <value>False</value>
     </param>
 
-    <param type="string" name="antenna" subparam="true">
-          <description>Antenna/baselines</description>
-          <value></value>
-        <example>''==>all, antenna = '3'</example>
+    <param subparam="true" name="antenna" type="string"><shortdescription>Antenna/baselines</shortdescription><description>Antenna/baselines</description>
+          
+          <value/>
+        <example>''==&gt;all, antenna = '3'</example>
     </param>
 
-    <param type="string" name="timerange" subparam="true">
-          <description>Time range</description>
-          <value></value>
-        <example>''==>all</example>
+    <param subparam="true" name="timerange" type="string"><shortdescription>Time range</shortdescription><description>Time range</description>
+          
+          <value/>
+        <example>''==&gt;all</example>
     </param>
 
-    <param type="string" name="correlation" subparam="true">
-          <description>Correlations</description>
-          <value></value>
-        <example>''==>all, correlation = 'RR RL'</example>
+    <param subparam="true" name="correlation" type="string"><shortdescription>Correlations</shortdescription><description>Correlations</description>
+          
+          <value/>
+        <example>''==&gt;all, correlation = 'RR RL'</example>
     </param>
 
-    <param type="string" name="scan" subparam="true">
-          <description>Scan numbers</description>
-          <value></value>
+    <param subparam="true" name="scan" type="string"><shortdescription>Scan numbers</shortdescription><description>Scan numbers</description>
+          
+          <value/>
     </param>
 
-    <param type="string" name="feed" subparam="true">
-          <description>Multi-feed numbers (Not yet implemented)</description>
-          <value></value>
+    <param subparam="true" name="feed" type="string"><shortdescription>Multi-feed numbers (Not yet implemented)</shortdescription><description>Multi-feed numbers (Not yet implemented)</description>
+          
+          <value/>
     </param>
 
-    <param type="string" name="array" subparam="true">
-          <description>Array numbers (Not yet implemented)</description>
-          <value></value>
+    <param subparam="true" name="array" type="string"><shortdescription>Array numbers (Not yet implemented)</shortdescription><description>Array numbers (Not yet implemented)</description>
+          
+          <value/>
     </param>
 
-    <param type="any" name="observation">
-      <description>Select by observation ID(s)</description>
-      <any type="variant" limittypes="string int"/>
-      <value type="string"></value>
+    <param name="observation" type="any"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
+      
+      <any limittypes="string int" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="string" name="uvrange" subparam="true">
-          <description>uv range</description>
-          <value></value>
-        <example>''==>all; not yet implemented</example>
+    <param subparam="true" name="uvrange" type="string"><shortdescription>uv range</shortdescription><description>uv range</description>
+          
+          <value/>
+        <example>''==&gt;all; not yet implemented</example>
     </param>
 
-    <param type="string" name="average">
-          <description>Averaging mode </description>
-          <value></value>
+    <param name="average" type="string"><shortdescription>Averaging mode </shortdescription><description>Averaging mode </description>
+          
+          <value/>
           <allowed kind="enum">
-                <value></value>
+                <value/>
                 <value>none</value>
                 <value>time</value>
                 <value>chan</value>
                 <value>both</value>
           </allowed>
-          <example>''==>none (Not yet implemented)</example>
+          <example>''==&gt;none (Not yet implemented)</example>
     </param>
 
-    <param type="bool" name="showflags">
-          <description>Show flagged data (Not yet implemented)</description>
+    <param name="showflags" type="bool"><shortdescription>Show flagged data (Not yet implemented)</shortdescription><description>Show flagged data (Not yet implemented)</description>
+          
           <value>False</value>
     </param>
 
-    <param type="int" name="pagerows">
-          <description>Rows per page</description>
+    <param name="pagerows" type="int"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
+          
           <value>50</value>
     </param>
 
-    <param type="string" name="listfile">
-          <description>Output file</description>
-          <value></value>
+    <param name="listfile" type="string"><shortdescription>Output file</shortdescription><description>Output file</description>
+          
+          <value/>
     </param>
 
     <constraints>
           <when param="selectdata">
-             <equals type="bool" value="False"/>
-             <equals type="bool" value="True">
+             <equals value="False" type="bool"/>
+             <equals value="True" type="bool">
                    <default param="antenna"><value type="string"/></default>
                    <default param="timerange"><value type="string"/></default>
                    <default param="correlation"><value type="string"/></default>
@@ -260,7 +255,7 @@ and residual (corrected - model) data.
 
 The output table format is dynamic.  Field, Spectral Window, and
 Channel columns are not displayed if the column contents are uniform.
-For example, if "spw = '1'" is specified, the spw column will not be
+For example, if &quot;spw = '1'&quot; is specified, the spw column will not be
 displayed.  When a column is not displayed, a message is sent to the
 logger and terminal indicating that the column values are uniform and
 listing the uniform value.
@@ -296,12 +291,12 @@ datacolumn  Visibility file data column:
             data, float_data, corrected, model, residual (corrected-model)
 
 field       Select data based on field id(s) or name(s)
-            default: ''==>all; example: field='1'
+            default: ''==&gt;all; example: field='1'
             field='0~2' field ids inclusive from 0 to 2
             field='3C*' all field names starting with 3C
 
 spw         Select spectral window, channel to list
-            default: '0:0' --> spw=0, chan=0
+            default: '0:0' --&gt; spw=0, chan=0
             spw='2:34' spectral window 2, channel 34
 
 selectdata  Toggle the following 7 selection parameters.
@@ -310,35 +305,35 @@ selectdata  Toggle the following 7 selection parameters.
             to default values.
 
       antenna     Select calibration data based on antenna
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   antenna = '5,6'; antenna index 5 and 6 solutions
                   antenna = '05,06'; antenna names '05' and '06 solutions
 
       timerange   Select time range to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   timerange='10:37:50.1'; list data for this sampling interval
                   timerange='&lt;10:37:25'; list data before 10:37:25
 
       correlation Select polarization correlations to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   correlation='RR LL'; list RR and LL correlations
                   correlation='XX XY'; list XX and XY correlations
 
       scan        Select scans to list
-                  default: ''-->all; examples:
+                  default: ''--&gt;all; examples:
                   scan='2'; list scan 2
-                  scan='>2'; list scan numbers greater than 2
+                  scan='&gt;2'; list scan numbers greater than 2
 
       feed        (not yet implemented)
 
       array       (not yet implemented)
 
       observation Select by observation ID(s).
-                  default: ''-->all;
+                  default: ''--&gt;all;
                   example: observation='0' (select obsID 0)
 
       uvrange     Select baseline lengths to list.
-                  default: ''--> all; examples:
+                  default: ''--&gt; all; examples:
                   uvrange='&lt;5klambda'; less than 5 kilo-wavelengths
                   Caution: Input units default to meters.
                   Listed units are always wavelengths.
@@ -348,10 +343,10 @@ average     (not yet implemented)
 showflags   (not yet implemented)
 
 pagerows    rows per page of listing
-            default: 50; 0 --> do not paginate
+            default: 50; 0 --&gt; do not paginate
 
 listfile    write output to disk; will not overwrite
-            default: '' --> write to screen
+            default: '' --&gt; write to screen
             listfile = 'solutions.txt'
 
    </example>

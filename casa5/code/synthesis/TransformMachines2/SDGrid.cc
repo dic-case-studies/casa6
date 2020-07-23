@@ -97,7 +97,7 @@ SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
 
 SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(),  sj_p(&sj), imageCache(0), wImageCache(0),
+  : FTMachine(), sj_p(&sj), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),

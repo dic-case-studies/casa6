@@ -1,5 +1,5 @@
 //# SimplePBConvFunc.cc: implementation of SimplePBConvFunc
-//# Copyright (C) 2007-2016
+//# Copyright (C) 2007-2020
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This library is free software; you can redistribute it and/or modify it
@@ -843,7 +843,8 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
   void SimplePBConvFunc::setSkyJones(SkyJones* sj){
     sj_p=sj;
   }
-
+  
+  
   void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
     
 	  
@@ -892,12 +893,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
       chanFreqs[k]=k*tol+bottomFreq;
     }
     
-    //readjust the tolerance...
-    /*tol=(max(freq)-min(freq)+origwidth)/Double(nchan);
-    chanFreqs.resize(nchan);
-    for (Int k=0; k < nchan; ++k)
-      chanFreqs[k]=minfreq-origwidth+tol/2.0+tol*Double(k);
-    */
+  
     Int activechan=0;
     chanMap.set(0);
     for (uInt k=0; k < chanMap.nelements(); ++k){
@@ -928,7 +924,67 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     return;
   }
 
+  /*
+    void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
+    
+	  
+	Int spw=vb.spectralWindows()(0);
+	bandName_p=vb.subtableColumns().spectralWindow().name()(spw);
+	chanMap.resize(freq.nelements());
+    Vector<Double> localfreq=vb.getFrequencies(0, MFrequency::TOPO);
+    Double minfreq=min(freq);
+    
+    Double origwidth=freq.nelements()==1 ? 1e12 : (max(freq)-min(freq))/(freq.nelements()-1);
+    ///Fractional bandwidth which will trigger mutiple PB in one spw
+    Double tol=(max(freq))*0.5/100;
+    
+    Int nchan=Int(lround((max(freq)-min(freq))/tol));
+   
+    //cerr  << "TOLERA " << tol << " nchan " << nchan << " vb.nchan " << vb.nChannel() << endl;
+    //Number of beams that matters are the ones in the data
+    if(nchan > vb.nChannels())
+      nchan=vb.nChannels();
 
+    if(tol < origwidth) tol=origwidth;
+    chanFreqs.resize();
+    if(nchan >= (Int)(freq.nelements()-1)) { indgen(chanMap); chanFreqs=freq; return;}
+    if((nchan==0) || (freq.nelements()==1)) { chanFreqs=Vector<Double>(1, freq[0]);chanMap.set(0); return;}
+
+    //readjust the tolerance...
+    tol=(max(freq)-min(freq)+origwidth)/Double(nchan);
+    chanFreqs.resize(nchan);
+    for (Int k=0; k < nchan; ++k)
+      chanFreqs[k]=minfreq-origwidth+tol/2.0+tol*Double(k);
+    Int activechan=0;
+    chanMap.set(0);
+    for (uInt k=0; k < chanMap.nelements(); ++k){
+      Double mindiff=DBL_MAX;
+      Int nearestchan=0;
+      while((activechan< nchan) && Double(abs(freq[k]-chanFreqs[activechan])) > Double(tol/Double(2.0))){
+        if(mindiff > Double(abs(freq[k]-chanFreqs[activechan]))){
+          mindiff=Double(abs(freq[k]-chanFreqs[activechan]));
+          nearestchan=activechan;
+        }
+          
+        //	cerr << "k " << k << " atcivechan " << activechan << " comparison " 
+	//     << freq[k] << "    " << chanFreqs[activechan]  << endl;	
+	++activechan;
+      }
+      if(activechan != nchan){
+	chanMap[k]=activechan;
+      }
+      //////////////////
+      else{
+        //cerr << std::setprecision(10) << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
+        chanMap[k]=nearestchan;
+      }
+      ///////////////////////////
+      activechan=0;
+    }
+    //cerr << chanMap << endl;
+    return;
+  }
+  */
   Bool SimplePBConvFunc::checkPBOfField(const vi::VisBuffer2& vb){
     //Int fieldid=vb.fieldId();
     String msid=vb.msName(true);
@@ -979,6 +1035,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
 
   }
+  
 
   ImageInterface<Float>&  SimplePBConvFunc::getFluxScaleImage(){
 

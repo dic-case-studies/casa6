@@ -82,7 +82,10 @@ class SynthesisDeconvolver
   casacore::Record executeMinorCycle(casacore::Record& subIterBot);
   casacore::Record executeCoreMinorCycle(casacore::Record& subIterBot);
   //minor cycle for cubes
-  casacore::Record executeCubeMinorCycle(casacore::Record& minorCycleControlRec);
+  //doDeconvAndAutoMask=1 //do automask without deconv
+  //doDeconvAndAutoMask=0 //do deconv no automask
+  //doDeconvAndAutoMask=-1 //do automask then deconv
+  casacore::Record executeCubeMinorCycle(casacore::Record& minorCycleControlRec, const casacore::Int doDeconvAndAutomask=-1);
 
   casacore::Record interactiveGUI(casacore::Record& iterRec);
 
@@ -115,6 +118,7 @@ class SynthesisDeconvolver
   casacore::Vector<casacore::Bool> getChanFlag();
   void setRobustStats(const casacore::Record& rec);
   casacore::Record getRobustStats();
+  void setMinorCycleControl(const casacore::Record& minorCycleControlRec);
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );
@@ -209,6 +213,8 @@ protected:
 
   casacore::Float itsNsigma;
   SynthesisParamsDeconv itsDecPars;
+  casacore::Float itsPreviousFutureRes;
+  casacore::Record itsPreviousIterBotRec_p;
 };
 
 

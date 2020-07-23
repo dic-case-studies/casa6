@@ -87,7 +87,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 		public:
 			SIIterBot_state( std::shared_ptr<SIIterBot_callback> );
-			~SIIterBot_state( );
+			virtual ~SIIterBot_state( );
 
 			/****
 			***** allow or deny callbacks which are funneled through dbus,

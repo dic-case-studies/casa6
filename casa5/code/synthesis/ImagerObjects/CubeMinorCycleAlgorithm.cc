@@ -74,7 +74,7 @@ void CubeMinorCycleAlgorithm::get() {
         chanFlag_p.resize();
         chanflagRec.get("chanflag", chanFlag_p);
         statsRec_p=chanflagRec.asRecord("statsrec");
-	//cerr <<"GET chanRange " << chanRange_p << endl;
+	//cerr <<"GET statsRec " << statsRec_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
 	
@@ -87,6 +87,7 @@ void CubeMinorCycleAlgorithm::put() {
 	//cerr << "in put " << status_p << endl;
   //#2 chanflag
   chanFlagRec_p.define("chanflag", chanFlag_p);
+  //cerr << "PUT statsRec "<< statsRec_p << endl; 
   chanFlagRec_p.defineRecord("statsrec", statsRec_p);
   applicator.put(chanFlagRec_p);
   ///#3 return record of deconvolver
@@ -115,6 +116,7 @@ void CubeMinorCycleAlgorithm::task(){
 	status_p = False;
 	try{
           SynthesisDeconvolver subDeconv;
+	  Bool writeBackAutomask=True;
           subDeconv.setupDeconvolution(decPars_p);
           std::shared_ptr<SIImageStore> subimstor=subImageStore();
           //ImageBeamSet bs=ImageBeamSet::fromRecord(beamsetRec_p);
@@ -122,23 +124,82 @@ void CubeMinorCycleAlgorithm::task(){
           subimstor->setBeamSet(bs);
           subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
-          subDeconv.initMinorCycle(subimstor);
+          Record prevresrec=subDeconv.initMinorCycle(subimstor);
+	   
+	  Float prevPeakRes=prevresrec.asFloat("peakresidual");
+	  Bool doDeconv=True;
           if(autoMaskOn_p){
-            subDeconv.setChanFlag(chanFlag_p);
+	    subDeconv.setChanFlag(chanFlag_p);
 	    subDeconv.setRobustStats(statsRec_p);
-	    //cerr << "STATSRec " << statsRec_p << endl;
-            subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
-            subDeconv.setPosMask(subimstor->tempworkimage());
-            subDeconv.setAutoMask();
-          }
+	    Int automaskflag=iterBotRec_p.asInt("onlyautomask");
+	    if(automaskflag==1){
+	      doDeconv=False;
+	      if(iterBotRec_p.isDefined("cycleniter"))
+		 subDeconv.setMinorCycleControl(iterBotRec_p);
+	    }
+	    //cerr << "ITERDONE " << iterBotRec_p.asInt("iterdone")<< " itermask flag " << automaskflag << endl;
+	    subDeconv.setIterDone(iterBotRec_p.asInt("iterdone"));
+	    if(automaskflag !=0){
+	      //this is already sent in as part of subimstor
+	      //subDeconv.setPosMask(subimstor->tempworkimage());
+	     
+	      subDeconv.setAutoMask();
+	      /*
+	      Record resRec=subDeconv.initMinorCycle(subimstor);
+	      //cerr << "POST resrec " << resRec << endl;
+	      //cerr << "peakResidual " << resRec.asFloat("peakresidual") << " cyclethreshold " << iterBotRec_p.asFloat("cyclethreshold") << " as double " << iterBotRec_p.asDouble("cyclethreshold") << endl;
+	      if(resRec.isDefined("peakresidual") && iterBotRec_p.isDefined("cyclethreshold")){
+		
+		Float peakresidual=resRec.asFloat("peakresidual");
+		Float peakresidualnomask=resRec.asFloat("peakresidualnomask");
+		Float cyclethreshold=iterBotRec_p.asFloat("cyclethreshold");
+		if(iterBotRec_p.isDefined("psffraction")){
+		  cyclethreshold=iterBotRec_p.asFloat("psffraction")*peakresidual;	
+		  cyclethreshold= max(cyclethreshold, iterBotRec_p.asFloat("threshold"));
+		  if(automaskflag==-1){
+
+		    //		    cerr << "old cyclethreshold " <<iterBotRec_p.asFloat("cyclethreshold") << " new " << cyclethreshold << endl;
+		    iterBotRec_p.removeField("cyclethreshold");
+		    iterBotRec_p.define("cyclethreshold", cyclethreshold);
+		  }
+		}
+		
+		
+		  //if(peakresidual < iterBotRec_p.asFloat("cyclethreshold"))
+		if(peakresidual < cyclethreshold)
+		  writeBackAutomask=False;
+		
+		writeBackAutomask=False;
+		//Its better to always write the automask 
+		//cerr << "chanRange " << chanRange_p << endl;
+		//cerr << "WRITEBACK " << writeBackAutomask<< " peakres " <<  peakresidual << " prev " <<  prevPeakRes << " nomask " << peakresidualnomask << endl;
+		
+	      }
+	      */
+
+	      writeBackAutomask=True;
+	      //Its better to always write the automask 
+	     
+	    }
+	    else{
+	      writeBackAutomask=False;
+	    }
+	    
+	  }
           //subDeconv.setupMask();
-          returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+	  if(doDeconv)
+	    returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
+	  else
+	    returnRec_p.define("doneautomask", True);
           chanFlag_p.resize();
           chanFlag_p=subDeconv.getChanFlag();
 	  statsRec_p=Record();
 	  statsRec_p=subDeconv.getRobustStats();
-          writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
-          if(autoMaskOn_p){
+	  if(doDeconv){
+	    writeBackToFullImage(modelName_p, chanRange_p[0], chanRange_p[1], (subimstor->model()));
+
+	  }
+          if(autoMaskOn_p && writeBackAutomask){
             writeBackToFullImage(posMaskName_p, chanRange_p[0], chanRange_p[1], (subimstor->tempworkimage()));
             writeBackToFullImage(maskName_p, chanRange_p[0], chanRange_p[1], (subimstor->mask()));
           }
@@ -219,23 +280,36 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
       IPosition tileshape=tmpptr->shape();
       tileshape[2]=1; tileshape[3]=1;
       TiledShape tshape(tmpptr->shape(),tileshape);
+      ///TESTOO
+      /*if(imagename.contains(".residual")){
+        String newresid=File::newUniqueName("./", "newResid").absoluteName();
+        outptr.reset(new PagedImage<Float>(tshape, tmpptr->coordinates(), newresid));
+      	}
+      ////TESTOO
+      else
+      */
       outptr.reset(new TempImage<Float>(tshape, tmpptr->coordinates()));
+	
+      
       if(writelock){
 	LatticeLocker lock1 (*(tmpptr), FileLocker::Write);
 	outptr->copyData(*tmpptr);
-      //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
+	//cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
 	if(tmpptr->isMasked()){
 	  outptr->makeMask ("mask0", true, true, false, true);
 	  outptr->pixelMask().put(tmpptr->getMask());
+	  //	  cerr << "tempimage SUM of bit mask" << ntrue(tmpptr->pixelMask().get()) << " out   " << ntrue(outptr->pixelMask().get()) << endl;
 	}
       }
       else{
 	LatticeLocker lock1 (*(tmpptr), FileLocker::Read);
 	outptr->copyData(*tmpptr);
-      //cerr << "IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
+	//cerr << "false IMAGENAME " << imagename << " masked " << im.isMasked() << " tmptr  " << tmpptr->isMasked() << endl;
+	
 	if(tmpptr->isMasked()){
 	  outptr->makeMask ("mask0", true, true, false, true);
 	  outptr->pixelMask().put(tmpptr->getMask());
+	  //cerr << "tempimage SUM of bit mask" << ntrue(tmpptr->pixelMask().get()) << " out   " << ntrue(outptr->pixelMask().get()) << endl;
 	}
       }
       ImageInfo iinfo=tmpptr->imageInfo();

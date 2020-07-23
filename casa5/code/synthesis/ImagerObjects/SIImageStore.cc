@@ -1176,6 +1176,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::tempworkimage(uInt /*term*/){
     if(itsTempWorkIm) return itsTempWorkIm;
     itsTempWorkIm.reset(new PagedImage<Float>(itsImageShape, itsCoordSys, itsImageName+ ".work.temp"));
+    static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->set(0.0);
+    itsTempWorkIm->flush();
     static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->table().markForDelete();
     return itsTempWorkIm;
   }
@@ -2869,24 +2871,23 @@ Float SIImageStore::getPeakResidual()
     //LatticeExprNode pres( max(abs( *residual() ) ));
     LatticeExprNode pres( max(resd) );
     Float maxresidual = pres.getFloat();
-
-
+    
     return maxresidual;
   }
 
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
-        Float minresmask, maxresmask, minres, maxres;
+    //Float minresmask, maxresmask, minres, maxres;
     //findMinMax( residual()->get(), mask()->get(), minres, maxres, minresmask, maxresmask );
 
-    //ArrayLattice<Bool> pixelmask(residual()->getMask());
+    ArrayLattice<Bool> pixelmask(residual()->getMask());
     //findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
-        LatticeExpr<Float> resd(iif((*mask()) > 0,abs((*residual())),0));
+    LatticeExpr<Float> resd(iif(((*mask()) > 0) && pixelmask ,abs((*residual())),0));
     LatticeExprNode pres( max(resd) );
-    //return maxresmask;
-    //return max( abs(maxresmask), abs(minresmask) );
-    return pres.getFloat();
+    Float maxresidual = pres.getFloat();
+    //Float maxresidual=max( abs(maxresmask), abs(minresmask) );
+    return maxresidual;
   }
 
   // Calculate the total model flux

@@ -111,7 +111,7 @@ Options: plottype - AMP, PHASE, REAL, IMAG, SNR\n ***</shortdescription>
 <description>
 Draw plots specified via user inputs. If multiplot is turned on and an iteration axis is selected, the {\tt next} method can be used to step through the data.
 specification of the what of the calibration solution to plot is necessary, default is PHASE.
-Supported solution type (AMP, PHASE, RLPHASE, XYPHASE, DELAY, DELAYRATE)
+Supported solution type (AMP, PHASE, RLPHASE, XYPHASE, DELAY, DELAYRATE, DISPDELAY)
 </description>
 <input>
      <param type="string" name="xaxis" direction="in">
