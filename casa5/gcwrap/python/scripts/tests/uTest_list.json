@@ -2994,7 +2994,6 @@
         },
         {
              "testNumber":"0000",
-<<<<<<< HEAD
              "testName":"Sdintimaging",
              "testScript":"test_req_task_sdintimaging",
              "testType":"functionalTest",
@@ -3003,7 +3002,11 @@
              "MaintainerEmail":"scastro@nrao.edu",
              "priority":"4",
              "tag":"functionalTest",
-=======
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
              "testName":"STK VLASS TEST",
              "testScript":"test_stk_vlass_pipeline_imaging",
              "testType":"functionalTest",
