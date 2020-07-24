@@ -81,17 +81,28 @@ casac::record* synthesisiterbot::getiterationdetails()
 
 casac::record* synthesisiterbot::pauseforinteraction()
 {
-  casac::record* rstat;
+  static const auto debug = getenv("GRPC_DEBUG");
+  casac::record* rstat = 0;
+  casacore::Record rec;
 
   try 
     {
-      rstat = fromRecord( itsIterBot->pauseForUserInteractionOld() );
+      rec = itsIterBot->pauseForUserInteractionOld( );
+      rstat = fromRecord( rec );
     } 
   catch  (AipsError x) 
     {
       RETHROW(x);
     }
-  
+
+  if ( debug ) {
+      std::cerr << "-------------------------------------------" << std::endl;
+      std::cerr << "--- pauseforinteraction result:         ---" << std::endl;
+      std::cerr << "-------------------------------------------" << std::endl;
+      if ( rstat ) std::cerr << rec << std::endl;
+      else std::cerr << "****exception*occurred****" << std::endl;
+      std::cerr << "-------------------------------------------" << std::endl;
+  }
   return rstat;
 }
 /*
