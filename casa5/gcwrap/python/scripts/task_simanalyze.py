@@ -486,9 +486,17 @@ def simanalyze(
                         ia.open(temp_out)
                         imbeam = ia.restoringbeam()
                         ia.close()
-                        beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
-                                          * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
-                                          / pb_asec**2
+                        try:
+                            beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
+                                              * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
+                                              / pb_asec**2
+                        except KeyError: # the per-plane beams case
+                            # for now, use center channel and first polarization as "representative"
+                            chan_index = int(imbeam['nChannels']/2)
+                            pol_index = 0
+                            bmarea = (imbeam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                                      imbeam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                                      1.1331) #arcsec2
                         msg("Scaling TP image intensity by %f." % (beam_area_ratio),origin='simanalyze')
                         temp_in = temp_out
                         temp_out = temp_out + ".scaled"
@@ -549,7 +557,15 @@ def simanalyze(
                     ia.close()
 
                 if sd_only:
-                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                    try:
+                        bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                    except KeyError: # the per-plane beams case
+                        # for now, use center channel and first polarization as "representative"
+                        chan_index = int(beam['nChannels']/2)
+                        pol_index = 0
+                        bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                                  beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                                  1.1331) #arcsec2
                     bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 else: del beam
                 #del beam
@@ -684,7 +700,15 @@ def simanalyze(
                 ia.close()
                 # model has units of Jy/pix - calculate beam area from clean image
                 # (even if we are not plotting graphics)
-                bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                try:
+                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                except KeyError: # the per-plane beams case
+                    # for now, use center channel and first polarization as "representative"
+                    chan_index = int(beam['nChannels']/2)
+                    pol_index = 0
+                    bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                              beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                              1.1331) #arcsec2
                 bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 msg("synthesized beam area in output pixels = %f" % bmarea,origin='simanalyze')
 
@@ -774,7 +798,15 @@ def simanalyze(
                 cell= [ qa.convert(cell[0],'arcsec'),
                         qa.convert(cell[1],'arcsec') ]
                 # (even if we are not plotting graphics)
-                bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                try:
+                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                except KeyError: # the per-plane beams case
+                    # for now, use center channel and first polarization as "representative"
+                    chan_index = int(beam['nChannels']/2)
+                    pol_index = 0
+                    bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                              beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                              1.1331) #arcsec2
                 bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 msg("synthesized beam area in output pixels = %f" % bmarea)
 
@@ -948,11 +980,20 @@ def simanalyze(
                     pl.imshow(ttrans_array,interpolation='bilinear',cmap=pl.cm.jet,extent=xextent+yextent,origin="bottom")
                     psfim.replace(project+"/","")
                     pl.title(psfim,fontsize="x-small")
-                    b = qa.convert(beam['major'],'arcsec')['value']
-                    pl.xlim([-3*b,3*b])
-                    pl.ylim([-3*b,3*b])
-                    ax = pl.gca()
-                    pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],beam['minor']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                    try:
+                        b = qa.convert(beam['major'],'arcsec')['value']
+                        pl.xlim([-3*b,3*b])
+                        pl.ylim([-3*b,3*b])
+                        ax = pl.gca()
+                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],beam['minor']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                    except KeyError: # perplanebeams
+                        chan_index = int(beam['nChannels']/2)
+                        pol_index = 0
+                        b = qa.convert(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major'],'arcsec')['value']
+                        pl.xlim([-3*b,3*b])
+                        pl.ylim([-3*b,3*b])
+                        ax = pl.gca()
+                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'],beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
                     ia.close()
                     myutil.nextfig()
 
@@ -1000,7 +1041,20 @@ def simanalyze(
             #    str(sim_rms*bmarea)+" Jy/bm",origin="analysis")
             #msg('Simulation max: '+str(sim_max)+" Jy/pix = "+
             #    str(sim_max*bmarea)+" Jy/bm",origin="analysis")
-            msg('Beam bmaj: '+str(beam['major']['value'])+' bmin: '+str(beam['minor']['value'])+' bpa: '+str(beam['positionangle']['value']),origin="analysis")
+            try:
+                msg('Beam bmaj: '+str(beam['major']['value'])+
+                    ' bmin: '+str(beam['minor']['value'])+
+                    ' bpa: '+str(beam['positionangle']['value']),
+                    origin="analysis")
+            except KeyError: # per-plane beams...
+                pol_index = 0
+                for chan_index in range(0, beam['nChannels']+1):
+                    msg('polarization '+str(pol_index) + ' channel '+str(chan_index) + ' Beam'
+                        ' bmaj: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'])+
+                        ' bmin: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'])+
+                        ' bpa: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['positionangle']['value']),
+                        origin="analysis")
+
 
 
 
