@@ -3312,7 +3312,7 @@ class simutil:
 
         # subparameters
         invocation_parameters['restoringbeam'] = []
-        invocation_parameters['pbcor'] = True
+        invocation_parameters['pbcor'] = pbcor
         invocation_parameters['uvtaper'] = outertaper 
         if niter > 0:
             invocation_parameters['threshold'] = threshold
