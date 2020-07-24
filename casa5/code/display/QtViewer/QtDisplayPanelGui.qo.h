@@ -29,6 +29,10 @@
 #ifndef QTDISPLAYPANELGUI_H
 #define QTDISPLAYPANELGUI_H
 
+#if defined(CASA6)
+#include <future>
+#endif
+
 #include <casa/aips.h>
 #include <graphics/X11/X_enter.h>
 #  include <QtCore>
@@ -179,7 +183,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		}
 
 		virtual bool supports( SCRIPTING_OPTION option ) const;
+#if defined(CASA6)
+		virtual QVariant start_interact( std::promise<QVariant> &&, const QVariant &input, int id );
+#else
 		virtual QVariant start_interact( const QVariant &input, int id );
+#endif
 		virtual QVariant setoptions( const QMap<QString,QVariant> &input, int id);
 
 		// At least for now, colorbars can only be placed horizontally or
@@ -281,7 +289,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		void updateCursorInfo( WorldCanvas *wc, casacore::Quantity x, casacore::Quantity y );
 		typedef std::pair<QString, std::shared_ptr<casacore::ImageInterface<float> > > OverplotInterface;
 
-#if defined(CASATOOLS)
+#if defined(CASA6)
 		// Hold and release of refresh.  In order to draw, every call to hold()
 		// must be accompanied by a subsequent call to release() (so don't
 		// neglect: beware of exceptions, e.g.).  Calls can nest (they are
