@@ -985,7 +985,9 @@ def simanalyze(
                         pl.xlim([-3*b,3*b])
                         pl.ylim([-3*b,3*b])
                         ax = pl.gca()
-                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],beam['minor']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],
+                                                                      beam['minor']['value']),
+                                transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
                     except KeyError: # perplanebeams
                         chan_index = int(beam['nChannels']/2)
                         pol_index = 0
@@ -993,7 +995,9 @@ def simanalyze(
                         pl.xlim([-3*b,3*b])
                         pl.ylim([-3*b,3*b])
                         ax = pl.gca()
-                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'],beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                        pl.text(0.05, 0.95, "bmaj=%7.1e\nbmin=%7.1e" % (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'],
+                                                                        beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value']),
+                                transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
                     ia.close()
                     myutil.nextfig()
 
