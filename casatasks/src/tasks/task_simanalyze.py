@@ -1052,7 +1052,7 @@ def simanalyze(
                     origin="analysis")
             except KeyError: # per-plane beams...
                 pol_index = 0
-                for chan_index in range(0, beam['nChannels']+1):
+                for chan_index in range(0, beam['nChannels']):
                     msg('polarization '+str(pol_index) + ' channel '+str(chan_index) + ' Beam'
                         ' bmaj: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'])+
                         ' bmin: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'])+
