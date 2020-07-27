@@ -3311,7 +3311,7 @@ class simutil:
         invocation_parameters['parallel'] = False
 
         # subparameters
-        invocation_parameters['restoringbeam'] = []
+        invocation_parameters['restoringbeam'] = 'common'
         invocation_parameters['pbcor'] = pbcor
         invocation_parameters['uvtaper'] = outertaper 
         if niter > 0:

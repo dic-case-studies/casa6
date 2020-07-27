@@ -490,13 +490,15 @@ def simanalyze(
                             beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
                                               * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
                                               / pb_asec**2
-                        except KeyError: # the per-plane beams case
-                            # for now, use center channel and first polarization as "representative"
+                        except KeyError:
+                            # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                            msg("using center channel values to calculate beam area ratio",
+                                origin='simanalyze', priority='info')
                             chan_index = int(imbeam['nChannels']/2)
                             pol_index = 0
-                            bmarea = (imbeam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
-                                      imbeam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
-                                      1.1331) #arcsec2
+                            beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
+                                              * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
+                                              / pb_asec**2
                         msg("Scaling TP image intensity by %f." % (beam_area_ratio),origin='simanalyze')
                         temp_in = temp_out
                         temp_out = temp_out + ".scaled"
@@ -559,8 +561,10 @@ def simanalyze(
                 if sd_only:
                     try:
                         bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
-                    except KeyError: # the per-plane beams case
-                        # for now, use center channel and first polarization as "representative"
+                    except KeyError:
+                        # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                        msg("using center channel values to calculate beam area",
+                            origin='simanalyze', priority='info')
                         chan_index = int(beam['nChannels']/2)
                         pol_index = 0
                         bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
@@ -702,8 +706,10 @@ def simanalyze(
                 # (even if we are not plotting graphics)
                 try:
                     bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
-                except KeyError: # the per-plane beams case
-                    # for now, use center channel and first polarization as "representative"
+                except KeyError:
+                    # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                    msg("using center channel values to calculate beam area",
+                        origin='simanalyze', priority='info')
                     chan_index = int(beam['nChannels']/2)
                     pol_index = 0
                     bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
@@ -800,8 +806,10 @@ def simanalyze(
                 # (even if we are not plotting graphics)
                 try:
                     bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
-                except KeyError: # the per-plane beams case
-                    # for now, use center channel and first polarization as "representative"
+                except KeyError:
+                    # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                    msg("using center channel values to calculate beam area",
+                        origin='simanalyze', priority='info')
                     chan_index = int(beam['nChannels']/2)
                     pol_index = 0
                     bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
@@ -988,7 +996,10 @@ def simanalyze(
                         pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],
                                                                       beam['minor']['value']),
                                 transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
-                    except KeyError: # perplanebeams
+                    except KeyError:
+                        # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                        msg("using center channel beam values for plot configuration",
+                            origin='simanalyze', priority='info')
                         chan_index = int(beam['nChannels']/2)
                         pol_index = 0
                         b = qa.convert(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major'],'arcsec')['value']
