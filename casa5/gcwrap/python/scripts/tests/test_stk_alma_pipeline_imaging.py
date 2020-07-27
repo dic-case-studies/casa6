@@ -50,6 +50,7 @@ Test list
 import os
 import glob
 import sys
+import subprocess
 import unittest
 import numpy
 import shutil
@@ -90,7 +91,6 @@ except ImportError:
         return os.path.join(dataPath,apath)
 
 # location of data
-# data_path = '/lustre/naasc/sciops/comm/sbooth/CASA_ALMA_pipeline/data_dir/'
 data_path = ctsys_resolve('stakeholders/alma/')
 
 ## Base Test class with Utility functions
@@ -119,18 +119,21 @@ class test_tclean_base(unittest.TestCase):
              self.msfile=msname
 
     def delData(self, msname=[""]):
+        del_files = [self.img_subdir]
         if msname != [""]:
              self.msfile=msname
         if (os.path.exists(self.msfile)):
-             os.popen('rm -rf ' + self.msfile)
-        os.popen('rm -rf ' + self.img_subdir)
-        os.popen('rm -rf ' + self.img+'*')
+            del_files.append(self.msfile)
+        img_files = glob.glob(self.img+'*')
+        del_files += img_files
+        for f in del_files:
+            shutil.rmtree(f)
 
     def prepInputmask(self, maskname=""):
         if maskname!="":
             self.maskname=maskname
         if (os.path.exists(self.maskname)):
-            os.popen('rm -rf ' + self.maskname)
+            shutil.rmtree(self.maskname)
         shutil.copytree(refdatapath+self.maskname, self.maskname, symlinks=True)
 
     def checkfinal(self, pstr=""):
@@ -453,7 +456,7 @@ class test_tclean_base(unittest.TestCase):
         immoments(imagename = image, moments = 8, outfile = image+'.moment8')
         imview(raster={'file': image+'.moment8', 'range': range_list}, \
             out = {'file': image+'.moment8.png'})
-        os.popen('mogrify -trim '+image+'.moment8.png')
+        subprocess.call('mogrify -trim '+image+'.moment8.png', shell=True)
 
     def cube_profile_fit(self, image, max_loc, nchan):
         """ function that will retrieve a profile for cubes at the max position
