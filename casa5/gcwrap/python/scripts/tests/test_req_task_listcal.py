@@ -118,7 +118,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test that gives a wrong selection (antenna).
         """
-        listcal(vis=self._vis, caltable=self._caltable, antenna='inexistent-no-no')
+        with self.assertRaises(RuntimeError):
+            listcal(vis=self._vis, caltable=self._caltable, antenna='inexistent-no-no')
         self.assertFalse(os.path.isfile(self._listfile))
 
 
