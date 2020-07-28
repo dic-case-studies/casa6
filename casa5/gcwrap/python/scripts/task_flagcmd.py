@@ -1964,11 +1964,14 @@ def _plotants(figure, plotflagperant, antlist, readict_inp):
     nants = len(antlist)
     readict = dict()
     used_reasons = set()
+    # These style params can be critical to produce meaningful (or not too
+    # misleading) plots (CAS-13100)
+    style_params = {'alpha': .7, 'marker': '.', 'markersize': 1, 'linewidth': 1}
     for antind, thisant in enumerate(antlist):
         for flag in plotflagperant[thisant]:
             thisoffset = flag['offset'] + antind + 1
             ax1.plot([flag['t1s'], flag['t2s']], [thisoffset] * 2,
-                     color=flag['color'], lw=2, alpha=.7)
+                     color=flag['color'], **style_params)
             used_reasons.add(flag['reason'])
 
     # remove reasons that are not needed
