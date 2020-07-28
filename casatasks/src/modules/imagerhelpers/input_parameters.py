@@ -162,8 +162,8 @@ class ImagerParameters():
                  ):
         self.allparameters=dict(locals())
         ############TESTOO for debugging Felipe's crash
-        params_str=pprint.pformat(self.allparameters)
-        casalog.post('ALLPARAMS : ' + params_str, 'WARN', 'CAS-9386-DEBUG')
+        #params_str=pprint.pformat(self.allparameters)
+        #casalog.post('ALLPARAMS : ' + params_str, 'WARN', 'CAS-9386-DEBUG')
         ################################################
         del self.allparameters['self']
         self.defaultKey="0";
