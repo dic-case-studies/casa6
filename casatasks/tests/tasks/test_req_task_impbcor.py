@@ -220,14 +220,13 @@ class impbcor_test(unittest.TestCase):
             if j == 1:
                 pbimage = pbpix
             outfile = outfile
-            res = run_impbcor(
+            run_impbcor(
                 imagename=imagename, pbimage=pbimage,
                 outfile=outfile, overwrite=overwrite,
                 region=region, box=box, chans=chans,
                 stokes=stokes, mask=mask, mode=mode,
                 cutoff=cutoff
             )
-            self.assertTrue(res)
             self.checkImage(outfile, expected, epsilon)
             shutil.rmtree(outfile)
 
@@ -299,10 +298,11 @@ class impbcor_test(unittest.TestCase):
                 mask=mymask + ">0", stretch=False
             )
             self.assertFalse(zz)
-        zz = impbcor(
-            imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+        outname = "blahblah"
+        impbcor(
+            imagename=im2, pbimage=pb2, outfile=outname, mask=mymask + ">0", stretch=True
         )
-        self.assertTrue(zz)
+        self.assertTrue(os.path.exists(outname))
         
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""
