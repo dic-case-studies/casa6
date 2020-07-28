@@ -77,7 +77,7 @@ class listhistory_test(unittest.TestCase):
         # Get the number of lines in file
         # the number of expected lines differs
         if is_CASA6:
-            refnum=17
+            refnum=16
             if self.itismms:
                 # this is a guess, not tested
                 refnum = 40
