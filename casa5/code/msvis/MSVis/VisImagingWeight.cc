@@ -175,8 +175,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                   }
                               }
                           }
-                          Int ucell=Int(std::round(-uscale_p*u+uorigin_p));
-                          Int vcell=Int(std::round(-vscale_p*v+vorigin_p));
+                          ucell=Int(std::round(-uscale_p*u+uorigin_p));
+                          vcell=Int(std::round(-vscale_p*v+vorigin_p));
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
@@ -420,8 +420,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                               }
                           }
                           
-                          Int ucell=Int(std::round(-uscale_p*u+uorigin_p));
-                          Int vcell=Int(std::round(-vscale_p*v+vorigin_p));
+                          ucell=Int(std::round(-uscale_p*u+uorigin_p));
+                          vcell=Int(std::round(-vscale_p*v+vorigin_p));
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
