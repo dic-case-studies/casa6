@@ -1359,12 +1359,18 @@ class cvel2_test(test_base):
         self.setUp_vis_g()
         myvis = vis_g
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel2(
-                vis = 'myinput.ms',
-                outputvis = outfile,
-                outframe = 'SOURCE'
-                )
-        self.assertTrue(rval)
+        cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            outframe = 'SOURCE'
+        )
+
+        mytb.open(outfile+'/SPECTRAL_WINDOW')
+        chan_freq = mytb.getcell('CHAN_FREQ')
+        exp_chan_freq = numpy.array(chan_freq)
+        mytb.close()
+        ret = verify_ms(outfile, 1, 2, 0, exp_chan_freq)
+        self.assertTrue(ret[0],ret[1])
         
     def test_mms_heuristics1(self):
         '''cvel2 : MMS heuristic tests'''
