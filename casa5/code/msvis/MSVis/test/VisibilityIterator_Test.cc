@@ -170,7 +170,7 @@ printMs (MeasurementSet * ms)
 
             printf ("\n");
 
-            for (int i = 0; i < vb.nRow(); i++){
+            for (rownr_t i = 0; i < vb.nRow(); i++){
 
                 printf ("r=%d ", vb.rowIds () [i]);
                 printf ("t=%.0f ", vb.time () [i]);
@@ -593,7 +593,7 @@ BasicChannelSelection::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * 
     const Cube<Complex> & visibilityCorrected = vb->visCubeCorrected();
     const Cube<Complex> & visibilityModel = vb->visCubeModel();
 
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
 
     Int channelOffset = info [spectralWindow][0];
     Int nChannels = info [spectralWindow][1];
@@ -1523,7 +1523,7 @@ MultipleMss::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * vb)
     Int msId = vb->msId();
 
     const Cube<Complex> & visibility = vb->visCube();
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
 
 
     TestErrorIf (visibility.shape()[0] != 4,
