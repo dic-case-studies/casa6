@@ -61,8 +61,8 @@ def flagcmd(
 
     try:
         from xml.dom import minidom
-    except:
-        raise Exception( 'Failed to load xml.dom.minidom into python' )
+    except Exception as exc:
+        raise ImportError('Failed to load xml.dom.minidom into python: {}'.format(exc))
 
     casalog.origin('flagcmd')
 
@@ -79,7 +79,7 @@ def flagcmd(
         if (type(vis) == str) & os.path.exists(vis):
             aflocal.open(vis, ntime)
         else:
-            raise Exception( 'Visibility data set not found - please verify the name' )
+            raise ValueError( 'Visibility data set not found - please verify the name' )
 
         # Check if vis is a cal table:
         # typevis = 1 --> cal table
@@ -111,7 +111,7 @@ def flagcmd(
                         
             # Apply flag cmds
             if len(flagcmds.keys( )) == 0:
-                raise Exception( 'There are no unapplied flags in the input. '\
+                raise RuntimeError( 'There are no unapplied flags in the input. '\
                                  'Set useapplied=True to also use the previously-applied flags.' )
             
             # List flags on the screen/logger
@@ -126,7 +126,7 @@ def flagcmd(
             # Save the flag cmds to an output file
             if savepars:
                 if not overwrite and os.path.exists(outfile):
-                    raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                    raise ValueError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
                     
                 fh.writeFlagCommands(vis, flagcmds, False, '', outfile, False)
                                                                 
@@ -164,7 +164,7 @@ def flagcmd(
                 else:
                     casalog.post('Safety Mode: you chose not to set clearall=True, no action'
                                  )
-                return True
+                return
             
             elif inpmode == 'table':
     
@@ -226,8 +226,7 @@ def flagcmd(
                     casalog.post('%s'%myflagcmd,'DEBUG1')
                                                                                             
                 except Exception as instance:
-                    casalog.post('%s'%instance,'ERROR')
-                    raise Exception( 'Error reading the input list ' )
+                    raise Exception( 'Error reading the input list: {} '.format(instance))
                 
     
             elif inpmode == 'xml':
@@ -247,8 +246,8 @@ def flagcmd(
                 # Actually parse table. Fail if Flag.xml or Antenna.xml is not found
                 try:
                     myflags = fh.parseXML(flagtable, mytbuff=tbuff)            
-                except:
-                    raise Exception
+                except Exception as exc:
+                    raise RuntimeError('Error while parsing XML: {}'.format(exc))
     
                 casalog.post('%s' % myflags, 'DEBUG')
     
@@ -262,12 +261,12 @@ def flagcmd(
                 listmode = 'xml'
                 
             else:
-                raise Exception( 'Input type is not supported' )
+                raise ValueError( 'Input type is not supported' )
 
             # Before performing any action on the flag cmds, check them! 
             vrows = list(myflagcmd.keys())
             if len(vrows) == 0:
-                raise Exception( 'There are no unapplied flags in the input. Set useapplied=True to also use the previously-applied flags.' )
+                raise RuntimeError( 'There are no unapplied flags in the input. Set useapplied=True to also use the previously-applied flags.' )
             else:
                 casalog.post('Read ' + str(len(vrows))
                              + ' lines from input')
@@ -297,7 +296,7 @@ def flagcmd(
                             fh.writeFlagCommands(vis, myflagcmd, False, 
                                                  '', '', True)
                     elif not overwrite and os.path.exists(outfile):
-                        raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                        raise RuntimeError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
 
                     else:
                         casalog.post('Saving commands to ' + outfile)
@@ -374,7 +373,7 @@ def flagcmd(
                                     myval=apply, myrowlist=vrows)
 
                         if not overwrite and os.path.exists(outfile):
-                            raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                            raise RuntimeError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
 
                         else:
                             casalog.post('Saving commands to file '+ outfile)
@@ -394,10 +393,8 @@ def flagcmd(
                     casalog.post('Warning: will only reliably plot individual per-antenna flags'
                                  )
                     fns = newplotflags(myflagcmd, plotfile, t1sdata, t2sdata)
-                    if fns:
-                        return {'plotfiles': fns}
-                    else:
-                        return True
+                    return {'plotfiles': fns}
+
                 else:
                     casalog.post('Warning: empty flag dictionary, nothing to plot'
                                  )
@@ -416,34 +413,26 @@ def flagcmd(
                 return outdict
             
     
-    except Exception as instance:
-
+    finally:
         aflocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        raise
-#        return False
         
     # Write history only to action='apply' or 'unapply'
-    else:
-        # write history
-        if not iscal and (action == 'apply' or action == 'unapply'):
-            retval = True
-            try:
-                param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
-                if is_python3:
-                    vars = locals( )
-                    param_vals = [vars[p] for p in param_names]
-                else:
-                    param_vals = [eval(p) for p in param_names]
+    # write history
+    if not iscal and (action == 'apply' or action == 'unapply'):
+        try:
+            param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
 
-                retval &= write_history(mslocal, vis, 'flagcmd', param_names,
-                                        param_vals, casalog)
-                
-            except Exception as instance:
-                casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                             'WARN')
+            write_history(mslocal, vis, 'flagcmd', param_names,
+                          param_vals, casalog)
 
-    return True
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                         'WARN')
 
 
 # ************************************************************************
