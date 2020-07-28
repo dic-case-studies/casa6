@@ -93,8 +93,11 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumHogbomIter(0),
   itsNthHogbom(0),
   itsSwitchedToMS(false),
-  //itsStrenThres(6e-4), //m31norm_hog
-  itsStrenThres(0.003), //SNorm_hog
+  itsStrenThres(0.0001), //m31norm_hog, 5k->10k
+  //itsStrenThres(0.003), //SNorm_hog
+  //itsStrenThres(0.0001), //SNorm_nohog
+  //itsStrenThres(0.00036), //SNorm_hog 5k->10k
+  //itsStrenThres(0.00003), //m31Norm_nohog
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0)
 {
@@ -422,7 +425,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //FFTServer<Float,Complex> fft(psfShape_p);
     //Matrix<Float> itsScale0 = Matrix<Float>(psfShape_p);
     //Matrix<Float> itsScale = Matrix<Float>(psfShape_p);
-    cout << "clean: making scale " << itsOptimumScaleSize << endl;
+    cout << "aspclean: making scale " << itsOptimumScaleSize << endl;
     //makeScale(itsScale0, 0.0);
     //makeScale(itsScale, itsOptimumScaleSize);
     //Matrix<Complex>itsScaleXfr0 = Matrix<Complex> ();
@@ -567,7 +570,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
-	    itsStrenThres = itsStrenThres/1.5; //box4
+	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
+	    itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
 	    switchedToHogbom();
     }
     // try switch to MS if itsStrengthOptimum is small enough and # aspen is >=5
@@ -758,7 +762,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //dirtySub -= scaleFactor * psfSub; //MS's 
     //PSF * model
     Matrix<Complex> cWork;
-    cout << "aspclean: Calculating Psf convolution for model " << itsOptimumScaleSize << endl;
+    //cout << "aspclean: Calculating Psf convolution for model " << itsOptimumScaleSize << endl;
     Matrix<Float> itsPsfConvScale = Matrix<Float>(psfShape_p);
     cWork = ((*itsXfr)*(itsScaleXfr)); //Asp's
     //cWork = ((*itsXfr)*(itsScaleXfr0)*(itsScaleXfr)); //MS's
@@ -1171,7 +1175,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   const int nx = itsDirty->shape()[0];
   const int ny = itsDirty->shape()[1];
-  cout << "nx " << nx << " ny " << ny << endl;
+  //cout << "nx " << nx << " ny " << ny << endl;
   IPosition blcDirty(itsDirty->shape().nelements(), 0);
   IPosition trcDirty(itsDirty->shape() - 1);
 
@@ -1300,20 +1304,20 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       // Remember to adjust the position for the window and for
       // the flux scale
       //maxima(scale) /= maxPsfConvInitScales(scale);
-      cout << "before: maxima[" << scale << "] = " << maxima(scale) << endl;
+      //cout << "before: maxima[" << scale << "] = " << maxima(scale) << endl;
       if (scale > 0)
       {
 	      float normalization;
-	      normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
+	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good on M31 but bad on G55
-	     // normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
+	      normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
 	      maxima(scale) /= normalization;
-	      cout << "normalization[" << scale << "] " << normalization << endl;
+	      //cout << "normalization[" << scale << "] " << normalization << endl;
       }
       //maxima(scale) *= (vecWork_p[scale])(posMaximum[scale]); //makes maxima(scale) positive to ensure correct scale is selected in strengthOptimum for loop (next for loop).
       //cout << "maxDirty: maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       //cout << "maxDirty: itsDirtyConvInitScales[" << scale << "] = " << (itsDirtyConvInitScales[scale])(posMaximum[scale]) << endl;
-      cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
+      //cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;
       //genie: it seems we need the above
     }
   //}//End parallel section
@@ -1514,7 +1518,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
   {
   	cout << "Switched to hogbom because of frequent small components." << endl;
-    switchedToHogbom();
+    //switchedToHogbom();
   }
 
   if (itsSwitchedToHogbom)
@@ -1620,12 +1624,11 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 450.0; //G55 tesla, 1e8, spw3 nScales3
     //const Float lamda = 490.0; //G55 tesla, 1e8, spw3 nScales4/5/6/7/8/gold
     //const Float lamda = 485.8; // G55 tesla, 1e8, spw3 fixedScale, eigen
-    //const Float lamda = 485800; // G55 tesla, 1e8, spw3, new asp, new norm
     //const Float lamda = 9600000; // G55 tesla, 1e8, spw3, new asp, old norm
     //const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp, old norm
     //const Float lamda = 2400000; // G55 tesla, 1e8, spw3, new asp, SNorm
-    const Float lamda = 2600000; // G55 tesla, 1e8, spw3, new asp, SNorm2
-    //const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp
+    //const Float lamda = 2600000; // G55 tesla, 1e8, spw3, new asp, SNorm2
+    const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp, sNorm3-5 m31 norm
     
     const Float threshold = lamda * resArea;
     vector<Float> tempx;
@@ -1646,7 +1649,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //auto stop = high_resolution_clock::now();
       //auto duration = duration_cast<microseconds>(stop - start);
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
-      cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+      //cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	if (lenDirVec >= threshold)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
@@ -1845,9 +1848,10 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
-  //itsNumHogbomIter = ceil(10 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula
-  //itsNumHogbomIter = 10000; //fake it for M31
+  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
+  //itsNumHogbomIter = ceil(65 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm4 5k
+  //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
+  itsNumHogbomIter = 1000000; //fake it for M31
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 

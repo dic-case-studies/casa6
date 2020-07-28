@@ -124,7 +124,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsScaleSizes = itsCleaner.getActiveSetAspen();
     /*for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
       cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;*/
-    cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
+    //cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
     /*if (!itsCleaner.getterSwitchedHogbom() && itsScaleSizes.size() == 0) // hack to make nScalesToClean at least 3
     {
       itsScaleSizes.push_back(itsCleaner.getterPsfWidth() * 5); // put init scales
