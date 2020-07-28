@@ -429,7 +429,7 @@ BasicChannelSelection::checkRowScalars (VisBuffer2 * vb)
 {
     // Check out the non-cube data for each row
 
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
     Int nRows = vb->nRows();
 
     Int expectedAntenna1 = 0;
