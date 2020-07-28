@@ -75,8 +75,6 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
         else:
             raise Exception('temporary file was unexpectedly not created.')
 
-    except Exception:
-        raise
     finally:
         if 'tempfile' in locals() and os.path.exists(tempfile):
             os.system('rm -f %s' % tempfile)
