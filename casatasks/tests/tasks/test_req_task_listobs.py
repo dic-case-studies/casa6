@@ -153,7 +153,10 @@ class listobs_test_base(unittest.TestCase):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
         self.assertTrue('Scan' in open('listobs.txt').read(), msg='scan does not exist in output')
         # Check to see if a valid input and invalid input is returns the proper value (pass/fail)
-        self.assertTrue(listobs(vis=dataset, scan='1'), msg='Scan fails to select')
+        try:
+            listobs(vis=dataset, scan='1')
+        except Exception:
+            self.fail('Scan fails to select')
         if CASA6:
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, scan=1)
@@ -260,7 +263,10 @@ class listobs_test_base(unittest.TestCase):
 
     def selectcheck(self, dataset):
         # selectdata should fail for all invalid inputs
-        self.assertTrue(listobs(vis=dataset, selectdata=False), msg='Passing False to select data fails on a MS')
+        try:
+            listobs(vis=dataset, selectdata=False)
+        except Exception:
+            self.fail('Passing False to select data fails on a MS')
         if CASA6:
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, selectdata=1)
@@ -274,20 +280,33 @@ class listobs_test_base(unittest.TestCase):
                              msg='Array data type is accepted when it contains values')
         # I'm really not sure why these happen. especially the empty list
         if not CASA6:
-            self.assertTrue(listobs(vis=dataset, selectdata=[]))
-            self.assertTrue(listobs(vis=dataset, selectdata=None))
+            try:
+                listobs(vis=dataset, selectdata=[])
+            except Exception:
+                self.fail()
+            try:
+                listobs(vis=dataset, selectdata=None)
+            except Exception:
+                self.fail()
 
     def uvrangecheck(self, dataset):
-        self.assertTrue(listobs(vis=dataset, uvrange='0~100klambda'), msg='fails to read valid input for uvrange in a MS')
+        try:
+            listobs(vis=dataset, uvrange='0~100klambda')
+        except Exception:
+            self.fail('fails to read valid input for uvrange in a MS')
         if CASA6:
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, uvrange=0)
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, uvrange=[1, 2])
         else:
-            self.assertFalse(listobs(vis=dataset, uvrange=0), msg='Accepts an int when only str should be accepted')
-            self.assertFalse(listobs(vis=dataset, uvrange=[1, 2]),
-                             msg='accepts an array of ints when only str should be accepted')
+            with self.assertRaises(RuntimeError,
+                                   msg='Accepts an int when only str should be accepted'):
+                listobs(vis=dataset, uvrange=0)
+            with self.assertRaises(RuntimeError,
+                                   msg='accepts an array of ints when only str should be accepted'):
+                listobs(vis=dataset, uvrange=[1, 2]),
+
         # Use temp log
         casalog.setlogfile('testlog.log')
         # shouldn't raise Warning
@@ -306,7 +325,10 @@ class listobs_test_base(unittest.TestCase):
 
     def timerangecheck(self, dataset):
         #check valid entry
-        self.assertTrue(listobs(vis=dataset, timerange='03:00:00~04:00:00'))
+        try:
+            listobs(vis=dataset, timerange='03:00:00~04:00:00')
+        except Exception:
+            self.fail()
         # create temp log and check inputs that raise no warnings
         casalog.setlogfile('testlog.log')
         listobs(vis=dataset, timerange='3:0:0~4:0:0,4:0:0~5:0:0')
@@ -325,16 +347,23 @@ class listobs_test_base(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, timerange=4)
         else:
-            self.assertFalse(listobs(vis=dataset, timerange=4))
+            with self.assertRaises(RuntimeError):
+                listobs(vis=dataset, timerange=4)
 
     def intentcheck(self, dataset):
         # Returns true with a valid input and false with an int
-        self.assertTrue(listobs(vis=dataset, intent='CALIBRATE_PHASE.ON_SOURCE,CALIBRATE_POINTING.ON_SOURCE,CALIBRATE_WVR.ON_SOURCE'), msg='Fails with valid input')
+        try:
+            listobs(vis=dataset, intent='CALIBRATE_PHASE.ON_SOURCE,CALIBRATE_POINTING.ON_SOURCE,CALIBRATE_WVR.ON_SOURCE')
+        except Exception:
+            self.fail('Fails with valid input')
         if CASA6:
             with self.assertRaises(AssertionError):
                 listobs(vis=dataset, intent=1)
         else:
-            self.assertFalse(listobs(vis=dataset, intent=1), msg='Accepts int when it should only accept str')
+            with self.assertRaises(RuntimeError,
+                                   msg='Accepts int when it should only accept str'):
+                listobs(vis=dataset, intent=1)
+
         # Test for the existence of the column scan intent
         self.res = listobs(vis=dataset, listfile='listobs.txt')
         self.assertTrue('ScanIntent' in open('listobs.txt').read(), msg='There is no ScanIntent information for a MS')
@@ -351,12 +380,17 @@ class listobs_test_base(unittest.TestCase):
         # Set log path back to default
 
     def arraycheck(self, dataset):
-        self.assertTrue(listobs(vis=dataset, array='0'), msg='Listobs fails to recognize valid array in a MS')
+        try:
+            listobs(vis=dataset, array='0')
+        except Exception:
+            self.fail('Listobs fails to recognize valid array in a MS')
         if CASA6:
             with self.assertRaises(AssertionError):
                listobs(vis=dataset, array=0)
         else:
-            self.assertFalse(listobs(vis=dataset, array=0), msg='Listobs fails to recognize invalid data type in a MS')
+            with self.assertRaises(RuntimeError,
+                              msg='Listobs fails to recognize invalid data type in a MS'):
+                listobs(vis=dataset, array=0)
         self.res = listobs(vis=dataset, listfile='listobs.txt')
         # These should raise warnings
         casalog.setlogfile('testlog.log')
@@ -368,8 +402,14 @@ class listobs_test_base(unittest.TestCase):
         self.assertTrue('ArrayID' in open('listobs.txt').read(), msg='There is no Array information for a MS')
 
     def obscheck(self, dataset):
-        self.assertTrue(listobs(vis=dataset, observation=0), msg='Observation fails to accept Int for a MS')
-        self.assertTrue(listobs(vis=dataset, observation='0'), msg='Observation fails to accept proper string for a MS')
+        try:
+            listobs(vis=dataset, observation=0)
+        except Exception:
+            self.fail('Observation fails to accept Int for a MS')
+        try:
+            listobs(vis=dataset, observation='0')
+        except Exception:
+            self.fail('Observation fails to accept proper string for a MS')
         # These should raise warnings
         casalog.setlogfile('testlog.log')
         listobs(vis=dataset, observation='abc')
@@ -392,12 +432,20 @@ class listobs_test_base(unittest.TestCase):
 
     def overwritecheck(self, dataset):
         listfile = "listobs.txt"
-        self.assertTrue(listobs(vis=dataset, listfile=listfile))
+        try:
+            listobs(vis=dataset, listfile=listfile)
+        except Exception:
+            self.fail()
         # test default value is overwrite=False
-        self.assertFalse(listobs(vis=dataset, listfile=listfile))
-        self.assertFalse(listobs(vis=dataset, listfile=listfile, overwrite=False))
+        with self.assertRaises(RuntimeError):
+            listobs(vis=dataset, listfile=listfile)
+        with self.assertRaises(RuntimeError):
+            listobs(vis=dataset, listfile=listfile, overwrite=False)
         expec = _sha1it(listfile)
-        self.assertTrue(listobs(vis=dataset, listfile=listfile, overwrite=True))
+        try:
+            listobs(vis=dataset, listfile=listfile, overwrite=True)
+        except Exception:
+            self.fail()
         got = _sha1it(listfile)
         self.assertTrue(got == expec)
 
@@ -406,7 +454,10 @@ class listobs_test_base(unittest.TestCase):
         self.assertTrue('Average Interval' in open('listobs.txt').read(), msg='There is no average interval column in a MS')
 
     def unfcheck(self, dataset):
-        self.assertTrue(listobs(vis=dataset, listunfl=True))
+        try:
+            listobs(vis=dataset, listunfl=True)
+        except Exception:
+            self.fail()
         listobs(vis=dataset, listfile='listobs1.txt', listunfl=True)
         self.assertTrue('nUnflRows' in open('listobs1.txt').read())
 
@@ -443,15 +494,28 @@ class test_listobs(listobs_test_base):
     # Test that Different ms are taken
     def test_wrongInp(self):
         if not CASA6:
-            self.assertFalse(listobs(vis='foo.ms'))
+            with self.assertRaises(RuntimeError):
+                listobs(vis='foo.ms')
 
     def test_input(self):
         '''Listobs test: Check all if listobs can take ms, mms, time averaged ms, and time averaged mms'''
         # See if listobs can take all these forms of MS
-        self.assertTrue(listobs(vis=mesSet), msg='Fails to take MS file')
-        self.assertTrue(listobs(vis=multiMesSet), msg='Fails to take MMS file')
-        self.assertTrue(listobs(vis=timeavg_ms), msg='Fails to take time-averaged MS file')
-        self.assertTrue(listobs(vis=timeavg_mms), msg='Fails to take time-averaged MMS file')
+        try:
+            listobs(vis=mesSet)
+        except Exception:
+            self.fail('Fails to take MS file')
+        try:
+            listobs(vis=multiMesSet)
+        except Exception:
+            self.fail('Fails to take MMS file')
+        try:
+            listobs(vis=timeavg_ms)
+        except Exception:
+            self.fail('Fails to take time-averaged MS file')
+        try:
+            listobs(vis=timeavg_mms)
+        except Exception:
+            self.fail('Fails to take time-averaged MMS file')
 
     # Test the list file
     def test_fileMS(self):
@@ -781,7 +845,10 @@ class test_listobs(listobs_test_base):
         else:
             vis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/CAS-6733.ms'
             
-        self.assertTrue(listobs(vis=vis))
+        try:
+            listobs(vis=vis)
+        except Exception:
+            self.fail()
 
     # Test average interval
 
