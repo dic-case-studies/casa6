@@ -22,10 +22,10 @@ else:
 
 # string.find (python 2) vs str_instance.find
 if is_python3:
-    def strfind(a):
+    def strfind(str_instance, a):
         return str_instance.find(a)
 else:
-    def strfind(a):
+    def strfind(str_instance, a):
         return string.find(str_instance,a)
 
 # common function to use to get a dictionary values iterator
@@ -190,7 +190,9 @@ class ParallelTaskHelper:
             self._cluster = MPICommandClient()
         # jagonzal: To inhibit return values consolidation
         self._consolidateOutput = True
-        # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
+        # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested
+        # This is actually a dict, with key=vis and value= the 'success' field of the cmd.
+        # (exception: for tasks with parameter outputvis (like partition), key=outputvis)
         self._sequential_return_list = {}
         
     def override_arg(self,arg,value):
@@ -271,24 +273,27 @@ class ParallelTaskHelper:
                             exec("from casatasks import *; " + job.getCommandLine(),gvars)
                         except Exception as exc:
                             casalog.post("exec in parallel_task_helper.executeJobs failed: {}'".format(exc))
+                            raise
 
                         # jagonzal: Special case for partition
+                        # The 'True' values emulate the command_response['success'] that
+                        # we'd get in parallel runs from other MPI processes.
                         if 'outputvis' in parameters:
-                            self._sequential_return_list[parameters['outputvis']] = gvars['returnVar0']
+                            self._sequential_return_list[parameters['outputvis']] = True
                         else:
-                            self._sequential_return_list[parameters['vis']] = gvars['returnVar0']
+                            self._sequential_return_list[parameters['vis']] = gvars['returnVar0'] or True
                     else:
                         exec("from taskinit import *; from tasks import *; " + job.getCommandLine())
 
                         # jagonzal: Special case for partition
                         if ('outputvis' in parameters):
-                            self._sequential_return_list[parameters['outputvis']] = returnVar0
+                            self._sequential_return_list[parameters['outputvis']] = True
                         else:
-                            self._sequential_return_list[parameters['vis']] = returnVar0
+                            self._sequential_return_list[parameters['vis']] = returnVar0 or True
 
                 except Exception as instance:
                     str_instance = str(instance)
-                    if (strfind("NullSelection") == 0):
+                    if (strfind(str_instance, "NullSelection") == 0):
                         casalog.post("Error running task sequentially %s: %s" % (job.getCommandLine(),str_instance),"WARN","executeJobs")
                         traceback.print_tb(sys.exc_info()[2])
                     else:
