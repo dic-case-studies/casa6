@@ -83,7 +83,7 @@ def simanalyze(
 
     if (not image) and (not analyze):
         casalog.post("No operation to be done. Exiting from task.", "WARN")
-        return True
+        return
 
     grscreen = False
     grfile = False
@@ -121,8 +121,8 @@ def simanalyze(
             if user_imagename=="default" or len(user_imagename)<=0:
                 images= glob.glob(fileroot+"/*image")
                 if len(images)<1:
-                    msg("can't find any image in project directory",priority="error")
-                    return False
+                    emsg = "can't find any image in project directory"
+                    raise RuntimeError(emsg)
                 if len(images)>1:
                     msg("found multiple images in project directory",priority="warn")
                     msg("using  "+images[0],priority="warn")
@@ -138,7 +138,7 @@ def simanalyze(
                 if os.path.exists(fileroot+"/"+user_skymodel):
                     user_skymodel=fileroot+"/"+user_skymodel
                 elif len(user_skymodel)>0:
-                    raise Exception("Can't find your specified skymodel "+user_skymodel)
+                    raise RuntimeError("Can't find your specified skymodel "+user_skymodel)
             # try to strip a searchable identifier
             tmpstring=user_skymodel.split("/")[-1]
             skymodel_searchstring=tmpstring.replace(".image","")
@@ -224,7 +224,7 @@ def simanalyze(
 
 
             if not mstoimage  and len(tpmstoimage) == 0:
-                raise Exception("No MS found to image")
+                raise RuntimeError("No MS found to image")
 
             # now try to parse the mslist for an identifier string that 
             # we can use to find the right skymodel if there are several
@@ -382,7 +382,7 @@ def simanalyze(
                         minimsize = min(imsize)
                         psfsize = qa.mul(cell[0],3) # HACK
                     else:
-                        raise Exception(mstoimage+" not found.")
+                        raise RuntimeError(mstoimage+" not found.")
 
                 if imsize[0] < minimsize:
                     msg("The number of image pixel in x-axis, %d, is small to cover 8 x PSF. Setting x pixel number, %d." % (imsize[0], minimsize), priority='warn',origin='simanalyze')
@@ -427,7 +427,7 @@ def simanalyze(
                     aveant = 12.0
                     pb_asec = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi
                 else:
-                    raise Exception(tpmstoimage+" not found.")
+                    raise RuntimeError(tpmstoimage+" not found.")
 
                 # default PSF from PB of antenna
                 imbeam = {'major': qa.quantity(pb_asec,'arcsec'),
@@ -623,7 +623,7 @@ def simanalyze(
             # feather
             if featherimage:
                 if not os.path.exists(featherimage):
-                    raise Exception("Could not find featherimage "+featherimage)
+                    raise RuntimeError("Could not find featherimage "+featherimage)
             else:
                 featherimage=""
                 if tpimage:
@@ -737,15 +737,15 @@ def simanalyze(
                 if os.path.exists(fileroot+"/"+imagename+".image"):
                     imagename=fileroot+"/"+imagename
                 else:
-                    msg("Can't find a simulated image - expecting "+imagename,priority="error")
-                    return False
+                    emsg = "Can't find a simulated image - expecting "+imagename
+                    raise RuntimeError(emsg)
 
             # we should have skymodel.flat created above 
 
             if not image:
                 if not os.path.exists(imagename+".image"):
-                    msg("you must image before analyzing.",priority="error")
-                    return False
+                    emsg = "you must image before analyzing."
+                    raise RuntimeError(emsg)
 
                 # get beam from output clean image
                 if verbose: msg("getting beam from "+imagename+".image",origin="analysis")
@@ -857,7 +857,7 @@ def simanalyze(
             if nfig > 6:
                 msg("only displaying first 6 selected panels in graphic output",priority="warn")
             if nfig <= 0:
-                return True
+                return
             if nfig < 4:
                 multi = [1,nfig,1]
             else:
@@ -1012,24 +1012,8 @@ def simanalyze(
             myutil.closereport()
 
 
-    except TypeError as e:
+    finally:
         finalize_tools()
-        #msg("simanalyze -- TypeError: %s" % e,priority="error")
-        casalog.post("simanalyze -- TypeError: %s" % e, priority="ERROR")
-        raise
-        return
-    except ValueError as e:
-        finalize_tools()
-        #print "simanalyze -- OptionError: ", e
-        casalog.post("simanalyze -- OptionError: %s" % e, priority="ERROR")
-        raise
-        return
-    except Exception as instance:
-        finalize_tools()
-        #print '***Error***',instance
-        casalog.post("simanalyze -- Exception: %s" % instance, priority="ERROR")
-        raise
-        return
 
 
 def finalize_tools():
