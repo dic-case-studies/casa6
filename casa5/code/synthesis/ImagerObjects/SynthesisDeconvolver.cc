@@ -607,7 +607,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       else if(doAutoMask==1){
 	minorCycleControlRec=itsPreviousIterBotRec_p;
       }
-      CubeMinorCycleAlgorithm *cmc=new CubeMinorCycleAlgorithm();
+      CubeMinorCycleAlgorithm cmc;
       //casa::applicator.defineAlgorithm(cmc);
       ///argv and argc are needed just to callthe right overloaded init
       Int argc=1;
@@ -690,11 +690,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Int indexofretval=0;
           for (Int k=0; k < numblocks; ++k) {
             //os << LogIO::DEBUG1 << "deconvolving channel "<< k << LogIO::POST;
-            assigned=casa::applicator.nextAvailProcess(*cmc, rank);
+            assigned=casa::applicator.nextAvailProcess(cmc, rank);
             //cerr << "assigned "<< assigned << endl;
             while(!assigned) {
               //cerr << "SErial ? " << casa::applicator.isSerial() << endl;
-              rank = casa::applicator.nextProcessDone(*cmc, allDone);
+              rank = casa::applicator.nextProcessDone(cmc, allDone);
               //cerr << "while rank " << rank << endl;
               //receiving output of CubeMinorCycleAlgorithm::put
               //#1
@@ -727,7 +727,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 cerr << k << "deconv rank " << rank << " failed " << endl;
               */
               //cerr <<"rank " << rank << " return rec "<< retval << endl;
-              assigned = casa::applicator.nextAvailProcess(*cmc, rank);
+              assigned = casa::applicator.nextAvailProcess(cmc, rank);
 	  
             }
 
@@ -760,11 +760,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    chanflagRec.defineRecord("statsrec", statrec);
             applicator.put(chanflagRec);
             /// Tell worker to process it
-            applicator.apply(*cmc);
+            applicator.apply(cmc);
             
           }
           // Wait for all outstanding processes to return
-          rank = casa::applicator.nextProcessDone(*cmc, allDone);
+          rank = casa::applicator.nextProcessDone(cmc, allDone);
           while (!allDone) {
 
             Vector<Int> chanRangeProcessed;
@@ -788,10 +788,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             else
               cerr << "deconv remainder rank " << rank << " failed " << endl;
             
-            rank = casa::applicator.nextProcessDone(*cmc, allDone);
-	    if(casa::applicator.isSerial())
-	      allDone=true;
-	    
+            rank = casa::applicator.nextProcessDone(cmc, allDone);
+            if(casa::applicator.isSerial())
+              allDone=true;
+
           }
 
           if(anyEQ(retvals, False))

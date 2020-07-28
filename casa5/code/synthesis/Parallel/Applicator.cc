@@ -72,6 +72,10 @@ Applicator::~Applicator()
     }
     delete comm;
   }
+
+  for (auto &algo : knownAlgorithms) {
+      delete algo.second;
+  }
 }
 
 void Applicator::initThreads(Int argc, Char *argv[]){

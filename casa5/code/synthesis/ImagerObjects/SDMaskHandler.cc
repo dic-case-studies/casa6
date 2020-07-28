@@ -195,14 +195,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }// end of readable table
             else {
               //
-              Record* myrec = 0;
+              std::unique_ptr<Record> myrec(nullptr);
               try {
-                myrec = RegionManager::readImageFile(maskString,String("temprgrec"));
+                myrec.reset(RegionManager::readImageFile(maskString,String("temprgrec")));
                 if (myrec!=0) {
                   Bool ret(false);
                   Matrix<Quantity> dummyqmat;
                   Matrix<Float> dummyfmat;
-                  ret=SDMaskHandler::regionToImageMask(tempMaskImage, myrec, dummyqmat, dummyfmat);
+                  ret=SDMaskHandler::regionToImageMask(tempMaskImage, myrec.get(), dummyqmat, dummyfmat);
                   if (!ret) cout<<"regionToImageMask failed..."<<endl;
                     os << "Reading region record mask: " << maskString << LogIO::POST;
 
@@ -337,8 +337,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   //Bool SDMaskHandler::regionToImageMask(const String& maskName, Record* regionRec, Matrix<Quantity>& blctrcs,
-  Bool SDMaskHandler::regionToImageMask(ImageInterface<Float>& maskImage, Record* regionRec, Matrix<Quantity>& blctrcs,
-            Matrix<Float>& circles, const Float& value) {
+  Bool SDMaskHandler::regionToImageMask(ImageInterface<Float>& maskImage, const Record* regionRec, const Matrix<Quantity>& blctrcs,
+            const Matrix<Float>& circles, const Float& value) {
 
     LogIO os(LogOrigin("imager", "regionToImageMask", WHERE));
 
@@ -473,7 +473,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     delete elunion;
   }
  
-  void SDMaskHandler::recordRegionToImageRegion(Record* imageRegRec, ImageRegion*& imageRegion ) 
+  void SDMaskHandler::recordRegionToImageRegion(const Record* imageRegRec, ImageRegion*& imageRegion )
   //void SDMaskHandler::recordRegionToImageRegion(Record& imageRegRec, ImageRegion*& imageRegion ) 
   {
     if(imageRegRec !=0){

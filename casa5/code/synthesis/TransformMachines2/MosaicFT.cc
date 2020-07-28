@@ -94,7 +94,7 @@ using namespace casa::refim;
 		   Long icachesize, Int itilesize, 
 		     Bool usezero, Bool useDoublePrec, Bool useConjConvFunc, Bool usePointing)
   : FTMachine(), sj_p(sj),
-    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(0),
+    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(nullptr),
     isTiled(false),
     maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
     mspc(0), msac(0), pointingToImage(0), usezero_p(usezero), convSampling(1),
@@ -161,13 +161,13 @@ MosaicFT& MosaicFT::operator=(const MosaicFT& other)
     else
       convWeightImage_p=0;
     if(other.gridder==0)
-      gridder=0;
+      gridder.reset(nullptr);
     else{
       uvScale=other.uvScale;
       uvOffset=other.uvOffset;
-      gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						     uvScale, uvOffset,
-						     "SF");
+      gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                         uvScale, uvOffset,
+                                                         "SF"));
 	  
     }
     useConjConvFunc_p=other.useConjConvFunc_p;
@@ -226,10 +226,9 @@ void MosaicFT::init() {
   uvOffset(0)=nx/2;
   uvOffset(1)=ny/2;
   
-  if(gridder) delete gridder; gridder=0;
-  gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						 uvScale, uvOffset,
-						 "SF");
+  gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                     uvScale, uvOffset,
+                                                     "SF"));
 
   // Set up image cache needed for gridding. 
   if(imageCache) delete imageCache; imageCache=0;
@@ -282,7 +281,7 @@ void MosaicFT::findConvFunction(const ImageInterface<Complex>& iimage,
   if(pbConvFunc_p.null())
     pbConvFunc_p=new SimplePBConvFunc();
   if(sj_p)
-    pbConvFunc_p->setSkyJones(sj_p);
+    pbConvFunc_p->setSkyJones(sj_p.get());
   ////TEST for HetArray only for now
   if(pbConvFunc_p->name()=="HetArrayConvFunc"){
     if(convSampling <10) 
@@ -1963,7 +1962,7 @@ Bool MosaicFT::fromRecord(String& error,
     String pbname;
     PBMath::whichCommonPBtoUse(tel, freq, band, pbtype, pbname);
     if(pbtype != PBMath::UNKNOWN)
-      sj_p=new VPSkyJones(tel,pbtype); 
+      sj_p.reset(new VPSkyJones(tel,pbtype));
   }
 
   inRec.get("name", machineName_p);
@@ -2010,7 +2009,7 @@ Bool MosaicFT::fromRecord(String& error,
   else{
     pbConvFunc_p=0;
   }
-  gridder=nullptr;
+  gridder.reset(nullptr);
    return retval;
 }
 

@@ -142,6 +142,7 @@ public:
   // size of the tile used in gridding (cannot be less than
   // 12, 16 works in most cases). 
   // <group>
+  // Note: this takes ownership of the sj pointer
   MosaicFT(SkyJones* sj, casacore::MPosition mloc, casacore::String stokes,
 	    casacore::Long cachesize, casacore::Int tilesize=16, 
 	   casacore::Bool usezero=true, casacore::Bool useDoublePrec=false, casacore::Bool useConjConvFunc=false, casacore::Bool usePointingTable=false);
@@ -250,7 +251,8 @@ protected:
   void addBeamCoverage(casacore::ImageInterface<casacore::Complex>& image);
   void prepGridForDegrid();
 
-  SkyJones* sj_p;
+  // shared: this is assigned in the copy constructor
+  std::shared_ptr<SkyJones> sj_p;
 
 
   // Get the appropriate data pointer
@@ -273,7 +275,7 @@ protected:
   casacore::Int tilesize;
 
   // Gridder
-  casacore::ConvolveGridder<casacore::Double, casacore::Complex>* gridder;
+  std::unique_ptr<casacore::ConvolveGridder<casacore::Double, casacore::Complex>> gridder;
 
   // Is this tiled?
   casacore::Bool isTiled;

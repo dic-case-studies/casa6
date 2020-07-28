@@ -183,7 +183,7 @@ class SynthesisImager
   casacore::CountedPtr<SIImageStore> imageStore(const casacore::Int id=0);
 
   //casacore::Record getMajorCycleControls();
-  void executeMajorCycle(casacore::Record& controls);
+  void executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
   void makePSF();

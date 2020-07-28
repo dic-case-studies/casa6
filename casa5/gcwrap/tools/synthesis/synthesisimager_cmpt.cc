@@ -123,7 +123,7 @@ synthesisimager::selectdata(const casac::record& selpars)
 
       //if( ! itsImager ) itsImager = new SynthesisImagerVi2();
       itsImager = makeSI();
-      std::unique_ptr<casacore::Record> recpars(toRecord( selpars ));
+      const std::unique_ptr<const casacore::Record> recpars(toRecord( selpars ));
       SynthesisParamsSelect pars;
       pars.fromRecord( *recpars );
 
@@ -205,7 +205,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
     
     //if( ! itsImager ) itsImager = new SynthesisImager();
     itsImager = makeSI();
-    std::unique_ptr<casacore::Record> irecpars(toRecord( impars ));
+    const std::unique_ptr<casacore::Record> irecpars(toRecord( impars ));
     ////Temporary fix till we get the checking for phasecenter in fromRecord 
     ////to deal with this
     //////////////
@@ -238,7 +238,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
     ipars.fromRecord( *irecpars );
     
       
-    std::unique_ptr<casacore::Record> grecpars (toRecord( gridpars ));
+    const std::unique_ptr<const casacore::Record> grecpars (toRecord( gridpars ));
     SynthesisParamsGrid gpars;
     gpars.fromRecord( *grecpars );
     ipars.trackSource=False;
@@ -310,7 +310,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
 			    const bool wbawp,//      = true,
 			    const std::string& cfcache,//  = "",
 			    const bool usepointing,// = false,
-			    const ::casac::variant& pointingoffsetsigdev,//=10.0,
+			    const ::casac::variant& /* pointingoffsetsigdev*/,//=10.0, //unused!
 			    const bool dopbcorr,//   = true,
 			    const bool conjbeams,//  = false,
 			    const float computepastep,         //=360.0
@@ -431,7 +431,7 @@ bool synthesisimager::normalizerinfo(const casac::record& normpars)
     
     //if( ! itsImager ) itsImager = new SynthesisImager();
     itsImager = makeSI();
-    std::unique_ptr<casacore::Record> normrecpars(toRecord( normpars ));
+    const std::unique_ptr<const casacore::Record> normrecpars(toRecord( normpars ));
       
    
     itsImager->normalizerinfo( *normrecpars );
@@ -606,7 +606,7 @@ bool synthesisimager::executemajorcycle(const casac::record& controls)
 
     //if( ! itsImager ) itsImager = new SynthesisImager();
     itsImager = makeSI();
-    std::unique_ptr<casacore::Record> recpars(toRecord( controls ));
+    const std::unique_ptr<const casacore::Record> recpars(toRecord( controls ));
     itsImager->executeMajorCycle( *recpars );
 
   } catch  (AipsError x) {
