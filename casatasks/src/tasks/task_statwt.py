@@ -74,5 +74,7 @@ def statwt(
             except Exception as instance:
                 casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
+        return rval
+
     finally:
         myms.done()
