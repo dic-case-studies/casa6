@@ -201,18 +201,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             const casacore::MeasurementSet* ms=NULL) 
     { return msSelection_p->getScanList(ms); }
 
-    // // casacore::Matrix<casacore::Int> getChanList(
-    // //               const casacore::MeasurementSet* ms=NULL, 
-    // // 			    const casacore::Int defaultStep=1,
-    // // 			    const casacore::Bool sorted=false);
-    // // { return msSelection_p->getChanList(ms, defaultStep, sorted); }
+    inline casacore::Matrix<casacore::Int> getChanList(
+            const casacore::MeasurementSet* ms=NULL,
+            const casacore::Int defaultStep=1,
+            const casacore::Bool sorted=false)
+    { return msSelection_p->getChanList(ms, defaultStep, sorted); }
 
     // // //
     // // // Same as getChanList, except that the channels and steps are in Hz.
     // // //    
     // // casacore::Matrix<casacore::Double> getChanFreqList(
     // //                  const casacore::MeasurementSet* ms=NULL, 
-    // // 				   const casacore::Bool sorted=false);
+    // //                  const casacore::Bool sorted=false);
     // // { return msSelection_p->getChanFreqList(ms, sorted); }
 
     // This version of reset() works with generic MSSelectableTable
@@ -220,19 +220,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // this interface is recommended over the version of reset() that
     // uses MeasurementSet.
     void reset(casacore::MSSelectableTable& msLike,
-	       const casacore::MSSelection::MSSMode& mode = 
+           const casacore::MSSelection::MSSMode& mode = 
                casacore::MSSelection::PARSE_NOW,
-	       const casacore::String& timeExpr        = "",
-	       const casacore::String& antennaExpr     = "",
-	       const casacore::String& fieldExpr       = "",
-	       const casacore::String& spwExpr         = "",
-	       // const String& uvDistExpr             = "", // not supported
-	       const casacore::String& taqlExpr        = "",
-	       // const String& polnExpr               = "", // not supported
-	       const casacore::String& scanExpr        = "",
-	       // const String& arrayExpr              = "", // not supported
-	       const casacore::String& stateExpr       = "",
-	       const casacore::String& observationExpr = "");
+           const casacore::String& timeExpr        = "",
+           const casacore::String& antennaExpr     = "",
+           const casacore::String& fieldExpr       = "",
+           const casacore::String& spwExpr         = "",
+           // const String& uvDistExpr             = "", // not supported
+           const casacore::String& taqlExpr        = "",
+           // const String& polnExpr               = "", // not supported
+           const casacore::String& scanExpr        = "",
+           // const String& arrayExpr              = "", // not supported
+           const casacore::String& stateExpr       = "",
+           const casacore::String& observationExpr = "");
 
 private:
 
