@@ -75,9 +75,14 @@ class listhistory_test(unittest.TestCase):
         '''test takesMS: Check that list history takes a valid MS and refuses incorrect inputs'''
         casalog.setlogfile('testlog.log')
         listhistory(datapath)
-        self.assertFalse('SEVERE' in open('testlog.log').read())
-        listhistory(fakepath)
-        self.assertTrue('SEVERE' in open('testlog.log').read())
+        with open('testlog.log') as tlog:
+            self.assertFalse('SEVERE' in tlog.read())
+
+        with self.assertRaises(RuntimeError):
+            listhistory(fakepath)
+        with open('testlog.log') as tlog:
+            self.assertTrue('SEVERE' in tlog.read())
+
         if CASA6:
             with self.assertRaises(AssertionError):
                 listhistory('fake')
