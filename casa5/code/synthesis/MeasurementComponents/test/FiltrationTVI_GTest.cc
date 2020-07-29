@@ -600,8 +600,8 @@ protected:
         // ROW IDs
         cout << "Examining ROW ID";
         cout.flush();
-        Vector<uInt> row_ids;
-        Vector<uInt> row_ids_ref;
+        Vector<rownr_t> row_ids;
+        Vector<rownr_t> row_ids_ref;
         vi->getImpl()->getRowIds(row_ids);
         refvi->getImpl()->getRowIds(row_ids_ref);
         Vector<bool> is_filtrate;
