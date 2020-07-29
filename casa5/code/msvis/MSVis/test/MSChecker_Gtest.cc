@@ -32,21 +32,21 @@ TEST_F(MSCheckerTest, CheckIntegrityTestBadDDID) {
 
 TEST_F(MSCheckerTest, CheckIntegrityTestBadFieldID) {
 	TableProxy proxy(*testMS);
-	proxy.putCell("FIELD_ID", Vector<Int>(1, 20), ValueHolder(9));
+	proxy.putCell("FIELD_ID", Vector<rownr_t>(1, 20), ValueHolder(9));
 	MSChecker checker(*testMS);
 	EXPECT_THROW(checker.checkReferentialIntegrity(), AipsError);
 }
 
 TEST_F(MSCheckerTest, CheckIntegrityTestBadAntenna1) {
 	TableProxy proxy(*testMS);
-	proxy.putCell("ANTENNA1", Vector<Int>(1, 20), ValueHolder(9));
+	proxy.putCell("ANTENNA1", Vector<rownr_t>(1, 20), ValueHolder(9));
 	MSChecker checker(*testMS);
 	EXPECT_THROW(checker.checkReferentialIntegrity(), AipsError);
 }
 
 TEST_F(MSCheckerTest, CheckIntegrityTestBadAntenna2) {
 	TableProxy proxy(*testMS);
-	proxy.putCell("ANTENNA2", Vector<Int>(1, 20), ValueHolder(9));
+	proxy.putCell("ANTENNA2", Vector<rownr_t>(1, 20), ValueHolder(9));
 	MSChecker checker(*testMS);
 	EXPECT_THROW(checker.checkReferentialIntegrity(), AipsError);
 }
