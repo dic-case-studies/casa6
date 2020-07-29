@@ -1090,16 +1090,18 @@ class cvel2_test(test_base):
         self.setUp_vis_d()
         myvis = vis_d
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel2(
-            vis = 'myinput.ms',
-            outputvis = outfile,
-            mode='channel',
-            spw='1',
-            start = 98,
-            width = 3,
-            phasecenter = "J2000 18h25m56.09 -12d04m28.20"
-        )
-        self.assertTrue(rval)
+        try:
+            cvel2(
+                vis = 'myinput.ms',
+                outputvis = outfile,
+                mode='channel',
+                spw='1',
+                start = 98,
+                width = 3,
+                phasecenter = "J2000 18h25m56.09 -12d04m28.20"
+            )
+        except Exception as exc:
+            self.assertFail('Unexpected exception: {}'.format(exc))
         ret = verify_ms(outfile, 1, 10, 0)
 
     def test43(self):
