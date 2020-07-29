@@ -191,7 +191,8 @@ class impv_test(unittest.TestCase):
             If this is left blank then the entire spectral range is used.
         '''
         
-        self.assertTrue(impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], region='box[[0pix,0pix],[255pix,255pix]]'))
+        impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], region='box[[0pix,0pix],[255pix,255pix]]')
+        self.assertTrue(os.path.exists(testfile))
         
         
     def test_startEnd(self):
