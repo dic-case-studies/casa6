@@ -191,7 +191,8 @@ class clearcal_test(unittest.TestCase):
         tb.putcol('CORRECTED_DATA', newdata)
         # Check that spw select only corrects the selected spw
         colOld = tb.getcol('CORRECTED_DATA')[0,0,0]
-        clearcal(clearMS, spw='100')
+        with self.assertRaises(RuntimeError):
+            clearcal(clearMS, spw='100')
         colNew1 = tb.getcol('CORRECTED_DATA')[0,0,0]
         self.assertTrue(colNew1.real == colOld.real, msg='Data was corrected even when not selected')
         clearcal(clearMS, spw='0')
