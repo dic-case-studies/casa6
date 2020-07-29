@@ -186,7 +186,8 @@ class imrebin_test(unittest.TestCase):
             Check that the task supports images with float values
         '''
         
-        self.assertTrue(imrebin(imagename=useFloat, outfile=rebinned, factor=[2,2]))
+        imrebin(imagename=useFloat, outfile=rebinned, factor=[2,2])
+        self.assertTrue(rebinned)
         
     def test_compValue(self):
         '''
@@ -197,8 +198,9 @@ class imrebin_test(unittest.TestCase):
             TODO come back to this one to make sure the complex component isn't being discarded
         '''
         
-        self.assertTrue(imrebin(imagename=useComp, outfile=rebinned, factor=[2,2]))
-        
+        imrebin(imagename=useComp, outfile=rebinned, factor=[2,2])
+        self.assertTrue(os.path.exists(rebinned))
+
     def test_outAverage(self):
         '''
             test_outAverage
@@ -464,7 +466,8 @@ class imrebin_test(unittest.TestCase):
             imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
             self.assertTrue('SEVERE' in open(testlog).read())
             
-        self.assertTrue(imrebin(imagename=useImage, outfile=rebinned, factor=[2,2], overwrite=True))
+        imrebin(imagename=useImage, outfile=rebinned, factor=[2,2], overwrite=True)
+        self.assertTrue(os.path.exists(rebinned))
         
     
     
