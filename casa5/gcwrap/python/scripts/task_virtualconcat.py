@@ -364,4 +364,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                 if os.path.exists(tempdir+'/'+elvis):
                     shutil.rmtree(elvis)
                     shutil.move(tempdir+'/'+elvis, elvis)
-            os.rmdir(tempdir)
+            try:
+                os.rmdir(tempdir)
+            except FileNotFoundError:
+                pass
