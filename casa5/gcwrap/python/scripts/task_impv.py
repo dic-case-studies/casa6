@@ -23,7 +23,7 @@ def impv(
         mymode = mode.lower()
         if mymode.startswith('c'):
             if len(start) == 0 or len(end) == 0:
-                raise Exception("When mode='coords', start and end must both be specified.")
+                raise ValueError("When mode='coords', start and end must both be specified.")
             center = ""
             length = ""
             pa = ""
@@ -36,21 +36,22 @@ def impv(
                 )
                 or len(pa) == 0
             ):
-                raise Exception("When mode='length', center, length, and pa must all be specified.")
+                raise ValueError("When mode='length', center, length, and pa must all be specified.")
             start = ""
             end = ""
         else:
-            raise Exception("Unsupported value for mode.")
+            raise ValueError("Unsupported value for mode.")
         myia = image()
         myia.dohistory(False)
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using %s" % imagename)
+            raise RuntimeError("Cannot create image analysis tool using %s" % imagename)
         outia = myia.pv(
             outfile=outfile, start=start, end=end, center=center,
             length=length, pa=pa, width=width, unit=unit,
             overwrite=overwrite, region=region, chans=chans,
             stokes=stokes, mask=mask, stretch=stretch, wantreturn=True
         )
+
         try:
             param_names = impv.__code__.co_varnames[:impv.__code__.co_argcount]
             if is_python3:
@@ -64,10 +65,7 @@ def impv(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if (myia):
             myia.done()
