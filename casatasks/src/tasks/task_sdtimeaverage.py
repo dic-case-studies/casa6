@@ -65,7 +65,7 @@ def sdtimeaverage(
 
     # Check timebin
     if tbin < 0:     # Error, raise Exception.
-        raise Exception(
+        raise ValueError(
             "Parameter timebin must be >= '0s' to do time averaging")
     elif tbin == 0:  # No averaging, when tbin == 0
         msg = 'Parameter timebin equals zero. No averaging will be performed.'
@@ -75,42 +75,33 @@ def sdtimeaverage(
     origin = 'sdtimeaverage'
     casalog.origin(origin)
 
-    try:
-        # Select Data and make Average.
-        st = do_mst(
-            infile=infile,
-            datacolumn=active_datacolumn,
-            field=field,
-            spw=spw,
-            timerange=timerange,
-            scan=scan,
-            antenna=antenna,
-            timebin=timebin,
-            timespan=timespan,
-            outfile=outfile,
-            do_timeaverage=do_timeaverage)
+    # Select Data and make Average.
+    st = do_mst(
+        infile=infile,
+        datacolumn=active_datacolumn,
+        field=field,
+        spw=spw,
+        timerange=timerange,
+        scan=scan,
+        antenna=antenna,
+        timebin=timebin,
+        timespan=timespan,
+        outfile=outfile,
+        do_timeaverage=do_timeaverage)
 
-        # History
-        add_history(
-            casalog=casalog,
-            infile=infile,
-            datacolumn=active_datacolumn,
-            field=field,
-            spw=spw,
-            timerange=timerange,
-            scan=scan,
-            timebin=timebin,
-            timespan=timespan,
-            antenna=antenna,
-            outfile=outfile)
-
-    except Exception as e:
-        casalog.post(
-            'Exception from task_sdtimeaverage : ' +
-            str(e),
-            'SEVERE',
-            origin=origin)
-        return False
+    # History
+    add_history(
+        casalog=casalog,
+        infile=infile,
+        datacolumn=active_datacolumn,
+        field=field,
+        spw=spw,
+        timerange=timerange,
+        scan=scan,
+        timebin=timebin,
+        timespan=timespan,
+        antenna=antenna,
+        outfile=outfile)
 
     return st
 
