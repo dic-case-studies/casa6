@@ -216,7 +216,7 @@ template <class T> void compareVector(	const Char* column,
 	// Compare values
 	for (uInt index=0;index < inp.size(); index++)
 	{
-	    ASSERT_NEAR(abs(inp(index) - ref(index)), 0, tolerance)
+	    ASSERT_NEAR(std::abs(inp(index) - ref(index)), 0, tolerance)
             << column << " does not match in position ="
             << index
             << " test=" << inp(index)
