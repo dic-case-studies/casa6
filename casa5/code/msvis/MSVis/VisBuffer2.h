@@ -33,10 +33,11 @@
 //#include <casa/Arrays/Vector.h>
 //#include <casa/Arrays/Matrix.h>
 //#include <casa/BasicSL/Complex.h>
-#include <casa/BasicSL/Complexfwd.h>
+#include <casacore/casa/BasicSL/Complexfwd.h>
 #include <msvis/MSVis/VisBufferComponents2.h>
 //#include <msvis/MSVis/VisibilityIterator2.h>
-#include <measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casatools/casacore/casa/aipsxtype.h>
 
 using casa::vi::VisBufferComponent2;
 using casa::vi::VisBufferComponents2;
