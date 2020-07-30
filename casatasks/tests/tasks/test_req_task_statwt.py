@@ -502,16 +502,12 @@ class statwt_test(unittest.TestCase):
             if statalg == "cl":
                 statwt(vis=dst, statalg=statalg)
             elif statalg == "ch":
-                self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
-                )
+                statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
             elif statalg == "h":
-                self.assertTrue(statwt(vis=dst, statalg=statalg, fence=0.2))
+                statwt(vis=dst, statalg=statalg, fence=0.2)
             elif statalg == "f":
-                self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, center="median",
-                    lside=False)
-                )
+                statwt(vis=dst, statalg=statalg, center="median",
+                       lside=False)
             elif statalg == "bogus":
                 if th.is_casa6():
                     self.assertRaises(
@@ -1021,12 +1017,14 @@ class statwt_test(unittest.TestCase):
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
             if spw == '':
-                res = statwt(
-                    vis=dst, combine='scan,field,state', chanbin=1,
-                    timebin='1yr', datacolumn='residual_data',
-                    selectdata=True, spw=spw
-                )
-                self.assertTrue(res)
+                try:
+                    statwt(
+                        vis=dst, combine='scan,field,state', chanbin=1,
+                        timebin='1yr', datacolumn='residual_data',
+                        selectdata=True, spw=spw
+                    )
+                except Exception:
+                    self.fail()
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
