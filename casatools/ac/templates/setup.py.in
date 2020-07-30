@@ -1238,7 +1238,8 @@ class casa_build_ext(build_ext):
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
 
-        if sys.platform == 'darwin':
+        # Fixing rpaths is needed for gcc wheel builds
+        if sys.platform == 'darwin' and doing_wheel_build:
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
