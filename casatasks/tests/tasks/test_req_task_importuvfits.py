@@ -232,7 +232,8 @@ class importuvfits_test(unittest.TestCase):
         '''test_overwrite: Tests to make sure files aren't overwritten'''
         casalog.setlogfile('testlog.log')
         importuvfits(fitsfile=vlapath, vis='test_set.ms')
-        importuvfits(fitsfile=vlapath, vis='test_set.ms')
+        with self.assertRaises(RuntimeError):
+            importuvfits(fitsfile=vlapath, vis='test_set.ms')
         self.assertTrue('user does not want to remove it.' in open('testlog.log').read(), msg='No warning saying that the file will not overwrite was displayed')
 
 def suite():
