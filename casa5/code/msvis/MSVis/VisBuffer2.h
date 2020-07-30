@@ -37,7 +37,7 @@
 #include <msvis/MSVis/VisBufferComponents2.h>
 //#include <msvis/MSVis/VisibilityIterator2.h>
 #include <casacore/measures/Measures/Stokes.h>
-#include <casatools/casacore/casa/aipsxtype.h>
+#include <casacore/casatools/casa/aips.h>
 
 using casa::vi::VisBufferComponent2;
 using casa::vi::VisBufferComponents2;
