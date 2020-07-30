@@ -10,6 +10,8 @@
 #include <imageanalysis/ImageAnalysis/ImageFactory.h>
 #include <imageanalysis/ImageAnalysis/PixelValueManipulator.h>
 
+#include <iomanip>
+
 namespace casa {
 
 template<class T> ImageExprCalculator<T>::ImageExprCalculator(
@@ -339,11 +341,31 @@ template<class T> void ImageExprCalculator<T>::_checkImages() const {
 					}
 					casacore::ImageBeamSet mybs = myImage.imageInfoObject().getBeamSet();
 					if (beamSet) {
-						if (mybs != *beamSet) {
-							ostringstream oss;
-							oss << "image beams are not the same: " << mybs << " vs " << *beamSet;
-							_log << casacore::LogIO::WARN << oss.str() << casacore::LogIO::POST;
-							break;
+                        if (mybs != *beamSet) {
+                            ostringstream oss;
+                            if (mybs.shape() == beamSet->shape()) {
+                                String s0, s1;
+                                // figure out precision to present unequal beams, CAS-13081
+                                uInt i = 5;
+                                for (; i<100; i += 5) {
+                                    ostringstream os0;
+                                    ostringstream os1;
+                                    os0 << std::setprecision(i) << mybs;
+                                    os1 << std::setprecision(i) << *beamSet;
+                                    s0 = os0.str();
+                                    s1 = os1.str();
+                                    if (s0 != s1) {
+                                        break;
+                                    }
+                                }
+                                oss << std::setprecision(i) << "image beams are not the same: "
+                                    << mybs << " vs " << *beamSet;
+                            }
+                            else {
+                                oss << "image beam set shapes are not the same " << mybs << " vs " << *beamSet;
+                            }
+                            _log << casacore::LogIO::WARN << oss.str() << casacore::LogIO::POST;
+                            break;
 						}
 					}
 					else {
