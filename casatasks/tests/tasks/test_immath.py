@@ -86,6 +86,7 @@ import traceback
 import os
 import shutil
 import random
+import re
 import time
 import numpy
 import glob
@@ -1183,6 +1184,9 @@ class immath_test2(unittest.TestCase):
                 i += 1
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
+beam0 = 'mybeamtest0.im'
+beam1 = 'mybeamtest1.im'
+beam_out = 'myout.im'
 
 class immath_test3(unittest.TestCase):
 
@@ -1197,13 +1201,15 @@ class immath_test3(unittest.TestCase):
         
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
+        for img in [beam0, beam1, beam_out]:
+            if os.path.exists(img):
+                shutil.rmtree(img)
         # FIXME need to figure out how to close this table correctly
         cache_tables = self._tb.showcache()
         if (len(cache_tables) > 0):
             for table in cache_tables:
                 self.assertTrue(table.rfind("/IERSeop97") >= 0)
         
-
     def _comp(self, imagename, mode, outfile, expected, epsilon, polithresh=''):
         self.assertTrue(immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh))
         self.assertTrue(os.path.exists(outfile))
@@ -1819,6 +1825,100 @@ class immath_test3(unittest.TestCase):
             self.assertTrue(
                 numpy.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
+
+    def test_beam_logging_precision(self):
+        """
+            Test that when beams are different, immath logs enough digits to show where the
+            difference occurs. CAS-13135
+        """
+        shape = [2, 2, 2, 2]
+        old_log = casalog.logfile()
+        logfile = 'test_beam_logging_precision0.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia = image()
+        self.assertTrue(_ia.fromshape(beam0, shape), 'Failed to created image ' + beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()
+        self.assertTrue(_ia.fromshape(beam1, shape), 'Failed to created image ' + beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.235arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam1
+        )
+        _ia.done()
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 14
+            i1 = 16
+        else:
+            i0 = 17
+            i1 = 19
+        self.assertTrue(re.search("3.235", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision1.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234567arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234568arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.234568", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234567", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision2.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678901777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678902777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.23456789027778", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.23456789017778", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        self.assertTrue(casalog.setlogfile(old_log), 'Failed to reset log file')
 
 def suite():
     return [immath_test1, immath_test2, immath_test3]
