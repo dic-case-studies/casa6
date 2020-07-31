@@ -92,14 +92,25 @@ import glob
 import struct
 import unittest
 
-from casatools import ctsys, table, image, regionmanager, measures
-from casatasks import casalog, immath
-
-_ia = image( )
-_rg = regionmanager( )
-
 sep = os.sep
-datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
+is_CASA6 = True
+try:
+    import casac
+    from tasks import *
+    from taskinit import *
+    _ia = iatool()
+    _rg = rgtool()
+    image = iatool
+    table = tbtool
+    datapath = os.environ.get('CASAPATH').split()[0] + sep + 'data' + sep\
+        + 'regression' + sep + 'unittest' + sep + 'immath' + sep
+    is_CASA6 = False
+except ImportError:
+    from casatools import ctsys, table, image, regionmanager, measures
+    from casatasks import casalog, immath
+    _ia = image()
+    _rg = regionmanager()
+    datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -206,7 +217,7 @@ def make_data(imshape):
 class immath_test1(unittest.TestCase):
     
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         if(os.path.exists(imageList[0])):
             for img in imageList:
                 os.system('rm -rf ' +img)
@@ -398,11 +409,11 @@ class immath_test1(unittest.TestCase):
                     retValue['error_msgs']=retValue['error_msgs']\
                               + "\nError: Bad region file, 'garbage.rgn',"\
                               + " was not reported as bad."+str(results)
-        except Exception:
+        except Exception(err):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Unable to create bad region file.\n\t"
-            raise
+            raise Exception(err)
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
     
@@ -819,8 +830,6 @@ class immath_test2(unittest.TestCase):
                 shutil.rmtree(img)
             else:
                 os.remove(img)
-        # FIXME need to figure out how to close this table correctly
-        #me.done()
         cache_tables = self._tb.showcache()
         self.assertTrue(len(cache_tables) == 0)
                        
@@ -1178,7 +1187,7 @@ class immath_test2(unittest.TestCase):
 class immath_test3(unittest.TestCase):
 
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         for img in imageList4:
             shutil.copytree(os.path.join(datapath,img), img)
     
@@ -1356,10 +1365,20 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask2.im > 5", stretch=False
-        )
+        if is_CASA6:
+            # CASA6 tasks raise exceptions
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask2.im > 5", stretch=False
+            )
+        else:
+            # CASA5 tasks return False
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask2.im > 5", stretch=False
+                )
+            )
         outfile = "out3.im"
         immath(
             imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1369,11 +1388,19 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask3.im > 5", stretch=False
-        )
-        
+        if is_CASA6:
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask3.im > 5", stretch=False
+            )
+        else:
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask3.im > 5", stretch=False
+                )
+            )
+
     def test21(self):
         """Test moved from imagetest regreesion"""
         
@@ -1558,7 +1585,7 @@ class immath_test3(unittest.TestCase):
                 self.assertTrue(
                     (cc == expecv).all(), "wrong values for " + mytype
                 )
-       
+
     def test_8(self):
         """Tests moved from imagetest regression, some are probably useless"""
         myia = image()
@@ -1776,9 +1803,14 @@ class immath_test3(unittest.TestCase):
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                self.assertRaises(
-                    Exception, immath, imagename=subi, outfile=outfile, mode=mode
-                )
+                if is_CASA6:
+                    self.assertRaises(
+                        Exception, immath, imagename=subi, outfile=outfile, mode=mode
+                    )
+                else:
+                    self.assertFalse(
+                        immath(imagename=subi, outfile=outfile, mode=mode)
+                    )
                 continue
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
