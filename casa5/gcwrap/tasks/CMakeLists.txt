@@ -96,6 +96,7 @@ sdfit.xml
 sdfixscan.xml
 sdgaincal.xml
 sdimaging.xml
+sdintimaging.xml
 tsdimaging.xml
 sdpolaverage.xml
 sdtimeaverage.xml

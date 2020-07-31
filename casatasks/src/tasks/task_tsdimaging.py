@@ -849,16 +849,9 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         imager.initializeImagers()
         casalog.post('*** Initializing normalizers ***', origin=origin)
         imager.initializeNormalizers()
-        #imager.setWeighting()
         
         ## (5) Make the initial images 
         
-        #imager.makePSF()
-        casalog.post('*** Executing runMajorCycle ***', origin=origin)
-        casalog.post('NF = {0}'.format(imager.NF), origin=origin)
-        #imager.runMajorCycle()  # Make initial dirty / residual image
-        casalog.post('*** makeSdPSF... ***', origin=origin)
-        imager.makeSdPSF()
         casalog.post('*** makeSdImage... ***', origin=origin)
         imager.makeSdImage()
         
@@ -882,7 +875,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         # change image suffix from .residual to .image
         if os.path.exists(outfile + residual_suffix):
             os.rename(outfile + residual_suffix, outfile + image_suffix)
-        
 
     # set beam size
     # TODO: re-define related functions in the new tool framework (sdms?)
@@ -921,3 +913,11 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     # mask low weight pixels 
     weightimage = outfile + weight_suffix
     do_weight_mask(imagename, weightimage, minweight)
+
+    # CAS-10891
+    _remove_image(outfile + '.sumwt')
+
+    # CAS-10893
+    # TODO: remove the following line once the 'correct' SD 
+    # PSF image based on primary beam can be generated
+    _remove_image(outfile + '.psf')

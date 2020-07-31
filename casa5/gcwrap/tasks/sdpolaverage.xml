@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="sdpolaverage" category="single dish">
+<task category="single dish" name="sdpolaverage" type="function">
      <shortdescription>Average SD spectra over polarisation</shortdescription>
 
 <description>
@@ -21,59 +16,59 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 </description>
 
 <input>
-    <param type="string" name="infile" mustexist="true">
-        <description>name of input SD dataset</description>
-        <value></value>
+    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
+        
+        <value/>
     </param>
     
-    <param type="string" name="datacolumn" ignorecase="true">
-        <description>name of data column to be used ["data", "float_data", or "corrected_data"]</description>
+    <param ignorecase="true" name="datacolumn" type="string"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
+        
         <value>data</value>
     </param>
 
-    <param type="string" name="antenna">
-        <description>select data by antenna name or ID, e.g. "PM03"</description>
-        <value></value>
+    <param name="antenna" type="string"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
+        
+        <value/>
     </param>
     
-    <param type="string" name="field">
-        <description>select data by field IDs and names, e.g. "3C2*" (""=all)</description>
-        <value></value>
+    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+        
+        <value/>
     </param>
 
-    <param type="string" name="spw">
-        <description>select data by IF IDs (spectral windows), e.g. "3,5,7" (""=all)</description>
-        <value></value>
+    <param name="spw" type="string"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+        
+        <value/>
     </param>
     
-    <param type="string" name="timerange" >
-        <description>select data by time range, e.g. "09:14:0~09:54:0" (""=all) (see examples in help)</description>
-        <value></value>
+    <param name="timerange" type="string"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
+        
+        <value/>
     </param>
     
-    <param type="string" name="scan" >
-        <description>select data by scan numbers, e.g. "21~23" (""=all)</description>
-        <value></value>
+    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+        
+        <value/>
     </param>
 
-    <param type="string" name="intent">
-        <description>select data by observational intent, e.g. "*ON_SOURCE*" (""=all)</description>
-        <value></value>
+    <param name="intent" type="string"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+        
+        <value/>
     </param>
 
-    <param type="string" name="polaverage">
-        <description>polarization averaging mode ("", "stokes" or "geometric").</description>
+    <param name="polaverage" type="string"><shortdescription>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</shortdescription><description>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</description>
+        
         <allowed kind="enum">
-            <value></value>
+            <value/>
             <value>stokes</value>
             <value>geometric</value>
         </allowed>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="outfile">
-        <description>name of output file</description>
-        <value></value>
+    <param name="outfile" type="string"><shortdescription>name of output file</shortdescription><description>name of output file</description>
+        
+        <value/>
     </param>
 </input>
 
