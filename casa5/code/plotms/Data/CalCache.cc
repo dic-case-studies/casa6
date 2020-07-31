@@ -86,8 +86,10 @@ void CalCache::setFilename(String filename) {
     filename_ = filename;
     Table tab(filename);
     calType_= tab.tableInfo().subType();
-    if ((calType_=="T Jones") && (tab.keywordSet().isDefined("CAL_DESC")))
+
+    if ((calType_=="T Jones") && (tab.keywordSet().isDefined("CAL_DESC"))) {
       throw AipsError(calType_ + " tables in the old cal table format are unsupported in plotms.");
+    }
 }
 
 //*********************************
@@ -100,11 +102,7 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   // this also sets calType_:
   setFilename(filename_);
 
-  // Trap unsupported modes: cal types, averaging, transforms, poln ratio
-  if (calType_[0]=='M' || (calType_[0]=='X' && calType_.contains("Mueller"))) {
-    throw AipsError("Cal table type " + calType_ + " is unsupported in plotms. Please continue to use plotcal.");
-  }
-
+  // Trap unsupported modes: averaging, transforms, poln ratio
   logLoad("Plotting a " + calType_ + " calibration table.");
   // Warn that averaging and transformations will be ignored
   if (averaging().anyAveraging())
@@ -118,7 +116,7 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   if (selection_.corr()=="/") {
     if (calType_=="BPOLY" || calType_[0] == 'T' || calType_[0] == 'F') {
       throw(AipsError("Polarization ratio plots not supported for " + calType_ + " tables."));
-	} else {
+    } else {
       polnRatio_ = true;
     }
   }
@@ -262,14 +260,17 @@ void CalCache::loadCalChunks(ROCTIter& ci,
       if (pol=="" || pol=="RL" || pol=="XY") { // no selection
         nPol = pshape[0];
         // half the data for EVLASWP table is swp, half is tsys
-        if (calType_.contains("EVLASWP")) nPol = pshape[0]/2;
+        if (calType_.contains("EVLASWP")) {
+            nPol = pshape[0]/2;
+        }
         pol = "";
       } else { // poln selection using calParSlice
         String paramAxis = toVisCalAxis(PMS::AMP);
-        if (polnRatio_)  // pick one!
+        if (polnRatio_) {  // length is for 1 poln, pick one!
             nPol = getParSlice(paramAxis, "R").length();
-        else 
+		} else {
             nPol = getParSlice(paramAxis, pol).length();
+        }
       }
 
       // Cache the data shapes
@@ -1609,7 +1610,20 @@ Slice CalCache::getParSlice(String axis, String polnSel) {
         if (err.getMesg().contains("Unsupported value type")) {
             // Message a bit vague at top level, add some explanation
             String errMsg = err.getMesg() + ". Invalid axis or polarization selection for cal table type.";
-            throw(AipsError(errMsg));
+            throw (AipsError(errMsg));
+        } else if (calType_ == "M Mueller") {
+            if (polnSel.empty()) {
+                return Slice(0, 2, 1); // full selection
+            }
+            // include default "RL" when not set by user
+            std::vector<casacore::String> valid_poln = {"R", "X", "RL"};
+
+            for (auto& poln : valid_poln) {
+                if (poln == polnSel) {
+                    return Slice(0, 2, 1); // full selection
+                }
+            }
+            throw (AipsError("Invalid polarization selection for cal table type."));
         } else { // unsupported cal type
             throw(AipsError(err));
         }
