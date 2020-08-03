@@ -2646,7 +2646,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Access Spectral Window sub-table
     MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    rownnr_t nInputSpws = spwTable.nrow();
+    rownr_t nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
 
     // Access columns which have to be modified
@@ -2661,7 +2661,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Create list of input channels
     vector<channelInfo> inputChannels;
-    for(rownnr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
     {
     	Int spwId;
 		if (outputInputSPWIndexMap_p.size())
