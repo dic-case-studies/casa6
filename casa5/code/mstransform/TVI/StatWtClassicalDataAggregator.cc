@@ -207,7 +207,7 @@ void StatWtClassicalDataAggregator::_computeVariances(
         auto dataForBLCB = data.find(blcb)->second;
         auto flagsForBLCB = flags.find(blcb)->second;
         auto exposuresForBLCB = exposures.find(blcb)->second;
-        for (uInt corr=0; corr<ncorr; ++corr) {
+        for (size_t corr=0; corr<ncorr; ++corr) {
             IPosition start(3, 0);
             auto end = dataForBLCB.shape() - 1;
             if (! _combineCorr) {
@@ -233,7 +233,7 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
     auto sliceStart = slice.start();
     auto sliceEnd = slice.end();
     auto nrows = ant1.size();
-    for (uInt i=0; i<nrows; ++i) {
+    for (size_t i=0; i<nrows; ++i) {
         sliceStart[2] = i;
         sliceEnd[2] = i;
         StatWtTypes::BaselineChanBin blcb;
@@ -248,7 +248,7 @@ void StatWtClassicalDataAggregator::weightSpectrumFlags(
             auto variances = _variances.find(blcb)->second;
             auto ncorr = variances.size();
             Vector<Double> weights(ncorr);
-            for (uInt corr=0; corr<ncorr; ++corr) {
+            for (size_t corr=0; corr<ncorr; ++corr) {
                 if (! _combineCorr) {
                     sliceStart[0] = corr;
                     sliceEnd[0] = corr;

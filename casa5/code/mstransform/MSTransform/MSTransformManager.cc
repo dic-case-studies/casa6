@@ -1507,7 +1507,7 @@ void MSTransformManager::setup()
 	// Check if we really need to combine SPWs
 	if (combinespws_p)
 	{
-		uInt nInputSpws = outputMs_p->spectralWindow().nrow();
+		rownr_t nInputSpws = outputMs_p->spectralWindow().nrow();
 		if (nInputSpws < 2)
 		{
 			logger_p << LogIO::WARN << LogOrigin("MSTransformManager", __FUNCTION__)
@@ -2259,7 +2259,7 @@ void MSTransformManager::initDataSelectionParams()
         // jagonzal (CAS-7149): Have to remove duplicates: With multiple pols per SPW
         // each SPWId appears various (see times test_chanavg_spw_with_diff_pol_shape)
         vector<Int> noDupSpwList;
-        for (uInt idx=0;idx < spwchan.nrow(); idx++)
+        for (size_t idx=0;idx < spwchan.nrow(); idx++)
         {
             if (find(noDupSpwList.begin(),noDupSpwList.end(),spwchan(idx,0)) == noDupSpwList.end())
             {
@@ -2285,7 +2285,7 @@ void MSTransformManager::initDataSelectionParams()
                 freqbin_p.resize(spwList.size(),True);
                 freqbin_p = freqbin;
 
-                for (uInt spw_i=0;spw_i<spwList.size();spw_i++)
+                for (size_t spw_i=0;spw_i<spwList.size();spw_i++)
                 {
                     freqbinMap_p[spwList(spw_i)] = freqbin_p(spw_i);
 
@@ -2323,7 +2323,7 @@ void MSTransformManager::initDataSelectionParams()
             }
             else
             {
-                for (uInt spw_i=0;spw_i<spwList.size();spw_i++)
+                for (size_t spw_i=0;spw_i<spwList.size();spw_i++)
                 {
                     freqbinMap_p[spwList(spw_i)] = freqbin_p(spw_i);
                     // jagonzal (new WEIGHT/SIGMA convention)
@@ -2371,9 +2371,9 @@ void MSTransformManager::initDataSelectionParams()
             std::sort(polddids.begin(), polddids.end());
 
             // Make the in/out DD mapping
-            uInt nddids = polddids.size();
+            size_t nddids = polddids.size();
             Int dd;
-            for(uInt ii=0;ii<nddids;ii++)
+            for(size_t ii=0;ii<nddids;ii++)
             {
                 // Get dd id and set the input-output dd map
                 dd = polddids[ii];
@@ -2554,7 +2554,7 @@ void MSTransformManager::regridSpwSubTable()
 {
   // Access Spectral Window sub-table
   MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-  uInt nInputSpws = spwTable.nrow();
+  rownr_t nInputSpws = spwTable.nrow();
   MSSpWindowColumns spwCols(spwTable);
 
   // Access columns which have to be modified
@@ -2568,7 +2568,7 @@ void MSTransformManager::regridSpwSubTable()
   ScalarColumn<Int> measFreqRefCol = spwCols.measFreqRef();
 
   Int spwId;
-  for(uInt spw_idx=0; spw_idx<nInputSpws; ++spw_idx) {
+  for(rownr_t spw_idx=0; spw_idx<nInputSpws; ++spw_idx) {
     if (outputInputSPWIndexMap_p.size() > 0) {
       spwId = outputInputSPWIndexMap_p[spw_idx];
     } else {
@@ -2646,7 +2646,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Access Spectral Window sub-table
     MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    rownnr_t nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
 
     // Access columns which have to be modified
@@ -2661,7 +2661,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Create list of input channels
     vector<channelInfo> inputChannels;
-    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+    for(rownnr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
     {
     	Int spwId;
 		if (outputInputSPWIndexMap_p.size())
@@ -3159,8 +3159,8 @@ void MSTransformManager::separateFeedSubtable()
 				phasedFeedId = feedCols.phasedFeedId().getColumn();
 			}
 
-			uInt nRowsPerSpw = feedCols.spectralWindowId().nrow();
-		    uInt rowIndex = nRowsPerSpw;
+			rownr_t nRowsPerSpw = feedCols.spectralWindowId().nrow();
+		    rownr_t rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3284,8 +3284,8 @@ void MSTransformManager::separateSourceSubtable()
 			}
 
 
-			uInt nRowsPerSpw = sourceCols.spectralWindowId().nrow();
-		    uInt rowIndex = nRowsPerSpw;
+			rownr_t nRowsPerSpw = sourceCols.spectralWindowId().nrow();
+		    rownr_t rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3507,8 +3507,8 @@ void MSTransformManager::separateSyscalSubtable()
 			}
 
 
-			uInt nRowsPerSpw = syscalCols.spectralWindowId().nrow();
-			uInt rowIndex = nRowsPerSpw;
+			rownr_t nRowsPerSpw = syscalCols.spectralWindowId().nrow();
+			rownr_t rowIndex = nRowsPerSpw;
 			for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 			{
 				// Add rows
@@ -3677,8 +3677,8 @@ void MSTransformManager::separateFreqOffsetSubtable()
 
     		// NOTE (jagonzal): FreqOffset does not have optional columns
 
-    		uInt nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
-    		uInt rowIndex = nRowsPerSpw;
+    		rownr_t nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
+    		rownr_t rowIndex = nRowsPerSpw;
     		for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
     		{
     			// Add rows
@@ -3891,8 +3891,8 @@ void MSTransformManager::separateSysPowerSubtable()
 			if (MSTransformDataHandler::columnOk(requantizerGainCol))
 				requantizerGain = requantizerGainCol.getColumn();
 
-	    	uInt nRowsPerSpw = spectralWindowId.nelements();
-	        uInt rowIndex = nRowsPerSpw;
+	    	rownr_t nRowsPerSpw = spectralWindowId.nelements();
+	        rownr_t rowIndex = nRowsPerSpw;
 	        for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 	        {
 	        	// Add rows
@@ -3950,8 +3950,8 @@ Int MSTransformManager::getAveragedPolarizationId() {
   logger_p << LogOrigin("MSTransformManager", __func__, WHERE);
   MSPolarizationColumns cols(outputMs_p->polarization());
   Int polId = -1;
-  Int nrow = cols.nrow();
-  for (Int i = 0; i < nrow; ++i) {
+  rownr_t nrow = cols.nrow();
+  for (rownr_t i = 0; i < nrow; ++i) {
     auto const numCorr = cols.numCorr()(i);
     auto const flagRow = cols.flagRow()(i);
     if (numCorr == 1 && flagRow == False) {
@@ -3988,12 +3988,12 @@ void MSTransformManager::reindexPolarizationIdInDataDesc(Int newPolarizationId) 
   logger_p << "new polid is " << newPolarizationId << LogIO::POST;
   MSDataDescColumns ddcols(outputMs_p->dataDescription());
   MSPolarizationColumns pcols(outputMs_p->polarization());
-  Int nrow = ddcols.nrow();
+  rownr_t nrow = ddcols.nrow();
   auto __isValidType = [&](Vector<Int> const &ctype) {
     return (anyEQ(ctype, (Int)Stokes::XX) && anyEQ(ctype, (Int)Stokes::YY))
       || (anyEQ(ctype, (Int)Stokes::RR) && anyEQ(ctype, (Int)Stokes::LL));
   };
-  for (Int i = 0; i < nrow; ++i) {
+  for (rownr_t i = 0; i < nrow; ++i) {
     Int const polarizationId = ddcols.polarizationId()(i);
     Int nCorr = pcols.numCorr()(polarizationId);
     Vector<Int> corrType = pcols.corrType()(polarizationId);
@@ -4222,7 +4222,7 @@ void MSTransformManager::initGridForRegridTClean(const Vector<Double> &originalC
 // -----------------------------------------------------------------------
 void MSTransformManager::reindexColumn(ScalarColumn<Int> &inputCol, Int value)
 {
-	for(uInt idx=0; idx<inputCol.nrow(); idx++)
+	for(rownr_t idx=0; idx<inputCol.nrow(); idx++)
 	{
 		inputCol.put(idx,value);
 	}
@@ -4252,7 +4252,7 @@ void MSTransformManager::reindexSourceSubTable()
         std::vector<casacore::rownr_t> duplicateIdx;
     	std::vector< std::pair<uInt,uInt> > sourceIdSpwIdMap;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> sourceIdSpwId = std::make_pair(spectralWindowId(idx),sourceId(idx));
 
@@ -4319,12 +4319,12 @@ void MSTransformManager::reindexDDISubTable()
     	}
 
     	// Delete the old rows  
-    	uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
+    	rownr_t nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
-        	uInt rownr = ddiCols.nrow()-1;
+        	rownr_t rownr = ddiCols.nrow()-1;
             Vector<casacore::rownr_t> rowsToDelete(nrowsToDelete);
-        	for(uInt idx=0; idx<nrowsToDelete; idx++)
+        	for(rownr_t idx=0; idx<nrowsToDelete; idx++)
         	{
         		rowsToDelete(idx) = rownr;
         		rownr -= 1;
@@ -4367,7 +4367,7 @@ void MSTransformManager::reindexFeedSubTable()
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4427,7 +4427,7 @@ void MSTransformManager::reindexSysCalSubTable()
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4487,7 +4487,7 @@ void MSTransformManager::reindexFreqOffsetSubTable()
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair < std::pair<uInt,uInt> , uInt> antennaFeedPair = std::make_pair(std::make_pair(antenna1(idx),antenna2(idx)),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4549,7 +4549,7 @@ void MSTransformManager::reindexGenericTimeDependentSubTable(const String& subta
 	    	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
 	    	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-	    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+	    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
 	    	{
 	    		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
 	    		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4612,12 +4612,12 @@ void MSTransformManager::getInputNumberOfChannels()
 {
     // Access spectral window sub-table
     MSSpectralWindow spwTable = inputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    rownr_t nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
 
     // Get number of output channels per input spw
-    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
     {
     	numOfInpChanMap_p[spw_idx] = numChanCol(spw_idx);
     }
@@ -4632,7 +4632,7 @@ void MSTransformManager::dropNonUniformWidthChannels()
 {
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-	uInt nInputSpws = spwTable.nrow();
+	rownr_t nInputSpws = spwTable.nrow();
 	MSSpWindowColumns spwCols(spwTable);
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
     ArrayColumn<Double> chanWidthCol = spwCols.chanWidth();
@@ -4643,7 +4643,7 @@ void MSTransformManager::dropNonUniformWidthChannels()
 
 	uInt nChans;
 	Int spwId;
-	for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+	for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
 	{
 		nChans = numChanCol(spw_idx);
 		Vector<Double> widthVector = chanWidthCol(spw_idx);
@@ -4767,7 +4767,7 @@ void MSTransformManager::getOutputNumberOfChannels()
 
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    rownr_t nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
@@ -4785,7 +4785,7 @@ void MSTransformManager::getOutputNumberOfChannels()
     {
 	    // Get number of output channels per input spw
 	    Int spwId;
-	    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+	    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
 	    {
 	    	if (outputInputSPWIndexMap_p.size()>0)
 	    	{
@@ -5790,7 +5790,7 @@ void MSTransformManager::fillOutputMs(vi::VisBuffer2 *vb)
 	if (not bufferMode_p)
 	{
 		// Create RowRef object to fill new rows
-		uInt currentRows = outputMs_p->nrow();
+		rownr_t currentRows = outputMs_p->nrow();
 		RefRows rowRef( currentRows, currentRows + nRowsToAdd_p/nspws_p - 1);
 
 		// Add new rows to output MS
@@ -6198,7 +6198,7 @@ void MSTransformManager::mapAndAverageVector(	const Vector<Double> &inputVector,
 		// Compute combined value from each SPW
 		counts = 0;
 
-		for (vector<uInt>::iterator iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
+		for (auto iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
 		{
 			row = *iter_row;
 			if (counts == 0)
@@ -6244,7 +6244,7 @@ void MSTransformManager::mapAndAverageVector(	const Vector<Bool> &inputVector,
 		// Compute combined value from each SPW
 		counts = 0;
 
-		for (vector<uInt>::iterator iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
+		for (auto iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
 		{
 			row = *iter_row;
 			if (counts == 0)
@@ -7082,9 +7082,9 @@ template <class T> void MSTransformManager::writeMatrix(	const Matrix<T> &inputM
 		// jagonzal (CAS-8492): Huge bug, each input row must
 		// be copied n times not the whole matrix n times
 		uInt outRowIdx = 0;
-		uInt nInputRows = inputMatrix.shape()(1);
+		size_t nInputRows = inputMatrix.shape()(1);
 		Matrix<T> outputMatrix(IPosition(2,3,nInputRows*nBlocks));
-		for (uInt inputRowIdx = 0; inputRowIdx<nInputRows; inputRowIdx++)
+		for (size_t inputRowIdx = 0; inputRowIdx<nInputRows; inputRowIdx++)
 		{
 			for (uInt blockIdx = 0; blockIdx<nBlocks; blockIdx++)
 			{
