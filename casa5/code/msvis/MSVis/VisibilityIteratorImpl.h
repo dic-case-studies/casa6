@@ -518,7 +518,7 @@ public:
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
     // original ms row
-    virtual casacore::Vector<casacore::uInt> & rowIds (casacore::Vector<casacore::uInt> & rowids) const;
+    virtual casacore::Vector<casacore::rownr_t> & rowIds (casacore::Vector<casacore::rownr_t> & rowids) const;
 
     // Return the numbers of rows in the current chunk
     virtual casacore::Int nRowChunk () const;
@@ -664,7 +664,7 @@ public:
     casacore::MPosition getObservatoryPosition () const;
     casacore::MDirection getPhaseCenter () const;
     casacore::Vector<casacore::Float> getReceptor0Angle ();
-    casacore::Vector<casacore::uInt> getRowIds () const;
+    casacore::Vector<casacore::rownr_t> getRowIds () const;
 
     static void lsrFrequency (const casacore::Int & spw,
                               casacore::Vector<casacore::Double> & freq,
@@ -824,7 +824,7 @@ protected:
         casacore::Bool               msHasWtSp_p; // Does the current casacore::MS have a valid WEIGHT_SPECTRUM?
         casacore::Float              parang0_p;
         casacore::Vector<casacore::Float>      parang_p;
-        casacore::Vector<casacore::uInt>       rowIds_p;
+        casacore::Vector<casacore::rownr_t>    rowIds_p;
         casacore::Matrix<casacore::Double>     uvwMat_p;
         casacore::Cube<casacore::Complex>      visCube_p;
         casacore::Block<casacore::Bool>        visOK_p;
@@ -923,8 +923,8 @@ protected:
     casacore::Int                     curChanGroup_p;
     casacore::Int                     curEndRow_p;
     casacore::Int                     curNGroups_p;
-    casacore::uInt                    curNumRow_p;
-    casacore::Int                     curStartRow_p;
+    casacore::rownr_t                 curNumRow_p;
+    casacore::rownr_t                 curStartRow_p;
     casacore::Int                     curTableNumRow_p;
     casacore::Bool                    floatDataFound_p;
     VisImagingWeight        imwgt_p;    // object to calculate imaging weight

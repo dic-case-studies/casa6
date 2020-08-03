@@ -399,7 +399,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	//
 	//	Double Tint;
 	MSMainColumns mainCols(selectedMS);
-	Vector<uInt> rowNumbers = selectedMS.rowNumbers();
+	Vector<casacore::rownr_t> rowNumbers = selectedMS.rowNumbers();
 	Int nRows=selectedMS.nrow(), 
 	  dRows=nRows/npart;
 	Int rowBegID=0, rowEndID=nRows-1;
