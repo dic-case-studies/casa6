@@ -1961,6 +1961,9 @@ void PlotMSPlot::getAxisBoundsForTime(double& minval, double& maxval) {
 	if (range == 0.0) { // autorange has crazy tick marks; add 2-sec margins
 		minval -= 2.0;
 		maxval += 2.0;
+	} else if ((range < 1.0)) {
+		minval -= (range / 4.0);
+		maxval += (range / 4.0);
 	} else if (range < 120.0) {
 		minval -= 1.0;
 		maxval += 1.0;
