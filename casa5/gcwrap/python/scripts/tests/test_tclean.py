@@ -136,7 +136,8 @@ else:
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel,test_widefield,test_pbcor,test_mosaic_mtmfs,test_mosaic_cube,test_hetarray_imaging]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
 ## Base Test class with Utility functions
@@ -521,11 +522,11 @@ class test_onefield(testref_base):
           checkims = [self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0',self.img+'.model.tt0']  
           
           ## For parallel run, check sub workdirectory images also.
-          if self.parallel==True:
-               checkims = checkims + self.th.getNParts( imprefix=self.img, 
-                                                        imexts=['residual.tt0','residual.tt1',
-                                                                'psf.tt0','psf.tt1',
-                                                                'model.tt0','model.tt1']) 
+          #if self.parallel==True:
+          #     checkims = checkims + self.th.getNParts( imprefix=self.img, 
+          #                                              imexts=['residual.tt0','residual.tt1',
+          #                                                      'psf.tt0','psf.tt1',
+          #                                                      'model.tt0','model.tt1']) 
           report = self.th.checkall(ret=ret, 
                                      peakres=0.409, modflux=0.764, iterdone=10, nmajordone=2,
                                      imexist=checkims, 
@@ -2084,6 +2085,17 @@ class test_cube(testref_base):
           report=self.th.checkall(imexist=[self.img+'cc.image'],imval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.assertTrue( self.th.checkmodelchan(self.msfile,5) > 0.0 and self.th.checkmodelchan(self.msfile,18) > 0.0 )
           self.checkfinal(report)
+
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_cube_chanchunks_savevirtual(self):
+          """ [cube] Test channel chunking for large cubes and save model """
+          self.prepData('refim_point.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',
+                       chanchunks=2,savemodel='virtual',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
+          report=self.th.checkall(imexist=[self.img+'cc.image'],imval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
+          self.checkfinal(report)
+
           
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")     
      def test_cube_mtmfs_nterms1(self):		
@@ -3065,6 +3077,7 @@ class test_startmodel(testref_base):
           # start with full model
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',interactive=0,
                         startmodel=[self.img+'1.model.tt0',self.img+'1.model.tt1'],parallel=self.parallel)
+
           # start with model only for tt0
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',interactive=0,
                         startmodel=self.img+'1.model.tt0',parallel=self.parallel)
@@ -3080,7 +3093,165 @@ class test_startmodel(testref_base):
                              (self.img+'2.residual.tt1',-0.01519,[50,50,0,0]),
                              (self.img+'3.residual.tt1',-0.04358,[50,50,0,0]),
                              (self.img+'4.residual.tt1',-0.01519,[50,50,0,0])     ] )
+
           self.checkfinal(report)
+
+     ## Run this test only in parallel mode as it tests combinations of serial and parallel runs. 
+     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_csys_startmodel_restart_mfs(self):
+          """ [startmodel] test_csys_startmodel_restart_cube
+
+          Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
+          This sequence, coupled with the algorithm options listed below in tests #1 through #6 trigger three different errors that
+          have been fixed in this branch, and one that will be addressed via CAS-9386 (cube refactor). 
+
+          tclean call sequence : 
+          --- (a) Parallel run for niter=0
+          --- (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+          --- (c) Serial model-predict run (without/with startmodel) : in one case it reuses prev image-set. in other case it reuses only 'model'. 
+          --- (d) Impbcor on the output of (b)
+
+          Note that this is not a full fix of the various instances of the 'latpole' inconsistency, but only a workaround. 
+          Hence it needs a test to ensure this keeps working. 
+          """
+          self.prepData('refim_point.ms')
+
+          specmode='mfs'
+          runpar=self.parallel
+
+          # Test 1 :  mfs + hogbom/mtmfs + usestartmod=False : Triggers both the latpole errors 
+          #                                                                      (a) when the serial modelpredict runs on the output of the prev parallel run.
+          #                                                                      (b) when the ouput of a parallel run is used by impbcor.
+          # Test 2 : mfs + hogbom/mtmfs + usestartmod=True : Triggers the problem of 'model' being insufficient to create a valid ImStore. 
+          # Run for deconvolver='hogbom' and 'mtmfs' because it exercises both SIImageStore and SIImageStoreMultiTerm 
+          #      where some infrastructure code is re-implemented for multi-term vs single-term. 
+
+          report = ''
+
+          for runtype in ['serial','parallel']:
+               for deconvolver in ['hogbom','mtmfs']:
+                    for usestartmod in [False,True]:
+                         infostr = 'Run with '+specmode +' - ' + deconvolver + ' - usestartmodel = ' + str(usestartmod) + ' - imaging in ' + runtype 
+                         print(infostr)
+                         report = report + infostr+'\n'
+
+                         # Clear the model column.
+                         self.th.delmodels(msname=self.msfile,modcol='reset0')
+
+                         os.system('rm -rf savemod*')
+
+                         ## (a) Always parallel run for niter=0
+                         tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19',   niter=0,  imsize=100, cell='10.0arcsec', deconvolver=deconvolver,  specmode=specmode,  parallel=True)
+                         
+                         ## (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+                         if runtype=='serial':
+                              runpar=False
+                         else:
+                              runpar=True
+                         tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19', niter=10, imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode,  calcpsf=False, calcres=False,  parallel=runpar)
+                         
+                         # (c) Serial model-predict run (without/with startmodel) : 
+                         if usestartmod==False:    # Do the restart by re-using the same image name as before.
+                              imname2 = 'savemod.par'
+                              startmodel=[]
+                         else:
+                              imname2 = 'savemod.ser'  # Do the restart with a new imagename, and using 'startmodel'
+                              if deconvolver=='mtmfs':
+                                   startmodel=['savemod.par.model.tt0', 'savemod.par.model.tt1']
+                              else:
+                                   startmodel= ['savemod.par.model']
+
+                         tclean( vis=self.msfile, imagename=imname2, spw='0:0~5,0:15~19', niter=0,  imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode, savemodel='modelcolumn', startmodel=startmodel, calcres=False,  calcpsf= False, restoration=False, parallel=False)
+                         
+                         # Check the values of the model column
+                         report = report + self.th.checkchanvals(self.msfile,[(0,">",0.5),(19,"<",0.9)])
+                         
+                         ## (d) Impbcor on the output of (b) + check the output of pbcor
+                         if deconvolver=='hogbom':
+                              impbcor(imagename='savemod.par'+'.image', pbimage='savemod.par'+'.pb', outfile='savemod.par'+'.impbcor',overwrite=True)
+                              report=report +self.th.checkall(imexist=['savemod.par.impbcor'], imval=[  ('savemod.par.impbcor',1.1,[50,50,0,0]) ])
+                         else:
+                              impbcor(imagename='savemod.par'+'.image.tt0', pbimage='savemod.par'+'.pb.tt0', outfile='savemod.par'+'.impbcor.tt0',overwrite=True)
+                              report=report +self.th.checkall(imexist=['savemod.par.impbcor.tt0'], imval=[  ('savemod.par.impbcor.tt0',1.1,[50,50,0,0]) ])
+
+          self.checkfinal(report)
+
+
+
+     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_csys_startmodel_restart_cube(self):
+          """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
+
+          Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
+          This sequence, coupled with the algorithm options listed below in tests #1 through #6 trigger three different errors that
+          have been fixed in this branch, and one that will be addressed via CAS-9386 (cube refactor). 
+
+          tclean call sequence : 
+          --- (a) Parallel run for niter=0
+          --- (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+          --- (c) Serial model-predict run (without/with startmodel) : in one case it reuses prev image-set. in other case it reuses only 'model'. 
+          --- (d) Impbcor on the output of (b)
+
+          Note that this is not a full fix of the various instances of the 'latpole' inconsistency, but only a workaround. 
+          Hence it needs a test to ensure this keeps working. 
+          """
+          self.prepData('refim_point.ms')
+
+          specmode='cube'
+          deconvolver='hogbom'
+          runpar=self.parallel
+
+          report=''
+
+          # Test  : cube + hogbom + usestartmod=True/False :  Triggers the problem of refconcat image outputs being incompatible with restarts in serial later.
+          ####for runtype in ['serial','parallel']:     ## This will fail in 'serial' because we cannot mix and match refconcat images with regular ones. 
+          ####                                                                 This must be revisited after CAS-9386. 
+          for runtype in ['parallel']:
+               for usestartmod in [False,True]:
+                    print('Run with '+specmode +' - ' + deconvolver + ' - ' + str(usestartmod))
+                    
+                    infostr = 'Run with '+specmode +' - ' + deconvolver + ' - usestartmodel = ' + str(usestartmod) + ' - imaging in ' + runtype 
+                    print(infostr)
+                    report = report + infostr+'\n'
+                    
+                    # Clear the model column.
+                    self.th.delmodels(msname=self.msfile,modcol='reset0')
+                    
+                    os.system('rm -rf savemod*')
+                    
+                    ## (a) Always parallel run for niter=0
+                    tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19',   niter=0,  imsize=100, cell='10.0arcsec', deconvolver=deconvolver,  specmode=specmode,  parallel=True)
+                    
+                    ## (b) Serial/Parallel run for niter=10, with calcres=F, calcpsf=F  : to reuse images from prev.
+                    if runtype=='serial':
+                         runpar=False
+                    else:
+                         runpar=True
+                    tclean( vis = self.msfile, imagename='savemod.par', spw='0:0~5,0:15~19', niter=10, imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode,  calcpsf=False, calcres=False,  parallel=runpar)
+                         
+                    # (c) Serial model-predict run (without/with startmodel) : 
+                    if usestartmod==False:    # Do the restart by re-using the same image name as before.
+                         imname2 = 'savemod.par'
+                         startmodel=[]
+                    else:
+                         imname2 = 'savemod.ser'  # Do the restart with a new imagename, and using 'startmodel'
+                         if deconvolver=='mtmfs':
+                              startmodel=['savemod.par.model.tt0', 'savemod.par.model.tt1']
+                         else:
+                              startmodel= ['savemod.par.model']
+                              
+                    tclean( vis=self.msfile, imagename=imname2, spw='0:0~5,0:15~19', niter=0,  imsize=100, cell='10.0arcsec',deconvolver=deconvolver, specmode=specmode, savemodel='modelcolumn', startmodel=startmodel, calcres=False,  calcpsf= False, restoration=False, parallel=False)
+                              
+                    # Check the values of the model column
+                    report = report + self.th.checkchanvals(self.msfile,[(0,">",0.5),(19,"<",0.9)])
+                    
+                    ## (d) Impbcor on the output of (b) + check the output of pbcor (first channel)
+                    impbcor(imagename='savemod.par'+'.image', pbimage='savemod.par'+'.pb', outfile='savemod.par'+'.impbcor',overwrite=True)
+                    report=report +self.th.checkall(imexist=['savemod.par.impbcor'], imval=[  ('savemod.par.impbcor',1.5,[50,50,0,0]) ])
+
+
+          self.checkfinal(report)
+
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mfs(self):
@@ -3218,6 +3389,243 @@ class test_pbcor(testref_base):
           report2=self.th.checkall(imexist=[self.img+'.image', self.img+'.pb'], imval=[(self.img+'.pb',0.7,[256,256,0,0])] , immask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
 
           self.checkfinal(report1+report2)
+
+
+#####################################################
+#####################################################
+#####################################################
+#####################################################
+### Heterogeneous array imaging
+class test_hetarray_imaging(testref_base):
+     '''
+     Tests for all kinds of heterogeneous imaging.
+
+     Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
+     Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
+
+     Current Test list : 
+     test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
+     test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
+
+     Tests to add later : 
+     test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
+     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
+     '''     
+          
+     def test_het_pointing_offsets_awproject_cube(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '5'
+               os.environ['ATerm_CONVSIZE'] = '512'
+               os.environ['PO_DEBUG'] = '0'
+
+          ## No corrections :  usepointing=False : PB goes to location of MS field phasecenter (middle of the image)
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspF', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=False,parallel=self.parallel)
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspF.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,2]) ] )
+
+          ## Note : Test for PB location in the following tests. Pick the expected location (for a single PB) and test that the value is 1.0
+
+          ## Average correction : usepointing=True, pointingoffsetsigdev=[2000,2000] :  PB goes to the average location of all antennas, for first timestep. PB[-100,0] 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr0_uspT', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,2000.0],parallel=self.parallel)
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr0_uspT.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr0_uspT.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr0_uspT.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr0_uspT.pb' ,1.0,[924,1024,0,0]) ] )   
+
+
+
+          ## Antenna/time correction : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1' : PB = PB[-100,+100] in the top left corner. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_grp1', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1']+ ' & ' ,parallel=self.parallel)
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,0.09,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_grp1.pb' ,1.0,[924,1124,0,0]) ] )   
+          
+          
+          ## Cross baselines only : usepointing=True, pointingoffsetsigdev=[20,2000], timerange='time1', antenna='grp1 & grp2' : PB = PB[-100,0].  Note : THIS IS WRONG. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr1_time1_cross', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,2000.0], timerange='<21:40:00.0', antenna=self.baselines['grp1'] + ' & ' + self.baselines['grp2'],parallel=self.parallel)
+          report4=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.40,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.22,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.image' ,0.09,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.65,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.50,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr1_time1_cross.pb' ,0.35,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr1_time1_cross.pb' ,1.0,[924,1024,0,0]) ] )   
+          report4 = report4 + "This test checks for cross-baseline PB values that are known to be incorrect. Edit these values/test once the algorithm for cross-baseline PBs is fixed.\n"
+          
+          ## Four corners : usepointing=True, pointingoffsetsigdev=[20,20], timerange='*', antenna='grp1,grp2' : PB = Sum of PB in all 4 corners (with no cross-terms). Flux/alpha are correct. 
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=self.img+'_pcorr2_4corners', niter=0, specmode='cube', nchan=3,start='1.9GHz', width='0.4GHz', interpolation='nearest', pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0], antenna=self.baselines['grp1']+' & ; '+self.baselines['grp2']+ ' &',parallel=self.parallel)
+          report5=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          (self.img+'_pcorr2_4corners.image' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.image' ,0.17,[1024,1024,0,2]), 
+                                          ## Check PB at source location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.77,[1024,1024,0,0]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.42,[1024,1024,0,1]), 
+                                          (self.img+'_pcorr2_4corners.pb' ,0.17,[1024,1024,0,2]), 
+                                          ## Check that PB peak is at the expected location
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[924,1124,0,0]),  
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[924,924,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,0.925,[1124,1124,0,0]),   
+                                          (self.img+'_pcorr2_4corners.pb' ,1.0,[1124,924,0,0]) ] )   
+          report5 = report5 + "This test leaves out cross-baselines. Edit later to include them, once the algorithm for cross-baseline PBs is fixed.\n"
+        
+          #### Note : Add a run with all antennas ONLY after the cross-baselines imaging is correct.  
+          #### grp1 has 14 ants. grp2 has 13.  But, the PBs for grp1 have the peak of 1.0 whereas grp2 has 0.93.  Needs to be understood. But, image and pb values match, so flux is ok. 
+
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '20'
+               os.environ['ATerm_CONVSIZE'] = '2048'
+
+          self.checkfinal(report1+report2+report3+report4+report5)
+
+     ###########################
+
+     def test_het_pointing_offsets_awproject_mtmfs(self):
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
+          '''
+          self.prepData('refim_heterogeneous_pointings.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
+
+          self.baselines  ={'grp1':'0,2,4,6,8,10,12,14,16,18,20,22,24,26', 
+                            'grp2':'1,3,5,7,9,11,13,15,17,19,21,23,25' }
+
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '5'
+               os.environ['ATerm_CONVSIZE'] = '512'
+               os.environ['PO_DEBUG'] = '0'
+
+          ######################
+          ## Top Left : Grp 1 and Time 1.  
+
+          im_pcorr2 = 'try_mt_pcorr1_grp1_time1'  # Apply antenna grouping corrections and time-dependence corrections
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &' , timerange='<21:40:00.0',parallel=self.parallel)
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] +' &' , timerange='<21:40:00.0',parallel=self.parallel)
+          
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1']+' &'  , timerange='<21:40:00.0', calcpsf=False, calcres=False,parallel=self.parallel)
+          
+          report1=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_grp1_time1.image.tt0' ,0.2,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_grp1_time1.pb.tt0' ,0.2,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr1_grp1_time1.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ######################
+          ## 4 corners : All baselines and both timesteps ( leave out cross baselines for now ).
+          
+          im_pcorr2 = 'try_mt_pcorr2_4corners'  # Apply antenna grouping corrections and time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &',parallel=self.parallel)
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[20.0,20.0],   antenna=self.baselines['grp1'] + ' & ; ' + self.baselines['grp2'] + ' &', calcres=False, calcpsf=False,parallel=self.parallel)
+          
+          report2=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr2_4corners.image.tt0' ,0.38,[1024,1024,0,0]), ## Average of 0.4,0.22,0.09 for the 3 chans.
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr2_4corners.pb.tt0' ,0.38,[1024,1024,0,0]), 
+                                          ## Check alpha
+                                          ('try_mt_pcorr2_4corners.alpha' ,0.0,[1024,1024,0,0]) ] )
+
+
+          ######################
+          ## Apply only time-dependent corrections :  Pick only one group of antennas, and both timesteps
+          ##  The PB should be separate per timestep, but should appear at the average location of all antennas => [-100,100] and [+100,100] locations, 
+          
+          im_pcorr2 = 'try_mt_pcorr1_onlytime'  # Apply only time-dependence corrections
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2+'.std', niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='standard',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &',parallel=self.parallel)
+         
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=0, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' ,parallel=self.parallel)
+         
+          os.system('rm -rf '+im_pcorr2+'.psf*')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt0 ' + im_pcorr2+'.psf.tt0')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt1 ' + im_pcorr2+'.psf.tt1')
+          os.system('cp -r ' + im_pcorr2+'.std.psf.tt2 ' + im_pcorr2+'.psf.tt2')
+          
+          tclean(vis=msname, datacolumn='observed', imsize=2048,cell=5.0, imagename=im_pcorr2, niter=10, cycleniter=15, specmode='mfs', deconvolver='mtmfs', conjbeams=True,  pblimit=-0.01,gridder='awproject',wbawp=True,psterm=False, usepointing=True, pointingoffsetsigdev=[2000.0,20.0],   antenna=self.baselines['grp1'] +' &' , calcres=False, calcpsf=False,parallel=self.parallel)
+
+          ## This is a hard-ish case where it's a joint mosaic and the PSF is made very far from the PB peak. It's the problem in CAS-12436. So, put a high tolerance.
+          ## Serial and parallel runs are also different for alpha due to slightly different MS subsets seen by each process.  
+          report3=self.th.checkall(imval=[
+                                          ## Check source intensity
+                                          ('try_mt_pcorr1_onlytime.image.tt0' ,0.28,[1024,1024,0,0]), 
+                                          ## Check PB at source location
+                                          ## Check that PB peak is at the expected location
+                                          ('try_mt_pcorr1_onlytime.pb.tt0' ,0.28,[1024,1024,0,0]) ])
+
+                                          ## Do not check alpha
+                                          ## ('try_mt_pcorr1_onlytime.alpha' ,0.13,[1024,1024,0,0]) ] ) ## Too much variation between serial and parallel. Eval after 6.1. 
+           
+          ### Set these back to the default values encoded in  code/synthesis/TransformMachines2/ATerm.h 
+          if self.parallel==False:
+               os.environ['ATerm_OVERSAMPLING'] = '20'
+               os.environ['ATerm_CONVSIZE'] = '2048'
+
+          self.checkfinal(report1+report2+report3)
+
+     ###########################
 
 #####################################################
 #####################################################

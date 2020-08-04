@@ -75,6 +75,7 @@ const String PlotMSDBusApp::PARAM_FLAGGING = "flagging";
 const String PlotMSDBusApp::PARAM_HEIGHT = "height";
 const String PlotMSDBusApp::PARAM_ITERATE = "iterate";
 const String PlotMSDBusApp::PARAM_PLOTINDEX = "plotIndex";
+const String PlotMSDBusApp::PARAM_NUMPLOTS = "numPlots";
 const String PlotMSDBusApp::PARAM_PRIORITY = "priority";
 const String PlotMSDBusApp::PARAM_SELECTION = "selection";
 const String PlotMSDBusApp::PARAM_TRANSFORMATIONS = "transformations";
@@ -134,7 +135,6 @@ const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLFILL = "flaggedsymbolfill";
 const String PlotMSDBusApp::PARAM_FLAGGEDSYMBOLOUTLINE = "flaggedsymboloutline";
 const String PlotMSDBusApp::PARAM_XCONNECTOR = "xconnector";
 const String PlotMSDBusApp::PARAM_TIMECONNECTOR = "timeconnector";
-
 
 const String PlotMSDBusApp::METHOD_GETLOGPARAMS = "getLogParams";
 const String PlotMSDBusApp::METHOD_SETLOGPARAMS = "setLogParams";
@@ -320,6 +320,7 @@ void PlotMSDBusApp::dbusRunXmlMethod(
 		pair<int, int> ci = itsPlotms_.getParameters().cachedImageSize();
 		ret.define(PARAM_WIDTH, ci.first);
 		ret.define(PARAM_HEIGHT, ci.second);
+		ret.define(PARAM_NUMPLOTS, static_cast<int>(itsPlotParams_.size()));
 		retValue.defineRecord(0, ret);
 
 	} else if(methodName == METHOD_SETPLOTMSPARAMS) {

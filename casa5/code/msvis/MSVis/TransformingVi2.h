@@ -183,7 +183,7 @@ public:
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const override;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	virtual VisBuffer2 * getVisBuffer () const override {return vb_p;}
 
@@ -495,6 +495,7 @@ public:
     virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
     virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const override;
+    virtual casacore::Int nTimes() const override;
 
     //   +-------------------+
     //   |                   |

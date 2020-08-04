@@ -229,7 +229,7 @@ public:
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const = 0;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const = 0;
 
     virtual VisBuffer2 * getVisBuffer () const = 0;
 
@@ -555,6 +555,8 @@ public:
     virtual casacore::Int nRowsInChunk () const = 0; // number rows in current chunk
     virtual casacore::Int nRowsViWillSweep () const = 0; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const = 0;
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const = 0;
 
     //   +-------------------+
     //   |                   |

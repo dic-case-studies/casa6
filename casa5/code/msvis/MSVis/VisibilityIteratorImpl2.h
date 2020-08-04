@@ -84,8 +84,11 @@ class VisibilityIteratorImpl2 : public ViImplementation2 {
 
 public:
 
-	typedef VisibilityIterator2::DataColumn DataColumn;
-	typedef std::tuple <casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > ChannelInfo;
+	using DataColumn = VisibilityIterator2::DataColumn;
+	using ChannelInfo = std::tuple<
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>,
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>
+	>;
 
 	// Default constructor - useful only to assign another iterator later
 	////VisibilityIteratorImpl2 ();
@@ -507,12 +510,15 @@ public:
 	// to find correspondance between a given row in this iteration to the
 	// original ms row
 	virtual void
-	getRowIds(casacore::Vector<casacore::uInt> & rowids) const override;
+	getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	// Return the numbers of rows in the current chunk
 	virtual casacore::Int
 	nRowsInChunk() const override;
 
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const override;
+ 
 	// Return the number of sub-intervals in the current chunk
 
 	//virtual casacore::Int nSubInterval() const;
@@ -1095,7 +1101,7 @@ protected:
 		casacore::Double azelTime_p;
 		// Row numbers of underlying casacore::MS; used to map form chunk rows
 		// to casacore::MS rows.  See rowIds method.
-		casacore::Vector<casacore::uInt> chunkRowIds_p;
+		casacore::Vector<casacore::rownr_t> chunkRowIds_p;
 		casacore::Vector<casacore::Float> feedpa_p;
 		casacore::Double feedpaTime_p;
 		casacore::Double hourang_p;

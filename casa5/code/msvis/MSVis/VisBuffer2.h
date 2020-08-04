@@ -33,10 +33,11 @@
 //#include <casa/Arrays/Vector.h>
 //#include <casa/Arrays/Matrix.h>
 //#include <casa/BasicSL/Complex.h>
-#include <casa/BasicSL/Complexfwd.h>
+#include <casacore/casa/BasicSL/Complexfwd.h>
 #include <msvis/MSVis/VisBufferComponents2.h>
 //#include <msvis/MSVis/VisibilityIterator2.h>
-#include <measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/casa/aips.h>
 
 using casa::vi::VisBufferComponent2;
 using casa::vi::VisBufferComponents2;
@@ -555,7 +556,7 @@ public:
     // the VisBuffer and the row IDs in the underlying casacore::MS main
     // virtual table:  mainTableID [i] = rowIds () [ i] = 0;
 
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const = 0; // [nR]
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const = 0; // [nR]
 
     // Returns the spectral window ID for the specified row.
 

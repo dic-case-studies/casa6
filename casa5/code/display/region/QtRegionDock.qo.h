@@ -30,7 +30,7 @@
 #include <map>
 #include <list>
 #include <iostream>
-#include <display/region/QtRegionDock.ui.h>
+#include <ui/ui_QtRegionDock.h>
 #include <display/QtViewer/InActiveDock.qo.h>
 #include <imageanalysis/Annotations/AnnRegion.h>
 #include <imageanalysis/Annotations/RegionTextList.h>

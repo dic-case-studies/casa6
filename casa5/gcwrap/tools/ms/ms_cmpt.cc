@@ -1473,6 +1473,26 @@ class StatisticsAccumulator
     const set<MSMainEnums::PredefinedColumns> &mergedColumns;
     bool hideTimeAxis;
 
+
+    static void setNaN(Record &rec) {
+        const auto nan = std::numeric_limits<double>::quiet_NaN();
+        // ensure all stats inited so far are re-set to 'nan'
+        for (uInt idx=0; idx<rec.size(); ++idx) {
+            try {
+                rec.define(idx, nan);
+            } catch(const AipsError &) {
+                // Non-numeric value. There are bool fields for example.
+            }
+        }
+        // exception: the npts
+        rec.define("npts", .0);
+        // now also set as 'nan' all the statistics explicitly added by this class
+        rec.define("median", nan);
+        rec.define("firstquartile", nan);
+        rec.define("thirdquartile", nan);
+        rec.define("medabsdevmed", nan);
+    }
+
 public:
     StatisticsAccumulator(
         Record &acc, const vector<Int> &sortColumnIds,
@@ -1495,16 +1515,23 @@ public:
                 delim = ",";
             }
         }
-        Record stats = toRecord(statistics.getStatistics());
 
-        // Compute some quantiles
-        quantileToValue.clear();
-        A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
-        stats.define("median", median);
-        stats.define("firstquartile", quantileToValue[quartile1]);
-        stats.define("thirdquartile", quantileToValue[quartile3]);
-        A medianAbsDevMed = statistics.getMedianAbsDevMed();
-        stats.define("medabsdevmed", medianAbsDevMed);
+        Record stats;
+        try {
+            stats = toRecord(statistics.getStatistics());
+
+            // Compute some quantiles
+            quantileToValue.clear();
+            A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
+            stats.define("median", median);
+            stats.define("firstquartile", quantileToValue[quartile1]);
+            stats.define("thirdquartile", quantileToValue[quartile3]);
+            A medianAbsDevMed = statistics.getMedianAbsDevMed();
+            stats.define("medabsdevmed", medianAbsDevMed);
+        } catch(const AipsError &err) {
+            // Example: one individual iterationaxis group/subsel is all-flagged (CAS-12857)
+            setNaN(stats);
+        }
 
         // Record statistics, associated with key
         acc.defineRecord(keyvals, stats);
@@ -3647,8 +3674,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Keep table before increment selection, restore later
             MeasurementSet origSelMS = *itsSelectedMS;
             if ((increment>1) && (uInt(increment)<=nrows)) {
-                Vector<uInt> rows(nrows/increment);
-                indgen(rows, uInt(0), uInt(increment));
+                Vector<casacore::rownr_t> rows(nrows/increment);
+                indgen(rows, casacore::rownr_t(0), casacore::rownr_t(increment));
                 Table selTable = (*itsSelectedMS)(rows);
                 *itsSelectedMS = selTable;
             }
@@ -6326,13 +6353,11 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
 }
 
 record* ms::statwt(
-    const string& combine, const casac::variant& timebin,
-    bool slidetimebin, const casac::variant& chanbin,
-    int minsamp, const string& statalg, double fence,
-    const string& center, bool lside, double zscore,
-    int maxiter, const string& fitspw, bool excludechans,
-    const std::vector<double>& wtrange, bool preview,
-    const string& datacolumn
+    const string& combine, const casac::variant& timebin, bool slidetimebin,
+    const casac::variant& chanbin, int minsamp, const string& statalg,
+    double fence, const string& center, bool lside, double zscore, int maxiter,
+    const string& fitspw, bool excludechans, const std::vector<double>& wtrange,
+    bool preview, const string& datacolumn
 ) {
     *itsLog << LogOrigin("ms", __func__);
     try {
@@ -6340,50 +6365,65 @@ record* ms::statwt(
             return nullptr;
         }
         StatWtColConfig statwtColConfig(
-            itsOriginalMS, preview, datacolumn, chanbin
+            itsOriginalMS, itsMS, preview, datacolumn, chanbin
+        );
+        ThrowIf(
+            (
+                itsOriginalMS->tableDesc().isColumn("WEIGHT_SPECTRUM")
+                && ! itsMS->tableDesc().isColumn("WEIGHT_SPECTRUM")
+            )
+            || (
+                itsOriginalMS->tableDesc().isColumn("SIGMA_SPECTRUM")
+                && ! itsMS->tableDesc().isColumn("SIGMA_SPECTRUM")
+            ),
+            "The WEIGHT_SPECTRUM and/or SIGMA_SPECTRUM columnS did not exist "
+            "in this MS but it/they has now been created and initialized. "
+            "However, due to a known issue in the code, statwt cannot "
+            "correctly construct and write back these columns for the subset "
+            "of the MS specified by data selection. A work-around is to simply "
+            "re-run statwt again (on the MS that now contains a properly "
+            "initialized columns), specifying the same selection criteria. If "
+            "you are using the tool method, first close the ms tool, then "
+            "reopen it using the same data set, apply the same selection, and "
+            "then run ms.statwt(). If you are using the task, simply rerunning "
+            "it with the same inputs should be sufficient"
         );
         StatWt statwt(itsMS, &statwtColConfig);
-        if (slidetimebin) {
-            // make the size of the encompassing chunks
-            // very large, so that chunk boundaries are determined only
-            // by changes in MS key values
+        const auto tbtype = timebin.type();
+        // first group in conditional requires all data in a chunk to be
+        // loaded at once. The second does as well and represents the default
+        // setting since a CASA 5 variant always comes in as a boolvec even if a
+        // different default type is specified in the XML,
+        if (
+            (slidetimebin || tbtype == casac::variant::INT)
+            || (
+                // default value of timebin specified
+                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
+            )
+        ) {
+            // make the size of the encompassing chunks very large, so that
+            // subchunk boundaries are determined only by changes in MS key
+            // values
             statwt.setTimeBinWidth(1e8);
         }
+        else if (tbtype == casac::variant::STRING) {
+            auto myTimeBin = casaQuantity(timebin);
+            if (myTimeBin.getUnit().empty()) {
+                myTimeBin.setUnit("s");
+            }
+            if (myTimeBin.getValue() <= 0) {
+                myTimeBin.setValue(1e-5);
+            }
+            statwt.setTimeBinWidth(myTimeBin);
+        }
         else {
-            // block time processing
-            auto tbtype = timebin.type();
-            if (
-                tbtype == casac::variant::BOOLVEC && timebin.toBoolVec().empty()
-            ) {
-                // default for tool method since variants always come in as
-                // boolvecs even if defaults specified in the XML, Because,
-                // you know, no one apparently knows how to fix that bug which
-                // has been around for years
-                statwt.setTimeBinWidth(casacore::Quantity(0.001, "s"));
-            }
-            else if (tbtype == casac::variant::INT) {
-                auto n = timebin.toInt();
-                ThrowIf(n <= 0, "timebin must be positive");
-                statwt.setTimeBinWidthUsingInterval(timebin.touInt());
-            }
-            else if (tbtype == casac::variant::STRING){
-                casacore::Quantity myTimeBin = casaQuantity(timebin);
-                if (myTimeBin.getUnit().empty()) {
-                    myTimeBin.setUnit("s");
-                }
-                if (myTimeBin.getValue() <= 0) {
-                    myTimeBin.setValue(1e-5);
-                }
-                statwt.setTimeBinWidth(myTimeBin);
-            }
-            else {
-                ThrowCc("Unsupported type for timebin, must be int or string");
-            }
+            ThrowCc("Unsupported type for timebin, must be int or string");
         }
         statwt.setCombine(combine);
         statwt.setPreview(preview);
         casac::record tviConfig;
-        tviConfig["timebin"] = timebin;
+        tviConfig["timebin"] = tbtype == casac::variant::BOOLVEC
+            ? Int(1) : timebin;
         tviConfig["slidetimebin"] = slidetimebin;
         tviConfig["combine"] = combine;
         tviConfig[vi::StatWtTVI::CHANBIN] = chanbin;
@@ -6403,7 +6443,8 @@ record* ms::statwt(
         return fromRecord(statwt.writeWeights());
     }
     catch (const AipsError& x) {
-        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        *itsLog << LogIO::SEVERE << "Exception Reported: "
+            << x.getMesg() << LogIO::POST;
         Table::relinquishAutoLocks(true);
         RETHROW(x);
     }
@@ -7321,7 +7362,7 @@ ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, cons
             }
             case MSS::ROWS:
             {
-                Vector<uInt> rowIds;
+                Vector<casacore::rownr_t> rowIds;
                 rowIds = itsVI->rowIds(rowIds);
                 Vector<Int> tmp(rowIds.shape());
                 for (Int ii=0;ii<(Int)tmp.nelements(); ii++)

@@ -25,7 +25,7 @@
 #ifndef THRESHOLDINGBINPLOTDIALOG_QO_H_1
 #define THRESHOLDINGBINPLOTDIALOG_QO_H_1
 
-#include <display/QtPlotter/ThresholdingBinPlotDialog.ui.h>
+#include <ui/ui_ThresholdingBinPlotDialog.h>
 #include <casa/aips.h>
 #include <casa/Utilities/CountedPtr.h>
 #include <utility>

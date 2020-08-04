@@ -72,7 +72,7 @@ public:
 
   // Add calibrating layer factory (one way or another)
   void addCalForSolving(float calfactor);
-  void addCalForSolving(VisEquation& ve);
+  void addCalForSolving(VisEquation& ve,const casacore::Bool& corrDepFlags);
 
   // Add chan-averaging layer factory
   void addChanAve(casacore::Vector<int> chanbin);

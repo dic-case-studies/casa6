@@ -67,6 +67,7 @@ casa_add_library( synthesis
   TransformMachines2/PolOuterProduct.cc
   TransformMachines2/AWVisResampler.cc
   TransformMachines2/VB2CFBMap.cc
+  TransformMachines2/BaselineType.cc
  TransformMachines2/VisibilityResamplerBase.cc
  TransformMachines2/VisibilityResampler.cc
   TransformMachines2/SDGrid.cc
@@ -725,6 +726,7 @@ install (FILES
 	TransformMachines2/Utils.h
 	TransformMachines2/VBStore.h
 	TransformMachines2/VB2CFBMap.h
+	TransformMachines2/BaselineType.h
 	TransformMachines2/VisibilityResamplerBase.h
 	TransformMachines2/VisibilityResampler.h
 	TransformMachines2/VisModelData.h

@@ -1,13 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<!-- This is the parameter set for makemask -->
 
-<task type="function" name="makemask" category="information">
+
+<task category="information" name="makemask" type="function">
 
   <shortdescription>Makes and manipulates image masks</shortdescription>
 
@@ -15,10 +10,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
   <input>
 
-    <!-- MAIN PARAMETERS -->
+    
 
-    <param type="string" name="mode">
-      <description>Mask method (list, copy,expand,delete,setdefaultmask)</description>
+    <param name="mode" type="string"><shortdescription>Mask method (list, copy,expand,delete,setdefaultmask)</shortdescription><description>Mask method (list, copy,expand,delete,setdefaultmask)</description>
+      
       <value>list</value>
       <allowed kind="enum">
         <value>list</value>
@@ -26,118 +21,102 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         <value>expand</value>
         <value>delete</value>
         <value>setdefaultmask</value>
-       <!-- <value>draw</value>-->
+       
       </allowed>
     </param>
 
 
 
 
-    <!-- SUB-PARAMETERS -->
+    
 
-            <!-- Mode = copy,expand,list-->
-            <param type="any" name="inpimage" subparam="true">
-            <description>Name of input image.</description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+            
+            <param subparam="true" name="inpimage" type="any"><shortdescription>Name of input image.</shortdescription><description>Name of input image.</description>
+            
+            <any limittypes="string stringArray" type="variant"/>
+            <value type="string"/>
             </param>
 
-            <!-- Mode = copy,expand,merge -->
-            <!--<param type="string" name="inpmask" subparam="true">-->
-            <param type="any" name="inpmask" subparam="true">
-            <!-- for merge, inpmask can be list -->
-              <any type="variant" limittypes="string stringArray"/>
-              <description>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</description>
+            
+            
+            <param subparam="true" name="inpmask" type="any"><shortdescription>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</shortdescription><description>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</description>
+            
+              <any limittypes="string stringArray" type="variant"/>
+              
 
-              <value type="string"></value>
+              <value type="string"/>
             </param>
 
-            <param type="string" name="output" subparam="true">
-               <description>Name of output mask (imagename or imagename:internal_maskname)</description>
-               <value></value>
+            <param subparam="true" name="output" type="string"><shortdescription>Name of output mask (imagename or imagename:internal_maskname)</shortdescription><description>Name of output mask (imagename or imagename:internal_maskname)</description>
+               
+               <value/>
             </param>
 
-            <param type="bool" name="overwrite" subparam="true">
-               <description>overwrite output if exists?</description>
+            <param subparam="true" name="overwrite" type="bool"><shortdescription>overwrite output if exists?</shortdescription><description>overwrite output if exists?</description>
+               
                <value>False</value>
             </param>
 
-            <!-- Mode = expand -->
-      <param type="any" name="inpfreqs" subparam="true">
-              <description>List of chans/freqs (in inpmask) to read masks from </description>
-              <any type="variant" limittypes="string intArray"/>
-              <value type="intArray"></value>
+            
+      <param subparam="true" name="inpfreqs" type="any"><shortdescription>List of chans/freqs (in inpmask) to read masks from </shortdescription><description>List of chans/freqs (in inpmask) to read masks from </description>
+              
+              <any limittypes="string intArray" type="variant"/>
+              <value type="intArray"/>
             </param>
 
-      <param type="any" name="outfreqs" subparam="true">
-              <description>List of chans/freqs (in output) on which to expand the mask</description>
-              <any type="variant" limittypes="string intArray"/>
-              <value type="intArray"></value>
+      <param subparam="true" name="outfreqs" type="any"><shortdescription>List of chans/freqs (in output) on which to expand the mask</shortdescription><description>List of chans/freqs (in output) on which to expand the mask</description>
+              
+              <any limittypes="string intArray" type="variant"/>
+              <value type="intArray"/>
             </param>
 
-           <!-- <param type="string" name="template" subparam="true">
-              <description>template image name</description>
-              <value type="string"></value>
-            </param>-->
+           
 
 
 
 
-            <!-- Mode = merge -->
-            <!-- make mask from regions, boxfiles, LEL expressions -->
-            <!--<param type="any" name="regionlist" subparam="true">
-              <description>Cleanbox(es), region(s)</description>
-              <any type="variant"/>
-              <value type="stringArray"></value>
-            </param>-->
+            
+            
+            
 
-            <!-- outmask type -->
-            <!--<param type="string" name="maskname" subparam="true">
-              <description>Name of mask to embed</description>
-              <value>mask0</value>
-            </param>
-            <param type="bool" name="replace" subparam="true">
-              <description>If this mask name exists, replace it. Otherwise, complain.</description>
-              <value>True</value>
-            </param>-->
+            
+            
 
 
 
-    <!-- CONSTRAINTS FOR SUB-PARAMETERS -->
+    
 
             <constraints>
 
                 <when param="mode">
                     <equals value="list">
-                        <default param="inpimage"><value type="string"></value></default>
+                        <default param="inpimage"><value type="string"/></default>
                     </equals>
                     <equals value="copy">
-                        <default param="inpimage"><value type="string"></value></default>
-                        <default param="inpmask"><value type="string"></value></default>
-                        <default param="output"><value type="string"></value></default>
+                        <default param="inpimage"><value type="string"/></default>
+                        <default param="inpmask"><value type="string"/></default>
+                        <default param="output"><value type="string"/></default>
                         <default param="overwrite"><value type="bool">False</value></default>
                     </equals>
                     <equals value="expand">
-                        <default param="inpimage"><value type="string"></value></default>
-                        <default param="inpmask"><value type="string"></value></default>
-                        <default param="inpfreqs"><value type="intArray"></value></default>
-                        <default param="outfreqs"><value type="intArray"></value></default>
-                        <default param="output"><value type="string"></value></default>
+                        <default param="inpimage"><value type="string"/></default>
+                        <default param="inpmask"><value type="string"/></default>
+                        <default param="inpfreqs"><value type="intArray"/></default>
+                        <default param="outfreqs"><value type="intArray"/></default>
+                        <default param="output"><value type="string"/></default>
                         <default param="overwrite"><value type="bool">False</value></default>
-                        <!--<default param="template"><value type="string"></value></default>-->
+                        
                     </equals>
                     <equals value="delete">
-                        <default param="inpmask"><value type="string"></value></default>
+                        <default param="inpmask"><value type="string"/></default>
                     </equals>
                     <equals value="setdefaultmask">
-                        <default param="inpmask"><value type="string"></value></default>
+                        <default param="inpmask"><value type="string"/></default>
                     </equals>
-                    <!--<equals value="merge">-->
-                    <!--    <default param="regionlist"><value type="stringArray"></value></default>-->
-                    <!--</equals>-->
-                    <!--<equals value="draw">
-                        <default param="inpimage"><value type="string"></value></default>
-                    </equals>-->
+                    
+                    
+                    
+                    
 
     </when>
 
@@ -160,12 +139,9 @@ delete : delete an internal mask from an image (if the deleted mask was a defaul
          the task chooses the first one in the remaining internal mask list (as appears
          in the log when do listing with mode='list')
 setdefaultmask : set a specified internal mask as a default internal mask
-<!--region : Make a mask from a list of region files on the input image coordinate-sys
--->
-<!--draw : Draw a mask from the viewer using the input image.-->
-<!-- 'draw' is not included while it can simply call drawmaskinimage()
-it appears that interaction with the viewer can be a bit flaky when called
-in succession.-->
+
+
+
 
 In all cases (for output mask is expected), if the output image has a different coordinate system from the
 result of input and processing, the mask will be re-gridded to the output
@@ -297,9 +273,7 @@ Usage examples :
 
 
 (8) (copy mode):
-<!--     Make a one/zero mask from a list of region files, using the input coordinate-sys,
-     and saving in a new output file.  Remember, if outimage has a different
-     coordinate system from inpimage, the mask will be regridded to it. -->
+
      Merge a (one/zero) mask and  T/F masks, using the input coordinate-sys of inpimage and
      saving in a new output file. Remember, if the image specified in output already exist and
      has a different coordinate system from inpimage, the mask will be regridded to it.
@@ -315,7 +289,7 @@ Usage examples :
      regridded before it is combined to the other two masks.
 
      makemask(mode='copy',
-              inpimage='image1.im', <!--regionlist=['box1.rgn','circle[[15pix , 15pix] ,8pix ]']-->
+              inpimage='image1.im', 
               inpmask=['image1.im', image1.im:mask0','image2.mask:mask1', 'circle[[15pix , 15pix] ,8pix ]'],
               output='newmask.im);
 
@@ -364,14 +338,7 @@ Usage examples :
 
       makemask(mode='setdefaultmask', inpmask='newmask.im:mask1')
 
-<!--
-(7) (draw mode):
-     Make a one/zero interactive mask (calls "drawmaskinimage()" from recipes)
 
-     makemask(mode='draw',
-              inpimage='image.im',
-              outimage='newmask.im', outmask='');
--->
 
 
 

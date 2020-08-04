@@ -26,7 +26,7 @@
 #include "LegendCurve.h"
 
 #include <guitools/Feather/LegendItemRect.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 #include <QDebug>
 
 namespace casa {

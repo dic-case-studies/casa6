@@ -1607,6 +1607,13 @@ Int VisibilityIteratorImpl2::nRowsInChunk() const
 	return msIter_p->table().nrow();
 }
 
+Int VisibilityIteratorImpl2::nTimes() const {
+    static const auto timeName = MeasurementSet::columnName(MSMainEnums::TIME);
+    auto times = ScalarColumn<Double>(msIter_p->table(), timeName).getColumn();
+    std::set<Double> uniqueTimes(times.cbegin(), times.cend());
+    return uniqueTimes.size();
+}
+
 Bool
 VisibilityIteratorImpl2::more() const
 {
@@ -2838,7 +2845,7 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 }
 
 void
-VisibilityIteratorImpl2::getRowIds(Vector<uInt> & rowIds) const
+VisibilityIteratorImpl2::getRowIds(Vector<casacore::rownr_t> & rowIds) const
 {
 	// Resize the rowIds vector and fill it with the row numbers contained in
 	// the current subchunk.  These row numbers are relative to the reference

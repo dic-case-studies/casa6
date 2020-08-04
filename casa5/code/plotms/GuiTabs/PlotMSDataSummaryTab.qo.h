@@ -28,7 +28,7 @@
 
 #include <plotms/Gui/PlotMSPageHeaderDataModel.qo.h>
 
-#include <plotms/GuiTabs/PlotMSDataSummaryTab.ui.h>
+#include <ui/ui_PlotMSDataSummaryTab.h>
 #include <plotms/Plots/PlotMSPlotParameters.h>
 #include <plotms/PlotMS/PlotMS.h>
 #include <plotms/GuiTabs/PlotMSTab.qo.h>
