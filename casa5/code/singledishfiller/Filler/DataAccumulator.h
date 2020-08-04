@@ -485,17 +485,22 @@ private:
             record.setTsysSize(2, 1);
             record.tsys(0, 0) = tsys_(0, apol0);
             record.tsys(1, 0) = tsys_(0, apol1);
-        } else {
-            casacore::Float tsys00 = tsys_(0, apol0);
-            casacore::Float tsys01 = tsys_(0, apol1);
-            casacore::Float tsys10 = tsys_(1, apol0);
-            casacore::Float tsys11 = tsys_(1, apol1);
-            if ((tsys00 > 0.0f && tsys10 > 0.0f)
-                    || (tsys01 > 0.0f && tsys11 > 0.0f)) {
+        } else if ((!tsys_.empty()) && casacore::anyNE(tsys_, 0.0f)) {
+            // valid spectral Tsys data are available
+            casacore::IPosition const startpos0(2, 1, apol0);
+            casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
+            casacore::IPosition const startpos1(2, 1, apol1);
+            casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
+            if (casacore::anyNE(tsys_(startpos0, startpos1), 0.0f)
+                && casacore::anyNE(tsys_(startpos1, endpos1), 0.0f)) {
+                // spectral Tsys
                 record.setTsysSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
                         num_chan_, 0, tsys_, record.tsys, { apol0, apol1 });
-            } else if (tsys00 > 0.0f || tsys01 > 0.0f) {
+            }
+            else {
+                // valid Tsys data are only for channel 0
+                // so treat as scalar Tsys
                 record.setTsysSize(2, 1);
                 record.tsys(0, 0) = tsys_(0, apol0);
                 record.tsys(1, 0) = tsys_(0, apol1);
@@ -515,17 +520,22 @@ private:
             record.setTcalSize(2, 1);
             record.tcal(0, 0) = tcal_(0, apol0);
             record.tcal(1, 0) = tcal_(0, apol1);
-        } else {
-            casacore::Float tcal00 = tcal_(0, apol0);
-            casacore::Float tcal01 = tcal_(0, apol1);
-            casacore::Float tcal10 = tcal_(1, apol0);
-            casacore::Float tcal11 = tcal_(1, apol1);
-            if ((tcal00 > 0.0f && tcal10 > 0.0f)
-                    || (tcal01 > 0.0f && tcal11 > 0.0f)) {
+        } else if ((!tcal_.empty()) && casacore::anyNE(tcal_, 0.0f)) {
+            // valid spectral Tcal data are available
+            casacore::IPosition const startpos0(2, 1, apol0);
+            casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
+            casacore::IPosition const startpos1(2, 1, apol1);
+            casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
+            if (casacore::anyNE(tcal_(startpos0, startpos1), 0.0f)
+               && casacore::anyNE(tcal_(startpos1, endpos1), 0.0f)) {
+                // spectral Tcal
                 record.setTcalSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
                         num_chan_, 0, tcal_, record.tcal, { apol0, apol1 });
-            } else if (tcal00 > 0.0f || tcal01 > 0.0f) {
+            }
+            else {
+                // valid Tcal data are only for channel 0
+                // so treat as scalar Tcal
                 record.setTcalSize(2, 1);
                 record.tcal(0, 0) = tcal_(0, apol0);
                 record.tcal(1, 0) = tcal_(0, apol1);
@@ -537,17 +547,20 @@ private:
         if (num_chan_ == 1) {
             record.setTsysSize(1, 1);
             record.tsys(0, 0) = tsys_(0, start_src);
-        } else if (tsys_(0, start_src) > 0.0f && tsys_(1, start_src) > 0.0f) {
-            // should be spectral Tsys
-            record.setTsysSize(1, num_chan_);
-            //record.tsys = -1;
-            shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
+        } else if ((!tsys_.empty()) && casacore::anyNE(tsys_, 0.0f)) {
+            casacore::IPosition const startpos(2, 1, start_src);
+            casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
+            if (casacore::anyNE(tsys_(startpos, endpos), 0.0f)) {
+                // should be spectral Tsys
+                record.setTsysSize(1, num_chan_);
+                shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
                     start_src, tsys_, record.tsys);
-            //record.tsys.row(0) = tsys_.column(0);
-        } else if (tsys_(0, start_src) > 0.0f) {
-            // scalar Tsys
-            record.setTsysSize(1, 1);
-            record.tsys(0, 0) = tsys_(0, start_src);
+            } else {
+                // valid Tsys data are only for channel 0
+                // so treat as scalar Tsys
+                record.setTsysSize(1, 1);
+                record.tsys(0, 0) = tsys_(0, start_src);
+            }
         }
     }
 
@@ -555,17 +568,20 @@ private:
         if (num_chan_ == 1) {
             record.setTcalSize(1, 1);
             record.tcal(0, 0) = tcal_(0, start_src);
-        } else if (tcal_(0, start_src) > 0.0f && tcal_(1, start_src) > 0.0f) {
-            // should be spectral Tsys
-            record.setTcalSize(1, num_chan_);
-            //record.tsys = -1;
-            shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
+        } else if ((!tcal_.empty()) && casacore::anyNE(tcal_, 0.0f)) {
+            casacore::IPosition const startpos(2, 1, start_src);
+            casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
+            if (casacore::anyNE(tcal_(startpos, endpos), 0.0f)) {
+                // should be spectral Tcal
+                record.setTcalSize(1, num_chan_);
+                shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
                     start_src, tcal_, record.tcal);
-            //record.tsys.row(0) = tsys_.column(0);
-        } else if (tcal_(0, start_src) > 0.0f) {
-            // scalar Tsys
-            record.setTcalSize(1, 1);
-            record.tcal(0, 0) = tcal_(0, start_src);
+            } else {
+                // valid Tcal data are only for channel 0
+                // so treat as scalar Tcal
+                record.setTcalSize(1, 1);
+                record.tcal(0, 0) = tcal_(0, start_src);
+            }
         }
     }
 
