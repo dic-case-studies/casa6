@@ -1912,6 +1912,13 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 	std::vector<double> yRefVals(yaxes.size(), 0.0);
 	casacore::String title = canvasParams[lastPlotIndex]->titleFormat().getLabel(xaxis, yaxes,
 		xHasRef, xRefVal, yHasRefs, yRefVals, xcolumn, ycolumns, commonPolnRatio);
+    if (itsCache_->calType().startsWith("Fringe")) {
+        if (title.startsWith("Gain")) {
+            title.gsub("Gain", "Fringe");
+        } else if (title.startsWith("Delay")) {
+            title = "Fringe " + title;
+        }
+    }
 	setTitleProperties(title, canvas, canvasParams, iterParams, plots, defaultTitleFontSize, iteration);
 
 	// square plot settings
