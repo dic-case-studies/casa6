@@ -504,7 +504,7 @@ private:
     }
 
     void setTcal2(MSDataRecord &record, std::vector<size_t> order = { }) {
-        if (!setAndCheckOrder(2, tsys_.ncolumn()-1, order))
+        if (!setAndCheckOrder(2, tcal_.ncolumn()-1, order))
             throw casacore::AipsError("got invalid order list");
         size_t apol0 = order[0], apol1 = order[order.size() - 1];
 
