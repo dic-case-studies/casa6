@@ -208,7 +208,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
 void StatWtFloatingWindowDataAggregator::weightSingleChanBin(
     Matrix<Float>& wtmat, Int nrows
 ) const {
-    Vector<uInt> rowIDs;
+    Vector<casacore::rownr_t> rowIDs;
     _vii->getRowIds(rowIDs);
     const auto start = _rowIDInMSToRowIndexInChunk.find(*rowIDs.begin());
     ThrowIf(
@@ -317,7 +317,7 @@ void StatWtFloatingWindowDataAggregator::weightSpectrumFlags(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
     const Vector<Int>& ant1, const Vector<Int>&,
     const Vector<Int>& spws, const Vector<Double>&,
-    const Vector<uInt>& rowIDs
+    const Vector<casacore::rownr_t>& rowIDs
 ) const {
     // fish out the rows relevant to this subchunk
     const auto start = _rowIDInMSToRowIndexInChunk.find(*rowIDs.begin());
