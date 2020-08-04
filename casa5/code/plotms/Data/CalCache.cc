@@ -114,7 +114,8 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   // poln ratio
   polnRatio_ = false;
   if (selection_.corr()=="/") {
-    if (calType_=="BPOLY" || calType_[0] == 'T' || calType_[0] == 'F') {
+    if ((calType_=="BPOLY") || (calType_[0] == 'T') ||
+        ((calType_[0] == 'F') && !calType_.startsWith("Fringe"))) {
       throw(AipsError("Polarization ratio plots not supported for " + calType_ + " tables."));
     } else {
       polnRatio_ = true;
@@ -257,20 +258,11 @@ void CalCache::loadCalChunks(ROCTIter& ci,
       IPosition pshape(ci.flag().shape());
       size_t nPol;
       String pol = selection_.corr();
-      if (pol=="" || pol=="RL" || pol=="XY") { // no selection
-        nPol = pshape[0];
-        // half the data for EVLASWP table is swp, half is tsys
-        if (calType_.contains("EVLASWP")) {
-            nPol = pshape[0]/2;
-        }
-        pol = "";
-      } else { // poln selection using calParSlice
-        String paramAxis = toVisCalAxis(PMS::AMP);
-        if (polnRatio_) {  // length is for 1 poln, pick one!
-            nPol = getParSlice(paramAxis, "R").length();
-		} else {
-            nPol = getParSlice(paramAxis, pol).length();
-        }
+      String paramAxis = toVisCalAxis(PMS::AMP);
+      if (polnRatio_) {  // length is for 1 poln, pick first one
+          nPol = getParSlice(paramAxis, "R").length();
+      } else {
+          nPol = getParSlice(paramAxis, pol).length();
       }
 
       // Cache the data shapes
@@ -319,7 +311,7 @@ void CalCache::loadCalChunks(ROCTIter& ci,
 }
 
 void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol) {
-    // for NewCalTable  
+    // Load axis from NewCalTable
     Slice parSlice1 = Slice();
     Slice parSlice2 = Slice();
     if (PMS::axisNeedsCalSlice(axis)) {
@@ -331,6 +323,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             parSlice1 = getParSlice(calAxis, pol);
         }
     }
+
     switch(axis) {
         case PMS::SCAN: // assumes scan unique
             scan_(chunk) = cti.thisScan();
@@ -404,8 +397,10 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             break;
         }
         case PMS::ANTPOS: {
-            if (!calType_.startsWith("KAntPos"))
+            if (!calType_.startsWith("KAntPos")) {
                 throw(AipsError( "ANTPOS has no meaning for this table"));
+            }
+
             Cube<Float> fArray = cti.fparam();
             *antpos_[chunk] = fArray(parSlice1, Slice(), Slice());
             break;
@@ -425,15 +420,21 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             } else {
                 Cube<Float> fArray = cti.fparam();
                 if (polnRatio_) {
-                    Array<Float> ampRatio = fArray(parSlice1, Slice(), Slice()) /
-                        fArray(parSlice2, Slice(), Slice());
-                    checkRatioArray(ampRatio, chunk);
-                    *amp_[chunk] = ampRatio;
+                    if (calType_ == "Fringe Jones") { // subtract
+                        *amp_[chunk] = fArray(parSlice1, Slice(), Slice()) -
+                            fArray(parSlice2, Slice(), Slice());
+                    } else {
+                        Array<Float> ampRatio = fArray(parSlice1, Slice(), Slice()) /
+                            fArray(parSlice2, Slice(), Slice());
+                        checkRatioArray(ampRatio, chunk);
+                        *amp_[chunk] = ampRatio;
+                    }
                 } else {        
                     *amp_[chunk] = fArray(parSlice1, Slice(), Slice());
                 }
-                if (calType_[0] == 'F') // TEC table
+                if (calType_ == "F Jones") { // TEC table
                     (*amp_[chunk]) /= Float(1e+16);
+                }
             }
             break;
         }
@@ -450,6 +451,15 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                     *pha_[chunk] = phase(cArray(parSlice1, Slice(), Slice()));
                 }
                 (*pha_[chunk]) *= Float(180.0/C::pi);
+            } else if (calType_ == "Fringe Jones") {
+                Cube<Float> fArray = cti.fparam();
+                if (polnRatio_) {
+                    *pha_[chunk] = fArray(parSlice1, Slice(), Slice()) -
+                        fArray(parSlice2, Slice(), Slice());
+                } else {
+                    *pha_[chunk] = fArray(parSlice1, Slice(), Slice());
+                }
+                (*pha_[chunk]) *= Float(180.0/C::pi);
             } else {
                 throw(AipsError("phase has no meaning for this table"));
             }
@@ -457,7 +467,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
         }
         case PMS::GREAL:   
         case PMS::REAL: {
-            if (parsAreComplex()) {
+            if (calType_ == "Fringe Jones") { // do not use float for this axis 
+                throw(AipsError("real has no meaning for this table"));
+            } else if (parsAreComplex()) {
                 Cube<Complex> cArray = cti.cparam();
                 if (polnRatio_) {
                     Array<Float> realRatio = real(cArray(parSlice1, Slice(),
@@ -491,8 +503,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                 } else {        
                     *imag_[chunk] = imag(cArray(parSlice1, Slice(), Slice()));
                 }
-            } else
+            } else {
                 throw(AipsError("imag has no meaning for this table"));
+            }
             break;
         }
         case PMS::DELAY:{
@@ -506,16 +519,34 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                 } else {
                     *par_[chunk] = fArray(parSlice1, Slice(), Slice());
                 }
-            } else
-                throw(AipsError( "delay has no meaning for this table"));
+            } else {
+                throw(AipsError("delay has no meaning for this table"));
+            }
+            break;
+        }
+        case PMS::DELAY_RATE:{
+            if (calType_.startsWith("Fringe") && !parsAreComplex()) {
+                Cube<Float> fArray = cti.fparam();
+                if (polnRatio_) {
+                    Array<Float> delayRatio = fArray(parSlice1, Slice(), Slice())
+                        - fArray(parSlice2, Slice(), Slice());
+                    checkRatioArray(delayRatio, chunk);
+                    *par_[chunk] = delayRatio / 1.0e-12;
+                } else {
+                    *par_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1.0e-12;
+                }
+            } else {
+                throw(AipsError("delay rate has no meaning for this table"));
+            }
             break;
         }
         case PMS::OPAC: {
             if (!parsAreComplex() && calType_.contains("Opac")) {
                 Cube<Float> fArray = cti.fparam();
                 *par_[chunk] = fArray(parSlice1, Slice(), Slice());
-            } else
-                throw(AipsError( "opacity has no meaning for this table"));
+            } else {
+                throw(AipsError("opacity has no meaning for this table"));
+            }
             break;
         }
         case PMS::SWP: {   // "SPGAIN" in plotcal
@@ -529,8 +560,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                 } else {
                     *par_[chunk] = fArray(parSlice1, Slice(), Slice());
                 }
-            } else
-                throw( AipsError( "SwPower has no meaning for this table"));
+            } else {
+                throw(AipsError("SwPower has no meaning for this table"));
+            }
             break;
         }
         case PMS::TSYS: {
@@ -545,8 +577,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                 } else {
                     *par_[chunk] = fArray(parSlice1, Slice(), Slice());
                 }
-            } else
-                throw(AipsError( "Tsys has no meaning for this table"));
+            } else {
+                throw(AipsError("Tsys has no meaning for this table"));
+            }
             break;
         }
         case PMS::SNR: {
@@ -564,16 +597,18 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             if ( !parsAreComplex() && calType_[0]=='F') {
                 Cube<Float> fArray = cti.fparam();
                 *par_[chunk] = (fArray(parSlice1, Slice(), Slice()))/1e+16;
-            } else
-                throw(AipsError( "TEC has no meaning for this table"));
+            } else {
+                throw(AipsError("TEC has no meaning for this table"));
+            }
             break;
         }
         case PMS::FLAG: {
-            if (polnRatio_)
+            if (polnRatio_) {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice()) |
                     cti.flag()(parSlice2, Slice(), Slice());
-            else
+			} else {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice());
+            }
             break;
         }
         /*
@@ -1179,6 +1214,7 @@ void CalCache::loadCalAxis(ROSolvableVisJonesMCol& mcol,
     case PMS::ANTENNA2:
     case PMS::BASELINE:
     case PMS::DELAY:
+    case PMS::DELAY_RATE:
     case PMS::OPAC:
     case PMS::SWP:   // "SPGAIN" in plotcal
     case PMS::TSYS:
@@ -1534,6 +1570,7 @@ void CalCache::checkAxes(const vector<PMS::Axis>& loadAxes) {
       case PMS::BASELINE:
       case PMS::ROW:
       case PMS::DELAY:
+      case PMS::DELAY_RATE:
       case PMS::OPAC:
       case PMS::SWP:
       case PMS::TSYS:
@@ -1580,7 +1617,8 @@ String CalCache::toVisCalAxis(PMS::Axis axis) {
             if (calType_.contains("TSYS")) return "TSYS";
             if (calType_[0] == 'K' && !calType_.startsWith("KAntPos")) 
                 return "DELAY";
-            if (calType_[0] == 'F') return "TEC";
+            if (calType_ == "F Jones") return "TEC";
+            if (calType_ == "Fringe Jones") return "DELAY";
             if (calType_ == "TOpac") return "OPAC";
             return "AMP";
             break;
@@ -1595,6 +1633,9 @@ String CalCache::toVisCalAxis(PMS::Axis axis) {
         case PMS::IMAG:
         case PMS::GIMAG:
             return "IMAG";
+            break;
+        case PMS::DELAY_RATE:
+            return "RATE";
             break;
         default:
             return PMS::axis(axis);

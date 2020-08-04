@@ -48,7 +48,7 @@ PlotAxisScale PMS::axisScale(Axis axis) {
     
     case PMS::Axis::RA:
     case PMS::Axis::DEC:
-    	return PlotAxisScale::ANGLE;
+        return PlotAxisScale::ANGLE;
 
     default: return NORMAL;
     }
@@ -58,7 +58,7 @@ bool PMS::axisIsData(Axis axis) {
     switch(axis) {
     case AMP: case PHASE: case REAL: case IMAG: case WTxAMP: 
     case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC:
+    case DELAY: case DELAY_RATE: case SWP: case TSYS: case OPAC:
     case TEC: case ANTPOS: return true;
     default: return false;
     }
@@ -67,7 +67,7 @@ bool PMS::axisIsData(Axis axis) {
 bool PMS::axisIsCalData(Axis axis) {
     switch(axis) {
     case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC:
+    case DELAY: case DELAY_RATE: case SWP: case TSYS: case OPAC:
     case TEC: case ANTPOS: return true;
     default: return false;
     }
@@ -77,8 +77,8 @@ bool PMS::axisNeedsCalSlice(Axis axis) {
     switch(axis) {
     case AMP: case PHASE: case REAL: case IMAG: 
     case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC: case SNR: case TEC:
-    case ANTPOS: case FLAG:
+    case DELAY: case DELAY_RATE: case SWP: case TSYS: case OPAC:
+    case SNR: case TEC: case ANTPOS: case FLAG:
         return true;
     default: return false;
     }
@@ -210,8 +210,10 @@ PMS::AxisType PMS::axisType(Axis axis) {
     case INTENT: case FEED1: case FEED2:
         return TINT;
     
-    case AMP: case PHASE: case REAL: case IMAG:
-      case PARANG: case SNR: case TEC:
+    case AMP: case PHASE: case REAL: case IMAG: case WTxAMP:
+      case WT: case WTSP: case SIGMA: case SIGMASP: case PARANG: 
+	  case DELAY: case DELAY_RATE: case SWP: case TSYS: case OPAC:
+      case SNR: case TEC: case ANTPOS:
         return TFLOAT;
     
     case TIME: case TIME_INTERVAL:
@@ -261,6 +263,8 @@ PMS::AxisUnit PMS::axisUnit(Axis axis) {
         return KILOMETERS_PER_SECOND;
    case DELAY:
         return NANOSECONDS;
+   case DELAY_RATE:
+        return PSEC_PER_SECOND;
    case TSYS:
    case TSKY:
         return KELVIN;

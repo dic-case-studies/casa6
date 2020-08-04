@@ -947,6 +947,7 @@ void PlotMSCacheBase::release(const vector<PMS::Axis>& axes) {
 			case PMS::PARANG: PMSC_DELETE(parang_)
 				break;
 			case PMS::DELAY:
+			case PMS::DELAY_RATE:
 			case PMS::SWP:
 			case PMS::TSYS:
 			case PMS::OPAC:
@@ -1755,22 +1756,15 @@ void PlotMSCacheBase::setCache(Int newnChunk,
                 addVectors(parang_, increaseCache);
                 break;
             case PMS::DELAY:
-                addArrays(par_, increaseCache);
-                break;
+            case PMS::DELAY_RATE:
             case PMS::SWP:
-                addArrays(par_, increaseCache);
-                break;
             case PMS::TSYS:
-                addArrays(par_, increaseCache);
-                break;
             case PMS::OPAC:
+            case PMS::TEC:
                 addArrays(par_, increaseCache);
                 break;
             case PMS::SNR:
                 addArrays(snr_, increaseCache);
-                break;
-            case PMS::TEC:
-                addArrays(par_, increaseCache);
                 break;
             case PMS::ANTPOS:
                 addArrays(antpos_, increaseCache);
@@ -1876,6 +1870,7 @@ void PlotMSCacheBase::setAxesMask(PMS::Axis axis,Vector<Bool>& axismask) {
 	case PMS::GREAL:
 	case PMS::GIMAG:
 	case PMS::DELAY:
+	case PMS::DELAY_RATE:
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:

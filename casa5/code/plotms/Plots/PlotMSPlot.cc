@@ -315,7 +315,7 @@ vector<PMS::Axis> PlotMSPlot::getCachedAxes() {
 	PMS_PP_MSData* d = itsParams_.typedGroup<PMS_PP_MSData>();
 	for(uInt i=0; i<c->numXAxes(); i++) {
 		if (c->xAxis(i) == PMS::NONE) {
-	        // get default x-axis for ms/caltable if not given by user
+			// get default x-axis for ms/caltable if not given by user
 			c->setXAxis(getDefaultXAxis(d->cacheType(), d->calType()), i);
 		}
 	}
@@ -453,6 +453,8 @@ PMS::Axis PlotMSPlot::msDataAxisToCal(PMS::Axis inputAxis, casacore::String calT
 				calAxis = PMS::OPAC;
 			else if (calType.contains("SD"))
 				calAxis = PMS::GREAL;
+			else if (calType.startsWith("Fringe"))
+				calAxis = PMS::DELAY;
 			else if (calType[0]=='F')
 				calAxis = PMS::TEC;
 			else if (calType.startsWith("KAntPos"))
@@ -495,6 +497,7 @@ PMS::Axis PlotMSPlot::calDataAxisToMS(PMS::Axis inputAxis) {
 		case PMS::TEC:
 		case PMS::ANTPOS:
 		case PMS::DELAY:
+		case PMS::DELAY_RATE:
 			msAxis = PMS::AMP;
 			break;
 		case PMS::GPHASE:
@@ -2008,6 +2011,14 @@ void PlotMSPlot::addAxisDescription(casacore::String& label, PMS::Axis axis,
 	// "Poln" for CAL types
 	if (commonCacheType == PlotMSCacheBase::CAL) {
 		label.gsub("Corr", "Poln");
+
+        if (itsCache_->calType().startsWith("Fringe")) {
+            if (label.startsWith("Delay")) {
+                label = "Fringe " + label;
+            } else if (label.startsWith("Gain Phase")) {
+		        label.gsub("Gain", "Fringe");
+            }
+        }
 	}
 }
 

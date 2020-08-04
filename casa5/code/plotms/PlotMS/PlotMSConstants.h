@@ -124,7 +124,7 @@ public:
           PARANG,
           // Calibration 
           GAMP,GPHASE,GREAL,GIMAG,
-          DELAY,SWP,TSYS,OPAC, SNR, TEC, ANTPOS,
+          DELAY,DELAY_RATE,SWP,TSYS,OPAC, SNR, TEC, ANTPOS,
           // Ephemeris
           RADIAL_VELOCITY, RHO,
           // Overlays
@@ -148,7 +148,7 @@ public:
           "Antenna","Ant-Azimuth","Ant-Elevation","Ant-Ra","Ant-Dec","Ant-ParAngle",
           // Calibration 
           "Gain Amp","Gain Phase","Gain Real","Gain Imag",
-          "Delay","SwPower","Tsys","Opac", "SNR", "TEC",
+          "Delay","Delay Rate", "SwPower","Tsys","Opac", "SNR", "TEC",
           "Antenna Positions",
           // Ephemeris
           "Radial Velocity", "Distance (rho)", 
@@ -240,11 +240,11 @@ public:
     PMS_ENUM1(AxisUnit, axesUnits, axesUnitStrings, axisUnit,
               UNONE, UDATETIME, GHERTZ, METERS_PER_SECOND, KILOMETERS_PER_SECOND,
               KILOMETERS, METERS, HOURS, WAVELENGTHS, DEGREES, NANOSECONDS, KELVIN,
-              NEPERS, SECONDS, PERCENT);
+              NEPERS, SECONDS, PERCENT, PSEC_PER_SECOND);
     PMS_ENUM2(AxisUnit, axesUnits, axesUnitStrings, axisUnit,
               "", "hh:mm:ss", "GHz", "m/s", "km/s", "km", "m", "hours",
               "<html>&lambda;</html>", "degrees", "ns", "K", "neper", "s",
-              "%");
+              "%", "psec/sec");
 
     // </group>
               

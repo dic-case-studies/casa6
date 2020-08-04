@@ -1279,6 +1279,7 @@ void PlotMSIndexer::setMethod(CacheMemPtr& getmethod,PMS::Axis axis,
 		getmethod = &PlotMSCacheBase::getImag;
 		break;
 	case PMS::DELAY:
+	case PMS::DELAY_RATE:
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:
@@ -1353,6 +1354,7 @@ void PlotMSIndexer::setIndexer(IndexerMethPtr& indexmethod,PMS::Axis axis) {
 	case PMS::GREAL:
 	case PMS::GIMAG:
 	case PMS::DELAY:
+	case PMS::DELAY_RATE:
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:

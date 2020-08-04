@@ -264,6 +264,7 @@ String MSCacheVolMeter::evalVolume(map<PMS::Axis,Bool> axes, Vector<Bool> axesma
 			case PMS::GREAL:
 			case PMS::GIMAG:
 			case PMS::DELAY:
+			case PMS::DELAY_RATE:
 			case PMS::SWP:
 			case PMS::TSYS:
 			case PMS::OPAC:
@@ -456,6 +457,7 @@ String MSCacheVolMeter::evalVolume(std::vector<IPosition> vbShapes,
 			case PMS::GREAL:
 			case PMS::GIMAG:
 			case PMS::DELAY:
+			case PMS::DELAY_RATE:
 			case PMS::SWP:
 			case PMS::TSYS:
 			case PMS::OPAC:
