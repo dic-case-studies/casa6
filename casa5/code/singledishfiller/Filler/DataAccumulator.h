@@ -491,7 +491,7 @@ private:
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
             casacore::IPosition const startpos1(2, 1, apol1);
             casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
-            if (casacore::anyNE(tsys_(startpos0, startpos1), 0.0f)
+            if (casacore::anyNE(tsys_(startpos0, endpos0), 0.0f)
                 && casacore::anyNE(tsys_(startpos1, endpos1), 0.0f)) {
                 // spectral Tsys
                 record.setTsysSize(2, num_chan_);
@@ -526,7 +526,7 @@ private:
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
             casacore::IPosition const startpos1(2, 1, apol1);
             casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
-            if (casacore::anyNE(tcal_(startpos0, startpos1), 0.0f)
+            if (casacore::anyNE(tcal_(startpos0, endpos0), 0.0f)
                && casacore::anyNE(tcal_(startpos1, endpos1), 0.0f)) {
                 // spectral Tcal
                 record.setTcalSize(2, num_chan_);
