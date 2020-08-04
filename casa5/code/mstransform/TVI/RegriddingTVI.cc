@@ -437,7 +437,7 @@ void RegriddingTVI::initFrequencyTransformationEngine() const
 	VisBuffer2 *vb = getVii()->getVisBuffer();
 
 	// Check if frequency transformation engine has to be re-constructed
-	uInt rowId = vb->rowIds()[0];
+	rownr_t rowId = vb->rowIds()[0];
 	if (freqTransEngineRowId_p != rowId)
 	{
 		// Mark this rowId as the current one
