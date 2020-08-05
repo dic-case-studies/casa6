@@ -1,0 +1,24 @@
+{
+    "Flagging": ["test_flagdata", "test_flagcmd" ],
+    "HPC": [ "test_flagdata", "test_casampi", "mpi_test_casampi" ],
+    "Imaging": [
+        "test_tclean",
+        "test_sdimaging",
+        "test_fixvis",
+        "test_imfit",
+        "test_immath",
+        "test_imregrid",
+        "test_imsmooth",
+        "test_immoments",
+        "test_imval",
+        "test_imhead",
+        "test_imcollapse",
+        "test_imcontsub"
+    ],
+    "default": [ "test_asdf"],
+    "flagdata": [ "test_flagdata"],
+    "tclean": [ "test_tclean", "test_sdimaging" ]
+    
+    
+}
+

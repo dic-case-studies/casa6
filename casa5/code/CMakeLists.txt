@@ -33,6 +33,7 @@ if (UseCcache)
     endif(CCACHE_FOUND)
 endif()
 
+add_definitions(-DIMPLICIT_CTDS_32BIT)
 add_definitions ("-DUseCasacoreNamespace")
 add_definitions ("-DWITHOUT_BOOST")
 add_definitions(-DUSE_THREADS)                 # new casacore requirement:
@@ -72,7 +73,7 @@ include( target )
 include( CASA )
 
 set( CASA_VERSION_MAJOR   5   )
-set( CASA_VERSION_MINOR   7   )
+set( CASA_VERSION_MINOR   8   )
 set( CASA_VERSION_PATCH   0   )
 set( CASA_VERSION_FEATURE 0 CACHE STRING "feature version" )
 set( CASA_VERSION_DESC    "" )
