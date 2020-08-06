@@ -51,22 +51,30 @@ class gencal_antpostest(unittest.TestCase):
 
     # Input and output names
     msfile = 'tdem0003gencal.ms'
+    # used for test_antpos_auto_evla_CAS13057
+    msfile2 = 'auto_antposcorr_evla_gencal.ms'
 #    if testmms:
 #        msfile = 'tdem0003gencal.mms'
     caltable = 'anpos.cal'
     reffile1 = os.path.join(datapath,'anpos.manual.cal')
     reffile2 = os.path.join(datapath,'anpos.auto.cal')
+    reffile3 = os.path.join(datapath,'anpos.autoCAS13057.cal')
     res = False
 
     def setUp(self):
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
+        if (os.path.exists(self.msfile2)):
+            shutil.rmtree(self.msfile2)
 
         shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
+        shutil.copytree(os.path.join(datapath,self.msfile2), self.msfile2, symlinks=True)
 
     def tearDown(self):
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
+        if (os.path.exists(self.msfile2)):
+            shutil.rmtree(self.msfile2)
 
         shutil.rmtree(self.caltable,ignore_errors=True)
 
@@ -120,6 +128,34 @@ class gencal_antpostest(unittest.TestCase):
           print("Cannot access %s , skip this test" % evlabslncorrURL)
           self.res=True
 
+    def test_antpos_auto_evla_CAS13057(self):
+        """
+        gencal: test a bugfix of CAS-13057 for automated antenna position correction
+        """
+        # check if the URL is reachable
+        if is_CASA6:
+            from urllib.request import urlopen
+            from urllib.error import URLError
+        else:
+            from urllib2 import urlopen, URLError
+    
+        # current EVLA baseline correction URL
+        evlabslncorrURL="http://www.vla.nrao.edu/cgi-bin/evlais_blines.cgi?Year="
+        try: 
+          urlaccess=urlopen(evlabslncorrURL+"2019", timeout=60.0) 
+          gencal(vis=self.msfile2,
+                 caltable=self.caltable,
+                 caltype='antpos',
+                 antenna='')
+
+          self.assertTrue(os.path.exists(self.caltable))
+          # Compare with reference file from the repository
+          reference = self.reffile3
+          self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT','OBSERVATION_ID']))
+
+        except URLError as err:
+          print("Cannot access %s , skip this test" % evlabslncorrURL)
+          self.res=True
 
 class test_gencal_antpos_alma(unittest.TestCase):
     """

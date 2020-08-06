@@ -92,7 +92,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_putregion.py
   test_ia_pv.py
   test_ia_rebin.py
-  test_ia_rename.py
   test_ia_replacemaskedpixels.py
   test_ia_restoringbeam.py
   test_ia_rotate.py
@@ -203,6 +202,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   test_req_tool_componentlistimage.py
   test_req_tool_ia_pbcor.py
+  test_req_tool_ia_rename.py
   test_req_tool_ia_transpose.py
   test_req_tool_ia_statistics.py
 
@@ -233,6 +233,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_sdintimaging.py
   test_req_task_simanalyze.py
   test_req_task_statwt.py
   test_req_tool_ms_statwt.py
@@ -242,6 +243,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py
+  test_stk_vlass_pipeline_imaging.py
 
   ###
   test_setjy.py

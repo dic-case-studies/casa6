@@ -10,15 +10,13 @@
 
 #include <set>
 
-namespace casacore{
-
+namespace casacore {
 class ImageRegion;
 class LatticeExprNode;
 template <class T> class  MaskedLattice;
 }
 
 namespace casa {
-
 
 template <class T> class ImageMaskHandler {
 

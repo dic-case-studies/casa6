@@ -1,13 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<!-- This is the parameter set for listsdm -->
 
-<task type="function" name="listsdm" category="information">
+
+<task category="information" name="listsdm" type="function">
 
   <shortdescription>Lists observation information present in an SDM directory.</shortdescription>
 
@@ -15,9 +10,9 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
   <input>
 
-    <param type="string" name="sdm" mustexist="true">
-      <description>Name of input SDM directory</description>
-      <value></value>
+    <param mustexist="true" name="sdm" type="string"><shortdescription>Name of input SDM directory</shortdescription><description>Name of input SDM directory</description>
+      
+      <value/>
     </param>
 
   </input>

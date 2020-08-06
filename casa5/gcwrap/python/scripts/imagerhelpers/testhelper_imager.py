@@ -303,7 +303,7 @@ class TestHelpers():
                          ok = thisval < val[2]
                     else:
                          ok=False
-                    pstr =  "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
+                    pstr = pstr + "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
 
           print(pstr)
           return pstr
@@ -434,6 +434,7 @@ class TestHelpers():
           csys = _ia.coordsys()
           _ia.close()
           reffreq = csys.referencevalue()['numeric'][3]
+          csys.done()
           if  abs(reffreq - theval)/theval > self.epsilon :
               retres=False
           else:
@@ -489,10 +490,15 @@ class TestHelpers():
           return pstr
         
      def getcoordsys(self,imname):
-         _ia.open(imname)
-         csys = _ia.coordsys().torecord()
-         _ia.close()
-         return csys
+         try:
+             _ia.open(imname)
+             csys = _ia.coordsys()
+             csys_rec = csys.torecord()
+             csys.done()
+         finally:
+             _ia.close()
+
+         return csys_rec
 
      def check_keywords(self, imlist):
          """
