@@ -443,11 +443,11 @@ def generate_pyinit(moduledir,tools):
                 fd.write("from .%s import %s\n" % (tool,tool))
 
         config='''\
-
-               import casatools.ctuser as __user
+               from casatools import ctuser as __user
                from .utils import utils as __utils
                import os as __os
                import sys as __sys
+
                def __find_data_path( ):
 
                    def find_mount_point(path):
@@ -483,12 +483,25 @@ def generate_pyinit(moduledir,tools):
                ctsys = __utils( )
                _distro_dpath = ""
                _dpath = [ ]
+               _user_data = __os.path.expanduser("~/.casa/data")
+
+               if __os.path.isdir(_user_data):
+                   _dpath = _dpath + [ _user_data ]
+                   _iers = __os.path.join(_user_data,'geodetic','IERSeop2000')
+                   if __os.path.isdir(_iers):
+                       _distro_dpath = _user_data
+
                try:
                    import casadata
-                   _distro_dpath = casadata.datapath
-                   _dpath = [ _distro_dpath ]
+                   if len(_distro_dpath) == 0:
+                       _distro_dpath = casadata.datapath
+                   _dpath = _dpath + [ _distro_dpath ]
                except: pass
+
                ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+               if __sys.argv[0] != '-m' and ctsys.resolve('geodetic/IERSeop2000') == 'geodetic/IERSeop2000':
+                   raise ImportError('measures data is not available run "python3 -m casatools --update-user-data" to install/update data in ~/.casa')
+                                                                                                               
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -2523,4 +2536,4 @@ if __name__ == '__main__':
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
-           install_requires=[ 'numpy', 'casadata' ] )
+           install_requires=[ 'numpy' ] )

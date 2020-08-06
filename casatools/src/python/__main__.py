@@ -29,6 +29,29 @@ for flag in sys.argv:
         print(build['build.compiler.cxx'])
     if flag == '--compiler-xml':
         print(build['build.compiler.xml-casa'])
+    if flag == '--update-user-data':
+        from subprocess import Popen, PIPE
+        def _execute(cmd):
+            popen = Popen(cmd, stdout=PIPE, universal_newlines=True)
+            for stdout_line in iter(popen.stdout.readline, ""):
+                yield stdout_line
+            popen.stdout.close()
+            return_code = popen.wait()
+            if return_code:
+                raise subprocess.CalledProcessError(return_code, cmd)
+
+        _user_data = __os.path.expanduser("~/.casa/data")
+        if not __os.path.exists(_user_data):
+            __os.makedirs(_user_data)
+        elif __os.path.isfile(_user_data):
+            sys.exit('error, ~/.casa/data exists and is a file instead of a directory')
+
+        try:
+            for line in _execute([ 'rsync', '-avz', 'rsync://casa-rsync.nrao.edu/casa-data', _user_data ]):
+                sys.stdout.write(".")
+                sys.stdout.flush( )
+        except: sys.exit('data fetch failed...')
+
     if flag == '--help':
         print("--compiler-cc\t\tpath to C compiler used to build casatools")
         print("--compiler-cxx\t\tpath to C++ compiler used to build casatools")
@@ -41,3 +64,4 @@ for flag in sys.argv:
         print("--proto-registrar\tpath to registrar protobuf spec")
         print("--proto-shutdown\tpath to shutdown protobuf spec")
         print("--proto-ping\t\tpath to ping protobuf spec")
+        print("--update-user-data\tinstall or update measures data in ~/.casa/data")
