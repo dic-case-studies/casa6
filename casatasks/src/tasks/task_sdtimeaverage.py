@@ -76,7 +76,7 @@ def sdtimeaverage(
     casalog.origin(origin)
 
     # Select Data and make Average.
-    st = do_mst(
+    do_mst(
         infile=infile,
         datacolumn=active_datacolumn,
         field=field,
@@ -102,8 +102,6 @@ def sdtimeaverage(
         timespan=timespan,
         antenna=antenna,
         outfile=outfile)
-
-    return st
 
 
 def use_alternative_column(infile, datacolumn):
@@ -193,11 +191,7 @@ def do_mst(
     pdh.bypassParallelProcessing(0)
 
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s' % instance, 'ERROR')
-        return False
+    pdh.setupIO()
 
     # Create a local copy of the MSTransform tool
     mtlocal = mstransformer()  # CASA6 changed.
@@ -259,12 +253,8 @@ def do_mst(
         casalog.post('Apply the transformations')
         mtlocal.run()
 
+    finally:
         mtlocal.done()
-
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        return False
 
     """
       CAS-12721:
@@ -361,21 +351,11 @@ def do_mst(
                     casalog.post(
                         'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
 
-            mytb.close()
 
-        except Exception as instance:
-            if isopen:
-                mytb.close()
+        finally:
+            mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
-
-    mytb = None
-    mslocal = None
-
-    return True
 
 
 def add_history(
