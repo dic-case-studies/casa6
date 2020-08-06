@@ -213,13 +213,12 @@ class PySynthesisImager:
     def estimatememory(self):
         #print "MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory())
 
-        if not any(item in self.majorActivities for item in self.activities):
-            griddermem = 0
-        elif(self.SItool != None):
+        griddermem = 0
+        if any(item in self.majorActivities for item in self.activities) and (self.SItool != None):
             griddermem= self.SItool.estimatememory()
 
         deconmem=0
-        if 'decon' in self.activities:
+        if any(item in self.minorActivities for item in self.activities):
             for immod in range(0,self.NF):
                 ims= self.allimpars[str(immod)]['imsize']
                 if(type(ims)==int) :
@@ -275,6 +274,10 @@ class PySynthesisImager:
 #         print('no cluster to delete')
         return
 
+    def deleteWorkDir(self):
+        # No .workdirectory to delete
+        return
+
     def initDefaults(self):
         # Reset globals/members
          self.NF=1
@@ -295,6 +298,7 @@ class PySynthesisImager:
         if 'recon' in self.activities:
             self.deleteNormalizers()
         self.deleteIterBot()
+        self.deleteWorkDir()
         self.initDefaults()
         self.deleteCluster()
 
