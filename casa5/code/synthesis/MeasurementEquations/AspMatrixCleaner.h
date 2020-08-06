@@ -49,7 +49,7 @@ public:
       const casacore::Float gain, const casacore::Quantity& aThreshold,
       const casacore::Quantity& fThreshold);
 
-  // Calculate the convolutions of the dirty image 
+  // Calculate the convolutions of the dirty image
   // the concept is almost the same as MatrixCleaner::makeDirtyScales
   // except this doesn't check itsCleanType
   void makedirtyscales();
@@ -72,7 +72,7 @@ public:
   // Make an image of the specified scale by Gaussian
   void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
 
-  // Make images of the Asp scales in the active-set 
+  // Make images of the Asp scales in the active-set
   void makeAspScales();
 
   void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
@@ -91,7 +91,7 @@ public:
   std::vector<casacore::Float> getActiveSetAspen();
 
   //void defineAspScales(const casacore::Vector<casacore::Float>& scales);
-  // Juat define the active-set aspen scales 
+  // Juat define the active-set aspen scales
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
   void switchedToHogbom();
@@ -158,7 +158,7 @@ private:
   std::vector<casacore::Float> itsAspScaleSizes; // permanent list for making model image
   std::vector<casacore::Float> itsAspAmplitude;
   std::vector<casacore::IPosition> itsAspCenter;
-  std::vector<bool> itsAspGood;
+  std::vector<bool> itsAspGood; // indicates if the aspen in the permanent list passes heuristic
   casacore::Int itsNInitScales;
   double itsPrevLBFGSGrad; // for gradient clipping if LBFGS gradient explodes
   std::deque<int> itsNumIterNoGoodAspen;
@@ -168,8 +168,11 @@ private:
   unsigned int itsNumHogbomIter;
   unsigned int itsNthHogbom;
   bool itsSwitchedToMS;
-  std::vector<casacore::Float> itsGoodAspActiveSet; // avtice-set of aspens
-  std::vector<casacore::Float> itsGoodAspAmplitude; // amplitude of avtice-set of aspens
+  std::vector<casacore::Float> itsGoodAspActiveSet; // avtice-set of aspens (updated)
+  std::vector<casacore::Float> itsGoodAspAmplitude; // amplitude of avtice-set of aspens (updated)
+  std::vector<casacore::IPosition> itsGoodAspCenter; // center of aspens in active-set
+  std::vector<casacore::Float> itsPrevAspActiveSet; // avtice-set of aspens (before lbfgs)
+  std::vector<casacore::Float> itsPrevAspAmplitude; // amplitude of avtice-set of aspens (before lbfgs)
   float itsStrenThres;
   casacore::Int itsOptimumScale;
   casacore::IPosition itsPositionOptimum;
