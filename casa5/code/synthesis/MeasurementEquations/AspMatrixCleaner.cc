@@ -356,6 +356,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Matrix<Float> itsScale = Matrix<Float>(psfShape_p);
   Matrix<Complex>itsScaleXfr = Matrix<Complex> ();
 
+  // Define a subregion so that the peak is centered
+  IPosition support(model.shape());
+  support(0) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(0));
+  support(1) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(1));
+
+  IPosition inc(model.shape().nelements(), 1);
+
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
     cout << "cur iter " << itsIteration << " max iter is "<<
@@ -503,11 +510,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // genie Continuing: subtract the peak that we found from the dirty image
     // Define a subregion so that the peak is centered
-    IPosition support(model.shape());
+    /*IPosition support(model.shape());
     support(0) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(0));
     support(1) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(1));
 
-    IPosition inc(model.shape().nelements(), 1);
+    IPosition inc(model.shape().nelements(), 1);*/
     //cout << "support " << support.asVector()  << endl;
 
     IPosition blc(itsPositionOptimum - support/2);
@@ -541,21 +548,68 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     Matrix<Float> dirtySub=(*itsDirty)(blc,trc);
     dirtySub -= scaleFactor * psfSub;
 
-    /*for (scale = 0; scale < itsNscales; ++scale)
+    // further update the model and residual with the remaining aspen of the active-set
+    if (itsOptimumScaleSize != 0)
     {
-      Matrix<Float> scaleSub = (itsScales[scale])(blcPsf,trcPsf);
-      if (itsScaleSizes[scale] == 0)
-        scaleFactor = itsGain * itsStrengthOptimum;
-      else
-        scaleFactor = itsGain * itsGoodAspAmplitude[scale];
+      for (scale = 0; scale < (Int)itsGoodAspActiveSet.size() - 1; ++scale)
+      // -1 because we counted the latest aspen in the previous step already
+      {
+        if (itsPrevAspActiveSet[scale] == itsGoodAspActiveSet[scale])
+          continue;
 
-      // Now do the addition of the active-set scales to the model image...
-      modelSub += scaleFactor * scaleSub;
+        // "center" is unchanged for aspen
+        IPosition blc1(itsGoodAspCenter[scale] - support/2);
+        IPosition trc1(itsGoodAspCenter[scale] + support/2 - 1);
+        LCBox::verify(blc1, trc1, inc, model.shape());
 
-      // Now update the residual image - this is wrong. Asp is not like MS
-      Matrix<Float> psfSub = (itsPsfConvScales[index(0, scale)])(blcPsf, trcPsf);
-      dirtySub -= scaleFactor * psfSub;
-    }*/
+        IPosition blcPsf1(blc1 + itsPositionPeakPsf - itsGoodAspCenter[scale]);
+        IPosition trcPsf1(trc1 + itsPositionPeakPsf - itsGoodAspCenter[scale]);
+        LCBox::verify(blcPsf1, trcPsf1, inc, model.shape());
+        makeBoxesSameSize(blc1, trc1, blcPsf1, trcPsf1);
+
+        Matrix<Float> modelSub1 = model(blc1, trc1);
+        Matrix<Float> dirtySub1 = (*itsDirty)(blc1,trc1);
+
+        // First remove the previous values of aspen in the active-set
+        cout << "aspclean: restore with previous scale " << itsPrevAspActiveSet[scale];
+        cout << "at blcPsf1 " << blcPsf1.asVector() << " trcPsf1 " << trcPsf1.asVector();
+        cout << "at blc1 " << blc1.asVector() << " trc1 " << trc1.asVector() << endl;
+
+        makeScale(itsScale, itsPrevAspActiveSet[scale]);
+        itsScaleXfr.resize();
+        fft.fft0(itsScaleXfr, itsScale);
+        Matrix<Float> scaleSubPrev = (itsScale)(blcPsf1,trcPsf1);
+        const float scaleFactorPrev = itsGain * itsPrevAspAmplitude[scale];
+        // restore the model image...
+        modelSub1 -= scaleFactorPrev * scaleSubPrev;
+        // restore the residual image
+        Matrix<Complex> cWorkPrev;
+        cWorkPrev = ((*itsXfr)*(itsScaleXfr));
+        Matrix<Float> itsPsfConvScalePrev = Matrix<Float>(psfShape_p);
+        fft.fft0(itsPsfConvScalePrev, cWorkPrev, false);
+        fft.flip(itsPsfConvScalePrev, false, false); //need this if conv with 1 scale; don't need this if conv with 2 scales
+        Matrix<Float> psfSubPrev = (itsPsfConvScalePrev)(blcPsf1, trcPsf1);
+        dirtySub1 += scaleFactorPrev * psfSubPrev;
+
+        // Then update with the new values of aspen in the active-set
+        cout << "aspclean: update with new scale " << itsGoodAspActiveSet[scale] << endl;
+        makeScale(itsScale, itsGoodAspActiveSet[scale]);
+        itsScaleXfr.resize();
+        fft.fft0(itsScaleXfr, itsScale);
+        Matrix<Float> scaleSubNew = (itsScale)(blcPsf1,trcPsf1);
+        const float scaleFactorNew = itsGain * itsGoodAspAmplitude[scale];
+        // Now do the addition of the active-set scales to the model image...
+        modelSub1 += scaleFactorNew * scaleSubNew;
+        // Now subtract the active-set scales from the residual image
+        Matrix<Complex> cWorkNew;
+        cWorkNew = ((*itsXfr)*(itsScaleXfr));
+        Matrix<Float> itsPsfConvScaleNew = Matrix<Float>(psfShape_p);
+        fft.fft0(itsPsfConvScaleNew, cWorkNew, false);
+        fft.flip(itsPsfConvScaleNew, false, false); //need this if conv with 1 scale; don't need this if conv with 2 scales
+        Matrix<Float> psfSubNew = (itsPsfConvScaleNew)(blcPsf1, trcPsf1);
+        dirtySub1 -= scaleFactorNew * psfSubNew;
+      }
+    }
 
     //cout << "after dirtySub(262,291) = " << dirtySub(262,291) << endl;
     //cout << "after itsDirty(262,291) = " << (*itsDirty)(262,291) << endl;
@@ -1564,7 +1618,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
         itsAspGood.push_back(true);
     }
 
-    itsOptimumScaleSize = x[length - 1];
+    itsOptimumScaleSize = x[length - 1]; // the latest aspen is the last element of x
     itsGoodAspCenter = activeSetCenter;
 
   } // end of LBFGS optimization
