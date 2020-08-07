@@ -147,7 +147,7 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
     String ms    = "",
            xaxis = PMS::axis(PMS::DEFAULT_XAXIS),
            yaxis = PMS::axis(PMS::DEFAULT_YAXIS),
-           logfile = "", logfilter = "";
+           datapath = "", logfile = "", logfilter = "";
     PlotMSSelection select;
     PlotMSAveraging averaging;
     bool cachedImageSizeToScreenResolution = false, usePixels = false,
@@ -174,80 +174,13 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
 #else
            casapy_address = "",
            ARG_LOGFILE = "--logfilename",
+           ARG_DATAPATH = "--datapath",
            ARG_SERVER = grpcPlotMS::APP_SERVER_SWITCH,
 #endif
            ARG_DEBUG1 = "-d",
            ARG_DEBUG2 = "--debug",
            ARG_NOPOPUPS = "--nopopups",
     	   ARG_SHOWGUI = "--nogui";
-
-	//
-	// configure datapath for casacore and colormaps...
-	//
-	auto ends_with = []( const std::string& str, const std::string& ending ) {
-		return ( str.size( ) >= ending.size( ) ) && equal( ending.rbegin( ), ending.rend( ), str.rbegin( ) );
-	};
-	auto begins_with = []( const std::string& str, const std::string& beginning ) {
-		return str.size( ) >= beginning.size( ) && str.substr(0, beginning.size( )) == beginning;
-	};
-
-	if ( ends_with(exepath, "Contents/MacOS/CASAplotms") ||
-         ends_with(exepath, "Contents/MacOS/casaplotms") ) {
-		// initialize CASAviewer app data...
-		if ( ! casacore::AppStateSource::fetch( ).initialized( ) ) {
-			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			// Mac OSX  --  path is specific to package format
-			// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-			// initialize CASAviewer app data...
-			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			// generate path to data...
-			std::string datapath(exepath);
-			datapath.erase( datapath.end( ) -  16, datapath.end( ) );
-			std::string pluginpath = datapath;             // save for later...
-			datapath += "Resources/casa-data";
-			// initialize casacore...
-			std::list<std::string> datadirs;
-			datadirs.push_back(datapath);
-			casacore::AppStateSource::initialize(new PlotmsDataState(datadirs));
-			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			// set up Qt Plugin Path
-			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-			pluginpath += "Plugins";
-			QCoreApplication::addLibraryPath(QString(pluginpath.c_str( )));
-		}
-
-	} else if ( begins_with(exepath,"/tmp/.mount") && ends_with(exepath,"/usr/bin/casaplotms") ||
-		    ends_with(exepath,"/casaplotms.app/usr/bin/casaplotms") ||
-		    ends_with(exepath,"/squashfs-root/usr/bin/casaplotms") ) {
-
-		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-		// linux  --  path is specific to package format
-		//
-		//    .../AppRun implies AppImage bash script startup, e.g. from an unpacked AppImage
-		//    .../CASAplotms.app/usr/bin/CASAplotms implies debugging or running from the
-		//                                          build tree before it has been packaged
-		//
-		// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-		// initialize CASAplotms app data...
-		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-		// generate path to data...
-		std::string datapath(exepath);
-		//	   .../usr/bin/casaplotms
-		//		   123456789012345678
-		//					1
-		datapath.erase( datapath.end( ) - 18, datapath.end( ) );
-		std::string pluginpath = datapath;			   // save for later...
-		datapath += "data";
-		// initialize casacore...
-		std::list<std::string> datadirs;
-		datadirs.push_back(datapath);
-		casacore::AppStateSource::initialize(new PlotmsDataState(datadirs));
-		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-		// set up Qt Plugin Path
-		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-		pluginpath += "usr/lib/plugins";
-		QCoreApplication::addLibraryPath(QString(pluginpath.c_str( )));
-	}
 
     const vector<String>& selectFields = PlotMSSelection::fieldStrings(),
                           averagingFields = PlotMSAveraging::fieldStrings();
@@ -319,6 +252,8 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
 #else
                  << "\n* " << ARG_LOGFILE << "=[filename]\n     "
                  << "Sets the log file location (blank to use global)."
+                 << "\n* " << ARG_DATAPATH << "=[directory]\n     "
+                 << "Sets the path to the data repository (blank to use default)."
                  
 #endif
                  << "\n* " << ARG_DEBUG1 << " or " << ARG_DEBUG2 << "\n     "
@@ -387,7 +322,17 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
         else if(arg2 == ARG_XAXIS) xaxis = arg3;
         else if(arg2 == ARG_YAXIS) yaxis = arg3;
         else if(arg2 == ARG_LOGFILE) logfile = arg3;
-#if ! defined(CASATOOLS)
+#if defined(CASATOOLS)
+        else if(arg2 == ARG_DATAPATH) {
+            struct stat statbuf;
+            datapath = arg3;
+            if ( stat( datapath.c_str( ), &statbuf ) == -1 ) {
+                qWarning("path provided with '--datapath=...' does not exist");
+                qFatal("exiting...");
+                exit(1);
+            }
+        }
+#else
         else if(arg2 == ARG_LOGFILTER) logfilter = arg3;
 #endif
         else {
@@ -415,6 +360,84 @@ setbuf(stdout, NULL); /* for debugging - forces all printf() to flush immediatel
 
         }
     }
+
+	//
+	// configure datapath for casacore and colormaps...
+	//
+	auto ends_with = []( const std::string& str, const std::string& ending ) {
+		return ( str.size( ) >= ending.size( ) ) && equal( ending.rbegin( ), ending.rend( ), str.rbegin( ) );
+	};
+	auto begins_with = []( const std::string& str, const std::string& beginning ) {
+		return str.size( ) >= beginning.size( ) && str.substr(0, beginning.size( )) == beginning;
+	};
+
+	if ( ends_with(exepath, "Contents/MacOS/CASAplotms") ||
+         ends_with(exepath, "Contents/MacOS/casaplotms") ) {
+		// initialize CASAviewer app data...
+		if ( ! casacore::AppStateSource::fetch( ).initialized( ) ) {
+			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+			// Mac OSX  --  path is specific to package format
+			// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+			// initialize CASAviewer app data...
+			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+			if ( datapath == "" ) {
+				// generate path to data...
+				datapath = exepath;
+				datapath.erase( datapath.end( ) -  16, datapath.end( ) );
+				datapath += "Resources/casa-data";
+			}
+			// initialize casacore...
+			std::list<std::string> datadirs;
+			datadirs.push_back(datapath);
+			casacore::AppStateSource::initialize(new PlotmsDataState(datadirs));
+			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+			// set up Qt Plugin Path
+			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+			std::string pluginpath = exepath;
+			pluginpath.erase( pluginpath.end( ) -  16, pluginpath.end( ) );
+			pluginpath += "Plugins";
+			QCoreApplication::addLibraryPath(QString(pluginpath.c_str( )));
+		}
+
+	} else if ( begins_with(exepath,"/tmp/.mount") && ends_with(exepath,"/usr/bin/casaplotms") ||
+		    ends_with(exepath,"/casaplotms.app/usr/bin/casaplotms") ||
+		    ends_with(exepath,"/squashfs-root/usr/bin/casaplotms") ) {
+
+		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+		// linux  --  path is specific to package format
+		//
+		//    .../AppRun implies AppImage bash script startup, e.g. from an unpacked AppImage
+		//    .../CASAplotms.app/usr/bin/CASAplotms implies debugging or running from the
+		//                                          build tree before it has been packaged
+		//
+		// -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+		// initialize CASAplotms app data...
+		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+		if ( datapath == "" ) {
+			// generate path to data...
+			datapath = exepath;
+			//	   .../usr/bin/casaplotms
+			//		   123456789012345678
+			//					1
+			datapath.erase( datapath.end( ) - 18, datapath.end( ) );
+			datapath += "data";
+		}
+		// initialize casacore...
+		std::list<std::string> datadirs;
+		datadirs.push_back(datapath);
+		casacore::AppStateSource::initialize(new PlotmsDataState(datadirs));
+		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+		// set up Qt Plugin Path
+		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+		std::string pluginpath = exepath;
+		//	   .../usr/bin/casaplotms
+		//		   123456789012345678
+		//					1
+		pluginpath.erase( pluginpath.end( ) - 18, pluginpath.end( ) );
+		pluginpath += "usr/lib/plugins";
+		QCoreApplication::addLibraryPath(QString(pluginpath.c_str( )));
+	}
+
 
     // If run from casapy, don't let Ctrl-C kill the application.
     if(casapy) signal(SIGINT,SIG_IGN);

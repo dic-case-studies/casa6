@@ -906,12 +906,12 @@ void ComponentList::writeTable() {
   }
   DebugAssert(itsTable.isWritable(), AipsError);
   {
-    const uInt nRows = itsTable.nrow();
-    const uInt nelem = nelements();
+    const casacore::rownr_t nRows = itsTable.nrow();
+    const casacore::rownr_t nelem = nelements();
     if (nRows < nelem) {
       itsTable.addRow(nelem - nRows);
     } else if (nRows > nelem) {
-      Vector<uInt> rows(nRows - nelem);
+      Vector<casacore::rownr_t> rows(nRows - nelem);
       indgen(rows, nelem);
       itsTable.removeRow(rows);
     }

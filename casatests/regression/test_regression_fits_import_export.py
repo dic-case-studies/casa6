@@ -1,7 +1,7 @@
 
 #############################################################################
-# $Id:$
-# Test Name:                                                                #
+# $Id:$                                                                     #
+# Test Name: test_regression_fits_import_export.py                          #
 #    Regression Test Script for importfits/exportfits                       #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
