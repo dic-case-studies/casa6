@@ -31,8 +31,8 @@ else:
 
 def deconvolve(
     ####### Data Selection
-    #vis,#=''                                         -> not necessary: need to remove
-    #selectdata,                                      -> not necessary: not used in tclean anywhere?
+    #vis,#=''               -> not necessary: need to remove
+    #selectdata,            -> not necessary: not used in tclean anywhere?
     #field,#='',               -> testing removal of allselpars
     #spw,#='',                 -> testing removal of allselpars
     #timerange,#='',           -> testing removal of allselpars
@@ -40,17 +40,17 @@ def deconvolve(
     #antenna,#='',             -> testing removal of allselpars
     #scan,#='',                -> testing removal of allselpars
     #observation,#='',         -> testing removal of allselpars
-    #intent,#='',                                     -> not necessary: not used in tclean anywhere?
+    #intent,#='',           -> not necessary: not used in tclean anywhere?
     #datacolumn,#='corrected', -> testing removal of allselpars
 
     ####### Image definition
     imagename,#='',                                   -> now the first positional argument, indicating the dirty image to start from
-    #imsize,#=[100,100],                              -> not necessary: can be gleaned from the size of the dirty image created in the major cycle from tclean
+    #imsize,#=[100,100],                              -> not necessary: can be gleaned from the size of the dirty image created in the major cycle from tclean TODO is this correct?
     #cell,#=['1.0arcsec','1.0arcsec'],                -> not necessary: already set in major cycle of tclean?
     #phasecenter,#='J2000 19:59:28.500 +40.44.01.50', -> not necessary: already set in major cycle of tclean?
     #stokes,#='I',                                    -> not necessary: already set in major cycle of tclean?
     #projection,#='SIN',                              -> not necessary: already set in major cycle of tclean?
-    startmodel,#='',                                  -> kept: if the model gets updated then this allows for a choice in where to put the updated model TODO is this true?
+    startmodel,#='',                                  -> kept: allows for a different model name than imagename
 
     ## Spectral parameters
     #specmode,#='mfs',  -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
@@ -120,6 +120,7 @@ def deconvolve(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False, TODO test with TRUE
+    plotReport,#=False
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -143,17 +144,23 @@ def deconvolve(
     ## Misc
 
     restart,#=True,
-    savemodel,#="none",
+    iterbot):#=None
+    """
+    Runs the minor cycle only of tclean.
+    Most of this code is copied directly from tclean.
+    """
+    #savemodel,#="none",    -> not necessary: should be done in the major cycle
 
     ####### State parameters
-    parallel):#=False)
+    #parallel):#=False) -> not necessary: no parallelized version of deconvolver-only task
 
     # used in PySynthesisImager:
-    # * allselpars  (initializeImagers)
-    # * allgridpars (initializeImagers)
+    # * allselpars  (initializeImagers) -> not necessary
+    # * allgridpars (initializeImagers) -> not necessary
     # * allimpars   (__init__, initializeImagers, estimatememory, hasConverged, runMinorCycleCore)
     # * alldecpars  (initializeDeconvolvers, hasConverged, runMinorCycleCore)
     # * iterpars    (initializeIterationControl)
+    #
     # these translate as:
     # * allselpars:  vis, field, spw, scan, timerange, uvrange, antenna, observation, state, datacolumn, savemodel
     # * allgridpars: gridder, aterm, psterm, mterm, wbawp, cfcache, usepointing, dopbcorr, conjbeams, computepastep, rotatepastep,
@@ -170,12 +177,8 @@ def deconvolve(
 
     # clean input
     inp=locals().copy()
-    inp['msname']      = '' #                   -> no 'vis' parameter for minor cycle only
+    inp['msname']      = '' # -> no 'vis' parameter for minor cycle only
     inp['cycleniter']  = inp['niter']
-    # inp['timestr']   = inp.pop('timerange')   -> testing removal of allselpars
-    # inp['uvdist']    = inp.pop('uvrange')     -> testing removal of allselpars
-    # inp['obs']       = inp.pop('observation') -> testing removal of allselpars
-    # inp['state']     = 'inp.pop('intent')     -> not necessary: not used in tclean anywhere?
     inp['loopgain']    = inp.pop('gain')
     inp['scalebias']   = inp.pop('smallscalebias')
 
@@ -184,51 +187,20 @@ def deconvolve(
     #####################################################
     
     # make a list of parameters with defaults from tclean
-    # TODO this pcube check is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
     if is_python3:
         defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
     else:
         defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
 
-    ## assign values to the ones passed to tclean and if not defined yet in tclean...
+    ## assign values to the ones passed to deconvolve and if not defined yet in deconvolve...
     ## assign them the default value of the constructor
-    ## stolen directly from tclean
     bparm={k:  inp[k] if k in inp else defparm[k]  for k in defparm.keys()}
-
-    # TODO this pcube check is now in at least two different tasks (tclean, deconvolve). Should it be moved into common code somewhere?
-    pcube = False
-    if parallel==True and specmode!='mfs':
-        pcube=True
-        parallel=False
-
-    # TODO this bparm check is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
-    # TODO not necessary if we're removing it along with the rest of the gridding parameters
-    ###default mosweight=True is tripping other gridders as they are not
-    ###expecting it to be true
-    # if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
-    #     bparm['mosweight']=False
 
     ## create the parameters list help object
     paramList=ImagerParameters(**bparm)
 
-    ## Setup Imager objects, for different parallelization schemes.
-    imager=None
-    imagerInst=PySynthesisImager
-    if parallel==False and pcube==False:
-         imager = PySynthesisImager(params=paramList,activities=PySynthesisImager.minorActivities)
-         imagerInst=PySynthesisImager
-    elif parallel==True:
-         imager = PyParallelContSynthesisImager(params=paramList)
-         imagerInst=PyParallelContSynthesisImager
-    elif pcube==True:
-         imager = PyParallelCubeSynthesisImager(params=paramList)
-         imagerInst=PyParallelCubeSynthesisImager
-         # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
-         #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
-         concattype='copyvirtual'
-    else:
-         print('Invalid parallel combination in doClean.')
-         return False
+    ## Setup Imager object
+    imager = PyDeconvolver(params=paramList)
 
     #####################################################
     #### Run the minor cycle
@@ -236,65 +208,41 @@ def deconvolve(
 
     retrec = {}
     try:
-        # quick inputs check
-        if niter == 0:
-            return True
 
         #################################################
         #### Setup
         #################################################
 
         ## Init minor cycle elements
-        print("initializing imager")
+        print("initializing deconvolver")
         t0=time.time();
-        autoInit=True # TODO testing/discussing initializeAuto
-        if autoInit:
-            imager.initializeAuto()
+        imager.initializeDeconvolvers()
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+        ## setup iteration controller
+        if (iterbot != None)
+            imager.setIterationControl(iterbot)
         else:
-            # imager.initializeImagers()     # -> not needed with activities changes to PySynthesisImager
-            # imager.initializeNormalizers() # -> not needed for minor cycle
-            # imager.setWeighting()          # -> not needed for minor cycle
-            imager.initializeDeconvolvers()
-            ####now is the time to check estimated memory
-            imager.estimatememory()
-            ## setup iteration controller
             imager.initializeIterationControl()
         t1=time.time();
         casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
-
-        ## Make PSF
-        ### Don't need to make the PSF -> The first run
-        ### of the major cycle should have done this.
-        # if calcpsf==True:
-        #     print("building PSF")
-        #     imager.makePSF()
-        #     if((psfphasecenter != '') and (gridder=='mosaic')):
-        #         print("doing with different phasecenter psf")
-        #         imager.unlockimages(0)
-        #         psfParameters=paramList.getAllPars()
-        #         psfParameters['phasecenter']=psfphasecenter
-        #         psfParamList=ImagerParameters(**psfParameters)
-        #         psfimager=imagerInst(params=psfParamList)
-        #         psfimager.initializeImagers()
-        #         psfimager.setWeighting()
-        #         psfimager.makeImage('psf', psfParameters['imagename']+'.psf')
-        #     imager.makePB()
-
-        ## Set up the internal state of the iterater and automask
-        # is this necessary? -> I think so ~bgb200731
-        isit = imager.hasConverged()
-        imager.updateMask()
 
         #################################################
         #### Exec
         #################################################
 
-        if not imager.hasConverged(): # here in case updateMask() produces an all-false mask
-            print("running minor cycle");
-            t0=time.time();
-            imager.runMinorCycle()
-            t1=time.time();
-            casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+        if niter > 0:
+            ## Set up the internal state of the iterater and automask
+            # is this necessary? -> I think so ~bgb200731
+            isit = imager.hasConverged()
+            imager.updateMask()
+
+            if not imager.hasConverged(): # here in case updateMask() produces an all-false mask
+                print("running minor cycle");
+                t0=time.time();
+                imager.runMinorCycle()
+                t1=time.time();
+                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
         #################################################
         #### Teardown
@@ -303,6 +251,8 @@ def deconvolve(
         ## Get summary from iterbot
         if type(bparm['interactive']) != bool:
             retrec=imager.getSummary();
+            if plotReport:
+                PySynthesisImager.plotReport(retrec)
 
         # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
         ## Restore images.
@@ -318,19 +268,7 @@ def deconvolve(
                 casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
         ##close tools
-        # needs to deletools before concat or lock waits for ever
         imager.deleteTools()
-   
-        # TODO this concatImages is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
-        if (pcube):
-            print("running concatImages ...")
-            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_deconvolve")
-            imager.concatImages(type=concattype)
-
-        # TODO this casalog.post is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?        
-        # CAS-10721 
-        if niter>0 and savemodel != "none":
-            casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_deconvolve")
 
     except Exception as e:
         casalog.post('Exception from deconvolve : ' + str(e), "SEVERE", "deconvolve")

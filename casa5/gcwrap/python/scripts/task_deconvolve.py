@@ -1,149 +1,283 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
-from taskinit import *
-import pdb
-ia, dc, tb=gentools(['ia', 'dc', 'tb'])
+import shutil
+import numpy
+import copy
+import time
 
-def deconvolve(imagename,model,psf,alg,niter,gain,threshold,mask,scales,sigma,targetflux,prior):
-    """ deconvolve: Image based deconvolver. The psf provided is
-    deconvolved out of the image provided.
+# get is_CASA6 and is_python3, and import other classes
+try:
+    from casatasks.private.casa_transition import *
+except:
+    from sys import version_info
+    is_python3 = version_info > (3,)
+    is_CASA6 = is_python3
+if is_CASA6:
+    from casatasks import casalog
 
-    	Keyword arguments:
-    	imagename -- Name of input image to be deconvoled
-    	model     -- Name of output to store found model, a.k.a clean components
-    	psf       -- Name of psf image to use e.g  psf='mypsf.image' .
-     	             But if the psf has 3 parameter, then
-       		     a gaussian psf is assumed with the values representing
-                     the major , minor and position angle  values
-                     e.g  psf=['3arcsec', '2.5arcsec', '10deg']
-    	alg       -- algorithm to use clark, hogbom or multiscale or mem. if multiscale 
-       	             the parameter scale is used to define the number of scales.
-    	niter     -- Number of iteration
-    	gain      -- CLEAN gain parameter; fraction to remove from peak (< 1.0)
-    	threshold -- deconvolution stopping threshold: if no peak above
-       	             found above this level 
-    	mask      -- mask image (same shape as image and psf) to limit region
-       	             where deconvoltion is to occur
-    	------parameters useful for multiscale only
-    	scales     -- parameter needed for multiscale clean. default value [0,3,10]
-    	------parameters useful for mem only
-    	sigma     -- Estimated noise for image
-    	targetflux -- Target total flux in image 
-    	prior     -- Prior image to guide mem
+    from casatasks.private.imagerhelpers.imager_base import PySynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+else:
+    from taskinit import *
 
+    from imagerhelpers.imager_base import PySynthesisImager
+    from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
+    from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from imagerhelpers.input_parameters import ImagerParameters
+
+def deconvolve(
+    ####### Data Selection
+    #vis,#=''               -> not necessary: need to remove
+    #selectdata,            -> not necessary: not used in tclean anywhere?
+    #field,#='',               -> testing removal of allselpars
+    #spw,#='',                 -> testing removal of allselpars
+    #timerange,#='',           -> testing removal of allselpars
+    #uvrange,#='',             -> testing removal of allselpars
+    #antenna,#='',             -> testing removal of allselpars
+    #scan,#='',                -> testing removal of allselpars
+    #observation,#='',         -> testing removal of allselpars
+    #intent,#='',           -> not necessary: not used in tclean anywhere?
+    #datacolumn,#='corrected', -> testing removal of allselpars
+
+    ####### Image definition
+    imagename,#='',                                   -> now the first positional argument, indicating the dirty image to start from
+    #imsize,#=[100,100],                              -> not necessary: can be gleaned from the size of the dirty image created in the major cycle from tclean TODO is this correct?
+    #cell,#=['1.0arcsec','1.0arcsec'],                -> not necessary: already set in major cycle of tclean?
+    #phasecenter,#='J2000 19:59:28.500 +40.44.01.50', -> not necessary: already set in major cycle of tclean?
+    #stokes,#='I',                                    -> not necessary: already set in major cycle of tclean?
+    #projection,#='SIN',                              -> not necessary: already set in major cycle of tclean?
+    startmodel,#='',                                  -> kept: allows for a different model name than imagename
+
+    ## Spectral parameters
+    #specmode,#='mfs',  -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #reffreq,#='',      -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #nchan,#=1,         -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #start,#='',        -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #width,#='',        -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #outframe,#='LSRK', -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #veltype,#='',      -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #restfreq,#=[''],   -> testing removal of allimpars ? needed in the case that we're working with an image cube ?
+    #interpolation,#='',             -> testing removal of allgridpars ? needed in the case that we're working with an image cube ?
+    #perchanweightdensity, #='' -> not necessary: part of weightpars which aren't used
+    ## 
+    ####### Gridding parameters
+    #gridder,#='ft',                 -> testing removal of allgridpars ? needed during image to uv gridding ?
+    #facets,#=1,                     -> testing removal of allgridpars ? needed during image to uv gridding ?
+    #psfphasecenter,#='',                             -> not necessary: used in generating PSF in tclean python code
+    #chanchunks,#=1,                 -> testing removal of allgridpars ? needed during image to uv gridding ?
+
+    #wprojplanes,#=1,                -> testing removal of allgridpars ? needed during image to uv gridding ?
+
+    ### PB
+    #vptable,#                       -> testing removal of allgridpars ? needed during image to uv gridding ?
+    #mosweight, #=True               -> testing removal of allgridpars ? needed during image to uv gridding ?
+    #aterm,#=True,                   -> testing removal of allgridpars ? needed during restoration ? 
+    #psterm,#=True,                  -> testing removal of allgridpars ? needed during restoration ?
+    #wbawp ,#= True,                 -> testing removal of allgridpars ? needed during restoration ?
+    #conjbeams ,#= True,             -> testing removal of allgridpars ? needed during restoration ?
+    #cfcache ,#= "",                 -> testing removal of allgridpars ? needed during restoration ?
+    #usepointing, #=false            -> testing removal of allgridpars
+    #computepastep ,#=360.0,         -> testing removal of allgridpars
+    #rotatepastep ,#=360.0,          -> testing removal of allgridpars
+    #pointingoffsetsigdev ,#=[10.0], -> testing removal of allgridpars
+
+    #pblimit,#=0.01,         -> not necessary: part of allnormpars which aren't used
+    #normtype,#='flatnoise', -> not necessary: part of allnormpars which aren't used
+
+    ####### Deconvolution parameters
+    deconvolver,#='hogbom',
+    scales,#=[],
+    #nterms,#=1,        -> testing removal of allimpars
+    smallscalebias,#=0.0
+
+    ### restoration options
+    restoration,
+    restoringbeam,#=[],
+    pbcor,
+
+    ##### Outliers
+    outlierfile,#='',
+
+    ##### Weighting
+    #weighting,#='natural',     -> not necessary: part of weightpars which aren't used
+    #robust,#=0.5,              -> not necessary: part of weightpars which aren't used
+    #noise,#0.0Jy               -> not necessary: part of weightpars which aren't used
+    #npixels,#=0,               -> not necessary: part of weightpars which aren't used
+    #uvtaper,#=[],              -> not necessary: part of weightpars which aren't used
+
+
+    ##### Iteration control
+    niter,#=0, 
+    gain,#=0.1,
+    threshold,#=0.0, 
+    nsigma,#=0.0
+    #cycleniter,#=0, since we're only doing one minor loop, this can be a mirror of niter
+    cyclefactor,#=1.0,
+    minpsffraction,#=0.1,
+    maxpsffraction,#=0.8,
+    interactive,#=False, TODO test with TRUE
+    plotReport,#=False
+
+    ##### (new) Mask parameters
+    usemask,#='user',
+    mask,#='',
+    pbmask,#='',
+
+    ##### automask by multithresh
+    sidelobethreshold,#=5.0,
+    noisethreshold,#=3.0,
+    lownoisethreshold,#=3.0,
+    negativethreshold,#=0.0,
+    smoothfactor,#=1.0,
+    minbeamfrac,#=0.3, 
+    cutthreshold,#=0.01,
+    growiterations,#=100
+    dogrowprune,#=True
+    #minpercentchange,#=0.0 -> not necessary: no major loops
+    verbose, #=False
+    fastnoise, #=False
+
+    ## Misc
+
+    restart,#=True,
+    iterbot):#=None
     """
-    
-    
-    casalog.origin('deconvolve')
-        
-    tmppsf=''
-    tmpImagename=''
-    if(len(psf)==0):
-        raise Exception, "****give some psf please****"
-    if(len(psf)==1):
-        if (type(psf[0])==str and os.path.exists(psf[0])):
-            psf=psf[0]
-            ia.open(psf)
-            psfaxis=len(ia.shape())
-            ia.close()
-            if(psfaxis<4):
-                modPsf=_add_axes(psf)
-                if modPsf is False:
-                    raise Exception, "****problem with input psf image****"
-                else:
-                    tmppsf='__decon_tmp_psf'
-                    ia.fromimage(tmppsf,modPsf, overwrite=True)
-                    ia.close()
-                    psf=tmppsf
-            ia.open(imagename)
-            imnaxis=len(ia.shape())
-            ia.close()
-            if(imnaxis<4):
-                tmpImagename=_add_axes(imagename)
-                if tmpImagename is False:
-                    raise Exception, "****problem with input diry image****"
-                else:
-                    imagename=tmpImagename
+    Runs the minor cycle only of tclean.
+    Most of this code is copied directly from tclean.
+    """
+    #savemodel,#="none",    -> not necessary: should be done in the major cycle
 
-        else:
-            raise Exception, "****psf file, %s does not exist****" % psf
+    ####### State parameters
+    #parallel):#=False) -> not necessary: no parallelized version of deconvolver-only task
 
-    if(len(psf)==3):
-        #We've got bmaj bmin bpa
-        # add axes if the input dirty image does not have four axes
-        ia.open(imagename)
-        imnaxis=len(ia.shape())
-        #csys=ia.coordsys()
-        ia.close()
-        if(imnaxis<4):
-           tmpImagename=_add_axes(imagename)
-           if tmpImagename is False:
-               raise Exception, "****problem with input diry image****"
-           else:
-               imagename=tmpImagename
-        tmppsf=model+'.psf'
-        dc.open(imagename,psf='', warn=False)
-        print 
-        dc.makegaussian(tmppsf,bmaj=psf[0],bmin=psf[1],
-                        bpa=psf[2], normalize=False)
-        dc.close()
-        psf=tmppsf
-    dc.open(imagename,psf=psf)
-    if(alg=='multiscale'):
-        dc.setscales(scalemethod='uservector', uservector=scales)
-    if((alg=='hogbom') or (alg=='multiscale')):
-        dc.clean(algorithm=alg, model=model, niter=niter, gain=gain,
-                 mask=mask, threshold=qa.quantity(threshold, 'mJy'))
-    elif(alg=='clark'):
-        dc.clarkclean(niter=niter, model=model, mask=mask,
-                      gain=gain, threshold=qa.quantity(threshold, 'mJy'))
-    elif(alg=='mem'):
-        dc.mem(niter=niter, sigma=sigma, targetflux=targetflux,
-               model=model, prior=prior)
+    # used in PySynthesisImager:
+    # * allselpars  (initializeImagers) -> not necessary
+    # * allgridpars (initializeImagers) -> not necessary
+    # * allimpars   (__init__, initializeImagers, estimatememory, hasConverged, runMinorCycleCore)
+    # * alldecpars  (initializeDeconvolvers, hasConverged, runMinorCycleCore)
+    # * iterpars    (initializeIterationControl)
+    #
+    # these translate as:
+    # * allselpars:  vis, field, spw, scan, timerange, uvrange, antenna, observation, state, datacolumn, savemodel
+    # * allgridpars: gridder, aterm, psterm, mterm, wbawp, cfcache, usepointing, dopbcorr, conjbeams, computepastep, rotatepastep,
+    #                pointingoffsetsigdev, facets, chanchunks, interpolation, wprojplanes, deconvolver,
+    #                vptable, gridfunction, convsupport, truncate, gwidth, jwidth, minweight, clipminmax, imagename
+    # * allimpars:   imagename, nchan, imsize, cell, phasecenter, stokes, specmode, start, width, veltype, nterms, restfreq, outframe,
+    #                reffreq, sysvel, sysvelframe, projection, restart, startmodel, deconvolver
+    # ** ^^notes^^ just need imagename and imsize, I think?
+    # * alldecpars:  deconvolver, nterms, scales, smallscalebias, restoringbeam, usemask, mask, pbmask, maskthreshold, maskresolution,
+    #                nmask, sidelobethreshold, noisethreshold, lownoisethreshold, negativethreshold,
+    #                smoothfactor, minbeamfrac, cutthreshold, growiterations, dogrowprune, minpercentchange, verbose, fastnoise,
+    #                interactive, startmodel, nsigma,  imagename
+    # * iterpars:    niter, cycleniter, threshold, gain, interactive, cyclefactor, minpsffraction, maxpsffraction, savemodel, nsigma
+
+    # clean input
+    inp=locals().copy()
+    inp['msname']      = '' # -> no 'vis' parameter for minor cycle only
+    inp['cycleniter']  = inp['niter']
+    inp['loopgain']    = inp.pop('gain')
+    inp['scalebias']   = inp.pop('smallscalebias')
+
+    #####################################################
+    #### Construct ImagerParameters and Imager objects
+    #####################################################
+    
+    # make a list of parameters with defaults from tclean
+    if is_python3:
+        defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
     else:
-        raise Exception, '****algorithm %s is not known****'%alg
-    dc.restore(model=model, image=model+'.restored')
-    dc.residual(model=model, image=model+'.residual')
-    dc.close()    
-    #if(len(tmppsf) != 0):
-    #    os.system('rm -rf '+tmppsf)
-    if(len(tmpImagename) != 0):
-        #os.system('rm -rf '+tmpImagename)
-        ia.removefile(tmpImagename)
-    tb.clearlocks()
-   
-# helper function to add degenerate axes
-def _add_axes(inImage):
-        tmpim=''
-        tmpim2=''
-        outImage=''
-	ok=ia.open(inImage)
-        if ok:
-            tmpim='__decon_tmp_im'
-            csys=ia.coordsys()
-            isStokes=csys.findcoordinate('stokes')['return'] 
-            isSpectral=csys.findcoordinate('spectral')['return'] 
-            if not isStokes:
-                ia.open(inImage)
-                ib=ia.adddegaxes(tmpim, stokes="I", overwrite=True)
-                ia.close() 
-                ib.done()
-                if not isSpectral:
-                    tmpim2='__decon_tmp_im2'
-                    ia.open(tmpim)
-                    ib=ia.adddegaxes(tmpim2, spectral=True, overwrite=True)
-                    ia.remove()
-                    outImage=tmpim2
-                    ib.done()
-                else:
-                    outImage=tmpim
-            elif not isSpectral:
-                ia.open(inImage)
-                ib=ia.adddegaxes(tmpim, spectral=True, overwrite=True)
-                ia.close()
-                ib.done()
-                outImage=tmpim
-            else:
-                outImage=inImage 
-            return outImage 
+        defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+
+    ## assign values to the ones passed to deconvolve and if not defined yet in deconvolve...
+    ## assign them the default value of the constructor
+    bparm={k:  inp[k] if k in inp else defparm[k]  for k in defparm.keys()}
+
+    ## create the parameters list help object
+    paramList=ImagerParameters(**bparm)
+
+    ## Setup Imager object
+    imager = PyDeconvolver(params=paramList)
+
+    #####################################################
+    #### Run the minor cycle
+    #####################################################
+
+    retrec = {}
+    try:
+
+        #################################################
+        #### Setup
+        #################################################
+
+        ## Init minor cycle elements
+        print("initializing deconvolver")
+        t0=time.time();
+        imager.initializeDeconvolvers()
+        ####now is the time to check estimated memory
+        imager.estimatememory()
+        ## setup iteration controller
+        if (iterbot != None)
+            imager.setIterationControl(iterbot)
         else:
-           return False
+            imager.initializeIterationControl()
+        t1=time.time();
+        casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+
+        #################################################
+        #### Exec
+        #################################################
+
+        if niter > 0:
+            ## Set up the internal state of the iterater and automask
+            # is this necessary? -> I think so ~bgb200731
+            isit = imager.hasConverged()
+            imager.updateMask()
+
+            if not imager.hasConverged(): # here in case updateMask() produces an all-false mask
+                print("running minor cycle");
+                t0=time.time();
+                imager.runMinorCycle()
+                t1=time.time();
+                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+
+        #################################################
+        #### Teardown
+        #################################################
+
+        ## Get summary from iterbot
+        if type(bparm['interactive']) != bool:
+            retrec=imager.getSummary();
+            if plotReport:
+                PySynthesisImager.plotReport(retrec)
+
+        # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
+        ## Restore images.
+        if restoration==True:  
+            t0=time.time();
+            imager.restoreImages()
+            t1=time.time();
+            casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+            if pbcor==True:
+                t0=time.time();
+                imager.pbcorImages()
+                t1=time.time();
+                casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+
+        ##close tools
+        imager.deleteTools()
+
+    except Exception as e:
+        casalog.post('Exception from deconvolve : ' + str(e), "SEVERE", "deconvolve")
+        if imager != None:
+            imager.deleteTools() 
+
+        larg = list(e.args)
+        larg[0] = 'Exception from deconvolve : ' + str(larg[0])
+        e.args = tuple(larg)
+        raise
+
+    return retrec;
