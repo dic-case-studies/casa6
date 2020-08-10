@@ -36,12 +36,8 @@ Summary...
 
 #############################################
 class PySynthesisImager:
-    majorActivities = ['pbgen','psfgen','gridding','residual','dirty'] # PB generation, PSF generation, gridding/convolution, residual image generation, dirty image generation
-    minorActivities = ['decon','recon']                                # deconvolution, reconstruction/normalization
 
-    def __init__(self,params,activities=['pbgen','psfgen','gridding','residual','dirty','decon','recon']):
-        self.activities=activities
-
+    def __init__(self,params):
         ################ Tools
         self.initDefaults()
 
@@ -75,17 +71,11 @@ class PySynthesisImager:
 #            print('Invalid parameters')
 
 #############################################
-    def checkParameters(self):
+#    def checkParameters(self):
 #        # Copy the imagename from impars to decpars, for each field.
 #        for immod in range(0,self.NF):
 #            self.alldecpars[str(immod)]['imagename'] = self.allimpars[str(immod)]['imagename']
-        if self.iterpars['niter'] <= 0 and 'decon' not in self.activities:
-            casalog.post("***niter can't be " + self.iterpars['niter'] + " when 'decon' not in selected activities, coercing niter to 0", "WARN", "task_tclean"); # TODO should this be warn or info3?
-            self.iterpars['niter'] = 0
-        if self.iterpars['savemodel'] != "none" and not any(item in self.majorActivities for item in self.activities):
-            casalog.post("***savemodel can't be " + self.iterpars['savemodel'] + " when only minor activities are selected, coercing savemodel to none", "WARN", "task_tclean"); # TODO should this be warn or info3?
-            self.iterpars['savemodel'] = 'none'
-        return True
+#        return True
 
 #############################################
     def makeCFCache(self,exists):
@@ -101,10 +91,6 @@ class PySynthesisImager:
         
 #############################################
     def initializeImagers(self):
-
-        ## Actives check TODO remove
-        if not any(item in self.majorActivities for item in self.activities):
-            raise Exception("Trying to initializeImagers with limited activities {0}: \n".format(self.activities))
         
         ## Initialize the tool for the current node
         self.SItool = synthesisimager()
@@ -144,11 +130,6 @@ class PySynthesisImager:
 #############################################
 
     def initializeDeconvolvers(self):
-
-         ## Actives check TODO remove
-         if not any(item in self.minorActivities for item in self.activities):
-              raise Exception("Trying to initializeDeconvolvers with limited activities {0}: \n".format(self.activities))
-
          for immod in range(0,self.NF):
               self.SDtools.append(synthesisdeconvolver())
               self.SDtools[immod].setupdeconvolution(decpars=self.alldecpars[str(immod)])
@@ -157,11 +138,6 @@ class PySynthesisImager:
 #############################################
     ## Overloaded by ParallelCont
     def initializeNormalizers(self):
-
-        ## Actives check TODO remove
-        if not any(item in self.major for item in self.activities):
-            raise Exception("Trying to initializeNormalizers with limited activities {0}: \n".format(self.activities))
-
         for immod in range(0,self.NF):
             self.PStools.append(synthesisnormalizer())
             normpars = self.allnormpars[str(immod)]
@@ -175,62 +151,23 @@ class PySynthesisImager:
         itbot = self.IBtool.setupiteration(iterpars=self.iterpars)
 
 #############################################
-    def initializeAuto(self):
-        """
-        Initializes different parts of this instance based on the activities given in __init__.
-        """
-
-        ## Init major cycle elements
-        if any(item in self.majorActivities for item in self.activities):
-            t0=time.time();
-            self.initializeImagers()
-
-            self.initializeNormalizers()
-            self.setWeighting()
-            t1=time.time();
-            casalog.post("***Time for initializing imager and normalizers: "+"%.2f"%(t1-t0)+" sec", "INFO3");
-
-        ## Init minor cycle elements
-        if any(item in self.minorActivities for item in self.activities):
-            # if self.iterpars['niter']>>0 or restoration==True:
-                t0=time.time();
-                self.initializeDeconvolvers()
-                t1=time.time();
-                casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3");
-
-        ####now is the time to check estimated memory
-        self.estimatememory()
-            
-        # if self.iterpars['niter']>>0:
-        # if 'decon' in self.activities:
-        if True:
-            t0=time.time();
-            self.initializeIterationControl()
-            t1=time.time();
-            casalog.post("***Time for initializing iteration controller: "+"%.2f"%(t1-t0)+" sec", "INFO3");
-
-#############################################
     def estimatememory(self):
         #print "MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory())
-
-        griddermem = 0
-        if any(item in self.majorActivities for item in self.activities) and (self.SItool != None):
+        #griddermem=0
+        if(self.SItool != None):
             griddermem= self.SItool.estimatememory()
-
         deconmem=0
-        if any(item in self.minorActivities for item in self.activities):
-            for immod in range(0,self.NF):
-                ims= self.allimpars[str(immod)]['imsize']
-                if(type(ims)==int) :
-                    ims=[ims, ims]
-                if(len(ims) ==1):
-                    ims.append(ims[0])
-                #print 'shape', self.allimpars[str(immod)]['imsize'], len(ims) 
-                #print "DECON mem usage ", self.SDtools[immod].estimatememory(ims)
-                if(len(self.SDtools) > immod):
-                    if(self.SDtools != None):
-                        deconmem+=self.SDtools[immod].estimatememory(ims)
-
+        for immod in range(0,self.NF):
+            ims= self.allimpars[str(immod)]['imsize']
+            if(type(ims)==int) :
+                ims=[ims, ims]
+            if(len(ims) ==1):
+                ims.append(ims[0])
+            #print 'shape', self.allimpars[str(immod)]['imsize'], len(ims) 
+            #print "DECON mem usage ", self.SDtools[immod].estimatememory(ims)
+            if(len(self.SDtools) > immod):
+                if(self.SDtools != None):
+                    deconmem+=self.SDtools[immod].estimatememory(ims)
         availmem=ctsys_hostinfo()['memory']['available']
         if((deconmem+griddermem) > 0.8*availmem):
             casalog.post("Memory available "+str(availmem)+" kB is very close to amount of required memory "+str(deconmem+griddermem)+" kB" , "WARN")
@@ -291,26 +228,22 @@ class PySynthesisImager:
 #############################################
 
     def deleteTools(self):
-        if any(item in self.majorActivities for item in self.activities):
-            self.deleteImagers()
-        if 'decon' in self.activities:
-            self.deleteDeconvolvers()
-        if 'recon' in self.activities:
-            self.deleteNormalizers()
-        self.deleteIterBot()
-        self.deleteWorkDir()
-        self.initDefaults()
-        self.deleteCluster()
+         self.deleteImagers()
+         self.deleteDeconvolvers()
+         self.deleteNormalizers()
+         self.deleteIterBot()
+         self.deleteWorkDir()
+         self.initDefaults()
+         self.deleteCluster()
 
 #############################################
 
     def hasConverged(self):
         # Merge peak-res info from all fields to decide iteration parameters
          self.IBtool.resetminorcycleinfo() 
-         if any(item in self.minorActivities for item in self.activities):
-             for immod in range(0,self.NF):
-                  initrec =  self.SDtools[immod].initminorcycle() 
-                  self.IBtool.mergeinitrecord( initrec );
+         for immod in range(0,self.NF):
+              initrec =  self.SDtools[immod].initminorcycle() 
+              self.IBtool.mergeinitrecord( initrec );
 
 #         # Run interactive masking (and threshold/niter editors)
 #         self.runInteractiveGUI2()
@@ -355,9 +288,8 @@ class PySynthesisImager:
     def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
-        if any(item in self.minorActivities for item in self.activities):
-            for immod in range(0,self.NF):
-                maskchanged = maskchanged | self.SDtools[immod].setupmask() 
+        for immod in range(0,self.NF):
+            maskchanged = maskchanged | self.SDtools[immod].setupmask() 
         
         # Run interactive masking (and threshold/niter editors), if interactive=True
         maskchanged = maskchanged | self.runInteractiveGUI2()
@@ -406,7 +338,7 @@ class PySynthesisImager:
         for immod in range(0,self.NF):
             self.PStools[immod].gatherpsfweight() 
             self.PStools[immod].dividepsfbyweight()
-            if any(item in self.minorActivities for item in self.activities) and self.SDtools != []:
+            if self.SDtools != []:
                 if immod <= len(self.SDtools) - 1:
                     self.SDtools[immod].checkrestoringbeam()
 
@@ -433,11 +365,10 @@ class PySynthesisImager:
         if self.IBtool != None:
             self.IBtool.endmajorcycle()
         ### Gather residuals (if needed) and normalize by weight
-        if 'residual' in self.activities:
-            for immod in range(0,self.NF):
-                self.PStools[immod].gatherresidual() 
-                self.PStools[immod].divideresidualbyweight()
-                self.PStools[immod].multiplymodelbyweight()
+        for immod in range(0,self.NF):
+            self.PStools[immod].gatherresidual() 
+            self.PStools[immod].divideresidualbyweight()
+            self.PStools[immod].multiplymodelbyweight()
 
 #############################################
     def predictModel(self):
@@ -713,4 +644,3 @@ class PySynthesisImager:
         return retval
 #######################################################
 #######################################################
-

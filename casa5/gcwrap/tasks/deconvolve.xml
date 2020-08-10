@@ -879,45 +879,6 @@
       <value type="bool">True</value>
     </param>
 
-    <param type="bool" name="calcres">
-     <shortdescription>Calculate initial residual image</shortdescription>
-<description>Calculate initial residual image
-
-                      This parameter controls what the first major cycle does.
-
-                      calcres=False with niter greater than 0 will assume that
-                      a .residual image already exists  and that the minor cycle can
-                      begin without recomputing it.
-
-                      calcres=False with niter=0 implies that only the PSF will be made
-                      and no data will be gridded.
-
-                      calcres=True requires that calcpsf=True or that the .psf and .sumwt
-                      images already exist on disk (for normalization purposes).
-
-                      Usage example : For large runs (or a pipeline scripts) it may be
-                                                  useful to first run deconvolve with niter=0 to create
-                                                  an initial .residual to look at and perhaps make
-                                                  a custom mask for. Imaging can be resumed
-                                                  without recomputing it.
-
-</description>
-      <value type="bool">True</value>
-    </param>
-
-
-    <param type="bool" name="calcpsf">
-      <shortdescription>Calculate PSF</shortdescription>
-      <description>Calculate PSF
-
-                        This parameter controls what the first major cycle does.
-
-                        calcpsf=False will assume that a .psf image already exists
-                        and that the minor cycle can begin without recomputing it.
-      </description>
-      <value type="bool">True</value>
-    </param>
-
     <param type="any" name="iterbot">
       <shortdescription>Used for existing iteration controller</shortdescription>
       <description>The iteration controller. Can be set to use the same iteration controller between
@@ -925,8 +886,7 @@
 
                    Leave or set to None to allow deconvolve to create its own iteration controller.
       </description>
-      <type>iterbotsink</type>
-      <value type="iterbotsink"/>
+      <value type="any">False</value>
     </param>
 
    <constraints>

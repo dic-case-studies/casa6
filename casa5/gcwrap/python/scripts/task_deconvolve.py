@@ -18,15 +18,13 @@ if is_CASA6:
     from casatasks import casalog
 
     from casatasks.private.imagerhelpers.imager_base import PySynthesisImager
-    from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
-    from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
 else:
     from taskinit import *
 
     from imagerhelpers.imager_base import PySynthesisImager
-    from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
-    from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
+    from imagerhelpers.imager_deconvolver import PyDeconvolver
     from imagerhelpers.input_parameters import ImagerParameters
 
 def deconvolve(
@@ -220,7 +218,7 @@ def deconvolve(
         ####now is the time to check estimated memory
         imager.estimatememory()
         ## setup iteration controller
-        if (iterbot != None)
+        if type(iterbot) != bool and iterbot != None:
             imager.setIterationControl(iterbot)
         else:
             imager.initializeIterationControl()
@@ -235,9 +233,9 @@ def deconvolve(
             ## Set up the internal state of the iterater and automask
             # is this necessary? -> I think so ~bgb200731
             isit = imager.hasConverged()
-            imager.updateMask()
+            imager.updateMaskMinor()
 
-            if not imager.hasConverged(): # here in case updateMask() produces an all-false mask
+            if not imager.hasConverged(): # here in case updateMaskMinor() produces an all-false mask
                 print("running minor cycle");
                 t0=time.time();
                 imager.runMinorCycle()
