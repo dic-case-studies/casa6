@@ -433,7 +433,7 @@ def generate_pyinit(moduledir,tools):
         fd.write("""###########################################################################\n""")
         fd.write("from __future__ import absolute_import\n")
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\",\n")
+        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\", \"rundata\"\n")
         for tool in tools:
             if tool != "utils":
                 fd.write("            '%s',\n" % tool)
@@ -481,9 +481,15 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               _distro_dpath = ""
+               _distro_dpath = None
                _dpath = [ ]
+
+               rundata = None
                _user_data = __os.path.expanduser("~/.casa/data")
+               if hasattr(__user,'rundata') and __os.path.isdir(__os.path.expanduser(__user.rundata)):
+                   _user_data = __os.path.expanduser(__user.rundata)
+               elif hasattr(__user,'rcdir') and __os.path.isdir(__os.path.join(__os.path.expanduser(__user.rcdir),'data')):
+                   _user_data = __os.path.join(__os.path.expanduser(__user.rcdir),'data')
 
                if __os.path.isdir(_user_data):
                    _dpath = _dpath + [ _user_data ]
@@ -491,16 +497,18 @@ def generate_pyinit(moduledir,tools):
                    if __os.path.isdir(_iers):
                        _distro_dpath = _user_data
 
-               try:
-                   import casadata
-                   if len(_distro_dpath) == 0:
+               if _distro_dpath is None:
+                   try:
+                       import casadata
                        _distro_dpath = casadata.datapath
-                   _dpath = _dpath + [ _distro_dpath ]
-               except: pass
+                       _dpath = _dpath + [ _distro_dpath ]
+                   except: pass
+
+               rundata = _distro_dpath
 
                ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                if __sys.argv[0] != '-m' and ctsys.resolve('geodetic/IERSeop2000') == 'geodetic/IERSeop2000':
-                   raise ImportError('measures data is not available run "python3 -m casatools --update-user-data" to install/update data in ~/.casa')
+                   raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
                                                                                                                
                from .coercetype import coerce as __coerce
 
