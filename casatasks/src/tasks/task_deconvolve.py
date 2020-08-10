@@ -14,7 +14,6 @@ except:
     from sys import version_info
     is_python3 = version_info > (3,)
     is_CASA6 = is_python3
-    print("is_python3: " + str(is_python3) + ", is_CASA6: " + str(is_CASA6))
 if is_CASA6:
     from casatasks import casalog
 
@@ -30,7 +29,7 @@ else:
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
 
-def beanvolve(
+def deconvolve(
     ####### Data Selection
     #vis,#=''                                         -> not necessary: need to remove
     #selectdata,                                      -> not necessary: not used in tclean anywhere?
@@ -334,23 +333,13 @@ def beanvolve(
             casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_deconvolve")
 
     except Exception as e:
-        casalog.post('Exception from beanvolve : ' + str(e), "SEVERE", "beanvolve")
+        casalog.post('Exception from deconvolve : ' + str(e), "SEVERE", "deconvolve")
         if imager != None:
             imager.deleteTools() 
 
         larg = list(e.args)
-        larg[0] = 'Exception from beanvolve : ' + str(larg[0])
+        larg[0] = 'Exception from deconvolve : ' + str(larg[0])
         e.args = tuple(larg)
         raise
 
     return retrec;
-
-
-if __name__ == "__main__":
-    if True:#('beanvolve_args' not in vars()):
-        print("importing beanvolve_args")
-        exec(open('./beanvolve_args.py').read())
-
-    print("executing beanvolve")
-    ret = beanvolve(**(beanvolve_args.copy()))
-    globals()['beanvolve_ret'] = ret
