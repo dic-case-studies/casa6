@@ -7,24 +7,27 @@ A subset of this runtime data is updated regularly because things like the earth
 
 ## Initial Setup
 
-There are two paths to getting CASA's runtime data. One is by installing a Python package that is only available from NRAO's PyPI repository. Because the packaged data is 336M and is updated every week, it is not possible to put the data on standard Python package servers because of the data size and the frequency of the updates.
+There are two paths to getting CASA's runtime data. One is by installing a Python package that is only available from NRAO's PyPI repository. It is not possible to put the data on standard Python package servers because of the data size and the frequency of the updates.
 
 ### Use Existing Data
 
-If you already have a CASA data repository that contains CASA's runtime data, you can point casatools to this data by setting ```rundata``` in CASA's config directory. For example:
+If you already have a CASA data repository that contains CASA's runtime data, you can point casatools to this data by setting ```rundata``` in CASA's config.py file, ```~/.casa/config.py```. For example:
 ```
 rundata = '/home/casa/data/trunk'
 ```
 
 ### user data installation
 
-You can install the data in CASA's runtime data using casatools with:
+You can install your own copy of CASA's runtime data using casatools with:
 ```
 -bash-4.2$ python3 -m casatools --update-user-data
 ```
-This will install the runtime data into ```~/.casa/data``` (or wherever ```rcdir``` specifies) if it does not already exist. If the directory already exists, it will update the runtime data to the most recent version.
+This will install the runtime data into ```~/.casa/data``` (or a user specified alternative ```rcdir```). If a copy of the runtime data already exists there, it will be updated. If it does not already exist, all of the runtime data will be downloaded (approximately 830MB).
 
 ### casadata package
 
-The casadata package can also be used to supply the runtime data for casatools. It can be installed from CASA's internal PyPI server.
-
+The casadata package can also be used to supply the runtime data for casatools. It can be installed from CASA's internal PyPI server. This can be done like:
+```
+-bash-4.2$ pip3 install --index-url=https://go.nrao.edu/pypi casadata
+```
+This will make the ```casadata``` package available within the current python environment.
