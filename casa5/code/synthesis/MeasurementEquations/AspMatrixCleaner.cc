@@ -391,11 +391,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < itsStrenThres) //try
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < itsStrenThres) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.002) // G55 value, new Asp, old normalization
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
@@ -572,7 +572,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
         // First remove the previous values of aspen in the active-set
         cout << "aspclean: restore with previous scale " << itsPrevAspActiveSet[scale];
-        cout << "at blcPsf1 " << blcPsf1.asVector() << " trcPsf1 " << trcPsf1.asVector();
+        cout << " amp " << itsPrevAspAmplitude[scale];
+        cout << " at blcPsf1 " << blcPsf1.asVector() << " trcPsf1 " << trcPsf1.asVector();
         cout << "at blc1 " << blc1.asVector() << " trc1 " << trc1.asVector() << endl;
 
         makeScale(itsScale, itsPrevAspActiveSet[scale]);
@@ -592,7 +593,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         dirtySub1 += scaleFactorPrev * psfSubPrev;
 
         // Then update with the new values of aspen in the active-set
-        cout << "aspclean: update with new scale " << itsGoodAspActiveSet[scale] << endl;
+        cout << "aspclean: update with new scale " << itsGoodAspActiveSet[scale];
+        cout << " amp " << itsGoodAspAmplitude[scale] << endl;
         makeScale(itsScale, itsGoodAspActiveSet[scale]);
         itsScaleXfr.resize();
         fft.fft0(itsScaleXfr, itsScale);
@@ -1358,7 +1360,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   if (!itsSwitchedToHogbom &&
   	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
   {
-  	cout << "Switched to hogbom because of frequent small components." << endl;
+  	cout << "disabled - Switched to hogbom because of frequent small components." << endl;
     //switchedToHogbom();
   }
 
@@ -1442,8 +1444,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }*/
 
     // test scale up genie
-    /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-      itsAspAmplitude[i] = itsAspAmplitude[i] * 1e8;*/
+    for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+      itsAspAmplitude[i] = itsAspAmplitude[i] * 1e8;
 
 
     // heuristiclly determine active set for speed up
@@ -1460,7 +1462,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 5e3; //M31 gold2
     //const Float lamda = 7e3; //M31 all fixed
     //const Float lamda = 200; //M31 new Asp
-    const Float lamda = 318; //M31 new Asp - gold
+    //const Float lamda = 318; //M31 new Asp - gold
 
     //const Float lamda = 13000.0; //G55
     //const Float lamda = 1120.0; //G55 tesla, 1e8, spw2
@@ -1472,6 +1474,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp, old norm
     //const Float lamda = 2400000; // G55 tesla, 1e8, spw3, new asp, SNorm
     //const Float lamda = 2600000; // G55 tesla, 1e8, spw3, new asp, SNorm2
+    const Float lamda = 130000; // G55 local, 1e8, spw3, new asp, permanent list
     //const Float lamda = 5000000; // G55 tesla, 1e8, spw3, new asp, sNorm3-5 m31 norm, gold
 
     const Float threshold = lamda * resArea;
@@ -1493,7 +1496,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //auto stop = high_resolution_clock::now();
       //auto duration = duration_cast<microseconds>(stop - start);
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
-      //cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
+      cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	if (lenDirVec >= threshold)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
@@ -1529,8 +1532,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
     // the new aspen is always added to the active-set
     // remember to scale up the strength for G55
-    //tempx.push_back(strengthOptimum * 1e8); //G55
-    tempx.push_back(strengthOptimum); // M31
+    tempx.push_back(strengthOptimum * 1e8); //G55
+    //tempx.push_back(strengthOptimum); // M31
     tempx.push_back(itsInitScaleSizes[optimumScale]);
     activeSetCenter.push_back(positionOptimum);
 
@@ -1543,7 +1546,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       x[i+1] = tempx[i+1];
 
       // save aspen before optimization
-      itsPrevAspAmplitude.push_back(tempx[i]); // active-set amplitude before lbfgs
+      //itsPrevAspAmplitude.push_back(tempx[i]); // M31 active-set amplitude before lbfgs
+      itsPrevAspAmplitude.push_back(tempx[i] / 1e8); // G55 active-set amplitude before lbfgs
       itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before lbfgs
     }
 
@@ -1609,7 +1613,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     {
       itsAspAmplitude.push_back(x[i]);
       itsAspScaleSizes.push_back(x[i+1]); //permanent list that doesn't get clear
-      itsGoodAspAmplitude.push_back(x[i]); // active-set amplitude
+      //itsGoodAspAmplitude.push_back(x[i]); // M31 active-set amplitude
+      itsGoodAspAmplitude.push_back(x[i] / 1e8); // active-set amplitude
       itsGoodAspActiveSet.push_back(x[i+1]); // active-set
       itsAspCenter.push_back(activeSetCenter[i/2]);
       if (becomesNegScale && x[i+1] < 2.0)
@@ -1633,8 +1638,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
   // test scale back genie
-  /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;*/
+  for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;
 
   //return itsAspScaleSizes; // this returns permanent list
   return itsGoodAspActiveSet; // return optimized scale
