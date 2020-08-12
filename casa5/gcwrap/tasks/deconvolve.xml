@@ -879,14 +879,14 @@
       <value type="bool">True</value>
     </param>
 
-    <param type="any" name="iterbot">
+    <param type="any" name="iterrec">
       <shortdescription>Used for existing iteration controller</shortdescription>
       <description>The iteration controller. Can be set to use the same iteration controller between
                    major cycles in tclean and minor cycles in deconvolve.
 
-                   Leave or set to None to allow deconvolve to create its own iteration controller.
+                   Leave or set to empty dictionary to allow deconvolve to create its own iteration controller.
       </description>
-      <value type="any">False</value>
+      <value type="bool">False</value>
     </param>
 
    <constraints>
@@ -902,7 +902,7 @@
        </equals>
        <equals type="string" value="mtmfs">
          <default param="scales"><value type="intVec"/></default>
-         <!--<default param="nterms"><value>2</value></default>-->
+         
 	 <default param="smallscalebias"><value>0.0</value></default>
        </equals>
        <equals type="string" value="aasp">
@@ -921,7 +921,7 @@
          <default param="gain"><value>0.1</value></default>
          <default param="threshold"><value>0.0</value></default>
          <default param="nsigma"><value>0.0</value></default>
-         <!--<default param="cycleniter"><value>-1</value></default>-->
+         
          <default param="cyclefactor"><value>1.0</value></default>
          <default param="minpsffraction"><value>0.05</value></default>
          <default param="maxpsffraction"><value>0.8</value></default>
@@ -951,7 +951,7 @@
        <equals type="string" value="auto-multithresh">
          <default param="pbmask"><value>0.2</value></default>
          <default param="sidelobethreshold"><value>3.0</value></default>
-         <!--<default param="noisethreshold"><value>5.0</value></default>-->
+         
          <default param="lownoisethreshold"><value>1.5</value></default>
          <default param="negativethreshold"><value>0.0</value></default>
          <default param="smoothfactor"><value>1.0</value></default>
@@ -959,7 +959,7 @@
          <default param="cutthreshold"><value>0.01</value></default>
          <default param="growiterations"><value>75</value></default>
          <default param="dogrowprune"><value type="bool">True</value></default>
-         <!--<default param="minpercentchange"><value>-1.0</value></default>-->
+         
          <default param="verbose"><value type="bool">False</value></default>
          
        </equals>

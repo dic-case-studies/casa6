@@ -142,7 +142,7 @@ def deconvolve(
     ## Misc
 
     restart,#=True,
-    iterbot):#=None
+    iterrec):#=False
     """
     Runs the minor cycle only of tclean.
     Most of this code is copied directly from tclean.
@@ -198,13 +198,15 @@ def deconvolve(
     paramList=ImagerParameters(**bparm)
 
     ## Setup Imager object
-    imager = PyDeconvolver(params=paramList)
+    decon = PyDeconvolver(params=paramList)
 
     #####################################################
     #### Run the minor cycle
     #####################################################
 
-    retrec = {}
+    iterrecout = False
+    isit = 0
+    retrec = ''
     try:
 
         #################################################
@@ -212,16 +214,15 @@ def deconvolve(
         #################################################
 
         ## Init minor cycle elements
-        print("initializing deconvolver")
+        # print("initializing deconvolver")
         t0=time.time();
-        imager.initializeDeconvolvers()
+        decon.initializeDeconvolvers()
         ####now is the time to check estimated memory
-        imager.estimatememory()
+        decon.estimatememory()
         ## setup iteration controller
-        if type(iterbot) != bool and iterbot != None:
-            imager.setIterationControl(iterbot)
-        else:
-            imager.initializeIterationControl()
+        decon.initializeIterationControl()
+        if type(iterrec) == dict:
+            PyDeconvolver.mergeIterRecords(decon, iterrec)
         t1=time.time();
         casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
@@ -232,50 +233,53 @@ def deconvolve(
         if niter > 0:
             ## Set up the internal state of the iterater and automask
             # is this necessary? -> I think so ~bgb200731
-            isit = imager.hasConverged()
-            imager.updateMaskMinor()
+            isit = decon.hasConverged()
+            decon.updateMask()
 
-            if not imager.hasConverged(): # here in case updateMaskMinor() produces an all-false mask
-                print("running minor cycle");
+            isit = decon.hasConverged() # here in case updateMaskMinor() produces an all-false mask
+            if not isit:
+                # print("running minor cycle");
                 t0=time.time();
-                imager.runMinorCycle()
+                decon.runMinorCycle()
                 t1=time.time();
                 casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+                isit = decon.hasConverged() # get the convergence state, to report back to the calling code
+
+            ## Get summary from iterbot
+            if type(interactive) != bool:
+                retrec=imager.getSummary();
 
         #################################################
         #### Teardown
         #################################################
 
-        ## Get summary from iterbot
-        if type(bparm['interactive']) != bool:
-            retrec=imager.getSummary();
-            if plotReport:
-                PySynthesisImager.plotReport(retrec)
+        ## Get records from iterbot, to be used in the next call to deconvolve
+        iterrecout = decon.getIterRecords()
 
         # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
         ## Restore images.
         if restoration==True:  
             t0=time.time();
-            imager.restoreImages()
+            decon.restoreImages()
             t1=time.time();
             casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
             if pbcor==True:
                 t0=time.time();
-                imager.pbcorImages()
+                decon.pbcorImages()
                 t1=time.time();
                 casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
         ##close tools
-        imager.deleteTools()
+        decon.deleteTools()
 
     except Exception as e:
         casalog.post('Exception from deconvolve : ' + str(e), "SEVERE", "deconvolve")
-        if imager != None:
-            imager.deleteTools() 
+        if decon != None:
+            decon.deleteTools() 
 
         larg = list(e.args)
         larg[0] = 'Exception from deconvolve : ' + str(larg[0])
         e.args = tuple(larg)
         raise
 
-    return retrec;
+    return iterrecout, isit, retrec

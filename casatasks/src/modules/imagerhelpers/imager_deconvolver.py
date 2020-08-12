@@ -59,17 +59,14 @@ class PyDeconvolver:
             self.stopMinor[str(immod)]=1.0
         ## for debug mode automask incrementation only
         self.ncycle = 0
+        self.initrecs = []
+        self.exrecs = []
 
 #############################################
     def initializeDeconvolvers(self):
         for immod in range(0,self.NF):
             self.SDtools.append(synthesisdeconvolver())
             self.SDtools[immod].setupdeconvolution(decpars=self.alldecpars[str(immod)])
-
-#############################################
-    def setIterationControl(self, iterbot):
-        # not that this might produce strange results if the iteration parameters are different for this iterbot than for this imager_deconvolver
-        self.IBtool = iterbot
 
 #############################################
     def initializeIterationControl(self):
@@ -103,7 +100,7 @@ class PyDeconvolver:
 ############################################
     def restoreImages(self):
         for immod in range(0,self.NF):
-              self.SDtools[immod].restore()
+            self.SDtools[immod].restore()
 
 #############################################
     def pbcorImages(self):
@@ -118,22 +115,22 @@ class PyDeconvolver:
 
 #############################################
     def deleteDeconvolvers(self):
-         for immod in range(0,len(self.SDtools)):
-              self.SDtools[immod].done()
+        for immod in range(0,len(self.SDtools)):
+            self.SDtools[immod].done()
 
     def deleteIterBot(self):
-         if self.IBtool != None:
-              self.IBtool.done()
+        if self.IBtool != None:
+            self.IBtool.done()
 
     def initDefaults(self):
         # Reset globals/members
-         self.NF=1
-         self.stopMinor={'0':1.0}  # Flag to call minor cycle for this field or not.
-         self.NN=1
-         self.SItool=None
-         self.SDtools=[]
-         self.PStools=[]
-         self.IBtool=None
+        self.NF=1
+        self.stopMinor={'0':1.0}  # Flag to call minor cycle for this field or not.
+        self.NN=1
+        self.SItool=None
+        self.SDtools=[]
+        self.PStools=[]
+        self.IBtool=None
     
 #############################################
 
@@ -145,11 +142,13 @@ class PyDeconvolver:
 #############################################
 
     def hasConverged(self):
-        # Merge peak-res info from all fields to decide iteration parameters
-         self.IBtool.resetminorcycleinfo() 
+         # Merge peak-res info from all fields to decide iteration parameters
+         self.IBtool.resetminorcycleinfo()
+         self.initrecs = []
          for immod in range(0,self.NF):
               initrec =  self.SDtools[immod].initminorcycle() 
               self.IBtool.mergeinitrecord( initrec );
+              self.initrecs.append(initrec)
 
          # Check with the iteration controller about convergence.
          #print("check convergence")
@@ -187,26 +186,48 @@ class PyDeconvolver:
          return (stopflag>0)
 
 #############################################
-    def updateMask(self, synthesisImager):
-        # Run update mask for this instance
-        maskchanged = self.updateMaskMinor()
-        
-        # Run interactive masking with the major cycle imager
-        maskchanged = maskchanged | synthesisImager.runInteractiveGUI2()
-
-        ## Return a flag to say that the mask has changed or not.
-        return maskchanged
-
-#############################################
-    def updateMaskMinor(self):
+    def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
         for immod in range(0,self.NF):
-            maskchanged = maskchanged | self.SDtools[immod].setupmask()
+            maskchanged = maskchanged | self.SDtools[immod].setupmask() 
+        
+        # Run interactive masking (and threshold/niter editors), if interactive=True
+        ig2maskchanged, nil, forcestop = self.runInteractiveGUI2()
+        maskchanged = maskchanged | ig2maskchanged
 
         ## Return a flag to say that the mask has changed or not.
-        return maskchanged
-        
+        return maskchanged, forcestop
+
+#############################################
+    def runInteractiveGUI2(self):
+        maskchanged = False
+        forcestop = True
+        if self.iterpars['interactive'] == True:
+            self.stopMinor = self.IBtool.pauseforinteraction()
+            #print("Actioncodes in python : " , self.stopMinor)
+
+            for akey in self.stopMinor:
+                if self.stopMinor[akey] < 0:
+                    maskchanged = True
+                    self.stopMinor[akey] = abs( self.stopMinor[akey] )
+
+            #Check if force-stop has happened while savemodel != "none".
+            # If so, warn the user that unless the Last major cycle has happened,
+            # the model won't have been written into the MS, and to do a 'predict' run.
+            forcestop=True;
+            for akey in self.stopMinor:
+                forcestop = forcestop and self.stopMinor[akey]==3
+
+            if self.iterpars['savemodel'] != "none":
+                # Predicting the model requires knowledge about the normalization parameters.
+                # Instead of predicting the model, return the value of forcestop so that the
+                # major cycle has a chance to predict the model.
+                pass
+
+        #print('Mask changed during interaction  : ', maskchanged)
+        return ( maskchanged or forcestop, maskchanged, forcestop )
+
 #############################################
     def runMinorCycle(self):
         self.runMinorCycleCore()
@@ -230,6 +251,7 @@ class PyDeconvolver:
         #
         # Run minor cycle
         self.ncycle+=1
+        self.exrecs = []
         for immod in range(0,self.NF):  
             if self.stopMinor[str(immod)]<3 :
 
@@ -249,6 +271,7 @@ class PyDeconvolver:
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)
                     if os.path.isdir(maskname):
                         shutil.copytree(maskname, tempmaskname)
+                self.exrecs.append(exrec)
                 
                 # Some what duplicated as above but keep a copy of the previous mask
                 # for interactive automask to revert to it if the current mask
@@ -261,6 +284,17 @@ class PyDeconvolver:
                         if os.path.isdir(prevmaskname):
                             shutil.rmtree(prevmaskname)
                         shutil.copytree(maskname, prevmaskname)
+
+#############################################
+    def getIterRecords(self):
+        return {'initrecs':self.initrecs, 'exrecs':self.exrecs}
+
+#############################################
+    def mergeIterRecords(imager, records):
+        for initrec in records['initrecs']:
+            imager.IBtool.mergeinitrecord(initrec)
+        for exrec in records['exrecs']:
+            imager.IBtool.mergeexecrecord(exrec)
 
 #######################################################
 #######################################################
