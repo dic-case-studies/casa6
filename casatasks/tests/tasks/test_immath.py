@@ -86,20 +86,32 @@ import traceback
 import os
 import shutil
 import random
+import re
 import time
 import numpy
 import glob
 import struct
 import unittest
 
-from casatools import ctsys, table, image, regionmanager, measures
-from casatasks import casalog, immath
-
-_ia = image( )
-_rg = regionmanager( )
-
 sep = os.sep
-datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
+is_CASA6 = True
+try:
+    import casac
+    from tasks import *
+    from taskinit import *
+    _ia = iatool()
+    _rg = rgtool()
+    image = iatool
+    table = tbtool
+    datapath = os.environ.get('CASAPATH').split()[0] + sep + 'data' + sep\
+        + 'regression' + sep + 'unittest' + sep + 'immath' + sep
+    is_CASA6 = False
+except ImportError:
+    from casatools import ctsys, table, image, regionmanager, measures
+    from casatasks import casalog, immath
+    _ia = image()
+    _rg = regionmanager()
+    datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -206,7 +218,7 @@ def make_data(imshape):
 class immath_test1(unittest.TestCase):
     
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         if(os.path.exists(imageList[0])):
             for img in imageList:
                 os.system('rm -rf ' +img)
@@ -396,11 +408,11 @@ class immath_test1(unittest.TestCase):
                     retValue['error_msgs']=retValue['error_msgs']\
                               + "\nError: Bad region file, 'garbage.rgn',"\
                               + " was not reported as bad."+str(results)
-        except Exception:
+        except Exception(err):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Unable to create bad region file.\n\t"
-            raise
+            raise Exception(err)
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
     
@@ -817,8 +829,6 @@ class immath_test2(unittest.TestCase):
                 shutil.rmtree(img)
             else:
                 os.remove(img)
-        # FIXME need to figure out how to close this table correctly
-        #me.done()
         cache_tables = self._tb.showcache()
         self.assertTrue(len(cache_tables) == 0)
                        
@@ -1160,11 +1170,14 @@ class immath_test2(unittest.TestCase):
                 i += 1
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
+beam0 = 'mybeamtest0.im'
+beam1 = 'mybeamtest1.im'
+beam_out = 'myout.im'
 
 class immath_test3(unittest.TestCase):
 
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         for img in imageList4:
             shutil.copytree(os.path.join(datapath,img), img)
     
@@ -1174,13 +1187,15 @@ class immath_test3(unittest.TestCase):
         
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
+        for img in [beam0, beam1, beam_out]:
+            if os.path.exists(img):
+                shutil.rmtree(img)
         # FIXME need to figure out how to close this table correctly
         cache_tables = self._tb.showcache()
         if (len(cache_tables) > 0):
             for table in cache_tables:
                 self.assertTrue(table.rfind("/IERSeop97") >= 0)
         
-
     def _comp(self, imagename, mode, outfile, expected, epsilon, polithresh=''):
         immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh)
         self.assertTrue(os.path.exists(outfile))
@@ -1342,10 +1357,20 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask2.im > 5", stretch=False
-        )
+        if is_CASA6:
+            # CASA6 tasks raise exceptions
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask2.im > 5", stretch=False
+            )
+        else:
+            # CASA5 tasks return False
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask2.im > 5", stretch=False
+                )
+            )
         outfile = "out3.im"
         immath(
             imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1355,11 +1380,19 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask3.im > 5", stretch=False
-        )
-        
+        if is_CASA6:
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask3.im > 5", stretch=False
+            )
+        else:
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask3.im > 5", stretch=False
+                )
+            )
+
     def test21(self):
         """Test moved from imagetest regreesion"""
         
@@ -1544,7 +1577,7 @@ class immath_test3(unittest.TestCase):
                 self.assertTrue(
                     (cc == expecv).all(), "wrong values for " + mytype
                 )
-       
+
     def test_8(self):
         """Tests moved from imagetest regression, some are probably useless"""
         myia = image()
@@ -1759,9 +1792,14 @@ class immath_test3(unittest.TestCase):
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                self.assertRaises(
-                    Exception, immath, imagename=subi, outfile=outfile, mode=mode
-                )
+                if is_CASA6:
+                    self.assertRaises(
+                        Exception, immath, imagename=subi, outfile=outfile, mode=mode
+                    )
+                else:
+                    self.assertFalse(
+                        immath(imagename=subi, outfile=outfile, mode=mode)
+                    )
                 continue
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
@@ -1770,6 +1808,100 @@ class immath_test3(unittest.TestCase):
             self.assertTrue(
                 numpy.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
+
+    def test_beam_logging_precision(self):
+        """
+            Test that when beams are different, immath logs enough digits to show where the
+            difference occurs. CAS-13135
+        """
+        shape = [2, 2, 2, 2]
+        old_log = casalog.logfile()
+        logfile = 'test_beam_logging_precision0.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia = image()
+        self.assertTrue(_ia.fromshape(beam0, shape), 'Failed to created image ' + beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()
+        self.assertTrue(_ia.fromshape(beam1, shape), 'Failed to created image ' + beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.235arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam1
+        )
+        _ia.done()
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 14
+            i1 = 16
+        else:
+            i0 = 17
+            i1 = 19
+        self.assertTrue(re.search("3.235", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision1.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234567arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234568arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.234568", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234567", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision2.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678901777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678902777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.23456789027778", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.23456789017778", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        self.assertTrue(casalog.setlogfile(old_log), 'Failed to reset log file')
 
 def suite():
     return [immath_test1, immath_test2, immath_test3]
