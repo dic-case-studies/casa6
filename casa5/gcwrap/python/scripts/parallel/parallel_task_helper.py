@@ -306,9 +306,9 @@ class ParallelTaskHelper:
 
 
     def postExecution(self):   
-        
+
         casalog.origin("ParallelTaskHelper")
-           
+
         ret_list = {}
         if (self.__bypass_parallel_processing==1):
             ret_list = self._sequential_return_list
@@ -326,17 +326,25 @@ class ParallelTaskHelper:
             ret_list = {}
             for command_response in command_response_list:
                 vis = command_response['parameters']['vis']
-                ret_list[vis] = command_response['ret']
+                if 'uvcontsub' in command_response['command']:
+                    # One more particular case, similar as in 'executeJob' for partition.
+                    # The design of these lists and how they are used in different ways in
+                    # tasks uvcontsub, setjy, flagdata, etc. is evil
+                    # uvcontsub expects a 'success' True/False value for every subMS rather
+                    # than the return value of the subMS uvcontsub.
+                    ret_list[vis] = command_response['successful']
+                else:
+                    ret_list[vis] = command_response['ret']
         else:
             return None
-        
+
         ret = ret_list
         if self._consolidateOutput:
             ret = ParallelTaskHelper.consolidateResults(ret_list,self._taskName)
-        
+
         return ret
-        
-        
+
+
     @staticmethod
     def consolidateResults(ret_list,taskname):
         if isinstance(list(ret_list.values())[0],bool):
