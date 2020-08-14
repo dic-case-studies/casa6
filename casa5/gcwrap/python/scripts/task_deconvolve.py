@@ -43,11 +43,11 @@ def deconvolve(
 
     ####### Image definition
     imagename,#='',                                   -> now the first positional argument, indicating the dirty image to start from
-    #imsize,#=[100,100],                              -> not necessary: can be gleaned from the size of the dirty image created in the major cycle from tclean TODO is this correct?
-    #cell,#=['1.0arcsec','1.0arcsec'],                -> not necessary: already set in major cycle of tclean?
-    #phasecenter,#='J2000 19:59:28.500 +40.44.01.50', -> not necessary: already set in major cycle of tclean?
-    #stokes,#='I',                                    -> not necessary: already set in major cycle of tclean?
-    #projection,#='SIN',                              -> not necessary: already set in major cycle of tclean?
+    imsize,#=[100,100],                               -> kept: although this can be gleaned from the dirty image, we need to be able to sort out what the user wants in the case this value differs from what is in one or more of the residual images.
+    cell,#=['1.0arcsec','1.0arcsec'],                 -> kept: although this can be gleaned from the dirty image, we need to be able to sort out what the user wants in the case this value differs from what is in one or more of the residual images.
+    phasecenter,#='J2000 19:59:28.500 +40.44.01.50',  -> kept: although this can be gleaned from the dirty image, we need to be able to sort out what the user wants in the case this value differs from what is in one or more of the residual images.
+    stokes,#='I',                                     -> kept: although this can be gleaned from the dirty image, we need to be able to sort out what the user wants in the case this value differs from what is in one or more of the residual images.
+    projection,#='SIN',                               -> kept: although this can be gleaned from the dirty image, we need to be able to sort out what the user wants in the case this value differs from what is in one or more of the residual images.
     startmodel,#='',                                  -> kept: allows for a different model name than imagename
 
     ## Spectral parameters
@@ -89,16 +89,16 @@ def deconvolve(
     ####### Deconvolution parameters
     deconvolver,#='hogbom',
     scales,#=[],
-    #nterms,#=1,        -> testing removal of allimpars
+    nterms,#=1,             -> kept: needed for deconvolver to find multi-term images on disk
     smallscalebias,#=0.0
 
     ### restoration options
     restoration,
     restoringbeam,#=[],
-    pbcor,
+    # pbcor,
 
     ##### Outliers
-    outlierfile,#='',
+    # outlierfile,#='',     -> not necessary: can manually execute on all outlier images?
 
     ##### Weighting
     #weighting,#='natural',     -> not necessary: part of weightpars which aren't used
@@ -119,6 +119,7 @@ def deconvolve(
     maxpsffraction,#=0.8,
     interactive,#=False, TODO test with TRUE
     plotReport,#=False
+    iterrec,#=False
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -137,16 +138,15 @@ def deconvolve(
     dogrowprune,#=True
     #minpercentchange,#=0.0 -> not necessary: no major loops
     verbose, #=False
-    fastnoise, #=False
-
-    ## Misc
-
-    restart,#=True,
-    iterrec):#=False
+    fastnoise): #=False
     """
     Runs the minor cycle only of tclean.
     Most of this code is copied directly from tclean.
     """
+
+    ## Misc
+
+    # restart):#=True,
     #savemodel,#="none",    -> not necessary: should be done in the major cycle
 
     ####### State parameters
@@ -263,11 +263,6 @@ def deconvolve(
             decon.restoreImages()
             t1=time.time();
             casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
-            if pbcor==True:
-                t0=time.time();
-                decon.pbcorImages()
-                t1=time.time();
-                casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
         ##close tools
         decon.deleteTools()

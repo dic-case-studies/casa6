@@ -64,6 +64,99 @@
       <value type="string"/>
     </param>
 
+    <param name="imsize" type="any"> 
+     <shortdescription>Number of pixels</shortdescription>
+<description>Number of pixels
+         example :  imsize = [350,250]
+                           imsize = 500 is equivalent to [500,500]
+         To take proper advantage of internal optimized FFT routines, the
+         number of pixels must be even and factorizable by 2,3,5,7 only.
+</description>
+      <type>int</type><type>intVec</type>
+      <value type="intVec">100</value>
+    </param>
+
+    <param name="cell" type="any"> 
+     <shortdescription>Cell size</shortdescription>
+<description>Cell size
+               example: cell=['0.5arcsec,'0.5arcsec'] or
+               cell=['1arcmin', '1arcmin']
+               cell = '1arcsec' is equivalent to ['1arcsec','1arcsec']
+</description>
+      <type>int</type><type>double</type><type>intVec</type><type>doubleVec</type><type>string</type><type>stringVec</type>
+      <value type="stringVec">&quot;1arcsec&quot;</value>
+    </param>
+
+    <param name="phasecenter" type="any"> 
+     <shortdescription>Phase center of the image</shortdescription>
+<description>Phase center of the image (string or field id); if the phasecenter is the name known major solar system object ('MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON') or is an ephemerides table then that source is tracked and the background sources get smeared. There is a special case, when phasecenter='TRACKFIELD', which will use the ephemerides or polynomial phasecenter in the FIELD table of the MS's as the source center to track.
+               example: phasecenter=6
+                        phasecenter='J2000 19h30m00 -40d00m00'
+                        phasecenter='J2000 292.5deg  -40.0deg'
+                        phasecenter='J2000 5.105rad  -0.698rad'
+                        phasecenter='ICRS 13:05:27.2780 -049.28.04.458'
+                        phasecenter='myComet_ephem.tab'
+                        phasecenter='MOON'
+                        phasecenter='TRACKFIELD'
+</description>
+      <type>int</type><type>string</type>
+      <value type="string"/>
+    </param>
+
+
+    <param name="stokes" type="string"> 
+     <shortdescription>Stokes Planes to make</shortdescription>
+<description>Stokes Planes to make
+               default='I'; example: stokes='IQUV';
+                 Options: 'I','Q','U','V','IV','QU','IQ','UV','IQUV','RR','LL','XX','YY','RRLL','XXYY','pseudoI'
+
+                             Note : Due to current internal code constraints, if any correlation pair
+                                        is flagged, by default, no data for that row in the MS will be used.
+                                        So, in an MS with XX,YY, if only YY is flagged, neither a
+                                        Stokes I image nor an XX image can be made from those data points.
+                                        In such a situation, please split out only the unflagged correlation into
+                                        a separate MS.
+
+                             Note : The 'pseudoI' option is a partial solution, allowing Stokes I imaging
+                                    when either of the parallel-hand correlations are unflagged.
+
+                             The remaining constraints shall be removed (where logical) in a future release.
+
+</description>
+      <value type="string">I</value>
+      <allowed kind="enum">
+        <value>I</value>
+        <value>Q</value>
+        <value>U</value>
+        <value>V</value>
+        <value>IV</value>
+        <value>QU</value>
+        <value>IQ</value>
+        <value>UV</value>
+        <value>IQUV</value>
+        <value>RR</value>
+        <value>LL</value>
+        <value>XX</value>
+        <value>YY</value>
+        <value>RRLL</value>
+        <value>XXYY</value>
+        <value>pseudoI</value>
+      </allowed>
+    </param>
+
+    <param name="projection" type="string"> 
+     <shortdescription>Coordinate projection </shortdescription>
+<description>Coordinate projection
+                     Examples : SIN,   NCP
+                     A list of supported (but untested) projections can be found here :
+                     http://casa.nrao.edu/active/docs/doxygen/html/classcasa_1_1Projection.html#a3d5f9ec787e4eabdce57ab5edaf7c0cd
+
+
+
+</description>
+      <value type="string">SIN</value>
+    </param>
+
     <param name="startmodel" type="any"> 
      <shortdescription>Name of starting model image</shortdescription>
 <description>Name of starting model image
@@ -205,6 +298,55 @@
       <value type="intVec"/>
     </param>
 
+    <param subparam="true" name="nterms" type="int">
+     <shortdescription>Number of Taylor coefficients in the spectral model</shortdescription>
+<description>Number of Taylor coefficients in the spectral model
+
+                       - nterms=1 : Assume flat spectrum source
+                       - nterms=2 : Spectrum is a straight line with a slope
+                       - nterms=N : A polynomial of order N-1
+
+                       From a Taylor expansion of the expression of a power law, the
+                       spectral index is derived as alpha = taylorcoeff_1 / taylorcoeff_0
+
+                       Spectral curvature is similarly derived when possible.
+
+                       The optimal number of Taylor terms depends on the available
+                       signal to noise ratio, bandwidth ratio, and spectral shape of the
+                       source as seen by the telescope (sky spectrum x PB spectrum).
+
+                       nterms=2 is a good starting point for wideband EVLA imaging
+                       and the lower frequency bands of ALMA (when fractional bandwidth
+                       is greater than 10%) and if there is at least one bright source for
+                       which a dynamic range of greater than few 100 is desired.
+
+                       Spectral artifacts for the VLA often look like spokes radiating out from
+                       a bright source (i.e. in the image made with standard mfs imaging).
+                       If increasing the number of terms does not eliminate these artifacts,
+                       check the data for inadequate bandpass calibration. If the source is away
+                       from the pointing center, consider including wide-field corrections too.
+
+                       (Note : In addition to output Taylor coefficient images .tt0,.tt1,etc
+                                   images of spectral index (.alpha), an estimate of error on
+                                   spectral index (.alpha.error) and spectral curvature (.beta,
+                                   if nterms is greater than 2) are produced.
+                                   - These alpha, alpha.error and beta images contain
+                                     internal T/F masks based on a threshold computed
+                                     as peakresidual/10. Additional masking based on
+                                    .alpha/.alpha.error may be desirable.
+                                   - .alpha.error is a purely empirical estimate derived
+                                     from the propagation of error during the division of
+                                     two noisy numbers (alpha = xx.tt1/xx.tt0) where the
+                                     'error' on tt1 and tt0 are simply the values picked from
+                                     the corresponding residual images. The absolute value
+                                     of the error is not always accurate and it is best to interpret
+                                     the errors across the image only in a relative sense.)
+
+
+</description>
+      <value type="int">2</value>
+    </param>
+
     <param type="double" name="smallscalebias" subparam="true">
      <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
      <description>A numerical control to bias the scales when using multi-scale or mtmfs algorithms.
@@ -265,93 +407,6 @@
 </description>
       <type>string</type><type>stringVec</type>
       <value type="stringVec"/>
-    </param>
-
-    <param type="bool" name="pbcor" subparam="true">
-     <shortdescription>Apply PB correction on the output restored image</shortdescription>
-<description> Apply PB correction on the output restored image
-
-                       A new image with extension .image.pbcor will be created from
-                       the evaluation of   .image / .pb  for all pixels above the specified pblimit.
-
-                       Note : Stand-alone PB-correction can be triggered by re-running
-                                 deconvolve with the appropriate imagename and with
-                                 niter=0, calcpsf=False, calcres=False, pbcor=True, vptable='vp.tab'
-                                 ( where vp.tab is the name of the vpmanager file.
-                                    See the inline help for the 'vptable' parameter )
-
-                       Note : Multi-term PB correction that includes a correction for the
-                                 spectral index of the PB has not been enabled for the 4.7 release.
-                                 Please use the widebandpbcor task instead.
-                                 ( Wideband PB corrections are required when the amplitude of the
-                                    brightest source is known accurately enough to be sensitive
-                                    to the difference in the PB gain between the upper and lower
-                                    end of the band at its location. As a guideline, the artificial spectral
-                                    index due to the PB is -1.4 at the 0.5 gain level and less than -0.2
-                                    at the 0.9 gain level at the middle frequency )
-</description>
-      <value type="bool">False</value>
-    </param>
-
-
-
-
-
-
-
-    <param type="string" name="outlierfile">
-     <shortdescription>Name of outlier-field image definitions</shortdescription>
-<description>Name of outlier-field image definitions
-
-                       A text file containing sets of parameter=value pairs,
-                       one set per outlier field.
-
-                       Example :   outlierfile='outs.txt'
-
-                                          Contents of outs.txt :
-
-                                                    imagename=tst1
-                                                    nchan=1
-                                                    imsize=[80,80]
-                                                    cell=[8.0arcsec,8.0arcsec]
-                                                    phasecenter=J2000 19:58:40.895 +40.55.58.543
-                                                    mask=circle[[40pix,40pix],10pix]
-
-                                                    imagename=tst2
-                                                    nchan=1
-                                                    imsize=[100,100]
-                                                    cell=[8.0arcsec,8.0arcsec]
-                                                    phasecenter=J2000 19:58:40.895 +40.56.00.000
-                                                    mask=circle[[60pix,60pix],20pix]
-
-                          The following parameters are currently allowed to be different between
-                          the main field and the outlier fields (i.e. they will be recognized if found
-                          in the outlier text file). If a parameter is not listed, the value is picked from
-                          what is defined in the main task input.
-
-                              imagename, imsize, cell, phasecenter, startmodel, mask
-                              specmode, nchan, start, width, nterms, reffreq,
-                              gridder, deconvolver, wprojplanes
-
-                          Note : 'specmode' is an option, so combinations of mfs and cube
-                                     for different image fields, for example, are supported.
-                                    'deconvolver' and 'gridder' are also options that allow different
-                                     imaging or deconvolution algorithm per image field.
-
-                                     For example, multiscale with wprojection and 16 w-term planes
-                                     on the main field and mtmfs with nterms=3 and wprojection
-                                     with 64 planes on a bright outlier source for which the frequency
-                                     dependence of the primary beam produces a strong effect that
-                                     must be modeled.   The traditional alternative to this approach is
-                                     to first image the outlier, subtract it out of the data (uvsub) and
-                                     then image the main field.
-
-                          Note : If you encounter a use-case where some other parameter needs
-                                    to be allowed in the outlier file (and it is logical to do so), please
-                                    send us feedback. The above is an initial list.
-
-</description>
-      <value type="string"/>
     </param>
 
     <param type="int" name="niter">
@@ -595,6 +650,16 @@
 </description>
     </param>
 
+    <param type="any" name="iterrec">
+      <shortdescription>Used for existing iteration controller</shortdescription>
+      <description>The iteration controller. Can be set to use the same iteration controller between
+                   major cycles in tclean and minor cycles in deconvolve.
+
+                   Leave or set to empty dictionary to allow deconvolve to create its own iteration controller.
+      </description>
+      <value type="bool">False</value>
+    </param>
+
     <param type="string" name="usemask">
            <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
 
@@ -819,74 +884,6 @@
 
                         In all cases above RMS noise is calculated from MAD. 
 </description>
-    </param>
-
-
-
-
-    <param type="bool" name="restart">
-     <shortdescription>True : Re-use existing images. False : Increment imagename</shortdescription>
-<description> Restart using existing images (and start from an existing model image)
-                        or automatically increment the image name and make a new image set.
-
-                        True : Re-use existing images. If imagename.model exists the subsequent
-                                  run will start from this model (i.e. predicting it using current gridder
-                                  settings and starting from the residual image).  Care must be taken
-                                  when combining this option with startmodel. Currently, only one or
-                                  the other can be used.
-
-                                  startmodel='', imagename.model exists :
-                                            - Start from imagename.model
-                                  startmodel='xxx', imagename.model does not exist :
-                                            - Start from startmodel
-                                  startmodel='xxx', imagename.model exists :
-                                            - Exit with an error message requesting the user to pick
-                                              only one model.  This situation can arise when doing one
-                                              run with startmodel='xxx' to produce an output
-                                              imagename.model that includes the content of startmodel,
-                                              and wanting to restart a second run to continue deconvolution.
-                                              Startmodel should be set to '' before continuing.
-
-                                   If any change in the shape or coordinate system of the image is
-                                   desired during the restart, please change the image name and
-                                   use the startmodel (and mask) parameter(s) so that the old model
-                                   (and mask) can be regridded to the new coordinate system before starting.
-
-                         False : A convenience feature to increment imagename with '_1', '_2',
-                                    etc as suffixes so that all runs of deconvolve are fresh starts (without
-                                    having to change the imagename parameter or delete images).
-
-                                    This mode will search the current directory for all existing
-                                    imagename extensions, pick the maximum, and adds 1.
-                                    For imagename='try' it will make try.psf, try_2.psf, try_3.psf, etc.
-
-                                    This also works if you specify a directory name in the path :
-                                    imagename='outdir/try'.  If './outdir' does not exist, it will create it.
-                                    Then it will search for existing filenames inside that directory.
-
-                                    If outlier fields are specified, the incrementing happens for each
-                                    of them (since each has its own 'imagename').  The counters are
-                                    synchronized across imagefields, to make it easier to match up sets
-                                    of output images.  It adds 1 to the 'max id' from all outlier names
-                                    on disk.  So, if you do two runs with only the main field
-                                   (imagename='try'), and in the third run you add an outlier with
-                                   imagename='outtry', you will get the following image names
-                                   for the third run :  'try_3' and 'outtry_3' even though
-                                   'outry' and 'outtry_2' have not been used.
-
-
-</description>
-      <value type="bool">True</value>
-    </param>
-
-    <param type="any" name="iterrec">
-      <shortdescription>Used for existing iteration controller</shortdescription>
-      <description>The iteration controller. Can be set to use the same iteration controller between
-                   major cycles in tclean and minor cycles in deconvolve.
-
-                   Leave or set to empty dictionary to allow deconvolve to create its own iteration controller.
-      </description>
-      <value type="bool">False</value>
     </param>
 
    <constraints>
