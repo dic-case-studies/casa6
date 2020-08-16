@@ -42,6 +42,7 @@ def impv(
         else:
             raise ValueError("Unsupported value for mode.")
         myia = image()
+        outia = None
         myia.dohistory(False)
         if (not myia.open(imagename)):
             raise RuntimeError("Cannot create image analysis tool using %s" % imagename)
