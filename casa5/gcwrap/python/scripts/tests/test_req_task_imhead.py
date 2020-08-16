@@ -152,14 +152,8 @@ class imhead_test(unittest.TestCase):
         endDict = {'bunit': '', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05, 'cdelt3': 1.0, 'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0, 'crpix4': 0.0, 'crval1': 4.022983925846928, 'crval2': 0.08843001543437938, 'crval3': 1.0, 'crval4': 1412787144.0812755, 'ctype1': 'Right Ascension', 'ctype2': 'Declination', 'ctype3': 'Stokes', 'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': '', 'observer': '', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]), 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': ''}
         
         for key in expectedKeys:
-            try:
-                imhead(datacopy, mode='del', hdkey=key)
-            except RuntimeError:
-                # cdelt1 pertains to a coordinate system axis attribute. It may be modified,
-                # but it may not be removed.
-                # Same for 'crpix', 'crval', 'ctype', etc.
-                pass
-                #print(key, imhead(datacopy, mode='list')[key] == endDict[key])
+            imhead(datacopy, mode='del', hdkey=key)
+            #print(key, imhead(datacopy, mode='list')[key] == endDict[key])
         #for key in endDict.keys():
             #print(key, np.all(imhead(datacopy, mode='list')[key] == endDict[key]))
             
@@ -189,21 +183,11 @@ class imhead_test(unittest.TestCase):
         endDict = {'beammajor': {'unit': 'arcsec', 'value': 51.7}, 'beamminor': {'unit': 'arcsec', 'value': 51.7}, 'beampa': {'unit': 'deg', 'value': 0.0}, 'bunit': 'Jy/beam', 'cdelt1': -7.27220521664304e-05, 'cdelt2': 7.27220521664304e-05, 'cdelt3': 1.0, 'cdelt4': 24414.0625, 'crpix1': 128.0, 'crpix2': 128.0, 'crpix3': 0.0, 'crpix4': 0.0, 'crval1': 4.022983925846928, 'crval2': 0.08843001543437938, 'crval3': 1.0, 'crval4': 1412787144.0812755, 'ctype1': 'Right Ascension', 'ctype2': 'Declination', 'ctype3': 'Stokes', 'ctype4': 'Frequency', 'cunit1': 'rad', 'cunit2': 'rad', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1995/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Intensity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_2', 'observer': 'TEST', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': np.array([1420405752.0]), 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'VLA'}
         
         for key in expectedKeys:
-            try:
-                imhead(datacopy, mode='del', hdkey=key)
-            except RuntimeError:
-                # cdelt1 pertains to a coordinate system axis attribute. It may be modified,
-                # but it may not be removed
-                # Same for 'crpix', 'crval', 'ctype', etc.
-                pass
-
+            imhead(datacopy, mode='del', hdkey=key)
+            
         for key in expectedKeys:
-            try:
-                imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
-            except RuntimeError:
-                # Exception: This image already has a beam(s). Cannot add one. etc.
-                pass
-                
+            imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
+        
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
         self.assertTrue(np.all([np.all(imhead(datacopy, mode='list')[key]==endDict[key]) for key in imhead(datacopy, mode='list').keys()]))
         
@@ -223,16 +207,8 @@ class imhead_test(unittest.TestCase):
         InDict = {'beammajor': {'unit': 'arcsec', 'value': 59.2}, 'beamminor': {'unit': 'arcsec', 'value': 42.2}, 'beampa': {'unit': 'deg', 'value': 8.0}, 'bunit': 'Jy/beam', 'cdelt1': '-8.27220521664304e-05deg', 'cdelt2': '7.17220521664304e-05deg', 'cdelt3': '1.0', 'cdelt4': '24413.0625', 'crpix1': float(127.0), 'crpix2': 127.0, 'crpix3': float(0.0), 'crpix4': float(1.0), 'crval1': '3.02deg', 'crval2': '0.078deg', 'crval3': '0.0', 'crval4': '1412787143.0812755', 'ctype1': 'Declination', 'ctype2': 'Right Ascension', 'ctype3': 'Frequency', 'ctype4': 'Stokes', 'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': '', 'cunit4': 'Hz', 'datamax': 0.054880399256944656, 'datamin': -0.011138656176626682, 'date-obs': '1996/04/13/09:33:00', 'equinox': 'J2000', 'imtype': 'Velocity', 'masks': np.array([], dtype='<U16'), 'maxpixpos': np.array([134, 134,   0,  38], dtype='int32'), 'maxpos': '15:21:53.976 +05.05.29.998 I 1.41371e+09Hz', 'minpixpos': np.array([230,   0,   0,  15], dtype='int32'), 'minpos': '15:20:17.679 +04.31.59.470 I 1.41315e+09Hz', 'object': 'N5921_22', 'observer': 'TESTING', 'projection': 'SIN', 'reffreqtype': 'LSRK', 'restfreq': '1.3', 'shape': np.array([256, 256,   1,  46], dtype='int32'), 'telescope': 'EVLA'}
 
         for key in expectedKeys:
-            try:
-                imhead(datacopy, mode='put', hdkey=key, hdvalue=InDict[key])
-            except RuntimeError as exc:
-                # Exception: A polarization axis cannot have a reference pixel.
-                # Exception: A polarization axis cannot have a unit.
-                # Exception Reported: datamax is is a statistic of the image and may not be
-                # added or modified....
-                # etc
-                pass
-                
+            imhead(datacopy, mode='put', hdkey=key, hdvalue=InDict[key])
+            
         
         self.assertTrue(len(endDict.keys()) == len(imhead(datacopy, mode='list').keys()))
         self.assertTrue(np.all([np.all(imhead(datacopy, mode='list')[key]==endDict[key]) for key in imhead(datacopy, mode='list').keys()]))

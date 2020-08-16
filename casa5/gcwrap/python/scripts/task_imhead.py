@@ -114,9 +114,12 @@ def imhead(
             myia.open(imagename)
             if mode.startswith('h'):
                 myia.history()
-                return
+                return True
             elif mode.startswith('s'):
                 return myia.summary(verbose=verbose)
+        except Exception as instance:
+            casalog.post(str('*** Error *** ') + str(instance), 'SEVERE')
+            raise
         finally:
             myia.done()
     if (
@@ -127,7 +130,7 @@ def imhead(
         myimd = imagemetadata()
         try:
             myimd.open(imagename)
-            res = None
+            res = False
             if mode.startswith('a'):
                 res = myimd.add(hdkey, hdvalue)
             elif mode.startswith('d'):
@@ -138,7 +141,6 @@ def imhead(
                 return myimd.list(True)
             elif mode.startswith('p'):
                 res = myimd.set(hdkey, hdvalue)
-
             if res:
                 try:
                     param_names = imhead.__code__.co_varnames[:imhead.__code__.co_argcount]
@@ -154,8 +156,12 @@ def imhead(
                 except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
             return res
-
+        except Exception as instance:
+            casalog.post(str('*** Error *** ') + str(instance), 'SEVERE')
+            return False
         finally:
             myimd.done()
-
-        raise ValueError('Unknown imhead mode ' + str(mode))
+        casalog.post('Unknown imhead mode ' + str(mode), 'SEVERE')
+        return False
+                
+        
