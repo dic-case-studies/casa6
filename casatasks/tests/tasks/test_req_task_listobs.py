@@ -81,12 +81,29 @@ else:
     else:
         mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
 
-partition(vis=mesSet, outputvis='genmms.mms', createmms=True)
-multiMesSet = 'genmms.mms'
-split(vis=mesSet, outputvis='gentimeavgms.ms', datacolumn='DATA',timebin='1s')
-timeavg_ms = 'gentimeavgms.ms'
-split(vis=multiMesSet, outputvis='gentimeavgmms.mms', datacolumn='DATA', timebin='1s')
-timeavg_mms = 'gentimeavgmms.mms'
+# This is for tests that check what the parameter validator does when parameters are
+# given wrong types - these don't exercise the task but the parameter validator!
+if CASA6:
+    validator_exc_type = AssertionError
+else:
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    validator_exc_type = RuntimeError
+
+outvis = 'genmms.mms'
+if not os.path.exists(outvis):
+    partition(vis=mesSet, outputvis=outvis, createmms=True)
+multiMesSet = outvis
+
+outvis = 'gentimeavgms.ms'
+if not os.path.exists(outvis):
+    split(vis=mesSet, outputvis=outvis, datacolumn='DATA',timebin='1s')
+timeavg_ms = outvis
+
+outvis = 'gentimeavgmms.mms'
+if not os.path.exists(outvis):
+    split(vis=multiMesSet, outputvis=outvis, datacolumn='DATA', timebin='1s')
+timeavg_mms = outvis
 
 logpath = casalog.logfile()
 
@@ -157,8 +174,8 @@ class listobs_test_base(unittest.TestCase):
             listobs(vis=dataset, scan='1')
         except Exception:
             self.fail('Scan fails to select')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, scan=1)
         else:
             self.assertFalse(listobs(vis=dataset, scan=1), msg='Scan incorrectly accepts an int')
@@ -176,8 +193,8 @@ class listobs_test_base(unittest.TestCase):
 
     def fieldcheck(self, dataset):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, field=1)
         else:
             self.assertFalse(listobs(vis=dataset, field=1), msg='An int was given to the field (requires a string)')
@@ -197,8 +214,8 @@ class listobs_test_base(unittest.TestCase):
 
     def spwcheck(self, dataset):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, spw=1)
         else:
             self.assertFalse(listobs(vis=dataset, spw=1), msg='An int was given to spw (requires string)')
@@ -221,8 +238,8 @@ class listobs_test_base(unittest.TestCase):
     def corrcheck(self, dataset):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
         self.assertTrue('Corrs' in open('listobs.txt').read(), msg='Corrs does not exist in a MS')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, correlation=1)
         else:
             self.assertFalse(listobs(vis=dataset, correlation=1), msg='An int was accepted when a string is required')
@@ -240,8 +257,8 @@ class listobs_test_base(unittest.TestCase):
     def antcheck(self, dataset):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
         self.assertTrue('Antennas' in open('listobs.txt').read(), msg='Antennas section does not exist in MS')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, antenna=0)
         else:
             self.assertFalse(listobs(vis=dataset, antenna=0),
@@ -267,10 +284,10 @@ class listobs_test_base(unittest.TestCase):
             listobs(vis=dataset, selectdata=False)
         except Exception:
             self.fail('Passing False to select data fails on a MS')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, selectdata=1)
-            with self.assertRaises(AssertionError):
+            with self.assertRaises(validator_exc_type):
                 listobs(vis=dataset, selectdata='str')
         else:
             self.assertFalse(listobs(vis=dataset, selectdata=1), msg='An int is accepted for the select data parameter')
