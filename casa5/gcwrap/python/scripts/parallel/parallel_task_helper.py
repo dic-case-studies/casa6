@@ -276,7 +276,7 @@ class ParallelTaskHelper:
                             raise
 
                         # jagonzal: Special case for partition
-                        # The 'True' values emulate the command_response['success'] that
+                        # The 'True' values emulate the command_response['successful'] that
                         # we'd get in parallel runs from other MPI processes.
                         if 'outputvis' in parameters:
                             self._sequential_return_list[parameters['outputvis']] = True

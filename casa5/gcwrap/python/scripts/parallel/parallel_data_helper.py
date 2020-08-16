@@ -1517,7 +1517,7 @@ class ParallelDataHelper(ParallelTaskHelper):
             # Format list in the form of vis dict
             for command_response in command_response_list:
                 outvis = command_response['parameters']['outputvis']
-                outputList[outvis] = command_response['success']
+                outputList[outvis] = command_response['successful']
 
         casalog.post('postExecution dict of commands and success values: {}'.format(
             outputList), 'DEBUG')
