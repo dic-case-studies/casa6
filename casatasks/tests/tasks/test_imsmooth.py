@@ -49,6 +49,8 @@ else:
     import casac
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     componentlist = cltool
     image = iatool
@@ -451,7 +453,7 @@ class imsmooth_test(unittest.TestCase):
         casalog.post( "The BOX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
         # CASA6 task throw exceptions, CASA5 tasks return False
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
         else:
             self.assertFalse(imsmooth(tiny, box='-3,0,511,511', beam=beam))
