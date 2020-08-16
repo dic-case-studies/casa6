@@ -35,6 +35,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import casa_stack_manip
+
 import sys
 import os
 import subprocess
@@ -57,7 +59,16 @@ else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
         fakepath = dataroot + 'casa-data-req/visibilities/'
     #filepath = 'testlog.log'
-    
+
+# This is for tests that check what the parameter validator does when parameters are
+# given wrong types - these don't exercise the task but the parameter validator!
+if CASA6:
+    validator_exc_type = AssertionError
+else:
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    validator_exc_type = RuntimeError
+
 class listhistory_test(unittest.TestCase):
     
     def setUp(self):
@@ -83,8 +94,8 @@ class listhistory_test(unittest.TestCase):
         with open('testlog.log') as tlog:
             self.assertTrue('SEVERE' in tlog.read())
 
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listhistory('fake')
         else:
             listhistory('fake')
@@ -104,7 +115,8 @@ class listhistory_test(unittest.TestCase):
         '''Test 1: Empty input should return False'''
         # CASA5 tasks return False, casatasks throw exceptions
         myms = ''
-        if CASA6:
+        if CASA6 or\
+           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
             self.assertRaises(Exception,listhistory,myms)
         else:
             res = listhistory(myms)
