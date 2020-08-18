@@ -39,6 +39,10 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
+
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
     image = iatool
     # not a local tool
     _tb = tb
@@ -82,8 +86,9 @@ class imtrans_test(unittest.TestCase):
     def test_exceptions(self):
         """imtrans: Test various exception cases"""
         def testit(imagename, outfile, order):
-            # CASA6 tasks always throw exceptions, CASA5 tasks return False
-            if is_CASA6:
+            # CASA6 tasks always throw exceptions, CASA5 tasks might return False
+            # depending on __rethrow_casa_exceptions
+            if is_CASA6 or casa_stack_rethrow:
                 self.assertRaises(Exception, run_imtrans, imagename, outfile, order)
             else:
                 self.assertFalse(run_imtrans(imagename, outfile, order))
