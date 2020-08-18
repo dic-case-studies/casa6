@@ -162,10 +162,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                           Float f=vb->frequency()(chn)/C::c;
                           u=vb->uvw()(row)(0)*f;
                           v=vb->uvw()(row)(1)*f;
-                          
-                          
-                          Int ucell=Int(std::round(uscale_p*u+uorigin_p));
-                          Int vcell=Int(std::round(vscale_p*v+vorigin_p));
+                          Int ucell=Int(uscale_p*u+uorigin_p);
+                          Int vcell=Int(vscale_p*v+vorigin_p);
 			 
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
@@ -175,8 +173,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                   }
                               }
                           }
-                          ucell=Int(std::round(-uscale_p*u+uorigin_p));
-                          vcell=Int(std::round(-vscale_p*v+vorigin_p));
+                          ucell=Int(-uscale_p*u+uorigin_p);
+                          vcell=Int(-vscale_p*v+vorigin_p);
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
@@ -407,10 +405,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                           Float f=vb->getFrequency(row, chn)/C::c;
                           u=vb->uvw()(0,row)*f;
                           v=vb->uvw()(1,row)*f;
-                          
-                          
-                          Int ucell=Int(std::round(uscale_p*u+uorigin_p));
-                          Int vcell=Int(std::round(vscale_p*v+vorigin_p));
+                          Int ucell=Int(uscale_p*u+uorigin_p);
+                          Int vcell=Int(vscale_p*v+vorigin_p);
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
@@ -419,9 +415,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                   }
                               }
                           }
-                          
-                          ucell=Int(std::round(-uscale_p*u+uorigin_p));
-                          vcell=Int(std::round(-vscale_p*v+vorigin_p));
+                          ucell=Int(-uscale_p*u+uorigin_p);
+                          vcell=Int(-vscale_p*v+vorigin_p);
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
@@ -700,8 +695,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    Float f=frequency(chn)/C::c;
 	    u=uvw(0, row)*f;
 	    v=uvw(1, row)*f;
-	    Int ucell=Int(std::round(uscale_p*u+uorigin_p));
-	    Int vcell=Int(std::round(vscale_p*v+vorigin_p));
+	    Int ucell=Int(uscale_p*u+uorigin_p);
+	    Int vcell=Int(vscale_p*v+vorigin_p);
 	    imWeight(chn,row)=weight(chn%nChanWt,row);
 	    if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p) &&a_gwt_p(ucell,vcell)>0.0) {
 		imWeight(chn,row)/=a_gwt_p(ucell,vcell)*f2_p[fid]+d2_p[fid];

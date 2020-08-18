@@ -1531,8 +1531,8 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
     <param name="weighting" type="string">
-           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental])</shortdescription>
-<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs)
+           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
+<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
                        During gridding of the dirty or residual image, each visibility value is
                        multiplied by a weight before it is accumulated on the uv-grid.
@@ -1596,6 +1596,8 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                                                       This method approximately minimizes rms sidelobes
                                                       for an east-west synthesis array.
+                                                      
+                       weighting='briggsbwtaper' :
 
                For more details on weighting please see Chapter3
                of Dan Briggs' thesis (http://www.aoc.nrao.edu/dissertations/dbriggs)
@@ -1609,6 +1611,7 @@ to use the correct direction in which the antenna is pointing with respect to th
         <value>briggsabs</value>
         <value>radial</value>
         <value>superuniform</value>
+        <value>briggsbwtaper</value>
       </allowed>
 
     </param>
@@ -2550,6 +2553,10 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="robust"><value>0.5</value></default>
          <default param="noise"><value>&quot;1.0Jy&quot;</value></default>
          <default param="npixels"><value>0</value></default>
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals value="briggsbwtaper" type="string">
+         <default param="robust"><value>0.5</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
      </when>

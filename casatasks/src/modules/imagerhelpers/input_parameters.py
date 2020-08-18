@@ -205,6 +205,9 @@ class ImagerParameters():
             weighting='briggs'
         elif(weighting=='briggs'):
             rmode='norm'
+        elif(weighting=='briggsbwtaper'):
+            rmode='bwtaper'
+            weighting='briggs'
         self.weightpars = {'type':weighting,'rmode':rmode,'robust':robust, 'noise': noise, 'npixels':npixels,'uvtaper':uvtaper, 'multifield':mosweight, 'usecubebriggs': perchanweightdensity}
 
 

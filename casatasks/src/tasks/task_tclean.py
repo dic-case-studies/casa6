@@ -190,6 +190,18 @@ def tclean(
     if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
         return
+        
+    if(perchanweightdensity==False and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with perchanweightdensity=False.", "WARN", "task_tclean" )
+        return
+        
+    if((specmode=='mfs' or specmode=='cont') and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with specmode='mfs' or 'cont'.", "WARN", "task_tclean" )
+        return
+        
+    if(npixels != 0 and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with npixels != 0.", "WARN", "task_tclean" )
+        return
 
     #####################################################
     #### Construct ImagerParameters object

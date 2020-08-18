@@ -197,7 +197,7 @@ using namespace casa::vi;
       Array<Float> arr;
       grids_p[index]->getSlice(arr, start, shape, True);
       Matrix<Float> gwt(arr);
-      if (rmode_p=="norm" && (sumWgts[index](0,chan)> 0.0)) {
+      if ((rmode_p=="norm" || rmode_p=="bwtaper" ) && (sumWgts[index](0,chan)> 0.0)) {
     //os << "Normal robustness, robust = " << robust << LogIO::POST;
     Double sumlocwt = 0.;
     for(Int vgrid=0;vgrid<ny_p;vgrid++) {
@@ -268,10 +268,6 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     VisImagingWeight::unPolChanWeight(weight, vb.weightSpectrum());
     Matrix<Bool> flag;
     cube2Matrix(vb.flagCube(), flag);
-      
-    //#############
-    bool uvDisWeight = True;
-    //#############
 
     Int nChanWt=weight.shape()(0);
     Double sumwt=0.0;
@@ -281,7 +277,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     
     for (Int row=0; row<nRow; row++) {
     
-    if(uvDisWeight) fracBW = calcFractionalBandwidth(vb.getFrequencies(row), nvischan, flag(Slice(),row));
+    if(rmode_p=="bwtaper") fracBW = calcFractionalBandwidth(vb.getFrequencies(row), nvischan, flag(Slice(),row));
 
     for (Int chn=0; chn<nvischan; chn++) {
       if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
@@ -298,17 +294,17 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
           Float gwt=grids_p[index]->getAt(pos);
           if(gwt >0){
               imweight(chn,row)=weight(chn%nChanWt,row);
-              //#############
-              if(uvDisWeight){
+              
+              if(rmode_p=="bwtaper"){
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
                   imweight(chn,row)/= gwt*f2_p[index][pos[3]]*2/uvDistanceFactor +d2_p[index][pos[3]];
               }
               else{
-                  imweight(chn,row)/=gwt*f2_p[index][pos[3]]*2+d2_p[index][pos[3]];
+                  imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
               }
-              //#############
+              
               sumwt+=imweight(chn,row);
           }
         }
