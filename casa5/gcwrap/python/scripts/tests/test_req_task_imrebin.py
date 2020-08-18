@@ -31,6 +31,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     ia = iatool()
 import sys
 import os
@@ -237,7 +239,7 @@ class imrebin_test(unittest.TestCase):
             Check that the polarization axis cannot be rebinned
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,2,2])
         else:
@@ -254,15 +256,16 @@ class imrebin_test(unittest.TestCase):
             All these values must be positive.
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,2,2,2,2])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,-2])
-            with self.assertRaises(AssertionError):
-                imrebin(imagename=datapath, outfile=rebinned, factor=[2.2,2.2])
+            if CASA6:
+                with self.assertRaises(AssertionError):
+                    imrebin(imagename=datapath, outfile=rebinned, factor=[2.2,2.2])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[1,1,1])
             
@@ -458,7 +461,7 @@ class imrebin_test(unittest.TestCase):
         '''
         
         imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
         else:
