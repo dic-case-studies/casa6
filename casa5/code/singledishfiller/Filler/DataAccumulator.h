@@ -500,8 +500,7 @@ private:
                 record.setTsysSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
                         num_chan_, 0, tsys_, record.tsys, { apol0, apol1 });
-            }
-            else {
+            } else {
                 // valid Tsys data are only for channel 0
                 // so treat as scalar Tsys
                 record.setTsysSize(2, 1);
@@ -538,8 +537,7 @@ private:
                 record.setTcalSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
                         num_chan_, 0, tcal_, record.tcal, { apol0, apol1 });
-            }
-            else {
+            } else {
                 // valid Tcal data are only for channel 0
                 // so treat as scalar Tcal
                 record.setTcalSize(2, 1);
