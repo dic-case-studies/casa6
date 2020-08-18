@@ -99,6 +99,10 @@ try:
     import casac
     from tasks import *
     from taskinit import *
+
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
     _ia = iatool()
     _rg = rgtool()
     image = iatool
@@ -1371,7 +1375,7 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             # CASA6 tasks raise exceptions
             self.assertRaises(
                 Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1394,7 +1398,7 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
                 expr="1*IM0", mask="mask3.im > 5", stretch=False
@@ -1809,7 +1813,7 @@ class immath_test3(unittest.TestCase):
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                if is_CASA6:
+                if is_CASA6 or casa_stack_rethrow:
                     self.assertRaises(
                         Exception, immath, imagename=subi, outfile=outfile, mode=mode
                     )
