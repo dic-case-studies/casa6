@@ -31,6 +31,9 @@ except ImportError:
     from __main__ import *
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    
 import sys
 import os
 import unittest
@@ -135,7 +138,7 @@ class impv_test(unittest.TestCase):
         self.assertTrue(os.path.exists(testfile))
         
         # Check that the outfile needs to be given
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile='', start=[10,15], end=[110,120])
         else:
@@ -154,7 +157,7 @@ class impv_test(unittest.TestCase):
             The use of parameters for the other mode is not allowed
         '''
         # Catch if using the wrong combo of length and mode are allowed
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], mode='length')
         else:
@@ -167,7 +170,7 @@ class impv_test(unittest.TestCase):
     def test_modeStartEnd(self):
         ''' Check that start and end is required '''
         # Catch if there is no start or end given
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile=testfile, mode='coords')
         else:
