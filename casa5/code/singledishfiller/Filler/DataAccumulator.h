@@ -481,11 +481,14 @@ private:
         // clear Tsys
         record.setTsysSize(0, 0);
 
-        if (num_chan_ == 1) {
+        if (tsys_.empty()) {
+            // no Tsys data. do nothing.
+            return;
+        } else if (num_chan_ == 1) {
             record.setTsysSize(2, 1);
             record.tsys(0, 0) = tsys_(0, apol0);
             record.tsys(1, 0) = tsys_(0, apol1);
-        } else if ((!tsys_.empty()) && casacore::anyNE(tsys_, 0.0f)) {
+        } else if (casacore::anyNE(tsys_, 0.0f)) {
             // valid spectral Tsys data are available
             casacore::IPosition const startpos0(2, 1, apol0);
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
@@ -516,11 +519,14 @@ private:
         // clear Tcal
         record.setTcalSize(0, 0);
 
-        if (num_chan_ == 1) {
+        if (tcal_.empty()) {
+            // no Tcal data. do nothing.
+            return;
+        } else if (num_chan_ == 1) {
             record.setTcalSize(2, 1);
             record.tcal(0, 0) = tcal_(0, apol0);
             record.tcal(1, 0) = tcal_(0, apol1);
-        } else if ((!tcal_.empty()) && casacore::anyNE(tcal_, 0.0f)) {
+        } else if (casacore::anyNE(tcal_, 0.0f)) {
             // valid spectral Tcal data are available
             casacore::IPosition const startpos0(2, 1, apol0);
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
@@ -544,10 +550,13 @@ private:
     }
 
     void setTsys1(MSDataRecord &record, ssize_t start_src) {
-        if (num_chan_ == 1) {
+        if (tsys_.empty()) {
+            // no Tsys data. do nothing.
+            return;
+        } else if (num_chan_ == 1) {
             record.setTsysSize(1, 1);
             record.tsys(0, 0) = tsys_(0, start_src);
-        } else if ((!tsys_.empty()) && casacore::anyNE(tsys_, 0.0f)) {
+        } else if (casacore::anyNE(tsys_, 0.0f)) {
             casacore::IPosition const startpos(2, 1, start_src);
             casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
             if (casacore::anyNE(tsys_(startpos, endpos), 0.0f)) {
@@ -565,10 +574,13 @@ private:
     }
 
     void setTcal1(MSDataRecord &record, ssize_t start_src) {
-        if (num_chan_ == 1) {
+        if (tcal_.empty()) {
+            // no Tcal data. do nothing.
+            return;
+        } else if (num_chan_ == 1) {
             record.setTcalSize(1, 1);
             record.tcal(0, 0) = tcal_(0, start_src);
-        } else if ((!tcal_.empty()) && casacore::anyNE(tcal_, 0.0f)) {
+        } else if (casacore::anyNE(tcal_, 0.0f)) {
             casacore::IPosition const startpos(2, 1, start_src);
             casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
             if (casacore::anyNE(tcal_(startpos, endpos), 0.0f)) {
