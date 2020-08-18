@@ -18,6 +18,9 @@ if th.is_casa6():
 else:
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     datadir = (
         os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
     )
@@ -509,9 +512,9 @@ class statwt_test(unittest.TestCase):
                 statwt(vis=dst, statalg=statalg, center="median",
                        lside=False)
             elif statalg == "bogus":
-                if th.is_casa6():
+                if th.is_casa6() or casa_stack_rethrow:
                     self.assertRaises(
-                        Exception, statwt, vis=dst, statalg=statalg
+                        RuntimeError, statwt, vis=dst, statalg=statalg
                     )
                 else:
                     self.assertFalse(statwt(vis=dst, statalg=statalg))
@@ -1028,9 +1031,9 @@ class statwt_test(unittest.TestCase):
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
-                if th.is_casa6():
+                if th.is_casa6() or casa_stack_rethrow:
                     self.assertRaises(
-                        Exception, statwt, vis=dst, combine='scan,field,state',
+                        RuntimeError, statwt, vis=dst, combine='scan,field,state',
                         chanbin=1, timebin='1yr', datacolumn='residual_data',
                         selectdata=True, spw=spw
                     )
