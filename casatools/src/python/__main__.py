@@ -42,7 +42,7 @@ for flag in sys.argv:
             if return_code:
                 raise subprocess.CalledProcessError(return_code, cmd)
 
-        _user_data = _ct.rundata if _ct.rundata is not None else __os.path.expanduser("~/.casa/data")
+        _user_data = _ct.rundata(False) if _ct.rundata(False) is not None else __os.path.expanduser("~/.casa/data")
 
         if not __os.path.exists(_user_data):
             __os.makedirs(_user_data)
