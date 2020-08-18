@@ -484,7 +484,15 @@ def generate_pyinit(moduledir,tools):
                _distro_dpath = None
                _dpath = [ ]
 
-               rundata = None
+               _rundata = None
+               def rundata(infer=True):
+                   if infer == False or _rundata is not None:
+                       return _rundata
+                   located = ctsys.resolve('geodetic/IERSeop2000')
+                   if located == 'geodetic/IERSeop2000':
+                       return None
+                   return __os.path.split(__os.path.split(located)[0])[0]
+
                _user_data = __os.path.expanduser("~/.casa/data")
                if hasattr(__user,'rundata') and __os.path.isdir(__os.path.expanduser(__user.rundata)):
                    _user_data = __os.path.expanduser(__user.rundata)
@@ -504,7 +512,7 @@ def generate_pyinit(moduledir,tools):
                        _dpath = _dpath + [ _distro_dpath ]
                    except: pass
 
-               rundata = _distro_dpath
+               _rundata = _distro_dpath
 
                ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                if __sys.argv[0] != '-m' and ctsys.resolve('geodetic/IERSeop2000') == 'geodetic/IERSeop2000':
