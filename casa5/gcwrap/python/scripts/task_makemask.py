@@ -745,10 +745,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         if os.path.exists(tmpregrid):
                             shutil.rmtree(tmpregrid)
                         # regrid to output image coords
-                        regridmask(img,sum_tmp_outfile,tmpregrid)
-                        addimagemask(sum_tmp_outfile,tmpregrid)
-                        usedimfiles.append(img)
-                        shutil.rmtree(tmpregrid)
+                        try:
+                            regridmask(img,sum_tmp_outfile,tmpregrid)
+                            addimagemask(sum_tmp_outfile,tmpregrid)
+                            usedimfiles.append(img)
+                        finally:
+                            shutil.rmtree(tmpregrid)
                     # get boolean masks
                     #  will work in image(1/0) masks
                 
@@ -894,15 +896,17 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 if outbmask!='':
                     casalog.post('Putting mask in T/F','INFO')
                     if _ia.isopen(): _ia.close()
-                    _ia.open(sum_tmp_outfile)
-                    _ia.calcmask(mask='%s==1.0' % sum_tmp_outfile,name=outbmask,asdefault=True)
+                    try:
+                        _ia.open(sum_tmp_outfile)
+                        _ia.calcmask(mask='%s==1.0' % sum_tmp_outfile,name=outbmask,asdefault=True)
                     # mask only pixel == 0.0 (for a new outfile), mask region !=1.0 and preserve
                     # the pixel values if outfile exists
                     #if os.path.isdir(outparentim):
                     #  _ia.calcmask(mask='%s==1.0' % sum_tmp_outfile,name=outbmask,asdefault=True)
                     #else:
                     #  _ia.calcmask(mask='%s!=0.0' % sum_tmp_outfile,name=outbmask,asdefault=True)
-                    _ia.done()
+                    finally:
+                        _ia.done()
                 if debug: shutil.copytree(sum_tmp_outfile,sum_tmp_outfile+"_afterCoverttoTFmask")
                 # if outfile exists initially outfile is copied to sum_tmp_outfile
                 # if outfile does not exist initially sum_tmp_outfile is a copy of inpimage
@@ -954,7 +958,6 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     casalog.post("region(s) from direct input: "+str(usedrglist),"INFO")
                 casalog.post(outputmsg,"INFO")
                 
-
             except Exception as instance:
                 raise RuntimeError("*** Error (2), in mode copy: *** %s" % instance)
             finally:
@@ -1020,14 +1023,16 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
         raise OSError("template image %s does not exist" % template)
     
     _ia = image()
-    _tb = table()
-    inputmaskcopy = "_tmp_copy_"+os.path.basename(inputmask)
-    cleanuptempfiles([inputmaskcopy])
-    shutil.copytree(inputmask,inputmaskcopy)
-    _ia.open(template)
-    ocsys = _ia.coordsys()
-    oshp = _ia.shape()
-    _ia.done()
+    try:
+        _tb = table()
+        inputmaskcopy = "_tmp_copy_"+os.path.basename(inputmask)
+        cleanuptempfiles([inputmaskcopy])
+        shutil.copytree(inputmask,inputmaskcopy)
+        _ia.open(template)
+        ocsys = _ia.coordsys()
+        oshp = _ia.shape()
+    finally:
+        _ia.done()
     _tb.open(template)
     defTelescope = _tb.getkeywords()['coords']['telescope']
     _tb.close()
@@ -1094,8 +1099,11 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
         # to ensure to create 1/0 mask image
         #ir.calc('iif (%s>0.0 && %s<1.0,1,%s)'%(outputmask,outputmask,outputmask))
         # treat everything not = 0.0 to be mask
-        ir.calc('iif (abs("%s")>0.0,1,"%s")'%(outputmask,outputmask),False)
-        ir.done()
+        if (ir):
+            try:
+                ir.calc('iif (abs("%s")>0.0,1,"%s")'%(outputmask,outputmask),False)
+            finally:
+                ir.done()
         if os.path.isdir(inputmaskcopy):
             shutil.rmtree(inputmaskcopy)
 
@@ -1104,13 +1112,15 @@ def addimagemask(sumimage, imagetoadd, threshold=0.0):
     add image masks (assumed the images are already in the same coordinates)
     """
     _ia = image()
-    #print "addimagemask: sumimage=",sumimage," imagetoadd=",imagetoadd
-    _ia.open(sumimage)
-    _ia.calc('iif ("'+imagetoadd+'">'+str(threshold)+',("'+sumimage+'"+"'+imagetoadd+'")/("'+sumimage+'"+"'+imagetoadd+'"),"'+sumimage+'")',False)
-    # actually should be AND?
-    #_ia.calc('iif ('+imagetoadd+'>'+str(threshold)+','+sumimage+'*'+imagetoadd+','+sumimage+')')
-    #_ia.calc('iif ('+imagetoadd+'>'+str(threshold)+',('+sumimage+'*'+imagetoadd+')/('+sumimage+'*'+imagetoadd+'),'+sumimage+')')
-    _ia.close()  
+    try:
+        #print "addimagemask: sumimage=",sumimage," imagetoadd=",imagetoadd
+        _ia.open(sumimage)
+        _ia.calc('iif ("'+imagetoadd+'">'+str(threshold)+',("'+sumimage+'"+"'+imagetoadd+'")/("'+sumimage+'"+"'+imagetoadd+'"),"'+sumimage+'")',False)
+        # actually should be AND?
+        #_ia.calc('iif ('+imagetoadd+'>'+str(threshold)+','+sumimage+'*'+imagetoadd+','+sumimage+')')
+        #_ia.calc('iif ('+imagetoadd+'>'+str(threshold)+',('+sumimage+'*'+imagetoadd+')/('+sumimage+'*'+imagetoadd+'),'+sumimage+')')
+    finally:
+        _ia.close()
     
 def multiplyimagemask(sumimage, imagetomerge):
     """
@@ -1119,10 +1129,12 @@ def multiplyimagemask(sumimage, imagetomerge):
     and a T/F mask originated mask image
     """
     _ia = image()
-    _ia.open(sumimage)
-    _ia.calc('iif ("'+imagetomerge+'"!=0.0,("'+sumimage+'"*"'+imagetomerge+'"),0.0 )',False)
-    _ia.calc('iif ("'+sumimage+'"!=0.0,("'+sumimage+'")/("'+sumimage+'"),"'+sumimage+'")',False)
-    _ia.close()
+    try:
+        _ia.open(sumimage)
+        _ia.calc('iif ("'+imagetomerge+'"!=0.0,("'+sumimage+'"*"'+imagetomerge+'"),0.0 )',False)
+        _ia.calc('iif ("'+sumimage+'"!=0.0,("'+sumimage+'")/("'+sumimage+'"),"'+sumimage+'")',False)
+    finally:
+        _ia.close()
 
 def expandchanmask(inimage,inchans,outimage,outchans):
     """
@@ -1236,6 +1248,12 @@ def extractmaskname(maskname):
     # the image file name may contains ':' some cases
     # take last one in split list as an internal mask name
 
+    # Try to avoid issues with ':' included in paths when given absolute paths
+    dirname = None
+    if os.path.isabs(maskname):
+        dirname = os.path.dirname(maskname)
+        maskname = os.path.basename(maskname)
+
     indx = maskname.find(':') 
     for i in list(range(len(maskname))):
         if indx>-1:
@@ -1244,12 +1262,16 @@ def extractmaskname(maskname):
         else:
             break
     if indx != -1: 
-        parentimage=maskname[:indx]
-        maskn=maskname[indx+1:]
-        return (parentimage,maskn) 
+        parentimage = maskname[:indx]
+        maskn = maskname[indx+1:]
     else:
-        parentimage=maskname
-        return (parentimage, '')
+        parentimage = maskname
+        maskn = ''
+
+    if dirname:
+        parentimage = os.path.join(dirname, parentimage)
+
+    return (parentimage, maskn)
 
 def makeEmptyimage(template,outimage):
     """
