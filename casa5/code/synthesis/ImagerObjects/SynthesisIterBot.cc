@@ -101,7 +101,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		SynthesisUtilMethods::getResource("End SynthesisIterBot");
 	}
 
-	void SynthesisIterBot::setIterationDetails(Record iterpars) {
+	void SynthesisIterBot::setIterationDetails(const Record &iterpars) {
 		LogIO os( LogOrigin("SynthesisIterBot","setIterationDetails",WHERE) );
 		try {
 
@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
 
-	void SynthesisIterBot::setupIteration(Record iterpars) {
+	void SynthesisIterBot::setupIteration(const Record &iterpars) {
 		LogIO os( LogOrigin("SynthesisIterBot","setupIteration",WHERE) );
 		os << "Set Iteration Control Options" << LogIO::POST;
 		try {
@@ -217,7 +217,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		return returnRecord;
 	}
 
-	void SynthesisIterBot::startMinorCycle(Record& initializationRecord) {
+	void SynthesisIterBot::startMinorCycle(const Record& initializationRecord) {
 		try {
 			LogIO os( LogOrigin("SynthesisIterBot",__FUNCTION__,WHERE) );
 			if ( itsLoopController )
@@ -227,7 +227,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		}
 	}
 
-	void SynthesisIterBot::endMinorCycle(Record& executionRecord) {
+	void SynthesisIterBot::endMinorCycle(const Record& executionRecord) {
 		try {
 			//SISubIterBot loopController(subIterBotRecord);
 			LogIO os( LogOrigin("SynthesisIterBot",__FUNCTION__,WHERE) );
@@ -264,7 +264,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	SynthesisIterBotWithOldGUI::SynthesisIterBotWithOldGUI() : 
 	  SynthesisIterBot(), itsInteractiveMasker( ) {
 	}
-	void SynthesisIterBotWithOldGUI::setIterationDetails(Record iterpars) {
+	void SynthesisIterBotWithOldGUI::setIterationDetails(const Record &iterpars) {
 		LogIO os( LogOrigin("SynthesisIterBot","setIterationDetails",WHERE) );
 		try {
 

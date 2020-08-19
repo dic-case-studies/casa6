@@ -228,7 +228,7 @@ public:
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::RowNumbers & rowids) const = 0;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const = 0;
 
     virtual VisBuffer2 * getVisBuffer () const = 0;
 

@@ -72,7 +72,7 @@ from subprocess import Popen, PIPE
 from datetime import datetime
 from inspect import currentframe, getframeinfo
 from textwrap import dedent
-from shutil import copy2
+from shutil import copy2, move
 import subprocess
 import sysconfig
 import platform
@@ -95,11 +95,14 @@ parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
+parser.add_argument('--relwithdebinfo', help='Build with optimization and debug flags', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
 _debug_build_ = args.debug
+_rel_with_deb_info_ = args.relwithdebinfo
 print("_debug_build_: " + str(_debug_build_))
+print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
 for arg in sys.argv:
@@ -107,12 +110,14 @@ for arg in sys.argv:
         sys.argv.remove(arg)
     if (arg.startswith("--debug")):
         sys.argv.remove(arg)
+    if (arg.startswith("--relwithdebinfo")):
+        sys.argv.remove(arg)
 
 
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.50.jar'
+xml_jar_file = 'xml-casa-assembly-1.54.jar'
 real_gnu = None
 
 if pyversion < 3:
@@ -396,6 +401,7 @@ def generate_grpc(protos):
     outdir=get_grpc_srcdir()
     mkpath(outdir)
     mkpath(proto_export_dir)
+    mkpath("binding/generated/include")
     for p in protos:
         copy2(p,proto_export_dir)
         assert os.path.isfile(p), "could not find gRPC proto '%s'" % p
@@ -406,6 +412,14 @@ def generate_grpc(protos):
         run_process( genprotocol, err='could not generate protobuf bindings for %s' % p )
         print("\t%s" % " ".join(genrpc))
         run_process( genrpc, err='could not generate protobuf bindings for %s' % p )
+        todir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "include")
+        name, extension = os.path.splitext(os.path.basename(p))
+        if os.path.isfile("%s/%s.pb.h" % (todir,name)):
+            os.remove("%s/%s.pb.h" % (todir,name))
+        move( "%s.pb.h" % os.path.join(outdir,name), todir )
+        if os.path.isfile("%s/%s.grpc.pb.h" % (todir,name)):
+            os.remove("%s/%s.grpc.pb.h" % (todir,name))
+        move( "%s.grpc.pb.h" % os.path.join(outdir,name), todir )
     return outdir
 
 def generate_pyinit(moduledir,tools):
@@ -467,12 +481,14 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
+               _distro_dpath = ""
                _dpath = [ ]
                try:
                    import casadata
-                   _dpath = [ casadata.datapath ]
+                   _distro_dpath = casadata.datapath
+                   _dpath = [ _distro_dpath ]
                except: pass
-               ctsys.initialize( __sys.executable, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -873,8 +889,16 @@ def get_cflags():
 def debug_build():
     return _debug_build_
 
+def relwithdebinfo_build():
+    return _rel_with_deb_info_
+
 def get_optimization_flags():
-    return ['-g'] if debug_build( ) else ['-O2']
+    if debug_build( ):
+        return ['-g']
+    elif relwithdebinfo_build():
+        return ['-g', '-O2']
+    else:    
+        return ['-O2']
 
 def get_new_cxx_compiler_flags():
     return get_optimization_flags() + ['-std=c++11']
@@ -898,8 +922,14 @@ def get_fortran_compiler_flags(ext):
     arch = platform.architecture()[0].lower()
     if (ext == ".f90"):
         cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
     if (ext == ".f"):
         cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        if relwithdebinfo_build():
+            cc_args.insert(0, "-g")
+   
+    
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
@@ -951,6 +981,8 @@ def customize_compiler(self):
     if debug_build( ):
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-O'),new_compiler_cc))
+    elif relwithdebinfo_build( ):
+        pass
     else:
         new_compiler_cxx = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cxx))
         new_compiler_ccc = list(filter(lambda flag: not flag.startswith('-g'),new_compiler_cc))
@@ -1206,11 +1238,19 @@ class casa_build_ext(build_ext):
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
 
-        if sys.platform == 'darwin':
+        # Fixing rpaths is needed for gcc wheel builds
+        if sys.platform == 'darwin' and doing_wheel_build:
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-
+        
+        if relwithdebinfo_build():
+           print("Extracting debug symbols")
+           if not os.path.exists('./debugsymbols'):
+                os.makedirs('./debugsymbols')
+           result = subprocess.run(['perl', 'scripts/extract_symbols.pl', 'ws=./debugsymbols', 'binaries=./build', 'version='+casatools_version ], stdout=subprocess.PIPE)
+           print(result.stdout.decode('utf-8'))
+        
 
 
 class casa_test(Command):
@@ -1447,6 +1487,10 @@ c_target = "c_compile"
 # test_target = "test_compile"
 fortran_target = "f_compile"
 soabi = sysconfig.get_config_var('SOABI')
+if soabi is None:
+    ## Python 2.7
+    soabi = "python-27-x86_64"
+lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
 casac_dir = get_casac_dir()
 output_lib = os.sep.join([casac_dir, "lib", "lib{libname}." + soabi + "." + lib_ext])
 libcasatools = output_lib.format(libname='casatools')
@@ -2194,7 +2238,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.50.jar"
+        assembly_jar = "xml-casa-assembly-1.54.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
@@ -2350,7 +2394,7 @@ if __name__ == '__main__':
     generate_pyinit(moduledir,tools)
 
     a_priori_directory_exclusions += [ 'casadbus/session', 'casadbus/plotserver', 'casadbus/synthesis', 'casadbus/utilities', 'casadbus/viewer' ]
-    a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc' ]
+    a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc', 'SIIterBot.cc' ]
 
     CASACORE_YACC = source_files("casacore",file_suffix_filter=".yy")
     CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
@@ -2386,7 +2430,8 @@ if __name__ == '__main__':
     grpc_incdir = get_grpc_incdir()
     grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
                                    os.path.join('casa-source','code','casatools','protos','shutdown.proto'),
-                                   os.path.join('casa-source','code','casatools','protos','ping.proto')  ] )
+                                   os.path.join('casa-source','code','casatools','protos','ping.proto'),
+                                   os.path.join('casa-source','code','display','protos','img.proto') ] )
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
@@ -2457,7 +2502,7 @@ if __name__ == '__main__':
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
         # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding',grpc_incdir] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",

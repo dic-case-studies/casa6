@@ -193,7 +193,7 @@ public:
 	virtual const casacore::MDirection& phaseCenter () const {static casacore::MDirection dummy; return dummy;}
 	virtual casacore::Int polarizationFrame () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int polarizationId () const {static casacore::Int dummy; return dummy;}
-	virtual const casacore::RowNumbers & rowIds () const {static casacore::RowNumbers dummy; return dummy;}
+	virtual const casacore::Vector<casacore::rownr_t> & rowIds () const {static casacore::Vector<casacore::rownr_t> dummy; return dummy;}
 	virtual casacore::Int spectralWindow () const {static casacore::Int dummy; return dummy;}
 	virtual const casacore::Vector<casacore::Int> & spectralWindows () const {static casacore::Vector<casacore::Int> dummy; return dummy;}
         virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & /*spectralWindows*/) {}

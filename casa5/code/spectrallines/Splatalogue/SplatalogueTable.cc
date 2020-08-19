@@ -157,10 +157,10 @@ typedef Array<T> (TableExprNode::* Extractor) (const RowNumbers& rownrs) const;
 static Array<T>
 extract (const TableExprNode & col, Extractor extractor)
 {
-  RowNumbers rownrs (col.nrow());
+  Vector<rownr_t> rownrs (col.nrow());
   indgen (rownrs);
 
-  return ((& col) ->* extractor) (rownrs);
+  return ((& col) ->* extractor) (RowNumbers(rownrs));
 
 }
 

@@ -7362,7 +7362,7 @@ ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, cons
             }
             case MSS::ROWS:
             {
-                RowNumbers rowIds;
+                Vector<rownr_t> rowIds;
                 rowIds = itsVI->rowIds(rowIds);
                 Vector<Int> tmp(rowIds.shape());
                 for (Int ii=0;ii<(Int)tmp.nelements(); ii++)

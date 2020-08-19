@@ -4248,8 +4248,8 @@ void MSTransformManager::reindexSourceSubTable()
        	ScalarColumn<Int> sourceId = tableCols.sourceId();
         reindexColumn(spectralWindowId,0);
 
-    	// Remove duplicates
-    	std::vector<rownr_t> duplicateIdx;
+        // Remove duplicates
+        std::vector<rownr_t> duplicateIdx;
     	std::vector< std::pair<uInt,uInt> > sourceIdSpwIdMap;
 
     	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
@@ -4318,12 +4318,12 @@ void MSTransformManager::reindexDDISubTable()
     		rowIndex += 1;
     	}
 
-        // Delete the old rows
-      uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
+    	// Delete the old rows  
+    	uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
         	uInt rownr = ddiCols.nrow()-1;
-        	RowNumbers rowsToDelete(nrowsToDelete);
+            Vector<rownr_t> rowsToDelete(nrowsToDelete);
         	for(uInt idx=0; idx<nrowsToDelete; idx++)
         	{
         		rowsToDelete(idx) = rownr;

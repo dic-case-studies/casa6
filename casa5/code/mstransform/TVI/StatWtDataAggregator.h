@@ -90,7 +90,7 @@ public:
         const casacore::Vector<casacore::Int>& ant2,
         const casacore::Vector<casacore::Int>& spws,
         const casacore::Vector<casacore::Double>& exposures,
-        const casacore::RowNumbers& rowIDs
+        const casacore::Vector<casacore::rownr_t>& rowIDs
     ) const = 0;
 
     virtual void weightSingleChanBin(

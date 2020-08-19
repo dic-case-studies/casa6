@@ -712,7 +712,7 @@ public:
     VbCacheItem <casacore::Int> polFrame_p;
     VbCacheItem <casacore::Int> polarizationId_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > processorId_p;
-    VbCacheItemArray <casacore::RowNumbers> rowIds_p;
+    VbCacheItemArray <casacore::Vector<casacore::rownr_t> > rowIds_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > scan_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > sigma_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > sigmaMat_p;

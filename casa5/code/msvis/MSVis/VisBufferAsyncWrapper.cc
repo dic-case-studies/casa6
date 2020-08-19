@@ -1270,14 +1270,14 @@ VisBufferAsyncWrapper::resetWeightMat ()
   wrappedVba_p->resetWeightMat ();
 }
 
-casacore::RowNumbers&
+Vector<rownr_t>&
 VisBufferAsyncWrapper::rowIds ()
 {
   CheckWrap ();
   return wrappedVba_p->rowIds ();
 }
 
-const casacore::RowNumbers&
+const Vector<rownr_t>&
 VisBufferAsyncWrapper::rowIds () const
 {
   CheckWrap ();

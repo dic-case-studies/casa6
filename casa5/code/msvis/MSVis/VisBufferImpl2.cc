@@ -1806,7 +1806,7 @@ VisBufferImpl2::setProcessorId (const Vector<Int> & value)
     cache_p->processorId_p.set (value);
 }
 
-const casacore::RowNumbers &
+const Vector<rownr_t> &
 VisBufferImpl2::rowIds () const
 {
     return cache_p->rowIds_p.get ();
@@ -2617,7 +2617,7 @@ VisBufferImpl2::fillProcessorId (Vector<Int>& value) const
 }
 
 void
-VisBufferImpl2::fillRowIds (casacore::RowNumbers& value) const
+VisBufferImpl2::fillRowIds (Vector<rownr_t>& value) const
 {
   CheckVisIter ();
 

@@ -11,7 +11,9 @@
  Note to self what happens when we open another table if one is already opened?
  ***/
 
+#include <climits>
 #include <iostream>
+#include <algorithm>
 #include <table_cmpt.h>
 #include <casa/aips.h>
 #include <tables/DataMan/IncrementalStMan.h>
@@ -717,7 +719,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
    }
    else{
      std::vector<int> shape;
-     RowNumbers rownrs (result.node().nrow());
+     Vector<rownr_t> rownrs (result.node().nrow());
      indgen (rownrs);
      //cerr << "rownrs " << result.node().nrow() << "  is scalar " << result.node().isScalar() << endl;
      if(result.node().isScalar())
@@ -1055,7 +1057,7 @@ std::vector<int>
 table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
 {
  *itsLog << LogOrigin(__func__, name());
- std::vector<Int64> rstat(0);
+ std::vector<long long int> rstat(0);
  try {
 	 if(itsTable){
 		 TableProxy dummy;
@@ -1069,10 +1071,12 @@ table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- std::vector<int> newrstat;
- newrstat.reserve(rstat.size());
- std::for_each( rstat.begin( ), rstat.end( ), [&](Int64 x) { newrstat.push_back((int)x); } );
- return newrstat;
+ std::vector<int> result(rstat.size( ));
+ std::transform( rstat.begin( ), rstat.end( ), result.begin( ),
+                 []( long long int e ) {
+                     return e >= INT_MIN && e <= INT_MAX  ? e : -1;
+                 } );
+ return result;
 }
 
 bool
@@ -1172,8 +1176,8 @@ table::ncols()
  Int64 rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int64> myshape = itsTable->shape();
-	    rstat = myshape[0];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[0] >= INT_MIN && myshape[0] <= INT_MAX ? myshape[0] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -1191,8 +1195,8 @@ table::nrows()
  Int64 rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int64> myshape = itsTable->shape();
-	    rstat = myshape[1];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[1] >= INT_MIN && myshape[1] <= INT_MAX ? myshape[1] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }

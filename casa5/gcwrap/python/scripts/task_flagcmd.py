@@ -1903,10 +1903,11 @@ def newplotflags(
     casalog.post('Plotted %d flags' % nplotted)
 
     figs = []
+    figsize = (8, 6)
     # maximum number of antennas per plot page (CAS-5187)
     antlimit = 28
     if len(myants) <= antlimit:
-        figs.append(pl.figure())
+        figs.append(pl.figure(figsize=figsize))
         _plotants(figs[0], plotflagperant, myants, readict)
     else:
         # prefer DA on first page
@@ -1918,12 +1919,12 @@ def newplotflags(
             da = da[:antlimit]
 
         if da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, da, readict)
 
         # stuff the rest on other figures
         while no_da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, no_da[:antlimit], readict)
             no_da = no_da[antlimit:]
 
@@ -1963,11 +1964,14 @@ def _plotants(figure, plotflagperant, antlist, readict_inp):
     nants = len(antlist)
     readict = dict()
     used_reasons = set()
+    # These style params can be critical to produce meaningful (or not too
+    # misleading) plots (CAS-13100)
+    style_params = {'alpha': .7, 'marker': '.', 'markersize': 1, 'linewidth': 1}
     for antind, thisant in enumerate(antlist):
         for flag in plotflagperant[thisant]:
             thisoffset = flag['offset'] + antind + 1
             ax1.plot([flag['t1s'], flag['t2s']], [thisoffset] * 2,
-                     color=flag['color'], lw=2, alpha=.7)
+                     color=flag['color'], **style_params)
             used_reasons.add(flag['reason'])
 
     # remove reasons that are not needed
