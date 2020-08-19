@@ -38,7 +38,7 @@
                        plus the following extra output images.
                        try.alpha            - spectral index
                        try.alpha.error   - estimate of error on spectral index
-                       try.beta              - spectral curvature (if nterms \&gt; 2)
+                       try.beta              - spectral curvature (if nterms &gt; 2)
 
                        Tip : Include a directory name in 'imagename' for all
                                output images to be sent there instead of the
@@ -641,13 +641,6 @@
 </description>
       <type>bool</type><type>int</type>
       <value type="bool">False</value>
-    </param>
-
-    <param type="bool" name="plotReport">
-           <shortdescription>Plot reported minor cycle changes.</shortdescription>
-           <value type="bool">False</value>
-<description>Plot reported minor cycle changes. Otherwise, the changes will just be returned as normal.
-</description>
     </param>
 
     <param type="any" name="iterrec">

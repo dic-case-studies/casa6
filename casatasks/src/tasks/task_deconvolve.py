@@ -40,7 +40,7 @@ def deconvolve(
     smallscalebias,#=0.0
 
     ### restoration options
-    restoration,
+    restoration,#=True,
     restoringbeam,#=[],
 
     ##### Iteration control
@@ -52,7 +52,6 @@ def deconvolve(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False, TODO test with TRUE
-    plotReport,#=False
     iterrec,#=False
 
     ##### (new) Mask parameters
@@ -151,7 +150,7 @@ def deconvolve(
 
             ## Get summary from iterbot
             if type(interactive) != bool:
-                retrec=imager.getSummary();
+                retrec=decon.getSummary();
 
         #################################################
         #### Teardown
