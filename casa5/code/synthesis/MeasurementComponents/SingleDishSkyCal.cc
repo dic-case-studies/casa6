@@ -70,6 +70,8 @@
 //
 //#define SDCALSKY_DEBUG
 
+using namespace casacore;
+
 namespace {
 struct NullLogger {};
 
@@ -482,7 +484,6 @@ inline void setNumberOfCorrelationsPerSpw(casacore::MeasurementSet const &ms,
 }
 }
 
-using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 //
 // SingleDishSkyCal
