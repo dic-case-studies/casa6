@@ -106,11 +106,7 @@ def sdpolaverage(
         pdh.bypassParallelProcessing(0)
 
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s' % instance, 'ERROR')
-        return False
+    pdh.setupIO()
 
     # Process the input Multi-MS
     if ParallelDataHelper.isMMSAndNotServer(infile) == True and monolithic_processing == False:
@@ -141,15 +137,10 @@ def sdpolaverage(
         # MMS is processed in parallel
         else:
             createmms = False
-            try:
-                pdh.override__args('createmms', False)
-                pdh.setupCluster('sdpolaverage')
-                pdh.go()
-            except Exception as instance:
-                casalog.post('%s' % instance, 'ERROR')
-                return False
-
-            return True
+            pdh.override__args('createmms', False)
+            pdh.setupCluster('sdpolaverage')
+            pdh.go()
+            return
 
     # Create an output Multi-MS
     if createmms == True:
@@ -157,20 +148,15 @@ def sdpolaverage(
         # Check the heuristics of separationaxis and the requested transformations
         pval = pdh.validateOutputParams()
         if pval == 0:
-            raise Exception(
+            raise RuntimeError(
                 'Cannot create MMS using separationaxis=%s with some of the requested transformations.'
                     % separationaxis
             )
 
-        try:
-            pdh.setupCluster('sdpolaverage')
-            pdh.go()
-            monolithic_processing = False
-        except Exception as instance:
-            casalog.post('%s' % instance, 'ERROR')
-            return False
-
-        return True
+        pdh.setupCluster('sdpolaverage')
+        pdh.go()
+        monolithic_processing = False
+        return
 
     # Create a local copy of the MSTransform tool
     mtlocal = mstransformer()
@@ -229,7 +215,7 @@ def sdpolaverage(
 
         # Only parse chanaverage if chanbin is valid
         if chanaverage and isinstance(chanbin, int) and chanbin <= 1:
-            raise Exception('Parameter chanbin must be > 1 to do channel averaging')
+            raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
 
         # Validate the case of int or list chanbin
         if chanaverage and pdh.validateChanBin():
@@ -273,7 +259,7 @@ def sdpolaverage(
         if timeaverage:
             tb = quanta.convert(quanta.quantity(timebin), 's')['value']
             if not tb > 0:
-                raise Exception("Parameter timebin must be > '0s' to do time averaging")
+                raise ValueError("Parameter timebin must be > '0s' to do time averaging")
 
         if timeaverage:
             casalog.post('Parse time averaging parameters')
@@ -317,12 +303,9 @@ def sdpolaverage(
         casalog.post('Apply the transformations')
         mtlocal.run()
 
+    finally:
         mtlocal.done()
 
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        return False
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
@@ -415,14 +398,11 @@ def sdpolaverage(
 
             mytb.close()
 
-        except Exception as instance:
+        finally:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
 
     mytb = None
 
@@ -435,8 +415,5 @@ def sdpolaverage(
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
-        return False
 
     mslocal = None
-
-    return True

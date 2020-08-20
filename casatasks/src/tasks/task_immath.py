@@ -207,13 +207,13 @@ def immath(
                 filenames, outfile, tmpFilePrefix, mask, region,
                 box, chans, stokes, stretch, polithresh, _myia
             )
-            return True
+            return
         elif mode == 'poli' or mode == 'lpoli' or mode == 'tpoli':
             _immath_new_poli(
                 filenames, outfile, tmpFilePrefix, mask, region,
                 box, chans, stokes, stretch, sigma, _myia, mode
             )
-            return True
+            return
         elif mode == 'evalexpr':
             if box or chans or stokes or region or mask:
                 (subImages, file_map) = _immath_createsubimages(
@@ -243,7 +243,8 @@ def immath(
                     varnames, filenames, _myia, prec
                 )
         else:
-            raise(Exception, "Unsupported mode " + str(mode))
+            raise ValueError("Unsupported mode " + str(mode))
+
         try:
             vars = locals( )
             param_names = immath.__code__.co_varnames[:immath.__code__.co_argcount]
@@ -254,13 +255,10 @@ def immath(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
+
     except Exception as error:
         if mode == 'evalexpr':
             casalog.post("Unable to process expression " + expr, 'SEVERE')
-        else:
-            casalog.post("Error running immath", 'SEVERE')
-        casalog.post("Exception caught was: " + str(error), 'SEVERE')
         raise
     finally:
         if _myia:

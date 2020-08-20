@@ -173,8 +173,11 @@ class splattotable_test(unittest.TestCase):
                     newsl = run_sttmethod(filenames, tab)
                     newsl.done()
                 else:
-                    self.assertTrue(run_stttask(filenames, tab))
-                    
+                    try:
+                        run_stttask(filenames, tab)
+                    except Exception:
+                        self.fail()
+
                 self.assertTrue(mytb.open(tab))
             mytb.done()
                     
