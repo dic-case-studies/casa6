@@ -39,6 +39,10 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
+
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
     image = iatool
     # not a local tool
     _tb = tb
@@ -82,8 +86,9 @@ class imtrans_test(unittest.TestCase):
     def test_exceptions(self):
         """imtrans: Test various exception cases"""
         def testit(imagename, outfile, order):
-            # CASA6 tasks always throw exceptions, CASA5 tasks return False
-            if is_CASA6:
+            # CASA6 tasks always throw exceptions, CASA5 tasks might return False
+            # depending on __rethrow_casa_exceptions
+            if is_CASA6 or casa_stack_rethrow:
                 self.assertRaises(Exception, run_imtrans, imagename, outfile, order)
             else:
                 self.assertFalse(run_imtrans(imagename, outfile, order))
@@ -118,7 +123,8 @@ class imtrans_test(unittest.TestCase):
         count = 0
         for order in ["012", 12, ['r', 'd', 'f'], ["righ", "declin", "freq"]]:
             outfile = "straight_copy_" + str(count)
-            self.assertTrue(run_imtrans(imagename, outfile, order))
+            run_imtrans(imagename, outfile, order)
+            self.assertTrue(os.path.exists(outfile))
             myia.open(outfile)
             gotdata = myia.getchunk()
             gotnames = myia.coordsys().names()
@@ -138,7 +144,8 @@ class imtrans_test(unittest.TestCase):
         count = 0
         for order in ["120", 120, ['d', 'f', 'r'], ["declin", "freq", "righ"]]:
             outname = "transpose_" + str(count)
-            self.assertTrue(run_imtrans(imagename, outname, order))
+            run_imtrans(imagename, outname, order)
+            self.assertTrue(os.path.exists(outname))
             myia.open(outname)
             gotdata = myia.getchunk()
             inshape = expecteddata.shape
@@ -158,7 +165,8 @@ class imtrans_test(unittest.TestCase):
         shutil.copytree(ctsys_resolve(os.path.join(datapath, cas_2364im)), cas_2364im)
         order = "0132"
         out1 = "blah2.im"
-        self.assertTrue(imtrans(imagename=cas_2364im, outfile=out1, order=order))
+        imtrans(imagename=cas_2364im, outfile=out1, order=order)
+        self.assertTrue(os.path.exists(out1))
         myia = image()
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
         myia.open(out1)
@@ -172,9 +180,8 @@ class imtrans_test(unittest.TestCase):
         myia.fromshape(imagename, [10,10,4,10])
         order = "3210"
         outfile = "zz_out.im"
-        self.assertTrue(
-            imtrans(imagename=imagename, outfile=outfile, order=order)
-        )
+        imtrans(imagename=imagename, outfile=outfile, order=order)
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         msgs = myia.history()
         myia.done()
@@ -193,7 +200,8 @@ class imtrans_test(unittest.TestCase):
         myia.setbrightnessunit("Jy/beam")
         myia.setrestoringbeam("4arcmin", "3arcmin", "0deg")
         outfile = "imageinfo_test_out.im"
-        self.assertTrue(imtrans(imname, outfile, "201"))
+        imtrans(imname, outfile, "201")
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         self.assertEqual(
             myia.brightnessunit(), "Jy/beam",

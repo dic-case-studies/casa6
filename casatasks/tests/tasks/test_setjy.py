@@ -89,7 +89,7 @@ class SetjyUnitTestBase(unittest.TestCase):
             print("\nRemoving a local copy of MS from the previous test...")
             #ret = os.system('rm -rf unittest/setjy/*')
             shutil.rmtree(self.inpms)
-        
+
         if hasattr(self, 'inpmms') and os.path.exists(self.inpmms):
             print("\nRemoving a local copy of MMS from the previous test...")
             shutil.rmtree(self.inpmms)
@@ -1548,8 +1548,10 @@ class test_inputs(SetjyUnitTestBase):
         """ Test listmodels mode """
         self.inpms=''
         print("\nRunning setjy in listmodels mode ....")
-        sjran = setjy(vis=self.inpms,listmodels=True)
-        self.assertTrue(sjran)
+        try:
+            setjy(vis=self.inpms,listmodels=True)
+        except Exception as exc:
+            self.fail('Unexpected task exception: {}'.format(exc))
 
 
 class test_conesearch(SetjyUnitTestBase):
@@ -2072,11 +2074,13 @@ class test_NullSelection(SetjyUnitTestBase):
 
         # Field 1 is Titan and has scanintent 'CALIBRATE_FLUX#ON_SOURCE', there are
         # SPWs 0-3, but no scan 5 -> null (zero rows) selection
-        res = setjy(vis=self.inpms, field='1', spw='3', scan='5',
-                    standard='Butler-JPL-Horizons 2012', intent="*CALIB*FLUX*",
-                    usescratch=True)
-
-        self.assertEqual(res, False, "setjy did not return False for a null selection")
+        try:
+            setjy(vis=self.inpms, field='1', spw='3', scan='5',
+                  standard='Butler-JPL-Horizons 2012', intent="*CALIB*FLUX*",
+                  usescratch=True)
+        except Exception:
+            self.fail("setjy produced an exception for a null selection - it should have "
+                      "been handled more gracefully")
 
 
 def suite():

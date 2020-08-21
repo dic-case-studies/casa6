@@ -38,6 +38,16 @@ else:
     datapath = os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],
                                          'data'), reg_unittest_datap)
 
+# This is for tests that check what the parameter validator does when parameters are
+# given wrong types - these don't exercise the task but the parameter validator!
+if CASA6:
+    validator_exc_type = AssertionError
+else:
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    validator_exc_type = RuntimeError
+
+
 class test_listcal_minimal(unittest.TestCase):
     """
     Most basic ways of calling listcal, with an existing small dataset from the
@@ -94,8 +104,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test proper error when listcal with MS + forget caltable.
         """
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listcal(vis=self._vis, listfile=self._listfile)
         else:
                 listcal(vis=self._vis, listfile=self._listfile)
@@ -106,8 +116,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test proper error when listcal caltable + forget MS.
         """
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listcal(caltable=self._caltable, listfile=self._listfile)
         else:
             listcal(caltable=self._caltable, listfile=self._listfile)                
@@ -118,7 +128,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test that gives a wrong selection (antenna).
         """
-        listcal(vis=self._vis, caltable=self._caltable, antenna='inexistent-no-no')
+        with self.assertRaises(RuntimeError):
+            listcal(vis=self._vis, caltable=self._caltable, antenna='inexistent-no-no')
         self.assertFalse(os.path.isfile(self._listfile))
 
 

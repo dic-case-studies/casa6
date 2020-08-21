@@ -1,5 +1,5 @@
 ##########################################################################
-# task_imcollapse.py
+# task_impbcor.py
 #
 # Copyright (C) 2008, 2009, 2010
 # Associated Universities, Inc. Washington DC, USA.
@@ -86,14 +86,15 @@ def impbcor(
     try:
         myia.dohistory(False)
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using " + imagename)
+            raise RuntimeError("Cannot create image analysis tool using " + imagename)
         if (len(outfile) == 0):
-            raise Exception("outfile must be specified")
+            raise ValueError("outfile must be specified")
         outia = myia.pbcor(
             pbimage=pbimage, outfile=outfile, overwrite=overwrite,
             box=box, region=region, chans=chans, stokes=stokes,
             mask=mask, mode=mode, cutoff=cutoff, stretch=stretch
         )
+
         try:
             param_names = impbcor.__code__.co_varnames[:impbcor.__code__.co_argcount]
             if is_python3:
@@ -108,10 +109,7 @@ def impbcor(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         outia.done()
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if (myia):
             myia.done()
