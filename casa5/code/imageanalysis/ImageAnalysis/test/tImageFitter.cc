@@ -732,7 +732,7 @@ int main() {
  				"test fitting using zero-level offset held constant"
          	);
          	SPIIF scaled(new TempImage<Float>(noisyImage->shape(), noisyImage->coordinates()));
-         	scaled->put(noisyImage->get() + Array<Float>(scaled->shape(), 0.0));
+         	scaled->put(noisyImage->get() + Array<Float>(scaled->shape(), 0.0F));
          	scaled->setUnits(noisyImage->units());
 
          	ImageFitter<Float> fitter(
