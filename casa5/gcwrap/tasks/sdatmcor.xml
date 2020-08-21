@@ -1,0 +1,277 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<task type="function" name="sdatmcor" category="single dish">
+     <shortdescription>Offline Atomospheric Lines Correction </shortdescription>
+
+<description>
+    
+    The task sdatmcor is an SD task for providing Offline Atmosphere Correction
+    over specified time range on selected data set. 
+    
+</description>
+
+<input>
+
+    <param name="infile" type="string">
+        <shortdescription>name of input MS.</shortdescription>
+        <description>name of input MS.</description>
+        <value/>
+    </param>
+
+    <param type="string" name="datacolumn" ignorecase="true">
+        <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription>
+        <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
+        
+        <value>data</value>
+        <allowed kind="enum">
+            <value>data</value>
+            <value>float_data</value>
+            <value>corrected_data</value> 
+       </allowed>
+    </param>
+
+    <param type="string" name="outfile">
+        <shortdescription>name of output MS.</shortdescription>
+        <description>name of output MS.</description>
+        <value/>
+    </param>
+
+    <param type="string" name="field">
+        <shortdescription>field selection. (&quot;&quot; = all)</shortdescription>
+        <description>field selection. (&quot;&quot; = all)</description>
+        <value/>
+    </param>
+
+    <param type="string" name="spw">
+        <shortdescription>spw selection. (&quot;&quot; = all)</shortdescription>
+        <description>spw selection (&quot;&quot; = all)</description>
+        <value/>
+    </param>
+    
+    <param type="string" name="scan">
+        <shortdescription>scan selection. (&quot;&quot; = all)</shortdescription>
+        <description>scan selection. (&quot;&quot; = all)</description>
+        <value/>
+    </param>
+
+    <param type="string" name="antenna">
+        <shortdescription>antenna selection. (&quot;&quot; = all)</shortdescription>
+        <description>antenna selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param  type="string" name="correlation">
+        <shortdescription>correlation (polalization) selection. (&quot;&quot; = all)</shortdescription>
+        <description>correlation (polalization) selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param type="string" name="timerange">
+        <shortdescription>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all) (see examples in help)</shortdescription>
+        <description>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all) (see examples in help)</description>
+        <value/>
+    </param>
+
+    <param name="intent" type="string">
+        <shortdescription>intent selection. (&quot;&quot; = all)</shortdescription>
+        <description>intent selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="observation" type="string">
+        <shortdescription>observation selection. (&quot;&quot; = all)</shortdescription>
+        <description>observation selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="feed" type="string">
+        <shortdescription>feed selection. (&quot;&quot; = all)</shortdescription>
+        <description>feed selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="msselect" type="string">
+        <shortdescription>taql selection. (&quot;&quot; = all)</shortdescription>
+        <description>taql selection. (&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="outputspw" type="string">
+        <shortdescription>select spws to output, same syntax of spw.(&quot;&quot; = all)</shortdescription>
+        <description>select spws to output, same syntax of spw.(&quot;&quot; = all)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="dtem_dh" type="string">
+        <shortdescription>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default) </shortdescription>
+        <description>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default)</description>
+        <value type="double"></value>
+    </param>
+
+    <param name="h0" type="string">
+        <shortdescription>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</shortdescription>
+        <description>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="atmtype" type="string">
+        <shortdescription>atmtype. (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</shortdescription>
+        <description>atmtype.(1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="atmdetail" type="bool">
+        <shortdescription>expose sub-parameters to assign True.</shortdescription>
+        <description>expose sub-parameters, if True.</description>
+        <value type="bool">False</value>
+    </param>
+
+<!--   
+   SubParameters  when 'atmdetail' is True
+-->
+
+    <param name="altitude" type="string" subparam="true" >
+        <shortdescription>altitude (km). (&quot;&quot; = value from MS.)</shortdescription>
+        <description>altitude (km). (&quot;&quot; = value from MS.)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="temperature" type="string" subparam="true">
+        <shortdescription>ambient temperature (K). (&quot;&quot; = value from MS.)</shortdescription>
+        <description>ambient temperature (K). (&quot;&quot; = value from MS.)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="pressure" type="string" subparam="true">
+        <shortdescription>ambient pressure (mbar). e.g. 1013.25 ,(&quot;&quot; = value from MS.)</shortdescription>
+        <description>ambient pressure (mbar). e.g. 1013.25 ,(&quot;&quot; = value from MS.)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="humidity" type="string" subparam="true">
+        <shortdescription>humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</shortdescription>
+        <description>humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="PWV" type="string" subparam="true">
+        <shortdescription>zenith water vapor [mm]. (&quot;&quot; = Tool default)</shortdescription>
+        <description>zenith water vapor [mm]. (&quot;&quot; = Tool default)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="dp" type="string" subparam="true">
+        <shortdescription>initial pressure step [mbar].(&quot;&quot; = Tool default)</shortdescription>
+        <description>initial pressure step [mbar].(&quot;&quot; = Tool default)</description>
+        <value type="string"></value>
+    </param>
+
+    <param name="dpm" type="string" subparam="true">
+        <shortdescription>pressure multiplicative factor for steps. (&quot;&quot; = Tool default)</shortdescription>
+        <description>pressure multiplicative factor for steps. (&quot;&quot; = Tool default)</description>
+        <value type="double"></value>
+    </param>
+
+    <param name="layerboundaries" type="stringArray" subparam="true">
+        <shortdescription>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
+        <description>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</description>
+        <value></value>
+    </param>
+
+    <param name="layertemperature" type="stringArray" subparam="true">
+        <shortdescription>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
+        <description>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</description>
+        <value></value>
+    </param>
+
+    <param name="debug" type="string">
+        <shortdescription>debug option. internal use only.</shortdescription>
+        <description>debug option. internal use only.</description>
+        <value></value>
+    </param>
+
+<!--
+    Constraints (activate subpram)
+-->
+    <constraints>
+      <when param="atmdetail">
+        <equals value="True">
+            <default param="altitude"><value type="string"></value></default>
+            <default param="temperature"><value type="string"></value></default>
+            <default param="pressure"><value type="string"></value></default>
+            <default param="humidity"><value type="string"></value></default>
+            <default param="PWV"><value type="string"></value></default>
+            <default param="dp"><value type="string"></value></default>
+            <default param="dpm"><value type="string">-1</value></default>
+            <default param="layerboundaries"><value type="string"></value></default>
+            <default param="layertemperature"><value type="string"></value></default>
+        </equals>
+      </when>
+    </constraints>
+
+</input>
+
+<example>  
+-----------------
+Keyword arguments
+-----------------
+infile -- name of input SD dataset
+datacolumn -- name of data column to be used
+        options: 'data', 'float_data', or 'corrected_data'
+        default: 'float_data'
+        In case the column 'float_data' does not exists on the specified MS,
+        sdatmcor alternatively attempt to use 'data' column.  
+            
+field -- select data by field IDs and names
+        default: '' (use all fields)
+        example: field='3C2*' (all names starting with 3C2)
+                 field='0,4,5~7' (field IDs 0,4,5,6,7)
+                 field='0,3C273' (field ID 0 or field named 3C273)
+        this selection is in addition to the other selections to data
+spw -- select data by IF IDs (spectral windows)
+        default: '' (use all IFs)
+        example: spw='0~2,4'; spectral windows 0,1,2,4 (all channels)
+                 spw='&lt;2';  spectral windows less than 2 (i.e. 0,1)
+        this selection is in addition to the other selections to data
+timerange -- select data by time range
+        default: '' (use all)
+        example: timerange = 'YYYY/MM/DD/hh:mm:ss~YYYY/MM/DD/hh:mm:ss'
+                 Note: YYYY/MM/DD can be dropped as needed:
+                 timerange='09:14:00~09:54:00' # this time range
+                 timerange='09:44:00' # data within one integration of time
+                 timerange='&gt;10:24:00' # data after this time
+                 timerange='09:44:00+00:13:00' #data 13 minutes after time
+        this selection is in addition to the other selections to data
+scan -- select data by scan numbers
+        default: '' (use all scans)
+        example: scan='21~23' (scan IDs 21,22,23)
+        this selection is in addition to the other selections to data
+antenna -- select data by antenna name or ID
+        default: '' (use all antennas)
+        example: 'PM03'
+timebin -- bin width for time averaging
+           default: 'all' 
+           example: timebin='100s' (time averaging performed over 100 second bins)
+                    timebin=''  (use all)
+timespan -- Let the timebin span across scan, state or both.
+            State is equivalent to sub-scans. One scan may have several
+            state ids. For ALMA MSs, the sub-scans are limited to about
+            30s duration each. In these cases, the task will automatically
+            add state to the timespan parameter. To see the number of states
+            in an MS, use the msmd tool. See help msmd.
+
+        default: 'scan' (separate time bins by both of the above)
+        options: 'scan', 'state', 'state,scan', ''
+               
+        examples:
+             timespan = 'scan'; can be useful when the scan number
+             goes up with each integration as in many WSRT MSs.
+             timespan = ['scan', 'state']: disregard scan and state
+             numbers when time averaging.
+             timespan = 'state,scan'; same as above
+             timespan = '': averages for each combination of scan and state
+outfile -- name of output file
+
+</example>
+<returns>void</returns></task>
+</casaxml>
