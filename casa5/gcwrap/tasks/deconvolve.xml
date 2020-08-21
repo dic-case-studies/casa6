@@ -465,35 +465,35 @@
       <shortdescription>Stopping threshold </shortdescription>
       <description>Stopping threshold (number in units of Jy, or string)
 
-                      A global stopping threshold that the peak residual (within clean mask)
-                      across all image planes is compared to.
+                        A global stopping threshold that the peak residual (within clean mask)
+                        across all image planes is compared to.
 
-                      threshold = 0.005  : 5mJy
-                      threshold = '5.0mJy'
+                        threshold = 0.005  : 5mJy
+                        threshold = '5.0mJy'
 
-                      Note : A 'cyclethreshold' is internally computed and used as a major cycle
-                                 trigger. It is related what fraction of the PSF can be reliably
-                                 used during minor cycle updates of the residual image. By default
-                                 the minor cycle iterations terminate once the peak residual reaches
-                                 the first sidelobe level of the brightest source.
+                        Note : A 'cyclethreshold' is internally computed and used as a stopping
+                               trigger. It is related what fraction of the PSF can be reliably
+                               used during minor cycle updates of the residual image. By default
+                               the minor cycle iterations terminate once the peak residual reaches
+                               the first sidelobe level of the brightest source.
+                               
+                               'cyclethreshold' is computed as follows using the settings in
+                               parameters 'cyclefactor','minpsffraction','maxpsffraction','threshold' :
 
-                                 'cyclethreshold' is computed as follows using the settings in
-                                  parameters 'cyclefactor','minpsffraction','maxpsffraction','threshold' :
-
-                                psf_fraction = max_psf_sidelobe_level * 'cyclefactor'
-                                psf_fraction = max(psf_fraction, 'minpsffraction');
-                                psf_fraction = min(psf_fraction, 'maxpsffraction');
-                                cyclethreshold = peak_residual * psf_fraction
-                                cyclethreshold = max( cyclethreshold, 'threshold' )
-
-                                If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
-                                the description under nsigma), then cyclethreshold is further modified as,
-
-                                cyclethreshold = max( cyclethreshold, nsgima_threshold )
-
-
-                                'cyclethreshold' is made visible and editable only in the
-                                interactive GUI when deconvolve is run with interactive=True.
+                               psf_fraction = max_psf_sidelobe_level * 'cyclefactor'
+                               psf_fraction = max(psf_fraction, 'minpsffraction');
+                               psf_fraction = min(psf_fraction, 'maxpsffraction');
+                               cyclethreshold = peak_residual * psf_fraction
+                               cyclethreshold = max( cyclethreshold, 'threshold' )
+                               
+                               If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
+                               the description under nsigma), then cyclethreshold is further modified as,
+                               
+                               cyclethreshold = max( cyclethreshold, nsgima_threshold )
+                               
+                               
+                               'cyclethreshold' is made visible and editable only in the
+                               interactive GUI when deconvolve is run with interactive=True.
       </description>
 
       <value type="double">0.0</value>
@@ -503,13 +503,13 @@
       <shortdescription>Multiplicative factor for rms-based threshold stopping</shortdescription>
       <description>Multiplicative factor for rms-based threshold stopping
 
-                       N-sigma threshold is calculated as nsigma * rms value per image plane determined
-                       from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
-                       the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
-                       (see also the descreption under 'threshold').
-                       Set nsigma=0.0 to preserve the previous deconvolve behavior without this feature.
-                       The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
-                       to determine the threshold. 
+                        N-sigma threshold is calculated as nsigma * rms value per image plane determined
+                        from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
+                        the N-sigma threshold and cyclethreshold, is used as a stopping trigger
+                        (see also the descreption under 'threshold').
+                        Set nsigma=0.0 to preserve the previous deconvolve behavior without this feature.
+                        The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
+                        to determine the threshold. 
 
       </description>
       <value type="double">0.0</value>
@@ -519,14 +519,14 @@
       <shortdescription>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.</shortdescription>
       <description>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.
 
-                       Please refer to the Note under the documentation for 'threshold' that
-                       discussed the calculation of 'cyclethreshold'
+                        Please refer to the Note under the documentation for 'threshold' that
+                        discussed the calculation of 'cyclethreshold'
 
-                       cyclefactor=1.0 results in a cyclethreshold at the first sidelobe level of
-                       the brightest source in the residual image before the minor cycle starts.
+                        cyclefactor=1.0 results in a cyclethreshold at the first sidelobe level of
+                        the brightest source in the residual image before the minor cycle starts.
 
-                       cyclefactor=0.5 allows the minor cycle to go deeper.
-                       cyclefactor=2.0 triggers a major cycle sooner.
+                        cyclefactor=0.5 allows the minor cycle to go deeper.
+                        cyclefactor=2.0 triggers stopping the minor cycle sooner.
 
       </description>
       <value type="double">1.0</value>
@@ -536,11 +536,11 @@
       <shortdescription>PSF fraction that marks the max depth of cleaning in the minor cycle</shortdescription>
       <description>PSF fraction that marks the max depth of cleaning in the minor cycle
 
-                       Please refer to the Note under the documentation for 'threshold' that
-                       discussed the calculation of 'cyclethreshold'
+                        Please refer to the Note under the documentation for 'threshold' that
+                        discussed the calculation of 'cyclethreshold'
 
-                       For example, minpsffraction=0.5 will stop cleaning at half the height of
-                       the peak residual and trigger a major cycle earlier.
+                        For example, minpsffraction=0.5 will stop cleaning at half the height of
+                        the peak residual.
 
       </description>
       <value type="double">0.05</value>
@@ -550,13 +550,13 @@
       <shortdescription>PSF fraction that marks the minimum depth of cleaning in the minor cycle </shortdescription>
       <description>PSF fraction that marks the minimum depth of cleaning in the minor cycle
 
-                       Please refer to the Note under the documentation for 'threshold' that
-                       discussed the calculation of 'cyclethreshold'
+                        Please refer to the Note under the documentation for 'threshold' that
+                        discussed the calculation of 'cyclethreshold'
 
-                       For example, maxpsffraction=0.8 will ensure that at least the top 20
-                       percent of the source will be subtracted out in the minor cycle even if
-                       the first PSF sidelobe is at the 0.9 level (an extreme example), or if the
-                       cyclefactor is set too high for anything to get cleaned.
+                        For example, maxpsffraction=0.8 will ensure that at least the top 20
+                        percent of the source will be subtracted out in the minor cycle even if
+                        the first PSF sidelobe is at the 0.9 level (an extreme example), or if the
+                        cyclefactor is set too high for anything to get cleaned.
 
       </description>
       <value type="double">0.8</value>
@@ -567,56 +567,36 @@
       <shortdescription>Modify masks and parameters at runtime</shortdescription>
       <description>Modify masks and parameters at runtime
 
-                       interactive=True will trigger an interactive GUI at every major cycle
-                       boundary (after the major cycle and before the minor cycle).
+                        interactive=True will trigger an interactive GUI after deconvolution finishes.
 
-                       The interactive mode is currently not available for parallel cube imaging (please also
-                       refer to the Note under the documentation for 'parallel' below).
+                        The interactive mode is currently not available for parallel cube imaging (please also
+                        refer to the Note under the documentation for 'parallel' below).
 
-                       Options for runtime parameter modification are :
+                        Options for runtime parameter modification are :
 
-                       Interactive clean mask : Draw a 1/0 mask (appears as a contour) by hand.
-                                                              If a mask is supplied at the task interface or if
-                                                              automasking is invoked, the current mask is
-                                                              displayed in the GUI and is available for manual
-                                                              editing.
-
-                                                              Note : If a mask contour is not visible, please
-                                                                         check the cursor display at the bottom of
-                                                                         GUI to see which parts of the mask image
-                                                                         have ones and zeros. If the entire mask=1
-                                                                         no contours will be visible.
-
-
-                       Operation buttons :  -- Stop execution now (restore current model and exit)
-                                                        -- Continue on until global stopping criteria are reached
-                                                           without stopping for any more interaction
-                                                        -- Continue with minor cycles and return for interaction
-                                                            after the next major cycle.
-
-                       Iteration control : -- max cycleniter :  Trigger for the next major cycle
-
-                                                                                   The display begins with
-                                                                                   [ min( cycleniter, niter - itercount ) ]
-                                                                                   and can be edited by hand.
-
-                                                    -- iterations left :  The display begins with [niter-itercount ]
-                                                                                and can be edited to increase or
-                                                                                decrease the total allowed niter.
-
-                                                    -- threshold : Edit global stopping threshold
-
-                                                    -- cyclethreshold : The display begins with the
-                                                                                  automatically computed value
-                                                                                  (see Note in help for 'threshold'),
-                                                                                  and can be edited by hand.
-
-                                                    All edits will be reflected in the log messages that appear
-                                                    once minor cycles begin.
+                        Interactive clean mask : Draw a 1/0 mask (appears as a contour) by hand.
+                                                 If a mask is supplied at the task interface or if
+                                                 automasking is invoked, the current mask is
+                                                 displayed in the GUI and is available for manual
+                                                 editing.
+                                                 
+                                                 Note : If a mask contour is not visible, please
+                                                            check the cursor display at the bottom of
+                                                            GUI to see which parts of the mask image
+                                                            have ones and zeros. If the entire mask=1
+                                                            no contours will be visible.
 
 
-                       [ For scripting purposes, replacing True/False with 1/0 will get deconvolve to
-                         return an imaging summary dictionary to python ]
+                        Operation buttons :  -- For the task deconvolve, all options stop the minor cycle.
+
+                        Iteration control : -- max cycleniter :  For task deconvolve, this contol has no effect.
+                                            -- iterations left : For task deconvolve, this contol has no effect.
+                                            -- threshold :       For task deconvolve, this contol has no effect.
+                                            -- cyclethreshold :  For task deconvolve, this contol has no effect.
+
+
+                        [ For scripting purposes, replacing True/False with 1/0 will get deconvolve to
+                          return an imaging summary dictionary to python ]
 
       </description>
       <any limittypes="bool int" type="variant"/>
@@ -626,9 +606,10 @@
     <param name="iterrec" type="any">
       <shortdescription>Used for existing iteration controller</shortdescription>
       <description>The iteration controller. Can be set to use the same iteration controller between
-        multiple calls to deconvolve.
+                        multiple calls to deconvolve.
 
-        Leave or set to empty dictionary to allow deconvolve to create its own iteration controller.
+                        Leave or set to an empty dictionary to start deconvolving without any iteration
+                        controller history.
       </description>
       <value type="bool">False</value>
     </param>
@@ -638,34 +619,35 @@
 
       <description>Type of mask(s) to be used for deconvolution
 
-                       user: (default) mask image(s) or user specified region file(s) or string CRTF expression(s)
-                         subparameters: mask, pbmask
-                       pb: primary beam mask
-                         subparameter: pbmask
+                        user: (default) mask image(s) or user specified region file(s) or string CRTF expression(s)
+                              subparameters: mask, pbmask
+                        pb: primary beam mask
+                              subparameter: pbmask
+                              
+                              Example: usemask=&quot;pb&quot;, pbmask=0.2
+                                              Construct a mask at the 0.2 pb gain level.
+                                              (Currently, this option will work only with
+                                              gridders that produce .pb (i.e. mosaic and awproject)
+                                              or if an externally produced .pb image exists on disk)
+                            
+                        auto-multithresh : auto-masking by multiple thresholds for deconvolution
+                              subparameters : sidelobethreshold, noisethreshold, lownoisethreshold,
+                                              negativethrehsold,  smoothfactor, minbeamfrac, cutthreshold,
+                                              pbmask, growiterations, dogrowprune, minpercentchange, verbose
+                              Additional top level parameter relevant to auto-multithresh: fastnoise
+                              
+                              if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
+                              image statistics in determination of the threshold.
 
-                           Example: usemask=&quot;pb&quot;, pbmask=0.2
-                                             Construct a mask at the 0.2 pb gain level.
-                                             (Currently, this option will work only with
-                                             gridders that produce .pb (i.e. mosaic and awproject)
-                                             or if an externally produced .pb image exists on disk)
 
-                       auto-multithresh : auto-masking by multiple thresholds for deconvolution
-                          subparameters : sidelobethreshold, noisethreshold, lownoisethreshold, negativethrehsold,  smoothfactor,
-                                          minbeamfrac, cutthreshold, pbmask, growiterations, dogrowprune, minpercentchange, verbose
-                          Additional top level parameter relevant to auto-multithresh: fastnoise
 
-                          if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
-                          image statistics in determination of the threshold.
 
-                      
-                       
-
-                       Note: By default the intermediate mask generated by automask at each deconvolution cycle
-                             is over-written in the next cycle but one can save them by setting
-                             the environment variable, SAVE_ALL_AUTOMASKS=&quot;true&quot;.
-                             (e.g. in the CASA prompt, os.environ['SAVE_ALL_AUTOMASKS']=&quot;true&quot; )
-                             The saved CASA mask image name will be imagename.mask.autothresh#, where
-                             # is the iteration cycle number.
+                        Note: By default the intermediate mask generated by automask at each deconvolution cycle
+                              is over-written in the next cycle but one can save them by setting
+                              the environment variable, SAVE_ALL_AUTOMASKS=&quot;true&quot;.
+                              (e.g. in the CASA prompt, os.environ['SAVE_ALL_AUTOMASKS']=&quot;true&quot; )
+                              The saved CASA mask image name will be imagename.mask.autothresh#, where
+                              # is the iteration cycle number.
 
       </description>
       <value type="string">user</value>
@@ -682,52 +664,52 @@
       <description>Mask (a list of image name(s) or region file(s) or region string(s)
 
     
-                       The name of a CASA image or region file or region string that specifies
-                       a 1/0 mask to be used for deconvolution. Only locations with value 1 will
-                       be considered for the centers of flux components in the minor cycle.
-                       If regions specified fall completely outside of the image, deconvolve will throw an error.
+                        The name of a CASA image or region file or region string that specifies
+                        a 1/0 mask to be used for deconvolution. Only locations with value 1 will
+                        be considered for the centers of flux components in the minor cycle.
+                        If regions specified fall completely outside of the image, deconvolve will throw an error.
 
-                       Manual mask options/examples :
+                        Manual mask options/examples :
 
-                       mask='xxx.mask'  : Use this CASA image named xxx.mask and containing
-                                                       ones and zeros as the mask. 
-                                                       If the mask is only different in spatial coordinates from what is being made 
-                                                       it will be resampled to the target coordinate system before being used.
-                                                       The mask has to have the same shape in velocity and Stokes planes
-                                                       as the output image. Exceptions are single velocity and/or single
-                                                       Stokes plane masks. They will be expanded to cover all velocity and/or
-                                                       Stokes planes of the output cube.
-
-                                                       [ Note : If an error occurs during image resampling or
-                                                                   if the expected mask does not appear, please try
-                                                                   using tasks 'imregrid' or 'makemask' to resample
-                                                                   the mask image onto a CASA image with the target
-                                                                   shape and coordinates and supply it via the 'mask'
-                                                                   parameter. ]
-
-
-                       mask='xxx.crtf' : A text file with region strings and the following on the first line
-                                                  ( #CRTFv0 CASA Region Text Format version 0 )
-                                                  This is the format of a file created via the viewer's region
-                                                  tool when saved in CASA region file format.
-
-                       mask='circle[[40pix,40pix],10pix]'  : A CASA region string.
-
-                       mask=['xxx.mask','xxx.crtf', 'circle[[40pix,40pix],10pix]']  : a list of masks
+                        mask='xxx.mask'  : Use this CASA image named xxx.mask and containing
+                                           ones and zeros as the mask. 
+                                           If the mask is only different in spatial coordinates from what is being made 
+                                           it will be resampled to the target coordinate system before being used.
+                                           The mask has to have the same shape in velocity and Stokes planes
+                                           as the output image. Exceptions are single velocity and/or single
+                                           Stokes plane masks. They will be expanded to cover all velocity and/or
+                                           Stokes planes of the output cube.
+                                           
+                                           [ Note : If an error occurs during image resampling or
+                                                    if the expected mask does not appear, please try
+                                                    using tasks 'imregrid' or 'makemask' to resample
+                                                    the mask image onto a CASA image with the target
+                                                    shape and coordinates and supply it via the 'mask'
+                                                    parameter. ]
 
 
-              
+                        mask='xxx.crtf' : A text file with region strings and the following on the first line
+                                             ( #CRTFv0 CASA Region Text Format version 0 )
+                                          This is the format of a file created via the viewer's region
+                                          tool when saved in CASA region file format.
+
+                        mask='circle[[40pix,40pix],10pix]'  : A CASA region string.
+
+                        mask=['xxx.mask','xxx.crtf', 'circle[[40pix,40pix],10pix]']  : a list of masks
 
 
-                       Note : Mask images for deconvolution must contain 1 or 0 in each pixel.
-                                  Such a mask is different from an internal T/F mask that can be
-                                  held within each CASA image. These two types of masks are not
-                                  automatically interchangeable, so please use the makemask task
-                                  to copy between them if you need to construct a 1/0 based mask
-                                  from a T/F one.
 
-                       Note : Work is in progress to generate more flexible masking options and
-                                  enable more controls.
+
+
+                        Note : Mask images for deconvolution must contain 1 or 0 in each pixel.
+                               Such a mask is different from an internal T/F mask that can be
+                               held within each CASA image. These two types of masks are not
+                               automatically interchangeable, so please use the makemask task
+                               to copy between them if you need to construct a 1/0 based mask
+                               from a T/F one.
+
+                        Note : Work is in progress to generate more flexible masking options and
+                               enable more controls.
 
       </description>
 
@@ -741,8 +723,8 @@
       <shortdescription>primary beam mask</shortdescription>
       <description>Sub-parameter for usemask='auto-multithresh': primary beam mask
 
-                       Examples : pbmask=0.0 (default, no pb mask)
-                                  pbmask=0.2 (construct a mask at the 0.2 pb gain level)
+                        Examples : pbmask=0.0 (default, no pb mask)
+                                   pbmask=0.2 (construct a mask at the 0.2 pb gain level)
 
       </description>
       <value type="double">0.0</value>
@@ -753,73 +735,78 @@
     
     <param subparam="true" name="sidelobethreshold" type="double">
       <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
-           <value type="double">3.0</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
+      <value type="double">3.0</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold based on sidelobe levels:
+                        sidelobethreshold * max_sidelobe_level * peak residual
 
       </description>
     </param>
 
     <param type="double" name="noisethreshold" subparam="true">
       <shortdescription>noisethreshold * rms in residual image + location(median) </shortdescription>
-           <value type="double">5.0</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold * rms + location (=median)
+      <value type="double">5.0</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold based on the noise level:
+                        noisethreshold * rms + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+                        The rms is calculated from MAD with rms = 1.4826*MAD.
       </description>
     </param>
 
     <param subparam="true" name="lownoisethreshold" type="double">
       <shortdescription>lownoisethreshold * rms in residual image + location(median) </shortdescription>
-           <value type="double">1.5</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
+      <value type="double">1.5</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold to grow previously masked regions via binary dilation:
+                        lownoisethreshold * rms in residual image + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+                        The rms is calculated from MAD with rms = 1.4826*MAD.
       </description>
     </param>
     <param subparam="true" name="negativethreshold" type="double">
       <shortdescription>negativethreshold * rms in residual image + location(median) </shortdescription>
-           <value type="double">0.0</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
+      <value type="double">0.0</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold for negative features:
+                        -1.0* negativethreshold * rms + location(=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+                        The rms is calculated from MAD with rms = 1.4826*MAD.
       </description>
     </param>
     <param subparam="true" name="smoothfactor" type="double">
       <shortdescription>smoothing factor in a unit of the beam</shortdescription>
-           <value type="double">1.0</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;:  smoothing factor in a unit of the beam
+      <value type="double">1.0</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: smoothing factor in a unit of the beam
       </description>
     </param>
     <param subparam="true" name="minbeamfrac" type="double">
       <shortdescription>minimum beam fraction for pruning</shortdescription>
-           <value type="double">0.3</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
+      <value type="double">0.3</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
                        &lt;=0.0 : No pruning
       </description>
     </param>
     <param subparam="true" name="cutthreshold" type="double">
       <shortdescription>threshold to cut the smoothed mask to create a final mask</shortdescription>
-           <value type="double">0.01</value>
-      <description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
+      <value type="double">0.01</value>
+      <description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask:
+                        cutthreshold * peak of the smoothed mask
       </description>
     </param>
     <param subparam="true" name="growiterations" type="int">
       <shortdescription>number of binary dilation iterations for growing the mask</shortdescription>
-           <value type="int">75</value>
+      <value type="int">75</value>
       <description>Sub-parameter for &quot;auto-multithresh&quot;: Maximum number of iterations to perform using binary dilation for growing the mask
       </description>
     </param>
 
     <param subparam="true" name="dogrowprune" type="bool">
       <shortdescription>Do pruning on the grow mask</shortdescription>
-           <value type="bool">True</value>
+      <value type="bool">True</value>
       <description>Experimental sub-parameter for &quot;auto-multithresh&quot;: Do pruning on the grow mask
       </description>
     </param>
 
     <param subparam="true" name="verbose" type="bool">
       <shortdescription>True: print more automasking information in the logger</shortdescription>
-           <value type="bool">False</value>
+      <value type="bool">False</value>
       <description> If it is set to True, the summary of automasking at the end of each automasking process
                         is printed in the logger.  Following information per channel will be listed in the summary.
 
@@ -840,17 +827,18 @@
     </param>
     <param name="fastnoise" type="bool">
       <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
-           <value type="bool">True</value>
-      <description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
+      <value type="bool">True</value>
+      <description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold
+                        (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
                         In this case, the threshold values are determined based on classic statistics (using all
                         unmasked pixels for the calculations).
-                          
+
                         If it is set to False,  the new noise calculation
                         method is used based on pre-existing mask.   
- 
+
                         Case 1: no exiting mask
                         Calculate image statistics using Chauvenet algorithm 
-                        
+
                         Case 2: there is an existing mask
                         Calculate image statistics by classical method on the region
                         outside the mask and inside the primary beam mask.
