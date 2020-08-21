@@ -692,7 +692,7 @@ int main() {
         	for (uInt i=0; i<3; i++) {
         		Double x = (i == 0) ? -10 : (i == 1) ? 0 : 20;
         		SPIIF scaled(new TempImage<Float>(noisyImage->shape(), noisyImage->coordinates()));
-        		scaled->put(noisyImage->get() + Array<Float>(scaled->shape(), x));
+        		scaled->put(noisyImage->get() + Array<Float>(scaled->shape(), (Float) x));
         		scaled->setUnits(noisyImage->units());
 
         		ImageFitter<Float> fitter(
