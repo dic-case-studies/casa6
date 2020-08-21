@@ -4,6 +4,7 @@
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Containers/Block.h>
 #include <imageanalysis/ImageTypedefs.h>
 
 // #include <lattices/Lattices/LatticeExprNode.h>
