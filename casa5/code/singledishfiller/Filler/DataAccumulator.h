@@ -474,17 +474,21 @@ private:
 
     // Tsys and Tcal assignment for 2 & 4 pols. Auto-correlation components of pol should be used.
     void setTsys2(MSDataRecord &record, std::vector<size_t> order = { }) {
-        if (!setAndCheckOrder(2, tsys_.ncolumn() - 1, order))
+        // safeguard to avoid processing empty array
+        if (tsys_.empty()) {
+            return;
+        }
+
+        assert(tsys_.ncolumn() == num_pol_max_);
+        if (!setAndCheckOrder(2, tsys_.ncolumn() - 1, order)) {
             throw casacore::AipsError("got invalid order list");
+        }
         size_t apol0 = order[0], apol1 = order[order.size() - 1];
 
         // clear Tsys
         record.setTsysSize(0, 0);
 
-        if (tsys_.empty()) {
-            // no Tsys data. do nothing.
-            return;
-        } else if (num_chan_ == 1) {
+        if (num_chan_ == 1) {
             record.setTsysSize(2, 1);
             record.tsys(0, 0) = tsys_(0, apol0);
             record.tsys(1, 0) = tsys_(0, apol1);
@@ -511,17 +515,21 @@ private:
     }
 
     void setTcal2(MSDataRecord &record, std::vector<size_t> order = { }) {
-        if (!setAndCheckOrder(2, tcal_.ncolumn()-1, order))
+        // safeguard to avoid processing empty array
+        if (tcal_.empty()) {
+            return;
+        }
+
+        assert(tcal_.ncolumn() == num_pol_max_);
+        if (!setAndCheckOrder(2, tcal_.ncolumn()-1, order)) {
             throw casacore::AipsError("got invalid order list");
+        }
         size_t apol0 = order[0], apol1 = order[order.size() - 1];
 
         // clear Tcal
         record.setTcalSize(0, 0);
 
-        if (tcal_.empty()) {
-            // no Tcal data. do nothing.
-            return;
-        } else if (num_chan_ == 1) {
+        if (num_chan_ == 1) {
             record.setTcalSize(2, 1);
             record.tcal(0, 0) = tcal_(0, apol0);
             record.tcal(1, 0) = tcal_(0, apol1);
