@@ -1,9 +1,9 @@
 #ifndef IMAGEANALYSIS_IMAGEMASKHANDLER_H
 #define IMAGEANALYSIS_IMAGEMASKHANDLER_H
 
-#include <casa/BasicSL/String.h>
-#include <casa/Arrays/Vector.h>
-
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Record.h>
 #include <imageanalysis/ImageTypedefs.h>
 
 // #include <lattices/Lattices/LatticeExprNode.h>
