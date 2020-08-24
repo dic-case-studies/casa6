@@ -201,6 +201,11 @@ def set_antenna_param(in_arg, def_para):
         return int(in_arg)
     else:
         return  def_para
+
+def list_comma_string( separated_string):
+        tmp_list = separated_string.split(',')  # convert to List #
+        out_list = [int(s) for s in tmp_list]  # convert to list[int]
+        return out_list
 #
 # ATM Profile
 #
@@ -349,7 +354,6 @@ def calc_sdatmcor(
     # spw #
     # scan #
     # antenna #
-    antenna = set_antenna_param(p_antenna, antenna)
     # correlation #
     # timerange #
     # intent #
@@ -475,6 +479,8 @@ def calc_sdatmcor(
     ################################################################
     print("- opening 'ASDM_CALWVR'.")
     tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
+    # confirm #
+    print("tmonsource:",tmonsource.min(),tmonsource.max() )
     pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                    (tmonsource.min(), tmonsource.max())).getcol('water')
     tb.close()
@@ -508,15 +514,13 @@ def calc_sdatmcor(
 
     # set processing SPW, (not output_SPW)  #
     if (p_spw != ''):
-        spws_list = p_spw.split(',')      # convert to List #
-        spws = [int(s) for s in spws_list]  # convert to list[int]
-    
+        spws = list_comma_string(p_spw)
+
     # set Output SPW
     if (a_outputspw == ''):
         outputspws = spws                    # use calculated 'spws' above
     else:
-        outputspws_list = a_outputspw.split(',')     # convert to List #
-        outputspws = [int(s) for s in outputspws_list]  # convert to list[int]
+        outputspws = list_comma_string(a_outputspw)
 
     print('--- spws ', spws)
     print('--- outputspws ',outputspws)    # This is the expected outputspw
@@ -610,6 +614,11 @@ def calc_sdatmcor(
             t_pwv         = set_floatquantity_param(a_PWV, t_pwv, 'mm')
             t_dp          = set_floatquantity_param(a_dp, t_dp, 'mbar')
             t_dpm         = set_float_param(a_dpm, t_dpm)
+            # user-defined
+            t_layerboundaries  = set_float_param(a_layerboundaries, t_layerboundaries) 
+            t_layertemperature = set_float_param(a_layertemperature , a_layertemperature)
+
+
         else:
              print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True." )
 
@@ -678,7 +687,8 @@ def calc_sdatmcor(
         if not ddis[spwid] in outputspws:
             print("-------   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
             continue
-        # Debug #
+
+        # Debug (tentative) #
         if skipCorrection:
             print("-------   Correction (loop) will be skipped, due to Debug option.\n\n\n")
             continue
@@ -687,20 +697,38 @@ def calc_sdatmcor(
         # Query and get data 
         # (org)    subtb = tb.query('DATA_DESC_ID in %s' % ddis[spwid])
         #
-        """  
-          How to apply msselect
-              Here, Data selection by specified key is possible,
-              using    selTble = orgTable.quety( key ) .... like this
-              But, '%ddis[spwid]' hold current loop context...
-        """
 
-        # Expand Query,when 'msselect' is specified #
-        if p_msselect =='':
-            querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
-        else:
-            querytext = 'DATA_DESC_ID in %s' % ddis[spwid] + p_msselect  ### THIS IS TENTATIVE ### 
+        # DATA SELECTION Query Editing (under construction) #
+        select_param = (p_field, p_scan, p_antenna, p_correlation,
+                        p_correlation, p_timerange, p_intent, p_observation, p_feed, p_msselect )
+        print(select_param)
 
-        # Query #
+        # data-select #
+        query_antenna = ''
+        query_field = ''
+        query_msselect = ''
+
+        # (by ANTENNA1)      XX following sould be by suburoutie XX 
+        if (p_antenna != ''):
+            p_antenna = list_comma_string(p_antenna)
+            query_antenna = " && ANTENNA1 in %s"% p_antenna
+
+        # (by FIELD_ID)
+        if (p_field != ''):
+            query_field = " && FIELD_ID==%s"% p_field
+
+        # (by MSSELECT)
+        if (p_msselect != ''):
+            query_msselect =  p_msselect
+ 
+        # Essential Query (required by org. script) #
+        query_desc_id = 'DATA_DESC_ID in %s' % ddis[spwid] 
+
+        # edit text
+        querytext = query_desc_id + query_antenna + query_field + query_msselect
+        print("**  used Query Test is [%s] **" % querytext )
+
+        # query
         subtb = tb.query(querytext)
 
         # time data and numPol #
@@ -721,8 +749,9 @@ def calc_sdatmcor(
         ###########################
         # Correction Main Loop
         ###########################
+        print("==================================")
         print("ATM Correction for loop (N=%d), " % len(tmdata))
-
+        print("==================================")
         cdata = data.copy()
         for i, t in enumerate(tmdata):
 
@@ -775,10 +804,4 @@ def calc_sdatmcor(
     print("- terminating.")
     return True
 
-"""
-History
-
-    24-AUG-2020    Build on Bamboo OK
-    24-AUG-2020    Push with minor rivision to check next build
-""" 
 # END
