@@ -383,7 +383,7 @@ void CasacRegionManager::_setRegion(
         return;
     }
     // region name provided
-    const static Regex image("(.*)+:(.*)+");
+    const static Regex image("(.+):(.+)");
     const static Regex regionText(
         "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
     );
