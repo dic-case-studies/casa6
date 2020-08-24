@@ -86,20 +86,32 @@ import traceback
 import os
 import shutil
 import random
+import re
 import time
 import numpy
 import glob
 import struct
 import unittest
 
-from casatools import ctsys, table, image, regionmanager, measures
-from casatasks import casalog, immath
-
-_ia = image( )
-_rg = regionmanager( )
-
 sep = os.sep
-datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
+is_CASA6 = True
+try:
+    import casac
+    from tasks import *
+    from taskinit import *
+    _ia = iatool()
+    _rg = rgtool()
+    image = iatool
+    table = tbtool
+    datapath = os.environ.get('CASAPATH').split()[0] + sep + 'data' + sep\
+        + 'regression' + sep + 'unittest' + sep + 'immath' + sep
+    is_CASA6 = False
+except ImportError:
+    from casatools import ctsys, table, image, regionmanager, measures
+    from casatasks import casalog, immath
+    _ia = image()
+    _rg = regionmanager()
+    datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -206,7 +218,7 @@ def make_data(imshape):
 class immath_test1(unittest.TestCase):
     
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         if(os.path.exists(imageList[0])):
             for img in imageList:
                 os.system('rm -rf ' +img)
@@ -251,15 +263,14 @@ class immath_test1(unittest.TestCase):
     def test_input3(self):
         '''Immath 3: test good input file'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        results = None
         try:
-            results = immath( imageList[0], outfile='input_test2', expr='IM0' )
+            immath( imageList[0], outfile='input_test2', expr='IM0' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Unable to do math on "+imageList[0]
             
-        if (  not os.path.exists( 'input_test2' ) or results == None ):
+        if (  not os.path.exists( 'input_test2' ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: outfile 'input_test2' was not created."
@@ -286,15 +297,14 @@ class immath_test1(unittest.TestCase):
     def test_input5(self):
         '''Immath 5: test list with good input files'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        results=None
         try:
-            results = immath( imageList, outfile='input_test4', expr='IM0' )
+            immath( imageList, outfile='input_test4', expr='IM0' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Unable to do math on image "+imageList[0]
             
-        if (  not os.path.exists( 'input_test4' ) or results == None ):
+        if (  not os.path.exists( 'input_test4' ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: 'input_test4' output file was not created."
@@ -320,19 +330,19 @@ class immath_test1(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']\
                       +"\nError: Bad outfile, 'input_test4', was not reported as already existing."
 
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_input7(self):
         '''Immath 7: test outfile'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        results = None
+
         try:
-            results = immath( imageList[0], outfile='input_test5', expr='IM0*1' )
+            immath( imageList[0], outfile='input_test5', expr='IM0*1' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Unable to create image 'input_test5'"
-        if ( not os.path.exists( 'input_test5' ) or results == None ):
+        if ( not os.path.exists( 'input_test5' ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: output file, 'input_test5', was not created."
@@ -398,11 +408,11 @@ class immath_test1(unittest.TestCase):
                     retValue['error_msgs']=retValue['error_msgs']\
                               + "\nError: Bad region file, 'garbage.rgn',"\
                               + " was not reported as bad."+str(results)
-        except Exception:
+        except Exception(err):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Unable to create bad region file.\n\t"
-            raise
+            raise Exception(err)
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
     
@@ -422,7 +432,7 @@ class immath_test1(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Unable to do math with region file "+imageList[1]
             
-        if ( not os.path.exists('input_test12') or results==None or results==False ):
+        if ( not os.path.exists('input_test12') ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                   +"\nError: output file 'input_test12', was not created."\
@@ -694,12 +704,12 @@ class immath_test1(unittest.TestCase):
         results = None            
         try:
             print("immath( imagename="+imageList[0]+", varnames='A', expr='A', chans='22~35', outfile='input_test14' )")
-            results = immath( imagename=imageList[0], chans='22~35', expr='A', varnames='A', outfile='input_test14' )
+            immath( imagename=imageList[0], chans='22~35', expr='A', varnames='A', outfile='input_test14' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Unable to do image math on chans=22~35 only "
-        if ( not os.path.exists( 'input_test14' ) or results==None or results==False ): 
+        if ( not os.path.exists( 'input_test14' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: output file, 'input_test14', was not created."\
@@ -707,12 +717,12 @@ class immath_test1(unittest.TestCase):
         
         results = None
         try:
-            results = immath( imageList[0], expr='IM0', chans='0', outfile='input_test15' )
+            immath( imageList[0], expr='IM0', chans='0', outfile='input_test15' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Unable to do image math with chans=0 only"
-        if ( not os.path.exists( 'input_test15' ) or results==None or results==False ): 
+        if ( not os.path.exists( 'input_test15' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: output file 'input_test15`' was not created."\
@@ -720,17 +730,17 @@ class immath_test1(unittest.TestCase):
     
         results=None
         try:
-            results = immath( imageList[0], chans='39', expr='IM0', outfile='input_test16' )
+            immath( imageList[0], chans='39', expr='IM0', outfile='input_test16' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Unable to do image math with chans=39 only"
-        if ( not os.path.exists( 'input_test16' ) or results==None or results==False ): 
+        if ( not os.path.exists( 'input_test16' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: output file 'input_test16' was not created."
 
-        self.assertTrue(retValue['success'],retValue['error_msgs'])    
+        self.assertTrue(retValue['success'], retValue['error_msgs'])    
 
     def test_input14(self):
         '''Immath 13: Test STOKES parameter, values: I, Q, yellow'''
@@ -777,18 +787,18 @@ class immath_test1(unittest.TestCase):
     
         results = None
         try:
-            results = immath( imageList[0], stokes='I', outfile='input_test17', expr='IM0' )
+            immath( imageList[0], stokes='I', outfile='input_test17', expr='IM0' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Image math failed with stokes=I"
-        if ( not os.path.exists( 'input_test17' ) or results==None or results==False ):
+        if ( not os.path.exists( 'input_test17' ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: output file 'input_test17' was not created."
     
     
-        self.assertTrue(retValue['success'],retValue['error_msgs'])    
+        self.assertTrue(retValue['success'], retValue['error_msgs'])    
     
 
 class immath_test2(unittest.TestCase):   
@@ -819,8 +829,6 @@ class immath_test2(unittest.TestCase):
                 shutil.rmtree(img)
             else:
                 os.remove(img)
-        # FIXME need to figure out how to close this table correctly
-        #me.done()
         cache_tables = self._tb.showcache()
         self.assertTrue(len(cache_tables) == 0)
                        
@@ -854,16 +862,16 @@ class immath_test2(unittest.TestCase):
         # if we truly doubled each value.
     
         casalog.post( "Testing the doubling of every value in an image.", 'NORMAL2' )
-        results=None
+
         try:
-            results=immath( imagename=imageList2[0], outfile='expr_test1', expr='IM0 * 2' );
+            immath( imagename=imageList2[0], outfile='expr_test1', expr='IM0 * 2' );
         except Exception as e:
             casalog.post( "Exception occured doubling image ... "+str(e), 'DEBUG1')
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +'\nError: Failed to create "doubled image" on '+imageList2[0]
             
-        if (  not os.path.exists( 'expr_test1' ) or results == None ):
+        if (  not os.path.exists( 'expr_test1' ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: outfile 'expr_test1' was not created."
@@ -905,9 +913,8 @@ class immath_test2(unittest.TestCase):
         # points to make sure they are from the correct plane.
         outimage='expr_test2'
 
-        results=None
         try:    
-            results = self._create_expr_test2()
+            self._create_expr_test2()
             #immath( outimage, 'evalexpr', str('"')+image1+str('"[INDEXIN(4,[5])]' ) );
         except Exception as e:
             casalog.post( "Exception occured getting image slice ... "+str(e), 'DEBUG1')        
@@ -915,7 +922,7 @@ class immath_test2(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']\
                      +'\nError: Failed to create image" slice on '+imageList2[0]
             
-        if (  not os.path.exists( outimage ) or results == None ):
+        if (  not os.path.exists( outimage ) ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: outfile '"+outimage+"' was not created."
@@ -1020,19 +1027,21 @@ class immath_test2(unittest.TestCase):
         myia = image()
         # total polarization intensity
         outfile = 'pol_test1'
-        self.assertTrue(immath( imagename=imList, outfile=outfile, mode='poli' ))
+        immath( imagename=imList, outfile=outfile, mode='poli' )
         myia.open(outfile)
         self.assertTrue(myia.coordsys().stokes()[0] == 'Ptotal')
         myia.done()
         
         # linear polarization intensity
         outfile = 'linear_pol_intensity_test'
-        self.assertTrue(immath(imagename=imList[0:2], outfile=outfile, mode='poli' ))
+        immath(imagename=imList[0:2], outfile=outfile, mode='poli' )
         myia.open(outfile)
         self.assertTrue(myia.coordsys().stokes()[0] == 'Plinear')
         myia.done()
         imList = ['pol_test_Q.im', 'pol_test_U.im']
-        self.assertTrue(immath( imagename=imList, outfile='pol_test2', mode='pola' ))
+        immath( imagename=imList, outfile='pol_test2', mode='pola' )
+        self.assertTrue(os.path.exists(outfile))
+        
  
     # verification of fix to CAS-1678
     # https://bugs.aoc.nrao.edu/browse/CAS-1678
@@ -1051,18 +1060,16 @@ class immath_test2(unittest.TestCase):
         try:
             # full image test
             outfile = 'full_image_sum.im'
-            if (immath(imagename=imagename, expr=expr, outfile=outfile)):
-                expected = numpy.ndarray([2,2])
-                expected.put(range(expected.size),66)
-                myia.open(outfile)
-                got = myia.getchunk()
-                myia.done()
-                if (not (got == expected).all()):
-                    retValue['success'] = False
-                    retValue['error_msgs'] += "\n Full image sum not correctly calculated"
-            else:
+            immath(imagename=imagename, expr=expr, outfile=outfile)
+            expected = numpy.ndarray([2,2])
+            expected.put(range(expected.size),66)
+            myia.open(outfile)
+            got = myia.getchunk()
+            myia.done()
+            if (not (got == expected).all()):
                 retValue['success'] = False
-                retValue['error_msgs'] += "\nimmath returned False for full image sum"            
+                retValue['error_msgs'] += "\n Full image sum not correctly calculated"
+     
         except:
             retValue['success'] = False
             retValue['error_msgs'] += "\nFull image calculation threw an exception: " + str(sys.exc_info()[0])
@@ -1071,18 +1078,15 @@ class immath_test2(unittest.TestCase):
         try:
             # subimage image test
             outfile = 'subimage_sum.im'
-            if (immath(imagename=imagename, expr=expr, outfile=outfile, box='0,0,0,0')):
-                expected = numpy.ndarray([1,1])
-                expected.put(range(expected.size), 66)
-                myia.open(outfile)
-                got = myia.getchunk()
-                myia.done()
-                if (not (got == expected).all()):
-                    retValue['success'] = False
-                    retValue['error_msgs'] += "\n sub image sum not correctly calculated"
-            else:
+            immath(imagename=imagename, expr=expr, outfile=outfile, box='0,0,0,0')
+            expected = numpy.ndarray([1,1])
+            expected.put(range(expected.size), 66)
+            myia.open(outfile)
+            got = myia.getchunk()
+            myia.done()
+            if (not (got == expected).all()):
                 retValue['success'] = False
-                retValue['error_msgs'] += "\nimmath returned False for sub image sum: " + str(sys.exc_info()[0])
+                retValue['error_msgs'] += "\n sub image sum not correctly calculated"
         except:
             retValue['success'] = False
             retValue['error_msgs'] += "\nSub image calculation threw an exception"
@@ -1097,16 +1101,11 @@ class immath_test2(unittest.TestCase):
         '''Immath: verification of fix to CAS-1910'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         try:
-    
-            if (
-                not immath(
-                    imagename=cas1910_im, outfile='cas-1910_out.im',
-                    mode='evalexpr', expr='IM0*1',
-                    box='708,1158,1006,1456'
-                )
-            ):
-                retValue['success'] = False
-                retValue['error_msgs'] += "\nimmath returned False for setting box correctly (CAS-1910)"
+            immath(
+                imagename=cas1910_im, outfile='cas-1910_out.im',
+                mode='evalexpr', expr='IM0*1',
+                box='708,1158,1006,1456'
+            )
         except:
             retValue['success'] = False
             retValue['error_msgs'] += "\nimmath threw exception for setting box correctly (CAS-1910)"
@@ -1131,11 +1130,9 @@ class immath_test2(unittest.TestCase):
             
             outfile = 'cas-1452_out_' + f + '.im'
             expr = f + "(\'" + imagename + "\')" 
-            self.assertTrue(
-                immath(
-                    imagename=imagename, outfile=outfile,
-                    mode='evalexpr', expr=expr
-                )
+            immath(
+                imagename=imagename, outfile=outfile,
+                mode='evalexpr', expr=expr
             )
             _ia.open(outfile)
             got = _ia.getchunk()
@@ -1163,22 +1160,24 @@ class immath_test2(unittest.TestCase):
             for imagename in imagenames:
                 outfile = 'cas1830_out+' + str(i)
                 if (imagename):
-                    res = immath(imagename=imagename, expr=expr, chans='22', outfile=outfile)
+                    immath(imagename=imagename, expr=expr, chans='22', outfile=outfile)
                 else:
-                    res = immath(expr=expr, chans='22', outfile=outfile)
-                self.assertTrue(res)
+                    immath(expr=expr, chans='22', outfile=outfile)
                 myia = image()
                 myia.open(outfile)
                 self.assertTrue((myia.shape() == expected).all())
                 myia.close()
                 i += 1
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
 
+beam0 = 'mybeamtest0.im'
+beam1 = 'mybeamtest1.im'
+beam_out = 'myout.im'
 
 class immath_test3(unittest.TestCase):
 
     def setUp(self):
-        self._tb = table( )
+        self._tb = table()
         for img in imageList4:
             shutil.copytree(os.path.join(datapath,img), img)
     
@@ -1188,15 +1187,17 @@ class immath_test3(unittest.TestCase):
         
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
+        for img in [beam0, beam1, beam_out]:
+            if os.path.exists(img):
+                shutil.rmtree(img)
         # FIXME need to figure out how to close this table correctly
         cache_tables = self._tb.showcache()
         if (len(cache_tables) > 0):
             for table in cache_tables:
                 self.assertTrue(table.rfind("/IERSeop97") >= 0)
         
-
     def _comp(self, imagename, mode, outfile, expected, epsilon, polithresh=''):
-        self.assertTrue(immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh))
+        immath(imagename=imagename, outfile=outfile, mode=mode, polithresh=polithresh)
         self.assertTrue(os.path.exists(outfile))
         _ia.open(outfile)
         got = _ia.getchunk()
@@ -1356,10 +1357,20 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out2.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask2.im > 5", stretch=False
-        )
+        if is_CASA6:
+            # CASA6 tasks raise exceptions
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask2.im > 5", stretch=False
+            )
+        else:
+            # CASA5 tasks return False
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask2.im > 5", stretch=False
+                )
+            )
         outfile = "out3.im"
         immath(
             imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1369,11 +1380,19 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done()
         outfile = "out4.im"
-        self.assertRaises(
-            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-            expr="1*IM0", mask="mask3.im > 5", stretch=False
-        )
-        
+        if is_CASA6:
+            self.assertRaises(
+                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask3.im > 5", stretch=False
+            )
+        else:
+            self.assertFalse(
+                immath(
+                    imagename="myim.im", outfile=outfile, mode="evalexpr",
+                    expr="1*IM0", mask="mask3.im > 5", stretch=False
+                )
+            )
+
     def test21(self):
         """Test moved from imagetest regreesion"""
         
@@ -1558,7 +1577,7 @@ class immath_test3(unittest.TestCase):
                 self.assertTrue(
                     (cc == expecv).all(), "wrong values for " + mytype
                 )
-       
+
     def test_8(self):
         """Tests moved from imagetest regression, some are probably useless"""
         myia = image()
@@ -1700,10 +1719,7 @@ class immath_test3(unittest.TestCase):
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
         
         outfile = "zz_out.im"
-        self.assertTrue(
-            immath(imagename=im1, outfile=outfile, expr=expr),
-            "immath failed"
-        )
+        immath(imagename=im1, outfile=outfile, expr=expr),
         myia.open(outfile)
         msgs = myia.history()
         myia.done()
@@ -1776,9 +1792,14 @@ class immath_test3(unittest.TestCase):
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                self.assertRaises(
-                    Exception, immath, imagename=subi, outfile=outfile, mode=mode
-                )
+                if is_CASA6:
+                    self.assertRaises(
+                        Exception, immath, imagename=subi, outfile=outfile, mode=mode
+                    )
+                else:
+                    self.assertFalse(
+                        immath(imagename=subi, outfile=outfile, mode=mode)
+                    )
                 continue
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
@@ -1787,6 +1808,100 @@ class immath_test3(unittest.TestCase):
             self.assertTrue(
                 numpy.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
+
+    def test_beam_logging_precision(self):
+        """
+            Test that when beams are different, immath logs enough digits to show where the
+            difference occurs. CAS-13135
+        """
+        shape = [2, 2, 2, 2]
+        old_log = casalog.logfile()
+        logfile = 'test_beam_logging_precision0.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia = image()
+        self.assertTrue(_ia.fromshape(beam0, shape), 'Failed to created image ' + beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()
+        self.assertTrue(_ia.fromshape(beam1, shape), 'Failed to created image ' + beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.235arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam1
+        )
+        _ia.done()
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 14
+            i1 = 16
+        else:
+            i0 = 17
+            i1 = 19
+        self.assertTrue(re.search("3.235", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision1.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234567arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.234568arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.234568", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234567", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        logfile = 'test_beam_logging_precision2.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        _ia.open(beam0)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678901777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()        
+        _ia.open(beam1)
+        self.assertTrue(
+            _ia.setrestoringbeam(major='3.2345678902777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        _ia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.23456789027778", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.23456789017778", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        self.assertTrue(casalog.setlogfile(old_log), 'Failed to reset log file')
 
 def suite():
     return [immath_test1, immath_test2, immath_test3]

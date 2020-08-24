@@ -2096,7 +2096,7 @@ def evaluateFlagParameters(pardict, pars):
         count += 1
         for key,val in lociteritems(mydict):
             if key not in refkeys:
-                raise IOError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
+                raise ValueError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
 
             # reference[key] is always a list
             refval = reference[key]
@@ -2108,7 +2108,7 @@ def evaluateFlagParameters(pardict, pars):
                     # type matches
                     match = True
             if not match:
-                raise(IOError,'Parameter %s=%s in row=%s has wrong type.\nSupported types are: %s.'%(key,val,idx,vtypes.rstrip(',')))
+                raise(ValueError,'Parameter %s=%s in row=%s has wrong type.\nSupported types are: %s.'%(key,val,idx,vtypes.rstrip(',')))
 
     casalog.post('Evaluated %s rows of dictionary'%count,'DEBUG1')
     return True

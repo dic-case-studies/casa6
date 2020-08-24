@@ -46,6 +46,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import casa_stack_manip
+
 import gc
 import math
 import os
@@ -72,12 +74,12 @@ else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/uvfits/3C219D_CAL.UVFITS'):
         vlapath = dataroot + 'data/casa-data-req/uvfits/3C219D_CAL.UVFITS'
         carmapath = dataroot + 'data/casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'data/casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS')
-        
+        exportuvfits(vis=dataroot + 'data/casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
+
     else:
         vlapath = dataroot + 'casa-data-req/uvfits/3C219D_CAL.UVFITS'
         carmapath = dataroot + 'casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS')
+        exportuvfits(vis=dataroot + 'casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
 
     evlapath = 'EVLAUV.UVFITS'
 
@@ -220,8 +222,14 @@ class importuvfits_test(unittest.TestCase):
         '''test_invalidinput: Tests to see if the given fits file is valid, or if given an invalid filename'''
         # Try for existing non uvfits file types
         casalog.setlogfile('testlog.log')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or\
+           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
+            if CASA6:
+                exc_type = AssertionError
+            else:
+                exc_type = RuntimeError
+
+            with self.assertRaises(exc_type):
                 importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
         else:
             importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
@@ -232,7 +240,8 @@ class importuvfits_test(unittest.TestCase):
         '''test_overwrite: Tests to make sure files aren't overwritten'''
         casalog.setlogfile('testlog.log')
         importuvfits(fitsfile=vlapath, vis='test_set.ms')
-        importuvfits(fitsfile=vlapath, vis='test_set.ms')
+        with self.assertRaises(RuntimeError):
+            importuvfits(fitsfile=vlapath, vis='test_set.ms')
         self.assertTrue('user does not want to remove it.' in open('testlog.log').read(), msg='No warning saying that the file will not overwrite was displayed')
 
 def suite():

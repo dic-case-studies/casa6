@@ -1120,6 +1120,19 @@
              "comment":""
         },
         {
+             "testNumber":"0000",
+             "testName":"Simanalyze",
+             "testScript":"test_req_task_simanalyze",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
+             "priority":"3",
+             "tag":"simulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
              "testNumber":"6001",
              "testName":"Ia adddegaxes",
              "testScript":"test_ia_adddegaxes",
