@@ -630,30 +630,32 @@ def do_weight_mask(imagename, weightimage, minweight):
                  "INFO")
     casalog.post("Pixels in map with weight <= median(weight)*minweight = %f will be masked." % \
                  (weight_threshold),"INFO")
-    ###Leaving the original logic to calculate the number of masked pixels via
-    ###product of median of and min_weight (which i don't understand the logic)
-    ### if one wanted to find how many pixel were masked one could easily count the
-    ### number of pixels set to false 
-    ### e.g  after masking self.outfile below one could just do this 
-    ### nmasked_pixels=tb.calc('[select from "'+self.outfile+'"/mask0'+'"  giving [nfalse(PagedArray )]]')
     my_tb = gentools(['tb'])[0]
     nmask_pixels=0
     nchan=stat['trc'][3]+1
     casalog.filter('ERROR') ### hide the useless message of tb.calc
 
-   
-    ### doing it by channel to make sure it does not go out of memory
-    ####tab.calc try to load the whole chunk in ram 
-    for k in range(nchan):
-        nmask_pixels += my_tb.calc('[select from "'+weightimage+'"  giving [ntrue(map[,,,'+str(k)+'] <='+str(median_weight*minweight)+')]]')['0'][0]
-    casalog.filter()  ####set logging back to normal
-    
-    # Modify default mask
     with open_ia(imagename) as ia:
-        imsize=numpy.product(ia.shape())
         ia.calcmask("'%s'>%f" % (weightimage, weight_threshold), asdefault=True)
 
-    masked_fraction = 100.*(1. - (imsize - nmask_pixels) / float(valid_pixels[0]) )
+        ndim = len(ia.shape())
+        if ndim <= 2:
+            _axes = list(range(ndim))
+        else:
+            _axes = list(range(2, ndim))
+
+        try:
+            collapsed = ia.collapse('npts', axes=_axes)
+            valid_pixels_after = collapsed.getchunk().sum()
+            collapsed.close()
+        except RuntimeError as e:
+            if 'All selected pixels are masked' in e.message:
+                valid_pixels_after = 0
+            else:
+                raise
+
+    masked_fraction = 100.*(1. - valid_pixels_after / float(valid_pixels[0]) )
+
     casalog.post("This amounts to %5.1f %% of the area with nonzero weight." % \
                 ( masked_fraction ),"INFO")
     casalog.post("The weight image '%s' is returned by this task, if the user wishes to assess the results in detail." \
@@ -692,7 +694,9 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     
     origin = 'tsdimaging'
     imager = None
-  
+
+    os.environ['OMP_NUM_THREADS'] = '1'  # CAS-10894
+
     try: 
         # if spw starts with ':', add '*' at the beginning
         if isinstance(spw, str):
