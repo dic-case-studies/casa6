@@ -1,5 +1,4 @@
 # common import
-
 # from Script
 import os
 import pylab as pl
@@ -104,6 +103,15 @@ def sdatmcor(
     dp          = form_value_unit(dp,  ['mbar', 'hPa'])
     dpm         = dpm
 
+# User-Define Profile (nothing =[] )
+
+    if False:
+        layerboundaries = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
+        layertemperature = [ 270., 264., 258., 252. ] #Kelvin
+    else:
+        layerboundaries = []
+        layertemperature = []
+
 #
 # Ceall calc Function
 #
@@ -118,9 +126,9 @@ def sdatmcor(
         layertemperature,
         debug)
 
-#
+##########################
 # Subroutines
-#
+##########################
 
 # by  Wataru, thanks. #
 def ms_remove(path):
@@ -188,6 +196,12 @@ def set_any_param(in_arg, def_para):
     else:
         return def_para
 
+def set_list_param(in_arg, list_para):
+    if (len(in_arg) == 0):
+        return []
+    else:
+        return list_para
+
 
 def set_floatquantity_param(in_arg, def_para, unit):
     if (in_arg != ''):
@@ -218,11 +232,15 @@ def showProfile(at):
     # 5 - pressure, 6 - O3 (number density), 7 - CO, 8 - N2O
 
 #    for i in range(at.getNumLayers()):
-#        # Print atmospheric profile returned by at.getProfile():
-#        # Layer thickness (idx=1), Temperature (idx=2),
-#        # Number density of water vapor(idx=4), and Pressure (idx=5)
+#        Print atmospheric profile returned by at.getProfile():
+#        Layer thickness (idx=1), Temperature (idx=2),
+#        Number density of water vapor(idx=4), and Pressure (idx=5)
 #        print(p[1]['value'][i],p[2]['value'][i],p[4]['value'][i],p[5]['value'][i])    
 
+##    tmp_list = p[0].split(',')  # convert to List #
+##    text = [s for s in tmp_list]  # convert to list[int]
+##    text = p[0].split('\n')
+##    print(text)
     print(p[0])
     return
 #
@@ -259,9 +277,9 @@ def calc_sdatmcor(
         debug):
 
     if True:  # flag option is reserved. #
-        print("*****************************")
-        print("**   calc_sdatmcor::       **")
-        print("*****************************")
+        print("***********************************")
+        print("**   calc_sdatmcor:: (0825)      **")
+        print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
         print('outfile     =', p_outfile)
@@ -588,13 +606,20 @@ def calc_sdatmcor(
         t_dpm         = dpm      # float      
         t_maxAltitude = qa.quantity(maxalt, 'km')
 
+        # init. internal. # 
+        t_layerboundaries  = a_layerboundaries   # layer boundary [m]
+        t_layertemperature = a_layerboundaries   # layer temerature [K]
+
         # user-defined Profile
         # example:
         #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
         #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
- 
-        t_layerboundaries  =[]   # layer boundary [m]
-        t_layertemperature =[]   # layer temerature [K]
+
+        # set arg. # 
+        t_layerboundaries  = a_layerboundaries   # layer boundary [m]
+        t_layertemperature = a_layerboundaries   # layer temerature [K]
+
+        print( "DEBUG   a_layerXXX", t_layerboundaries, t_layertemperature)
 
         #---------------------------------------
         # Change value, if the ARG spoecified 
@@ -614,10 +639,9 @@ def calc_sdatmcor(
             t_pwv         = set_floatquantity_param(a_PWV, t_pwv, 'mm')
             t_dp          = set_floatquantity_param(a_dp, t_dp, 'mbar')
             t_dpm         = set_float_param(a_dpm, t_dpm)
-            # user-defined
-            t_layerboundaries  = set_float_param(a_layerboundaries, t_layerboundaries) 
-            t_layertemperature = set_float_param(a_layertemperature , a_layertemperature)
-
+            # user-defined profile.
+            t_layerboundaries  = set_list_param(a_layerboundaries, a_layerboundaries) 
+            t_layertemperature = set_list_param(a_layertemperature, a_layertemperature)
 
         else:
              print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True." )
@@ -636,6 +660,8 @@ def calc_sdatmcor(
         print(" > dp          =%s" % t_dp)
         print(" > dpm         =%s" % t_dpm)
         print(" > *maxAltitude=%s" % t_maxAltitude)
+        print(" > layerboundaries =%s" % t_layerboundaries)
+        print(" > layerboundaries =%s" % t_layertemperature)
         print(" ------------------------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
@@ -649,7 +675,7 @@ def calc_sdatmcor(
             dTem_dh = t_dtem_dh,
             dP = t_dp, dPm=t_dpm,
             layerBoundaries = t_layerboundaries,
-            layerTemperature = t_layertemperature)
+            layerTemperature =t_layertemperature )
 
         # ATM Profile #
         if is_CASA6: 
