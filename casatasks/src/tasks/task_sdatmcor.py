@@ -663,7 +663,7 @@ def calc_sdatmcor(
                 print(myAtm)
 
         # PROFILE #
-#        showProfile(at)
+        showProfile(at)
 
         # Spectral Window #     
         at.initSpectralWindow(nband, 
