@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // now active-set itsScaleSizes is ready for cleanning
     //itsCleaner.makePsfScales(); it doesn't seem I need this.
     //itsCleaner.makeScaleMasks(); it doesn't seem I need this. Mask is used for InitScales only
-    //itsCleaner.makedirtyscales(); //it doesn't seem I need this. 
+    //itsCleaner.makedirtyscales(); //it doesn't seem I need this.
                                     //Asp is different from MS on Asp is substracting from dirty directly
   }
 
@@ -153,7 +153,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
+    itsCleaner.setaspcontrol(cycleNiter, 0.1/*loopgain*/, thresh, Quantity(0.0, "%"));
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model

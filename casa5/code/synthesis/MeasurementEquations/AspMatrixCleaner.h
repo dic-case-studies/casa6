@@ -70,10 +70,11 @@ public:
   float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
 
   // Make an image of the specified scale by Gaussian
-  void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
+  void makeInitScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
+  void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize, const casacore::Float& amp, const casacore::IPosition& center);
 
   // Make images of the Asp scales in the active-set
-  void makeAspScales();
+  //void makeAspScales();
 
   void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
 

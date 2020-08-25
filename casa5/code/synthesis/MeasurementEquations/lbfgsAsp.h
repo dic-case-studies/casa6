@@ -102,25 +102,17 @@ public:
       // generate a gaussian for each Asp in the Aspen set
       // x[0]: Amplitude0,       x[1]: scale0
       // x[2]: Amplitude1,       x[3]: scale1
-      // x[i]: Amplitude(i/2), x[i+1]: scale(i/2)
+      // x[2k]: Amplitude(k), x[2k+1]: scale(k+1)
       casacore::Matrix<casacore::Float> Asp(nX, nY);
       Asp = 0.0;
 
       const double sigma5 = 5 * x[2*k+1] / 2;
-      /*const int minI = std::max(0, (int)(refi - sigma5));
-      const int maxI = std::min(nX-1, (int)(refi + sigma5));
-      const int minJ = std::max(0, (int)(refj - sigma5));
-      const int maxJ = std::min(nY-1, (int)(refj + sigma5));*/
       const int minI = std::max(0, (int)(refi + center[k][0] - sigma5));
       const int maxI = std::min(nX-1, (int)(refi + center[k][0] + sigma5));
       const int minJ = std::max(0, (int)(refj + center[k][1] - sigma5));
       const int maxJ = std::min(nY-1, (int)(refj + center[k][1] + sigma5));
 
       casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
-      /*for (int j = 0; j < nY; ++j)
-      {
-        for(int i = 0; i < nX; ++i)
-        {*/
       for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -154,18 +146,10 @@ public:
       // gradient. 0: amplitude; 1: scale
       // generate derivatives of amplitude
       ////start = std::chrono::high_resolution_clock::now();
-      /*casacore::Matrix<casacore::Float> GradAmp(nX, nY);
-      GradAmp = 0.0;
-      casacore::Matrix<casacore::Float> GradScale(nX, nY);
-      GradScale = 0.0;*/
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
       casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
 
-      /*for (int j = 0; j < nY; ++j)
-      {
-        for(int i = 0; i < nX; ++i)
-        {*/
       for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -185,13 +169,11 @@ public:
       ////start = std::chrono::high_resolution_clock::now();
       casacore::Bool ddel;
       const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
-      //double *ddptr = reinterpret_cast<double*>(&dptr); // seg fault
-      //double *ddptr = const_cast<double*>(reinterpret_cast<const double *>(dptr)); // reinterpret_cast returns wrong value
       float *ddptr = const_cast<float*>(dptr);
       Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
-      //casacore::Matrix<casacore::Float> Grad0 = product(transpose(itsMatDirty), GradAmp);
+
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
-      //casacore::Matrix<casacore::Float> Grad1 = product(transpose(itsMatDirty), GradScale);
+
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
       itsMatDirty.freeStorage(dptr, ddel);
       ////stop = std::chrono::high_resolution_clock::now();
@@ -245,7 +227,6 @@ public:
       for(int i = minX; i < maxX; ++i)
       {
         //std::cout << "after Asp fx " << fx << " double " << double(pow(itsMatDirty(i,j) - AspConvPsfSum(i,j),2)) << " MatDirty " << itsMatDirty(i,j) << " PsfSum " << AspConvPsfSum(i,j) << std::endl;
-        //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsfSum(i,j))); //abs returns int
         fx = fx + double(pow(itsMatDirty(i, j) - AspConvPsfSum(i,j),2));
       }
     }
