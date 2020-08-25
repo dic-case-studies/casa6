@@ -492,14 +492,14 @@ private:
             record.setTsysSize(2, 1);
             record.tsys(0, 0) = tsys_(0, apol0);
             record.tsys(1, 0) = tsys_(0, apol1);
-        } else if (casacore::anyNE(tsys_, 0.0f)) {
+        } else if (casacore::anyGT(tsys_, 0.0f)) {
             // valid spectral Tsys data are available
             casacore::IPosition const startpos0(2, 1, apol0);
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
             casacore::IPosition const startpos1(2, 1, apol1);
             casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
-            if (casacore::anyNE(tsys_(startpos0, endpos0), 0.0f)
-                || casacore::anyNE(tsys_(startpos1, endpos1), 0.0f)) {
+            if (casacore::anyGT(tsys_(startpos0, endpos0), 0.0f)
+                || casacore::anyGT(tsys_(startpos1, endpos1), 0.0f)) {
                 // spectral Tsys
                 record.setTsysSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
@@ -533,14 +533,14 @@ private:
             record.setTcalSize(2, 1);
             record.tcal(0, 0) = tcal_(0, apol0);
             record.tcal(1, 0) = tcal_(0, apol1);
-        } else if (casacore::anyNE(tcal_, 0.0f)) {
+        } else if (casacore::anyGT(tcal_, 0.0f)) {
             // valid spectral Tcal data are available
             casacore::IPosition const startpos0(2, 1, apol0);
             casacore::IPosition const endpos0(2, num_chan_ - 1, apol0);
             casacore::IPosition const startpos1(2, 1, apol1);
             casacore::IPosition const endpos1(2, num_chan_ - 1, apol1);
-            if (casacore::anyNE(tcal_(startpos0, endpos0), 0.0f)
-                || casacore::anyNE(tcal_(startpos1, endpos1), 0.0f)) {
+            if (casacore::anyGT(tcal_(startpos0, endpos0), 0.0f)
+                || casacore::anyGT(tcal_(startpos1, endpos1), 0.0f)) {
                 // spectral Tcal
                 record.setTcalSize(2, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix2>(
@@ -562,10 +562,10 @@ private:
         } else if (num_chan_ == 1) {
             record.setTsysSize(1, 1);
             record.tsys(0, 0) = tsys_(0, start_src);
-        } else if (casacore::anyNE(tsys_, 0.0f)) {
+        } else if (casacore::anyGT(tsys_, 0.0f)) {
             casacore::IPosition const startpos(2, 1, start_src);
             casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
-            if (casacore::anyNE(tsys_(startpos, endpos), 0.0f)) {
+            if (casacore::anyGT(tsys_(startpos, endpos), 0.0f)) {
                 // should be spectral Tsys
                 record.setTsysSize(1, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
@@ -586,10 +586,10 @@ private:
         } else if (num_chan_ == 1) {
             record.setTcalSize(1, 1);
             record.tcal(0, 0) = tcal_(0, start_src);
-        } else if (casacore::anyNE(tcal_, 0.0f)) {
+        } else if (casacore::anyGT(tcal_, 0.0f)) {
             casacore::IPosition const startpos(2, 1, start_src);
             casacore::IPosition const endpos(2, num_chan_ - 1, start_src);
-            if (casacore::anyNE(tcal_(startpos, endpos), 0.0f)) {
+            if (casacore::anyGT(tcal_(startpos, endpos), 0.0f)) {
                 // should be spectral Tcal
                 record.setTcalSize(1, num_chan_);
                 shuffleTransposeMatrix<casacore::Float, ExecuteMatrix1>(num_chan_,
