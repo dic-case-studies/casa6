@@ -2675,7 +2675,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       size_t const num_chan = static_cast<size_t>(vb->nChannels());
       size_t const num_pol = static_cast<size_t>(vb->nCorrelations());
       size_t const num_row = static_cast<size_t>(vb->nRows());
-      Vector<uInt> orig_rows = vb->rowIds();
+      Vector<casacore::rownr_t> orig_rows = vb->rowIds();
       Cube<Float> data_chunk(num_pol, num_chan, num_row);
       Vector<float> spec(num_chan);
       Cube<Bool> flag_chunk(num_pol, num_chan, num_row);

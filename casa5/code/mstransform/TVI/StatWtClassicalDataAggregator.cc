@@ -227,7 +227,7 @@ void StatWtClassicalDataAggregator::_computeVariances(
 void StatWtClassicalDataAggregator::weightSpectrumFlags(
     Cube<Float>& wtsp, Cube<Bool>& flagCube, Bool& checkFlags,
     const Vector<Int>& ant1, const Vector<Int>& ant2, const Vector<Int>& spws,
-    const Vector<Double>& exposures, const Vector<uInt>&
+    const Vector<Double>& exposures, const Vector<casacore::rownr_t>&
 ) const {
     Slicer slice(IPosition(3, 0), flagCube.shape(), Slicer::endIsLength);
     auto sliceStart = slice.start();
