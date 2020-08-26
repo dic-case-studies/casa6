@@ -41,7 +41,7 @@ def sdatmcor(
         layerboundaries, layertemperature,
         debug):
 
-    if('showTaskArgs' in debug):
+    if True:
         print("****************************************************")
         print(" SDATMCOR::  based Script =  'atmcor_20200602.py'      ")
         print("****************************************************")
@@ -104,14 +104,8 @@ def sdatmcor(
     dpm         = dpm
 
 # User-Define Profile (nothing =[] )
-
-    if False:
-        layerboundaries = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
-        layertemperature = [ 270., 264., 258., 252. ] #Kelvin
-    else:
-        layerboundaries = []
-        layertemperature = []
-
+    if(len(layerboundaries) != len(layertemperature)):
+        print("WARN: specified Count of Bounday and Temperature mismatch.")
 #
 # Ceall calc Function
 #
@@ -237,10 +231,6 @@ def showProfile(at):
 #        Number density of water vapor(idx=4), and Pressure (idx=5)
 #        print(p[1]['value'][i],p[2]['value'][i],p[4]['value'][i],p[5]['value'][i])    
 
-##    tmp_list = p[0].split(',')  # convert to List #
-##    text = [s for s in tmp_list]  # convert to list[int]
-##    text = p[0].split('\n')
-##    print(text)
     print(p[0])
     return
 #
@@ -322,6 +312,7 @@ def calc_sdatmcor(
     interruptCorrectionCnt =1000  #  (limit count)
 
     showAtmProfile = False     # print( initAtmProfile() )
+    showAtmLayer = False     # print( at )
 
     if('skipTaskExec' in debug):
         skipTaskExec = True
@@ -334,6 +325,9 @@ def calc_sdatmcor(
 
     if('showAtmProfile' in debug):
         showAtmProfile = True
+
+    if('showAtmLayer' in debug):
+        showAtmLayer = True
 
     if('showCorrection' in debug):
         showCorrection = True
@@ -665,15 +659,15 @@ def calc_sdatmcor(
         print(" ------------------------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
-            humidity = t_humidity, 
-            temperature = t_temperature, 
-            altitude = t_altitude, 
-            pressure = t_pressure, 
-            atmType = t_atmtype, 
-            maxAltitude = t_maxAltitude, 
-            h0 = t_h0, 
-            dTem_dh = t_dtem_dh,
-            dP = t_dp, dPm=t_dpm,
+        #    humidity = t_humidity, 
+        #    temperature = t_temperature, 
+        #    altitude = t_altitude, 
+        #    pressure = t_pressure, 
+        #    atmType = t_atmtype, 
+        #    maxAltitude = t_maxAltitude, 
+        #    h0 = t_h0, 
+        #    dTem_dh = t_dtem_dh,
+        #    dP = t_dp, dPm=t_dpm,
             layerBoundaries = t_layerboundaries,
             layerTemperature =t_layertemperature )
 
@@ -689,7 +683,8 @@ def calc_sdatmcor(
                 print(myAtm)
 
         # PROFILE #
-        showProfile(at)
+        if showAtmLayer:
+            showProfile(at)
 
         # Spectral Window #     
         at.initSpectralWindow(nband, 
@@ -711,12 +706,12 @@ def calc_sdatmcor(
         # Skip outputspw
         ####################
         if not ddis[spwid] in outputspws:
-            print("-------   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
+            print("----   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
             continue
 
         # Debug (tentative) #
         if skipCorrection:
-            print("-------   Correction (loop) will be skipped, due to Debug option.\n\n\n")
+            print("----   Correction (loop) will be skipped, due to Debug option.\n\n\n")
             continue
 
         #

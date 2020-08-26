@@ -172,16 +172,16 @@
         <value type="double"></value>
     </param>
 
-    <param name="layerboundaries" type="stringArray" subparam="true">
+    <param name="layerboundaries" type="doubleArray" subparam="true">
         <shortdescription>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
         <description>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</description>
-        <value></value>
+        <value type="doubleArray"></value>
     </param>
 
-    <param name="layertemperature" type="stringArray" subparam="true">
+    <param name="layertemperature" type="doubleArray" subparam="true">
         <shortdescription>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
         <description>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</description>
-        <value></value>
+        <value type="doubleArray"></value>
     </param>
 
     <param name="debug" type="string">
@@ -203,8 +203,8 @@
             <default param="PWV"><value type="string"></value></default>
             <default param="dp"><value type="string"></value></default>
             <default param="dpm"><value type="string">-1</value></default>
-            <default param="layerboundaries"><value type="string"></value></default>
-            <default param="layertemperature"><value type="string"></value></default>
+            <default param="layerboundaries"><value type="doubleArray"></value></default>
+            <default param="layertemperature"><value type="doubleArray"></value></default>
         </equals>
       </when>
     </constraints>
