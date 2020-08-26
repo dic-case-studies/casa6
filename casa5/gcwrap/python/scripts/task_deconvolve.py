@@ -123,24 +123,23 @@ def deconvolve(
         #### Exec
         #################################################
 
-        if niter > 0:
-            ## Set up the internal state of the iterater and automask
-            # is this necessary? -> I think so ~bgb200731
-            isit = decon.hasConverged()
-            decon.updateMask()
+        ## Set up the internal state of the iterater and automask
+        # is this necessary? -> I think so ~bgb200731
+        isit = decon.hasConverged()
+        decon.updateMask()
 
-            isit = decon.hasConverged() # here in case updateMaskMinor() produces an all-false mask
-            if not isit:
-                # print("running minor cycle");
-                t0=time.time();
-                decon.runMinorCycle()
-                t1=time.time();
-                casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
-                isit = decon.hasConverged() # get the convergence state, to report back to the calling code
+        isit = decon.hasConverged() # here in case updateMaskMinor() produces an all-false mask
+        if not isit:
+            # print("running minor cycle");
+            t0=time.time();
+            decon.runMinorCycle()
+            t1=time.time();
+            casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
+            isit = decon.hasConverged() # get the convergence state, to report back to the calling code
 
-            ## Get summary from iterbot
-            if type(interactive) != bool:
-                retrec=decon.getSummary();
+        ## Get summary from iterbot
+        if type(interactive) != bool:
+            retrec=decon.getSummary();
 
         #################################################
         #### Teardown

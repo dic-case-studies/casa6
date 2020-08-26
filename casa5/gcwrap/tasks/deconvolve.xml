@@ -494,12 +494,16 @@
                                                             no contours will be visible.
 
 
-                        Operation buttons :  -- For the task deconvolve, all options stop the minor cycle.
+                        Operation buttons : -- For the task deconvolve, all options stop the minor cycle.
 
                         Iteration control : -- max cycleniter :  For task deconvolve, this contol has no effect.
-                                            -- iterations left : For task deconvolve, this contol has no effect.
-                                            -- threshold :       For task deconvolve, this contol has no effect.
-                                            -- cyclethreshold :  For task deconvolve, this contol has no effect.
+                                            -- iterations left : Sets the limit on the number of iterations
+                                                                 about to be done.
+                                            -- threshold :       Sets the peak residual stopping threshold for
+                                                                 for this execution of deconvolve. The max
+                                                                 between "threshold" and "cyclethreshold" is
+                                                                 used for this stopping criteria.
+                                            -- cyclethreshold :  See description for "-- threshold".
 
 
                         [ For scripting purposes, replacing True/False with 1/0 will get deconvolve to
@@ -778,7 +782,6 @@
           <default param="cyclefactor"><value>1.0</value></default>
           <default param="minpsffraction"><value>0.05</value></default>
           <default param="maxpsffraction"><value>0.8</value></default>
-          <default param="interactive"><value>False</value></default>
 
 
         </notequals>
