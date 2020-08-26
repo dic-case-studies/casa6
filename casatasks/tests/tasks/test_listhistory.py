@@ -103,6 +103,9 @@ class listhistory_test(unittest.TestCase):
             output=commands.getoutput(cmd)
 
         num = int(output.split()[0])
+        # This check is flaky, as the refnum includes not only lines from listhistory
+        # but also other pre-/post- lines printed around the task.(end, begin, time, result,
+        # etc.)
         self.assertEqual(refnum,num)
 
 

@@ -66,12 +66,11 @@ class fixvis_test1(unittest.TestCase):
         shutil.rmtree(outms2, ignore_errors=True)
         mystats = ''
         try:
-            self.res = fixvis(inpms2, outms2, field='0', refcode=refcode,
-                              phasecenter=phasecent, distances=dist)
-            self.assertTrue(self.res)
+            fixvis(inpms2, outms2, field='0', refcode=refcode,
+                   phasecenter=phasecent, distances=dist)
             mystats = self._get_stats(0, 'testy')
-        except Exception as e:
-            print("*** Unexpected error *** %s" % e)
+        except Exception as exc:
+            self.fail("*** Unexpected error *** {}".format(exc))
 
         return mystats
 
@@ -212,9 +211,9 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='1', refcode=refcode,
+            fixvis(vis=outms2, outputvis=outms2, field='1', refcode=refcode,
                               phasecenter=phc, datacolumn='all')
-            self.assertTrue(self.res)
+
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
         except:
@@ -245,14 +244,12 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA,CORRECTED')
-            self.assertTrue(self.res)
+            fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA,CORRECTED')
             mystats0 = self._get_stats(0, 'testy') 
 
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
         # CASA5 and CASA6 differences - due to tclean vs clean?
         if is_CASA6:
@@ -274,15 +271,14 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA')
-            self.assertTrue(self.res)
+            fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA')
+
             mystats0 = self._get_stats(0, 'testy') # source should still be centered because CORRECTED was not changed
                                                    # but the phase center change affects the world coordinates anyway
 
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
 
         # CASA5 and CASA6 differences - due to tclean vs clean?
@@ -331,9 +327,8 @@ class fixvis_test1(unittest.TestCase):
             shutil.rmtree('test9tmp.ms', ignore_errors=True)
             split(vis=outms2, outputvis='test9tmp.ms', datacolumn='corrected')
             shutil.rmtree(outms2)
-            self.res = fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA')
-            self.assertTrue(self.res)
+            fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA')
             
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
@@ -369,16 +364,14 @@ class fixvis_test1(unittest.TestCase):
             shutil.rmtree('test9tmp.ms', ignore_errors=True)
             split(vis=outms2, outputvis='test9tmp.ms', datacolumn='corrected')
             shutil.rmtree(outms2)
-            self.res = fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
-                              phasecenter=phc)
-            self.assertTrue(self.res)
+            fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
+                   phasecenter=phc)
             
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
             
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
         # CASA5 and CASA6 differences - due to tclean vs clean?
         if is_CASA6:
@@ -402,18 +395,16 @@ class fixvis_test1(unittest.TestCase):
 
         mystats = ''
         try:
-            self.res = fixvis(inpms2, outms3, field='0', refcode=refcode,
-                              phasecenter='J2000 18h00m02.3092s -29d49m29.9987s') # 10 arcmin off
-            self.assertTrue(self.res)
+            fixvis(inpms2, outms3, field='0', refcode=refcode,
+                   phasecenter='J2000 18h00m02.3092s -29d49m29.9987s') # 10 arcmin off
             
-            self.res = fixvis(outms3, outms2, field='0', refcode=refcode,
-                              phasecenter='J2000 18h00m02.3092s -29d59m29.9987s') # == original pos.
-            self.assertTrue(self.res)
+            fixvis(outms3, outms2, field='0', refcode=refcode,
+                   phasecenter='J2000 18h00m02.3092s -29d59m29.9987s') # == original pos.
             
             mystats = self._get_stats(0, 'testy')
             shutil.rmtree(outms3, ignore_errors=True)
-        except:
-            print("*** Unexpected error ***")
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m29.9987s')
 
