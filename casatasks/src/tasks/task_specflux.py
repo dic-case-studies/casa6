@@ -185,10 +185,7 @@ def specflux(
         if (logfile):
             with open(logfile, "w") as myfile:
                 myfile.write(header)
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if (myia):
             myia.done()
@@ -196,7 +193,7 @@ def specflux(
 
 def _no_unit_no_beam_message():
     # CAS-10791
-    raise Exception(
+    raise RuntimeError(
         "This application is required to do a flux density calculation but cannot "
         + "because the image has no beam and/or appropriate brightness unit. Please "
         + "define a beam using the relevant task parameter inputs. To add a beam "

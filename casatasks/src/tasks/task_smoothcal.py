@@ -39,12 +39,9 @@ def smoothcal(vis,tablein,caltable,field,smoothtype,smoothtime):
                         _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                                
                 else:
-                        raise Exception('Visibility data set not found - please verify the name')
+                        raise ValueError('Visibility data set not found - please verify the name')
 
                 _cb.smooth(tablein=tablein,tableout=caltable,field=field,smoothtype=smoothtype,smoothtime=smoothtime)
-                _cb.close()
 
-        except Exception as instance:
-                print('*** Error ***',instance)
+        finally:
                 _cb.close()
-                raise

@@ -297,8 +297,7 @@ class test_concat(unittest.TestCase):
         '''Concat 1: 4 parts, same sources but different spws'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         
-        self.res = concat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -388,8 +387,8 @@ class test_concat(unittest.TestCase):
     def test2(self):
         '''Concat 2: 3 parts, different sources, different spws,  copypointing=False, visweightscale=[3.,2.,1.]'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        self.res = concat(vis=['part1.ms','part2-mod.ms','part3.ms'],concatvis=msname, copypointing=False, visweightscale=[3.,2.,1.])
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2-mod.ms','part3.ms'],concatvis=msname,
+               copypointing=False, visweightscale=[3.,2.,1.])
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -526,8 +525,7 @@ class test_concat(unittest.TestCase):
     def test3(self):
         '''Concat 3: 3 parts, different sources, same spws'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
-        self.res = concat(vis=['part1.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -618,9 +616,9 @@ class test_concat(unittest.TestCase):
         '''Concat 4: five MSs with identical sources but different time/intervals on them (CSV-268)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms', 'shortpart5.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms',
+                      'shortpart5.ms'],
+               concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -749,9 +747,7 @@ class test_concat(unittest.TestCase):
         '''Concat 5: two MSs with different state table (CAS-2601)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -832,9 +828,7 @@ class test_concat(unittest.TestCase):
         '''Concat 6: two MSs with different state table and feed table'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2b.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2b.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -917,9 +911,7 @@ class test_concat(unittest.TestCase):
         '''Concat 7: two MSs with different antenna table such that baseline label reversal becomes necessary'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['sim7.ms','sim8.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['sim7.ms','sim8.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1006,9 +998,7 @@ class test_concat(unittest.TestCase):
         '''Concat 8: two MSs with different antenna tables, copypointing = False'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['sim7.ms','sim8.ms'],
-                          concatvis = msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis = ['sim7.ms','sim8.ms'], concatvis = msname, copypointing=False)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1106,12 +1096,10 @@ class test_concat(unittest.TestCase):
         if testmms:
             print("Expecting an Error ... ")
 
-        self.res = concat(vis=['part1.ms','part2-mod2-wscratch.ms','part3.ms'],concatvis=msname)
+        concat(vis=['part1.ms','part2-mod2-wscratch.ms','part3.ms'],concatvis=msname)
         shutil.rmtree('part2-mod2-wscratch.ms',ignore_errors=True)
 
         if not testmms:
-
-            self.assertEqual(self.res,True)
 
             print(myname, ": Now checking output ...")
             mscomponents = set(["table.dat",
@@ -1211,9 +1199,8 @@ class test_concat(unittest.TestCase):
             cb.open('part1-wscratch.ms') # calibrator-open creates scratch columns
             cb.close()
 
-            self.res = concat(vis=['part1-wscratch.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
+            concat(vis=['part1-wscratch.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
             shutil.rmtree('part1-wscratch.ms',ignore_errors=True)
-            self.assertEqual(self.res,True)
 
             print(myname, ": Now checking output ...")
             mscomponents = set(["table.dat",
@@ -1304,8 +1291,7 @@ class test_concat(unittest.TestCase):
         '''Concat 11: 2 parts of same MS split in time,  use of ephemerides, first ephemeris covers both MS time ranges'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1.ms','xy2.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1.ms','xy2.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1388,8 +1374,7 @@ class test_concat(unittest.TestCase):
         '''Concat 12: 2 parts of same MS split in spw,  use of ephemerides'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xya.ms','xyb.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xya.ms','xyb.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1473,8 +1458,7 @@ class test_concat(unittest.TestCase):
         '''Concat 13: 2 parts of same MS split in time,  use of ephemerides only in second part'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1-noephem.ms','xy2.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1-noephem.ms','xy2.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1543,8 +1527,7 @@ class test_concat(unittest.TestCase):
         '''Concat 14: 2 parts of same MS split in time,  use of ephemerides, first ephemeris covers both MS time ranges, not chronologically ordered'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy2.ms', 'xy1.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy2.ms', 'xy1.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1628,8 +1611,7 @@ class test_concat(unittest.TestCase):
         '''Concat 15: 2 parts of same MS split in time,  use of ephemerides, first ephemeris does not cover both MS time ranges'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1.ms','xy2late.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1.ms','xy2late.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1713,8 +1695,7 @@ class test_concat(unittest.TestCase):
     def test16(self):
         '''Concat 16: 3 parts, SD data, one non-concurrent, two concurrent (CAS-5316)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
-        self.res = concat(vis=['X39a.pm03.scan3.ms', 'X425.pm03.scan4.ms', 'X425.pm04.scan4.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['X39a.pm03.scan3.ms', 'X425.pm03.scan4.ms', 'X425.pm04.scan4.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1784,8 +1765,8 @@ class test_concat(unittest.TestCase):
         '''Concat 17: 2 completely different MSs, use of ephemerides'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['uid___A002_Xab8dc1_X95a-shrunk.ms','uid___A002_Xab8dc1_Xf13-shrunk.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['uid___A002_Xab8dc1_X95a-shrunk.ms','uid___A002_Xab8dc1_Xf13-shrunk.ms'],
+               concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1856,9 +1837,8 @@ class test_concat(unittest.TestCase):
         '''Concat 18: 3 MSs, use of ephemerides with parameter forcesingleephemfield'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['nep2-shrunk.ms','nep1-shrunk.ms','nep3-shrunk.ms'],concatvis=msname, 
-                          copypointing=False, forcesingleephemfield=['Neptune'])
-        self.assertEqual(self.res,True)
+        concat(vis=['nep2-shrunk.ms','nep1-shrunk.ms','nep3-shrunk.ms'],concatvis=msname, 
+               copypointing=False, forcesingleephemfield=['Neptune'])
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1937,9 +1917,7 @@ class test_concat(unittest.TestCase):
         '''Concat 19: two MSs with different PROCESSOR table (CAS-12937)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['X1127a.smaller.ms','Xd21.smaller.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['X1127a.smaller.ms','Xd21.smaller.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -2053,8 +2031,7 @@ class test_concat(unittest.TestCase):
         '''Concat 20: two MSs with different antenna table in full polarization (CAS-12872)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['n08c1_swap1.ms','n08c1_swap2_swapped.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['n08c1_swap1.ms','n08c1_swap2_swapped.ms'],concatvis=msname)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",

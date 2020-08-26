@@ -4248,8 +4248,8 @@ void MSTransformManager::reindexSourceSubTable()
        	ScalarColumn<Int> sourceId = tableCols.sourceId();
         reindexColumn(spectralWindowId,0);
 
-    	// Remove duplicates
-    	std::vector<uInt> duplicateIdx;
+        // Remove duplicates
+        std::vector<casacore::rownr_t> duplicateIdx;
     	std::vector< std::pair<uInt,uInt> > sourceIdSpwIdMap;
 
     	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
@@ -4318,12 +4318,12 @@ void MSTransformManager::reindexDDISubTable()
     		rowIndex += 1;
     	}
 
-        // Delete the old rows
-      uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
+    	// Delete the old rows  
+    	uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
         	uInt rownr = ddiCols.nrow()-1;
-        	Vector<uInt> rowsToDelete(nrowsToDelete);
+            Vector<casacore::rownr_t> rowsToDelete(nrowsToDelete);
         	for(uInt idx=0; idx<nrowsToDelete; idx++)
         	{
         		rowsToDelete(idx) = rownr;
@@ -4363,7 +4363,7 @@ void MSTransformManager::reindexFeedSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<uInt> duplicateIdx;
+    	std::vector<casacore::rownr_t> duplicateIdx;
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4423,7 +4423,7 @@ void MSTransformManager::reindexSysCalSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<uInt> duplicateIdx;
+    	std::vector<casacore::rownr_t> duplicateIdx;
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4483,7 +4483,7 @@ void MSTransformManager::reindexFreqOffsetSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<uInt> duplicateIdx;
+    	std::vector<casacore::rownr_t> duplicateIdx;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4545,7 +4545,7 @@ void MSTransformManager::reindexGenericTimeDependentSubTable(const String& subta
 	    	reindexColumn(spectralWindowId,0);
 
 	    	// Remove duplicates
-	    	std::vector<uInt> duplicateIdx;
+	    	std::vector<casacore::rownr_t> duplicateIdx;
 	    	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
 	    	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 

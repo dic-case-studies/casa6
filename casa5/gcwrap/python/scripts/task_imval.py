@@ -109,7 +109,7 @@ def imval(imagename, region, box, chans, stokes):
         try:
             axes=getimaxes(imagename)
         except:
-            raise Exception("Unable to determine the axes of image: "+imagename)
+            raise RuntimeError("Unable to determine the axes of image: "+imagename)
         
     
         # Get rid of any white space in the parameters
@@ -236,9 +236,7 @@ def imval(imagename, region, box, chans, stokes):
     
         casalog.post( 'imval task complete for region bound by blc='+str(retValue['blc'])+' and trc='+str(retValue['trc']), 'NORMAL1' )
         return retValue
-    except Exception as instance:
-        casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
-        raise
+
     finally:
         myia.done()
         mycsys.done()

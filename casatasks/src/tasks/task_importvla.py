@@ -29,8 +29,9 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
     try:
         casalog.origin('importvla')
         if ((type(vis)!=str) | (vis=='') | (os.path.exists(vis))):
-            raise Exception('Need valid visibility file name (bad name or already exists)')
-        if (os.path.exists(vis)): raise Exception('Visibility file already exists - remove or rename')
+            raise ValueError('Need valid visibility file name (bad name or already exists)')
+        if (os.path.exists(vis)):
+            raise ValueError('Visibility file already exists - remove or rename')
         for archivefile in archivefiles:
             if i>0: overwrite=False
             if ((type(archivefile)==str) & (os.path.exists(archivefile))):
@@ -41,11 +42,10 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
                               keepblanks=keepblanks,evlabands=evlabands )
                 i += 1
             else:
-                raise Exception('Archive file not found - please verify the name')
-    except Exception:
-        casalog.post("*** Error importing %s to %s" % (archivefiles, vis), 'SEVERE')
-        casalog.post("    %s" % instance, 'SEVERE')
-        raise
+                raise ValueError('Archive file not found - please verify the name')
+    except Exception as exc:
+        msg = "*** Error importing %s to %s: %s" % (archivefiles, vis, exc)
+        raise RuntimeError(msg)
 
     nrows = 0
     try:
@@ -54,12 +54,11 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
         nrows =  _tb.nrows()
         _tb.done()
     except Exception:
-        casalog.post("*** Error checking size of visibility file %s: %s" % (vis,instance), 'SEVERE')
-        raise
+        msg = "*** Error checking size of visibility file %s: %s" % (vis,instance)
+        raise RuntimeError(msg)
 
     if nrows == 0:
         msg = "*** visibility file is empty: %s" % vis
-        casalog.post(msg, 'SEVERE')
         raise Exception(msg)
 
     # Write history
@@ -81,6 +80,6 @@ def importvla(archivefiles,vis,bandname,frequencytol,project,starttime,
             ok &= _af.open(vis);
             ok &= _af.saveflagversion('Original', comment='Original flags at import into CASA', merge='replace')
             ok &= _af.done();
-        except:
-            casalog.post("*** Error writing initial flag version of %s: %s" % (vis, instance), 'SEVERE')
-            raise
+        except Exception:
+            msg = "*** Error writing initial flag version of %s: %s" % (vis, instance)
+            raise RuntimeError(msg)

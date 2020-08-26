@@ -33,6 +33,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import os
 import unittest
 import shutil
@@ -75,10 +77,19 @@ class listsdm_test(unittest.TestCase):
     def test_readSDM(self):
         '''test readsdm: Makes sure the sdm can be opened without error and fails when looking at fake paths'''
         self.assertTrue(listsdm(sdm=datapath))
-        if CASA6:
-            with self.assertRaises(FileNotFoundError):
+        if CASA6 or casa_stack_rethrow:
+            if CASA6:
+                exp_exc = FileNotFoundError
+            else:
+                exp_exc = IOError
+            with self.assertRaises(exp_exc):
                 listsdm(sdm=falsepath)
-            with self.assertRaises(AssertionError):
+
+            if CASA6:
+                exp_exc = AssertionError
+            else:
+                exp_exc = RuntimeError
+            with self.assertRaises(exp_exc):
                 listsdm(sdm='fake')
         else:
             self.assertFalse(listsdm(sdm=falsepath))

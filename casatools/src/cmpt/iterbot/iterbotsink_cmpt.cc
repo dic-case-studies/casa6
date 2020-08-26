@@ -18,7 +18,7 @@
 #include <ms/MeasurementSets/MSHistoryHandler.h>
 #include <casa/Logging/LogIO.h>
 
-#include <synthesis/ImagerObjects/SIIterBot.h>
+#include <synthesis/ImagerObjects/grpcInteractiveClean.h>
 
 #include <iterbotsink_cmpt.h>
 
@@ -30,76 +30,78 @@ using namespace casa;
 using namespace casacore;
 namespace casac {
 
-    iterbotsink::iterbotsink( ): state(nullptr) {
-        cb.reset(new SIIterBot_callback( ));
-        state = new SIIterBot_state( cb );
+    iterbotsink::iterbotsink( ): state(grpcInteractiveClean::getManager( )) {
     }
 
     iterbotsink::~iterbotsink( ) {
-        if ( state ) {
-            delete state;
-        }
     }
 
     casac::record* iterbotsink::setupiteration(const casac::record& iterpars) {
-        const std::unique_ptr<const casacore::Record> recpars(toRecord(iterpars));
-        state->setControlsFromRecord(*recpars);
+        state.setIterationDetails( iterpars );
         return getiterationdetails();
     }
 
 
     casac::record* iterbotsink::getiterationdetails( ) {
-        return fromRecord(state->getDetailsRecord( ));
+        return fromRecord(state.getDetailsRecord( ));
     }
 
     casac::record* iterbotsink::pauseforinteraction( ) {
-        return getiterationdetails( );
+        static const auto debug = getenv("GRPC_DEBUG");
+        auto ret = state.pauseForUserInteraction( );
+        if ( debug ) {
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << "--- pauseforinteraction result:         ---" << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+            std::cerr << ret << std::endl;
+            std::cerr << "-------------------------------------------" << std::endl;
+        }
+        return fromRecord( ret );
     }
 
     casac::record* iterbotsink::getiterationsummary( ) {
-        return fromRecord(state->getSummaryRecord( ));
+        return fromRecord(state.getSummaryRecord( ));
     }
 
     int iterbotsink::cleanComplete(const bool lastcyclecheck) {
-        return state->cleanComplete(lastcyclecheck);
+        return state.cleanComplete(lastcyclecheck);
     }
 
     bool iterbotsink::endmajorcycle( ) {
-        state->incrementMajorCycleCount( );
-        state->addSummaryMajor( );
+        state.incrementMajorCycleCount( );
+        state.addSummaryMajor( );
         return false;
     }
 
     bool iterbotsink::resetminorcycleinfo( ) {
-        state->resetMinorCycleInitInfo( );
+        state.resetMinorCycleInitInfo( );
         return false;
     }
 
     casac::record* iterbotsink::getminorcyclecontrols( ) {
-        return fromRecord(state->getMinorCycleControls( ));
+        return fromRecord(state.getMinorCycleControls( ));
     }  
 
     bool iterbotsink::mergeinitrecord(const casac::record& initrecord) {
-        const std::unique_ptr<const casacore::Record> recpars(toRecord(initrecord));
-        state->mergeCycleInitializationRecord(*recpars);
+        const std::unique_ptr<casacore::Record> recpars(toRecord(initrecord));
+        state.mergeCycleInitializationRecord( *recpars );
         return false;
     }
 
     bool iterbotsink::mergeexecrecord(const casac::record& execrecord) {
-        const std::unique_ptr<const casacore::Record> recpars(toRecord(execrecord));
-        state->mergeCycleExecutionRecord(*recpars);
+        const std::unique_ptr<casacore::Record> recpars(toRecord(execrecord));
+        state.mergeCycleExecutionRecord( *recpars );
         return false;
     }
 
     bool iterbotsink::changestopflag(const bool stopflag) {
-        state->changeStopFlag(stopflag);
+        state.changeStopFlag(stopflag);
         return true;
     }
 
     bool iterbotsink::done( ) {
-	  delete state;
-      state = 0;
-      return false;
+        state.closePanel( );
+        return false;
     }
 
 } // casac namespace
