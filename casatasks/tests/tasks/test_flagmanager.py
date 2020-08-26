@@ -172,7 +172,7 @@ class test_flagmanager_ms(test_base):
                   
         try:
             flagmanager(vis = self.vis,mode = "save",versionname = "")     
-        except IOError as e:
+        except ValueError as e:
             print('Expected exception: %s'%e)
         
     def test_rename(self):

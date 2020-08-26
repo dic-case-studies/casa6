@@ -350,7 +350,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         if os.path.exists(self.outfile + '.weight') and self.overwrite:
             smart_remove(self.outfile + '.weight')
 
-
         # cell
         cell = self.cell
         if cell == '' or cell[0] == '':
@@ -428,8 +427,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.imager_param['nchan'] = imnchan #self.nchan
 
         self.imager_param['projection'] = self.projection
-
-
 
     def execute(self):
         # imaging

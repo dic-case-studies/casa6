@@ -523,7 +523,7 @@ def sdintimaging(
     # catch non operational case (parallel cube tclean with interative=T)
     if parallel==True and specmode!='mfs' and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
-        return False
+        return
    
     ## move to a function
     ## Setup Imager objects, for different parallelization schemes.
@@ -766,18 +766,10 @@ def sdintimaging(
             casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
 
 
-    except Exception as e:
-        #print 'Exception : ' + str(e)
-        casalog.post('Exception from task_sdintimaging : ' + str(e), "SEVERE", "task_sdintimaging")
+    finally:
         if imager != None:
             imager.deleteTools() 
 
-        larg = list(e.args)
-        larg[0] = 'Exception from task_sdintimaging : ' + str(larg[0])
-        e.args = tuple(larg)
-        raise
-
-    finally:
         #clean up tmp files
         deleteTmpFiles()
        
