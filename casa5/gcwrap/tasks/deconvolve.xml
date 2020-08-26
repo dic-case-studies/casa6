@@ -56,99 +56,6 @@
       <value type="string"/>
     </param>
 
-    <param type="any" name="imsize"> 
-      <shortdescription>Number of pixels</shortdescription>
-      <description>Number of pixels
-                        example :  imsize = [350,250]
-                                   imsize = 500 is equivalent to [500,500]
-                        To take proper advantage of internal optimized FFT routines, the
-                        number of pixels must be even and factorizable by 2,3,5,7 only.
-      </description>
-      <any limittypes="int intArray" type="variant"/>
-      <value type="intArray">100</value>
-    </param>
-
-    <param type="any" name="cell"> 
-      <shortdescription>Cell size</shortdescription>
-      <description>Cell size
-                        example: cell=['0.5arcsec,'0.5arcsec'] or
-                        cell=['1arcmin', '1arcmin']
-                        cell = '1arcsec' is equivalent to ['1arcsec','1arcsec']
-      </description>
-      <any limittypes="int double intArray doubleArray string stringArray" type="variant"/>
-      <value type="stringArray">&quot;1arcsec&quot;</value>
-    </param>
-
-    <param type="any" name="phasecenter"> 
-      <shortdescription>Phase center of the image</shortdescription>
-      <description>Phase center of the image (string or field id); if the phasecenter is the name known major solar system object ('MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON') or is an ephemerides table then that source is tracked and the background sources get smeared. There is a special case, when phasecenter='TRACKFIELD', which will use the ephemerides or polynomial phasecenter in the FIELD table of the MS's as the source center to track.
-                        example: phasecenter=6
-                                 phasecenter='J2000 19h30m00 -40d00m00'
-                                 phasecenter='J2000 292.5deg  -40.0deg'
-                                 phasecenter='J2000 5.105rad  -0.698rad'
-                                 phasecenter='ICRS 13:05:27.2780 -049.28.04.458'
-                                 phasecenter='myComet_ephem.tab'
-                                 phasecenter='MOON'
-                                 phasecenter='TRACKFIELD'
-      </description>
-      <any limittypes="int string" type="variant"/>
-      <value type="string"/>
-    </param>
-
-
-    <param type="string" name="stokes"> 
-      <shortdescription>Stokes Planes to use</shortdescription>
-      <description>Stokes Planes to use
-                        default='I'; example: stokes='IQUV';
-                        Options: 'I','Q','U','V','IV','QU','IQ','UV','IQUV','RR','LL','XX','YY','RRLL','XXYY','pseudoI'
-
-                        Note : Due to current internal code constraints, if any correlation pair
-                        is flagged, by default, no data for that row in the MS will be used.
-                        So, in an MS with XX,YY, if only YY is flagged, neither a
-                        Stokes I image nor an XX image can be made from those data points.
-                        In such a situation, please split out only the unflagged correlation into
-                        a separate MS.
-
-                        Note : The 'pseudoI' option is a partial solution, allowing Stokes I imaging
-                        when either of the parallel-hand correlations are unflagged.
-
-                        The remaining constraints shall be removed (where logical) in a future release.
-
-      </description>
-      <value type="string">I</value>
-      <allowed kind="enum">
-        <value>I</value>
-        <value>Q</value>
-        <value>U</value>
-        <value>V</value>
-        <value>IV</value>
-        <value>QU</value>
-        <value>IQ</value>
-        <value>UV</value>
-        <value>IQUV</value>
-        <value>RR</value>
-        <value>LL</value>
-        <value>XX</value>
-        <value>YY</value>
-        <value>RRLL</value>
-        <value>XXYY</value>
-        <value>pseudoI</value>
-      </allowed>
-    </param>
-
-    <param type="string" name="projection"> 
-      <shortdescription>Coordinate projection </shortdescription>
-      <description>Coordinate projection
-                        Examples : SIN,   NCP
-                        A list of supported (but untested) projections can be found here :
-                        http://casa.nrao.edu/active/docs/doxygen/html/classcasa_1_1Projection.html#a3d5f9ec787e4eabdce57ab5edaf7c0cd
-
-
-
-      </description>
-      <value type="string">SIN</value>
-    </param>
-
     <param type="any" name="startmodel"> 
       <shortdescription>Name of starting model image</shortdescription>
       <description>Name of starting model image
@@ -603,17 +510,6 @@
       <value type="bool">False</value>
     </param>
 
-    <param name="iterrec" type="any">
-      <shortdescription>Used for existing iteration controller</shortdescription>
-      <description>The iteration controller. Can be set to use the same iteration controller between
-                        multiple calls to deconvolve.
-
-                        Leave or set to an empty dictionary to start deconvolving without any iteration
-                        controller history.
-      </description>
-      <value type="bool">False</value>
-    </param>
-
     <param name="usemask" type="string">
       <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
 
@@ -860,7 +756,7 @@
         </equals>
         <equals value="mtmfs" type="string">
           <default param="scales"><value type="intArray"/></default>
-         
+          <default param="nterms"><value type="int">2</value></default>
           <default param="smallscalebias"><value>0.0</value></default>
         </equals>
         <equals value="aasp" type="string">

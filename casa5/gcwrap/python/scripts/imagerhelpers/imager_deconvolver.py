@@ -289,13 +289,6 @@ class PyDeconvolver:
     def getIterRecords(self):
         return {'initrecs':self.initrecs, 'exrecs':self.exrecs}
 
-#############################################
-    def mergeIterRecords(imager, records):
-        for initrec in records['initrecs']:
-            imager.IBtool.mergeinitrecord(initrec)
-        for exrec in records['exrecs']:
-            imager.IBtool.mergeexecrecord(exrec)
-
 #######################################################
 #######################################################
 

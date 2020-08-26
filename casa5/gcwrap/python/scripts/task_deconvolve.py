@@ -24,13 +24,6 @@ else:
 def deconvolve(
     ####### Data Selection
     imagename,#='',
-
-    ####### Image definition
-    imsize,#=[100,100],
-    cell,#=['1.0arcsec','1.0arcsec'],
-    phasecenter,#='J2000 19:59:28.500 +40.44.01.50',
-    stokes,#='I',
-    projection,#='SIN',
     startmodel,#='',
 
     ####### Deconvolution parameters
@@ -52,7 +45,6 @@ def deconvolve(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False, TODO test with TRUE
-    iterrec,#=False
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -107,7 +99,7 @@ def deconvolve(
     #### Run the minor cycle
     #####################################################
 
-    iterrecout = False
+    iterrec = False
     isit = 0
     retrec = ''
     try:
@@ -124,8 +116,6 @@ def deconvolve(
         decon.estimatememory()
         ## setup iteration controller
         decon.initializeIterationControl()
-        if type(iterrec) == dict:
-            PyDeconvolver.mergeIterRecords(decon, iterrec)
         t1=time.time();
         casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
 
@@ -157,7 +147,7 @@ def deconvolve(
         #################################################
 
         ## Get records from iterbot, to be used in the next call to deconvolve
-        iterrecout = decon.getIterRecords()
+        iterrec = decon.getIterRecords()
 
         # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
         ## Restore images.
@@ -180,4 +170,4 @@ def deconvolve(
         e.args = tuple(larg)
         raise
 
-    return iterrecout, isit, retrec
+    return iterrec, isit, retrec
