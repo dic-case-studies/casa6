@@ -630,10 +630,8 @@ def do_weight_mask(imagename, weightimage, minweight):
                  "INFO")
     casalog.post("Pixels in map with weight <= median(weight)*minweight = %f will be masked." % \
                  (weight_threshold),"INFO")
-    my_tb = gentools(['tb'])[0]
-    nmask_pixels=0
-    nchan=stat['trc'][3]+1
-    casalog.filter('ERROR') ### hide the useless message of tb.calc
+    ###Leaving the original logic to calculate the number of masked pixels via
+    ###product of median of and min_weight (which i don't understand the logic)
 
     # Modify default mask
     with open_ia(imagename) as ia:
@@ -661,7 +659,7 @@ def do_weight_mask(imagename, weightimage, minweight):
                 ( masked_fraction ),"INFO")
     casalog.post("The weight image '%s' is returned by this task, if the user wishes to assess the results in detail." \
                  % (weightimage), "INFO")
-        
+
 def get_ms_column_unit(tb, colname):
     col_unit = ''
     if colname in tb.colnames():
