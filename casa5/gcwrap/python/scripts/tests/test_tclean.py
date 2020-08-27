@@ -3174,7 +3174,6 @@ class test_startmodel(testref_base):
 
 
 
-     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
