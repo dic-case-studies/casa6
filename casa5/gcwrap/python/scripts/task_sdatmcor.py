@@ -268,7 +268,7 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("***********************************")
-        print("**   calc_sdatmcor:: (0825)      **")
+        print("**   calc_sdatmcor:: (0825-A)    **")
         print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
