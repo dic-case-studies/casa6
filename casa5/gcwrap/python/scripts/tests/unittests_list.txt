@@ -162,6 +162,7 @@ test_req_task_calstat           nschweig@nrao.edu
 test_req_task_rmtables          nschweig@nrao.edu
 test_req_task_clearcal          nschweig@nrao.edu
 test_req_task_imhead            nschweig@nrao.edu
+test_req_task_rerefant          nschweig@nrao.edu
 test_req_task_visstat           nschweig@nrao.edu
 test_req_task_delmod            nschweig@nrao.edu
 test_req_task_feather           nschweig@nrao.edu
