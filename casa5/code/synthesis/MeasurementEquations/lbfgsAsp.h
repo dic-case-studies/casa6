@@ -79,14 +79,10 @@ public:
     const int refi = nX/2;
     const int refj = nY/2;
 
-    /*int minX = nX - 1;
+    int minX = nX - 1;
     int maxX = 0;
     int minY = nY - 1;
-    int maxY = 0;*/
-    int maxX = nX - 1;
-    int minX = 0;
-    int maxY = nY - 1;
-    int minY = 0;
+    int maxY = 0;
 
     for (unsigned int k = 0; k < AspLen; k ++)
     {
@@ -107,18 +103,24 @@ public:
       Asp = 0.0;
 
       const double sigma5 = 5 * x[2*k+1] / 2;
-      const int minI = std::max(0, (int)(refi + center[k][0] - sigma5));
+      /*const int minI = std::max(0, (int)(refi + center[k][0] - sigma5));
       const int maxI = std::min(nX-1, (int)(refi + center[k][0] + sigma5));
       const int minJ = std::max(0, (int)(refj + center[k][1] - sigma5));
-      const int maxJ = std::min(nY-1, (int)(refj + center[k][1] + sigma5));
+      const int maxJ = std::min(nY-1, (int)(refj + center[k][1] + sigma5));*/
+      const int minI = std::max(0, (int)(center[k][0] - sigma5));
+      const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
+      const int minJ = std::max(0, (int)(center[k][1] - sigma5));
+      const int maxJ = std::min(nY-1, (int)(center[k][1] + sigma5));
 
       casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
       for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
         {
-          const int px = i - refi;
-          const int py = j - refj;
+          //const int px = i - refi;
+          //const int py = j - refj;
+          const int px = i;
+          const int py = j;
           Asp(i,j) = gbeam(px, py);
         }
       }
@@ -141,7 +143,7 @@ public:
       ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
       ////std::cout << "LBFGS 2st AspFFT runtime " << duration.count() << " ms" << std::endl;
       //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
-      //fft.flip(AspConvPsf, false, false); //genie need this?
+      fft.flip(AspConvPsf, false, false); //genie need this?
 
       // gradient. 0: amplitude; 1: scale
       // generate derivatives of amplitude
@@ -203,14 +205,7 @@ public:
         minY = minJ;
       if (maxJ > maxY)
         maxY = maxJ;
-      /*if (minI > minX)
-        minX = minI;
-      if (maxI < maxX)
-        maxX = maxI;
-      if (minJ > minY)
-        minY = minJ;
-      if (maxJ < maxY)
-        maxY = maxJ;*/
+
 
       ////stop = std::chrono::high_resolution_clock::now();
       ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -218,10 +213,7 @@ public:
     } // end of Aspen
 
     ////auto start = std::chrono::high_resolution_clock::now();
-    /*for (int j = 0; j < nY; ++j)
-    {
-      for(int i = 0; i < nX; ++i)
-      {*/
+
     for (int j = minY; j < maxY; ++j)
     {
       for(int i = minX; i < maxX; ++i)

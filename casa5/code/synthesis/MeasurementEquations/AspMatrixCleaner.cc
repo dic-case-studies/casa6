@@ -385,8 +385,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     }
     else
     {
-      //makeScaleImage(itsScale, itsOptimumScaleSize, itsStrengthOptimum, itsPositionOptimum);
-      makeScaleImage(itsScale, itsOptimumScale, itsStrengthOptimum, itsPositionOptimum);
+      makeScaleImage(itsScale, itsOptimumScaleSize, itsStrengthOptimum, itsPositionOptimum);
+      //makeScaleImage(itsScale, itsOptimumScale, itsStrengthOptimum, itsPositionOptimum);
       itsScaleXfr.resize();
       fft.fft0(itsScaleXfr, itsScale);
     }
@@ -540,8 +540,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     Matrix<Float> modelSub = model(blc, trc);
     Float scaleFactor;
-    //scaleFactor = itsGain * itsStrengthOptimum;
-    scaleFactor = itsGain;
+    scaleFactor = itsGain * itsStrengthOptimum;
+    //scaleFactor = itsGain;
     Matrix<Float> scaleSub = (itsScale)(blcPsf,trcPsf);
     modelSub += scaleFactor * scaleSub; //MS'way
     //cout << "before dirtySub(262,291) = " << dirtySub(262,291) << " itsGain " << itsGain << " itsStrengthOptimum " << itsStrengthOptimum << endl;
@@ -873,8 +873,12 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     //cout << "makeScaleImage: scalesize " << scaleSize << " mini " << mini << " maxi " << maxi << " minj " << minj << " maxj " << maxj << endl;
     cout << "makeScaleImage: scalesize " << scaleSize << " center " << center << " amp " << amp << endl;
 
+    const Float d = sqrt(pow(1.0/itsPsfWidth, 2) + pow(1.0/scaleSize, 2));
     //Gaussian2D<Float> gbeam(amp / (sqrt(2*M_PI)*scaleSize), center[0], center[1], scaleSize, 1, 0);
-    Gaussian2D<Float> gbeam(amp / pow(2,scaleSize-1), center[0], center[1], itsInitScaleSizes[scaleSize], 1, 0);
+    Gaussian2D<Float> gbeam(1.0 / (sqrt(2*M_PI)*scaleSize), center[0], center[1], scaleSize, 1, 0);
+    //Gaussian2D<Float> gbeam(amp * sqrt(2*M_PI)/d, center[0], center[1], scaleSize * d, 1, 0);
+    //Gaussian2D<Float> gbeam(amp / (2*M_PI), center[0], center[1], scaleSize, 1, 0);
+    //Gaussian2D<Float> gbeam(amp / pow(2,scaleSize-1), center[0], center[1], itsInitScaleSizes[scaleSize], 1, 0);
     /*for (int j = minj; j <= maxj; j++)
     {
       for (int i = mini; i <= maxi; i++)
@@ -1244,7 +1248,8 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   if (optimumScale > 0)
   {
-    const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
+    //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
+    const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)));
     strengthOptimum /= normalization;
     cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
   }
