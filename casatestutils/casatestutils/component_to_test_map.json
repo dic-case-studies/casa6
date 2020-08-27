@@ -1,24 +1,264 @@
 {
-    "Flagging": ["test_flagdata", "test_flagcmd" ],
-    "HPC": [ "test_flagdata", "test_casampi", "mpi_test_casampi" ],
-    "Imaging": [
-        "test_tclean",
-        "test_sdimaging",
+    "accor": [
+        "test_req_task_accor"],
+    "accum": [],                # IGNORE; it will be deprecated next cycle
+    "agentflagger": [
+        "test_agentflagger"],
+    "apparentsens": [],
+    "applycal": [
+        "test_req_task_applycal"],
+    "atmosphere": [
+        "test_gencal"],         # Review by Federico 
+    "bandpass": [
+        "test_bandpass"],
+    "blcal": [],                # TBD
+    "browsetable": [],          # IGNORE
+    "calanalysis": [            # tool
+        "test_calanalysis"], 
+    "Calibration": [            # Review by George
+        "test_fluxscale",
+        "test_fringefit",
+        "test_gencal",
+        "test_initweights",
+        "test_req_task_applycal",
+        "test_req_task_delmod",
+        "test_req_task_fluxscale",
+        "test_req_task_gaincal",
+        "test_req_task_listcal",
+        "test_req_task_uvmodelfit",
+        "test_setjy",
+        "test_smoothcal"],
+    "casacore": [],         # IGNORE
+    "clean": [],            # IGNORE
+    "clearcal": [
+        "test_req_task_clearcal"],
+    "CNGI": [],             # IGNORE
+    "concat": [
+        "test_concat",
+        "test_virtualconcat"],
+    "cvel": [
+        "test_cvel",        # TBD
+        "test_cvel2"],
+    "deconvolve": [],       # TBD, new test coming
+    "Documentation": [],    # TBD
+    "exportfits": [
+        "test_exportfits"],
+    "exportuvfits": [
+        "test_exportuvfits"],
+    "external": [],         # IGNORE
+    "feather": ["test_req_task_feather"],
+    "fixvis": [
         "test_fixvis",
-        "test_imfit",
-        "test_immath",
-        "test_imregrid",
-        "test_imsmooth",
-        "test_immoments",
-        "test_imval",
-        "test_imhead",
-        "test_imcollapse",
-        "test_imcontsub"
-    ],
-    "default": [ "test_asdf"],
-    "flagdata": [ "test_flagdata"],
-    "tclean": [ "test_tclean", "test_sdimaging" ]
-    
-    
+        "test_req_task_phaseshift"],
+    "flagcmd": [
+        "test_flagcmd"],
+    "flagdata": [
+        "test_flagdata"],
+    "Flagging": [
+        "test_flagcmd",
+        "test_flagdata",
+        "test_flagmanager"],
+    "flagmanager": [
+        "test_flagmanager"],
+    "fluxscale": [
+        "test_req_task_fluxscale", 
+        test_fluxscale],
+    "fringecal": [],                #TBD
+    "fringefit": [
+        "test_fringefit"],
+    "ft": [],
+    "gaincal": [
+        "test_req_task_gaincal"],
+    "gencal": [
+        "test_gencal"],
+    "hanningsmooth": [
+        "test_hanningsmooth"],
+    "HPC": [
+        "test_casampi_subset"],     # TBD; is it possible?
+    "Image Analysis": [             # Review by Dave
+        "test_ia_adddegaxes",
+        "test_ia_addnoise",
+        "test_ia_boxcar",
+        "test_ia_calcmask",
+        "test_ia_collapse",
+        "test_ia_commonbeam",
+        "test_ia_constructors",
+        "test_ia_continuumsub",
+        "test_ia_convertflux",
+        "test_ia_convolve",
+        "test_ia_convolve2d",
+        "test_ia_coordmeasures",
+        "test_ia_crop",
+        "test_ia_decimate",
+        "test_ia_decompose",
+        "test_ia_deconvolvecomponentlist",
+        "test_ia_deconvolvefrombeam",
+        "test_ia_deviation",
+        "test_ia_fft",
+        "test_ia_findsources",
+        "test_ia_fitprofile",
+        "test_ia_fromarray",
+        "test_ia_fromfits",
+        "test_ia_fromimage",
+        "test_ia_fromrecord",
+        "test_ia_fromshape",
+        "test_ia_getregion",
+        "test_ia_hanning",
+        "test_ia_histograms",
+        "test_ia_imageconcat",
+        "test_ia_insert",
+        "test_ia_isconform",
+        "test_ia_makecomplex",
+        "test_ia_maskhandler",
+        "test_ia_modify",
+        "test_ia_newimagefromimage",
+        "test_ia_pad",
+        "test_ia_putchunk",
+        "test_ia_putregion",
+        "test_ia_pv",
+        "test_ia_rebin",
+        "test_ia_regrid",
+        "test_ia_replacemaskedpixels",
+        "test_ia_restoringbeam",
+        "test_ia_rotate",
+        "test_ia_sepconvolve",
+        "test_ia_set",
+        "test_ia_setbrightnessunit",
+        "test_ia_setcoordsys",
+        "test_ia_setmiscinfo",
+        "test_ia_subimage",
+        "test_ia_summary",
+        "test_ia_tofits",
+        "test_ia_twopointcorrelation",
+        "test_req_tool_componentlistimage",
+        "test_req_tool_ia_pbcor",
+        "test_req_tool_ia_rename",
+        "test_req_tool_ia_statistics",
+        "test_req_tool_ia_transpose"],
+    "imagepol": [                       # tool
+        "test_po_complexfraclinpol",
+        "test_po_complexlinpol",
+        "test_po_depolratio",
+        "test_po_fourierrotationmeasure",
+        "test_po_fraclinpol",
+        "test_po_fractotpol",
+        "test_po_linpolint",
+        "test_po_linpolposang",
+        "test_po_rotationmeasure",
+        "test_po_sigma",
+        "test_po_sigmadepolratio",
+        "test_po_sigmafraclinpol",
+        "test_po_sigmafractotpol",
+        "test_po_sigmalinpolint",
+        "test_po_sigmalinpolposang",
+        "test_po_totpolint"]
+    "Imaging": [],          # run a subset of some tests TBD
+    "imcollapse": [
+        test_imcollapse"],
+    "imcontsub": [
+        "test_imcontsub"],
+    "imfit": [
+        "test_imfit"],
+    "imhead": [
+        "test_imhead"
+        "test_req_task_imhead"],
+    "immath": [
+        "test_immath"],
+    "immoments": [
+        test_immoments"],
+    "importasdm": [
+        "test_importasdm"],
+    "importfits": [],           # TBD
+    "importfitsidi": [
+        "test_importfitsidi"],
+    "importuvfits": [
+        "test_req_task_importuvfits",
+        "test_importuvfits"],
+    "importvla": [],        # IGNORe
+    "imregrid": [
+        "test_imregrid"],
+    "imsmooth": [
+        "test_imsmooth"],
+    "imstat": [
+        "test_req_task_imstat"],
+    "imsubimage": [
+        "test_imsubimage"],
+    "imval": [
+        "test_imval"],
+    "Infrastructure": [],   # IGNORE
+    "listcal": [
+        "test_req_task_listcal"],
+    "listhistory": [
+        "test_listhistory",
+        "test_req_task_listhistory"],
+    "listobs": [
+        "test_listobs"
+        "test_req_task_listobs"],
+    "listvis": [
+        "test_listivis"],
+    "makemask": [
+        "test_makemask"],
+    "mosaic": [],       # TBD
+    "msmd": [
+        "test_msmetadata"],
+    "mstransform": [
+        "test_mstransform",
+        "test_split",
+        "test_hanningsmooth"
+        "test_cvel2"],
+    "ngCASA": [],           # IGNORE
+    "pipeline": [],         # IGNORE
+    "plotants": [
+        "test_plotants"],
+    "plotbandpass": [],     # TBD
+    "plotcal": [],
+    "plotms": [
+        "test_plotms"],     # NOT SURE WE WILL BE ABLE TO RUN THIS
+    "plotweather": [
+        "test_plotweather"],
+    "plotxy": [],           # IGNORE; isn't this deprecated?
+    "polcal": [],           # TBD ; new test
+    "predictcomp": [
+        "test_predictcomp"],
+    "runtime": [],          # TBD
+    "SciDev": [],           # IGNORE or find a set of smoke tests. What does it mean this component alone?
+    "sdbaseline": [
+        "test_sdbaseline"],
+    "sdimaging": [
+        "test_sdimaging"],
+    "setjy": [
+        "test_setjy"],
+    "Simulation": [
+        "test_req_task_simanalyze",
+        "test_simobserve"],
+    "Single Dish": [],      # TBD
+    "smoothcal": [
+        "test_smoothcal"],
+    "specfit": [
+        "test_specfit"],
+    "split": [
+        "test_split"],
+    "table": [],            # TBD
+    "tclean": [
+        "test_tclean"],
+     "tsdimaging": [
+        "test_tsdimaging",
+        "test_sdimaging"],
+    "uvcontsub": [
+        "test_uvcontsub"],
+    "uvmodelfit": [
+        "test_req_task_uvmodelfit"],
+    "Verification": [],     # TBD
+    "viewer": [],           # IGNORE
+    "vishead": [
+        "test_vishead",
+        "test_req_task_vishead"],
+    "visstat": [
+        "test_req_task_visstat"],
+    "Visualization": [],        # TBD
+    "vpmmanager": [             # DOES IT EXIST?
+        "test_vpmanager"]       
+    "widefield": [],            # IGNORE
+    "wvrgcal": [
+        "test_wvrgcal"]         # IS THIS POSSIBLE?
 }
-
