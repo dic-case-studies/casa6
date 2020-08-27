@@ -2829,7 +2829,7 @@ Bool Calibrater::reRefant(const casacore::String& infile,
 
     // Do the work
     svj->refantmode() = refantmode;
-    svj->refantlist() = getRefantIdxList(refant);
+    svj->refantlist().reference(getRefantIdxList(refant));   // replaces the default list
     svj->applyRefAnt();
 
     // Store the result on disk
