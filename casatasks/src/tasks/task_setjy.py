@@ -120,32 +120,27 @@ def setjy(vis=None, field=None, spw=None,
         #sh = SetjyHelper(vis)
         #rstat = sh.resetModelCol()
 
-        if rstat:
-            ismms=rstat
-            mylocals['ismms']=ismms
-            #print("mylocals now=",mylocals)
-            helper = ParallelTaskHelper('setjy', mylocals)
-            helper._consolidateOutput = False
-            #helper._consolidateOutput = True
-            try:
-                retval = helper.go()
+        if not rstat:
+            raise RuntimeError("Could not initialize MODEL columns in sub-MSs", 'SEVERE')
 
-                # Remove the subMS names from the returned dictionary
-                #print("remove subms names ...retval=",retval)
-                if (any(isinstance(v,dict) for v in retval.values())):
-                    for subMS in retval:
-                        dict_i = retval[subMS]
-                        if isinstance(dict_i,dict):
-                            retval = dict_i
-                            break
-                else:
-                    casalog.post("Error in parallel processing of MMS",'SEVERE')
-                    retval = False
-            except Exception:
-                retval = False
+        ismms=rstat
+        mylocals['ismms']=ismms
+        helper = ParallelTaskHelper('setjy', mylocals)
+        helper._consolidateOutput = False
+        retval = helper.go()
+
+        # Remove the subMS names from the returned dictionary. Pick the first dictionary from
+        # the list os subMS dictionaries
+        if (any(isinstance(v, dict) for v in retval.values())):
+            for subMS in retval:
+                dict_i = retval[subMS]
+                if isinstance(dict_i,dict):
+                    retval = dict_i
+                    break
         else:
-            casalog.post("Could not initialize MODEL columns in sub-MSs", 'SEVERE')
-            retval = False
+            raise RuntimeError("Error in parallel processing of MMS, retval: {}".
+                               format(retval),'SEVERE')
+
     else:
         retval = setjy_core(vis, field, spw, selectdata, timerange, 
                         scan, intent, observation, scalebychan, standard, model, 
@@ -153,7 +148,6 @@ def setjy(vis=None, field=None, spw=None,
                         polindex, polangle, rotmeas, fluxdict, 
                         useephemdir, interpolation, usescratch, ismms)
 
-    #pdb.set_trace()
     return retval
 
 
@@ -165,7 +159,7 @@ def setjy_core(vis=None, field=None, spw=None,
                useephemdir=None, interpolation=None, usescratch=None, ismms=None):
     """Fills the model column for flux density calibrators."""
 
-    #retval = True
+    retval = {}
     clnamelist=[]
     # remove componentlist generated
     deletecomp = True
@@ -173,7 +167,6 @@ def setjy_core(vis=None, field=None, spw=None,
     try:
         # Here we only list the models available, but don't perform any operation
         if listmodels:
-            retval=True
             casalog.post("Listing model candidates (listmodels == True).")
             if vis:
               casalog.post("%s is NOT being modified." % vis)
@@ -209,7 +202,6 @@ def setjy_core(vis=None, field=None, spw=None,
               #casalog.post(vis + " must be a valid MS unless listmodels is True.",
               #             "SEVERE")
                 raise Exception("%s is not a valid MS" % vis) 
-                #return False
 
             myms = ms()
             myim = imager()
@@ -233,8 +225,7 @@ def setjy_core(vis=None, field=None, spw=None,
                 if ((not n_selected_rows) and ((ismms) or (standard=="Butler-JPL-Horizons 2012"))) :
                     # jagonzal: Turn this SEVERE into WARNING, as explained above
                     casalog.post("No rows were selected.", "WARNING")
-                    #return True
-                    return False
+                    return {}
                 else:
                     if (not n_selected_rows):
                         raise Exception("No rows were selected. Please check your data selection")
@@ -267,17 +258,16 @@ def setjy_core(vis=None, field=None, spw=None,
                     if os.path.isdir(cand):
                         candidates.append(cand)
                 if not candidates:
-                    casalog.post("%s was not found for modimage in %s." %(modimage,
-                                 ', '.join(calmoddirs)), 'SEVERE')
-                    return False
+                    raise RuntimeError("%s was not found for modimage in %s." %(modimage,
+                                 ', '.join(calmoddirs)))
+
                 elif len(candidates) > 1:
                     casalog.post("More than 1 candidate for modimage was found:",
                          'SEVERE')
                     for c in candidates:
                         casalog.post("\t" + c, 'SEVERE')
-                    casalog.post("Please pick 1 and use the absolute path (starting with /).",
-                           'SEVERE')
-                    return False
+                    raise RuntimeError("Please pick 1 and use the absolute path (starting with /).")
+
                 else:
                     modimage = candidates[0]
                     casalog.post("Using %s for modimage." % modimage, 'INFO')
@@ -291,8 +281,8 @@ def setjy_core(vis=None, field=None, spw=None,
                 else:
                     param_vals = [eval(p) for p in param_names]
 
-                retval = write_history(myms, vis, 'setjy', param_names,
-                                    param_vals, casalog)
+                write_history(myms, vis, 'setjy', param_names,
+                              param_vals, casalog)
             except Exception as instance:
                 casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')
@@ -407,16 +397,6 @@ def setjy_core(vis=None, field=None, spw=None,
                                       interpolation=interpolation)
 
             myim.close()
-
-    # This block should catch errors mainly from the actual operation mode 
-    except Exception as instance:
-        casalog.post('%s' % instance,'SEVERE')
-        #retval=False
-        raise
-        #if not ismms: 
-        #    raise Exception, instance
-        #else:
-        #    pass
 
     finally:
         if standard=='Butler-JPL-Horizons 2012':
@@ -595,8 +575,8 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
 #            mytb.close()
             myms.msselect(msselargs)
             retval = myms.nrow(True)
-            myms.close()
-        except Exception as instance:
+
+        finally:
             #if ismms:
             #     casalog.post('nselrows: %s' % instance,'WARN')
             #else:
@@ -607,7 +587,6 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
             myms.close()
             #if not ismms: 
             #    raise Exception, instance
-            raise
             #else:
             #    casalog.post('Proceed as it appears to be dealing with a MMS...','DEBUG')
 

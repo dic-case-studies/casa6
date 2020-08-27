@@ -867,13 +867,12 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue((myia.shape() == [20, 20, 4, 20]).all())
         myia.done()
         # Cannot explicitly specify to regrid spectral axis if template has no such axis
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             imregrid(
                 imagename=imagename, template=template,
                 output=output, decimate=5, overwrite=True,
                 axes=[0, 1, 3]
             )
-        )
         
     def test_degenerate_template_spectral_axis(self):
         """Verify correct behavior for when template has a degenerate spectral axis"""

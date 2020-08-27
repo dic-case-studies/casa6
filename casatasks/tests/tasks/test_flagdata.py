@@ -2026,12 +2026,9 @@ class test_list_file(test_base):
         filename = 'listintscan.txt'
         create_input(myinput, filename)
         
-        try:
+        with self.assertRaises(ValueError, msg='Expected error '):
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
-            
-        except IOError as instance:
-            print('Expected error!')
-        
+
     def test_file_scan_list(self):
         '''flagdata: select a scan by giving a list value. Expect error.'''
         # The new fh.parseFlagParameters should NOT allow this
@@ -2041,12 +2038,9 @@ class test_list_file(test_base):
         
         filename = 'listscan.txt'
         create_input(myinput, filename)
-        try:
+        with self.assertRaises(Exception, msg='Expected error when reading input list'):
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
-            
-        except IOError as instance:
-            print('Expected error!')
-               
+
     def test_file_overwrite_true(self):
         '''flagdata: Use savepars and overwrite=True'''
         
@@ -2091,11 +2085,12 @@ class test_list_file(test_base):
                 
         # Apply flags from file and try to save in newfile
         # Overwrite parameter should give an error and not save
-        flagdata(vis=self.vis, action='calculate', mode='list',inpfile=filename, savepars=True, outfile=newfile,
-                flagbackup=False, overwrite=False)
+        with self.assertRaises(RuntimeError, msg='expected issue with overwrite'):
+            flagdata(vis=self.vis, action='calculate', mode='list', inpfile=filename,
+                     savepars=True, outfile=newfile, flagbackup=False, overwrite=False)
         
         # newfile should not be overwritten
-        self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
+        self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')
 
     def test_file_overwrite_false1(self):
         '''flagdata: Use savepars and overwrite=False'''
@@ -2419,7 +2414,9 @@ class test_clip(test_base):
         # It should fail and not flag anything
         datacols = ["RESIDUAL","RESIDUAL_DATA"]
         for col in datacols:
-            flagdata(vis=self.vis, mode='clip',datacolumn=col,clipminmax=[2.3,3.1],clipoutside=False, action='apply')
+            with self.assertRaises(ValueError):
+                flagdata(vis=self.vis, mode='clip', datacolumn=col, clipminmax=[2.3,3.1],
+                         clipoutside=False, action='apply')
             print('flagadta is expected to fail with datacolumn='+col)
             self.assertEqual(flagdata(vis=self.vis, mode='summary')['flagged'],0.0)
 
@@ -2463,8 +2460,10 @@ class test_clip(test_base):
         delmod(vis='ngc5921_virtual_model_col.ms',otf=True,scr=True)
         
         # Flag RESIDUAL_DATA should fail because virtual MODEL column doesn't exist
-        flagdata(vis='ngc5921_virtual_model_col.ms', mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],
-                 clipoutside=False, action='apply')
+        with self.assertRaises(ValueError):
+            flagdata(vis='ngc5921_virtual_model_col.ms', mode='clip',
+                     datacolumn='RESIDUAL_DATA', clipminmax=[2.3,3.1], clipoutside=False,
+                     action='apply')
         self.assertEqual(flagdata(vis='ngc5921_virtual_model_col.ms', mode='summary')['flagged'],0)
         
 
@@ -2729,13 +2728,13 @@ class test_tsys(test_base):
          
     def test_unsupported_elevation(self):
         '''Flagdata: Unsupported elevation mode'''
-        res = flagdata(vis=self.vis, mode='elevation')
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='elevation')
 
     def test_unsupported_shadow(self):
         '''Flagdata: Unsupported shadow mode'''
-        res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
         
     def test_mixed_list(self):
         '''Flagdata: mixed supported and unsupported modes in a list'''
@@ -2866,8 +2865,9 @@ class test_tsys(test_base):
         
     def test_invalid_datacol_cal(self):
         '''Flagdata: invalid data column should not fall back to default'''
-        flagdata(vis=self.vis, mode='clip', clipminmax=[0.,600.],datacolumn='PARAMERR',
-                 flagbackup=False)
+        with self.assertRaises(ValueError):
+            flagdata(vis=self.vis, mode='clip', clipminmax=[0.,600.],datacolumn='PARAMERR',
+                     flagbackup=False)
         res=flagdata(vis=self.vis, mode='summary')
 #        self.assertEqual(res['flagged'], 1192.0)
         self.assertFalse(res['flagged']==1192.0)
@@ -3062,10 +3062,11 @@ class test_bandpass(test_base):
 
     def test_unsupported_modes(self):
         '''Flagdata: elevation and shadow are not supported in cal tables'''
-        res = flagdata(vis=self.vis, mode='elevation', flagbackup=False)
-        self.assertEqual(res, {})
-        res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='elevation', flagbackup=False)
+
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
 
     def test_nullselections(self):
         '''Flagdata: unkonwn scan selection in cal tables'''
@@ -3082,11 +3083,12 @@ class test_bandpass(test_base):
 
     def test_invalid_datacol(self):
         '''Flagdata: invalid data column should not fall back to default'''
-        flagdata(vis=self.vis, mode='clip', clipzeros=True, datacolumn='PARAMERR',
-                 flagbackup=False)
-        res=flagdata(vis=self.vis, mode='summary')
+        with self.assertRaises(ValueError):
+            flagdata(vis=self.vis, mode='clip', clipzeros=True, datacolumn='PARAMERR',
+                     flagbackup=False)
+        res = flagdata(vis=self.vis, mode='summary')
 #        self.assertEqual(res['flagged'], 11078.0)
-        self.assertFalse(res['flagged']==11078.0)
+        self.assertNotEqual(res['flagged'], 11078.0)
         
                         
     def test_manual_field_selection_for_bpass(self):
@@ -4124,7 +4126,9 @@ class test_virtual_col(test_base):
         self.assertFalse('SOURCE_MODEL' in cols_v, 'Test cannot have a virtual MODEL column')
         
         # Run flagdata on it. RESIDUAL_DATA = DATA - MODEL
-        flagdata(self.vis, mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False)
+        with self.assertRaises(ValueError):
+            flagdata(self.vis, mode='clip', datacolumn='RESIDUAL_DATA',
+                     clipminmax=[2.3,3.1],clipoutside=False)
 
     def test_virtual_model_col(self):
         '''flagdata: Tests using a virtual MODEL column'''

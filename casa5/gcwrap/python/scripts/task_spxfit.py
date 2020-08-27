@@ -84,41 +84,36 @@ def spxfit(
     myia = image()
     retval = None
     try:
-                if type(imagename) == list and len(imagename) > 1:
-                        myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
+        if type(imagename) == list and len(imagename) > 1:
+                myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
+        else:
+                if type(imagename) == list and len(imagename) == 1:
+                        imagename = imagename[0]
+                if (not myia.open(imagename)):
+                        raise RuntimeError("Cannot create image analysis tool using " + str(imagename))
+        sigmacopy = sigma
+        if type(sigma) == list and type(sigma) == str:
+                if len(sigma) == 1:
+                        sigmacopy = sigma[0]
                 else:
-                        if type(imagename) == list and len(imagename) == 1:
-                                imagename = imagename[0]
-                        if (not myia.open(imagename)):
-                                raise Exception("Cannot create image analysis tool using " + str(imagename))
-                sigmacopy = sigma
-                if type(sigma) == list and type(sigma) == str:
-                        if len(sigma) == 1:
-                                sigmacopy = sigma[0]
-                        else:
-                                sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
-                                sigmacopy = sigia.getchunk()
-                retval = myia.fitprofile(
-                        box=box, region=region, chans=chans,
-                        stokes=stokes, axis=axis, mask=mask,
-                        minpts=minpts, ngauss=0, multifit=multifit,
-                        spxtype=spxtype, spxest=spxest, spxfix=spxfix,
-                        div=div,  model=model, residual=residual,
-                        stretch=stretch, logresults=logresults,
-                        spxsol=spxsol, spxerr=spxerr, logfile=logfile,
-                        append=append,
-                        sigma=sigmacopy, outsigma=outsigma
-                )
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        retval = None
-    myia.done()
-    if (wantreturn):
-        return retval
-    else:
-        if (retval):
-           del retval
-        return None
-
-
-
+                        sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
+                        sigmacopy = sigia.getchunk()
+        retval = myia.fitprofile(
+            box=box, region=region, chans=chans,
+            stokes=stokes, axis=axis, mask=mask,
+            minpts=minpts, ngauss=0, multifit=multifit,
+            spxtype=spxtype, spxest=spxest, spxfix=spxfix,
+            div=div,  model=model, residual=residual,
+            stretch=stretch, logresults=logresults,
+            spxsol=spxsol, spxerr=spxerr, logfile=logfile,
+            append=append,
+            sigma=sigmacopy, outsigma=outsigma
+        )
+    finally:
+        myia.done()
+        if (wantreturn):
+            return retval
+        else:
+            if (retval):
+                del retval
+            return
