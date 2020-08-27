@@ -710,14 +710,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     
     origin = 'tsdimaging'
     imager = None
-  
-    # set OMP_NUM_THREADS as 1 to be faster (CAS-10894)
-    try:
-        omp_num_threads_orig = os.environ['OMP_NUM_THREADS']
-    except KeyError as e:
-        omp_num_threads_orig = None
-    os.environ['OMP_NUM_THREADS'] = '1'
-
+    
     try: 
         # if spw starts with ':', add '*' at the beginning
         if isinstance(spw, str):
@@ -922,12 +915,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     # mask low weight pixels 
     weightimage = outfile + weight_suffix
     do_weight_mask(imagename, weightimage, minweight)
-
-    # restore OMP_NUM_THREADS (CAS-10894)
-    if omp_num_threads_orig is None:
-        del os.environ['OMP_NUM_THREADS']
-    else:
-        os.environ['OMP_NUM_THREADS'] = omp_num_threads_orig
 
     # CAS-10891
     _remove_image(outfile + '.sumwt')
