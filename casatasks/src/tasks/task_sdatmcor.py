@@ -29,7 +29,7 @@ else:
 
 
 def sdatmcor(
-        infile, datacolumn, outfile,
+        infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna,
         correlation, timerange, intent,
         observation, feed, msselect,
@@ -50,6 +50,7 @@ def sdatmcor(
         print('infile      =', infile)
         print('datacolumn  =', datacolumn)
         print('outfile     =', outfile)
+        print('overwrite   =', overwrite)
         print('field       =', field)
         print('spw         =', spw)
         print('scan        =', scan)
@@ -110,7 +111,7 @@ def sdatmcor(
 # Ceall calc Function
 #
     return calc_sdatmcor(
-        infile, datacolumn, outfile,
+        infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna, correlation, timerange, intent, observation, feed, msselect,
         outputspw,
         dtem_dh, h0, atmtype,
@@ -166,13 +167,9 @@ def form_value_unit(data, base_unit):
 
 
 def set_float_param(in_arg, def_para):
-    if (in_arg != ''):
-        val = float(in_arg)
-        if (val != (-1)):
-            return val
-        else:
-            return def_para
-
+#   print( "set_float_param::", in_arg, def_para )
+    if (in_arg != -1)and(in_arg > 0):
+        return in_arg
     else:
         return  def_para
 
@@ -240,6 +237,7 @@ def calc_sdatmcor(
         p_infile,
         p_datacolumn,
         p_outfile,
+        p_overwrite,
         p_field,
         p_spw,
         p_scan,
@@ -268,11 +266,12 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("***********************************")
-        print("**   calc_sdatmcor:: (0825-A)    **")
+        print("**   calc_sdatmcor:: (0828-A)    **")
         print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
         print('outfile     =', p_outfile)
+        print('overwrite   =', p_overwrite)
         print('field       =', p_field)
         print('spw         =', p_spw)
         print('scan        =', p_scan)
@@ -403,6 +402,9 @@ def calc_sdatmcor(
     # outfile #
     outfile = p_outfile[0]
     outext  = p_outfile[1]
+
+    # overwrite check (reserved) #
+
 
     # outfile, file name assist #
     if (outfile == ''):
@@ -613,8 +615,6 @@ def calc_sdatmcor(
         t_layerboundaries  = a_layerboundaries   # layer boundary [m]
         t_layertemperature = a_layerboundaries   # layer temerature [K]
 
-        print( "DEBUG   a_layerXXX", t_layerboundaries, t_layertemperature)
-
         #---------------------------------------
         # Change value, if the ARG spoecified 
         #---------------------------------------
@@ -659,15 +659,15 @@ def calc_sdatmcor(
         print(" ------------------------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
-        #    humidity = t_humidity, 
-        #    temperature = t_temperature, 
-        #    altitude = t_altitude, 
-        #    pressure = t_pressure, 
-        #    atmType = t_atmtype, 
-        #    maxAltitude = t_maxAltitude, 
-        #    h0 = t_h0, 
-        #    dTem_dh = t_dtem_dh,
-        #    dP = t_dp, dPm=t_dpm,
+            humidity = t_humidity, 
+            temperature = t_temperature, 
+            altitude = t_altitude, 
+            pressure = t_pressure, 
+            atmType = t_atmtype, 
+            maxAltitude = t_maxAltitude, 
+            h0 = t_h0, 
+            dTem_dh = t_dtem_dh,
+            dP = t_dp, dPm=t_dpm,
             layerBoundaries = t_layerboundaries,
             layerTemperature =t_layertemperature )
 
