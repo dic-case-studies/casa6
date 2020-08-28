@@ -196,7 +196,7 @@ inline  casacore::Int nominalDataDesc(casacore::MeasurementSet const &ms, casaco
     spwMap[col(i)] = i;
   }
   casacore::ScalarColumn<casacore::String> obsModeCol(ms.state(), "OBS_MODE");
-  casacore::Regex regex("^OBSERVE_TARGET#ON_SOURCE");
+  casacore::Regex regex("^OBSERVE_TARGET#ON_SOURCE.*");
   for (size_t ispw = 0; ispw < numSpw; ++ispw) {
     if (nchanList[ispw] == 4) {
       // this should be WVR
