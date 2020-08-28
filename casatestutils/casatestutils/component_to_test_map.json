@@ -11,11 +11,11 @@
         "test_gencal"],         # Review by Federico 
     "bandpass": [
         "test_bandpass"],
-    "blcal": [],                # TBD
-    "browsetable": [],          # IGNORE
+    "blcal": [],       
+    "browsetable": [],  
     "calanalysis": [            # tool
         "test_calanalysis"], 
-    "Calibration": [            # Review by George
+    "Calibration": [         
         "test_fluxscale",
         "test_fringefit",
         "test_gencal",
@@ -25,8 +25,8 @@
         "test_req_task_fluxscale",
         "test_req_task_gaincal",
         "test_req_task_listcal",
+        "test_req_task_rerefant",
         "test_req_task_uvmodelfit",
-        "test_setjy",
         "test_smoothcal"],
     "casacore": [],         # IGNORE
     "clean": [],            # IGNORE
@@ -62,7 +62,7 @@
         "test_flagmanager"],
     "fluxscale": [
         "test_req_task_fluxscale", 
-        test_fluxscale],
+        "test_fluxscale"],
     "fringecal": [],                #TBD
     "fringefit": [
         "test_fringefit"],
@@ -74,7 +74,8 @@
     "hanningsmooth": [
         "test_hanningsmooth"],
     "HPC": [
-        "test_casampi_subset"],     # TBD; is it possible?
+        "test_casampi_subset",     # TBD; is it possible?
+        "test_perf_tclean_mem_setweighting"],
     "Image Analysis": [             # Review by Dave
         "test_ia_adddegaxes",
         "test_ia_addnoise",
@@ -151,21 +152,26 @@
         "test_po_sigmafractotpol",
         "test_po_sigmalinpolint",
         "test_po_sigmalinpolposang",
-        "test_po_totpolint"]
-    "Imaging": [],          # run a subset of some tests TBD
+        "test_po_totpolint"],
+    "Imaging": [                # run a subset of some tests TBD
+        "test_tclean",
+        "test_sdimaging",
+        "test_sdintimaging",
+        "test_setjy",
+        "test_makemask"],          
     "imcollapse": [
-        test_imcollapse"],
+        "test_imcollapse"],
     "imcontsub": [
         "test_imcontsub"],
     "imfit": [
         "test_imfit"],
     "imhead": [
-        "test_imhead"
+        "test_imhead",
         "test_req_task_imhead"],
     "immath": [
         "test_immath"],
     "immoments": [
-        test_immoments"],
+        "test_immoments"],
     "importasdm": [
         "test_importasdm"],
     "importfits": [],           # TBD
@@ -174,7 +180,7 @@
     "importuvfits": [
         "test_req_task_importuvfits",
         "test_importuvfits"],
-    "importvla": [],        # IGNORe
+    "importvla": [],        # default
     "imregrid": [
         "test_imregrid"],
     "imsmooth": [
@@ -185,7 +191,7 @@
         "test_imsubimage"],
     "imval": [
         "test_imval"],
-    "Infrastructure": [],   # IGNORE
+    "Infrastructure": [],   # default
     "listcal": [
         "test_req_task_listcal"],
     "listhistory": [
@@ -198,30 +204,30 @@
         "test_listivis"],
     "makemask": [
         "test_makemask"],
-    "mosaic": [],       # TBD
+    "mosaic": [],       # IGNORE
     "msmd": [
         "test_msmetadata"],
     "mstransform": [
         "test_mstransform",
         "test_split",
-        "test_hanningsmooth"
+        "test_hanningsmooth",
         "test_cvel2"],
     "ngCASA": [],           # IGNORE
     "pipeline": [],         # IGNORE
     "plotants": [
         "test_plotants"],
-    "plotbandpass": [],     # TBD
+    "plotbandpass": [],     # default
     "plotcal": [],
     "plotms": [
         "test_plotms"],     # NOT SURE WE WILL BE ABLE TO RUN THIS
     "plotweather": [
         "test_plotweather"],
-    "plotxy": [],           # IGNORE; isn't this deprecated?
+    "plotxy": [],           # IGNORE
     "polcal": [],           # TBD ; new test
     "predictcomp": [
         "test_predictcomp"],
     "runtime": [],          # TBD
-    "SciDev": [],           # IGNORE or find a set of smoke tests. What does it mean this component alone?
+    "SciDev": [],           # IGNORE
     "sdbaseline": [
         "test_sdbaseline"],
     "sdimaging": [
@@ -231,14 +237,14 @@
     "Simulation": [
         "test_req_task_simanalyze",
         "test_simobserve"],
-    "Single Dish": [],      # TBD
+    "Single Dish": [],      # to be reviewed by Takeshi
     "smoothcal": [
         "test_smoothcal"],
     "specfit": [
         "test_specfit"],
     "split": [
         "test_split"],
-    "table": [],            # TBD
+    "table": [],            # default
     "tclean": [
         "test_tclean"],
      "tsdimaging": [
@@ -256,7 +262,7 @@
     "visstat": [
         "test_req_task_visstat"],
     "Visualization": [],        # TBD
-    "vpmmanager": [             # DOES IT EXIST?
+    "vpmmanager": [             # TOOL
         "test_vpmanager"]       
     "widefield": [],            # IGNORE
     "wvrgcal": [
