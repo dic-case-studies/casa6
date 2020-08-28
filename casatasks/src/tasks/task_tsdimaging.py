@@ -632,8 +632,7 @@ def do_weight_mask(imagename, weightimage, minweight):
             stat=ia.statistics(mask="'"+weightimage+"' > 0.0", robust=True)
             valid_pixels=stat['npts']
         except RuntimeError as e:
-            #if e.message.find('No valid data found.') >= 0:
-            if str(e).find('No valid data found.') >= 0:
+            if 'No valid data found.' in str(e):
                 valid_pixels = [0]
             else:
                 raise e
@@ -655,10 +654,7 @@ def do_weight_mask(imagename, weightimage, minweight):
         ia.calcmask("'%s'>%f" % (weightimage, weight_threshold), asdefault=True)
 
         ndim = len(ia.shape())
-        if ndim <= 2:
-            _axes = list(range(ndim))
-        else:
-            _axes = list(range(2, ndim))
+        _axes = numpy.arange(start=0 if ndim <= 2 else 2, stop=ndim)
 
         try:
             collapsed = ia.collapse('npts', axes=_axes)
@@ -670,10 +666,10 @@ def do_weight_mask(imagename, weightimage, minweight):
             else:
                 raise
 
-    masked_fraction = 100.*(1. - valid_pixels_after / float(valid_pixels[0]) )
+    masked_fraction = 100. * (1.-valid_pixels_after/float(valid_pixels[0]))
 
-    casalog.post("This amounts to %5.1f %% of the area with nonzero weight." % \
-                ( masked_fraction ),"INFO")
+    msg = "This amounts to {fraction:5.1f} % of the area with nonzero weight.".format(fraction=masked_fraction)
+    casalog.post(msg, "INFO")
     casalog.post("The weight image '%s' is returned by this task, if the user wishes to assess the results in detail." \
                  % (weightimage), "INFO")
 
