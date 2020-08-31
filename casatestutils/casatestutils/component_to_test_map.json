@@ -4,15 +4,15 @@
     "accum": [],                # IGNORE; it will be deprecated next cycle
     "agentflagger": [
         "test_agentflagger"],
-    "apparentsens": [],
+    "apparentsens": [],         # new test
     "applycal": [
         "test_req_task_applycal"],
     "atmosphere": [
         "test_gencal"],         # Review by Federico 
     "bandpass": [
         "test_bandpass"],
-    "blcal": [],       
-    "browsetable": [],  
+    "blcal": [],                # new test
+    "browsetable": [],          # new test
     "calanalysis": [            # tool
         "test_calanalysis"], 
     "Calibration": [         
@@ -28,7 +28,7 @@
         "test_req_task_rerefant",
         "test_req_task_uvmodelfit",
         "test_smoothcal"],
-    "casacore": [],         # IGNORE
+    "casacore": [],         # IGNORE or define some tools tests
     "clean": [],            # IGNORE
     "clearcal": [
         "test_req_task_clearcal"],
@@ -37,23 +37,25 @@
         "test_concat",
         "test_virtualconcat"],
     "cvel": [
-        "test_cvel",        # TBD
+        "test_cvel", 
         "test_cvel2"],
-    "deconvolve": [],       # TBD, new test coming
+    "deconvolve": [],       # new test
     "Documentation": [],    # TBD
     "exportfits": [
         "test_exportfits"],
     "exportuvfits": [
         "test_exportuvfits"],
     "external": [],         # IGNORE
-    "feather": ["test_req_task_feather"],
+    "feather": [
+        "test_req_task_feather"],
     "fixvis": [
         "test_fixvis",
         "test_req_task_phaseshift"],
     "flagcmd": [
         "test_flagcmd"],
     "flagdata": [
-        "test_flagdata"],
+        "test_flagdata",
+        "test_flagcmd"],
     "Flagging": [
         "test_flagcmd",
         "test_flagdata",
@@ -63,10 +65,10 @@
     "fluxscale": [
         "test_req_task_fluxscale", 
         "test_fluxscale"],
-    "fringecal": [],                #TBD
+    "fringecal": [],            #TBD
     "fringefit": [
         "test_fringefit"],
-    "ft": [],
+    "ft": [],                   # new test
     "gaincal": [
         "test_req_task_gaincal"],
     "gencal": [
@@ -74,8 +76,7 @@
     "hanningsmooth": [
         "test_hanningsmooth"],
     "HPC": [
-        "test_casampi_subset",     # TBD; is it possible?
-        "test_perf_tclean_mem_setweighting"],
+        "test_casampi_subset"],     # TBD; is it possible?
     "Image Analysis": [             # Review by Dave
         "test_ia_adddegaxes",
         "test_ia_addnoise",
@@ -180,7 +181,7 @@
     "importuvfits": [
         "test_req_task_importuvfits",
         "test_importuvfits"],
-    "importvla": [],        # default
+    "importvla": [],            # default
     "imregrid": [
         "test_imregrid"],
     "imsmooth": [
@@ -191,7 +192,7 @@
         "test_imsubimage"],
     "imval": [
         "test_imval"],
-    "Infrastructure": [],   # default
+    "Infrastructure": [],       # default
     "listcal": [
         "test_req_task_listcal"],
     "listhistory": [
@@ -204,7 +205,7 @@
         "test_listivis"],
     "makemask": [
         "test_makemask"],
-    "mosaic": [],       # IGNORE
+    "mosaic": [],               # IGNORE
     "msmd": [
         "test_msmetadata"],
     "mstransform": [
@@ -212,22 +213,22 @@
         "test_split",
         "test_hanningsmooth",
         "test_cvel2"],
-    "ngCASA": [],           # IGNORE
-    "pipeline": [],         # IGNORE
+    "ngCASA": [],               # IGNORE
+    "pipeline": [],             # IGNORE
     "plotants": [
         "test_plotants"],
-    "plotbandpass": [],     # default
+    "plotbandpass": [],         # default
     "plotcal": [],
     "plotms": [
-        "test_plotms"],     # NOT SURE WE WILL BE ABLE TO RUN THIS
+        "test_plotms"],         # NOT SURE WE WILL BE ABLE TO RUN THIS
     "plotweather": [
         "test_plotweather"],
-    "plotxy": [],           # IGNORE
-    "polcal": [],           # TBD ; new test
+    "plotxy": [],               # IGNORE
+    "polcal": [],               # new test
     "predictcomp": [
         "test_predictcomp"],
-    "runtime": [],          # TBD
-    "SciDev": [],           # IGNORE
+    "runtime": [],              # TBD
+    "SciDev": [],               # IGNORE
     "sdbaseline": [
         "test_sdbaseline"],
     "sdimaging": [
@@ -237,14 +238,14 @@
     "Simulation": [
         "test_req_task_simanalyze",
         "test_simobserve"],
-    "Single Dish": [],      # to be reviewed by Takeshi
+    "Single Dish": [],          # to be reviewed by Takeshi
     "smoothcal": [
         "test_smoothcal"],
     "specfit": [
         "test_specfit"],
     "split": [
         "test_split"],
-    "table": [],            # default
+    "table": [],                # default
     "tclean": [
         "test_tclean"],
      "tsdimaging": [
@@ -254,8 +255,8 @@
         "test_uvcontsub"],
     "uvmodelfit": [
         "test_req_task_uvmodelfit"],
-    "Verification": [],     # TBD
-    "viewer": [],           # IGNORE
+    "Verification": [],         # TBD
+    "viewer": [],               # IGNORE
     "vishead": [
         "test_vishead",
         "test_req_task_vishead"],
