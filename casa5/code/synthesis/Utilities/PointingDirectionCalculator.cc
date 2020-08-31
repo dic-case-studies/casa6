@@ -665,11 +665,11 @@ Vector<Double> PointingDirectionCalculator::getDirection(uInt i) {
     return direction;
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowId() {
+Vector<casacore::rownr_t> PointingDirectionCalculator::getRowId() {
     return selectedMS_->rowNumbers();
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowIdForOriginalMS() {
+Vector<casacore::rownr_t> PointingDirectionCalculator::getRowIdForOriginalMS() {
     return selectedMS_->rowNumbers(*originalMS_, True);
 }
 

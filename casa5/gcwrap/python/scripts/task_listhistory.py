@@ -25,11 +25,7 @@ def listhistory(vis=None):
     """
     #Python script
     try:
-        if ((type(vis)==str) & (os.path.exists(vis))):
-            _ms.open(vis)
-        else:
-            raise Exception('Visibility data set not found - please verify the name')
+        _ms.open(vis)
         _ms.listhistory()
+    finally:
         _ms.close()
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
