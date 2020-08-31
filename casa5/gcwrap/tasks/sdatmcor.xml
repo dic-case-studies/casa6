@@ -19,14 +19,14 @@
     </param>
 
     <param type="string" name="datacolumn" ignorecase="true">
-        <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
-        <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
+        <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription>
+        <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
         
         <value>data</value>
         <allowed kind="enum">
             <value>data</value>
             <value>float_data</value>
-            <value>corrected</value> 
+            <value>corrected_data</value> 
        </allowed>
     </param>
 

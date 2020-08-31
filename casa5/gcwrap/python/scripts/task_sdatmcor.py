@@ -266,7 +266,7 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("***********************************")
-        print("**   calc_sdatmcor:: (0828-A)    **")
+        print("**   calc_sdatmcor:: (0831-A)    **")
         print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
@@ -346,7 +346,7 @@ def calc_sdatmcor(
 
     # other constant
     antenna = 1      # default antenna_id
-    altitude = 5703  # default altitude
+    altitude = 5073  # default altitude
     nband =1         # number of band in initSpectralWindow()
 
     # normalized spectral response for Hanning window, FWHM=10
@@ -705,7 +705,8 @@ def calc_sdatmcor(
         ####################
         # Skip outputspw
         ####################
-        if not ddis[spwid] in outputspws:
+        if not spwid in outputspws:  # [CNo-34] #
+#        if not ddis[spwid] in outputspws:
             print("----   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
             continue
 
@@ -714,39 +715,11 @@ def calc_sdatmcor(
             print("----   Correction (loop) will be skipped, due to Debug option.\n\n\n")
             continue
 
-        #
-        # Query and get data 
-        # (org)    subtb = tb.query('DATA_DESC_ID in %s' % ddis[spwid])
-        #
-
-        # DATA SELECTION Query Editing (under construction) #
-        select_param = (p_field, p_scan, p_antenna, p_correlation,
-                        p_correlation, p_timerange, p_intent, p_observation, p_feed, p_msselect )
-        print(select_param)
-
-        # data-select #
-        query_antenna = ''
-        query_field = ''
-        query_msselect = ''
-
-        # (by ANTENNA1)      XX following sould be by suburoutie XX 
-        if (p_antenna != ''):
-            p_antenna = list_comma_string(p_antenna)
-            query_antenna = " && ANTENNA1 in %s"% p_antenna
-
-        # (by FIELD_ID)
-        if (p_field != ''):
-            query_field = " && FIELD_ID==%s"% p_field
-
-        # (by MSSELECT)
-        if (p_msselect != ''):
-            query_msselect =  p_msselect
- 
         # Essential Query (required by org. script) #
         query_desc_id = 'DATA_DESC_ID in %s' % ddis[spwid] 
 
-        # edit text
-        querytext = query_desc_id + query_antenna + query_field + query_msselect
+        # edit text (expand reserved.)
+        querytext = query_desc_id
         print("**  used Query Test is [%s] **" % querytext )
 
         # query
