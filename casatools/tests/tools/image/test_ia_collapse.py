@@ -1,5 +1,5 @@
 #############################################
-# imfit_test.py
+# test_ia_collapse.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -30,7 +30,7 @@
 # </author>
 #
 # <summary>
-# Test suite for the CASA task imcollapse
+# Test suite for the CASA tool method ia.collapse()
 # </summary>
 #
 # <reviewed reviwer="" date="" tests="" demos="">
@@ -74,10 +74,12 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    quanta = qatool
+    regionmanager = rgtool
+    table = tbtool
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)
-
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
@@ -94,7 +96,6 @@ def run_collapse(
         region=region, box=box, chans=chans, stokes=stokes,
         mask=mask, overwrite=overwrite, stretch=stretch
     )
-    myia.close()
     myia.done()
     return res
 
@@ -151,15 +152,12 @@ class ia_collapse_test(unittest.TestCase):
             imagename, function, axes, outfile, region,
             box, chans, stokes, mask, overwrite, wantreturn
         ):
-            if (len(imagename) > 0 and imagename != bogus):
-                self.assertRaises(
-                    Exception, run_collapse, imagename,
-                    function, axes, outfile, region, box,
-                    chans, stokes, mask, overwrite
-                )
+            self.assertRaises(
+                Exception, run_collapse, imagename,
+                function, axes, outfile, region, box,
+                chans, stokes, mask, overwrite
+            )
 
-        # no image name given
-        testit("", "mean", 0, "", "", "", "", "", "", False, True)
         # bad image name given
         testit(bogus, "mean", 0, "", "", "", "", "", "", False, True)
         # no function given
