@@ -569,6 +569,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     findMaxAbs((*itsDirty), maxvalue, peakpos);
     cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
     cout << "itsPositionOptimum " << itsPositionOptimum << endl;
+    cout << "itsStrengthOptimum " << itsStrengthOptimum << endl;
     cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl;
     dirtySub -= scaleFactor * psfSub;
 
@@ -608,8 +609,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         itsScaleXfr.resize();
         fft.fft0(itsScaleXfr, itsScale);
         Matrix<Float> scaleSubPrev = (itsScale)(blcPsf1,trcPsf1);
-        //const float scaleFactorPrev = itsGain * itsPrevAspAmplitude[scale];
-        const float scaleFactorPrev = itsGain;
+        const float scaleFactorPrev = itsGain * itsPrevAspAmplitude[scale];
+        //const float scaleFactorPrev = itsGain;
         // restore the model image...
         modelSub1 -= scaleFactorPrev * scaleSubPrev;
         // restore the residual image
@@ -629,8 +630,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         itsScaleXfr.resize();
         fft.fft0(itsScaleXfr, itsScale);
         Matrix<Float> scaleSubNew = (itsScale)(blcPsf1,trcPsf1);
-        //const float scaleFactorNew = itsGain * itsGoodAspAmplitude[scale];
-        const float scaleFactorNew = itsGain;
+        const float scaleFactorNew = itsGain * itsGoodAspAmplitude[scale];
+        //const float scaleFactorNew = itsGain;
         // Now do the addition of the active-set scales to the model image...
         modelSub1 += scaleFactorNew * scaleSubNew;
         // Now subtract the active-set scales from the residual image
@@ -866,10 +867,10 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
   {
     AlwaysAssert(scaleSize>0.0, AipsError);
 
-    const Int mini = max(0, (Int)(refi - scaleSize));
+    /*const Int mini = max(0, (Int)(refi - scaleSize));
     const Int maxi = min(nx-1, (Int)(refi + scaleSize));
     const Int minj = max(0, (Int)(refj - scaleSize));
-    const Int maxj = min(ny-1, (Int)(refj + scaleSize));
+    const Int maxj = min(ny-1, (Int)(refj + scaleSize));*/
     //cout << "makeScaleImage: scalesize " << scaleSize << " mini " << mini << " maxi " << maxi << " minj " << minj << " maxj " << maxj << endl;
     cout << "makeScaleImage: scalesize " << scaleSize << " center " << center << " amp " << amp << endl;
 
@@ -1250,6 +1251,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   {
     //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
     const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)));
+
     strengthOptimum /= normalization;
     cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
   }
@@ -1336,28 +1338,27 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
 
   Matrix<Float> Asp(nX, nY);
   Asp = 0.0;
-  Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
+  //Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
+  Gaussian2D<Float> gbeam(1.0 / (sqrt(2*M_PI)*scale), center[0], center[1], scale, 1, 0);
 
   const double sigma5 = 5 * scale / 2;
-  /*const int minI = std::max(0, (int)(refi - sigma5));
-  const int maxI = std::min(nX-1, (int)(refi + sigma5));
-  const int minJ = std::max(0, (int)(refj - sigma5));
-  const int maxJ = std::min(nY-1, (int)(refj + sigma5));*/
-  const int minI = std::max(0, (int)(refi + center[0] - sigma5));
+  /*const int minI = std::max(0, (int)(refi + center[0] - sigma5));
   const int maxI = std::min(nX-1, (int)(refi + center[0] + sigma5));
   const int minJ = std::max(0, (int)(refj + center[1] - sigma5));
-  const int maxJ = std::min(nY-1, (int)(refj + center[1] + sigma5));
+  const int maxJ = std::min(nY-1, (int)(refj + center[1] + sigma5));*/
+  const int minI = std::max(0, (int)(center[0] - sigma5));
+  const int maxI = std::min(nX-1, (int)(center[0] + sigma5));
+  const int minJ = std::max(0, (int)(center[1] - sigma5));
+  const int maxJ = std::min(nY-1, (int)(center[1] + sigma5));
 
-  /*for (int j = 0; j < nY; ++j)
-  {
-    for(int i = 0; i < nX; ++i)
-    {*/
   for (int j = minJ; j <= maxJ; j++)
   {
     for (int i = minI; i <= maxI; i++)
     {
-      const int px = i - refi;
-      const int py = j - refj;
+      //const int px = i - refi;
+      //const int py = j - refj;
+      const int px = i;
+      const int py = j;
       Asp(i,j) = gbeam(px, py);
     }
   }
@@ -1371,27 +1372,27 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
   GradScale = 0.0;*/
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
-  Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
+  //Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
   for (int j = minJ; j <= maxJ; j++)
   {
     for (int i = minI; i <= maxI; i++)
     {
-      const int px = i - refi;
-      const int py = j - refj;
-      GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
-      GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
+      //const int px = i - refi;
+      //const int py = j - refj;
+      const int px = i;
+      const int py = j;
+      //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+      GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * scale; // sanjay: -2*asp/Amp
+      //GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
+      GradScale(i,j) = 2 * (pow(i-center[0],2) + pow(j-center[1],2)) * Asp(i,j) / scale; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
     }
   }
-  /*Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
-  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);*/
+
   Bool ddel;
   const Float *dptr = itsDirty->getStorage(ddel);
-  //double *ddptr = reinterpret_cast<double*>(&dptr); // seg fault
-  //double *ddptr = const_cast<double*>(reinterpret_cast<const double *>(dptr)); // reinterpret_cast returns wrong value
+
   float *ddptr = const_cast<float*>(dptr);
   Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
-  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M.transpose() * GradAmp; // M = T(itsDirty)
-  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M.transpose() * GradScale;
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
   itsDirty->freeStorage(dptr, ddel);
@@ -1402,8 +1403,7 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
   {
     for (int i = minI; i <= maxI; i++)
     {
-      lenDirVec += sqrt(pow(Grad0(i,j), 2));
-      lenDirVec += sqrt(pow(Grad1(i,j), 2));
+      lenDirVec += sqrt(pow(Grad0(i,j), 2) + pow(Grad1(i,j), 2));
     }
   }
 
@@ -1699,6 +1699,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
         itsAspGood.push_back(true);
     }
 
+    itsStrengthOptimum = x[length - 2]; // the latest aspen is the last element of x
     itsOptimumScaleSize = x[length - 1]; // the latest aspen is the last element of x
     itsGoodAspCenter = activeSetCenter;
 

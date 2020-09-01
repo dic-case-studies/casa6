@@ -112,7 +112,7 @@ public:
       const int minJ = std::max(0, (int)(center[k][1] - sigma5));
       const int maxJ = std::min(nY-1, (int)(center[k][1] + sigma5));
 
-      casacore::Gaussian2D<casacore::Float> gbeam(x[2*k], center[k][0], center[k][1], x[2*k+1], 1, 0);
+      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1])/*x[2*k]*/, center[k][0], center[k][1], x[2*k+1], 1, 0);
       for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -150,18 +150,22 @@ public:
       ////start = std::chrono::high_resolution_clock::now();
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
-      casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
+      //casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
 
       for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
         {
-          const int px = i - refi;
-          const int py = j - refj;
+          //const int px = i - refi;
+          //const int py = j - refj;
+          const int px = i;
+          const int py = j;
           // generate derivatives of amplitude
-          GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
+          //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py); // genie
+          GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * x[2*k+1]; // sanjay: -2*asp/Amp
           // generate derivative of scale
-          GradScale(i,j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3);
+          //GradScale(i,j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3); // genie
+          GradScale(i,j) = 2 * (pow(i-center[k][0],2) + pow(j-center[k][1],2)) * Asp(i,j) / x[2*k+1]; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
         }
       }
       ////stop = std::chrono::high_resolution_clock::now();
@@ -191,7 +195,7 @@ public:
         for (int i = minI; i <= maxI; i++)
         {
           //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
-          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + AspConvPsf(i,j);
+          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + 0.1 * x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
           grad[2*k] = grad[2*k] + double(Grad0(i,j));
           grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
         }
