@@ -867,15 +867,14 @@ vpmanager::createantresp(const std::string& imdir,
 
     // all input parameters checked, now find all the images
     Directory imDirD(imDir);
-    String imPattern = "*?_*?_*_*_*?_*?_*?_*?_*?_*?_*?_*?_*?_*?_*_*?.im";
-    Vector<String> imNamesV = imDirD.find(Regex(Regex::fromPattern(imPattern)), true, false); // follow symlinks, non-recursive
+    Vector<String> imNamesV = imDirD.find(Regex("([^_]+_){2}([^_]*_){2}([^_]+_){10}[^_]*_[^_]+"), true, false); // follow symlinks, non-recursive
     
     uInt nIm = imNamesV.size();
 
     *itsLog << LogIO::NORMAL << "Found " << nIm << " response images in directory " << absPathName << LogIO::POST;
 
     {
-      imPattern = "*.im";
+      String imPattern = "*.im";
       Vector<String> imNamesV2 = imDirD.find(Regex(Regex::fromPattern(imPattern)), true, false);
 
       if(nIm==0){
