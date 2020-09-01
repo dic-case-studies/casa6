@@ -1,5 +1,5 @@
 #############################################
-# imfit_test.py
+# test_imcollapse.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -66,33 +66,35 @@
 #
 
 ###########################################################################
-import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
-import unittest
+from __future__ import absolute_import
+
 import numpy
+import shutil
+import unittest
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import ctsys, image, table, quanta, regionmanager
+    from casatasks import imcollapse
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    image = iatool
+    table = tbtool
+    quanta = qatool
+    regionmanager = rgtool
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
+_ia = image()
+_tb = table()
+_qa = quanta()
+_rg = regionmanager()
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imcollapse/'
-
-
-def run_collapse(
-    imagename, function, axes, outfile, region, box, chans,
-    stokes, mask, overwrite, stretch=False
-):
-    myia = iatool()
-    myia.open(imagename)
-    res = myia.collapse(
-        function=function, axes=axes, outfile=outfile,
-        region=region, box=box, chans=chans, stokes=stokes,
-        mask=mask, overwrite=overwrite, stretch=stretch
-    )
-    myia.close()
-    myia.done()
-    return res
 
 def run_imcollapse(
     imagename, function, axes, outfile, region, box, chans,
@@ -108,17 +110,17 @@ def run_imcollapse(
 class imcollapse_test(unittest.TestCase):
     
     def setUp(self):
-        shutil.copy(datapath + good_image, good_image)
-        self.tabular_spectral_image = datapath + "longZax"
+        shutil.copy(ctsys_resolve(os.path.join(datapath,good_image)), good_image)
+        self.tabular_spectral_image = ctsys_resolve(os.path.join(datapath,"longZax"))
 
     def tearDown(self):
         os.remove(good_image)
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
     def checkImage(self, gotImage, expectedName):
-        expected = iatool()                                
+        expected = image()                                
         expected.open(expectedName)
-        got = iatool()
+        got = image()
         if type(gotImage) == str:
             got.open(gotImage)
         else:
@@ -148,25 +150,26 @@ class imcollapse_test(unittest.TestCase):
         """imcollapse: Test various exception cases"""
         
         bogus = "mybogus.im"
+
         def testit(
             imagename, function, axes, outfile, region,
             box, chans, stokes, mask, overwrite, wantreturn
         ):
-            for i in [0,1]:
-                if (i==0 and len(imagename) > 0 and imagename != bogus):
-                    self.assertRaises(
-                        Exception, run_collapse, imagename,
-                        function, axes, outfile, region, box,
-                        chans, stokes, mask, overwrite
+            if is_CASA6:
+                self.assertRaises(
+                    Exception, run_imcollapse, imagename,
+                    function, axes, outfile, region, box,
+                    chans, stokes, mask, overwrite
+                )
+            else:
+                self.assertFalse(
+                    run_imcollapse(
+                        imagename, function, axes,
+                        outfile, region, box, chans,
+                        stokes, mask, overwrite
                     )
-                else:
-                    self.assertFalse(
-                        run_imcollapse(
-                            imagename, function, axes,
-                            outfile, region, box, chans,
-                            stokes, mask, overwrite
-                        )
-                    )
+                )
+
         # no image name given
         testit("", "mean", 0, "", "", "", "", "", "", False, True)
         # bad image name given
@@ -189,98 +192,53 @@ class imcollapse_test(unittest.TestCase):
     def test_1(self):
         """imcollapse: average full image collapse along axis 0"""
         expected = "collapse_avg_0.fits"
-        shutil.copy(datapath + expected, expected)
-        for i in [0, 1]:
-            for axis in (0 ,"r", "right"):
-                outname = "test_1_" + str(i) + "_" + str(axis) + ".im"
-                if i == 0:
-                    mytool = run_collapse(
-                        good_image, "mean", axis, outname, "", "",
-                        "", "", "", False
-                    )
-                    self.assertTrue(type(mytool) == type(ia))
-                    self.checkImage(mytool, expected)
-                    self.checkImage(outname, expected)
-                else:
-                    for wantreturn in [True, False]:
-                        outname = outname + str(wantreturn)
-                        res = run_imcollapse(
-                            good_image, "mean", 0, outname, "", "",
-                            "", "", "", False
-                        )
-                        self.assertTrue(res)
-                        self.checkImage(outname, expected)
-                shutil.rmtree(outname)
+        shutil.copy(ctsys.resolve(os.path.join(datapath,expected)), expected)
+        for axis in (0 ,"r", "right"):
+            outname = "test_1_0" + "_" + str(axis) + ".im"
+            res = run_imcollapse(
+                good_image, "mean", axis, outname, "", "",
+                "", "", "", False
+            )
+            self.assertTrue(res)
+            self.checkImage(outname, expected)
+            shutil.rmtree(outname)
 
     def test_2(self):
         """imcollapse: average full image collapse along axis 2"""
         expected = "collapse_avg_2.fits"
-        shutil.copy(datapath + expected, expected)
-        for i in [0, 1]:
-            for axis in (2, "f", "freq"):
-                outname = "test_2_" + str(i) + str(axis) + ".im"
-                if i == 0:
-                    mytool = run_collapse(
-                        good_image, "mean", axis, outname, "", "",
-                        "", "", "", False
-                    )
-                    self.assertTrue(type(mytool) == type(ia))
-                    self.checkImage(mytool, expected)
-                    self.checkImage(outname, expected)
-                else:
-                    outname = outname + "imcollapse"
-                    res = run_imcollapse(
-                    good_image, "mean", 2, outname, "", "",
-                        "", "", "", False
-                    )
-                    self.assertTrue(res)
-                    self.checkImage(outname, expected)
-                shutil.rmtree(outname)
+        shutil.copy(ctsys.resolve(os.path.join(datapath,expected)), expected)
+        for axis in (2, "f", "freq"):
+            outname = "test_2_" + str(i) + str(axis) + ".im"
+            outname = outname + "imcollapse"
+            res = run_imcollapse(
+            good_image, "mean", 2, outname, "", "",
+                "", "", "", False
+            )
+            self.assertTrue(res)
+            self.checkImage(outname, expected)
+            shutil.rmtree(outname)
 
     def test_3(self):
         """imcollapse: average full image collapse along axis 2 and check output overwritability"""
         expected = "collapse_sum_1.fits"
-        shutil.copy(datapath + expected, expected)
+        shutil.copy(ctsys.resolve(os.path.join(datapath,expected)), expected)
         box = "1,1,2,2"
         chans = "1~2"
         stokes = "qu"
-        for i in [0, 1]:
-            outname = "test_3_" + str(i) + ".im"
-            if i == 0:
-                mytool = run_collapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", False
-                )
-                # this should throw an exception because we are trying to overwrite a file
-                # that is open in the table cache
-                self.assertRaises(
-                    Exception, run_collapse, good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", True
-                )
-                mytool.done()
-                # now the image is closed, so check that can overwrite previous output. Then check output image
-                mytool = run_collapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", True
-                )
-                self.assertTrue(type(mytool) == type(ia))
-                self.checkImage(mytool, expected)
-                self.checkImage(outname, expected)
-                mytool.done()
-            else:
-               outname = outname + "imcollapse"
-               # check that can overwrite previous output. Then check output image
-               res = run_imcollapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", False
-               )
-               res = run_imcollapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", True
-               )
-               self.assertTrue(res)
-               self.checkImage(outname, expected)
-            shutil.rmtree(outname)
+        outname = "test_3_" + str(i) + ".im"
+        outname = outname + "imcollapse"
+        # check that can overwrite previous output. Then check output image
+        res = run_imcollapse(
+             good_image, "sum", 1, outname, "", box,
+             chans, stokes, "", False
+        )
+        res = run_imcollapse(
+             good_image, "sum", 1, outname, "", box,
+             chans, stokes, "", True
+        )
+        self.assertTrue(res)
+        self.checkImage(outname, expected)
+        shutil.rmtree(outname)
 
     def test_4(self):
         """imcollapse: not specifying an output image is ok"""
@@ -707,3 +665,7 @@ class imcollapse_test(unittest.TestCase):
         
 def suite():
     return [imcollapse_test]
+
+if __name__ == '__main__':
+    unittest.main()
+
