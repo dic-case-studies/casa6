@@ -137,6 +137,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     // return comprehensible direction string from given MDirection object
     static casacore::String asComprehensibleDirectionString(casacore::MDirection const &direction);
+    // Advise the chanselection needed for the frequency range or
+    // give the frequency range for a give spwselection
+    // You need to specify the field_id for which this calculation is 
+    // being done. 
+    // getFreqRange=true then the freqrange in the frame and spwselection  you choose is 
+    // returned in freqStart and freqEnd.
+    casacore::Bool adviseChanSel(casacore::Double& freqStart,
+				 casacore::Double& freqEnd, 
+				 const casacore::Double& freqStep,
+				 const casacore::MFrequency::Types& freqframe,
+				 casacore::Vector<casacore::Int>& spw,
+				 casacore::Vector<casacore::Int>& start,
+				 casacore::Vector<casacore::Int>& nchan,
+				 const casacore::String& msname="",
+				 const casacore::String& ephemtab="",
+				 const casacore::Int fieldid=0,
+				 const casacore::Bool getFreqRange=false, 
+				 const casacore::String spwselection="");
+
 
   protected:
     static casacore::String mergeSpwSel(const casacore::Vector<casacore::Int>& fspw, const casacore::Vector<casacore::Int>& fstart, const casacore::Vector<casacore::Int>& fnchan, const casacore::Matrix<casacore::Int>& spwsel);
@@ -150,7 +169,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     static casacore::String g_startTimestamp;
     static const casacore::String g_enableOptMemProfile;
 
-    static casacore::Int parseProcStatusLine(const std::string &str);
+    static casacore::Int parseProcStatusLine(const std::string &str);    
+    
   };
 
 class SynthesisParams

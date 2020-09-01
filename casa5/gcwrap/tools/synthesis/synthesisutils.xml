@@ -89,79 +89,68 @@ If the parameter {\tt getfreqrange=True} then the reverse is requested. You set 
 <input>
 
 
-     <param type="double" direction="in" name="freqstart">
-     <description>Begining of frequency range in Hz</description>
+     <param name="freqstart" direction="in" type="any">
+       <description>Begining of frequency range in Hz</description>
+       <any type="variant"/>
      <value>1.0e6</value>
      </param>
 
-     <param type="double" direction="in" name="freqend">
-     <description>End of frequency range in Hz</description>
+     <param name="freqend" direction="in" type="any">
+       <description>End of frequency range in Hz</description>
+        <any type="variant"/>
      <value>1.1e6</value>
      </param>
      
-     <param type="double" direction="in" name="freqstep">
+     <param name="freqstep" direction="in" type="any">
        <description>spectral channel resolution of intended image in Hz</description>
+        <any type="variant"/>
        <value>100.0</value>
      </param>
      
-     <param type="string" direction="in" name="freqframe">
+     <param name="freqframe" direction="in" type="string">
        <description>frame in which frequency is being expressed in other parameters</description>
        <value>LSRK</value>
      </param>
-     <param type="string" direction="in" name="msname">
-       <description>name of an ms, if empty string it will use the ms's used in selectvis</description>
+     
+      <param name="ephemtable" direction="in" type="string">
+       <description>valid ephemeris table name or TRACKFIELD (use ephemeris in FIELD subtable) if freqframe is SOURCE </description>
        <value></value>
+      </param>
+      
+     <param name="msname" direction="in" type="string">
+       <description>name of an ms, if empty string it will use the ms's used in selectvis</description>
+       <value/>
      </param>
-     <param type="int" direction="in" name="fieldid">
+     <param name="fieldid" direction="in" type="int">
        <description>fieldid to use when msname is not empty otherwise ignored and field selected in selectvis is used</description>
        <value>0</value>
      </param>
-     <param type="bool" name="getfreqrange">
+     <param name="getfreqrange" type="bool">
      <description>if set then freqrange is returned in the frame requested for the data selected</description>
      <value>false</value>
      </param>
-     <param type="string" name="spwselection">
+     <param name="spwselection" type="string">
        <description>if getfreqrange=True then this is needed to find the range of frequency in the frame requested</description>
-       <value></value>
+       <value/>
      </param>
-     
+
+
 </input>
 <example>
 In this example, we are interested in an image cube which span 20.0682GHz to 20.1982 in LSRK  which will have a channel resolution of 3.9MHz. The field we are interested is field 4 of each of the ms.
 
 
 #######
-im.selectvis(vis='test1.ms', field='4', spw='*')
-im.selectvis(vis='test2.ms', field='4', spw='*')
-selinfo=im.advisechansel(freqstart=2.00682e10, freqend=2.01982e10, freqstep=3.9e3, freqframe="LSRK")
-####The output "selfinfo" will be a record which will look like thus
-{'ms_0': {'nchan': array([109,  23], dtype=int32),
-          'spw': array([4, 5], dtype=int32),
-          'start': array([19,  0], dtype=int32)},
- 'ms_1': {'nchan': array([109,  23], dtype=int32),
-          'spw': array([4, 5], dtype=int32),
-          'start': array([19,  0], dtype=int32)}}
-###
-Thus from the first ms a spw selection like  '4:19~127, 5:0~22'  is all that is needed. 
-Similarly from the second ms.
 
-###if you need this info without needing to change the state of the imager tool 
-then you can it as follows
-
-im.advisechansel(freqstart=2.00682e10, freqend=2.01982e10, freqstep=3.9e3, freqframe="LSRK", msname="test1.ms", fieldid=4)
+syut.advisechansel(freqstart=2.00682e10, freqend=2.01982e10, freqstep=3.9e3, freqframe=&quot;LSRK&quot;, msname=&quot;test1.ms&quot;, fieldid=4)
 
 
 ####now if you want to see what frequency range is covered, in the frame 
 ####defined by freqframe, in spwselection you want to use
-im.selectvis(vis='test3.ms', spw='0:20~210')
-im.advisechansel(getfreqrange=True, freqframe="LSRK")
-### the output will be something
- {'freqend': 346020345384.64178, 'freqstart': 345683852920.1723}
 
-###and if you just want to use it as a helper function without touching the state 
-###of imager
+syut.advisechansel(msname=&quot;test3.ms&quot;, getfreqrange=True, spwselection=&quot;0:20~210&quot;)
 
-im.advisechansel(msname='test3.ms', getfreqrange=True, spwselection='0:20~210')
+
 
 
 </example>
