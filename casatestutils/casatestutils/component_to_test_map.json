@@ -1,4 +1,13 @@
 {
+    "default": [                # matches in case of empty/ignored/wrong component
+        "test_req_task_applycal",
+        "test_exportfits",
+        "test_immath",
+        "test_req_task_listobs",
+        "test_plotants",
+        "test_split",
+        "test_req_task_statwt.py",
+        "test_sdcal.py"],        
     "accor": [
         "test_req_task_accor"],
     "accum": [],                # IGNORE; it will be deprecated next cycle
