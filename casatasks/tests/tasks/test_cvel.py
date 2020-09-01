@@ -155,17 +155,6 @@ class cvel_test(unittest.TestCase):
         else:
             with self.assertRaises(RuntimeError):
                 cvel()
-#         myvis = vis_b
-#         os.system('ln -sf ' + myvis + ' myinput.ms')
-#         passes = False
-#         try:
-#             rval = cvel()
-#             # CASA5 returns False for this expected error
-#             passes = not rval
-#         except AssertionError:
-#             passes = True
-#             print("*** Expected error ***")
-#         self.assertTrue(passes)
 
     def test2(self):
         '''Cvel 2: Only input vis set - expected error'''
@@ -177,17 +166,7 @@ class cvel_test(unittest.TestCase):
         else:
             with self.assertRaises(AssertionError):
                 cvel(vis = 'myinput.ms')
-        
-#         passes = False
-#         try:
-#             rval = cvel(vis = 'myinput.ms')
-#             # CASA5 returns False for this expected error
-#             passes = not rval
-#         except AssertionError:
-#             passes = True
-#             print("*** Expected error ***")
-#         self.assertTrue(passes)
-            
+                    
     def test3(self):
         '''Cvel 3: Input and output vis set'''
         myvis = vis_b
