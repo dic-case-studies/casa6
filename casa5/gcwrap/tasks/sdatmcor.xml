@@ -19,14 +19,14 @@
     </param>
 
     <param type="string" name="datacolumn" ignorecase="true">
-        <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription>
-        <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
+        <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
+        <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
         
         <value>data</value>
         <allowed kind="enum">
             <value>data</value>
             <value>float_data</value>
-            <value>corrected_data</value> 
+            <value>corrected</value> 
        </allowed>
     </param>
 
@@ -108,21 +108,24 @@
         <value type="string"></value>
     </param>
 
-    <param name="dtem_dh" type="string">
+    <param name="dtem_dh" type="any">
         <shortdescription>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default) </shortdescription>
         <description>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default)</description>
-        <value type="double"></value>
-    </param>
-
-    <param name="h0" type="string">
-        <shortdescription>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</shortdescription>
-        <description>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</description>
+        <any type="variant"  limittypes="string double"/>  
         <value type="string"></value>
     </param>
 
-    <param name="atmtype" type="string">
+    <param name="h0" type="any">
+        <shortdescription>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</shortdescription>
+        <description>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</description>
+        <any type="variant"  limittypes="string double"/>  
+        <value type="string"></value>
+    </param>
+
+    <param name="atmtype" type="any">
         <shortdescription>atmtype. (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</shortdescription>
         <description>atmtype.(1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</description>
+        <any type="variant"  limittypes="string int"/>  
         <value type="string"></value>
     </param>
 
@@ -136,21 +139,24 @@
    SubParameters  when 'atmdetail' is True
 -->
 
-    <param name="altitude" type="string" subparam="true" >
+    <param name="altitude" type="any" subparam="true" >
         <shortdescription>altitude (km). (&quot;&quot; = value from MS.)</shortdescription>
         <description>altitude (km). (&quot;&quot; = value from MS.)</description>
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
-    <param name="temperature" type="string" subparam="true">
+    <param name="temperature" type="any" subparam="true">
         <shortdescription>ambient temperature (K). (&quot;&quot; = value from MS.)</shortdescription>
         <description>ambient temperature (K). (&quot;&quot; = value from MS.)</description>
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
-    <param name="pressure" type="string" subparam="true">
+    <param name="pressure" type="any" subparam="true">
         <shortdescription>ambient pressure (mbar). e.g. 1013.25 ,(&quot;&quot; = value from MS.)</shortdescription>
         <description>ambient pressure (mbar). e.g. 1013.25 ,(&quot;&quot; = value from MS.)</description>
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
@@ -160,15 +166,17 @@
         <value type="double">-1</value>
     </param>
 
-    <param name="PWV" type="string" subparam="true">
+    <param name="PWV" type="any" subparam="true">
         <shortdescription>zenith water vapor [mm]. (&quot;&quot; = Tool default)</shortdescription>
         <description>zenith water vapor [mm]. (&quot;&quot; = Tool default)</description>
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
-    <param name="dp" type="string" subparam="true">
+    <param name="dp" type="any" subparam="true">
         <shortdescription>initial pressure step [mbar].(&quot;&quot; = Tool default)</shortdescription>
         <description>initial pressure step [mbar].(&quot;&quot; = Tool default)</description>
+        <any type="variant"  limittypes="string double"/> 
         <value type="string"></value>
     </param>
 

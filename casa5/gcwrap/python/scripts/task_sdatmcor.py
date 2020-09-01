@@ -62,20 +62,20 @@ def sdatmcor(
         print('feed        =', feed)
         print('msselect    =', msselect)
         print('outputspw   =', outputspw)
-        print('dtem_dh     =', dtem_dh)
-        print('h0          =', h0)
+        print('dtem_dh     =', dtem_dh, type(dtem_dh))
+        print('h0          =', h0, type(h0))
         print('atmtype     =', atmtype)      # int
         print('atmdetail   =', atmdetail)    # bool
 
-        print('altitude    =', altitude)
-        print('temperature =', temperature)
-        print('pressure    =', pressure)
-        print('humidity    =', humidity)
-        print('PWV         =', PWV)
-        print('dp          =', dp)
-        print('dpm         =', dpm)
-        print('layerboundaries (doubleArray)  =', layerboundaries)
-        print('layertemperature (doubleArray) =', layertemperature)
+        print('altitude    =', altitude, type(altitude))
+        print('temperature =', temperature, type(temperature))
+        print('pressure    =', pressure, type(pressure))
+        print('humidity    =', humidity, type(humidity))
+        print('PWV         =', PWV, type(PWV))
+        print('dp          =', dp, type(dp))
+        print('dpm         =', dpm, type(dpm))
+        print('layerboundaries (doubleArray)  =', layerboundaries, type(layerboundaries))
+        print('layertemperature (doubleArray) =', layertemperature, type(layertemperature))
 
 #
 # File Handling
@@ -99,14 +99,19 @@ def sdatmcor(
     altitude    = form_value_unit(altitude, ['m'])
     temperature = form_value_unit(temperature, ['K'])
     pressure    = form_value_unit(pressure, ['mbar', 'hPa'])
-    humidity    = form_value_unit(humidity, ['%'])
+    humidity    = humidity  # through (string or float)
     PWV         = form_value_unit(PWV, ['mm'])
     dp          = form_value_unit(dp,  ['mbar', 'hPa'])
-    dpm         = dpm
+    dpm         = dpm  # through (string or float)
 
 # User-Define Profile (nothing =[] )
     if(len(layerboundaries) != len(layertemperature)):
         print("WARN: specified Count of Bounday and Temperature mismatch.")
+
+    # convert to List. #
+    layerboundaries = list_comma_string(layerboundaries)
+    layertemperature = list_comma_string(layertemperature)
+
 #
 # Ceall calc Function
 #
@@ -208,9 +213,14 @@ def set_antenna_param(in_arg, def_para):
         return  def_para
 
 def list_comma_string( separated_string):
+    if type(separated_string) is str:
         tmp_list = separated_string.split(',')  # convert to List #
         out_list = [int(s) for s in tmp_list]  # convert to list[int]
         return out_list
+    elif type(separated_string) is list:
+        return separated_string
+    else:
+        return []
 #
 # ATM Profile
 #
@@ -266,7 +276,7 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("***********************************")
-        print("**   calc_sdatmcor:: (0831-A)    **")
+        print("**   calc_sdatmcor:: (0901-A)    **")
         print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
@@ -398,6 +408,8 @@ def calc_sdatmcor(
 
     # datacolumn (XML fills default) ,to UPPER CASE #
     datacolumn = p_datacolumn.upper()
+    if (datacolumn == 'CORRECTED'):  # add '_DATA' if CORRECED #
+        datacolumn = 'CORRECTED_DATA' 
 
     # outfile #
     outfile = p_outfile[0]
@@ -542,7 +554,7 @@ def calc_sdatmcor(
     # Check
     for spw in outputspws:
         if not spw in spws: 
-            print("WARNING:: output spw %d not in procxessing spws. Use ALL." % spw)
+            print("WARNING:: output spw %d not in processing spws. Use ALL." % spw)
             outputspws = spws
 
             print('--- spws ', spws)
@@ -596,7 +608,7 @@ def calc_sdatmcor(
         t_altitude    = qa.quantity(altitude, 'm')       
         t_temperature = qa.quantity(tground, 'K')              # tground (original)
         t_pressure    = qa.quantity(pground/100.0, 'mbar')     # pground (original) in  [Pa]  convert to [mbar]
-        t_humidity    = hground  # float
+        t_humidity    = hground  # float                       # hground  in [percent =%]
         t_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) im [m] converto to [mm]
         t_dp          = qa.quantity(dp, 'mbar')  
         t_dpm         = dpm      # float      
@@ -610,10 +622,6 @@ def calc_sdatmcor(
         # example:
         #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
         #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
-
-        # set arg. # 
-        t_layerboundaries  = a_layerboundaries   # layer boundary [m]
-        t_layertemperature = a_layerboundaries   # layer temerature [K]
 
         #---------------------------------------
         # Change value, if the ARG spoecified 
@@ -638,7 +646,7 @@ def calc_sdatmcor(
             t_layertemperature = set_list_param(a_layertemperature, a_layertemperature)
 
         else:
-             print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True." )
+             print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True.\n\n" )
 
         # print to confirm #
         print(" ------------------------------------------------------")
@@ -717,15 +725,13 @@ def calc_sdatmcor(
 
         # Essential Query (required by org. script) #
         query_desc_id = 'DATA_DESC_ID in %s' % ddis[spwid] 
-
-        # edit text (expand reserved.)
         querytext = query_desc_id
-        print("**  used Query Test is [%s] **" % querytext )
 
         # query
         subtb = tb.query(querytext)
 
         # time data and numPol #
+        print( " - datacolumn [%s] is used." % datacolumn)
         tmdata = subtb.getcol('TIME')
         data = subtb.getcol(datacolumn)
         npol = data.shape[0]
@@ -743,9 +749,9 @@ def calc_sdatmcor(
         ###########################
         # Correction Main Loop
         ###########################
-        print("==================================")
+        print("=====================================")
         print("ATM Correction for loop (N=%d), " % len(tmdata))
-        print("==================================")
+        print("=====================================")
         cdata = data.copy()
         for i, t in enumerate(tmdata):
 
