@@ -600,23 +600,23 @@ class mstool_test_transform(mstool_test_base):
         self.assertAlmostEqual(centers[30], 1414142124.5500255)
         print
 
-    """
-    def test_statwt(self): 
-        """test ms.statwt"""
-        self.ms.close()
-        statwtms = 'ngc5921_statwt.ms'
-        shutil.copytree(self.testms, statwtms)
-        self.ms.open(statwtms, False)
-        self.assertTrue(self.ms.oldstatwt(fitspw='0:0~32', field=[0], datacolumn='data'))
-        rec = self.ms.getdata(['weight','sigma'])
-        self.ms.close()
-        self.removeMS(statwtms)
-        self.ms.open(self.testms) # prevent SEVERE ms::detached errors in cleanup
-        # orig weight=378.0, sigma=0.0514344
-        self.assertAlmostEqual(rec['weight'][0][0], .0101575451)
-        self.assertAlmostEqual(rec['sigma'][0][0], 9.9221458)
-        print
-    """
+    
+    #def test_statwt(self): 
+    #    """test ms.statwt"""
+    #    self.ms.close()
+    #    statwtms = 'ngc5921_statwt.ms'
+    #    shutil.copytree(self.testms, statwtms)
+    #    self.ms.open(statwtms, False)
+    #    self.assertTrue(self.ms.oldstatwt(fitspw='0:0~32', field=[0], datacolumn='data'))
+    #    rec = self.ms.getdata(['weight','sigma'])
+    #    self.ms.close()
+    #    self.removeMS(statwtms)
+    #    self.ms.open(self.testms) # prevent SEVERE ms::detached errors in cleanup
+    #    # orig weight=378.0, sigma=0.0514344
+    #    self.assertAlmostEqual(rec['weight'][0][0], .0101575451)
+    #    self.assertAlmostEqual(rec['sigma'][0][0], 9.9221458)
+    #    print
+
     def test_continuum_uv_cont_sub(self): 
         """test ms.continuumsub, uvsub, contsub"""
         # Make writable ms

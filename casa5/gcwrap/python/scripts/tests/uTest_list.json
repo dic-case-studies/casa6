@@ -327,6 +327,19 @@
              "comment":""
         },
         {
+             "testNumber":"3172",
+             "testName":"Rerefant",
+             "testScript":"test_req_task_rerefant",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Neal Schweighart",
+             "MaintainerEmail":"nschweig@nrao.edu",
+             "priority":"3",
+             "tag":"calibration",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
              "testNumber":"3175",
              "testName":"Uvcontsub",
              "testScript":"test_uvcontsub",
@@ -1114,6 +1127,19 @@
              "testLevel":"critical",
              "Maintainer":"Kanako Sugimoto",
              "MaintainerEmail":"kana.sugi@ezweb.ne.jp",
+             "priority":"3",
+             "tag":"simulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"Simanalyze",
+             "testScript":"test_req_task_simanalyze",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
              "priority":"3",
              "tag":"simulation",
              "suppressEmail": false,
@@ -2994,7 +3020,6 @@
         },
         {
              "testNumber":"0000",
-<<<<<<< HEAD
              "testName":"Sdintimaging",
              "testScript":"test_req_task_sdintimaging",
              "testType":"functionalTest",
@@ -3003,7 +3028,11 @@
              "MaintainerEmail":"scastro@nrao.edu",
              "priority":"4",
              "tag":"functionalTest",
-=======
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
              "testName":"STK VLASS TEST",
              "testScript":"test_stk_vlass_pipeline_imaging",
              "testType":"functionalTest",

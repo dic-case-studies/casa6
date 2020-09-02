@@ -119,6 +119,7 @@ def specfit(
 			goodcenterrange=goodcenterrange, goodfwhmrange=goodfwhmrange,
 			sigma=sigma, outsigma=outsigma
 		)
+
         try:
             param_names = specfit.__code__.co_varnames[:specfit.__code__.co_argcount]
             if is_python3:
@@ -138,13 +139,10 @@ def specfit(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
-    except Exception as instance:
-        casalog.post('*** Error *** ' + str(instance), 'SEVERE')
-        retval = None
-    myia.done()
-    if (wantreturn):
-    	return retval
-    else:
-        if (retval):
-           del retval
-        return None
+    finally:
+        myia.done()
+        if (wantreturn):
+            return retval
+        else:
+            if (retval):
+                del retval

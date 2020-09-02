@@ -106,7 +106,7 @@ class Fringefit_single_tests(unittest.TestCase):
         refant = 0
         refant_s = str(refant) 
         for pactive in itertools.product(*3*[[False, True]]):
-            fringefit(vis=self.msfile, paramactive=pactive, caltable=sbdcal, refant=refant_s)
+            fringefit(vis=self.msfile, paramactive=list(pactive), caltable=sbdcal, refant=refant_s)
             tblocal.open(sbdcal)
             fparam = tblocal.getcol('FPARAM')
             flag = tblocal.getcol('FLAG')
@@ -174,7 +174,38 @@ class Fringefit_dispersive_tests(unittest.TestCase):
         reference = os.path.join(datapath, dispcal)
         self.assertTrue(th.compTables(dispcal, reference, ['WEIGHT', 'SNR']))
 
-    
+
+class Fringefit_refant_bookkeeping_tests(unittest.TestCase):
+    prefix = 'n08c1-single'
+    msfile = prefix + '.ms'
+    sbdcal = prefix + '-book.sbdcal'
+
+    def setUp(self):
+        shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+        flagdata(self.prefix + '.ms', mode='manual', spw='*:0~2;29~31')
+        flagdata(self.prefix + '.ms', mode='manual', antenna='EF')
+
+    def tearDown(self):
+        shutil.rmtree(self.msfile)
+        shutil.rmtree(self.msfile + '.flagversions')
+        shutil.rmtree(self.sbdcal, True)
+
+    def test_bookkeeping(self):
+        eps = 1e-2
+        refant_ind = 1
+        fringefit(vis=self.msfile, caltable=self.sbdcal, refant='WB')
+        tblocal.open(self.sbdcal)
+        print("Haha, yes", file=sys.stderr)
+        fparam = tblocal.getcol('FPARAM')
+        flag = tblocal.getcol('FLAG')
+        tblocal.close()
+        for i in range(8):
+            self.assertTrue(abs(fparam[i, 0, refant_ind]) < eps )
+            self.assertTrue(abs(fparam[i, 0, refant_ind]) < eps)
+
+
+
+        
 def suite():
     return [Fringefit_tests, Fringefit_single_tests, Fringefit_dispersive_tests]
 

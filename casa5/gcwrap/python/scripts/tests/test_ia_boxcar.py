@@ -121,12 +121,11 @@ class ia_boxcar_test(unittest.TestCase):
                     self.assertRaises(
                         Exception, myia.boxcar, region=reg, axis=2, width=width
                     )
-                    self.assertFalse(
+                    with self.assertRaises(RuntimeError):
                         specsmooth(
                             imagename=imagename, outfile=outfile, region=reg, axis=2,
                             function="b", width=width
                         )
-                    )
                 else:
                     undec = []
                     if width==3:
@@ -152,12 +151,11 @@ class ia_boxcar_test(unittest.TestCase):
                                             Exception, myia.boxcar, region=reg, axis=2,
                                             width=width, dmethod=dmethod
                                         )
-                                        self.assertFalse(
+                                        with self.assertRaises(RuntimeError):
                                             specsmooth(
                                                 imagename=imagename, outfile=outfile, function="b",
                                                 region=reg, axis=2, width=width, dmethod=dmethod
                                             )
-                                        )
                                     while kk < len(undec)/width*width:
                                         sum = 0
                                         npoints = 0
