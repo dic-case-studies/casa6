@@ -93,10 +93,10 @@ NullLogger nulllogger;
 
 // Local Functions
 namespace {
-inline casacore::Vector<casacore::uInt> getOffStateIdList(casacore::MeasurementSet const &ms) {
+inline casacore::Vector<casacore::rownr_t> getOffStateIdList(casacore::MeasurementSet const &ms) {
   casacore::String taql("SELECT FLAG_ROW FROM $1 WHERE UPPER(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/");
   casacore::Table stateSel = casacore::tableCommand(taql, ms.state());
-  casacore::Vector<casacore::uInt> stateIdList = stateSel.rowNumbers();
+  casacore::Vector<casacore::rownr_t> stateIdList = stateSel.rowNumbers();
   debuglog << "stateIdList[" << stateIdList.nelements() << "]=";
   for (size_t i = 0; i < stateIdList.nelements(); ++i) {
     debuglog << stateIdList[i] << " ";
@@ -1571,7 +1571,7 @@ MeasurementSet SingleDishOtfCal::selectReferenceData(MeasurementSet const &ms)
     }
   }
 
-  Vector<uInt> rowList;
+  Vector<casacore::rownr_t> rowList;
 
   for (uInt field_id=0; field_id < tbl_field.nrow(); ++field_id){
     String field_sel(casacore::String::toString<uInt>(field_id));
@@ -1659,7 +1659,7 @@ MeasurementSet SingleDishOtfCal::selectReferenceData(MeasurementSet const &ms)
         }
         AlwaysAssert(edges_detection_ok,AipsError);
         // Compute ROW ids of detected edges. ROW "ids" are ROW ids in the MS filtered by user selection.
-        Vector<uInt> index_2_rowid = calc.getRowIdForOriginalMS();
+        Vector<casacore::rownr_t> index_2_rowid = calc.getRowIdForOriginalMS();
         size_t edges_count = ntrue(is_edge);
         size_t rowListIndex = rowList.size();
         rowList.resize(rowList.size() + edges_count, True);

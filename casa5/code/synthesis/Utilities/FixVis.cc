@@ -648,7 +648,7 @@ void FixVis::processSelected(uInt numInSel)
       vb.phaseCenterShift(dphase);
 
       // write changed UVWs
-      Vector <uInt> origRows = vb.rowIds();
+      Vector <casacore::rownr_t> origRows = vb.rowIds();
       for(uInt row = 0; row < numRows; row++){
 	UVWcol.put(origRows(row), uvw.column(row));
       }

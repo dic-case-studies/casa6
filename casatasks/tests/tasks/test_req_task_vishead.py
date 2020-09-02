@@ -83,7 +83,8 @@ class vishead_test(unittest.TestCase):
         ''' 1. test_takesMeasurementSet: Check that vishead takes a MeasurementSet (*.ms)'''
         casalog.setlogfile('testlog.log')
         vishead(vis=casaimagepath, mode='list')
-        success = ('SEVERE  vishead::image::open' not in open('testlog.log').read())
+        with open('testlog.log') as logf:
+            success = ('SEVERE  vishead::image::open' not in logf.read())
         self.assertTrue(success)
 
     def test_listMode(self):
@@ -102,7 +103,8 @@ class vishead_test(unittest.TestCase):
         ''' 3. test_summaryMode: Check that vishead in summary mode produces output in the logger with origin=summary'''
         casalog.setlogfile('testlog.log')
         vishead(vis=casaimagepath, mode='summary')
-        success = ('Antennas:' in open('testlog.log').read())
+        with open('testlog.log') as logf:
+            success = ('Antennas:' in logf.read())
         self.assertTrue(success)
 
     def test_getModeDefaultIndex(self):

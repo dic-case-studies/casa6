@@ -31,11 +31,11 @@ def sdsmooth(infile=None, datacolumn=None, antenna=None,
     try:
         if len(outfile) == 0:
             errmsg = 'outfile is empty.'
-            raise_exception(errmsg)
+            raise ValueError(errmsg)
         
         if (os.path.exists(outfile)) and (not overwrite):
             errmsg = outfile+' exists.'
-            raise_exception(errmsg)
+            raise ValueError(errmsg)
 
         sdms.open(infile)
         sdms.set_selection(spw=spw, field=field, 
@@ -55,11 +55,5 @@ def sdsmooth(infile=None, datacolumn=None, antenna=None,
         write_history(ms, outfile, 'sdsmooth', param_names,
                       param_vals, casalog)
 
-    except Exception:
-        raise
     finally:
         sdms.close()
-
-def raise_exception(errmsg):
-    casalog.post(errmsg, priority='SEVERE')
-    raise Exception(errmsg)

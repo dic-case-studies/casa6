@@ -33,6 +33,7 @@ import shutil
 import pprint
 import nose
 from taskinit import casalog
+import casa_stack_manip
 
 ##
 ## testwrapper.py depends upon the current directory being in the path because
@@ -221,12 +222,11 @@ def getsubtests(filename,list=[]):
 
 # Define which tests to run    
 whichtests = 0
-            
 
-def main(testnames=[]):
+def main(testnames):
 
     # Global variable used by regression framework to determine pass/failure status
-    global regstate  
+    global regstate
     regstate = False
         
     listtests = testnames
@@ -383,6 +383,20 @@ def main(testnames=[]):
     else:
         os.chdir(PWD)
 
+def main_with_rethrow(testnames):
+    """
+    Sets the __rethrow_casa_exceptions switch, and restores its value at the end.
+    This can be used to run tests with behavior similar to the casatasks version of tassk
+    in CASA6. That is, exceptions are raised normally by all tasks.
+    """
+    frame = casa_stack_manip.stack_frame_find()
+    orig_rethrow = frame.get('__rethrow_casa_exceptions', False)
+    try:
+        frame['__rethrow_casa_exceptions'] = True
+        main(testnames)
+    finally:
+        frame['__rethrow_casa_exceptions'] = orig_rethrow
+
 
 # ------------------ NOTE ---------------------------------------------
 # Once CASA moves to Python 2.7, the getpopt module should be replaced
@@ -492,8 +506,12 @@ if __name__ == "__main__":
         testnames = []
 
                     
+    frame = casa_stack_manip.stack_frame_find()
+    orig_rethrow = frame.get('__rethrow_casa_exceptions', False)
     try:
-        main(testnames)
+        frame['__rethrow_casa_exceptions'] = True
+        main_with_rethrow(testnames)
     except:
         traceback.print_exc()
-        
+    finally:
+        frame['__rethrow_casa_exceptions'] = orig_rethrow

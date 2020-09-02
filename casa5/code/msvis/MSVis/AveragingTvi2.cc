@@ -2785,7 +2785,7 @@ void AveragingTvi2::exposure (casacore::Vector<double> & expo) const
     return;
 }
 
-void AveragingTvi2::getRowIds (casacore::Vector<casacore::uInt> & rowids) const
+void AveragingTvi2::getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const
 {
     VisBuffer2* vb = getVisBuffer();
     rowids = vb->rowIds();

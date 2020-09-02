@@ -1302,7 +1302,7 @@ void CalCache::loadCalAxis(ROSolvableVisJonesMCol& mcol,
       break;
     }
     case PMS::ROW: {
-      Vector<uInt> rows(1, chunk);
+      Vector<casacore::rownr_t> rows(1, chunk);
       *row_[chunk] = rows;
       break;
     }
@@ -1634,7 +1634,7 @@ void CalCache::loadCalChunks(ROGJonesSplineMCol& mcol, ROCalDescColumns& dcol,
             break;
           }
           case PMS::ROW: {
-            Vector<uInt> sampleRow(nAnt, sample);
+            Vector<casacore::rownr_t> sampleRow(nAnt, sample);
             *row_[sample] = sampleRow;
             break;
           }

@@ -98,7 +98,7 @@ class ia_fromfits_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
         
         imagename = "xx.im"
-        self.assertTrue(importfits(fitsimage=fits, imagename=imagename))
+        importfits(fitsimage=fits, imagename=imagename)
         myia.open(imagename)
         msgs = myia.history()
         myia.done()
