@@ -144,6 +144,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_partitionHelper.py
   test_plotants.py
   test_plotcal.py
+  test_plotbandpass.py
   test_plotms.py
   test_plotprofilemap.py
   test_plotuv.py
