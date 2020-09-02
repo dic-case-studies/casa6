@@ -243,23 +243,20 @@ class imcollapse_test(unittest.TestCase):
     def test_4(self):
         """imcollapse: not specifying an output image is ok"""
         expected = "collapse_avg_2.fits"
-        shutil.copy(datapath + expected, expected)
-        for i in [0, 1]:
-            if i == 0:
-                mytool = run_collapse(
+        shutil.copy(ctsys.resolve(os.path.join(datapath,expected)), expected)
+        if is_CASA6:
+            self.assertRaises(
+                Exception, run_imcollapse, good_image, "mean", 2, "", "", "", 
+                "", "", "", False
+            )
+        else:
+            self.assertFalse(
+                run_imcollapse(
                     good_image, "mean", 2, "", "", "",
                     "", "", "", False
                 )
-                self.assertTrue(type(mytool) == type(ia))
-                self.checkImage(mytool, expected)
-            else:
-                self.assertFalse(
-                    run_imcollapse(
-                        good_image, "mean", 2, "", "", "",
-                        "", "", "", False
-                    )
-                )
-        
+            )
+
     def test_6(self):
         """imcollapse: memory only images can be collapsed"""
         mytool = run_collapse(
@@ -273,75 +270,58 @@ class imcollapse_test(unittest.TestCase):
     def test_7(self):
         """imcollapse: verify collapsing along multiple axes works"""
         expected = "collapse_avg_0_1.fits"
-        shutil.copy(datapath + expected, expected)
-        for i in [0, 1]:
-            for axes in ([0, 1], ["r", "d"], ["right", "dec"]):
-                if i == 0:
-                    mytool = run_collapse(
-                        good_image, "mean", axes, "", "", "",
-                        "", "", "", False
-                    )
-                    self.assertTrue(type(mytool) == type(ia))
-                    self.checkImage(mytool, expected)
-                else:
-                    outfile = "test_7.out"
-                    res = run_imcollapse(
-                        good_image, "mean", [0, 1], outfile, "", "",
-                        "", "", "", overwrite=True
-                    )
-                    self.assertTrue(res)
-                    self.checkImage(outfile, expected)
+        shutil.copy(ctsys.resolve(os.path.join(datapath,expected)), expected)
+        for axes in ([0, 1], ["r", "d"], ["right", "dec"]):
+            outfile = "test_7.out"
+            res = run_imcollapse(
+                good_image, "mean", [0, 1], outfile, "", "",
+                "", "", "", overwrite=True
+            )
+            self.assertTrue(res)
+            self.checkImage(outfile, expected)
 
     def test_8(self):
         """imcollapse: test both OTF and permanent masking works"""
-        xx = iatool()
+        xx = image()
         good_image_im = "collapse_in.im"
         xx.fromfits(good_image_im, good_image)
         xx.calcmask(good_image_im + "<78")
         xx.close()
         xx.done()
-        mytool = False
+        mytool = image()
         axes = 3
-        for i in [0,1]:
-            for j in [0, 1, 2]:
-                mask = good_image_im + ">7"
-                if j == 0:
-                    xx.open(good_image_im)
-                    xx.maskhandler("set", "")
-                    xx.close()
-                    xx.done()
-                if j == 1:
-                    mask = ""
-                    xx.open(good_image_im)
-                    xx.maskhandler("set", "mask0")
-                    xx.close()
-                    xx.done()
-                for func in ["mean", "median"]:
-                    for outfile in ["", "test_8_"+str(i) + str(j) + func]:
-                        if i == 0:
-                            mytool = run_collapse(
-                                good_image_im, func, axes, outfile, "", "",
-                                "", "", mask, False
-                            )
-                            self.assertTrue(type(mytool) == type(ia))
-                        else:
-                            outfile = "test8.im"
-                            res = run_imcollapse(
-                                good_image_im, func, axes, outfile, "", "",
-                                "", "", mask, True
-                            )
-                            self.assertTrue(type(res))
-                            mytool.open(outfile)
-                        npts = mytool.statistics()["npts"]
-                        mytool.close()
-                        mytool.done()
-                        if (j == 0):
-                            self.assertTrue(npts == 25)
-                        elif (j == 1):
-                            self.assertTrue(npts == 26)
-                        else:
-                            self.assertTrue(npts == 24)
-                            
+        for j in [0, 1, 2]:
+            mask = good_image_im + ">7"
+            if j == 0:
+                xx.open(good_image_im)
+                xx.maskhandler("set", "")
+                xx.close()
+                xx.done()
+            if j == 1:
+                mask = ""
+                xx.open(good_image_im)
+                xx.maskhandler("set", "mask0")
+                xx.close()
+                xx.done()
+            for func in ["mean", "median"]:
+                for outfile in ["", "test_8_"+str(i) + str(j) + func]:
+                    outfile = "test8.im"
+                    res = run_imcollapse(
+                        good_image_im, func, axes, outfile, "", "",
+                        "", "", mask, True
+                    )
+                    self.assertTrue(type(res))
+                    mytool.open(outfile)
+                    npts = mytool.statistics()["npts"]
+                    mytool.close()
+                    mytool.done()
+                    if (j == 0):
+                        self.assertTrue(npts == 25)
+                    elif (j == 1):
+                        self.assertTrue(npts == 26)
+                    else:
+                        self.assertTrue(npts == 24)
+
     def test_median(self):
         """Test median when collapsing along multiple axes"""
         myia = iatool()
