@@ -110,6 +110,36 @@ def merge_dict(d1, d2):
     d12.update(d2)
     return d12
 
+def remove_tables_starting_with(filename):
+    """
+    Remove files/directories/symlinks 'filename*'.
+    For filename, '', '.' and those starting with '..' are not allowed.
+    """
+    if filename == '.' or filename[:2] == '..':
+        raise Exception("Dangerous! Attempting to remove '" + filename + "*'!!")
+    elif filename == '':
+        raise Exception("The parameter 'filename' must not be a null string.")
+
+    import glob
+    filenames = glob.glob('{}*'.format(filename))
+
+    for filename in filenames:
+        remove_table(filename)
+
+def remove_table(filename):
+    """
+    Remove a single directory.
+    For filename, '.' and those starting with '..' are not allowed.
+    """
+    if filename == '.' or filename[:2] == '..':
+        raise Exception("Dangerous! Attempting to remove '" + filename + "'!!")
+    
+    if os.path.exists(filename):
+        if os.path.isdir(filename):
+            shutil.rmtree(filename)
+        else: # file or symlink
+            os.remove(filename)
+
 
 ###
 # Base class for sdimaging unit test
@@ -422,9 +452,8 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
 
         default(sdimaging)
@@ -438,10 +467,9 @@ class sdimaging_test0(sdimaging_unittest_base):
                                minweight=self.minweight0)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
-
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def test000(self):
@@ -598,8 +626,7 @@ class sdimaging_test1(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
@@ -615,9 +642,8 @@ class sdimaging_test1(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -927,8 +953,7 @@ class sdimaging_test2(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
@@ -941,9 +966,8 @@ class sdimaging_test2(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -1064,8 +1088,7 @@ class sdimaging_test3(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
@@ -1078,9 +1101,8 @@ class sdimaging_test3(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -1197,11 +1219,9 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
+        remove_table(self.outfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,outfile=self.outfile,
                                intent="",nchan=self.nchan,start=self.start,
@@ -1210,9 +1230,8 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -1345,11 +1364,9 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         self.cache_validator = TableCacheValidator()
 
         for name in self.rawfiles:
-            if os.path.exists(name):
-                shutil.rmtree(name)
+            remove_table(name)
             shutil.copytree(os.path.join(self.datapath,name), name)
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
+        remove_table(self.outfile)
         # Common task parameters of the class
         self.task_param = dict(mode=self.mode_def,intent="",
                                gridfunction=self.kernel,outfile=self.outfile,
@@ -1357,14 +1374,13 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
                                cell=self.cell_auto,imsize=self.imsize_auto)
 
         default(sdimaging)
-        os.system( 'rm -rf '+self.prefix+'*' )
-
+        remove_tables_starting_with(self.prefix)
+        
     def tearDown(self):
         for name in self.rawfiles:
-            if (os.path.exists(name)):
-                shutil.rmtree(name)
-        os.system( 'rm -rf '+self.prefix+'*' )
-
+            remove_table(name)
+        remove_tables_starting_with(self.prefix)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, task_param, refstats, shape,
@@ -2161,11 +2177,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
+        remove_table(self.outfile)
         default(sdimaging)
         with tbmanager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
@@ -2174,9 +2188,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self.fix_timestamp()
 
     def tearDown(self):
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -2362,10 +2375,9 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.infiles):
-            shutil.rmtree(self.infiles)
+        remove_table(self.infiles)
         shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_tables_starting_with(self.prefix)
 
         # Common task parameters of the class
         self.task_param = dict(infiles=self.infiles,mode=self.mode,
@@ -2377,20 +2389,17 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if os.path.exists(self.infiles):
-            shutil.rmtree(self.infiles)
-        # Since the data is flagged by flagdata, flagversions directory
+        remove_table(self.infiles)
+        # Since the data is flagged by flagdata, flagversions directory 
         # is automatically created. This must be removed
         flagversions = self.infiles + '.flagversions'
-        if os.path.exists(flagversions):
-            shutil.rmtree(flagversions)
+        remove_table(flagversions)
         # By executing flagdata task, flagdata.last is created automatically
         # This must also be removed
         flagdata_last = 'flagdata.last'
-        if os.path.exists(flagdata_last):
-            os.remove(flagdata_last)
+        remove_table(flagdata_last)
         # Remove test image and its weight image
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -2507,11 +2516,9 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.outfile):
-            os.system('rm -rf %s*' % self.outfile)
+        remove_tables_starting_with(self.outfile)
         for name in self.infiles:
-            if os.path.exists(name):
-                shutil.rmtree(name)
+            remove_table(name)
             shutil.copytree(os.path.join(self.datapath,self.org_ms), name)
 
         default(sdimaging)
@@ -2528,12 +2535,10 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     def tearDown(self):
         if self.clearup:
             outfile = self.outfile + image_suffix
-            if os.path.exists(outfile):
-                os.system('rm -rf %s*' % self.outfile)
+            remove_tables_starting_with(self.outfile)
             for name in self.infiles:
-                if os.path.exists(name):
-                    shutil.rmtree(name)
-
+                remove_table(name)
+                    
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, task_param=None,refstats=None):
@@ -2623,16 +2628,14 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.infiles):
-            shutil.rmtree(self.infiles)
+        remove_table(self.infiles)
         shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
         default(sdimaging)
         self.param = self.param_base.copy()
 
     def tearDown(self):
-        if os.path.exists(self.infiles):
-            shutil.rmtree(self.infiles)
-        os.system('rm -rf {0}*'.format(self.outfile))
+        remove_table(self.infiles)
+        remove_tables_starting_with(self.outfile)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -2775,13 +2778,10 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                   'gridfunction': 'BOX',
                   'outfile': outfile,
                   'intent': ""}
-
-    def __remove_table(self, f):
-        if os.path.exists(f):
-            shutil.rmtree(f)
-
+    
+    
     def __copy_table(self, f):
-        self.__remove_table(f)
+        remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
 
     def setUp(self):
@@ -2792,12 +2792,12 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 
     def tearDown(self):
         for infile in self.infiles_ephem:
-            self.__remove_table(infile)
-        self.__remove_table(self.infiles_selection)
-        self.__remove_table(self.infiles_azel)
-        #self.__remove_table(self.outfile)
-        os.system('rm -rf %s*'%(self.outfile))
-
+            remove_table(infile)
+        remove_table(self.infiles_selection)
+        remove_table(self.infiles_azel)
+        #remove_table(self.outfile)
+        remove_tables_starting_with(self.outfile)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -2938,13 +2938,10 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                   'gridfunction': 'BOX',
                   'outfile': outfile,
                   'intent': ""}
-
-    def __remove_table(self, f):
-        if os.path.exists(f):
-            shutil.rmtree(f)
-
+    
+    
     def __copy_table(self, f):
-        self.__remove_table(f)
+        remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
 
     def setUp(self):
@@ -2955,9 +2952,9 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         self.__copy_table(self.infiles)
 
     def tearDown(self):
-        self.__remove_table(self.infiles)
-        os.system('rm -rf %s*'%(self.outfile))
-
+        remove_table(self.infiles)
+        remove_tables_starting_with(self.outfile)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3111,12 +3108,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     infiles = []
     outfiles = [] # have a list of outfiles as multiple task execution may occur in a test
 
-    def __remove_table(self, f):
-        if os.path.exists(f):
-            shutil.rmtree(f)
-
+    
     def __copy_table(self, f):
-        self.__remove_table(f)
+        remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
 
     def setUp(self):
@@ -3128,9 +3122,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def tearDown(self):
         for infile in self.infiles:
-            self.__remove_table(infile)
+            remove_table(infile)
         for outfile in self.outfiles:
-            os.system('rm -rf %s*'%(outfile))
+            remove_tables_starting_with(outfile)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -3259,12 +3253,9 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
                   pointingcolumn = "direction")
     outfile = params['outfile']
 
-    def __remove_table(self, f):
-        if os.path.exists(f):
-            shutil.rmtree(f)
-
+    
     def __copy_table(self, f):
-        self.__remove_table(f)
+        remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
 
     def setUp(self):
@@ -3276,9 +3267,9 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
 
     def tearDown(self):
         for infile in self.params['infiles']:
-            self.__remove_table(infile)
-        os.system('rm -rf %s*'%(self.outfile))
-
+            remove_table(infile)
+        remove_tables_starting_with(self.outfile)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3363,21 +3354,16 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
 
     def __clear_up(self):
         for data in self.data_list:
-            if os.path.exists(data):
-                shutil.rmtree(data)
+            remove_table(data)
         outfile = self.outfile + image_suffix
-        if os.path.exists(outfile):
-            shutil.rmtree(outfile)
-            shutil.rmtree(self.outfile + '.weight')
-            shutil.rmtree(self.outfile + '.sumwt')
-            #shutil.rmtree(self.outfile + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
+        remove_table(outfile)
+        remove_table(self.outfile + '.weight')
+        #remove_table(self.outfile + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
         outfile_ref = self.outfile_ref + image_suffix
-        if os.path.exists(outfile_ref):
-            shutil.rmtree(outfile_ref)
-            shutil.rmtree(self.outfile_ref + '.weight')
-            shutil.rmtree(self.outfile_ref + '.sumwt')
-            #shutil.rmtree(self.outfile_ref + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
-
+        remove_table(outfile_ref)
+        remove_table(self.outfile_ref + '.weight')
+        #remove_table(self.outfile_ref + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
+    
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):
             self._test_clipping([infiles], is_clip_effective)
@@ -3608,8 +3594,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        if os.path.exists(self.rawfile):
-            shutil.rmtree(self.rawfile)
+        remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
@@ -3622,9 +3607,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         default(sdimaging)
 
     def tearDown(self):
-        if (os.path.exists(self.rawfile)):
-            shutil.rmtree(self.rawfile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        remove_table(self.rawfile)
+        remove_tables_starting_with(self.prefix)
 
         self.assertTrue(self.cache_validator.validate())
 
@@ -3778,12 +3762,9 @@ class sdimaging_test_output(sdimaging_unittest_base):
                   intent = '')
     outfile = params['outfile']
 
-    def __remove_table(self, f):
-        if os.path.exists(f):
-            shutil.rmtree(f)
-
+    
     def __copy_table(self, f):
-        self.__remove_table(f)
+        remove_table(f)
         copytree_ignore_subversion(self.datapath, f)
 
     def setUp(self):
@@ -3795,9 +3776,9 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
     def tearDown(self):
         for infile in self.params['infiles']:
-            self.__remove_table(infile)
-        os.system('rm -rf %s*'%(self.outfile))
-
+            remove_table(infile)
+        remove_tables_starting_with(self.outfile)
+        
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3807,17 +3788,17 @@ class sdimaging_test_output(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
 
-    # a test to verify CAS-10893
-    def test_output_no_psf(self):
-        """test_no_psf: Check if .psf is no longer output."""
-        os.system('rm -rf %s*'%(self.outfile))
+    # a test to verify CAS-10891/CAS-10893
+    def test_output_no_sumwt_no_psf(self):
+        """test_no_sumwt_no_psf: Check if .sumwt and .psf are no longer output."""
+        remove_tables_starting_with(self.outfile)
         self.run_test()
 
         # check data that must be output
-        for suffix in ['.image', '.weight', '.sumwt']:
+        for suffix in ['.image', '.weight']:
             self.assertTrue(os.path.exists(self.outfile+suffix), msg=suffix+' not found.')
         # check data that must not be output
-        for suffix in ['.psf']:
+        for suffix in ['.sumwt', '.psf']:
             self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
 
 

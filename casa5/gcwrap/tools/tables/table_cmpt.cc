@@ -11,7 +11,9 @@
  Note to self what happens when we open another table if one is already opened?
  ***/
 
+#include <climits>
 #include <iostream>
+#include <algorithm>
 #include <table_cmpt.h>
 #include <casa/aips.h>
 #include <tables/DataMan/IncrementalStMan.h>
@@ -734,7 +736,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
    }
    else{
      std::vector<int> shape;
-     Vector<uInt> rownrs (result.node().nrow());
+     Vector<casacore::rownr_t> rownrs (result.node().nrow());
      indgen (rownrs);
      //cerr << "rownrs " << result.node().nrow() << "  is scalar " << result.node().isScalar() << endl;
      if(result.node().isScalar())
@@ -1072,7 +1074,7 @@ std::vector<int>
 table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
 {
  *itsLog << LogOrigin(__func__, name());
- std::vector<int> rstat(0);
+ std::vector<long long int> rstat(0);
  try {
 	 if(itsTable){
 		 TableProxy dummy;
@@ -1086,7 +1088,12 @@ table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ std::vector<int> result(rstat.size( ));
+ std::transform( rstat.begin( ), rstat.end( ), result.begin( ),
+                 []( long long int e ) {
+                     return e >= INT_MIN && e <= INT_MAX  ? e : -1;
+                 } );
+ return result;
 }
 
 bool
@@ -1186,8 +1193,8 @@ table::ncols()
  int rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int> myshape = itsTable->shape();
-	    rstat = myshape[0];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[0] >= INT_MIN && myshape[0] <= INT_MAX ? myshape[0] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -1205,8 +1212,8 @@ table::nrows()
  Int rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int> myshape = itsTable->shape();
-	    rstat = myshape[1];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[1] >= INT_MIN && myshape[1] <= INT_MAX ? myshape[1] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -2373,13 +2380,13 @@ bool table::testincrstman(const std::string& column)
 			}
 
 			uInt offenndingCursor = 0;
-			uInt offendingBucketStartRow = 0;
+			casacore::rownr_t offendingBucketStartRow = 0;
 			uInt offendingBucketNrow = 0;
 			uInt offendingBucketNr = 0;
 			uInt offendingCol = 0;
 			uInt offendingIndex = 0;
-			uInt offendingRow = 0;
-			uInt offendingPrevRow = 0;
+			casacore::rownr_t offendingRow = 0;
+			casacore::rownr_t offendingPrevRow = 0;
 
 			ROIncrementalStManAccessor acc(itsTable->table(), dataManagerGroup);
 			ok = acc.checkBucketLayout (	offenndingCursor,

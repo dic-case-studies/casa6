@@ -74,7 +74,7 @@ try{
     MeasurementSet ms(msName, TableLock(TableLock::UserNoReadLocking), Table::Update);
     ///select on rowids
     cerr << "rowids " << rowids << endl;
-    MeasurementSet mssel=ms(rowids);
+    MeasurementSet mssel=ms(RowNumbers(rowids));
     mssel.lock();
     vi::VisibilityIterator2 vi2(mssel, vi::SortColumns(), true);
     

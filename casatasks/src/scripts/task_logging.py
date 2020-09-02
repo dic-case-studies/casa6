@@ -37,3 +37,7 @@ def end_log( state, tname, result ):
     _clog.post( '##### End Task: ' + tname + '  ' + spaces + ' #####' )
     _clog.post( '##########################################' )
     return result
+
+def except_log(tname, exc):
+    _clog.post('Task {} raised an exception of class {} with the following message: {}'.
+               format(tname, type(exc).__name__, exc) ,'ERROR')

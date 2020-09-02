@@ -759,7 +759,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
       MSSource& mss=theMS.source();
      
       Int sid=fCol.sourceId().get(fieldIds[0]);
-      Vector<uInt> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      Vector<casacore::rownr_t> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       else{
@@ -1513,7 +1513,7 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       const MSSource& mss=theMS.source();
       
       Int sid=fCol.sourceId().get(field);
-      Vector<uInt> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      Vector<casacore::rownr_t> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       const TableRecord& keywords=mss.keywordSet();

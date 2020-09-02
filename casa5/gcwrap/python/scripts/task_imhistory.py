@@ -19,9 +19,7 @@ def imhistory(
             return _myia.history(verbose)
         elif mode.startswith("a") or mode.startswith("A"):
             return _myia.sethistory(origin=origin, history=message)
-        raise Exception("Unsopported mode " + mode)
-    except Exception as instance:
-        casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
-        raise
+        raise ValueError("Unsopported mode " + mode)
+
     finally:
         _myia.done()
