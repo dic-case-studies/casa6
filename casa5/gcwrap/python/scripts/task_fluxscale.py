@@ -190,11 +190,11 @@ def fluxscale(vis=None, caltable=None, fluxtable=None, reference=None, transfer=
         # check the input param
         if fluxtable=="":
             casalog.post("Missing fluxtable name.","SEVERRE")
-            raise Exception("Missing fluxtable name.")
+            raise ValueError("Missing fluxtable name.")
         else:
             if os.path.exists(fluxtable) and not append:
                 casalog.post("fluxtable %s exists." % fluxtable, "SEVERE")
-                raise Exception("fluxtable %s exists. Please specify a different name. Or set append=True, to append the results to the table." % fluxtable)
+                raise ValueError("fluxtable %s exists. Please specify a different name. Or set append=True, to append the results to the table." % fluxtable)
 
         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
         output = mycb.fluxscale(tablein=caltable,tableout=fluxtable,reference=reference,
@@ -202,7 +202,6 @@ def fluxscale(vis=None, caltable=None, fluxtable=None, reference=None, transfer=
                                 refspwmap=refspwmap,gainthreshold=gainthreshold,antenna=antenna,
                                 timerange=timerange,scan=scan,
                                 incremental=incremental,fitorder=fitorder,display=display)
-        mycb.close()
 
         #write history
         try:
@@ -218,9 +217,7 @@ def fluxscale(vis=None, caltable=None, fluxtable=None, reference=None, transfer=
         except Exception as instance:
             casalog.post( "*** Error \'%s\' updating HISTORY" % (instance), 'WARN' )
 
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
+    finally:
         mycb.close()
-        raise
 
     return output

@@ -109,7 +109,8 @@ class ia_tofits_test(unittest.TestCase):
         yy.fromshape(name, [1,1,1,1])
         self.assertRaises(Exception, yy.tofits, overwrite=True)
         yy.done()
-        self.assertFalse(exportfits(imagename=name, overwrite=True))
+        with self.assertRaises(RuntimeError):
+            exportfits(imagename=name, overwrite=True)
     
     def test_multibeam(self):
         """Test exporting and importing an image with multiple beams"""

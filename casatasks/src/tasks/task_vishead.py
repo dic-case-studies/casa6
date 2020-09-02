@@ -83,58 +83,52 @@ def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=No
         #MS_VERSION (probably not)
     }
     
-    try:
-        # In list mode, list the keywords.
-        if mode == 'list' or mode == '':
+    # In list mode, list the keywords.
+    if mode == 'list' or mode == '':
 
-            #tb.open(vis)
-            #tb.summary()
+        #tb.open(vis)
+        #tb.summary()
 
-            values = {}
-            if not listitems:
-                listitems = list(keywords.keys())
-                listitems.sort()
-            for key in listitems:
-                if key in keywords:
-                    kwtuple = keywords.get(key)
-                    if keyword_exists(vis, kwtuple):
-                        casalog.post('    ' + str(kwtuple[0]) + \
-                                     ' -> ' + str(kwtuple[1]), 'DEBUG1')
-                        values[key] = getput_keyw('get', vis, kwtuple, '')
-                        if len(kwtuple) > 2:
-                            casalog.post(key + ': ' + str(kwtuple[2](values[key])),
-                                         'INFO')
-                        else:
-                            casalog.post(key + ': ' + str(values[key]), 'INFO')  
+        values = {}
+        if not listitems:
+            listitems = list(keywords.keys())
+            listitems.sort()
+        for key in listitems:
+            if key in keywords:
+                kwtuple = keywords.get(key)
+                if keyword_exists(vis, kwtuple):
+                    casalog.post('    ' + str(kwtuple[0]) + \
+                                 ' -> ' + str(kwtuple[1]), 'DEBUG1')
+                    values[key] = getput_keyw('get', vis, kwtuple, '')
+                    if len(kwtuple) > 2:
+                        casalog.post(key + ': ' + str(kwtuple[2](values[key])),
+                                     'INFO')
                     else:
-                        casalog.post(key + ': <undefined>', 'INFO')
+                        casalog.post(key + ': ' + str(values[key]), 'INFO')
                 else:
-                    casalog.post("Unrecognized item: " + key, 'WARN')
-                    
-            return values
-
-        # In summary mode, just list the MS basic info.
-        elif mode == 'summary':
-            _ms.open(vis)
-            _ms.summary()
-            _ms.close()
-            print("Summary information is listed in logger")
-
-        # In GET/PUT mode, focus on 1 particular bit of MS data
-        elif (mode=='get' or mode=='put'):
-            if not hdkey in keywords:
-                raise Exception("hdkey " + str(hdkey) +" is not a recognized keyword. Your options are " + str(keywords.keys()))
-
-            # get/put the data specified by hdkey
-            if mode == 'get':
-                value = getput_keyw(mode, vis, keywords[hdkey], hdindex)
-                casalog.post(hdkey+': '+str(value))
-                return value
+                    casalog.post(key + ': <undefined>', 'INFO')
             else:
-                getput_keyw(mode, vis, keywords[hdkey], hdindex, hdvalue)
-                casalog.post(hdkey + ' set to ' + str(hdvalue))
+                casalog.post("Unrecognized item: " + key, 'WARN')
 
-    except Exception as instance:
-        casalog.post( str('*** Error *** ') + str(instance), 'SEVERE')
+        return values
 
-    return
+    # In summary mode, just list the MS basic info.
+    elif mode == 'summary':
+        _ms.open(vis)
+        _ms.summary()
+        _ms.close()
+        print("Summary information is listed in logger")
+
+    # In GET/PUT mode, focus on 1 particular bit of MS data
+    elif (mode=='get' or mode=='put'):
+        if not hdkey in keywords:
+            raise Exception("hdkey " + str(hdkey) +" is not a recognized keyword. Your options are " + str(keywords.keys()))
+
+        # get/put the data specified by hdkey
+        if mode == 'get':
+            value = getput_keyw(mode, vis, keywords[hdkey], hdindex)
+            casalog.post(hdkey+': '+str(value))
+            return value
+        else:
+            getput_keyw(mode, vis, keywords[hdkey], hdindex, hdvalue)
+            casalog.post(hdkey + ' set to ' + str(hdvalue))

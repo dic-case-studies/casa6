@@ -65,8 +65,10 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
                                         comment='Original flags at import into CASA using importasap',
                                         merge='save')
                 aflocal.done()
+        else:
+            raise RuntimeError('Failure in importasap')
 
-       # Write history to output MS
+        # Write history to output MS
         param_names = importasap.__code__.co_varnames[:importasap.__code__.co_argcount]
         if is_python3:
             vars = locals()
@@ -76,10 +78,6 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
         write_history(myms, outputvis, 'importasap', param_names,
                       param_vals, casalog)
 
-        return status
-    except Exception as instance:
-        casalog.post('*** Error *** ' + str(instance), 'SEVERE')
-        raise
     finally:
         mycb.close()
 

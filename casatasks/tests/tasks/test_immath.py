@@ -86,6 +86,7 @@ import traceback
 import os
 import shutil
 import random
+import re
 import time
 import numpy as np
 import glob
@@ -108,6 +109,8 @@ else:
     _rg = rgtool()
     mytb = tbtool()
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -422,11 +425,14 @@ class immath_test1(unittest.TestCase):
                     retValue['error_msgs']=retValue['error_msgs']\
                               + "\nError: Bad region file, 'garbage.rgn',"\
                               + " was not reported as bad."+str(results)
-        except Exception:
+        except Exception(err):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Unable to create bad region file.\n\t"
-            raise
+            raise(err)
+        finally:
+            if os.path.exists('garbage.rgn'):
+                os.remove('garbage.rgn')
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
     
@@ -823,8 +829,8 @@ class immath_test1(unittest.TestCase):
 class immath_test2(unittest.TestCase):   
 
     def setUp(self):
-        if(os.path.exists(imageList2[0])):
-            for img in imageList2:
+        for img in imageList2:
+            if os.path.exists(img):
                 shutil.rmtree(img)
                 
         # FIXME: add links to repository
@@ -900,7 +906,7 @@ class immath_test2(unittest.TestCase):
             myia.done()
             myia.open("expr_test1")
             got = myia.getchunk()
-            myia.done()
+            myia.done(remove=True)
             self.assertTrue((expected == got).all(), "got not equal to expected for doubling pixel values")
             
 
@@ -968,6 +974,8 @@ class immath_test2(unittest.TestCase):
                 self.assertTrue((got == expected).all()) 
                 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
+        if os.path.exists('expr_test2'):
+            shutil.rmtree('expr_test2') 
     
     def test_expr3(self):
         '''Immath expr3: Add plane to an image'''
@@ -988,7 +996,7 @@ class immath_test2(unittest.TestCase):
         # function, however, we are assuming that its a 256x256x1x46 image.
         size=[]
         try:
-            myia.open( outimage )
+            myia.open(outimage)
             size = myia.shape()
             myia.done()
         except Exception as e:
@@ -1008,11 +1016,12 @@ class immath_test2(unittest.TestCase):
         expected = chunk1 + chunk2
         myia.open(outimage)
         got = myia.getchunk()
-        myia.done()
+        myia.done(remove=True)
         self.assertTrue((got - expected < 0.000001 ).all())
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-    
+        if os.path.exists('expr_test2'):
+            shutil.rmtree('expr_test2') 
     
     ####################################################################
     # Testing various the various polarization modes for data
@@ -1053,7 +1062,7 @@ class immath_test2(unittest.TestCase):
         self.assertTrue(immath(imagename=imList[0:2], outfile=outfile, mode='poli' ))
         myia.open(outfile)
         self.assertTrue(myia.coordsys().stokes()[0] == 'Plinear')
-        myia.done()
+        myia.done(remove=True)
         imList = ['pol_test_Q.im', 'pol_test_U.im']
         self.assertTrue(immath( imagename=imList, outfile='pol_test2', mode='pola' ))
  
@@ -1119,16 +1128,18 @@ class immath_test2(unittest.TestCase):
         '''Immath: verification of fix to CAS-1910'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         try:
-    
+            outfile = 'cas-1910_out.im' 
             if (
                 not immath(
-                    imagename=cas1910_im, outfile='cas-1910_out.im',
+                    imagename=cas1910_im, outfile=outfile,
                     mode='evalexpr', expr='IM0*1',
                     box='708,1158,1006,1456'
                 )
             ):
                 retValue['success'] = False
                 retValue['error_msgs'] += "\nimmath returned False for setting box correctly (CAS-1910)"
+            if os.path.exists(outfile):
+                shutil.rmtree(outfile)
         except:
             retValue['success'] = False
             retValue['error_msgs'] += "\nimmath threw exception for setting box correctly (CAS-1910)"
@@ -1191,10 +1202,13 @@ class immath_test2(unittest.TestCase):
                 self.assertTrue(res)
                 myia.open(outfile)
                 self.assertTrue((myia.shape() == expected).all())
-                myia.close()
+                myia.done(remove=True)
                 i += 1
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
+beam0 = 'mybeamtest0.im'
+beam1 = 'mybeamtest1.im'
+beam_out = 'myout.im'
 
 class immath_test3(unittest.TestCase):
 
@@ -1206,6 +1220,9 @@ class immath_test3(unittest.TestCase):
         for img in imageList4 + [spix_out]:
             if os.path.exists(img):
                 shutil.rmtree(img)     
+        for img in [beam0, beam1, beam_out, 'a.im', 'b.im', 'hist1.im', 'hist2.im']:
+            if os.path.exists(img):
+                shutil.rmtree(img)
         
         os.system('rm -rf pola*')
         os.system('rm -rf poli*')
@@ -1349,7 +1366,6 @@ class immath_test3(unittest.TestCase):
         except:
             self.assertFalse(os.path.exists(outfile))
 
-
     def test_CAS2943(self):
         """Test the stretch parameter"""
         myia.fromshape("myim.im", [10, 20, 4, 40])
@@ -1367,9 +1383,9 @@ class immath_test3(unittest.TestCase):
         )
         myia.open(outfile)
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
-        myia.done()
+        myia.done(remove=True)
         outfile = "out2.im"
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
                 expr="1*IM0", mask="mask2.im > 5", stretch=False
@@ -1388,9 +1404,9 @@ class immath_test3(unittest.TestCase):
         )
         myia.open(outfile)
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
-        myia.done()
+        myia.done(remove=True)
         outfile = "out4.im"
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
                 expr="1*IM0", mask="mask3.im > 5", stretch=False
@@ -1402,8 +1418,13 @@ class immath_test3(unittest.TestCase):
                     expr="1*IM0", mask="mask3.im > 5", stretch=False
                 )
             )
+        for img in ('myim.im', 'mask1.im', 'mask2.im', 'mask3.im'):
+            if os.path.exists(img):
+                shutil.rmtree(img)
         
     def test21(self):
+        # FIXME there are tests in here that do not test immath
+        # these should be moved
         """Test moved from imagetest regreesion"""
         
         # Define some arrays to be stored in the test images.
@@ -1534,6 +1555,9 @@ class immath_test3(unittest.TestCase):
         # Remove the image files created.
         # Note that im.4 has been moved into im.1.
         ok = global_iet_im1.done()
+        for img in (outf, imname1, imname2, imname4, imname5):
+            if os.path.exists(img):
+                shutil.rmtree(img)
       
     def test_precision(self):
         """Test ia.imagecalc() support for various precisions"""
@@ -1585,8 +1609,12 @@ class immath_test3(unittest.TestCase):
                 self.assertTrue(
                     (cc == expecv).all(), "wrong values for " + mytype
                 )
-        
+            for img in [out0, out1]:
+                if os.path.exists(img):
+                    os.system('rm -rf ' +img)
+
     def test_8(self):
+        # FIXME some of these tests do not test immath and so should be moved
         """Tests moved from imagetest regression, some are probably useless"""
         imname = 'ia.fromarray1.image'
         imname2 = 'ia.fromshape2.image'
@@ -1628,8 +1656,12 @@ class immath_test3(unittest.TestCase):
         )
         myia.close()  # needed to remove table lock preventing myim.done
         myim.remove(done=True)
+        for img in (imname, imname2, imname3):
+            if os.path.exists(img):
+                shutil.rmtree(img)
         
     def test_complex_calc(self):
+        # FIXME not an immath test, should be moved to the proper file
         """Test ia.calc on complex images"""
         shape = [4, 4]
         im1 = 'complex_calc1.im'
@@ -1646,8 +1678,14 @@ class immath_test3(unittest.TestCase):
         myia.done()
         self.assertTrue(type(data[0,0]) == np.complex128)
 
-        #myia.fromshape(im4, shape, type='f')
-        #self.assertRaises(Exception, myia.calc, im1 + '+' + im2)
+        myia.fromshape(im4, shape, type='f')
+        myia.done()
+        # FIXME this seems to abort the process, so this needs to be investigated
+        # self.assertRaises(Exception, myia.calc, im1 + '+' + im2)
+
+        for img in (im1, im2, im3, im4):
+            if os.path.exists(img):
+                shutil.rmtree(img)
         
     def test_CAS6896(self):
         """Verify CAS-6896, user can choose from which image to copy metadata"""
@@ -1685,6 +1723,7 @@ class immath_test3(unittest.TestCase):
         units = [aunit, bunit, cunit]
         images = ['a.im', 'b.im', 'c.im']
         for i in [0, 1, 2]:
+            # FIXME not an immath test, should be moved to the relevant file
             myia = myia.imagecalc("", expr, imagemd=images[i])
             self.assertTrue(myia.restoringbeam() == beams[i])
             self.assertTrue(myia.brightnessunit() == units[i])
@@ -1698,9 +1737,14 @@ class immath_test3(unittest.TestCase):
                 myia.open(outfile)
                 self.assertTrue(myia.restoringbeam() == beams[i])
                 self.assertTrue(myia.brightnessunit() == units[i])
-                myia.done()
+                myia.done(remove=True)
+        for img in ['a.im', 'b.im', 'c.im']:
+            if os.path.exists(img):
+                shutil.rmtree(img)
 
     def test_history(self):
+        # FIXME There are tests here that do not test immath.
+        # they should be moved
         """Test that history records are added"""
         im1 = "hist1.im"
         im2 = "hist2.im"
@@ -1730,7 +1774,7 @@ class immath_test3(unittest.TestCase):
         )
         myia.open(outfile)
         msgs = myia.history()
-        myia.done()
+        myia.done(remove=True)
         teststr = "version"
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         teststr = "immath"
@@ -1738,13 +1782,18 @@ class immath_test3(unittest.TestCase):
         
     def test_flush(self):
         """CAS-8570: ensure image is flushed to disk when it is created"""
+        # FIXME this is not an immath test but an ia.imagecalc() test and should 
+        # therefore be moved to the relevant test file
         myia.fromshape("jj.im", [20,20,20])
         myia.fromshape("kk.im", [20,20,20])
         outfile = "CAS-8570.im"
         zz = myia.imagecalc(outfile, "jj.im + kk.im")
         self.assertTrue(myia.open(outfile))
         myia.done()
-        zz.done()
+        zz.done(remove=True)
+        for img in ('jj.im', 'kk.im'):
+            if os.path.exists(img):
+                shutil.rmtree(img)
 
     def test_poli_sigma(self):
         """Verify poli sigma fix, CAS-8880"""
@@ -1786,21 +1835,21 @@ class immath_test3(unittest.TestCase):
             immath(imagename=imagename, outfile=outfile, mode=mode)
             myia.open(outfile)
             bb = myia.getchunk()
-            myia.done()
+            myia.done(remove=True)
             self.assertTrue(
                 np.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
         subi = 'noV.im'
         myia.open(imagename)
         zz = myia.subimage(subi, region=_rg.box([0,0,0],[3,3,2]))
-        myia.done()
+        myia.done(remove=True)
         zz.done()
         expec['poli'] = expec['lpoli'] 
         expec['lpoli'] = np.sqrt(52.0) 
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                if is_CASA6:
+                if is_CASA6 or casa_stack_rethrow:
                     self.assertRaises(
                         Exception, immath, imagename=subi, outfile=outfile,
                         mode=mode
@@ -1813,10 +1862,12 @@ class immath_test3(unittest.TestCase):
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
             bb = myia.getchunk()
-            myia.done()
+            myia.done(remove=True)
             self.assertTrue(
                 np.allclose(bb, expec[mode], 1e-7), "Fail mode " + mode
             )
+        if os.path.exists(subi):
+            shutil.rmtree(subi)
 
     def test_spix(self):
         '''
@@ -1841,10 +1892,105 @@ class immath_test3(unittest.TestCase):
             np.isclose(got, expec).all(), 'Failed spectral index comparison'
         )
 
+    def test_beam_logging_precision(self):
+        """
+            Test that when beams are different, immath logs enough digits to show where the
+            difference occurs. CAS-13135
+        """
+        shape = [2, 2, 2, 2]
+        old_log = casalog.logfile()
+        logfile = 'test_beam_logging_precision0.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        self.assertTrue(myia.fromshape(beam0, shape), 'Failed to created image ' + beam0)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.234arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        myia.done()
+        self.assertTrue(myia.fromshape(beam1, shape), 'Failed to created image ' + beam1)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.235arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam1
+        )
+        myia.done()
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 14
+            i1 = 16
+        else:
+            i0 = 17
+            i1 = 19
+        self.assertTrue(re.search("3.235", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+        os.remove(logfile)
+
+        logfile = 'test_beam_logging_precision1.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        myia.open(beam0)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.234567arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        myia.done()        
+        myia.open(beam1)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.234568arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        myia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.234568", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.234567", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+        os.remove(logfile)
+
+        logfile = 'test_beam_logging_precision2.log'
+        self.assertTrue(casalog.setlogfile(logfile), 'Failed to set log file')
+        myia.open(beam0)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.2345678901777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        myia.done()        
+        myia.open(beam1)
+        self.assertTrue(
+            myia.setrestoringbeam(major='3.2345678902777777arcmin', minor='1.0arcmin', pa='0.0deg'),
+            'Failed to set beam for image ' + beam0
+        )
+        myia.done()         
+        immath(imagename=[beam0, beam1], mode='evalexpr', expr='IM0 + IM1', outfile=beam_out)
+        f = open(logfile, 'r')
+        lines = f.readlines()
+        f.close()
+        if is_CASA6:
+            i0 = 12
+            i1 = 14
+        else:
+            i0 = 15
+            i1 = 17
+        self.assertTrue(re.search("3.23456789027778", lines[i0]), 'Expected pattern not found')
+        self.assertTrue(re.search("3.23456789017778", lines[i1]), 'Expected pattern not found')
+        shutil.rmtree(beam_out)
+
+        self.assertTrue(casalog.setlogfile(old_log), 'Failed to reset log file')
+        os.remove(logfile)
+
 def suite():
     return [immath_test1, immath_test2, immath_test3]
     
 if __name__ == '__main__':
     unittest.main()
-        
-    
+

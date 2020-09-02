@@ -24,30 +24,22 @@ def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=Non
                    figsize=None, numpanels=None):
     casalog.origin('plotprofilemap')
 
-    try:
-        if len(figfile) > 0 and os.path.exists(figfile) and overwrite == False:
-            raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
+    if len(figfile) > 0 and os.path.exists(figfile) and overwrite == False:
+        raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
 
-        image = SpectralImage(imagename)
-        npol = len(image.stokes)
-        if pol < 0 or pol > npol - 1:
-            raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image.stokes))        
+    image = SpectralImage(imagename)
+    npol = len(image.stokes)
+    if pol < 0 or pol > npol - 1:
+        raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image.stokes))
 
-        parsed_size = parse_figsize(figsize)
-        nx, ny = parse_numpanels(numpanels)
-        if (not isinstance(restfreq, str)) or len(restfreq) == 0:
-            restfreq = None
-        plot_profile_map(image, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
-                         separatepanel, plotmasked, maskedcolor,
-                         showaxislabel, showtick, showticklabel, parsed_size,
-                         nx, ny, transparent, plotrange)
-    except Exception as e:
-        casalog.post('Error: %s' % (str(e)), priority='SEVERE')
-        import traceback
-        casalog.post(traceback.format_exc(), priority='DEBUG')
-        raise e
-    finally:
-        pass
+    parsed_size = parse_figsize(figsize)
+    nx, ny = parse_numpanels(numpanels)
+    if (not isinstance(restfreq, str)) or len(restfreq) == 0:
+        restfreq = None
+    plot_profile_map(image, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
+                     separatepanel, plotmasked, maskedcolor,
+                     showaxislabel, showtick, showticklabel, parsed_size,
+                     nx, ny, transparent, plotrange)
 
 
 NoData = -32767.0

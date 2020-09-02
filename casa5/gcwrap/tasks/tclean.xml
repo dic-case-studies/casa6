@@ -625,8 +625,9 @@
                          (the default, True)
                          or a common weight density for all of the selected
                          data. This parameter has no
-                         meaning for continuum (specmode='mfs')
-                         imaging but for cube imaging
+                         meaning for continuum (specmode='mfs') imaging
+                         or for natural and radial weighting schemes.
+                         For cube imaging
                          perchanweightdensity=True is a recommended
                          option that provides more uniform
                          sensitivity per channel for cubes, but with
@@ -1105,6 +1106,19 @@ to use the correct direction in which the antenna is pointing with respect to th
                          number controls how much a pointing change across time can 
                          be ignored and after which an antenna rebinning is required.   
 
+
+                        Note : The default value of this parameter is [], due a programmatic constraint.
+                                   If run with this value, it will internally pick [600,600] and exercise the
+                                   option of using large tolerances (10arcmin) on both axes. Please choose
+                                   a setting explicitly for runs that need to use this parameter. 
+
+	                Note : This option is available only for gridder='awproject' and usepointing=True and
+                                   and has been validated primarily with VLASS on-the-fly mosaic data
+                                   where POINTING subtables have been modified after the data are recorded.
+
+
+		        Examples of parameter usage : 
+
                         [100.0,100.0] : Pointing offsets of 100 arcsec or less are considered 
                                                 small enough to be ignored.  Using large values for both
                                                 indicates a homogeneous array.
@@ -1136,10 +1150,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                         but to retain the time dependent corrections required from one timestep
                         to the next. 
 
-                        Note : The default value of this parameter is [], due a programmatic constraint.
-                                   If run with this value, it will internally pick [600,600] and exercise the
-                                   option of using large tolerances (10arcmin) on both axes. Please choose
-                                   a setting explicitly for runs that need to use this parameter. 
 
 
 </description>

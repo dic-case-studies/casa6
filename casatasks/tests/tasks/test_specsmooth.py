@@ -133,12 +133,13 @@ class specsmooth_test(unittest.TestCase):
         myia = image( )
         myia.fromshape(imagename, [20,20,20])
         outfile = "zz_out.im"
-        self.assertTrue(
+        try:
             specsmooth(
                 imagename=imagename, outfile=outfile,
                 axis=2, function="h"
             )
-        )
+        except Exception:
+            self.fail()
         myia.open(outfile)
         msgs = myia.history()
         myia.done()
