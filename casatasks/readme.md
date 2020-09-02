@@ -1,4 +1,3 @@
-
 ## CASAtasks
 
 CASAtasks is a self-contained python module that provides the tasks from the [CASA](http://casa.nrao.edu/) project. This package depends on the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) python module being found in your **PYTHONPATH** at build time and runtime. The CASAtasks are stateless routines and recipes built on CASAtools.

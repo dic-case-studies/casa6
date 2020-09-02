@@ -71,188 +71,181 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
         shutil.copytree(src, dest, symlinks=True)
 
     casalog.origin('fixvis')
-    retval = True
-    try:
-        if vis == outputvis or outputvis == '':
-            casalog.post('Will overwrite original MS ...', 'NORMAL')
-            outputvis = vis
-        else:
-            casalog.post('Copying original MS to outputvis ...', 'NORMAL')
 
-            shutil.rmtree(outputvis, ignore_errors=True)
-            copy_ms(vis, outputvis)
+    if vis == outputvis or outputvis == '':
+        casalog.post('Will overwrite original MS ...', 'NORMAL')
+        outputvis = vis
+    else:
+        casalog.post('Copying original MS to outputvis ...', 'NORMAL')
 
-        if is_CASA6:
-            tbt = table( )
-            myms = ms( )
-            myim = imager( )
-        else:
-            tbt, myms, myim = gentools(['tb', 'ms', 'im'])
+        shutil.rmtree(outputvis, ignore_errors=True)
+        copy_ms(vis, outputvis)
 
-        if field == '' or isinstance(field,list) and len(field) == 0:
-            field='*'
-            
-        fields = myms.msseltoindex(vis=outputvis,field=field)['field']
+    if is_CASA6:
+        tbt = table( )
+        myms = ms( )
+        myim = imager( )
+    else:
+        tbt, myms, myim = gentools(['tb', 'ms', 'im'])
 
-        if len(fields) == 0:
-            casalog.post( "Field selection returned zero results.", 'WARN')
-            return False
+    if field == '' or isinstance(field,list) and len(field) == 0:
+        field='*'
 
-        thedistances = []
+    fields = myms.msseltoindex(vis=outputvis,field=field)['field']
 
-        if distances == "":
-            distances = []
-        elif distances != []:
-            if type(distances) == str and _myqa.isquantity(distances):
-                thedist = _myqa.canonical(distances)
-                if thedist['unit'] == 'm': # a length
-                    for f in fields: # put nfields copies into the list
-                        thedistances.append(thedist['value'])
-                else:
-                    casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')                
-                    return False
-            elif type(distances) == list:
-                if len(fields) != len(distances):
-                    casalog.post("You selected "+str(len(fields))+" fields but gave "+str(len(distances))+" distances,", 'SEVERE')
-                    return False
-                else:
-                    for d in distances:
-                        if _myqa.isquantity(d):
-                            thedist = _myqa.canonical(d)
-                            if thedist['unit'] == 'm': # a length
-                                thedistances.append(thedist['value'])
-                            else:
-                                casalog.post("Parameter distances needs to contain quanta with units of length.", 'SEVERE')       
-                                return False
+    if len(fields) == 0:
+        casalog.post( "Field selection returned zero results.", 'WARN')
+        return
+
+    thedistances = []
+
+    if distances == "":
+        distances = []
+    elif distances != []:
+        if type(distances) == str and _myqa.isquantity(distances):
+            thedist = _myqa.canonical(distances)
+            if thedist['unit'] == 'm': # a length
+                for f in fields: # put nfields copies into the list
+                    thedistances.append(thedist['value'])
             else:
-                casalog.post("Invalid parameter distances.", 'SEVERE')       
-                return False
+                msg = "Parameter distances needs to contain quanta with units of length."
+                raise ValueError(msg)
+
+        elif type(distances) == list:
+            if len(fields) != len(distances):
+                msg = "You selected "+str(len(fields))+" fields but gave "+str(len(distances))+" distances,"
+                raise ValueError(msg)
+            else:
+                for d in distances:
+                    if _myqa.isquantity(d):
+                        thedist = _myqa.canonical(d)
+                        if thedist['unit'] == 'm': # a length
+                            thedistances.append(thedist['value'])
+                        else:
+                            msg = "Parameter distances needs to contain quanta with units of length."
+                            raise ValueError(msg)
+        else:
+            msg = "Invalid parameter distances."
+            raise ValueError(msg)
 
 
-        if thedistances != []:
-            casalog.post('Will refocus to the given distances: '+str(distances), 'NORMAL')
-        
-        #determine therefcode, the reference frame to be used for the output UVWs
-        tbt.open(outputvis+"/FIELD")
-        numfields = tbt.nrows()
-        therefcode = 'J2000'
-        ckwdict = tbt.getcolkeyword('PHASE_DIR', 'MEASINFO')
-        tbt.close()
-        if refcode == '':
-            if 'TabRefTypes' in ckwdict: # we have a variable reference column
-                therefcode = 'J2000' # always use "J2000"
-            else: # not a variable reference column
-                therefcode = ckwdict['Ref']
-        else: # a refcode was given, enforce validity
-            if not (type(refcode)==str):
-                casalog.post('Invalid refcode '+str(refcode), 'SEVERE')
-                return False
-            if 'TabRefTypes' in ckwdict: # variable ref column
-                refcodelist = ckwdict['TabRefTypes'].tolist()
-                ref = 0
-                if not (refcode in refcodelist):
-                    casalog.post('Invalid refcode '+refcode, 'SEVERE')
-                    return False
-            else: # not a variable reference column
-                if not (refcode in get_validcodes()):
-                    casalog.post('Invalid refcode '+refcode, 'SEVERE')
-                    return False
-            #endif
-            therefcode = refcode
-        #end if
+    if thedistances != []:
+        casalog.post('Will refocus to the given distances: '+str(distances), 'NORMAL')
 
-        if phasecenter == '': # we are only modifying the UVW coordinates
-            casalog.post('Will leave phase centers unchanged.', 'NORMAL')
-            casalog.post("Recalculating the UVW coordinates ...", 'NORMAL')
+    #determine therefcode, the reference frame to be used for the output UVWs
+    tbt.open(outputvis+"/FIELD")
+    numfields = tbt.nrows()
+    therefcode = 'J2000'
+    ckwdict = tbt.getcolkeyword('PHASE_DIR', 'MEASINFO')
+    tbt.close()
+    if refcode == '':
+        if 'TabRefTypes' in ckwdict: # we have a variable reference column
+            therefcode = 'J2000' # always use "J2000"
+        else: # not a variable reference column
+            therefcode = ckwdict['Ref']
+    else: # a refcode was given, enforce validity
+        if not (type(refcode)==str):
+            msg = 'Invalid refcode '+str(refcode)
+            raise RuntimeError(msg)
+        if 'TabRefTypes' in ckwdict: # variable ref column
+            refcodelist = ckwdict['TabRefTypes'].tolist()
+            ref = 0
+            if not (refcode in refcodelist):
+                msg = 'Invalid refcode '+refcode
+                raise RuntimeError(msg)
+        else: # not a variable reference column
+            if not (refcode in get_validcodes()):
+                msg = 'Invalid refcode '+refcode
+                raise RuntimeError(msg)
+        #endif
+        therefcode = refcode
+    #end if
 
-            fldids = []
+    if phasecenter == '': # we are only modifying the UVW coordinates
+        casalog.post('Will leave phase centers unchanged.', 'NORMAL')
+        casalog.post("Recalculating the UVW coordinates ...", 'NORMAL')
+
+        fldids = []
+        for i in range(numfields):
+            if (i in fields):
+                fldids.append(i)
+
+        # 
+        myim.open(outputvis, usescratch=False)
+        myim.calcuvw(fields=fldids, refcode=therefcode, reuse=reuse)
+        myim.close()
+    else: # we are modifying UVWs and visibilities
+        ## if observation:
+        ##     casalog.post('Modifying the phase tracking center(s) is imcompatible', 'SEVERE')
+        ##     casalog.post('with operating on only a subset of the observation IDs', 'SEVERE')
+        ##     return False
+
+        if type(phasecenter) != str:
+            msg = "Invalid phase center."
+            raise ValueError(msg)
+
+        theoldref, theoldrefstr, ckwdict, isvarref, flddict = get_oldref(outputvis, tbt)
+
+        # for the case of a non-variable reference column and several selected fields 
+        commonoldrefstr = ''
+
+        # handle the datacolumn parameter
+        if (not type(datacolumn)==str):
+            casalog.post("Invalid parameter datacolumn", 'SEVERE')
+        elif datacolumn=='' or datacolumn.lower()=='all':
+            datacolumn='all'
+            casalog.post("Will modify the visibilities in all columns", 'NORMAL')
+        else:
+            # need to check datacolumn before any part of the MS gets modified
+            wantedcolumns = datacolumn.split(',')
+            tbt.open(outputvis)
+            thecolumns = tbt.colnames()
+            tbt.close()
+            for col in wantedcolumns:
+                if not (col.lower() in ['data','observed','corrected', 'corrected_data','model','model_data']):
+                    msg = "Invalid datacolumn: \""+col+"\""
+                    raise RuntimeError(msg)
+                if (col.lower()=='observed'):
+                    col = 'DATA'
+                if (col.lower()=='corrected'):
+                    col = 'CORRECTED_DATA'
+                if (col.lower()=='model'):
+                    col = 'MODEL_DATA'
+                if not col.upper() in thecolumns:
+                    msg = "Datacolumn "+col+" not present"
+                    raise RuntimeError(msg)
+
+            casalog.post("Will only modify the visibilities in the columns "+datacolumn.upper(), 'NORMAL')
+
+        for fld in fields:
+            allselected = True
             for i in range(numfields):
-                if (i in fields):
-                    fldids.append(i)
+                if not (i in fields):
+                    allselected = False
+                    break
 
-            # 
-            myim.open(outputvis, usescratch=False)
-            myim.calcuvw(fields=fldids, refcode=therefcode, reuse=reuse)
-            myim.close()
-        else: # we are modifying UVWs and visibilities
-            ## if observation:
-            ##     casalog.post('Modifying the phase tracking center(s) is imcompatible', 'SEVERE')
-            ##     casalog.post('with operating on only a subset of the observation IDs', 'SEVERE')
-            ##     return False
+            commonoldrefstr = modify_fld_vis(fld, outputvis, tbt, myim,
+                                             commonoldrefstr, phasecenter,
+                                             therefcode, reuse, numfields,
+                                             ckwdict, theoldref, theoldrefstr,
+                                             isvarref, flddict, datacolumn,
+                                             allselected, thedistances)
+            if commonoldrefstr == False:
+                raise RuntimeError('Failure in modify_fld_vis)')
+    #endif change phasecenter
 
-            if type(phasecenter) != str:
-                casalog.post("Invalid phase center.", 'SEVERE')
-                return False
-
-            try:
-                theoldref, theoldrefstr, ckwdict, isvarref, flddict = get_oldref(outputvis, tbt)
-            except ValueError:
-                return False
-
-            # for the case of a non-variable reference column and several selected fields 
-            commonoldrefstr = ''
-
-            # handle the datacolumn parameter
-            if (not type(datacolumn)==str):
-                casalog.post("Invalid parameter datacolumn", 'SEVERE')
-            elif datacolumn=='' or datacolumn.lower()=='all':
-                datacolumn='all'
-                casalog.post("Will modify the visibilities in all columns", 'NORMAL')
-            else:
-                # need to check datacolumn before any part of the MS gets modified
-                wantedcolumns = datacolumn.split(',')
-                tbt.open(outputvis)
-                thecolumns = tbt.colnames()
-                tbt.close()
-                for col in wantedcolumns:
-                    if not (col.lower() in ['data','observed','corrected', 'corrected_data','model','model_data']):
-                        casalog.post("Invalid datacolumn: \""+col+"\"", 'SEVERE')
-                        return False
-                    if (col.lower()=='observed'):
-                        col = 'DATA'
-                    if (col.lower()=='corrected'):
-                        col = 'CORRECTED_DATA'
-                    if (col.lower()=='model'):
-                        col = 'MODEL_DATA'
-                    if not col.upper() in thecolumns:
-                        casalog.post("Datacolumn "+col+" not present", 'SEVERE')
-                        return False
-                casalog.post("Will only modify the visibilities in the columns "+datacolumn.upper(), 'NORMAL')
-
-            for fld in fields:
-                allselected = True
-                for i in range(numfields):
-                    if not (i in fields):
-                        allselected = False
-                        break
-
-                commonoldrefstr = modify_fld_vis(fld, outputvis, tbt, myim,
-                                                 commonoldrefstr, phasecenter,
-                                                 therefcode, reuse, numfields,
-                                                 ckwdict, theoldref, theoldrefstr,
-                                                 isvarref, flddict, datacolumn,
-                                                 allselected, thedistances)
-                if commonoldrefstr == False:
-                    return False
-        #endif change phasecenter
-
-        # Write history to output MS
-        try:
-            param_names = fixvis.__code__.co_varnames[:fixvis.__code__.co_argcount]
-            if is_python3:
-                vars = locals( )
-                param_vals = [vars[p] for p in param_names]
-            else:           
-                param_vals = [eval(p) for p in param_names]   
-            retval &= write_history(myms, outputvis, 'fixvis', param_names, param_vals,
-                                    casalog)
-        except Exception as instance:
-            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')        
+    # Write history to output MS
+    try:
+        param_names = fixvis.__code__.co_varnames[:fixvis.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:           
+            param_vals = [eval(p) for p in param_names]   
+        write_history(myms, outputvis, 'fixvis', param_names, param_vals,
+                      casalog)
     except Exception as instance:
-        casalog.post("*** Error \'%s\' " % (instance), 'SEVERE')
-        retval = False
-        
-    return retval
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')        
 
 def get_validcodes(code=None):
     """Returns a list of valid refcodes."""
@@ -325,9 +318,8 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
         refcodestrlist = ckwdict['TabRefTypes'].tolist()
         refcodelist = ckwdict['TabRefCodes'].tolist()
         if not (theoldref in refcodelist):
-            casalog.post('Invalid refcode in FIELD column PhaseDir_Ref: ' +
-                         str(theoldref), 'SEVERE')
-            return False
+            msg = 'Invalid refcode in FIELD column PhaseDir_Ref: ' + str(theoldref)
+            raise RuntimeError(msg)
         theoldrefstr = refcodestrlist[refcodelist.index(theoldref)]
 
     if not isvarref:
@@ -361,7 +353,7 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
 
     dirstr = parse_phasecenter(phasecenter, isvarref, theoldref, theoldrefstr, theolddir)
     if not dirstr:
-        return False
+        raise RuntimeError('Failed to parse phasecenter')
 
     if isvarref:
         thenewrefindex = ckwdict['TabRefTypes'].tolist().index(dirstr[0])
@@ -373,15 +365,15 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
             thenewref = validcodes.index(dirstr[0])
             thenewrefstr = dirstr[0]
         else:
-            casalog.post('Invalid refcode ' + dirstr[0], 'SEVERE')
-            return False
+            msg = 'Invalid refcode ' + dirstr[0]
+            raise RuntimeError(msg)
         if dirstr[0] != ckwdict['Ref']:
             if numfields > 1 and not allselected:
-                        casalog.post("You have not selected all " + str(numfields)
-                      + " fields and PHASE_DIR is not a variable reference column.\n"
-                      + " Please use split or provide phase dir in " + ckwdict['Ref']
-                                     + ".", 'SEVERE')
-                        return False
+                        msg = ("You have not selected all " + str(numfields) +
+                               " fields and PHASE_DIR is not a variable reference column.\n"
+                               " Please use split or provide phase dir in " + ckwdict['Ref']
+                               + ".")
+                        raise RuntimeError(msg)
             else:
                 casalog.post(
             "The direction column reference frame in the FIELD table will be changed from "
@@ -393,9 +385,8 @@ def modify_fld_vis(fld, outputvis, tbt, myim, commonoldrefstr, phasecenter,
         thenewra_rad = thedir['m0']['value']
         thenewdec_rad = thedir['m1']['value']
     except Exception as instance:
-        casalog.post("*** Error \'%s\' when interpreting parameter \'phasecenter\': "
-                     % (instance), 'SEVERE')
-        return False 
+        msg = "*** Error \'%s\' when interpreting parameter \'phasecenter\': " % (instance)
+        raise RuntimeError(msg)
 
     if not is_valid_refcode(thenewrefstr):
         casalog.post('Refcode for the new phase center is valid but not yet supported: '
@@ -506,9 +497,8 @@ def parse_phasecenter(phasecenter, isvarref, ref, refstr, theolddir):
         qraoffset = _myqa.quantity(dirstr[0])
         qdecoffset = _myqa.quantity(dirstr[1])
         if not _myqa.isangle(qdecoffset):
-            casalog.post("Invalid phasecenter parameter. DEC offset must be an angle.",
-                         'SEVERE')
-            return False
+            msg = "Invalid phasecenter parameter. DEC offset must be an angle."
+            raise RuntimeError(msg)
         qnewdec = _myqa.add(qdec,qdecoffset)
         qnewra = qra
         ishms = (_myqa.canonical(qraoffset)['unit'] == 'rad') and (('h' in dirstr[0] and 'm' in dirstr[0] and 's' in dirstr[0]) or (dirstr[0].count(':')==2))
@@ -523,9 +513,8 @@ def parse_phasecenter(phasecenter, isvarref, ref, refstr, theolddir):
                 qnewra = _myqa.add(qnewra, qraoffset)
         else:
             if not ((_myqa.canonical(qraoffset)['unit'] == 's') or ishms):
-                casalog.post("Invalid phasecenter parameter. RA offset must be an angle or a time.",
-                             'SEVERE')
-                return False
+                msg = "Invalid phasecenter parameter. RA offset must be an angle or a time."
+                raise RuntimeError(msg)
             # RA offset was given as a time; apply as is
             qraoffset = _myqa.convert(qraoffset, 'deg')
             qnewra = _myqa.add(qnewra, qraoffset)
@@ -533,7 +522,6 @@ def parse_phasecenter(phasecenter, isvarref, ref, refstr, theolddir):
         dirstr = [refstr, _myqa.time(qnewra,12)[0], _myqa.angle(qnewdec,12)[0]]
 
     elif not len(dirstr) == 3:
-        casalog.post('Incorrectly formatted parameter \'phasecenter\': '
-                     + phasecenter, 'SEVERE')
-        return False
+        msg = 'Incorrectly formatted parameter \'phasecenter\': ' + phasecenter
+        raise RuntimeError(msg)
     return dirstr

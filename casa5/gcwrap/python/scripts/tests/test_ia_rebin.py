@@ -139,17 +139,15 @@ class ia_rebin_test(unittest.TestCase):
         yy.done()
         zz.done()
         outfile = "ab.im"
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             imrebin(
                 imagename=imagename, outfile=outfile, factor=[2,2,1,1],
                 mask=mymask + ">0", stretch=False, overwrite=True
             )
-        )
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile, factor=[2,2,1,1],
-                mask=mymask + ">0", stretch=True, overwrite=True
-            )
+
+        imrebin(
+            imagename=imagename, outfile=outfile, factor=[2,2,1,1],
+            mask=mymask + ">0", stretch=True, overwrite=True
         )
         yy.open(outfile)
         print "shape " + str(yy.shape())
@@ -177,12 +175,11 @@ class ia_rebin_test(unittest.TestCase):
             myim2b = False
         self.assertFalse(myim2b)
         
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             imrebin(
                 imagename=imagename, outfile=outfile,
                 factor=[-100,2], overwrite=True
             )
-        )
         
         myim2b = myim2.rebin("", bin=[2,2])
         self.assertTrue(myim2b)
@@ -191,11 +188,9 @@ class ia_rebin_test(unittest.TestCase):
     
         self.assertTrue(myim2.done() and myim2b.done())
         
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile, overwrite=True,
-                factor=[2,2]
-            )
+        imrebin(
+            imagename=imagename, outfile=outfile, overwrite=True,
+            factor=[2,2]
         )
         myim2b.open(outfile)
         p = myim2b.getchunk()
@@ -215,22 +210,19 @@ class ia_rebin_test(unittest.TestCase):
         self.assertTrue(rebin)
         rebin.done()
         outfile = "dx.im"
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile,
-                factor=[2,2,1]
-            )
+        imrebin(
+            imagename=imagename, outfile=outfile,
+            factor=[2,2,1]
         )
         self.assertRaises(
             Exception, myia.rebin, "", [2,2,2]
         )
         myia.done()
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             imrebin(
                 imagename=imagename, outfile=outfile,
                 factor=[2,2,2]
             )
-        )
         
     def test_crop(self):
         """Test crop parameter"""
@@ -309,7 +301,7 @@ class ia_rebin_test(unittest.TestCase):
     def test_history(self):
         """Test history writing"""
         myia = iatool()
-        imagename = "zz.im"
+        imagename = "zz_rebin.im"
         factor = [1, 1, 20]
         myia.fromshape(imagename,[20,20,20])
         bb = myia.rebin("", bin=factor)
@@ -321,7 +313,7 @@ class ia_rebin_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
         
         outfile = "zz_out.im"
-        self.assertTrue(imrebin(imagename=imagename, outfile=outfile, factor=factor))
+        imrebin(imagename=imagename, outfile=outfile, factor=factor)
         myia.open(outfile)
         msgs = myia.history()
         myia.done()

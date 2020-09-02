@@ -162,6 +162,7 @@ test_req_task_calstat           nschweig@nrao.edu
 test_req_task_rmtables          nschweig@nrao.edu
 test_req_task_clearcal          nschweig@nrao.edu
 test_req_task_imhead            nschweig@nrao.edu
+test_req_task_rerefant          nschweig@nrao.edu
 test_req_task_visstat           nschweig@nrao.edu
 test_req_task_delmod            nschweig@nrao.edu
 test_req_task_feather           nschweig@nrao.edu
@@ -177,6 +178,7 @@ test_req_task_listsdm           nschweig@nrao.edu
 test_req_task_rmfit             nschweig@nrao.edu
 test_req_task_gaincal           nschweig@nrao.edu
 test_req_task_impv              nschweig@nrao.edu
+test_req_task_sdintimaging      ttsutsum@nrao.edu
 test_req_task_statwt            dmehring@nrao.edu
 test_stk_alma_pipeline_imaging.py  scastro@eso.org
 

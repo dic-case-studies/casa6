@@ -2845,7 +2845,7 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 }
 
 void
-VisibilityIteratorImpl2::getRowIds(Vector<uInt> & rowIds) const
+VisibilityIteratorImpl2::getRowIds(Vector<casacore::rownr_t> & rowIds) const
 {
 	// Resize the rowIds vector and fill it with the row numbers contained in
 	// the current subchunk.  These row numbers are relative to the reference
