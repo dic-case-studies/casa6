@@ -114,7 +114,7 @@ class exportuvfits_test(unittest.TestCase):
         self.assertTrue(
             exportuvfits(vis=msname, fitsfile=fitsname),
             "Failed exportuvfits with no SOURCE table"
-        ) 
+        )
             
 def suite():
     return [exportuvfits_test]        

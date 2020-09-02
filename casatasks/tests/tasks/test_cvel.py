@@ -1236,12 +1236,14 @@ class cvel_test(unittest.TestCase):
         '''Cvel 53: cvel of a field with ephemeris attached and outframe SOURCE'''
         myvis = vis_g
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel(
+        try:
+            cvel(
                 vis = 'myinput.ms',
                 outputvis = outfile,
                 outframe = 'SOURCE'
-                )
-        self.assertTrue(rval)
+            )
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
 
 
 

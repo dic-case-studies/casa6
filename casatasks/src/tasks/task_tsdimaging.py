@@ -270,7 +270,7 @@ def _calc_PB(vis, antenna_id, restfreq):
               "Your data does not seem to have valid one in selected field.\n" + \
               "PB is not calculated.\n" + \
               "Please set restreq or cell manually to generate an image."
-        raise Exception(msg)
+        raise RuntimeError(msg)
     # Antenna diameter
     with open_table(os.path.join(vis, 'ANTENNA')) as tb:
         antdiam_ave = tb.getcell('DISH_DIAMETER', antenna_id)
@@ -854,16 +854,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         
         casalog.post('*** makeSdImage... ***', origin=origin)
         imager.makeSdImage()
-        
-    except Exception as e:
-        casalog.post('Exception from task_tsdimaging : ' + str(e), "SEVERE", origin=origin)
-#         if imager != None:
-#             imager.deleteTools() 
-
-        larg = list(e.args)
-        larg[0] = 'Exception from task_tsdimaging : ' + str(larg[0])
-        e.args = tuple(larg)
-        raise
     
     finally:
         ## (8) Close tools.
