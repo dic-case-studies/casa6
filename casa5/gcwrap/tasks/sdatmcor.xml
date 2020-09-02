@@ -186,16 +186,18 @@
         <value type="double">-1</value>
     </param>
 
-    <param name="layerboundaries" type="doubleArray" subparam="true">
+    <param name="layerboundaries" type="any" subparam="true">
         <shortdescription>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
         <description>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</description>
-        <value type="doubleArray"></value>
+        <any type="variant"  limittypes="stringArray doubleArray"/>
+        <value type="stringArray"></value>
     </param>
 
-    <param name="layertemperature" type="doubleArray" subparam="true">
+    <param name="layertemperature" type="any" subparam="true">
         <shortdescription>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
         <description>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</description>
-        <value type="doubleArray"></value>
+        <any type="variant"  limittypes="stringArray doubleArray"/>
+        <value type="stringArray"></value>
     </param>
 
     <param name="debug" type="string">

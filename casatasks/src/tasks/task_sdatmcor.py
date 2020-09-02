@@ -80,11 +80,19 @@ def sdatmcor(
 #
 # File Handling
 #
+    # infile oufile, nmuste be specified.
+    if infile == '':
+        print ("FATAL:: infile MUST BE  specified.")
+        return False
+    if outfile == '':
+        print ("FATAL:: outfile MUST BE specified.")
+        return False
+
+
     # infile
     infile_without_ext = os.path.splitext(os.path.basename(infile))[0]
     infile_ext         = os.path.splitext(os.path.basename(infile))[1]
     infile = [infile_without_ext, infile_ext]
-
     # outfile
     outfile_without_ext = os.path.splitext(os.path.basename(outfile))[0]
     outfile_ext         = os.path.splitext(os.path.basename(outfile))[1]
@@ -105,13 +113,17 @@ def sdatmcor(
     dpm         = dpm  # through (string or float)
 
 # User-Define Profile (nothing =[] )
-    if(len(layerboundaries) != len(layertemperature)):
-        print("WARN: specified Count of Bounday and Temperature mismatch.")
+##    if(len(layerboundaries) != len(layertemperature)):
+##        print("WARN: specified Count of Bounday and Temperature mismatch.")
 
-    # convert to List. #
+    # convert to List from comma separated #
+    '''  param = "1.1, 2.2, 3.3 .... 4.4" 
     layerboundaries = list_comma_string(layerboundaries)
     layertemperature = list_comma_string(layertemperature)
-
+    '''
+    #  param = ['1.1', '2.2', '3.3' .....]  
+    layerboundaries = conv_to_doubleArrayList(layerboundaries)
+    layertemperature = conv_to_doubleArrayList(layertemperature)
 #
 # Ceall calc Function
 #
@@ -145,9 +157,14 @@ def ms_copy(src, dst):
     print("-- copying [%s] ->[%s]."%(src, dst))
     shutil.copytree(src, dst)
 
+def file_exist(path):
+    if (os.path.exists(path)):
+        return True
+    else:
+        return False
+
 
 def form_value_unit(data, base_unit):
-
     if (data == ''):
 #       msg = "INFO::No parameter. use Default."
 #       print(msg)
@@ -221,6 +238,13 @@ def list_comma_string( separated_string):
         return separated_string
     else:
         return []
+
+def conv_to_doubleArrayList( in_list ):
+    if  not (type(in_list) is list):
+        return []
+    out_list = [float(s) for s in in_list]  # convert to list[int]
+    return out_list
+
 #
 # ATM Profile
 #
@@ -395,41 +419,62 @@ def calc_sdatmcor(
     # atmtype #
     atmtype_for_file     = set_int_param(a_atmtype,atmtype)
 
-    # infile #
-    ebuid = p_infile[0]  ### The Arg must have a filename WITHOUT extension###
-    ebext = p_infile[1]  ### given Extension  ###
-    if(ebext == ''):
-        ebext = '.ms'
-
-    # default file format (original style) #
-    rawms = '%s%s' % (ebuid, ebext)
-    calms = '%s%s' % (ebuid, ebext)                    ### name of MS in which (standard-)calibrated spectra are stored
-    corms = '%s.ms.atm%d' % (ebuid, atmtype_for_file)  ### name of MS in which corrected spectra are to be written
-
     # datacolumn (XML fills default) ,to UPPER CASE #
     datacolumn = p_datacolumn.upper()
     if (datacolumn == 'CORRECTED'):  # add '_DATA' if CORRECED #
         datacolumn = 'CORRECTED_DATA' 
 
-    # outfile #
-    outfile = p_outfile[0]
-    outext  = p_outfile[1]
+    # infile, supprty Extension #
+    ebuid = p_infile[0]  ### The Arg must have a filename WITHOUT extension###
+    ebext = p_infile[1]  ### given Extension  ###
+    if(ebext == ''):
+        ebext = '.ms'
 
-    # overwrite check (reserved) #
+    # outfile, support Extension #
+    outfile = p_outfile[0]  ### The Arg must have a filename WITHOUT extension###
+    outext  = p_outfile[1]  ### given Extension  ###
+    if(outext == ''):
+        outext = '.ms'
 
+    # default file format (original style) #
+    rawms = '%s%s' % (ebuid, ebext)
+    calms = '%s%s' % (ebuid, ebext)                    ### name of MS in which (standard-)calibrated spectra are stored
+    corms = '%s.ms.atm%d' % (ebuid, atmtype_for_file)  ### name of MS form (based on Original)
 
-    # outfile, file name assist #
-    if (outfile == ''):
-        corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
-    elif (outext == ''):
-        corms = '%s%s.atm%d' %(outfile, ebext, atmtype_for_file)   # use same mane as infile +'<infileext>' #
+    # outfile, Assist 
+    #  (based on Jira-reqested and other) 
+    if False:   # old-way with atm and copied use of outeile
+        if (outfile == ''):
+            corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
+        elif (outext == ''):
+            corms = '%s%s.atm%d' %(outfile, ebext, atmtype_for_file)   # use same mane as infile +'<infileext>' #
+        else:
+            corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
     else:
-        corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
-    # check #
-    print("- default MS file (rawms) = ", rawms)
-    print("- default MS file (calms) = ", calms)
-    print("- default MS file (corms) = ", corms)
+            corms = '%s%s' %(outfile, outext)     # use same mane as infile #
 
+
+    # existence check
+    rawms_exist =  file_exist(rawms)
+    calms_exist =  file_exist(calms)
+    corms_exist =  file_exist(corms)
+
+    # check #
+    print("- default MS file (rawms) =", rawms, "Exist =", rawms_exist)
+    print("- default MS file (calms) =", calms, "Exist =", calms_exist)
+    print("- default MS file (corms) =", corms, "Exist =", corms_exist) 
+
+    # infile inaccesible  
+    if not rawms_exist:
+        print("FATAL:: Specified infile does not exist..")
+        return False
+  
+    # Overwrite Protection 
+    if not p_overwrite:  
+        if corms_exist:
+            print("FATAL:: Specified outputfile already exist. Cannot write.")
+            return False
+        
     #----------
     # Clean
     #----------
