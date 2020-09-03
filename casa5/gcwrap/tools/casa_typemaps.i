@@ -580,7 +580,7 @@ if($1){
 %typemap(in) std::vector<long> & (std::unique_ptr<std::vector<long> > deleter){
     if(!$1){
 	deleter.reset (new std::vector<long>(0));
-	$1 = deleter.get():
+	$1 = deleter.get();
     }
    else
       $1->resize(0);

@@ -151,7 +151,7 @@ variant* functional::f(const variant& v) {
 	);
 }
 
-int functional::ndim() {
+long functional::ndim() {
 	_FUNC(
 		return _functional->ndim();
 	)

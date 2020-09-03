@@ -241,7 +241,7 @@ template<class T> image* image::_adddegaxes(
 
 bool image::addnoise(
     const std::string& type, const std::vector<double>& pars,
-    const variant& region, bool zeroIt, const vector<int>& seeds
+    const variant& region, bool zeroIt, const vector<long>& seeds
 ) {
     try {
         _log << LogOrigin("image", __func__);
@@ -306,7 +306,7 @@ bool image::addnoise(
     return false;
 }
 
-record* image::beamarea(int channel, int polarization) {
+record* image::beamarea(long channel, long polarization) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
@@ -426,7 +426,7 @@ template <class T> record* image::_boundingbox(
 
 image* image::boxcar(
     const string& outfile, const variant& region,
-    const variant& vmask, int axis, int width, bool drop,
+    const variant& vmask, long axis, long width, bool drop,
     const string& dmethod,
     bool overwrite, bool stretch
 ) {
@@ -475,7 +475,7 @@ image* image::boxcar(
 template <class T> image* image::_boxcar(
     SPCIIT myimage, const variant& region,
     const variant& mask, const string& outfile, bool overwrite,
-    bool stretch, int axis, int width, bool drop,
+    bool stretch, long axis, long width, bool drop,
     const string& dmethod, const LogOrigin& lor
 ) {
     ImageBoxcarSmoother<T> smoother(
@@ -651,7 +651,8 @@ image* image::collapse(
             myAxes = IPosition(1, axes.toInt());
         }
         else if (axesType == variant::INTVEC) {
-            myAxes = IPosition(axes.getIntVec());
+            auto index = axes.getIntVec();
+            myAxes = IPosition(vector<int>(index.begin(),index.end()));
         }
         else if (
             axesType == variant::STRINGVEC
@@ -786,8 +787,8 @@ record* image::commonbeam() {
 
 image* image::continuumsub(
     const string& outline, const string& outcont,
-    const variant& region, const vector<int>& channels,
-    const string& pol, const int in_fitorder, const bool overwrite
+    const variant& region, const vector<long>& channels,
+    const string& pol, const long in_fitorder, const bool overwrite
 ) {
     try {
         _log << _ORIGIN;
@@ -804,7 +805,7 @@ image* image::continuumsub(
                 << LogIO::POST;
         }
         std::shared_ptr<Record> leRegion = _getRegion(region, false);
-        vector<Int> planes = channels;
+        vector<Int> planes(channels.begin(),channels.end());
         if (planes.size() == 1 && planes[0] == -1) {
             planes.resize(0);
         }
@@ -854,7 +855,7 @@ record* image::convertflux(
     const variant& qvalue, const variant& major,
     const variant& minor,  const string& /*type*/,
     const bool toPeak,
-    const int channel, const int polarization
+    const long channel, const long polarization
 ) {
     try {
         _log << _ORIGIN;
@@ -997,7 +998,7 @@ template <class T> image* image::_convolve(
 }
 
 image* image::convolve2d(
-    const string& outFile, const vector<int>& axes,
+    const string& outFile, const vector<long>& axes,
     const string& type, const variant& major, const variant& minor,
     const variant& pa, double in_scale, const variant& region,
     const variant& vmask, bool overwrite, bool stretch,
@@ -1053,7 +1054,7 @@ image* image::convolve2d(
 }
 
 template<class T> image* image::_convolve2d(
-    SPIIT myImage, const string& outFile, const vector<int>& axes,
+    SPIIT myImage, const string& outFile, const vector<long>& axes,
     const string& type, const variant& major, const variant& minor,
     const variant& pa, double in_scale, const variant& region,
     const variant& vmask, bool overwrite, bool stretch,
@@ -1235,7 +1236,7 @@ record* image::coordmeasures(
     return nullptr;
 }
 
-coordsys* image::coordsys(const std::vector<int>& pixelAxes) {
+coordsys* image::coordsys(const std::vector<long>& pixelAxes) {
     _log << _ORIGIN;
     try {
         if (_detached()) {
@@ -1266,9 +1267,9 @@ coordsys* image::coordsys(const std::vector<int>& pixelAxes) {
 }
 
 template <class T> coordsys* image::_coordsys(
-    SPIIT image, const std::vector<int>& pixelAxes
+    SPIIT image, const std::vector<long>& pixelAxes
 ) {
-    vector<Int> myAxes = pixelAxes;
+    vector<int> myAxes(pixelAxes.begin(),pixelAxes.end());
     if (pixelAxes.size() == 1 && pixelAxes[0] == -1) {
         myAxes.clear();
     }
@@ -1280,7 +1281,7 @@ template <class T> coordsys* image::_coordsys(
 }
 
 image* image::crop(
-    const string& outfile, const vector<int>& axes,
+    const string& outfile, const vector<long>& axes,
     bool overwrite, const variant& region, const string& box,
     const string& chans, const string& stokes, const string& mask,
     bool  stretch, bool wantreturn
@@ -1338,7 +1339,7 @@ image* image::crop(
 }
 
 image* image::decimate(
-    const string& outfile, int axis, int factor, const string& method,
+    const string& outfile, long axis, long factor, const string& method,
     const variant& region, const string& mask, bool overwrite, bool stretch
 ) {
     try {
@@ -1425,8 +1426,8 @@ template <class T> image* image::_decimate(
 
 record* image::decompose(
     const variant& region, const ::casac::variant& vmask,
-    bool simple, double threshold, int ncontour, int minrange,
-    int naxis, bool fit, double maxrms, int maxretry, int maxiter,
+    bool simple, double threshold, long ncontour, long minrange,
+    long naxis, bool fit, double maxrms, long maxretry, long maxiter,
     double convcriteria, bool stretch
 ) {
     try {
@@ -1465,7 +1466,7 @@ record* image::decompose(
 }
 
 record* image::deconvolvecomponentlist(
-    const record& complist, int channel, int polarization
+    const record& complist, long channel, long polarization
 ) {
     _log << _ORIGIN;
     if (_detached()) {
@@ -1614,8 +1615,8 @@ bool image::done(bool remove, bool verbose) {
 }
 
 record* image::findsources(
-    int nMax, double cutoff, const variant& region,
-    const variant& vmask, bool point, int width, bool absFind
+    long nMax, double cutoff, const variant& region,
+    const variant& vmask, bool point, long width, bool absFind
 ) {
     try {
         _log << _ORIGIN;
@@ -1649,7 +1650,7 @@ record* image::findsources(
 
 bool image::fft(
     const string& realOut, const string& imagOut, const string& ampOut,
-    const string& phaseOut, const std::vector<int>& axes, const variant& region,
+    const string& phaseOut, const std::vector<long>& axes, const variant& region,
     const variant& vmask, bool stretch, const string& complexOut
 ) {
     try {
@@ -1695,7 +1696,7 @@ bool image::fft(
 
 template<class T> bool image::_fft(
     SPIIT myImage, const string& realOut, const string& imagOut,
-    const string& ampOut, const string& phaseOut, const std::vector<int>& axes,
+    const string& ampOut, const string& phaseOut, const std::vector<long>& axes,
     const variant& region, const variant& vmask, bool stretch,
     const string& complexOut
 ) {
@@ -1920,9 +1921,9 @@ template <class T> record* image::_fitcomponents(
 }
 
 record* image::fitprofile(const string& box, const variant& region,
-    const string& chans, const string& stokes, int axis,
-    const variant& vmask, int ngauss, int poly,
-    const string& estimates, int minpts, bool multifit,
+    const string& chans, const string& stokes, long axis,
+    const variant& vmask, long ngauss, long poly,
+    const string& estimates, long minpts, bool multifit,
     const string& model, const string& residual, const string& amp,
     const string& amperr, const string& center, const string& centererr,
     const string& fwhm, const string& fwhmerr, const string& integral,
@@ -1938,7 +1939,7 @@ record* image::fitprofile(const string& box, const variant& region,
     const variant& pfunc, const vector<double>& goodamprange,
     const vector<double>& goodcenterrange,
     const vector<double>& goodfwhmrange, const variant& sigma,
-    const string& outsigma, const vector<int>& planes
+    const string& outsigma, const vector<long>& planes
 ) {
     _log << LogOrigin(_class, __func__);
     if (_detached()) {
@@ -2284,7 +2285,7 @@ ITUPLE image::_fromarray(
 }
 
 bool image::fromcomplist(
-    const string& outfile, const vector<int>& shape, const variant& cl,
+    const string& outfile, const vector<long>& shape, const variant& cl,
     const record& csys, bool overwrite, bool log, bool cache
 ) {
     try {
@@ -2337,7 +2338,7 @@ bool image::fromcomplist(
 
 bool image::fromfits(
     const string& outfile, const string& fitsfile,
-    int whichrep, int whichhdu, bool zeroBlanks,
+    long whichrep, long whichhdu, bool zeroBlanks,
     bool overwrite
 ) {
     try {
@@ -2427,7 +2428,7 @@ bool image::fromrecord(const record& imrecord, const string& outfile) {
 }
 
 bool image::fromshape(
-    const string& outfile, const vector<int>& shape, const record& csys,
+    const string& outfile, const vector<long>& shape, const record& csys,
     const bool linear, const bool overwrite, const bool log, const string& type
 ) {
     try {
@@ -2488,8 +2489,8 @@ bool image::fromshape(
 }
 
 variant* image::getchunk(
-    const std::vector<int>& blc, const std::vector<int>& trc,
-    const std::vector<int>& inc, const std::vector<int>& axes,
+    const std::vector<long>& blc, const std::vector<long>& trc,
+    const std::vector<long>& inc, const std::vector<long>& axes,
     bool list, bool dropdeg, bool getmask
 ) {
     try {
@@ -2562,8 +2563,8 @@ variant* image::getchunk(
 
 template<class T> Record image::_getchunk(
     SPCIIT myimage,
-    const vector<int>& blc, const vector<int>& trc,
-    const vector<int>& inc, const vector<int>& axes,
+    const vector<long>& blc, const vector<long>& trc,
+    const vector<long>& inc, const vector<long>& axes,
     bool list, bool dropdeg
 ) {
     Array<T> pixels;
@@ -2621,7 +2622,7 @@ template<class T> Record image::_getchunk(
             mblc[i] = 0;
             mtrc[i] = shape[i] - 1;
         }
-        if (inc[i] > shape[i]) {
+        if ( minc[i] > shape[i]) {
             minc[i] = 1;
         }
     }
@@ -2633,7 +2634,7 @@ template<class T> Record image::_getchunk(
     rec.assign(slicer.toRecord(""));
     PixelValueManipulator<T> pvm(myimage, &rec, "");
     if (axes.size() != 1 || axes[0] >= 0) {
-        pvm.setAxes(IPosition(axes));
+        pvm.setAxes(IPosition(vector<int>(axes.begin(),axes.end())));
     }
     pvm.setVerbosity(
         list ? ImageTask<T>::DEAFENING : ImageTask<T>::QUIET
@@ -2643,7 +2644,7 @@ template<class T> Record image::_getchunk(
 }
 
 record* image::getprofile(
-    int axis, const string& function, const variant& region,
+    long axis, const string& function, const variant& region,
     const string& mask, const string& unit, bool stretch,
     const string& spectype, const variant& restfreq,
     const string& frame, const string& logfile
@@ -2718,7 +2719,7 @@ template <class T> Record image::_getprofile(
 }
 
 variant* image::getregion(
-    const variant& region, const std::vector<int>& axes,
+    const variant& region, const std::vector<long>& axes,
     const variant& mask, bool list, bool dropdeg,
     bool getmask, bool stretch
 ) {
@@ -2765,7 +2766,7 @@ variant* image::getregion(
 
 template<class T> variant* image::_getregion2(
     SPIIT image, const variant& region,
-    const std::vector<int>& axes, const variant& mask,
+    const std::vector<long>& axes, const variant& mask,
     bool list, bool dropdeg, bool getmask, bool stretch
 ) {
     auto Region = _getRegion(region, false);
@@ -2821,8 +2822,8 @@ template<class T> variant* image::_getregion2(
 
 record* image::getslice(
     const std::vector<double>& x, const std::vector<double>& y,
-    const std::vector<int>& axes, const std::vector<int>& coord,
-    int npts, const std::string& method
+    const std::vector<long>& axes, const std::vector<long>& coord,
+    long npts, const std::string& method
 ) {
     try {
         _log << _ORIGIN;
@@ -2882,7 +2883,7 @@ record* image::getslice(
 
 image* image::hanning(
     const string& outfile, const variant& region,
-    const variant& vmask, int axis, bool drop,
+    const variant& vmask, long axis, bool drop,
     bool overwrite, bool stretch,
     const string& dmethod
 ) {
@@ -3005,8 +3006,8 @@ vector<bool> image::haslock() {
 }
 
 record* image::histograms(
-    const vector<int>& axes, const variant& region, const variant& mask,
-    int nbins, const vector<double>& includepix, bool cumu, bool log,
+    const vector<long>& axes, const variant& region, const variant& mask,
+    long nbins, const vector<double>& includepix, bool cumu, bool log,
     bool stretch
 ) {
     _log << _ORIGIN;
@@ -3043,8 +3044,8 @@ record* image::histograms(
 }
 
 template <class T> record* image::_histograms(
-    SPIIT myImage, const vector<int>& axes, const variant& region,
-    const variant& mask, int nbins, const vector<double>& includepix, bool cumu,
+    SPIIT myImage, const vector<long>& axes, const variant& region,
+    const variant& mask, long nbins, const vector<double>& includepix, bool cumu,
     bool log, bool stretch
 ) {
     vector<uInt> myaxes;
@@ -3169,7 +3170,7 @@ template<class T> SPIIT image::_imagecalc(
 }
 
 image* image::imageconcat(
-    const string& outfile, const variant& infiles, int axis,
+    const string& outfile, const variant& infiles, long axis,
     bool relax, bool tempclose, bool overwrite, bool reorder,
     const string& mode
 ) {
@@ -3244,7 +3245,7 @@ image* image::imageconcat(
 
 template<class T> SPIIT image::_concat(
     const string& outfile,
-    const variant& infiles, int axis, bool relax, bool tempclose,
+    const variant& infiles, long axis, bool relax, bool tempclose,
     bool overwrite, bool reorder, vector<String>& imageNames,
     const string& mode
 ) {
@@ -3364,7 +3365,7 @@ bool image::ispersistent() {
     return false;
 }
 
-bool image::lock(bool writelock, int nattempts) {
+bool image::lock(bool writelock, long nattempts) {
     try {
         _log << LogOrigin("image", __func__);
         if (_detached()) {
@@ -3458,10 +3459,10 @@ bool image::makecomplex(
 image* image::deviation(
     const std::string& outfile, const variant& region,
     const string& mask, bool overwrite, bool stretch,
-    const vector<int>& grid, const variant& anchor,
+    const vector<long>& grid, const variant& anchor,
     const variant& xlength, const variant& ylength,
     const string& interp, const string& stattype,
-    const string& statalg, double zscore, int maxiter
+    const string& statalg, double zscore, long maxiter
 ) {
     _log << _ORIGIN;
     try {
@@ -3718,7 +3719,7 @@ template<class T> vector<string>  image::_handleMask(
 
 record* image::maxfit(
     const variant& region, bool doPoint,
-    int width, bool absFind, bool list
+    long width, bool absFind, bool list
 ) {
     try {
         _log << _ORIGIN;
@@ -3815,10 +3816,10 @@ bool image::modify(
 }
 
 image* image::moments(
-    const vector<int>& moments, int axis,
+    const vector<long>& moments, long axis,
     const variant& region, const variant& vmask,
     const vector<string>& in_method,
-    const vector<int>& smoothaxes,
+    const vector<long>& smoothaxes,
     const variant& smoothtypes,
     const vector<double>& smoothwidths,
     const vector<double>& d_includepix,
@@ -4095,7 +4096,7 @@ image* image::newimagefromimage(
 }
 
 image* image::newimagefromshape(
-    const string& outfile, const vector<int>& shape, const record& csys,
+    const string& outfile, const vector<long>& shape, const record& csys,
     bool linear, bool overwrite, bool log, const string& type
 ) {
     try {
@@ -4150,7 +4151,7 @@ bool image::open(const std::string& infile, bool cache) {
 }
 
 image* image::pad(
-    const string& outfile, int npixels, double value, bool padmask,
+    const string& outfile, long npixels, double value, bool padmask,
     bool overwrite, const variant& region, const string& box,
     const string& chans, const string& stokes, const string& mask,
     bool  stretch, bool wantreturn
@@ -4317,7 +4318,7 @@ std::string image::pixeltype() {
     return "";
 }
 
-record* image::pixelvalue(const vector<int>& pixel) {
+record* image::pixelvalue(const vector<long>& pixel) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
@@ -4347,7 +4348,7 @@ record* image::pixelvalue(const vector<int>& pixel) {
 
 bool image::putchunk(
     const variant& pixels,
-    const vector<int>& blc, const vector<int>& inc,
+    const vector<long>& blc, const vector<long>& inc,
     bool list, bool locking, bool replicate
 ) {
     try {
@@ -4425,7 +4426,7 @@ bool image::putchunk(
 
 template<class T> void image::_putchunk(
     SPIIT myimage, const variant& pixels,
-    const vector<int>& blc, const vector<int>& inc,
+    const vector<long>& blc, const vector<long>& inc,
     const bool list, const bool locking, const bool replicate
 ) {
     Array<T> pixelsArray;
@@ -4437,7 +4438,7 @@ template<class T> void image::_putchunk(
         casacore::convertArray(pixelsArray, localpix.reform(IPosition(shape)));
     }
     else if (pixels.type() == variant::INTVEC) {
-        std::vector<int> pixelVector = pixels.getIntVec();
+        auto pixelVector = pixels.getIntVec();
         Vector<Int> localpix(pixelVector);
         casacore::convertArray(pixelsArray, localpix.reform(IPosition(shape)));
     }
@@ -4852,7 +4853,7 @@ void image::_processDirection(
 }
 
 image* image::rebin(
-    const string& outfile, const vector<int>& bin,
+    const string& outfile, const vector<long>& bin,
     const variant& region, const variant& vmask,
     bool dropdeg, bool overwrite,
     bool stretch, bool crop
@@ -4922,9 +4923,9 @@ image* image::rebin(
 }
 
 image* image::regrid(
-    const string& outfile, const vector<int>& inshape, const record& csys,
-    const vector<int>& inaxes, const variant& region, const variant& vmask,
-    const string& method, int decimate, bool replicate, bool doRefChange,
+    const string& outfile, const vector<long>& inshape, const record& csys,
+    const vector<long>& inaxes, const variant& region, const variant& vmask,
+    const string& method, long decimate, bool replicate, bool doRefChange,
     bool dropDegenerateAxes, bool overwrite, bool forceRegrid,
     bool specAsVelocity, bool stretch
 ) {
@@ -4964,7 +4965,7 @@ image* image::regrid(
         if (_imageF) {
             ImageRegridder<Float> regridder(
                 _imageF, regionPtr.get(), mask, outfile, overwrite,
-                *coordinates, IPosition(axes), IPosition(inshape)
+                *coordinates, IPosition(axes), IPosition(vector<int>(inshape.begin(),inshape.end()))
             );
             return _regrid(
                 regridder, method, decimate, replicate, doRefChange,
@@ -4975,7 +4976,8 @@ image* image::regrid(
         else if (_imageC) {
             ImageRegridder<Complex> regridder(
                 _imageC, regionPtr.get(), mask, outfile, overwrite,
-                *coordinates, IPosition(axes), IPosition(inshape)
+                *coordinates, IPosition(vector<int>(axes.begin(),axes.end())),
+                IPosition(vector<int>(inshape.begin(),inshape.end()))
             );
             return _regrid(
                 regridder, method, decimate, replicate, doRefChange,
@@ -4986,7 +4988,8 @@ image* image::regrid(
         if (_imageD) {
             ImageRegridder<Double> regridder(
                 _imageD, regionPtr.get(), mask, outfile, overwrite,
-                *coordinates, IPosition(axes), IPosition(inshape)
+                *coordinates, IPosition(vector<int>(axes.begin(),axes.end())),
+                IPosition(vector<int>(inshape.begin(),inshape.end()))
             );
             return _regrid(
                 regridder, method, decimate, replicate, doRefChange,
@@ -4997,7 +5000,8 @@ image* image::regrid(
         else if (_imageDC) {
             ImageRegridder<DComplex> regridder(
                 _imageDC, regionPtr.get(), mask, outfile, overwrite,
-                *coordinates, IPosition(axes), IPosition(inshape)
+                *coordinates, IPosition(vector<int>(axes.begin(),axes.end())),
+                IPosition(vector<int>(inshape.begin(),inshape.end()))
             );
             return _regrid(
                 regridder, method, decimate, replicate, doRefChange,
@@ -5205,7 +5209,7 @@ bool image::replacemaskedpixels(
     return false;
 }
 
-record* image::restoringbeam(int channel, int polarization) {
+record* image::restoringbeam(long channel, long polarization) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
@@ -5244,9 +5248,9 @@ record* image::restoringbeam(int channel, int polarization) {
 }
 
 image* image::rotate(
-    const string& outfile, const vector<int>& inshape, const variant& inpa,
+    const string& outfile, const vector<long>& inshape, const variant& inpa,
     const variant& region, const variant& vmask, const string& method,
-    int decimate, bool replicate, bool dropdeg, bool overwrite, bool stretch
+    long decimate, bool replicate, bool dropdeg, bool overwrite, bool stretch
 ) {
     try {
         _log << _ORIGIN;
@@ -5288,9 +5292,9 @@ image* image::rotate(
 }
 
 template <class T> image* image::_rotate(
-    SPIIT myImage, const string& outfile, const vector<int>& inshape,
+    SPIIT myImage, const string& outfile, const vector<long>& inshape,
     const variant& inpa, const variant& region, const variant& vmask,
-    const string& method, int decimate, bool replicate, bool dropdeg,
+    const string& method, long decimate, bool replicate, bool dropdeg,
     bool overwrite, bool stretch
 ) {
     Vector<Int> shape(inshape);
@@ -5359,7 +5363,7 @@ bool image::rotatebeam(const variant& angle) {
 }
 
 image* image::sepconvolve(
-    const string& outfile, const vector<int>& axes,
+    const string& outfile, const vector<long>& axes,
     const vector<std::string>& types,
     const variant& widths,
     double scale, const variant& region,
@@ -5380,7 +5384,7 @@ image* image::sepconvolve(
         Int num = 0;
         Vector<Quantum<Double> > kernelwidths;
         if (widths.type() == ::casac::variant::INTVEC) {
-            vector<int> widthsIVec = widths.toIntVec();
+            auto widthsIVec = widths.toIntVec();
             num = widthsIVec.size();
             vector<double> widthsVec(num);
             for (int i = 0; i < num; ++i) {
@@ -5460,7 +5464,7 @@ image* image::sepconvolve(
 }
 
 bool image::set(
-    const variant& vpixels, int pixelmask,
+    const variant& vpixels, long pixelmask,
     const variant& region, bool list
 ) {
     try {
@@ -5658,7 +5662,7 @@ bool image::setmiscinfo(const record& info) {
 
 bool image::setrestoringbeam(
     const variant& major, const variant& minor, const variant& pa,
-    const record& beam, bool remove, bool log, int channel, int polarization,
+    const record& beam, bool remove, bool log, long channel, long polarization,
     const string& imagename
 ) {
     try {
@@ -5796,10 +5800,10 @@ String image::_quantityRecToString(const Record& q) {
     return oss.str();
 }
 
-vector<int> image::shape() {
+vector<long> image::shape() {
     _log << _ORIGIN;
     if (_detached()) {
-        return vector<int>();
+        return vector<long>();
     }
     try {
         vector<int> rstat = _imageF
@@ -5807,23 +5811,23 @@ vector<int> image::shape() {
             : _imageC ? _imageC->shape().asVector().tovector()
             : _imageD ? _imageD->shape().asVector().tovector()
             : _imageDC ? _imageDC->shape().asVector().tovector() : vector<int>();
-        return rstat;
+        return vector<long>(rstat.begin(),rstat.end());
     }
     catch (const AipsError& x) {
         _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
                 << LogIO::POST;
         RETHROW(x);
     }
-    return vector<int>();
+    return vector<long>();
 }
 
 record* image::statistics(
-    const vector<int>& axes, const variant& region, const variant& mask,
+    const vector<long>& axes, const variant& region, const variant& mask,
     const vector<double>& includepix, const vector<double>& excludepix,
     bool list, bool force, bool disk, bool robust, bool verbose, bool stretch,
     const string& logfile, bool append, const string& algorithm, double fence,
-    const string& center, bool lside, double zscore, int maxiter,
-    const string& clmethod, int niter
+    const string& center, bool lside, double zscore, long maxiter,
+    const string& clmethod, long niter
 ) {
     _log << _ORIGIN;
     if (_detached()) {
@@ -5865,12 +5869,12 @@ record* image::statistics(
 
 template <class T> record* image::_statistics(
     std::unique_ptr<casa::ImageStatsCalculator<T>>& stats, SPIIT myImage,
-    const vector<int>& axes, const variant& region,
+    const vector<long>& axes, const variant& region,
     const variant& mask, const vector<double>& includepix,
     const vector<double>& excludepix, bool list, bool force, bool disk,
     bool robust, bool verbose, bool stretch, const string& logfile, bool append,
     const string& algorithm, double fence, const string& center, bool lside,
-    double zscore, int maxiter, const string& clmethod, int niter
+    double zscore, long maxiter, const string& clmethod, long niter
 ) {
     auto regionRec = _getRegion(region, true);
     auto mtmp = mask.toString();
@@ -5989,7 +5993,7 @@ template <class T> record* image::_statistics(
 image* image::subimage(
     const string& outfile, const variant& region, const variant& vmask,
     bool dropDegenerateAxes, bool overwrite, bool list, bool stretch,
-    bool wantreturn, const vector<int>& keepaxes
+    bool wantreturn, const vector<long>& keepaxes
 ) {
     try {
         _log << _ORIGIN;
@@ -6038,7 +6042,7 @@ image* image::subimage(
 template<class T> image* image::_subimage(
     SPIIT clone, const String& outfile, const variant& region,
     const variant& vmask, bool dropDegenerateAxes, bool overwrite, bool list,
-    bool stretch, const vector<int>& keepaxes, bool wantreturn
+    bool stretch, const vector<long>& keepaxes, bool wantreturn
 ) {
     SPIIT im;
     auto regionRec = _getRegion(region, false);
@@ -6124,7 +6128,7 @@ template <class T> record* image::_summary(
 
 bool image::tofits(
     const string& fitsfile, bool velocity,
-    bool optical, int bitpix, double minpix,
+    bool optical, long bitpix, double minpix,
     double maxpix, const variant& region,
     const variant& vmask, bool overwrite,
     bool dropdeg, bool deglast, bool dropstokes,
@@ -6375,7 +6379,7 @@ image* image::transpose(
 bool image::twopointcorrelation(
     const string& outfile,
     const variant& region, const variant& vmask,
-    const vector<int>& axes, const string& method,
+    const vector<long>& axes, const string& method,
     bool overwrite, bool stretch
 ) {
     _log << _ORIGIN;
@@ -6605,7 +6609,7 @@ void image::_reset() {
 
 image* image::newimagefromfits(
     const string& outfile, const string& fitsfile,
-    const int whichrep, const int whichhdu,
+    const long whichrep, const long whichhdu,
     const bool zeroBlanks, const bool overwrite
 ) {
     try {
@@ -6629,7 +6633,7 @@ image* image::newimagefromfits(
 }
 
 variant* image::makearray(
-    double v, const vector<int>& shape
+    double v, const vector<long>& shape
 ) {
     auto ndim = shape.size();
     int nelem = 1;
@@ -6640,7 +6644,7 @@ variant* image::makearray(
     for (int i = 0; i < nelem; ++i) {
         element[i] = v;
     }
-    return new variant(element, shape);
+    return new variant(element, vector<int>(shape.begin(),shape.end()));
 }
 
 void image::_notSupported(const std::string& method) const {

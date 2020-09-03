@@ -134,7 +134,7 @@ Bool checkfreq(const casacore::Quantity x) {
 ::casac::coordsys * 
 coordsys::newcoordsys(const bool direction, const bool spectral,
 		      const std::vector<std::string>& stokes,
-		      const int linear, const bool tabular)
+		      const long linear, const bool tabular)
 {
   ::casac::coordsys *newCS = 0;
 
@@ -186,7 +186,7 @@ coordsys::newcoordsys(const bool direction, const bool spectral,
 bool
 coordsys::addcoordinate(const bool direction, const bool spectral,
 			const std::vector<std::string>& stokes,
-			const int linear, const bool tabular)
+			const long linear, const bool tabular)
 {
 	_setup(__func__);
     Vector<String> Stokes;
@@ -216,13 +216,13 @@ coordsys::setparentname(const std::string& imagename)
   return true;
 }
 
-std::vector<int>
+std::vector<long>
 coordsys::axesmap(const bool toWorld)
 {
 	_setup(__func__);
-  std::vector<int> rstat;
+  std::vector<long> rstat;
   try {
-    Vector<Int> map;
+    Vector<long> map;
     if (toWorld) {
       map.resize(_csys->nPixelAxes());
       for (uInt i=0; i<_csys->nPixelAxes(); i++) {
@@ -308,7 +308,7 @@ coordsys::convert(const std::vector<double>& coordin,
 		  const std::vector<bool>& absout,
 		  const std::string& dopplerOut,
 		  const std::vector<std::string>& unitsout,
-		  const std::vector<int>& in_shape)
+		  const std::vector<long>& in_shape)
 {
   std::vector<double> rstat;
   _setup(__func__);
@@ -400,7 +400,7 @@ coordsys::convertmany(const ::casac::variant& coordin,
 		      const std::vector<bool>& absout,
 		      const std::string& dopplerOut,
 		      const std::vector<std::string>& unitsout,
-		      const std::vector<int>& in_shape)
+		      const std::vector<long>& in_shape)
 {
   ::casac::variant *rstat = 0;
   _setup(__func__);
@@ -479,7 +479,7 @@ coordsys::convertmany(const ::casac::variant& coordin,
 }
 
 std::vector<std::string>
-coordsys::coordinatetype(const int which)
+coordsys::coordinatetype(const long which)
 {
   std::vector<std::string> rstat;
   _setup(__func__);
@@ -561,7 +561,7 @@ coordsys::epoch()
   return rstat;
 }
 
-int coordsys::findaxisbyname(const string& name, bool allowfriendlynames) {
+long coordsys::findaxisbyname(const string& name, bool allowfriendlynames) {
 	try {
 		_setup(__func__);
 		Vector<String> names(1, name);
@@ -574,7 +574,7 @@ int coordsys::findaxisbyname(const string& name, bool allowfriendlynames) {
 }
 
 record* coordsys::findaxis(
-	bool isWorld, int axis
+	bool isWorld, long axis
 ) {
 	try {
 		_setup(__func__);
@@ -591,8 +591,8 @@ record* coordsys::findaxis(
 		}
 
 		std::unique_ptr<record> out(new record());
-		(*out)["coordinate"] = coordinate;
-		(*out)["axisincoordinate"] = axisInCoordinate;
+		(*out)["coordinate"] = (long) coordinate;
+		(*out)["axisincoordinate"] = (long) axisInCoordinate;
 		return out.release();
 	}
 	catch (const AipsError& x) {
@@ -602,7 +602,7 @@ record* coordsys::findaxis(
 }
 
 record* coordsys::findcoordinate(
-	const std::string& coordType, int which
+	const std::string& coordType, long which
 ) {
 	try {
 		_setup(__func__);
@@ -833,7 +833,7 @@ coordsys::names(const std::string& coordtype)
   return rstat;
 }
 
-int
+long
 coordsys::naxes(const bool world)
 {
 
@@ -845,7 +845,7 @@ coordsys::naxes(const bool world)
   }
 }
 
-int
+long
 coordsys::ncoordinates()
 {
   int rstat(0);
@@ -1062,7 +1062,7 @@ coordsys::referencevalue(const std::string& format,
 }
 
 bool
-coordsys::reorder(const std::vector<int>& order)
+coordsys::reorder(const std::vector<long>& order)
 {
   bool rstat(false);
 
@@ -1089,8 +1089,8 @@ coordsys::reorder(const std::vector<int>& order)
 }
 
 bool
-coordsys::replace(const ::casac::record& csys, const int in,
-		  const int out)
+coordsys::replace(const ::casac::record& csys, const long in,
+		  const long out)
 {
   bool rstat(false);
   _setup(__func__);
@@ -1617,7 +1617,7 @@ coordsys::setlineartransform(const std::string& coordinateType,
 	  *iter = valueVector[i++];
       }
   } else if ( v_value.type() == ::casac::variant::INTVEC ) {
-      std::vector<int> valueVector;
+      std::vector<long> valueVector;
       valueVector = v_value.getIntVec();
       int i = 0;
       for (Array<Double>::iterator iter = value.begin();
@@ -1783,7 +1783,7 @@ coordsys::setreferencecode(const std::string& code,
 }
 
 bool
-coordsys::setreferencelocation(const std::vector<int>& pixel,
+coordsys::setreferencelocation(const std::vector<long>& pixel,
 			       const ::casac::variant& world,
 			       const std::vector<bool>& imask)
 {
@@ -1834,7 +1834,7 @@ coordsys::setreferencelocation(const std::vector<int>& pixel,
   }
 
   // Eliminate Stokes and masked values
-  std::vector<int> p2w = axesmap(true);
+  std::vector<long> p2w = axesmap(true);
   std::vector<double> rp;
   (_csys->referencePixel()).tovector(rp);
   if (rp.size() != nPixelAxes) {
@@ -1990,7 +1990,7 @@ coordsys::setreferencevalue(const ::casac::variant& value,
 }
 
 bool
-coordsys::setrestfrequency(const ::casac::variant& vfvalue, const int which,
+coordsys::setrestfrequency(const ::casac::variant& vfvalue, const long which,
 			   const bool append)
 {
   bool rstat(false);
@@ -2295,7 +2295,7 @@ coordsys::setstokes(const std::vector<std::string>& in_stokes)
 }
 
 bool
-coordsys::settabular(const std::vector<double>& in_pixel, const std::vector<double>& in_world, const int which)
+coordsys::settabular(const std::vector<double>& in_pixel, const std::vector<double>& in_world, const long which)
 {
 
   bool rstat(false);
@@ -2419,7 +2419,7 @@ coordsys::settelescope(const std::string& telescope)
 bool
 coordsys::setunits(const std::vector<std::string>& value,
 		   const std::string& coordinateType, const bool overwrite,
-		   const int which)
+		   const long which)
 {
   bool rstat(false);
   _setup(__func__);
@@ -2549,7 +2549,7 @@ coordsys::telescope()
 }
 
 ::casac::record*
-coordsys::toabs(const ::casac::variant& value, const int isworld)
+coordsys::toabs(const ::casac::variant& value, const long isworld)
 {
   ::casac::record *rstat = 0;
   _setup(__func__);
@@ -2604,7 +2604,7 @@ coordsys::toabs(const ::casac::variant& value, const int isworld)
 }
 
 ::casac::record*
-coordsys::toabsmany(const ::casac::variant& value, const int isworld)
+coordsys::toabsmany(const ::casac::variant& value, const long isworld)
 {
 
   ::casac::record *rstat=0;
@@ -2894,7 +2894,7 @@ coordsys::torecord()
 }
 
 ::casac::record*
-coordsys::subimage(const ::casac::variant& neworigin, const std::vector<int>& newshape)
+coordsys::subimage(const ::casac::variant& neworigin, const std::vector<long>& newshape)
 {
   ::casac::record *rstat = new ::casac::record();
 
@@ -2934,7 +2934,7 @@ coordsys::subimage(const ::casac::variant& neworigin, const std::vector<int>& ne
   return rstat;
 }
 ::casac::record*
-coordsys::torel(const ::casac::variant& value, const int isworld)
+coordsys::torel(const ::casac::variant& value, const long isworld)
 {
   ::casac::record *rstat = 0;
   _setup(__func__);
@@ -2989,7 +2989,7 @@ coordsys::torel(const ::casac::variant& value, const int isworld)
 }
 
 ::casac::record *
-coordsys::torelmany(const ::casac::variant& value, const int isWorld)
+coordsys::torelmany(const ::casac::variant& value, const long isWorld)
 {
   ::casac::record *rstat = 0;
   _setup(__func__);
@@ -3132,7 +3132,7 @@ record* coordsys::toworldmany(const variant& value) {
 	}
 }
 
-bool coordsys::transpose(const vector<int>& order) {
+bool coordsys::transpose(const vector<long>& order) {
 	try {
 		  _setup(__func__);
 
@@ -3171,8 +3171,8 @@ std::vector<std::string> coordsys::units(
 			std::unique_ptr<record> rec(
 				findcoordinate (cordtype, 0)
 			);
-			std::vector<int> pixelaxes = rec->find("pixel")->second.toIntVec();
-			std::vector<int> worldaxes = rec->find("world")->second.toIntVec();
+			std::vector<long> pixelaxes = rec->find("pixel")->second.toIntVec();
+			std::vector<long> worldaxes = rec->find("world")->second.toIntVec();
 			int n = pixelaxes.size();
 			vector<string> rstat(0);
 			for (int i = 0; i < n; i++) {
@@ -3245,7 +3245,7 @@ coordsys::velocitytofrequency(const std::vector<double>& value,
 
 void 
 coordsys::addCoordinate (CoordinateSystem& cSys, Bool direction, Bool spectral,
-			 const Vector<String>& stokes, Int linear,
+			 const Vector<String>& stokes, int linear,
 			 Bool tabular)
 {
   if (direction) CoordinateUtil::addDirAxes(cSys);
@@ -3321,7 +3321,7 @@ Coordinate::Type coordsys::stringToType(const String& typeIn) const
 }
 
 Record coordsys::worldVectorToRecord (const Vector<Double>& world,
-                                      Int c, const String& format,
+                                      int c, const String& format,
                                       Bool isAbsolute, Bool showAsAbsolute)
   //
   // World vector must be in the native units of cSys
@@ -3409,7 +3409,7 @@ coordsys::quantumToRecord (LogIO& os, const Quantum<Double>& value) const
 }
 
 Record coordsys::worldVectorToMeasures(const Vector<Double>& world,
-                                       Int c, Bool abs) const
+                                       int c, Bool abs) const
 {
 	  *_log << LogOrigin("coordsys", __func__);
 
@@ -3608,7 +3608,7 @@ Record coordsys::worldVectorToMeasures(const Vector<Double>& world,
   return rec;
 }
 
-Int coordsys::findCoordinate (Coordinate::Type type, Bool warn)
+int coordsys::findCoordinate (Coordinate::Type type, Bool warn)
 const
 {
 	  *_log << LogOrigin("coordsys", __func__);
@@ -3631,7 +3631,7 @@ const
 }
 
 void coordsys::recordToWorldVector (Vector<Double>& out, String& type,
-                                    Int c, const RecordInterface& rec) const
+                                    int c, const RecordInterface& rec) const
   //
   // The Record may hold any combination of "numeric", "quantity",
   // "measure" and "string".  They are all representations of the same
@@ -4004,7 +4004,7 @@ coordsys::stringToWorldVector (LogIO& os, const Vector<String>& world,
 }
 
 void coordsys::copyWorldAxes (Vector<Double>& out,
-			      const Vector<Double>& in, Int c) const
+			      const Vector<Double>& in, int c) const
 {
   Vector<Int> worldAxes = _csys->worldAxes(c);
   for (uInt i=0; i<worldAxes.nelements(); i++) {

@@ -442,7 +442,7 @@ bool vpmanager::reset(){
   return true;
 }
 
-bool vpmanager::setuserdefault(const int vplistnum,
+bool vpmanager::setuserdefault(const long vplistnum,
 			       const std::string& telescope,
 			       const std::string& anttype)
 {
@@ -455,7 +455,7 @@ bool vpmanager::setuserdefault(const int vplistnum,
 
 }
 
-int vpmanager::getuserdefault(const std::string& telescope,
+long vpmanager::getuserdefault(const std::string& telescope,
 			      const std::string& anttype)
 {
 
@@ -531,7 +531,7 @@ std::vector<std::string> vpmanager::getanttypes(const std::string& telescope,
 }
   
 
-int vpmanager::numvps(const std::string& telescope,
+long vpmanager::numvps(const std::string& telescope,
 		      const casac::variant& obstime, 
 		      const casac::variant& freq, 
 		      const casac::variant& obsdirection){
@@ -1160,7 +1160,7 @@ vpmanager::getrespimagename(const std::string& telescope,
 			    const std::string& azimuth,
 			    const std::string& elevation, 
 			    const std::string& rectype,
-			    const int beamnumber)
+			    const long beamnumber)
 {
   std::string rval("");
 
