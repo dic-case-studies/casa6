@@ -1572,7 +1572,6 @@ class split_test_tav_then_cvel(SplitChecker):
         shutil.rmtree(self.records['cvms'])
         #self.__class__.n_tests_passed += 1
 
-@unittest.skip("split_test_wttosig is skipped")
 class split_test_wttosig(SplitChecker):
     """
     Check WEIGHT and SIGMA after various datacolumn selections and averagings.
