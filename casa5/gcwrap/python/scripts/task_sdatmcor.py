@@ -9,7 +9,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
     from casatools import quanta, table, msmetadata
-    # CAS-13088
+    from casatools import mstransformer
     from casatools import atmosphere
 
     msmd = msmetadata()
@@ -20,9 +20,11 @@ if is_CASA6:
 else:
     from taskinit import tbtool, casalog, qa
     # CAS-13088
+    from taskinit import mttool as mttool 
     from taskinit import msmdtool as msmetadata
     from casac import casac
 
+    mstransformer = mttool
     msmd = msmetadata()
     tb = tbtool()
     at = casac.atmosphere()
@@ -124,8 +126,36 @@ def sdatmcor(
     #  param = ['1.1', '2.2', '3.3' .....]  
     layerboundaries = conv_to_doubleArrayList(layerboundaries)
     layertemperature = conv_to_doubleArrayList(layertemperature)
+
 #
-# Ceall calc Function
+# TENTATIVE: pre-process (Data Selection)
+#    (3-Sep-2020 ~ underconstruction)
+#
+
+    #########################
+    # Data Selection
+    #  (under construction)
+    #########################
+    """
+      Design : 
+        by Mst, input MS is ready for ATM correction by the selected data
+ 
+      First plan:
+        On very sooner stage, call AtmMst and make temporary file.
+        Original file must be preserved.
+ 
+    """
+    print( "---------------------------------------------")
+    print( "Here, DataSelection is supported to be done. ")
+    print( "---------------------------------------------")
+    atmMst(
+        infile, datacolumn, outfile, overwrite,
+        field, spw, scan, antenna,
+        correlation, timerange, intent,
+        observation, feed, msselect)
+
+#
+# Call calc Function
 #
     return calc_sdatmcor(
         infile, datacolumn, outfile, overwrite,
@@ -137,6 +167,38 @@ def sdatmcor(
         layerboundaries,
         layertemperature,
         debug)
+
+##################
+# Data Selection
+##################
+def atmMst(
+    infile, datacolumn, outfile, overwrite,
+    field, spw, scan, antenna,
+    correlation, timerange, intent,
+    observation, feed, msselect):
+
+    # Tentative output #
+    DevTempName = './_AtmCor-Selected.ms'
+    # clean temp output #
+    ms_remove(DevTempName)
+
+    # Tentative call #
+    print("DBG: calling mstransformer.") 
+    return   ### ByPass ### 
+    mstransformr(
+        vis=infile, outputvis = DevTempName, datacolumn=datacolumn,
+        field = field, 
+        spw = spw, 
+        scan = scan, 
+        dantenna = antenna,
+        correlation = correlation, 
+        timerange = timerange, 
+        intent = intent,
+        observation = observation, 
+        feed = feed, 
+        msselect = msselect, 
+        reindex = False)
+
 
 ##########################
 # Subroutines
@@ -151,7 +213,8 @@ def ms_remove(path):
         else:
             os.remove(path)
     else:
-        print("--- No file to delete [%s]"%path)
+        print("--- Info: No file to delete [%s]"%path)
+
 
 def ms_copy(src, dst):
     print("-- copying [%s] ->[%s]."%(src, dst))
@@ -300,7 +363,7 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("***********************************")
-        print("**   calc_sdatmcor:: (0901-A)    **")
+        print("**   calc_sdatmcor:: (0903-MST)  **")
         print("***********************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
@@ -481,6 +544,7 @@ def calc_sdatmcor(
     # os.system('rm -rf %s' % corms)
     ms_remove(corms)
     ms_copy(src=calms, dst=corms)
+
 
     ################################################################
     # Get metadata
