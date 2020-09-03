@@ -100,6 +100,8 @@ public:
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
   bool getterSwitchedHogbom() { return itsSwitchedToHogbom; }
+  casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
+  float getterPeakResidual() { return itsPeakResidual; }
 
 
 //protected:
@@ -179,6 +181,7 @@ private:
   casacore::IPosition itsPositionOptimum;
   casacore::Float itsOptimumScaleSize;
   double itsUsedMemoryMB;
+  float itsPeakResidual;
 };
 
 } //# NAMESPACE CASA - END

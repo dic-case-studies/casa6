@@ -153,7 +153,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setaspcontrol(cycleNiter, 0.1/*loopgain*/, thresh, Quantity(0.0, "%"));
+    itsCleaner.setaspcontrol(cycleNiter, 0.35/*loopgain*/, thresh, Quantity(0.0, "%"));
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model
@@ -176,11 +176,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( retval==-2 ) {os << LogIO::WARN << "AAspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
     if( retval==-3 ) {os << LogIO::WARN << "AAspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
-    ////This is going to be wrong if there is no 0 scale;
-    // residual() takes the difference of the models before/after clean
-    Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //Matrix<Float> residual(itsCleaner.getterResidual());
     // account for mask as well
-    peakresidual = max(abs(residual*itsMatMask));
+    //peakresidual = max(abs(residual*itsMatMask));
+    peakresidual = itsCleaner.getterPeakResidual();
     cout << "SDAlg: peakres " << peakresidual << endl;
     modelflux = sum( itsMatModel );
   }

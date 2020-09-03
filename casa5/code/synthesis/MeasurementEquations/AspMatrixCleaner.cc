@@ -99,7 +99,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   //itsStrenThres(0.00036), //SNorm_hog 5k->10k
   //itsStrenThres(0.00003), //m31Norm_nohog
   itsOptimumScale(0),
-  itsOptimumScaleSize(0.0)
+  itsOptimumScaleSize(0.0),
+  itsPeakResidual(0.0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -399,8 +400,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*0.38*/) // M31 value - new Asp + new normalization: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.002) // G55 value, new Asp, old normalization
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
@@ -557,17 +559,19 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     fft.flip(itsPsfConvScale, false, false); //need this if conv with 1 scale; don't need this if conv with 2 scales
     Matrix<Float> psfSub = (itsPsfConvScale)(blcPsf, trcPsf);
     Matrix<Float> dirtySub=(*itsDirty)(blc,trc);
-    cout << "before peakres " << max(fabs((*itsDirty))) << " max(dirtySub)" << max(fabs(dirtySub)) << endl;
+
     float maxvalue;
     IPosition peakpos;
     findMaxAbs(psfSub, maxvalue, peakpos);
     cout << "psfSub pos " << peakpos << " maxval " << psfSub(peakpos) << endl;
+    cout << "dirtySub pos " << peakpos << " val " << dirtySub(peakpos) << endl;
     findMaxAbs(itsPsfConvScale, maxvalue, peakpos);
     cout << "itsPsfConvScale pos " << peakpos << " maxval " << itsPsfConvScale(peakpos) << endl;
-    findMaxAbs(dirtySub, maxvalue, peakpos);
+    cout << "itsDirty pos " << peakpos << " val " << (*itsDirty)(peakpos) << endl;
+    /*findMaxAbs(dirtySub, maxvalue, peakpos);
     cout << "dirtySub pos " << peakpos << " maxval " << dirtySub(peakpos) << endl;
     findMaxAbs((*itsDirty), maxvalue, peakpos);
-    cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
+    cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;*/
     cout << "itsPositionOptimum " << itsPositionOptimum << endl;
     cout << "itsStrengthOptimum " << itsStrengthOptimum << endl;
     cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl;
@@ -647,7 +651,15 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     //cout << "after dirtySub(262,291) = " << dirtySub(262,291) << endl;
     //cout << "after itsDirty(262,291) = " << (*itsDirty)(262,291) << endl;
-    cout << "current peakres " << max(fabs((*itsDirty))) << endl;
+    Float maxVal=0;
+    IPosition posmin((*itsDirty).shape().nelements(), 0);
+    Float minVal=0;
+    IPosition posmax((*itsDirty).shape().nelements(), 0);
+    minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
+    itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
+    cout << "current peakres " << itsPeakResidual << " posmin " << posmin << " val " << (*itsDirty)(posmin);
+    cout << " posmax " << posmax << " val " << (*itsDirty)(posmax) << endl;
+    cout << "after: itsDirty optPos " << (*itsDirty)(itsPositionOptimum) << endl;
 
 
     // cout << "before dirtySub(100,100) = " << itsDirtyConvScales[0](100,100) << endl;
@@ -845,7 +857,7 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
   IPosition pos;
   findMaxAbs(iscale, maxima, pos);
   cout << "peak(iscale) " << max(fabs(iscale)) << " amp " << 1.0/scaleSize;
-  cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos);
+  cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos) << endl;
 
 }
 
@@ -1189,10 +1201,18 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   //#pragma omp parallel default(shared) private(scale) num_threads(nth)
   //{
   //  #pragma omp for // genie pragma seems to sometimes return wrong value to maxima on tesla
-    float maxvalue;
+    /*float maxvalue;
     IPosition peakpos;
     findMaxAbs((*itsDirty), maxvalue, peakpos);
-    cout << "orig itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
+    cout << "orig itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;*/
+    Float maxVal=0;
+    IPosition posmin((*itsDirty).shape().nelements(), 0);
+    Float minVal=0;
+    IPosition posmax((*itsDirty).shape().nelements(), 0);
+    minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[scale]);
+    cout << "orig itsDirty : min " << minVal << " max " << maxVal << endl;
+    cout << "posmin " << posmin << " posmax " << posmax << endl;
+
     for (scale=0; scale < itsNInitScales; ++scale)
     {
       // Find absolute maximum for the dirty image
@@ -1202,7 +1222,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
       maxima(scale) = 0;
       posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
-      //cout << "makedirtyinitscale before: " << itsInitScaleMasks[scale].shape() << endl;
+      //cout << "makedirtyinitscale mask shape: " << itsInitScaleMasks[scale].shape() << endl;
 
       //genie debug
       Float maxVal=0;
@@ -1212,6 +1232,12 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsInitScaleMasks[scale]);
       cout << "InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
       cout << "posmin " << posmin << " posmax " << posmax << endl;
+
+      /*maxVal=0;
+      minVal=0;
+      minMaxMasked(minVal, maxVal, posmin, posmax, itsDirtyConvInitScales[scale], itsInitScaleMasks[scale]);
+      cout << "DirtyConvInitScale " << scale << ": min " << minVal << " max " << maxVal << endl;
+      cout << "posmin " << posmin << " posmax " << posmax << endl;*/
       //genie
 
       if (!itsMask.null())
@@ -1573,7 +1599,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //auto duration = duration_cast<microseconds>(stop - start);
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
       cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
-    	if (lenDirVec >= threshold)
+    	//if (lenDirVec >= threshold)
+      if (lenDirVec >= 70000.0)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     		vp.push_back({lenDirVec, i});
@@ -1647,7 +1674,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //if (itsUseZhang)
     //AspZhangObjFunc fun(*itsDirty, activeSetCenter); // Asp 2016
     //else
-    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter); //Asp 2004
+    AspObjFunc fun(*itsDirty, *itsXfr, activeSetCenter, itsGain); //Asp 2004
 
     //auto start = high_resolution_clock::now();
 
@@ -1700,6 +1727,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }
 
     itsStrengthOptimum = x[length - 2]; // the latest aspen is the last element of x
+    // the above line affects residual image (brighter) (0 scales so far seems problemastic)
     itsOptimumScaleSize = x[length - 1]; // the latest aspen is the last element of x
     itsGoodAspCenter = activeSetCenter;
 

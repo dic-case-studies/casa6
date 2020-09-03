@@ -55,14 +55,17 @@ private:
   casacore::Matrix<casacore::Float> itsMatDirty;
   casacore::Matrix<casacore::Complex> itsPsfFT;
   std::vector<casacore::IPosition> center;
+  casacore::Float itsGain;
 
 public:
   AspObjFunc(const casacore::Matrix<casacore::Float>& dirty,
     const casacore::Matrix<casacore::Complex>& psf,
-    const std::vector<casacore::IPosition>& positionOptimum) :
+    const std::vector<casacore::IPosition>& positionOptimum,
+    const casacore::Float gain) :
     itsMatDirty(dirty),
     itsPsfFT(psf),
-    center(positionOptimum)
+    center(positionOptimum),
+    itsGain(gain)
   {
     nX = itsMatDirty.shape()(0);
     nY = itsMatDirty.shape()(1);
@@ -195,7 +198,7 @@ public:
         for (int i = minI; i <= maxI; i++)
         {
           //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
-          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + 0.1 * x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
+          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + itsGain * x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
           grad[2*k] = grad[2*k] + double(Grad0(i,j));
           grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
         }
