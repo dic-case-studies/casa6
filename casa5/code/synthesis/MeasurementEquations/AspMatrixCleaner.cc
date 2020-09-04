@@ -400,7 +400,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < /*0*/0.38) // M31 value - new Asp + new normalization: 5k->10k good
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*0.38*/) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
