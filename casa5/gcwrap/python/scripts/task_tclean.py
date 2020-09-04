@@ -439,13 +439,18 @@ def tclean(
                     imager.pbcorImages()
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-######### niter >=0  end if
-
-
+######### niter >=0  end if 
+    except Exception as e:
+    #    #print 'Exception : ' + str(e)
+    #    if(cppparallel):
+    #        ###release workers back to python mpi control
+    #        si=synthesisimager()
+    #        si.releasempi()
+        casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
     finally:
         ##close tools
         # needs to deletools before concat or lock waits for ever
-         if imager != None:
+        if imager != None:
              imager.deleteTools()
         if(cppparallel):
             ###release workers back to python mpi control
@@ -459,13 +464,6 @@ def tclean(
         #if niter>0 and savemodel != "none":
         #    casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
 
-    except Exception as e:
-        #print 'Exception : ' + str(e)
-        if(cppparallel):
-            ###release workers back to python mpi control
-            si=synthesisimager()
-            si.releasempi()
-        casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
 
     return retrec
 

@@ -1206,7 +1206,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     else {
     // Revised version of calcRobustImageStatistics  (previous one- rename to calcRobustImageStatisticsOld)
     //Record thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
-      thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
+      try{
+	thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
+      }
+      catch( AipsError &x )
+      {
+	//now that there are part images that are masked...should just not proceed rather than throw an exception
+	if(x.getMesg().contains("zero element data"))
+	  return;
+	else
+	  throw(x);
+      }
       Array<Double> newmaxs, newmins, newrmss, newmads;
       thenewstats.get(RecordFieldId("max"), newmaxs);
       thenewstats.get(RecordFieldId("rms"), newrmss);
