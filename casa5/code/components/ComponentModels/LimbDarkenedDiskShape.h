@@ -29,14 +29,14 @@
 #include <casa/aips.h>
 #include <casa/BasicSL/Complex.h>
 #include <components/ComponentModels/TwoSidedShape.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
 class MDirection;
 class MVAngle;
 template <class Qtype> class Quantum;
-template <class T> class Matrix;
-template <class T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

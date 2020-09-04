@@ -29,17 +29,10 @@
 #define TRIALDISPLAY_LATTICEPADM_H
 
 //# aips includes:
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 
 //# display library includes:
 #include <display/DisplayDatas/PrincipalAxesDM.h>
-
-namespace casacore{
-
-	template <class T> class Array;
-	template <class T> class MaskedLattice;
-	class IPosition;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

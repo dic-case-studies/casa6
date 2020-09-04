@@ -30,14 +30,15 @@
 #define SYNTHESIS_WPCONVFUNC_H
 
 
-#include <casa/Arrays/Vector.h>
-#include <casa/Containers/Block.h>
-#include <casa/Utilities/CountedPtr.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/Utilities/CountedPtr.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Matrix;
+
 }
 
 namespace casa{

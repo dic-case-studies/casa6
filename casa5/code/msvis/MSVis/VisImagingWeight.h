@@ -32,11 +32,10 @@
 #include <casa/BasicSL/Complex.h>
 #include <casa/Quanta/Quantum.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
-template<class T> class Matrix;
-template<class T> class Vector;
 template<class T> class ImageInterface;
 template<class T> class TempLattice;
 

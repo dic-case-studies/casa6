@@ -29,6 +29,7 @@
 #include <casa/Arrays/Vector.h>
 #include <QString>
 #include <QTextStream>
+#include <casacore/casa/aipstype.h>
 
 namespace casa {
 
