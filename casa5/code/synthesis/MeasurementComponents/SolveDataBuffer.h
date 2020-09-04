@@ -28,11 +28,12 @@
 #ifndef SYNTHESIS_SOLVEDATABUFFER_H
 #define SYNTHESIS_SOLVEDATABUFFER_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <msvis/MSVis/VisBuffer2.h>
-#include <casa/Arrays/Array.h>
-#include <casa/Arrays/Cube.h>
-#include <casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Arrays/Cube.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Containers/Block.h>
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 //#forward
@@ -59,8 +60,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 //<todo>
 // <li> write todo list
 //</todo>
-
-
 
 class SolveDataBuffer 
 {

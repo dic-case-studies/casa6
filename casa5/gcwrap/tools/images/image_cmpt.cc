@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <sys/wait.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayUtil.h>
 #include <casa/Arrays/MaskedArray.h>

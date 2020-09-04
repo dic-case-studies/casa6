@@ -27,15 +27,10 @@
 #ifndef TRIALDISPLAY_WEDGEDD_H
 #define TRIALDISPLAY_WEDGEDD_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <display/DisplayDatas/ActiveCaching2dDD.h>
 #include <display/Display/DisplayCoordinateSystem.h>
 #include <display/DisplayCanvas/WCCSNLAxisLabeller.h>
-
-namespace casacore{
-
-	template <class T> class Matrix;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

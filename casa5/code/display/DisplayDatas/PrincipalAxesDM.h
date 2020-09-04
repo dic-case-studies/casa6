@@ -28,16 +28,11 @@
 #ifndef TRIALDISPLAY_PRINCIPALAXESDM_H
 #define TRIALDISPLAY_PRINCIPALAXESDM_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Vector.h>
 #include <display/Display/DisplayEnums.h>
 #include <display/DisplayDatas/DisplayMethod.h>
 #include <display/DisplayDatas/PrincipalAxesDD.h>
-
-namespace casacore{
-
-	class IPosition;
-	template <class T> class Vector;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

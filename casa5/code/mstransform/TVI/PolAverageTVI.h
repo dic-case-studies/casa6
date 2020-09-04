@@ -39,11 +39,6 @@
 #include <casacore/measures/Measures/Stokes.h>
 #include <casacore/casa/Containers/Record.h>
 
-namespace casacore {
-
-template<typename T> class Vector;
-}
-
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 namespace vi { // # NAMESPACE VI - BEGIN

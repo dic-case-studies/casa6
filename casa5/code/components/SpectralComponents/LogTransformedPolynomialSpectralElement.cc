@@ -26,7 +26,7 @@
 //# $Id: SpectralElement.cc 21024 2011-03-01 11:46:18Z gervandiepen $
 
 #include <components/SpectralComponents/LogTransformedPolynomialSpectralElement.h>
-
+#include <casacore/casa/Exceptions/Error.h>
 #include <casa/iostream.h>
 
 #define _ORIGIN  String("LogTransformedPolynomialSpectralElement::") + __FUNCTION__ + ":" + String::toString(__LINE__) + ": "

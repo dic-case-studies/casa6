@@ -308,7 +308,7 @@ public:
 	/* 			     std::list<std::pair<size_t,size_t>> const& in_range, */
 	/* 			     std::list<std::pair<size_t,size_t>>& out_range); */
 
-	inline static string FormatLineString(std::list<std::pair<size_t,size_t>> &line_list) {
+	inline static std::string FormatLineString(std::list<std::pair<size_t,size_t>> &line_list) {
 	  std::ostringstream oss;
 	  oss << "number of Lines = " << line_list.size() << std::endl;
 	  for (std::list<std::pair<size_t,size_t>>::iterator iter = line_list.begin();

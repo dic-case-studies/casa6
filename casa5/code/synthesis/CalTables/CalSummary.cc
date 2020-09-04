@@ -40,6 +40,7 @@
 #include <casacore/measures/Measures/MeasTable.h>
 #include <casacore/ms/MSOper/MSMetaData.h>
 #include <casacore/tables/Tables/TableRecord.h>
+#include <casacore/casa/Utilities/GenSort.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN

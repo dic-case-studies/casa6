@@ -581,7 +581,7 @@ Table PlotMSAtm::selectWeatherTable(Table& wtable, String tempUnits, String pres
             // do not use weather station "MeteoItinerant"
             casacore::Table staTable = Table::openTable(tableName_ + "::ASDM_STATION");
             casacore::Table result = staTable(staTable.col("name")=="MeteoItinerant");
-            auto antIds = result.rowNumbers(staTable);
+            Vector<rownr_t> antIds = result.rowNumbers(staTable);
             if (!antIds.empty()) ten = (wtable.col("NS_WX_STATION_ID") != antIds(0));
         } catch (AipsError & err) {
             // table does not exist 
