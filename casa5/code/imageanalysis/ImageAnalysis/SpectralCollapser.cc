@@ -634,7 +634,7 @@ Bool SpectralCollapser::_mergeDataError( const String &outImg, const String &dat
 	QualityCoordinate qualAxis(quality);
 	newCSys.addCoordinate(qualAxis);
 
-	Array<Float> outData=Array<Float>(newShape, 0.0);
+	Array<Float> outData=Array<Float>(newShape, 0.0f);
 	Array<Bool>  outMask;
 
 	// get all the data values

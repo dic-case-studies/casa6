@@ -31,6 +31,7 @@
 // can safely use Sakura functions inside synthesis.
 //#include <libsakura/sakura.h>
 #include <synthesis/MeasurementComponents/SkyCal.h>
+#include <casacore/casa/BasicSL/Complex.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN

@@ -36,6 +36,7 @@
 #include <casa/Utilities/CountedPtr.h>
 #include <casa/BasicSL/String.h>
 #include <measures/Measures/Stokes.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
@@ -51,8 +52,6 @@ class RecordInterface;
 class Unit;
 class GaussianBeam;
 template <class Ms> class MeasRef;
-template <class T> class Cube;
-template <class T> class Vector;
 template <class T> class Quantum;
 }
 

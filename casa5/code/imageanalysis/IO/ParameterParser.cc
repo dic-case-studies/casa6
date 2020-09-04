@@ -29,6 +29,7 @@
 #include <casacore/casa/Utilities/Regex.h>
 #include <casacore/casa/Utilities/Sort.h>
 #include <casacore/measures/Measures/Stokes.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 using namespace casacore;
 namespace casa {
@@ -90,7 +91,7 @@ std::vector<uInt> ParameterParser::spectralRangesFromChans(
 	uInt& nSelectedChannels, const String& specification,  const uInt nChannels
 ) {
 	// First split on commas
-	Vector<String> parts = stringToVector(specification, Regex("[,;]"));
+	Vector<String> parts = stringToVector(specification, std::regex("[,;]"));
 	static const Regex regexuInt("^[0-9]+$");
 	static const Regex regexRange("^[0-9]+[ \n\t\r\v\f]*~[ \n\t\r\v\f]*[0-9]+$");
 	static const Regex regexLT("^<.*$");
@@ -200,7 +201,7 @@ std::vector<String> ParameterParser::stokesFromString(
 	specification.rtrim(']');
 	specification.upcase();
 
-	Vector<String> parts = stringToVector(specification, Regex("[,;]"));
+	Vector<String> parts = stringToVector(specification, std::regex("[,;]"));
 	Vector<String> polNames = Stokes::allNames(false);
 	uInt nNames = polNames.size();
 	Vector<uInt> nameLengths(nNames);

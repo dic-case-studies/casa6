@@ -38,6 +38,7 @@
 #include <casacore/casa/Logging/LogOrigin.h>
 #include <casacore/casa/namespace.h>
 #include <casacore/lattices/Lattices/LatticeBase.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <utility>
 #include <vector>
 
@@ -47,7 +48,7 @@ class CoordinateSystem;
 class IPosition;
 class Record;
 template <class T> class TempImage;
-template <class T> class Vector;
+
 }
 
 namespace casa {
