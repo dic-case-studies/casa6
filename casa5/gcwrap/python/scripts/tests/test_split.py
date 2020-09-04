@@ -1735,8 +1735,6 @@ class split_test_wttosig(SplitChecker):
                         [ 0.70710677,  0.70710677,  0.70710677,  0.70710677]]),
                  0.001)
 
-#After reenabling split_test_wttosig in the context of CAS-11139,
-#he tests with time averaging seem not to be working yet. 
     def test_wt_tavcorr(self):
         """WEIGHT after time averaging CORRECTED_DATA."""
         check_eq(self.records[('corrected', '1', '60s')]['wt'],
