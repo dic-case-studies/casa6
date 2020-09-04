@@ -28,10 +28,10 @@ not full unit tests for the bandpass task.
 '''
 
 if is_CASA6:
-    datapath = ctsys.resolve('regression/unittest/bandpass')
+    datapath = ctsys.resolve('unittest/bandpass/')
 else:
     datapath = os.environ.get('CASAPATH').split()[0] +\
-               '/data/regression/unittest/bandpass/'
+               '/casatestdata/unittest/bandpass/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False

@@ -37,7 +37,7 @@ class asdmsummary_test(unittest.TestCase):
     dataPath = ""
     extraLines = 0
     if not is_CASA6:
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/asdmsummary/')
         extraLines = 8
 
     def doASDMSummary(self, asdmpath, expectedLogLines):

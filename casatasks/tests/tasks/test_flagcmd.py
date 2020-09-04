@@ -19,7 +19,7 @@ if is_CASA6:
         pass
 
     # Path for data
-    datapath = ctsys.resolve("regression/unittest/flagdata/")
+    datapath = ctsys.resolve("unittest/flagcmd/")
 else:
     from tasks import flagcmd, flagdata, flagmanager
     from taskinit import aftool
@@ -31,7 +31,7 @@ else:
     aflocal = aftool()
 
     # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "casatestdata/unittest/flagcmd/"
 
 #
 # Test of flagcmd task. It uses flagdata to unflag and summary
@@ -737,6 +737,11 @@ class test_XML(test_base):
     
     def setUp(self):
         self.setUp_evla()
+        
+    # During implementation of CAS-13049, test_xml2 would fail without a tearDown
+    def tearDown(self):
+        os.system('rm -rf tosr0001_scan3*.ms*')
+
         
     def test_xml1(self):
         '''flagcmd: list xml file and save in outfile'''

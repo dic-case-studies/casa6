@@ -29,13 +29,15 @@ else:
     _ms = mstool( )
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+
+datapath = ctsys_resolve('unittest/exportasdm/')
 class exportasdm_test(unittest.TestCase):
     
     #vis_a = 'ngc4826.ms'
-    vis_b = 'test.ms'
+    vis_b = 'ARP299F_sma_2scans_24spws_negative_chanwidth.ms'
     vis_c = 'M100-X220-shortened.ms'
     vis_d = 'ngc4826.tutorial.ngc4826.ll.5.ms'
     vis_e = 'g19_d2usb_targets_line-shortened.ms'
@@ -52,25 +54,26 @@ class exportasdm_test(unittest.TestCase):
         #    _ms.fromfits( self.vis_a, '/regression/ngc4826/fitsfiles/ngc4826.ll.fits5')
         #    _ms.close( )
         if(not os.path.exists(self.vis_b)):
-            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .')
+            os.system('cp -RL '+os.path.join(datapath,'ARP299F_sma_2scans_24spws_negative_chanwidth.ms')+' .')
         if(not os.path.exists(self.vis_c)):
-            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M100-X220-shortened.ms')+' .')
+            os.system('cp -RL '+os.path.join(datapath,'M100-X220-shortened.ms')+' .')
         if(not os.path.exists(self.vis_d)):
             # CASA6 will fetch this from the repo without the need for ctsys_resolve
-            _ms.fromfits( self.vis_d, ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5') )
+            _ms.fromfits( self.vis_d, os.path.join(datapath,'ngc4826.ll.fits5') )
             _ms.close( )
         if(not os.path.exists(self.vis_e)):
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened.ms')+' .')
+            os.system('cp -RL '+os.path.join(datapath,'g19_d2usb_targets_line-shortened.ms')+' .')
+            print('ls -l')
         if(not os.path.exists(self.vis_f)):
-            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/Itziar.ms')+' .')            
+            os.system('cp -RL '+os.path.join(datapath,'Itziar.ms')+' .')            
         if(not os.path.exists(self.vis_g)):
-            os.system('cp -R '+ctsys_resolve('regression/exportasdm/input/M51.ms')+' .')
+            os.system('cp -RL '+os.path.join(datapath,'M51.ms')+' .')
         if(not os.path.exists(self.vis_h)):
-            os.system('ln -sf '+ctsys_resolve('regression/unittest/importevla/X_osro_013.55979.93803716435'))
+            os.system('ln -sf '+os.path.join(datapath,'X_osro_013.55979.93803716435'))
             # the final two arguments are equivalent to the defaults for the original importevla used here
             importasdm('X_osro_013.55979.93803716435', vis = 'xosro2ref.ms', process_flags=False, scans='0:2', ocorr_mode='co', with_pointing_correction=True)
         if(not os.path.exists(self.vis_i)):
-            os.system('ln -sf '+ctsys_resolve('regression/asdm-import/input/uid___A002_X72bc38_X000'))
+            os.system('ln -sf '+os.path.join(datapath,'uid___A002_X72bc38_X000'))
             importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
             
         if not is_CASA6:

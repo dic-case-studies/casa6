@@ -107,15 +107,15 @@ try:
     _rg = rgtool()
     image = iatool
     table = tbtool
-    datapath = os.environ.get('CASAPATH').split()[0] + sep + 'data' + sep\
-        + 'regression' + sep + 'unittest' + sep + 'immath' + sep
+    datapath = os.environ.get('CASAPATH').split()[0] + sep + 'casatestdata' + sep\
+        +  'unittest' + sep + 'immath' + sep
     is_CASA6 = False
 except ImportError:
     from casatools import ctsys, table, image, regionmanager, measures
     from casatasks import casalog, immath
     _ia = image()
     _rg = regionmanager()
-    datapath = ctsys.resolve(os.path.join('regression','unittest','immath'))
+    datapath = ctsys.resolve(os.path.join('unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'

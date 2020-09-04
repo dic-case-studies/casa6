@@ -34,7 +34,7 @@ else:
     cb = cbtool( )
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata')
         return os.path.join(dataPath,apath)
 
 myname = 'test_concat'
@@ -114,7 +114,7 @@ class test_concat(unittest.TestCase):
         global testmms
         res = None
 
-        datapath=ctsys_resolve('regression/unittest/concat/input/')
+        datapath=ctsys_resolve('unittest/concat/')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -160,7 +160,7 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
                     print("Copying ", mymsname)
-                    rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
+                    rval = os.system('cp -RL '+os.path.join(datapath,mymsname)+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 

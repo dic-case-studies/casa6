@@ -107,7 +107,7 @@ from casatools import ctsys, image, table, quanta, imagemetadata
 # Input file names
 input_file = 'ngc5921.clean.image'
 input_file_copy = 'ngc5921.clean.image.copy'
-datapath='regression/unittest/imhead'
+datapath='unittest/imhead'
 complexim = 'complex.im'
 
 def deep_equality(a, b): 

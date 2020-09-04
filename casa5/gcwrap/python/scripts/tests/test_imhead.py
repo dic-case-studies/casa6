@@ -108,7 +108,7 @@ import unittest
 # Input file names
 input_file = 'ngc5921.clean.image'
 input_file_copy = 'ngc5921.clean.image.copy'
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imhead/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imhead/'
 complexim = 'complex.im'
 
 def deep_equality(a, b): 

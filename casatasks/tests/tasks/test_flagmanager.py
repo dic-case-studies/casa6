@@ -16,7 +16,7 @@ if is_CASA6:
         pass
 
     # Path for data
-    datapath = ctsys.resolve('regression/unittest/flagdata')
+    datapath = ctsys.resolve('unittest/flagmanager/')
 else:
     from tasks import flagdata, flagmanager
     from taskinit import aftool as agentflagger
@@ -30,7 +30,7 @@ else:
     g['__rethrow_casa_exceptions'] = True
 
     # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagdata/"
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False

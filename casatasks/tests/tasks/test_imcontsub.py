@@ -109,7 +109,7 @@ if is_CASA6:
 
     _ia = image( )
 
-    datapath = ctsys.resolve('regression/g192redux/reference')
+    datapath = ctsys.resolve('unittest/imcontsub/')
 else:
     import casac
     from tasks import *
@@ -117,7 +117,7 @@ else:
 
     _ia = iatool( )
     
-    datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
+    datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imcontsub/'
 
 # Input files
 list = ['g192_a2.image', 'g192_a2.image-2.rgn', 

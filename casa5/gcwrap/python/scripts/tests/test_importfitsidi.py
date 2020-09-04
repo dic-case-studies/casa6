@@ -33,7 +33,7 @@ if is_CASA6:
     _tb = table( )
 
     # enhanced later using ctsys.resolve
-    datapath = 'regression/fitsidi_import/input'
+    datapath = ctsys.resolve('unittest/importfitsidi/')
 else:
     from __main__ import default
     from tasks import *
@@ -43,7 +43,7 @@ else:
     _ms = ms
     _tb = tb
 
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/fitsidi_import/input'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/importfitsidi/'
 
 myname = 'importfitsidi-unit-test'
 

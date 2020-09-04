@@ -25,7 +25,7 @@ class calstat_test(unittest.TestCase):
         self.tb.done( )
 
     def data(self):
-        return map( lambda x: ctsys.resolve("regression/calstat/" + x), self.caltables )
+        return map( lambda x: ctsys.resolve("unittest/calstat/" + x), self.caltables )
 
     def test_cs(self):
         expected = {'ggtau.3mm.ph.gcal0':

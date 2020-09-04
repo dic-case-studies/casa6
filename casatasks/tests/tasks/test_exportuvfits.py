@@ -23,8 +23,7 @@ Features tested:
   1. When that UVFITS file is read back in, is its data still correct?
 '''
 
-datapath = 'regression/unittest/uvfits/'
-datapath2 = 'regression/'
+datapath = ctsys.resolve('unittest/exportuvfits/')
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -57,6 +56,7 @@ class exportuvfits_test(unittest.TestCase):
     
     def setUp(self):
         self.qa = quanta( )
+        self.fitsname = ''
         #pass
         #if self.need_to_initialize:
         #    self.initialize()
@@ -88,10 +88,11 @@ class exportuvfits_test(unittest.TestCase):
 
 
     def tearDown(self):
+        os.remove(self.fitsname)
         if self.do_teardown:
             self.qa.done( )
-            shutil.rmtree(self.origms)
-            shutil.rmtree(self.msfromfits)
+            shutil.rmtree(self.origms, ignore_errors=True)
+            shutil.rmtree(self.msfromfits,ignore_errors=True)
             os.remove(self.fitsfile)
             self.do_teardown = False
 
@@ -118,18 +119,18 @@ class exportuvfits_test(unittest.TestCase):
     def test_export_overwrite(self):
         """CAS-5492: test the overwrite parameter when exporting MSes to uvfits"""
         myms = mstool()
-        msname = ctsys.resolve(datapath + "uvfits_test.ms")
+        msname = os.path.join(datapath, "uvfits_test.ms")
         myms.open(msname)
-        fitsname = "CAS-5492.uvfits"
-        self.assertTrue(myms.tofits(fitsname))
+        self.fitsname = "CAS-5492.uvfits"
+        self.assertTrue(myms.tofits(self.fitsname))
         # fail because overwrite=False
-        self.assertRaises(Exception, myms.tofits, fitsfile=fitsname, overwrite=False)
+        self.assertRaises(Exception, myms.tofits, fitsfile=self.fitsname, overwrite=False)
         # succeed because overwrite=True
-        self.assertTrue(myms.tofits(fitsname, overwrite=True))
+        self.assertTrue(myms.tofits(self.fitsname, overwrite=True))
         myms.done()
-        self.assertRaises(Exception, exportuvfits, msname, fitsname, overwrite=False)
+        self.assertRaises(Exception, exportuvfits, msname, self.fitsname, overwrite=False)
         try:
-            exportuvfits(msname, fitsname, overwrite=True)
+            exportuvfits(msname, self.fitsname, overwrite=True)
         except Exception as exc:
             self.fail('Unexpected exception: {}'.format(exc))
             

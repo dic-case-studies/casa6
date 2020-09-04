@@ -7,21 +7,23 @@ import numpy
 import numpy.ma as ma
 import unittest
 
+from casatestutils import testhelper as th
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+#    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#    import testhelper as th
     from casatools import ctsys
     from casatasks import gencal
     
-    datapath=ctsys.resolve('regression/unittest/gencal')
+    datapath=ctsys.resolve('/unittest/gencal/')
 else:
-    import testhelper as th
+#    import testhelper as th
     from tasks import gencal
     from taskinit import *
     
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
 
 '''
 Unit tests for gencal 
@@ -56,9 +58,9 @@ class gencal_antpostest(unittest.TestCase):
 #    if testmms:
 #        msfile = 'tdem0003gencal.mms'
     caltable = 'anpos.cal'
-    reffile1 = os.path.join(datapath,'anpos.manual.cal')
-    reffile2 = os.path.join(datapath,'anpos.auto.cal')
-    reffile3 = os.path.join(datapath,'anpos.autoCAS13057.cal')
+    reffile1 = os.path.join(datapath+'evla_reference/','anpos.manual.cal')
+    reffile2 = os.path.join(datapath+'evla_reference/','anpos.auto.cal')
+    reffile3 = os.path.join(datapath+'evla_reference/','anpos.autoCAS13057.cal')
     res = False
 
     def setUp(self):
@@ -190,8 +192,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
         if (os.path.exists(self.ALMA_MS)):
             shutil.rmtree(self.ALMA_MS)
 
-        flagdata_datapath = os.path.join(datapath, '../flagdata/')
-        shutil.copytree(os.path.join(flagdata_datapath, self.ALMA_MS),
+        shutil.copytree(os.path.join(datapath, self.ALMA_MS),
                         self.ALMA_MS, symlinks=True)
 
     def tearDown(self):
