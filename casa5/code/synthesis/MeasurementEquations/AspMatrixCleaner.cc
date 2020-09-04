@@ -400,7 +400,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*0.38*/) // M31 value - new Asp + new normalization: 5k->10k good
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < /*0*/0.38) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
@@ -603,8 +603,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         Matrix<Float> dirtySub1 = (*itsDirty)(blc1,trc1);
 
         // First remove the previous values of aspen in the active-set
-        //cout << "aspclean: restore with previous scale " << itsPrevAspActiveSet[scale];
-        //cout << " amp " << itsPrevAspAmplitude[scale];
+        cout << "aspclean: restore with previous scale " << itsPrevAspActiveSet[scale];
+        cout << " amp " << itsPrevAspAmplitude[scale] << endl;
         //cout << " at blcPsf1 " << blcPsf1.asVector() << " trcPsf1 " << trcPsf1.asVector();
         //cout << "at blc1 " << blc1.asVector() << " trc1 " << trc1.asVector() << endl;
 
@@ -627,8 +627,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         dirtySub1 += scaleFactorPrev * psfSubPrev;
 
         // Then update with the new values of aspen in the active-set
-        //cout << "aspclean: update with new scale " << itsGoodAspActiveSet[scale];
-        //cout << " amp " << itsGoodAspAmplitude[scale] << endl;
+        cout << "aspclean: update with new scale " << itsGoodAspActiveSet[scale];
+        cout << " amp " << itsGoodAspAmplitude[scale] << endl;
         //makeScale(itsScale, itsGoodAspActiveSet[scale]);
         makeScaleImage(itsScale, itsGoodAspActiveSet[scale], itsGoodAspAmplitude[scale], itsGoodAspCenter[scale]);
         itsScaleXfr.resize();
@@ -1155,13 +1155,14 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     os << LogIO::NORMAL << "Finding initial scales using the entire image" << LogIO::POST;
 
   // Find the peak residual
-  IPosition gip;
+  /*IPosition gip;
   gip = IPosition(2, nx, ny);
   casacore::Block<casacore::Matrix<casacore::Float> > vecWork_p;
+  vecWork_p.resize(0);
   vecWork_p.resize(itsNInitScales);
 
   for (int i = 0; i < itsNInitScales; i++)
-    vecWork_p[i].resize(gip);
+    vecWork_p[i].resize(gip);*/
 
   Vector<Float> maxima(itsNInitScales);
   Block<IPosition> posMaximum(itsNInitScales);
@@ -1217,12 +1218,8 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     {
       // Find absolute maximum for the dirty image
       //cout << "in omp loop for scale : " << scale << " : " << blcDirty << " : " << trcDirty << " :: " << itsDirty->shape().nelements() << endl;
-      Matrix<Float> work = (vecWork_p[scale])(blcDirty, trcDirty);
+      /*Matrix<Float> work = (vecWork_p[scale])(blcDirty, trcDirty);
       work = 0.0;
-      work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);
-      maxima(scale) = 0;
-      posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
-      //cout << "makedirtyinitscale mask shape: " << itsInitScaleMasks[scale].shape() << endl;
 
       //genie debug
       Float maxVal=0;
@@ -1230,23 +1227,43 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       Float minVal=0;
       IPosition posmax(vecWork_p[scale].shape().nelements(), 0);
       minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsInitScaleMasks[scale]);
-      cout << "InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
+      cout << "before InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
       cout << "posmin " << posmin << " posmax " << posmax << endl;
+      //genie
 
+      work = work + (itsDirtyConvInitScales[scale])(blcDirty, trcDirty);*/
+      maxima(scale) = 0;
+      posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
+      //cout << "makedirtyinitscale mask shape: " << itsInitScaleMasks[scale].shape() << endl;
+
+      //genie debug
       /*maxVal=0;
+      posmin = IPosition(vecWork_p[scale].shape().nelements(), 0);
       minVal=0;
+      posmax = IPosition(vecWork_p[scale].shape().nelements(), 0);
+      minMaxMasked(minVal, maxVal, posmin, posmax, vecWork_p[scale], itsInitScaleMasks[scale]);
+      cout << "after InitScaleVal " << scale << ": min " << minVal << " max " << maxVal << endl;
+      cout << "posmin " << posmin << " posmax " << posmax << endl;*/
+
+      Float maxVal=0;
+      Float minVal=0;
+      IPosition posmin(itsDirty->shape().nelements(), 0);
+      IPosition posmax(itsDirty->shape().nelements(), 0);
       minMaxMasked(minVal, maxVal, posmin, posmax, itsDirtyConvInitScales[scale], itsInitScaleMasks[scale]);
       cout << "DirtyConvInitScale " << scale << ": min " << minVal << " max " << maxVal << endl;
-      cout << "posmin " << posmin << " posmax " << posmax << endl;*/
+      cout << "posmin " << posmin << " posmax " << posmax << endl;
       //genie
 
       if (!itsMask.null())
       {
-        findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
+        //findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
+        //  maxima(scale), posMaximum[scale]);
+        findMaxAbsMask(itsDirtyConvInitScales[scale], itsInitScaleMasks[scale],
           maxima(scale), posMaximum[scale]);
       }
       else
-        findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
+        //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
+        findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
       /*if (scale > 0)
       {
@@ -1474,6 +1491,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   Matrix<Complex> dirtyFT;
   FFTServer<Float,Complex> fft(itsDirty->shape());
   fft.fft0(dirtyFT, *itsDirty);
+  itsDirtyConvInitScales.resize(0);
   itsDirtyConvInitScales.resize(itsNInitScales); // 0, 1.5width, 5width and 10width
 
   for (int scale=0; scale < itsNInitScales; scale++)
@@ -1485,6 +1503,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
     fft.fft0((itsDirtyConvInitScales[scale]), cWork, false);
     fft.flip((itsDirtyConvInitScales[scale]), false, false);
+
+    cout << "remake itsDirtyConvInitScales " << scale << " max itsInitScales[" << scale << "] = " << max(fabs(itsInitScales[scale])) << endl;
+    cout << " max itsInitScaleXfrs[" << scale << "] = " << max(fabs(itsInitScaleXfrs[scale])) << endl;
   }
 
   float strengthOptimum = 0.0;
