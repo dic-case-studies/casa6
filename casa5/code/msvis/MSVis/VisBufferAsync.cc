@@ -4,11 +4,12 @@
  *  Created on: Nov 1, 2010
  *      Author: jjacobs
  */
-
 #include "UtilJ.h"
-using namespace casacore;
-using namespace casa::utilj;
 
+using namespace casacore;
+#include <regex>  // >>>----------------> no compile failure
+using namespace casa::utilj;
+// include <regex>   >>>----------------> causes compile failure
 #include <casa/Containers/Record.h>
 
 #include <msvis/MSVis/VisBufferAsync.h>
@@ -1007,7 +1008,7 @@ VisBufferAsync::setReceptor0Angle (const Vector<Float> & angles)
 }
 
 void
-VisBufferAsync::setRowIds (const Vector<casacore::rownr_t> & rowIds)
+VisBufferAsync::setRowIds (const Vector<rownr_t> & rowIds)
 {
     rowIds_p = rowIds;
 }

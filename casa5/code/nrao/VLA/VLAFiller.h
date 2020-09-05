@@ -29,22 +29,22 @@
 #ifndef NRAO_VLAFILLER_H
 #define NRAO_VLAFILLER_H
 
-#include <casa/aips.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Containers/Block.h>
-#include <casa/Containers/Record.h>
-#include <casa/Logging/LogIO.h>
-#include <ms/MeasurementSets/MSColumns.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <measures/Measures/MBaseline.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/Muvw.h>
-#include <measures/Measures/MFrequency.h>
-#include <measures/Measures/MeasConvert.h>
-#include <measures/Measures/MeasFrame.h>
-#include <measures/Measures/Stokes.h>
-#include <tables/DataMan/TiledDataStManAccessor.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/measures/Measures/MBaseline.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/Muvw.h>
+#include <casacore/measures/Measures/MFrequency.h>
+#include <casacore/measures/Measures/MeasConvert.h>
+#include <casacore/measures/Measures/MeasFrame.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/tables/DataMan/TiledDataStManAccessor.h>
 #include <nrao/VLA/VLAEnum.h>
 #include <nrao/VLA/VLAFilterSet.h>
 #include <nrao/VLA/VLALogicalRecord.h>
@@ -54,10 +54,8 @@
 
 #include <casa/namespace.h>
 namespace casacore{
-
 class Path;
 class MPosition;
-template <class T> class Vector;
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

@@ -27,6 +27,7 @@
 #include <casaqt/QtBrowser/TBRowLocate.qo.h>
 #include <casaqt/QtBrowser/TBConstants.h>
 #include <casaqt/QtBrowser/TBTableTabs.qo.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -45,7 +46,7 @@ TBRowLocate::TBRowLocate(TBLocatedRows* r) : QDialog(NULL), rows(r),
     QStringList cols;
     cols << "Row #";
     
-    vector<int>* rv;
+    std::vector<int>* rv;
     QTableWidgetItem* item;
     for(unsigned int i = 0; i < tables.size(); i++) {
         rv = r->results[tables[i]];

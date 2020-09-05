@@ -568,10 +568,10 @@ Int BasePlot::getData(Vector<String> &datastr, Int layer,
       createMap();
    }
    catch(ArraySlicerError &x){
-      BasePlotError(String("Error in TaQL indices : ") + x.getMesg());
+      BasePlotError(String("Error in TaQL indices : ") + x.what());
    }
    catch(AipsError &x){
-      BasePlotError(String("TaQL string Error : ") + x.getMesg());
+      BasePlotError(String("TaQL string Error : ") + x.what());
    }
    
    log->out( String("Time to allocate mem : ")+ String::toString(tmr.all()),
@@ -3284,7 +3284,7 @@ Int BasePlot::flagData(Int direction, String msname, String spwexpr,
       return 0;
    }
 
-   Vector<uInt> rownrs = itsTab_p->rowNumbers();
+   RowNumbers rownrs = itsTab_p->rowNumbers();
 
    //try {
    //   itsTab_p = new Table(itsTabName_p, casa::Table::Update);

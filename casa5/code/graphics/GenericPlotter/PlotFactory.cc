@@ -64,7 +64,7 @@ BarPlotPtr PlotFactory::histogramPlot(PlotSingleDataPtr data,
     return barPlot(new PlotHistogramData(data, numBins), title, smartDelete); }
 
 RasterPlotPtr PlotFactory::contourPlot(PlotRasterDataPtr data,
-        const vector<double>& contours, const String& title,
+        const std::vector<double>& contours, const String& title,
         PlotRasterData::Format format, bool smartDelete) const {
     RasterPlotPtr p = rasterPlot(data, title, format, smartDelete);
     p->setContourLines(contours);
@@ -76,7 +76,7 @@ RasterPlotPtr PlotFactory::spectrogramPlot(PlotRasterDataPtr data,
     return rasterPlot(data, title, PlotRasterData::SPECTROGRAM, smartDelete); }
 
 RasterPlotPtr PlotFactory::contouredSpectrogramPlot(PlotRasterDataPtr data,
-        const vector<double>& cont, const String& title,bool smartDelete)const{
+        const std::vector<double>& cont, const String& title,bool smartDelete)const{
     RasterPlotPtr p = rasterPlot(data, title, PlotRasterData::SPECTROGRAM,
                                  smartDelete);
     p->setContourLines(cont);
@@ -103,9 +103,9 @@ PlotShapeEllipsePtr PlotFactory::shapeEllipse(double x, double y,
             smartDelete);
 }
 
-PlotShapePolygonPtr PlotFactory::shapePolygon(const vector<double>& x,
-        const vector<double>& y, bool smartDelete) const {
-    vector<PlotCoordinate> c(min((uInt)x.size(), (uInt)y.size()));
+PlotShapePolygonPtr PlotFactory::shapePolygon(const std::vector<double>& x,
+        const std::vector<double>& y, bool smartDelete) const {
+    std::vector<PlotCoordinate> c(min((uInt)x.size(), (uInt)y.size()));
     for(unsigned int i = 0; i < c.size(); i++)
         c[i] = PlotCoordinate(x[i], y[i], PlotCoordinate::WORLD);
     return shapePolygon(c, smartDelete);
@@ -133,9 +133,9 @@ PlotShapeArrowPtr PlotFactory::shapeLineSegment(double fromX, double fromY,
                       smartDelete);
 }
 
-PlotShapePathPtr PlotFactory::shapePath(const vector<double>& x,
-        const vector<double>& y, bool smartDelete) const {
-    vector<PlotCoordinate> c(min((uInt)x.size(), (uInt)y.size()));
+PlotShapePathPtr PlotFactory::shapePath(const std::vector<double>& x,
+        const std::vector<double>& y, bool smartDelete) const {
+    std::vector<PlotCoordinate> c(min((uInt)x.size(), (uInt)y.size()));
     for(unsigned int i = 0; i < c.size(); i++)
         c[i] = PlotCoordinate(x[i], y[i], PlotCoordinate::WORLD);
     return shapePath(c, smartDelete);
@@ -304,7 +304,7 @@ PlotPointDataPtr PlotFactory::data(Vector< TYPE >& y,                         \
         bool shouldDelete) const {                                            \
     return new PlotPointDataImpl< TYPE >(y, shouldDelete); }                  \
                                                                               \
-PlotPointDataPtr PlotFactory::data(vector< TYPE >& y,                         \
+PlotPointDataPtr PlotFactory::data(std::vector< TYPE >& y,                    \
         bool shouldDelete) const {                                            \
     return new PlotPointDataImpl< TYPE >(y, shouldDelete); }                  \
                                                                               \
@@ -316,7 +316,7 @@ PlotPointDataPtr PlotFactory::data(Vector< TYPE >& x, Vector< TYPE >& y,      \
         bool shouldDelete) const {                                            \
     return new PlotPointDataImpl< TYPE >(x, y, shouldDelete); }               \
                                                                               \
-PlotPointDataPtr PlotFactory::data(vector< TYPE >& x, vector< TYPE >& y,      \
+PlotPointDataPtr PlotFactory::data(std::vector< TYPE >& x, std::vector< TYPE >& y,      \
         bool shouldDelete) const {                                            \
     return new PlotPointDataImpl< TYPE >(x, y, shouldDelete); }               \
                                                                               \
@@ -328,7 +328,7 @@ PlotSingleDataPtr PlotFactory::singleData(Vector< TYPE >& data,               \
         bool shouldDelete) const {                                            \
     return new PlotSingleDataImpl< TYPE >(data, shouldDelete); }              \
                                                                               \
-PlotSingleDataPtr PlotFactory::singleData(vector< TYPE >& data,               \
+PlotSingleDataPtr PlotFactory::singleData(std::vector< TYPE >& data,               \
         bool shouldDelete) const {                                            \
     return new PlotSingleDataImpl< TYPE >(data, shouldDelete); }              \
                                                                               \
@@ -340,7 +340,7 @@ PlotPointDataPtr PlotFactory::histogramData(Vector< TYPE >& data,             \
         unsigned int numBins, bool shouldDel) const {                         \
     return new PlotHistogramData(singleData(data, shouldDel), numBins); }     \
                                                                               \
-PlotPointDataPtr PlotFactory::histogramData(vector< TYPE >& data,             \
+PlotPointDataPtr PlotFactory::histogramData(std::vector< TYPE >& data,             \
         unsigned int numBins, bool shouldDel) const {                         \
     return new PlotHistogramData(singleData(data, shouldDel), numBins); }     \
                                                                               \
@@ -352,8 +352,8 @@ PlotMaskedPointDataPtr PlotFactory::data(Vector< TYPE >& x, Vector< TYPE >& y,\
         Vector<bool>& mask, bool shouldDelete) const {                        \
     return new PlotMaskedPointDataImpl< TYPE >(x, y, mask, shouldDelete); }   \
                                                                               \
-PlotMaskedPointDataPtr PlotFactory::data(vector< TYPE >& x, vector< TYPE >& y,\
-        vector<bool>& mask, bool shouldDelete) const {                        \
+PlotMaskedPointDataPtr PlotFactory::data(std::vector< TYPE >& x, std::vector< TYPE >& y,\
+        std::vector<bool>& mask, bool shouldDelete) const {                        \
     return new PlotMaskedPointDataImpl< TYPE >(x, y, mask, shouldDelete); }   \
                                                                               \
 PlotErrorDataPtr PlotFactory::data(TYPE *& x, TYPE *& y, unsigned int n,      \
@@ -368,7 +368,7 @@ PlotErrorDataPtr PlotFactory::data(Vector< TYPE >& x, Vector< TYPE >& y,      \
     return new PlotScalarErrorDataImpl< TYPE >(x, y, xLeftError,              \
             xRightError, yBottomError, yTopError, shouldDelete); }            \
                                                                               \
-PlotErrorDataPtr PlotFactory::data(vector< TYPE >& x, vector< TYPE >& y,      \
+PlotErrorDataPtr PlotFactory::data(std::vector< TYPE >& x, std::vector< TYPE >& y,      \
         TYPE xLeftError, TYPE xRightError, TYPE yBottomError, TYPE yTopError, \
         bool shouldDelete) const {                                            \
     return new PlotScalarErrorDataImpl< TYPE >(x, y, xLeftError,              \
@@ -387,9 +387,9 @@ PlotErrorDataPtr PlotFactory::data(Vector< TYPE >& x, Vector< TYPE >& y,      \
     return new PlotErrorDataImpl< TYPE >(x, y, xLeftError, xRightError,       \
             yBottomError, yTopError, shouldDelete); }                         \
                                                                               \
-PlotErrorDataPtr PlotFactory::data(vector< TYPE >& x, vector< TYPE >& y,      \
-        vector< TYPE >& xLeftError, vector< TYPE >& xRightError,              \
-        vector< TYPE >& yBottomError, vector< TYPE >& yTopError,              \
+PlotErrorDataPtr PlotFactory::data(std::vector< TYPE >& x, std::vector< TYPE >& y,      \
+        std::vector< TYPE >& xLeftError, std::vector< TYPE >& xRightError,              \
+        std::vector< TYPE >& yBottomError, std::vector< TYPE >& yTopError,              \
         bool shouldDelete) const {                                            \
     return new PlotErrorDataImpl< TYPE >(x, y, xLeftError, xRightError,       \
             yBottomError, yTopError, shouldDelete); }                         \

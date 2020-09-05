@@ -171,7 +171,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
   if(!newTab.isWritable())
     return;
-  Vector<String> theParts(newTab.getPartNames(true));
+  auto part_block = newTab.getPartNames(true);
+  Vector<String> theParts(part_block.begin( ),part_block.end( ));
   if(theParts.nelements() > 1){
     for (uInt k=0; k < theParts.nelements(); ++k){
       MeasurementSet subms(theParts[k], newTab.lockOptions(), Table::Update);
@@ -236,7 +237,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 }
   void VisModelData::clearModel(const MeasurementSet& thems, const String field, const String specwindows){
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
-  Vector<String> theParts(newTab.getPartNames(true));
+  auto part_block = newTab.getPartNames(true);
+  Vector<String> theParts(part_block.begin( ),part_block.end( ));
   if(theParts.nelements() > 1){
     for (uInt k =0; k < theParts.nelements(); ++k){
       MeasurementSet subms(theParts[k], newTab.lockOptions(), Table::Update);
@@ -717,7 +719,8 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
   }
 
   Bool VisModelData::putModelRecord(const Vector<Int>& fieldIds, TableRecord& theRec, MeasurementSet& theMS){
-    Vector<String> theParts(theMS.getPartNames(true));
+    auto part_block = theMS.getPartNames(true);
+    Vector<String> theParts(part_block.begin( ),part_block.end( ));
     if(theParts.nelements() > 1){
       Bool retval=true;
       for (uInt k =0; k < theParts.nelements(); ++k){
@@ -742,7 +745,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
       MSSource& mss=theMS.source();
      
       Int sid=fCol.sourceId().get(fieldIds[0]);
-      Vector<casacore::rownr_t> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      auto rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       else{
@@ -1466,7 +1469,7 @@ Int VisModelData::firstSourceRowRecord(const Int field, const MeasurementSet& th
       const MSSource& mss=theMS.source();
      
       Int sid=fCol.sourceId().get(field);
-      Vector<casacore::rownr_t> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      auto rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       const TableRecord& keywords=mss.keywordSet();

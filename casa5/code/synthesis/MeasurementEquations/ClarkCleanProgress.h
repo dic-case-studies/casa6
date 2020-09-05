@@ -29,16 +29,16 @@
 #define SYNTHESIS_CLARKCLEANPROGRESS_H
  
 //# Includes
-#include <casa/aips.h>
-#include <casa/Quanta/Quantum.h>
-#include <lattices/Lattices/Lattice.h>
-#include <lattices/Lattices/TempLattice.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/lattices/Lattices/Lattice.h>
+#include <casacore/lattices/Lattices/TempLattice.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
-template <class T> class Vector;
 class PGPlotter;
 // the class ProgressMeter sounded bad. This abstract class serves
 }

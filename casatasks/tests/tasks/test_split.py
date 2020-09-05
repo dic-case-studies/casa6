@@ -2058,7 +2058,8 @@ class splitTests(test_base):
         
         # Now, delete only the MS and leave the .flagversions in disk
         os.system('rm -rf '+self.outputms)
-        self.assertFalse(split(vis=self.vis, outputvis=self.outputms, spw='0'),'Expected task to fail.')
+        with self.assertRaises(RuntimeError):
+            split(vis=self.vis, outputvis=self.outputms, spw='0')
         # The next code doesn't work with the __rethrow_casa_exceptions=False in prelude.py
 #         with self.assertRaises(IOError):
 #             split(vis=self.vis, outputvis=self.outputms, spw='0')
@@ -2088,7 +2089,7 @@ class splitTests(test_base):
         ParallelTaskHelper.bypassParallelProcessing(1)
         # This will cause MS NULL selections in some subMSs that have only spw=0
         split(vis=self.testmms, outputvis=self.outputms, spw='1', datacolumn='data',
-                    width=bin1)
+              width=bin1)
         
         ParallelTaskHelper.bypassParallelProcessing(0)
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')

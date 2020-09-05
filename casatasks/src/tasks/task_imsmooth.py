@@ -104,8 +104,7 @@ def imsmooth(
             gkernel or  bkernel or ckernel or ikernel
         )
     ):
-        casalog.post('Unsupported kernel, ' + kernel, 'SEVERE' )
-        return False
+        raise ValueError('Unsupported kernel, ' + kernel)
 
     if (not ikernel and type(beam) == str):
         if len(beam) != 0:
@@ -160,14 +159,14 @@ def imsmooth(
                 pa = ""
                 targetres = True
             if (beam and (major or minor or pa)):
-                raise Exception("You may specify only beam or the set of major/minor/pa")
+                raise ValueError("You may specify only beam or the set of major/minor/pa")
             if not beam:
                 if not major:
-                    raise Exception("Major axis must be specified")
+                    raise ValueError("Major axis must be specified")
                 if not minor:
-                    raise Exception("Minor axis must be specified")
+                    raise ValueError("Minor axis must be specified")
                 if not pa:
-                    raise Exception("Position angle must be specified")
+                    raise ValueError("Position angle must be specified")
        
             outia = _myia.convolve2d(
                 axes=[0,1], region=reg, major=major,
@@ -177,7 +176,7 @@ def imsmooth(
             )
         elif (bkernel ):
             if not major or not minor:
-                raise Exception("Both major and minor must be specified.")
+                raise ValueError("Both major and minor must be specified.")
             # BOXCAR KERNEL
             #
             # Until convolve2d supports boxcar we will need to
@@ -212,8 +211,8 @@ def imsmooth(
                 mask=mask, overwrite=overwrite, stretch=stretch 
             )
         else:
-            casalog.post( 'Unrecognized kernel type: ' + kernel, 'SEVERE' )
-            return False
+            raise ValueError('Unrecognized kernel type: ' + kernel)
+
         try:
             param_names = imsmooth.__code__.co_varnames[:imsmooth.__code__.co_argcount]
             if is_python3:
@@ -227,10 +226,7 @@ def imsmooth(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post("Exception: " + str(instance), 'SEVERE')
-        return False
+
     finally:
         _myia.done()
         if outia: outia.done()
