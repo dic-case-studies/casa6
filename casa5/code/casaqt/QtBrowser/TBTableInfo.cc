@@ -28,6 +28,7 @@
 #include <casaqt/QtBrowser/TBField.h>
 #include <casaqt/QtBrowser/TBConstants.h>
 #include <casaqt/QtBrowser/TBTable.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -57,7 +58,7 @@ TBTableInfo::~TBTableInfo() { }
 
 // Private Methods //
 
-void TBTableInfo::setFields(vector<TBField*>* fields) {
+void TBTableInfo::setFields(std::vector<TBField*>* fields) {
     tableWidget->clearContents();
     tableWidget->setRowCount(fields->size());
     

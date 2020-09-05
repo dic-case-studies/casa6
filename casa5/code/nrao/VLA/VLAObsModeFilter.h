@@ -31,7 +31,8 @@
 
 #include <casa/aips.h>
 #include <nrao/VLA/VLAFilter.h>
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/String.h>
 
 #include <unordered_map>
 #include <string>

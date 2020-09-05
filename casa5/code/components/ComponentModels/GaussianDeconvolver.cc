@@ -26,7 +26,7 @@
 //# $Id: ImageMetaData.cc 20886 2010-04-29 14:06:56Z gervandiepen $
 
 #include <components/ComponentModels/GaussianDeconvolver.h>
-
+#include <casacore/casa/BasicMath/Math.h>
 #include <scimath/Mathematics/GaussianBeam.h>
 
 using namespace casacore;

@@ -13,6 +13,7 @@
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Cube.h>
+#include <casa/BasicSL/Complex.h>
 
 using namespace std;
 
