@@ -323,8 +323,10 @@ class imcollapse_test(unittest.TestCase):
                         self.assertTrue(npts == 24)
 
     def test_median(self):
+        # FIXME this tests ia.collapse, not imcollapse, so should
+        # be moved
         """Test median when collapsing along multiple axes"""
-        myia = iatool()
+        myia = image()
         imagename = "median.im"
         myia.fromshape(imagename, [3, 3, 3])
         bb = myia.getchunk()
@@ -353,7 +355,7 @@ class imcollapse_test(unittest.TestCase):
         collapsed.done()
         
         myia.fromshape("", [20, 20, 5])
-        reg = rg.fromtext(
+        reg = _rg.fromtext(
             "circle [[10pix, 10pix], 5pix]", csys=myia.coordsys().torecord(),
             shape=myia.shape()
         )
@@ -364,7 +366,7 @@ class imcollapse_test(unittest.TestCase):
     def test_CAS_3418(self):
         """imcollapse: Test separate code for median due to performance issues"""
         for i in range(0,4):
-            xx = iatool()
+            xx = image()
             xx.open(good_image)
             exp = xx.statistics(robust=True, axes=i)["median"]
             xx.done()
@@ -389,7 +391,7 @@ class imcollapse_test(unittest.TestCase):
             
     def test_region(self):
         """ imcollapse: Test region"""
-        myia = iatool()
+        myia = image()
         myia.fromshape("", [10, 10, 10])
         bb = myia.getchunk()
         for i in range(10):
@@ -406,7 +408,7 @@ class imcollapse_test(unittest.TestCase):
         
     def test_stretch(self):
         """ imcollapse: Test stretch parameter"""
-        yy = iatool()
+        yy = image()
         yy.open(good_image)
         mycs = yy.coordsys().torecord()
         yy.done()
@@ -418,35 +420,17 @@ class imcollapse_test(unittest.TestCase):
         yy.putchunk(bb)
         yy.setcoordsys(mycs)
         yy.done()
-        for i in [0,1]:
-            if i == 1:
-                yy = run_collapse(
-                    good_image, "mean", 0, "", "", "", "",
-                    "", maskim + ">0", False, stretch=True
-                )
-                self.assertTrue(type(yy) == type(ia))
-                yy.done()
-            else:
-                outfile = "test_stretch.im"
-                res = run_imcollapse(
-                    good_image, "mean", 0, outfile, "", "", "",
-                    "", maskim + ">0", False, stretch=True
-                )
-                self.assertTrue(res)
-            
+        outfile = "test_stretch.im"
+        res = run_imcollapse(
+            good_image, "mean", 0, outfile, "", "", "",
+            "", maskim + ">0", False, stretch=True
+        )
+        self.assertTrue(res)
+
     def test_CAS3737(self):
         """ imcollapse: test tabular spectral axis has correct collapsed reference value """
         image = self.tabular_spectral_image
         for chans in ["2445~2555", "range=[2445pix,2555pix]"]:
-            mytool = run_collapse(
-                image, "mean", 2, "", "", "",
-                chans, "", "", False
-            )
-            expected = 98318505973583.641
-            got = mytool.toworld([0,0,0])["numeric"][2]
-            mytool.done()
-            frac = got/expected - 1
-            self.assertTrue(frac < 1e-6 and frac > -1e-6)
             outfile = "test_CAS3737"
             res = run_imcollapse(
                 image, "mean", 2, outfile, "", "",
@@ -459,8 +443,10 @@ class imcollapse_test(unittest.TestCase):
             self.assertTrue(frac < 1e-6 and frac > -1e-6)
         
     def test_beams(self):
+        # FIXME this tests ia.collapse(), not imcollapse, so
+        # move to more appropriate test file
         """test per plane beams"""
-        myia = iatool()
+        myia = image()
         myia.fromshape("", [10, 10, 10, 4])
         myia.setrestoringbeam(
             major="4arcsec", minor="3arcsec",
@@ -468,20 +454,20 @@ class imcollapse_test(unittest.TestCase):
         )
         for i in range (myia.shape()[2]):
             for j in range(myia.shape()[3]):
-                major = qa.quantity(4 + i + j, "arcsec")
-                minor = qa.quantity(2 + i + 0.5*j, "arcsec")
-                pa = qa.quantity(10*i + j, "deg")
+                major = _qa.quantity(4 + i + j, "arcsec")
+                minor = _qa.quantity(2 + i + 0.5*j, "arcsec")
+                pa = _qa.quantity(10*i + j, "deg")
                 myia.setrestoringbeam(
                     major=major, minor=minor, pa=pa,
                     channel=i, polarization=j
                 )
-        reg = rg.box(blc=[1,1,1,1], trc=[2,2,2,2])
+        reg = _rg.box(blc=[1,1,1,1], trc=[2,2,2,2])
         collapsed = myia.collapse(function="mean", axes=2, outfile="", region=reg)
         beam = collapsed.restoringbeam()
         self.assertTrue(len(beam) == 3)
-        self.assertTrue(beam["major"] == qa.quantity(6, "arcsec"))
-        self.assertTrue(beam["minor"] == qa.quantity(3.5, "arcsec"))
-        self.assertTrue(beam["positionangle"] == qa.quantity(11, "deg"))
+        self.assertTrue(beam["major"] == _qa.quantity(6, "arcsec"))
+        self.assertTrue(beam["minor"] == _qa.quantity(3.5, "arcsec"))
+        self.assertTrue(beam["positionangle"] == _qa.quantity(11, "deg"))
         myia.done()
         collapsed.done()
 
