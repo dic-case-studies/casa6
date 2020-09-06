@@ -68,6 +68,7 @@
 ###########################################################################
 from __future__ import absolute_import
 
+import math
 import numpy
 import shutil
 import unittest
@@ -85,6 +86,7 @@ else:
     quanta = qatool
     regionmanager = rgtool
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    datapath = dataRoot + '/regression/unittest/imcollapse/'
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -170,14 +172,8 @@ class imcollapse_test(unittest.TestCase):
                     )
                 )
 
-        # no image name given
-        testit("", "mean", 0, "", "", "", "", "", "", False, True)
-        # bad image name given
-        testit(bogus, "mean", 0, "", "", "", "", "", "", False, True)
-        # no function given
-        testit(good_image, "", 0, "", "", "", "", "", "", False, True)
         # bogus function given
-        testit(good_image, "bogus function", 0, "", "", "", "", "", "", False, True)
+        testit(good_image, "bogus function", 0, "bugus_func.im", "", "", "", "", "", False, True)
         # bogus region given
         testit(good_image, "mean", 0, "", "bogus_region", "", "", "", "", False, True)
         #bogus box
@@ -323,6 +319,8 @@ class imcollapse_test(unittest.TestCase):
                         self.assertTrue(npts == 24)
 
     def test_median(self):
+        # FIXME this tests ia.collapse, not imcollapse, so should
+        # be moved
         """Test median when collapsing along multiple axes"""
         myia = image()
         imagename = "median.im"
@@ -368,18 +366,19 @@ class imcollapse_test(unittest.TestCase):
             xx.open(good_image)
             exp = xx.statistics(robust=True, axes=i)["median"]
             xx.done()
-            mytool = run_collapse(
-                good_image, "median", i, "", "", "",
-                "", "", "", False
-            )
-            zz = mytool.subimage("", dropdeg=True)
-            got = zz.getchunk()
-            self.assertTrue((got == exp).all())
+            # mytool = run_collapse(
+            #    good_image, "median", i, "", "", "",
+            #    "", "", "", False
+            # )
+            # zz = mytool.subimage("", dropdeg=True)
+            # got = zz.getchunk()
+            # self.assertTrue((got == exp).all())
             outfile = "test_CAS_3418.im"
             res = run_imcollapse(
                 good_image, "median", i, outfile, "", "",
                 "", "", "", overwrite=True
             )
+            mytool = image()
             mytool.open(outfile)
             zz = mytool.subimage("", dropdeg=True)
             got = zz.getchunk()
@@ -418,38 +417,22 @@ class imcollapse_test(unittest.TestCase):
         yy.putchunk(bb)
         yy.setcoordsys(mycs)
         yy.done()
-        for i in [0,1]:
-            if i == 1:
-                yy = run_collapse(
-                    good_image, "mean", 0, "", "", "", "",
-                    "", maskim + ">0", False, stretch=True
-                )
-                self.assertTrue(type(yy) == type(_ia))
-                yy.done()
-            else:
-                outfile = "test_stretch.im"
-                res = run_imcollapse(
-                    good_image, "mean", 0, outfile, "", "", "",
-                    "", maskim + ">0", False, stretch=True
-                )
-                self.assertIsNone(res)
-            
+        outfile = "test_stretch.im"
+        res = run_imcollapse(
+            good_image, "mean", 0, outfile, "", "", "",
+            "", maskim + ">0", False, stretch=True
+        )
+        self.assertTrue(res)
+
     def test_CAS3737(self):
         """ imcollapse: test tabular spectral axis has correct collapsed reference value """
-        image = self.tabular_spectral_image
+        myimage = self.tabular_spectral_image
+        mytool = image()
+        expected = 98318505973583.641
         for chans in ["2445~2555", "range=[2445pix,2555pix]"]:
-            mytool = run_collapse(
-                image, "mean", 2, "", "", "",
-                chans, "", "", False
-            )
-            expected = 98318505973583.641
-            got = mytool.toworld([0,0,0])["numeric"][2]
-            mytool.done()
-            frac = got/expected - 1
-            self.assertTrue(frac < 1e-6 and frac > -1e-6)
             outfile = "test_CAS3737"
             res = run_imcollapse(
-                image, "mean", 2, outfile, "", "",
+                myimage, "mean", 2, outfile, "", "",
                 chans, "", "", True
             )
             mytool.open(outfile)
@@ -459,6 +442,8 @@ class imcollapse_test(unittest.TestCase):
             self.assertTrue(frac < 1e-6 and frac > -1e-6)
         
     def test_beams(self):
+        # FIXME this tests ia.collapse(), not imcollapse, so
+        # move to more appropriate test file
         """test per plane beams"""
         myia = image()
         myia.fromshape("", [10, 10, 10, 4])
@@ -545,14 +530,14 @@ class imcollapse_test(unittest.TestCase):
         zz = myia.collapse(axes=[0,1], function="sqrtsum")
         bb = zz.getchunk()
         self.assertTrue(bb[0, 0, 0] == 2)
-        self.assertTrue(abs(bb[0, 0, 1] - 2*sqrt(2)) < 1e-6)
+        self.assertTrue(abs(bb[0, 0, 1] - 2*math.sqrt(2)) < 1e-6)
         bb = myia.getchunk()
         bb[:, :, 0] = -1
         myia.putchunk(bb)
         zz = myia.collapse(axes=[0,1], function="sqrtsum")
         bb = zz.getchunk()
         self.assertTrue(bb[0, 0, 0] == 0)
-        self.assertTrue(abs(bb[0, 0, 1] - 2*sqrt(2)) < 1e-6)
+        self.assertTrue(abs(bb[0, 0, 1] - 2*math.sqrt(2)) < 1e-6)
         
     def test_sqrtsum_npix(self):
         """Test sqrtsum function"""
@@ -565,14 +550,14 @@ class imcollapse_test(unittest.TestCase):
         zz = myia.collapse(axes=[0,1], function="sqrtsum_npix")
         bb = zz.getchunk()
         self.assertTrue(bb[0, 0, 0] == 0.5)
-        self.assertTrue(abs(bb[0, 0, 1] - 0.5*sqrt(2)) < 1e-6)
+        self.assertTrue(abs(bb[0, 0, 1] - 0.5*math.sqrt(2)) < 1e-6)
         bb = myia.getchunk()
         bb[:, :, 0] = -1
         myia.putchunk(bb)
         zz = myia.collapse(axes=[0,1], function="sqrtsum_npix")
         bb = zz.getchunk()
         self.assertTrue(bb[0, 0, 0] == 0)
-        self.assertTrue(abs(bb[0, 0, 1] - 0.5*sqrt(2)) < 1e-6)
+        self.assertTrue(abs(bb[0, 0, 1] - 0.5*math.sqrt(2)) < 1e-6)
         
     def test_sqrtsum_npix_beam(self):
         """Test sqrtsum function"""
@@ -625,8 +610,9 @@ class imcollapse_test(unittest.TestCase):
 
     def test_CAS_10938(self):
         """Verify fix for CAS-10938, ia.collapse can compute median for large images of all noise"""
+        # FIXME does not test imcollapse, move to more appropriate test
         myia = image()
-        myia.open(ctsys.resolve(os.path.join(datapath,"CAS-10938.im")))
+        myia.open(ctsys_resolve(os.path.join(datapath,"CAS-10938.im")))
         # successful completion of this command indicates the issue is resolved
         xx = myia.collapse(function="median", axes=[0])
         myia.done()
@@ -635,6 +621,7 @@ class imcollapse_test(unittest.TestCase):
         
     def test_CAS_11230(self):
         """Verify output image has correct shape when 0,0 included in region box"""
+        # FIXME does not test imcollapse, move to more appropriate test
         myia = image()
         myia.fromshape("",[20,20,20])
         xx = myia.collapse(function="mean",axes=2,region="box[[0pix,0pix],[19pix,19pix]]")
@@ -648,3 +635,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+
