@@ -580,8 +580,11 @@ class test_sdatmcor(unittest.TestCase):
         '''sdatmcor::1:: file1  '''
 
         infile = 'uid___A002_Xe770d7_X320b'
+        outfile = 'sdatmcor-out1.ms'
         prm = {'debug': 'skipTaskExec',
-               'infile' : infile }
+               'infile' : infile,
+               'outfile': outfile,
+               'overwrite':  True }
         # Run Task and check
         self.assertTrue(self._run_task(prm))
 
@@ -589,8 +592,11 @@ class test_sdatmcor(unittest.TestCase):
         '''sdatmcor::2:: file2   '''
 
         infile = 'uid___A002_Xe77cf7_X2ed5'
+        outfile = 'sdatmcor-out2.ms'
         prm = {'debug': 'skipTaskExec',
-               'infile' : infile }
+               'infile' : infile, 
+               'outfile': outfile, 
+               'overwrite':  True }
         # Run Task and check
         self.assertTrue(self._run_task(prm))
 
@@ -598,8 +604,11 @@ class test_sdatmcor(unittest.TestCase):
         '''sdatmcor::3:: file3   '''
 
         infile = 'uid___A002_Xe78c20_X2dc1'
+        outfile = 'sdatmcor-out3.ms'
         prm = {'debug': 'skipTaskExec',
-               'infile' : infile }
+               'infile' : infile, 
+               'outfile': outfile, 
+               'overwrite':  True }
         # Run Task and check
         self.assertTrue(self._run_task(prm))
 
