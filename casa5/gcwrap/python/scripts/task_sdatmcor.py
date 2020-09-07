@@ -9,8 +9,10 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
     from casatools import quanta, table, msmetadata
-    from casatools import mstransformer
     from casatools import atmosphere
+
+    # mstransform #
+    from casatasks import mstransform
 
     msmd = msmetadata()
     tb = table()
@@ -20,11 +22,12 @@ if is_CASA6:
 else:
     from taskinit import tbtool, casalog, qa
     # CAS-13088
-    from taskinit import mttool as mttool 
     from taskinit import msmdtool as msmetadata
     from casac import casac
 
-    mstransformer = mttool
+    # mstransform #
+    from tasks import mstransform
+
     msmd = msmetadata()
     tb = tbtool()
     at = casac.atmosphere()
@@ -128,33 +131,6 @@ def sdatmcor(
     layertemperature = conv_to_doubleArrayList(layertemperature)
 
 #
-# TENTATIVE: pre-process (Data Selection)
-#    (3-Sep-2020 ~ underconstruction)
-#
-
-    #########################
-    # Data Selection
-    #  (under construction)
-    #########################
-    """
-      Design : 
-        by Mst, input MS is ready for ATM correction by the selected data
- 
-      First plan:
-        On very sooner stage, call AtmMst and make temporary file.
-        Original file must be preserved.
- 
-    """
-    print( "---------------------------------------------")
-    print( "Here, DataSelection is supported to be done. ")
-    print( "---------------------------------------------")
-    atmMst(
-        infile, datacolumn, outfile, overwrite,
-        field, spw, scan, antenna,
-        correlation, timerange, intent,
-        observation, feed, msselect)
-
-#
 # Call calc Function
 #
     return calc_sdatmcor(
@@ -177,28 +153,33 @@ def atmMst(
     correlation, timerange, intent,
     observation, feed, msselect):
 
+    # infile #
+    print("atmMst:: infile =%s "% infile)
+
     # Tentative output #
     DevTempName = './_AtmCor-Selected.ms'
     # clean temp output #
     ms_remove(DevTempName)
 
     # Tentative call #
-    print("DBG: calling mstransformer.") 
-    return   ### ByPass ### 
-    mstransformr(
-        vis=infile, outputvis = DevTempName, datacolumn=datacolumn,
-        field = field, 
-        spw = spw, 
-        scan = scan, 
-        dantenna = antenna,
-        correlation = correlation, 
-        timerange = timerange, 
-        intent = intent,
-        observation = observation, 
-        feed = feed, 
-        msselect = msselect, 
-        reindex = False)
+    print("- calling mstransform() task.") 
 
+    mstransform(
+        vis=infile,               ## Full file spec.
+        outputvis=DevTempName,    ##   ditto 
+        datacolumn=datacolumn,
+        field=field, 
+        spw=spw,           ## spw=''(default) cause Warning. spw=ALL takes a long tine in MST. 
+        scan=scan, 
+        antenna='PM01&&&',    ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
+        correlation=correlation, 
+        timerange=timerange, 
+        intent=intent)
+#        observation = observation, 
+#        feed = feed, 
+#        msselect = msselect, 
+#        reindex = False)
+    print("- END  mstransforme() task.") 
 
 ##########################
 # Subroutines
@@ -362,9 +343,9 @@ def calc_sdatmcor(
         debug):
 
     if True:  # flag option is reserved. #
-        print("***********************************")
-        print("**   calc_sdatmcor:: (0903-MST)  **")
-        print("***********************************")
+        print("************************************")
+        print("**   calc_sdatmcor:: (0907-Work)  **")
+        print("************************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
         print('outfile     =', p_outfile)
@@ -454,21 +435,6 @@ def calc_sdatmcor(
         0.05017949,  0.03556241,  0.02260546,  0.01217214,  0.00465696,
         0.00000000, -0.00222265, -0.00265951, -0.00202866, -0.00098041]
 
-    #---------------------------
-    #  Data Selection
-    #    (Action  TBD)
-    #---------------------------
-    # field #
-    # spw #
-    # scan #
-    # antenna #
-    # correlation #
-    # timerange #
-    # intent #
-    # observation #
-    # feed #
-    # msselect #
-
     # TENTATIVE::  skip task execution while UnitTest is incomplete.
     if(skipTaskExec is True):
         print('-------  Task Execution is skipped.')
@@ -538,6 +504,44 @@ def calc_sdatmcor(
             print("FATAL:: Specified outputfile already exist. Cannot write.")
             return False
         
+#
+# TENTATIVE: pre-process (Data Selection)
+#    (3-Sep-2020 ~ underconstruction)
+#
+
+    #########################
+    # Data Selection
+    #  (under construction)
+    #########################
+    """
+      Design : 
+        by Mst, input MS is ready for ATM correction by the selected data
+ 
+      First plan:
+        On very sooner stage, call AtmMst and make temporary file.
+        Original file must be preserved.
+ 
+    """
+    print( "-------------------------------------------------------------")
+    print( "Here, DataSelection is supported to be executed. ")
+    print( "  mstransform is called, but no outout is passed to atmCor ")
+    print( "-------------------------------------------------------------")
+    atmMst(
+        infile=rawms,           # Tentatively use 'rawms' name
+        datacolumn=p_datacolumn, 
+        outfile=p_outfile,      # Temp name is used inside. Ignoring the arg. # 
+        overwrite=p_overwrite,  # passed by the actual ARG.
+        field=p_field, 
+        spw=p_spw, 
+        scan=p_scan, 
+        antenna=p_antenna,
+        correlation=p_correlation, 
+        timerange=p_timerange, 
+        intent=p_intent,
+        observation=p_observation, 
+        feed=p_feed, 
+        msselect=p_msselect)
+
     #----------
     # Clean
     #----------
@@ -776,17 +780,17 @@ def calc_sdatmcor(
         print(" ------------------------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
-            humidity = t_humidity, 
-            temperature = t_temperature, 
-            altitude = t_altitude, 
-            pressure = t_pressure, 
-            atmType = t_atmtype, 
-            maxAltitude = t_maxAltitude, 
-            h0 = t_h0, 
-            dTem_dh = t_dtem_dh,
-            dP = t_dp, dPm=t_dpm,
-            layerBoundaries = t_layerboundaries,
-            layerTemperature =t_layertemperature )
+            humidity=t_humidity, 
+            temperature=t_temperature, 
+            altitude=t_altitude, 
+            pressure=t_pressure, 
+            atmType=t_atmtype, 
+            maxAltitude=t_maxAltitude, 
+            h0=t_h0, 
+            dTem_dh=t_dtem_dh,
+            dP=t_dp, dPm=t_dpm,
+            layerBoundaries=t_layerboundaries,
+            layerTemperature=t_layertemperature )
 
         # ATM Profile #
         if is_CASA6: 

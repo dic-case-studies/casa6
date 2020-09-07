@@ -12,7 +12,7 @@
 
 <input>
 
-    <param name="infile" type="string">
+    <param type="string" name="infile" mustexist="true">
         <shortdescription>name of input MS.</shortdescription>
         <description>name of input MS.</description>
         <value/>
