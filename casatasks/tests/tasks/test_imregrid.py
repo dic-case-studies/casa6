@@ -20,7 +20,7 @@ fail  = 0
 current_test =""
 stars = "*************"
 
-datapath = 'regression/unittest/imregrid'
+datapath = ctsys.resolve('unittest/imregrid/')
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -279,7 +279,7 @@ class imregrid_test(unittest.TestCase):
        
     def test_ref_code_preserves_position(self):
         """Test that regridding to new refcode preserves source positions"""
-        shutil.copytree(ctsys.resolve(os.path.join(datapath,gim)), gim)
+        shutil.copytree(os.path.join(datapath,gim), gim)
         orig = image( )
         myme = measures( )
         for rah in (0, 4, 8, 12, 16, 20):

@@ -19,7 +19,7 @@ else:
     from tasks import *
     from taskinit import *
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -39,8 +39,8 @@ Unit tests for task listobs. It tests the following parameters:
     listfile:   save on a file
     
 '''
-datapath  = ctsys_resolve('regression/unittest/listobs')
-datapath2 = ctsys_resolve('regression/unittest/mstransform')
+datapath  = ctsys_resolve('unittest/listobs/')
+refpath = ctsys_resolve('unittest/listobs/listobs_reference/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -53,10 +53,9 @@ if 'TEST_DATADIR' in os.environ:
         print('WARN: directory '+DATADIR+' does not exist')
 
 print('listobs tests will use data from '+datapath)         
-print('                        and from '+datapath2)
 
 # Reference files
-reffile = os.path.join(datapath,'reflistobs')
+reffile = os.path.join(refpath,'reflistobs')
 
 # Input and output names
 msfile1 = 'ngc5921_ut.ms'
@@ -235,7 +234,7 @@ class listobs_test1(unittest.TestCase):
 
     def test_CAS_6733(self):
         """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
-        vis = os.path.join(datapath2,"CAS-6733.ms")
+        vis = os.path.join(datapath,"CAS-6733.ms")
         listobs(vis=vis)
         
 class listobs_cleanup(unittest.TestCase):

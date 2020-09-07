@@ -18,7 +18,7 @@ fail  = 0
 current_test =""
 stars = "*************"
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imregrid/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imregrid/'
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:

@@ -13,7 +13,7 @@ if is_CASA6:
     from casatasks import casalog, listhistory
     import subprocess
 
-    datapath = ctsys.resolve('regression/unittest/listhistory')
+    datapath = ctsys.resolve('unittest/listhistory/')
 else:
     import commands
     from __main__ import default
@@ -21,7 +21,7 @@ else:
     from taskinit import *
 
     datapath = os.environ.get('CASAPATH').split()[0] +\
-        '/data/regression/unittest/listhistory/'
+        '/casatestdata/unittest/listhistory/'
 
 testmms = False
 if 'TEST_DATADIR' in os.environ:   

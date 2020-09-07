@@ -75,11 +75,11 @@ try:
     from casatools import image as iatool
     from casatools import quanta
     from casatools import table, ctsys
-    datapath = ctsys.resolve('regression/unittest/imageanalysis/ImageAnalysis/')
+    datapath = ctsys.resolve('unittest/impv/')
 except ImportError:
     from tasks import *
     from taskinit import *   
-    datapath = 'regression/unittest/imageanalysis/ImageAnalysis/'
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/impv/')
     
 _tb = table( )
 
