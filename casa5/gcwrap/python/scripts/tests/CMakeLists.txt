@@ -37,7 +37,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cvel.py
   test_cvel2.py
   test_cvelfreqs.py
-  test_deconvolve.py
   test_exportasdm.py
   test_exportfits.py
   test_fixplanets.py
@@ -215,6 +214,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_calstat.py
   test_req_task_clearcal.py
   test_req_task_conjugatevis.py 
+  test_req_task_deconvolve.py
   test_req_task_delmod.py
   test_req_task_feather.py
   test_req_task_fixplanets.py
