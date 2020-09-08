@@ -32,6 +32,7 @@
 #include <casaqt/QtBrowser/TBKeyword.h>
 
 #include <fstream>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -63,11 +64,11 @@ TBIDFieldsTest::~TBIDFieldsTest() { }
 
 // Public Methods //
 
-vector<String> TBIDFieldsTest::checks(String t) {
-    vector<String> c;
+std::vector<String> TBIDFieldsTest::checks(String t) {
+    std::vector<String> c;
 
     TBTable* table = browser->table(t)->getTable();
-    vector<TBField*>* fields = table->getFields();
+    std::vector<TBField*>* fields = table->getFields();
 
     for(unsigned int i = 0; i < fields->size(); i++) {
         String name = fields->at(i)->getName();
@@ -84,8 +85,8 @@ vector<String> TBIDFieldsTest::checks(String t) {
 
 bool TBIDFieldsTest::runCheck(String t, int id) {
     TBTable* table = browser->table(t)->getTable();
-    vector<TBField*>* fields = table->getFields();
-    vector<TBKeyword*>* keywords = table->getTableKeywords();
+    std::vector<TBField*>* fields = table->getFields();
+    std::vector<TBKeyword*>* keywords = table->getTableKeywords();
 
     int count = 0;
     String name;
@@ -122,11 +123,11 @@ TBSubtablesTest::~TBSubtablesTest() { }
 
 // Public Methods //
 
-vector<String> TBSubtablesTest::checks(String t) {
-    vector<String> c;
+std::vector<String> TBSubtablesTest::checks(String t) {
+    std::vector<String> c;
 
     TBTable* table = browser->table(t)->getTable();
-    vector<TBKeyword*>* keywords = table->getTableKeywords();
+    std::vector<TBKeyword*>* keywords = table->getTableKeywords();
 
     for(unsigned int i = 0; i < keywords->size(); i++) {
         String type = keywords->at(i)->getType();
@@ -142,7 +143,7 @@ vector<String> TBSubtablesTest::checks(String t) {
 
 bool TBSubtablesTest::runCheck(String t, int id) {
     TBTable* table = browser->table(t)->getTable();
-    vector<TBKeyword*>* keywords = table->getTableKeywords();
+    std::vector<TBKeyword*>* keywords = table->getTableKeywords();
 
     int count = 0;
 
@@ -180,11 +181,11 @@ TBValidSubtablesTest::~TBValidSubtablesTest() { }
 
 // Public Methods //
 
-vector<String> TBValidSubtablesTest::checks(String t) {
-    vector<String> c;
+std::vector<String> TBValidSubtablesTest::checks(String t) {
+    std::vector<String> c;
 
     TBTable* table = browser->table(t)->getTable();
-    vector<TBKeyword*>* keywords = table->getTableKeywords();
+    std::vector<TBKeyword*>* keywords = table->getTableKeywords();
 
     for(unsigned int i = 0; i < keywords->size(); i++) {
         String type = keywords->at(i)->getType();
@@ -200,7 +201,7 @@ vector<String> TBValidSubtablesTest::checks(String t) {
 
 bool TBValidSubtablesTest::runCheck(String t, int id) {
     TBTable* tb = browser->table(t)->getTable();
-    vector<TBKeyword*>* keywords = tb->getTableKeywords();
+    std::vector<TBKeyword*>* keywords = tb->getTableKeywords();
 
     int count = 0;
 

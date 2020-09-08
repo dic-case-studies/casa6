@@ -1994,7 +1994,7 @@ void PlotMSCacheBase::setPlotMask(Int dataIndex, Int chunk) {
 	}
 	else {
 		plmask_[dataIndex][chunk]->resize(nsh);
-		(*plmask_[dataIndex][chunk]) = operator>(partialNFalse(*flag_[chunk],csh).reform(nsh),uInt(0));
+		(*plmask_[dataIndex][chunk]) = operator>(partialNFalse(*flag_[chunk],csh).reform(nsh),0ul);
 	}
 }
 

@@ -141,15 +141,6 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
 
         ## reporting calibration solution
         #reportsolvestats(mycb.activityrec());
-
-    except Exception as e:
-        import traceback
-        casalog.post(traceback.format_exc(), priority='DEBUG')
-        casalog.post(errmsg(e), priority='SEVERE')
-        raise
     
     finally:
         mycb.close()
-
-def errmsg(e):
-    return '{type}: {msg}'.format(type=e.__class__.__name__, msg=str(e))

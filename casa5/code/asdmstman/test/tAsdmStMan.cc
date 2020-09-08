@@ -40,7 +40,7 @@
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayLogical.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/OS/RegularFile.h>
 #include <casa/IO/RegularFileIO.h>
 #include <casa/IO/AipsIO.h>

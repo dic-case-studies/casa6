@@ -28,9 +28,10 @@
 #include <synthesis/TransformMachines/SynthesisError.h>
 #include <synthesis/TransformMachines/CFCache.h>
 #include <synthesis/TransformMachines/Utils.h>
-#include <lattices/LEL/LatticeExpr.h>
-#include <casa/System/ProgressMeter.h>
-#include <casa/Exceptions/Error.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
+#include <casacore/casa/System/ProgressMeter.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Utilities/Regex.h>
 #include <fstream>
 #include <algorithm>
 // #include <tables/Tables/TableDesc.h>

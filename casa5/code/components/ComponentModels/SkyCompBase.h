@@ -33,6 +33,7 @@
 #include <components/ComponentModels/ComponentType.h>
 #include <casa/Utilities/RecordTransformable.h>
 #include <casa/BasicSL/Complexfwd.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
@@ -44,9 +45,6 @@ class MVAngle;
 class RecordInterface;
 class String;
 class Unit;
-template <class T> class Vector;
-template <class T> class Matrix;
-template <class T> class Cube;
 template <class Ms> class MeasRef;
 }
 

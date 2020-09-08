@@ -1,6 +1,5 @@
-#include <casa/IO/AipsIO.h>
-#include <casa/Arrays/ArrayIO.h>
-#include <casa/Containers/BlockIO.h>
+#include <casacore/casa/IO/AipsIO.h>
+#include <casacore/casa/Containers/BlockIO.h>
 
 #include "BDF2AsdmStManIndex.h"
 #include "ASDM2MSException.h"

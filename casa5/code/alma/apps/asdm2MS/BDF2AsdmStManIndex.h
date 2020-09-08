@@ -4,7 +4,7 @@
 #include <casa/Containers/Block.h>
 #include <asdmstman/AsdmIndex.h>
 #include <casa/Arrays/Array.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayUtil.h>
 #include <casa/Arrays/ArrayLogical.h>
 #include <casa/IO/AipsIO.h>

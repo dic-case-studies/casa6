@@ -28,16 +28,16 @@
 #ifndef IMAGES_IMAGEFFT_H
 #define IMAGES_IMAGEFFT_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <casacore/scimath/Mathematics/NumericTraits.h>
-
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <imageanalysis/ImageTypedefs.h>
 
 namespace casacore {
 
 class CoordinateSystem;
 class IPosition;
-template<class T> class Vector;
+
 }
 
 namespace casa {

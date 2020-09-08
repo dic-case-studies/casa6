@@ -70,6 +70,8 @@
 //
 //#define SDCALSKY_DEBUG
 
+using namespace casacore;
+
 namespace {
 struct NullLogger {};
 
@@ -93,10 +95,10 @@ NullLogger nulllogger;
 
 // Local Functions
 namespace {
-inline casacore::Vector<casacore::uInt> getOffStateIdList(casacore::MeasurementSet const &ms) {
-  casacore::String taql("SELECT FLAG_ROW FROM $1 WHERE UPPER(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/");
-  casacore::Table stateSel = casacore::tableCommand(taql, ms.state());
-  casacore::Vector<casacore::uInt> stateIdList = stateSel.rowNumbers();
+inline Vector<rownr_t> getOffStateIdList(MeasurementSet const &ms) {
+  String taql("SELECT FLAG_ROW FROM $1 WHERE UPPER(OBS_MODE) ~ m/^OBSERVE_TARGET#OFF_SOURCE/");
+  Table stateSel = tableCommand(taql, ms.state());
+  Vector<rownr_t> stateIdList = stateSel.rowNumbers();
   debuglog << "stateIdList[" << stateIdList.nelements() << "]=";
   for (size_t i = 0; i < stateIdList.nelements(); ++i) {
     debuglog << stateIdList[i] << " ";
@@ -194,7 +196,7 @@ inline  casacore::Int nominalDataDesc(casacore::MeasurementSet const &ms, casaco
     spwMap[col(i)] = i;
   }
   casacore::ScalarColumn<casacore::String> obsModeCol(ms.state(), "OBS_MODE");
-  casacore::Regex regex("^OBSERVE_TARGET#ON_SOURCE");
+  casacore::Regex regex("^OBSERVE_TARGET#ON_SOURCE.*");
   for (size_t ispw = 0; ispw < numSpw; ++ispw) {
     if (nchanList[ispw] == 4) {
       // this should be WVR
@@ -482,7 +484,6 @@ inline void setNumberOfCorrelationsPerSpw(casacore::MeasurementSet const &ms,
 }
 }
 
-using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 //
 // SingleDishSkyCal
@@ -1571,7 +1572,7 @@ MeasurementSet SingleDishOtfCal::selectReferenceData(MeasurementSet const &ms)
     }
   }
 
-  Vector<uInt> rowList;
+  Vector<casacore::rownr_t> rowList;
 
   for (uInt field_id=0; field_id < tbl_field.nrow(); ++field_id){
     String field_sel(casacore::String::toString<uInt>(field_id));
@@ -1659,7 +1660,7 @@ MeasurementSet SingleDishOtfCal::selectReferenceData(MeasurementSet const &ms)
         }
         AlwaysAssert(edges_detection_ok,AipsError);
         // Compute ROW ids of detected edges. ROW "ids" are ROW ids in the MS filtered by user selection.
-        Vector<uInt> index_2_rowid = calc.getRowIdForOriginalMS();
+        auto index_2_rowid = calc.getRowIdForOriginalMS();
         size_t edges_count = ntrue(is_edge);
         size_t rowListIndex = rowList.size();
         rowList.resize(rowList.size() + edges_count, True);

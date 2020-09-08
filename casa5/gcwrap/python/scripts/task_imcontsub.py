@@ -21,13 +21,12 @@ def imcontsub(
     region, box, chans, stokes
 ):
     casalog.origin('imcontsub')
-    filesExist=False
+
     if ( len( linefile ) > 0 ):
         if ( os.path.exists( linefile ) ):
-            casalog.post('Error: file ' + linefile
-                          +' already exists, please delete before continuing.',\
-                          'SEVERE' )
-            filesExist=True
+            raise ValueError('Error: file ' + linefile
+                             +' already exists, please delete before continuing.',\
+                             'SEVERE' )
     else:
         casalog.post("The linefile parameter is empty, consequently the"
                       +" spectral line image will NOT be\nsaved on disk.", \
@@ -35,16 +34,12 @@ def imcontsub(
             
     if ( len( contfile ) > 0 ):
             if ( os.path.exists( contfile ) ):
-                casalog.post( 'Error: Unable to continue file '+contfile\
-                              +' already exists, please delete before continuing.',\
-                          'SEVERE' )
-                filesExist=True
+                raise ValueError('Error: Unable to continue file '+contfile\
+                                 +' already exists, please delete before continuing.')
     else:
         casalog.post("The contfile parameter is empty, consequently the"
                       +" continuum image will NOT be\nsaved on disk.", \
                       'WARN')
-    if ( filesExist ):
-        return False
     
     _myia = image()
     _myia.dohistory(False)
@@ -89,14 +84,10 @@ def imcontsub(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
         lineim.done()
-        return True
-    except Exception as err:
-        casalog.post( 'Error: Unable to perform continuum subtraction'+str(err), 'SEVERE' )
-        raise
+
     finally:
         _myia.done()
         if (lineim):
             lineim.done()
         if ( reg != None ):
             del reg
-    return True

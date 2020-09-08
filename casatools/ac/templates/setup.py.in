@@ -117,7 +117,7 @@ for arg in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.54.jar'
+xml_jar_file = 'xml-casa-assembly-1.55.jar'
 real_gnu = None
 
 if pyversion < 3:
@@ -1238,7 +1238,8 @@ class casa_build_ext(build_ext):
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
 
-        if sys.platform == 'darwin':
+        # Fixing rpaths is needed for gcc wheel builds
+        if sys.platform == 'darwin' and doing_wheel_build:
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
@@ -2237,7 +2238,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.54.jar"
+        assembly_jar = "xml-casa-assembly-1.55.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
