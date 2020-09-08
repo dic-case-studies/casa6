@@ -16,6 +16,7 @@ except:
     is_CASA6 = is_python3
 if is_CASA6:
     from casatasks import casalog
+    casalog.post("1", "WARN")
 
     from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
@@ -248,4 +249,4 @@ def deconvolve(
         e.args = tuple(larg)
         raise
 
-    return iterrec, isit, retrec
+    return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }

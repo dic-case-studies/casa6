@@ -248,4 +248,4 @@ def deconvolve(
         e.args = tuple(larg)
         raise
 
-    return iterrec, isit, retrec
+    return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }
