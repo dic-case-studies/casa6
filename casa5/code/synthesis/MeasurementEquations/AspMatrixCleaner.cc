@@ -93,7 +93,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumHogbomIter(0),
   itsNthHogbom(0),
   itsSwitchedToMS(false),
-  itsStrenThres(0.0001), //m31norm_hog, 5k->10k
+  itsStrenThres(0.3),
+  //itsStrenThres(0.0001), //m31norm_hog, 5k->10k
   //itsStrenThres(0.003), //SNorm_hog
   //itsStrenThres(0.0001), //SNorm_nohog
   //itsStrenThres(0.00036), //SNorm_hog 5k->10k
@@ -396,11 +397,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < itsStrenThres) //try
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < itsStrenThres) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*0.38*/) // M31 value - new Asp + new normalization: 5k->10k good
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.38) // M31 value - new Asp + new normalization: 5k->10k good
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0) // M31 value - new Asp + gaussian
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
@@ -410,7 +411,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
 	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
-	    itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
+	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
+      itsStrenThres = itsStrenThres - 0.02;
 	    switchedToHogbom();
     }
 
@@ -447,7 +449,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // Various ways of stopping:
     //    1. stop if below threshold
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*threshold()*/)
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0004/*threshold()*/)
     {
     	cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
@@ -1820,10 +1822,10 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
+  itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
   //itsNumHogbomIter = ceil(65 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm4 5k
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
-  itsNumHogbomIter = 1000000; //fake it for M31
+  //itsNumHogbomIter = 1000000; //fake it for M31
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 
