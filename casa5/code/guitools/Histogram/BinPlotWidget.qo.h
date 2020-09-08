@@ -30,7 +30,8 @@
 #include "ui/ui_BinPlotWidget.h"
 #include <guitools/Histogram/HeightSource.h>
 #include <guitools/Histogram/FootPrintWidget.qo.h>
-#include <images/Regions/ImageRegion.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/casa/Arrays/Vector.h>
 #include <casa/aips.h>
 #include <casa/aipstype.h>
 #include <qwt/qwt_plot.h>
@@ -49,7 +50,7 @@ class QWidgetAction;
 namespace casacore{
 
 template <class T> class ImageInterface;
-template <class T> class Vector;
+
 }
 
 namespace casa {

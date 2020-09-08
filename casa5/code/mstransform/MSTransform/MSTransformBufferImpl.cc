@@ -1489,7 +1489,7 @@ Vector<Int> MSTransformBufferImpl::getChannelNumbersSelected (Int outputChannelI
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-const Vector<casacore::rownr_t> & MSTransformBufferImpl::rowIds () const
+const Vector<rownr_t> & MSTransformBufferImpl::rowIds () const
 {
 	if (not rowIdsOk_p)
 	{

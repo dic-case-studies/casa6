@@ -40,6 +40,9 @@ except ImportError:
     from taskinit import *
     from taskinit import tbtool
 
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
 import sys
 import os
 import unittest
@@ -190,7 +193,7 @@ class conjugatevis_test(unittest.TestCase):
         conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             # Run again and expect an exception to be raised
             try:
                 conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)
@@ -213,7 +216,7 @@ class conjugatevis_test(unittest.TestCase):
         conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
 
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             # Run again and expect an exception to be raised
             try:
                 conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)

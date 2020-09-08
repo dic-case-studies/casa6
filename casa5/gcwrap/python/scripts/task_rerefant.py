@@ -35,11 +35,7 @@ def rerefant(vis,tablein,caltable,refantmode,refant):
             raise Exception('Visibility data set not found - please verify the name')
 
         _cb.rerefant(tablein=tablein,tableout=caltable,refantmode=refantmode,refant=refant);
-        _cb.close()
 
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
+    finally:
         _cb.close()
-        raise
-
 

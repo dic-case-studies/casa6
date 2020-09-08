@@ -31,7 +31,7 @@ def accor(vis=None,caltable=None,
                 if ((type(vis)==str) & (os.path.exists(vis))):
                         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                 else:
-                        raise Exception('Visibility data set not found - please verify the name')
+                        raise ValueError('Visibility data set not found - please verify the name')
 
                 # Do data selection according to selectdata
                 casalog.post("NB: accor automatically excludes crosso-correlations.")
@@ -110,10 +110,6 @@ def accor(vis=None,caltable=None,
                 mycb.setsolve(type='ACCOR',t=solint,combine=combine,
                               table=caltable, append=append)
                 mycb.solve()
-                mycb.close()
 
-        except Exception as instance:
-                print('*** Error *** %s' % str(instance))
+        finally:
                 mycb.close( )
-                casalog.post("Error in accor: %s" % str(instance), "SEVERE")
-                raise Exception("Error in accor: %s" % str(instance))

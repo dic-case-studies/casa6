@@ -100,10 +100,13 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
         visname = str(int_project +'/'+ int_project + '.' + configpath_int.split('/')[-1][:-3] +'ms')
 
-        val = simanalyze(project=int_project, image=False, vis=visname, imagename=imagepath_int, analyze=False, 
-                       graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
-
-        self.assertTrue(val)
+        try:
+            simanalyze(project=int_project, image=False, vis=visname,
+                       imagename=imagepath_int, analyze=False,
+                       graphics='none', verbose=False, overwrite=True, dryrun=False,
+                       logfile=logpath)
+        except Exception:
+            self.fail()
         
     def test_imaging_True_interferometric_analysis_False(self):
         '''test_imaging_True_interferometric_analysis_False:

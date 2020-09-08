@@ -43,7 +43,8 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
-#include <casa/Arrays.h>
+#include <casacore/casa/Arrays.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <map>
 #include <vector>
@@ -55,10 +56,9 @@ namespace casacore{
 
 class AipsError;
 class RecordInterface;
-class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
-template <typename T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
