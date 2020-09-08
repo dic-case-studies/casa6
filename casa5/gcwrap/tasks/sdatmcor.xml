@@ -140,8 +140,8 @@
 -->
 
     <param name="altitude" type="any" subparam="true" >
-        <shortdescription>altitude (km). (&quot;&quot; = value from MS.)</shortdescription>
-        <description>altitude (km). (&quot;&quot; = value from MS.)</description>
+        <shortdescription>altitude (m). (&quot;&quot; = value from MS.)</shortdescription>
+        <description>altitude (m). (&quot;&quot; = value from MS.)</description>
         <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
