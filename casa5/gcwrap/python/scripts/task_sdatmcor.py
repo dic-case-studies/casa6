@@ -157,7 +157,7 @@ def atmMst(
     print("atmMst:: infile =%s "% infile)
 
     # Tentative output #
-    DevTempName = './_AtmCor-Selected.ms'
+    DevTempName = './AtmCor-Selected.ms'
     # clean temp output #
     ms_remove(DevTempName)
 
@@ -169,17 +169,17 @@ def atmMst(
         outputvis=DevTempName,    ##   ditto 
         datacolumn=datacolumn,
         field=field, 
-        spw=spw,           ## spw=''(default) cause Warning. spw=ALL takes a long tine in MST. 
-        scan=scan, 
-        antenna='PM01&&&',    ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
+        spw=spw,                ## mstransform requires specific spw grammar.  (GOW TO GET LISTED Spw for AtmCor) ## 
+        scan=scan,              ## Limit the range to make short  ##
+        antenna='PM02&&&',      ## ex)'PM01&&&',      ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
         correlation=correlation, 
         timerange=timerange, 
-        intent=intent)
-#        observation = observation, 
-#        feed = feed, 
-#        msselect = msselect, 
-#        reindex = False)
-    print("- END  mstransforme() task.") 
+        intent=intent,
+        observation=observation, 
+        feed=feed, 
+#        msselect=msselect,      ## THIS MAKES ERROR when used. ##
+        reindex=False)   # CAUTION #
+    print("- end    mstransforme() task.") 
 
 ##########################
 # Subroutines
@@ -343,9 +343,10 @@ def calc_sdatmcor(
         debug):
 
     if True:  # flag option is reserved. #
-        print("************************************")
-        print("**   calc_sdatmcor:: (0907-Work)  **")
-        print("************************************")
+        print("******************************************")
+        print("**   calc_sdatmcor:: (0908-Work2)       **")
+        print("**      testing mstransform() behavior  **")
+        print("******************************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
         print('outfile     =', p_outfile)
