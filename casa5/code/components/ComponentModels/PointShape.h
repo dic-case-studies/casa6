@@ -33,6 +33,7 @@
 #include <components/ComponentModels/ComponentShape.h>
 #include <components/ComponentModels/ComponentType.h>
 #include <casa/BasicSL/Complex.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
@@ -40,7 +41,7 @@ class MVAngle;
 class MDirection;
 class RecordInterface;
 class String;
-template <class T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

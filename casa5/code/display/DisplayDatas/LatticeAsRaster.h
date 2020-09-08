@@ -28,15 +28,13 @@
 #ifndef TRIALDISPLAY_LATTICEASRASTER_H
 #define TRIALDISPLAY_LATTICEASRASTER_H
 
-#include <casa/aips.h>
-#include <images/Images/ImageInterface.h>
-#include <casa/Arrays/Array.h>
+#include <casacore/casa/aips.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/casa/Arrays/Array.h>
 #include <display/DisplayDatas/LatticePADD.h>
 
 namespace casacore{
 
-	template <class T> class Array;
-	class IPosition;
 	class Record;
 }
 

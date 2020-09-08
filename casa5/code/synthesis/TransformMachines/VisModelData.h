@@ -27,17 +27,17 @@
 //# $Id$
 #ifndef VISMODELDATA_H
 #define VISMODELDATA_H
-#include <casa/aips.h>
-#include <casa/Containers/Record.h>
-#include <casa/Containers/Block.h>
-#include <casa/Arrays/Cube.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/Arrays/Cube.h>
 #include <synthesis/TransformMachines/ComponentFTMachine.h>
 #include <msvis/MSVis/VisModelDataI.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
   class MeasurementSet;
-  template <class T> class Vector;
   template <class T> class CountedPtr;
 }
 

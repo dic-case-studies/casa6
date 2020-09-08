@@ -578,7 +578,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		VisBuffer vb(vi);
 
 
-		nAnt_ = max(casacore::rownr_t(1), msCols_->antenna().nrow());
+		nAnt_ = max(rownr_t(1), msCols_->antenna().nrow());
 
 
 		// In the single-antenna case, the 'baseline' axis is used for feeds

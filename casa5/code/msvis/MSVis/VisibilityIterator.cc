@@ -1253,14 +1253,14 @@ ROVisibilityIterator::getReceptor0Angle ()
 
 //Vector<uInt> getRowIds ();
 
-Vector<casacore::rownr_t>&
-ROVisibilityIterator::rowIds (Vector<casacore::rownr_t>& rowids) const
+Vector<rownr_t>&
+ROVisibilityIterator::rowIds (Vector<rownr_t>& rowids) const
 {
     CheckImplementationPointerR ();
     return readImpl_p->rowIds (rowids);
 }
 
-Vector<casacore::rownr_t>
+Vector<rownr_t>
 ROVisibilityIterator::getRowIds() const
 {
     CheckImplementationPointerR();

@@ -988,7 +988,7 @@ namespace casa {
 		y.shape(yl);
 		CurveData data;
 		if (ln >= 0) {
-			for (int i = 0; i < min(xl, yl); i++) {
+			for (int i = 0; i < std::min(xl, yl); i++) {
 				data.push_back(x[i]);
 				data.push_back(y[i]);
 			}
@@ -1007,7 +1007,7 @@ namespace casa {
 		y.shape(yl);
 		CurveData data;
 		if (ln >= 0) {
-			for (int i = 0; i < min(xl, yl); i++) {
+			for (int i = 0; i < std::min(xl, yl); i++) {
 				data.push_back(x[i]);
 				data.push_back(y[i]);
 			}
@@ -1026,7 +1026,7 @@ namespace casa {
 		y.shape(yl);
 		CurveData data;
 		if (ln >= 0) {
-			for (int i = 0; i < min(xl, yl); i++) {
+			for (int i = 0; i < std::min(xl, yl); i++) {
 				data.push_back(x[i]);
 				data.push_back(y[i]);
 			}

@@ -1,8 +1,8 @@
 #ifndef IMAGEANALYSIS_IMAGETASK_H
 #define IMAGEANALYSIS_IMAGETASK_H
 
-#include <casa/Containers/Record.h>
-
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/lattices/Lattices/Lattice.h>
 #include <imageanalysis/ImageTypedefs.h>
 #include <imageanalysis/IO/OutputDestinationChecker.h>
 #include <imageanalysis/Regions/CasacRegionManager.h>

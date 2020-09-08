@@ -230,7 +230,7 @@ VLAFiller::VLAFiller(MeasurementSet& output, VLALogicalRecord& input, Double fre
     } else if (keywords.dataType(key) == TpArrayInt) {
       DebugAssert(keywords.shape(key) == IPosition(1, maxSubarrays),AipsError);
       const Vector<Int> lastscans(keywords.asArrayInt(key));
-      lastscans.toBlock(itsScan);
+      itsScan = makeBlock(lastscans);
     }
   }
 
@@ -419,7 +419,7 @@ void VLAFiller::fill(Int verbose){
   }
 
   scanNumber().rwKeywordSet().define(RecordFieldId("LAST_SCAN"), 
-				     Vector<Int>(itsScan));
+                                     Vector<Int>(itsScan.begin(),itsScan.end()));
  
 #if defined(AIPS_DEBUG)
   LogSink::globalSink().filter(saved);
@@ -661,7 +661,7 @@ Bool VLAFiller::fillOne() {
     cout << "antOrder = " << antOrder << endl;
   */
     // If there are antennas to add
-    if (min(Vector<Int>(itsAntId,nAnt))<0) {
+    if (min(Vector<Int>(itsAntId.begin(),nAnt,int(0)))<0) {
       //      cout << "itsAntId 0 = " << Vector<Int>(itsAntId,nAnt) << endl;
 
       for (uInt ai=0; ai < antOrder.nelements(); ++ai) {
