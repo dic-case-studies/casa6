@@ -10,10 +10,7 @@ import unittest
 import matplotlib
 import pylab as pl
 
-try:
-    import testutils
-except:
-    import tests.testutils as testutils
+from casatestutils.testhelper import copytree_ignore_subversion
 
 from plotprofilemap import plotprofilemap
 from exportfits import exportfits
@@ -41,7 +38,7 @@ class plotprofilemap_test(unittest.TestCase):
         test_title: put title to the plot
     """
     # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/imregrid/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotprofilemap/'
     
     imagename_ref = 'expected.im'
     prefix = 'plotprofilemap_test'
@@ -61,7 +58,7 @@ class plotprofilemap_test(unittest.TestCase):
             pl.ioff()
         
         # copy input image
-        testutils.copytree_ignore_subversion(self.datapath, self.imagename_ref, self.imagename)
+        copytree_ignore_subversion(self.datapath, self.imagename_ref, self.imagename)
         
         # make parameters default
         default(plotprofilemap)

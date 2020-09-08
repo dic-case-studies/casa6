@@ -17,7 +17,7 @@ Unit tests for task plotweather. It tests the following parameters:
     return value:       [opacity] (type='list')
 '''
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listobs/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotweather/'
 
 # Read the data sets from another directory
 if os.environ.has_key('TEST_DATADIR'):  

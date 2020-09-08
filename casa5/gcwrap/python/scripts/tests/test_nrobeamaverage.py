@@ -14,7 +14,7 @@ import testhelper as th
 from sdutil import tbmanager, toolmanager, table_selector
 
 # Define the root for the data files
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/nrobeamaverage/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/nrobeamaverage/"
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""

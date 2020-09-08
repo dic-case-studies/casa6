@@ -8,6 +8,8 @@ import unittest
 import matplotlib
 import pylab as pl
 
+from casatestutils.testhelper import copytree_ignore_subversion
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import plotprofilemap
@@ -15,9 +17,9 @@ if is_CASA6:
     from casatools import image
     from casatools import regionmanager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/imregrid/')
+    datapath = ctsys.resolve('unittest/plotprofilemap/')
 
-    from testhelper import copytree_ignore_subversion
+#    from testhelper import copytree_ignore_subversion
 
     # default isn't used in CASA6
     def default(atask):
@@ -30,12 +32,12 @@ else:
     from taskinit import rgtool as regionmanager
 
     # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/imregrid/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotprofilemap/'
 
-    try:
-        from testutils import copytree_ignore_subversion
-    except Exception:
-        from tests.testutils import copytree_ignore_subversion
+#     try:
+#         from testutils import copytree_ignore_subversion
+#     except Exception:
+#         from tests.testutils import copytree_ignore_subversion
 
 
 myia = image()

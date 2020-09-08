@@ -16,7 +16,7 @@ else:
     from taskinit import *
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -43,7 +43,7 @@ class plotweather_test(unittest.TestCase):
             default(plotweather)
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
-        shutil.copytree(ctsys_resolve(os.path.join("regression/unittest/listobs",self.msfile)), self.msfile)
+        shutil.copytree(ctsys_resolve(os.path.join("unittest/plotweather",self.msfile)), self.msfile)
 
     def tearDown(self):
         if (os.path.exists(self.msfile)):
@@ -71,7 +71,7 @@ class plotweather_test(unittest.TestCase):
         '''Test 2: ms with no weather, no plot '''
         if (os.path.exists(self.msNoWeatherfile)):
             shutil.rmtree(self.msNoWeatherfile)
-        shutil.copytree(ctsys_resolve(os.path.join("regression/unittest/listobs",self.msNoWeatherfile)), self.msNoWeatherfile)
+        shutil.copytree(ctsys_resolve(os.path.join("unittest/plotweather",self.msNoWeatherfile)), self.msNoWeatherfile)
 
         opac = plotweather(vis=self.msNoWeatherfile, plotName=self.fig)
         self.assertIsNotNone(opac)
