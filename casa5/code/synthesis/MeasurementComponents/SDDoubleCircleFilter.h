@@ -34,10 +34,10 @@
 
 #include <msvis/MSVis/ViImplementation2.h>
 #include <synthesis/MeasurementComponents/SDDoubleCircleGainCalImpl.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore {
 // forward declaration
-template<class T> class Vector;
 class MeasurementSet;
 class Record;
 class String;

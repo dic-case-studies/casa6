@@ -343,7 +343,7 @@ public:
   inline casacore::Vector<casacore::Int>& ant1(casacore::Int chnk) { return *(antenna1_[chnk]); };
   inline casacore::Vector<casacore::Int>& ant2(casacore::Int chnk) { return *(antenna2_[chnk]); };
   inline casacore::Vector<casacore::Int>& bsln(casacore::Int chnk) { return *(baseline_[chnk]); };
-  inline casacore::Vector<casacore::uInt>& row(casacore::Int chnk) { return *(row_[chnk]); };
+  inline casacore::Vector<casacore::rownr_t>& row(casacore::Int chnk) { return *(row_[chnk]); };
   inline casacore::Vector<casacore::Int>& obsid(casacore::Int chnk) { return *(obsid_[chnk]); };
   inline casacore::Vector<casacore::Int>& intent(casacore::Int chnk) { return *(intent_[chnk]); };
   inline casacore::Vector<casacore::Int>& feed1(casacore::Int chnk) { return *(feed1_[chnk]); };
@@ -613,7 +613,7 @@ protected:
   casacore::Vector<casacore::Bool> goodChunk_;
   casacore::Vector<casacore::Double> time_, timeIntr_;
   casacore::Vector<casacore::Int> field_, spw_, scan_;
-  casacore::PtrBlock<casacore::Vector<casacore::uInt>*> row_;
+  casacore::PtrBlock<casacore::Vector<casacore::rownr_t>*> row_;
   casacore::PtrBlock<casacore::Vector<casacore::Int>*> antenna1_, antenna2_, baseline_;
   casacore::PtrBlock<casacore::Vector<casacore::Double>*> uvdist_, u_, v_, w_;
   casacore::PtrBlock<casacore::Matrix<casacore::Double>*> uvdistL_, uwave_, vwave_, wwave_;

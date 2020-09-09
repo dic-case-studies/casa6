@@ -31,11 +31,12 @@
 
 //# Includes
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
-template <class T> class Matrix;
 template <class T> class ImageInterface;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

@@ -30,11 +30,7 @@
 
 #include <casa/aips.h>
 #include <casa/Arrays/Vector.h>
-
-namespace casacore{
-
-	template <class T> class Matrix;
-}
+#include <casa/Arrays/Matrix.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

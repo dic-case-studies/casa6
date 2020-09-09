@@ -56,11 +56,7 @@ def imdev(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        outia.done() 
-        return True
-    except Exception as instance:
-        casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
-        raise
+
     finally:
         _myia.done()
         _myrg.done()

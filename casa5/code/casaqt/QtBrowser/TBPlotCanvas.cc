@@ -30,6 +30,7 @@
 #include <casaqt/QtBrowser/TBPlotter.qo.h>
 
 #include <QHBoxLayout>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -140,7 +141,7 @@ int TBPlotCanvas::getNumPlots() {
     return canvas->allPlots().size();
 }
 
-vector<TBPlotData*> TBPlotCanvas::allData() { return data; }
+std::vector<TBPlotData*> TBPlotCanvas::allData() { return data; }
 
 // Public Methods //
 
@@ -196,7 +197,7 @@ void TBPlotCanvas::clearSelectedRectangle() {
 PlotRegion TBPlotCanvas::currentSelection() {
     if(selectedRegion.null()) return PlotRegion();
     
-    vector<PlotCoordinate> coords = selectedRegion->coordinates();
+    std::vector<PlotCoordinate> coords = selectedRegion->coordinates();
     if(coords.size() < 2) return PlotRegion();
     else return PlotRegion(coords[0], coords[1]);
 }

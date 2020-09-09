@@ -3653,7 +3653,7 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
     ::casac::record *retval(0);
     try {
         if(!detached()) {
-          uInt nrows = itsSelectedMS->nrow();
+          rownr_t nrows = itsSelectedMS->nrow();
           if (nrows == 0) {
               *itsLog << LogIO::WARN << "Selected table is empty, cannot get data" << LogIO::POST;
                 return retval;
@@ -3674,8 +3674,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Keep table before increment selection, restore later
             MeasurementSet origSelMS = *itsSelectedMS;
             if ((increment>1) && (uInt(increment)<=nrows)) {
-                Vector<uInt> rows(nrows/increment);
-                indgen(rows, uInt(0), uInt(increment));
+                Vector<rownr_t> rows(nrows/increment);
+                indgen(rows, rownr_t(0), rownr_t(increment));
                 Table selTable = (*itsSelectedMS)(rows);
                 *itsSelectedMS = selTable;
             }
@@ -7362,7 +7362,7 @@ ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, cons
             }
             case MSS::ROWS:
             {
-                Vector<uInt> rowIds;
+                Vector<rownr_t> rowIds;
                 rowIds = itsVI->rowIds(rowIds);
                 Vector<Int> tmp(rowIds.shape());
                 for (Int ii=0;ii<(Int)tmp.nelements(); ii++)

@@ -23,8 +23,8 @@
 #include <synthesis/ImagerObjects/SIMinorCycleController.h>
 
 /* Records Interface */
-#include <casa/Containers/Record.h>
-
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/BasicMath/Math.h>
 #include <math.h> // For FLT_MAX
 
 using namespace casacore;

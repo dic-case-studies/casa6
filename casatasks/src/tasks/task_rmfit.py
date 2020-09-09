@@ -17,7 +17,7 @@ def rmfit(
     tmpim = ""
     try:
         if len(imagename) == 0:
-            raise Exception("imagename must be specified.")
+            raise ValueError("imagename must be specified.")
         if type(imagename) == type(['s']):
             # negative axis value means concatenate along spectral axis
             tmpim = tempfile.mkdtemp(suffix=".im", prefix="_rmfit_concat")
@@ -26,12 +26,12 @@ def rmfit(
                 axis=-1, overwrite=True
             )
             if not myia:
-                raise Exception("Unable to concatenate images.")
+                raise RuntimeError("Unable to concatenate images.")
             myia.done()
             mypo.open(tmpim)
         else:
             if (not mypo.open(imagename)):
-                raise Exception("Cannot create image analysis tool using " + imagename)
+                raise RuntimeError("Cannot create image analysis tool using " + imagename)
         mypo.rotationmeasure(
             rm=rm, rmerr=rmerr, pa0=pa0, pa0err=pa0err, nturns=nturns, chisq=chisq,
             sigma=sigma, rmfg=rmfg, rmmax=rmmax, maxpaerr=maxpaerr
@@ -47,10 +47,6 @@ def rmfit(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
     finally:
         if (myia):
             myia.done()

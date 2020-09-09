@@ -23,16 +23,11 @@
 
 #include <casacore/casa/BasicSL/Complexfwd.h>
 #include <casacore/scimath/StatsFramework/StatisticsAlgorithm.h>
+#include <casacore/casa/Arrays/Cube.h>
 
 #include <map>
 #include <memory>
 #include <utility>
-
-namespace casacore {
-template <class T> class Array;
-template <class T> class Cube;
-template <class T> class Vector;
-}
 
 namespace casa {
 
