@@ -33,8 +33,8 @@ Unit tests for task makemask
 
 datapath = 'regression/unittest/makemask'
 
-debug=True
-#debug=False
+#debug=True
+debug=False
 
 class makemaskTestBase(unittest.TestCase):
     """ base class for makemask unit test"""
