@@ -3,6 +3,7 @@
 import os
 import pylab as pl
 import shutil
+import datetime
 
 # for CASA
 from casatasks.private.casa_transition import is_CASA6
@@ -154,18 +155,16 @@ def atmMst(
     observation, feed, msselect):
 
     # infile #
-    print("atmMst:: infile =%s "% infile)
+    print("atmMst:: infile =%s antenna=%s"% (infile, antenna))
 
-    # Tentative output #
-    DevTempName = './AtmCor-Selected.ms'
-    # clean temp output #
-    ms_remove(DevTempName)
 
     #+
-    #  Patch
+    #  Debug Patch
     #-
     if antenna == '':
-        antenna = 'PM02&&&'
+        antenna = 'PM02'
+    antenna += '&&&'
+
     if scan == '':
         scan = '1,2,3,4'
     if spw == '':
@@ -179,7 +178,7 @@ def atmMst(
 
     mstransform(
         vis=infile,               ## Full file spec.
-        outputvis=DevTempName,    ##   ditto 
+        outputvis=outfile,        ## overwrite is not allowed. 
         datacolumn=datacolumn,
         field=field, 
         spw=spw,                ## mstransform requires specific spw grammar.  (GOW TO GET LISTED Spw for AtmCor) ## 
@@ -302,6 +301,32 @@ def conv_to_doubleArrayList( in_list ):
     out_list = [float(s) for s in in_list]  # convert to list[int]
     return out_list
 
+#########################
+# Search ANTENNA_ID 
+#########################
+def get_antennaId( msname, antennaName):
+    print( "get_antennaId called. ")
+
+    if antennaName == '':
+        antennaName = 'PM02'
+
+    tb.open(os.path.join(msname, 'ANTENNA'))
+
+    # Query
+    queryText = "NAME=='%s'" % antennaName
+    subtb = tb.query(queryText)
+
+    # Access Table
+    rows = subtb.rownumbers()
+    iAnt=rows[0]   # Single Hit is assumed 
+
+    # close
+    subtb.close()
+    tb.close()
+    print('iAnt = ', iAnt)
+    return iAnt
+    
+
 #
 # ATM Profile
 #
@@ -356,10 +381,10 @@ def calc_sdatmcor(
         debug):
 
     if True:  # flag option is reserved. #
-        print("******************************************")
-        print("**   calc_sdatmcor:: (0908-Work2)       **")
-        print("**      testing mstransform() behavior  **")
-        print("******************************************")
+        print("*********************************************")
+        print("**   calc_sdatmcor:: (0909-Work1)          **")
+        print("**     finalizing atmMst by mstransform()  **")
+        print("*********************************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
         print('outfile     =', p_outfile)
@@ -405,6 +430,8 @@ def calc_sdatmcor(
     showAtmProfile = False     # print( initAtmProfile() )
     showAtmLayer = False     # print( at )
 
+    useSelection = False     # Use Selection
+
     if('skipTaskExec' in debug):
         skipTaskExec = True
 
@@ -422,6 +449,10 @@ def calc_sdatmcor(
 
     if('showCorrection' in debug):
         showCorrection = True
+
+    if('useSelection' in debug):
+        useSelection = True
+
 
     #--------------------------------------
     #   Inside Constant for ATM (from org. script)
@@ -517,7 +548,7 @@ def calc_sdatmcor(
         if corms_exist:
             print("FATAL:: Specified outputfile already exist. Cannot write.")
             return False
-        
+
 #
 # TENTATIVE: pre-process (Data Selection)
 #    (3-Sep-2020 ~ underconstruction)
@@ -527,23 +558,17 @@ def calc_sdatmcor(
     # Data Selection
     #  (under construction)
     #########################
-    """
-      Design : 
-        by Mst, input MS is ready for ATM correction by the selected data
- 
-      First plan:
-        On very sooner stage, call AtmMst and make temporary file.
-        Original file must be preserved.
- 
-    """
-    print( "-------------------------------------------------------------")
-    print( "Here, DataSelection is supported to be executed. ")
-    print( "  mstransform is called, but no outout is passed to atmCor ")
-    print( "-------------------------------------------------------------")
+
+    # Temp File (cleaned use)
+    tempName = './_AtmCor-Temp'
+    tempFileName = tempName + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.ms'
+    print("- use temp file [%s]" % tempFileName)
+
+    # internal Mst 
     atmMst(
         infile=rawms,           # Tentatively use 'rawms' name
         datacolumn=p_datacolumn, 
-        outfile=p_outfile,      # Temp name is used inside. Ignoring the arg. # 
+        outfile= tempFileName,      # Temp name is used inside. Ignoring the arg. # 
         overwrite=p_overwrite,  # passed by the actual ARG.
         field=p_field, 
         spw=p_spw, 
@@ -555,6 +580,21 @@ def calc_sdatmcor(
         observation=p_observation, 
         feed=p_feed, 
         msselect=p_msselect)
+
+    #
+    # Antenna ID (note: the function occasionally depends on atmMST)
+    #
+    antenna = get_antennaId( rawms, p_antenna)
+
+    #
+    # TESTING :: Switch cal-MS
+    #
+    if useSelection:
+        calms = tempFileName
+        print( "--------------------------------------------")
+        print( "  Data Selection is applied by Debug Option ")
+        print( "    calms = %s" % calms )
+        print( "--------------------------------------------")
 
     #----------
     # Clean
@@ -845,11 +885,6 @@ def calc_sdatmcor(
             print("----   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
             continue
 
-        # Debug (tentative) #
-        if skipCorrection:
-            print("----   Correction (loop) will be skipped, due to Debug option.\n\n\n")
-            continue
-
         # Essential Query (required by org. script) #
         query_desc_id = 'DATA_DESC_ID in %s' % ddis[spwid] 
         querytext = query_desc_id
@@ -862,7 +897,7 @@ def calc_sdatmcor(
         tmdata = subtb.getcol('TIME')
         data = subtb.getcol(datacolumn)
         npol = data.shape[0]
-
+      
         # Smoothing control #
         if nchanperbb[bbprs[spwid]]*npol in [256, 8192]:
             print('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely not applied).  dosmooth=True' %
@@ -872,6 +907,14 @@ def calc_sdatmcor(
             print('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely applied).  dosmooth=False' %
                   (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
             dosmooth = False
+
+        #
+        # Debug (tentative) 
+        #
+        if skipCorrection:
+            print("----   Correction (loop) will be skipped, due to Debug option.")
+            print("  Assumes number of processing raw = %d \n\n" % len(tmdata))
+            continue
 
         ###########################
         # Correction Main Loop
