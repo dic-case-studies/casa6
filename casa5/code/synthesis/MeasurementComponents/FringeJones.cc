@@ -1993,26 +1993,31 @@ void FringeJones::setApply(const Record& apply) {
     // Use the "physical" (centroid) frequency, per spw 
     MSSpectralWindow msSpw(ct_->spectralWindow());
     MSSpWindowColumns msCol(msSpw);
+    Vector<Double> tmpfreqs;
     Vector<Double> chanfreq;
-    KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
-    for (Int ispw=0;ispw<nSpw();++ispw) {
+    tmpfreqs.resize(msSpw.nrow());
+    for (Int ispw=0;ispw<msSpw.nrow();++ispw) {
       if (ispw < msSpw.nrow()) {
 	msCol.chanFreq().get(ispw,chanfreq,true);  // reshape, if nec.
 	Int nch=chanfreq.nelements();
-	KrefFreqs_(ispw)=chanfreq(nch/2);
+	tmpfreqs(ispw)=chanfreq(nch/2);
       }
     }
-    KrefFreqs_/=1.0e9;  // in GHz
+
+    KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
+    for (Int ispw=0;ispw<nSpw();++ispw) {
+        if (ispw < tmpfreqs.nelements())
+            KrefFreqs_(ispw)=tmpfreqs(ispw);
+    }
 
     /// Re-assign KrefFreq_ according spwmap (if any)
     if (spwMap().nelements()>0) {
-      Vector<Double> tmpfreqs;
-      tmpfreqs.assign(KrefFreqs_);
       for (uInt ispw=0;ispw<spwMap().nelements();++ispw)
-	if (spwMap()(ispw)>-1)
+	if (spwMap()(ispw)>-1 && ispw < tmpfreqs.nelements())
 	  KrefFreqs_(ispw)=tmpfreqs(spwMap()(ispw));
     }
 
+    KrefFreqs_/=1.0e9;  // in GHz
 }
 
 void FringeJones::setApply() {

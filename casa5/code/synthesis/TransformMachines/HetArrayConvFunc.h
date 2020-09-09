@@ -29,11 +29,12 @@
 #define SYNTHESIS_HETARRAYCONVFUNC_H
 
 #include <synthesis/TransformMachines/SimplePBConvFunc.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Matrix;
+
 }
 
 namespace casa{

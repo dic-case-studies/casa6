@@ -31,6 +31,8 @@
 #include <qwt/qwt_plot_picker.h>
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_symbol.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 #if QWT_VERSION >= 0x060000
 #include <qwt/qwt_picker_machine.h>

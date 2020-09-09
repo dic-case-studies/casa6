@@ -29,15 +29,13 @@
 #ifndef IMAGES_IMAGESOURCEFINDER_H
 #define IMAGES_IMAGESOURCEFINDER_H
 
-#include <casa/aips.h>
-#include <measures/Measures/Stokes.h>      
+#include <casacore/casa/aips.h>
+#include <casacore/measures/Measures/Stokes.h>      
 #include <components/ComponentModels/ComponentType.h>
 #include <imageanalysis/ImageAnalysis/ImageTask.h>
 
 namespace casacore{
-
 template <class T> class ImageInterface;
-template <class T> class Vector;
 class LogIO;
 }
 

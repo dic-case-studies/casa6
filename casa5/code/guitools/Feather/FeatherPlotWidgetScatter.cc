@@ -9,6 +9,8 @@
 #include <QtCore/qmath.h>
 #include <limits>
 #include <QDebug>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 using namespace casacore;
 namespace casa {
