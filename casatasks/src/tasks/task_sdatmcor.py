@@ -161,8 +161,21 @@ def atmMst(
     # clean temp output #
     ms_remove(DevTempName)
 
+    #+
+    #  Patch
+    #-
+    if antenna == '':
+        antenna = 'PM02&&&'
+    if scan == '':
+        scan = '1,2,3,4'
+    if spw == '':
+        spw = '17,19,21,23'
+
     # Tentative call #
     print("- calling mstransform() task.") 
+    print("   - antenna=", antenna)
+    print("   - scan   =", scan)
+    print("   - spw    =", spw)
 
     mstransform(
         vis=infile,               ## Full file spec.
@@ -171,7 +184,7 @@ def atmMst(
         field=field, 
         spw=spw,                ## mstransform requires specific spw grammar.  (GOW TO GET LISTED Spw for AtmCor) ## 
         scan=scan,              ## Limit the range to make short  ##
-        antenna='PM02&&&',      ## ex)'PM01&&&',      ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
+        antenna=antenna,        ## ex)'PM01&&&',      ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
         correlation=correlation, 
         timerange=timerange, 
         intent=intent,
