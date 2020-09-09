@@ -222,8 +222,8 @@ def file_exist(path):
 
 def form_value_unit(data, base_unit):
     if (data == ''):
-#       msg = "INFO::No parameter. use Default."
-#       print(msg)
+        #       msg = "INFO::No parameter. use Default."
+        #       print(msg)
         return ''  # in future, at where DEFAULT should be given ? #
 
     ext_unit = qa.getunit(data)
@@ -232,9 +232,9 @@ def form_value_unit(data, base_unit):
         print(msg)
         return qa.getvalue(data)[0]
     elif (ext_unit == ''):
-#       msg = "INFO::No unit specified. Using '%s'" % base_unit
-#       print(msg)
-#       casalog.post(msg)
+        #       msg = "INFO::No unit specified. Using '%s'" % base_unit
+        #       print(msg)
+        #       casalog.post(msg)
         return data
     else:
         msg = "FATAL:: Unexpected Unit ('%s'). Aborted." % ext_unit
@@ -245,7 +245,7 @@ def form_value_unit(data, base_unit):
 
 
 def set_float_param(in_arg, def_para):
-#   print( "set_float_param::", in_arg, def_para )
+    #   print( "set_float_param::", in_arg, def_para )
     if (in_arg != -1)and(in_arg > 0):
         return in_arg
     else:
@@ -525,7 +525,7 @@ def calc_sdatmcor(
         else:
             corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
     else:
-            corms = '%s%s' %(outfile, outext)     # use same mane as infile #
+        corms = '%s%s' %(outfile, outext)     # use same mane as infile #
 
 
     # existence check
@@ -813,7 +813,7 @@ def calc_sdatmcor(
             t_layertemperature = set_list_param(a_layertemperature, a_layertemperature)
 
         else:
-             print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True.\n\n" )
+            print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True.\n\n" )
 
         # print to confirm #
         print(" ------------------------------------------------------")
@@ -881,7 +881,7 @@ def calc_sdatmcor(
         # Skip outputspw
         ####################
         if not spwid in outputspws:  # [CNo-34] #
-#        if not ddis[spwid] in outputspws:
+#       if not ddis[spwid] in outputspws:
             print("----   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
             continue
 
