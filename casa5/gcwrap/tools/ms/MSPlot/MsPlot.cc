@@ -817,7 +817,7 @@ MsPlot::getAllSpwsAndFreqs()
     Record rc = msRange.range(MSS::DATA_DESC_ID);
     Vector<Int> dataDescIds = rc.asArrayInt(RecordFieldId(0));
     //cout << " +++++++++" << endl;
-    Vector<uInt> udataDescIds( dataDescIds.nelements() );
+    RowNumbers udataDescIds( dataDescIds.nelements() );
     for ( uInt i=0; i < dataDescIds.nelements(); i++ )
        udataDescIds[i]=dataDescIds[i];
     Vector<Int> spwIds = 

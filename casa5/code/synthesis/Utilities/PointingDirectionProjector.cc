@@ -92,9 +92,9 @@ const Matrix<Double>& OrthographicProjector::project() {
   DirectionCoordinate coord(MDirection::J2000, Projection(Projection::SIN),
       cenx_, ceny_, dx_, dy_, identity, pcenx_, pceny_);
 
-  Double *pdir_p = new Double[dir_.nelements()];
-  pdir_.takeStorage(dir_.shape(), pdir_p, TAKE_OVER);
-  uInt len = dir_.ncolumn();
+  pdir_ = Matrix<Double>(dir_.shape());
+  double* pdir_p = pdir_.data();
+  size_t len = dir_.ncolumn();
   Bool b;
   Double *dir_p = dir_.getStorage(b);
   Double *wdir_p = dir_p;

@@ -34,7 +34,7 @@
 #include <scimath/Fitting/NonLinearFitLM.h>
 #include <scimath/Functionals/Polynomial.h>
 #include <scimath/Functionals/CompoundFunction.h>
-#include <imageanalysis/ImageAnalysis/ImageMoments.h>
+#include <imageanalysis/ImageAnalysis/MomentsBase.h>
 #include <lattices/LatticeMath/LatticeStatsBase.h>
 #include <casa/BasicMath/Math.h>
 #include <casa/Logging/LogIO.h> 

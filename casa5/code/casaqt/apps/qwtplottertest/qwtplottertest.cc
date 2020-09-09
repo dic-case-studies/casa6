@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 
 #include <casa/namespace.h>
 
@@ -358,7 +359,7 @@ int main(int argc, char** argv) {
                 0x000000;
         
         RasterPlotPtr raster = factory->rasterPlot(factory->data(rdata));
-        vector<double> contours(1, 0x000000);
+        std::vector<double> contours(1, 0x000000);
         raster->setContourLines(contours);
         raster->setLine("green", PlotLine::SOLID, 2.0);
         

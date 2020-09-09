@@ -2955,7 +2955,7 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 }
 
 void
-VisibilityIteratorImpl2::getRowIds(Vector<casacore::rownr_t> & rowIds) const
+VisibilityIteratorImpl2::getRowIds(Vector<rownr_t> & rowIds) const
 {
     if(nRowBlocking_p >0)
     {

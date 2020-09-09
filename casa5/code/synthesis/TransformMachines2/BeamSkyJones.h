@@ -38,12 +38,13 @@
 #include <synthesis/TransformMachines2/SkyJones.h>
 #include <synthesis/TransformMachines/PBMath.h>
 #include <msvis/MSVis/VisBufferUtil.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
 class ImageRegion;
 class String;
-template <typename T> class Vector;
+
 }
 
 namespace casa {

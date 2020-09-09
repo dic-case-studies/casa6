@@ -422,8 +422,4 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 } //# NAMESPACE CASA - END
 
-  // declare a commonly used template extern
-
-  extern template class casacore::Array<casacore::CountedPtr<casa::CFBuffer> >;
-
 #endif
