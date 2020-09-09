@@ -1,17 +1,7 @@
 #############################################################################
-# $Id:$
-# Test Name:                                                                #
-# alma-m100-analysis-hpc-regression.py                                      #
-# An ALMA Science Verification Data Analysis Regression                     #
-# using observation of M100 from September 2011                             #
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    Need test of complete ALMA analysis chain                              #
-#                                                                           #
-# Input data:                                                               #
-#     two ASDMs                                                             #
-#     the clean masks                                                       #
-#                                                                           #
+# Test Name:
+#   test_regression_alma_M100_sd.py
+#
 # Regression Tests of M100 SV data
 # Measurementset version (2016/10/03) updated from ASAP one
 #
@@ -34,9 +24,6 @@
 #
 #############################################################################
 
-# alma-m100-analysis-hpc-regression.py
-# An ALMA Science Verification Data Analysis Regression
-# using observations of M100 from September 2011 and _parallelisation_
 
 step_title = { 0 : 'Data import',
                1 : 'Generate antenna position cal tables',
@@ -84,16 +71,13 @@ CASA6 = False
 try:
     import casatools
     cu = casatools.utils
-    from casatasks import casalog, tclean, split, virtualconcat, imstat, applycal, fluxscale, flagdata, setjy, bandpass, flagmanager, gaincal, gencal, importasdm, fixplanets, uvcontsub, immoments
-    from almatasks import wvrgcal
-    # imview, plotcal
+    from casatasks import importasdm, listobs, flagdata, sdcal, sdbaseline, sdimaging, imhead, immoments, imstat, exportfits, casalog
+    from casaplotms import plotms
     CASA6 = True
-#    from casatestutils import filltsys
 except ImportError:
     from __main__ import *
     from tasks import *
     from taskinit import *
-    import filltsys
 
 import time
 import os
@@ -144,29 +128,29 @@ inittime = time.time()
 ttime = inittime
 steptime = []
 
-def timing(mystep, thesteps):
-    global totaltime
-    global inittime
-    global ttime
-    global steptime
-    global step_title
+#def timing(mystep, thesteps):
+#    global totaltime
+#    global inittime
+#    global ttime
+#    global steptime
+#    global step_title
     #global mystep
     #global thesteps
 
-    print()
-    thetime = time.time()
-    dtime = thetime - ttime
-    steptime.append(dtime)
-    totaltime += dtime
-    ttime = thetime
-    casalog.origin('TIMING')
-    casalog.post( 'Step '+str(mystep)+': '+step_title[mystep], 'WARN')
-    casalog.post( 'Time now: '+str(ttime), 'WARN')
-    casalog.post( 'Time used this step: '+str(dtime), 'WARN')
-    casalog.post( 'Total time used so far: ' + str(totaltime), 'WARN')
-    casalog.post( 'Step  Time used (s)     Fraction of total time (percent) [description]', 'WARN')
-    for i in range(0, len(steptime)):
-        casalog.post( '  '+str(thesteps[i])+'   '+str(steptime[i])+'  '+str(steptime[i]/totaltime*100.) +' ['+step_title[thesteps[i]]+']', 'WARN')
+#    print()
+#    thetime = time.time()
+#    dtime = thetime - ttime
+#    steptime.append(dtime)
+#    totaltime += dtime
+#    ttime = thetime
+#    casalog.origin('TIMING')
+#    casalog.post( 'Step '+str(mystep)+': '+step_title[mystep], 'WARN')
+#    casalog.post( 'Time now: '+str(ttime), 'WARN')
+#    casalog.post( 'Time used this step: '+str(dtime), 'WARN')
+#    casalog.post( 'Total time used so far: ' + str(totaltime), 'WARN')
+#    casalog.post( 'Step  Time used (s)     Fraction of total time (percent) [description]', 'WARN')
+#    for i in range(0, len(steptime)):
+#        casalog.post( '  '+str(thesteps[i])+'   '+str(steptime[i])+'  '+str(steptime[i]/totaltime*100.) +' ['+step_title[thesteps[i]]+']', 'WARN')
 
 if CASA6:
     datapath = casatools.ctsys.resolve('regression/alma-sd/M100/')
@@ -192,15 +176,20 @@ class regression_alma_m100_test(unittest.TestCase):
 
         # Remove Last Files
         for lastfile in ["exportfits","imhead","listobs","plotms","sdbaseline","sdcal","sdimaging"]:
-            os.remove("{}.last".format(lastfile))
+            name = "{}.last".format(lastfile)
+            if os.path.exists(name):
+                os.remove(name)
         
         # Remove PNGs
         os.remove("raw_spectrum_Spw1,3,5,7,9,11,13,15.png")
         for target in ['9', '11', '13', '15']:
             for antname  in ['PM03', 'PM04', 'CM03', 'CM05']:
-                os.remove("baselined_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target))
-                os.remove("calibrated_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target))
-                
+                png_baselined = "baselined_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target)
+                png_calibrated = "calibrated_spectrum.{}.spw{}_Scan2,3,4,5,6,8,9,10,11.png".format(antname,target)
+                for name in [png_baselined,png_calibrated]:
+                    if os.path.exists(name):
+                        os.remove(name)
+
         for antname  in ['PM03', 'PM04', 'CM03', 'CM05']:
             os.remove("raw_spectrum.{}.spw15_Scan2,3,4,5,6,8,9,10,11.png".format(antname))
             
