@@ -27,7 +27,8 @@
 #ifndef FEATHEREDDATA_H_
 #define FEATHEREDDATA_H_
 
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 namespace casa {
 

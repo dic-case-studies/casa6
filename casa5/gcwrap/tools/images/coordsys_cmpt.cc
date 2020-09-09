@@ -10,31 +10,32 @@
  * @version 
  ***/
 
-#include <casa/Arrays/Matrix.h>
-#include <casa/Containers/Record.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogFilter.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/MVTime.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
-#include <coordinates/Coordinates/CoordinateUtil.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <coordinates/Coordinates/LinearCoordinate.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
-#include <coordinates/Coordinates/StokesCoordinate.h>
-#include <coordinates/Coordinates/TabularCoordinate.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogFilter.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Utilities/Regex.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/CoordinateUtil.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/LinearCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/coordinates/Coordinates/StokesCoordinate.h>
+#include <casacore/coordinates/Coordinates/TabularCoordinate.h>
 #include <coordsys_cmpt.h>
-#include <measures/Measures/MCFrequency.h>
-#include <measures/Measures/MCDirection.h>
+#include <casacore/measures/Measures/MCFrequency.h>
+#include <casacore/measures/Measures/MCDirection.h>
 
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MeasTable.h>
-#include <measures/Measures/MeasureHolder.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MeasTable.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 using namespace std;
 
@@ -4400,7 +4401,7 @@ coordsys::coordinateValueToRecord(const ::casac::variant& value, Bool isWorld,
 	rec->define("ar_type", "absolute");
       } else {
 	int naxes = _csys->nWorldAxes();
-	Array<Float> arr(IPosition(naxes),0.0);
+	Array<Float> arr(IPosition(naxes),0.0F);
 	rec->define(RecordFieldId("numeric"), arr);
       }
     } else {
@@ -4411,7 +4412,7 @@ coordsys::coordinateValueToRecord(const ::casac::variant& value, Bool isWorld,
 	rec->define("ar_type","absolute");
       } else {
 	int naxes = _csys->nPixelAxes();
-	Array<Float> arr(IPosition(naxes),0.0);
+	Array<Float> arr(IPosition(naxes),0.0F);
 	rec->define(RecordFieldId("numeric"), arr);
       }
     }

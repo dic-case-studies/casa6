@@ -29,6 +29,7 @@
 #include <casaqt/QwtPlotter/QPPanel.qo.h>
 
 #include <QHBoxLayout>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -93,7 +94,7 @@ void QPButton::registerHandler(PlotButtonEventHandlerPtr handler) {
     m_handlers.push_back(handler);
 }
 
-vector<PlotButtonEventHandlerPtr> QPButton::allHandlers() const {
+std::vector<PlotButtonEventHandlerPtr> QPButton::allHandlers() const {
     return m_handlers; }
 
 void QPButton::unregisterHandler(PlotButtonEventHandlerPtr handler) {
@@ -159,7 +160,7 @@ void QPCheckbox::registerHandler(PlotCheckboxEventHandlerPtr handler) {
     m_handlers.push_back(handler);
 }
 
-vector<PlotCheckboxEventHandlerPtr> QPCheckbox::allHandlers() const {
+std::vector<PlotCheckboxEventHandlerPtr> QPCheckbox::allHandlers() const {
     return m_handlers; }
 
 void QPCheckbox::unregisterHandler(PlotCheckboxEventHandlerPtr handler) {
@@ -205,7 +206,7 @@ QPPanel::~QPPanel() {
 }
 
 
-vector<PlotWidgetPtr> QPPanel::widgets() const { return m_widgets; }
+std::vector<PlotWidgetPtr> QPPanel::widgets() const { return m_widgets; }
 
 int QPPanel::addWidget(PlotWidgetPtr widget) {
     // make sure it's a QPButton or QPCheckbox

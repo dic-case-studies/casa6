@@ -30,7 +30,7 @@
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/MaskArrMath.h>
 #include <casa/Arrays/MatrixMath.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/BasicMath/Math.h>
 #include <casa/BasicSL/Complex.h>
 #include <casa/Logging/LogIO.h>

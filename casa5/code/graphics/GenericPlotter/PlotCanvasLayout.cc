@@ -68,8 +68,8 @@ PlotCanvasPtr PlotLayoutSingle::canvasAt(const PlotLayoutCoordinate& coord)
 
 
 
-vector<PlotCanvasPtr> PlotLayoutSingle::allCanvases() const {
-    vector<PlotCanvasPtr> v(m_canvas.null() ? 0 : 1);
+std::vector<PlotCanvasPtr> PlotLayoutSingle::allCanvases() const {
+    std::vector<PlotCanvasPtr> v(m_canvas.null() ? 0 : 1);
     if(!m_canvas.null()) v[0] = m_canvas;
     return v;
 }
@@ -140,14 +140,14 @@ PlotCanvasPtr PlotLayoutGrid::canvas() const {
     else return PlotCanvasPtr();
 }
 
-vector<PlotCanvasPtr> PlotLayoutGrid::allCanvases() const {
+std::vector<PlotCanvasPtr> PlotLayoutGrid::allCanvases() const {
     unsigned int count = 0;
     for(unsigned int i = 0; i < m_rows; i++)
         for(unsigned int j = 0; j < m_cols; j++)
             if(!m_panels[i][j].null())
                 count++;
 
-    vector<PlotCanvasPtr> v(count);
+    std::vector<PlotCanvasPtr> v(count);
 
     count = 0;
     for(unsigned int i = 0; i < m_rows; i++)

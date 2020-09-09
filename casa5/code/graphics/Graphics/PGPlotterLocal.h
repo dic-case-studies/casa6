@@ -31,12 +31,8 @@
 
 #include <casa/aips.h>
 #include <casa/System/PGPlotter.h>
-
-namespace casacore{
-
-class String;
-template<class T> class Vector;
-}
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
