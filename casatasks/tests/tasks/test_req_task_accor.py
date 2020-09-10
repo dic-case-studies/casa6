@@ -45,6 +45,7 @@ if CASA6:
     datapath = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
     libpath = casatools.ctsys.resolve('text/testcallib.txt')
     vladata = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
+    cdfdata = casatools.ctsys.resolve('regression/evn/n08c1.ms/')
 
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
@@ -55,12 +56,14 @@ else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
         libpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/testcallib.txt'
         vladata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
+    cdfdata = os.environ.get('CASAPATH').split()[0] + '/data/regression/evn/n08c1.ms/'
 
 
 caltab = 'cal.A'
 cal_default = 'cal.default'
 datacopy = 'uid_copy.ms'
 vlacopy = 'vla_copy.ms'
+cdfcopy = 'cdf_copy.ms'
 
 def cal_size(cal):
     '''
@@ -96,6 +99,8 @@ class accor_test(unittest.TestCase):
         rmtables(caltab)
         if os.path.exists('cal.B'):
             rmtables('cal.B')
+        if os.path.exists(cdfcopy):
+            shutil.rmtree(cdfcopy)
     
     @classmethod
     def tearDownClass(cls):
@@ -284,6 +289,20 @@ class accor_test(unittest.TestCase):
         
         self.assertTrue(numpy.isclose(datamean, 1.282986655279442+0j))
         
+    #CAS-13184
+    @unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
+    def test_corrdepflags(self):
+        ''' Test that adding corrdepflags=True finds more solutions '''
+
+        shutil.copytree(cdfdata, cdfcopy)
+
+        # Cross autocorrelations are flagged; no solutions should be found
+        accor(vis=cdfcopy, caltable=caltab)
+        self.assertFalse(os.path.exists(caltab))
+
+        # Cross autocorrelations are flagged; solutions should be found
+        accor(vis=cdfcopy, caltable=caltab, corrdepflags=True)
+        self.assertTrue(os.path.exists(caltab))
         
                 
 def suite():
