@@ -55,6 +55,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_addnoise.py
   test_ia_boxcar.py
   test_ia_calcmask.py
+  test_ia_collapse.py
   test_ia_continuumsub.py
   test_ia_constructors.py
   test_ia_commonbeam.py
@@ -165,7 +166,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_po_sigmalinpolposang.py
   test_po_totpolint.py
   test_predictcomp.py
-  test_rerefant.py
   test_report.py
   test_rg_selectedchannels.py
   test_rg_frombcs.py
@@ -239,6 +239,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+  test_req_task_rerefant.py
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py

@@ -1724,7 +1724,7 @@ Bool VisBuffer::timeRange(MEpoch & rTime, MVEpoch & rTimeEP,
 };
 
 
-Vector<uInt>& VisBuffer::rowIds()
+Vector<casacore::rownr_t>& VisBuffer::rowIds()
 {
   if (!rowIdsOK_p) {
 
