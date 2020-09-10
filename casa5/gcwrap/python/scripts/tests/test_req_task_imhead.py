@@ -39,12 +39,9 @@ import numpy as np
 
     #DATA#
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    datapath = casatools.ctsys.resolve('unittest/imhead/ngc5921.clean.image/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhead/ngc5921.clean.image/'
 
 logfile = casalog.logfile()
 datacopy = 'clean.image'

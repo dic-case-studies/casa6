@@ -32,7 +32,6 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-import sys
 import os
 import unittest
 import shutil
@@ -41,18 +40,25 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    interpath = casatools.ctsys.resolve('image/orion_tfeather.im/')
-    sdpath = casatools.ctsys.resolve('image/orion_tsdmem.image/')
+#    interpath = casatools.ctsys.resolve('image/orion_tfeather.im/')
+#    sdpath = casatools.ctsys.resolve('image/orion_tsdmem.image/')
+    datapath = casatools.ctsys.resolve('unittest/feather/')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        interpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im/'
-        sdpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tsdmem.image/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/feather/'
+#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+#        interpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im/'
+#        sdpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tsdmem.image/'
         
-    else:
-        interpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im/'
-        sdpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tsdmem.image/'
+#    else:
+#   sdpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tsdmem.image/'
 
+
+#Input files
+intimg = 'orion_tfeather.im'
+sdimg = 'orion_tsdmem.image'
+
+# Output files
 output = 'feathered.im'
 output2 = 'feathered2.im'
 
@@ -74,6 +80,11 @@ class feather_test(unittest.TestCase):
         pass
     
     def setUp(self):
+        if not os.path.exists(intimg):
+            os.symlink(os.path.join(datapath, intimg), intimg)
+        if not os.path.exists(sdimg):
+            os.symlink(os.path.join(datapath, sdimg), sdimg)
+        
         if not CASA6:
             default(feather)
             
@@ -91,7 +102,8 @@ class feather_test(unittest.TestCase):
     
     @classmethod
     def tearDownClass(cls):
-        pass
+        os.unlink(intimg)
+        os.unlink(sdimg)
     
     def test_combine(self):
         '''
@@ -101,7 +113,7 @@ class feather_test(unittest.TestCase):
             Check that interferometric and Single dish images can be combined
         '''
         
-        feather(imagename=output, highres=interpath, lowres=sdpath)
+        feather(imagename=output, highres=intimg, lowres=sdimg)
         self.assertTrue(os.path.exists(output))
         
     def test_imagename(self):
@@ -112,8 +124,8 @@ class feather_test(unittest.TestCase):
             Check that the imagename parameter gives the name of the output image file
         '''
         
-        feather(imagename=output, highres=interpath, lowres=sdpath)
-        feather(imagename=output2, highres=interpath, lowres=sdpath)
+        feather(imagename=output, highres=intimg, lowres=sdimg)
+        feather(imagename=output2, highres=intimg, lowres=sdimg)
         
         self.assertTrue(os.path.exists(output))
         self.assertTrue(os.path.exists(output2))
@@ -129,10 +141,10 @@ class feather_test(unittest.TestCase):
         
         if CASA6:
             with self.assertRaises(AssertionError):
-                feather(imagename=output, lowres=sdpath)
+                feather(imagename=output, lowres=sdimg)
         else:
             casalog.setlogfile(logname)
-            feather(imagename=output, lowres=sdpath)
+            feather(imagename=output, lowres=sdimg)
             self.assertTrue(('SEVERE' in open(logname).read()))
             
         
@@ -147,10 +159,10 @@ class feather_test(unittest.TestCase):
         
         if CASA6:
             with self.assertRaises(AssertionError):
-                feather(imagename=output, highres=interpath)
+                feather(imagename=output, highres=intimg)
         else:
             casalog.setlogfile(logname)
-            feather(imagename=output, highres=interpath)
+            feather(imagename=output, highres=intimg)
             self.assertTrue('SEVERE' in open(logname).read())
         
         
@@ -162,8 +174,8 @@ class feather_test(unittest.TestCase):
             Check that differing sdfactors results in differing image files
         '''
         
-        feather(imagename=output, highres=interpath, lowres=sdpath)
-        feather(imagename=output2, highres=interpath, lowres=sdpath, sdfactor=0.5)
+        feather(imagename=output, highres=intimg, lowres=sdimg)
+        feather(imagename=output2, highres=intimg, lowres=sdimg, sdfactor=0.5)
         
         res1 = get_map(output)
         res2 = get_map(output2)
@@ -178,8 +190,8 @@ class feather_test(unittest.TestCase):
             Check that chaging the effective dish diameter results in differing image files
         '''
         
-        feather(imagename=output, highres=interpath, lowres=sdpath)
-        feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1)
+        feather(imagename=output, highres=intimg, lowres=sdimg)
+        feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1)
         
         res1 = get_map(output)
         res2 = get_map(output2)
@@ -188,10 +200,10 @@ class feather_test(unittest.TestCase):
         
         if CASA6:
             with self.assertRaises(RuntimeError):
-                feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
+                feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1000)
         else:
             casalog.setlogfile(logname)
-            feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
+            feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1000)
             self.assertTrue('SEVERE' in open(logname).read())
         
     def test_lowpassfiltersd(self):
@@ -202,8 +214,8 @@ class feather_test(unittest.TestCase):
             Check that lowpassfiltersd = True results in a different image than the default
         '''
         
-        feather(imagename=output, highres=interpath, lowres=sdpath)
-        feather(imagename=output2, highres=interpath, lowres=sdpath, lowpassfiltersd=True)
+        feather(imagename=output, highres=intimg, lowres=sdimg)
+        feather(imagename=output2, highres=intimg, lowres=sdimg, lowpassfiltersd=True)
         
         res1 = get_map(output)
         res2 = get_map(output2)

@@ -47,63 +47,65 @@ import unittest
 import shutil
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('caltables/ggtau.1mm.amp.gcal')
-    datapath_visibilities = casatools.ctsys.resolve('visibilities/')
-    #filepath = casatools.ctsys.resolve('testlog.log')
+    datapath = casatools.ctsys.resolve('unittest/calstat')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/data/visibilities/'
-    #filepath = os.environ.get('CASAPATH').split()[0] + '/bin/nosedir/testlog.log'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/calstat/'
         
 logpath = casalog.logfile()
 contained = ['max', 'mean', 'medabsdevmed', 'median', 'min', 'npts', 'quartile', 'rms', 'stddev', 'sum', 'sumsq', 'var']
 
+gcaltable = 'ggtau.1mm.amp.gcal'
+non_caltable = 'Itziar.ms'
+
 class calstat_test(unittest.TestCase):
      
     def setUp(self):
+        if not os.path.exists(gcaltable):
+            shutil.copytree(os.path.join(datapath,gcaltable), gcaltable)
+        if not os.path.exists(non_caltable):
+            os.symlink(os.path.join(datapath,non_caltable), non_caltable)
         if not CASA6:
             default(calstat)
      
     def tearDown(self):
+        shutil.rmtree(gcaltable, ignore_errors=True)
+        os.unlink(non_caltable)
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
      
     def test_logreturn(self):
         '''logreturn test: Test that a logfile is written and populated with the expected information'''
         casalog.setlogfile('testlog.log')
-        # Check that a logfile is populated and contains the correct infromation
-        calstat(datapath, axis='TIME')
+        # Check that a logfile is populated and contains the correct information
+        calstat(gcaltable, axis='TIME')
         for item in contained:
             self.assertTrue( item in open('testlog.log').read(), msg='Fails to write required information to the log')
         
     def test_dictreturn(self):
         '''dictionary test: Test that calstat makes a python dict with the expected keys'''
         # Check that type of returned object is a python dict
-        caldict = calstat(datapath)
+        caldict = calstat(gcaltable)
         self.assertTrue(isinstance(caldict, dict), msg='calstat does not return a python dict')
         # Check that the dict contains the correct values
         self.assertTrue(all (k in caldict['GAIN'] for k in contained), msg='Dictionalry does not contain all the correct values')
             
     def test_takescal(self):
         '''takes cal test: Test that calstat only takes cal tables'''
-        self.assertTrue(calstat(datapath), msg='calstat fails to take a caltable')
+        self.assertTrue(calstat(gcaltable), msg='calstat fails to take a caltable')
         ### Needs work. try and produce some fake cal tables to test with
         # No type checking for CASA 6, but some for CASA 5
         if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(RuntimeError, msg='Fails to recognize non-caltable'):
-                calstat(datapath_visibilities)
+            with self.assertRaises(AssertionError, msg='Fails to recognize non-caltable'):
+                calstat(non_caltable)
         else:
-            self.assertFalse(calstat(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/'), msg='Fails to recognize non-caltable')
+            self.assertFalse(calstat(non_caltable), msg='Fails to recognize non-caltable')
             self.assertFalse(calstat(1), msg='Fails to refuse int type')
             self.assertFalse(calstat([]), msg='Fails to refuse a list')
             
     def test_axis(self):
         '''axis test: Check that the axis param makes different selections'''
-        timeAxis = calstat(datapath, axis='TIME')
-        ampAxis = calstat(datapath, axis='amp')
+        timeAxis = calstat(gcaltable, axis='TIME')
+        ampAxis = calstat(gcaltable, axis='amp')
         self.assertFalse(timeAxis == ampAxis, msg='different axis selections should give different values')
         
     def test_axisvals(self):
@@ -111,23 +113,23 @@ class calstat_test(unittest.TestCase):
         # Some type checking for CASA 5 - this doesn't make much sense to me, it should also
         # check that exceptions are raised in CASA6 (or if casa_stack_rethrow)
         if not CASA6 and not casa_stack_rethrow:
-            self.assertFalse(calstat(datapath, axis='abc'), msg='Fails to recognize non-existing axis')
-            self.assertFalse(calstat(datapath, axis=1), msg='Takes int as input when it should not')
-            self.assertFalse(calstat(datapath, axis=[]), msg='Takes list as input when it should not')
+            self.assertFalse(calstat(gcaltable, axis='abc'), msg='Fails to recognize non-existing axis')
+            self.assertFalse(calstat(gcaltable, axis=1), msg='Takes int as input when it should not')
+            self.assertFalse(calstat(gcaltable, axis=[]), msg='Takes list as input when it should not')
         # Check that the documented inputs function
         for item in ['amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary']:
-            self.assertTrue(calstat(datapath, axis=item), msg='axis {} is not recognized'.format(item))
+            self.assertTrue(calstat(gcaltable, axis=item), msg='axis {} is not recognized'.format(item))
     
     def test_dataColumn(self):
         '''datacolumn test: Check that the datacolumn param makes unique selections'''
         # Some type checking for CASA 5
         if not CASA6 and not casa_stack_rethrow:
-            self.assertFalse(calstat(datapath, axis='amp', datacolumn='abc'), msg='Fails to recognize non-existing datacolumn')
-            self.assertFalse(calstat(datapath, axis='amp', datacolumn=1), msg='Takes an int as input when it should not')
-            self.assertFalse(calstat(datapath, axis='amp', datacolumn=[]), msg='Takes list as input when it should not')
+            self.assertFalse(calstat(gcaltable, axis='amp', datacolumn='abc'), msg='Fails to recognize non-existing datacolumn')
+            self.assertFalse(calstat(gcaltable, axis='amp', datacolumn=1), msg='Takes an int as input when it should not')
+            self.assertFalse(calstat(gcaltable, axis='amp', datacolumn=[]), msg='Takes list as input when it should not')
         # Check that datacolumn selects different data when it should
-        timeCol = calstat(datapath, axis='amp', datacolumn='TIME')
-        gainCol = calstat(datapath, axis='amp', datacolumn='GAIN')
+        timeCol = calstat(gcaltable, axis='amp', datacolumn='TIME')
+        gainCol = calstat(gcaltable, axis='amp', datacolumn='GAIN')
         self.assertFalse(timeCol == gainCol, msg='different datacolumns should give different results')
         # Added for additional test coverage. These should correspond to CORRECTED_DATA and MODEL_DATA
         # These columns are not present for the current cal table
