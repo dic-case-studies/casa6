@@ -244,9 +244,11 @@ class </xsl:text><xsl:value-of select="@name"/><xsl:text>_cli_:</xsl:text>
 </xsl:for-each>
 <xsl:text disable-output-escaping="yes">
         except Exception, instance:
-          if(self.__globals__.has_key('__rethrow_casa_exceptions') and self.__globals__['__rethrow_casa_exceptions']) :
+          from mpi4casa.MPIEnvironment import MPIEnvironment
+          if (self.__globals__.has_key('__rethrow_casa_exceptions') and self.__globals__['__rethrow_casa_exceptions']) or\
+             (MPIEnvironment.is_mpi_enabled and not MPIEnvironment.is_mpi_client):
              raise
-          else :
+          else:
              #print '**** Error **** ',instance
              tname = </xsl:text>'<xsl:value-of select="$taskname"/>'<xsl:text disable-output-escaping="yes">
              casalog.post('An error occurred running task '+tname+'.', 'ERROR')

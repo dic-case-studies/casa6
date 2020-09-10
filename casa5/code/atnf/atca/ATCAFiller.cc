@@ -90,8 +90,7 @@ Bool ATCAFiller::open(const String& msName, const Vector<String>& rpfitsFiles,
   }
   Vector<String> opts;
   if (options.nelements()==1) {
-    Regex separator(" |,");
-    opts=stringToVector(options(0),separator);
+    opts=stringToVector(options(0),std::regex(" |,"));
   } else {
     opts=options;
   }
@@ -644,8 +643,7 @@ Bool ATCAFiller::fill() {
         
         os_p << LogIO::NORMAL << "Look for next file ..." << LogIO::POST;
         
-        Regex separator("/");
-        Vector<String> elts=stringToVector(currentFile_p,separator);
+        Vector<String> elts=stringToVector(currentFile_p,std::regex("/"));
         String rpfitsDir_p = "";
         if (elts.nelements()>1) {
           Int m = elts.nelements() - 1;

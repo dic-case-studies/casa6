@@ -39,9 +39,9 @@ def imrebin(
     outia = None
     try:
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using %s" % imagename)
+            raise RuntimeError("Cannot create image analysis tool using %s" % imagename)
         if (len(outfile) == 0):
-            raise Exception("outfile must be specified.")
+            raise ValueError("outfile must be specified.")
         if (type(region) != type({})):
             myrg = regionmanager( )
             reg = myrg.frombcs(
@@ -54,6 +54,7 @@ def imrebin(
             outfile=outfile, bin=factor, region=reg, mask=mask, dropdeg=dropdeg,
             overwrite=overwrite, stretch=stretch, crop=crop
         )
+
         try:
             param_names = imrebin.__code__.co_varnames[:imrebin.__code__.co_argcount]
             if is_python3:
@@ -67,10 +68,7 @@ def imrebin(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if myia:
             myia.done()

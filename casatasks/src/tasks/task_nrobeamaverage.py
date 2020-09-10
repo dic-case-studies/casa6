@@ -101,8 +101,6 @@ def nrobeamaverage(
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, beam=beam, outfile=outfile)
 
-    except Exception as e:
-        casalog.post('Exception from task_nrobeamaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
         #delete tmpfile
         if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
@@ -163,11 +161,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     pdh.bypassParallelProcessing(0)
     
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Create a local copy of the MSTransform tool
     mtlocal = mstransformer( )
@@ -228,12 +222,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
         casalog.post('Apply the transformations')
         mtlocal.run()        
 
+    finally:
         mtlocal.done()
-                    
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
@@ -326,19 +316,14 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                 
             mytb.close()
             
-        except Exception as instance:
+        finally:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
 
     mytb = None
     mslocal = None
-
-    return True
 
 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, beam, outfile):

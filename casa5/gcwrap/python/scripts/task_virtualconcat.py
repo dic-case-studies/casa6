@@ -88,21 +88,21 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
         doweightscale = False
         if(len(visweightscale)>0):
             if (len(visweightscale) != len(vis)):
-                raise Exception('parameter visweightscale must have same number of elements as parameter vis')
+                raise ValueError('parameter visweightscale must have same number of elements as parameter vis')
             for factor in visweightscale:
                 if factor<0.:
-                    raise Exception('parameter visweightscale must only contain positive numbers')
+                    raise ValueError('parameter visweightscale must only contain positive numbers')
                 elif factor!=1.:
                     doweightscale=True
                     
         if((type(concatvis)!=str) or (len(concatvis.split()) < 1)):
-            raise Exception('Parameter concatvis is invalid.')
+            raise ValueError('Parameter concatvis is invalid.')
 
         if(vis.count(concatvis) > 0):
-            raise Exception('Parameter concatvis must not be equal to one of the members of parameter vis.')
+            raise ValueError('Parameter concatvis must not be equal to one of the members of parameter vis.')
 
         if(os.path.exists(concatvis)):
-            raise Exception('The output MMS must not yet exist.')
+            raise ValueError('The output MMS must not yet exist.')
 
         # process the input MSs in chronological order
         sortedvis = []
@@ -230,11 +230,11 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
             needscrcols.append(t.colnames().count('CORRECTED_DATA')==0 or t.colnames().count('MODEL_DATA')==0)
             t.close()
         else:
-            raise Exception('Visibility data set '+theconcatvis+' not found - please verify the name')
+            raise ValueError('Visibility data set '+theconcatvis+' not found - please verify the name')
 
         for elvis in vis :             ###Oh no Elvis does not exist Mr Bill
             if(not os.path.exists(elvis)):
-                raise Exception('Visibility data set '+elvis+' not found - please verify the name')
+                raise ValueError('Visibility data set '+elvis+' not found - please verify the name')
 
             # check if all scratch columns are present
             t.open(elvis)
@@ -357,13 +357,14 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                 shutil.move(tempdir+'/'+elvis, elvis)
             os.rmdir(tempdir)
 
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
+    finally:
         if keepcopy and tempdir!='':
             print("Restoring original MSs ...")
             for elvis in originalvis:
                 if os.path.exists(tempdir+'/'+elvis):
                     shutil.rmtree(elvis)
                     shutil.move(tempdir+'/'+elvis, elvis)
-            os.rmdir(tempdir)
-        raise
+            try:
+                os.rmdir(tempdir)
+            except OSError:
+                pass

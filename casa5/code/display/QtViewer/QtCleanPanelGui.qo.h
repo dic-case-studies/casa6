@@ -80,7 +80,11 @@ namespace casa {
 		~QtCleanPanelGui();
 
 		bool supports( SCRIPTING_OPTION option ) const;
+#if defined(CASA6)
+		QVariant start_interact( std::promise<QVariant> &&, const QVariant &input, int id );
+#else
 		QVariant start_interact( const QVariant &input, int id );
+#endif
 		QVariant setoptions( const QMap<QString,QVariant> &input, int id);
 
 		// the QtDBusViewerAdaptor can handle loading & registering data itself,
@@ -104,8 +108,10 @@ namespace casa {
 		virtual void changeImageAxis(casacore::String, casacore::String, casacore::String, std::vector<int> );
 		virtual void changeMaskSelectionText( casacore::String x, casacore::String y, casacore::String z );
 
+#if ! defined(CASA6)
 	signals:
 		void interact( QVariant );
+#endif
 
 	protected:
 
@@ -135,6 +141,9 @@ namespace casa {
 		QPalette input_palette;
 
 	private:
+#if defined(CASA6)
+        std::promise<QVariant> interact_promise;
+#endif
 		bool in_interact_mode;
 		int interact_id;
 

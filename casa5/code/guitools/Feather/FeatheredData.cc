@@ -25,6 +25,7 @@
 
 
 #include "FeatheredData.h"
+#include <casacore/casa/Arrays/Vector.h>
 
 using namespace casacore;
 namespace casa {

@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 import numpy
@@ -34,8 +35,9 @@ class imsubimage_test(unittest.TestCase):
         imname = "xx.im"
         myia.fromshape(imname, [20,30,4,10])
         mask1 = "mask1.im > 10"
-        res = imsubimage(imagename=imname, outfile="stretch1", mask=mask1)
-        self.assertTrue(res)
+        outfile = "stretch1"
+        imsubimage(imagename=imname, outfile=outfile, mask=mask1)
+        self.assertTrue(os.path.exists(outfile))
         myia.done()
         self.assertTrue(len(_tb.showcache()) == 0)
         mask2 = "mask2.im > 10"
@@ -43,7 +45,9 @@ class imsubimage_test(unittest.TestCase):
             Exception, imsubimage, imname, "stretch4", mask=mask2, stretch=False
         )
         self.assertTrue(len(_tb.showcache()) == 0)
-        self.assertTrue(imsubimage(imname, outfile="stretch2", mask=mask2, stretch=True))
+        outfile = "stretch2"
+        imsubimage(imname, outfile=outfile, mask=mask2, stretch=True)
+        self.assertTrue(os.path.exists(outfile))
         mask3 = "mask3.im > 10"
         self.assertRaises(
             Exception, imsubimage, imname, "junk", mask=mask3, stretch=True
