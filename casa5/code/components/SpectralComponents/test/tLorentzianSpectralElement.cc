@@ -32,7 +32,7 @@
 #include <components/SpectralComponents/SpectralElementFactory.h>
 
 #include <casa/Utilities/Assert.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 #include <casa/Arrays/Vector.h>
 

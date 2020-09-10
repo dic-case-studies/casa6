@@ -35,14 +35,10 @@
 //# classes are a typedef hence this does not work. Replace the following with
 //# forward declarations when casacore::Complex and casacore::DComplex are no longer typedefs.
 #include <casa/BasicSL/Complex.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 #include <casa/namespace.h>
-namespace casacore{
-
-class String;
-template <class T> class Vector;
-template <class T> class Array;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 } //# NAMESPACE CASA - END

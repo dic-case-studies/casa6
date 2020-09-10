@@ -29,8 +29,8 @@
 #include <synthesis/CalTables/CTSelection.h>
 #include <synthesis/CalTables/CTColumns.h>
 #include <synthesis/CalTables/CTInterface.h>
-#include <ms/MSSel/MSSelectionTools.h>
-#include <casa/Utilities/Sort.h>
+#include <casacore/ms/MSSel/MSSelectionTools.h>
+#include <casacore/casa/Utilities/GenSort.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

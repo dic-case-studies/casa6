@@ -37,7 +37,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 //----------------------------------------------------------------------------
 
 ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
-  sortCols_(sortcol,sortcol.nelements()),
+  sortCols_(sortcol.begin( ),sortcol.end( )),
   singleSpw_(false),
   parentNCT_(tab),
   calCol_(tab),

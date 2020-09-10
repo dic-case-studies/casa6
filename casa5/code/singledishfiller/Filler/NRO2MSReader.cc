@@ -17,7 +17,7 @@
 #include <casacore/tables/Tables/TableRecord.h>
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/casa/Arrays/ArrayMath.h>
-#include <casacore/casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casacore/tables/Tables/Table.h>
 
 using namespace casacore;
@@ -722,7 +722,7 @@ Bool NRO2MSReader::getSourceRowImpl(SourceRecord &record) {
       Quantity(obs_header_.RA00, "rad"),
       Quantity(obs_header_.DEC00, "rad"),
       getDirectionFrame());
-  record.proper_motion = Vector<Double>(0.0, 0.0);
+  record.proper_motion = Vector<Double>(0, 0.0);
   record.rest_frequency.resize(1);
   record.rest_frequency[0] = getRestFrequency(source_spw_id_counter_);
   //record.transition

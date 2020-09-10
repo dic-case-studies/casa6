@@ -66,6 +66,7 @@
 
 #include <imageanalysis/ImageAnalysis/ImageTask.h>
 #include <components/ComponentModels/ComponentList.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <memory>
 
@@ -77,9 +78,9 @@ class LogIO;
 template <class T> class MeasRef;
 class MDirection;
 class MVAngle;
-template <class T> class Vector;
 class MVFrequency;
 class MFrequency;
+
 }
 
 namespace casa {
