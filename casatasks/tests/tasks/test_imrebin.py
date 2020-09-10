@@ -134,11 +134,9 @@ class imrebin_test(unittest.TestCase):
             Exception, imrebin, imagename=imagename, outfile=outfile, factor=[2,2,1,1],
             mask=mymask + ">0", stretch=False, overwrite=True
         )
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile, factor=[2,2,1,1],
-                mask=mymask + ">0", stretch=True, overwrite=True
-            )
+        imrebin(
+            imagename=imagename, outfile=outfile, factor=[2,2,1,1],
+            mask=mymask + ">0", stretch=True, overwrite=True
         )
         yy.open(outfile)
         self.assertTrue((yy.shape() == [100, 100, 1, 10]).all())
@@ -160,11 +158,9 @@ class imrebin_test(unittest.TestCase):
             Exception, imrebin, imagename=imagename, outfile=outfile,
             factor=[-100,2], overwrite=True
         )
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile, overwrite=True,
-                factor=[2,2]
-            )
+        imrebin(
+            imagename=imagename, outfile=outfile, overwrite=True,
+            factor=[2,2]
         )
         myia.open(outfile)
         p = myia.getchunk()
@@ -181,12 +177,11 @@ class imrebin_test(unittest.TestCase):
             channel=0, polarization=0
         )
         outfile = "dx.im"
-        self.assertTrue(
-            imrebin(
-                imagename=imagename, outfile=outfile,
-                factor=[2,2,1]
-            )
+        imrebin(
+            imagename=imagename, outfile=outfile,
+            factor=[2,2,1]
         )
+
         self.assertRaises(
             Exception, imrebin, imagename=imagename, outfile=outfile,
             factor=[2,2,2]
@@ -259,7 +254,7 @@ class imrebin_test(unittest.TestCase):
         myia.fromshape(imagename,[20,20,20])
         myia.done()
         outfile = "zz_out.im"
-        self.assertTrue(imrebin(imagename=imagename, outfile=outfile, factor=factor))
+        imrebin(imagename=imagename, outfile=outfile, factor=factor)
         myia.open(outfile)
         msgs = myia.history()
         myia.done()

@@ -65,9 +65,5 @@ def listobs(
             verbose=verbose, listfile=listfile, listunfl=listunfl,
             cachesize=cachesize, overwrite=overwrite, wantreturn=False
         )
-        return True
-    except Exception as instance:
-        casalog.post('*** Error *** ' + str(instance), 'SEVERE')
-        return False
     finally:
         myms.close()

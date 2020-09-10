@@ -31,6 +31,7 @@
 #include <casa/Arrays/Cube.h> 
 #include <casa/Exceptions/Error.h>
 #include <measures/Measures/Stokes.h> 
+#include <casa/BasicSL/Complex.h>
     
 namespace casa { //# NAMESPACE CASA - BEGIN
 

@@ -18,7 +18,6 @@ else:
     imager = imtool
     quanta = qatool
     regionmanager = rgtool
-    casalog = casac.logsink()
     table = tbtool
 _ia = image()
 _qa = quanta()

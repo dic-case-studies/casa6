@@ -327,6 +327,19 @@
              "comment":""
         },
         {
+             "testNumber":"3172",
+             "testName":"Rerefant",
+             "testScript":"test_req_task_rerefant",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Neal Schweighart",
+             "MaintainerEmail":"nschweig@nrao.edu",
+             "priority":"3",
+             "tag":"calibration",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
              "testNumber":"3175",
              "testName":"Uvcontsub",
              "testScript":"test_uvcontsub",

@@ -719,7 +719,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
    }
    else{
      std::vector<int> shape;
-     Vector<casacore::rownr_t> rownrs (result.node().nrow());
+     Vector<rownr_t> rownrs (result.node().nrow());
      indgen (rownrs);
      //cerr << "rownrs " << result.node().nrow() << "  is scalar " << result.node().isScalar() << endl;
      if(result.node().isScalar())
@@ -1173,7 +1173,7 @@ int
 table::ncols()
 {
  *itsLog << LogOrigin(__func__, name());
- int rstat(0);
+ Int64 rstat(0);
  try {
 	 if(itsTable){
 	    Vector<long long int> myshape = itsTable->shape();
@@ -1185,14 +1185,14 @@ table::ncols()
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ return (int) rstat;
 }
 
 int
 table::nrows()
 {
  *itsLog << LogOrigin(__func__, name());
- Int rstat(0);
+ Int64 rstat(0);
  try {
 	 if(itsTable){
 	    Vector<long long int> myshape = itsTable->shape();
@@ -1204,7 +1204,7 @@ table::nrows()
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ return (int) rstat;
 }
 
 bool
@@ -2363,13 +2363,13 @@ bool table::testincrstman(const std::string& column)
 			}
 
 			uInt offenndingCursor = 0;
-			casacore::rownr_t offendingBucketStartRow = 0;
+			rownr_t offendingBucketStartRow = 0;
 			uInt offendingBucketNrow = 0;
 			uInt offendingBucketNr = 0;
 			uInt offendingCol = 0;
 			uInt offendingIndex = 0;
-			casacore::rownr_t offendingRow = 0;
-			casacore::rownr_t offendingPrevRow = 0;
+			rownr_t offendingRow = 0;
+			rownr_t offendingPrevRow = 0;
 
 			ROIncrementalStManAccessor acc(itsTable->table(), dataManagerGroup);
 			ok = acc.checkBucketLayout (	offenndingCursor,

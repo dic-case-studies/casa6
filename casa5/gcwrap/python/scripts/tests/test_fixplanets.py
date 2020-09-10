@@ -72,54 +72,49 @@ class fixplanets_test1(unittest.TestCase):
     def test1(self):
         '''test1: Does a standard fixplanets work on an MS imported from an ASDM from April 2011'''
         for myms in [outms,outms2]:
-            rval = fixplanets(myms, 'Titan', True)
-            self.assertTrue(rval)
+            fixplanets(myms, 'Titan', True)
 
     def test2(self):
         '''test2: Does the setting of a given direction work on an MS imported from an ASDM from April 2011'''
         for myms in [outms,outms2]:
-            rval = fixplanets(myms, 'Titan', False, 'J2000 0h0m0s 0d0m0s')
-            self.assertTrue(rval)
+            fixplanets(myms, 'Titan', False, 'J2000 0h0m0s 0d0m0s')
             self.assertTrue(self.verify(myms, 'Titan', 'J2000'))
 
     def test3(self):
         '''test3: Does the setting of a given direction with ref !=J2000 and != sol.sys. object give the expected error?'''
         for myms in [outms,outms2]:
-            rval = fixplanets(myms, 'Titan', False, 'B1950 0h0m0s 0d0m0s')
-            self.assertFalse(rval)
+            with self.assertRaises(RuntimeError):
+                fixplanets(myms, 'Titan', False, 'B1950 0h0m0s 0d0m0s')
 
     def test4(self):
         '''test4: Does the setting of a given direction work with a sol system ref frame?'''
         for myms in [outms,outms2]:
-            rval = fixplanets(myms, 'Titan', False, 'SATURN 0h0m0s 0d0m0s')
-            self.assertTrue(rval)
+            fixplanets(myms, 'Titan', False, 'SATURN 0h0m0s 0d0m0s')
             self.assertTrue(self.verify(myms, 'Titan', 'SATURN'))
 
     def test5(self):
         '''test5: Does a standard fixplanets work on an MS imported from an ASDM from April 2011 with parameter reftime'''
         for myms in [outms,outms2]:
-            rval = fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='median')
-            self.assertTrue(rval)
+            fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='median')
 
     def test6(self):
         '''test6: Does a standard fixplanets with put of bounds parameter reftime give the expected error'''
         for myms in [outms,outms2]:
-            rval = fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='2012/07/11/08:41:32')
-            self.assertFalse(rval)
+            with self.assertRaises(TypeError):
+                fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='2012/07/11/08:41:32')
 
     def test7(self):
         '''test7: Does a standard fixplanets with wrong parameter reftime give the expected error'''
         for myms in [outms,outms2]:
-            rval = fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='MUDIAN')
-            self.assertFalse(rval)
+            with self.assertRaises(TypeError):
+                fixplanets(vis=myms, field='Titan', fixuvw=True, reftime='MUDIAN')
 
     def test8(self):
         '''test8: Does a fixplanets with an ephemeris work'''
         for myms in [outms,outms2]:
-            rval = fixplanets(vis=myms, field='Titan', fixuvw=True,
-                              direction=ctsys_resolve('regression/unittest/fixplanets/Titan_55437-56293dUTC.tab') )
+            fixplanets(vis=myms, field='Titan', fixuvw=True,
+                       direction=ctsys_resolve('regression/unittest/fixplanets/Titan_55437-56293dUTC.tab') )
                 
-            self.assertTrue(rval)
             self.assertTrue(os.path.exists(myms+'/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'APP'))
 
@@ -128,8 +123,8 @@ class fixplanets_test1(unittest.TestCase):
         os.system('cp '+ctsys_resolve('regression/unittest/fixplanets/titan.eml')+' .')
         for myms in [outms,outms2]:
             os.system("rm -rf titan.eml.tab")
-            rval = fixplanets( vis=myms, field='Titan', fixuvw=True, direction='titan.eml' )
-            self.assertTrue(rval)
+            fixplanets( vis=myms, field='Titan', fixuvw=True, direction='titan.eml' )
+
             self.assertTrue(os.path.exists(myms+'/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'J2000'))
 
