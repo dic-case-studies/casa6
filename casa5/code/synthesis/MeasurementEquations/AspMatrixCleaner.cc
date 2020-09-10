@@ -397,7 +397,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < itsStrenThres) //try
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
@@ -810,6 +810,7 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
   cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
 
   itsPsfWidth = float(ceil((xpixels + ypixels)/2));
+  itsPsfWidth = 2.0f;
 
   return itsPsfWidth;
 }
@@ -959,7 +960,8 @@ void AspMatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Flo
 
   // try 0, width, 2width, 4width and 8width
   itsInitScaleSizes.resize(itsNInitScales, false);
-  itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
+  //itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
+  itsInitScaleSizes = {0.0f, 2.0f, 4.0f, 8.0f, 16.0f};
   itsInitScales.resize(itsNInitScales, false);
   itsInitScaleXfrs.resize(itsNInitScales, false);
   FFTServer<Float,Complex> fft(psfShape_p);
@@ -1623,7 +1625,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       //cout << "isGoodAspen runtime " << duration.count() << " ms" << endl;
       cout << "test: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     	//if (lenDirVec >= threshold)
-      if (lenDirVec >= 70000.0)
+      //if (lenDirVec >= 70000.0)
+      if (lenDirVec >= 200.0)
     	{
     		//cout << "good: scale " << itsAspScaleSizes[i] << " amp " << itsAspAmplitude[i] << " center " << itsAspCenter[i] << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
     		vp.push_back({lenDirVec, i});
@@ -1638,7 +1641,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<int> goodvp;
     for (unsigned int i = 0; i < vp.size(); i++)
     {
-      if (i >= 5)
+      //if (i >= 5)
+      if (i >= 20)
         break;
       goodvp.push_back(vp[i].second);
     }
