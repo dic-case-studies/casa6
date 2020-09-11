@@ -2649,6 +2649,8 @@ void Calibrater::specifycal(const String& type,
       cal_ = createSolvableVisCal("EVLASWP",*msmc_p);
     else if (utype.contains("OPAC"))
       cal_ = createSolvableVisCal("TOPAC",*msmc_p);
+    else if (utype.contains("GC") && ms_p && ms_p->keywordSet().isDefined("GAIN_CURVE"))
+      cal_ = createSolvableVisCal("POWERCURVE",*msmc_p);
     else if (utype.contains("GC") || utype.contains("EFF"))
       cal_ = createSolvableVisCal("GAINCURVE",*msmc_p);
     else if (utype.contains("TEC"))
