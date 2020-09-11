@@ -217,33 +217,47 @@ class cvel2_test(test_base):
     
     def test1(self):
         '''cvel2 1: Testing default - expected error'''
-        self.setUp_vis_b()
-        myvis = vis_b
-        os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel2()
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print('Expected error!')
-        self.assertTrue(passes)
+#         self.setUp_vis_b()
+#         myvis = vis_b
+#         os.system('ln -sf ' + myvis + ' myinput.ms')
+#         passes = False
+#         try:
+#             rval = cvel2()
+#             # CASA5 returns False for this expected error
+#             passes = not rval
+#         except AssertionError:
+#             passes = True
+#             print('Expected error!')
+#         self.assertTrue(passes)
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel2()
+        else:
+            with self.assertRaises(RuntimeError):
+                cvel2()
+        print('Expected error!')
 
     def test2(self):
         '''cvel2 2: Only input vis set - expected error'''
         self.setUp_vis_b()
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel2(vis = 'myinput.ms')
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print('Expected error!')
-        self.assertTrue(passes)
+#         passes = False
+#         try:
+#             rval = cvel2(vis = 'myinput.ms')
+#             # CASA5 returns False for this expected error
+#             passes = not rval
+#         except AssertionError:
+#             passes = True
+#             print('Expected error!')
+#         self.assertTrue(passes)
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel2(vis = 'myinput.ms')
+        else:
+            with self.assertRaises(IOError):
+                cvel2(vis = 'myinput.ms')
+        print('Expected error!')
 
     def test3(self):
         '''cvel2 3: Input and output vis set'''

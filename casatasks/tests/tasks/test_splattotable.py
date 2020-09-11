@@ -137,7 +137,8 @@ class splattotable_test(unittest.TestCase):
                     if is_CASA6:
                         self.assertRaises(Exception, run_stttask, filenames, tab)
                     else:
-                        self.assertEqual(run_stttask(filenames, tab), None)
+                        with self.assertRaises(Exception):
+                            run_stttask(filenames, tab)
                 # in all cases, nothing should be opened
                 self.assertTrue(len(self._tb.showcache()) == 0)
 

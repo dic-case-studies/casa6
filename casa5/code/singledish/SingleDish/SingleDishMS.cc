@@ -1263,11 +1263,11 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
       size_t const num_chan = static_cast<size_t>(vb->nChannels());
       size_t const num_pol = static_cast<size_t>(vb->nCorrelations());
       size_t const num_row = static_cast<size_t>(vb->nRows());
-      Cube<Float> data_chunk(num_pol, num_chan, num_row, ArrayInitPolicies::NO_INIT);
-      Vector<float> spec(num_chan, ArrayInitPolicies::NO_INIT);
-      Cube<Bool> flag_chunk(num_pol, num_chan, num_row, ArrayInitPolicies::NO_INIT);
-      Vector<bool> mask(num_chan, ArrayInitPolicies::NO_INIT);
-      Vector<bool> mask2(num_chan, ArrayInitPolicies::NO_INIT);
+      Cube<Float> data_chunk(num_pol, num_chan, num_row, Array<Float>::uninitialized);
+      Vector<float> spec(num_chan, Array<float>::uninitialized);
+      Cube<Bool> flag_chunk(num_pol, num_chan, num_row, Array<Bool>::uninitialized);
+      Vector<bool> mask(num_chan, Array<bool>::uninitialized);
+      Vector<bool> mask2(num_chan, Array<bool>::uninitialized);
       float *spec_data = spec.data();
       bool *mask_data = mask.data();
       bool *mask2_data = mask2.data();
@@ -1337,12 +1337,12 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         std::vector<std::vector<double> > coeff_mtx_tmp(num_pol);
         
         Array<Float> rms_mtx(IPosition(2, num_pol, 1), (Float)0);
-        Array<Float> cthres_mtx(IPosition(2, num_pol, 1), ArrayInitPolicies::NO_INIT);
-        Array<uInt> citer_mtx(IPosition(2, num_pol, 1), ArrayInitPolicies::NO_INIT);
-        Array<Bool> uself_mtx(IPosition(2, num_pol, 1), ArrayInitPolicies::NO_INIT);
-        Array<Float> lfthres_mtx(IPosition(2, num_pol, 1), ArrayInitPolicies::NO_INIT);
-        Array<uInt> lfavg_mtx(IPosition(2, num_pol, 1), ArrayInitPolicies::NO_INIT);
-        Array<uInt> lfedge_mtx(IPosition(2, num_pol, 2), ArrayInitPolicies::NO_INIT);
+        Array<Float> cthres_mtx(IPosition(2, num_pol, 1), Array<Float>::uninitialized);
+        Array<uInt> citer_mtx(IPosition(2, num_pol, 1), Array<uInt>::uninitialized);
+        Array<Bool> uself_mtx(IPosition(2, num_pol, 1), Array<Bool>::uninitialized);
+        Array<Float> lfthres_mtx(IPosition(2, num_pol, 1), Array<Float>::uninitialized);
+        Array<uInt> lfavg_mtx(IPosition(2, num_pol, 1), Array<uInt>::uninitialized);
+        Array<uInt> lfedge_mtx(IPosition(2, num_pol, 2), Array<uInt>::uninitialized);
 
         size_t num_apply_true = 0;
         size_t num_fpar_max = 0;
@@ -1513,19 +1513,19 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         if (num_apply_true == 0) continue;
 
         Array<Int> fpar_mtx(IPosition(2, num_pol, num_fpar_max),
-                            ArrayInitPolicies::NO_INIT);
+                            Array<Int>::uninitialized);
         set_matrix_for_bltable<size_t, Int>(num_pol, num_fpar_max,
                                            fpar_mtx_tmp, fpar_mtx);
         Array<Float> ffpar_mtx(IPosition(2, num_pol, num_ffpar_max),
-                               ArrayInitPolicies::NO_INIT);
+                               Array<Float>::uninitialized);
         set_matrix_for_bltable<double, Float>(num_pol, num_ffpar_max,
                                               ffpar_mtx_tmp, ffpar_mtx);
         Array<uInt> masklist_mtx(IPosition(2, num_pol, num_masklist_max),
-                                 ArrayInitPolicies::NO_INIT);
+                                 Array<uInt>::uninitialized);
         set_matrix_for_bltable<uInt, uInt>(num_pol, num_masklist_max,
                                            masklist_mtx_tmp, masklist_mtx);
         Array<Float> coeff_mtx(IPosition(2, num_pol, num_coeff_max),
-                               ArrayInitPolicies::NO_INIT);
+                               Array<Float>::uninitialized);
         set_matrix_for_bltable<double, Float>(num_pol, num_coeff_max,
                                               coeff_mtx_tmp, coeff_mtx);
         Matrix<uInt> masklist_mtx2 = masklist_mtx;
@@ -1865,7 +1865,7 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
   std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> bl_contexts;
   bl_contexts.clear();
   size_t const bltype = BaselineType_kCubicSpline;
-  Vector<size_t> boundary(npiece+1, ArrayInitPolicies::NO_INIT);
+  Vector<size_t> boundary(npiece+1, Array<size_t>::uninitialized);
   size_t *boundary_data = boundary.data();
 
   doSubtractBaseline(in_column_name,
@@ -2675,7 +2675,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       size_t const num_chan = static_cast<size_t>(vb->nChannels());
       size_t const num_pol = static_cast<size_t>(vb->nCorrelations());
       size_t const num_row = static_cast<size_t>(vb->nRows());
-      Vector<casacore::rownr_t> orig_rows = vb->rowIds();
+      auto orig_rows = vb->rowIds();
       Cube<Float> data_chunk(num_pol, num_chan, num_row);
       Vector<float> spec(num_chan);
       Cube<Bool> flag_chunk(num_pol, num_chan, num_row);
@@ -2850,7 +2850,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           if (bltype == BaselineType_kCubicSpline) {
             num_boundary = fit_param.npiece+1;
           }
-          Vector<size_t> boundary(num_boundary,ArrayInitPolicies::NO_INIT);
+          Vector<size_t> boundary(num_boundary,Array<size_t>::uninitialized);
           size_t *boundary_data = boundary.data();
 
           if (write_baseline_text || write_baseline_csv || write_baseline_table) {

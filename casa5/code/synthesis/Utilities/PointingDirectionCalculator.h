@@ -291,7 +291,7 @@ public:
     // exception will be thrown.
     //-
 
-    casacore::uInt getRowId(casacore::uInt irow);
+    casacore::rownr_t getRowId(casacore::uInt irow);
 
     //***************************************
     // CAS-8418  Spline Interpolation API 

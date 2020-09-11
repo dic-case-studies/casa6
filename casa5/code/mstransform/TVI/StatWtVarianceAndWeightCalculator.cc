@@ -24,7 +24,7 @@
 #include <casacore/casa/Arrays/Cube.h>
 
 // DEBUG
-#include <casacore/casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 #ifdef _OPENMP
 #include <omp.h>

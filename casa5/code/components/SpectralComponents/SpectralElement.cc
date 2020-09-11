@@ -37,7 +37,7 @@
 
 //debug only
 #include <scimath/Functionals/CompiledFunction.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 #include <casa/iostream.h>
 
