@@ -39,6 +39,13 @@
 #define CUBIC InterpolateArray1D<Double,Float>::cubic
 #define SPLINE InterpolateArray1D<Double,Float>::spline
 
+// MetaData tools
+//#include <ms/msmetadata_cmpt.h>
+//#include <ms/msmetadata_forward.h>
+//#include <ms/msmetadata_private.h>
+#include <ms/MSOper/MSMetaData.h>
+#include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
+//#include <ms/MeasurementSets/MeasurementSet.h>
 
 //#include <casa/BasicSL/Constants.h>
 //#include <casa/OS/File.h>
@@ -59,6 +66,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 Vector<Int> fldmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),
+  msmc_(NULL),
   mtype_(mtype),
   isCmplx_(false),
   nPar_(nPar),
@@ -241,9 +249,11 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 const String& freqtype,
 				 const String& fieldtype,
 				 const MeasurementSet& ms,
+                 const MSMetaInfoForCal& msmc,
 				 Vector<Int> spwmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),
+  msmc_(&msmc),
   mtype_(mtype),
   isCmplx_(false),
   nPar_(nPar),
@@ -426,6 +436,7 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 				 Vector<Int> spwmap,
 				 const CTTIFactoryPtr cttifactoryptr) :
   ct_(ct),
+  msmc_(NULL),
   mtype_(mtype),
   isCmplx_(false),
   nPar_(nPar),
@@ -547,6 +558,189 @@ CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
 
   //  state();
 
+}
+    
+CTPatchedInterp::CTPatchedInterp(NewCalTable& ct,
+                 VisCalEnum::MatrixType mtype,
+                 Int nPar,
+                 const String& timetype,
+                 const String& freqtype,
+                 const String& fieldtype,
+                 const MeasurementSet& ms,
+                 Vector<Int> spwmap,
+                 const CTTIFactoryPtr cttifactoryptr) :
+  ct_(ct),
+  msmc_(NULL),
+  mtype_(mtype),
+  isCmplx_(false),
+  nPar_(nPar),
+  nFPar_(nPar),
+  timeType_(timetype),
+  freqTypeStr_(freqtype),
+  relativeFreq_(freqtype.contains("rel")),
+  freqInterpMethod0_(ftype(freqTypeStr_)),
+  freqInterpMethod_(freqInterpMethod0_),
+  freqInterpMethodVec_(),
+  byObs_(timetype.contains("perobs")), // detect slicing by obs
+  byField_(fieldtype=="nearest"),  // for now we are NOT slicing by field
+  nChanIn_(),
+  freqIn_(),
+  nMSObs_(1), // byObs_?ms.observation().nrow():1),
+  nMSFld_(ms.field().nrow()),
+  nMSSpw_(ms.spectralWindow().nrow()),
+  nMSAnt_(ms.antenna().nrow()),
+  altFld_(),
+  nCTObs_(1),  // byObs_?ct.observation().nrow():1),
+  nCTFld_(byField_?ct.field().nrow():1),
+  nCTSpw_(ct.spectralWindow().nrow()),
+  nCTAnt_(ct.antenna().nrow()),
+  nCTElem_(0),
+  spwInOK_(),
+  fldMap_(),
+  spwMap_(),
+  antMap_(),
+  elemMap_(),
+  conjTab_(),
+  result_(),
+  resFlag_(),
+  tI_(),
+  tIdel_(),
+  lastFld_(ms.spectralWindow().nrow(),-1),
+  lastObs_(ms.spectralWindow().nrow(),-1),
+  cttifactoryptr_(cttifactoryptr)
+{
+    
+  if (CTPATCHEDINTERPVERB) cout << "CTPatchedInterp::CTPatchedInterp(CT,MS)" << endl;
+    
+  //freqInterpMethod_=ftype(freqTypeStr_);
+    
+  freqInterpMethodVec_.resize(nMSSpw_);
+  freqInterpMethodVec_.set(freqInterpMethod0_);
+    
+  //  cout << "freqInterpMethod_ = " << freqInterpMethod_ << endl;
+    
+  switch(mtype_) {
+    case VisCalEnum::GLOBAL: {
+            
+      throw(AipsError("CTPatchedInterp::ctor: No non-Mueller/Jones yet."));
+            
+      nCTElem_=1;
+      nMSElem_=1;
+      break;
+    }
+    case VisCalEnum::MUELLER: {
+      nCTElem_=nCTAnt_*(nCTAnt_+1)/2;
+      nMSElem_=nMSAnt_*(nMSAnt_+1)/2;
+      break;
+    }
+    case VisCalEnum::JONES: {
+      nCTElem_=nCTAnt_;
+      nMSElem_=nMSAnt_;
+      break;
+    }
+    }
+    
+    // How many _Float_ parameters?
+    isCmplx_=(ct_.keywordSet().asString("ParType")=="Complex");  // Complex input
+    if (isCmplx_)
+        nFPar_*=2;  // interpolating 2X as many Float values
+    
+    // Set channel/freq info
+    CTSpWindowColumns ctspw(ct_.spectralWindow());
+    ctspw.numChan().getColumn(nChanIn_);
+    freqIn_.resize(nCTSpw_);
+    for (uInt iCTspw=0;iCTspw<ctspw.nrow();++iCTspw) {
+        ctspw.chanFreq().get(iCTspw,freqIn_(iCTspw),true);
+        if (relativeFreq_) {
+            Vector<Double>& fIn(freqIn_(iCTspw));
+            fIn-=mean(fIn); //  assume mean freq is center, and apply offset
+            // Flip LSB
+            if (fIn.nelements()>1 && fIn(0)>fIn(1)) {
+                //cout << " spw=" << iCTspw << " LSB!" << endl;
+                fIn*=Double(-1.0);
+            }
+        }
+        //cout << " freqIn_(" << iCTspw << ")=" << freqIn_(iCTspw) << endl;
+    }
+    
+    // Manage 'byObs_' carefully
+    if (byObs_) {
+        Int nMSObs=ms.observation().nrow();
+        Int nCTObs=ct_.observation().nrow();
+        
+        // Count _available_ obsids in caltable
+        ROCTMainColumns ctmc(ct_);
+        Vector<Int> obsid;
+        ctmc.obsId().getColumn(obsid);
+        Int nctobsavail=genSort(obsid,Sort::Ascending,
+                                (Sort::QuickSort | Sort::NoDuplicates));
+        
+        
+        LogIO log;
+        ostringstream msg;
+        
+        if (nctobsavail==1) {
+            byObs_=false;
+            msg << "Only one ObsId found in "
+            << Path(ct_.tableName()).baseName().before(".tempMemCal")
+            << "; ignoring 'perobs' interpolation.";
+            log << msg.str() << LogIO::WARN;
+        }
+        else {
+            
+            // Verify consistency between CT and MS
+            if (nctobsavail==nCTObs &&
+                nctobsavail==nMSObs) {
+                // Everything ok
+                nCTObs_=nCTObs;
+                nMSObs_=nMSObs;
+            }
+            else {
+                // only 1 obs, or available nobs doesn't match MS
+                byObs_=false;
+                msg << "Multiple ObsIds found in "
+                << Path(ct_.tableName()).baseName().before(".tempMemCal")
+                << ", but they do not match the MS ObsIds;"
+                << " turning off 'perobs'.";
+                log << msg.str() << LogIO::WARN;
+            }
+        }
+    }
+    
+    // Initialize caltable slices
+    sliceTable();
+    
+    // Set spwmap
+    setSpwMap(spwmap);
+    
+    // Set fldmap
+    if (byField_)
+        setFldMap(ms.field());  // on a trial basis
+    else
+        setDefFldMap();
+    
+    // Set defaultmaps
+    setDefAntMap();
+    setElemMap();
+    
+    // Resize working arrays
+    result_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    resFlag_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    timeResult_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    timeResFlag_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    freqResult_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    freqResFlag_.resize(nMSSpw_,nMSFld_,nMSObs_);
+    
+    // Figure out where we can duplicate field interpolators
+    calcAltFld();
+    
+    // Setup mapped interpolators
+    // TBD: defer this to later, so that spwmap, etc. can be revised
+    //   before committing to the interpolation engines
+    makeInterpolators();
+    
+    //  state();
+    
 }
 
 
@@ -988,12 +1182,32 @@ void CTPatchedInterp::makeInterpolators() {
 	      tR.set(0.0);
 	      tRf.set(true);
 	      //	      cout << tIip << "<-" << ictip << " " << "ctSlices_(ictip) = " << ctSlices_(ictip) << endl;
-	      cout << "MS obs=" << iMSObs
-		   << ",fld=" << iMSFld
-		   << ",spw=" << iMSSpw
-		   << ",ant=" << iMSElem
-		   << " cannot be calibrated by " << tabname 
-		   << " as mapped, and will be flagged in this process." << endl;
+          // print msmd summary
+          //open(tabname);
+          //msmetadata::open(tabname);
+            
+          // Get Obs Id from summary, from third set of keys get scan(s)
+          // Get antenna from scan and fields for scan
+          // Logic check -->
+          // Do you have obs -> is your field in scans? Spw in field? antenna in scan?
+          // If all true print below, else don't print anything
+            
+          Record summary = msmc_->msmd().getSummary();
+          std::set<uInt> spws = msmc_->msmd().getSpwsForField(iMSFld);
+          //std::set<uInt> scans = msmc_->msmd().getScansForSpw(iMSSpw);
+          //std::set<uInt> antennas = msmc_->msmd().;
+            
+            
+          if(spws.find(iMSSpw) != spws.end() &&
+             summary.isDefined("observationID=" + String::toString(iMSObs)))
+          {
+              cout << "MS obs=" << iMSObs
+               << ",fld=" << iMSFld
+               << ",spw=" << iMSSpw
+               << ",ant=" << iMSElem
+               << " cannot be calibrated by " << tabname
+               << " as mapped, and will be flagged in this process." << endl;
+          }
 	    }
 	  } // iMSElem
 	} // spwOK

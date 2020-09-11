@@ -560,7 +560,8 @@ void SolvableVisCal::setApply(const Record& apply) {
 
   // Make the interpolation engine
   MeasurementSet ms(msName());
-  ci_ = new CTPatchedInterp(*ct_,matrixType(),nPar(),tInterpType(),fInterpType(),fieldtype,ms,spwMap(),cttifactoryptr());
+  const MSMetaInfoForCal msmc_(msName());
+  ci_ = new CTPatchedInterp(*ct_,matrixType(),nPar(),tInterpType(),fInterpType(),fieldtype,ms,msmc_,spwMap(),cttifactoryptr());
 
   // Channel counting info 
   //  (soon will deprecate, I think, because there will be no need
@@ -6759,7 +6760,7 @@ void SolvableVisJones::fluxscale(const String& outfile,
           oMsg+="median(field="+String::toString(iFld)+",spw="+String::toString(iSpw)+")="+\
              String::toString(medianGains(iFld,iSpw));
           logSink() << LogIO::NORMAL3<< oMsg << LogIO::POST;
-        } catch (...) {
+        } catch (AipsError x) {
          if (anyEQ(tranField,iFld)) validSels[iSpw]=false;
         }
       }
