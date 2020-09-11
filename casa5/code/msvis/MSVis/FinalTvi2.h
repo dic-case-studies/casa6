@@ -36,11 +36,6 @@
 #include <map>
 #include <vector>
 
-namespace casacore{
-
-template <typename T> class Vector;
-}
-
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 

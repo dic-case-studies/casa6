@@ -32,7 +32,7 @@
 
 #include <casa/Arrays/Matrix.h>
 #include <casa/Arrays/Vector.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Exceptions/Error.h>
 #include <casa/Logging/LogIO.h>
 #include <casa/Quanta/Unit.h>

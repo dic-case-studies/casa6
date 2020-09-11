@@ -36,6 +36,7 @@
 #include <casa/Logging/LogIO.h>
 #include <singledish/SingleDish/LineFinder.h>
 #include <singledish/SingleDish/LineFindingUtils.h>
+#include <casacore/casa/Utilities/Assert.h>
 
 using namespace std;
 
@@ -166,7 +167,7 @@ list<pair<size_t,size_t>> MADLineFinder(size_t const num_data,
 #if defined(KS_DEBUG)
       os << LogIO::DEBUG1 << "raw detection:" <<  LineFinderUtils::FormatLineString(new_lines) << LogIO::POST;
 #endif
-      size_t const binned_min =  max(minwidth/average_factor,1);
+      size_t const binned_min =  max(minwidth/average_factor,1UL);
 	LineFinderUtils::rejectNarrowRange(binned_min, new_lines);
 #if defined(KS_DEBUG)
 	os << LogIO::DEBUG1 << "rejection by min width (" << binned_min << " chan):" <<  LineFinderUtils::FormatLineString(new_lines) << LogIO::POST;

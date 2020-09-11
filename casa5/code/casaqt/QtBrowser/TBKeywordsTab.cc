@@ -47,7 +47,7 @@ namespace casa {
 
 // Constructors/Destructors //
 
-TBNewKeyword::TBNewKeyword(vector<String>* fields, QWidget* parent):
+TBNewKeyword::TBNewKeyword(std::vector<String>* fields, QWidget* parent):
                                                         QDialog(parent) {
     setupUi(this);
     
@@ -132,7 +132,7 @@ void TBTableKeywordsTab::updateTable(ProgressHelper* pp) {
     }
     
     // Update table keywords
-    vector<TBKeyword*>* keywords = table->getTableKeywords();
+    std::vector<TBKeyword*>* keywords = table->getTableKeywords();
     tableKeywords->clearContents();
     tableKeywords->setRowCount(keywords->size());
 
@@ -292,9 +292,9 @@ void TBFieldKeywordsTab::updateTable(ProgressHelper* pp) {
 
     // Update field keywords
     fieldKeywords->clear();
-    vector<TBField*>* fields = table->getFields();
+    std::vector<TBField*>* fields = table->getFields();
 
-    vector<TBKeyword*>* keywords = NULL;
+    std::vector<TBKeyword*>* keywords = NULL;
     // put values in field keywords
     for(unsigned int i = 0; i < fields->size(); i++) {
         keywords = fields->at(i)->getKeywords();

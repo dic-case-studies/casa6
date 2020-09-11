@@ -39,13 +39,6 @@
 #include <nrao/VLA/VLASDA.h>
 
 #include <casa/namespace.h>
-namespace casacore{
-
-template <class T> class Vector;
-}
-
-namespace casa { //# NAMESPACE CASA - BEGIN
-} //# NAMESPACE CASA - END
 
 // <summary>This class interprets a VLA logical record.</summary>
 

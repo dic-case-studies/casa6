@@ -28,7 +28,8 @@
 #ifndef TRIALDISPLAY_DEFAULTWCCOORDINATEHANDLER_H
 #define TRIALDISPLAY_DEFAULTWCCOORDINATEHANDLER_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/BasicSL/String.h>
 #include <display/DisplayCanvas/WCCoordinateHandler.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN

@@ -31,6 +31,7 @@
 #include <casaqt/QtBrowser/TBDataTab.qo.h>
 #include <casaqt/QtBrowser/TBArray.h>
 #include <casaqt/QtBrowser/TBData.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -229,7 +230,7 @@ Result TBEditDataAction::update(TBData* val) {
 // Constructors/Destructors //
             
 TBEditArrayDataAction::TBEditArrayDataAction(TBTableTabs* t, TBViewArray* a,
-            int r, int c, vector<int> d, TBData* nv) :
+            int r, int c, std::vector<int> d, TBData* nv) :
             TBAction(a), tt(t), row(r), col(c), coords(d), newVal(nv),
             oneDim(a->getArrayData()->isOneDimensional()) {
     oldVal = TBData::create(*a->getArrayData()->dataAt(d));
