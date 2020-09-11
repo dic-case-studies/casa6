@@ -355,7 +355,7 @@
                                 before the total is compared with niter=100 and it exits.
 
       </description>
-      <value type="int">0</value>
+      <value type="int">100</value>
     </param>
 
     <param subparam="true" name="gain" type="double">
@@ -523,6 +523,28 @@
       </description>
       <any limittypes="bool int" type="variant"/>
       <value type="bool">False</value>
+    </param>
+    
+    <param subparam="true" name="fastnoise" type="bool">
+      <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
+      <value type="bool">True</value>
+      <description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold
+                        (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
+                        In this case, the threshold values are determined based on classic statistics (using all
+                        unmasked pixels for the calculations).
+
+                        If it is set to False,  the new noise calculation
+                        method is used based on pre-existing mask.   
+
+                        Case 1: no exiting mask
+                        Calculate image statistics using Chauvenet algorithm 
+
+                        Case 2: there is an existing mask
+                        Calculate image statistics by classical method on the region
+                        outside the mask and inside the primary beam mask.
+
+                        In all cases above RMS noise is calculated from MAD. 
+      </description>
     </param>
 
     <param name="usemask" type="string">
@@ -736,27 +758,6 @@
                         Note that for a large cube, extra logging may slow down the process.
       </description>
     </param>
-    <param name="fastnoise" type="bool">
-      <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
-      <value type="bool">True</value>
-      <description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold
-                        (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
-                        In this case, the threshold values are determined based on classic statistics (using all
-                        unmasked pixels for the calculations).
-
-                        If it is set to False,  the new noise calculation
-                        method is used based on pre-existing mask.   
-
-                        Case 1: no exiting mask
-                        Calculate image statistics using Chauvenet algorithm 
-
-                        Case 2: there is an existing mask
-                        Calculate image statistics by classical method on the region
-                        outside the mask and inside the primary beam mask.
-
-                        In all cases above RMS noise is calculated from MAD. 
-      </description>
-    </param>
 
     <constraints>
 
@@ -793,7 +794,7 @@
           <default param="cyclefactor"><value>1.0</value></default>
           <default param="minpsffraction"><value>0.05</value></default>
           <default param="maxpsffraction"><value>0.8</value></default>
-
+          <default param="fastnoise"><value>True</value></default>
 
         </notequals>
 

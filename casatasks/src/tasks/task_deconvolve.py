@@ -114,7 +114,8 @@ def deconvolve(
     cyclefactor,#=1.0,
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
-    interactive,#=False, TODO test with TRUE
+    interactive,#=False,
+    fastnoise,#=False,
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -131,8 +132,7 @@ def deconvolve(
     cutthreshold,#=0.01,
     growiterations,#=100
     dogrowprune,#=True
-    verbose, #=False
-    fastnoise): #=False
+    verbose): #=False
     """
     Runs the minor cycle only of tclean.
     Most of this code is copied directly from tclean.

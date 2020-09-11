@@ -16,7 +16,6 @@ except:
     is_CASA6 = is_python3
 if is_CASA6:
     from casatasks import casalog
-    casalog.post("1", "WARN")
 
     from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
@@ -115,7 +114,8 @@ def deconvolve(
     cyclefactor,#=1.0,
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
-    interactive,#=False, TODO test with TRUE
+    interactive,#=False,
+    fastnoise,#=False,
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -132,8 +132,7 @@ def deconvolve(
     cutthreshold,#=0.01,
     growiterations,#=100
     dogrowprune,#=True
-    verbose, #=False
-    fastnoise): #=False
+    verbose): #=False
     """
     Runs the minor cycle only of tclean.
     Most of this code is copied directly from tclean.
