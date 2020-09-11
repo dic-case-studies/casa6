@@ -157,24 +157,16 @@ def atmMst(
     # infile #
     print("atmMst:: infile =%s antenna=%s"% (infile, antenna))
 
+    # Antenna Key word # 
+    if antenna != '':
+        antenna += '&&&'
 
-    #+
-    #  Debug Patch
-    #-
-    if antenna == '':
-        antenna = 'PM02'
-    antenna += '&&&'
-
-    if scan == '':
-        scan = '1,2,3,4'
-    if spw == '':
-        spw = '17,19,21,23'
-
-    # Tentative call #
+    # Info (debug) #
     print("- calling mstransform() task.") 
     print("   - antenna=", antenna)
     print("   - scan   =", scan)
     print("   - spw    =", spw)
+
 
     mstransform(
         vis=infile,               ## Full file spec.
@@ -382,8 +374,8 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("*********************************************")
-        print("**   calc_sdatmcor:: (0909-Work1)          **")
-        print("**     finalizing atmMst by mstransform()  **")
+        print("**   calc_sdatmcor:: (0911-Work1)          **")
+        print("**     mstransform mistake , resolved.     **")
         print("*********************************************")
         print('infile      =', p_infile)
         print('datacolumn  =', p_datacolumn)
