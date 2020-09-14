@@ -29,10 +29,11 @@
 #define TRIALDISPLAY_LATTICEASCONTOUR_H
 
 //# aips includes:
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 
 //# trial includes:
-#include <images/Images/ImageInterface.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/casa/Arrays/Array.h>
 
 //# display library includes:
 #include <display/DisplayDatas/LatticePADD.h>
@@ -40,8 +41,6 @@
 
 namespace casacore{
 
-	template <class T> class Array;
-	class IPosition;
 	class Record;
 }
 

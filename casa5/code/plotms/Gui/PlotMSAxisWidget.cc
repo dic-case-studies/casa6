@@ -32,6 +32,7 @@
 #include <plotms/GuiTabs/PlotMSTab.qo.h>
 #include <QDebug>
 #include <QLayout>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -48,7 +49,7 @@ PlotMSAxisWidget::PlotMSAxisWidget(PMS::Axis defaultAxis, int attachAxes,
 
 
 	// Setup axes choices
-	const vector<String>& axes = PMS::axesStrings();
+	const std::vector<String>& axes = PMS::axesStrings();
 	String def = PMS::axis(defaultAxis);
 	// Hide the last axes (overlays) from the user....
 	for (int i = 0; i < PMS::ATM; i++) {
@@ -60,7 +61,7 @@ PlotMSAxisWidget::PlotMSAxisWidget(PMS::Axis defaultAxis, int attachAxes,
 	initPlotAxis( attachAxes );
 
 	// Setup data column choices.
-	const vector<String>& data = PMS::dataColumnStrings();
+	const std::vector<String>& data = PMS::dataColumnStrings();
 	def = PMS::dataColumn(PMS::DEFAULT_DATACOLUMN);
 
 	for(unsigned int i = 0; i < data.size(); i++) {

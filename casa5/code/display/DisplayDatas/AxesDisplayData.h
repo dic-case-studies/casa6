@@ -28,21 +28,17 @@
 #ifndef TRIALDISPLAY_AXESDISPLAYDATA_H
 #define TRIALDISPLAY_AXESDISPLAYDATA_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <display/Display/DParameterRange.h>
 #include <display/Display/DParameterString.h>
 #include <display/Display/DParameterChoice.h>
 #include <display/Display/DParameterColorChoice.h>
 #include <display/DisplayDatas/PassiveCachingDD.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/String.h>
 
 #include <iostream>
 using namespace std;
-
-namespace casacore{
-
-	template <class T> class Vector;
-	class String;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
