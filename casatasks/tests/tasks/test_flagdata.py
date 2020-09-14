@@ -1131,7 +1131,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
+        os.system('cp -RH '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
