@@ -47,17 +47,17 @@
 #include <tables/Tables/ArrayColumn.h>
 #include <tables/Tables/RefRows.h>
 
-#include <casa/Arrays.h>
-#include <scimath/Mathematics/MatrixMathLA.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/OS/Timer.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/OS/Path.h>
-#include <casa/sstream.h>
+#include <casacore/casa/Arrays.h>
+#include <casacore/scimath/Mathematics/MatrixMathLA.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/OS/Timer.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/OS/Path.h>
+#include <casacore/casa/sstream.h>
 
-#include <casa/Logging/LogMessage.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogMessage.h>
+#include <casacore/casa/Logging/LogSink.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -224,17 +224,17 @@ template<class T> void CalSet<T>::inflate() {
       fieldId_[ispw]      = new casacore::Vector<casacore::Int>(ntime,-1);
 
       casacore::IPosition parshape(4,nPar_,nChan_(ispw),nElem_,ntime);
-      par_[ispw]     = new casacore::Array<T>(parshape,1.0);
+      par_[ispw]     = new casacore::Array<T>(parshape,(T)1.0);
       parOK_[ispw]   = new casacore::Array<casacore::Bool>(parshape,false);
-      parErr_[ispw]  = new casacore::Array<casacore::Float>(parshape,0.0);
-      parSNR_[ispw]  = new casacore::Array<casacore::Float>(parshape,0.0);
+      parErr_[ispw]  = new casacore::Array<casacore::Float>(parshape,0.0f);
+      parSNR_[ispw]  = new casacore::Array<casacore::Float>(parshape,0.0f);
 
       //      iSolutionOK_[ispw]  = new casacore::Matrix<casacore::Bool>(nElem_,ntime,false);
-      iFit_[ispw]         = new casacore::Matrix<casacore::Float>(nElem_,ntime,0.0);
-      iFitwt_[ispw]       = new casacore::Matrix<casacore::Float>(nElem_,ntime,0.0);
+      iFit_[ispw]         = new casacore::Matrix<casacore::Float>(nElem_,ntime,0.0f);
+      iFitwt_[ispw]       = new casacore::Matrix<casacore::Float>(nElem_,ntime,0.0f);
       solutionOK_[ispw]   = new casacore::Vector<casacore::Bool>(ntime,false);
-      fit_[ispw]          = new casacore::Vector<casacore::Float>(ntime,0.0);
-      fitwt_[ispw]        = new casacore::Vector<casacore::Float>(ntime,0.0);
+      fit_[ispw]          = new casacore::Vector<casacore::Float>(ntime,0.0f);
+      fitwt_[ispw]        = new casacore::Vector<casacore::Float>(ntime,0.0f);
     }
   }
 
@@ -638,7 +638,7 @@ template<class T> void CalSet<T>::store (const casacore::String& file,
 	casacore::Vector <casacore::Int> spwId(1,iSpw);
 	casacore::Matrix <casacore::Double> chanFreq(ip, dzero); 
 	casacore::Matrix <casacore::Double> chanWidth(ip, dzero);
-	casacore::Array <casacore::String> polznType(ip, "");
+	casacore::Array <casacore::String> polznType(ip, casacore::String(""));
 	casacore::Cube <casacore::Int> chanRange(casacore::IPosition(3,2,1,maxNumChan), 0);
 	casacore::Vector <casacore::Int> numChan(1,nChan_(iSpw));
 	for (casacore::Int ichan=0; ichan<nChan_(iSpw); ichan++) {

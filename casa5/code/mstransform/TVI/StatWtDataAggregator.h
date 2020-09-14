@@ -25,6 +25,7 @@
 
 #include <mstransform/TVI/StatWtTypes.h>
 #include <mstransform/TVI/StatWtVarianceAndWeightCalculator.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 #include <map>
 
