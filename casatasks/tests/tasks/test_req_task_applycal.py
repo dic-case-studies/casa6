@@ -50,6 +50,7 @@ if CASA6:
 else:
     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/applycal/'
 
+
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
 
@@ -227,13 +228,11 @@ class applycal_test(unittest.TestCase):
         shutil.rmtree('cl_fldmap_test.ms', ignore_errors=True)
         shutil.rmtree('cl_fldmap_test.Gf0', ignore_errors=True)
         shutil.rmtree('cl_fldmap_test.Gf01', ignore_errors=True)
-        os.remove('callib_f0.txt')
-        os.remove('callib_f01_m0.txt')
-        os.remove('callib_f01_s0.txt')
-        os.remove('callib_f01.txt')
-        os.remove('callib_f01_s01.txt')
-        os.remove('callib_f01_m01.txt')
-
+        outlist = ['callib_f0.txt','callib_f01_m0.txt','callib_f01_s0.txt','callib_f01.txt','callib_f01_s01.txt','callib_f01_m01.txt']
+        for f in outlist:
+            if os.path.exists(f):
+                os.remove(f)
+ 
     def test_corrected(self):
         '''
             test_corrected
