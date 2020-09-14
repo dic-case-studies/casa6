@@ -93,7 +93,7 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumHogbomIter(0),
   itsNthHogbom(0),
   itsSwitchedToMS(false),
-  itsStrenThres(0.3),
+  itsStrenThres(0.19), //m31_gaussian_trynorm8
   //itsStrenThres(0.0001), //m31norm_hog, 5k->10k
   //itsStrenThres(0.003), //SNorm_hog
   //itsStrenThres(0.0001), //SNorm_nohog
@@ -413,6 +413,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
 	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
       itsStrenThres = itsStrenThres - 0.02;
+
 	    switchedToHogbom();
     }
 
@@ -1214,7 +1215,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     IPosition posmin((*itsDirty).shape().nelements(), 0);
     Float minVal=0;
     IPosition posmax((*itsDirty).shape().nelements(), 0);
-    minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[scale]);
+    minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     cout << "orig itsDirty : min " << minVal << " max " << maxVal << endl;
     cout << "posmin " << posmin << " posmax " << posmax << endl;
 
@@ -1429,9 +1430,11 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
       const int px = i;
       const int py = j;
       //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
-      GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * scale; // sanjay: -2*asp/Amp
+      //GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * scale; // sanjay: -2*asp/Amp
+      GradAmp(i,j) = (-2) * Asp(i,j); // try
       //GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
-      GradScale(i,j) = 2 * (pow(i-center[0],2) + pow(j-center[1],2)) * Asp(i,j) / scale; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
+      //GradScale(i,j) = 2 * (pow(i-center[0],2) + pow(j-center[1],2)) * Asp(i,j) / scale; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
+      GradScale(i,j) = (-2) * amp * ((pow(i-center[0],2) + pow(j-center[1],2)) / pow(scale,2) - 1) * (Asp(i,j) / scale); //try
     }
   }
 
@@ -1732,10 +1735,31 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }
 
     // remove scales that get larger
-    for (unsigned int i = 0; i < length; i+= 2)
+    /*for (unsigned int i = 0; i < length; i+= 2)
     {
     	if (x[i+1] > tempx[i+1])
     		x[i+1] = tempx[i+1];
+    }*/
+    //prevent lbfgs overadjusting
+    // can try to add *itsgain here or 
+    // switch to hogbom
+    bool overflow = false;
+    for (unsigned int i = 0; i < length; i+= 2)
+    {
+    	if ((fabs(x[i+1]) / fabs(tempx[i+1])) >= 2.0 || (fabs(x[i]) / fabs(tempx[i])) >= 2.0) 
+    	{	
+    		overflow = true;
+    		break;
+    	}
+    }
+    if (overflow)
+    {
+    	itsSwitchedToHogbom = true;
+    	for (unsigned int i = 0; i < length; i+= 2)
+	    {
+	    	x[i+1] = tempx[i+1];
+	    	x[i] = tempx[i];
+	    }
     }
 
     // put the updated x back to the class variables, itsAspAmp and itsAspScale

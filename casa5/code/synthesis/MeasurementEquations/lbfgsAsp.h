@@ -165,10 +165,12 @@ public:
           const int py = j;
           // generate derivatives of amplitude
           //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py); // genie
-          GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * x[2*k+1]; // sanjay: -2*asp/Amp
+          //GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * x[2*k+1]; // sanjay: -2*asp/Amp
+          GradAmp(i,j) = (-2) * Asp(i,j); // try
           // generate derivative of scale
           //GradScale(i,j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3); // genie
-          GradScale(i,j) = 2 * (pow(i-center[k][0],2) + pow(j-center[k][1],2)) * Asp(i,j) / x[2*k+1]; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
+          //GradScale(i,j) = 2 * (pow(i-center[k][0],2) + pow(j-center[k][1],2)) * Asp(i,j) / x[2*k+1]; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
+          GradScale(i,j) = (-2) * x[2*k] * ((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) * (Asp(i,j) / x[2*k+1]); //try
         }
       }
       ////stop = std::chrono::high_resolution_clock::now();
