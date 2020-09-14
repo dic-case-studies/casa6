@@ -86,14 +86,13 @@ def sdatmcor(
 #
 # File Handling
 #
-    # infile oufile, nmuste be specified.
+    # infile oufile, must be specified.
     if infile == '':
         print ("FATAL:: infile MUST BE  specified.")
         return False
     if outfile == '':
         print ("FATAL:: outfile MUST BE specified.")
         return False
-
 
     # infile
     infile_without_ext = os.path.splitext(os.path.basename(infile))[0]
@@ -119,14 +118,10 @@ def sdatmcor(
     dpm         = dpm  # through (string or float)
 
 # User-Define Profile (nothing =[] )
-##    if(len(layerboundaries) != len(layertemperature)):
-##        print("WARN: specified Count of Bounday and Temperature mismatch.")
 
-    # convert to List from comma separated #
-    '''  param = "1.1, 2.2, 3.3 .... 4.4" 
-    layerboundaries = list_comma_string(layerboundaries)
-    layertemperature = list_comma_string(layertemperature)
-    '''
+    # if(len(layerboundaries) != len(layertemperature)):
+    #     print("WARN: specified Count of Bounday and Temperature mismatch.")
+
     #  param = ['1.1', '2.2', '3.3' .....]  
     layerboundaries = conv_to_doubleArrayList(layerboundaries)
     layertemperature = conv_to_doubleArrayList(layertemperature)
@@ -155,17 +150,17 @@ def atmMst(
     observation, feed, msselect):
 
     # infile #
-    print("atmMst:: infile =%s antenna=%s"% (infile, antenna))
+    print("- atmMst called.")
 
     # Antenna Key word # 
     if antenna != '':
         antenna += '&&&'
 
     # Info (debug) #
-    print("- calling mstransform() task.") 
-    print("   - antenna=", antenna)
-    print("   - scan   =", scan)
-    print("   - spw    =", spw)
+    print("-- calling mstransform() task.") 
+    print("    - antenna=", antenna)
+    print("    - scan   =", scan)
+    print("    - spw    =", spw)
 
 
     mstransform(
@@ -173,9 +168,9 @@ def atmMst(
         outputvis=outfile,        ## overwrite is not allowed. 
         datacolumn=datacolumn,
         field=field, 
-        spw=spw,                ## mstransform requires specific spw grammar.  (GOW TO GET LISTED Spw for AtmCor) ## 
-        scan=scan,              ## Limit the range to make short  ##
-        antenna=antenna,        ## ex)'PM01&&&',      ## THIS IS TEMP.   Need to design Name to Id in atmcor ##
+        spw=spw, 
+        scan=scan,
+        antenna=antenna,        ## ex)'PM01&&&', 
         correlation=correlation, 
         timerange=timerange, 
         intent=intent,
@@ -183,7 +178,7 @@ def atmMst(
         feed=feed, 
 #        msselect=msselect,      ## THIS MAKES ERROR when used. ##
         reindex=False)   # CAUTION #
-    print("- end    mstransforme() task.") 
+    print("- end    mstransform() task.") 
 
 ##########################
 # Subroutines
@@ -192,7 +187,7 @@ def atmMst(
 # by  Wataru, thanks. #
 def ms_remove(path):
     if (os.path.exists(path)):
-        print("-- deleting [%s]."%path)
+        print("--- Info: deleting [%s]."%path)
         if (os.path.isdir(path)):
             shutil.rmtree(path)
         else:
@@ -214,21 +209,21 @@ def file_exist(path):
 
 def form_value_unit(data, base_unit):
     if (data == ''):
-        #       msg = "INFO::No parameter. use Default."
-        #       print(msg)
-        return ''  # in future, at where DEFAULT should be given ? #
+        return ''  
 
     ext_unit = qa.getunit(data)
     if (ext_unit in base_unit):
+        # INFO #
         msg = "INFO::Full-spec data '%s'" % data
         print(msg)
         return qa.getvalue(data)[0]
     elif (ext_unit == ''):
-        #       msg = "INFO::No unit specified. Using '%s'" % base_unit
-        #       print(msg)
-        #       casalog.post(msg)
+        # INFO #
+        msg = "WARN::No unit specified. Using '%s'" % base_unit
+        print(msg)
         return data
     else:
+        # FATAL #
         msg = "FATAL:: Unexpected Unit ('%s'). Aborted." % ext_unit
         print(msg)
         casalog.post(msg, 'SEVERE')
@@ -277,7 +272,24 @@ def set_antenna_param(in_arg, def_para):
     else:
         return  def_para
 
-def list_comma_string( separated_string):
+
+def list_comma_string( separated_string, dType):
+    if type(separated_string) is str:
+        tmp_list = separated_string.split(',')  # convert to List #
+        if dType == 'str':
+            out_list = [str(s) for s in tmp_list]  # convert to list['str','str', ...]
+        elif dType == 'int':
+            out_list = [int(s) for s in tmp_list]  # convert to list[int,int, ...]
+        else:
+            out_list = [s for s in tmp_list]  # No convert list [ data, data, ...] 
+        return out_list
+    elif type(separated_string) is list:
+        return separated_string
+    else:
+        return []
+
+
+def listInt_comma_string( separated_string):
     if type(separated_string) is str:
         tmp_list = separated_string.split(',')  # convert to List #
         out_list = [int(s) for s in tmp_list]  # convert to list[int]
@@ -287,7 +299,23 @@ def list_comma_string( separated_string):
     else:
         return []
 
+def listStr_comma_string( separated_string):
+    """
+      make a list from comma separated string
+    """
+    if type(separated_string) is str:
+        tmp_list = separated_string.split(',')  # convert to List #
+        out_list = [str(s) for s in tmp_list]  # convert to list[int]
+        return out_list
+    elif type(separated_string) is list:
+        return separated_string
+    else:
+        return []
+
 def conv_to_doubleArrayList( in_list ):
+    """
+      convert elements in a list, to double espression
+    """
     if  not (type(in_list) is list):
         return []
     out_list = [float(s) for s in in_list]  # convert to list[int]
@@ -298,9 +326,6 @@ def conv_to_doubleArrayList( in_list ):
 #########################
 def get_antennaId( msname, antennaName):
     print( "get_antennaId called. ")
-
-    if antennaName == '':
-        antennaName = 'PM02'
 
     tb.open(os.path.join(msname, 'ANTENNA'))
 
@@ -423,6 +448,7 @@ def calc_sdatmcor(
     showAtmLayer = False     # print( at )
 
     useSelection = False     # Use Selection
+    keepMstTemp = False       # keep tempFile(mstransform out) for debug 
 
     if('skipTaskExec' in debug):
         skipTaskExec = True
@@ -445,6 +471,8 @@ def calc_sdatmcor(
     if('useSelection' in debug):
         useSelection = True
 
+    if('keepMstTemp' in debug):
+        keepMstTemp = True
 
     #--------------------------------------
     #   Inside Constant for ATM (from org. script)
@@ -493,23 +521,18 @@ def calc_sdatmcor(
     # infile, supprty Extension #
     ebuid = p_infile[0]  ### The Arg must have a filename WITHOUT extension###
     ebext = p_infile[1]  ### given Extension  ###
-    if(ebext == ''):
-        ebext = '.ms'
 
     # outfile, support Extension #
     outfile = p_outfile[0]  ### The Arg must have a filename WITHOUT extension###
     outext  = p_outfile[1]  ### given Extension  ###
-    if(outext == ''):
-        outext = '.ms'
 
     # default file format (original style) #
     rawms = '%s%s' % (ebuid, ebext)
     calms = '%s%s' % (ebuid, ebext)                    ### name of MS in which (standard-)calibrated spectra are stored
     corms = '%s.ms.atm%d' % (ebuid, atmtype_for_file)  ### name of MS form (based on Original)
 
-    # outfile, Assist 
-    #  (based on Jira-reqested and other) 
-    if False:   # old-way with atm and copied use of outeile
+    # outfile (=corms), Assist (reserved if needed)
+    if False:
         if (outfile == ''):
             corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
         elif (outext == ''):
@@ -536,9 +559,12 @@ def calc_sdatmcor(
         return False
   
     # Overwrite Protection 
-    if not p_overwrite:  
-        if corms_exist:
-            print("FATAL:: Specified outputfile already exist. Cannot write.")
+    if corms_exist:
+        if p_overwrite:
+            print("INFO:: Overwriting to output, once delete the existing file. " )
+            ms_remove(corms)
+        else:
+            print("FATAL:: Specified outputfile already exist. Abort.")
             return False
 
 #
@@ -574,26 +600,38 @@ def calc_sdatmcor(
         msselect=p_msselect)
 
     #
-    # Antenna ID (note: the function occasionally depends on atmMST)
+    # Antenna ID
+    #   only Single antenna is available    
+    #   multiple antenna  TBD
     #
+
+    # antenna List, when muslipe antennas are given
+    ant_list = list_comma_string(p_antenna, dType='str')
+    print("- antenna_list =", ant_list )
+    # antenna (this is used inside the script) 
     antenna = get_antennaId( rawms, p_antenna)
 
     #
     # TESTING :: Switch cal-MS
     #
     if useSelection:
+        print( "-------------------------------")
+        print( "  Data Selection is applied ")
+        print( "-------------------------------")
+        #---------------------------------------
+        # Prepare MS.
+        #  PENDING: deleting tempFile is pended.
+        #----------------------------------------
         calms = tempFileName
-        print( "--------------------------------------------")
-        print( "  Data Selection is applied by Debug Option ")
-        print( "    calms = %s" % calms )
-        print( "--------------------------------------------")
+        ms_copy(src=tempFileName, dst=corms)
 
-    #----------
-    # Clean
-    #----------
-    # os.system('rm -rf %s' % corms)
-    ms_remove(corms)
-    ms_copy(src=calms, dst=corms)
+    else: # Existing handling, going to be obsoleted.
+        #-------------
+        # Prepare MS.
+        #-------------
+        # os.system('rm -rf %s' % corms)
+        ms_remove(corms)
+        ms_copy(src=calms, dst=corms)
 
 
     ################################################################
@@ -647,7 +685,10 @@ def calc_sdatmcor(
     #-
     print("- opening POINTING.")
 
-    tb.open(os.path.join(rawms, 'POINTING'))
+    if not useSelection:  # original #
+        tb.open(os.path.join(rawms, 'POINTING'))
+    else:     # revised #
+        tb.open(os.path.join(calms, 'POINTING'))
 
     querytext = 'ANTENNA_ID==%s' % antenna
     subtb = tb.query(querytext)
@@ -699,13 +740,13 @@ def calc_sdatmcor(
 
     # set processing SPW, (not output_SPW)  #
     if (p_spw != ''):
-        spws = list_comma_string(p_spw)
+        spws = list_comma_string(p_spw, dType='int')
 
     # set Output SPW
     if (a_outputspw == ''):
         outputspws = spws                    # use calculated 'spws' above
     else:
-        outputspws = list_comma_string(a_outputspw)
+        outputspws = list_comma_string(a_outputspw, dType='int')
 
     print('--- spws ', spws)
     print('--- outputspws ',outputspws)    # This is the expected outputspw
@@ -961,6 +1002,11 @@ def calc_sdatmcor(
 
     tb.close()
     print("- closed MS[%s] to write."% corms)
+
+    # delete temp file. TENTATIVE: these is(s) will be deleted.
+    if useSelection:
+        if not keepMstTemp:
+            ms_remove(tempFileName)
 
     # finish #
     print("- terminating.")
