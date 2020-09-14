@@ -250,8 +250,8 @@ class test_onefield(testref_base):
         ######################################################################################
         self.prepData('refim_eptwochan.ms', tclean_args={'imsize':200, 'cell':'8.0arcsec', 'deconvolver':'multiscale', 'scales':[0,20,40,100]})
         results = deconvolve(imagename=self.img, niter=10, deconvolver='multiscale', scales=[0,20,40,100], interactive=0)
-        report=th.checkall(ret=results['ret'], peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'],
-                                imgval=[(self.img+'.model',0.234,[94,107,0,0])])
+        report=th.checkall(ret=results['retrec'], peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'],
+                           imgval=[(self.img+'.model',0.234,[94,107,0,0])])
         self.checkfinal(pstr=report)
 
     def test_onefield_mtmfs(self):
@@ -261,8 +261,8 @@ class test_onefield(testref_base):
         ######################################################################################
         self.prepData('refim_twochan.ms', tclean_args={'imsize':100, 'cell':'8.0arcsec', 'deconvolver':'mtmfs'})
         results = deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', interactive=0)
-        report=th.checkall(ret=results['ret'], peakres=0.392, modflux=0.732, iterdone=10, imgexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0',self.img+'.model.tt1',self.img+'.alpha'],
-                                imgval=[(self.img+'.model.tt0',0.733,[50,50,0,0]),(self.img+'.image.tt1',0.019,[2,94,0,0])])
+        report=th.checkall(ret=results['retrec'], peakres=0.392, modflux=0.732, iterdone=10, imgexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0',self.img+'.model.tt1',self.img+'.alpha'],
+                           imgval=[(self.img+'.model.tt0',0.733,[50,50,0,0]),(self.img+'.image.tt1',0.019,[2,94,0,0])])
         ## iterdone=11 only because of the return (iterdone_p+1) in MultiTermMatrixCleaner::mtclean() !
         self.checkfinal(pstr=report)
 
@@ -289,8 +289,8 @@ class test_iterbot(testref_base):
         ######################################################################################
         self.prepData('refim_twochan.ms', tclean_args={'imsize':100,'cell':'8.0arcsec','deconvolver':'clark','gain':0.15})
         results = deconvolve(imagename=self.img, deconvolver='clark', niter=20, gain=0.15,interactive=0)
-        report=th.checkall(ret=results['ret'], iterdone=14, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                                imgval=[(self.img+'.model',0.937,[50,50,0,0])])
+        report=th.checkall(ret=results['retrec'], iterdone=14, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                           imgval=[(self.img+'.model',0.937,[50,50,0,0])])
 
         self.checkfinal(report)
 
@@ -301,8 +301,8 @@ class test_iterbot(testref_base):
         ######################################################################################
         self.prepData('refim_twochan.ms', tclean_args={'imsize':100,'cell':'8.0arcsec','deconvolver':'clark','threshold':'0.5Jy','gain':0.15})
         results = deconvolve(imagename=self.img, deconvolver='clark', niter=10, threshold='0.5Jy', gain=0.15, interactive=0)
-        report=th.checkall(ret=results['ret'], peakres=0.499, modflux=0.626, iterdone=5, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                                imgval=[(self.img+'.model',0.626,[50,50,0,0])])
+        report=th.checkall(ret=results['retrec'], peakres=0.499, modflux=0.626, iterdone=5, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                           imgval=[(self.img+'.model',0.626,[50,50,0,0])])
 
         self.checkfinal(report)
 
@@ -484,7 +484,7 @@ class test_cube(testref_base):
 
         self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
         report = th.checkall(imgexist=[self.img+'.image'],
-                                  imgval=[(self.img+'.image',1.50002,[50,50,0,0])])
+                             imgval=[(self.img+'.image',1.50002,[50,50,0,0])])
         report2 = th.checkspecframe(self.img+'.image','LSRK',999988750)
         self.checkfinal(report)#+report2)
 
@@ -569,16 +569,16 @@ class test_multirun(testref_base):
         ######################################################################################
         self.prepData('refim_twochan.ms', tclean_args={'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'})
         results = deconvolve(imagename=self.img, deconvolver='hogbom', niter=20, threshold='1mJy', interactive=0)
-        report1=th.checkall(ret=results['ret'], peakres=0.148, modflux=1.008, iterdone=20, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                                imgval=[(self.img+'.model',0.917,[50,50,0,0])])
+        report1=th.checkall(ret=results['retrec'], peakres=0.148, modflux=1.008, iterdone=20, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                            imgval=[(self.img+'.model',0.917,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args={'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'})
         results2 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=10, threshold='1mJy', interactive=0, restoration=False)
-        report2=th.checkall(ret=results2['ret'], peakres=0.353, modflux=0.772, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'],
-                                 imgval=[(self.img+'.model',0.772,[50,50,0,0])])
+        report2=th.checkall(ret=results2['retrec'], peakres=0.353, modflux=0.772, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'],
+                            imgval=[(self.img+'.model',0.772,[50,50,0,0])])
         results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=10, threshold='1mJy', interactive=0)
-        report3=th.checkall(ret=results3['ret'], peakres=0.148, modflux=1.008, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                                 imgval=[(self.img+'.model',0.917,[50,50,0,0])])
+        report3=th.checkall(ret=results3['retrec'], peakres=0.148, modflux=1.008, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                            imgval=[(self.img+'.model',0.917,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
 
@@ -606,7 +606,7 @@ class test_multirun(testref_base):
         report1=th.checkall(ret=results1['ret'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model'], imgexistnot=[self.img+'.image'])
         results2 = deconvolve(imagename=self.img, niter=0, restoration=True)
         report2=th.checkall(ret=results2['ret'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model', self.img+'.image'],
-                                 imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+                            imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
         self.checkfinal(report1 + report2)
 
 ##############################################
