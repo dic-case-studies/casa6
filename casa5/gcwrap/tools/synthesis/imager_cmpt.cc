@@ -69,7 +69,7 @@ imager::~imager()
 
 bool
 imager::advise( const bool takeadvice, const double amplitudeloss, const ::casac::variant& fieldofview,
-	       int& pixels, ::casac::record& cell, int& facets, string& phasecenter )
+	       long& pixels, ::casac::record& cell, long& facets, string& phasecenter )
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -80,8 +80,11 @@ imager::advise( const bool takeadvice, const double amplitudeloss, const ::casac
          casacore::Quantity qfieldofview(casaQuantity(fieldofview));
    
    // pixels and facets are expected to be returned !
+         int lpixels = (int) pixels, lfacets = (int) facets;
          rstat = itsImager->advise(takeadvice, amplitudeloss, qfieldofview,
-                                   qcell, pixels, facets, mphaseCenter);
+                                   qcell, lpixels, lfacets, mphaseCenter);
+         pixels = lpixels;
+         facets = lfacets;
          const unique_ptr<casac::record> tmpRec(recordFromQuantity(qcell));
          cell = *tmpRec;
       //std::cerr << qcell << std::endl;
@@ -110,7 +113,7 @@ imager::advise( const bool takeadvice, const double amplitudeloss, const ::casac
 
 
 ::casac::record* imager::advisechansel(const double freqstart, const double freqend, const double freqstep, const std::string& freqframe, const std::string& msname, 
-				       const int fieldid, const bool getfreqrange, const std::string& spwselection){
+				       const long fieldid, const bool getfreqrange, const std::string& spwselection){
   casac::record* retval=0;
   if(hasValidMS_p || msname.length() > 0){
       try {
@@ -171,7 +174,7 @@ imager::approximatepsf(const std::string& psf)
 }
 
 bool
-imager::boxmask(const std::string& mask, const std::vector<int>& blc, const std::vector<int>& trc, const double value)
+imager::boxmask(const std::string& mask, const std::vector<long>& blc, const std::vector<long>& trc, const double value)
 {
 
    Bool rstat(false);
@@ -190,7 +193,7 @@ imager::boxmask(const std::string& mask, const std::vector<int>& blc, const std:
     return rstat;
 }
 
-bool imager::calcuvw(const std::vector<int>& fields, const std::string& refcode, 
+bool imager::calcuvw(const std::vector<long>& fields, const std::string& refcode, 
                      const bool reuse)
 {
   Bool rstat(false);
@@ -236,7 +239,7 @@ bool imager::calcuvw(const std::vector<int>& fields, const std::string& refcode,
   return rstat;
 }
 
-  casac::record* imager::clean(const std::string& algorithm, const int niter, const double gain,
+  casac::record* imager::clean(const std::string& algorithm, const long niter, const double gain,
                    const ::casac::variant& threshold, const bool displayprogress,
                    const std::vector<std::string>& model,
                    const std::vector<bool>& keepfixed, const std::string& complist,
@@ -244,7 +247,7 @@ bool imager::calcuvw(const std::vector<int>& fields, const std::string& refcode,
                    const std::vector<std::string>& image,
                    const std::vector<std::string>& residual,
                    const std::vector<std::string>& psfnames,
-                   const bool interactive, const int npercycle,
+                   const bool interactive, const long npercycle,
                    const std::string& masktemplate)
 {
   casac::record* rstat(0);
@@ -355,7 +358,7 @@ imager::done()
    return close();
 }
 
-::casac::record*  imager::drawmask(const std::string& image, const std::string& mask, const int niter,  const int npercycle, const std::string& threshold){
+::casac::record*  imager::drawmask(const std::string& image, const std::string& mask, const long niter,  const long npercycle, const std::string& threshold){
 
   casac::record* rstat=0;
   try{
@@ -455,7 +458,7 @@ imager::fitpsf( const std::string& psf,
    return rstat;
 }
 
-bool imager::fixvis(const std::vector<int>& fields,
+bool imager::fixvis(const std::vector<long>& fields,
                     const std::vector<std::string>& phaseDirs,
                     const std::string& refcode,
                     const std::vector<double>& distances,
@@ -539,7 +542,7 @@ imager::ft(const std::vector<std::string>& model, const std::string& complist, c
 }
 
 bool
-imager::linearmosaic(const std::vector<std::string>& images, const std::string& mosaic, const std::string& fluxscale, const std::string& sensitivity, const std::vector<int>& fieldids, const bool usedefaultvp, const std::string& vptable)
+imager::linearmosaic(const std::vector<std::string>& images, const std::string& mosaic, const std::string& fluxscale, const std::string& sensitivity, const std::vector<long>& fieldids, const bool usedefaultvp, const std::string& vptable)
 {
 
    Bool rstat(false);
@@ -665,7 +668,7 @@ bool imager::mask(const std::string& image, const std::string& mask,
 }
 
 bool
-imager::mem(const std::string& algorithm, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const std::vector<std::string>& prior, const std::vector<std::string>& mask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
+imager::mem(const std::string& algorithm, const long niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const std::vector<std::string>& prior, const std::vector<std::string>& mask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
 {
 
    Bool rstat(false);
@@ -692,7 +695,7 @@ imager::mem(const std::string& algorithm, const int niter, const ::casac::varian
 }
 
 bool
-imager::nnls(const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const int niter, const double tolerance, const std::vector<std::string>& fluxmask, const std::vector<std::string>& datamask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
+imager::nnls(const std::vector<std::string>& model, const std::vector<bool>& keepfixed, const std::string& complist, const long niter, const double tolerance, const std::vector<std::string>& fluxmask, const std::vector<std::string>& datamask, const std::vector<std::string>& image, const std::vector<std::string>& residual)
 {
 
    Bool rstat(false);
@@ -817,7 +820,7 @@ imager::plotuv(const bool rotate)
 }
 
 bool
-imager::plotvis(const std::string& type, const int increment)
+imager::plotvis(const std::string& type, const long increment)
 {
 
    Bool rstat(false);
@@ -835,7 +838,7 @@ imager::plotvis(const std::string& type, const int increment)
 }
 
  bool
- imager::plotweights(const bool gridded, const int increment)
+ imager::plotweights(const bool gridded, const long increment)
  {
     Bool rstat(false);
    if(hasValidMS_p){
@@ -962,9 +965,9 @@ imager::regionmask(const std::string& mask, const ::casac::record& region,
 	  if(boxes.type() == ::casac::variant::DOUBLEVEC)
 	    boxVector=Vector<Double>(boxes.toDoubleVec());
 	  else{
-	    std::vector<int> intvector=boxes.toIntVec();
+	    auto intvector=boxes.toIntVec();
 	    boxVector.resize(intvector.size());
-	    convertArray(boxVector, Vector<Int>(intvector));
+	    convertArray(boxVector, Vector<long>(intvector));
 	   
 	  }
 	  Vector<Int> shape;
@@ -1018,9 +1021,9 @@ imager::regionmask(const std::string& mask, const ::casac::record& region,
 	  if(circles.type() == ::casac::variant::DOUBLEVEC)
 	    circleVector=Vector<Double>(circles.toDoubleVec());
 	  else if(circles.type() == ::casac::variant::INTVEC){
-	    std::vector<int> intvector=circles.toIntVec();
+	    auto intvector=circles.toIntVec();
 	    circleVector.resize(intvector.size());
-	    convertArray(circleVector, Vector<Int>(intvector));
+	    convertArray(circleVector, Vector<long>(intvector));
 	    
 	  }
 	  Vector<Int> shape;
@@ -1084,9 +1087,9 @@ imager::regiontoimagemask(const std::string& mask,
       if(boxes.type() == ::casac::variant::DOUBLEVEC)
 	boxVector=Vector<Double>(boxes.toDoubleVec());
       else{
-	std::vector<int> intvector=boxes.toIntVec();
+	auto intvector=boxes.toIntVec();
 	boxVector.resize(intvector.size());
-	convertArray(boxVector, Vector<Int>(intvector));
+	convertArray(boxVector, Vector<long>(intvector));
 	
       }
       Vector<Int> shape;
@@ -1141,9 +1144,9 @@ imager::regiontoimagemask(const std::string& mask,
       if(circles.type() == ::casac::variant::DOUBLEVEC)
 	circleVector=Vector<Double>(circles.toDoubleVec());
       else if(circles.type() == ::casac::variant::INTVEC){
-	std::vector<int> intvector=circles.toIntVec();
+	auto intvector=circles.toIntVec();
 	circleVector.resize(intvector.size());
-	convertArray(circleVector, Vector<Int>(intvector));
+	convertArray(circleVector, Vector<long>(intvector));
 	
       }
       Vector<Int> shape;
@@ -1349,8 +1352,8 @@ imager::setbeam(const ::casac::variant& bmaj, const ::casac::variant& bmin,
 
 
 bool
-imager::selectvis(const std::string& vis, const std::vector<int>& nchan,
-		  const std::vector<int>& start, const std::vector<int>& step, 
+imager::selectvis(const std::string& vis, const std::vector<long>& nchan,
+		  const std::vector<long>& start, const std::vector<long>& step, 
                   const ::casac::variant& spw, const ::casac::variant& field,
                   const ::casac::variant& baseline,
 		  const ::casac::variant& time, const ::casac::variant& scan,
@@ -1431,17 +1434,17 @@ imager::selectvis(const std::string& vis, const std::vector<int>& nchan,
 }
 
 bool
-imager::defineimage(const int nx, const int ny, const ::casac::variant& cellx, 
+imager::defineimage(const long nx, const long ny, const ::casac::variant& cellx, 
 		    const ::casac::variant& celly, const std::string& stokes, 
 		    const ::casac::variant& phasecenter, 
-		    const std::string& mode, const int nchan, 
+		    const std::string& mode, const long nchan, 
 		    const ::casac::variant& start, 
 		    const ::casac::variant& step, 
-		    const std::vector<int>& spwid, 
+		    const std::vector<long>& spwid, 
 		    const ::casac::variant& restfreq, 
 	            const std::string& outframe,
 	            const std::string& veltype,
-	            const int facets, 
+	            const long facets, 
 		    const ::casac::variant& movingsource,
 		    const ::casac::variant& distance,
 		    const std::string& projection)
@@ -1666,7 +1669,7 @@ imager::ssoflux()
 }
 
 bool
-imager::setmfcontrol(const double cyclefactor, const double cyclespeedup, const double cyclemaxpsffraction, const int stoplargenegatives, const int stoppointmode, const double minpb, const std::string& scaletype, const double constpb, const std::vector<std::string>& fluxscale, const bool flatnoise)
+imager::setmfcontrol(const double cyclefactor, const double cyclespeedup, const double cyclemaxpsffraction, const long stoplargenegatives, const long stoppointmode, const double minpb, const std::string& scaletype, const double constpb, const std::vector<std::string>& fluxscale, const bool flatnoise)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1685,7 +1688,7 @@ imager::setmfcontrol(const double cyclefactor, const double cyclespeedup, const 
 }
 
 bool
-imager::setoptions(const std::string& ftmachine, const int cache, const int tile, const std::string& gridfunction, const ::casac::variant& location, const double padding, const std::string& freqinterp, const int wprojplanes, const std::string& epjtablename, const bool applypointingoffsets, const bool dopbgriddingcorrections, const std::string& cfcachedirname, const double rotpastep, const double pastep, const double pblimit, const int imagetilevol, const bool singprec, const int numthreads,const bool psterm, const bool aterm, const bool mterm, const bool wbawp, const bool conjbeams)
+imager::setoptions(const std::string& ftmachine, const long cache, const long tile, const std::string& gridfunction, const ::casac::variant& location, const double padding, const std::string& freqinterp, const long wprojplanes, const std::string& epjtablename, const bool applypointingoffsets, const bool dopbgriddingcorrections, const std::string& cfcachedirname, const double rotpastep, const double pastep, const double pblimit, const long imagetilevol, const bool singprec, const long numthreads,const bool psterm, const bool aterm, const bool mterm, const bool wbawp, const bool conjbeams)
 {
 
    Bool rstat(false);
@@ -1716,7 +1719,7 @@ imager::setoptions(const std::string& ftmachine, const int cache, const int tile
 }
 
 bool
-imager::setscales(const std::string& scalemethod, const int nscales, const std::vector<double>& uservector)
+imager::setscales(const std::string& scalemethod, const long nscales, const std::vector<double>& uservector)
 {
 
 
@@ -1760,7 +1763,7 @@ imager::setsmallscalebias(const float inbias)
 }
   
 bool
-imager::settaylorterms(const int ntaylorterms, const double reffreq)
+imager::settaylorterms(const long ntaylorterms, const double reffreq)
 {
    Bool rstat(false);
    if(hasValidMS_p){
@@ -1779,7 +1782,7 @@ imager::settaylorterms(const int ntaylorterms, const double reffreq)
 }
 
 bool
-imager::setsdoptions(const double scale, const double weight, const int convsupport, const std::string& pointingcolumntouse,
+imager::setsdoptions(const double scale, const double weight, const long convsupport, const std::string& pointingcolumntouse,
     const ::casac::variant &truncate, const ::casac::variant &gwidth, const ::casac::variant &jwidth,
     const double minweight, const bool clipminmax)
 {
@@ -1905,7 +1908,7 @@ imager::uvrange(const double uvmin, const double uvmax)
 bool
 imager::weight(const std::string& type, const std::string& rmode,
                const ::casac::variant& noise, const double robust,
-               const ::casac::variant& fieldofview, const int npixels,
+               const ::casac::variant& fieldofview, const long npixels,
                const bool mosaic)
 {
   Bool rstat(false);

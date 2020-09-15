@@ -92,7 +92,7 @@ msmetadata::msmetadata() : _log(new LogIO()) {}
 
 msmetadata::~msmetadata() {}
 
-vector<int> msmetadata::almaspws(
+vector<long> msmetadata::almaspws(
     bool chavg, bool fdm, bool sqld, bool tdm, bool wvr, bool complement
 ) {
     _FUNC(
@@ -134,7 +134,7 @@ vector<int> msmetadata::almaspws(
         }
         return _setUIntToVectorInt(x);
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 vector<String> msmetadata::_vectorStdStringToVectorString(
@@ -187,9 +187,9 @@ record* msmetadata::antennadiameter(const variant& antenna) {
     return nullptr;
 }
 
-vector<int> msmetadata::antennaids(
+vector<long> msmetadata::antennaids(
     const variant& names, const variant& mindiameter,
-    const variant& maxdiameter, int obsid
+    const variant& maxdiameter, long obsid
 ) {
     _FUNC(
         _checkObsId(obsid, False);
@@ -212,19 +212,19 @@ vector<int> msmetadata::antennaids(
         if (filterObsID) {
             filteredAnts = _antsForObsID(obsid);
         }
-        vector<Int> foundIDs;
+        vector<long> foundIDs;
         variant::TYPE type = names.type();
         // empty names argument arrives as BOOLVEC for CASA 5 and as an empty STRING for CASA 6
         if (((type == variant::STRING) && names.empty()) || (type == variant::BOOLVEC)) {
             if (filterObsID) {
                 foundIDs = _setUIntToVectorInt(filteredAnts);
                 if (foundIDs.empty()) {
-                    return vector<int>();
+                    return vector<long>();
                 }
             }
             else {
-                Vector<Int> x(_msmd->nAntennas());
-                indgen(x, 0);
+                Vector<long> x(_msmd->nAntennas());
+                indgen(x, 0L);
                 foundIDs = x.tovector();
             }
         }
@@ -293,7 +293,7 @@ vector<int> msmetadata::antennaids(
         casacore::Quantity maxAntD(max(diams.getValue()), diams.getUnit());
         casacore::Quantity minAntD(min(diams.getValue()), diams.getUnit());
         if (mind > minAntD || maxd < maxAntD) {
-            vector<Int> newList;
+            vector<long> newList;
             String unit = diams.getUnit();
             Vector<Double> v = diams.getValue();
             for(uInt id: foundIDs) {
@@ -306,7 +306,7 @@ vector<int> msmetadata::antennaids(
         }
         return foundIDs;
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 std::set<uInt> msmetadata::_antsForObsID(Int obsid) const {
@@ -334,10 +334,10 @@ vector<string> msmetadata::antennanames(const variant& antennaids) {
             myIDs.push_back(id);
         }
         else if (type == variant::INTVEC) {
-            vector<Int> tmp = antennaids.toIntVec();
-            vector<Int>::const_iterator end = tmp.end();
+            vector<long> tmp = antennaids.toIntVec();
+            vector<long>::const_iterator end = tmp.end();
             for (
-                vector<Int>::const_iterator iter=tmp.begin();
+                vector<long>::const_iterator iter=tmp.begin();
                 iter!=tmp.end(); iter++
             ) {
                 ThrowIf(*iter < 0, "Antenna ID must be nonnegative");
@@ -423,7 +423,7 @@ record* msmetadata::antennaposition(const variant& which) {
     return 0;
 }
 
-vector<string> msmetadata::antennastations(const variant& ants, int obsid) {
+vector<string> msmetadata::antennastations(const variant& ants, long obsid) {
     _FUNC(
         _checkObsId(obsid, False);
         std::set<uInt> filteredAnts;
@@ -453,7 +453,7 @@ vector<string> msmetadata::antennastations(const variant& ants, int obsid) {
             );
         }
         else if (type == variant::INTVEC) {
-            vector<Int> ids = ants.toIntVec();
+            auto ids = ants.toIntVec();
             if (ids.empty() || (ids.size() == 1 && ids[0] < 0)) {
                 return _vectorStringToStdVectorString(
                     _msmd->getAntennaStations(
@@ -543,17 +543,17 @@ vector<string> msmetadata::antennastations(const variant& ants, int obsid) {
     return vector<string>();
 }
 
-vector<int> msmetadata::antennasforscan(int scan, int obsid, int arrayid) {
+vector<long> msmetadata::antennasforscan(long scan, long obsid, long arrayid) {
     _FUNC(
         auto scanKeys = _getScanKeys(scan, obsid, arrayid);
-        std::set<int> myres;
+        std::set<long> myres;
         for (auto scanKey: scanKeys) {
             auto t = _msmd->getAntennasForScan(scanKey);
             myres.insert(t.begin(), t.end());
         }
-        return vector<int>(myres.begin(), myres.end());
+        return vector<long>(myres.begin(), myres.end());
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 variant* msmetadata::bandwidths(const variant& spws) {
@@ -602,7 +602,7 @@ variant* msmetadata::bandwidths(const variant& spws) {
     return 0;
 }
 
-int msmetadata::baseband(int spw) {
+long msmetadata::baseband(long spw) {
     _FUNC (
         _checkSpwId(spw, true);
         return _msmd->getBBCNos()[spw];
@@ -620,7 +620,7 @@ variant* msmetadata::baselines() {
     return 0;
 }
 
-vector<int> msmetadata::chanavgspws() {
+vector<long> msmetadata::chanavgspws() {
     _FUNC (
             /*
         *_log << LogIO::WARN << "This method is deprecated and will be removed. "
@@ -628,10 +628,10 @@ vector<int> msmetadata::chanavgspws() {
             */
         return _setUIntToVectorInt(_msmd->getChannelAvgSpw());
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<double> msmetadata::chaneffbws(int spw, const string& unit, bool asvel) {
+vector<double> msmetadata::chaneffbws(long spw, const string& unit, bool asvel) {
     _FUNC(
         _checkSpwId(spw, true);
         string myunit = unit;
@@ -644,7 +644,7 @@ vector<double> msmetadata::chaneffbws(int spw, const string& unit, bool asvel) {
     return vector<double>();
 }
 
-vector<double> msmetadata::chanfreqs(int spw, const string& unit) {
+vector<double> msmetadata::chanfreqs(long spw, const string& unit) {
     _FUNC (
         _checkSpwId(spw, true);
         return _msmd->getChanFreqs()[spw].getValue(Unit(unit)).tovector();
@@ -652,7 +652,7 @@ vector<double> msmetadata::chanfreqs(int spw, const string& unit) {
     return vector<double>();
 }
 
-vector<double> msmetadata::chanres(int spw, const string& unit, bool asvel) {
+vector<double> msmetadata::chanres(long spw, const string& unit, bool asvel) {
     _FUNC(
         _checkSpwId(spw, true);
         string myunit = unit;
@@ -665,7 +665,7 @@ vector<double> msmetadata::chanres(int spw, const string& unit, bool asvel) {
     return vector<double>();
 }
 
-vector<double> msmetadata::chanwidths(int spw, const string& unit) {
+vector<double> msmetadata::chanwidths(long spw, const string& unit) {
     _FUNC (
         _checkSpwId(spw, true);
         return _msmd->getChanWidths()[spw].getValue(Unit(unit), true).tovector();
@@ -682,32 +682,33 @@ bool msmetadata::close() {
     return false;
 }
 
-variant* msmetadata::corrprodsforpol(int polid) {
+variant* msmetadata::corrprodsforpol(long polid) {
     _FUNC(
         _checkPolId(polid, true);
         Array<Int> prods = _msmd->getCorrProducts()[polid];
         return new variant(
-            vector<int>(prods.begin(), prods.end()),
+            vector<long>(prods.begin(), prods.end()),
             prods.shape().asStdVector()
         );
     )
     return NULL;
 }
 
-vector<int> msmetadata::corrtypesforpol(int polid) {
+vector<long> msmetadata::corrtypesforpol(long polid) {
     _FUNC(
         _checkPolId(polid, true);
-        return _msmd->getCorrTypes()[polid];
+        auto ct = _msmd->getCorrTypes()[polid];
+        return vector<long>( ct.begin( ), ct.end( ) );
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<int> msmetadata::datadescids(int spw, int pol) {
+vector<long> msmetadata::datadescids(long spw, long pol) {
     _FUNC(
         _checkSpwId(spw, false);
         _checkPolId(pol, false);
         auto mymap = _msmd->getSpwIDPolIDToDataDescIDMap();
-        vector<int> ddids;
+        vector<long> ddids;
         for(auto iter : mymap) {
             uInt myspw = iter.first.first;
             uInt mypol = iter.first.second;
@@ -722,7 +723,7 @@ vector<int> msmetadata::datadescids(int spw, int pol) {
         std::sort (ddids.begin(),ddids.end());
         return ddids;
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 bool msmetadata::done() {
@@ -744,7 +745,7 @@ record* msmetadata::effexposuretime() {
 }
 
 record* msmetadata::exposuretime(
-    int scan, int spwid, int polid, int obsid, int arrayid
+    long scan, long spwid, long polid, long obsid, long arrayid
 ) {
     _FUNC(
         _checkSpwId(spwid, true);
@@ -803,7 +804,7 @@ record* msmetadata::exposuretime(
     return nullptr;
 }
 
-vector<int> msmetadata::fdmspws() {
+vector<long> msmetadata::fdmspws() {
     _FUNC(
             /*
         *_log << LogIO::WARN << __FUNCTION__ << " is deprecated and will be removed. "
@@ -811,7 +812,7 @@ vector<int> msmetadata::fdmspws() {
             */
         return _setUIntToVectorInt(_msmd->getFDMSpw());
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 
@@ -847,7 +848,7 @@ variant* msmetadata::fieldsforintent(
                 << intent << "' exists in this dataset." << LogIO::POST;
             x = asnames
                 ? new variant(vector<string>(0))
-                : new variant(vector<int>(0));
+                : new variant(vector<long>(0));
         }
         else {
             x = asnames
@@ -859,17 +860,17 @@ variant* msmetadata::fieldsforintent(
     return nullptr;
 }
 
-vector<int> msmetadata::fieldsforname(const string& name) {
+vector<long> msmetadata::fieldsforname(const string& name) {
     _FUNC(
         if (name.empty()) {
             return _setIntToVectorInt(_msmd->getUniqueFiedIDs());
         }
         return _setIntToVectorInt(_msmd->getFieldIDsForField(name));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-variant* msmetadata::fieldsforscan(int scan, bool asnames, int obsid, int arrayid) {
+variant* msmetadata::fieldsforscan(long scan, bool asnames, long obsid, long arrayid) {
     _FUNC(
         ThrowIf(
             scan < 0,
@@ -894,8 +895,8 @@ variant* msmetadata::fieldsforscan(int scan, bool asnames, int obsid, int arrayi
 }
 
 variant* msmetadata::fieldsforscans(
-    const vector<int>& scans, const bool asnames,
-    int obsid, int arrayid, bool asmap
+    const vector<long>& scans, const bool asnames,
+    long obsid, long arrayid, bool asmap
 ) {
     _FUNC(
         ThrowIf(
@@ -956,7 +957,7 @@ variant* msmetadata::fieldsforscans(
     return nullptr;
 }
 
-variant* msmetadata::fieldsforsource(int sourceID, bool asnames) {
+variant* msmetadata::fieldsforsource(long sourceID, bool asnames) {
     _FUNC(
         if (asnames) {
             auto res = _msmd->getFieldNamesForSourceMap();
@@ -972,7 +973,7 @@ variant* msmetadata::fieldsforsource(int sourceID, bool asnames) {
         else {
             auto res = _msmd->getFieldsForSourceMap();
             if (res.find(sourceID) == res.end()) {
-                return new variant(vector<int>());
+                return new variant(vector<long>());
             }
             else {
                 return new variant(
@@ -1008,7 +1009,7 @@ record* msmetadata::fieldsforsources(bool asnames) {
     return nullptr;
 }
 
-variant* msmetadata::fieldsforspw(const int spw, const bool asnames) {
+variant* msmetadata::fieldsforspw(const long spw, const bool asnames) {
     _FUNC(
         _checkSpwId(spw, true);
         if (asnames) {
@@ -1025,11 +1026,11 @@ variant* msmetadata::fieldsforspw(const int spw, const bool asnames) {
     return 0;
 }
 
-vector<int> msmetadata::fieldsfortimes(const double center, const double tol) {
+vector<long> msmetadata::fieldsfortimes(const double center, const double tol) {
     _FUNC(
         return _setIntToVectorInt(_msmd->getFieldsForTimes(center, tol));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 vector<string> msmetadata::intents() {
@@ -1061,7 +1062,7 @@ vector<string> msmetadata::intentsforfield(const variant& field) {
     return vector<string>();
 }
 
-vector<string> msmetadata::intentsforscan(int scan, int obsid, int arrayid) {
+vector<string> msmetadata::intentsforscan(long scan, long obsid, long arrayid) {
     _FUNC(
         if (scan < 0) {
             throw AipsError("Scan number must be nonnegative.");
@@ -1077,7 +1078,7 @@ vector<string> msmetadata::intentsforscan(int scan, int obsid, int arrayid) {
     return vector<string>();
 }
 
-vector<string> msmetadata::intentsforspw(int spw) {
+vector<string> msmetadata::intentsforspw(long spw) {
     _FUNC(
         _checkSpwId(spw, true);
         return _setStringToVectorString(_msmd->getIntentsForSpw(spw));
@@ -1085,7 +1086,7 @@ vector<string> msmetadata::intentsforspw(int spw) {
     return vector<string>();
 }
 
-double msmetadata::meanfreq(int spw, const string& unit) {
+double msmetadata::meanfreq(long spw, const string& unit) {
     _FUNC (
         _checkSpwId(spw, true);
         return _msmd->getMeanFreqs()[spw].getValue(Unit(unit));
@@ -1105,7 +1106,7 @@ vector<string> msmetadata::namesforfields(const variant& fieldids) {
             fieldIDs.push_back(id);
         }
         else if (myType == variant::INTVEC) {
-            vector<Int> kk = fieldids.toIntVec();
+            auto kk = fieldids.toIntVec();
             if (min(Vector<Int>(kk)) < 0 ) {
                 throw AipsError("All field IDs must be nonnegative.");
             }
@@ -1139,7 +1140,7 @@ vector<string> msmetadata::namesforspws(const variant& spwids) {
             spwIDs.push_back(id);
         }
         else if (myType == variant::INTVEC) {
-            vector<Int> kk = spwids.toIntVec();
+            auto kk = spwids.toIntVec();
             Vector<Int> xx(kk);
             ThrowIf(
                 min(xx) < 0,
@@ -1183,28 +1184,28 @@ string msmetadata::name() {
     return "";
 }
 
-int msmetadata::nantennas() {
+long msmetadata::nantennas() {
     _FUNC(
         return _msmd->nAntennas();
     )
     return 0;
 }
 
-int msmetadata::narrays() {
+long msmetadata::narrays() {
     _FUNC(
         return _msmd->nArrays();
     )
     return 0;
 }
 
-int msmetadata::nbaselines(bool doAC) {
+long msmetadata::nbaselines(bool doAC) {
     _FUNC(
         return _msmd->nBaselines(doAC);
     )
     return 0;
 }
 
-int msmetadata::nchan(int spw) {
+long msmetadata::nchan(long spw) {
     _FUNC (
         _checkSpwId(spw, true);
         return _msmd->nChans()[spw];
@@ -1212,10 +1213,11 @@ int msmetadata::nchan(int spw) {
     return 0;
 }
 
-variant* msmetadata::ncorrforpol(int polid) {
+variant* msmetadata::ncorrforpol(long polid) {
     _FUNC(
         _checkPolId(polid, false);
-        vector<Int> ncorr = _msmd->getNumCorrs();
+        auto nci = _msmd->getNumCorrs();
+        vector<long> ncorr(nci.begin( ), nci.end( ));
         if (polid < 0) {
             return new variant(ncorr);
         }
@@ -1224,7 +1226,7 @@ variant* msmetadata::ncorrforpol(int polid) {
     return NULL;
 }
 
-int msmetadata::nfields() {
+long msmetadata::nfields() {
     _FUNC(
         return _msmd->nFields();
     )
@@ -1232,35 +1234,35 @@ int msmetadata::nfields() {
 
 }
 
-int msmetadata::nobservations() {
+long msmetadata::nobservations() {
     _FUNC(
         return _msmd->nObservations();
     )
     return 0;
 }
 
-int msmetadata::nscans() {
+long msmetadata::nscans() {
     _FUNC(
         return _msmd->nScans();
     )
     return 0;
 }
 
-int msmetadata::nsources() {
+long msmetadata::nsources() {
     _FUNC(
         return _msmd->nUniqueSourceIDsFromSourceTable();
     )
     return 0;
 }
 
-int msmetadata::nspw(bool includewvr) {
+long msmetadata::nspw(bool includewvr) {
     _FUNC(
         return _msmd->nSpw(includewvr);
     )
     return 0;
 }
 
-int msmetadata::nstates() {
+long msmetadata::nstates() {
     _FUNC(
         return _msmd->nStates();
     )
@@ -1294,7 +1296,7 @@ vector<string> msmetadata::observatorynames() {
     return vector<string>();
 }
 
-record* msmetadata::observatoryposition(const int which) {
+record* msmetadata::observatoryposition(const long which) {
     _FUNC(
         MeasureHolder out(_msmd->getObservatoryPosition(which));
         Record outRec;
@@ -1309,7 +1311,7 @@ record* msmetadata::observatoryposition(const int which) {
     return 0;
 }
 
-::casac::record* msmetadata::phasecenter(const int fieldid, const ::casac::record& epoch){
+::casac::record* msmetadata::phasecenter(const long fieldid, const ::casac::record& epoch){
     ::casac::record *rval=0;
     _FUNC(   
         PtrHolder<Record> ep(toRecord(epoch));
@@ -1331,7 +1333,7 @@ record* msmetadata::observatoryposition(const int which) {
     return rval;
 }
 
-record* msmetadata::pointingdirection(int rowid, bool const interpolate, int const initialrow) {
+record* msmetadata::pointingdirection(long rowid, bool const interpolate, long const initialrow) {
     _FUNC(
         Int ant1 COMMA ant2;
         Double time;
@@ -1377,9 +1379,10 @@ bool msmetadata::open(const string& msname, const float cachesize) {
     return false;
 }
 
-variant* msmetadata::polidfordatadesc(int ddid) {
+variant* msmetadata::polidfordatadesc(long ddid) {
     _FUNC(
-        vector<uInt> pols = _msmd->getDataDescIDToPolIDMap();
+        auto pis = _msmd->getDataDescIDToPolIDMap();
+        vector<unsigned long> pols(pis.begin( ),pis.end( ));
         if (ddid < 0) {
             return new variant(pols);
         }
@@ -1463,7 +1466,7 @@ record* msmetadata::refdir(
     return nullptr;
 }
 
-record* msmetadata::reffreq(int spw) {
+record* msmetadata::reffreq(long spw) {
     _FUNC(
         _checkSpwId(spw, true);
         MeasureHolder freq(_msmd->getRefFreqs()[spw]);
@@ -1474,7 +1477,7 @@ record* msmetadata::reffreq(int spw) {
     return nullptr;
 }
 
-variant* msmetadata::restfreqs(int sourceid, int spw) {
+variant* msmetadata::restfreqs(long sourceid, long spw) {
     _FUNC(
         _checkSpwId(spw, true);
         ThrowIf(
@@ -1510,17 +1513,17 @@ variant* msmetadata::restfreqs(int sourceid, int spw) {
     return nullptr;
 }
 
-vector<int> msmetadata::scannumbers(int obsid, int arrayid) {
+vector<long> msmetadata::scannumbers(long obsid, long arrayid) {
     _FUNC(
         _checkObsId(obsid, false);
         _checkArrayId(arrayid, false);
         return _setIntToVectorInt(_msmd->getScanNumbers(obsid, arrayid));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<int> msmetadata::scansforfield(
-    const variant& field, int obsid, int arrayid
+vector<long> msmetadata::scansforfield(
+    const variant& field, long obsid, long arrayid
 ) {
     _FUNC(
         _checkObsId(obsid, false);
@@ -1536,10 +1539,10 @@ vector<int> msmetadata::scansforfield(
             throw AipsError("Unsupported type for field parameter.");
         }
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-record* msmetadata::scansforfields(int obsid, int arrayid) {
+record* msmetadata::scansforfields(long obsid, long arrayid) {
     _FUNC(
         _checkArrayId(arrayid, true);
         _checkObsId(obsid, true);
@@ -1564,7 +1567,7 @@ record* msmetadata::scansforfields(int obsid, int arrayid) {
     return nullptr;
 }
 
-vector<int> msmetadata::scansforintent(const string& intent, int obsid, int arrayid) {
+vector<long> msmetadata::scansforintent(const string& intent, long obsid, long arrayid) {
     _FUNC(
         _checkObsId(obsid, false);
         _checkArrayId(arrayid, false);
@@ -1589,20 +1592,20 @@ vector<int> msmetadata::scansforintent(const string& intent, int obsid, int arra
             return _setIntToVectorInt(_msmd->getScansForIntent(intent, obsid, arrayid));
         }
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<int> msmetadata::scansforspw(const int spw, int obsid, int arrayid) {
+vector<long> msmetadata::scansforspw(const long spw, long obsid, long arrayid) {
     _FUNC(
         _checkSpwId(spw, true);
         _checkObsId(obsid, false);
         _checkArrayId(arrayid, false);
         return _setIntToVectorInt(_msmd->getScansForSpw(spw, obsid, arrayid));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-record* msmetadata::scansforspws(int obsid, int arrayid) {
+record* msmetadata::scansforspws(long obsid, long arrayid) {
     _FUNC(
         _checkArrayId(arrayid, true);
         _checkObsId(obsid, true);
@@ -1627,7 +1630,7 @@ record* msmetadata::scansforspws(int obsid, int arrayid) {
     return nullptr;
 }
 
-vector<int> msmetadata::scansforstate(int state, int obsid, int arrayid) {
+vector<long> msmetadata::scansforstate(long state, long obsid, long arrayid) {
     _FUNC(
         ThrowIf(
             state < 0, "State must be nonnegative."
@@ -1636,11 +1639,11 @@ vector<int> msmetadata::scansforstate(int state, int obsid, int arrayid) {
         _checkArrayId(arrayid, false);
         return _setIntToVectorInt(_msmd->getScansForState(state, obsid, arrayid));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<int> msmetadata::scansfortimes(
-    double center, double tol, int obsid, int arrayid
+vector<long> msmetadata::scansfortimes(
+    double center, double tol, long obsid, long arrayid
 ) {
     _FUNC(
         _checkObsId(obsid, false);
@@ -1649,10 +1652,10 @@ vector<int> msmetadata::scansfortimes(
             _msmd->getScansForTimes(center, tol, obsid, arrayid)
         );
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<string> msmetadata::schedule(int obsid) {
+vector<string> msmetadata::schedule(long obsid) {
     _FUNC(
         _checkObsId(obsid, true);
         return _vectorStringToStdVectorString(_msmd->getSchedules()[obsid]);
@@ -1660,7 +1663,7 @@ vector<string> msmetadata::schedule(int obsid) {
     return vector<string>();
 }
 
-int msmetadata::sideband(int spw) {
+long msmetadata::sideband(long spw) {
     _FUNC (
         _checkSpwId(spw, true);
         Int ret = _msmd->getNetSidebands()[spw] == 2 ? 1 : -1;
@@ -1706,7 +1709,7 @@ record* msmetadata::sourcetimes() {
     return nullptr;
 }
 
-int msmetadata::sourceidforfield(int field) {
+long msmetadata::sourceidforfield(long field) {
     _FUNC(
         _checkFieldId(field, true);
         return _msmd->getFieldTableSourceIDs()[field];
@@ -1714,11 +1717,12 @@ int msmetadata::sourceidforfield(int field) {
     return 0;
 }
 
-vector<int> msmetadata::sourceidsfromsourcetable() {
+vector<long> msmetadata::sourceidsfromsourcetable() {
     _FUNC(
-        return _msmd->getSourceTableSourceIDs();
+        auto sid = _msmd->getSourceTableSourceIDs();
+        return vector<long>(sid.begin( ), sid.end( ));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 vector<string> msmetadata::sourcenames() {
@@ -1728,9 +1732,10 @@ vector<string> msmetadata::sourcenames() {
     return vector<string>();
 }
 
-variant* msmetadata::spwfordatadesc(int ddid) {
+variant* msmetadata::spwfordatadesc(long ddid) {
     _FUNC(
-        vector<uInt> spws = _msmd->getDataDescIDToSpwMap();
+        auto sdd = _msmd->getDataDescIDToSpwMap();
+        vector<unsigned long> spws(sdd.begin( ), sdd.end( ));
         if (ddid < 0) {
             return new variant(spws);
         }
@@ -1741,7 +1746,7 @@ variant* msmetadata::spwfordatadesc(int ddid) {
     return NULL;
 }
 
-variant* msmetadata::spwsforbaseband(int bb, const string& sqldmode) {
+variant* msmetadata::spwsforbaseband(long bb, const string& sqldmode) {
     _FUNC(
         String mode = sqldmode;
         mode.downcase();
@@ -1764,7 +1769,7 @@ variant* msmetadata::spwsforbaseband(int bb, const string& sqldmode) {
         map<uInt COMMA set<uInt> > x = _msmd->getBBCNosToSpwMap(sqld);
         if (bb >= 0) {
             if (x.find(bb) == x.end()) {
-                return new variant(vector<int>(0));
+                return new variant(vector<long>(0));
             }
             else {
                 return new variant(_setUIntToVectorInt(x[bb]));
@@ -1777,7 +1782,7 @@ variant* msmetadata::spwsforbaseband(int bb, const string& sqldmode) {
                 std::map<uInt COMMA std::set<uInt> >::const_iterator iter=x.begin();
                 iter!=end; iter++
             ) {
-                vector<int> v = _setUIntToVectorInt(iter->second);
+                vector<long> v = _setUIntToVectorInt(iter->second);
                 out.insert(String::toString(iter->first), variant(v));
             }
             return new variant(out);
@@ -1786,7 +1791,7 @@ variant* msmetadata::spwsforbaseband(int bb, const string& sqldmode) {
     return 0;
 }
 
-vector<int> msmetadata::spwsforintent(const string& intent) {
+vector<long> msmetadata::spwsforintent(const string& intent) {
     _FUNC(
         Bool expand = intent.find('*') != std::string::npos;
         if (expand) {
@@ -1795,7 +1800,7 @@ vector<int> msmetadata::spwsforintent(const string& intent) {
             return _setIntToVectorInt(ids);
         }
         else {
-            vector<int> x = _setUIntToVectorInt(_msmd->getSpwsForIntent(intent));
+            vector<long> x = _setUIntToVectorInt(_msmd->getSpwsForIntent(intent));
             if (x.size() == 0) {
                 *_log << LogIO::WARN << "Intent " << intent
                     << " does not exist in this dataset." << LogIO::POST;
@@ -1803,10 +1808,10 @@ vector<int> msmetadata::spwsforintent(const string& intent) {
             return x;
         }
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-vector<int> msmetadata::spwsforfield(const variant& field) {
+vector<long> msmetadata::spwsforfield(const variant& field) {
     _FUNC(
         switch (field.type()) {
         case variant::INT:
@@ -1819,7 +1824,7 @@ vector<int> msmetadata::spwsforfield(const variant& field) {
             throw AipsError("Unacceptable type for field parameter.");
         }
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 record* msmetadata::spwsforfields() {
@@ -1829,7 +1834,7 @@ record* msmetadata::spwsforfields() {
         for (const auto& elem: mymap) {
             ret->insert(
                 String::toString(elem.first),
-                vector<uInt>(elem.second.begin(), elem.second.end())
+                vector<unsigned long>(elem.second.begin(), elem.second.end())
             );
         }
         return ret;
@@ -1862,12 +1867,12 @@ record* msmetadata::spwsfornames(const variant& names) {
             );
         }
         unique_ptr<record> rec(new record());
-        uInt id = 0;
+        unsigned long id = 0;
         for (const auto& name : allNames) {
             if (
                 spwNames.find(name) != spwNames.end()
             ) {
-                rec->insert(name, vector<int>(1, id));
+                rec->insert(name, vector<unsigned long>(1, id));
                 spwNames.erase(name);
             }
             else if (rec->find(name) != rec->end()) {
@@ -1887,7 +1892,7 @@ record* msmetadata::spwsfornames(const variant& names) {
     return nullptr;
 }
 
-vector<int> msmetadata::spwsforscan(int scan, int obsid, int arrayid) {
+vector<long> msmetadata::spwsforscan(long scan, long obsid, long arrayid) {
     _FUNC(
         if (scan < 0) {
             throw AipsError("Scan must be nonnegative");
@@ -1900,10 +1905,10 @@ vector<int> msmetadata::spwsforscan(int scan, int obsid, int arrayid) {
         }
         return _setUIntToVectorInt(spws);
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-record* msmetadata::spwsforscans(int obsid, int arrayid) {
+record* msmetadata::spwsforscans(long obsid, long arrayid) {
     _FUNC(
         _checkArrayId(arrayid, true);
         _checkObsId(obsid, true);
@@ -1927,17 +1932,17 @@ record* msmetadata::spwsforscans(int obsid, int arrayid) {
     return nullptr;
 }
 
-vector<int> msmetadata::statesforscan(int scan, int obsid, int arrayid) {
+vector<long> msmetadata::statesforscan(long scan, long obsid, long arrayid) {
     _FUNC(
         ThrowIf(scan < 0, "Scan number must be nonnegative");
         _checkObsId(obsid, false);
         _checkArrayId(arrayid, false);
         return _setIntToVectorInt(_msmd->getStatesForScan(obsid, arrayid, scan));
     )
-    return vector<int>();
+    return vector<long>();
 }
 
-record* msmetadata::statesforscans(int obsid, int arrayid) {
+record* msmetadata::statesforscans(long obsid, long arrayid) {
     _FUNC(
         _checkObsId(obsid, false);
         _checkArrayId(arrayid, false);
@@ -1956,7 +1961,7 @@ record* msmetadata::statesforscans(int obsid, int arrayid) {
     return nullptr;
 }
 
-record* msmetadata::timerangeforobs(int obsid) {
+record* msmetadata::timerangeforobs(long obsid) {
     _FUNC(
         _checkObsId(obsid, true);
         auto range = _msmd->getTimeRangesOfObservations()[obsid];
@@ -1972,7 +1977,7 @@ record* msmetadata::timerangeforobs(int obsid) {
     return NULL;
 }
 
-vector<double> msmetadata::timesforfield(int field) {
+vector<double> msmetadata::timesforfield(long field) {
     _FUNC(
         if (field < 0) {
             throw AipsError("Field ID must be nonnegative");
@@ -1996,7 +2001,7 @@ vector<double> msmetadata::timesforintent(const string& intent) {
     return vector<double>();
 }
 
-variant* msmetadata::timesforscan(int scan, int obsid, int arrayid, bool perspw) {
+variant* msmetadata::timesforscan(long scan, long obsid, long arrayid, bool perspw) {
     _FUNC(
         if (scan < 0) {
             throw AipsError("Scan number must be nonnegative");
@@ -2040,9 +2045,9 @@ variant* msmetadata::timesforscan(int scan, int obsid, int arrayid, bool perspw)
     return nullptr;
 }
 
-vector<double> msmetadata::timesforscans(const variant& scans, int obsid, int arrayid) {
+vector<double> msmetadata::timesforscans(const variant& scans, long obsid, long arrayid) {
     _FUNC(
-        vector<int> myscans;
+        vector<long> myscans;
         if (scans.type() == variant::INT) {
             myscans.push_back(scans.toInt());
         }
@@ -2062,7 +2067,7 @@ vector<double> msmetadata::timesforscans(const variant& scans, int obsid, int ar
     return vector<double>();
 }
 
-vector<int> msmetadata::tdmspws() {
+vector<long> msmetadata::tdmspws() {
     _FUNC(
             /*
         *_log << LogIO::WARN << __FUNCTION__ << " is deprecated and will be removed. "
@@ -2070,13 +2075,13 @@ vector<int> msmetadata::tdmspws() {
             */
         return _setUIntToVectorInt(_msmd->getTDMSpw());
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 variant* msmetadata::timesforspws(const variant& spws) {
     _FUNC(
         auto type = spws.type();
-        std::vector<Int> myspws;
+        std::vector<long> myspws;
         Int nspw = _msmd->nSpw(True);
         // in CASA 6, an empty spws is turned into an int = -1 (as specified in the xml)
         // in CASA 5, an empty spws is left empty and ends up here as a BOOLVEC
@@ -2125,7 +2130,7 @@ variant* msmetadata::timesforspws(const variant& spws) {
     return nullptr;
 }
 
-variant* msmetadata::transitions(int sourceid, int spw) {
+variant* msmetadata::transitions(long sourceid, long spw) {
     _FUNC(
         _checkSpwId(spw, true);
         ThrowIf(
@@ -2154,18 +2159,18 @@ variant* msmetadata::transitions(int sourceid, int spw) {
 }
 
 
-vector<int> msmetadata::wvrspws(bool complement) {
+vector<long> msmetadata::wvrspws(bool complement) {
     _FUNC(
             /*
         *_log << LogIO::WARN << __FUNCTION__ << " is deprecated and will be removed. "
             << "Use almaspws(tdm=true) instead." << LogIO::POST;
             */
-        vector<int> wvrs = _setUIntToVectorInt(_msmd->getWVRSpw());
+        vector<long> wvrs = _setUIntToVectorInt(_msmd->getWVRSpw());
         if (complement) {
-            vector<int> nonwvrs(
+            vector<long> nonwvrs(
                 counting_iterator<int>(0),
                 counting_iterator<int>(_msmd->nSpw(true)));
-            vector<int>::iterator begin = nonwvrs.begin();
+            auto begin = nonwvrs.begin();
             for_each(wvrs.rbegin(), wvrs.rend(), [&](int spw){ nonwvrs.erase(begin + spw); });
             return nonwvrs;
         }
@@ -2173,7 +2178,7 @@ vector<int> msmetadata::wvrspws(bool complement) {
             return wvrs;
         }
     )
-    return vector<int>();
+    return vector<long>();
 }
 
 msmetadata::msmetadata(
@@ -2222,8 +2227,8 @@ std::vector<std::string> msmetadata::_setStringToVectorString(
     return output;
 }
 
-std::vector<int> msmetadata::_setUIntToVectorInt(const std::set<casacore::uInt>& inset) {
-    vector<int> output;
+std::vector<long> msmetadata::_setUIntToVectorInt(const std::set<casacore::uInt>& inset) {
+    vector<long> output;
     std::copy(inset.begin(), inset.end(), std::back_inserter(output));
     return output;
 }
@@ -2234,8 +2239,8 @@ std::vector<uInt> msmetadata::_setUIntToVectorUInt(const std::set<casacore::uInt
     return output;
 }
 
-std::vector<int> msmetadata::_setIntToVectorInt(const std::set<casacore::Int>& inset) {
-    vector<int> output;
+std::vector<long> msmetadata::_setIntToVectorInt(const std::set<casacore::Int>& inset) {
+    vector<long> output;
     std::copy(inset.begin(), inset.end(), std::back_inserter(output));
     return output;
 }
@@ -2246,13 +2251,13 @@ std::vector<std::string> msmetadata::_vectorStringToStdVectorString(const std::v
     return output;
 }
 
-std::vector<int> msmetadata::_vectorUIntToVectorInt(const std::vector<uInt>& inset) {
-    vector<int> output;
+std::vector<long> msmetadata::_vectorUIntToVectorInt(const std::vector<uInt>& inset) {
+    vector<long> output;
     std::copy(inset.begin(), inset.end(), std::back_inserter(output));
     return output;
 }
 
-std::vector<uint> msmetadata::_vectorIntToVectorUInt(const std::vector<Int>& inset) {
+std::vector<uint> msmetadata::_vectorIntToVectorUInt(const std::vector<long>& inset) {
     vector<uint> output;
     std::copy(inset.begin(), inset.end(), std::back_inserter(output));
     return output;
@@ -2314,7 +2319,7 @@ void msmetadata::_checkPolId(int id, bool throwIfNegative) const {
     ThrowIf(throwIfNegative && id < 0, "Polarization ID cannot be negative");
 }
 
-std::set<ScanKey> msmetadata::_getScanKeys(int scan, int obsid, int arrayid) const {
+std::set<ScanKey> msmetadata::_getScanKeys(long scan, long obsid, long arrayid) const {
     _checkObsId(obsid, false);
     _checkArrayId(arrayid, false);
     if (obsid >= 0 && arrayid >= 0) {
@@ -2343,7 +2348,7 @@ std::set<ScanKey> msmetadata::_getScanKeys(int scan, int obsid, int arrayid) con
 }
 
 std::set<ScanKey> msmetadata::_getScanKeys(
-    const vector<int>& scans, int obsid, int arrayid
+    const vector<long>& scans, long obsid, long arrayid
 ) const {
     _checkObsId(obsid, false);
     _checkArrayId(arrayid, false);

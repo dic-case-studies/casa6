@@ -37,8 +37,8 @@ class variant {
 	variant(const variant &);
 
 	variant(bool arg) : typev(BOOL), shape_(1,1) { val.b = arg;  }
-	variant(int arg) : typev(INT), shape_(1,1) { val.i = arg; }
-	variant(unsigned int arg) : typev(UINT), shape_(1,1) { val.ui = arg; }
+	variant(long arg) : typev(INT), shape_(1,1) { val.i = arg; }
+	variant(unsigned long arg) : typev(UINT), shape_(1,1) { val.ui = arg; }
 	variant(long long arg) : typev(LONG), shape_(1,1) { val.l = arg; }
 	variant(double arg) : typev(DOUBLE), shape_(1,1) { val.d = arg; }
 	variant(std::complex<double> arg) : typev(COMPLEX) { val.c = new std::complex<double>(arg); }
@@ -56,22 +56,22 @@ class variant {
 	variant(std::vector<bool> *arg, std::vector<int> &theshape) : typev(BOOLVEC), shape_(theshape)
                         { val.bv = arg; }
 //
-	variant(const std::vector<int> &arg) : typev(INTVEC), shape_(1,arg.size())
-			{ val.iv = new std::vector<int>(arg); }
-	variant(const std::vector<int> &arg, const std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
-			{ val.iv = new std::vector<int>(arg); }
-	variant(std::vector<int> *arg) : typev(INTVEC), shape_(1, arg->size())
+	variant(const std::vector<long> &arg) : typev(INTVEC), shape_(1,arg.size())
+			{ val.iv = new std::vector<long>(arg); }
+	variant(const std::vector<long> &arg, const std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
+			{ val.iv = new std::vector<long>(arg); }
+	variant(std::vector<long> *arg) : typev(INTVEC), shape_(1, arg->size())
                         { val.iv = arg; }
-	variant(std::vector<int> *arg, std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
+	variant(std::vector<long> *arg, std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
 			{ val.iv = arg; }
 
-        variant(const std::vector<unsigned int> &arg) : typev(UINTVEC), shape_(1,arg.size())
-                        { val.uiv = new std::vector<unsigned int>(arg); }
-        variant(const std::vector<unsigned int> &arg, const std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
-                        { val.uiv = new std::vector<unsigned int>(arg); }
-        variant(std::vector<unsigned int> *arg) : typev(UINTVEC), shape_(1, arg->size())
+        variant(const std::vector<unsigned long> &arg) : typev(UINTVEC), shape_(1,arg.size())
+                        { val.uiv = new std::vector<unsigned long>(arg); }
+        variant(const std::vector<unsigned long> &arg, const std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
+                        { val.uiv = new std::vector<unsigned long>(arg); }
+        variant(std::vector<unsigned long> *arg) : typev(UINTVEC), shape_(1, arg->size())
                         { val.uiv = arg; }
-        variant(std::vector<unsigned int> *arg, std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
+        variant(std::vector<unsigned long> *arg, std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
                         { val.uiv = arg; }
 
 //
@@ -119,15 +119,15 @@ class variant {
 	variant & operator= (const variant &other);
 
 	bool toBool( ) const;
-	int toInt( ) const;
-	unsigned int touInt( ) const;
+	long toInt( ) const;
+	unsigned long touInt( ) const;
 	long long toLong( ) const;
 	double toDouble( ) const;
 	std::complex<double> toComplex( ) const;
 	std::string toString( bool no_brackets=false ) const;
 	std::vector<bool> toBoolVec( ) const;
-	std::vector<int> toIntVec( ) const;
-	std::vector<unsigned int> touIntVec( ) const;
+	std::vector<long> toIntVec( ) const;
+	std::vector<unsigned long> touIntVec( ) const;
 	std::vector<long long> toLongVec( ) const;
 	std::vector<double> toDoubleVec( ) const;
 	std::vector<std::complex<double> > toComplexVec( ) const;
@@ -138,14 +138,14 @@ class variant {
 //      Modify
 //      ---------------------------------------------------
 	bool &asBool( );
-	int &asInt( );
-	unsigned int &asuInt( );
+	long &asInt( );
+	unsigned long &asuInt( );
 	long long &asLong( );
 	double &asDouble( );
 	std::complex<double> &asComplex( );
 	std::string &asString( );
-	std::vector<int> &asIntVec( int size=-1 );
-	std::vector<unsigned int> &asuIntVec( int size=-1 );
+	std::vector<long> &asIntVec( int size=-1 );
+	std::vector<unsigned long> &asuIntVec( int size=-1 );
 	std::vector<long long> &asLongVec( int size=-1 );
 	std::vector<bool> &asBoolVec( int size=-1 );
 	std::vector<double> &asDoubleVec( int size=-1 );
@@ -158,14 +158,14 @@ class variant {
 //      Const
 //      ---------------------------------------------------
 	bool getBool( ) const throw(error);
-	int getInt( ) const  throw(error);
-	unsigned int getuInt( ) const  throw(error);
+	long getInt( ) const  throw(error);
+	unsigned long getuInt( ) const  throw(error);
 	long long  getLong( ) const  throw(error);
 	double getDouble( ) const throw(error);
 	const std::complex<double> &getComplex( ) const throw(error);
 	const std::string &getString( ) const throw(error);
-	const std::vector<int> &getIntVec( ) const throw(error);
-	const std::vector<unsigned int> &getuIntVec( ) const throw(error);
+	const std::vector<long> &getIntVec( ) const throw(error);
+	const std::vector<unsigned long> &getuIntVec( ) const throw(error);
 	const std::vector<long long> &getLongVec( ) const throw(error);
 	const std::vector<bool> &getBoolVec( ) const throw(error);
 	const std::vector<double> &getDoubleVec( ) const throw(error);
@@ -178,13 +178,13 @@ class variant {
 //	Modify
 //      ---------------------------------------------------
 	bool &getBoolMod( ) throw(error);
-	int &getIntMod( ) throw(error);
-	unsigned int &getuIntMod( ) throw(error);
+	long &getIntMod( ) throw(error);
+	unsigned long &getuIntMod( ) throw(error);
 	double &getDoubleMod( ) throw(error);
 	std::complex<double> &getComplexMod( ) throw(error);
 	std::string &getStringMod( ) throw(error);
-	std::vector<int> &getIntVecMod( ) throw(error);
-	std::vector<unsigned int> &getuIntVecMod( ) throw(error);
+	std::vector<long> &getIntVecMod( ) throw(error);
+	std::vector<unsigned long> &getuIntVecMod( ) throw(error);
 	std::vector<bool> &getBoolVecMod( ) throw(error);
 	std::vector<double> &getDoubleVecMod( ) throw(error);
 	std::vector<std::complex<double> > &getComplexVecMod( ) throw(error);
@@ -197,8 +197,8 @@ class variant {
 	TYPE type( ) const { return typev; }
 
 	void push(bool, bool conform = true);
-	void push(int, bool conform = true);
-	void push(unsigned int, bool conform = true);
+	void push(long, bool conform = true);
+	void push(unsigned long, bool conform = true);
 	void push(long long, bool conform = true);
 	void push(double, bool conform = true);
 	void push(std::vector<long long>, bool conform = true);
@@ -206,8 +206,8 @@ class variant {
 	void push(const std::string&, bool conform = true);
 
 	void place(bool, unsigned int index, bool conform = true);
-	void place(int, unsigned int index, bool conform = true);
-	void place(unsigned int, unsigned int index, bool conform = true);
+	void place(long, unsigned int index, bool conform = true);
+	void place(unsigned long, unsigned int index, bool conform = true);
 	void place(long long, unsigned int index, bool conform = true);
 	void place(double, unsigned int index, bool conform = true);
 	void place(std::vector<long long>, unsigned int index, bool conform = true);
@@ -237,11 +237,11 @@ class variant {
 	union {
 	  bool b;
 	  std::vector<bool> *bv;
-	  int i;
-          unsigned int ui;
+	  long i;
+          unsigned long ui;
 	  long long l;
-	  std::vector<int> *iv;
-	  std::vector<unsigned int> *uiv;
+	  std::vector<long> *iv;
+	  std::vector<unsigned long> *uiv;
 	  std::vector<long long> *lv;
 	  double d;
 	  std::vector<double> *dv;

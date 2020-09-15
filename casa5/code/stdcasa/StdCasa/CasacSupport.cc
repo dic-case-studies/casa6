@@ -7,6 +7,7 @@
 #include <casa/Quanta/MVAngle.h>
 #include <measures/Measures/MeasureHolder.h>
 #include <measures/Measures/MeasTable.h>
+#include <algorithm>
 
 using namespace casacore;
 namespace casa {
@@ -241,17 +242,17 @@ Bool toCasaVectorQuantity(const ::casac::variant& theval, casacore::Vector<casac
                break;
           case TpChar :
           case TpUChar :
-               transcribedRec->insert(theRec.name(i).c_str(), int(theRec.asuChar(i)));
+               transcribedRec->insert(theRec.name(i).c_str(), long(theRec.asuChar(i)));
                break;
           case TpShort :
           case TpUShort :
-               transcribedRec->insert(theRec.name(i).c_str(), int(theRec.asShort(i)));
+               transcribedRec->insert(theRec.name(i).c_str(), long(theRec.asShort(i)));
                break;
           case TpUInt :
-               transcribedRec->insert(theRec.name(i).c_str(), int(theRec.asuInt(i)));
+               transcribedRec->insert(theRec.name(i).c_str(), (unsigned long) theRec.asuInt(i));
                break;
           case TpInt :
-               transcribedRec->insert(theRec.name(i).c_str(), int(theRec.asInt(i)));
+               transcribedRec->insert(theRec.name(i).c_str(), long(theRec.asInt(i)));
                break;
           case TpInt64 :
 	       {
@@ -299,12 +300,12 @@ Bool toCasaVectorQuantity(const ::casac::variant& theval, casacore::Vector<casac
           case TpArrayUShort :
           case TpArrayInt :
                {
-               Array<Int> tmpArray = theRec.asArrayInt(i);
+               Array<int> tmpArray = theRec.asArrayInt(i);
                Vector<Int> tmpShape = (tmpArray.shape()).asVector();
                std::vector<Int> vecShape;
                tmpShape.tovector(vecShape);
-               std::vector<Int> tmpVec;
-               tmpArray.tovector(tmpVec);
+               std::vector<long> tmpVec;
+               std::for_each( tmpArray.begin( ), tmpArray.end( ), [&](int v){tmpVec.push_back((long)v);} );
                transcribedRec->insert(theRec.name(i).c_str(), casac::variant(tmpVec, vecShape));
                }
                break;
@@ -314,8 +315,8 @@ Bool toCasaVectorQuantity(const ::casac::variant& theval, casacore::Vector<casac
                Vector<Int> tmpShape = (tmpArray.shape()).asVector();
                std::vector<Int> vecShape;
                tmpShape.tovector(vecShape);
-               std::vector<uInt> tmpVec;
-               tmpArray.tovector(tmpVec);
+               std::vector<unsigned long> tmpVec;
+               std::for_each( tmpArray.begin( ), tmpArray.end( ), [&](uInt v){tmpVec.push_back((unsigned long)v);} );
                transcribedRec->insert(theRec.name(i).c_str(), casac::variant(tmpVec, vecShape));
                }
                break;
@@ -567,19 +568,19 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
 	         theV = new casac::variant(theVH.asBool());
                  break;
             case TpUChar :
-	         theV = new casac::variant(theVH.asuChar());
+	         theV = new casac::variant((long)theVH.asuChar());
                  break;
             case TpShort :
-	         theV = new casac::variant(theVH.asShort());
+	         theV = new casac::variant((long)theVH.asShort());
                  break;
             case TpUShort :
-	         theV = new casac::variant(theVH.asuShort());
+	         theV = new casac::variant((long)theVH.asuShort());
                  break;
             case TpInt :
-	         theV = new casac::variant(theVH.asInt());
+	         theV = new casac::variant((long)theVH.asInt());
                  break;
             case TpUInt :
-                 theV = new casac::variant(theVH.asuInt());
+                 theV = new casac::variant((unsigned long)theVH.asuInt());
                  break;
             case TpInt64 :
 	         theV = new casac::variant(theVH.asInt64());
@@ -618,7 +619,7 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
 		    std::vector<uChar> tData;
 		    ts.tovector(tShape);
 		    tArr.tovector(tData);
-		    std::vector<int> tD(tData.size());
+		    std::vector<long> tD(tData.size());
 		    for(unsigned int i=0;i<tData.size();i++)
 			    tD[i] = tData[i];
 		    theV = new casac::variant(tD, tShape);
@@ -632,7 +633,7 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
 		    std::vector<Short> tData;
 		    ts.tovector(tShape);
 		    tArr.tovector(tData);
-		    std::vector<int> tD(tData.size());
+		    std::vector<long> tD(tData.size());
 		    for(unsigned int i=0;i<tData.size();i++)
 			    tD[i] = tD[i];
 		    theV = new casac::variant(tD, tShape);
@@ -646,7 +647,7 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
 		    std::vector<uShort> tData;
 		    ts.tovector(tShape);
 		    tArr.tovector(tData);
-		    std::vector<int> tD(tData.size());
+		    std::vector<long> tD(tData.size());
 		    for(unsigned int i=0;i<tData.size();i++)
 			    tD[i] = tData[i];
 		    theV = new casac::variant(tD, tShape);
@@ -658,9 +659,9 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
 		    Vector<Int> ts = tArr.shape().asVector();
 	            //std::cerr << "Vector Shape " << ts << std::endl;
 		    std::vector<int> tShape;
-		    std::vector<int> tData;
+		    std::vector<long> tData;
 		    ts.tovector(tShape);
-		    tArr.tovector(tData);
+            std::for_each( tArr.begin( ), tArr.end( ), [&](Int v){tData.push_back((long)v);} );
 		    theV = new casac::variant(tData, tShape);
 	         }
                  break;
@@ -669,9 +670,9 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
                     Array<uInt> tArr(theVH.asArrayuInt());
                     Vector<Int> ts = tArr.shape().asVector();
                     std::vector<int> tShape;
-                    std::vector<uInt> tData;
+                    std::vector<unsigned long> tData;
                     ts.tovector(tShape);
-                    tArr.tovector(tData);
+                    std::for_each( tArr.begin( ), tArr.end( ), [&](Int v){tData.push_back((unsigned long)v);} );
                     theV = new casac::variant(tData, tShape);
                  }
                  break;
@@ -769,7 +770,8 @@ ValueHolder *toValueHolder(const casac::variant &theV){
 			theVH = new ValueHolder(theV.getBool());
 			break;
 		case casac::variant::INT :
-			theVH = new ValueHolder(theV.getInt());
+			/*** need range check ***/
+			theVH = new ValueHolder((int)theV.getInt());
 			break;
 		case casac::variant::DOUBLE :
 			theVH = new ValueHolder(theV.getDouble());
@@ -1440,8 +1442,11 @@ vector<int> toVectorInt(const ::casac::variant& v, const String& varName) {
 	case casac::variant::INT:
 		ret.push_back(v.toInt());
 		return ret;
-	case casac::variant::INTVEC:
-		return v.toIntVec();
+	case casac::variant::INTVEC: {
+        auto input = v.toIntVec( );
+        std::vector<int> ret;
+        std::for_each( input.begin( ), input.end( ), [&](long x){ret.push_back((int)x);} );
+		return ret; }
 	case casac::variant::STRING:
 		if (v.toString().size() > 0) {
 			throw AipsError(varName + " cannot be a non-empty string");

@@ -202,7 +202,7 @@ tableplot::setgui(const bool gui)
 // Saving of the plotted to an image file.
 bool
 tableplot::savefig( const std::string& filename,
-                const int dpi,
+                const long dpi,
 		const std::string& orientation,
 		const std::string& papertype,
 		const std::string& facecolor,
@@ -401,7 +401,7 @@ tableplot::iterplotstart(const ::casac::record& poption, const std::vector<std::
 }
 
 /* IterPlotNext */
-int
+long
 tableplot::iterplotnext()
 {
 	if(alive==0) return false;
@@ -442,7 +442,7 @@ tableplot::iterplotstop( const bool /*rmplotter*/ )
 
 /* Mark Flags */
 bool
-tableplot::markregions(const int nrows, const int ncols, const int panel,const std::vector<double>& region)
+tableplot::markregions(const long nrows, const long ncols, const long panel,const std::vector<double>& region)
 {
 	if(alive==0) return false;
 	if(adbg)cout << "Mark Flag Regions" << endl;
@@ -526,7 +526,7 @@ tableplot::locatedata(const std::vector<std::string>& columnlist)
 }
 
 bool 
-tableplot::clearplot(const int nrows, const int ncols, const int panel)
+tableplot::clearplot(const long nrows, const long ncols, const long panel)
 {
 	if(adbg)cout << " Clear Plot " << endl;
 	try {

@@ -211,14 +211,14 @@ void dumpRecord(ostream &oss, const record &theRec, string spaces){
             break;
          case ::casac::variant::INTVEC :
             {
-            vector<int> shapeVec((*rec_it).second.arrayshape());
-            vector<int>intVec((*rec_it).second.getIntVec());
+            auto shapeVec((*rec_it).second.arrayshape());
+            auto intVec((*rec_it).second.getIntVec());
             unsigned int i(0);
-	    oss << spaces <<  (*rec_it).first << " :int vector: [";
-            for(vector<int>::iterator iter = intVec.begin();
+            oss << spaces <<  (*rec_it).first << " :int vector: [";
+            for(auto iter = intVec.begin();
                iter != intVec.end(); iter++)
                oss << intVec[i++] << " ";
-	    oss << "]" << endl;
+            oss << "]" << endl;
             }
             break;
          case ::casac::variant::DOUBLEVEC :
@@ -513,7 +513,7 @@ bool stdBaseInterface::checkme(const string &param, variant &user, record &const
 		  case variant::INT:
 		     {
 		      unsigned int i=0;
-		      vector<int> &theEnums = dflt.asIntVec();
+		      auto theEnums = dflt.asIntVec();
 		      while(i<theEnums.size()){
 			if(user.asInt() == theEnums[i])
 			   break;
@@ -525,8 +525,8 @@ bool stdBaseInterface::checkme(const string &param, variant &user, record &const
 		     break;
 		  case variant::INTVEC :
 		     {
-		      vector<int> &theEnums = dflt.asIntVec();
-		      vector<int> &userVals = user.asIntVec();
+		      auto theEnums = dflt.asIntVec();
+		      auto userVals = user.asIntVec();
 		      unsigned int j(0);
 		      while(j<userVals.size()){
 		         unsigned int i=0;
@@ -557,8 +557,8 @@ bool stdBaseInterface::checkme(const string &param, variant &user, record &const
 		  case variant::DOUBLEVEC :
 			  // Hey it can only be true or false
 		     {
-		      vector<int> &theEnums = dflt.asIntVec();
-		      vector<int> &userVals = user.asIntVec();
+		      auto theEnums = dflt.asIntVec();
+		      auto userVals = user.asIntVec();
 		      unsigned int j(0);
 		      while(j<userVals.size()){
 		         unsigned int i=0;
@@ -687,8 +687,8 @@ bool stdBaseInterface::checkme(const string &param, variant &user, record &const
 		  case variant::INT:
 		     {
 		      unsigned int i=0;
-		      vector<int> &theMins = dflt2.asRecord()["min"].asRecord()["value"].asIntVec();
-		      vector<int> &theMaxs = dflt2.asRecord()["max"].asRecord()["value"].asIntVec();
+		      auto theMins = dflt2.asRecord()["min"].asRecord()["value"].asIntVec();
+		      auto theMaxs = dflt2.asRecord()["max"].asRecord()["value"].asIntVec();
 		      if(!theMins.size()){
 		         while(i<theMaxs.size()){
 			    if(user.asInt() <= theMaxs[i]){
@@ -720,9 +720,9 @@ bool stdBaseInterface::checkme(const string &param, variant &user, record &const
 		     break;
 		  case variant::INTVEC :
 		     {
-		      vector<int> &theMins = dflt2.asRecord()["min"].asRecord()["value"].asIntVec();
-		      vector<int> &theMaxs = dflt2.asRecord()["max"].asRecord()["value"].asIntVec();
-		      vector<int> &userVals = user.asIntVec();
+		      auto theMins = dflt2.asRecord()["min"].asRecord()["value"].asIntVec();
+		      auto theMaxs = dflt2.asRecord()["max"].asRecord()["value"].asIntVec();
+		      auto userVals = user.asIntVec();
 		      unsigned int j(0);
 		      //cerr << "Range checking: mins: ";
 		      //dumpRecord(cerr, dflt2.asRecord()["min"].asRecord());

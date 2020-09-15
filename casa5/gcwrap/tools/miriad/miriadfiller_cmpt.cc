@@ -52,11 +52,11 @@ void
 miriadfiller::fill(const std::string& vis, 
 		    const std::string& inputfile, 
 		    const bool tsys, 
-		    const std::vector<int>& spw, 
+		    const std::vector<long>& spw, 
 		    const std::string& vel, 
 		    const bool linecal, 
-		    const std::vector<int>& wide, 
-		    const int debug) 
+		    const std::vector<long>& wide, 
+		    const long debug) 
 {
     if (inputfile=="")
       throw(AipsError("No miriad file given"));

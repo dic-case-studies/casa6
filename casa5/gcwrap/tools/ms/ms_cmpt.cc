@@ -282,7 +282,7 @@ std::vector<std::string> ms::getreferencedtables()
     return rvalue;
 }
 
-int
+long
 ms::nrowold(const bool selected)
 {
     *itsLog << LogOrigin("ms", "nrowold");
@@ -310,7 +310,7 @@ ms::nrowold(const bool selected)
     return rstat;
 }
 
-int
+long
 ms::nrow(const bool selected)
 {
     *itsLog << LogOrigin("ms", "nrow");
@@ -436,7 +436,7 @@ ms::reset()
 bool
 ms::fromfits(const std::string& msfile, const std::string &fitsfile,
              const bool nomodify, const bool lock,
-             const int obstype, const std::string &,//host,
+             const long obstype, const std::string &,//host,
              bool, //forcenewserver,
              const std::string& antnamescheme)
 {
@@ -465,7 +465,7 @@ ms::fromfits(const std::string& msfile, const std::string &fitsfile,
 
 bool
 ms::fromfitsidi(const std::string& msfile, const std::string &fitsidifile, const bool nomodify, const bool lock,
-                const int obstype)
+                const long obstype)
 {
     try {
         *itsLog << LogIO::NORMAL3 << "Opening FITS-IDI file " << fitsidifile << LogIO::POST;
@@ -804,7 +804,7 @@ ms::getspectralwindowinfo()
 }
 
 variant*
-ms::getfielddirmeas(const std::string& dircolname, int fieldid, double time, const string& format)
+ms::getfielddirmeas(const std::string& dircolname, long fieldid, double time, const string& format)
 {
     variant *retval = 0;
     try{
@@ -946,7 +946,7 @@ ms::writehistory_batch(const std::vector<std::string>& messages, const std::stri
 }
 
 ::casac::record*
-ms::rangeold(const std::vector<std::string>& items, const bool useflags, const int blocksize)
+ms::rangeold(const std::vector<std::string>& items, const bool useflags, const long blocksize)
 {
     *itsLog << LogOrigin("ms", "rangeold");
     *itsLog << LogIO::WARN
@@ -973,7 +973,7 @@ ms::rangeold(const std::vector<std::string>& items, const bool useflags, const i
 }
 
 ::casac::record*
-ms::range(const std::vector<std::string>& items, const bool useflags, const int blocksize)
+ms::range(const std::vector<std::string>& items, const bool useflags, const long blocksize)
 {
     *itsLog << LogOrigin("ms", "range");
     ::casac::record *retval(0);
@@ -2247,7 +2247,7 @@ ms::lister(const std::string& options,
            const std::string& average,
            const bool         showflags,
            const std::string& msselect,
-           const int          pagerows,
+           const long          pagerows,
            const std::string& listfile)
 {
     Bool rstat(false);
@@ -2300,7 +2300,7 @@ Bool ms::checkinit() {
 }
 
 bool
-ms::selectinitold(const int datadescid, const bool reset)
+ms::selectinitold(const long datadescid, const bool reset)
 {
     *itsLog << LogOrigin("ms", "selectinitold");
     *itsLog << LogIO::WARN
@@ -2337,7 +2337,7 @@ ms::selectinitold(const int datadescid, const bool reset)
 }
 
 bool
-ms::selectinit(const int datadescid, const bool resetsel)
+ms::selectinit(const long datadescid, const bool resetsel)
 {
 	*itsLog << LogOrigin("ms", "selectinit");
 	Bool retval = false;
@@ -2574,8 +2574,8 @@ ms::selecttaql(const std::string& taqlstr)
 }
 
 bool
-ms::selectchannelold(const int nchan, const int start, const int width, 
-        const int inc)
+ms::selectchannelold(const long nchan, const long start, const long width, 
+        const long inc)
 {
     *itsLog << LogOrigin("ms", "selectchannelold");
     *itsLog << LogIO::WARN
@@ -2618,7 +2618,7 @@ String ms::getSpwExpr() {
 }
 
 bool
-ms::selectchannel(const int nchan, const int start, const int width, const int inc)
+ms::selectchannel(const long nchan, const long start, const long width, const long inc)
 {
     *itsLog << LogOrigin("ms", "selectchannel");
     Bool retval(false);
@@ -2870,7 +2870,7 @@ ms::regridspw(const std::string& outframe,
 
 bool
 ms::cvel(const std::string& mode,
-         const int nchan,
+         const long nchan,
          const ::casac::variant& start, const ::casac::variant& width,
          const std::string& interp,
          const ::casac::variant& phasec,
@@ -3224,11 +3224,11 @@ ms::cvel(const std::string& mode,
 }
 
 std::vector<double>
-ms::cvelfreqs(const std::vector<int>& spwids,
-              const std::vector<int>& fieldids,
+ms::cvelfreqs(const std::vector<long>& spwids,
+              const std::vector<long>& fieldids,
               const std::string& obstime,
               const std::string& mode,
-              const int nchan,
+              const long nchan,
               const ::casac::variant& start,
               const ::casac::variant& width,
               const ::casac::variant& phasec,
@@ -3603,7 +3603,7 @@ void ms::getIfrArray(Array<T>& inputarray, vi::VisBuffer2* vb2) {
 }
 
 ::casac::record*
-ms::getdataold(const std::vector<std::string>& items, const bool ifraxis, const int ifraxisgap, const int increment, const bool average)
+ms::getdataold(const std::vector<std::string>& items, const bool ifraxis, const long ifraxisgap, const long increment, const bool average)
 {
     *itsLog << LogOrigin("ms", "getdataold");
     *itsLog << LogIO::WARN
@@ -3646,7 +3646,7 @@ ms::getdataold(const std::vector<std::string>& items, const bool ifraxis, const 
 }
 
 ::casac::record*
-ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int ifraxisgap, const int increment, const bool average)
+ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const long ifraxisgap, const long increment, const bool average)
 {
     *itsLog << LogOrigin("ms", "getdata");
 
@@ -5555,7 +5555,7 @@ void ms::putitem(uInt fieldId, vi::VisBuffer2* vb2, Record& inputRecord,
 
 bool
 ms::concatenate(const std::string& msfile, const ::casac::variant& freqtol, const ::casac::variant& dirtol, const float weightscale,
-                const int handling, const std::string& destmsfile, const bool respectname)
+                const long handling, const std::string& destmsfile, const bool respectname)
 {
     Bool rstat(false);
     try {
@@ -5888,7 +5888,7 @@ ms::sort(const std::string& msname,const std::vector<std::string>& columns)
 }
 
 bool ms::contsub(const std::string& outputms,    const ::casac::variant& fitspw,
-                 const int fitorder,             const std::string& combine,
+                 const long fitorder,             const std::string& combine,
                  const ::casac::variant& spw,    const ::casac::variant& unionspw,
                  const ::casac::variant& field,  const ::casac::variant& scan,
                  const std::string&      intent, const std::string& correlation,
@@ -5979,7 +5979,7 @@ bool ms::contsub(const std::string& outputms,    const ::casac::variant& fitspw,
 bool ms::oldstatwt(const bool dorms,                const bool /*byantenna*/,
                 const bool /*sepacs*/,               const ::casac::variant& fitspw,
                 const ::casac::variant& /*fitcorr*/, const std::string& combine,
-                const ::casac::variant& timebin, const int minsamp,
+                const ::casac::variant& timebin, const long minsamp,
                 const ::casac::variant& field,   const ::casac::variant& spw,
                 const ::casac::variant& baseline, const std::string& timerange,
                 const ::casac::variant& scan,    const std::string&      intent,
@@ -6050,7 +6050,7 @@ bool ms::oldstatwt(const bool dorms,                const bool /*byantenna*/,
 
 bool
 ms::split(const std::string&      outputms,  const ::casac::variant& field,
-          const ::casac::variant& spw,       const std::vector<int>& step,
+          const ::casac::variant& spw,       const std::vector<long>& step,
           const ::casac::variant& antenna,   const ::casac::variant& timebin,
           const std::string&      timerange, const ::casac::variant& scan,
           const ::casac::variant& uvrange,   const std::string&      taql,
@@ -6223,7 +6223,7 @@ Vector<Int> ms::getspectralwindows() {
 
 bool
 ms::iterinitold(const std::vector<std::string>& columns, const double interval,
-             const int maxrows, const bool adddefaultsortcolumns)
+             const long maxrows, const bool adddefaultsortcolumns)
 {
     *itsLog << LogOrigin("ms", "iterinitold");
     *itsLog << LogIO::WARN
@@ -6257,7 +6257,7 @@ ms::iterinitold(const std::vector<std::string>& columns, const double interval,
 
 bool
 ms::iterinit(const std::vector<std::string>& columns, const double interval,
-             const int maxrows, const bool adddefaultsortcolumns)
+             const long maxrows, const bool adddefaultsortcolumns)
 {
     *itsLog << LogOrigin("ms", "iterinit");
     Bool rstat(false);
@@ -6325,7 +6325,7 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
             // Add channel-averaging layer if requested in selectchannel 
             if (chanAverage) {
                 Record config;
-                config.define("chanbin", chansel_p[2]);
+                config.define("chanbin", (int) chansel_p[2]);
                 chanavglayer.reset(new vi::ChannelAverageTVILayerFactory(config));
                 layers.resize(layers.size()+1, True);
                 layers[1] = chanavglayer.get();
@@ -6354,8 +6354,8 @@ ms::iterinit(const std::vector<std::string>& columns, const double interval,
 
 record* ms::statwt(
     const string& combine, const casac::variant& timebin, bool slidetimebin,
-    const casac::variant& chanbin, int minsamp, const string& statalg,
-    double fence, const string& center, bool lside, double zscore, int maxiter,
+    const casac::variant& chanbin, long minsamp, const string& statalg,
+    double fence, const string& center, bool lside, double zscore, long maxiter,
     const string& fitspw, bool excludechans, const std::vector<double>& wtrange,
     bool preview, const string& datacolumn
 ) {
@@ -6423,7 +6423,7 @@ record* ms::statwt(
         statwt.setPreview(preview);
         casac::record tviConfig;
         tviConfig["timebin"] = tbtype == casac::variant::BOOLVEC
-            ? Int(1) : timebin;
+            ? (long) 1 : timebin;
         tviConfig["slidetimebin"] = slidetimebin;
         tviConfig["combine"] = combine;
         tviConfig[vi::StatWtTVI::CHANBIN] = chanbin;
@@ -6682,7 +6682,7 @@ bool ms::continuumsubold(const ::casac::variant& field,
                       const ::casac::variant& fitspw,
                       const ::casac::variant& spw,
                       const ::casac::variant& solint,
-                      const int fitorder,
+                      const long fitorder,
                       const std::string& mode)
 {
     *itsLog << LogOrigin("ms", "continuumsubold");
@@ -6721,7 +6721,7 @@ bool ms::continuumsub(const ::casac::variant& field,
                       const ::casac::variant& fitspw,
                       const ::casac::variant& spw,
                       const ::casac::variant& solint,
-                      const int fitorder,
+                      const long fitorder,
                       const std::string& mode)
 {
     Bool rstat(False);
@@ -7024,7 +7024,7 @@ ms::msselectedindices()
 }
 
 bool
-ms::addephemeris(const int id,
+ms::addephemeris(const long id,
                  const std::string& ephemerisname,
                  const std::string& comment,
                  const ::casac::variant& field)
@@ -7175,7 +7175,7 @@ ms::addephemcol(const casacore::MeasurementSet& appendedMS)
 //
 bool
 ms::niterinit(const std::vector<std::string>& /*columns*/, const double interval,
-              const int maxrows, const bool adddefaultsortcolumns)
+              const long maxrows, const bool adddefaultsortcolumns)
 { 
     *itsLog << LogOrigin("ms", "niterinit");
     *itsLog << LogIO::WARN
@@ -7285,7 +7285,7 @@ ms::niternext()
 }
 
 ::casac::record*
-ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, const int /*ifraxisgap*/, const int /*increment*/, const bool /*average*/)
+ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, const long /*ifraxisgap*/, const long /*increment*/, const bool /*average*/)
 {
     *itsLog << LogOrigin("ms", "ngetdata");
     *itsLog << LogIO::WARN

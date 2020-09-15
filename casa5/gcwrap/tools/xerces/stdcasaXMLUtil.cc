@@ -165,8 +165,8 @@ bool stdcasaXMLUtil::fromCasaRecord(ostream &oss, const record &inRec)
             oss << "type=\"intVec\">" << endl;
             oss << "<value>" << endl;
             {
-                const vector<int> &tVec =(*iter).second.getIntVec();
-                for(vector<int>::const_iterator iter2 = tVec.begin();
+                auto tVec =(*iter).second.getIntVec();
+                for(auto iter2 = tVec.begin();
                 iter2 != tVec.end(); iter2++){
                     oss << "<value>" << *iter2 << "</value>" <<endl;
                 }
@@ -704,7 +704,7 @@ variant *stdcasaXMLUtil::tovariant(variant::TYPE theType, string &theInput, bool
     case variant::INT :
     case variant::INTVEC :
     {
-        int val(0);
+        long val(0);
         if(theInput != "none"){
             istringstream iss(theInput.c_str());
             iss >> val;
@@ -712,7 +712,7 @@ variant *stdcasaXMLUtil::tovariant(variant::TYPE theType, string &theInput, bool
             val = INT_MAX;
         }
         if(isVector || theType == variant::INTVEC)
-            rstat = new variant(vector<int>(1,val));
+            rstat = new variant(vector<long>(1,val));
         else
             rstat = new variant(val);
     }
@@ -799,7 +799,7 @@ variant *stdcasaXMLUtil::itsvalue(DOMNode *theNode, variant::TYPE itsType){
             else if(itsType == variant::BOOLVEC) rstatus = new variant(vector<bool>());
             else if(itsType == variant::DOUBLEVEC) rstatus = new variant(vector<double>());
             else if(itsType == variant::COMPLEXVEC) rstatus = new variant(vector<complex<double> >());
-            else if(itsType == variant::INTVEC) rstatus = new variant(vector<int>());            
+            else if(itsType == variant::INTVEC) rstatus = new variant(vector<long>());
         } else if(aValue) {
             rstatus = tovariant(itsType, sValue, isVector);
         }

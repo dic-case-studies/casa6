@@ -581,7 +581,7 @@ if($1){
 %typemap(in) std::vector<long> & (std::unique_ptr<std::vector<long> > deleter){
     if(!$1){
 	deleter.reset (new std::vector<long>(0));
-	$1 = deleter.get():
+	$1 = deleter.get();
     }
    else
       $1->resize(0);
@@ -745,6 +745,14 @@ if($1){
    $result = casac::map_vector($1);
 }
 
+%typemap(out) std::vector<long> {
+   $result = casac::map_vector($1);
+}
+
+%typemap(out) std::vector<long>& {
+   $result = casac::map_vector($1);
+}
+
 %typemap(out) std::vector<long long> {
    $result = casac::map_vector($1);
 }
@@ -905,6 +913,25 @@ if($1){
 }
 
 %typemap(argout) std::vector<int>& OUTARGVEC {
+   PyObject *o = casac::map_vector(*$1);
+   if((!$result) || ($result == Py_None)){
+      $result = o;
+   } else {
+      PyObject *o2 = $result;
+      if (!PyTuple_Check($result)) {
+         $result = PyTuple_New(1);
+         PyTuple_SetItem($result,0,o2);
+      }
+      PyObject *o3 = PyTuple_New(1);
+      PyTuple_SetItem(o3,0,o);
+      o2 = $result;
+      $result = PySequence_Concat(o2,o3);
+      Py_DECREF(o2);
+      Py_DECREF(o3);
+   }
+}
+
+%typemap(argout) std::vector<long>& OUTARGVEC {
    PyObject *o = casac::map_vector(*$1);
    if((!$result) || ($result == Py_None)){
       $result = o;

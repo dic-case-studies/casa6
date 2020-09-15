@@ -39,7 +39,7 @@ synthesisutils::~synthesisutils()
   done();
 }
 
-  ::casac::record* synthesisutils::advisechansel(const ::casac::variant& freqstart, const ::casac::variant& freqend, const ::casac::variant& freqstep, const std::string& freqframe, const std::string& ephemtab, const std::string& msname, const int fieldid, const bool getfreqrange, const std::string& spwselection){
+  ::casac::record* synthesisutils::advisechansel(const ::casac::variant& freqstart, const ::casac::variant& freqend, const ::casac::variant& freqstep, const std::string& freqframe, const std::string& ephemtab, const std::string& msname, const long fieldid, const bool getfreqrange, const std::string& spwselection){
 
   casac::record* retval=0;
   LogIO theLog;
@@ -59,8 +59,9 @@ synthesisutils::~synthesisutils()
 	  else if(!MFrequency::getType(tp, freqframe))
 	    throw(AipsError("Invalid frequency frame"));
 	  Double fstart, fend, fstep;
-	  if(freqstart.type()==::casac::variant::INT || freqend.type()==::casac::variant::INT || freqstep.type()==::casac::variant::INT)
+	  /***if(freqstart.type()==::casac::variant::INT || freqend.type()==::casac::variant::INT || freqstep.type()==::casac::variant::INT)
 	    throw(AipsError("Due to a known bug (CAS-13149) in casa parameter passing \nDo not pass a python integer as parameter here... use a period '.' at the end of the number to make sure it is interpreted as double")); 
+          ***/
 	  if(freqstart.type() > ::casac::variant::BOOL && freqstart.type() < ::casac::variant::COMPLEX){
 	    fstart=freqstart.toDouble();
 	  }
@@ -115,7 +116,7 @@ synthesisutils::~synthesisutils()
 
   }
   
-  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const int npart)
+  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -132,7 +133,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const int npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
+  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const long npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
 {
   casac::record* rstat(0);
 
@@ -158,7 +159,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const int npart)
+  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -176,7 +177,7 @@ synthesisutils::~synthesisutils()
 }
 
   casac::record* synthesisutils::cubedataimagepartition(const casac::record& selpars, const casac::record& incsysrec,
-                                                      const int npart, const int nchannel)
+                                                      const long npart, const long nchannel)
 {
    casac::record* rstat(0);
 
@@ -308,7 +309,7 @@ synthesisutils::~synthesisutils()
 ***/
 
 
-  int  synthesisutils::getOptimumSize(const int size)
+  long  synthesisutils::getOptimumSize(const long size)
 {
    int rstat(size);
 
