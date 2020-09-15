@@ -65,21 +65,14 @@ except ImportError:
 
 # If the test is being run in CASA6 use the new method to get the CASA path
 if CASA6:
-    datapath = casatools.ctsys.resolve('/data/regression/unittest/listobs')
-
+    datapath = casatools.ctsys.resolve('unittest/listobs/')
 else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
-    datapath = dataroot + 'unittest/listobs/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listobs/'
 
     # Generate the test data
 
-if CASA6:
-    mesSet = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'):
-        mesSet = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-    else:
-        mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
+mesSet = os.path.join(datapath, 'uid___X02_X3d737_X1_01_small.ms')
+
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -853,15 +846,8 @@ class test_listobs(listobs_test_base):
     # Test the inf loop bug CAS-6733
 
     def test_CAS_6733(self):
-        """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
-        if CASA6:
-            vis = casatools.ctsys.resolve('visibilities/evla/CAS-6733.ms')
-
-        elif os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            vis = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/CAS-6733.ms'
-        else:
-            vis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/CAS-6733.ms'
-            
+        """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""            
+        vis = os.path.join(datapath,'CAS-6733.ms')
         try:
             listobs(vis=vis)
         except Exception:

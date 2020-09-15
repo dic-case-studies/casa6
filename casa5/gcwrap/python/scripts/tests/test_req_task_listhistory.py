@@ -46,18 +46,13 @@ import shutil
 logpath = casalog.logfile()
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/Itziar.ms')
-    fakepath = casatools.ctsys.resolve('visibilities/')
+    datapath = casatools.ctsys.resolve('unittest/listhistory/Itziar.ms')
+    fakepath = casatools.ctsys.resolve('unittest/listhistory/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'data/casa-data-req/visibilities/'
-    else:
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'casa-data-req/visibilities/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listhistory/Itziar.ms'
+    fakepath = dataroot + '/casatestdata/unittest/listhistory/'
     #filepath = 'testlog.log'
 
 # This is for tests that check what the parameter validator does when parameters are
