@@ -153,7 +153,7 @@ class imhead_test(unittest.TestCase):
         for f in [input_file, complexim]:
             if(os.path.exists(f)):
                 os.system('rm -rf ' + f)
-            os.system('cp -r ' +datapath + f +' ' + f)
+            os.system('cp -RH ' +datapath + f +' ' + f)
 
     def tearDown(self):
         for f in [input_file, complexim]:

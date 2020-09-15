@@ -860,7 +860,7 @@ class immath_test2(unittest.TestCase):
     def copy_img(self):
         '''Copy images to local disk'''
         for img in imageList3:
-            os.system('cp -r ' + os.path.join(datapath, img) + ' ' + img)
+            os.system('cp -RH ' + os.path.join(datapath, img) + ' ' + img)
 
     def rm_img(self):
         '''Remove images from disk'''
