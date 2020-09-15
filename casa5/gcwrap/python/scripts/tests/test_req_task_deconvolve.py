@@ -78,8 +78,8 @@ if is_CASA6:
     _qa = quanta( )
     _me = measures( )
 
-    # refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
-    refdatapath = "/export/home/figs/bbean/casadata/master/regression/unittest/clean/refimager/"
+    refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+    # refdatapath = "/export/home/figs/bbean/casadata/master/regression/unittest/clean/refimager/"
 else:
     from __main__ import default
     from tasks import *
@@ -471,6 +471,7 @@ class test_cube(testref_base):
                         'interpolation':interpolation }
         return tclean_args
 
+    @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
     def test_cube_0(self):
         """ [cube] test_cube_0 """
         ######################################################################################
@@ -590,9 +591,9 @@ class test_multirun(testref_base):
         ######################################################################################
         self.prepData('refim_eptwochan.ms', tclean_args={'imsize':200, 'cell':'8.0arcsec', 'deconvolver':'multiscale', 'scales':[0,20,40,100]})
         results1 = deconvolve(imagename=self.img, niter=10, deconvolver='multiscale', scales=[0,20,40,100], interactive=0, restoration=False)
-        report1 = th.checkall(ret=results1['ret'], peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model'], imgexistnot=[self.img+'.image'])
+        report1 = th.checkall(ret=results1['retrec'], peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model'], imgexistnot=[self.img+'.image'])
         results2 = deconvolve(imagename=self.img, niter=10, deconvolver='hogbom', interactive=0)
-        report2 = th.checkall(ret=results2['ret'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image', self.img+'.model'])
+        report2 = th.checkall(ret=results2['retrec'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image', self.img+'.model'])
 
         self.checkfinal(report1 + report2)
 
@@ -603,9 +604,9 @@ class test_multirun(testref_base):
         ######################################################################################
         self.prepData('refim_point.ms', tclean_args={'imsize':100, 'cell':['10.0arcsec','30.0arcsec']})
         results1 = deconvolve(imagename=self.img, niter=10, restoration=False)
-        report1=th.checkall(ret=results1['ret'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model'], imgexistnot=[self.img+'.image'])
+        report1=th.checkall(ret=results1['retrec'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model'], imgexistnot=[self.img+'.image'])
         results2 = deconvolve(imagename=self.img, niter=0, restoration=True)
-        report2=th.checkall(ret=results2['ret'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model', self.img+'.image'],
+        report2=th.checkall(ret=results2['retrec'], iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.model', self.img+'.image'],
                             imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
         self.checkfinal(report1 + report2)
 
@@ -662,9 +663,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10)
         else:
-            deconvolve(imagename=self.img, niter=10)
-            logstr = self.getLogStr()
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10)
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     def test_imgval_missingimgs_residual(self):
         """ [imgval] test_imgval_missingimgs_residual """
@@ -700,9 +703,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10)
         else:
-            deconvolve(imagename=self.img, niter=10)
-            logstr = self.getLogStr()
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10)
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     def test_imgval_axesmismatch_residual(self):
         """ [imgval] test_imgval_axesmismatch_residual """
@@ -751,9 +756,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10)
         else:
-            deconvolve(imagename=self.img, niter=10)
-            logstr = self.getLogStr()
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10)
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     def test_imgval_shapemismatch_residual(self):
         """ [imgval] test_imgval_shapemismatch_residual """
@@ -818,9 +825,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
         else:
-            deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
-            logstr = self.getLogStr()
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     def test_imgval_startmodel_model_exists(self):
         """ [imgval] test_imgval_startmodel_model_exists """
@@ -836,10 +845,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
         else:
-            deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-            logstr = self.getLogStr()
-            casalog.post(logstr, "WARN")
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
     @unittest.skip("if test_imgval_startmodel_axesmismatch executes immediately before this test then it fails")
@@ -873,9 +883,11 @@ class test_imgval(testref_base):
             with self.assertRaisesRegex(RuntimeError, strcheck):
                 deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
         else:
-            deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-            logstr = self.getLogStr()
-            self.assertTrue('SEVERE' in logstr and strcheck in logstr)
+            try:
+                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
+                self.assertFalse("Error case failed to throw exception")
+            except RuntimeError as e:
+                self.assertTrue(strcheck in str(e))
 
     def test_imgval_startmodel_csysmismatch(self):
         """ [imgval] test_imgval_startmodel_csysmismatch """
