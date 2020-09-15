@@ -47,12 +47,9 @@ from filecmp import dircmp
 ## DATA ## 
 
 if CASA6:
-    casaim = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    casaim = casatools.ctsys.resolve('unittest/rmfit/ngc5921.clean.image/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaim = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        casaim = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
+    casaim = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmfit/ngc5921.clean.image/'
     
 outfile = 'out.im'
 

@@ -51,18 +51,13 @@ import math
 ## DATA ## 
 
 if CASA6:
-    casaim = casatools.ctsys.resolve('image/ngc5921.clean.image/')
-    eq_beams = casatools.ctsys.resolve('fits/pol_eq_beams.fits')
-    neq_beams = casatools.ctsys.resolve('fits/pol_neq_beams.fits')
+    casaim = casatools.ctsys.resolve('unittest/rmfit/ngc5921.clean.image/')
+    eq_beams = casatools.ctsys.resolve('unittest/rmfit/pol_eq_beams.fits')
+    neq_beams = casatools.ctsys.resolve('unittest/rmfit/pol_neq_beams.fits')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaim = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-        eq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
-        neq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
-    else:
-        casaim = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
-        eq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
-        neq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
+    casaim = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmfit/ngc5921.clean.image/'
+    eq_beams = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmfit/pol_eq_beams.fits'
+    neq_beams = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmfit/pol_eq_beams.fits'
     
 outfile = 'out.im'
 
