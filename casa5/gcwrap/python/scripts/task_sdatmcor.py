@@ -20,6 +20,8 @@ if is_CASA6:
     qa = quanta()
     at = atmosphere()
 
+    origin = 'sdatmcor'
+
 else:
     from taskinit import tbtool, casalog, qa
     # CAS-13088
@@ -33,6 +35,7 @@ else:
     tb = tbtool()
     at = casac.atmosphere()
 
+    origin = 'sdatmcor'
 
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
@@ -47,6 +50,11 @@ def sdatmcor(
         layerboundaries, layertemperature,
         debug):
 
+# Information
+    msg = "Revision  sdatmcor 0916-1 testing data-selection"
+    print(msg)
+    casalog.post(msg, 'INFO', origin=origin)
+
 #
 # File Handling
 #
@@ -60,12 +68,20 @@ def sdatmcor(
 
     # infile
     infile_without_ext = os.path.splitext(os.path.basename(infile))[0]
-    infile_ext         = os.path.splitext(os.path.basename(infile))[1]
+    infile_ext = os.path.splitext(os.path.basename(infile))[1]
     infile = [infile_without_ext, infile_ext]
     # outfile
     outfile_without_ext = os.path.splitext(os.path.basename(outfile))[0]
-    outfile_ext         = os.path.splitext(os.path.basename(outfile))[1]
+    outfile_ext = os.path.splitext(os.path.basename(outfile))[1]
     outfile = [outfile_without_ext, outfile_ext]
+
+    # in case infile == outfile
+    if infile == outfile:
+        msg = "You are atempting to write on input file."
+        print(msg)
+        casalog.post(msg, 'SEVERE', origin=origin)
+
+        raise Exception
 
 #
 # Unit Conversion
@@ -85,7 +101,6 @@ def sdatmcor(
 
     # if(len(layerboundaries) != len(layertemperature)):
     #     print("WARN: specified Count of Bounday and Temperature mismatch.")
-
     #  param = ['1.1', '2.2', '3.3' .....]  
     layerboundaries = conv_to_doubleArrayList(layerboundaries)
     layertemperature = conv_to_doubleArrayList(layertemperature)
@@ -113,19 +128,9 @@ def atmMst(
     correlation, timerange, intent,
     observation, feed, msselect):
 
-    # infile #
-    print("- atmMst called.")
-
     # Antenna Key word # 
     if antenna != '':
         antenna += '&&&'
-
-    # Info (debug) #
-    print("-- calling mstransform() task.") 
-    print("    - antenna=", antenna)
-    print("    - scan   =", scan)
-    print("    - spw    =", spw)
-
 
     mstransform(
         vis=infile,               ## Full file spec.
@@ -142,7 +147,6 @@ def atmMst(
         feed=feed, 
 #        msselect=msselect,      ## THIS MAKES ERROR when used. ##
         reindex=False)   # CAUTION #
-    print("- end    mstransform() task.") 
 
 ##########################
 # Subroutines
@@ -151,17 +155,17 @@ def atmMst(
 # by  Wataru, thanks. #
 def ms_remove(path):
     if (os.path.exists(path)):
-        print("--- Info: atempt to delete [%s]."%path)
+        print("- Atempt to delete [%s]."%path)
         if (os.path.isdir(path)):
             shutil.rmtree(path)
         else:
             os.remove(path)
     else:
-        print("--- Info: No file to delete [%s]"%path)
+        print("- No file to delete [%s]"%path)
 
 
 def ms_copy(src, dst):
-    print("--- copying [%s] ->[%s]."%(src, dst))
+    print("- Copying [%s] ->[%s]."%(src, dst))
     shutil.copytree(src, dst)
 
 def file_exist(path):
@@ -180,19 +184,17 @@ def form_value_unit(data, base_unit):
         # INFO #
         msg = "INFO::Data with Unit '%s'" % data
         print(msg)
-        casalog.post(msg, 'INFO')
+        casalog.post(msg, 'INFO', origin=origin)
         return qa.getvalue(data)[0]
     elif (ext_unit == ''):
         # INFO #
-        msg = "WARN::No unit specified. Assumed '%s'" % base_unit
-        print(msg)
-        casalog.post(msg, 'WARN')
+        msg = "WARN::No unit specified in %s . Assumed '%s'" % (data, base_unit)
+        casalog.post(msg, 'WARN', origin=origin)
         return data
     else:
         # FATAL #
-        msg = "FATAL:: Unexpected Unit '%s'. Aborted." % ext_unit
-        print(msg)
-        casalog.post(msg, 'SEVERE')
+        msg = "FATAL:: Unexpected Unit '%s' in %s . Aborted." % (ext_unit,data)
+        casalog.post(msg, 'SEVERE', origin=origin)
 
         raise Exception
 
@@ -291,10 +293,7 @@ def conv_to_doubleArrayList( in_list ):
 # Search ANTENNA_ID 
 #########################
 def get_antennaId( msname, antennaName):
-    print( "get_antennaId called. ")
-
     tb.open(os.path.join(msname, 'ANTENNA'))
-
     # Query
     queryText = "NAME=='%s'" % antennaName
     subtb = tb.query(queryText)
@@ -306,7 +305,7 @@ def get_antennaId( msname, antennaName):
     # close
     subtb.close()
     tb.close()
-    print('iAnt = ', iAnt)
+    print('get_antennaId:: iAnt = ', iAnt)
     return iAnt
     
 
@@ -365,8 +364,7 @@ def calc_sdatmcor(
 
     if True:  # flag option is reserved. #
         print("*********************************************")
-        print("**   calc_sdatmcor:: (0915-Work1)          **")
-        print("**     mstransform -> atmCor Debugging     **")
+        print("**   calc_sdatmcor::                       **")
         print("*********************************************")
         print('infile      =', p_infile, type(p_infile))
         print('datacolumn  =', p_datacolumn, type(p_datacolumn))
@@ -403,15 +401,14 @@ def calc_sdatmcor(
         print("*****************************")
 
     # debug flags  #
-    skipTaskExec   = False     # skip execution in do_sdatmcor() until official test code is ready
-
-    skipCorrection = False     # skip Correction procedure in the script, to save time.
-    showCorrection = False     # show index information while Correction.
+    skipTaskExec = False          # skip execution in do_sdatmcor() until official test code is ready
+    skipCorrection = False        # skip Correction procedure in the script, to save time.
+    showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt =1000  #  (limit count)
 
-    showAtmProfile = False     # print( initAtmProfile() )
-    showAtmLayer = False     # print( at )
+    showAtmProfile = False        # print( initAtmProfile() )
+    showAtmLayer = False          # print( at )
 
     noSelection = False       # No Use Selection
     keepMstTemp = False       # keep tempFile(mstransform out) for debug 
@@ -440,9 +437,6 @@ def calc_sdatmcor(
     if('keepMstTemp' in debug):
         keepMstTemp = True
 
-    # casalog 
-    origin = 'sdatmcor'
-    casalog.origin(origin)
 
     #--------------------------------------
     #   Inside Constant for ATM (from org. script)
@@ -521,9 +515,10 @@ def calc_sdatmcor(
     corms_exist =  file_exist(corms)
 
     # check #
-    print("- default MS file (rawms) =", rawms, "Exist =", rawms_exist)
-    print("- default MS file (calms) =", calms, "Exist =", calms_exist)
-    print("- default MS file (corms) =", corms, "Exist =", corms_exist) 
+    print("INPUT and OUTPUT")
+    print("default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
+    print("default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
+    print("default MS file (corms) = %s , Exist =%s" % (corms, corms_exist)) 
 
     # infile inaccesible  
     if not rawms_exist:
@@ -554,7 +549,7 @@ def calc_sdatmcor(
     tempFileName = tempName + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.ms'
     print("- use temp file [%s]" % tempFileName)
 
-    # internal Mst 
+    # internal Mstransform
     atmMst(
         infile=rawms,           # Tentatively use 'rawms' name
         datacolumn=p_datacolumn, 
@@ -594,7 +589,7 @@ def calc_sdatmcor(
         # Here is the DEFAUT route. #
         msg = "Data Selection is applied." 
         print(msg)
-        casalog.post(msg, 'INFO')
+        casalog.post(msg, 'INFO', origin=origin)
 
         # Prepare MS, hand to AtmCor
         calms = tempFileName
@@ -702,30 +697,36 @@ def calc_sdatmcor(
     # prepare SPW
     #-------------------
 
-    print("- determine spws, outputspw")
+    print("Determine spws, outputspw")
 
     # set processing SPW, (not output_SPW)  #
     if (p_spw != ''):
         spws = list_comma_string(p_spw, dType='int')
 
-    # set Output SPW
+    # set Output SPW (if ommited, use spws)
     if (a_outputspw == ''):
         outputspws = spws                    # use calculated 'spws' above
     else:
         outputspws = list_comma_string(a_outputspw, dType='int')
 
-    print('--- spws ', spws)
-    print('--- outputspws ',outputspws)    # This is the expected outputspw
+    print('- spws %s' % spws)
+    print('- outputspws %s' %outputspws)    # This is the expected outputspw
 
-    # Check
+    # Check if outputspw is available
+    _found = False
     for spw in outputspws:
-        if not spw in spws: 
-            print("WARNING:: output spw %d not in processing spws. Use ALL." % spw)
-            outputspws = spws
-
-            print('--- spws ', spws)
-            print('--- outputspws ',outputspws)    # This is the expected outputspw
-
+        if spw in spws:
+            _found = True
+            break
+        else:
+            _found = False 
+ 
+    if not _found:
+        # LOG #
+        msg = "None of the output-spws (%s) is not in the processing spws[%s]. Use ALL." % (outputspws,spws)
+        casalog.post(msg,'WARN',origin=origin)
+        outputspws = spws    
+        print('- spws = %s, outputspws = %s ', (spws,outputspws))
 
     ################################################################
     # Looping over spws
@@ -733,7 +734,11 @@ def calc_sdatmcor(
     print("- opening MS[%s] to write  ATM-Corrected Data."% corms)
     tb.open(corms, nomodify=False)
     for spwid in spws:
-        print('Processing spw %d in %s...' % (spwid,spws))
+        # Log #
+        msg = "Processing spw %d in %s " % (spwid,spws)
+        print(msg)
+        casalog.post(msg,'INFO',origin=origin)
+
         istdm = False
         nchan = len(chanfreqs[spwid])
 #       fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
@@ -815,22 +820,22 @@ def calc_sdatmcor(
             print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True.\n\n" )
 
         # print to confirm #
-        print(" ------------------------------------------------------")
-        print(" initATMProfile  Parameters  to set up.")
-        print(" ------------------------------------------------------")
-        print(" > dTem_dh     =%s" % t_dtem_dh)
-        print(" > h0          =%s" % t_h0)
-        print(" > altitude    =%s" % t_altitude)
-        print(" > temperature =%s" % t_temperature)
-        print(" > pressure    =%s" % t_pressure)
-        print(" > humidity    =%s" % t_humidity)
-        print(" > pwv         =%s" % t_pwv)
-        print(" > dp          =%s" % t_dp)
-        print(" > dpm         =%s" % t_dpm)
-        print(" > *maxAltitude=%s" % t_maxAltitude)
-        print(" > layerboundaries =%s" % t_layerboundaries)
-        print(" > layerboundaries =%s" % t_layertemperature)
-        print(" ------------------------------------------------------")
+        print("========================================================")
+        print("initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
+        print("-----------------+--------------------------------------")
+        print(" dTem_dh         |%s" % t_dtem_dh)
+        print(" h0              |%s" % t_h0)
+        print(" altitude        |%s" % t_altitude)
+        print(" temperature     |%s" % t_temperature)
+        print(" pressure        |%s" % t_pressure)
+        print(" humidity        |%s" % t_humidity)
+        print(" pwv             |%s" % t_pwv)
+        print(" dp              |%s" % t_dp)
+        print(" dpm             |%s" % t_dpm)
+        print("*maxAltitude     |%s" % t_maxAltitude)
+        print(" layerboundaries |%s" % t_layerboundaries)
+        print(" layerboundaries |%s" % t_layertemperature)
+        print("-----------------+--------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
             humidity=t_humidity, 
@@ -881,7 +886,14 @@ def calc_sdatmcor(
         ####################
         if not spwid in outputspws:  # [CNo-34] #
 #       if not ddis[spwid] in outputspws:
-            print("----   This spw %d is not the Output. Skipped, due to this is not in the output spw.\n\n\n"% ddis[spwid])
+
+            print("- This spw %d is not the Output. Skipped, due to this is not in the output spw."% ddis[spwid])
+
+
+
+
+
+
             continue
 
         # Essential Query (required by org. script) #
@@ -916,9 +928,12 @@ def calc_sdatmcor(
         ###########################
         # Correction Main Loop
         ###########################
-        print("=====================================")
-        print("ATM Correction for loop (N=%d), " % len(tmdata))
-        print("=====================================")
+
+        # LOG #
+        msg = "ATM Correction for loop (N=%d), " % len(tmdata)
+        print(msg)
+        casalog.post(msg,'INFO',origin=origin)
+
         cdata = data.copy()
         for i, t in enumerate(tmdata):
 
@@ -967,10 +982,13 @@ def calc_sdatmcor(
     # end for spwid in spws:
     tb.flush()
     tb.close()
-    print("- closed MS[%s] to write."% corms)
+
+    # LOG #
+    msg = "closed MS[%s] to write."% corms
+    print(msg)
+    casalog.post(msg,'INFO',origin=origin)
 
     # delete temp file. TENTATIVE
-    # Final editiona does not have 'if' around here.
     if noSelection:
         None
     else:
@@ -980,7 +998,7 @@ def calc_sdatmcor(
             ms_remove(tempFileName)
 
     # finish #
-    print("- terminating task.")
+    print("terminating task.")
     return True
 
 # END
