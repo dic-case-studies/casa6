@@ -1165,7 +1165,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  newcoordsys.addCoordinate(zc);
         }
 	  itsGridWt.reset(new PagedImage<Float>(newshape, newcoordsys, itsImageName+ imageExts(GRIDWT)));
-	
+	  initMetaInfo(itsGridWt, itsImageName+ imageExts(GRIDWT));
 
       }
     }

@@ -150,6 +150,7 @@ void CubeMajorCycleAlgorithm::task(){
           //std::shared_ptr<SIImageStore> subImStor=imstor->getSubImageStore(0, 1, chanId_p, nchan, 0,1);
           
           SynthesisImagerVi2 subImgr;
+	  subImgr.setCubeGridding(False);
           for (Int k=0; k < Int(dataSel_p.nelements()); ++k){
             //The original SynthesisImager would have cleared the model if it was requested
             dataSel_p[k].incrmodel=True;

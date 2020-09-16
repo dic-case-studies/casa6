@@ -152,18 +152,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    cout << "**************** usescr : " << useScratch_p << "     readonly : " << readOnly_p << endl;
     //if you want to use scratch col...make sure they are there
     lockMS(thisms);
-    if(selpars.usescratch && !selpars.readonly){
-      VisSetUtil::addScrCols(thisms, true, false, true, false);
-      refim::VisModelData::clearModel(thisms);
-    }
+    ///Need to clear this in first pass only...child processes or loops for cube ///should skip it
+    if(!(impars_p.mode.contains("cube")) || ((impars_p.mode.contains("cube")) && doingCubeGridding_p)){
+      if(selpars.usescratch && !selpars.readonly){
+	VisSetUtil::addScrCols(thisms, true, false, true, false);
+	refim::VisModelData::clearModel(thisms);
+      }
     ////TESTOO
     //Int CPUID;
 	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
     //cerr  << " SELPARS " << selpars.toRecord()  << endl;
-    if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
-      refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
-
-    unlockMSs();
+      if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
+	refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
+    }//end of first pass if for cubes
+    // unlockMSs();
 
 
     os << "MS : " << selpars.msname << " | ";
