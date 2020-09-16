@@ -47,7 +47,7 @@ if CASA6:
     rootpath = casatools.ctsys.resolve('unittest/gaincal/')
     
 else:
-    rootpath = os.environ.get('CASAPATH').split()[0] + 'casatestdata/unittest/gaincal/'
+    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/gaincal/'
 
 datapath = rootpath + 'gaincaltest2.ms'
 compCal = rootpath + 'gaincaltest2.ms.G0'
