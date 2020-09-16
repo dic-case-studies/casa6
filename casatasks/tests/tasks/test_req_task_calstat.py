@@ -95,7 +95,7 @@ class calstat_test(unittest.TestCase):
         ### Needs work. try and produce some fake cal tables to test with
         # No type checking for CASA 6, but some for CASA 5
         if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(AssertionError, msg='Fails to recognize non-caltable'):
+            with self.assertRaises(RuntimeError, msg='Fails to recognize non-caltable'):
                 calstat(non_caltable)
         else:
             self.assertFalse(calstat(non_caltable), msg='Fails to recognize non-caltable')
