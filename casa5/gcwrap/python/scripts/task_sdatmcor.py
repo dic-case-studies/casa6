@@ -51,7 +51,7 @@ def sdatmcor(
         debug):
 
 # Information
-    msg = "Revision  sdatmcor 0916-1 testing data-selection"
+    msg = "Revision  sdatmcor 0917-1 testing data-selection"
     print(msg)
     casalog.post(msg, 'INFO', origin=origin)
 
@@ -313,7 +313,7 @@ def get_antennaId( msname, antennaName):
 # ATM Profile
 #
 
-def showProfile(at):
+def showLayerInfo(at):
     p = at.getProfile()
     # returns a tuple of  
     # 0 - string listing of layer values, and arrays of layer, 1 - thickness,
@@ -407,9 +407,6 @@ def calc_sdatmcor(
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt =1000  #  (limit count)
 
-    showAtmProfile = False        # print( initAtmProfile() )
-    showAtmLayer = False          # print( at )
-
     noSelection = False       # No Use Selection
     keepMstTemp = False       # keep tempFile(mstransform out) for debug 
 
@@ -421,12 +418,6 @@ def calc_sdatmcor(
 
     if('interruptCorrection' in debug):
         interruptCorrection = True
-
-    if('showAtmProfile' in debug):
-        showAtmProfile = True
-
-    if('showAtmLayer' in debug):
-        showAtmLayer = True
 
     if('showCorrection' in debug):
         showCorrection = True
@@ -852,18 +843,14 @@ def calc_sdatmcor(
 
         # ATM Profile #
         if is_CASA6: 
-            if showAtmProfile:
-                for s in myAtm:
-                    print(s)
-            else:
-                None
+            for s in myAtm:
+                print(s)
         else:
-            if showAtmProfile:
-                print(myAtm)
+            print(myAtm)
 
-        # PROFILE #
-        if showAtmLayer:
-            showProfile(at)
+        #  LAYER INFO (when the arg specified) #
+        if t_layerboundaries !='':
+            showLayerInfo(at)
 
         # Spectral Window #     
         at.initSpectralWindow(nband, 
@@ -888,11 +875,6 @@ def calc_sdatmcor(
 #       if not ddis[spwid] in outputspws:
 
             print("- This spw %d is not the Output. Skipped, due to this is not in the output spw."% ddis[spwid])
-
-
-
-
-
 
             continue
 
