@@ -16,8 +16,8 @@ if is_CASA6:
                 os.path.dirname(__file__))))
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-    # datapath = ctsys.resolve('atmcor/')
-    datapath = "/work-dev/nishie/ATM-devWork/ATM-data"
+
+    datapath = ctsys.resolve('')
 
 else:
     from tasks import sdatmcor
@@ -25,10 +25,8 @@ else:
     from sdutil import tbmanager
 
     # Define the root for the data files
-    if False:
-        datapath = os.environ.get('CASAPATH').split()[0] + "/atmcor/"
-    else:
-        datapath = "/work-dev/nishie/ATM-devWork/ATM-data"
+    datapath = os.environ.get('CASAPATH').split()[0] + ''
+
 #
 # Test-MS
 #
@@ -41,10 +39,6 @@ defWorkMsBasic = "uid___A002_Xe770d7_X320b-t.ms"
 
 # output MS #
 
-defOutputMs = "sdave.ms"        # (internal) output MS
-defPrivateMs = "sdave-*.ms"           # (private) Debug output MS template
-defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output MS form
-
 
 ##############
 # Test Entry
@@ -52,43 +46,26 @@ defPrivateMsForm = 'sdave-{}-{}.ms'   # Debug output MS form
 
 
 class test_sdatmcor(unittest.TestCase):
+
+    local_unit_test = True
+
     def setUp(self):
+
         default(sdatmcor)
 
-        # Check Environment 
-        msFile = os.path.join(datapath, 'uid___A002_Xe770d7_X320b.ms')
-        if os.path.exists(msFile):
-            print( "Test MS available on 'datapath'.")
-        else:
-            print( "File not Found on this Environment.")
-            return 
-
-        # copy template
-        self._copy_remote_file(defInputMs, defWorkMsBasic)
-
-        # default Args (based on CASR-424)
+        # default Args
         self.args = {'infile': defInputMs,
-                     'outfile': defOutputMs,
                      'datacolumn': 'float_data'
                      }
         
-
     def tearDown(self):
         print("tearDown::deleting MSs.")
 
-        """
-        # delete copied in-MS and out-MS
-        os.system('rm -rf ' + defInputMs)
-        os.system('rm -rf ' + defOutputMs)  # Comment out , for DEBUG ##
 
-        # CAS-13088 TENTATIVE #
-        os.system('rm -rf ' + "atm*.ms")
-        """
 # private function #
 
     def _copy_remote_file(self, infile, outfile):
         print("Copying temp MS from Remote to Local.")
-        os.system('cp -RL ' + os.path.join(datapath, infile) + ' ' + outfile)
 
     def _if_exist(self, msname):
         _filePath = os.path.join("./", msname)
@@ -103,29 +80,10 @@ class test_sdatmcor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("setUpClass::deleting existing work-MS.")
-        """
-        os.system('rm -rf ' + defWorkMsBasic)  # in case, the MS already exist.
-        os.system('rm -rf ' + defWorkMsTimeSpan)
-        os.system('rm -rf ' + defWorkMs3NRO)
-        os.system('rm -rf ' + defWorkMs3ALMA)
-        os.system('rm -rf ' + defPrivateMs)
-        os.system('rm -rf ' + "TEST-*.ms")
-        """
 
     @classmethod
     def tearDownClass(cls):
         print("tearDownClass::deleting work-MS.")
-        #
-        # Comment Out if you reserve MS.
-        #
-        """
-        os.system('rm -rf ' + defWorkMsBasic)
-        os.system('rm -rf ' + defWorkMsTimeSpan)
-        os.system('rm -rf ' + defWorkMs3NRO)
-        os.system('rm -rf ' + defWorkMs3ALMA)
-        os.system('rm -rf ' + defPrivateMs)
-        os.system('rm -rf ' + "TEST-*.ms")
-        """
 
 ##############
 # Run Task
@@ -136,6 +94,13 @@ class test_sdatmcor(unittest.TestCase):
         if auxArgs is not None:
             for k in auxArgs:
                 self.args[k] = auxArgs[k]
+
+        if not self.local_unit_test:   # FORCE to change
+            self.args = {
+                'debug': 'skipTaskExec',
+                'infile' : infile,
+                'outfile': outfile,
+                'overwrite':  True }
 
         # Execution.
         #  if success, returns True
@@ -188,7 +153,7 @@ class test_sdatmcor(unittest.TestCase):
 # Generate Data on FLOAT_DATA column
 #####################################
     def _generate_data(self, msName, stateOption=False):
-        None
+        pass
 
 ##############
 # MISC
@@ -199,10 +164,6 @@ class test_sdatmcor(unittest.TestCase):
 # TEST FIXTURE
 ############################
 
-
-#
-# SPW
-#
 
     def test_param1(self):
         '''sdatmcor::1:: file1  '''
@@ -215,21 +176,6 @@ class test_sdatmcor(unittest.TestCase):
                'overwrite':  True }
         # Run Task and check
         self.assertTrue(self._run_task(prm))
-
-    def test_param2(self):
-        '''sdatmcor::2:: Execute minimum '''
-
-        infile = 'uid___A002_Xe770d7_X320b-t.ms'
-        outfile = 'sdatmcor-out2.ms'
-        prm = {'debug'    : 'interruptCorrection,showAtmProfile',
-               'infile'   : infile,
-               'outfile'  : outfile,
-               'overwrite':  True,
-               'antenna'  : 'PM02',
-               'scan'     : '3,5' }
-        # Run Task and check
-        self.assertTrue(self._run_task(prm))
-
 
 def suite():
     return [test_sdatmcor]
@@ -244,4 +190,7 @@ History
 3-AUG-2020   Revised for Unit-Test until the Task body is completed.
              - added 'skipTaskExec'  on debug argument.
 
+17-SEP-2020  Totally simplified, by minimum functions.
+             - This calls the Task with skipTaskExec. 
+               simply called and returns soon.
 """
