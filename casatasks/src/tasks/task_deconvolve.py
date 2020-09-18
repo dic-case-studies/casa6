@@ -26,6 +26,18 @@ else:
     from imagerhelpers.input_parameters import ImagerParameters
     from imregrid import imregrid
 
+def check_requiredmask_exists(usemask, mask):
+    if usemask != "user":        # don't use the mask parameter
+        return
+    if type(mask) is type([]):   # mask is an array of values
+        return
+    if mask == "":               # mask is an empty string -> no file specified
+        return
+    if "[" in mask:              # mask is a region string
+        return
+    if not os.path.exists(mask): # mask is a filename string <- only option left
+        raise RuntimeError("Internal Error: 'mask' parameter specified as a filename '"+mask+"', but no such file exists")
+
 def check_requiredimgs_exist(imagename, deconvolver, nterms):
     # get the list of images to check for
     reqims = []
@@ -168,6 +180,7 @@ def deconvolve(
 
     # Make sure that we have all the necessary images and that the startmodel is valid.
     # Note: cpp code should check that .residual and .psf exist, but current tests indicate that it doesn't do that.
+    check_requiredmask_exists(usemask, mask)
     check_requiredimgs_exist(imagename, deconvolver, nterms)
     check_starmodel_model_collisions(startmodel, imagename, deconvolver)
 
