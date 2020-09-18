@@ -407,7 +407,6 @@ def calc_sdatmcor(
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt =1000  #  (limit count)
 
-    noSelection = False       # No Use Selection
     keepMstTemp = False       # keep tempFile(mstransform out) for debug 
 
     if('skipTaskExec' in debug):
@@ -421,9 +420,6 @@ def calc_sdatmcor(
 
     if('showCorrection' in debug):
         showCorrection = True
-
-    if('noSelection' in debug):
-        noSelection = True
 
     if('keepMstTemp' in debug):
         keepMstTemp = True
@@ -572,7 +568,7 @@ def calc_sdatmcor(
     #
     # TESTING :: Switch cal-MS
     #
-    if noSelection:
+    if False:  # (this is original)
         # Prepare MS. Ignore the tempFile.
         ms_remove(corms)
         ms_copy(src=calms, dst=corms)
@@ -590,9 +586,9 @@ def calc_sdatmcor(
     # Get metadata
     ################################################################
     chanfreqs = {}
+    print("SDATMCOR main body.", rawms)
 
-    print("- msmd.open(rawms)", rawms)
-
+    print("msmd.open(rawms)", rawms)
     msmd.open(rawms)
     tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
     tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
@@ -602,12 +598,13 @@ def calc_sdatmcor(
     spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
     spwnames = msmd.namesforspws(spws)
 
-    print("- for spwid in spws: set chanfreqs[spwid]")
+    print("#ON_SOURCE: count of tmonsource   = %d" % len(tmonsource))
+    print("#OFF_SOURCE: count of tmoffsource = %d" % len(tmoffsource))
 
     for spwid in spws:
         chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
     msmd.close()
-    print("- closed msmd")
+    print("closed msmd")
 
     bnd = (pl.diff(tmoffsource) > 1)
     w1 = pl.append([True], bnd)
@@ -616,13 +613,12 @@ def calc_sdatmcor(
 
     ddis = {}
 
-    print("- opening MS.")
-
+    print("msmd.open(calms).")
     msmd.open(calms)
     for spwid in spws:
         ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     msmd.close()
-    print("- closed MS.")
+    print("closed msmd")
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
@@ -632,14 +628,12 @@ def calc_sdatmcor(
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
 
-    #+
     # Data Query (on Pointing Table)
-    #-
-    print("- opening POINTING.")
-
-    if noSelection:
+    if False:  # (original)
+        print("Opening rawms/POINTING.")
         tb.open(os.path.join(rawms, 'POINTING'))  # use original MS.
-    else: 
+    else:
+        print("Opening calms/POINTING.") 
         tb.open(os.path.join(calms, 'POINTING'))  # use tempMS
 
     querytext = 'ANTENNA_ID==%s' % antenna
@@ -650,25 +644,25 @@ def calc_sdatmcor(
     elev = subtb.getcol('DIRECTION').squeeze()[1]
     subtb.close()
     tb.close()
-    print("- closeed POINTING.")
+    print("closeed POINTING.")
 
     ################################################################
     # Get atmospheric parameters for ATM
     ################################################################
-    print("- opening 'ASDM_CALWVR'.")
+    print("opening rawms/'ASDM_CALWVR'.")
     tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
     # confirm #
     print("tmonsource:",tmonsource.min(),tmonsource.max() )
     pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                    (tmonsource.min(), tmonsource.max())).getcol('water')
     tb.close()
-    print("- closed 'ASDM_CALWVR'.")
+    print("closed rawms/'ASDM_CALWVR'.")
 
     # pick up pwv #
     pwv = pl.median(pwv)
 
     # ASDM_CALATMOSPHERE
-    print("- opening 'ASDM_CALATMOSPHERE'.")
+    print("opening rawms/'ASDM_CALATMOSPHERE'.")
     tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
     subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                      (tmonsource.min(),
@@ -680,16 +674,13 @@ def calc_sdatmcor(
 
     subtb.close()
     tb.close()
-    print("- closed 'ASDM_CALATMOSPHERE'.")
+    print("closed rawms/'ASDM_CALATMOSPHERE'.")
 
     print('median PWV = %fm, T = %fK, P = %fPa, H = %f%%' % (pwv, tground, pground, hground))
 
-    #-------------------
     # prepare SPW
-    #-------------------
 
     print("Determine spws, outputspw")
-
     # set processing SPW, (not output_SPW)  #
     if (p_spw != ''):
         spws = list_comma_string(p_spw, dType='int')
@@ -703,7 +694,7 @@ def calc_sdatmcor(
     print('- spws %s' % spws)
     print('- outputspws %s' %outputspws)    # This is the expected outputspw
 
-    # Check if outputspw is available
+    # Check if specified  outputspw is in spws
     _found = False
     for spw in outputspws:
         if spw in spws:
@@ -714,15 +705,19 @@ def calc_sdatmcor(
  
     if not _found:
         # LOG #
-        msg = "None of the output-spws (%s) is not in the processing spws[%s]. Use ALL." % (outputspws,spws)
-        casalog.post(msg,'WARN',origin=origin)
+        msg = "None of the output-spws (%s) is not in the processing spws[%s]. Abort." % (outputspws,spws)
+        casalog.post(msg,'SEVERE',origin=origin)
+        return False 
+
+        """
+        # if continue, helped by outputspw = spws #
         outputspws = spws    
         print('- spws = %s, outputspws = %s ', (spws,outputspws))
-
+        """
     ################################################################
     # Looping over spws
     ################################################################
-    print("- opening MS[%s] to write  ATM-Corrected Data."% corms)
+    print("opening corms[%s] to write ATM-Corrected Data."% corms)
     tb.open(corms, nomodify=False)
     for spwid in spws:
         # Log #
@@ -757,7 +752,7 @@ def calc_sdatmcor(
         # caveat: median values are used for calibrating the entire execution
         ################################################################
 
-        print("- Set parameters for ATM and obtain zenith opacity")
+        print("- set parameters for initATM and obtain zenith opacity")
 
         #--------------------------------------------
         # Default Value and Argument parameter set
@@ -776,18 +771,17 @@ def calc_sdatmcor(
         t_dpm         = dpm      # float      
         t_maxAltitude = qa.quantity(maxalt, 'km')
 
-        # init. internal. # 
-        t_layerboundaries  = a_layerboundaries   # layer boundary [m]
-        t_layertemperature = a_layerboundaries   # layer temerature [K]
+        t_layerboundaries  = a_layerboundaries   # array: layer boundary [m]
+        t_layertemperature = a_layerboundaries   # array: layer temerature [K]
 
-        # user-defined Profile
-        # example:
+        # user-defined Profile (example)
         #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
         #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
 
-        #---------------------------------------
-        # Change value, if the ARG spoecified 
-        #---------------------------------------
+        #------------------------------------------
+        # Change value, if the Argument  specified 
+        #------------------------------------------
+
         # ATM fundamental
         t_dtem_dh     = set_floatquantity_param(a_dtem_dh, t_dtem_dh, 'K/km')
         t_h0          = set_floatquantity_param(a_h0, t_h0, 'km')
@@ -808,12 +802,12 @@ def calc_sdatmcor(
             t_layertemperature = set_list_param(a_layertemperature, a_layertemperature)
 
         else:
-            print ("-- Sub Parameters were IGNORED, due to 'atmdetail' is not True.\n\n" )
+            print ("-- Sub Parameters were not used, due to 'atmdetail' is not True." )
 
         # print to confirm #
-        print("========================================================")
-        print("initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
-        print("-----------------+--------------------------------------")
+        print("==========================================================")
+        print("  initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
+        print("-----------------+----------------------------------------")
         print(" dTem_dh         |%s" % t_dtem_dh)
         print(" h0              |%s" % t_h0)
         print(" altitude        |%s" % t_altitude)
@@ -826,7 +820,7 @@ def calc_sdatmcor(
         print("*maxAltitude     |%s" % t_maxAltitude)
         print(" layerboundaries |%s" % t_layerboundaries)
         print(" layerboundaries |%s" % t_layertemperature)
-        print("-----------------+--------------------------------------")
+        print("-----------------+----------------------------------------")
         # initATMProfile #
         myAtm = at.initAtmProfile(
             humidity=t_humidity, 
@@ -849,7 +843,7 @@ def calc_sdatmcor(
             print(myAtm)
 
         #  LAYER INFO (when the arg specified) #
-        if t_layerboundaries !='':
+        if len(t_layerboundaries) !=0:
             showLayerInfo(at)
 
         # Spectral Window #     
@@ -866,27 +860,22 @@ def calc_sdatmcor(
         ################################################################
 
         print("- Calculate and apply correction values")
-        print(" - Selecting DATA_DESC_ID == %s"%ddis[spwid])
+        print("- Selecting DATA_DESC_ID == %s"%ddis[spwid])
 
-        ####################
         # Skip outputspw
-        ####################
-        if not spwid in outputspws:  # [CNo-34] #
+        if not spwid in outputspws:  
 #       if not ddis[spwid] in outputspws:
-
-            print("- This spw %d is not the Output. Skipped, due to this is not in the output spw."% ddis[spwid])
-
+            msg = "This spw %d is skipped, due to this is not in the output spw." % spwid
+            print(msg)
+            casalog.post(msg,'INFO', origin=origin)
             continue
 
         # Essential Query (required by org. script) #
-        query_desc_id = 'DATA_DESC_ID in %s' % ddis[spwid] 
-        querytext = query_desc_id
-
-        # query
+        querytext = 'DATA_DESC_ID in %s' % ddis[spwid] 
         subtb = tb.query(querytext)
 
         # time data and numPol #
-        print( " - datacolumn [%s] is used." % datacolumn)
+        print( "- datacolumn [%s] is used." % datacolumn)
         tmdata = subtb.getcol('TIME')
         data = subtb.getcol(datacolumn)
         npol = data.shape[0]
@@ -901,10 +890,11 @@ def calc_sdatmcor(
                   (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
             dosmooth = False
 
-        # Debug (tentative) Skip the main correction loop. 
+        # Debug(Tentatitve) Skip the main correction loop. 
         if skipCorrection:
-            print("----   Correction (loop) will be skipped, due to Debug option.")
-            print("  Assumes number of processing raw = %d \n\n" % len(tmdata))
+            msg = "Correction loop will be skipped, due to Debug option. (nRow=%d)\n---" % len(tmdata)
+            print(msg)
+            casalog.post(msg,'INFO',origin=origin)
             continue
 
         ###########################
@@ -922,7 +912,9 @@ def calc_sdatmcor(
             # debug option, limit the correction loop. 
             if interruptCorrection:
                 if i > interruptCorrectionCnt:
-                    print("---- Correction Loop was interrupted. \n\n\n")
+                    msg = "Correction Loop was interrupted. \n---"
+                    print(msg)
+                    casalog.post(msg,'INFO',origin=origin)
                     break
 
             # (org script)
@@ -971,16 +963,13 @@ def calc_sdatmcor(
     casalog.post(msg,'INFO',origin=origin)
 
     # delete temp file. TENTATIVE
-    if noSelection:
+    if keepMstTemp:
         None
     else:
-        if keepMstTemp:
-            None
-        else:
-            ms_remove(tempFileName)
+        ms_remove(tempFileName)
 
     # finish #
-    print("terminating task.")
     return True
 
-# END
+
+
