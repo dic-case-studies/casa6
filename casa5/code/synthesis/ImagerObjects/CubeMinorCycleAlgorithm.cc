@@ -115,6 +115,7 @@ void CubeMinorCycleAlgorithm::put() {
 void CubeMinorCycleAlgorithm::task(){
 	status_p = False;
 	try{
+	 
           SynthesisDeconvolver subDeconv;
 	  Bool writeBackAutomask=True;
           subDeconv.setupDeconvolution(decPars_p);
@@ -132,6 +133,8 @@ void CubeMinorCycleAlgorithm::task(){
 	    subDeconv.setChanFlag(chanFlag_p);
 	    subDeconv.setRobustStats(statsRec_p);
 	    Int automaskflag=iterBotRec_p.asInt("onlyautomask");
+	    LogIO os( LogOrigin("SynthesisDeconvolver",automaskflag==1 ? "excuteAutomask" : "executeMinorCycle",WHERE) );
+	    os << "Processing channels in range " << chanRange_p << LogIO::POST;
 	    if(automaskflag==1){
 	      doDeconv=False;
 	      if(iterBotRec_p.isDefined("cycleniter"))

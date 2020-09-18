@@ -315,9 +315,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       // Calculate Peak Residual and Max Psf Sidelobe, and fill into SubIterBot.
       Float peakresnomask = itsImages->getPeakResidual();
+      Float peakresinmask= validMask ? itsImages->getPeakResidualWithinMask() : peakresnomask;
       //os << LogIO::NORMAL3 << "****INITMINOR residual peak "<< tim.real() << LogIO::POST;
       //tim.mark();
-      itsLoopController.setPeakResidual( validMask ? itsImages->getPeakResidualWithinMask() : peakresnomask );
+      itsLoopController.setPeakResidual( validMask ? peakresinmask : peakresnomask );
       //os << LogIO::NORMAL3 << "****INITMINOR OTHER residual peak "<< tim.real() << LogIO::POST;
       //tim.mark();
       itsLoopController.setPeakResidualNoMask( peakresnomask );
@@ -445,6 +446,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //cerr << "INIT record " << returnRecord << endl;
 
       //      itsImages->printImageStats();
+      os << " Absolute Peak residual within mask : " << peakresinmask << ", over full image : " << peakresnomask  << LogIO::POST;
       itsImages->releaseLocks();
 
       os << LogIO::DEBUG2 << "Initialized minor cycle. Returning returnRec" << LogIO::POST;
