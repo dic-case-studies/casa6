@@ -108,7 +108,7 @@ void StatWtClassicalDataAggregator::aggregate() {
         blcb.spw = spw;
         IPosition dataCubeBLC(3, 0);
         auto dataCubeTRC = dataCube.shape() - 1;
-        for (Int row=0; row<nrows; ++row) {
+        for (rownr_t row=0; row<nrows; ++row) {
             dataCubeBLC[2] = row;
             dataCubeTRC[2] = row;
             blcb.baseline = _baseline(ant1[row], ant2[row]);
