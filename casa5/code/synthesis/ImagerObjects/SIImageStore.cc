@@ -275,10 +275,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		throw(AipsError("Internal error : Sumwt has a useweightimage=True but the weight image does not exist."));
 	      }
 	  }
-	else
-	  {
-	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
-	  }
 	
       }// if psf or residual exist...
 
