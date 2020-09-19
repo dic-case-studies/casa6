@@ -65,7 +65,7 @@ def _merged_stderr_stdout():  # $ exec 2>&1
 if len(sys.argv) > 0 and sys.argv[0] == '-m':
     ##  many packages use the idiom "python -m casatools --some-flag" to query for
     ##  casatools state. Output from user files causes problems for this.
-    with _stdout_redirected(to=os.devnull), _merged_stderr_stdout():
+    with _stdout_redirected(to=os.devnull):
         configrc = os.path.join(home, ".casa/config.py")
         try:
             from casataskrc import *
