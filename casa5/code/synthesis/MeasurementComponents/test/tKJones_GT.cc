@@ -323,7 +323,7 @@ TEST_F(KJonesTest, SBDSolveTest) {
       Vector<Int> a1(vb2->antenna1());
       Vector<Int> a2(vb2->antenna2());
 
-      for (Int irow=0;irow<vb2->nRows();++irow) {
+      for (rownr_t irow=0;irow<vb2->nRows();++irow) {
 	for (Int icor=0;icor<nCorr;icor+=3) {
 	  Float dph=(ph(icor,hichan,irow)-ph(icor,0,irow))/2.0f/C::pi;  // cycles
 	  if (dph>0.5f) dph-=1.0f;
@@ -415,7 +415,7 @@ TEST_F(KJonesTest, MBDSolveTest) {
       Vector<Int> a1(vb2->antenna1());
       Vector<Int> a2(vb2->antenna2());
 
-      for (Int irow=0;irow<vb2->nRows();++irow) {
+      for (rownr_t irow=0;irow<vb2->nRows();++irow) {
 	for (Int icor=0;icor<nCorr;icor+=3) {
 	  Float dph=(ph(icor,hichan,irow)-ph(icor,0,irow))/2.0f/C::pi;  // cycles
 	  if (dph>0.5f) dph-=1.0f;
@@ -528,7 +528,7 @@ TEST_F(KJonesTest, KCrossSolveTest) {
       Vector<Int> a1(vb2->antenna1());
       Vector<Int> a2(vb2->antenna2());
 
-      for (Int irow=0;irow<vb2->nRows();++irow) {
+      for (rownr_t irow=0;irow<vb2->nRows();++irow) {
 	for (Int icor=1;icor<3;icor+=1) {
 	  Float dph=(ph(icor,hichan,irow)-ph(icor,0,irow))/2.0f/C::pi;  // cycles
 	  if (dph>0.5f) dph-=1.0f;
