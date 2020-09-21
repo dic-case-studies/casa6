@@ -398,7 +398,7 @@ public:
 
     // Returns the number of rows in this VisBuffer
 
-    virtual casacore::Int nRows () const;
+    virtual casacore::rownr_t nRows () const;
 
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.

@@ -1232,7 +1232,7 @@ void MSUVBin::gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
 	    Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
-		for (Int k=0; k < vb.nRows(); ++k){
+		for (rownr_t k=0; k < vb.nRows(); ++k){
 		  if(!vb.flagRow()[k]){
 		  Int locu, locv;
 		  {
@@ -1338,7 +1338,7 @@ void MSUVBin::gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
 	    Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
-		for (Int k=0; k < vb.nRows(); ++k){
+		for (rownr_t k=0; k < vb.nRows(); ++k){
 		  if(!vb.flagRow()[k]){
 		  Int locu, locv;
 		  {
@@ -1445,7 +1445,7 @@ void MSUVBin::gridDataConv(const vi::VisBuffer2& vb, Cube<Complex>& grid,
   eluvw=vb.uvw();
   Bool needRot=vbutil_p.rotateUVW(vb, phaseCenter_p, eluvw, phasor);
   Vector<Double> invLambda=visFreq/C::c;
-  for (Int k=0; k < vb.nRows(); ++k){
+  for (rownr_t k=0; k < vb.nRows(); ++k){
     if(!vb.flagRow()[k]){
       Int locu, locv, locw,supp, offu, offv;
       {
@@ -1772,7 +1772,7 @@ void MSUVBin::multiThrLoop(const Int outchan, const vi::VisBuffer2& vb, Double r
    for(uInt nel=0; nel < chanMapRev_p[outchan].nelements(); ++nel ){
       Int chan=chanMapRev_p[outchan][nel];
       Double invLambda=visFreq[chan]/C::c;
-      for (Int k=0; k < vb.nRows(); ++k){
+      for (rownr_t k=0; k < vb.nRows(); ++k){
 	if(!vb.flagRow()[k]){
 	  Int locu, locv, locw,supp, offu, offv;
 	  {
@@ -1931,7 +1931,7 @@ void MSUVBin::multiThrLoop(const Int outchan, const vi::VisBuffer2& vb, Double r
 	    //Bool hasCorrected=!(MSMainColumns(vb.ms()).correctedData().isNull());
 		//locateuvw(locuv, vb.uvw());
 	    Vector<Double> visFreq=vb.getFrequencies(0, MFrequency::LSRK);
-		for (Int k=0; k < vb.nRows(); ++k){
+		for (rownr_t k=0; k < vb.nRows(); ++k){
 		  if(!vb.flagRow()[k]){
 		  Int locu, locv;
 		  {

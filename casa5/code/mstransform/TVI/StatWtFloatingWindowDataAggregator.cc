@@ -86,7 +86,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
     Cube<Complex> chunkData;
     Cube<Bool> chunkFlags;
     std::vector<Double> exposures;
-    uInt subchunkStartRowNum = 0;
+    rownr_t subchunkStartRowNum = 0;
     auto initChanSelTemplate = True;
     Cube<Bool> chanSelFlagTemplate, chanSelFlags;
     // we cannot know the spw until inside the subchunk loop
@@ -129,7 +129,7 @@ void StatWtFloatingWindowDataAggregator::aggregate() {
         auto rowInChunk = subchunkStartRowNum;
         pair<StatWtTypes::Baseline, uInt> mypair;
         mypair.second = subChunkID;
-        for (Int row=0; row<nrows; ++row, ++rowInChunk) {
+        for (rownr_t row=0; row<nrows; ++row, ++rowInChunk) {
             // loop over rows in sub chunk, grouping baseline specific data
             // together
             const auto baseline = _baseline(ant1[row], ant2[row]);
