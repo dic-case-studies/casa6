@@ -200,7 +200,7 @@ public:
         for (int i = minI; i <= maxI; i++)
         {
           //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
-          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + itsGain * x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
+          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + /*itsGain * */x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
           grad[2*k] = grad[2*k] + double(Grad0(i,j));
           grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
         }
@@ -240,7 +240,7 @@ public:
     // memory used
     //std::cout << "Memory allocated in lbfgs " << double(casacore::HostInfo::memoryUsed()/1024) << " MB." << std::endl;
 
-    return fx;
+    return fx/(512.0*512.0);
   }
 
 };

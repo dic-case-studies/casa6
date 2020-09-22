@@ -93,7 +93,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumHogbomIter(0),
   itsNthHogbom(0),
   itsSwitchedToMS(false),
-  itsStrenThres(0.19), //m31_gaussian_trynorm8
+  //itsStrenThres(0.19), //m31_gaussian_trynorm8
+  itsStrenThres(0.4), //m31_gaussian_trynorm8
   //itsStrenThres(0.0001), //m31norm_hog, 5k->10k
   //itsStrenThres(0.003), //SNorm_hog
   //itsStrenThres(0.0001), //SNorm_nohog
@@ -583,12 +584,18 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // further update the model and residual with the remaining aspen of the active-set
     if (itsOptimumScaleSize != 0)
     {
+    	bool aspenUnchanged = true;
+    	if ((Int)itsGoodAspActiveSet.size() <= 1)
+    		aspenUnchanged = false;
+
       for (scale = 0; scale < (Int)itsGoodAspActiveSet.size() - 1; ++scale)
       // -1 because we counted the latest aspen in the previous step already
       {
         if (itsPrevAspActiveSet[scale] == itsGoodAspActiveSet[scale])
           continue;
+
         cout << "I have active-set to adjust" << endl;
+        aspenUnchanged = false;
         // "center" is unchanged for aspen
         // genie test
         IPosition blc1(itsGoodAspCenter[scale] - support/2);
@@ -649,7 +656,14 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         fft.flip(itsPsfConvScaleNew, false, false); //need this if conv with 1 scale; don't need this if conv with 2 scales
         Matrix<Float> psfSubNew = (itsPsfConvScaleNew)(blcPsf1, trcPsf1);
         dirtySub1 -= scaleFactorNew * psfSubNew;
-      }
+      } //update updating model/residual from aspen in active-set
+
+      // switch to hogbom if aspen is unchaned?
+	    /*if (!itsSwitchedToHogbom && aspenUnchanged)
+	    {
+	    	cout << "Switched to hogbom b/c aspen is unchanged" << endl;
+	    	switchedToHogbom();
+	    }*/
     }
 
     //cout << "after dirtySub(262,291) = " << dirtySub(262,291) << endl;
@@ -810,7 +824,7 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
   cout << "xpixels " << xpixels << " ypixels " << ypixels << endl;
   cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
 
-  itsPsfWidth = float(ceil((xpixels + ypixels)/2));
+  //itsPsfWidth = float(ceil((xpixels + ypixels)/2));
   itsPsfWidth = 2.0f;
 
   return itsPsfWidth;
@@ -1646,6 +1660,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     {
       //if (i >= 5)
       if (i >= 20)
+      //if (i >= 400)
         break;
       goodvp.push_back(vp[i].second);
     }
@@ -1746,15 +1761,19 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     bool overflow = false;
     for (unsigned int i = 0; i < length; i+= 2)
     {
-    	if ((fabs(x[i+1]) / fabs(tempx[i+1])) >= 2.0 || (fabs(x[i]) / fabs(tempx[i])) >= 2.0) 
+    	if ((fabs(x[i+1]) / fabs(tempx[i+1])) >= 2.0 || 
+    		  (fabs(x[i]) / fabs(tempx[i])) >= 2.0     ||
+    		  x[i+1] <= 1) 
     	{	
     		overflow = true;
+    		cout << "overflow by: " << tempx[i+1] << " -> " << x[i+1] << " or " << tempx[i] << " -> " << x[i]  << endl;
     		break;
     	}
     }
     if (overflow)
     {
-    	itsSwitchedToHogbom = true;
+    	cout << "lbfgs overflow!!! Switched to hogbom" << endl; 
+    	switchedToHogbom();
     	for (unsigned int i = 0; i < length; i+= 2)
 	    {
 	    	x[i+1] = tempx[i+1];
@@ -1850,7 +1869,8 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
+  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
+  itsNumHogbomIter = ceil(2 + 2 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
   //itsNumHogbomIter = ceil(65 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm4 5k
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
   //itsNumHogbomIter = 1000000; //fake it for M31
