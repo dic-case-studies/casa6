@@ -230,6 +230,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     peakresidual = itsMTCleaner.getpeakresidual();
 
     modelflux = sum( itsMatModels[0] ); // Performance hog ?
+
+    // Retrieve residual to be saved to the .residual file in finalizeDeconvolver
+    for(uInt tix=0; tix<itsNTerms; tix++)
+    {
+      itsImages->residual(tix)->get( itsMatResiduals[tix], true );
+    }
   }	    
 
   void SDAlgorithmMSMFS::finalizeDeconvolver()

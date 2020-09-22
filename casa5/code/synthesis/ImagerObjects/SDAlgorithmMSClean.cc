@@ -213,6 +213,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // account for mask as well
     peakresidual = max(abs(residual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
+
+    // Retrieve residual to be saved to the .residual file in finalizeDeconvolver
+    itsImages->residual()->get( itsMatResidual, true );
   }	    
 
   void SDAlgorithmMSClean::finalizeDeconvolver()
