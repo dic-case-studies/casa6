@@ -105,7 +105,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcollapse.py
   test_imcontsub.py
   test_imfit.py
-  test_imhead.py
   test_immath.py
   test_immoments.py
   test_importasap.py
