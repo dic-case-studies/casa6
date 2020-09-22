@@ -1,5 +1,5 @@
 #include <casa/IO/AipsIO.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Containers/BlockIO.h>
 
 #include <alma/apps/asdm2MS/BDF2AsdmStManIndex.h>

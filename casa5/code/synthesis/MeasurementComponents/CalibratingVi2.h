@@ -159,7 +159,8 @@ public:
 		 casacore::String msname);
 
   CalSolvingVi2( vi::ViImplementation2 * inputVii,
-		 VisEquation *ve);
+		 VisEquation *ve,
+		 const casacore::Bool& corrDepFlags=false);
 
   ~CalSolvingVi2();
 
@@ -196,7 +197,8 @@ private:
   mutable casacore::Int64 ntotal_,nflagged_,nskipped_;
   mutable casacore::Int64 nVB_,nVB0_;
   mutable casacore::Double Tio_,Tcalws_,Tcalfl_,Tcal2_;
-  
+
+  casacore::Bool corrDepFlags_;
 
 };
 
@@ -220,7 +222,7 @@ class CalSolvingVi2LayerFactoryByVE : public ViiLayerFactory {
 
  public:
 
-  CalSolvingVi2LayerFactoryByVE(VisEquation* ve);  // From a VE pointer in calling scope
+  CalSolvingVi2LayerFactoryByVE(VisEquation* ve,const casacore::Bool& corrDepFlags=false);  // From a VE pointer in calling scope
 
   virtual ~CalSolvingVi2LayerFactoryByVE () {}
 
@@ -232,6 +234,8 @@ class CalSolvingVi2LayerFactoryByVE : public ViiLayerFactory {
  private:
   
   VisEquation *ve_p;
+
+  casacore::Bool corrDepFlags_;
 
 };
 

@@ -176,7 +176,7 @@ TEST( CalSolVi2Organizer , VECalSolveLayerTest ) {
   // The VI2 for solving:
   CalSolVi2Organizer vi2org;
   vi2org.addSimIO(ss);
-  vi2org.addCalForSolving(ve);
+  vi2org.addCalForSolving(ve,false);
 
   Int nSol;
   Vector<Int> nChunkPerSol;
@@ -695,7 +695,7 @@ TEST( CalSolVi2Organizer , PartialTimeFreqAvedCalSolveTest ) {
   // The VI2 for solving:
   CalSolVi2Organizer vi2org;
   vi2org.addSimIO(s1);
-  vi2org.addCalForSolving(ve);
+  vi2org.addCalForSolving(ve,false);
   vi2org.addChanAve(chanbin);
   vi2org.addTimeAve(timebin);
 

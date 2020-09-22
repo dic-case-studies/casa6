@@ -28,13 +28,10 @@
 #ifndef TRIALDISPLAY_WCRESAMPLEHANDLER_H
 #define TRIALDISPLAY_WCRESAMPLEHANDLER_H
 
-#include <casa/aips.h>
-#include <casa/Arrays/Vector.h>
-
-namespace casacore{
-
-	template <class T> class Matrix;
-}
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/BasicSL/Complex.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

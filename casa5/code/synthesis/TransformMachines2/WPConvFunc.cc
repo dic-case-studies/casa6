@@ -210,6 +210,9 @@ void WPConvFunc::findConvFunction(const ImageInterface<Complex>& image,
      if(maxMemoryMB < 4000)
        maxMemoryMB=4000;
      convSize=max(Int(nx_p*padding),Int(ny_p*padding));
+     ///Do the same thing as in WProject::init
+     CompositeNumber cn(convSize);    
+     convSize    = cn.nextLargerEven(convSize);
     //nominal  100 wprojplanes above that you may (or not) go swapping
      
      planesPerChunk=Int((Double(maxMemoryMB)/8.0*1024.0*1024.0)/Double(convSize)/Double(convSize));

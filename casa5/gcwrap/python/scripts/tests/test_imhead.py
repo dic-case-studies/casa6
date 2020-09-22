@@ -1501,8 +1501,9 @@ class imhead_test(unittest.TestCase):
             for key in [
                 "datamin", "datamax", "maxpos", "minpos",
                 "maxpixpos", "minpixpos"
-            ]: 
-                self.assertFalse(imhead(imagename=imagename, mode="set", hdkey=key, hdvalue=4))
+            ]:
+                with self.assertRaises(RuntimeError):
+                    imhead(imagename=imagename, mode="set", hdkey=key, hdvalue=4)
                
             key = "user-specified"
             for value in ["test-val", 6, qa.quantity("4km/s")]:

@@ -91,19 +91,18 @@ Bool ImageMoments<T>::setMomentAxis(const casacore::Int momentAxisU) {
         }
     }
     if (
-            momentAxis_p == _image->coordinates().spectralAxisNumber()
-            && _image->imageInfo().hasMultipleBeams()
+        momentAxis_p == _image->coordinates().spectralAxisNumber()
+        && _image->imageInfo().hasMultipleBeams()
     ) {
-        casacore::GaussianBeam maxBeam = CasaImageBeamSet(_image->imageInfo().getBeamSet()).getCommonBeam();
+        auto maxBeam = CasaImageBeamSet(_image->imageInfo().getBeamSet()).getCommonBeam();
         os_p << casacore::LogIO::NORMAL << "The input image has multiple beams so each "
-                << "plane will be convolved to the largest beam size " << maxBeam
-                << " prior to calculating moments" << casacore::LogIO::POST;
+            << "plane will be convolved to the largest beam size " << maxBeam
+            << " prior to calculating moments" << casacore::LogIO::POST;
         Image2DConvolver<casacore::Float> convolver(_image, nullptr, "", "", false);
         auto dirAxes = _image->coordinates().directionAxesNumbers();
         convolver.setAxes(std::make_pair(dirAxes[0], dirAxes[1]));
         convolver.setKernel(
-                "gaussian", maxBeam.getMajor(), maxBeam.getMinor(),
-                maxBeam.getPA(true)
+            "gaussian", maxBeam.getMajor(), maxBeam.getMinor(), maxBeam.getPA(true)
         );
         convolver.setScale(-1);
         convolver.setTargetRes(true);

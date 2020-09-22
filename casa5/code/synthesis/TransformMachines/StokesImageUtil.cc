@@ -44,7 +44,7 @@
 #include <lattices/LatticeMath/LatticeConvolver.h>
 #include <scimath/Fitting/NonLinearFitLM.h>
 #include <scimath/Functionals/Gaussian2D.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 #include <ms/MeasurementSets/MSColumns.h>
 #include <ms/MeasurementSets/MSDopplerUtil.h>

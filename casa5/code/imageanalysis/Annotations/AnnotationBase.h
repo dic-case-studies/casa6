@@ -26,9 +26,9 @@
 #ifndef ANNOTATIONS_ANNOTATIONBASE_H
 #define ANNOTATIONS_ANNOTATIONBASE_H
 
-#include <coordinates/Coordinates/CoordinateSystem.h>
-
-#include <measures/Measures/Stokes.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/casa/Utilities/Regex.h>
+#include <casacore/measures/Measures/Stokes.h>
 
 #include <list>
 

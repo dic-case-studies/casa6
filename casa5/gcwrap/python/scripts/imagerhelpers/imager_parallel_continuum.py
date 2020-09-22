@@ -368,7 +368,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             ## If only one field, do the get/gather/set of the weight density.
             if self.NF == 1 and self.allimpars['0']['stokes']=="I":   ## Remove after gridded wts appear for all fields correctly (i.e. new FTM).
    
-                if self.weightpars['type'] == 'briggs' :  ## For natural, this array isn't created at all.
+                if self.weightpars['type'] !=  'natural' :  ## For natural, this array isn't created at all.
                                                                        ## Remove when we switch to new FTM
 
                     casalog.post("Gathering/Merging/Scattering Weight Density for PSF generation","INFO")
@@ -397,8 +397,20 @@ class PyParallelContSynthesisImager(PySynthesisImager):
     def deleteImagers(self):
          self.PH.runcmd("toolsi.done()")
 
+    def deleteWorkDir(self):
+        ## Delete the contents of the .workdirectory 
+        for immod in range(0,self.NF):
+            normpars = copy.deepcopy( self.allnormpars[str(immod)] )
+            if(self.NN>1):
+                for node in self.listOfNodes:
+                    self.PH.deletepartimages( self.allimpars[str(immod)]['imagename'],  node ,deldir=True ) 
+
+#        ## Delete the workdirectory
+#        print("Deleting workdirectory : "+self.PH.getworkdir(imagename, node))
+#        shutil.rmtree( self.PH.getworkdir(imagename, node) )
+
     def deleteCluster(self):
-         self.PH.takedownCluster()
+        self.PH.takedownCluster()
     
 # #############################################
     def dryGridding(self):

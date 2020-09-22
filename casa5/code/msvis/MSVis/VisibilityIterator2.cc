@@ -60,6 +60,11 @@ SortColumns::SortColumns (const Block<Int> & columnIds, Bool addDefaultColumns)
             std::make_pair(MS::columnName(casacore::MS::PredefinedColumns(colId)), nullptr));
 }
 
+SortColumns::SortColumns (Bool usingDefaultSortingFunctions)
+: usingDefaultSortingFunctions_p (usingDefaultSortingFunctions)
+{
+}
+
 SortColumns::SortColumns (const std::vector<std::pair<casacore::MS::PredefinedColumns, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition)
 : addDefaultColumns_p (false),
   usingDefaultSortingFunctions_p (false)
@@ -79,6 +84,9 @@ SortColumns::SortColumns (const std::vector<std::pair<casacore::String, casacore
 void SortColumns::addSortingColumn(casacore::MS::PredefinedColumns colId,
     casacore::CountedPtr<casacore::BaseCompare> sortingFunction)
 {
+    if (usingDefaultSortingFunctions_p)
+        throw AipsError("SortColumns invalid construction. "
+                        "Cannot add generic sorting functions.");
     sortingDefinition_p.push_back(
         std::make_pair(MS::columnName(colId), sortingFunction));
     usingDefaultSortingFunctions_p = false;
@@ -87,6 +95,9 @@ void SortColumns::addSortingColumn(casacore::MS::PredefinedColumns colId,
 void SortColumns::addSortingColumn(casacore::String colName,
     casacore::CountedPtr<casacore::BaseCompare> sortingFunction)
 {
+    if (usingDefaultSortingFunctions_p)
+        throw AipsError("SortColumns invalid construction. "
+                        "Cannot add generic sorting functions.");
     sortingDefinition_p.push_back(
         std::make_pair(colName, sortingFunction));
     usingDefaultSortingFunctions_p = false;

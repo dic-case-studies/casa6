@@ -362,7 +362,7 @@ TransformingVi2::getReportingFrameOfReference ()  const
 }
 
 void
-TransformingVi2::getRowIds (Vector<uInt> & rowids)  const
+TransformingVi2::getRowIds (Vector<rownr_t> & rowids)  const
 {
      getVii()->getRowIds (rowids);
 }
@@ -504,6 +504,10 @@ Int
 TransformingVi2::nSpectralWindows ()  const
 {
     return getVii()->nSpectralWindows ();
+}
+
+Int TransformingVi2::nTimes() const {
+    return getVii()->nTimes();
 }
 
 void

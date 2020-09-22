@@ -25,6 +25,8 @@
 //#
 //# $Id: $
 #include <graphics/GenericPlotter/SimplePlotter.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -400,7 +402,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<double>& d,
         Vector<double>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return contourPlot(PlotRasterDataPtr(new PlotRasterMatrixData<double>(d)),
@@ -411,7 +413,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<float>& d,
         Vector<float>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return contourPlot(PlotRasterDataPtr(new PlotRasterMatrixData<float>(d)),
@@ -422,7 +424,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<int>& data,
         Vector<int>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return contourPlot(PlotRasterDataPtr(new PlotRasterMatrixData<int>(data)),
@@ -433,7 +435,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<uInt>& data,
         Vector<uInt>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return contourPlot(PlotRasterDataPtr(new PlotRasterMatrixData<uInt>(data)),
@@ -445,7 +447,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<double>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<double>(data));
@@ -459,7 +461,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<float>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<float>(data));
@@ -473,7 +475,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<int>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<int>(data));
@@ -487,7 +489,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<uInt>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<uInt>(data));
@@ -497,7 +499,7 @@ RasterPlotPtr SimplePlotter::contourPlot(Matrix<uInt>& data, double fromX,
 }
 
 RasterPlotPtr SimplePlotter::contourPlot(PlotRasterDataPtr data,
-        vector<double>& contours, bool overplot) {
+        std::vector<double>& contours, bool overplot) {
     if(contours.size() == 0) return rasterPlot(data, overplot);
     
     if(data.null() || !data->isValid() || m_factory.null())
@@ -590,7 +592,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<double>& d,
         Vector<double>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return spectrogram(PlotRasterDataPtr(new PlotRasterMatrixData<double>(d)),
@@ -601,7 +603,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<float>& d,
         Vector<float>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return spectrogram(PlotRasterDataPtr(new PlotRasterMatrixData<float>(d)),
@@ -612,7 +614,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<int>& data,
         Vector<int>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return spectrogram(PlotRasterDataPtr(new PlotRasterMatrixData<int>(data)),
@@ -623,7 +625,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<uInt>& data,
         Vector<uInt>& contours, bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     return spectrogram(PlotRasterDataPtr(new PlotRasterMatrixData<uInt>(data)),
@@ -635,7 +637,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<double>& da, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<double>(da));
@@ -649,7 +651,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<float>& data,double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<float>(data));
@@ -663,7 +665,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<int>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<int>(data));
@@ -677,7 +679,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<uInt>& data, double fromX,
         bool overplot) {
     if(m_factory.null()) return RasterPlotPtr();
     
-    vector<double> v(contours.size());
+    std::vector<double> v(contours.size());
     for(unsigned int i = 0; i < v.size(); i++)
         v[i] = static_cast<double>(contours[i]);
     PlotRasterDataPtr d(new PlotRasterMatrixData<uInt>(data));
@@ -687,7 +689,7 @@ RasterPlotPtr SimplePlotter::spectrogram(Matrix<uInt>& data, double fromX,
 }
 
 RasterPlotPtr SimplePlotter::spectrogram(PlotRasterDataPtr data,
-        vector<double>& contours, bool overplot) {
+        std::vector<double>& contours, bool overplot) {
     if(contours.size() == 0) return spectrogram(data, overplot);
     
     if(data.null() || !data->isValid() || m_factory.null())
@@ -802,7 +804,7 @@ void SimplePlotter::showDefaultExportTools(bool show) {
     m_plotter->showDefaultPanel(Plotter::EXPORT_TOOLS, show);
 }
 
-vector<PlotRegion> SimplePlotter::allSelectedRegions() {
+std::vector<PlotRegion> SimplePlotter::allSelectedRegions() {
     return m_mouseTools->selectTool()->getSelectedRects();
 }
 

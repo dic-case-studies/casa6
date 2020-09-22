@@ -64,10 +64,7 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
         write_history(myms, outputvis, 'importnro', param_names, 
                           param_vals, casalog) 
         
-        return status
-    except Exception as instance:
-        casalog.post('*** Error *** %s' % instance, 'SEVERE')
-        raise
+
     finally:
         if status: 
             mycb.close()

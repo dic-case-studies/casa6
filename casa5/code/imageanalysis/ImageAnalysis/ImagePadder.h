@@ -91,7 +91,7 @@ public:
 	// set the number of pixels to use for padding and their values and if they should be
 	// masked on each edge of the direction plane. <src>good</src>=true means the padding
 	// pixels will not be masked (set to good, mask values = true).
-	void setPaddingPixels(const casacore::uInt nPixels, const casacore::Double value=0, const casacore::Bool good=false);
+	void setPaddingPixels(const casacore::uInt nPixels, const casacore::Float value=0, const casacore::Bool good=false);
 
 	casacore::String getClass() const;
 
@@ -108,7 +108,7 @@ protected:
 
 private:
 	casacore::uInt _nPixels;
-	casacore::Double _value;
+	casacore::Float _value;
 	casacore::Bool _good;
 	static const casacore::String _class;
 

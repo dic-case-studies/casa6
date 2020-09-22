@@ -325,7 +325,7 @@ public:
     virtual casacore::Int polarizationId () const;
     virtual const casacore::Vector<casacore::Int> & processorId () const;
     virtual void setProcessorId (const casacore::Vector<casacore::Int> & value);
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const;
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const;
     virtual const casacore::Vector<casacore::Int> & scan () const;
     virtual void setScan (const casacore::Vector<casacore::Int> & value);
     virtual const casacore::Matrix<casacore::Float> & sigma () const;
@@ -546,7 +546,7 @@ private:
     virtual void fillPolFrame (casacore::Int& value) const;
     virtual void fillPolarizationId (casacore::Int& value) const;
     virtual void fillProcessorId (casacore::Vector<casacore::Int>& value) const;
-    virtual void fillRowIds (casacore::Vector<casacore::uInt>& value) const;
+    virtual void fillRowIds (casacore::Vector<casacore::rownr_t>& value) const;
     virtual void fillScan (casacore::Vector<casacore::Int>& value) const;
     virtual void fillSigma (casacore::Matrix<casacore::Float>& value) const;
     virtual void fillSigmas (casacore::Vector<casacore::Matrix<casacore::Float>>& value) const;

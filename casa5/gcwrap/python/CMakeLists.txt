@@ -85,6 +85,7 @@ scripts/regressframe.py
 scripts/regression_utility.py
 scripts/restfreqtool.py
 scripts/sdbeamutil.py
+scripts/sdint_helper.py
 scripts/sdutil.py
 scripts/setjy_helper.py
 scripts/simutil.py
@@ -189,10 +190,12 @@ scripts/task_sdfit.py
 scripts/task_sdfixscan.py
 scripts/task_sdgaincal.py
 scripts/task_sdimaging.py
+scripts/task_sdintimaging.py
 scripts/task_tsdimaging.py
 scripts/task_sdpolaverage.py
 scripts/task_sdsidebandsplit.py
 scripts/task_sdsmooth.py
+scripts/task_sdtimeaverage.py 
 scripts/task_setjy.py
 scripts/task_simalma.py
 scripts/task_simobserve.py
@@ -244,3 +247,4 @@ add_subdirectory( scripts/parallel )
 add_subdirectory( scripts/mpi4casa )
 add_subdirectory( scripts/imagerhelpers )
 add_subdirectory( scripts/casatasks )
+add_subdirectory( scripts/casatestutils )

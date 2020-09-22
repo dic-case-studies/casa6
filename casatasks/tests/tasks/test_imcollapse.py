@@ -165,14 +165,15 @@ class imcollapse_test(unittest.TestCase):
                         function, axes, outfile, region, box,
                         chans, stokes, mask, overwrite
                     )
-                elif len(function) == 0 or function == "bogus function" or region == "bogus_region" or \
-                     box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
+                elif len(imagename) == 0 or imagename == bogus or len(function) == 0 \
+                    or function == "bogus function" or region == "bogus_region" \
+                    or box == "abc" or box == "0,0,1000,1000" or type(axes) == str or axes >= 4:
                     self.assertRaises(
                         RuntimeError, run_collapse, imagename,
                         function, axes, outfile, region, box,
                         chans, stokes, mask, overwrite
                     )
-                elif len(imagename) == 0 or imagename == bogus or len(outfile) == 0:
+                elif len(outfile) == 0:
                     self.assertRaises(
                         AssertionError, run_collapse, imagename,
                         function, axes, outfile, region, box,
@@ -223,11 +224,10 @@ class imcollapse_test(unittest.TestCase):
                 else:
                     for wantreturn in [True, False]:
                         outname = outname + str(wantreturn)
-                        res = run_imcollapse(
+                        run_imcollapse(
                             good_image, "mean", 0, outname, "", "",
                             "", "", "", False
                         )
-                        self.assertTrue(res)
                         self.checkImage(outname, expected)
                 shutil.rmtree(outname)
 
@@ -248,11 +248,10 @@ class imcollapse_test(unittest.TestCase):
                     self.checkImage(outname, expected)
                 else:
                     outname = outname + "imcollapse"
-                    res = run_imcollapse(
-                    good_image, "mean", 2, outname, "", "",
+                    run_imcollapse(
+                        good_image, "mean", 2, outname, "", "",
                         "", "", "", False
                     )
-                    self.assertTrue(res)
                     self.checkImage(outname, expected)
                 shutil.rmtree(outname)
 
@@ -290,14 +289,13 @@ class imcollapse_test(unittest.TestCase):
                outname = outname + "imcollapse"
                # check that can overwrite previous output. Then check output image
                res = run_imcollapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", False
+                   good_image, "sum", 1, outname, "", box,
+                   chans, stokes, "", False
                )
-               res = run_imcollapse(
-                    good_image, "sum", 1, outname, "", box,
-                    chans, stokes, "", True
+               run_imcollapse(
+                   good_image, "sum", 1, outname, "", box,
+                   chans, stokes, "", True
                )
-               self.assertTrue(res)
                self.checkImage(outname, expected)
             shutil.rmtree(outname)
 
@@ -350,11 +348,10 @@ class imcollapse_test(unittest.TestCase):
                     self.checkImage(mytool, expected)
                 else:
                     outfile = "test_7.out"
-                    res = run_imcollapse(
+                    run_imcollapse(
                         good_image, "mean", [0, 1], outfile, "", "",
                         "", "", "", overwrite=True
                     )
-                    self.assertTrue(res)
                     self.checkImage(outfile, expected)
 
     def test_8(self):
@@ -517,7 +514,7 @@ class imcollapse_test(unittest.TestCase):
                     good_image, "mean", 0, outfile, "", "", "",
                     "", maskim + ">0", False, stretch=True
                 )
-                self.assertTrue(res)
+                self.assertIsNone(res)
             
     def test_CAS3737(self):
         """ imcollapse: test tabular spectral axis has correct collapsed reference value """

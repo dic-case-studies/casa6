@@ -38,9 +38,7 @@ def imstat(
             lside=lside, zscore=zscore, maxiter=maxiter,
             clmethod=clmethod, niter=niter
         )
-    except Exception as instance:
-        casalog.post( '*** Error ***'+str(instance), 'SEVERE' )
-        raise
+
     finally:
         _myia.done()
         _myrg.done()

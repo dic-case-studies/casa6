@@ -597,7 +597,7 @@ Bool SimpleSimVi2::existsColumn (VisBufferComponent2 id) const
   // to find correspondance between a given row in this iteration to the
   // original ms row
 
-void SimpleSimVi2::getRowIds (Vector<uInt> &) const {
+void SimpleSimVi2::getRowIds (Vector<rownr_t> &) const {
   SSVi2NotYetImplemented()
   /*
   rowids.resize(nRows());
@@ -920,6 +920,10 @@ Int SimpleSimVi2::nRowsViWillSweep () const { SSVi2NotYetImplemented() } // numb
 
 Int SimpleSimVi2::nSpectralWindows () const { return pars_.nSpw_; }
 
+Int SimpleSimVi2::nTimes() const {
+    SSVi2NotYetImplemented();
+}
+
 
 void SimpleSimVi2::configureNewSubchunk() {
 
@@ -1128,8 +1132,6 @@ ViImplementation2 * SimpleSimVi2Factory::createVi () const {
   return vii;
   
 }
-
-
 
 SimpleSimVi2LayerFactory::SimpleSimVi2LayerFactory(const SimpleSimVi2Parameters& pars)
   : ViiLayerFactory(),

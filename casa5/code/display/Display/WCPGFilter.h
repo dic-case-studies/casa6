@@ -28,13 +28,9 @@
 #ifndef TRIALDISPLAY_WCPGFILTER_H
 #define TRIALDISPLAY_WCPGFILTER_H
 
-#include <casa/aips.h>
-
-namespace casacore{
-
-	template <class T> class Matrix;
-	template <class T> class Vector;
-}
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

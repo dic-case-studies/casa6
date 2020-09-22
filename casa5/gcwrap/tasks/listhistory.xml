@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="listhistory" category="information">
+<task category="information" name="listhistory" type="function">
     <shortdescription>List the processing history of a dataset:</shortdescription>
     <description>
         List the processing history of a dataset:
@@ -13,9 +8,9 @@
         given in the logger.
     </description>
     <input>
-        <param type="string" name="vis" mustexist="true">
-            <description>Name of input visibility file (MS)</description>
-            <value></value>
+        <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+            
+            <value/>
         </param>
     </input>
 <returns type="void"/>

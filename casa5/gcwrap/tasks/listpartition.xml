@@ -1,11 +1,6 @@
- 
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="listpartition" category="information">
+<task category="information" name="listpartition" type="function">
        <shortdescription>List the summary of a multi-MS data set in the logger or in a file</shortdescription>
        <description>
        Lists the following properties of a multi-measurement set:
@@ -13,19 +8,19 @@
        number of rows for all scans.
        </description>
        <input>
-              <param type="string" name="vis" mustexist="true">
-                     <description>Name of Multi-MS or normal MS.</description>
-                     <value></value>
+              <param mustexist="true" name="vis" type="string"><shortdescription>Name of Multi-MS or normal MS.</shortdescription><description>Name of Multi-MS or normal MS.</description>
+                     
+                     <value/>
               </param>
 
-        <param type="bool" name="createdict">
-            <description>Create and return a dictionary with Sub-MS information</description>
+        <param name="createdict" type="bool"><shortdescription>Create and return a dictionary with Sub-MS information</shortdescription><description>Create and return a dictionary with Sub-MS information</description>
+            
             <value>False</value>
         </param>
               
-              <param type="string" name="listfile">
-                     <description>Name of ASCII file to save output: ''==>to terminal</description>
-                     <value></value>
+              <param name="listfile" type="string"><shortdescription>Name of ASCII file to save output: ''==&gt;to terminal</shortdescription><description>Name of ASCII file to save output: ''==&gt;to terminal</description>
+                     
+                     <value/>
               </param>
             
        </input>
@@ -38,13 +33,13 @@
        located in a directory called SUBMSS inside the MMS directory.
        Example of a MS that was partitioned in the 'scan' axis using the task partition: 
 
-       > ls ngc5921.mms
+       &gt; ls ngc5921.mms
          ANTENNA           FLAG_CMD     POLARIZATION  SPECTRAL_WINDOW  table.dat
          DATA_DESCRIPTION  HISTORY      PROCESSOR     STATE            table.info
          FEED              OBSERVATION  SORTED_TABLE  SUBMSS           WEATHER
          FIELD             POINTING     SOURCE        SYSCAL
 
-       > ls ngc5921.mms/SUBMSS/
+       &gt; ls ngc5921.mms/SUBMSS/
          ngc5921.0000.ms/  ngc5921.0002.ms/  ngc5921.0004.ms/  ngc5921.0006.ms/
          ngc5921.0001.ms/  ngc5921.0003.ms/  ngc5921.0005.ms/
               

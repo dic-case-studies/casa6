@@ -23,7 +23,7 @@
 #include <stdcasa/StdCasa/CasacSupport.h>
 
 //DEBUG
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 using namespace std;
 using namespace casacore;
