@@ -45,13 +45,19 @@
 # test_listunfl checks that unflagged information is displayed by listobs
 #
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 CASA6 = False
+import string
 import sys
 import os
 import unittest
 import hashlib
 import subprocess
 import shutil
+
+from casatasks.private.casa_transition import *
+
 try:
     import casatools
     from casatasks import partition, split, listobs, casalog
@@ -65,21 +71,37 @@ except ImportError:
 
 # If the test is being run in CASA6 use the new method to get the CASA path
 if CASA6:
-    datapath = casatools.ctsys.resolve('/data/regression/unittest/listobs')
+    datapath = casatools.ctsys.resolve('/regression/unittest/listobs/')
+    ### for listing import
+    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    import listing as lt
 
 else:
     dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
     datapath = dataroot + 'unittest/listobs/'
+    import listing as lt
 
     # Generate the test data
 
 if CASA6:
     mesSet = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
+    #Data for old test
+    msfile1Orig = casatools.ctsys.resolve('visibilities/vla/ngc5921_ut.ms')
+    msfile2Orig = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
+    nep = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'):
         mesSet = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
+        #Data for old test
+        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921_ut.ms'
+        msfile2Orig = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
+        nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
     else:
         mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
+        #Data for old test
+        msfile1Orig = datapath + 'ngc5921.ms'
+        msfile2Orig = datapath + 'uid___X02_X3d737_X1_01_small.ms'
+        nep = datapath + 'nep2-shrunk.ms'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -106,6 +128,12 @@ if not os.path.exists(outvis):
 timeavg_mms = outvis
 
 logpath = casalog.logfile()
+# Old test input and output names
+msfile1 = 'ngc5921_ut.ms'
+msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
+#nep = 'nep2-shrunk.ms'
+# Old reffiles
+reffile = os.path.join(datapath, 'reflistobs')
 
 
 def _sha1it(filename):
@@ -493,12 +521,24 @@ class test_listobs(listobs_test_base):
         self.res = None
         if not CASA6:
             default(listobs)
+        #From merged cases
+        if CASA6:
+            self.ms = ms
+        else:
+            self.ms = ms
+        if (not os.path.lexists(msfile1)):
+            shutil.copytree(os.path.join(datapath,msfile1Orig), msfile1, symlinks=True)
+        if (not os.path.lexists(msfile2)):
+            shutil.copytree(os.path.join(datapath,msfile2Orig), msfile2, symlinks=True)
 
     def tearDown(self):
         # remove files and temp logs
         os.system('rm -rf ' + 'listobs*.txt')
         os.system('rm -rf testlog.log')
         casalog.setlogfile(str(logpath))
+        #From merged cases
+        if CASA6:
+            self.ms.done()
 
     @classmethod
     def tearDownClass(cls):
@@ -507,6 +547,12 @@ class test_listobs(listobs_test_base):
         os.system('rm -rf gentimeavgms.ms')
         os.system('rm -rf gentimeavgmms.mms')
         os.system('rm -rf genmms.mms.flagversions')
+        #From merged tests
+        shutil.rmtree(msfile1, ignore_errors=True)
+        shutil.rmtree(msfile2, ignore_errors=True)
+        os.system('rm -f diff*')
+        os.system('rm -f newobs*')
+        os.remove('CAS-5203.log')
 
     # Test that Different ms are taken
     def test_wrongInp(self):
@@ -902,6 +948,145 @@ class test_listobs(listobs_test_base):
     def test_listunflTimeAvgMMS(self):
         '''Listobs test: Check that the list unflagged column shows up in a time-averaged MMS'''
         self.unfcheck(timeavg_ms)
+
+    # Start of merged cases from test_listobs
+
+    def test1(self):
+        '''Listobs 1: Input MS'''
+        listobs(vis=msfile1, listunfl=True)
+
+    def test2(self):
+        '''Listobs 2: CSV-591. Check if long field names are fully displayed'''
+        self.ms.open(msfile1)
+        res = self.ms.summary(True, listunfl=True)
+        self.ms.close()
+        name = res['field_0']['name']
+        self.assertFalse(name.__contains__('*'), "Field name contains a *")
+        name = res['scan_7']['0']['FieldName']
+        self.assertFalse(name.__contains__('*'), "Field name contains a *")
+
+    def test3(self):
+        '''Listobs 3: CAS-2751. Check that ALMA MS displays one row per scan'''
+        self.ms.open(msfile2)
+        res = self.ms.summary(True, listunfl=True)
+        self.ms.close()
+        # Begin and end times should be different
+        btime = res['scan_1']['0']['BeginTime']
+        etime = res['scan_1']['0']['EndTime']
+        self.assertNotEqual(btime, etime, "Begin and End times of scan=1 should not be equal")
+        
+        # Only one row of scan=1 should be printed
+        output = 'listobs4.txt'
+        out = "newobs4.txt"
+        reference = reffile+'4'
+        diff = "difflistobs4"
+        
+        listobs(vis=msfile2, verbose=True, listfile=output, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different. %s != %s. '
+                        'See the diff file %s.'%(out,reference, diff))
+        
+    def test4(self):
+        '''Listobs 4: Save on a file, verbose=False'''
+        output = 'listobs5.txt'
+        out = "newobs5.txt"
+        reference = reffile+'5'
+        diff1 = "diff1listobs5"
+        diff2 = "diff2listobs5"
+        
+        #        # Run it twice to check for the precision change
+        self.res = listobs(vis=msfile1, verbose = False, listfile=output, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff1)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different in first run. %s != %s. '
+                        'See the diff file %s.'%(out,reference, diff1))
+            
+        os.system('rm -rf '+output+ " "+out)
+        self.res = listobs(vis=msfile1, verbose = False, listfile=output, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff2)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different in second run. %s != %s. '
+                        'See the diff file %s.'%(out,reference,diff2))
+
+    def test5(self):
+        '''Listobs 5: Save on a file, verbose=True'''
+        output = 'listobs6.txt'
+        out = "newobs6.txt"
+        diff = "difflistobs6"
+        reference = reffile+'6'
+        self.res = listobs(vis=msfile1, listfile=output, verbose = True, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different. %s != %s. '
+                        'See the diff file %s.'%(out,reference,diff))
+        
+        
+    def test6(self):
+        '''Listobs 6: test scan selection parameters'''
+        output = "listobs7.txt"
+        out = "newobs7.txt"
+        diff = "difflistobs7"
+        reference = reffile+'7'
+        self.res = listobs(vis=msfile1, scan='2', listfile=output, verbose=True, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different. %s != %s. '
+                        'See the diff file %s.'%(out,reference,diff))
+
+    def test7(self):
+        '''Listobs 7: test antenna selection parameters'''
+        output = "listobs8.txt"
+        out = "newobs8.txt"
+        diff = "difflistobs8"
+        reference = reffile+'8'
+        self.res = listobs(vis=msfile1, antenna='3&&4', listfile=output, verbose=True, listunfl=True)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different. %s != %s. '
+                        'See the diff file %s.'%(out,reference,diff))
+        
+    def test_ephem(self):
+        '''ephemeris objects'''
+        output = "listobs9.txt"
+        out = "newobs9.txt"
+        diff = "difflistobs9"
+        reference = reffile+'9'
+        self.res = listobs(vis=os.path.join(datapath,nep), listfile=output, verbose=True, listunfl=False)
+        #        # Remove the name of the MS from output before comparison
+        os.system("sed '1,3d' "+ output+ ' > '+ out)
+        os.system("diff "+reference+" "+out+" > "+diff)
+        self.assertTrue(lt.compare(out,reference),
+                        'New and reference files are different. %s != %s. '
+                        'See the diff file %s.'%(out,reference,diff))
+
+    def test_overwrite(self):
+        """Test overwrite parameter - CAS-5203"""
+        listfile = "CAS-5203.log"
+        listobs(vis=msfile1, listfile=listfile)
+        
+        # test default value is overwrite=False
+        with self.assertRaises(RuntimeError):
+            listobs(vis=msfile1, listfile=listfile)
+        with self.assertRaises(RuntimeError):
+            listobs(vis=msfile1, listfile=listfile, overwrite=False)
+
+        expec = _sha1it(listfile)
+        listobs(vis=msfile1, listfile=listfile, overwrite=True)
+        got = _sha1it(listfile)
+        self.assertTrue(got == expec)
 
 def suite():
     return[test_listobs]
