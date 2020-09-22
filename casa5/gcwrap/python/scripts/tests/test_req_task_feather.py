@@ -131,11 +131,13 @@ class feather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 feather(imagename=output, lowres=sdpath)
         else:
-            casalog.setlogfile(logname)
-            feather(imagename=output, lowres=sdpath)
-            self.assertTrue(('SEVERE' in open(logname).read()))
+            with self.assertRaises(RuntimeError):
+                feather(imagename=output, lowres=sdpath)
             
-        
+#             casalog.setlogfile(logname)
+#             feather(imagename=output, lowres=sdpath)
+#             self.assertTrue(('SEVERE' in open(logname).read()))
+                   
     def test_lowres(self):
         '''
             test_lowres
@@ -149,9 +151,11 @@ class feather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 feather(imagename=output, highres=interpath)
         else:
-            casalog.setlogfile(logname)
-            feather(imagename=output, highres=interpath)
-            self.assertTrue('SEVERE' in open(logname).read())
+            with self.assertRaises(RuntimeError):
+                feather(imagename=output, highres=interpath)            
+#             casalog.setlogfile(logname)
+#             feather(imagename=output, highres=interpath)
+#             self.assertTrue('SEVERE' in open(logname).read())
         
         
     def test_sdfactor(self):
@@ -190,9 +194,11 @@ class feather_test(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
         else:
-            casalog.setlogfile(logname)
-            feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
-            self.assertTrue('SEVERE' in open(logname).read())
+            with self.assertRaises(RuntimeError):
+                feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)            
+#             casalog.setlogfile(logname)
+#             feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
+#             self.assertTrue('SEVERE' in open(logname).read())
         
     def test_lowpassfiltersd(self):
         '''

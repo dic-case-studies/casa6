@@ -6,8 +6,11 @@
       file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <task type="function" name="accum" category="calibration">
-    <shortdescription>Accumulate incremental calibration solutions into a calibration table</shortdescription>
+    <shortdescription>Accumulate incremental calibration solutions into a calibration table (NB: ACCUM WILL BE REMOVED IN CASA 5.8/6.2)</shortdescription>
 <description>
+
+NOTE: THIS TASK HAS BEEN DEPRECATED, AND WILL BE REMOVED IN CASA 5.8/6.2.
+
 Accum will interpolate and extrapolate a calibration table onto a new
 table that has a regularly-space time grid.
 

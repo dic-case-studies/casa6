@@ -366,7 +366,7 @@ void TJones::guessPar(VisBuffer& vb) {
 }
 
 
-void TJones::guessPar(SDBList& sdbs) {
+void TJones::guessPar(SDBList& sdbs,const Bool&) {
 
   if (prtlev()>4) cout << "   T::guessPar(sdbs)" << endl;
 
@@ -864,7 +864,7 @@ void GJones::guessPar(VisBuffer& vb) {
   */
 }
 
-void GJones::guessPar(SDBList& sdbs) {
+void GJones::guessPar(SDBList& sdbs, const Bool& corrDepFlags) {
 
   if (prtlev()>4) cout << "   G::guessPar(sdbs)" << endl;
 
@@ -911,9 +911,11 @@ void GJones::guessPar(SDBList& sdbs) {
     rowok(irow)= (!sdb.flagRow()(irow) &&
 		  a1!=a2);
 
-    // All relevant correlations must be good
-    for (Int icorr=0;icorr<nCorr;++icorr)
-      rowok(irow)=(rowok(irow) && !sdb.flagCube()(corridx[icorr],guesschan,irow));
+    if (!corrDepFlags) {
+      // All relevant correlations must be good
+      for (Int icorr=0;icorr<nCorr;++icorr)
+	rowok(irow)=(rowok(irow) && !sdb.flagCube()(corridx[icorr],guesschan,irow));
+    }
 
     if (rowok(irow)) {
       antok(a1)++;

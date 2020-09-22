@@ -251,6 +251,7 @@ public:
   virtual casacore::Int& maxits() { return maxits_; }
   virtual casacore::Array<casacore::Double>& delayWindow() { return delayWindow_; }
   virtual casacore::Array<casacore::Double>& rateWindow() { return rateWindow_; }
+  virtual casacore::Array<casacore::Bool>& paramActive() { return paramActive_; }
   
   // Apply reference antenna
   virtual void applyRefAnt();
@@ -291,6 +292,7 @@ private:
   casacore::Bool globalSolve_;
   casacore::Array<casacore::Double> delayWindow_;
   casacore::Array<casacore::Double> rateWindow_;
+  casacore::Array<casacore::Bool> paramActive_;
   casacore::Int maxits_;
 };
 

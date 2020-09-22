@@ -1115,6 +1115,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  }
       }// setting model to zero
 
+    //Need to inialize the the forward ft machine to save the virtual model on first pass of each ms.
+    if(!dopsf && savevirtualmodel){
+      vi::VisBuffer2* vb=vi_p->getVisBuffer();
+      vi_p->originChunks();
+      vi_p->origin();
+      itsMappers.initializeDegrid(*vb, -1);
+    }
     
     for(Int gmap=0;gmap<itsMappers.nMappers();gmap++)
        {

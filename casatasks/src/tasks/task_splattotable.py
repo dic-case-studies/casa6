@@ -77,14 +77,11 @@ def splattotable(filenames=None, table=None):
 
     try:
         if (len(table) == 0):
-            raise Exception("table must be specified.")
+            raise ValueError("table must be specified.")
         newsl = mysl.splattotable(filenames=filenames, table=table)
         if (not newsl):
-            raise Exception("Exception when running sl.splattotable")
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+            raise RuntimeError("Error when running sl.splattotable")
+
     finally:
         if newsl:
             newsl.done()

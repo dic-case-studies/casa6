@@ -28,14 +28,10 @@
 #ifndef TRIALDISPLAY_WCDATASCALEHANDLER_H
 #define TRIALDISPLAY_WCDATASCALEHANDLER_H
 
-#include <casa/aips.h>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Containers/Record.h>
 #include <display/Utilities/DisplayOptions.h>
-
-namespace casacore{
-
-	template <class T> class Array;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

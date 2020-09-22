@@ -36,7 +36,7 @@
 
 #include <casa/aipstype.h>
 #include <casa/Exceptions/Error.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/BasicSL/String.h>
 #include <casa/Quanta/Quantum.h>
@@ -665,15 +665,15 @@ Vector<Double> PointingDirectionCalculator::getDirection(uInt i) {
     return direction;
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowId() {
+Vector<rownr_t> PointingDirectionCalculator::getRowId() {
     return selectedMS_->rowNumbers();
 }
 
-Vector<uInt> PointingDirectionCalculator::getRowIdForOriginalMS() {
+Vector<rownr_t> PointingDirectionCalculator::getRowIdForOriginalMS() {
     return selectedMS_->rowNumbers(*originalMS_, True);
 }
 
-uInt PointingDirectionCalculator::getRowId(uInt i) {
+rownr_t PointingDirectionCalculator::getRowId(uInt i) {
     return selectedMS_->rowNumbers()[i];
 }
 

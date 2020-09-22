@@ -56,7 +56,7 @@
 
 #include <casa/aipstype.h>
 #include <casa/Exceptions/Error.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/BasicSL/String.h>
 #include <casa/Quanta/Quantum.h>
@@ -1793,7 +1793,7 @@ TEST_F(TestMeasurementSet, RowId_inMS )
 
         // getRowIdForOriginalMS //
 
-          Vector<uInt> vRowIdOrgMS = calc.getRowIdForOriginalMS();
+          Vector<rownr_t> vRowIdOrgMS = calc.getRowIdForOriginalMS();
           calc.selectData( ant_sel,  "","","","","","","","","" );
           uInt nrow = calc.getNrowForSelectedMS();
 
@@ -1802,7 +1802,7 @@ TEST_F(TestMeasurementSet, RowId_inMS )
         // Vecrtor<uInt> getRowID() 
         
           Description("(1) Vector<uInt> getRowId() ", local_ms);
-          Vector<uInt> vRowId = calc.getRowId();
+          Vector<rownr_t> vRowId = calc.getRowId();
 
         // Show and Verify //
           

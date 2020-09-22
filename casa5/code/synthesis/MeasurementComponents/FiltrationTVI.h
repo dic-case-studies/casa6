@@ -164,7 +164,7 @@ public:
   // Return the row ids as from the original root table. This is useful
   // to find correspondance between a given row in this iteration to the
   // original ms row
-  virtual void getRowIds(casacore::Vector<casacore::uInt> & rowids) const;
+  virtual void getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const;
 
   //   +=========================+
   //   |                         |

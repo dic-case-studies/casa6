@@ -128,7 +128,10 @@ class exportuvfits_test(unittest.TestCase):
         self.assertTrue(myms.tofits(fitsname, overwrite=True))
         myms.done()
         self.assertRaises(Exception, exportuvfits, msname, fitsname, overwrite=False)
-        self.assertTrue(exportuvfits(msname, fitsname, overwrite=True))
+        try:
+            exportuvfits(msname, fitsname, overwrite=True)
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
             
 def suite():
     return [exportuvfits_test]        

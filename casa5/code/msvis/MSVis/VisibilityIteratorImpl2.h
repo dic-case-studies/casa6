@@ -510,7 +510,7 @@ public:
 	// to find correspondance between a given row in this iteration to the
 	// original ms row
 	virtual void
-	getRowIds(casacore::Vector<casacore::uInt> & rowids) const override;
+	getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	// Return the numbers of rows in the current chunk
 	virtual casacore::Int
@@ -1101,7 +1101,7 @@ protected:
 		casacore::Double azelTime_p;
 		// Row numbers of underlying casacore::MS; used to map form chunk rows
 		// to casacore::MS rows.  See rowIds method.
-		casacore::Vector<casacore::uInt> chunkRowIds_p;
+		casacore::Vector<casacore::rownr_t> chunkRowIds_p;
 		casacore::Vector<casacore::Float> feedpa_p;
 		casacore::Double feedpaTime_p;
 		casacore::Double hourang_p;

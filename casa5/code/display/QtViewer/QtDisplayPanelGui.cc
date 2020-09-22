@@ -1253,7 +1253,12 @@ bool QtDisplayPanelGui::supports( SCRIPTING_OPTION ) const {
 	return false;
 }
 
+#if defined(CASA6)
+QVariant QtDisplayPanelGui::start_interact( std::promise<QVariant> &&prom, const QVariant &, int ) {
+    prom.set_value(QVariant(false));
+#else
 QVariant QtDisplayPanelGui::start_interact( const QVariant &, int ) {
+#endif
 	return QVariant(QString("*error* unimplemented (by design)"));
 }
 QVariant QtDisplayPanelGui::setoptions( const QMap<QString,QVariant> &, int ) {

@@ -368,6 +368,7 @@ calibrater::setsolve(const std::string& type,
                      const int niter,
                      const vector<double>& delaywindow,
                      const vector<double>& ratewindow,
+                     const vector<bool>& paramactive,
 		     const std::string& solmode,
 		     const vector<double>& rmsthresh
     )
@@ -398,7 +399,7 @@ calibrater::setsolve(const std::string& type,
 			    toCasaString(refant),refantmode,
 			    solnorm,normtype, minsnr,combine,fillgaps,
 			    cfcache, painc, fitorder, fraction, numedge, radius, smooth,
-                            zerorates, globalsolve, niter, delaywindow, ratewindow, solmode, rmsthresh);
+                            zerorates, globalsolve, niter, delaywindow, ratewindow, paramactive, solmode, rmsthresh);
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
@@ -1115,8 +1116,8 @@ calibrater::rerefant(const std::string& tablein,
   try {
 
     logSink_p.clearLocally();
-    LogIO os(LogOrigin("calibrater", "refant"),logSink_p);
-    os << "Beginning smooth--(MSSelection version)-------" << LogIO::POST;
+    LogIO os(LogOrigin("calibrater", "rerefant"),logSink_p);
+    os << "Beginning rerefant--(MSSelection version)-------" << LogIO::POST;
 
     String tabo(tableout);
 
@@ -1396,6 +1397,25 @@ casac::record* calibrater::parsecallibfile(const std::string& filein )
   return( oRec );
  
 }
+
+//----------------------------------------------------------------------------
+
+bool
+calibrater::setcorrdepflags(const bool corrdepflags)
+{
+
+ bool rstat(false);
+ try {
+
+   rstat=itsCalibrater->setCorrDepFlags(corrdepflags);
+
+ } catch  (AipsError x) {
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    RETHROW(x);
+ }
+ return rstat;
+};
+
 
 //----------------------------------------------------------------------------
 

@@ -168,12 +168,12 @@ class ia_hanning_test(unittest.TestCase):
             outfile = "out" + str(i) + ".im"
             if (i < 2):
                 self.assertRaises(Exception, myia.hanning, region=reg, axis=2)
-                self.assertFalse(
+                with self.assertRaises(RuntimeError):
                     specsmooth(
                         imagename=imagename, outfile=outfile,
                         region=reg, function="h", axis=2
                     )
-                )
+
             else:
                 for drop in (False, True):
                     outfile = "out" + str(i) + str(drop) + ".im"
