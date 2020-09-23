@@ -1,5 +1,3 @@
-# common import
-# from Script
 import os
 import pylab as pl
 import shutil
@@ -51,19 +49,18 @@ def sdatmcor(
         debug):
 
 # Information
-    msg = "Revision  sdatmcor 0917-1 testing data-selection"
-    print(msg)
-    casalog.post(msg, 'INFO', origin=origin)
+    msg = "Revision  sdatmcor 0923-1 Initital Unit Test and Debug"
+    atmcor_msg(msg)
 
 #
 # File Handling
 #
     # infile oufile, must be specified.
     if infile == '':
-        print ("FATAL:: infile MUST BE  specified.")
+        atmcor_msg("ERROR:: infile MUST BE  specified.", 'SEVERE')
         return False
     if outfile == '':
-        print ("FATAL:: outfile MUST BE specified.")
+        atmcor_msg("ERROR:: outfile MUST BE specified.", 'SEVERE')
         return False
 
     # infile
@@ -77,10 +74,7 @@ def sdatmcor(
 
     # in case infile == outfile
     if infile == outfile:
-        msg = "You are atempting to write on input file."
-        print(msg)
-        casalog.post(msg, 'SEVERE', origin=origin)
-
+        atmcor_msg("ERROR:: You are attempting to write on input file.", 'SEVERE')
         raise Exception
 
 #
@@ -152,20 +146,23 @@ def atmMst(
 # Subroutines
 ##########################
 
-# by  Wataru, thanks. #
+#
+# file handling 
+#
+
 def ms_remove(path):
     if (os.path.exists(path)):
-        print("- Atempt to delete [%s]."%path)
+        atmcor_msg("- Atempt to delete [%s]."%path)
         if (os.path.isdir(path)):
             shutil.rmtree(path)
         else:
             os.remove(path)
     else:
-        print("- No file to delete [%s]"%path)
+        atmcor_msg("- No file to delete [%s]"%path)
 
 
 def ms_copy(src, dst):
-    print("- Copying [%s] ->[%s]."%(src, dst))
+    atmcor_msg("- Copying [%s] ->[%s]."%(src, dst))
     shutil.copytree(src, dst)
 
 def file_exist(path):
@@ -175,6 +172,10 @@ def file_exist(path):
         return False
 
 
+#
+# Unit handling service
+#
+
 def form_value_unit(data, base_unit):
     if (data == ''):
         return ''  
@@ -182,25 +183,22 @@ def form_value_unit(data, base_unit):
     ext_unit = qa.getunit(data)
     if (ext_unit in base_unit):
         # INFO #
-        msg = "INFO::Data with Unit '%s'" % data
-        print(msg)
-        casalog.post(msg, 'INFO', origin=origin)
+        atmcor_msg("Unit Conversion::Data with Unit '%s'" % data) 
         return qa.getvalue(data)[0]
     elif (ext_unit == ''):
         # INFO #
-        msg = "WARN::No unit specified in %s . Assumed '%s'" % (data, base_unit)
-        casalog.post(msg, 'WARN', origin=origin)
+        atmcor_msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit),'WARN')
         return data
     else:
         # FATAL #
-        msg = "FATAL:: Unexpected Unit '%s' in %s . Aborted." % (ext_unit,data)
-        casalog.post(msg, 'SEVERE', origin=origin)
-
+        atmcor_msg("Unit conversion:: Unexpected Unit '%s' in %s . Aborted." % (ext_unit,data), 'SEVERE')
         raise Exception
 
+#
+# Argument parameter handling
+#
 
 def set_float_param(in_arg, def_para):
-    #   print( "set_float_param::", in_arg, def_para )
     if (in_arg != -1)and(in_arg > 0):
         return in_arg
     else:
@@ -289,6 +287,14 @@ def conv_to_doubleArrayList( in_list ):
     out_list = [float(s) for s in in_list]  # convert to list[int]
     return out_list
 
+#
+# Logging CASA LOG (INFO/WARN/SEVERE)
+#
+def atmcor_msg(msg, msgtype='INFO'):
+    print(msg)
+    casalog.post(msg, msgtype, origin=origin)
+
+
 #########################
 # Search ANTENNA_ID 
 #########################
@@ -305,13 +311,21 @@ def get_antennaId( msname, antennaName):
     # close
     subtb.close()
     tb.close()
-    print('get_antennaId:: iAnt = ', iAnt)
+    atmcor_msg("get_antennaId:: iAnt = %d" % iAnt)
     return iAnt
     
 
 #
 # ATM Profile
 #
+
+def showAtmInfo(atm):
+        # ATM Profile #
+        if is_CASA6: 
+            for s in atm:
+                atmcor_msg(s)
+        else:
+            atmcor_msg(atm)
 
 def showLayerInfo(at):
     p = at.getProfile()
@@ -326,7 +340,7 @@ def showLayerInfo(at):
 #        Number density of water vapor(idx=4), and Pressure (idx=5)
 #        print(p[1]['value'][i],p[2]['value'][i],p[4]['value'][i],p[5]['value'][i])    
 
-    print(p[0])
+    atmcor_msg(p[0])
     return
 #
 # Sum Method (Replaced to C++ in future)
@@ -362,43 +376,9 @@ def calc_sdatmcor(
         a_layertemperature,
         debug):
 
-    if True:  # flag option is reserved. #
-        print("*********************************************")
-        print("**   calc_sdatmcor::                       **")
-        print("*********************************************")
-        print('infile      =', p_infile, type(p_infile))
-        print('datacolumn  =', p_datacolumn, type(p_datacolumn))
-        print('outfile     =', p_outfile, type(p_outfile))
-        print('overwrite   =', p_overwrite, type(p_overwrite))
-        print('field       =', p_field, type(p_field))
-        print('spw         =', p_spw,type(p_spw))
-        print('scan        =', p_scan, type(p_scan))
-        print('antenna     =', p_antenna, type(p_antenna))
-        print('correlation =', p_correlation, type(p_correlation))
-        print('timerange   =', p_timerange, type(p_timerange))
-        print('intent      =', p_intent, type(p_intent))
-        print('observation =', p_observation, type(p_observation))
-        print('feed        =', p_feed, type(p_feed))
-        print('msselect    =', p_msselect,type(p_msselect))
-        print('outputspw   =', a_outputspw, type(a_outputspw))
-        print('dtem_dh     =', a_dtem_dh, type(a_dtem_dh))
-        print('h0          =', a_h0, type(a_h0))
-        print('atmtype     =', a_atmtype, type(a_atmtype))
-        print('atmdetail   =', atmdetail, type(atmdetail))
-
-        print('altitude    =', a_altitude, type(a_altitude))
-        print('temperature =', a_temperature, type(a_temperature))
-        print('pressure    =', a_pressure, type(a_pressure))
-        print('humidity    =', a_humidity, type(a_humidity))
-        print('PWV         =', a_PWV, type(a_PWV))
-        print('dp          =', a_dp, type(a_dp))
-        print('dpm         =', a_dpm, type(a_dpm))
-        # reserved #
-        print('layerboundaries   =', a_layerboundaries, type(a_layerboundaries))
-        print('layertemperature  =', a_layertemperature,type(a_layertemperature))
-
-        print('debug       =', debug)
-        print("*****************************")
+    # Dump Arg (now not coded) 
+    #   if need to check and arg
+    #   pleas insert::  print('antenna     =', p_antenna, type(p_antenna))
 
     # debug flags  #
     skipTaskExec = False          # skip execution in do_sdatmcor() until official test code is ready
@@ -454,8 +434,7 @@ def calc_sdatmcor(
     # TENTATIVE::  skip task execution while UnitTest is incomplete.
     if(skipTaskExec is True):
         msg = "-------  Task Execution is skipped."
-        print(msg)
-        casalog.post(msg)
+        atmcor_msg(msg)
         return True
 
     #
@@ -484,17 +463,12 @@ def calc_sdatmcor(
     calms = '%s%s' % (ebuid, ebext)                    ### name of MS in which (standard-)calibrated spectra are stored
     corms = '%s.ms.atm%d' % (ebuid, atmtype_for_file)  ### name of MS form (based on Original)
 
-    # outfile (=corms), Assist (reserved if needed)
-    if False:
-        if (outfile == ''):
-            corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
-        elif (outext == ''):
-            corms = '%s%s.atm%d' %(outfile, ebext, atmtype_for_file)   # use same mane as infile +'<infileext>' #
-        else:
-            corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
-    else:
-        corms = '%s%s' %(outfile, outext)     # use same mane as infile #
-
+    # outfile set (=corms), if atmtype is need in outfile, write here as follows, including atmtype.
+    #     corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
+    #     corms = '%s%s.atm%d' %(outfile, ebext, atmtype_for_file)   # use same mane as infile +'<infileext>' #
+    #     corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
+    
+    corms = '%s%s' %(outfile, outext)     # use same mane as infile #
 
     # existence check
     rawms_exist =  file_exist(rawms)
@@ -502,29 +476,24 @@ def calc_sdatmcor(
     corms_exist =  file_exist(corms)
 
     # check #
-    print("INPUT and OUTPUT")
-    print("default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
-    print("default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
-    print("default MS file (corms) = %s , Exist =%s" % (corms, corms_exist)) 
-
+    atmcor_msg("INPUT and OUTPUT")
+    atmcor_msg("  default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
+    atmcor_msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
+    atmcor_msg("  default MS file (corms) = %s , Exist =%s" % (corms, corms_exist)) 
+    atmcor_msg("  The 'calms' will be determined to connect mstransform output.")
     # infile inaccesible  
     if not rawms_exist:
-        print("FATAL:: Specified infile does not exist..")
+        atmcor_msg("ERROR::Specified infile does not exist..", 'SEVERE')
         return False
   
     # Overwrite Protection 
     if corms_exist:
         if p_overwrite:
-            print("INFO:: Overwriting to output, once delete the existing file. " )
+            atmcor_msg("Overwtite:: Overwrite specified. Once delete the existing output file. " )
             ms_remove(corms)
         else:
-            print("FATAL:: Specified outputfile already exist. Abort.")
+            atmcor_msg("Overwrite:: Specified outputfile already exist. Abort.")
             return False
-
-#
-# TENTATIVE: pre-process (Data Selection)
-#    (3-Sep-2020 ~ underconstruction)
-#
 
     #########################
     # Data Selection
@@ -534,7 +503,7 @@ def calc_sdatmcor(
     # Temp File (cleaned use)
     tempName = './_AtmCor-Temp'
     tempFileName = tempName + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.ms'
-    print("- use temp file [%s]" % tempFileName)
+    atmcor_msg("- use temp file [%s] for mstransform" % tempFileName)
 
     # internal Mstransform
     atmMst(
@@ -553,6 +522,11 @@ def calc_sdatmcor(
         feed=p_feed, 
         msselect=p_msselect)
 
+    # Result check 
+    if not file_exist(tempFileName):
+        msg = "No outfile from  mstransform."
+        atmcor_msg(msg,'SEVERE')
+        return 
     #
     # Antenna ID
     #   only Single antenna is available    
@@ -561,50 +535,61 @@ def calc_sdatmcor(
 
     # antenna List, when muslipe antennas are given
     ant_list = list_comma_string(p_antenna, dType='str')
-    print("- antenna_list =", ant_list )
+    atmcor_msg("- antenna_list = %s"% ant_list )
+
     # antenna (this is used inside the script) 
     antenna = get_antennaId( rawms, p_antenna)
 
     #
-    # TESTING :: Switch cal-MS
+    # enable Data Selection, copy temp-out to calms for input MS.  #
     #
-    if False:  # (this is original)
-        # Prepare MS. Ignore the tempFile.
-        ms_remove(corms)
-        ms_copy(src=calms, dst=corms)
-    else: 
-        # Here is the DEFAUT route. #
-        msg = "Data Selection is applied." 
-        print(msg)
-        casalog.post(msg, 'INFO', origin=origin)
+    msg = "Data Selection is applied." 
+    atmcor_msg(msg)
 
-        # Prepare MS, hand to AtmCor
-        calms = tempFileName
-        ms_copy(src=tempFileName, dst=corms)
+    # Prepare MS, hand to AtmCor
+    calms = tempFileName
+    ms_copy(src=tempFileName, dst=corms)
 
     ################################################################
     # Get metadata
     ################################################################
     chanfreqs = {}
-    print("SDATMCOR main body.", rawms)
+    atmcor_msg("SDATMCOR main body starts. rawms=%s" % rawms)
 
-    print("msmd.open(rawms)", rawms)
-    msmd.open(rawms)
-    tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
-    tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
-    fdmspws = msmd.fdmspws()
-    tdmspws = msmd.tdmspws()
-    intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
-    spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
-    spwnames = msmd.namesforspws(spws)
+    try:
+        atmcor_msg("msmd.open(rawms)", rawms)
+        msmd.open(rawms)
+        tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
+        tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
+        fdmspws = msmd.fdmspws()
+        tdmspws = msmd.tdmspws()
+        intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+        spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
+        spwnames = msmd.namesforspws(spws)
 
-    print("#ON_SOURCE: count of tmonsource   = %d" % len(tmonsource))
-    print("#OFF_SOURCE: count of tmoffsource = %d" % len(tmoffsource))
+    except Exception as instance:
+        casalog.post('%s' % instance, 'ERROR')
+        return False 
+
+    # check count of ON/OFF SOURCE 
+    n_tmonsource = len(tmonsource)
+    n_tmoffsource = len(tmoffsource)
+    msg = "Target Informaiton. \n"   \
+        + " #ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
+        + " #OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+    atmcor_msg(msg)
+
+    # OFf_SOURCE check 
+    if (n_tmoffsource == 0):
+        # Error log
+        msg = "Can't find the  OFF_SOURCE data."
+        atmcor_msg(msg, 'SEVERE')
+        return
 
     for spwid in spws:
         chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
     msmd.close()
-    print("closed msmd")
+    atmcor_msg("closed msmd")
 
     bnd = (pl.diff(tmoffsource) > 1)
     w1 = pl.append([True], bnd)
@@ -613,12 +598,12 @@ def calc_sdatmcor(
 
     ddis = {}
 
-    print("msmd.open(calms).")
+    atmcor_msg("msmd.open(calms).")
     msmd.open(calms)
     for spwid in spws:
         ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     msmd.close()
-    print("closed msmd")
+    atmcor_msg("closed msmd")
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
@@ -630,10 +615,10 @@ def calc_sdatmcor(
 
     # Data Query (on Pointing Table)
     if False:  # (original)
-        print("Opening rawms/POINTING.")
+        atmcor_msg("Opening rawms/POINTING.")
         tb.open(os.path.join(rawms, 'POINTING'))  # use original MS.
     else:
-        print("Opening calms/POINTING.") 
+        atmcor_msg("Opening calms/POINTING.") 
         tb.open(os.path.join(calms, 'POINTING'))  # use tempMS
 
     querytext = 'ANTENNA_ID==%s' % antenna
@@ -644,25 +629,25 @@ def calc_sdatmcor(
     elev = subtb.getcol('DIRECTION').squeeze()[1]
     subtb.close()
     tb.close()
-    print("closeed POINTING.")
+    atmcor_msg("closeed POINTING.")
 
     ################################################################
     # Get atmospheric parameters for ATM
     ################################################################
-    print("opening rawms/'ASDM_CALWVR'.")
+    atmcor_msg("opening rawms/'ASDM_CALWVR'.")
     tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
     # confirm #
-    print("tmonsource:",tmonsource.min(),tmonsource.max() )
+    atmcor_msg("tmonsource: %f, %f" % (tmonsource.min(),tmonsource.max()) )
     pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                    (tmonsource.min(), tmonsource.max())).getcol('water')
     tb.close()
-    print("closed rawms/'ASDM_CALWVR'.")
+    atmcor_msg("closed rawms/'ASDM_CALWVR'.")
 
     # pick up pwv #
     pwv = pl.median(pwv)
 
     # ASDM_CALATMOSPHERE
-    print("opening rawms/'ASDM_CALATMOSPHERE'.")
+    atmcor_msg("opening rawms/'ASDM_CALATMOSPHERE'.")
     tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
     subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                      (tmonsource.min(),
@@ -674,13 +659,13 @@ def calc_sdatmcor(
 
     subtb.close()
     tb.close()
-    print("closed rawms/'ASDM_CALATMOSPHERE'.")
+    atmcor_msg("closed rawms/'ASDM_CALATMOSPHERE'.")
 
-    print('median PWV = %fm, T = %fK, P = %fPa, H = %f%%' % (pwv, tground, pground, hground))
+    atmcor_msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
 
     # prepare SPW
 
-    print("Determine spws, outputspw")
+    atmcor_msg("Determine spws, outputspw")
     # set processing SPW, (not output_SPW)  #
     if (p_spw != ''):
         spws = list_comma_string(p_spw, dType='int')
@@ -691,8 +676,8 @@ def calc_sdatmcor(
     else:
         outputspws = list_comma_string(a_outputspw, dType='int')
 
-    print('- spws %s' % spws)
-    print('- outputspws %s' %outputspws)    # This is the expected outputspw
+    atmcor_msg('- spws %s' % spws)
+    atmcor_msg('- outputspws %s' %outputspws)    # This is the expected outputspw
 
     # Check if specified  outputspw is in spws
     _found = False
@@ -704,26 +689,18 @@ def calc_sdatmcor(
             _found = False 
  
     if not _found:
-        # LOG #
         msg = "None of the output-spws (%s) is not in the processing spws[%s]. Abort." % (outputspws,spws)
-        casalog.post(msg,'SEVERE',origin=origin)
+        atmcor_msg(msg, 'SEVERE')
         return False 
 
-        """
-        # if continue, helped by outputspw = spws #
-        outputspws = spws    
-        print('- spws = %s, outputspws = %s ', (spws,outputspws))
-        """
     ################################################################
     # Looping over spws
     ################################################################
-    print("opening corms[%s] to write ATM-Corrected Data."% corms)
+    atmcor_msg("opening corms[%s] to write ATM-Corrected Data."% corms)
     tb.open(corms, nomodify=False)
     for spwid in spws:
         # Log #
-        msg = "Processing spw %d in %s " % (spwid,spws)
-        print(msg)
-        casalog.post(msg,'INFO',origin=origin)
+        atmcor_msg("Processing spw %d in %s " % (spwid,spws))
 
         istdm = False
         nchan = len(chanfreqs[spwid])
@@ -731,10 +708,10 @@ def calc_sdatmcor(
         fcenter = (chanfreqs[spwid][int(nchan/2)-1]+chanfreqs[spwid][int(nchan/2)])/2.   # PY3
         chansep = (chanfreqs[spwid][-1]-chanfreqs[spwid][0])/(nchan-1)
 
-        print('- checking nchanperbb[bbprs[spwid]]')
+        atmcor_msg('- checking nchanperbb[bbprs[spwid]]')
         if nchanperbb[bbprs[spwid]] in [128, 256]:
 
-            print('Spw %d seems to be TDM-like. More accurate Hanning smoothing is applied. istdm=True' % spwid)
+            atmcor_msg('Spw %d seems to be TDM-like. More accurate Hanning smoothing is applied. istdm=True' % spwid)
 
             # ATM model is calculated for finer spectral resolution (5x original),
             # convolved with Hanning spectral response with FWHM=10,
@@ -752,7 +729,7 @@ def calc_sdatmcor(
         # caveat: median values are used for calibrating the entire execution
         ################################################################
 
-        print("- set parameters for initATM and obtain zenith opacity")
+        atmcor_msg("- set parameters for initATM and obtain zenith opacity")
 
         #--------------------------------------------
         # Default Value and Argument parameter set
@@ -789,7 +766,7 @@ def calc_sdatmcor(
 
         # sub parameter, when atmdetai is True #
         if t_atmdetail:
-            print ("-- Sub Parameter from the Arguments will be set, if specified." )
+            atmcor_msg("-- Sub Parameter from the Arguments will be set, if specified." )
             t_altitude    = set_floatquantity_param(a_altitude, t_altitude, 'm')
             t_temperature = set_floatquantity_param(a_temperature, t_temperature, 'K')
             t_pressure    = set_floatquantity_param(a_pressure, t_pressure, 'mbar')
@@ -802,45 +779,41 @@ def calc_sdatmcor(
             t_layertemperature = set_list_param(a_layertemperature, a_layertemperature)
 
         else:
-            print ("-- Sub Parameters were not used, due to 'atmdetail' is not True." )
+            atmcor_msg("-- Sub Parameters were not used, due to 'atmdetail' is not True.")
 
         # print to confirm #
-        print("==========================================================")
-        print("  initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
-        print("-----------------+----------------------------------------")
-        print(" dTem_dh         |%s" % t_dtem_dh)
-        print(" h0              |%s" % t_h0)
-        print(" altitude        |%s" % t_altitude)
-        print(" temperature     |%s" % t_temperature)
-        print(" pressure        |%s" % t_pressure)
-        print(" humidity        |%s" % t_humidity)
-        print(" pwv             |%s" % t_pwv)
-        print(" dp              |%s" % t_dp)
-        print(" dpm             |%s" % t_dpm)
-        print("*maxAltitude     |%s" % t_maxAltitude)
-        print(" layerboundaries |%s" % t_layerboundaries)
-        print(" layerboundaries |%s" % t_layertemperature)
-        print("-----------------+----------------------------------------")
-        # initATMProfile #
-        myAtm = at.initAtmProfile(
-            humidity=t_humidity, 
-            temperature=t_temperature, 
-            altitude=t_altitude, 
-            pressure=t_pressure, 
-            atmType=t_atmtype, 
-            maxAltitude=t_maxAltitude, 
-            h0=t_h0, 
-            dTem_dh=t_dtem_dh,
-            dP=t_dp, dPm=t_dpm,
-            layerBoundaries=t_layerboundaries,
-            layerTemperature=t_layertemperature )
+        atmcor_msg("==========================================================")
+        atmcor_msg("  initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
+        atmcor_msg("-----------------+----------------------------------------")
+        atmcor_msg(" dTem_dh         |%s" % t_dtem_dh)
+        atmcor_msg(" h0              |%s" % t_h0)
+        atmcor_msg(" altitude        |%s" % t_altitude)
+        atmcor_msg(" temperature     |%s" % t_temperature)
+        atmcor_msg(" pressure        |%s" % t_pressure)
+        atmcor_msg(" humidity        |%s" % t_humidity)
+        atmcor_msg(" pwv             |%s" % t_pwv)
+        atmcor_msg(" dp              |%s" % t_dp)
+        atmcor_msg(" dpm             |%s" % t_dpm)
+        atmcor_msg("*maxAltitude     |%s" % t_maxAltitude)
+        atmcor_msg(" layerboundaries |%s" % t_layerboundaries)
+        atmcor_msg(" layerboundaries |%s" % t_layertemperature)
+        atmcor_msg("-----------------+----------------------------------------")
 
-        # ATM Profile #
-        if is_CASA6: 
-            for s in myAtm:
-                print(s)
-        else:
-            print(myAtm)
+        # initATMProfile #
+        atm = at.initAtmProfile(humidity=t_humidity, 
+                                temperature=t_temperature, 
+                                altitude=t_altitude, 
+                                pressure=t_pressure, 
+                                atmType=t_atmtype, 
+                                maxAltitude=t_maxAltitude, 
+                                h0=t_h0, 
+                                dTem_dh=t_dtem_dh,
+                                dP=t_dp, dPm=t_dpm,
+                                layerBoundaries=t_layerboundaries,
+                                layerTemperature=t_layertemperature )
+
+        # show intAtm Information
+        showAtmInfo(atm)
 
         #  LAYER INFO (when the arg specified) #
         if len(t_layerboundaries) !=0:
@@ -859,15 +832,14 @@ def calc_sdatmcor(
         # Calculate and apply correction values
         ################################################################
 
-        print("- Calculate and apply correction values")
-        print("- Selecting DATA_DESC_ID == %s"%ddis[spwid])
+        atmcor_msg("- Calculate and apply correction values")
+        atmcor_msg("- Selecting DATA_DESC_ID == %s"%ddis[spwid])
 
         # Skip outputspw
         if not spwid in outputspws:  
 #       if not ddis[spwid] in outputspws:
             msg = "This spw %d is skipped, due to this is not in the output spw." % spwid
-            print(msg)
-            casalog.post(msg,'INFO', origin=origin)
+            atmcor_msg(msg)
             continue
 
         # Essential Query (required by org. script) #
@@ -875,36 +847,33 @@ def calc_sdatmcor(
         subtb = tb.query(querytext)
 
         # time data and numPol #
-        print( "- datacolumn [%s] is used." % datacolumn)
+        atmcor_msg( "- getting tm and data. datacolumn [%s] is used." % datacolumn)
         tmdata = subtb.getcol('TIME')
         data = subtb.getcol(datacolumn)
         npol = data.shape[0]
       
         # Smoothing control #
         if nchanperbb[bbprs[spwid]]*npol in [256, 8192]:
-            print('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely not applied).  dosmooth=True' %
+            atmcor_msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely not applied).  dosmooth=True' %
                   (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
             dosmooth = True
         else:
-            print('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely applied).  dosmooth=False' %
+            atmcor_msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely applied).  dosmooth=False' %
                   (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
             dosmooth = False
 
         # Debug(Tentatitve) Skip the main correction loop. 
         if skipCorrection:
-            msg = "Correction loop will be skipped, due to Debug option. (nRow=%d)\n---" % len(tmdata)
-            print(msg)
-            casalog.post(msg,'INFO',origin=origin)
+            msg = "Correction loop (nRow=%d) will be skipped, due to debug option. \n---" % len(tmdata)
+            atmcor_msg(msg)
             continue
 
         ###########################
         # Correction Main Loop
         ###########################
 
-        # LOG #
         msg = "ATM Correction for loop (N=%d), " % len(tmdata)
-        print(msg)
-        casalog.post(msg,'INFO',origin=origin)
+        atmcor_msg(msg)
 
         cdata = data.copy()
         for i, t in enumerate(tmdata):
@@ -913,8 +882,7 @@ def calc_sdatmcor(
             if interruptCorrection:
                 if i > interruptCorrectionCnt:
                     msg = "Correction Loop was interrupted. \n---"
-                    print(msg)
-                    casalog.post(msg,'INFO',origin=origin)
+                    atmcor_msg(msg)
                     break
 
             # (org script)
@@ -944,7 +912,7 @@ def calc_sdatmcor(
 
             # debug option for task. #
             if showCorrection:
-                print("spw, i, time, Max(dTa),Min(dTa)", spwid, i, t, max(dTa),min(dTa))
+                atmcor_msg("spw=%d, i=%d, time=%s, Max(dTa)=%s, Min(dTa)=%s" % (spwid, i, t, max(dTa),min(dTa)))
 
             # Adjust Body (dTa is vector) #
             for ipol in range(npol):
@@ -958,9 +926,7 @@ def calc_sdatmcor(
     tb.close()
 
     # LOG #
-    msg = "closed MS[%s] to write."% corms
-    print(msg)
-    casalog.post(msg,'INFO',origin=origin)
+    atmcor_msg("closed MS[%s] to write."% corms)
 
     # delete temp file. TENTATIVE
     if keepMstTemp:
@@ -970,6 +936,4 @@ def calc_sdatmcor(
 
     # finish #
     return True
-
-
 
