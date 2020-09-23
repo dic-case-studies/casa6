@@ -141,7 +141,7 @@ String MsPlot::clname = "MsPlot";
 //#////////////////////////////////////////////////////////////////////////////
 //# default constructor. In case for some reason, one need to pass a Table 
 //# object, not a MeasurementSet to TABS_P, he can use this constructor.
-MsPlot::MsPlot() : msa(0), itsResetCallBack(0)
+MsPlot::MsPlot() : msa(0), itsResetCallBack(nullptr)
 {
     String fnname = "MsPlot";
     log = SLog::slog();
@@ -165,7 +165,7 @@ MsPlot::MsPlot() : msa(0), itsResetCallBack(0)
 
 //#////////////////////////////////////////////////////////////////////////////
 //# Another constructor with a ms object, ???
-MsPlot::MsPlot( const String& MSPath ) : msa(0), itsResetCallBack(0)
+MsPlot::MsPlot( const String& MSPath ) : msa(0), itsResetCallBack(nullptr)
 {
     String fnname = "MsPlot";
     log = SLog::slog();
@@ -477,7 +477,7 @@ MsPlot::open( const String& MSPath, Bool doV, const String& restfreq,
        reset( true );
     }
     itsMsIsOpen = false;
-    itsResetCallBack = NULL;
+    itsResetCallBack.reset(nullptr);
     
     doVel = doV;
     //cout << "doVel=" << doVel << endl;
@@ -1437,15 +1437,15 @@ MsPlot::initialize()
     }
 
     //# Setup the reset call back with table plot.
-    if ( itsResetCallBack == NULL )
+    if ( itsResetCallBack == nullptr )
     {
-       itsResetCallBack = new MSPlotReset( this );
+       itsResetCallBack.reset(new MSPlotReset(this));
 #if LOG2 
        log->out( "Created MS Plot Reset callback class", 
            fnname, clname, LogMessage::DEBUG1 );
 #endif 
     }
-    itsTablePlot->setResetCallBack( "MsPlot", itsResetCallBack );
+    itsTablePlot->setResetCallBack( "MsPlot", itsResetCallBack.get());
     
 
     //# TODO : Reset the MS variables 
