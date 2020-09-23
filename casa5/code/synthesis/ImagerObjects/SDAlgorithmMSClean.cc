@@ -215,7 +215,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     modelflux = sum( itsMatModel ); // Performance hog ?
 
     // Retrieve residual to be saved to the .residual file in finalizeDeconvolver
-    itsImages->residual()->get( itsMatResidual, true );
+    itsMatResidual = residual;
   }	    
 
   void SDAlgorithmMSClean::finalizeDeconvolver()

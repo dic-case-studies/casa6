@@ -234,7 +234,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Retrieve residual to be saved to the .residual file in finalizeDeconvolver
     for(uInt tix=0; tix<itsNTerms; tix++)
     {
-      itsImages->residual(tix)->get( itsMatResiduals[tix], true );
+      casacore::Matrix<Float> tmp;
+      itsMTCleaner.getresidual(tix, tmp);
+      itsMatResiduals[tix] = tmp;
     }
   }	    
 

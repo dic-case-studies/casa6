@@ -1246,16 +1246,10 @@ class test_residual_update(testref_base):
             _ia.close()
         return ret
 
-    def tst_residual_update(self, deconvolver, tclean_stats10, tclean_stats20):
+    def tst_residual_update(self, deconvolver):
         """Helper method to execute the residual update tests for non-multiterm images
            deconvolver (string):  name of the deconvolver to execute
-           tclean_stats10 (dict): max/mean/min statistics from .residual after running tclean(niter=10) once
-           tclean_stats20 (dict): max/mean/min statistics from .residual after running tclean(niter=10) twice
         """
-        # copy the measurement set and prepare the input images from the major cycle
-        tca={'vis':'refim_point.ms', 'imagename':self.img, 'imsize':10, 'cell':'8.0arcsec', 'niter':0, 'deconvolver':deconvolver}
-        tca=self.prepData(tca['vis'], tclean_args=tca)
-
         # these all have to be here for the mtmfs deconvolver
         ismtmfs = False
         ttnrange = 1
@@ -1267,24 +1261,35 @@ class test_residual_update(testref_base):
             ttnext = ".tt{0}"
             ttnstr = ", tt{0}"
 
+        # copy the measurement set and execute the first part of tclean (major cycle only)
+        tca={'vis':'refim_eptwochan.ms', 'imagename':self.img, 'imsize':10, 'cell':'8.0arcsec', 'niter':0, 'deconvolver':deconvolver}
+        tca=self.prepData(tca['vis'], tclean_args=tca)
+        tclean_stats = self.get_stats(ismtmfs, ttnrange, ttnext)
         delta=0.00001
-        tclean_stats={10:tclean_stats10, 20:tclean_stats20}
-        errmsg = "Difference exists in residual statistics between deconvolve and tclean for niter={0}{3}:\n" +\
-                 "Decon run: {1}\nTclean run: {2}"
-        for niter in [10, 20]:
-            # run and get the statistics for 10 more iterations
-            deconvolve(imagename=self.img, deconvolver=deconvolver, niter=10)
-            tclean(**tca) # perform the major cycle part of the residual update
-            ttnds = self.get_stats(ismtmfs, ttnrange, ttnext)
 
-            # compare to the values given by running tclean to those given by running deconvolve
-            for ttn in range(ttnrange):
-                ds = ttnds[ttn]
-                ts = tclean_stats[niter][ttn]
-                msg = errmsg.format(niter, ds, ts, ttnstr.format(ttn))
-                self.assertAlmostEqual(ds['max'],  ts['max'],  delta=delta, msg=msg)
-                self.assertAlmostEqual(ds['min'],  ts['min'],  delta=delta, msg=msg)
-                self.assertAlmostEqual(ds['mean'], ts['mean'], delta=delta, msg=msg)
+        # execute a single deconvolve and compare to tclean
+        deconvolve(imagename=self.img, deconvolver=deconvolver, niter=10)
+        decon_stats1 = self.get_stats(ismtmfs, ttnrange, ttnext)
+        for ttn in range(ttnrange):
+            ts = tclean_stats[ttn]
+            ds = decon_stats1[ttn]
+            msg = "No difference exists between initial tclean residual (dirty image) statistics, and residual for deconvolve:\n" +\
+                  "Tclean residual stats:     {0}\nDeconvolve residual stats: {1}".format(ts, ds)
+            self.assertNotAlmostEqual(ds['max'],  ts['max'],  delta=delta, msg=msg)
+            self.assertNotAlmostEqual(ds['min'],  ts['min'],  delta=delta, msg=msg)
+            self.assertNotAlmostEqual(ds['mean'], ts['mean'], delta=delta, msg=msg)
+
+        # execute deconvolve again and compare to first results
+        deconvolve(imagename=self.img, deconvolver=deconvolver, niter=10)
+        decon_stats2 = self.get_stats(ismtmfs, ttnrange, ttnext)
+        for ttn in range(ttnrange):
+            ds1 = decon_stats1[ttn]
+            ds2 = decon_stats2[ttn]
+            msg = "No difference exists between first deconvolve residual statistics, and residual for the second deconvolve:\n" +\
+                  "First deconvolve stats:    {0}\nSecond deconvolve stats:   {1}".format(ds1, ds2)
+            self.assertNotAlmostEqual(ds2['max'],  ds1['max'],  delta=delta, msg=msg)
+            self.assertNotAlmostEqual(ds2['min'],  ds1['min'],  delta=delta, msg=msg)
+            self.assertNotAlmostEqual(ds2['mean'], ds1['mean'], delta=delta, msg=msg)
 
     # Test 36
     def test_residual_update_hogbom(self):
@@ -1293,13 +1298,7 @@ class test_residual_update(testref_base):
         # Task deconvolve should update the .residual with every execution. This behavior is
         # left up to each deconvolver. Test that hogbom does this correctly.
         ######################################################################################
-        self.tst_residual_update('hogbom',
-            tclean_stats10=[{'max': 0.3326677083969116,
-                             'mean': 0.1598784178495407,
-                             'min': 0.05275852978229523}],
-            tclean_stats20=[{'max': 0.1043943464756012,
-                             'mean': 0.0641096230223775,
-                             'min': 0.021606260910630226}])
+        self.tst_residual_update('hogbom')
 
     # Test 37
     def test_residual_update_clark(self):
@@ -1308,13 +1307,7 @@ class test_residual_update(testref_base):
         # Task deconvolve should update the .residual with every execution. This behavior is
         # left up to each deconvolver. Test that clark does this correctly.
         ######################################################################################
-        self.tst_residual_update('clark',
-            tclean_stats10=[{'max': 0.3597305417060852,
-                             'mean': 0.16103664759546518,
-                             'min': 0.05119355767965317}],
-            tclean_stats20=[{'max': 0.13538648188114166,
-                             'mean': 0.05498173900996335,
-                             'min': 0.0011526079615578055}])
+        self.tst_residual_update('clark')
 
     # Test 38
     def test_residual_update_multiscale(self):
@@ -1323,13 +1316,7 @@ class test_residual_update(testref_base):
         # Task deconvolve should update the .residual with every execution. This behavior is
         # left up to each deconvolver. Test that multiscale does this correctly.
         ######################################################################################
-        self.tst_residual_update('multiscale',
-            tclean_stats10=[{'max': 0.3696308732032776,
-                             'mean': 0.17538576539605855,
-                             'min': 0.05780285969376564}],
-            tclean_stats20=[{'max': 0.12888191640377045,
-                             'mean': 0.0743830294534564,
-                             'min': 0.024948056787252426}])
+        self.tst_residual_update('multiscale')
 
     # Test 39
     def test_residual_update_mtmfs(self):
@@ -1338,19 +1325,7 @@ class test_residual_update(testref_base):
         # Task deconvolve should update the .residual with every execution. This behavior is
         # left up to each deconvolver. Test that mtmfs does this correctly.
         ######################################################################################
-        self.tst_residual_update('mtmfs',
-            tclean_stats10=[{'max': 0.36963093280792236, # one dict each for tt0 and tt1
-                             'mean': 0.16252573896199465,
-                             'min': 0.053284842520952225},
-                            {'max': -0.004791624378412962,
-                             'mean': -0.013807710451073945,
-                             'min': -0.017585966736078262}],
-            tclean_stats20=[{'max': 0.12888199090957642,
-                             'mean': 0.0570389730669558,
-                             'min': 0.018854711204767227},
-                            {'max': -0.0018438196275383234,
-                             'mean': -0.005230157331097871,
-                             'min': -0.006670158356428146}])
+        self.tst_residual_update('mtmfs')
 
 if __name__ == '__main__':
     unittest.main()
