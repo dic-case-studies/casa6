@@ -975,11 +975,7 @@ class test_listobs(listobs_test_base):
 
     # Start of merged cases from test_listobs
 
-    def test1(self):
-        '''Listobs 1: Input MS'''
-        listobs(vis=msfile1, listunfl=True)
-
-    def test2(self):
+    def test_longFieldName(self):
         '''Listobs 2: CSV-591. Check if long field names are fully displayed'''
         self.ms.open(msfile1)
         res = self.ms.summary(True, listunfl=True)
@@ -989,7 +985,7 @@ class test_listobs(listobs_test_base):
         name = res['scan_7']['0']['FieldName']
         self.assertFalse(name.__contains__('*'), "Field name contains a *")
 
-    def test3(self):
+    def test_almaOneRow(self):
         '''Listobs 3: CAS-2751. Check that ALMA MS displays one row per scan'''
         self.ms.open(msfile2)
         res = self.ms.summary(True, listunfl=True)
@@ -1013,7 +1009,7 @@ class test_listobs(listobs_test_base):
                         'New and reference files are different. %s != %s. '
                         'See the diff file %s.' % (out, reference, diff))
 
-    def test4(self):
+    def test_nonVerboseFileSave(self):
         '''Listobs 4: Save on a file, verbose=False'''
         output = 'listobs5.txt'
         out = "newobs5.txt"
@@ -1039,7 +1035,7 @@ class test_listobs(listobs_test_base):
                         'New and reference files are different in second run. %s != %s. '
                         'See the diff file %s.' % (out, reference, diff2))
 
-    def test5(self):
+    def test_verboseFileSave(self):
         '''Listobs 5: Save on a file, verbose=True'''
         output = 'listobs6.txt'
         out = "newobs6.txt"
@@ -1053,7 +1049,7 @@ class test_listobs(listobs_test_base):
                         'New and reference files are different. %s != %s. '
                         'See the diff file %s.' % (out, reference, diff))
 
-    def test6(self):
+    def test_scanSelectionParam(self):
         '''Listobs 6: test scan selection parameters'''
         output = "listobs7.txt"
         out = "newobs7.txt"
@@ -1067,7 +1063,7 @@ class test_listobs(listobs_test_base):
                         'New and reference files are different. %s != %s. '
                         'See the diff file %s.' % (out, reference, diff))
 
-    def test7(self):
+    def test_antennaSelectionParam(self):
         '''Listobs 7: test antenna selection parameters'''
         output = "listobs8.txt"
         out = "newobs8.txt"
