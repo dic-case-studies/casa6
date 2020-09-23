@@ -1,4 +1,4 @@
-std::unique_ptr<casacore::LogIO> itsLog;
+casacore::LogIO *itsLog;
 casa::ImagePol *itsImPol;
 
 std::shared_ptr<casacore::Record> _getRegion(

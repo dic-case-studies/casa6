@@ -25,10 +25,11 @@ using namespace casa;
 using namespace casacore;
 namespace casac {
 
-mstransformer::mstransformer(): logger_p(new LogIO(LogOrigin("mstransformer","",WHERE)))
+mstransformer::mstransformer()
 {
 	try
 	{
+		logger_p = new LogIO(LogOrigin("mstransformer","",WHERE));
 		mstransformer_p = new MSTransform();
 
 	} catch (AipsError x) {
@@ -69,7 +70,7 @@ mstransformer::done()
 	{
 		if (mstransformer_p) {
 			delete mstransformer_p;
-			mstransformer_p = nullptr;
+			mstransformer_p = NULL;
 		}
 
 	} catch (AipsError x) {
@@ -188,3 +189,4 @@ mstransformer::mergespwtables(const std::vector<std::string> &filenames)
 
 
 } // casac namespace
+

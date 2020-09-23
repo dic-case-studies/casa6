@@ -1,5 +1,3 @@
-#include <memory>
-
 namespace casacore{
 
 	class LogIO;

@@ -33,8 +33,12 @@ using namespace casa;
 
 namespace casac {
 
-imagepol::imagepol(): itsLog(new LogIO()), itsImPol(nullptr)
+imagepol::imagepol()
 {
+  itsImPol=0;
+  itsLog=0;
+
+  itsLog= new LogIO();
 }
 
 imagepol::~imagepol()
@@ -46,9 +50,10 @@ bool
 imagepol::open(const variant& image){
 	try {
 		*itsLog << LogOrigin("imagepol", "open");
-
+		if(itsLog==0) {
+			itsLog=new LogIO();
+		}
 		if(itsImPol) delete itsImPol;
-
 		if(image.type()==variant::RECORD){
 			variant localvar(image);
 			std::unique_ptr<Record> tmp(
@@ -96,6 +101,7 @@ imagepol::imagepoltestimage(const std::string& outfile,
     *itsLog << LogOrigin("imagepol", "imagepoltestimage");
     if(itsImPol) delete itsImPol;
     itsImPol = new ImagePol();
+    if(itsLog==0) itsLog=new LogIO();
 
     if (rm.size() == 1 and rm[0]==0.0) {
       rmdefault = true;
@@ -307,7 +313,7 @@ image * imagepol::linpolint(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog.get(), AxesSpecifier(), stretch, true
+            itsLog, AxesSpecifier(), stretch, true
         );
         LinearPolarizationCalculator lpc(subImage, outfile, False);
         lpc.setClip(clip);
@@ -335,7 +341,7 @@ image * imagepol::linpolposang(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog.get(), AxesSpecifier(), stretch, true
+            itsLog, AxesSpecifier(), stretch, true
         );
         LinearPolarizationAngleCalculator lpac(subImage, outfile, False);
         return new image(lpac.compute(False));
@@ -885,7 +891,7 @@ image* imagepol::totpolint(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog.get(), AxesSpecifier(), stretch, true
+            itsLog, AxesSpecifier(), stretch, true
         );
         ImageTotalPolarization itp(subImage, outfile, False);
         itp.setClip(clip);
