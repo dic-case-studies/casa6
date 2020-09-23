@@ -235,7 +235,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     for(uInt tix=0; tix<itsNTerms; tix++)
     {
       casacore::Matrix<Float> tmp;
-      itsMTCleaner.getresidual(tix, tmp);
+      itsMTCleaner.getresidual(tix, tmp); // possible room for optimization here -> get residual without extra tmp copy? maybe change getResidual to accept an array?
       itsMatResiduals[tix] = tmp;
     }
   }	    

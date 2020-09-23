@@ -207,15 +207,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( retval==-2 ) {os << LogIO::WARN << "MSClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
     if( retval==-3 ) {os << LogIO::WARN << "MSClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
+    // Retrieve residual to be saved to the .residual file in finalizeDeconvolver.
     ////This is going to be wrong if there is no 0 scale;
-    ///Matrix<Float> residual(itsCleaner.residual());
-    Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //isMatResidual = itsCleaner.residual(tempModel-prevModel);
+    itsMatResidual = itsCleaner.residual(tempModel-prevModel);
+    // Get the peak residual and model flux.
     // account for mask as well
-    peakresidual = max(abs(residual*itsMatMask));
+    peakresidual = max(abs(itsMatResidual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
-
-    // Retrieve residual to be saved to the .residual file in finalizeDeconvolver
-    itsMatResidual = residual;
   }	    
 
   void SDAlgorithmMSClean::finalizeDeconvolver()
