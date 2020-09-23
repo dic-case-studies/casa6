@@ -1756,8 +1756,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     		x[i+1] = tempx[i+1];
     }*/
     //prevent lbfgs overadjusting
-    // can try to add *itsgain here or 
-    // switch to hogbom
     bool overflow = false;
     for (unsigned int i = 0; i < length; i+= 2)
     {
