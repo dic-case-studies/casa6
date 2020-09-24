@@ -366,5 +366,5 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                     shutil.move(tempdir+'/'+elvis, elvis)
             try:
                 os.rmdir(tempdir)
-            except FileNotFoundError:
+            except OSError:
                 pass

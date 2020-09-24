@@ -2296,7 +2296,7 @@ void MSTransformManager::initDataSelectionParams()
                         logger_p << LogIO::WARN << LogOrigin("MSTransformManager", __FUNCTION__)
 							             << "Number of selected channels " << numOfSelChanMap_p[spwList(spw_i)]
 							                                                                    << " for SPW " << spwList(spw_i)
-							                                                                    << " is smaller than specified chanbin " << freqbin_p(0) << endl
+							                                                                    << " is smaller than specified chanbin " << freqbin_p(spw_i) << endl
 							                                                                    << "Setting chanbin to " << numOfSelChanMap_p[spwList(spw_i)]
 							                                                                                                                  << " for SPW " << spwList(spw_i)
 							                                                                                                                  << LogIO::POST;
@@ -2307,7 +2307,7 @@ void MSTransformManager::initDataSelectionParams()
                     }
                     else
                     {
-                        newWeightFactorMap_p[spwList(spw_i)] = freqbin_p(0);
+                        newWeightFactorMap_p[spwList(spw_i)] = freqbin_p(spw_i);
                     }
                 }
             }
@@ -2337,6 +2337,7 @@ void MSTransformManager::initDataSelectionParams()
 								                                                               << "Setting chanbin to " << numOfSelChanMap_p[spwList(spw_i)]
 								                                                                                                             << " for SPW " << spwList(spw_i)
 								                                                                                                             << LogIO::POST;
+                        freqbinMap_p[spwList(spw_i)] = numOfSelChanMap_p[spwList(spw_i)];
                         newWeightFactorMap_p[spwList(spw_i)] = numOfSelChanMap_p[spwList(spw_i)];
                         // jagonzal (CAS-8018): Update chanbin, otherwise there is a problem with dropped channels
                         freqbin_p(spw_i) = numOfSelChanMap_p[spwList(spw_i)];
@@ -4249,7 +4250,7 @@ void MSTransformManager::reindexSourceSubTable()
         reindexColumn(spectralWindowId,0);
 
         // Remove duplicates
-        std::vector<casacore::rownr_t> duplicateIdx;
+        std::vector<rownr_t> duplicateIdx;
     	std::vector< std::pair<uInt,uInt> > sourceIdSpwIdMap;
 
     	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
@@ -4266,7 +4267,7 @@ void MSTransformManager::reindexSourceSubTable()
     		}
     	}
 
-    	sourceSubtable.removeRow(duplicateIdx);
+    	sourceSubtable.removeRow(Vector<rownr_t>(duplicateIdx.begin(),duplicateIdx.end()));
 
     }
     else
@@ -4323,7 +4324,7 @@ void MSTransformManager::reindexDDISubTable()
     	if (nrowsToDelete > 0)
     	{
         	uInt rownr = ddiCols.nrow()-1;
-            Vector<casacore::rownr_t> rowsToDelete(nrowsToDelete);
+            Vector<rownr_t> rowsToDelete(nrowsToDelete);
         	for(uInt idx=0; idx<nrowsToDelete; idx++)
         	{
         		rowsToDelete(idx) = rownr;
@@ -4363,7 +4364,7 @@ void MSTransformManager::reindexFeedSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<casacore::rownr_t> duplicateIdx;
+    	std::vector<rownr_t> duplicateIdx;
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4390,7 +4391,7 @@ void MSTransformManager::reindexFeedSubTable()
     	}
 
 
-    	feedSubtable.removeRow(duplicateIdx);
+    	feedSubtable.removeRow(Vector<rownr_t>(duplicateIdx.begin(),duplicateIdx.end()));
 
     }
     else
@@ -4423,7 +4424,7 @@ void MSTransformManager::reindexSysCalSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<casacore::rownr_t> duplicateIdx;
+    	std::vector<rownr_t> duplicateIdx;
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4449,7 +4450,7 @@ void MSTransformManager::reindexSysCalSubTable()
     		}
     	}
 
-    	syscalSubtable.removeRow(duplicateIdx);
+    	syscalSubtable.removeRow(Vector<rownr_t>(duplicateIdx.begin(),duplicateIdx.end()));
 
     }
     else
@@ -4483,7 +4484,7 @@ void MSTransformManager::reindexFreqOffsetSubTable()
     	reindexColumn(spectralWindowId,0);
 
     	// Remove duplicates
-    	std::vector<casacore::rownr_t> duplicateIdx;
+    	std::vector<rownr_t> duplicateIdx;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4509,7 +4510,7 @@ void MSTransformManager::reindexFreqOffsetSubTable()
     		}
     	}
 
-    	freqoffsetSubtable.removeRow(duplicateIdx);
+    	freqoffsetSubtable.removeRow(Vector<rownr_t>(duplicateIdx.begin(),duplicateIdx.end()));
 
     }
     else
@@ -4545,7 +4546,7 @@ void MSTransformManager::reindexGenericTimeDependentSubTable(const String& subta
 	    	reindexColumn(spectralWindowId,0);
 
 	    	// Remove duplicates
-	    	std::vector<casacore::rownr_t> duplicateIdx;
+	    	std::vector<rownr_t> duplicateIdx;
 	    	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
 	    	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
@@ -4571,7 +4572,7 @@ void MSTransformManager::reindexGenericTimeDependentSubTable(const String& subta
 	    		}
 	    	}
 
-	    	subtable.removeRow(duplicateIdx);
+	    	subtable.removeRow(Vector<rownr_t>(duplicateIdx.begin(),duplicateIdx.end()));
 
 		}
 		else

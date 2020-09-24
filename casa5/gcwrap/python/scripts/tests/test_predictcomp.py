@@ -51,23 +51,13 @@ class predictcomp_test(unittest.TestCase):
         
     def test_default(self):
         '''predictcomp: test defaults'''
-        if is_CASA6:
-            # casatasks throw exceptions
-            self.assertRaises(Exception,predictcomp)
-        else:
-            # CASA 5 tasks do not
-            self.res=predictcomp() 
-            self.assertIsNone(self.res)
+        with self.assertRaises(ValueError):
+            predictcomp()
  
     def test_invalid_objname(self): 
         '''predictcomp: invalid objname'''
-        if is_CASA6:
-            # casatasks throw exceptions
-            self.assertRaises(Exception, predictcomp, objname='Moon', minfreq='100GHz',maxfreq='120GHz')
-        else:
-            # CASA 5 tasks do not
-            self.res=predictcomp(objname='Moon', minfreq='100GHz',maxfreq='120GHz') 
-            self.assertIsNone(self.res)
+        with self.assertRaises(RuntimeError):
+            predictcomp(objname='Moon', minfreq='100GHz',maxfreq='120GHz')
 
     def test_valid_objname(self):
         '''predictcomp: valid objname'''
@@ -79,14 +69,9 @@ class predictcomp_test(unittest.TestCase):
              
     def test_invalid_freqrange(self):
         '''predictcomp: invalid freqrange'''
-        if is_CASA6:
-            # casatasks throw exceptions
-            self.assertRaises(Exception, predictcomp, objname='Titan', epoch='2017/09/01/00:00', minfreq='100', maxfreq='120' )
-        else:
-            # CASA 5 tasks do not
-            self.res=predictcomp(objname='Titan', epoch='2017/09/01/00:00', minfreq='100',maxfreq='120')
-            self.assertIsNone(self.res)
-   
+        with self.assertRaises(RuntimeError):
+            predictcomp(objname='Titan', epoch='2017/09/01/00:00', minfreq='100', maxfreq='120' )
+    
     def test_badmaxfreq(self):
         '''predictcomp: invalid maxfreq '''
         # ignore the maxfreq just calculate for minfreq
@@ -109,15 +94,9 @@ class predictcomp_test(unittest.TestCase):
           
     def test_valid_but_not_visible_objname(self):
         '''predictcomp: valid but not visible objname'''
-        if is_CASA6:
-            # casatasks throw exceptions
-            self.assertRaises( Exception, predictcomp, objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz', maxfreq='120GHz',
+        with self.assertRaises(RuntimeError):
+            predictcomp(objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz', maxfreq='120GHz',
                                antennalist=ctsys_resolve(os.path.join(datapath,'alma.cycle5.1.cfg')), showplot=False )
-        else:
-            # CASA 5 tasks do not
-            self.res=predictcomp(objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz',maxfreq='120GHz',
-                                 antennalist=datapath+'alma.cycle5.1.cfg',showplot=False) 
-            self.assertIsNone(self.res)
 
 def suite():
     return [predictcomp_test]

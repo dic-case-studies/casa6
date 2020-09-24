@@ -54,14 +54,19 @@ class plotweather_test(unittest.TestCase):
         
     def test0(self):
         '''Test 0: Default parameters'''
-        opac = plotweather()
-        self.assertIsNone(opac)
+#         opac = plotweather()
+#         self.assertIsNone(opac)
+        with self.assertRaises(RuntimeError):
+            plotweather()
        
     def test1(self):
         '''Test 1: Bad input file'''
         badmsfile = 'badfile.ms'
-        opac = plotweather(vis=badmsfile)
-        self.assertIsNone(opac)
+#        opac = plotweather(vis=badmsfile)
+#        self.assertIsNone(opac)
+        with self.assertRaises(RuntimeError):
+            plotweather(vis=badmsfile)
+        
         
     def test2(self):
         '''Test 2: ms with no weather, no plot '''

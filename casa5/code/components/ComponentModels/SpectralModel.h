@@ -34,12 +34,13 @@
 #include <measures/Measures/MFrequency.h>
 #include <casa/Quanta/Unit.h>
 #include <casa/Quanta/Quantum.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
 class RecordInterface;
 class String;
-template <class T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

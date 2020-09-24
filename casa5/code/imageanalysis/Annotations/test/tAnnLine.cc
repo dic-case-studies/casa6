@@ -27,12 +27,12 @@
 
 #include <casa/aips.h>
 #include <imageanalysis/Annotations/AnnLine.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/coordinates/Coordinates/CoordinateUtil.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
 
-#include <coordinates/Coordinates/CoordinateUtil.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
-
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #include <iomanip>
 
