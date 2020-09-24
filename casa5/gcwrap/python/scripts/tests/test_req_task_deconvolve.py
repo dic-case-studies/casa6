@@ -125,7 +125,7 @@
 #
 #
 #Show multiple executions of deconvolve get a probably-correct answer
-#14. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#14. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
@@ -137,25 +137,31 @@
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_clarkclark
 #
-#16. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#16. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#imsize:100,cell:'8.0arcsec',deconvolver:'clarkstokes','cyclefactor':0.1,'stokes':'I'
+#first run to get expected value: niter=20
+#second/third runs to get actual value: niter=10, niter=10
+#testname: test_multirun_clarkstokesclarkstokes
+#
+#17. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'multiscale',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_multiscalemultiscale
 #
-#17. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#18. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_mtmfsmtmfs
 #
-#18. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
+#19. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
 #Note: we only test for task completion, don't know what the value should be at the end. (TODO needs validation)
 #imsize:200, cell:'8.0arcsec', deconvolver:'multiscale', scales:[0,20,40,100],niter=10
 #imsize:200, cell:'8.0arcsec', deconvolver:'hogbom', niter=10
 #testname: test_multirun_multiscalehog
 #
-#19. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
+#20. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=False, niter=10
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=True, niter=0
 #testname: test_multirun_norestore_restore
@@ -163,107 +169,107 @@
 #
 #
 #'img' value input checking
-#20. Missing Table: tst.residual is always required
+#21. Missing Table: tst.residual is always required
 #rm 'tst.residual', niter=10
 #testname: test_imgval_missingimgs_residual
 #
-#21. Missing Table: tst.psf is always required
+#22. Missing Table: tst.psf is always required
 #rm 'tst.psf', niter=10
 #testname: test_imgval_missingimgs_psf
 #
-#22. Missing Table: tst.model is used to continue deconvolution, but is not required.
+#23. Missing Table: tst.model is used to continue deconvolution, but is not required.
 #rm 'tst.model', niter=10
 #testname: test_imgval_missingimgs_model
 #
-#23. Missing Table: tst.sumwt is never required
+#24. Missing Table: tst.sumwt is never required
 #rm 'tst.sumwt', niter=10
 #testname: test_imgval_missingimgs_sumwt
 #
-#24. Reorder Image Axes: tst.residual must have the axes as is given in tclean
+#25. Reorder Image Axes: tst.residual must have the axes as is given in tclean
 #imtrans("tst.residual", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_residual
 #
-#25. Reorder Image Axes: tst.psf must have the axes as is given in tclean
+#26. Reorder Image Axes: tst.psf must have the axes as is given in tclean
 #imtrans("tst.psf", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_psf
 #
-#26. Reorder Image Axes: tst.model must have the axes as is given in tclean
+#27. Reorder Image Axes: tst.model must have the axes as is given in tclean
 #imtrans("tst.model", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_model
 #
-#27. Reorder Image Axes: tst.pb must have the axes as is given in tclean
+#28. Reorder Image Axes: tst.pb must have the axes as is given in tclean
 #imtrans("tst.pb", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_pb
 #
-#28. Rebin To Smaller Image: everything else must have the same shape as tst.residual
+#29. Rebin To Smaller Image: everything else must have the same shape as tst.residual
 #imrebin("tst.residual", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_residual
 #
-#29. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
+#30. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
 #imrebin("tst.psf", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_psf
 #
-#30. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
+#31. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
 #imrebin("tst.model", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_model
 #
-#31. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
+#32. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
 #Note: cpp code does not mind that the .pb image has a weird shape
 #imrebin("tst.pb", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_pb
 #
-#32. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#33. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_imgval_startmodel_empty
 #
-#33. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#34. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_imgval_startmodel_dne
 #
-#34. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
+#35. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_model_exists
 #
-#35. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
+#36. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_basic_copy
 #
-#36. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#37. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model', imtrans(order="3012")
 #testname:test_imgval_startmodel_axesmismatch
 #
-#37. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
+#38. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
 #set_crval0(51), niter=10
 #testname:test_imgval_startmodel_csysmismatch
 #
-#38. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
+#39. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
 #imrebin(factor=[2,2]), niter=10
 #testname:test_imgval_startmodel_shapemismatch
 #
 #
 #
 #Multiple deconvolves update the .residual
-#39. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
+#40. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':100, 'cell':['10.0arcsec','30.0arcsec'], 'deconvolver':hogbom, 'niter':10
 #testname: test_residual_update_hogbom
 #
-#40. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
+#41. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clark does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':100, 'cell':['10.0arcsec','30.0arcsec'], 'deconvolver':clark, 'niter':10
 #testname: test_residual_update_clark
 #
-#41. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
+#42. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clarkstokes does this correctly.
 #'vis':'refim_point_linRL.ms', 'imsize':100, 'cell':['10.0arcsec','30.0arcsec'], 'deconvolver':clark, 'niter':10, 'stokes':'I'
 #testname: test_residual_update_clarkstokes
 #
-#42. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
+#43. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':100, 'cell':['10.0arcsec','30.0arcsec'], 'deconvolver':multiscale, 'niter':10
 #testname: test_residual_update_multiscale
 #
-#43. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
+#44. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':100, 'cell':['10.0arcsec','30.0arcsec'], 'deconvolver':mtmfs, 'niter':10
 #testname: test_residual_update_mtmfs
@@ -279,7 +285,7 @@ import unittest
 import inspect
 import numpy as np
 import re
-from casatestutils.imagerhelpers import TestHelpers 
+from casatestutils.imagerhelpers import TestHelpers
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -836,6 +842,7 @@ class test_multirun(testref_base):
         """ [onefield] test_multirun_hogbomhogbom """
         ######################################################################################
         # Test running hogbom twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
+        # Note: tclean produced different results when running once with 20 iterations vs twice with 10 iterations, so that is what we are comparing deconvolve against.
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
@@ -848,7 +855,7 @@ class test_multirun(testref_base):
         report2  = th.checkall(ret=results2['retrec'], peakres=0.353, modflux=0.772, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'],
                                imgval=[(self.img+'.model',0.772,[50,50,0,0])])
         results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=10, threshold='1mJy', interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=0.148, modflux=1.008, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report3  = th.checkall(ret=results3['retrec'], peakres=0.142, modflux=1.023, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.917,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
@@ -875,29 +882,18 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 15
+    # Test 16
     def test_multirun_clarkstokesclarkstokes(self):
         """ [onefield] test_multirun_clarkstokesclarkstokes """
         ######################################################################################
         # Test running clarkstokes twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clarkstokes','cyclefactor':0.1,'stokes':'I'}
-        # tca['niter']=20
-        # tca['restoration']=True
-        # tca['interactive']=0
-        # tca=self.prepData('refim_point_linRL.ms', onlycopyms=True, tclean_args=tca)
-        # casalog.post(str(tca), "SEVERE")
-        # summ=tclean(**tca); results1={'retrec':summ}
         tca=self.prepData('refim_point_linRL.ms', tclean_args=tca)
         results1 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=20, cyclefactor=0.1, interactive=0)
         report1  = th.checkall(ret=results1['retrec'], peakres=0.122, modflux=0.878, iterdone=20, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.878,[50,50,0,0])])
 
-        # self.prepData('refim_point_linRL.ms', onlycopyms=True, tclean_args=tca)
-        # tca['niter']=10
-        # tca['restoration']=False
-        # casalog.post(str(tca), "SEVERE")
-        # summ=tclean(**tca); results2={'retrec':summ}
         self.prepData('refim_point_linRL.ms', tclean_args=tca)
         results2 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=10, cyclefactor=0.1, interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], peakres=0.349, modflux=0.651, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'],
@@ -907,7 +903,8 @@ class test_multirun(testref_base):
                                imgval=[(self.img+'.model',0.878,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
-    # Test 16
+
+    # Test 17
     def test_multirun_multiscalemultiscale(self):
         """" [onefield] test_multirun_multiscalemultiscale """
         ######################################################################################
@@ -929,7 +926,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 17
+    # Test 18
     def test_multirun_mtmfsmtmfs(self):
         """" [onefield] test_multirun_mtmfsmtmfs """
         ######################################################################################
@@ -954,7 +951,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report11 + report12 + report21 + report22 + report31 + report32)
 
-    # Test 18
+    # Test 19
     def test_multirun_multiscalehog(self):
         """ [onefield] test_multirun_multiscalehog """
         ######################################################################################
@@ -970,7 +967,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2)
 
-    # Test 19
+    # Test 20
     def test_multirun_norestore_restore(self):
         """ [onefield] test_multirun_norestore_restore """
         ######################################################################################
@@ -1043,7 +1040,7 @@ class test_imgval(testref_base):
             except RuntimeError as e:
                 self.assertTrue(strcheck in str(e))
 
-    # Test 20
+    # Test 21
     def test_imgval_missingimgs_residual(self):
         """ [imgval] test_imgval_missingimgs_residual """
         ######################################################################################
@@ -1051,7 +1048,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_missingimgs(".residual")
 
-    # Test 21
+    # Test 22
     def test_imgval_missingimgs_psf(self):
         """ [imgval] test_imgval_missingimgs_psf """
         ######################################################################################
@@ -1060,7 +1057,7 @@ class test_imgval(testref_base):
         # Note: cpp code doesn't throw an exception when psf is missing, just prints a warning
         self.tst_imgval_missingimgs(".psf")
 
-    # Test 22
+    # Test 23
     def test_imgval_missingimgs_model(self):
         """ [imgval] test_imgval_missingimgs_models """
         ######################################################################################
@@ -1071,7 +1068,7 @@ class test_imgval(testref_base):
             os.system("rm -rf "+self.img+".model")
         deconvolve(imagename=self.img, niter=10)
 
-    # Test 23
+    # Test 24
     def test_imgval_missingimgs_sumwt(self):
         """ [imgval] test_imgval_missingimgs_sumwt """
         ######################################################################################
@@ -1109,7 +1106,7 @@ class test_imgval(testref_base):
             except RuntimeError as e:
                 self.assertTrue(strcheck in str(e))
 
-    # Test 24
+    # Test 25
     def test_imgval_axesmismatch_residual(self):
         """ [imgval] test_imgval_axesmismatch_residual """
         ######################################################################################
@@ -1117,7 +1114,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_axesmismatch(".residual")
 
-    # Test 25
+    # Test 26
     def test_imgval_axesmismatch_psf(self):
         """ [imgval] test_imgval_axesmismatch_psf """
         ######################################################################################
@@ -1125,7 +1122,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_axesmismatch(".psf")
 
-    # Test 26
+    # Test 27
     def test_imgval_axesmismatch_model(self):
         """ [imgval] test_imgval_axesmismatch_model """
         ######################################################################################
@@ -1133,7 +1130,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_axesmismatch(".model")
 
-    # Test 27
+    # Test 28
     def test_imgval_axesmismatch_pb(self):
         """ [imgval] test_imgval_axesmismatch_pb """
         ######################################################################################
@@ -1166,7 +1163,7 @@ class test_imgval(testref_base):
             except RuntimeError as e:
                 self.assertTrue(strcheck in str(e))
 
-    # Test 28
+    # Test 29
     def test_imgval_shapemismatch_residual(self):
         """ [imgval] test_imgval_shapemismatch_residual """
         ######################################################################################
@@ -1174,7 +1171,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_shapemismatch(".residual")
 
-    # Test 29
+    # Test 30
     def test_imgval_shapemismatch_psf(self):
         """ [imgval] test_imgval_shapemismatch_psf """
         ######################################################################################
@@ -1182,7 +1179,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_shapemismatch(".psf")
 
-    # Test 30
+    # Test 31
     def test_imgval_shapemismatch_model(self):
         """ [imgval] test_imgval_shapemismatch_model """
         ######################################################################################
@@ -1190,7 +1187,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.tst_imgval_shapemismatch(".model")
 
-    # Test 31
+    # Test 32
     def test_imgval_shapemismatch_pb(self):
         """ [imgval] test_imgval_shapemismatch_pb """
         ######################################################################################
@@ -1201,7 +1198,7 @@ class test_imgval(testref_base):
         pass
     
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 32
+    # Test 33
     @unittest.skip("if test_imgval_startmodel_axesmismatch executes immediately before this test then it fails")
     def test_imgval_startmodel_empty(self):
         """ [imgval] test_imgval_startmodel_empty """
@@ -1223,7 +1220,7 @@ class test_imgval(testref_base):
         os.system("mv {0} {1}".format(self.mname, self.mname2))
         deconvolve(imagename=self.img, niter=10, startmodel=['', '', self.mname2, '', ''])
 
-    # Test 33
+    # Test 34
     def test_imgval_startmodel_dne(self):
         """ [imgval] test_imgval_startmodel_dne """
         ######################################################################################
@@ -1241,7 +1238,7 @@ class test_imgval(testref_base):
             except RuntimeError as e:
                 self.assertTrue(strcheck in str(e))
 
-    # Test 34
+    # Test 35
     def test_imgval_startmodel_model_exists(self):
         """ [imgval] test_imgval_startmodel_model_exists """
         ######################################################################################
@@ -1263,7 +1260,7 @@ class test_imgval(testref_base):
                 self.assertTrue(strcheck in str(e))
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 35
+    # Test 36
     @unittest.skip("if test_imgval_startmodel_axesmismatch executes immediately before this test then it fails")
     def test_imgval_startmodel_basic_copy(self):
         """ [imgval] test_imgval_startmodel_basic_copy """
@@ -1279,7 +1276,7 @@ class test_imgval(testref_base):
         deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
         self.assertTrue(os.path.exists(self.mname), "File {0} did not get copied!".format(self.mname))
 
-    # Test 36
+    # Test 37
     def test_imgval_startmodel_axesmismatch(self):
         """ [imgval] test_imgval_startmodel_axesmismatch """
         ######################################################################################
@@ -1302,7 +1299,7 @@ class test_imgval(testref_base):
             except RuntimeError as e:
                 self.assertTrue(strcheck in str(e))
 
-    # Test 37
+    # Test 38
     def test_imgval_startmodel_csysmismatch(self):
         """ [imgval] test_imgval_startmodel_csysmismatch """
         ######################################################################################
@@ -1328,7 +1325,7 @@ class test_imgval(testref_base):
         csys3, regridpnt = self.get_csys_crval0(self.mname)
         self.assertAlmostEqual(regridpnt, oldpnt, "Image {0} did not get its csys.direction0.crval[0] value regridded properly from {1} to {2}! (actual value is {3})".format(self.mname2, newpnt, oldpnt, regridpnt))
 
-    # Test 38
+    # Test 39
     def test_imgval_startmodel_shapemismatch(self):
         """ [imgval] test_imgval_startmodel_shapemismatch """
         ######################################################################################
@@ -1420,7 +1417,7 @@ class test_residual_update(testref_base):
             self.assertNotAlmostEqual(ds2['min'],  ds1['min'],  delta=delta, msg=msg)
             self.assertNotAlmostEqual(ds2['mean'], ds1['mean'], delta=delta, msg=msg)
 
-    # Test 39
+    # Test 40
     def test_residual_update_hogbom(self):
         """ [residual_update] test_residual_update_hogbom """
         ######################################################################################
@@ -1429,7 +1426,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.tst_residual_update('hogbom')
 
-    # Test 40
+    # Test 41
     def test_residual_update_clark(self):
         """ [residual_update] test_residual_update_clark """
         ######################################################################################
@@ -1438,7 +1435,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.tst_residual_update('clark')
 
-    # Test 41
+    # Test 42
     def test_residual_update_clarkstokes(self):
         """ [residual_update] test_residual_update_clarkstokes """
         ######################################################################################
@@ -1447,7 +1444,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.tst_residual_update('clarkstokes', tclean_args={'vis':'refim_point_linRL.ms','stokes':'I'})
 
-    # Test 42
+    # Test 43
     def test_residual_update_multiscale(self):
         """ [residual_update] test_residual_update_multiscale """
         ######################################################################################
@@ -1456,7 +1453,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.tst_residual_update('multiscale')
 
-    # Test 43
+    # Test 44
     def test_residual_update_mtmfs(self):
         """ [residual_update] test_residual_update_mtmfs """
         ######################################################################################

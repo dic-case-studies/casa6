@@ -125,7 +125,7 @@
 #
 #
 #Show multiple executions of deconvolve get a probably-correct answer
-#14. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#14. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
@@ -285,7 +285,7 @@ import unittest
 import inspect
 import numpy as np
 import re
-from casatestutils.imagerhelpers import TestHelpers 
+from casatestutils.imagerhelpers import TestHelpers
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -842,6 +842,7 @@ class test_multirun(testref_base):
         """ [onefield] test_multirun_hogbomhogbom """
         ######################################################################################
         # Test running hogbom twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
+        # Note: tclean produced different results when running once with 20 iterations vs twice with 10 iterations, so that is what we are comparing deconvolve against.
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
@@ -854,7 +855,7 @@ class test_multirun(testref_base):
         report2  = th.checkall(ret=results2['retrec'], peakres=0.353, modflux=0.772, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'],
                                imgval=[(self.img+'.model',0.772,[50,50,0,0])])
         results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=10, threshold='1mJy', interactive=0)
-        report3  = th.checkall(ret=results3['retrec'], peakres=0.148, modflux=1.008, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+        report3  = th.checkall(ret=results3['retrec'], peakres=0.142, modflux=1.023, iterdone=10, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.917,[50,50,0,0])])
 
         self.checkfinal(report1 + report2 + report3)
