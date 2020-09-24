@@ -534,7 +534,8 @@ def generate_pyinit(moduledir,tools):
 
                _rundata = _distro_dpath
 
-               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+               ctsys.initialize( __sys.executable, "" if _distro_dpath is None else _distro_dpath,
+                                 __find_user_data_path( ) + _dpath )
                if __sys.argv[0] != '-m' and ctsys.resolve('geodetic/IERSeop2000') == 'geodetic/IERSeop2000':
                    raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
                                                                                                                
