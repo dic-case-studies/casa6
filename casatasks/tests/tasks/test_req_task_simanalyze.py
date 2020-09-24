@@ -48,18 +48,18 @@ else:
 # DATA #
 if is_CASA6:
     dataroot = casatools.ctsys.resolve()
-    configpath_int      = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/vla.a.cfg')))
-    imagepath_int       = casatools.ctsys.resolve((os.path.join(dataroot, 'nrao/VLA/CalModels/3C286_Q.im/')))
-    configpath_both_int = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/aca.cycle7.cfg')))
-    configpath_sd       = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/aca.tp.cfg')))
-    mspath_sd           = casatools.ctsys.resolve((os.path.join(dataroot, 'regression/unittest/clean/refimager/refim_twopoints_twochan.ms')))
+    configpath_int      = casatools.ctsys.resolve('alma/simmos/vla.a.cfg')
+    imagepath_int       = casatools.ctsys.resolve('nrao/VLA/CalModels/3C286_Q.im/')
+    configpath_both_int = casatools.ctsys.resolve('alma/simmos/aca.cycle7.cfg')
+    configpath_sd       = casatools.ctsys.resolve('alma/simmos/aca.tp.cfg')
+    mspath_sd           = casatools.ctsys.resolve((os.path.join(dataroot, 'unittest/simanalyze/refim_twopoints_twochan.ms')))
 else:
     dataroot = os.environ.get('CASAPATH').split()[0]
     configpath_int      = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
     imagepath_int       = os.path.join(dataroot, 'data/nrao/VLA/CalModels/3C286_Q.im/')
     configpath_both_int = os.path.join(dataroot, 'data/alma/simmos/aca.cycle7.cfg')
     configpath_sd       = os.path.join(dataroot, 'data/alma/simmos/aca.tp.cfg')
-    mspath_sd           = os.path.join(dataroot, 'data/regression/unittest/clean/refimager/refim_twopoints_twochan.ms')
+    mspath_sd           = os.path.join(dataroot, 'casatestdata/unittest/simanalyze/refim_twopoints_twochan.ms')
 
 logpath = casalog.logfile()
 

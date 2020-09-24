@@ -4,35 +4,33 @@ import shutil
 import unittest
 import numpy as np
 import numpy.ma as ma
-### for testhelper import
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
 
-subdir = 'visibilities/vla/'
-if th.is_casa6():
+subdir = 'unittest/statwt/'
+CASA6 = False
+try:
     from casatools import ctsys, table, ms
     from casatasks import statwt
     datadir = ctsys.resolve(subdir)
     mytb = table()
     myms = ms()
-else:
+    CASA6 = True
+except:
     from tasks import *
     from taskinit import *
     from casa_stack_manip import stack_frame_find
 
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     datadir = (
-        os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
+        os.environ.get('CASAPATH').split()[0] + '/casatestdata/' + subdir
     )
-    if not os.path.exists(datadir):
-        datadir = (
-            os.environ.get('CASAPATH').split()[0] + '/casa-data-req/' + subdir
-        )
     mytb = tbtool()
     myms = mstool()
 
 src = os.path.join(datadir, 'ngc5921_small.statwt.ms')
 vlass = os.path.join(datadir, 'test_vlass_subset.ms')
+
+# Place for reference data used in the tests
+refdir = datadir + '/statwt_reference/'
 
 # rows and target_row are the row numbers from the subtable formed
 # by the baseline query
@@ -259,8 +257,8 @@ class statwt_test(unittest.TestCase):
               
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
-        mytb1 = table() if th.is_casa6() else tbtool()
-        ref = os.path.join(datadir, ref)
+        mytb1 = table() if CASA6 else tbtool()
+        ref = os.path.join(refdir, ref)
         self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
         self.compareTables(mytb, mytb1)
         mytb.done()
@@ -365,9 +363,9 @@ class statwt_test(unittest.TestCase):
                         mytb.done()
                         statwt(dst, chanbin=chanbin, combine=combine)
                     if combine == '':
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
+                        ref = 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
                     else:
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
+                        ref = 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
@@ -478,7 +476,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
+        ref = 'ngc5921_statwt_ref_test_no_scan_bounds.ms'
         combine = "corr, scan"
         shutil.copytree(src, dst)
         statwt(dst, timebin=timebin, combine=combine)
@@ -489,7 +487,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
+        ref = 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms'
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(src, dst)
             statwt(dst, timebin=timebin, combine=combine)
@@ -512,7 +510,7 @@ class statwt_test(unittest.TestCase):
                 statwt(vis=dst, statalg=statalg, center="median",
                        lside=False)
             elif statalg == "bogus":
-                if th.is_casa6() or casa_stack_rethrow:
+                if CASA6 or casa_stack_rethrow:
                     self.assertRaises(
                         RuntimeError, statwt, vis=dst, statalg=statalg
                     )
@@ -1015,7 +1013,7 @@ class statwt_test(unittest.TestCase):
         Test specifying chanbin when multi spw with no sigma nor weight
         spectrum columns works
         """
-        ref = datadir + 'ref_vlass_wtsp_creation.ms'
+        ref = 'ref_vlass_wtsp_creation.ms'
         for spw in ["", "0"]:
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
@@ -1031,7 +1029,7 @@ class statwt_test(unittest.TestCase):
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
-                if th.is_casa6() or casa_stack_rethrow:
+                if CASA6 or casa_stack_rethrow:
                     self.assertRaises(
                         RuntimeError, statwt, vis=dst, combine='scan,field,state',
                         chanbin=1, timebin='1yr', datacolumn='residual_data',
@@ -1050,7 +1048,7 @@ class statwt_test(unittest.TestCase):
                     selectdata=True, spw=spw
                 )
                 self.assertTrue(res)
-                mytb.open(ref)
+                mytb.open(refdir + ref)
                 reftab = mytb.query("DATA_DESC_ID == 0")
                 mytb.done()
                 mytb.open(dst)
