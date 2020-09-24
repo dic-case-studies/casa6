@@ -49,7 +49,7 @@ def sdatmcor(
         debug):
 
 # Information
-    msg = "Revision  sdatmcor 0924-1 Initital(2) Unit Test and Debug"
+    msg = "Revision  sdatmcor 0925-1 pre-Release #10 with Unit Test/Debug in progress."
     atmcor_msg(msg)
 
 #
@@ -300,7 +300,7 @@ def get_antennaId( msname, antennaName):
     
 
 #
-# ATM Profile
+# show ATM Profile
 #
 
 def showAtmInfo(atm):
@@ -535,7 +535,7 @@ def calc_sdatmcor(
     # Get metadata
     ################################################################
     chanfreqs = {}
-    atmcor_msg("SDATMCOR main body starts. rawms=%s" % rawms)
+    atmcor_msg("SDATMCOR main body starts. rawms=%s\n\n" % rawms)
 
     try:
         atmcor_msg("msmd.open(rawms)", rawms)
@@ -547,10 +547,10 @@ def calc_sdatmcor(
         intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
         spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
         spwnames = msmd.namesforspws(spws)
-
-    except Exception as instance:
-        casalog.post('%s' % instance, 'ERROR')
-        return False 
+ 
+    except Exception as err:
+        atmcor_msg("ERROR:: opening rawms")
+        casalog.post('%s' % err, 'ERROR')
 
     # check count of ON/OFF SOURCE 
     n_tmonsource = len(tmonsource)
@@ -560,12 +560,19 @@ def calc_sdatmcor(
         + " #OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
     atmcor_msg(msg)
 
-    # OFf_SOURCE check 
+    # OFF_SOURCE check 
     if (n_tmoffsource == 0):
         # Error log
-        msg = "Can't find the  OFF_SOURCE data."
+        msg = "Can't find the OFF_SOURCE data."
         atmcor_msg(msg, 'SEVERE')
-        return
+        return False
+
+    # ON_SOURCE check 
+    if (n_tmoffsource == 0):
+        # Error log
+        msg = "Can't find the ON_SOURCE data."
+        atmcor_msg(msg, 'SEVERE')
+        return False
 
     for spwid in spws:
         chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
@@ -595,52 +602,67 @@ def calc_sdatmcor(
         nchanperbb[bbp] += len(chanfreqs[spwid])
 
     # Data Query (on Pointing Table)
-    if False:  # (original)
-        atmcor_msg("Opening rawms/POINTING.")
-        tb.open(os.path.join(rawms, 'POINTING'))  # use original MS.
-    else:
-        atmcor_msg("Opening calms/POINTING.") 
-        tb.open(os.path.join(calms, 'POINTING'))  # use tempMS
+    try:
+        atmcor_msg("opening calms/POINTING.") 
+        tb.open(os.path.join(calms, 'POINTING'))  # use tempMS, (in org. using rawms)
 
-    querytext = 'ANTENNA_ID==%s' % antenna
-    subtb = tb.query(querytext)
+        querytext = 'ANTENNA_ID==%s' % antenna
+        subtb = tb.query(querytext)
 
-    # Access Table
-    tmpointing = subtb.getcol('TIME')
-    elev = subtb.getcol('DIRECTION').squeeze()[1]
-    subtb.close()
-    tb.close()
-    atmcor_msg("closed POINTING.")
+        # Access Table
+        tmpointing = subtb.getcol('TIME')
+        elev = subtb.getcol('DIRECTION').squeeze()[1]
+        subtb.close()
+        tb.close()
+        tb.close()
+        atmcor_msg("closed POINTING.")
+
+    except Exception as instance:
+        atmcor_msg("ERROR:: opening POINTING.")
+        casalog.post('%s' % instance, 'ERROR')
+        raise
 
     ################################################################
     # Get atmospheric parameters for ATM
     ################################################################
-    atmcor_msg("opening rawms/'ASDM_CALWVR'.")
-    tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
-    # confirm #
-    atmcor_msg("tmonsource: %f, %f" % (tmonsource.min(),tmonsource.max()) )
-    pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
-                   (tmonsource.min(), tmonsource.max())).getcol('water')
-    tb.close()
-    atmcor_msg("closed rawms/'ASDM_CALWVR'.")
+    try:
+        atmcor_msg("opening rawms/'ASDM_CALWVR'.")
+        tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
+        # confirm #
+        atmcor_msg("tmonsource: %f, %f" % (tmonsource.min(),tmonsource.max()) )
+        pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
+                       (tmonsource.min(), tmonsource.max())).getcol('water')
+        tb.close()
+        atmcor_msg("closed rawms/'ASDM_CALWVR'.")
+
+    except Exception as err:
+        atmcor_msg("ERROR:: opening rawms/'ASDM_CALWVR'.")
+        casalog.post('%s' % err, 'ERROR')
+        raise
 
     # pick up pwv #
     pwv = pl.median(pwv)
 
     # ASDM_CALATMOSPHERE
-    atmcor_msg("opening rawms/'ASDM_CALATMOSPHERE'.")
-    tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
-    subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
-                     (tmonsource.min(),
-                      tmonsource.max()))
+    try:
+        atmcor_msg("opening rawms/'ASDM_CALATMOSPHERE'.")
+        tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
+        subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
+                         (tmonsource.min(),
+                          tmonsource.max()))
 
-    tground = pl.median(subtb.getcol('groundTemperature'))
-    pground = pl.median(subtb.getcol('groundPressure'))
-    hground = pl.median(subtb.getcol('groundRelHumidity'))
+        tground = pl.median(subtb.getcol('groundTemperature'))
+        pground = pl.median(subtb.getcol('groundPressure'))
+        hground = pl.median(subtb.getcol('groundRelHumidity'))
 
-    subtb.close()
-    tb.close()
-    atmcor_msg("closed rawms/'ASDM_CALATMOSPHERE'.")
+        subtb.close()
+        tb.close()
+        atmcor_msg("closed rawms/'ASDM_CALATMOSPHERE'.")
+
+    except Exception as err:
+        atmcor_msg("ERROR:: opening rawms/'ASDM_CALATMOSPHERE'.")
+        casalog.post('%s' % err, 'ERROR')
+        raise
 
     atmcor_msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
 
