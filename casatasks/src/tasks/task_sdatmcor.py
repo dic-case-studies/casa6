@@ -49,7 +49,7 @@ def sdatmcor(
         debug):
 
 # Information
-    msg = "Revision  sdatmcor 0923-1 Initital Unit Test and Debug"
+    msg = "Revision  sdatmcor 0924-1 Initital(2) Unit Test and Debug"
     atmcor_msg(msg)
 
 #
@@ -86,16 +86,17 @@ def sdatmcor(
     altitude    = form_value_unit(altitude, ['m'])
     temperature = form_value_unit(temperature, ['K'])
     pressure    = form_value_unit(pressure, ['mbar', 'hPa'])
-    humidity    = humidity  # through (string or float)
+    humidity    = humidity  # pass through (string or float)
     PWV         = form_value_unit(PWV, ['mm'])
     dp          = form_value_unit(dp,  ['mbar', 'hPa'])
-    dpm         = dpm  # through (string or float)
+    dpm         = dpm  # pass through (string or float)
 
 # User-Define Profile (nothing =[] )
 
     # if(len(layerboundaries) != len(layertemperature)):
     #     print("WARN: specified Count of Bounday and Temperature mismatch.")
     #  param = ['1.1', '2.2', '3.3' .....]  
+
     layerboundaries = conv_to_doubleArrayList(layerboundaries)
     layertemperature = conv_to_doubleArrayList(layertemperature)
 
@@ -255,37 +256,20 @@ def list_comma_string( separated_string, dType):
         return []
 
 
-def listInt_comma_string( separated_string):
-    if type(separated_string) is str:
-        tmp_list = separated_string.split(',')  # convert to List #
-        out_list = [int(s) for s in tmp_list]  # convert to list[int]
-        return out_list
-    elif type(separated_string) is list:
-        return separated_string
-    else:
-        return []
-
-def listStr_comma_string( separated_string):
-    """
-      make a list from comma separated string
-    """
-    if type(separated_string) is str:
-        tmp_list = separated_string.split(',')  # convert to List #
-        out_list = [str(s) for s in tmp_list]  # convert to list[int]
-        return out_list
-    elif type(separated_string) is list:
-        return separated_string
-    else:
-        return []
-
 def conv_to_doubleArrayList( in_list ):
-    """
-      convert elements in a list, to double espression
-    """
-    if  not (type(in_list) is list):
-        return []
-    out_list = [float(s) for s in in_list]  # convert to list[int]
-    return out_list
+    # convert elements in  list or separated str =>  float list.
+    if  type(in_list) is list:
+        out_list = [float(s) for s in in_list]  # force to convert to list[float]
+        return out_list
+
+    elif type(in_list) is str:
+        tmp_list = in_list.split(',')  # convert to List #
+        out_list = [float(s) for s in tmp_list]  # force to convert to list[float]
+        return out_list
+    else:
+        atmcor_msg("Invalid arg type, expecting separated string or list.", 'SEVERE')
+        return []   # invalid type
+
 
 #
 # Logging CASA LOG (INFO/WARN/SEVERE)
@@ -320,12 +304,13 @@ def get_antennaId( msname, antennaName):
 #
 
 def showAtmInfo(atm):
-        # ATM Profile #
-        if is_CASA6: 
-            for s in atm:
+    # ATM Profile #
+    if is_CASA6: 
+        for s in atm:
+            if type(s) is str:
                 atmcor_msg(s)
-        else:
-            atmcor_msg(atm)
+    else:
+        atmcor_msg(atm)
 
 def showLayerInfo(at):
     p = at.getProfile()
@@ -382,7 +367,6 @@ def calc_sdatmcor(
 
     # debug flags  #
     skipTaskExec = False          # skip execution in do_sdatmcor() until official test code is ready
-    skipCorrection = False        # skip Correction procedure in the script, to save time.
     showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt =1000  #  (limit count)
@@ -391,9 +375,6 @@ def calc_sdatmcor(
 
     if('skipTaskExec' in debug):
         skipTaskExec = True
-
-    if('skipCorrection' in debug):
-        skipCorrection = True
 
     if('interruptCorrection' in debug):
         interruptCorrection = True
@@ -443,7 +424,7 @@ def calc_sdatmcor(
     #
 
     # atmtype #
-    atmtype_for_file     = set_int_param(a_atmtype,atmtype)
+    atmtype_for_file     = set_int_param(a_atmtype,atmtype)  # 'atmtype_for_file'  is NotACTIVE, reserved. #
 
     # datacolumn (XML fills default) ,to UPPER CASE #
     datacolumn = p_datacolumn.upper()
@@ -480,7 +461,7 @@ def calc_sdatmcor(
     atmcor_msg("  default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
     atmcor_msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
     atmcor_msg("  default MS file (corms) = %s , Exist =%s" % (corms, corms_exist)) 
-    atmcor_msg("  The 'calms' will be determined to connect mstransform output.")
+    atmcor_msg("  The 'calms' will refer temporary output file of mstransform.")
     # infile inaccesible  
     if not rawms_exist:
         atmcor_msg("ERROR::Specified infile does not exist..", 'SEVERE')
@@ -489,7 +470,7 @@ def calc_sdatmcor(
     # Overwrite Protection 
     if corms_exist:
         if p_overwrite:
-            atmcor_msg("Overwtite:: Overwrite specified. Once delete the existing output file. " )
+            atmcor_msg("Overwrite:: Overwrite specified. Once delete the existing output file. " )
             ms_remove(corms)
         else:
             atmcor_msg("Overwrite:: Specified outputfile already exist. Abort.")
@@ -533,7 +514,7 @@ def calc_sdatmcor(
     #   multiple antenna  TBD
     #
 
-    # antenna List, when muslipe antennas are given
+    # antenna List, when multiple antennas are given
     ant_list = list_comma_string(p_antenna, dType='str')
     atmcor_msg("- antenna_list = %s"% ant_list )
 
@@ -574,7 +555,7 @@ def calc_sdatmcor(
     # check count of ON/OFF SOURCE 
     n_tmonsource = len(tmonsource)
     n_tmoffsource = len(tmoffsource)
-    msg = "Target Informaiton. \n"   \
+    msg = "Target Information. \n"   \
         + " #ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
         + " #OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
     atmcor_msg(msg)
@@ -629,7 +610,7 @@ def calc_sdatmcor(
     elev = subtb.getcol('DIRECTION').squeeze()[1]
     subtb.close()
     tb.close()
-    atmcor_msg("closeed POINTING.")
+    atmcor_msg("closed POINTING.")
 
     ################################################################
     # Get atmospheric parameters for ATM
@@ -781,7 +762,7 @@ def calc_sdatmcor(
         else:
             atmcor_msg("-- Sub Parameters were not used, due to 'atmdetail' is not True.")
 
-        # print to confirm #
+        # print and log to confirm #
         atmcor_msg("==========================================================")
         atmcor_msg("  initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
         atmcor_msg("-----------------+----------------------------------------")
@@ -862,17 +843,11 @@ def calc_sdatmcor(
                   (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
             dosmooth = False
 
-        # Debug(Tentatitve) Skip the main correction loop. 
-        if skipCorrection:
-            msg = "Correction loop (nRow=%d) will be skipped, due to debug option. \n---" % len(tmdata)
-            atmcor_msg(msg)
-            continue
-
         ###########################
         # Correction Main Loop
         ###########################
 
-        msg = "ATM Correction for loop (N=%d), " % len(tmdata)
+        msg = "Writing ATM Correction Data. (N=%d) " % len(tmdata)
         atmcor_msg(msg)
 
         cdata = data.copy()
