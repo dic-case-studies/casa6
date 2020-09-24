@@ -636,8 +636,7 @@ private:
 
 
   //#! Private Member Functions
-    TPGuiCallBackHooks *itsCallBack;
-    TPResetCallBack *itsResetCallBack;
+    std::unique_ptr<TPResetCallBack> itsResetCallBack;
             
     casacore::Bool itsInitialized;
     casacore::Bool itsMsIsOpen;
