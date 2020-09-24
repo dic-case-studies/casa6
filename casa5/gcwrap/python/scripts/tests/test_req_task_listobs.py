@@ -73,7 +73,7 @@ except ImportError:
 
 # If the test is being run in CASA6 use the new method to get the CASA path
 if CASA6:
-    datapath = casatools.ctsys.resolve('/regression/unittest/listobs/')
+    datapath = casatools.ctsys.resolve('data/regression/unittest/listobs/')
     ### for listing import
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import listing as lt
