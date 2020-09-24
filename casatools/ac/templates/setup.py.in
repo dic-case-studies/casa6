@@ -493,11 +493,17 @@ def generate_pyinit(moduledir,tools):
                        return None
                    return __os.path.split(__os.path.split(located)[0])[0]
 
-               _user_data = __os.path.expanduser("~/.casa/data")
-               if hasattr(__user,'rundata') and __os.path.isdir(__os.path.expanduser(__user.rundata)):
-                   _user_data = __os.path.expanduser(__user.rundata)
-               elif hasattr(__user,'rcdir') and __os.path.isdir(__os.path.join(__os.path.expanduser(__user.rcdir),'data')):
+               _user_data = None
+               if hasattr(__user,'rundata'):
+                    if not __os.path.isdir(__os.path.expanduser(__user.rundata)):
+                        if __sys.argv[0] != '-m':
+                            print("ignoring rundata setting (%s) because it is not a directory" % __user.rundata,file=__sys.stderr)
+                    else:
+                        _user_data = __os.path.expanduser(__user.rundata)
+               if _user_data is None and hasattr(__user,'rcdir') and __os.path.isdir(__os.path.join(__os.path.expanduser(__user.rcdir),'data')):
                    _user_data = __os.path.join(__os.path.expanduser(__user.rcdir),'data')
+               if _user_data is None:
+                   _user_data = __os.path.expanduser("~/.casa/data")
 
                if __os.path.isdir(_user_data):
                    _dpath = _dpath + [ _user_data ]

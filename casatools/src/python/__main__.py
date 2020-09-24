@@ -29,12 +29,13 @@ for flag in sys.argv:
         print(build['build.compiler.cxx'])
     if flag == '--compiler-xml':
         print(build['build.compiler.xml-casa'])
-    if flag == '--update-user-data':
+    if flag == '--update-user-data' or flag.startswith("--update-user-data="):
         import casatools as _ct
         from subprocess import Popen, PIPE
 
         def _execute(cmd):
-            popen = Popen(cmd, stdout=PIPE, universal_newlines=True)
+            with open(__os.devnull,"w") as fnull:
+                popen = Popen(cmd, stdout=PIPE, stderr=fnull, universal_newlines=True)
             for stdout_line in iter(popen.stdout.readline, ""):
                 yield stdout_line
             popen.stdout.close()
@@ -42,10 +43,19 @@ for flag in sys.argv:
             if return_code:
                 raise subprocess.CalledProcessError(return_code, cmd)
 
-        _user_data = _ct.rundata(False) if _ct.rundata(False) is not None else __os.path.expanduser("~/.casa/data")
+        from casatools import ctuser as cfg
+        if flag.startswith("--update-user-data="):
+            _user_data = flag[19:]
+        elif hasattr(cfg,'rundata'):
+            _user_data = __os.path.expanduser(cfg.rundata)
+        else:
+            _user_data = _ct.rundata(False) if _ct.rundata(False) is not None else __os.path.expanduser("~/.casa/data")
 
         if not __os.path.exists(_user_data):
-            __os.makedirs(_user_data)
+            try:
+                __os.makedirs(_user_data)
+            except:
+                sys.exit('error, could not create %s' % _user_data)
         elif __os.path.isfile(_user_data):
             sys.exit('error, ~/.casa/data exists and is a file instead of a directory')
 
@@ -54,18 +64,19 @@ for flag in sys.argv:
             for line in _execute([ 'rsync', '-avz', 'rsync://casa-rsync.nrao.edu/casa-data', _user_data ]):
                 sys.stdout.write(".")
                 sys.stdout.flush( )
+            print("")
         except: sys.exit('data fetch failed...')
 
     if flag == '--help':
-        print("--compiler-cc\t\tpath to C compiler used to build casatools")
-        print("--compiler-cxx\t\tpath to C++ compiler used to build casatools")
-        print("--compiler-xml\t\tpath to compiler used to generate bindings from XML")
-        print("--grpc-compile\t\tflags to compile C++ source files")
-        print("--grpc-link\t\tflags to use to link gRPC C++ applications")
-        print("--grpc-libpath\t\tpath to gRPC C++ libraries")
-        print("--grpc-protocpp\t\tpath to C++ protoc compiler")
-        print("--grpc-protopy\t\tpath to Python protoc compiler")
-        print("--proto-registrar\tpath to registrar protobuf spec")
-        print("--proto-shutdown\tpath to shutdown protobuf spec")
-        print("--proto-ping\t\tpath to ping protobuf spec")
-        print("--update-user-data\tinstall or update measures data in ~/.casa/data")
+        print("--compiler-cc\t\t\tpath to C compiler used to build casatools")
+        print("--compiler-cxx\t\t\tpath to C++ compiler used to build casatools")
+        print("--compiler-xml\t\t\tpath to compiler used to generate bindings from XML")
+        print("--grpc-compile\t\t\tflags to compile C++ source files")
+        print("--grpc-link\t\t\tflags to use to link gRPC C++ applications")
+        print("--grpc-libpath\t\t\tpath to gRPC C++ libraries")
+        print("--grpc-protocpp\t\t\tpath to C++ protoc compiler")
+        print("--grpc-protopy\t\t\tpath to Python protoc compiler")
+        print("--proto-registrar\t\tpath to registrar protobuf spec")
+        print("--proto-shutdown\t\tpath to shutdown protobuf spec")
+        print("--proto-ping\t\t\tpath to ping protobuf spec")
+        print("--update-user-data[=dir]\tinstall or update measures data in ~/.casa/data")
