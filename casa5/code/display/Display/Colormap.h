@@ -31,13 +31,14 @@
 //# Includes
 
 #include <map>
-#include <casa/aips.h>
-#include <casa/Containers/BlockIO.h>
-#include <casa/BasicSL/String.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Containers/BlockIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 namespace casacore{
 
-	template <class T> class Vector;
 	template <class T, class U> class Function1D;
 	class LogIO;
 }

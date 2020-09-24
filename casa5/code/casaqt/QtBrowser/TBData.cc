@@ -26,7 +26,7 @@
 //# $Id: $
 #include <casaqt/QtBrowser/TBData.h>
 #include <casaqt/QtBrowser/TBArray.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 using namespace std;
 

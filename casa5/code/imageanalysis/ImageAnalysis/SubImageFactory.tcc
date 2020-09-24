@@ -309,8 +309,8 @@ template<class T> void SubImageFactory<T>::_getMask(
                 casacore::ExtendImage<casacore::Bool> exIm(*myExpression, imageShape, csys);
                 outMask = new casacore::ImageRegion(casacore::LCMask(exIm));
             }
-            catch (const casacore::AipsError& x) {
-                ThrowCc("Unable to extend mask: " + x.getMesg());
+            catch ( const std::exception &x ) {
+                ThrowCc( String("Unable to extend mask: ") + x.what() );
             }
         }
     }

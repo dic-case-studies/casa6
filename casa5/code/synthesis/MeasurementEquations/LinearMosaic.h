@@ -35,10 +35,11 @@
 #ifndef SYNTHESIS_LINEARMOSAIC_H
 #define SYNTHESIS_LINEARMOSAIC_H
 
+#include <casacore/casa/Arrays/ArrayFwd.h>
+
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Vector;
   class CoordinateSystem;
 }
 

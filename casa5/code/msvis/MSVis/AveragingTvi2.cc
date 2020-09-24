@@ -378,7 +378,7 @@ public:
 
     friend class MsRowAvg;
 
-    VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vi);
+    VbAvg (const AveragingParameters & averagingParameters, ViImplementation2 * vi);
 
     void accumulate (const VisBuffer2 * vb, const Subchunk & subchunk);
     const Cube<Int> & counts () const;
@@ -898,8 +898,8 @@ void MsRowAvg::accumulateNormalizationFactor(Double normalizationFactor)
 	vbAvg_p->normalizationFactor_p (row ()) += normalizationFactor;
 }
 
-VbAvg::VbAvg (const AveragingParameters & averagingParameters, const ViImplementation2 * vii)
-: VisBufferImpl2 (VbRekeyable),
+VbAvg::VbAvg (const AveragingParameters & averagingParameters, ViImplementation2 * vii)
+: VisBufferImpl2 (vii, VbRekeyable),
   averagingInterval_p (averagingParameters.getAveragingInterval ()),
   averagingOptions_p (averagingParameters.getOptions()),
   averagingVii_p (vii),
@@ -1186,15 +1186,17 @@ VbAvg::accumulateElementForCubes (AccumulationParameters & accumulationParameter
 										One, zeroAccumulation,
 										accumulationParameters.weightSpectrumOut ());
 		}
-		else
-		{
-			// We store the accumulated weight in sigmaSpectrumOut pending of
-			// - normalization
-			// - SIGMA = 1/sqrt(WEIGHT) in-place transformation
-			accumulateElementForCube (	& weightObserved,
-										One, zeroAccumulation,
-										accumulationParameters.sigmaSpectrumOut ());
-		}
+
+        // This will always create a sigma spectrum column which is not empty.
+        // This is useful in particular if not doing_p.correctedData_p but doing_p.modelData_p,
+        // so that modelData can be properly divided by sigmaSpectrumOut in finalizeCubeData
+        // We store the accumulated weight in sigmaSpectrumOut pending of
+        // - normalization
+        // - SIGMA = 1/sqrt(WEIGHT) in-place transformation
+        accumulateElementForCube (&weightObserved,
+                                  One, zeroAccumulation,
+                                  accumulationParameters.sigmaSpectrumOut ());
+
 	}
 
 	// For model data is less clear what to do, what in order to convert to
@@ -1482,7 +1484,7 @@ struct DividesNonZero : public std::binary_function<L,R,RES>
 
 
 void
-VbAvg::finalizeCubeData (MsRowAvg * msRow)
+VbAvg::finalizeCubeData (MsRowAvg * msRowAvg)
 {
     // Divide each of the data cubes in use by the sum of the appropriate weights.
 
@@ -1491,48 +1493,38 @@ VbAvg::finalizeCubeData (MsRowAvg * msRow)
 
     if (doing_p.correctedData_p)
     {
-        Matrix<Complex> corrected = msRow->correctedMutable();
-        arrayTransformInPlace<Complex, Float, DivideOp > (corrected,msRow->weightSpectrum (), op);
+        Matrix<Complex> corrected = msRowAvg->correctedMutable();
+        arrayTransformInPlace<Complex, Float, DivideOp > (corrected,msRowAvg->weightSpectrum (), op);
     }
 
     if (doing_p.observedData_p)
     {
-        Matrix<Complex> observed = msRow->observedMutable();
+        Matrix<Complex> observed = msRowAvg->observedMutable();
         if (not doing_p.correctedData_p)
-        {
-        	arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->weightSpectrum (), op);
-        }
+            arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRowAvg->weightSpectrum (), op);
         else
-        {
-        	arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRow->sigmaSpectrum (), op);
-        }
+            arrayTransformInPlace<Complex, Float, DivideOp > (observed,msRowAvg->sigmaSpectrum (), op);
     }
 
-	if (doing_p.modelData_p)
-	{
-		Matrix<Complex> model = msRow->modelMutable();
+    if (doing_p.modelData_p)
+    {
+        Matrix<Complex> model = msRowAvg->modelMutable();
 
-		if (doing_p.correctedData_p)
-		{
-			arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->weightSpectrum (), op);
-		}
-		else if (doing_p.observedData_p)
-		{
-			arrayTransformInPlace<Complex, Float, DivideOp > (model,msRow->sigmaSpectrum (), op);
-		}
-		else
-		{
-			arrayTransformInPlace<Complex, Int, DivideOp > (model,msRow->counts (), op);
-		}
-	}
+        if (doing_p.correctedData_p)
+            arrayTransformInPlace<Complex, Float, DivideOp > (model,msRowAvg->weightSpectrum (), op);
+        else if (doing_p.observedData_p)
+            arrayTransformInPlace<Complex, Float, DivideOp > (model,msRowAvg->sigmaSpectrum (), op);
+        else
+            arrayTransformInPlace<Complex, Int, DivideOp > (model,msRowAvg->counts (), op);
+    }
 
     if (doing_p.floatData_p)
     {
         typedef Divides <Float, Float, Float> DivideOpFloat;
         DivideOpFloat opFloat;
 
-        Matrix<Float> visCubeFloat = msRow->singleDishDataMutable();
-        arrayTransformInPlace<Float, Float, DivideOpFloat > (visCubeFloat,msRow->weightSpectrum (), opFloat);
+        Matrix<Float> visCubeFloat = msRowAvg->singleDishDataMutable();
+        arrayTransformInPlace<Float, Float, DivideOpFloat > (visCubeFloat,msRowAvg->weightSpectrum (), opFloat);
     }
 
 
@@ -2793,7 +2785,7 @@ void AveragingTvi2::exposure (casacore::Vector<double> & expo) const
     return;
 }
 
-void AveragingTvi2::getRowIds (casacore::Vector<casacore::uInt> & rowids) const
+void AveragingTvi2::getRowIds (Vector<rownr_t> & rowids) const
 {
     VisBuffer2* vb = getVisBuffer();
     rowids = vb->rowIds();

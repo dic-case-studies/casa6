@@ -24,7 +24,7 @@
 //#			                    Charlottesville, VA 22903-2475 USA
 //#
 //# $Id$
-
+#include <thread>
 #include <casa/iostream.h>
 
 #include <display/QtViewer/QtCleanPanelGui.qo.h>
@@ -79,7 +79,14 @@ namespace casa {
 
 	QtCleanPanelGui::QtCleanPanelGui( QtViewer *v, QWidget *parent, const std::list<std::string> &args ) :
 		QtDisplayPanelGui( v, parent, "iclean", args ), in_interact_mode(false), interact_id(0), imagedd_(0), maskdd_(0) {
-
+#if defined(CASA6)
+        static const auto debug = getenv("GRPC_DEBUG");
+        if (debug) {
+            std::cerr << "entering QtCleanPanelGui ctor... (thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
+            fflush(stderr);
+        }
+#endif
 		std::string tmp;
 		if ( rc.get("viewer.iclean.dimensions",tmp) == false ) resize(700,900);
 
@@ -332,8 +339,14 @@ namespace casa {
 
 	QtCleanPanelGui::~QtCleanPanelGui() { }
 
-#define EXIT_FUNC(NAME,STR,EXTRA)						\
+#define EXIT_FUNC(NAME,STR,ACTION,EXTRA)                \
     void QtCleanPanelGui::NAME() {						\
+    static const auto debug = getenv("GRPC_DEBUG");     \
+    if (debug) {			\
+        std::cerr << "entering " << #NAME << " [" << STR << "] ... (thread " <<	\
+            std::this_thread::get_id() << ")" << std::endl;	\
+        fflush(stderr);			\
+    }			\
 	QMap<QString,QVariant> state;						\
 	state["action"] = STR;							\
 	state["niter"] = niterED_->text().toInt();				\
@@ -350,14 +363,24 @@ namespace casa {
 	}									\
 	in_interact_mode = false;						\
 	if ( maskdd_ != 0 ) maskdd_->unlock( );					\
-	emit interact( QVariant(state) );					\
+    if (debug) {			\
+        std::cerr << "completing interaction with " << #NAME << " [" << STR << "] ... (thread " <<	\
+            std::this_thread::get_id() << ")" << std::endl;	\
+        fflush(stderr);			\
+    }			\
+	ACTION					\
 	EXTRA									\
     }
 
-
-	EXIT_FUNC(exitDone,"continue",)
-	EXIT_FUNC(exitNoMore,"no more",)
-	EXIT_FUNC(exitStop,"stop",hide( );)
+#if defined(CASA6)
+	EXIT_FUNC(exitDone,"continue",interact_promise.set_value(QVariant(state));,)
+	EXIT_FUNC(exitNoMore,"no more",interact_promise.set_value(QVariant(state));,)
+	EXIT_FUNC(exitStop,"stop",interact_promise.set_value(QVariant(state));,hide( );)
+#else
+	EXIT_FUNC(exitDone,"continue",emit interact( QVariant(state) );,)
+	EXIT_FUNC(exitNoMore,"no more",emit interact( QVariant(state) );,)
+	EXIT_FUNC(exitStop,"stop",emit interact( QVariant(state) );,hide( );)
+#endif
 
 	bool QtCleanPanelGui::supports( SCRIPTING_OPTION option ) const {
 		return option == INTERACT || option == SETOPTIONS ? true : false;
@@ -374,8 +397,22 @@ namespace casa {
 		return QVariant(true);
 	}
 
+#if defined(CASA6)
+	QVariant QtCleanPanelGui::start_interact( std::promise<QVariant> &&prom, const QVariant &/*input*/, int id ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+#else
 	QVariant QtCleanPanelGui::start_interact( const QVariant &/*input*/, int id ) {
+#endif
 		if ( ! in_interact_mode ) {
+#if defined(CASA6)
+            if (debug) {
+                std::cerr << "initiating QtCleanPanelGui::start_interact( )... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            
+            interact_promise = std::move(prom);
+#endif
 			in_interact_mode = true;
 			interact_id = id;
 			if(maskdd_ && (maskdd_->imageInterface())!=0) {
@@ -393,6 +430,14 @@ namespace casa {
 			raise( );
 			return QVariant(true);
 		} else {
+#if defined(CASA6)
+            if (debug) {
+                std::cerr << "QtCleanPanelGui::start_interact( ) interaction already in progress... (thread " <<
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
+            prom.set_value(QVariant(false));
+#endif
 			return QVariant(false);
 		}
 	}

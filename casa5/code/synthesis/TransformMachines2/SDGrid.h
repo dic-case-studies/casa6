@@ -118,7 +118,7 @@ namespace refim { //# namespace for imaging refactor
 // <ul> Deal with large VLA spectral line case 
 // </todo>
 
-class SDGrid : public FTMachine {
+class SDGrid final : public FTMachine {
 public:
 
   // Constructor: cachesize is the size of the cache in words
@@ -221,6 +221,7 @@ public:
   virtual casacore::String name() const;
 
 private:
+  casacore::Bool isSD() const override {return true;}
 
   // Find the Primary beam and convert it into a convolution buffer
   void findPBAsConvFunction(const casacore::ImageInterface<casacore::Complex>& image,

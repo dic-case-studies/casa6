@@ -33,10 +33,10 @@ test_fringefit			kettenis@jive.eu
 test_gencal                     ttsutsum@nrao.edu
 test_getchunk                   dmehring@nrao.edu
 test_hanningsmooth              scastro@eso.org
-test_hanningsmooth2             scastro@eso.org
 test_ia_adddegaxes              dmehring@nrao.edu
 test_ia_boxcar                  dmehring@nrao.edu
 test_ia_calcmask                dmehring@nrao.edu
+test_ia_collapse                dmehring@nrao.edu
 test_ia_constructors            dmehring@nrao.edu
 test_ia_continuumsub            dmehring@nrao.edu
 test_ia_convertflux             dmehring@nrao.edu
@@ -162,6 +162,7 @@ test_req_task_calstat           nschweig@nrao.edu
 test_req_task_rmtables          nschweig@nrao.edu
 test_req_task_clearcal          nschweig@nrao.edu
 test_req_task_imhead            nschweig@nrao.edu
+test_req_task_rerefant          nschweig@nrao.edu
 test_req_task_visstat           nschweig@nrao.edu
 test_req_task_delmod            nschweig@nrao.edu
 test_req_task_feather           nschweig@nrao.edu
@@ -177,6 +178,7 @@ test_req_task_listsdm           nschweig@nrao.edu
 test_req_task_rmfit             nschweig@nrao.edu
 test_req_task_gaincal           nschweig@nrao.edu
 test_req_task_impv              nschweig@nrao.edu
+test_req_task_sdintimaging      ttsutsum@nrao.edu
 test_req_task_statwt            dmehring@nrao.edu
 test_stk_alma_pipeline_imaging.py  scastro@eso.org
 
@@ -193,4 +195,9 @@ test_stk_alma_pipeline_imaging.py  scastro@eso.org
 #test_VLA_3C391                       awells@nrao.edu
 #test_VLA_IRC10216                    awells@nrao.edu
 #test_VLA_MG0414                      awells@nrao.edu
+
+# Stakeholders List
+test_stk_vlass_pipeline_imaging       scastro@eso.org
+test_stk_alma_pipeline_imaging        scastro@eso.org
+
 

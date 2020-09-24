@@ -36,6 +36,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import sys
 import os
 import unittest
@@ -416,7 +418,7 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range array returns a NoneType, and valid selections retrun a dictionary
         '''
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 arrayFail = visstat(selectiondata, array='1')
             with self.assertRaises(RuntimeError):
@@ -443,7 +445,7 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range observation ID returns a NoneType, and valid selections return a dictionary
         '''
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 observationFail = visstat(selectiondata, observation=1)
             with self.assertRaises(RuntimeError):
@@ -469,11 +471,11 @@ class visstat_test(unittest.TestCase):
             
             Assert that the dict produced when timeaverage = True is different from the one produced when timeaverage=False
         '''
-        
-        timeavgTrue = visstat(selectiondata, timeaverage=True)
+
+        timeavgTrue = visstat(selectiondata, timebin='1s', timeaverage=True)
         timeavgFalse = visstat(selectiondata, timeaverage=False)
         
-        timeavgTruemms = visstat(mms_select, timeaverage=True)
+        timeavgTruemms = visstat(mms_select, timebin='1s', timeaverage=True)
         timeavgFalsemms = visstat(mms_select, timeaverage=False)
         
         self.assertTrue( timeavgFalse != timeavgTrue )
@@ -505,14 +507,18 @@ class visstat_test(unittest.TestCase):
             
             Assert that all parameter settings give different results than the default output
         '''
+
+        scanSelect = visstat(selectiondata, timeaverage=True, timebin='1s', timespan='scan')
+        stateSelect = visstat(selectiondata, timeaverage=True, timebin='1s',
+                              timespan='state')
+        bothSelect = visstat(selectiondata, timeaverage=True,  timebin='1s',
+                             timespan='scan, state')
         
-        scanSelect = visstat(selectiondata, timeaverage=True, timespan='scan')
-        stateSelect = visstat(selectiondata, timeaverage=True, timespan='state')
-        bothSelect = visstat(selectiondata, timeaverage=True, timespan='scan, state')
-        
-        scanSelectmms = visstat(mms_select, timeaverage=True, timespan='scan')
-        stateSelectmms = visstat(mms_select, timeaverage=True, timespan='state')
-        bothSelectmms = visstat(mms_select, timeaverage=True, timespan='scan, state')
+        scanSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s', timespan='scan')
+        stateSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s',
+                                 timespan='state')
+        bothSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s',
+                                timespan='scan, state')
         
         for item in [scanSelect, stateSelect, bothSelect]:
             self.assertTrue( item != nostat )
@@ -529,10 +535,12 @@ class visstat_test(unittest.TestCase):
             
             Assert that the output is a python dict. Once again this selection seems to not change the values that are returned
         '''
+
+        uvwSelect = visstat(selectiondata, timeaverage=True, timebin='1s',
+                            maxuvwdistance=10.0)
         
-        uvwSelect = visstat(selectiondata, timeaverage=True, maxuvwdistance=10.0)
-        
-        uvwSelectmms = visstat(mms_select, timeaverage=True, maxuvwdistance=10.0)
+        uvwSelectmms = visstat(mms_select, timeaverage=True, timebin='1s',
+                               maxuvwdistance=10.0)
         
         self.assertTrue( uvwSelect != nostat )
         self.assertTrue( uvwSelectmms != nostatmms )
