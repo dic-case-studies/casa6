@@ -1476,7 +1476,6 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
     {
         for (auto sortCol : sortColumns_p.getColumnIds())
         {
-            cout << " sort col " << sortCol<<endl;
             if(sortCol == MS::DATA_DESC_ID)
                 ddIdScope_p = ChunkScope;
         }

@@ -354,6 +354,9 @@ public:
     flag(casacore::Cube<casacore::Bool> & flags) const override;
 
     // Return flag for each polarization, channel and row
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     flag(casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
 
@@ -406,6 +409,9 @@ public:
     sigma(casacore::Matrix<casacore::Float> & sig) const override;
 
     // Return sigma
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     sigma(casacore::Vector<casacore::Matrix<casacore::Float>> & sig) const override;
 
@@ -413,9 +419,11 @@ public:
 	virtual casacore::Int
 	spectralWindow() const override;
 
-	virtual void
-	spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
+    // Return spw Ids for each row of the current iteration
+    virtual void
+    spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
 
+    // Return polarization Ids for each row of the current iteration
     virtual void
     polarizationIds(casacore::Vector<casacore::Int> & polIds) const override;
 
@@ -427,8 +435,9 @@ public:
 	virtual casacore::Int
 	dataDescriptionId() const override;
 
-	virtual void
-	dataDescriptionIds(casacore::Vector<casacore::Int> & ddis) const override;
+    // Return ddIds for each row of the current iteration
+    virtual void
+    dataDescriptionIds(casacore::Vector<casacore::Int> & ddis) const override;
 
 	// Return MJD midpoint of interval.
 	virtual void
@@ -451,20 +460,34 @@ public:
     virtual void
     visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const override;
 
+    // Return the corrected visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
-    visibilityObserved(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
+    visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
-    virtual void
-    visibilityModel(casacore::Cube<casacore::Complex> & vis) const override;
-
-    virtual void
-    visibilityModel(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
-
+    // Return the observed visibilities
     virtual void
     visibilityObserved(casacore::Cube<casacore::Complex> & vis) const override;
 
+    // Return the observed visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
-    visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
+    visibilityObserved(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
+
+    // Return the model visibilities
+    virtual void
+    visibilityModel(casacore::Cube<casacore::Complex> & vis) const override;
+
+    // Return the model visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    visibilityModel(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
 	// This will return all selected spwids for each ms attached with this iterator
 	virtual casacore::Vector<casacore::Vector<casacore::Int> > getAllSelectedSpws() const;
@@ -476,6 +499,9 @@ public:
 
     // Return FLOAT_DATA as a casacore::Cube(npol, nchan, nrow) if found in the
     // MS.
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     floatData(casacore::Vector<casacore::Cube<casacore::Float>> & fcubes) const override;
 
@@ -500,6 +526,9 @@ public:
     weight(casacore::Matrix<casacore::Float> & wt) const override;
 
     // Return weight
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     weight(casacore::Vector<casacore::Matrix<casacore::Float>> & wt) const override;
 
@@ -516,6 +545,9 @@ public:
     weightSpectrum(casacore::Cube<casacore::Float> & wtsp) const override;
 
     // Return weightspectrum(a weight for each channel)
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     weightSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
 
@@ -524,6 +556,9 @@ public:
     sigmaSpectrum(casacore::Cube<casacore::Float> & sigsp) const override;
 
     // Return sigmaspectrum(a sigma for each channel)
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
     virtual void
     sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> & sigsp) const override;
 
