@@ -44,12 +44,11 @@ for flag in sys.argv:
                 raise subprocess.CalledProcessError(return_code, cmd)
 
         from casatools import ctuser as cfg
+        _user_data = __os.path.expanduser("~/.casa/data")
         if flag.startswith("--update-user-data="):
             _user_data = flag[19:]
         elif hasattr(cfg,'rundata'):
             _user_data = __os.path.expanduser(cfg.rundata)
-        else:
-            _user_data = _ct.rundata(False) if _ct.rundata(False) is not None else __os.path.expanduser("~/.casa/data")
 
         if not __os.path.exists(_user_data):
             try:
