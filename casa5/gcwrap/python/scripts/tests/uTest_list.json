@@ -810,7 +810,7 @@
         {
              "testNumber":"5105",
              "testName":"Imhead",
-             "testScript":"test_imhead",
+             "testScript":"test_req_task_imhead",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",

@@ -112,12 +112,12 @@ class imsmooth_test(unittest.TestCase):
                 os.system('rm -rf ' +file)
         
         for file in image_names:
-            os.system('cp -r '+ os.path.join(datapath,file)+' ' + file)
+            os.system('cp -RH '+ os.path.join(datapath,file)+' ' + file)
         self.ia = image()
         for f in [targetres_im, tiny]:
             if(os.path.exists(f)):
                 os.system('rm -rf ' +f)
-            os.system('cp -r '+ os.path.join(datapath,f)+' ' + f)
+            os.system('cp -RH '+ os.path.join(datapath,f)+' ' + f)
 
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)

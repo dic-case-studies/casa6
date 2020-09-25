@@ -73,7 +73,6 @@ test_ia_twopointcorrelation     dmehring@nrao.edu
 test_imcollapse                 dmehring@nrao.edu
 test_imcontsub                  dmehring@nrao.edu
 test_imfit                      dmehring@nrao.edu
-test_imhead                     dmehring@nrao.edu
 test_immath                     dmehring@nrao.edu
 test_immoments                  dmehring@nrao.edu
 test_impbcor                    dmehring@nrao.edu
