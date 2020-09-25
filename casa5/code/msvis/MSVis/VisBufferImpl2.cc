@@ -2716,9 +2716,9 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
     }
     else{
 
-        rownr_t nRows = this->nRows();
-        int nCorrelations = this->nCorrelations ();
-        int nChannels = this->nChannels();
+        auto nRows = this->nRows();
+        auto nCorrelations = this->nCorrelations ();
+        auto nChannels = this->nChannels();
 
         // Sigma spectrum doesn't exist so create on using the sigma column.
 

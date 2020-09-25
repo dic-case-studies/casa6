@@ -1507,7 +1507,7 @@ void MSTransformManager::setup()
 	// Check if we really need to combine SPWs
 	if (combinespws_p)
 	{
-		rownr_t nInputSpws = outputMs_p->spectralWindow().nrow();
+		auto nInputSpws = outputMs_p->spectralWindow().nrow();
 		if (nInputSpws < 2)
 		{
 			logger_p << LogIO::WARN << LogOrigin("MSTransformManager", __FUNCTION__)
@@ -2554,7 +2554,7 @@ void MSTransformManager::regridSpwSubTable()
 {
   // Access Spectral Window sub-table
   MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-  rownr_t nInputSpws = spwTable.nrow();
+  auto nInputSpws = spwTable.nrow();
   MSSpWindowColumns spwCols(spwTable);
 
   // Access columns which have to be modified
@@ -2646,7 +2646,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Access Spectral Window sub-table
     MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    rownr_t nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
 
     // Access columns which have to be modified
@@ -3159,8 +3159,8 @@ void MSTransformManager::separateFeedSubtable()
 				phasedFeedId = feedCols.phasedFeedId().getColumn();
 			}
 
-			rownr_t nRowsPerSpw = feedCols.spectralWindowId().nrow();
-		    rownr_t rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = feedCols.spectralWindowId().nrow();
+		    auto rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3284,8 +3284,8 @@ void MSTransformManager::separateSourceSubtable()
 			}
 
 
-			rownr_t nRowsPerSpw = sourceCols.spectralWindowId().nrow();
-		    rownr_t rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = sourceCols.spectralWindowId().nrow();
+		    auto rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3507,8 +3507,8 @@ void MSTransformManager::separateSyscalSubtable()
 			}
 
 
-			rownr_t nRowsPerSpw = syscalCols.spectralWindowId().nrow();
-			rownr_t rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = syscalCols.spectralWindowId().nrow();
+			auto rowIndex = nRowsPerSpw;
 			for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 			{
 				// Add rows
@@ -3677,8 +3677,8 @@ void MSTransformManager::separateFreqOffsetSubtable()
 
     		// NOTE (jagonzal): FreqOffset does not have optional columns
 
-    		rownr_t nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
-    		rownr_t rowIndex = nRowsPerSpw;
+    		auto nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
+    		auto rowIndex = nRowsPerSpw;
     		for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
     		{
     			// Add rows
@@ -3891,8 +3891,8 @@ void MSTransformManager::separateSysPowerSubtable()
 			if (MSTransformDataHandler::columnOk(requantizerGainCol))
 				requantizerGain = requantizerGainCol.getColumn();
 
-	    	rownr_t nRowsPerSpw = spectralWindowId.nelements();
-	        rownr_t rowIndex = nRowsPerSpw;
+	    	auto nRowsPerSpw = spectralWindowId.nelements();
+	        auto rowIndex = nRowsPerSpw;
 	        for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 	        {
 	        	// Add rows
@@ -3950,7 +3950,7 @@ Int MSTransformManager::getAveragedPolarizationId() {
   logger_p << LogOrigin("MSTransformManager", __func__, WHERE);
   MSPolarizationColumns cols(outputMs_p->polarization());
   Int polId = -1;
-  rownr_t nrow = cols.nrow();
+  auto nrow = cols.nrow();
   for (rownr_t i = 0; i < nrow; ++i) {
     auto const numCorr = cols.numCorr()(i);
     auto const flagRow = cols.flagRow()(i);
@@ -4612,7 +4612,7 @@ void MSTransformManager::getInputNumberOfChannels()
 {
     // Access spectral window sub-table
     MSSpectralWindow spwTable = inputMs_p->spectralWindow();
-    rownr_t nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
 
@@ -4632,7 +4632,7 @@ void MSTransformManager::dropNonUniformWidthChannels()
 {
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-	rownr_t nInputSpws = spwTable.nrow();
+	auto nInputSpws = spwTable.nrow();
 	MSSpWindowColumns spwCols(spwTable);
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
     ArrayColumn<Double> chanWidthCol = spwCols.chanWidth();
@@ -4767,7 +4767,7 @@ void MSTransformManager::getOutputNumberOfChannels()
 
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    rownr_t nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
@@ -5790,7 +5790,7 @@ void MSTransformManager::fillOutputMs(vi::VisBuffer2 *vb)
 	if (not bufferMode_p)
 	{
 		// Create RowRef object to fill new rows
-		rownr_t currentRows = outputMs_p->nrow();
+		auto currentRows = outputMs_p->nrow();
 		RefRows rowRef( currentRows, currentRows + nRowsToAdd_p/nspws_p - 1);
 
 		// Add new rows to output MS
