@@ -2200,7 +2200,6 @@ ITUPLE image::_fromarray(
     if (
         pixType == ::casac::variant::DOUBLEVEC
         || pixType == ::casac::variant::INTVEC
-        || pixType == ::casac::variant::LONGVEC
         || pixType == ::casac::variant::UINTVEC
     ) {
         ::casacore::Array<::casacore::Double> dv;
@@ -2212,11 +2211,6 @@ ITUPLE image::_fromarray(
         else if (pixType == ::casac::variant::INTVEC) {
             dv = ::casacore::Vector<::casacore::Double>(
                 pixels.getIntVec()
-            ).reform(shape);
-        }
-        else if (pixType == ::casac::variant::LONGVEC) {
-            dv = ::casacore::Vector<::casacore::Double>(
-                pixels.getLongVec()
             ).reform(shape);
         }
         else if (pixType == ::casac::variant::UINTVEC) {
@@ -6898,13 +6892,13 @@ void image::_setImage(casa::ITUPLE mytuple) {
 vector<double> image::_toDoubleVec(const variant& v) {
     variant::TYPE type = v.type();
     ThrowIf(
-        type != variant::INTVEC && type != variant::LONGVEC
+        type != variant::INTVEC
         && type != variant::DOUBLEVEC,
         "variant is not a numeric array"
     );
     vector<double> output;
-    if (type == variant::INTVEC || type == variant::LONGVEC) {
-        Vector<Int> x = v.toIntVec();
+    if (type == variant::INTVEC) {
+        Vector<long> x = v.toIntVec();
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     if (type == variant::DOUBLEVEC) {

@@ -178,7 +178,7 @@ synthesisimager::selectdata(const casac::record& selpars)
 
   variant* synthesisimager::estimatememory(){
     *itsLog << casacore::LogOrigin("synthesisimager", __func__);
-    long long mem1=0;
+    long mem1=0;
     variant * mem_ptr=new variant (mem1);
     try 
     {

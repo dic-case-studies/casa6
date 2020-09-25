@@ -13,7 +13,7 @@ class variant {
 
     public:
 
-	enum TYPE { RECORD, BOOL, INT, UINT, LONG, DOUBLE, COMPLEX, STRING, BOOLVEC, INTVEC, UINTVEC, LONGVEC, DOUBLEVEC, COMPLEXVEC, STRINGVEC };
+	enum TYPE { RECORD, BOOL, INT, UINT, DOUBLE, COMPLEX, STRING, BOOLVEC, INTVEC, UINTVEC, DOUBLEVEC, COMPLEXVEC, STRINGVEC };
 
 	static TYPE compatible_type( TYPE one, TYPE two );
 
@@ -39,7 +39,6 @@ class variant {
 	variant(bool arg) : typev(BOOL), shape_(1,1) { val.b = arg;  }
 	variant(long arg) : typev(INT), shape_(1,1) { val.i = arg; }
 	variant(unsigned long arg) : typev(UINT), shape_(1,1) { val.ui = arg; }
-	variant(long long arg) : typev(LONG), shape_(1,1) { val.l = arg; }
 	variant(double arg) : typev(DOUBLE), shape_(1,1) { val.d = arg; }
 	variant(std::complex<double> arg) : typev(COMPLEX) { val.c = new std::complex<double>(arg); }
 	variant(const char *arg) : typev(STRING), shape_(1,1)
@@ -74,15 +73,6 @@ class variant {
         variant(std::vector<unsigned long> *arg, std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
                         { val.uiv = arg; }
 
-//
-	variant(const std::vector<long long> &arg) : typev(LONGVEC), shape_(1,arg.size())
-			{ val.lv = new std::vector<long long>(arg); }
-	variant(const std::vector<long long> &arg, const std::vector<int> &theshape) : typev(LONGVEC), shape_(theshape)
-			{ val.lv = new std::vector<long long>(arg); }
-	variant(std::vector<long long> *arg) : typev(LONGVEC), shape_(1, arg->size())
-                        { val.lv = arg; }
-	variant(std::vector<long long> *arg, std::vector<int> &theshape) : typev(LONGVEC), shape_(theshape)
-			{ val.lv = arg; }
 //
 	variant(const std::vector<double> &arg) : typev(DOUBLEVEC), shape_(1,arg.size())
 			{ val.dv = new std::vector<double>(arg); }
@@ -121,14 +111,12 @@ class variant {
 	bool toBool( ) const;
 	long toInt( ) const;
 	unsigned long touInt( ) const;
-	long long toLong( ) const;
 	double toDouble( ) const;
 	std::complex<double> toComplex( ) const;
 	std::string toString( bool no_brackets=false ) const;
 	std::vector<bool> toBoolVec( ) const;
 	std::vector<long> toIntVec( ) const;
 	std::vector<unsigned long> touIntVec( ) const;
-	std::vector<long long> toLongVec( ) const;
 	std::vector<double> toDoubleVec( ) const;
 	std::vector<std::complex<double> > toComplexVec( ) const;
 	std::vector<std::string> toStringVec( ) const;
@@ -140,13 +128,11 @@ class variant {
 	bool &asBool( );
 	long &asInt( );
 	unsigned long &asuInt( );
-	long long &asLong( );
 	double &asDouble( );
 	std::complex<double> &asComplex( );
 	std::string &asString( );
 	std::vector<long> &asIntVec( int size=-1 );
 	std::vector<unsigned long> &asuIntVec( int size=-1 );
-	std::vector<long long> &asLongVec( int size=-1 );
 	std::vector<bool> &asBoolVec( int size=-1 );
 	std::vector<double> &asDoubleVec( int size=-1 );
 	std::vector<std::complex<double> > &asComplexVec( int size=-1 );
@@ -160,13 +146,11 @@ class variant {
 	bool getBool( ) const throw(error);
 	long getInt( ) const  throw(error);
 	unsigned long getuInt( ) const  throw(error);
-	long long  getLong( ) const  throw(error);
 	double getDouble( ) const throw(error);
 	const std::complex<double> &getComplex( ) const throw(error);
 	const std::string &getString( ) const throw(error);
 	const std::vector<long> &getIntVec( ) const throw(error);
 	const std::vector<unsigned long> &getuIntVec( ) const throw(error);
-	const std::vector<long long> &getLongVec( ) const throw(error);
 	const std::vector<bool> &getBoolVec( ) const throw(error);
 	const std::vector<double> &getDoubleVec( ) const throw(error);
 	const std::vector<std::complex<double> > &getComplexVec( ) const throw(error);
@@ -216,7 +200,6 @@ class variant {
 
 	int size( ) const { return typev >= BOOLVEC ? vec_size() : 1; }
 	void resize( int size );
-	void dump() const;
 
 	// return true if empty string, empty record, or size 0 vector.
 	// always returns false if object is a non-array bool or numerical type
@@ -238,11 +221,9 @@ class variant {
 	  bool b;
 	  std::vector<bool> *bv;
 	  long i;
-          unsigned long ui;
-	  long long l;
+	  unsigned long ui;
 	  std::vector<long> *iv;
 	  std::vector<unsigned long> *uiv;
-	  std::vector<long long> *lv;
 	  double d;
 	  std::vector<double> *dv;
 	  std::complex<double> *c;
@@ -251,7 +232,7 @@ class variant {
 	  std::vector<std::string> *sv;
 	  record *recordv;
 	} val;
-        std::vector<int> shape_;
+	std::vector<int> shape_;
 
 	std::string create_message( const std::string s ) const;
 };

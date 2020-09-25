@@ -1116,9 +1116,6 @@ ARRAY2PYOBJ(std::string,PyString_FromString(val.c_str()),PyString_FromString((*i
         case variant::UINT:                                             \
         result = PyInt_FromLong(val.touInt());                          \
         break;                                                          \
-	    case variant::LONG:												\
-		result = PyInt_FromLong(val.toLong());									\
-		break;													\
 	    case variant::DOUBLE:											\
 		result = PyFloat_FromDouble(val.toDouble());								\
 		break;													\
@@ -1141,9 +1138,6 @@ ARRAY2PYOBJ(std::string,PyString_FromString(val.c_str()),PyString_FromString((*i
         case variant::UINTVEC:                                          \
         HANDLEVEC2(unsigned long,getuIntVec)                             \
                                                                         \
-	    case variant::LONGVEC:											\
-		HANDLEVEC2(long long,getLongVec)										\
-															\
 	    case variant::DOUBLEVEC:											\
 		HANDLEVEC2(double,getDoubleVec)										\
 															\

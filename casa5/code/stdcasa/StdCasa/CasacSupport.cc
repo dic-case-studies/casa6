@@ -256,7 +256,7 @@ Bool toCasaVectorQuantity(const ::casac::variant& theval, casacore::Vector<casac
                break;
           case TpInt64 :
 	       {
-	       casac::variant val(theRec.asInt64(i));
+               casac::variant val((long)theRec.asInt64(i));
                transcribedRec->insert(theRec.name(i).c_str(), val);
 	       }
                break;
@@ -326,8 +326,7 @@ Bool toCasaVectorQuantity(const ::casac::variant& theval, casacore::Vector<casac
                Vector<Int> tmpShape = (tmpArray.shape()).asVector();
                std::vector<Int> vecShape;
                tmpShape.tovector(vecShape);
-               std::vector<Int64> tmpVec;
-               tmpArray.tovector(tmpVec);
+               std::vector<long> tmpVec(tmpArray.begin(),tmpArray.end());
                transcribedRec->insert(theRec.name(i).c_str(), casac::variant(tmpVec, vecShape));
                }
                break;
@@ -440,9 +439,6 @@ Record *toRecord(const ::casac::record &theRec){
             case ::casac::variant::BOOL :
               {transcribedRec->define(RecordFieldId((*rec_it).first), (*rec_it).second.toBool());}
                break;
-            case ::casac::variant::LONG :
-              {transcribedRec->define(RecordFieldId((*rec_it).first), Int((*rec_it).second.getInt()));}
-               break;
             case ::casac::variant::INT :
               {transcribedRec->define(RecordFieldId((*rec_it).first), Int((*rec_it).second.getInt()));}
                break;
@@ -497,20 +493,6 @@ Record *toRecord(const ::casac::record &theRec){
                for(Array<uInt>::iterator iter = intArr.begin();
                                          iter != intArrend; ++iter)
                    *iter = uintVec[i++];
-               transcribedRec->define(RecordFieldId((*rec_it).first), intArr);
-               }
-               break;
-            case ::casac::variant::LONGVEC :
-               {
-               Vector<Int> shapeVec((*rec_it).second.arrayshape());
-               Vector<Int64> longVec((*rec_it).second.getLongVec());
-               IPosition tshape(shapeVec);
-               Array<Int64> intArr(tshape);
-               int i(0);
-	       Array<Int64>::iterator intArrend = intArr.end();
-               for(Array<Int64>::iterator iter = intArr.begin();
-                                         iter != intArrend; ++iter)
-                   *iter = longVec[i++];
                transcribedRec->define(RecordFieldId((*rec_it).first), intArr);
                }
                break;
@@ -583,7 +565,7 @@ casac::variant *fromValueHolder(const ValueHolder &theVH){
                  theV = new casac::variant((unsigned long)theVH.asuInt());
                  break;
             case TpInt64 :
-	         theV = new casac::variant(theVH.asInt64());
+                theV = new casac::variant((long)theVH.asInt64());
                  break;
             case TpFloat :
 	         theV = new casac::variant(theVH.asFloat());
