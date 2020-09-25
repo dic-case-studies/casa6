@@ -447,7 +447,7 @@ def generate_pyinit(moduledir,tools):
         fd.write("""###########################################################################\n""")
         fd.write("from __future__ import absolute_import\n")
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\", \"rundata\"\n")
+        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\"\n")
         for tool in tools:
             if tool != "utils":
                 fd.write("            '%s',\n" % tool)
@@ -498,15 +498,6 @@ def generate_pyinit(moduledir,tools):
                _distro_dpath = None
                _dpath = [ ]
 
-               _rundata = None
-               def rundata(infer=True):
-                   if infer == False or _rundata is not None:
-                       return _rundata
-                   located = ctsys.resolve('geodetic/IERSeop2000')
-                   if located == 'geodetic/IERSeop2000':
-                       return None
-                   return __os.path.split(__os.path.split(located)[0])[0]
-
                _user_data = None
                if hasattr(__user,'rundata'):
                     if not __os.path.isdir(__os.path.expanduser(__user.rundata)):
@@ -514,10 +505,13 @@ def generate_pyinit(moduledir,tools):
                             print("ignoring rundata setting (%s) because it is not a directory" % __user.rundata,file=__sys.stderr)
                     else:
                         _user_data = __os.path.expanduser(__user.rundata)
-               if _user_data is None and hasattr(__user,'rcdir') and __os.path.isdir(__os.path.join(__os.path.expanduser(__user.rcdir),'data')):
-                   _user_data = __os.path.join(__os.path.expanduser(__user.rcdir),'data')
+
                if _user_data is None:
-                   _user_data = __os.path.expanduser("~/.casa/data")
+                   try:
+                       import casashell as __cs
+                       _user_data = __os.path.expanduser(__os.path.join(__cs._rcdir,'data'))
+                   except Exception as e:
+                       _user_data = __os.path.expanduser("~/.casa/data")
 
                if __os.path.isdir(_user_data):
                    _dpath = _dpath + [ _user_data ]
@@ -531,8 +525,6 @@ def generate_pyinit(moduledir,tools):
                        _distro_dpath = casadata.datapath
                        _dpath = _dpath + [ _distro_dpath ]
                    except: pass
-
-               _rundata = _distro_dpath
 
                ctsys.initialize( __sys.executable, "" if _distro_dpath is None else _distro_dpath,
                                  __find_user_data_path( ) + _dpath )
