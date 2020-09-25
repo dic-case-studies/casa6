@@ -257,10 +257,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    throw(AipsError("Internal error : MultiTerm Sumwt has a useweightimage=true but the weight image does not exist."));
 	  }
       }
-    else
-      {
-	throw( AipsError( "Multi-term SumWt does not exist. Please create PSFs or Residuals." ) );
-      }
       }// if psf0 or res0 exist
 
     if( ignorefacets==true ) itsNFacets=1;
