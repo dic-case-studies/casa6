@@ -119,6 +119,7 @@ module_name = 'casatools'
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
 xml_jar_file = 'xml-casa-assembly-1.56.jar'
 real_gnu = None
+gxx_version_number = 0
 
 if pyversion < 3:
     str_encode = str
@@ -363,10 +364,23 @@ def load_properties(filepath, sep='=', comment_char='#'):
                 props[key] = value.split(' ') if key.startswith('build.flags') else value
 
     global real_gnu
+    global gxx_version_number
     real_gnu = False
     proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
     out,err = pipe_decode(proc.communicate( ))
-    if len([s for s in (out + err).split('\n') if s.startswith("gcc version ")]) > 0 :
+    gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
+    if len(gcc_versions) > 0 :
+        ###
+        ### get gcc version number because turning warnings into errors
+        ### causes problems for grpc with gcc 8...
+        match_ver = re.compile('\d+\.\d+\.\d+')
+        for v in gcc_versions:
+            nums = match_ver.findall(v)
+            if len(nums) > 0:
+                elements = nums[1].split('.')
+                if len(elements) == 3:
+                    gxx_version_number = int(elements[0])
+
         if sys.platform == 'darwin':
             print('using real GNU compiler on OSX...')
         real_gnu = True
@@ -706,6 +720,10 @@ def build_grpc( prefix, srcdir, collectdir ):
                     if int(xcodeversionmajor) >= 10:
                         print("Xcode version is 10 or greater. Won't treat grpc build warnings as errors ")
                         s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
+
+                if gxx_version_number >= 8:
+                    print("g++ version is 8 or greater. Won't treat grpc build warnings as errors ")
+                    s = s.replace('CPPFLAGS += -g -Wall -Wextra -Werror','CPPFLAGS += -g -Wall -Wextra')
 
                 with open(makefile, "w") as fd:
                     fd.write(s)
@@ -1237,6 +1255,9 @@ class casa_build_ext(build_ext):
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
                 open(".created.closure",'a').close( )
+                if isexe("scripts/find-glibc-private"):
+                    if Proc(["scripts/find-glibc-private", "--delete", module_path]) != 0:
+                        sys.exit("\tGLIBC_PRIVATE cleanup failed...")
 
         # Fixing rpaths is needed for gcc wheel builds
         if sys.platform == 'darwin' and doing_wheel_build:
