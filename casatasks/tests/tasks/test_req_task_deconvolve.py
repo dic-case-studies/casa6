@@ -303,8 +303,7 @@ if is_CASA6:
     _qa = quanta( )
     _me = measures( )
 
-    # refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
-    refdatapath = "/export/home/figs/bbean/casadata/master/regression/unittest/clean/refimager/"
+    refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
 else:
     from __main__ import default
     from tasks import *
@@ -321,8 +320,6 @@ else:
     _me = me
 
     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
-    #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-    #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 
 th = TestHelpers()
 
@@ -458,11 +455,14 @@ class testref_base(unittest.TestCase):
             os.system('rm -rf ' + self.img+'*')
 
     def checkfinal(self,pstr=""):
-        #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
-        pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_deconvolve["+ inspect.stack()[1][3] +"]'])"
+        # pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_deconvolve["+ inspect.stack()[1][3] +"]'])"
         casalog.post(pstr,'INFO')
         if ( re.search('\( ?Fail', pstr) != None ):
             self.fail("\n"+pstr)
+
+## Python27 backports
+if not hasattr(testref_base, 'assertRaisesRegex'):
+    testref_base.assertRaisesRegex = testref_base.assertRaisesRegexp
 
 ##############################################
 ##############################################
@@ -809,15 +809,8 @@ class test_mask(testref_base):
         os.system("rm -rf "+self.img+".mask")
         os.system("rm -rf "+mname)
         strcheck = "'mask' parameter specified as a filename '"+mname+"', but no such file exists"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(**deconvolve_args)
-        else:
-            try:
-                deconvolve(**deconvolve_args)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(**deconvolve_args)
 
     # AUTOMASK TESTS
     # Test 13
@@ -1030,15 +1023,8 @@ class test_imgval(testref_base):
         os.system("mv {0}{1} {0}_bak{1}".format(self.img, ext))
 
         strcheck = "missing one or more of the required images"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10)
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10)
 
     # Test 21
     def test_imgval_missingimgs_residual(self):
@@ -1096,15 +1082,8 @@ class test_imgval(testref_base):
 
         imtrans(imagename=self.img+"_bak"+ext, outfile=self.img+ext, order="3012")
         strcheck = "There is a shape mismatch between existing images"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10)
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10)
 
     # Test 25
     def test_imgval_axesmismatch_residual(self):
@@ -1153,15 +1132,8 @@ class test_imgval(testref_base):
 
         imrebin(imagename=self.img+"_bak"+ext, outfile=self.img+ext, factor=[50,50])
         strcheck = "There is a shape mismatch between existing images"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10)
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10)
 
     # Test 29
     def test_imgval_shapemismatch_residual(self):
@@ -1228,15 +1200,8 @@ class test_imgval(testref_base):
         ######################################################################################
         self.ivsetup()
         strcheck = "does not exist"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
 
     # Test 35
     def test_imgval_startmodel_model_exists(self):
@@ -1249,15 +1214,8 @@ class test_imgval(testref_base):
         shutil.copytree(self.mname, self.mname2)
         
         strcheck = "exists"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
     # Test 36
@@ -1289,15 +1247,8 @@ class test_imgval(testref_base):
         os.system("rm -rf "+self.mname)
         self.assertTrue(os.path.exists(self.mname2) and not os.path.exists(self.mname), "File {0} did not get translated to {1}!".format(self.mname, self.mname2))
         strcheck = "Error in setting"
-        if is_CASA6:
-            with self.assertRaisesRegex(RuntimeError, strcheck):
-                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-        else:
-            try:
-                deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
-                self.assertFalse("Error case failed to throw exception")
-            except RuntimeError as e:
-                self.assertTrue(strcheck in str(e))
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
     # Test 38
     def test_imgval_startmodel_csysmismatch(self):
