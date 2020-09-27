@@ -528,8 +528,13 @@ def generate_pyinit(moduledir,tools):
 
                ctsys.initialize( __sys.executable, "" if _distro_dpath is None else _distro_dpath,
                                  __find_user_data_path( ) + _dpath )
-               if __sys.argv[0] != '-m' and ctsys.resolve('geodetic/IERSeop2000') == 'geodetic/IERSeop2000':
-                   raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
+
+               if __sys.argv[0] != '-m':
+                   __resolved_iers = ctsys.resolve('geodetic/IERSeop2000')
+                   if __resolved_iers == 'geodetic/IERSeop2000':
+                       raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
+                   if len(ctsys.rundata( )) == 0:
+                       ctsys.setrundata(__resolved_iers[:-21])
                                                                                                                
                from .coercetype import coerce as __coerce
 
