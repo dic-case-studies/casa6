@@ -523,13 +523,13 @@ class TestHelpers:
                 pstr += stopstr
         return pstr
 
-    def check_reffreq(self, reffreq):
+    def check_reffreq(self, reffreq, epsilon=0.05):
         pstr = ''
         if reffreq != None:
             if type(reffreq) == list:
                 for ii in reffreq:
                     if type(ii) == tuple and len(ii) == 2:
-                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1])
+                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
     def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
@@ -552,10 +552,10 @@ class TestHelpers:
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    out, message = TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res", epsilon=epsilon)
                     pstr = pstr + message
                 if modflux != None:
-                    out, message = TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux", epsilon=epsilon)
                     pstr = pstr + message
                 if iterdone != None:
                     out, message = TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
@@ -574,7 +574,7 @@ class TestHelpers:
         pstr += TestHelpers().check_immask(imgmask)
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
-        pstr += TestHelpers().check_reffreq(reffreq)
+        pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
         return pstr
 
     def check_final(self, pstr=""):
