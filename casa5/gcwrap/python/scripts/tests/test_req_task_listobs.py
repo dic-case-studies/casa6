@@ -73,7 +73,6 @@ except ImportError:
 
 # If the test is being run in CASA6 use the new method to get the CASA path
 if CASA6:
-    datapath = casatools.ctsys.resolve('data/regression/unittest/listobs/')
     ### for listing import
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import listing as lt
@@ -91,6 +90,8 @@ if CASA6:
     msfile1Orig = casatools.ctsys.resolve('visibilities/vla/ngc5921_ut.ms')
     msfile2Orig = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
     nep = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms')
+    # datapath for ref files
+    datapath = casatools.ctsys.resolve('text/')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[
                           0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'):
@@ -101,6 +102,8 @@ else:
         msfile2Orig = os.environ.get('CASAPATH').split()[
                           0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
         nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
+        # datapath for ref files
+        datapath = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/text/'
     else:
         mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
         # Data for old test
@@ -998,7 +1001,7 @@ class test_listobs(listobs_test_base):
         # Only one row of scan=1 should be printed
         output = 'listobs4.txt'
         out = "newobs4.txt"
-        reference = reffile + '4'
+        reference = reffile + '_almaOneRow'
         diff = "difflistobs4"
 
         listobs(vis=msfile2, verbose=True, listfile=output, listunfl=True)
@@ -1013,7 +1016,7 @@ class test_listobs(listobs_test_base):
         '''Listobs 4: Save on a file, verbose=False'''
         output = 'listobs5.txt'
         out = "newobs5.txt"
-        reference = reffile + '5'
+        reference = reffile + '_nonVerboseFileSave'
         diff1 = "diff1listobs5"
         diff2 = "diff2listobs5"
 
@@ -1040,7 +1043,7 @@ class test_listobs(listobs_test_base):
         output = 'listobs6.txt'
         out = "newobs6.txt"
         diff = "difflistobs6"
-        reference = reffile + '6'
+        reference = reffile + '_verboseFileSave'
         self.res = listobs(vis=msfile1, listfile=output, verbose=True, listunfl=True)
         #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' " + output + ' > ' + out)
@@ -1054,7 +1057,7 @@ class test_listobs(listobs_test_base):
         output = "listobs7.txt"
         out = "newobs7.txt"
         diff = "difflistobs7"
-        reference = reffile + '7'
+        reference = reffile + '_scanSelectionParam'
         self.res = listobs(vis=msfile1, scan='2', listfile=output, verbose=True, listunfl=True)
         #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' " + output + ' > ' + out)
@@ -1068,7 +1071,7 @@ class test_listobs(listobs_test_base):
         output = "listobs8.txt"
         out = "newobs8.txt"
         diff = "difflistobs8"
-        reference = reffile + '8'
+        reference = reffile + '_antennaSelectionParam'
         self.res = listobs(vis=msfile1, antenna='3&&4', listfile=output, verbose=True, listunfl=True)
         #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' " + output + ' > ' + out)
@@ -1082,7 +1085,7 @@ class test_listobs(listobs_test_base):
         output = "listobs9.txt"
         out = "newobs9.txt"
         diff = "difflistobs9"
-        reference = reffile + '9'
+        reference = reffile + '_ephem'
         self.res = listobs(vis=os.path.join(datapath, nep), listfile=output, verbose=True, listunfl=False)
         #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' " + output + ' > ' + out)
