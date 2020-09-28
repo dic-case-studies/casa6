@@ -33,7 +33,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_concat.py
   test_conjugatevis.py
   test_coordsys.py
-  test_createmultims.py
   test_cvel.py
   test_cvel2.py
   test_cvelfreqs.py
@@ -50,11 +49,11 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_getchunk.py
   test_gencal.py
   test_hanningsmooth.py
-  test_hanningsmooth2.py
   test_ia_adddegaxes.py
   test_ia_addnoise.py
   test_ia_boxcar.py
   test_ia_calcmask.py
+  test_ia_collapse.py
   test_ia_continuumsub.py
   test_ia_constructors.py
   test_ia_commonbeam.py
@@ -106,7 +105,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcollapse.py
   test_imcontsub.py
   test_imfit.py
-  test_imhead.py
   test_immath.py
   test_immoments.py
   test_importasap.py
@@ -132,16 +130,10 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_msmd.py
   test_mstransform.py
   test_mstransform_mms.py
-  test_mstransform_subset.py
-  test_mst_cvel.py
-  test_mst_cvelB.py
-  test_mst_split.py
   test_nrobeamaverage.py
-  test_oldhanningsmooth.py
   test_oldsplit.py
   test_mstool.py
   test_partition.py
-  test_partitionHelper.py
   test_plotants.py
   test_plotcal.py
   test_plotms.py
@@ -254,7 +246,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_splattotable.py
   test_split.py
   test_spxfit.py
-  test_oldstatwt.py
   test_testconcat.py
   test_uvcontsub.py
   test_uvcontsub3.py
