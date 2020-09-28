@@ -14,7 +14,7 @@ if is_CASA6:
     from casatools import quanta
     from casatools import image
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/sdsidebandsplit/')
+    datapath = ctsys.resolve('unittest/sdsidebandsplit/')
 
     # default isn't used in casatasks
     def default(atask):
@@ -29,7 +29,7 @@ else:
     from taskinit import iatool as image
     from casa_stack_manip import stack_frame_find
 
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdsidebandsplit/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdsidebandsplit/'
 
 
 # Gaussian fit

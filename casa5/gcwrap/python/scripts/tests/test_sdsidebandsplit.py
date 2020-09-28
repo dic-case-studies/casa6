@@ -11,7 +11,7 @@ from casa_stack_manip import stack_frame_find
 import unittest
 from matplotlib.transforms import offset_copy
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdsidebandsplit/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdsidebandsplit/'
 
 # Gaussian fit
 def gauss_func(x, *p):

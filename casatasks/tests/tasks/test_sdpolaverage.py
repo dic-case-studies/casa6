@@ -8,7 +8,7 @@ if is_CASA6:
     from casatasks import sdpolaverage
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/tsdfit/')
+    datapath = ctsys.resolve('unittest/sdpolaverage/')
 
     # default isn't used in casatasks
     def default(atask):
@@ -20,7 +20,7 @@ else:
     from sdutil import tbmanager
 
     # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/sdpolaverage/"
 
 
 def weighToSigma(weight):
@@ -68,7 +68,7 @@ class test_sdpolaverage(unittest.TestCase):
         self.inputms = "analytic_type1.fit.ms"
         self.outputms = "polave.ms"
         #datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
-        os.system('cp -RL ' + datapath + self.inputms + ' ' + self.inputms)
+        os.system('cp -RH ' + datapath + self.inputms + ' ' + self.inputms)
         default(sdpolaverage)
 
     def tearDown(self):

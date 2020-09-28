@@ -14,7 +14,7 @@ import testhelper as th
 from sdutil import tbmanager, toolmanager, table_selector
 
 # Define the root for the data files
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/sdpolaverage/"
 
 aflocal = aftool()
 
@@ -60,8 +60,8 @@ class test_sdpolaverage(unittest.TestCase):
     def setUp(self):
         self.inputms  = "analytic_type1.fit.ms"
         self.outputms = "polave.ms"
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
-        os.system('cp -RL '+datapath + self.inputms +' '+ self.inputms)
+        datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/sdpolaverage/"
+        os.system('cp -RH '+datapath + self.inputms +' '+ self.inputms)
         default(sdpolaverage)
 
     def tearDown(self):
