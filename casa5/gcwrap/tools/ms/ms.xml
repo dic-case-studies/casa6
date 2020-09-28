@@ -2551,6 +2551,15 @@ ms.tosdfits("myfile.sdfits")  # write SDFITS file
      </description>
      <value>0.0</value>
      </param>
+
+    <param type="bool" name="doquantiles">
+        <description>
+            If False, quantile-like statistics are not computed. These include
+            the first and third quartiles, the median, and the median of the 
+            absolute deviation from the median.
+        </description>
+        <value>true</value>
+    </param>
   </input>
   <returns type="record"/>
   <description>
