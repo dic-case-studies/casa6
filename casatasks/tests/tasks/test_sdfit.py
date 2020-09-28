@@ -50,7 +50,7 @@ else:
 
     # the global tb tool is used here
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
     
@@ -171,7 +171,7 @@ class sdfit_unittest_base(unittest.TestCase):
     Base class for sdfit unit test
     """
     # Data path of input/output
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     taskname = "sdfit"
     verboselog = False
 
@@ -865,7 +865,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
         intent, antenna, field, spw, timerange, scan, and pol,
     in combination with datacolumn selection = {corrected | float_data}
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type1.fit.ms"
     common_param = dict(infile=infile, outfile='',
                         fitfunc='gaussian',nfit=[1],fitmode='list')
@@ -1021,7 +1021,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     """
     This class tests fitmode='auto'
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='',datacolumn='float_data',
                         fitfunc='gaussian',fitmode='auto')
@@ -1160,7 +1160,7 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
           Averaging the first 4 rows, taking account of weight, gives
           Gaussian with peak amplitude of 1. 
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "sdfit_tave.ms"
     outfile = "sdfit.out"
     common_param = dict(infile=infile, outfile=outfile, datacolumn='float_data',

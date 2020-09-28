@@ -8,7 +8,8 @@ import numpy
 import math
 import contextlib
 import unittest
-import listing
+#import listing
+from casatestutils import listing
 
 class Casa5InitError(Exception):
     pass
@@ -68,34 +69,34 @@ except Casa5InitError as e:
     measures = metool
 
     # Try these locations in order
-    runUnitTestDataRoot = os.environ.get('TEST_DATADIR')
-    runUnitTestDataReqRoot = None
-    if runUnitTestDataRoot:
-        runUnitTestDataReqRoot = os.path.join(runUnitTestDataRoot,'casa-data-req')
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
-    dataReqRoot = os.path.join(dataRoot,'casa-data-req')
+#    runUnitTestDataRoot = os.environ.get('TEST_DATADIR')
+#    runUnitTestDataReqRoot = None
+#    if runUnitTestDataRoot:
+#        runUnitTestDataReqRoot = os.path.join(runUnitTestDataRoot,'casa-data-req')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
+#    dataReqRoot = os.path.join(dataRoot,'casa-data-req')
     def ctsys_resolve(rel_path):
         "Resolve absolute path of a unit test data directory given as a relative path"
-        data_roots = [runUnitTestDataRoot, runUnitTestDataReqRoot, dataRoot, dataReqRoot]
-        for data_root in data_roots:
-            if not data_root:
-                continue
-            resolved_path = os.path.join(data_root,rel_path)
-            if os.path.exists(resolved_path):
-                return resolved_path
+#        data_roots = [runUnitTestDataRoot, runUnitTestDataReqRoot, dataRoot, dataReqRoot]
+#        for data_root in data_roots:
+#            if not data_root:
+#                continue
+#            resolved_path = os.path.join(data_root,rel_path)
+#            if os.path.exists(resolved_path):
+#                return resolved_path
         # ctsys_resolve is called at module load time, so we don't raise an exception
-        warn_msg = "\n".join([
-            "WARNING: Unable to resolve: {}".format(rel_path),
-            "Under the following root paths:",
-            "\n".join([
-                "    {}".format(data_root)
-                for data_root in data_roots if data_root
-                ])
-            ])
-        print(warn_msg)
+#        warn_msg = "\n".join([
+#            "WARNING: Unable to resolve: {}".format(rel_path),
+#            "Under the following root paths:",
+#            "\n".join([
+#                "    {}".format(data_root)
+#                for data_root in data_roots if data_root
+#                ])
+#            ])
+#        print(warn_msg)
         # when unable to resolve, returning the input relative path instead of None
         # hopefully will result in more meaningful subsequent error messages
-        return rel_path
+        return os.path.join(dataRoot,rel_path)
 
 
 @contextlib.contextmanager
@@ -126,7 +127,7 @@ class sdcal_test(unittest.TestCase):
     """
 
     # Data path of input
-    datapath=ctsys_resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('unittest/sdcal/')
 
     # Input 
     infile1 = 'uid___A002_X6218fb_X264.ms.sel'
@@ -555,7 +556,7 @@ class sdcal_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    datapath=ctsys_resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('unittest/sdcal/')
 
     # Input
     infile = 'uid___A002_X6218fb_X264.ms.sel'
@@ -875,7 +876,7 @@ class sdcal_test_bug_fix_cas_12712(unittest.TestCase):
                    'output': { 'cal_tbl_name' : 'uid___A002_X85c183_X36f.ms.sel.cal.sky.tbl' },
                     # Path to search when looking for test input data,
                     # relative to some root data directory
-                   'datapath' : ctsys_resolve('visibilities/almasd')
+                   'datapath' : ctsys_resolve('unittest/sdcal/')
                    })
     def test_cas_12712_01(self):
         input_ms = self.io_files['input']['ms_name']
@@ -1288,7 +1289,7 @@ class sdcal_test_otf(unittest.TestCase):
     # Required checkers:
     # - compare 2 calibration tables
     # - compare 2 corrected data
-    datapath=ctsys_resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('unittest/sdcal/')
     ref_datapath=os.path.join(datapath,'otf_reference_data')
     sdcal_params = {}
     current_test_params = {}
@@ -1510,7 +1511,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
     test_otfephem02 | otf_ephem.ms     | 10%      | otf,apply
     """
     
-    datapath=ctsys_resolve('regression/unittest/tsdcal')
+    datapath=ctsys_resolve('unittest/sdcal/')
     infile = 'otf_ephem.ms'
     outfile = infile + '.otfcal'
         
@@ -2193,7 +2194,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
     test_single_pol_apply --- apply caltable to single-polarization data
     test_single_pol_apply_composite --- on-the-fly calibration/application on single-polarization data
     """
-    datapath = ctsys_resolve('regression/unittest/singledish')
+    datapath = ctsys_resolve('unittest/sdcal/')
     # Input
     infile = 'analytic_spectra.ms'
     #applytable = infile + '.sky'

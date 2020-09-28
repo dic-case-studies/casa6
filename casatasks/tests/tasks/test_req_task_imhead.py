@@ -40,11 +40,8 @@ except ImportError:
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     def ctsys_resolve(data):
-        return os.path.join(os.environ.get('CASAPATH').split()[0], '/casatestdata/', data)
-#         if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-#             return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
-#         else:
-#             return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
+        return os.path.join(dataroot, data)
 
     is_CASA6 = False
 
@@ -55,18 +52,10 @@ import shutil
 import numpy as np
 import re
 
-# <<<<<<< HEAD
-#     #DATA#
-# if CASA6:
-#     datapath = casatools.ctsys.resolve('unittest/imhead/ngc5921.clean.image/')
-# else:
-#     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhead/ngc5921.clean.image/'
-# 
-# =======
 
 datapath = ctsys_resolve('unittest/imhead/')
 impath = os.path.join(datapath,'ngc5921.clean.image')
-# >>>>>>> master
+
 logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'

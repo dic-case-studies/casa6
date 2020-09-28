@@ -44,9 +44,9 @@ class sdgaincal_test_base(unittest.TestCase):
     This class defines attributes and methods common to test cases 
     """
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/sdgaincal')
+        datapath=ctsys.resolve('unittest/sdgaincal/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdgaincal')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdgaincal/')
     
     def __copy_from_datapath(self, filename):
         if os.path.exists(filename):
