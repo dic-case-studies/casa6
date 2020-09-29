@@ -78,8 +78,6 @@ if CASA6:
     import listing as lt
 
 else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
-    datapath = dataroot + 'unittest/listobs/'
     import listing as lt
 
     # Generate the test data
@@ -105,6 +103,9 @@ else:
         # datapath for ref files
         datapath = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/text/'
     else:
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
+        datapath = dataroot + 'unittest/listobs/'
+
         mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
         # Data for old test
         msfile1Orig = datapath + 'ngc5921.ms'
