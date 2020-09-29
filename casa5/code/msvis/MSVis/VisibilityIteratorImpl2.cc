@@ -1969,7 +1969,7 @@ VisibilityIteratorImpl2::spectralWindows(Vector<Int> & spws) const
 void
 VisibilityIteratorImpl2::polarizationIds(Vector<Int> & polIds) const
 {
-    // Get's the list of spectral windows for each row in the VB window
+    // Get's the list of polarization Ids for each row in the VB window
 
     Vector<Int> ddis;
     dataDescriptionIds(ddis);
