@@ -280,8 +280,8 @@ public:
     // in selected MS. On the other hand, the getRowIdForOriginalMS will return
     // the ids in original MS.
 
-    casacore::Vector<casacore::uInt> getRowId();
-    casacore::Vector<casacore::uInt> getRowIdForOriginalMS();
+    casacore::Vector<casacore::rownr_t> getRowId();
+    casacore::Vector<casacore::rownr_t> getRowIdForOriginalMS();
 
     // </group>
 
@@ -291,7 +291,7 @@ public:
     // exception will be thrown.
     //-
 
-    casacore::uInt getRowId(casacore::uInt irow);
+    casacore::rownr_t getRowId(casacore::uInt irow);
 
     //***************************************
     // CAS-8418  Spline Interpolation API 

@@ -1472,6 +1472,7 @@ class StatisticsAccumulator
     const vector<Int> &sortColumnIds;
     const set<MSMainEnums::PredefinedColumns> &mergedColumns;
     bool hideTimeAxis;
+    bool _doQuantiles;
 
 
     static void setNaN(Record &rec) {
@@ -1497,11 +1498,11 @@ public:
     StatisticsAccumulator(
         Record &acc, const vector<Int> &sortColumnIds,
         const set<MSMainEnums::PredefinedColumns> &mergedColumns,
-        bool hideTimeAxis)
+        bool hideTimeAxis, bool doQuantiles)
         : acc(acc)
         , sortColumnIds(sortColumnIds)
         , mergedColumns(mergedColumns)
-        , hideTimeAxis(hideTimeAxis) {};
+        , hideTimeAxis(hideTimeAxis), _doQuantiles(doQuantiles) {};
 
     void nextDataset(StatisticsAlgorithm<A,D,M,W> &statistics,
                      const std::unordered_map<int,std::string> *columnValues) {
@@ -1519,15 +1520,16 @@ public:
         Record stats;
         try {
             stats = toRecord(statistics.getStatistics());
-
-            // Compute some quantiles
-            quantileToValue.clear();
-            A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
-            stats.define("median", median);
-            stats.define("firstquartile", quantileToValue[quartile1]);
-            stats.define("thirdquartile", quantileToValue[quartile3]);
-            A medianAbsDevMed = statistics.getMedianAbsDevMed();
-            stats.define("medabsdevmed", medianAbsDevMed);
+            if (_doQuantiles) {
+                // Compute some quantiles
+                quantileToValue.clear();
+                A median = statistics.getMedianAndQuantiles(quantileToValue, quantiles);
+                stats.define("median", median);
+                stats.define("firstquartile", quantileToValue[quartile1]);
+                stats.define("thirdquartile", quantileToValue[quartile3]);
+                A medianAbsDevMed = statistics.getMedianAbsDevMed();
+                stats.define("medabsdevmed", medianAbsDevMed);
+            }
         } catch(const AipsError &err) {
             // Example: one individual iterationaxis group/subsel is all-flagged (CAS-12857)
             setNaN(stats);
@@ -1551,7 +1553,7 @@ static ::casac::record *
 doStatistics(
     const vector<Int> &sortColumnIds,
     const set<MSMainEnums::PredefinedColumns> &mergedColumns,
-    bool hideTimeAxis,
+    bool hideTimeAxis, bool doQuantiles,
     DataProvider *dataProvider)
 {
     Record result;
@@ -1566,8 +1568,9 @@ doStatistics(
                           typename DataProvider::DataIteratorType,
                           typename DataProvider::WeightsIteratorType,
                           typename DataProvider::MaskIteratorType>
-        accumulateStatistics(result, sortColumnIds, mergedColumns,
-                             hideTimeAxis);
+        accumulateStatistics(
+            result, sortColumnIds, mergedColumns, hideTimeAxis, doQuantiles
+        );
 
     dp->foreachDataset(statistics, accumulateStatistics);
     return fromRecord(result);
@@ -1580,11 +1583,11 @@ static ::casac::record *
 doClassicalStatistics(
     const vector<Int> &sortColumnIds,
     const set<MSMainEnums::PredefinedColumns> &mergedColumns,
-    bool hideTimeAxis,
-    DataProvider *dataProvider)
-{
-    return doStatistics<DataProvider,ClassicalStatistics>(
-        sortColumnIds, mergedColumns, hideTimeAxis, dataProvider);
+    bool hideTimeAxis, bool doQuantiles, DataProvider *dataProvider
+) {
+    return doStatistics<DataProvider, ClassicalStatistics>(
+        sortColumnIds, mergedColumns, hideTimeAxis, doQuantiles, dataProvider
+    );
 }
 
 // Convert string provided as a statistics "reporting axis" to MS column id.
@@ -1680,39 +1683,19 @@ timespanBoundaries(const string &s, bool &spanScan, bool &spanSubscan)
 // TODO: how to handle WEIGHT, SIGMA and UVW columns?
 //
 ::casac::record*
-ms::statistics(const std::string& column,
-               const std::string& complex_value,
-               bool useflags,
-               bool useweights,
-               const std::string& spw,
-               const std::string& field,
-//                const std::string& feed,
-               const std::string& baseline,
-               const std::string& uvrange,
-               const std::string& time,
-               const std::string& correlation,
-               const std::string& scan,
-               const std::string& intent,
-               const std::string& array,
-               const std::string& obs,
-               const std::string& reportingaxes,
-               bool timeaverage,
-               const std::string& timebin,
-               const std::string& timespan,
-               double maxuvwdistance)
-{
-
-    // const std::array<Int,6> validSortColumnIds = {
-    //  MSMainEnums::PredefinedColumns::ARRAY_ID,
-    //  MSMainEnums::PredefinedColumns::FIELD_ID,
-    //  MSMainEnums::PredefinedColumns::DATA_DESC_ID,
-    //  MSMainEnums::PredefinedColumns::SCAN_NUMBER,
-    //  MSMainEnums::PredefinedColumns::STATE_ID,
-    //  MSMainEnums::PredefinedColumns::TIME
-    // };
-
+ms::statistics(
+    const std::string& column, const std::string& complex_value,
+    bool useflags, bool useweights, const std::string& spw,
+    const std::string& field, const std::string& baseline,
+    const std::string& uvrange, const std::string& time,
+    const std::string& correlation, const std::string& scan,
+    const std::string& intent, const std::string& array,
+    const std::string& obs, const std::string& reportingaxes,
+    bool timeaverage, const std::string& timebin,
+    const std::string& timespan, double maxuvwdistance,
+    bool doquantiles
+) {
     *itsLog << LogOrigin("ms", "statistics");
-
     ::casac::record *retval(0);
     try {
         if (!detached()) {
@@ -1741,21 +1724,11 @@ ms::statistics(const std::string& column,
                        "timebin = " << timebin << endl <<
                        "timespan = " << timespan << endl;
 
-            MSSelection mssel(*itsMS,
-                              MSSelection::PARSE_NOW,
-                              time,
-                              baseline,
-                              field,
-                              spw,
-                              uvrange,
-                              dummyExpr,   // taqlExpr
-                              correlation,
-                              scan,
-                              array,
-                              intent,
-                              obs);
-                         // , feed);
-
+            MSSelection mssel(
+                *itsMS, MSSelection::PARSE_NOW, time,
+                baseline, field, spw, uvrange, dummyExpr,
+                correlation, scan, array, intent, obs
+            );
             MeasurementSet *sel_p;
             MeasurementSet sel;
             if (mssel.getSelectedMS(sel)) {
@@ -1893,13 +1866,15 @@ ms::statistics(const std::string& column,
             if (!timeaverage) {
                 vi2 = new vi::VisibilityIterator2(
                     *sel_p, sortColumns, false, 0, chunkInterval);
-            } else if (!(mycolumn == "DATA" || mycolumn == "CORRECTED" ||
+            }
+            else if (!(mycolumn == "DATA" || mycolumn == "CORRECTED" ||
                          mycolumn == "MODEL" || mycolumn == "FLOAT")) {
                 stringstream ss;
                 ss << "Time averaging of '" << mycolumn
                    << "' is not supported";
                 throw AipsError(ss.str());
-            } else {
+            }
+            else {
                 // To use AveragingVi2Factory, we must decide how to apply
                 // weights and flags upon construction. After doing that, we set
                 // the useweights and useflags variables to false, as the
@@ -1921,7 +1896,8 @@ ms::statistics(const std::string& column,
                     }
                     useweights = false;
                     useflags = false;
-                } else if (mycolumn == "CORRECTED") {
+                } 
+                else if (mycolumn == "CORRECTED") {
                     options = vi::AveragingOptions::AverageCorrected;
                     if (useweights) {
                         if (useflags)
@@ -1936,7 +1912,8 @@ ms::statistics(const std::string& column,
                     }
                     useweights = false;
                     useflags = false;
-                } else if (mycolumn == "MODEL") {
+                }
+                else if (mycolumn == "MODEL") {
                     options = vi::AveragingOptions::AverageModel;
                     if (useweights) {
                         bool hasCorrected = sel_p->isColumn(
@@ -1958,7 +1935,8 @@ ms::statistics(const std::string& column,
                             else
                                 options |= vi::AveragingOptions::ModelPlainAvg;
                         }
-                    } else {
+                    }
+                    else {
                         if (useflags)
                             options |= vi::AveragingOptions::ModelFlagAvg;
                         else
@@ -1966,12 +1944,14 @@ ms::statistics(const std::string& column,
                     }
                     useweights = false;
                     useflags = false;
-                } else if (mycolumn == "FLOAT") {
+                }
+                else if (mycolumn == "FLOAT") {
                     options = vi::AveragingOptions::AverageFloat;
                 }
-                vi::AveragingParameters params(averagingInterval, chunkInterval,
-                                               sortColumns, options,
-                                               maxuvwdistance);
+                vi::AveragingParameters params(
+                    averagingInterval, chunkInterval, sortColumns,
+                    options, maxuvwdistance
+                );
                 vi::AveragingVi2Factory factory(params, sel_p);
                 vi2 = new vi::VisibilityIterator2(factory);
             }
@@ -1990,235 +1970,233 @@ ms::statistics(const std::string& column,
             // transformation for visibilities), followed by a call to
             // doStatistics().
             if (mycolumn == "DATA") {
-                if (complex_value == "amplitude" || complex_value == "amp")
+                if (complex_value == "amplitude" || complex_value == "amp") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ObservedVisAmplitudeProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "phase")
+                }
+                else if (complex_value == "phase") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ObservedVisPhaseProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "imaginary" || complex_value == "imag")
+                }
+                else if (complex_value == "imaginary" || complex_value == "imag") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ObservedVisImaginaryProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "real")
+                }
+                else if (complex_value == "real") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ObservedVisRealProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
+                }
             } else if (mycolumn == "CORRECTED") {
-                if (complex_value == "amplitude" || complex_value == "amp")
+                if (complex_value == "amplitude" || complex_value == "amp") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2CorrectedVisAmplitudeProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "phase")
+                }
+                else if (complex_value == "phase") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2CorrectedVisPhaseProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "imaginary" || complex_value == "imag")
+                }
+                else if (complex_value == "imaginary" || complex_value == "imag") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2CorrectedVisImaginaryProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "real")
+                }
+                else if (complex_value == "real") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2CorrectedVisRealProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-            } else if (mycolumn == "MODEL") {
-                if (complex_value == "amplitude" || complex_value == "amp")
+                }
+            }
+            else if (mycolumn == "MODEL") {
+                if (complex_value == "amplitude" || complex_value == "amp") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ModelVisAmplitudeProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "phase")
+                }
+                else if (complex_value == "phase") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ModelVisPhaseProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "imaginary" || complex_value == "imag")
+                }
+                else if (complex_value == "imaginary" || complex_value == "imag") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ModelVisImaginaryProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-                else if (complex_value == "real")
+                }
+                else if (complex_value == "real") {
                     retval = doClassicalStatistics(
                         sortColumnIds,
                         mergedColumnIds,
-                        hideTimeAxis,
+                        hideTimeAxis, doquantiles,
                         new Vi2ModelVisRealProvider(
                             vi2, mergedColumnIds, useflags, useweights));
-
-            } else if (mycolumn == "FLOAT") {
+                }
+            }
+            else if (mycolumn == "FLOAT") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2FloatVisDataProvider(
-                        vi2, mergedColumnIds, useflags, useweights));
-                // } else if (mycolumn == "UVW") {
-
-            } else if (mycolumn == "UVRANGE") {
+                    vi2, mergedColumnIds, useflags, useweights));
+            }
+            else if (mycolumn == "UVRANGE") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2UVRangeDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "FLAG") {
+            }
+            else if (mycolumn == "FLAG") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2FlagCubeDataProvider(
                         vi2, mergedColumnIds, useflags));
-                // } else if (mycolumn == "WEIGHT") {
-                // } else if (mycolumn == "SIGMA") {
-
-            } else if (mycolumn == "ANTENNA1") {
+            }
+            else if (mycolumn == "ANTENNA1") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2Antenna1DataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "ANTENNA2") {
+            } 
+            else if (mycolumn == "ANTENNA2") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2Antenna2DataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "FEED1") {
+            } 
+            else if (mycolumn == "FEED1") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2Feed1DataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "FEED2") {
+            } 
+            else if (mycolumn == "FEED2") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2Feed2DataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "FIELD_ID") {
+            } 
+            else if (mycolumn == "FIELD_ID") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2FieldIdDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "ARRAY_ID") {
+            }
+            else if (mycolumn == "ARRAY_ID") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2ArrayIdDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "DATA_DESC_ID") {
+            }
+            else if (mycolumn == "DATA_DESC_ID") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2DataDescriptionIdsDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "FLAG_ROW") {
+            }
+            else if (mycolumn == "FLAG_ROW") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2FlagRowDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "INTERVAL") {
+            }
+            else if (mycolumn == "INTERVAL") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2IntervalDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "SCAN_NUMBER" || mycolumn == "SCAN") {
+            } 
+            else if (mycolumn == "SCAN_NUMBER" || mycolumn == "SCAN") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2ScanDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "TIME") {
+            } 
+            else if (mycolumn == "TIME") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2TimeDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else if (mycolumn == "WEIGHT_SPECTRUM") {
+            } 
+            else if (mycolumn == "WEIGHT_SPECTRUM") {
                 retval = doClassicalStatistics(
                     sortColumnIds,
                     mergedColumnIds,
-                    hideTimeAxis,
+                    hideTimeAxis, doquantiles,
                     new Vi2WeightSpectrumDataProvider(
                         vi2, mergedColumnIds, useflags));
-
-            } else {
+            }
+            else {
                 stringstream ss;
                 ss << "Unsupported column name: " << column;
                 throw AipsError(ss.str());
             }
-
         } // end if !detached
-    } catch (AipsError x) {
+    } catch (const AipsError& x) {
         *itsLog <<
             LogIO::SEVERE <<
             "Exception Reported: " <<
@@ -3653,7 +3631,7 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
     ::casac::record *retval(0);
     try {
         if(!detached()) {
-          uInt nrows = itsSelectedMS->nrow();
+          rownr_t nrows = itsSelectedMS->nrow();
           if (nrows == 0) {
               *itsLog << LogIO::WARN << "Selected table is empty, cannot get data" << LogIO::POST;
                 return retval;
@@ -3674,8 +3652,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const int
             // Keep table before increment selection, restore later
             MeasurementSet origSelMS = *itsSelectedMS;
             if ((increment>1) && (uInt(increment)<=nrows)) {
-                Vector<uInt> rows(nrows/increment);
-                indgen(rows, uInt(0), uInt(increment));
+                Vector<rownr_t> rows(nrows/increment);
+                indgen(rows, rownr_t(0), rownr_t(increment));
                 Table selTable = (*itsSelectedMS)(rows);
                 *itsSelectedMS = selTable;
             }
@@ -7362,7 +7340,7 @@ ms::ngetdata(const std::vector<std::string>& items, const bool /*ifraxis*/, cons
             }
             case MSS::ROWS:
             {
-                Vector<uInt> rowIds;
+                Vector<rownr_t> rowIds;
                 rowIds = itsVI->rowIds(rowIds);
                 Vector<Int> tmp(rowIds.shape());
                 for (Int ii=0;ii<(Int)tmp.nelements(); ii++)

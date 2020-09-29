@@ -27,6 +27,7 @@
 #include <casaqt/QtBrowser/TBValidityChecker.qo.h>
 #include <casaqt/QtBrowser/TBBrowser.qo.h>
 #include <casaqt/QtBrowser/TBTest.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -40,7 +41,7 @@ namespace casa {
 TBValidityChecker::TBValidityChecker(TBBrowser* b) : QWidget(), browser(b) {
     setupUi(this);
     
-    vector<String> strs = browser->openedTableNames();
+    std::vector<String> strs = browser->openedTableNames();
     for(unsigned int i = 0; i < strs.size(); i++) {
         tableChooser->addItem(strs.at(i).c_str());
     }
@@ -99,7 +100,7 @@ void TBValidityChecker::loadTest(int index) {
     if(testList->currentRow() < 0) return;
 
     String t = qPrintable(tableChooser->currentText());
-    vector<String> checks = tests.at(index)->checks(t);
+    std::vector<String> checks = tests.at(index)->checks(t);
 
     testTable->clear();
     testTable->setColumnCount(2);

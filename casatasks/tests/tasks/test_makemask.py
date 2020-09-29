@@ -72,13 +72,15 @@ class test_copy(makemaskTestBase):
     inimage4='ngc5921.cube1.image' # actual cube image
     inimage5='ngc5921.cube1.UNKNOWNTEL.mask'# unknown telesocpe
     inimage6='3x3.image'
+    inimage_all = [inimage, inimage2, inimage3, inimage4, inimage5, inimage6]
 
     outimage1='ngc5921.cube1.copy.mask'
     outimage2='ngc5921.cube1.copyinimage.mask'
     outimage3='ngc5921.cube2.copyinimage.mask'
     outimage4='ngc5921.cube2.copy.mask'
     outimage5='3x3b.image'
-   
+    outimage_all = [outimage1, outimage2, outimage3, outimage4, outimage5]
+
     refimage4=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.copytest4.ref.mask'))
     refimage6=ctsys_resolve(os.path.join(datapath,'reference/ngc5921.copytest6.ref.mask'))
 
@@ -86,14 +88,13 @@ class test_copy(makemaskTestBase):
         #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]:
         #    if os.path.isdir(img):
         #        shutil.rmtree(img)
-        for img in [self.inimage,self.inimage2,self.inimage3, self.inimage4,
-            self.inimage5, self.inimage6]:
+        for img in self.inimage_all:
             if not os.path.isdir(img):
                 shutil.copytree(ctsys_resolve(os.path.join(datapath,img)),img)
 
     def tearDown(self):
         if not debug:
-            for img in [self.inimage,self.inimage2,self.inimage3,self.inimage4,self.inimage5, self.outimage1,self.outimage2,self.outimage3, self.outimage4]:
+            for img in self.inimage_all + self.outimage_all:
                 #pass
                 if os.path.isdir(img):
                     shutil.rmtree(img)
@@ -397,9 +398,13 @@ class test_merge(makemaskTestBase):
         #    makemask(mode='copy',inpimage=self.inimage,inpmask=[self.inimage,self.inimage2+':maskoo'], output=self.outimage1, overwrite=True)
             makemask(mode='copy',inpimage=os.path.abspath(self.inimage),inpmask=[os.path.abspath(self.inimage),os.path.abspath(self.inimage2)+':maskformergetest'],
             output=os.path.abspath(self.outimage1), overwrite=True)
-        except:
-            print("\nError running makemask")
-            raise
+        except RuntimeError:
+            if ':' in os.path.abspath(self.inimage):
+                print("\nIgnoring exception probably caused by ':' in file names, as per "
+                      "CAS-13159")
+            else:
+                print("\nError running makemask")
+                raise
 
         self.assertTrue(os.path.exists(self.outimage1))
         self.assertTrue(self.compareimpix(self.refimage1,self.outimage1))

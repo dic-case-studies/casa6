@@ -32,8 +32,6 @@
 #include <casa/Utilities/Assert.h>
 using namespace casacore;
 
-template class casacore::Array<casacore::CountedPtr<casa::CFBuffer> >;
-
 namespace casa{
 
   // Instantiate a commonly used extern template

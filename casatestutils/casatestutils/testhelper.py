@@ -705,7 +705,7 @@ def compMS(ms0,ms1,keys=['mean','min','max','rms'],ap="amp",tol=1e-4,verbose=Fal
             return False
         ms_local.open(mss[1])
         stats = ms_local.statistics("DATA",ap)
-        s.append(stats[stats.keys()[0]])
+        s.append(stats[list(stats)[0]])
         ms_local.done()
     status=True
     for ik in range(len(keys)):

@@ -26,7 +26,7 @@
 
 #include <components/SpectralComponents/GaussianMultipletSpectralElement.h>
 
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayLogical.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Containers/Record.h>

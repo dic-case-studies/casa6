@@ -27,14 +27,15 @@
 #ifndef TRIALDISPLAY_DISPLAYSHAPEWITHCOORDS_H
 #define TRIALDISPLAY_DISPLAYSHAPEWITHCOORDS_H
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <display/DisplayShapes/DisplayShape.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 namespace casacore{
 
 	class Record;
-	template <class T> class Vector;
-	template <class T> class Matrix;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

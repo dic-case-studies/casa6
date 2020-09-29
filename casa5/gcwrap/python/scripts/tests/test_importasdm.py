@@ -431,15 +431,17 @@ class asdm_import1(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -615,15 +617,17 @@ class asdm_import2(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -1595,7 +1599,9 @@ class asdm_import4(test_base):
         
         # Run again and verify that the online flags are not overwritten
         os.system('rm -rf x54.ms*')
-        importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True, outfile=outfile, overwrite=False)
+        with self.assertRaises(RuntimeError):
+            importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True,
+                       outfile=outfile, overwrite=False)
         print('Expected Error!')
         with open(outfile,'r') as ff:
             cmds = ff.readlines()
