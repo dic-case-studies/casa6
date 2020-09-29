@@ -137,7 +137,7 @@ TEST_F(AccorJonesTest, SolveTest) {
       Cube<Float> ratio =
 	amplitude(vb2->visCubeCorrected()) / amplitude(vb2->visCube());
 
-      for (Int irow=0;irow<vb2->nRows();++irow) {
+      for (rownr_t irow=0;irow<vb2->nRows();++irow) {
 	for (Int icor=0;icor<nCorr;icor+=3) {
 	  Int p1 = icor == 0 ? 0 : 1;
 	  Int p2 = icor == 0 ? 0 : 1;

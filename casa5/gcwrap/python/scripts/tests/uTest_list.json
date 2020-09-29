@@ -433,7 +433,7 @@
         {
              "testNumber":"3425",
              "testName":"Gaincal",
-             "testScript":"test_gaincal",
+             "testScript":"test_req_task_gaincal",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"George Moellenbrock",
@@ -2149,7 +2149,7 @@
         {
              "testNumber":"6905",
              "testName":"MPI Applycal",
-             "testScript":"test_applycal",
+             "testScript":"test_req_task_applycal",
              "testType":"functionalTest",
              "testLevel":"accepted",
              "Maintainer":"Sandra Castro",

@@ -69,7 +69,6 @@ public:
     virtual casacore::Bool isPresent () const = 0;
     virtual casacore::Bool isShapeOk () const = 0;
     virtual void resize (casacore::Bool /*copyValues*/) {}
-    virtual void resizeRows (casacore::Int /*newNRows*/) {}
     virtual void setDirty () = 0;
     virtual casacore::String shapeErrorMessage () const = 0;
 
@@ -522,24 +521,6 @@ public:
                 std::fill(this->getItem().begin( ),this->getItem().end( ),typename T::value_type());
             }
 
-        }
-    }
-
-    void
-    resizeRows (casacore::Int newNRows)
-    {
-        casacore::IPosition shape = this->getItem().shape();
-
-        if (shapePattern_p != NoCheck){
-
-            // Change the last dimension to be the new number of rows,
-            // then resize, copying values.
-
-            shape.last() = newNRows;
-
-            this->getItem().resize (shape, true);
-
-            this->setDirty();
         }
     }
 

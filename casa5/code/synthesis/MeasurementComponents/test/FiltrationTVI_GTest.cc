@@ -612,7 +612,7 @@ protected:
         ASSERT_EQ((unsigned long )num_filtrates, is_filtrate.nelements());
         EXPECT_EQ(num_filtrates, vi->getImpl()->nRows());
         int j = 0;
-        for (int i = 0; i < vb_ref->nRows(); ++i) {
+        for (rownr_t i = 0; i < vb_ref->nRows(); ++i) {
           if (is_filtrate[i]) {
             EXPECT_EQ(row_ids_ref[i], row_ids[j]);
             ++j;
