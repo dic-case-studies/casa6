@@ -442,7 +442,7 @@ template <class T> ComponentList ImageSourceFinder<T>::_findSources (
 					casacore::IPosition shp = trc0 - blc0 + 1;
 					casacore::Array<T> dataIn = subImage->getSlice(blc0, shp, false);
 					casacore::Array<casacore::Bool> maskIn = subImage->getMaskSlice(blc0, shp, false);
-					casacore::Array<T> sigmaIn(dataIn.shape(),1.0);
+					casacore::Array<T> sigmaIn(dataIn.shape(),1.0F);
 
 					// Make fitter, add model and fit
 
