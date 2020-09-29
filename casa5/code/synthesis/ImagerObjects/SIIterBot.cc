@@ -25,6 +25,7 @@
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/utilities/Conversion.h>
 #endif
+#include <casacore/casa/BasicMath/Math.h>
 
 /* Include file for the lock guard */
 #include <mutex>

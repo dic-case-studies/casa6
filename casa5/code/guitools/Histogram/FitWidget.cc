@@ -29,6 +29,8 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <limits>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 using namespace casacore;
 

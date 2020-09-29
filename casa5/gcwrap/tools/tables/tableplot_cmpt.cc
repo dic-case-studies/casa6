@@ -83,7 +83,7 @@ class TPGuiBinder : public casa::GUIBinderBase
 */
 
 /* Default Constructor */
-tableplot::tableplot()
+tableplot::tableplot(): itsLog(nullptr)
 {
 	try 
 	{
@@ -95,7 +95,7 @@ tableplot::tableplot()
 		TabNames.resize(0);
                 resetter_p = NULL;
 		
-		itsLog = new LogIO();
+		itsLog.reset(new LogIO());
 		
 		TP = NULL;
 		//PyBind = NULL;
