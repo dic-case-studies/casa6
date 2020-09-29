@@ -766,7 +766,7 @@ def calc_sdatmcor(
 
         # Sub parameter, only when atmdetai is True #
         if t_atmdetail:
-            _msg("-- Sub Parameter from the Arguments will be set, if specified.")
+            _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
             t_altitude    = _set_floatquantity_param(a_altitude, t_altitude, 'm')
             t_temperature = _set_floatquantity_param(a_temperature, t_temperature, 'K')
             t_pressure    = _set_floatquantity_param(a_pressure, t_pressure, 'mbar')
@@ -779,7 +779,7 @@ def calc_sdatmcor(
             t_layertemperature = _set_list_param(a_layertemperature, a_layertemperature)
 
         else:
-            _msg("-- Sub Parameters were not used, due to 'atmdetail' is not True.")
+            _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
 
         # print and log to confirm #
         _msg("==========================================================")
@@ -906,7 +906,7 @@ def calc_sdatmcor(
 
             # debug option for task. #
             if showCorrection:
-                _msg("spw=%d, i=%d, time=%s, Max(dTa)=%s, Min(dTa)=%s" % (spwid, i, t, max(dTa), min(dTa)))
+                _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
 
             # Adjust Body (dTa is vector) #
             for ipol in range(npol):
