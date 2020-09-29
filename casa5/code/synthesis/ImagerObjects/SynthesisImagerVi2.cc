@@ -1187,8 +1187,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
 				      const Bool savemodel) {
 	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
-	if(dopsf)
-		runCubeGridding(True);
+	if(dopsf){
+	  runCubeGridding(True);
+	  ///Store the beamsets in ImageInfo
+	  for(Int k=0; k < itsMappers.nMappers(); ++k){
+	   
+	    (itsMappers.imageStore(k))->getBeamSet();
+	  }
+	}
 	else
 		runCubeGridding(False, savemodel);
 	

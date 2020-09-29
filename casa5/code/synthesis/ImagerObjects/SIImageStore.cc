@@ -2011,17 +2011,24 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
     AlwaysAssert( itsImageShape.nelements() == 4, AipsError );
-    Int nx = itsImageShape[0];
-    Int ny = itsImageShape[1];
-    Int npol = itsImageShape[2];
-    Int nchan = itsImageShape[3];
+    uInt nx = itsImageShape[0];
+    uInt ny = itsImageShape[1];
+    uInt npol = itsImageShape[2];
+    uInt nchan = itsImageShape[3];
+    ImageInfo ii = psf()->imageInfo();
+    ImageBeamSet iibeamset=ii.getBeamSet();
+    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol){
+      itsPSFBeams=iibeamset;
+      itsRestoredBeams=iibeamset;
+      return;
+    }
     itsPSFBeams.resize( nchan, npol );
     itsRestoredBeams.resize(nchan, npol);
     //    cout << "makeImBeamSet : imshape : " << itsImageShape << endl;
 
     String blankpsfs="";
-    for( Int chanid=0; chanid<nchan;chanid++) {
-      for( Int polid=0; polid<npol; polid++ ) {
+    for( uInt chanid=0; chanid<nchan;chanid++) {
+      for( uInt polid=0; polid<npol; polid++ ) {
     LatticeLocker lock2 (*(psf()), FileLocker::Read);
 
 	IPosition substart(4,0,0,polid,chanid);
@@ -2076,8 +2083,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       defaultbeam.setMajorMinor(majax,minax);
       defaultbeam.setPA(pa);
     }
-    for( Int chanid=0; chanid<nchan;chanid++) {
-      for( Int polid=0; polid<npol; polid++ ) {
+    for( uInt chanid=0; chanid<nchan;chanid++) {
+      for( uInt polid=0; polid<npol; polid++ ) {
 	if( (itsPSFBeams.getBeam(chanid, polid)).isNull() ) 
 	  { itsPSFBeams.setBeam( chanid, polid, defaultbeam );
 	    itsRestoredBeams.setBeam( chanid, polid, defaultbeam );
@@ -2106,7 +2113,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
 
     /// For lack of a better place, store this inside the PSF image. To be read later and used to restore
-    ImageInfo ii = psf()->imageInfo();
+   
     ii.setBeams( itsPSFBeams );
     {
       LatticeLocker lock1(*(psf()), FileLocker::Write);
