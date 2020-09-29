@@ -7,31 +7,16 @@ if is_CASA6:
 else:
     from taskinit import mstool, casalog
 
-def visstat(vis=None,
-            axis=None,
-            datacolumn=None,
-            useflags=None,
-            spw=None,
-            field=None,
-            selectdata=None,
-            antenna=None,
-            uvrange=None,
-            timerange=None,
-            correlation=None,
-            scan=None,
-            array=None,
-            observation=None,
-            timeaverage=None,
-            timebin=None,
-            timespan=None,
-            maxuvwdistance=None,
-            disableparallel=None,
-            ddistart=None,
-            taql=None,
-            monolithic_processing=None,
-            intent=None,
-            reportingaxes=None):
-
+def visstat(
+    vis=None, axis=None, datacolumn=None, useflags=None,
+    spw=None, field=None, selectdata=None, antenna=None,
+    uvrange=None, timerange=None, correlation=None,
+    scan=None, array=None, observation=None,
+    timeaverage=None, timebin=None, timespan=None,
+    maxuvwdistance=None, disableparallel=None,
+    ddistart=None, taql=None, monolithic_processing=None,
+    intent=None, reportingaxes=None, doquantiles=None
+):
     casalog.origin('visstat')
 
     mslocal = mstool()
@@ -54,26 +39,18 @@ def visstat(vis=None,
         array=''
         observation = ''
 
-    s = mslocal.statistics(column=col.upper(),
-                           complex_value=complex_type,
-                           useflags=useflags,
-                           useweights=False,
-                           spw=spw,
-                           field=field,
-#                            feed="",
-                           baseline=antenna,
-                           uvrange=uvrange,
-                           time=timerange,
-                           correlation=correlation,
-                           scan=scan,
-                           intent=intent,
-                           array=array,
-                           obs=str(observation),
-                           reportingaxes=str(reportingaxes),
-                           timeaverage=timeaverage,
-                           timebin=timebin,
-                           timespan=timespan,
-                           maxuvwdistance=maxuvwdistance)
+    s = mslocal.statistics(
+        column=col.upper(), complex_value=complex_type,
+        useflags=useflags, useweights=False, spw=spw,
+        field=field, baseline=antenna, uvrange=uvrange,
+        time=timerange, correlation=correlation,
+        scan=scan, intent=intent, array=array,
+        obs=str(observation),
+        reportingaxes=str(reportingaxes),
+        timeaverage=timeaverage, timebin=timebin,
+        timespan=timespan, maxuvwdistance=maxuvwdistance,
+        doquantiles=doquantiles
+    )
 
     mslocal.close()
 
@@ -93,10 +70,11 @@ def visstat(vis=None,
                 casalog.post("        -- Variance of the values [variance]:         " + str(s[stats]['variance']), "NORMAL")
                 casalog.post("        -- Standard deviation of the values [stddev]: " + str(s[stats]['stddev']), "NORMAL")
                 casalog.post("        -- Root mean square [rms]:                    " + str(s[stats]['rms']), "NORMAL")
-                casalog.post("        -- Median of the pixel values [median]:       " + str(s[stats]['median']), "NORMAL")
-                casalog.post("        -- Median of the deviations [medabsdevmed]:   " + str(s[stats]['medabsdevmed']), "NORMAL")
-                casalog.post("        -- First quartile [firstquartile]:            " + str(s[stats]['firstquartile']), "NORMAL")
-                casalog.post("        -- Third quartile [thirdquartile]:            " + str(s[stats]['thirdquartile']), "NORMAL")
+                if doquantiles:
+                    casalog.post("        -- Median of the pixel values [median]:       " + str(s[stats]['median']), "NORMAL")
+                    casalog.post("        -- Median of the deviations [medabsdevmed]:   " + str(s[stats]['medabsdevmed']), "NORMAL")
+                    casalog.post("        -- First quartile [firstquartile]:            " + str(s[stats]['firstquartile']), "NORMAL")
+                    casalog.post("        -- Third quartile [thirdquartile]:            " + str(s[stats]['thirdquartile']), "NORMAL")
         else:
             casalog.post(stats + " -- No valid points found", "WARN")
 
