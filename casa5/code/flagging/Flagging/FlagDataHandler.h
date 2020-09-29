@@ -913,8 +913,15 @@ public:
 	casacore::uInt64 chunkCounts_p;
 	casacore::uInt64 progressCounts_p;
 	casacore::uInt64 msCounts_p;
-	casacore::uShort summaryThreshold_p;
 	bool printChunkSummary_p;
+
+	// control report/logging frequency for the per-agent partial (ongoing) summaries
+	casacore::uInt summaryThreshold_p;
+	const casacore::uInt summaryThresholdInc_p = 10;
+	// control report/logging frequency for the per-chunk progress report lines
+	casacore::uInt chunkLineThreshold_p;
+	const casacore::uInt chunkLineThresholdInc_p = 1;
+
 	casacore::uShort tableTye_p;
 	casacore::Bool loadProcessorTable_p;
 

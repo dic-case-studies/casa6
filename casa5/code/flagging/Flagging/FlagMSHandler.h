@@ -76,6 +76,9 @@ public:
 	// (typically for checking existence of CORRECTED_DATA
 	bool checkIfColumnExists(casacore::String column);
 
+	// Whether the per-chunk progress log line should be produced
+	bool checkDoChunkLine(double progress);
+
 	// Signal true when a progress summary has to be printed
 	bool summarySignal();
 

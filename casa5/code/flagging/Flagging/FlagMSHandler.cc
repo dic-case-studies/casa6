@@ -694,10 +694,13 @@ FlagMSHandler::nextBuffer()
         msCounts_p += currentBufferCounts;
 
         // Print chunk characteristics
-        if (bufferNo_p == 1)
+        // do not bother building this message if logger-priority not enough, as this is
+        // complex and potentially repeated very frequently
+        if (bufferNo_p == 1 and logger_p->priority() <= LogMessage::NORMAL)
         {
             processedRows_p += visibilityIterator_p->nRowsInChunk();
-            if (printChunkSummary_p)
+            double progress  = 100.0* ((double) processedRows_p / (double) selectedMeasurementSet_p->nrow());
+            if (checkDoChunkLine(progress))
             {
                 logger_p->origin(LogOrigin("FlagMSHandler",""));
                 String corrs = "[ ";
@@ -707,10 +710,6 @@ FlagMSHandler::nextBuffer()
                 }
                 corrs += "]";
 
-                Double progress  = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
-
-                *logger_p << LogIO::NORMAL <<
-                    "------------------------------------------------------------------------------------ " << LogIO::POST;
                 *logger_p << LogIO::NORMAL <<
                     "Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
                     ", Observation = " << visibilityBuffer_p->observationId()[0] <<
@@ -883,23 +882,38 @@ FlagMSHandler::checkIfColumnExists(String column)
 }
 
 // -----------------------------------------------------------------------
+// Whether the per-chunk progress log line should be produced
+// -----------------------------------------------------------------------
+bool
+FlagMSHandler::checkDoChunkLine(double progress)
+{
+    bool result = false;
+    // per-chunk progress report lines - every 'chunkLineThresholdInc_p' % and in
+    // any case always the beginning (~0%) end (100% rows)
+    if ((progress >= chunkLineThreshold_p) or (progress >= 100.0)) {
+        chunkLineThreshold_p += chunkLineThresholdInc_p;
+        result = true;
+    }
+    result |= (1 == chunkNo_p) or
+        (processedRows_p == selectedMeasurementSet_p->nrow());
+
+    return result;
+}
+
+// -----------------------------------------------------------------------
 // Signal true when a progress summary has to be printed
 // -----------------------------------------------------------------------
 bool
 FlagMSHandler::summarySignal()
 {
-	Double progress = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
-	if ((progress >= summaryThreshold_p) || (logger_p->priority() >= LogMessage::DEBUG1))
-	{
-		summaryThreshold_p += 10;
-		printChunkSummary_p = true;
-		return true;
-	}
-	else
-	{
-		printChunkSummary_p = false;
-		return false;
-	}
+        Double progress = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
+
+        // signal for per-agent partial (ongoing) summaries
+        auto signal = ((progress >= summaryThreshold_p) or (logger_p->priority() >= LogMessage::DEBUG1));
+        if (signal) {
+            summaryThreshold_p += summaryThresholdInc_p;
+        }
+        return signal;
 }
 
 // -----------------------------------------------------------------------
