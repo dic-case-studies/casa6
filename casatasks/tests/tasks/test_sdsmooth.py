@@ -9,12 +9,14 @@ import math
 from scipy import signal
 import unittest
 
+from casatestutils import testhelper as th
+copytree_ignore_subversion = th.copytree_ignore_subversion
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
     from casatasks import sdsmooth
     from casatasks.private import sdutil
-    from testhelper import copytree_ignore_subversion
 
     tb = table( )
 else:
@@ -25,12 +27,6 @@ else:
     from sdsmooth import sdsmooth
     from taskinit import mstool as ms
 
-    try:
-        from .testutils import copytree_ignore_subversion
-    except:
-        from tests.testutils import copytree_ignore_subversion
-
-    # the global tb tool is used here
 
 def gaussian_kernel(nchan, kwidth):
     sigma = kwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
@@ -51,9 +47,9 @@ class sdsmooth_test_base(unittest.TestCase):
     """
     # Data path of input
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+        datapath=ctsys.resolve('unittest/sdsmooth/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/tsdsmooth')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'/casatestdata/unittest/sdsmooth/')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'

@@ -22,7 +22,7 @@ else:
     from casa_stack_manip import stack_frame_find
     from __main__ import default
     mslocal = mstool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'/casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -36,7 +36,7 @@ Features tested:
   3. Solar system (Uranus) flux density calibration.
 """
 
-datapath = ctsys_resolve('regression/unittest/setjy')
+datapath = ctsys_resolve('unittest/setjy/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -74,11 +74,11 @@ class SetjyUnitTestBase(unittest.TestCase):
         #print(" setjydatapath=",setjydatapath, " inpms=",self.inpms)
         #print(" setjydatapath=",datapath, " inpms=",self.inpms)
         if testmms:
-            os.system('cp -rH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+            os.system('cp -RH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
         #elif ismms:
         #    os.system('cp -rH ' + os.path.join(datapath+'/mms',self.inpms) + ' ' + self.inpms)
         else:
-            os.system('cp -rf ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+            os.system('cp -RH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
         
         if ismms:
             self.createMMS(self.inpms)

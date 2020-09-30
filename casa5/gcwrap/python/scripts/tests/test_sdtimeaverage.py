@@ -18,7 +18,7 @@ if is_CASA6:
                 os.path.dirname(__file__))))
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/sdimaging')
+    datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
 else:
     from tasks import sdtimeaverage
@@ -27,7 +27,7 @@ else:
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split(
-    )[0] + "/data/regression/unittest/sdimaging/"
+    )[0] + "/casatestdata/unittest/sdtimeaverage/"
 """
 sdtimeaverage begins
 """
@@ -148,7 +148,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
 # private function #
     def _copy_remote_file(self, infile, outfile):
-        os.system('cp -RL ' + os.path.join(datapath, infile) + ' ' + outfile)
+        os.system('cp -RH ' + os.path.join(datapath, infile) + ' ' + outfile)
 
     def _if_exist(self, msname):
         _filePath = os.path.join("./", msname)

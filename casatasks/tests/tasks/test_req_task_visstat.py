@@ -71,7 +71,7 @@ else:
     mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid_mms.mms'
     singledish = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/analytic_spectra_tsys.ms'
     # Data from merged test
-    merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat2')
+    merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat/')
     
 axislist = ['flag', 'antenna1', 'antenna2', 'feed1', 'feed2', 'field_id', 'array_id', 'data_desc_id', 'flag_row', 'interval', 'scan', 'scan_number', 'time', 'weight_spectrum', 'amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary', 'uvrange']
  
