@@ -63,17 +63,17 @@ int convert_intvec_from_compatible_numpy_array( PyObject *obj, void *s );
 int pyarray_check(PyObject *obj);
 
 #define AMAP_ARRAY(TYPE) \
-PyObject *map_array_numpy(const std::vector<TYPE> &vec, const std::vector<int> &shape);         \
+PyObject *map_array_numpy(const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape);         \
 PyObject *map_vector_numpy(const std::vector<TYPE> &vec);                                       \
-inline PyObject *map_array( const std::vector<TYPE> &vec, const std::vector<int> &shape ) {     \
+inline PyObject *map_array( const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape ) {     \
                             return map_array_numpy(vec, shape);                                 \
 }                                                                                               \
                                                                                                 \
 inline PyObject *map_vector( const std::vector<TYPE> &vec ) {                                   \
                              return map_vector_numpy( vec );                                    \
 }                                                                                               \
-void numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vector<int> &shape );      \
-int pylist2vector( PyObject *array, std::vector<TYPE> &vec, std::vector<int> &shape, int stride = 1, int offset = 0 );
+void numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vector<ssize_t> &shape );      \
+int pylist2vector( PyObject *array, std::vector<TYPE> &vec, std::vector<ssize_t> &shape, int stride = 1, int offset = 0 );
 
 
 AMAP_ARRAY(std::string)

@@ -718,7 +718,6 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
      *itsLog << LogIO::SEVERE << "Result is a table tool please use table.taql for now till the developers fix this " << LogIO::POST;
    }
    else{
-     std::vector<int> shape;
      Vector<rownr_t> rownrs (result.node().nrow());
      indgen (rownrs);
      //cerr << "rownrs " << result.node().nrow() << "  is scalar " << result.node().isScalar() << endl;
@@ -728,7 +727,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpBool:{
 	 Array<Bool> oBool;
 	 oBool=result.node().getColumnBool(rownrs);
-	 oBool.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oBool.shape().begin( ),oBool.shape().end( ));
 	 std::vector<bool> s_bool(oBool.begin(), oBool.end());
 	 rstat=new ::casac::variant(s_bool, shape);
        }
@@ -736,7 +735,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpUChar:{
 	 Array<uChar> ouChar;
 	 ouChar=result.node().getColumnuChar(rownrs);
-	 ouChar.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(ouChar.shape().begin( ),ouChar.shape().end( ));
 	 std::vector<long> s_uchar(ouChar.begin(), ouChar.end());
 	 rstat=new ::casac::variant(s_uchar, shape);
        }
@@ -744,7 +743,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpShort:{
 	 Array<Short> oShort;
 	 oShort=result.node().getColumnShort(rownrs);
-	 oShort.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oShort.shape().begin( ),oShort.shape().end( ));
 	 std::vector<long> s_short(oShort.begin(), oShort.end());
 	 rstat=new ::casac::variant(s_short, shape);
        }
@@ -752,7 +751,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
 	case TpUShort:{
 	 Array<uShort> oushort;
 	 oushort=result.node().getColumnuShort(rownrs);
-	 oushort.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oushort.shape().begin( ),oushort.shape().end( ));
 	 std::vector<long> s_ushort(oushort.begin(), oushort.end());
 	 rstat=new ::casac::variant(s_ushort, shape);
        }
@@ -760,7 +759,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpInt:{
 	 Array<Int> oInt;
 	 oInt=result.node().getColumnInt(rownrs);
-	 oInt.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oInt.shape().begin( ),oInt.shape().end( ));
 	 std::vector<long> s_int(oInt.begin(), oInt.end());
 	 rstat=new ::casac::variant(s_int, shape);
        }
@@ -768,7 +767,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpInt64:{
 	 Array<Int64> oInt;
 	 oInt=result.node().getColumnInt64(rownrs);
-	 oInt.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oInt.shape().begin( ),oInt.shape().end( ));
 	 std::vector<long> s_int(oInt.begin(), oInt.end());
 	 rstat=new ::casac::variant(s_int, shape);
        }
@@ -776,7 +775,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpUInt:{
 	 Array<uInt> ouInt;
 	 ouInt=result.node().getColumnuInt(rownrs);
-	 ouInt.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(ouInt.shape().begin( ),ouInt.shape().end( ));
 	 std::vector<unsigned long> s_uint(ouInt.begin(), ouInt.end());
 	 rstat=new ::casac::variant(s_uint, shape);
        } 
@@ -784,7 +783,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpFloat:{
 	 Array<Float> oFloat;
 	 oFloat=result.node().getColumnFloat(rownrs);
-	 oFloat.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oFloat.shape().begin( ),oFloat.shape().end( ));
 	 std::vector<double> s_float(oFloat.begin(), oFloat.end());
 	 rstat=new ::casac::variant(s_float, shape);
        }
@@ -792,7 +791,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpDouble:{
 	 Array<Double> oDouble;
 	 oDouble=result.node().getColumnDouble(rownrs);
-	 oDouble.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oDouble.shape().begin( ),oDouble.shape().end( ));
 	 std::vector<double> s_double(oDouble.begin(), oDouble.end());
 	 rstat=new ::casac::variant(s_double, shape);
        }	
@@ -800,7 +799,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpComplex:{
 	 Array<Complex> oComplex;
 	 oComplex=result.node().getColumnComplex(rownrs);
-	 oComplex.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oComplex.shape().begin( ),oComplex.shape().end( ));
 	 std::vector<std::complex<double> > s_complex(oComplex.begin(), oComplex.end());
 	 rstat=new ::casac::variant(s_complex, shape);
        }	
@@ -808,7 +807,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpDComplex:{
 	 Array<DComplex> odComplex;
 	 odComplex=result.node().getColumnDComplex(rownrs);
-	 odComplex.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(odComplex.shape().begin( ),odComplex.shape().end( ));
 	 std::vector<std::complex<double> > s_dcomplex(odComplex.begin(), odComplex.end());
 	 rstat=new ::casac::variant(s_dcomplex, shape);
        }	
@@ -816,7 +815,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpString:{
 	 Array<String> oString;
 	 oString=result.node().getColumnString(rownrs);
-	 oString.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oString.shape().begin( ),oString.shape().end( ));
 	 std::vector<string> s_string(oString.begin(), oString.end());
 	 rstat=new ::casac::variant(s_string, shape);
        }	

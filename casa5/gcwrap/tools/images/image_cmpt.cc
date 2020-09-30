@@ -952,14 +952,14 @@ template <class T> image* image::_convolve(
     String kernelFileName = "";
     if (kernel.type() == variant::DOUBLEVEC) {
         const auto kernelVector = kernel.toDoubleVec();
-        const auto shape = kernel.arrayshape();
+        std::vector<long long> shape(kernel.arrayshape().begin(),kernel.arrayshape().end());
         fkernelArray.resize(IPosition(shape));
         Vector<Double> localkern(kernelVector);
         convertArray(fkernelArray, localkern.reform(IPosition(shape)));
     }
     else if (kernel.type() == variant::INTVEC) {
         const auto kernelVector = kernel.toIntVec();
-        const auto shape = kernel.arrayshape();
+        std::vector<long long> shape(kernel.arrayshape().begin(),kernel.arrayshape().end());
         fkernelArray.resize(IPosition(shape));
         Vector<Int> localkern(kernelVector);
         convertArray(fkernelArray, localkern.reform(IPosition(shape)));
@@ -2188,7 +2188,7 @@ ITUPLE image::_fromarray(
         "Supported values are \"d\" and \"f\""
     );
     auto doFloat = mytype == "f";
-    ::casacore::IPosition shape = pixels.arrayshape();
+    ::casacore::IPosition shape(std::vector<long long>(pixels.arrayshape().begin(),pixels.arrayshape().end()));
     ThrowIf(
         shape.empty(), "The pixels array cannot be empty"
     );
@@ -2501,7 +2501,7 @@ variant* image::getchunk(
             if (! getmask) {
                 Array<Float> vals = ret.asArrayFloat("values");
                 vector<double> v(vals.begin(), vals.end());
-                return new variant(v, vals.shape().asStdVector());
+                return new variant(v, std::vector<ssize_t>(vals.shape().begin(),vals.shape().end()));
             }
         }
         else if (_imageC) {
@@ -2512,7 +2512,7 @@ variant* image::getchunk(
             if (! getmask) {
                 Array<Complex> vals = ret.asArrayComplex("values");
                 vector<std::complex<double> > v(vals.begin(), vals.end());
-                return new variant(v, vals.shape().asStdVector());
+                return new variant(v, std::vector<ssize_t>(vals.shape().begin(),vals.shape().end()));
             }
         }
         else if (_imageD) {
@@ -2523,7 +2523,7 @@ variant* image::getchunk(
             if (! getmask) {
                 Array<Double> vals = ret.asArrayDouble("values");
                 vector<Double> v(vals.begin(), vals.end());
-                return new variant(v, vals.shape().asStdVector());
+                return new variant(v, std::vector<ssize_t>(vals.shape().begin(),vals.shape().end()));
             }
         }
         else if (_imageDC) {
@@ -2534,7 +2534,7 @@ variant* image::getchunk(
             if (! getmask) {
                 Array<DComplex> vals = ret.asArrayDComplex("values");
                 vector<DComplex> v(vals.begin(), vals.end());
-                return new variant(v, vals.shape().asStdVector());
+                return new variant(v, std::vector<ssize_t>(vals.shape().begin(),vals.shape().end()));
             }
         }
         else {
@@ -2543,7 +2543,7 @@ variant* image::getchunk(
         if (getmask) {
             Array<Bool> pixelMask = ret.asArrayBool("mask");
             std::vector<bool> s_pixelmask(pixelMask.begin(), pixelMask.end());
-            return new variant(s_pixelmask, pixelMask.shape().asStdVector());
+            return new variant(s_pixelmask, std::vector<ssize_t>(pixelMask.shape().begin(),pixelMask.shape().end()));
         }
     }
     catch (const AipsError& x) {
@@ -2781,11 +2781,10 @@ template<class T> variant* image::_getregion2(
     pvm.setStretch(stretch);
     auto ret = pvm.get();
     auto pixelmask = ret.asArrayBool("mask");
-    auto s_shape = pixelmask.shape().asStdVector();
+    std::vector<ssize_t> s_shape(pixelmask.shape().begin(),pixelmask.shape().end());
     if (getmask) {
-        pixelmask.shape().asVector().tovector(s_shape);
         std::vector<bool> s_pixelmask(pixelmask.begin(), pixelmask.end());
-        return new ::casac::variant(s_pixelmask, s_shape);
+        return new ::casac::variant(s_pixelmask,std::vector<ssize_t>(pixelmask.shape().begin(),pixelmask.shape().end()));
     }
     if (_imageF || _imageD) {
         std::vector<Double> d_pixels;
@@ -4365,7 +4364,7 @@ bool image::putchunk(
                 pixels.type() == variant::COMPLEXVEC
             ) {
                 Vector<DComplex> pixelVector(pixels.getComplexVec());
-                auto shape = pixels.arrayshape();
+                std::vector<long long> shape(pixels.arrayshape().begin(),pixels.arrayshape().end());
                 auto reshapedArray = pixelVector.reform(IPosition(shape));
                 if (_imageC) {
                     Array<Complex> pixelsArray;
@@ -4526,7 +4525,7 @@ template<class T> bool image::_putregionComplex(
 ) {
     Array<T> pixels;
     if (! _isUnset(v_pixels)) {
-        IPosition shape(v_pixels.arrayshape());
+        IPosition shape(std::vector<long long>(v_pixels.arrayshape().begin(),v_pixels.arrayshape().end()));
         auto mytype = v_pixels.type();
         ThrowIf(
             mytype == variant::DOUBLEVEC || mytype == variant::INTVEC,
@@ -4554,7 +4553,7 @@ template<class T> bool image::_putregionReal(
 ) {
     Array<T> pixels;
     if (! _isUnset(v_pixels)) {
-        IPosition shape(v_pixels.arrayshape());
+        IPosition shape(std::vector<long long>(v_pixels.arrayshape().begin(),v_pixels.arrayshape().end()));
         auto mytype = v_pixels.type();
         ThrowIf(
             mytype == variant::COMPLEXVEC,
@@ -4587,7 +4586,7 @@ template<class T> bool image::_putregion2(
 ) {
     Array<Bool> mask;
     if (! _isUnset(v_pixelmask)) {
-        IPosition shape(v_pixelmask.arrayshape());
+        IPosition shape(std::vector<long long>(v_pixelmask.arrayshape().begin(),v_pixelmask.arrayshape().end()));
         auto mytype = v_pixelmask.type();
         if (mytype == variant::DOUBLEVEC) {
             _convertArray(
@@ -6638,7 +6637,7 @@ variant* image::makearray(
     for (int i = 0; i < nelem; ++i) {
         element[i] = v;
     }
-    return new variant(element, vector<int>(shape.begin(),shape.end()));
+    return new variant(element, vector<ssize_t>(shape.begin(),shape.end()));
 }
 
 void image::_notSupported(const std::string& method) const {

@@ -171,7 +171,7 @@ npycomplextostring(npy_clongdouble,"(%Lf,%Lf)")
     }
 
 #define NUMPY2VECTOR(TYPE,NPYTYPE,NPY_TYPE,DIRECT_COPY_COND,BOOLCVT,COPY,STRCVT,CPXCVT,CPXIMAG,BTOSTR,ITOSTR,DTOSTR,CTOSTR,ASSIGN,INCR) \
-void casac::numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vector<int> &shape ) { \
+void casac::numpy2vector( PyArrayObject *obj, std::vector<TYPE > &vec, std::vector<ssize_t> &shape ) { \
     npy_intp *dims = (npy_intp *)PyArray_DIMS(obj);					\
     int ndims = (int)PyArray_NDIM(obj);							\
     npy_intp itemsize = (npy_intp)PyArray_ITEMSIZE(obj);				\
@@ -381,7 +381,7 @@ int casac::pyarray_check(PyObject *obj) {
 #define CPXCVT_REAL(val) (val.real)
 
 #define PYLIST2VECTOR(TYPE,BOOLCVT,INTCVT,DOUBLECVT,COMPLEXCVT,STRINGCVT)		\
-int casac::pylist2vector( PyObject *array, std::vector<TYPE> &vec, std::vector<int> &shape, int stride, int offset ) { \
+int casac::pylist2vector( PyObject *array, std::vector<TYPE> &vec, std::vector<ssize_t> &shape, int stride, int offset ) { \
 											\
     if ( PyList_Check(array) || PyTuple_Check(array) ) {				\
 	int number_elements = -1;							\
@@ -406,7 +406,7 @@ int casac::pylist2vector( PyObject *array, std::vector<TYPE> &vec, std::vector<i
 		if ( element_size != number_elements )					\
 		    return 0;								\
 											\
-		std::vector<int> element_shape;						\
+		std::vector<ssize_t> element_shape;						\
 		int result = casac::pylist2vector( ele, vec, element_shape, stride*array_size, i*stride+offset ); \
 											\
 		if ( result == 0 ) return 0;						\
@@ -552,7 +552,7 @@ PyObject *record2pydict(const record &rec) {
 
 
 #define FWD_DECL_map_array_pylist( TYPE )							\
-static PyObject *map_array_pylist( const std::vector<TYPE> &vec, const std::vector<int> &shape, \
+static PyObject *map_array_pylist( const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape, \
 				   int stride=1, int offset=0 );				\
 static PyObject *map_vector_pylist( const std::vector<TYPE> &vec );
 
@@ -591,7 +591,7 @@ PyObject *map_vector_numpy(const std::vector<TYPE> &vec) {				\
     return ary;											\
 }												\
 												\
-PyObject *map_array_numpy( const std::vector<TYPE> &vec, const std::vector<int> &shape ) { \
+PyObject *map_array_numpy( const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape ) { \
     initialize_numpy( );									\
     PyArray_Descr *type = PyArray_DescrFromType(NUMPY_TYPE);					\
     npy_intp dim[NPY_MAXDIMS];                 							\
@@ -644,7 +644,7 @@ PyObject *map_vector_numpy( const std::vector<std::string> &vec ) {
     return ary;
 }
 
-PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<int> &shape ) {
+PyObject *map_array_numpy( const std::vector<std::string> &vec, const std::vector<ssize_t> &shape ) {
     initialize_numpy( );
     unsigned int size = 0;
     for ( const auto &elem : vec ) {
@@ -725,7 +725,7 @@ else if ( casac::pyarray_check(obj) ) {						\
 #else
 
 #define FWD_map_array_pylist( TYPE )								\
-inline PyObject *map_array( const std::vector<TYPE> &vec, const std::vector<int> &shape ) {	\
+inline PyObject *map_array( const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape ) {	\
     return map_array_pylist(vec, shape);							\
 }												\
 												\
@@ -749,7 +749,7 @@ FWD_map_array_pylist(std::string)
 //
 // returns non-zero upon success
 //
-static int unmap_array_pylist( PyObject *array, std::vector<int> &shape, casac::variant &vnt, int stride = 1, int offset = 0 ) {
+static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, casac::variant &vnt, int stride = 1, int offset = 0 ) {
 
     if ( PyList_Check(array) || PyTuple_Check(array) ) {
 	int number_elements = -1;
@@ -777,7 +777,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<int> &shape, casac::
 		//if ( element_size != number_elements )
 		//    return 0;
 
-		std::vector<int> element_shape;
+		std::vector<ssize_t> element_shape;
 		int result = unmap_array_pylist( ele, element_shape, vnt, stride*array_size, i*stride+offset );
 
 		if ( result == 0 ) return 0;
@@ -894,7 +894,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<int> &shape, casac::
 	if ( ( is_list ? PyList_Size(obj) > 0 : PyTuple_Size(obj) > 0 ) &&              \
 		( is_list ? PyList_Check(PyList_GetItem(obj,0)) || PyTuple_Check(PyList_GetItem(obj,0)) :       \
 			    PyList_Check(PyTuple_GetItem(obj,0)) || PyTuple_Check(PyTuple_GetItem(obj,0))) ) {	\
-	    std::vector<int> oshape;							\
+	    std::vector<ssize_t> oshape;							\
 	    int outcome = unmap_array_pylist( obj, oshape, result );			\
 	    if ( outcome != 0 ) {							\
 		result.arrayshape() = oshape;						\
@@ -1037,7 +1037,7 @@ static PyObject *map_vector_pylist( const std::vector<TYPE> &vec ) {				\
     return list;										\
 }												\
 												\
-static PyObject *map_array_pylist( const std::vector<TYPE> &vec, const std::vector<int> &shape, int stride, int offset ) { \
+static PyObject *map_array_pylist( const std::vector<TYPE> &vec, const std::vector<ssize_t> &shape, int stride, int offset ) { \
     PyObject *result = NULL;									\
     if ( shape.size() == 0 )									\
 	return PyList_New(0);									\
@@ -1051,7 +1051,7 @@ static PyObject *map_array_pylist( const std::vector<TYPE> &vec, const std::vect
 	}											\
     } else {											\
 	result = PyList_New(shape[0]);								\
-	std::vector<int> plane_shape(shape.size()-1);						\
+	std::vector<ssize_t> plane_shape(shape.size()-1);						\
 	unsigned int plane_size = 1;								\
 	for (unsigned int i=0; i < shape.size()-1; ++i) {					\
 	    plane_size *= shape[i+1];								\
@@ -1077,9 +1077,9 @@ ARRAY2PYOBJ(std::string,PyString_FromString(val.c_str()),PyString_FromString((*i
 #define HANDLEVEC2(TYPE,FETCH)												\
 {															\
 	const std::vector<TYPE> &vec = val.FETCH();									\
-	const std::vector<int> &shape = val.arrayshape( );								\
+	const std::vector<ssize_t> &shape = val.arrayshape( );								\
 															\
-	unsigned int shape_size = 1;											\
+	ssize_t shape_size = 1;											\
 	if ( shape.size() > 1 ) {											\
 	    for ( unsigned int i = 0; i < shape.size(); ++i ) {								\
 		if ( shape[i] <= 0 ) {											\
@@ -1090,7 +1090,7 @@ ARRAY2PYOBJ(std::string,PyString_FromString(val.c_str()),PyString_FromString((*i
 	    }														\
 	}														\
 															\
-	if ( shape.size() > (unsigned) 1 && shape_size == vec.size() ) {						\
+	if ( shape.size() > 1 && (size_t) shape_size == vec.size() ) {       \
 	    result = map_array( vec, shape );										\
 	} else {													\
 	    result = map_vector( vec );											\
@@ -1238,7 +1238,7 @@ int is_intvec_compatible_numpy_array( PyObject *obj ) {
 int convert_intvec_from_compatible_numpy_array( PyObject *obj, void *s ) {
     if ( is_intvec_compatible_numpy_array(obj) ) {
 	std::vector<long> *to = (std::vector<long>*) s;
-	std::vector<int> shape;
+	std::vector<ssize_t> shape;
 	casac::numpy2vector((PyArrayObject*)obj,*to, shape);
 	return 1;
     }

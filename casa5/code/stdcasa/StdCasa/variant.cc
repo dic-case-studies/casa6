@@ -18,14 +18,14 @@ variant::variant( ) : typev(BOOLVEC), shape_(1,0) {
     val.bv = new std::vector<bool>( );
 }
 
-const std::vector<int> &variant::shape() const {
+const std::vector<ssize_t> &variant::shape() const {
     if ( typev == RECORD && (shape_.size() != 1 || (int) val.recordv->size() != shape_[0]) )
-	((variant*)this)->shape_ = std::vector<int>(1,val.recordv->size());
+	((variant*)this)->shape_ = std::vector<ssize_t>(1,val.recordv->size());
     return shape_;
 }
-std::vector<int> &variant::shape() {
+std::vector<ssize_t> &variant::shape() {
   if ( typev == RECORD && (shape_.size() != 1 || (int) val.recordv->size() != shape_[0]) )
-	shape_ = std::vector<int>(1,val.recordv->size());
+	shape_ = std::vector<ssize_t>(1,val.recordv->size());
     return shape_;
 }
 
@@ -371,7 +371,7 @@ std::vector<bool> variant::toBoolVec( ) const {
 
 #define VECASSTRINGVEC(TYPE,IDTYPE,MEM,SUBMEM,OPEN,CLOSE)			\
     {										\
-    int current_size = (*val.MEM) SUBMEM .size();				\
+    ssize_t current_size = (*val.MEM) SUBMEM .size();				\
     newsize = size > current_size ? size : current_size;			\
     std::vector<std::string> *tmp = new std::vector<std::string>(newsize);	\
     std::vector<TYPE>::const_iterator from = (*val.MEM) SUBMEM .begin();	\
@@ -726,7 +726,7 @@ TYPE &variant::NAME( ) {							\
 	}									\
 										\
 	typev = TYPETAG;							\
-	shape_ = std::vector<int>(1,1);						\
+	shape_ = std::vector<ssize_t>(1,1);					\
 										\
     }										\
 										\
@@ -812,7 +812,7 @@ std::complex<double> &variant::asComplex( ) {
 	}
 
 	typev = COMPLEX;
-	shape_ = std::vector<int>(1,1);
+	shape_ = std::vector<ssize_t>(1,1);
 
     }
 
@@ -820,8 +820,8 @@ std::complex<double> &variant::asComplex( ) {
 }
 
 #define ASNUMERICVEC( NAME, TYPE, IDTYPE, TYPETAG, VAL )			\
-std::vector<TYPE> &variant::NAME( int size ) {					\
-    int newsize = -1;								\
+std::vector<TYPE> &variant::NAME( ssize_t size ) {					\
+    ssize_t newsize = -1;								\
     if ( typev != TYPETAG ) {							\
         switch( typev ) {							\
 	    case BOOL:								\
@@ -851,7 +851,7 @@ std::vector<TYPE> &variant::NAME( int size ) {					\
 	    case BOOLVEC:							\
 		{								\
 		std::vector<bool> *tmp = val.bv;				\
-		int current_size = (*tmp).size();				\
+		ssize_t current_size = (*tmp).size();				\
 		newsize = size > current_size ? size : current_size;		\
 		val.VAL = new std::vector<TYPE>(newsize);			\
 		std::vector<bool>::const_iterator from = (*tmp).begin();	\
@@ -887,7 +887,7 @@ std::vector<TYPE> &variant::NAME( int size ) {					\
 	    case DOUBLEVEC:							\
 		{								\
 		std::vector<double> *tmp = val.dv;				\
-		int current_size = (*tmp).size();				\
+		ssize_t current_size = (*tmp).size();				\
 		newsize = size > current_size ? size : current_size;		\
 		val.VAL = new std::vector<TYPE>(newsize);			\
 		std::vector<double>::const_iterator from = (*tmp).begin();	\
@@ -899,7 +899,7 @@ std::vector<TYPE> &variant::NAME( int size ) {					\
 	    case COMPLEXVEC:							\
 		{								\
 		std::vector<std::complex<double> > *tmp = val.cv;		\
-		int current_size = (*tmp).size();				\
+		ssize_t current_size = (*tmp).size();				\
 		newsize = size > current_size ? size : current_size;		\
 		val.VAL = new std::vector<TYPE>(newsize);			\
 		std::vector<std::complex<double> >::const_iterator from = (*tmp).begin();\
@@ -940,14 +940,14 @@ std::vector<TYPE> &variant::NAME( int size ) {					\
 	if ( shape_.size() == 1 )						\
 	    shape_[0] = newsize;						\
 	else if ( shape_size() != newsize )					\
-	    shape_ = std::vector<int>(1,newsize);				\
+	    shape_ = std::vector<ssize_t>(1,newsize);				\
 										\
     } else if ( size > 0 && (unsigned int) size > (*val.VAL).size() ) {		\
 	resize(size);								\
 	if ( shape_.size() == 1 )						\
 	    shape_[0] = size;							\
 	else if ( shape_size() != size )					\
-	    shape_ = std::vector<int>(1,size);					\
+	    shape_ = std::vector<ssize_t>(1,size);					\
     }										\
     return *val.VAL;								\
 }
@@ -956,8 +956,8 @@ ASNUMERICVEC(asIntVec,long,int,INTVEC,iv)
 ASNUMERICVEC(asuIntVec,unsigned long,int,UINTVEC,uiv)
 ASNUMERICVEC(asDoubleVec,double,double,DOUBLEVEC,dv)
 
-std::vector<std::complex<double> > &variant::asComplexVec( int size ) {
-    int newsize = -1;
+std::vector<std::complex<double> > &variant::asComplexVec( ssize_t size ) {
+    ssize_t newsize = -1;
     if ( typev != COMPLEXVEC ) {
         switch( typev ) {
 	    case BOOL:
@@ -987,7 +987,7 @@ std::vector<std::complex<double> > &variant::asComplexVec( int size ) {
 	    case BOOLVEC:
 		{
 		std::vector<bool> *tmp = val.bv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.cv = new std::vector<std::complex<double> >(newsize);
 		std::vector<bool>::const_iterator from = (*tmp).begin();
@@ -1024,7 +1024,7 @@ std::vector<std::complex<double> > &variant::asComplexVec( int size ) {
 	    case DOUBLEVEC:
 		{
 		std::vector<double> *tmp = val.dv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.cv = new std::vector<std::complex<double> >(newsize);
 		std::vector<double>::const_iterator from = (*tmp).begin();
@@ -1044,7 +1044,7 @@ std::vector<std::complex<double> > &variant::asComplexVec( int size ) {
 	    case STRINGVEC:
 		{
 		std::vector<std::string> *tmp = val.sv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.cv = new std::vector<std::complex<double> >(newsize);
 		std::vector<std::string>::const_iterator from = (*tmp).begin();
@@ -1065,23 +1065,23 @@ std::vector<std::complex<double> > &variant::asComplexVec( int size ) {
 	if ( shape_.size() == 1 )
 	    shape_[0] = newsize;
 	else if ( shape_size() != newsize )
-	    shape_ = std::vector<int>(1,newsize);
+	    shape_ = std::vector<ssize_t>(1,newsize);
 
-    } else if ( size > 0 && (unsigned int) size > (*val.cv).size() ) {
+    } else if ( size > 0 && (size_t) size > (*val.cv).size() ) {
 
 	resize(size);
 	if ( shape_.size() == 1 )
 	    shape_[0] = size;
 	else if ( shape_size() != size )
-	    shape_ = std::vector<int>(1,size);
+	    shape_ = std::vector<ssize_t>(1,size);
 
     }
 
     return *val.cv;
 }
 
-std::vector<bool> &variant::asBoolVec( int size ) {
-    int newsize = -1;
+std::vector<bool> &variant::asBoolVec( ssize_t size ) {
+    ssize_t newsize = -1;
     if ( typev != BOOLVEC ) {
 	switch( typev ) {
 	    case BOOL:
@@ -1137,7 +1137,7 @@ std::vector<bool> &variant::asBoolVec( int size ) {
 	    case DOUBLEVEC:
 		{
 		std::vector<double> *tmp = val.dv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.bv = new std::vector<bool>(newsize);
 		std::vector<double>::const_iterator from = (*tmp).begin();
@@ -1149,7 +1149,7 @@ std::vector<bool> &variant::asBoolVec( int size ) {
 	    case COMPLEXVEC:
 		{
 		std::vector<std::complex<double> > *tmp = val.cv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.bv = new std::vector<bool>(newsize);
 		std::vector<std::complex<double> >::const_iterator from = (*tmp).begin();
@@ -1167,7 +1167,7 @@ std::vector<bool> &variant::asBoolVec( int size ) {
 	    case STRINGVEC:
 		{
 		std::vector<std::string> *tmp = val.sv;
-		int current_size = (*tmp).size();
+		ssize_t current_size = (*tmp).size();
 		newsize = size > current_size ? size : current_size;
 		val.bv = new std::vector<bool>(newsize);
 		std::vector<std::string>::const_iterator from = (*tmp).begin();
@@ -1188,14 +1188,14 @@ std::vector<bool> &variant::asBoolVec( int size ) {
 	if ( shape_.size() == 1 )
 	    shape_[0] = newsize;
 	else if ( shape_size() != newsize )
-	    shape_ = std::vector<int>(1,newsize);
+	    shape_ = std::vector<ssize_t>(1,newsize);
 
-    } else if ( size > 0 && (unsigned int) size > (*val.bv).size() ) {
+    } else if ( size > 0 && (size_t) size > (*val.bv).size() ) {
 	resize(size);
 	if ( shape_.size() == 1 )
 	    shape_[0] = size;
 	else if ( shape_size() != size )
-	    shape_ = std::vector<int>(1,size);
+	    shape_ = std::vector<ssize_t>(1,size);
     }
 
     return *val.bv;
@@ -1283,7 +1283,7 @@ bool &variant::asBool( ) {
     if ( shape_.size() == 1 )
 	shape_[0] = 1;
     else
-	shape_ = std::vector<int>(1,1);
+	shape_ = std::vector<ssize_t>(1,1);
 
     return val.b;
 }
@@ -1338,13 +1338,13 @@ std::string &variant::asString( ) {
     if ( shape_.size() == 1 )
 	shape_[0] = 1;
     else
-	shape_ = std::vector<int>(1,1);
+	shape_ = std::vector<ssize_t>(1,1);
 
     return *val.s;
 }
 
-std::vector<std::string> &variant::asStringVec( int size ) {
-    int newsize = -1;
+std::vector<std::string> &variant::asStringVec( ssize_t size ) {
+    ssize_t newsize = -1;
     if ( typev != STRINGVEC ) {
 	switch( typev ) {
 	    case BOOL:
@@ -1406,14 +1406,14 @@ std::vector<std::string> &variant::asStringVec( int size ) {
 	if ( shape_.size() == 1 )
 	    shape_[0] = newsize;
 	else if ( shape_size() != newsize )
-	    shape_ = std::vector<int>(1,newsize);
+	    shape_ = std::vector<ssize_t>(1,newsize);
 
     } else if ( size > 0 && (unsigned int) size > (*val.sv).size() ) {
 	resize(size);
 	if ( shape_.size() == 1 )
 	    shape_[0] = size;
 	else if ( shape_size() != size )
-	    shape_ = std::vector<int>(1,size);
+	    shape_ = std::vector<ssize_t>(1,size);
     }
 
     return *val.sv;
@@ -1459,12 +1459,12 @@ record &variant::asRecord( ) {
     if ( shape_.size() == 1 )
 	shape_[0] = 0;
     else
-	shape_ = std::vector<int>(1,0);
+	shape_ = std::vector<ssize_t>(1,0);
 
     return *val.recordv;
 }
 
-void variant::as( TYPE t, int size ) {
+void variant::as( TYPE t, ssize_t size ) {
 
     if (typev == t) return;
 
@@ -1605,7 +1605,7 @@ void variant::push(TYPEX v, bool conform ) {					\
     if ( shape_.size() == 1 )							\
 	shape_[0] += 1;								\
     else if ( shape_size() != size() )						\
-	shape_ = std::vector<int>(1,size());					\
+	shape_ = std::vector<ssize_t>(1,size());					\
 }
 
 PUSHIMPL(bool                ,BOOL    ,tostring ,                                             ,== true ? 1 : 0      ,== true ? 1 : 0, , , , , )
@@ -1720,14 +1720,14 @@ std::string variant::create_message( const std::string s ) const {
     return s + " " + type + " variant";
 }
 
-int variant::shape_size( ) const {
-    int result = 1;
-    for ( std::vector<int>::const_iterator iter = shape_.begin( );
+ssize_t variant::shape_size( ) const {
+    ssize_t result = 1;
+    for ( std::vector<ssize_t>::const_iterator iter = shape_.begin( );
 	  iter != shape_.end( ); ++iter ) result *= *iter;
     return result;
 }
 
-int variant::vec_size( ) const {
+ssize_t variant::vec_size( ) const {
     switch (typev) {
 	case BOOLVEC: return (*val.bv).size();
 	case INTVEC: return (*val.iv).size();
@@ -1739,7 +1739,7 @@ int variant::vec_size( ) const {
     }
 }
 
-void variant::resize( int size ) {
+void variant::resize( ssize_t size ) {
 
     if ( size < 0 ) return;
 

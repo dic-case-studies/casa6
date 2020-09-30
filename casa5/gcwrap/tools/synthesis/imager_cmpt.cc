@@ -871,8 +871,7 @@ imager::plotvis(const std::string& type, const long increment)
 	     for (uInt k=0; k < blockOGrid.nelements(); ++k){
 	       weight.xyPlane(k)= blockOGrid[k];
 	     }
-	     std::vector<int> s_shape;
-	     weight.shape().asVector().tovector(s_shape);
+	     std::vector<ssize_t> s_shape(weight.shape().begin(),weight.shape().end());
 	     std::vector<double> d_weight(weight.nelements());
 	     {
 	       Cube<Double> temp(weight.shape());
@@ -886,7 +885,7 @@ imager::plotvis(const std::string& type, const long increment)
 	   Vector <String> wgtim(toVectorString(wgtimages));
 	   itsImager->getWeightGrid(blockOGrid, String(type), wgtim);
 	   std::vector<double> d_weight(0);
-	   std::vector<int> s_shape(0);
+	   std::vector<ssize_t> s_shape(0);
 	   rstat = new ::casac::variant(d_weight, s_shape);
 	 }
 

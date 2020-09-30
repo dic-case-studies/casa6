@@ -199,7 +199,7 @@ void dumpRecord(ostream &oss, const record &theRec, string spaces){
             break;
          case ::casac::variant::BOOLVEC :
             {
-            vector<int> shapeVec((*rec_it).second.arrayshape());
+            auto shapeVec((*rec_it).second.arrayshape());
             vector<bool>boolVec((*rec_it).second.getBoolVec());
             unsigned int i(0);
 	    oss << spaces <<  (*rec_it).first << " :bool vector: [";
@@ -223,7 +223,7 @@ void dumpRecord(ostream &oss, const record &theRec, string spaces){
             break;
          case ::casac::variant::DOUBLEVEC :
             {
-            vector<int> shapeVec((*rec_it).second.arrayshape());
+            auto shapeVec((*rec_it).second.arrayshape());
             vector<double>doubleVec((*rec_it).second.getDoubleVec());
             unsigned int i(0);
 	    oss << spaces <<  (*rec_it).first << " :double vector: [";
@@ -235,7 +235,7 @@ void dumpRecord(ostream &oss, const record &theRec, string spaces){
             break;
          case ::casac::variant::COMPLEXVEC :
             {
-            vector<int> shapeVec((*rec_it).second.arrayshape());
+            auto shapeVec((*rec_it).second.arrayshape());
             vector<complex<double> >theVec((*rec_it).second.getComplexVec());
             unsigned int i(0);
 	    oss << spaces <<  (*rec_it).first << " :complex vector: [";
@@ -247,7 +247,7 @@ void dumpRecord(ostream &oss, const record &theRec, string spaces){
             break;
          case ::casac::variant::STRINGVEC :
             {
-            vector<int> shapeVec((*rec_it).second.arrayshape());
+            auto shapeVec((*rec_it).second.arrayshape());
             vector<string>theVec((*rec_it).second.getStringVec());
             unsigned int i(0);
 	    oss << spaces <<  (*rec_it).first << " :string vector: [";

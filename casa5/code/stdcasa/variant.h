@@ -48,57 +48,57 @@ class variant {
 //
 	variant(const std::vector<bool> &arg) : typev(BOOLVEC), shape_(1,arg.size())
 			{ val.bv = new std::vector<bool>(arg); }
-	variant(const std::vector<bool> &arg, const std::vector<int> &theshape) : typev(BOOLVEC), shape_(theshape)
+	variant(const std::vector<bool> &arg, const std::vector<ssize_t> &theshape) : typev(BOOLVEC), shape_(theshape)
 			{ val.bv = new std::vector<bool>(arg); }
 	variant(std::vector<bool> *arg) : typev(BOOLVEC), shape_(1,arg->size())
                         { val.bv = arg; }
-	variant(std::vector<bool> *arg, std::vector<int> &theshape) : typev(BOOLVEC), shape_(theshape)
+	variant(std::vector<bool> *arg, std::vector<ssize_t> &theshape) : typev(BOOLVEC), shape_(theshape)
                         { val.bv = arg; }
 //
 	variant(const std::vector<long> &arg) : typev(INTVEC), shape_(1,arg.size())
 			{ val.iv = new std::vector<long>(arg); }
-	variant(const std::vector<long> &arg, const std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
+	variant(const std::vector<long> &arg, const std::vector<ssize_t> &theshape) : typev(INTVEC), shape_(theshape)
 			{ val.iv = new std::vector<long>(arg); }
 	variant(std::vector<long> *arg) : typev(INTVEC), shape_(1, arg->size())
                         { val.iv = arg; }
-	variant(std::vector<long> *arg, std::vector<int> &theshape) : typev(INTVEC), shape_(theshape)
+	variant(std::vector<long> *arg, std::vector<ssize_t> &theshape) : typev(INTVEC), shape_(theshape)
 			{ val.iv = arg; }
 
         variant(const std::vector<unsigned long> &arg) : typev(UINTVEC), shape_(1,arg.size())
                         { val.uiv = new std::vector<unsigned long>(arg); }
-        variant(const std::vector<unsigned long> &arg, const std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
+        variant(const std::vector<unsigned long> &arg, const std::vector<ssize_t> &theshape) : typev(UINTVEC), shape_(theshape)
                         { val.uiv = new std::vector<unsigned long>(arg); }
         variant(std::vector<unsigned long> *arg) : typev(UINTVEC), shape_(1, arg->size())
                         { val.uiv = arg; }
-        variant(std::vector<unsigned long> *arg, std::vector<int> &theshape) : typev(UINTVEC), shape_(theshape)
+        variant(std::vector<unsigned long> *arg, std::vector<ssize_t> &theshape) : typev(UINTVEC), shape_(theshape)
                         { val.uiv = arg; }
 
 //
 	variant(const std::vector<double> &arg) : typev(DOUBLEVEC), shape_(1,arg.size())
 			{ val.dv = new std::vector<double>(arg); }
-	variant(const std::vector<double> &arg, const std::vector<int> &theshape) : typev(DOUBLEVEC), shape_(theshape)
+	variant(const std::vector<double> &arg, const std::vector<ssize_t> &theshape) : typev(DOUBLEVEC), shape_(theshape)
 			{ val.dv = new std::vector<double>(arg); }
 	variant(std::vector<double> *arg) : typev(DOUBLEVEC), shape_(1,arg->size())
 			{ val.dv = arg; }
-	variant(std::vector<double> *arg, std::vector<int> &theshape) : typev(DOUBLEVEC), shape_(theshape)
+	variant(std::vector<double> *arg, std::vector<ssize_t> &theshape) : typev(DOUBLEVEC), shape_(theshape)
 			{ val.dv = arg; }
 
 	variant(const std::vector<std::complex<double> > &arg) : typev(COMPLEXVEC), shape_(1, arg.size())
 			{ val.cv = new std::vector<std::complex<double> >(arg); }
-	variant(const std::vector<std::complex<double> > &arg, const std::vector<int> &theshape) : typev(COMPLEXVEC), shape_(theshape)
+	variant(const std::vector<std::complex<double> > &arg, const std::vector<ssize_t> &theshape) : typev(COMPLEXVEC), shape_(theshape)
 			{ val.cv = new std::vector<std::complex<double> >(arg); }
 	variant(std::vector<std::complex<double> > *arg) : typev(COMPLEXVEC), shape_(1,arg->size())
                         { val.cv = arg; }
-	variant(std::vector<std::complex<double> > *arg, std::vector<int> &theshape) : typev(COMPLEXVEC), shape_(theshape)
+	variant(std::vector<std::complex<double> > *arg, std::vector<ssize_t> &theshape) : typev(COMPLEXVEC), shape_(theshape)
 			{ val.cv = arg; }
 //
-	variant(const std::vector<std::string> &arg, const std::vector<int> &theshape) : typev(STRINGVEC), shape_(theshape)
+	variant(const std::vector<std::string> &arg, const std::vector<ssize_t> &theshape) : typev(STRINGVEC), shape_(theshape)
 			{ val.sv = new std::vector<std::string>(arg); }
 	variant(const std::vector<std::string> &arg) : typev(STRINGVEC), shape_(1,arg.size())
 			{ val.sv = new std::vector<std::string>(arg); }
 	variant(std::vector<std::string> *arg) : typev(STRINGVEC), shape_(1, arg->size())
 			{ val.sv = arg; }
-	variant(std::vector<std::string> *arg, std::vector<int> &theshape) : typev(STRINGVEC), shape_(theshape)
+	variant(std::vector<std::string> *arg, std::vector<ssize_t> &theshape) : typev(STRINGVEC), shape_(theshape)
 			{ val.sv = arg; }
 //
 	variant(const record &arg);
@@ -131,15 +131,15 @@ class variant {
 	double &asDouble( );
 	std::complex<double> &asComplex( );
 	std::string &asString( );
-	std::vector<long> &asIntVec( int size=-1 );
-	std::vector<unsigned long> &asuIntVec( int size=-1 );
-	std::vector<bool> &asBoolVec( int size=-1 );
-	std::vector<double> &asDoubleVec( int size=-1 );
-	std::vector<std::complex<double> > &asComplexVec( int size=-1 );
-	std::vector<std::string> &asStringVec( int size=-1 );
+	std::vector<long> &asIntVec( ssize_t size=-1 );
+	std::vector<unsigned long> &asuIntVec( ssize_t size=-1 );
+	std::vector<bool> &asBoolVec( ssize_t size=-1 );
+	std::vector<double> &asDoubleVec( ssize_t size=-1 );
+	std::vector<std::complex<double> > &asComplexVec( ssize_t size=-1 );
+	std::vector<std::string> &asStringVec( ssize_t size=-1 );
 	casac::record &asRecord( );
 
-	void as( TYPE t, int size=-1 );
+	void as( TYPE t, ssize_t size=-1 );
 
 //      Const
 //      ---------------------------------------------------
@@ -156,8 +156,8 @@ class variant {
 	const std::vector<std::complex<double> > &getComplexVec( ) const throw(error);
 	const std::vector<std::string> &getStringVec( ) const throw(error);
 	const record &getRecord( ) const throw(error);
-        const std::vector<int> &shape() const;
-        const std::vector<int> &arrayshape() const {return shape();}
+        const std::vector<ssize_t> &shape() const;
+        const std::vector<ssize_t> &arrayshape() const {return shape();}
 
 //	Modify
 //      ---------------------------------------------------
@@ -174,8 +174,8 @@ class variant {
 	std::vector<std::complex<double> > &getComplexVecMod( ) throw(error);
 	std::vector<std::string> &getStringVecMod( ) throw(error);
 	record &getRecordMod( ) throw(error);
-        std::vector<int> &shape();
-        std::vector<int> &arrayshape() {return shape();}
+        std::vector<ssize_t> &shape();
+        std::vector<ssize_t> &arrayshape() {return shape();}
 
 	const std::string &typeString( ) const;
 	TYPE type( ) const { return typev; }
@@ -198,8 +198,8 @@ class variant {
 	void place(std::complex<double>, unsigned int index, bool conform = true);
 	void place(const std::string&, unsigned int index, bool conform = true);
 
-	int size( ) const { return typev >= BOOLVEC ? vec_size() : 1; }
-	void resize( int size );
+	ssize_t size( ) const { return typev >= BOOLVEC ? vec_size() : 1; }
+	void resize( ssize_t size );
 
 	// return true if empty string, empty record, or size 0 vector.
 	// always returns false if object is a non-array bool or numerical type
@@ -210,12 +210,12 @@ class variant {
 	void freeStorage ();
 
 	// what size does the shape imply
-	int shape_size( ) const;
+	ssize_t shape_size( ) const;
 
 	// 4294967295
 	static unsigned int record_id_count;
 
-	int vec_size( ) const;
+	ssize_t vec_size( ) const;
 	TYPE typev;
 	union {
 	  bool b;
@@ -232,7 +232,7 @@ class variant {
 	  std::vector<std::string> *sv;
 	  record *recordv;
 	} val;
-	std::vector<int> shape_;
+	std::vector<ssize_t> shape_;
 
 	std::string create_message( const std::string s ) const;
 };
