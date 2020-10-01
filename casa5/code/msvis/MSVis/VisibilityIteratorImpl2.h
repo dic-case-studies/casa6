@@ -503,7 +503,7 @@ public:
 	newSpectralWindow() const;
 
 	// Return the number of rows in the current iteration
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRows() const override;
 
 	// Return the row ids as from the original root table. This is useful
@@ -513,7 +513,7 @@ public:
 	getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	// Return the numbers of rows in the current chunk
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsInChunk() const override;
 
     // number of unique time stamps in chunk
@@ -574,7 +574,7 @@ public:
 	nAntennas() const override;
 
 	//Return number of rows in all selected ms's
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsViWillSweep() const override;
 
 	// Return number of spws, polids, ddids
