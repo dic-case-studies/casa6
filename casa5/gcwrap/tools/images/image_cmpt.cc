@@ -3540,9 +3540,6 @@ image* image::deviation(
         if (myinterp.startsWith("c")) {
             interpAlg = Interpolate2D::CUBIC;
         }
-        else if (myinterp.startsWith("la")) {
-            interpAlg = Interpolate2D::LANCZOS;
-        }
         else if (myinterp.startsWith("li")) {
             interpAlg = Interpolate2D::LINEAR;
         }
