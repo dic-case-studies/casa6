@@ -108,7 +108,7 @@ else:
 
         mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
         # Data for old test
-        msfile1Orig = datapath + 'ngc5921.ms'
+        msfile1Orig = datapath + 'ngc5921_ut.ms'
         msfile2Orig = datapath + 'uid___X02_X3d737_X1_01_small.ms'
         nep = datapath + 'nep2-shrunk.ms'
 
@@ -554,10 +554,10 @@ class test_listobs(listobs_test_base):
             self.ms = ms
         else:
             self.ms = ms
-        if (not os.path.lexists(msfile1)):
-            shutil.copytree(os.path.join(datapath, msfile1Orig), msfile1, symlinks=True)
-        if (not os.path.lexists(msfile2)):
-            shutil.copytree(os.path.join(datapath, msfile2Orig), msfile2, symlinks=True)
+        if (not os.path.exists(msfile1)):
+            shutil.copytree(msfile1Orig, msfile1, symlinks=True)
+        if (not os.path.exists(msfile2)):
+            shutil.copytree(msfile2Orig, msfile2, symlinks=True)
 
     def tearDown(self):
         # remove files and temp logs
