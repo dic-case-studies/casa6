@@ -307,33 +307,41 @@ class ImagerParameters():
         casalog.post('Verifying Input Parameters')
         # Init the error-string
         errs = "" 
-        errs += self.checkAndFixSelectionPars()
-        errs += self.makeImagingParamLists(parallel)
-        errs += self.checkAndFixIterationPars()
-        errs += self.checkAndFixNormPars()
+        try:
+            errs += self.checkAndFixSelectionPars()
+            errs += self.makeImagingParamLists(parallel)
+            errs += self.checkAndFixIterationPars()
+            errs += self.checkAndFixNormPars()
 
-        for mss in sorted( self.allselpars.keys() ):
-            if(self.allimpars['0']['specmode']=='cubedata'):
-                self.allselpars[mss]['outframe']='Undefined'
-            if(self.allimpars['0']['specmode']=='cubesource'):
-                 self.allselpars[mss]['outframe']='REST'
-        ### MOVE this segment of code to the constructor so that it's clear which parameters go where ! 
-        ### Copy them from 'impars' to 'normpars' and 'decpars'
-        self.iterpars['allimages']={}
-        for immod in self.allimpars.keys() :
-            self.allnormpars[immod]['imagename'] = self.allimpars[immod]['imagename']
-            self.alldecpars[immod]['imagename'] = self.allimpars[immod]['imagename']
-            self.allgridpars[immod]['imagename'] = self.allimpars[immod]['imagename']
-            self.iterpars['allimages'][immod] = { 'imagename':self.allimpars[immod]['imagename'] , 'multiterm': (self.alldecpars[immod]['deconvolver']=='mtmfs') }
+            for mss in sorted( self.allselpars.keys() ):
+                if(self.allimpars['0']['specmode']=='cubedata'):
+                    self.allselpars[mss]['outframe']='Undefined'
+                if(self.allimpars['0']['specmode']=='cubesource'):
+                     self.allselpars[mss]['outframe']='REST'
+            ### MOVE this segment of code to the constructor so that it's clear which parameters go where ! 
+            ### Copy them from 'impars' to 'normpars' and 'decpars'
+            self.iterpars['allimages']={}
+            for immod in self.allimpars.keys() :
+                self.allnormpars[immod]['imagename'] = self.allimpars[immod]['imagename']
+                self.alldecpars[immod]['imagename'] = self.allimpars[immod]['imagename']
+                self.allgridpars[immod]['imagename'] = self.allimpars[immod]['imagename']
+                self.iterpars['allimages'][immod] = { 'imagename':self.allimpars[immod]['imagename'] , 'multiterm': (self.alldecpars[immod]['deconvolver']=='mtmfs') }
 
-        ## Integers need to be NOT numpy versions.
-        self.fixIntParam(self.allimpars, 'imsize')
-        self.fixIntParam(self.allimpars, 'nchan')
-        self.fixIntParam(self.allimpars,'nterms')
-        self.fixIntParam(self.allnormpars,'nterms')
-        self.fixIntParam(self.alldecpars,'nterms')
-        self.fixIntParam(self.allgridpars,'facets')
-        self.fixIntParam(self.allgridpars,'chanchunks')
+            ## Integers need to be NOT numpy versions.
+            self.fixIntParam(self.allimpars, 'imsize')
+            self.fixIntParam(self.allimpars, 'nchan')
+            self.fixIntParam(self.allimpars,'nterms')
+            self.fixIntParam(self.allnormpars,'nterms')
+            self.fixIntParam(self.alldecpars,'nterms')
+            self.fixIntParam(self.allgridpars,'facets')
+            self.fixIntParam(self.allgridpars,'chanchunks')
+        except Exception as exc:
+            if len(errs) > 0:
+                # errs string indicates that maybe this exception was our fault, indicate as such and provide the errs string to the user
+                raise Exception("Parameter Errors : \n{}\nThese errors may have caused the '{}'".format(errs, type(exc))) from exc
+            else:
+                # something unforseen happened, just re-throw the exception
+                raise
  
         ## If there are errors, print a message and exit.
         if len(errs) > 0:
