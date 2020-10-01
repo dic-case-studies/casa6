@@ -333,7 +333,7 @@ VisibilityIterator2::originChunks (Bool forceRewind)
 }
 
 void
-VisibilityIterator2::setRowBlocking (Int nRows) // for use by Async I/O *ONLY
+VisibilityIterator2::setRowBlocking (rownr_t nRows) // for use by Async I/O *ONLY
 {
     CheckImplementationPointer ();
     impl_p->setRowBlocking (nRows);
@@ -346,7 +346,7 @@ VisibilityIterator2::slurp () const
     impl_p->slurp ();
 }
 
-Int
+rownr_t
 VisibilityIterator2::nRowsInChunk () const
 {
     CheckImplementationPointer ();

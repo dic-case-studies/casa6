@@ -113,7 +113,7 @@ public:
     virtual void copyCoordinateInfo(const VisBuffer2 * other, casacore::Bool includeDirections,
                                     casacore::Bool fetchIfNeeded = true);
 
-    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::Int nRows);
+    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::rownr_t nRows);
 
     // For attached VBs this returns the VI the VB is attached to.  For free
     // VBs this method returns false.

@@ -248,12 +248,12 @@ Bool StatWT::update_variances(std::map<uInt, Vector<uInt> >& ns,
   Bool retval = true;
   uInt nCorr = data.shape()[0];
   uInt nChan = data.shape()[1];
-  uInt nRows = data.shape()[2];
+  auto nRows = data.shape()[2];
   Vector<uInt> unflagged(nChan);
   Vector<Int> a1(vb.antenna1());
   Vector<Int> a2(vb.antenna2());
 
-  for(uInt r = 0; r < nRows; ++r){
+  for(rownr_t r = 0; r < nRows; ++r){
     if(!vb.flagRow()[r]){
       uInt hr = hashFunction(a1[r], a2[r], maxAnt);
       // setup defaults, clear on all-flagged not needed as variances == 0 is
@@ -301,11 +301,11 @@ Bool StatWT::apply_variances(VisBuffer& vb,
   IPosition shp(vb.flagCube().shape());
   uInt nCorr = shp[0];
   uInt nChan = shp[1];
-  uInt nRows = shp[2];
+  auto nRows = shp[2];
   Vector<Int> a1(vb.antenna1());
   Vector<Int> a2(vb.antenna2());
 
-  for(uInt r = 0; r < nRows; ++r){
+  for(rownr_t r = 0; r < nRows; ++r){
     uInt hr = hashFunction(a1[r], a2[r], maxAnt);
     Bool unflagged = false;
     Bool havevar = ns.count(hr) > 0;

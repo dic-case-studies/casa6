@@ -55,7 +55,7 @@ VisBufferWrapperAsync2::copyCoordinateInfo(const VisBuffer2 * other, Bool includ
 }
 
 void
-VisBufferWrapperAsync2::setShape (Int nCorrelations, Int nChannels, Int nRows)
+VisBufferWrapperAsync2::setShape (Int nCorrelations, Int nChannels, rownr_t nRows)
 {
     wrappedVb_p->setShape (nCorrelations, nChannels, nRows);
 }

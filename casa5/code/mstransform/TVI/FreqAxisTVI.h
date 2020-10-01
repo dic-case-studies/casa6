@@ -136,7 +136,7 @@ protected:
 												FreqAxisTransformEngine2<T> &transformer,
 												casacore::Int parallelCorrAxis=-1) const
         {
-		auto nRows = inputShape(2);
+		size_t nRows = inputShape(2);
 		if (parallelCorrAxis >= 0)
 		{
 			for (size_t row=0; row < nRows; row++)
@@ -148,7 +148,7 @@ protected:
 		}
 		else
 		{
-			auto nCorrs = inputShape(0);
+			size_t nCorrs = inputShape(0);
 			for (size_t row=0; row < nRows; row++)
 			{
 				transformer.setRowIndex(row);

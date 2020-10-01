@@ -1174,13 +1174,13 @@ protected:
 			{}
 
 		// last row in current chunk
-		casacore::Int chunkNRows_p;
+		ssize_t::Int chunkNRows_p;
 		// first row in current subchunk
-		casacore::Int subchunkBegin_p;
+		ssize_t::Int subchunkBegin_p;
 		// last row in current subchunk
-		casacore::Int subchunkEnd_p;
+		ssize_t::Int subchunkEnd_p;
 		// # rows in subchunk
-		casacore::Int subchunkNRows_p;
+		ssize_t::Int subchunkNRows_p;
 		// subchunk's table row numbers
 		casacore::RefRows subchunkRows_p;
 		// times for each row in the chunk
