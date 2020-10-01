@@ -101,7 +101,7 @@ TEST( RecursiveVi2LayersTest , ChanAve_Sim ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(nchan/nchanbin,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(allEQ(vb->spectralWindows(),0));

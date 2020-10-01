@@ -170,7 +170,7 @@ printMs (MeasurementSet * ms)
 
             printf ("\n");
 
-            for (rownr_t i = 0; i < vb.nRow(); i++){
+            for (Int i = 0; i < vb.nRow(); i++){
 
                 printf ("r=%llu ", vb.rowIds () [i]);
                 printf ("t=%.0f ", vb.time () [i]);
@@ -201,7 +201,7 @@ Tester::sweepMs (TestWidget & tester)
 
     try {
 
-        rownr_t nRows;
+        Int nRows;
         Bool writableVi;
         if (tester.usesMultipleMss()){
             std::tie (mss, nRows, writableVi) = tester.createMss ();
@@ -223,7 +223,7 @@ Tester::sweepMs (TestWidget & tester)
             }
 
             VisBuffer2 * vb = vi->getVisBuffer ();
-            rownr_t nRowsProcessed = 0;
+            Int nRowsProcessed = 0;
 
             tester.startOfData (* vi, vb);
 
@@ -532,7 +532,7 @@ BasicChannelSelection::checkUvw (VisBuffer2 * vb, rownr_t nRows, Int rowId, Int 
 
     TestErrorIf (vb->uvw().shape().nelements() != 2 ||
                  vb->uvw().shape()(0) != 3 ||
-                 vb->uvw().shape()(1) != nRows,
+                 vb->uvw().shape()(1) != (ssize_t)nRows,
                  String::format ("Bad uvw shape: expected [3,%llu] got [%d,%d]",
                                  nRows, vb->uvw().shape()(0), vb->uvw().shape()(1)));
 
@@ -547,7 +547,7 @@ BasicChannelSelection::checkUvw (VisBuffer2 * vb, rownr_t nRows, Int rowId, Int 
 }
 
 
-std::tuple <MeasurementSet *, Int, Bool>
+std::tuple <MeasurementSet *, rownr_t, Bool>
 BasicChannelSelection::createMs ()
 {
     system ("rm -r BasicChannelSelection.ms");
@@ -555,7 +555,7 @@ BasicChannelSelection::createMs ()
     msf_p = new MsFactory ("BasicChannelSelection.ms");
     msf_p->setIncludeAutocorrelations(true);
 
-    pair<MeasurementSet *, Int> p = msf_p->createMs ();
+    pair<MeasurementSet *, rownr_t> p = msf_p->createMs ();
     nRowsToProcess_p = p.second;
     return std::make_tuple (p.first, p.second, false);
 }
@@ -1354,7 +1354,7 @@ PerformanceComparator::sweepViOld (ROVisibilityIterator & vi)
             Int nChannels = vb.nChannel();
             Int nCorrelations = vb.nCorr();
 
-            for (rownr_t row = 0; row < nRows; row ++){
+            for (Int row = 0; row < nRows; row ++){
                 for (Int channel = 0; channel < nChannels; channel ++){
                     for (Int correlation = 0; correlation < nCorrelations; correlation ++){
                         Complex c = vb.visCube ()(correlation, channel, row);
@@ -1485,7 +1485,7 @@ CopyMs::doit (const String & oldMsName)
 
 MultipleMss::MultipleMss () : TestWidget ("MultipleMss"), nMss_p (3) {}
 
-std::tuple <Block<const MeasurementSet *>, Int, Bool>
+std::tuple <Block<const MeasurementSet *>, rownr_t, Bool>
 MultipleMss::createMss (){
 
     Block <const MeasurementSet *> mss (nMss_p, 0);
@@ -1574,7 +1574,7 @@ MultipleMss::usesMultipleMss () const {
     return true;
 }
 
-std::tuple <MeasurementSet *, Int, Bool>
+std::tuple <MeasurementSet *, rownr_t, Bool>
 Weighting::createMs ()
 {
     system ("rm -r Weighting.ms");
@@ -1611,7 +1611,7 @@ Weighting::nextSubchunk (VisibilityIterator2 & vi, VisBuffer2 * vb)
 
     Int nCorrelations = wsShape (0);
     Int nChannels = wsShape (1);
-    auto nRows = wsShape (2);
+    rownr_t nRows = wsShape (2);
     //const Vector<uInt> & rowIds = vb->rowIds();
 
     for (rownr_t row = 0; row < nRows; row ++){

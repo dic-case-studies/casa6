@@ -608,9 +608,9 @@ protected:
         auto const num_filtrates = Validator::IsFiltratePerRow(vb_ref,
             is_filtrate);
         ASSERT_GE(num_filtrates, 0);
-        ASSERT_EQ(refvi->getImpl()->nRows(), num_filtrates);
+        ASSERT_EQ(refvi->getImpl()->nRows(), (size_t)num_filtrates);
         ASSERT_EQ((unsigned long )num_filtrates, is_filtrate.nelements());
-        EXPECT_EQ(num_filtrates, vi->getImpl()->nRows());
+        EXPECT_EQ((size_t)num_filtrates, vi->getImpl()->nRows());
         int j = 0;
         for (rownr_t i = 0; i < vb_ref->nRows(); ++i) {
           if (is_filtrate[i]) {

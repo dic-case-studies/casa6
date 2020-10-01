@@ -327,7 +327,7 @@ public:
 
     ~MsFactory ();
 
-    std::pair<casacore::MeasurementSet *, casacore::Int> createMs ();
+    std::pair<casacore::MeasurementSet *, casacore::rownr_t> createMs ();
 
     void addAntennas (casacore::Int nAntennas);
 

@@ -130,7 +130,7 @@ TEST( ViiLayerFactoryTest , ViiLayerFactoryRealDataBasicTest ) {
       */
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(64,vb->nChannels());  // all spws
       ASSERT_EQ(4,vb->nCorrelations());
 

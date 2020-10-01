@@ -124,7 +124,7 @@ TEST( RecursiveVi2LayersWithCal, BasicCalLayerTest ) {
 
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),vb->nAntennas(),False));
