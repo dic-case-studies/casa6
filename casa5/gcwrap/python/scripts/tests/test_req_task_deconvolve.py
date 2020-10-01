@@ -10,10 +10,11 @@
 #  test_multifield               # multiple fields of same type and with different shapes/deconvolvers/gridders
 #  test_stokes                   # multiple stokes planes, imaging with flagged correlations..
 #  test_cube                     # all things cube. Spectral frame setup, handling empty channels, etc
-#  test_widefield                # facets, wprojection, imagemosaic, mosaicft, awproject
 #  test_mask                     # input mask options : regridding, mask file, automasking, etc
-#  test_modelvis                 # saving models (column/otf), using starting models, predict-only (setjy)
-#  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
+#  test_multirun                 # running deconvolve multiple times in a row
+#  test_imgval                   # validation of input images and copying/converting startmodel images for the hogbom deconvolver
+#  test_mtmfsimgval              # validation of input images and copying/converting startmodel images for the mtmfs deconvolver
+#  test_residual_update          # .residual images should get updated between consecutive runs of deconvolve
 #
 # To run from within casapy :  
 #
@@ -24,27 +25,21 @@
 #
 # To see the full list of tests :   grep "\"\"\" \[" test_req_task_deconvolve.py
 #
-#  These tests need data stored in data/regression/unittest/clean/refimager
+#  These tests need data stored in casa-data/regression/unittest/clean/refimager
+#  The test_mask_autobox_multithresh_standard_cube_eph test needs data stored in asa-data-req/stakeholders/alma
 #
 #  For a developer build, to get the datasets locally 
 #
-#  --- Get the basic data repo :  svn co https://svn.cv.nrao.edu/svn/casa-data/distro data
-#  --- Make directories : mkdir -p data/regression/unittest/clean; cd data/regression/unittest/clean
-#  --- Get test datasets :  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/regression/unittest/clean/refimager
+#  --- Get the data: https://open-bitbucket.nrao.edu/projects/CASA/repos/casa-data/browse
 #
 ##########################################################################
 #
 #  Datasets
 #
 #  refim_twochan.ms : 2 channels, one 1Jy point source with spectral index of -1.0
-#  refim_twopoints_twochan.ms : Two point sources, 1Jy and 5Jy, both with spectral index -1.0. For multifield tests.
 #  refim_point.ms : 1-2 GHz, 20 channels, 1 spw, one 1Jy point source with spectral index -1.0.
-#  refim_point_withline.ms : refim_point with a 'line' added into 3 channels (just topo)
-#  refim_mawproject.ms : Two pointing wideband mosaic with 1 point source in between the two pointings
-#  refim_mawproject_offcenter.ms : Two pointing wideband mosaic with 1 point source at center of one pointing
-#  refim_point_stokes.ms : RR=1.0, LL=0.8, RL and LR are zero. Stokes I=0.9, V=0.1, U,Q=0.0
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
-#  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
+#  2017.1.00750.T_tclean_exe*.ms: testing data from casa-data-req/stakeholders/alma, for the pipeline test test_mask_autobox_multithresh_standard_cube_eph
 #
 #  task_tclean is used to generate the input tables to task_deconvolve from these data, then
 #  the test is run on task_deconvolve. It is probable, therefore, that if task_tclean tests
@@ -989,7 +984,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 18
-    # @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
+    @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
     def test_mask_autobox_multithresh_standard_cube_eph(self):
         """ [mask] test_mask_autobox_multithresh_standard_cube_eph """
         ######################################################################################
