@@ -864,19 +864,23 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     while (topFreq > maxfreq){
       topFreq -= tol;
     }
+    // For large tol
+    if(topFreq < minfreq)
+       topFreq += tol;
     //Int nchan=Int(lround((max(freq)-min(freq))/tol));
     Double bottomFreq=topFreq;
-    Int nchan=1;
-    //cerr << std::setprecision(12) << "bot " << bottomFreq << " minFreq " << minfreq << endl;
+    Int nchan=0;
+    //cerr << std::setprecision(12) << "top " << bottomFreq << " minFreq " << minfreq << " maxFreq " << maxfreq << endl;
      while(bottomFreq > minfreq){
        ++nchan;
        bottomFreq -= tol;
      }
-     if(nchan !=1){
+     if(nchan > 1){
        nchan-=1;
        bottomFreq+=tol;
      }
-     //cerr  << "TOLERA " << tol << " nchan " << nchan << " vb.nchan " << vb.nChannels() << endl;
+     
+     //cerr  << "TOLERA " << tol << " nchan " << nchan << " bot " << bottomFreq << " vb.nchan " << vb.nChannels() << endl;
     //Number of beams that matters are the ones in the data
      if(nchan > vb.nChannels()){
       nchan=vb.nChannels();
@@ -886,7 +890,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
    
     chanFreqs.resize();
     if(nchan >= (Int)(freq.nelements()-1)) { indgen(chanMap); chanFreqs=freq; return;}
-    if((nchan==0) || (freq.nelements()==1)) { chanFreqs=Vector<Double>(1, freq[0]);chanMap.set(0); return;}
+    if((nchan==0) || (freq.nelements()==1)) { chanFreqs=Vector<Double>(1, bottomFreq);chanMap.set(0); return;}
 
     chanFreqs.resize(nchan);
     for(Int k=0; k < nchan; ++k){
@@ -920,6 +924,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
       ///////////////////////////
       activechan=0;
     }
+    //cerr << "chanfreqs "  << chanFreqs << endl;
     //cerr << "USEFULchan " << chanMap << endl;
     return;
   }
