@@ -1692,7 +1692,7 @@ VisibilityIteratorImpl2::setInterval(Double timeInterval)
 }
 
 void
-VisibilityIteratorImpl2::setRowBlocking(Int nRow)
+VisibilityIteratorImpl2::setRowBlocking(rownr_t nRow)
 {
 	pendingChanges_p->setNRowBlocking(nRow);
 }

@@ -179,7 +179,7 @@ public:
 	// required for the calibration software. With blocking set, up to nRows can
 	// be returned in one go. The chunk size determines the actual maximum.
 	virtual void
-	setRowBlocking(casacore::Int nRows = 0) override;
+	setRowBlocking(casacore::rownr_t nRows = 0) override;
 
 	virtual casacore::Bool
 	existsColumn(VisBufferComponent2 id) const override;
@@ -1174,13 +1174,13 @@ protected:
 			{}
 
 		// last row in current chunk
-		ssize_t::Int chunkNRows_p;
+		ssize_t chunkNRows_p;
 		// first row in current subchunk
-		ssize_t::Int subchunkBegin_p;
+		ssize_t subchunkBegin_p;
 		// last row in current subchunk
-		ssize_t::Int subchunkEnd_p;
+		ssize_t subchunkEnd_p;
 		// # rows in subchunk
-		ssize_t::Int subchunkNRows_p;
+		ssize_t subchunkNRows_p;
 		// subchunk's table row numbers
 		casacore::RefRows subchunkRows_p;
 		// times for each row in the chunk
