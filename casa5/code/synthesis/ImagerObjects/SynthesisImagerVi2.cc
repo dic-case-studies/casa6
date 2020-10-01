@@ -2397,7 +2397,7 @@ void SynthesisImagerVi2::unlockMSs()
 	      Int nChanWt=wtc.shape()(1);  // Might be 1 (no WtSp)
 
 	      Cube<Bool> flagCube(vb->flagCube());
-	      for (rownnr_t row=0; row<nRow; row++) {
+	      for (rownr_t row=0; row<nRow; row++) {
 		if (!rowFlags(row) && a1(row)!=a2(row)) {  // exclude ACs
 
 		  for (Int ich=0;ich<vb->nChannels();++ich) {

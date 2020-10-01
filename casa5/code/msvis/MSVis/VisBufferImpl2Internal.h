@@ -687,7 +687,7 @@ public:
     VbCacheItem <casacore::Int> nAntennas_p;
     VbCacheItem <casacore::Int> nChannels_p;
     VbCacheItem <casacore::Int> nCorrelations_p;
-    VbCacheItem <casacore::rownr_t> nRows_p;
+    VbCacheItem <casacore::Int> nRows_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > observationId_p;
     VbCacheItem <casacore::MDirection> phaseCenter_p;
     VbCacheItem <casacore::Int> polFrame_p;

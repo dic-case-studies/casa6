@@ -248,7 +248,7 @@ Bool StatWT::update_variances(std::map<uInt, Vector<uInt> >& ns,
   Bool retval = true;
   uInt nCorr = data.shape()[0];
   uInt nChan = data.shape()[1];
-  auto nRows = data.shape()[2];
+  rownr_t nRows = data.shape()[2];
   Vector<uInt> unflagged(nChan);
   Vector<Int> a1(vb.antenna1());
   Vector<Int> a2(vb.antenna2());
@@ -301,7 +301,7 @@ Bool StatWT::apply_variances(VisBuffer& vb,
   IPosition shp(vb.flagCube().shape());
   uInt nCorr = shp[0];
   uInt nChan = shp[1];
-  auto nRows = shp[2];
+  rownr_t nRows = shp[2];
   Vector<Int> a1(vb.antenna1());
   Vector<Int> a2(vb.antenna2());
 

@@ -1996,7 +1996,7 @@ void FringeJones::setApply(const Record& apply) {
     Vector<Double> tmpfreqs;
     Vector<Double> chanfreq;
     tmpfreqs.resize(msSpw.nrow());
-    for (Int ispw=0;ispw<msSpw.nrow();++ispw) {
+    for (rownr_t ispw=0;ispw<msSpw.nrow();++ispw) {
       if (ispw < msSpw.nrow()) {
 	msCol.chanFreq().get(ispw,chanfreq,true);  // reshape, if nec.
 	Int nch=chanfreq.nelements();
@@ -2005,7 +2005,7 @@ void FringeJones::setApply(const Record& apply) {
     }
 
     KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
-    for (Int ispw=0;ispw<nSpw();++ispw) {
+    for (rownr_t ispw=0;ispw<nSpw();++ispw) {
         if (ispw < tmpfreqs.nelements())
             KrefFreqs_(ispw)=tmpfreqs(ispw);
     }

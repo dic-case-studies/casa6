@@ -677,7 +677,7 @@ public:
 
   // Return the numbers of rows in the current chunk
 
-  casacore::Int nRowsInChunk() const;
+  casacore::rownr_t nRowsInChunk() const;
 
   // Assign a VisImagingWeight object to this iterator.  This object is used
   // to generate imaging weights.
