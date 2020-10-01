@@ -120,7 +120,7 @@ public:
 
     virtual ~VbCacheItem () {}
 
-    virtual void appendRows (casacore::Int, casacore::Bool)
+    virtual void appendRows (casacore::rownr_t, casacore::Bool)
     {
         // Noop for scalars
     }
