@@ -34,6 +34,7 @@
 #include <casa/Utilities/CountedPtr.h>
 #include <msvis/MSVis/VisBufferUtil.h>
 #include <synthesis/Utilities/FFT2D.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <wcslib/wcsconfig.h>  /** HAVE_SINCOS **/
 
@@ -49,7 +50,6 @@
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Matrix;
   class CoordinateSystem;
   class DirectionCoordinate;
 }

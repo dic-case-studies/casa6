@@ -301,19 +301,6 @@
              "comment":""
         },
         {
-             "testNumber":"3170",
-             "testName":"Oldtatwt",
-             "testScript":"test_oldstatwt",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Takahiro Tsutsumi",
-             "MaintainerEmail":"ttsutsum@nrao.edu",
-             "priority":"1",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"3171",
              "testName":"Statwt",
              "testScript":"test_req_task_statwt",
@@ -323,6 +310,19 @@
              "MaintainerEmail":"dmehring@nrao.edu",
              "priority":"3",
              "tag":"manipulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"3172",
+             "testName":"Rerefant",
+             "testScript":"test_req_task_rerefant",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Neal Schweighart",
+             "MaintainerEmail":"nschweig@nrao.edu",
+             "priority":"3",
+             "tag":"calibration",
              "suppressEmail": false,
              "comment":""
         },
@@ -951,19 +951,6 @@
              "comment":""
         },
         {
-             "testNumber":"5150",
-             "testName":"Visstat Old",
-             "testScript":"test_visstatold",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Martin Pokorny",
-             "MaintainerEmail":"mpokorny@nrao.edu",
-             "priority":"3",
-             "tag":"information",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"5155",
              "testName":"Visstat",
              "testScript":"test_visstat",
@@ -1114,6 +1101,19 @@
              "testLevel":"critical",
              "Maintainer":"Kanako Sugimoto",
              "MaintainerEmail":"kana.sugi@ezweb.ne.jp",
+             "priority":"3",
+             "tag":"simulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"Simanalyze",
+             "testScript":"test_req_task_simanalyze",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
              "priority":"3",
              "tag":"simulation",
              "suppressEmail": false,

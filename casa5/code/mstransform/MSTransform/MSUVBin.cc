@@ -2203,7 +2203,7 @@ void MSUVBin::copySubtable(const String& tabName, const Table& inTab,const Bool 
 	  //cerr << "cpy subtable "<< outName << endl;
 		Table outTab(outName, Table::Update);
 		if(norows){
-			Vector<casacore::rownr_t> rownums=outTab.rowNumbers();
+			Vector<rownr_t> rownums=outTab.rowNumbers();
 			outTab.removeRow(rownums);
 		}
 		else{

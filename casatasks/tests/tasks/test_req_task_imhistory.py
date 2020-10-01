@@ -38,6 +38,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     myia = iatool()
 
 import unittest
@@ -143,7 +145,7 @@ class imhistory_test(unittest.TestCase):
         
     def test_noExistingMode(self):
         ''' 8. test_noExistingMode: Check that an exception is raised when a non-valid mode is given '''
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(Exception):
                 imhistory(imagecopy, mode='fakeMode')
         else:

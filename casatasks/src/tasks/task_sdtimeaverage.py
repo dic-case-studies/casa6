@@ -65,7 +65,7 @@ def sdtimeaverage(
 
     # Check timebin
     if tbin < 0:     # Error, raise Exception.
-        raise Exception(
+        raise ValueError(
             "Parameter timebin must be >= '0s' to do time averaging")
     elif tbin == 0:  # No averaging, when tbin == 0
         msg = 'Parameter timebin equals zero. No averaging will be performed.'
@@ -75,44 +75,33 @@ def sdtimeaverage(
     origin = 'sdtimeaverage'
     casalog.origin(origin)
 
-    try:
-        # Select Data and make Average.
-        st = do_mst(
-            infile=infile,
-            datacolumn=active_datacolumn,
-            field=field,
-            spw=spw,
-            timerange=timerange,
-            scan=scan,
-            antenna=antenna,
-            timebin=timebin,
-            timespan=timespan,
-            outfile=outfile,
-            do_timeaverage=do_timeaverage)
+    # Select Data and make Average.
+    do_mst(
+        infile=infile,
+        datacolumn=active_datacolumn,
+        field=field,
+        spw=spw,
+        timerange=timerange,
+        scan=scan,
+        antenna=antenna,
+        timebin=timebin,
+        timespan=timespan,
+        outfile=outfile,
+        do_timeaverage=do_timeaverage)
 
-        # History
-        add_history(
-            casalog=casalog,
-            infile=infile,
-            datacolumn=active_datacolumn,
-            field=field,
-            spw=spw,
-            timerange=timerange,
-            scan=scan,
-            timebin=timebin,
-            timespan=timespan,
-            antenna=antenna,
-            outfile=outfile)
-
-    except Exception as e:
-        casalog.post(
-            'Exception from task_sdtimeaverage : ' +
-            str(e),
-            'SEVERE',
-            origin=origin)
-        return False
-
-    return st
+    # History
+    add_history(
+        casalog=casalog,
+        infile=infile,
+        datacolumn=active_datacolumn,
+        field=field,
+        spw=spw,
+        timerange=timerange,
+        scan=scan,
+        timebin=timebin,
+        timespan=timespan,
+        antenna=antenna,
+        outfile=outfile)
 
 
 def use_alternative_column(infile, datacolumn):
@@ -202,11 +191,7 @@ def do_mst(
     pdh.bypassParallelProcessing(0)
 
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s' % instance, 'ERROR')
-        return False
+    pdh.setupIO()
 
     # Create a local copy of the MSTransform tool
     mtlocal = mstransformer()  # CASA6 changed.
@@ -268,12 +253,8 @@ def do_mst(
         casalog.post('Apply the transformations')
         mtlocal.run()
 
+    finally:
         mtlocal.done()
-
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        return False
 
     """
       CAS-12721:
@@ -370,21 +351,11 @@ def do_mst(
                     casalog.post(
                         'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
 
-            mytb.close()
 
-        except Exception as instance:
-            if isopen:
-                mytb.close()
+        finally:
+            mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
-
-    mytb = None
-    mslocal = None
-
-    return True
 
 
 def add_history(

@@ -648,7 +648,7 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
     antenna1(ant1);
     antenna2(ant2);
     spectralWindows(spws);
-    Vector<casacore::rownr_t> rowIDs;
+    Vector<rownr_t> rowIDs;
     getRowIds(rowIDs);
     Vector<Double> exposures;
     exposure(exposures);

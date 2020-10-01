@@ -28,18 +28,14 @@
 #if ! defined (MSVIS_TransformingVi2_H_121115_0950)
 #define MSVIS_TransformingVi2_H_121115_0950
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <msvis/MSVis/ViImplementation2.h>
 
 #include <map>
 #include <vector>
 
-#include <measures/Measures/Stokes.h>
-
-namespace casacore{
-
-template <typename T> class Vector;
-}
+#include <casacore/measures/Measures/Stokes.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

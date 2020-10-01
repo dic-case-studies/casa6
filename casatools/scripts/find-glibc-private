@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+use File::Find;
+
+if ( $^O ne "linux" ) {
+    print "GLIBC_PRIVATE fixes are only applied for linux\n";
+    exit(0);
+}
+
+%flags = ( );
+@args = ( );
+
+foreach ( @ARGV ) {
+    m|^--| && ( $flags{$_} = 1, next );
+    push( @args, $_ );
+}
+
+$do_delete = defined $flags{'--delete'};
+
+die "only one argument is permitted" if scalar(@args) > 1;
+die "one argument is required"  unless scalar(@args) == 1;
+die "argument should be a directory" unless -d $args[0];
+
+$root_dir = $args[0];
+
+$glibc_private = sub {
+                       if ( -f $_ ) {
+			   my $file = $_;
+			   my $type = `file $file`;
+			   if ( $type =~ m|ELF| ) {
+			       my $criminal = 0;
+			       open( ELF, "nm $file 2> /dev/null |" );
+			       while ( <ELF> ) {
+				   m|GLIBC_PRIVATE| && ($criminal = 1);
+			       }
+			       if ( $criminal ) {
+				   if ( $do_delete ) {
+				       print "GLIBC_PRIVATE found, removing ";
+				       unlink($file);
+				   }
+				   print "$File::Find::dir/$file\n"; }
+			   }
+		       }
+                 };
+
+find( { wanted => $glibc_private }, $root_dir );

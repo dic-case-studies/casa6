@@ -32,7 +32,7 @@
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayPartMath.h>
 #include <casa/Arrays/MaskArrMath.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Exceptions/Error.h>
 #include <casa/iostream.h>
 #include <casa/BasicMath/Math.h>
@@ -52,56 +52,75 @@ class VisVectorJonesMuellerTest : public ::testing::Test {
 public:
 
   virtual void setupV1() {
-    v1=Vector<Complex>(1,cOne);
-    f1=Vector<Bool>(1,false);
-    V1=Cube<Complex>(1,NCHAN,nBsln,cOne);
-    F1=Cube<Bool>(1,NCHAN,nBsln,false);
+    v1.resize(1);
+    v1 = cOne;
+    f1.resize(1);
+    f1 = false;
+    V1.resize(1,NCHAN,nBsln);
+    V1 = cOne;
+    F1.resize(1,NCHAN,nBsln);
+    F1 = false;
   }
   virtual void setupV2() {
-    v2=Vector<Complex>(2,cOne);
-    f2=Vector<Bool>(2,false);
-    V2=Cube<Complex>(2,NCHAN,nBsln,cOne);
-    F2=Cube<Bool>(2,NCHAN,nBsln,false);
+    v2.resize(2);
+    v2 = cOne;
+    f2.resize(2);
+    f2 = false;
+    V2.resize(2,NCHAN,nBsln);
+    V2 = cOne;
+    F2.resize(2,NCHAN,nBsln);
+    F2 = false;
 
   }
   virtual void setupV4() {
-    v4=Vector<Complex>(4,cOne);
-    f4=Vector<Bool>(4,false);
-    V4=Cube<Complex>(4,NCHAN,nBsln,cOne);
-    F4=Cube<Bool>(4,NCHAN,nBsln,false);
+    v4.resize(4);
+    v4 = cOne;
+    f4.resize(4);
+    f4 = false;
+    V4.resize(4,NCHAN,nBsln);
+    V4 = cOne;
+    F4.resize(4,NCHAN,nBsln);
+    F4 = false;
   }
   virtual void setupV4b() {
-    v4=Vector<Complex>(4,cOne);
+    v4.resize(4);
+    v4 = cOne;
     v4(1)=v4(2)=Complex(0.0);
-    f4=Vector<Bool>(4,false);
+    f4.resize(4);
+    f4 = false;
     //V4=Cube<Complex>(4,NCHAN,nBsln,cOne);
     //F4=Cube<Bool>(4,NCHAN,nBsln,false);
   }
   virtual void setupScalar() {
-    js=Vector<Complex>(1,iTwo);
-    jsok=Vector<Bool>(1,true);
+    js.resize(1);
+    js = iTwo;
+    jsok.resize(1);
+    jsok = true;
   }
 
   virtual void setupDiag() {
-    jd=Vector<Complex>(2);
-    jd(0)=iTwo;
-    jd(1)=iFour;
-    jdok=Vector<Bool>(2,true);
+    jd.resize(2);
+    jd(0) = iTwo;
+    jd(1) = iFour;
+    jdok.resize(2);
+    jdok = true;
   }
 
   virtual void setupGenLin() {
-    jgl=Vector<Complex>(2);
-    jgl(0)=iTwo;
-    jgl(1)=iThree;
-    jglok=Vector<Bool>(2,true);
+    jgl.resize(2);
+    jgl(0) = iTwo;
+    jgl(1) = iThree;
+    jglok.resize(2);
+    jglok = true;
   }
   virtual void setupGen() {
-    jg=Vector<Complex>(4);
-    jg(0)=cOne;
-    jg(1)=iTwo;
-    jg(2)=iThree;
-    jg(3)=cOne;
-    jgok=Vector<Bool>(4,true);
+    jg.resize(4);
+    jg(0) = cOne;
+    jg(1) = iTwo;
+    jg(2) = iThree;
+    jg(3) = cOne;
+    jgok.resize(4);
+    jgok = true;
   }
 
   virtual void setupB() {

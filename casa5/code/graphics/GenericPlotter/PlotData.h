@@ -34,6 +34,7 @@
 
 #include <casa/BasicSL/String.h>
 #include <casa/Utilities/CountedPtr.h>
+#include <casacore/casa/BasicMath/Math.h>
 
 namespace casa {
 
