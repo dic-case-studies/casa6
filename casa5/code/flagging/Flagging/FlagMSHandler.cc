@@ -694,33 +694,34 @@ FlagMSHandler::nextBuffer()
         msCounts_p += currentBufferCounts;
 
         // Print chunk characteristics
-        // do not bother building this message if logger-priority not enough, as this is
-        // complex and potentially repeated very frequently
-        if (bufferNo_p == 1 and logger_p->priority() <= LogMessage::NORMAL)
+        if (bufferNo_p == 1)
         {
             processedRows_p += visibilityIterator_p->nRowsInChunk();
             double progress  = 100.0* ((double) processedRows_p / (double) selectedMeasurementSet_p->nrow());
-            if (checkDoChunkLine(progress))
-            {
-                logger_p->origin(LogOrigin("FlagMSHandler",""));
-                String corrs = "[ ";
-                for (uInt corr_i=0;corr_i<(uInt) visibilityBuffer_p->nCorrelations();corr_i++)
-                {
-                    corrs += (*polarizationIndexMap_p)[corr_i] + " ";
-                }
-                corrs += "]";
-
-                *logger_p << LogIO::NORMAL <<
-                    "Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
-                    ", Observation = " << visibilityBuffer_p->observationId()[0] <<
-                    ", Array = " << visibilityBuffer_p->arrayId()[0] <<
-                    ", Scan = " << visibilityBuffer_p->scan()[0] <<
-                    ", Field = " << visibilityBuffer_p->fieldId()(0) << " (" << fieldNames_p->operator()(visibilityBuffer_p->fieldId()) << ")"
-                    ", Spw = " << visibilityBuffer_p->spectralWindows()(0) <<
-                    ", Channels = " << visibilityBuffer_p->nChannels() <<
-                    ", Corrs = " << corrs <<
-                    ", Total Rows = " << visibilityIterator_p->nRowsInChunk() << LogIO::POST;
+            // Send only a limited number of lines to INFO level, 'other' lines to debug
+            if (checkDoChunkLine(progress)) {
+                *logger_p << LogIO::NORMAL;
+            } else {
+                *logger_p << LogIO::DEBUG1;
             }
+            logger_p->origin(LogOrigin("FlagMSHandler",""));
+
+            String corrs = "[ ";
+            for (uInt corr_i=0;corr_i<(uInt) visibilityBuffer_p->nCorrelations();corr_i++)
+            {
+                corrs += (*polarizationIndexMap_p)[corr_i] + " ";
+            }
+            corrs += "]";
+
+            *logger_p << "Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
+                ", Observation = " << visibilityBuffer_p->observationId()[0] <<
+                ", Array = " << visibilityBuffer_p->arrayId()[0] <<
+                ", Scan = " << visibilityBuffer_p->scan()[0] <<
+                ", Field = " << visibilityBuffer_p->fieldId()(0) << " (" << fieldNames_p->operator()(visibilityBuffer_p->fieldId()) << ")"
+                ", Spw = " << visibilityBuffer_p->spectralWindows()(0) <<
+                ", Channels = " << visibilityBuffer_p->nChannels() <<
+                ", Corrs = " << corrs <<
+                ", Total Rows = " << visibilityIterator_p->nRowsInChunk() << LogIO::POST;
         }
     }
 
@@ -894,22 +895,22 @@ FlagMSHandler::checkDoChunkLine(double progress)
         chunkLineThreshold_p += chunkLineThresholdInc_p;
         result = true;
     }
-    result |= (1 == chunkNo_p) or
-        (processedRows_p == selectedMeasurementSet_p->nrow());
+    result |= (1 == chunkNo_p) or (processedRows_p == selectedMeasurementSet_p->nrow());
 
     return result;
 }
 
-// -----------------------------------------------------------------------
-// Signal true when a progress summary has to be printed
-// -----------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Signal true when a per-agent partial (ongoing run) summary has to be printed
+// ----------------------------------------------------------------------------
 bool
 FlagMSHandler::summarySignal()
 {
         Double progress = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
 
-        // signal for per-agent partial (ongoing) summaries
-        auto signal = ((progress >= summaryThreshold_p) or (logger_p->priority() >= LogMessage::DEBUG1));
+        // The summaries will be printed with INFO level. Do not bother building per-agent
+        // (for potentially many agents) summaries if logger priority not enough
+        auto signal = ((progress >= summaryThreshold_p) and (logger_p->priority() <= LogMessage::NORMAL));
         if (signal) {
             summaryThreshold_p += summaryThresholdInc_p;
         }

@@ -79,7 +79,7 @@ public:
 	// Whether the per-chunk progress log line should be produced
 	bool checkDoChunkLine(double progress);
 
-	// Signal true when a progress summary has to be printed
+	// Signal true when a per-agent partial (ongoing run) summary has to be printed
 	bool summarySignal();
 
 	// Get the casacore::MS PROCESSOR sub-table
