@@ -855,7 +855,6 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
     indices.resize(ntimes);
     
     indices.set(-1);
-    Int guessRow=0;
     
     for(Int pt=0; pt < ntimes; ++pt){
       //cerr << "  " << guessRow ;
@@ -934,14 +933,12 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 		  
 		}
 		///////////////////
-		guessRow=i;
 	      break;
 	      }
 	    } else {
 	      // valid for all times (we should also handle interval<0 -> timestamps)
 	      cerr << "JUMPY " << i << " ant " << ant << " halfint " << halfInt << " done "<< done <<  endl;
 	      indices[pt]=i;
-	      guessRow=i;
 	      break;
 	    }
 
