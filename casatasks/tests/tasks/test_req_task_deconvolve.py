@@ -138,7 +138,7 @@
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,minbeamfrac=0.3
 #testname: test_mask_autobox_multithresh_with_prune
 #
-#18. Largo Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
+#18. Large Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
 #Mostly the same arguments as from the pipeline test standard_cube_eph. Modified to run in a single major cycle.
 #testname: test_mask_autobox_multithresh_standard_cube_eph
 #
@@ -465,31 +465,37 @@ class testref_base(unittest.TestCase):
         #     os.system('rm -rf '+cls.cachedir)
         pass
 
-    # Separate functions here, for special-case tests that need their own MS.
-    def prepData(self,imgsrc="",cache=False,stopearly=False,tclean_args={},onlycopyms=False,delold=True):
-        """
-        Copies the .ms file to the local directory and
-        prepares the tclean(niter=0) tst.* tables for use with deconvolve.
-        - cache is mostly useful when running the same test repeatedly during development.
-        - onlycopyms is mostly useful when comparing the deconvolve test against the original tclean test method
-        - delold is mostly useful when creating mask files, so that the newly created mask isn't removed
-
-        1 stop if onlycopyms is True, otherwise:
-        2 if cache=True and test_req_task_deconvolve_residuals/imgsrc.residual exists, skip to (6)
-        3 execute tclean with the given tclean_args
-        4 stop if cache=False, otherwise:
-        5 copy all tst.* tables to test_req_task_deconvolve_residuals/ and remove all tst.* tables
-        6 copy all test_req_task_deconvolve_residuals/imgsrc.* to the working directory
-        """
+    def _setImgsrcField(self,imgsrc):
         if imgsrc.endswith(".ms"):
             self.msfile = imgsrc
             imgsrc = imgsrc[:-3]
         if imgsrc != "":
             self.imgsrc = imgsrc
+
+    def copyMS(self,imgsrc):
+        self._setImgsrcField(imgsrc)
+        if (os.path.exists(os.path.join(refdatapath,self.imgsrc+'.ms'))):
+            shutil.copytree(os.path.join(refdatapath,self.imgsrc+'.ms'), self.imgsrc+'.ms')
+        else:
+            shutil.copytree(os.path.join(refdatapath2,self.imgsrc+'.ms'), self.imgsrc+'.ms')
+
+    # Separate functions here, for special-case tests that need their own MS.
+    def prepData(self,imgsrc="",cache=False,tclean_args={},delold=True):
+        """
+        Copies the .ms file to the local directory and
+        prepares the tclean(niter=0) tst.* tables for use with deconvolve.
+        - cache is mostly useful when running the same test repeatedly during development.
+        - delold is mostly useful when creating mask files, so that the newly created mask isn't removed
+
+        1 if cache=True and test_req_task_deconvolve_residuals/imgsrc.residual exists, skip to (6)
+        2 execute tclean with the given tclean_args
+        3 stop if cache=False, otherwise:
+        4 copy all tst.* tables to test_req_task_deconvolve_residuals/ and remove all tst.* tables
+        5 copy all test_req_task_deconvolve_residuals/imgsrc.* to the working directory
+        """
+        self._setImgsrcField(imgsrc)
         if delold:
             self.delData()
-        if stopearly:
-            return
         if not os.path.exists(self.cachedir):
             os.system('mkdir ' + self.cachedir)
         print(refdatapath)
@@ -505,19 +511,14 @@ class testref_base(unittest.TestCase):
         for k in defs.keys():
             tclean_args[k] = defs[k] if k not in tclean_args else tclean_args[k]
         
-        if (onlycopyms):
-            if (os.path.exists(os.path.join(refdatapath,self.imgsrc+'.ms'))):
-                shutil.copytree(os.path.join(refdatapath,self.imgsrc+'.ms'), self.imgsrc+'.ms')
-            else:
-                shutil.copytree(os.path.join(refdatapath2,self.imgsrc+'.ms'), self.imgsrc+'.ms')
-        elif (cache):
+        if (cache):
             resfiles = [os.path.join(self.cachedir, self.imgsrc + '.residual')]
             resfiles.append(resfiles[0] + '.tt0')
             print(resfiles)
 
             # create the residuals and other feeder tables, as necessary
             if not os.path.exists(resfiles[0]) and not os.path.exists(resfiles[1]):
-                shutil.copytree(os.path.join(refdatapath,self.imgsrc+'.ms'), self.imgsrc+'.ms')
+                self.copyMS(imgsrc)
                 # return
                 tclean(**tclean_args)
                 for tbl in self.inptbls:
@@ -988,7 +989,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 18
-    @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
+    # @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
     def test_mask_autobox_multithresh_standard_cube_eph(self):
         """ [mask] test_mask_autobox_multithresh_standard_cube_eph """
         ######################################################################################
@@ -1027,8 +1028,8 @@ class test_mask(testref_base):
         #######################################################################
         # part 1: prepare the tables to evaluate against
 
-        self.prepData(vislist[0], onlycopyms=True)
-        self.prepData(vislist[1], onlycopyms=True)
+        self.copyMS(vislist[0])
+        self.copyMS(vislist[1])
 
         print("\nSTARTING: iter0 routine")
 
@@ -1287,9 +1288,9 @@ class test_multirun(testref_base):
 # Note that all of these tests utilize using the same ms and same tclean args in order to be able to cache the results
 # from tclean in order to execute faster.
 class test_imgval(testref_base):
-    def ivsetup(self, stopearly=False):
+    def ivsetup(self):
         # we can use "cache" here because every tclean run is being executed the same way
-        self.prepData('refim_point.ms', cache=True, stopearly=stopearly, tclean_args={'imsize':100, 'cell':['10.0arcsec','30.0arcsec']})
+        self.prepData('refim_point.ms', cache=True, tclean_args={'imsize':100, 'cell':['10.0arcsec','30.0arcsec']})
         self.mname = self.img + ".model"
         self.mname2 = self.img + "_2.model"
 
@@ -1532,7 +1533,7 @@ class test_imgval(testref_base):
         # Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
         ######################################################################################
         # self.test_imgval_startmodel_axesmismatch()
-        self.ivsetup(stopearly=False)
+        self.ivsetup()
         deconvolve(imagename=self.img, niter=10, restoration=False) # generate the first model to work off of
         os.system("mv {0} {1}".format(self.mname, self.mname2))
             
@@ -1615,9 +1616,9 @@ class test_imgval(testref_base):
 # Note that all of these tests utilize using the same ms and same tclean args in order to be able to cache the results
 # from tclean in order to execute faster.
 class test_mtmfsimgval(testref_base):
-    def ivsetup(self, stopearly=False):
+    def ivsetup(self):
         # we can use "cache" here because every tclean run for every test method is being executed the same way
-        self.prepData('refim_eptwochan.ms', cache=True, stopearly=stopearly, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'mtmfs'})
+        self.prepData('refim_eptwochan.ms', cache=True, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'mtmfs'})
         self.mname = self.img + ".model.tt1"
         self.mname2 = self.img + "_2.model.tt1"
 
@@ -1860,7 +1861,7 @@ class test_mtmfsimgval(testref_base):
         # Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
         ######################################################################################
         # self.test_mtmfsimgval_startmodel_axesmismatch()
-        self.ivsetup(stopearly=False)
+        self.ivsetup()
         deconvolve(imagename=self.img, niter=10, restoration=False, deconvolver='mtmfs') # generate the first model to work off of
         os.system("mv {0} {1}".format(self.mname, self.mname2))
             
