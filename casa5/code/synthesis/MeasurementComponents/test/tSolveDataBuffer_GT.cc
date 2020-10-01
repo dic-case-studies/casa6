@@ -382,4 +382,64 @@ TEST_F(SolveDataBufferTest, SDBListStateTest) {
   EXPECT_TRUE(sdbs.Ok());
 
 
+  String lm;
+  Int good(0);
+  Int ntrue0(0);
+  Int ntrue1(0);
+
+  // Nothing flagged yet
+  good=sdbs.extendCrossHandBaselineFlags(lm);
+  ntrue0=ntrue(sdbs(0).flagCube());
+  ntrue1=ntrue(sdbs(1).flagCube());
+  EXPECT_EQ(2,good);
+  EXPECT_EQ(0,ntrue0);
+  EXPECT_EQ(0,ntrue1);
+  if (false) {
+    cout << "ntrue=" << ntrue0 << " " << ntrue1 << endl;
+    cout << lm << endl;
+    cout << "good=" << good << endl << endl;
+  }
+
+  // Set flags in all channels on one baseline each SDB
+  sdbs(0).flagCube()(Slice(1,2,1),Slice(),Slice(2,1,1)).set(True);
+  sdbs(1).flagCube()(Slice(1,2,1),Slice(),Slice(5,1,1)).set(True);
+  ntrue0=ntrue(sdbs(0).flagCube());
+  ntrue1=ntrue(sdbs(1).flagCube());
+  EXPECT_EQ(4,ntrue0);  // 2 corrs x 2 channels on one baseline
+  EXPECT_EQ(4,ntrue1);  // 2 corrs x 2 channels on one baseline
+  if (false) 
+    cout << "ntrue=" << ntrue0 << " " << ntrue1 << endl << endl;
+
+
+  // This should make 2 baselines flagged in both
+  good=sdbs.extendCrossHandBaselineFlags(lm);
+  ntrue0=ntrue(sdbs(0).flagCube());
+  ntrue1=ntrue(sdbs(1).flagCube());
+  EXPECT_EQ(2,good);
+  EXPECT_EQ(8,ntrue0);
+  EXPECT_EQ(8,ntrue1);
+  if (false) {
+    cout << "ntrue=" << ntrue0 << " " << ntrue1 << endl;
+    cout << lm << endl;
+    cout << "good=" << good << endl << endl;
+  }
+
+  // Flag everything in first SDB
+  sdbs(0).flagCube().set(True);
+
+  // Expecting only one good SDB now
+  good=sdbs.extendCrossHandBaselineFlags(lm);
+  ntrue0=ntrue(sdbs(0).flagCube());
+  ntrue1=ntrue(sdbs(1).flagCube());
+  EXPECT_EQ(1,good);  // only *one* good SDB
+  EXPECT_EQ(80,ntrue0);
+  EXPECT_EQ(8,ntrue1);
+  if (false) {
+    cout << "ntrue=" << ntrue0 << " " << ntrue1 << endl;
+    cout << lm << endl;
+    cout << "good=" << good << endl << endl;
+  }
+
+
+
 }
