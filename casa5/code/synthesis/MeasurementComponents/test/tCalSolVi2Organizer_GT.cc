@@ -736,7 +736,7 @@ TEST( CalSolVi2Organizer , PartialTimeFreqAvedCalSolveTest ) {
       }
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(pAveFactor,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));

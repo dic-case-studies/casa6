@@ -2002,7 +2002,7 @@ void FringeJones::setApply(const Record& apply) {
     }
 
     KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
-    for (rownr_t ispw=0;ispw<nSpw();++ispw) {
+    for (rownr_t ispw=0;ispw<(rownr_t)nSpw();++ispw) {
         if (ispw < tmpfreqs.nelements())
             KrefFreqs_(ispw)=tmpfreqs(ispw);
     }
