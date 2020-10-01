@@ -189,7 +189,7 @@ public:
   virtual void setFrequencySelections (const FrequencySelections & selection) override;
 
   // Set the 'blocking' size for returning data.
-  virtual void setRowBlocking (casacore::Int) override { SSVi2NotPossible() };
+  virtual void setRowBlocking (casacore::rownr_t) override { SSVi2NotPossible() };
   
   virtual casacore::Bool existsColumn (VisBufferComponent2 id) const override;
   
