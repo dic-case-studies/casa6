@@ -755,7 +755,7 @@ class applycal_test(unittest.TestCase):
 
 
     def test_gaincurve(self):
-        applycal(vis=vlbacopy, gaintable=[vlbaGCCal])
+        applycal(vis=vlbacopy, gaintable=[vlbaGCCal], applymode='calonly')
         datamean = np.mean(getparam(vlbacopy, 'DATA'))
         correctedmean = np.mean(getparam(vlbacopy, 'CORRECTED_DATA'))
 
