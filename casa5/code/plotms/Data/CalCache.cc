@@ -48,6 +48,13 @@ using namespace casacore;
 
 namespace casa {
 
+// Define external CLIC solvers
+#define cheb cheb_
+
+extern "C" {
+  void cheb(Int*, Double*, Double*, Int*);
+}
+
 CalCache::CalCache(PlotMSApp* parent):
   PlotMSCacheBase(parent),
   divZero_(False),
@@ -129,8 +136,9 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   positions_.resize();
 
   vector<PMS::DataColumn> loadData(loadAxes.size());
-  for (uInt i=0; i<loadData.size(); ++i) 
+  for (uInt i=0; i<loadData.size(); ++i) { 
     loadData[i] = PMS::DEFAULT_DATACOLUMN;
+  }
 
   if (calType_=="BPOLY") {
     loadBPoly(loadAxes, loadData, thread);
@@ -606,7 +614,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             if (polnRatio_) {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice()) |
                     cti.flag()(parSlice2, Slice(), Slice());
-			} else {
+            } else {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice());
             }
             break;
@@ -978,270 +986,179 @@ void CalCache::getCalDataAxis(PMS::Axis axis, Cube<Complex>& viscube,
 // ======================== BPOLY ==========================
 void CalCache::loadBPoly(vector<PMS::Axis>& loadAxes,
     vector<PMS::DataColumn>& loadData, ThreadCommunication* thread) {
-  // set up BPoly table from filename and load cache
-  BJonesPolyTable ct = BJonesPolyTable(filename_);
-  BJonesPolyTable selct(ct);
-  Vector<Vector<Slice> > chansel;
-  Vector<Vector<Slice> > corrsel;
-  selection_.apply(ct, selct, chansel, corrsel);
+  // Load cache for a BPoly cal table
+  BJonesPolyTable pt = BJonesPolyTable(filename_, Table::Update);
 
-  ROBJonesPolyMCol mainCol(selct);
-  ROCalDescColumns calDescCol(selct);
+  // Set ms-related data
+  ROCalDescColumns calDescCol(pt);
   String msname(calDescCol.msName()(0));
   setMSname(msname); // add path
-  getNamesFromMS(); // field and antenna
+  getNamesFromMS();  // field and antenna
 
-  // count and load chunks
-  Int nrow = selct.nRowMain(); // iterate per row to load cache
-  countChunks(nrow, loadAxes, loadData, thread); // set up cache size
-  loadCalChunks(mainCol, calDescCol, nrow, loadAxes, chansel, thread); 
+  // Set number of antennas
+  nAnt_ = pt.maxAntenna() + 1;
+
+  // Create a B Jones table derived from BPOLY table
+  NewCalTable* nct = virtualBPoly(pt);
+  parsAreComplex_ = nct->isComplex();
+
+  // Apply selection to get selected cal table
+  NewCalTable* selct = new NewCalTable();
+  Vector<Vector<Slice> > chansel;
+  Vector<Vector<Slice> > corrsel;
+  selection_.apply(*nct, *selct, chansel, corrsel);
+
+  // Use NewCalTable implementation
+  setUpCalIter(*selct, true);
+  countChunks(*ci_p, loadAxes, loadData, thread);
+  loadCalChunks(*ci_p, loadAxes, thread);
 }
 
-void CalCache::loadCalChunks(ROBJonesPolyMCol& mcol, ROCalDescColumns& dcol,
-    Int nrow, const vector<PMS::Axis> loadAxes, Vector<Vector<Slice> >& chansel,
-    ThreadCommunication* thread) {
-  Slice parslice;
-  setUpLoad(thread, parslice);
-  bool selectchan(!chansel.empty());
+NewCalTable* CalCache::virtualBPoly(BJonesPolyTable& polyTable) {
+  // Returns B Jones NewCalTable derived from BPOLY; based on BPoly::loadMemCalTable.
 
-  // freq info from ms
-  Vector< Vector<Double> > mschanfreqs;
-  getChanFreqsFromMS(mschanfreqs);
+  // Generate a NCT in memory to hold the BPOLY as a B
+  NewCalTable* nct = new NewCalTable("BPolyAsB.tmp", VisCalEnum::COMPLEX, "B Jones", msname_, false);
 
-  MSMetaInfoForCal msmeta(msname_);
-  BJonesPoly* bpoly = new BJonesPoly(msmeta);
-  Record rec;  // for solving params
-  rec.define("caltable", filename_);
-  bpoly->setSpecify(rec);  // solves and makes data & flag cubes
+  // Frequency info from MS
+  Vector<Vector<Double>> mschanfreq; // [nspw, nchan]
+  getChanFreqsFromMS(mschanfreq);
 
-  // These change when spw changes
-  Int lastSpw(-1), nChan(0);
-  Vector<Double> chanFreqs; // per spw/chansel
-  Vector<Int> chanNums;     // per spw/chansel
-  Vector<Slice> spwChanSel; // chansel per spw
+  // Ensure sort on TIME, so CalSet is filled in order
+  Block <String> sortCol(3);
+  sortCol[0]="CAL_DESC_ID";
+  sortCol[1]="TIME";
+  sortCol[2]="ANTENNA1";
+  polyTable.sort2(sortCol);
 
-  // load axes: each row of main table is a "chunk"
-  for (Int row = 0; row < nrow; row++) {
-    // retrieve bpoly solutions per spw and ant1
-    Int calDescId = mcol.calDescId()(row);
-    Vector<Int> spwIds = dcol.spwId()(calDescId);
-    Int spw = spwIds(0);
-    Int ant1 = mcol.antenna1()(row);
-    bool isComplexSel(selectchan);
+  Int nrows = polyTable.nRowMain();
+  Int nDesc = polyTable.nRowDesc();
 
-    if (spw != lastSpw) { // only do this once per spw
-      // get chanfreqs and chan nums for spw and channel selection
-      chanFreqs.resize();
-      chanFreqs = mschanfreqs(spw);
-      nChan = chanFreqs.nelements();
-      chanNums.resize(chanFreqs.nelements());
-      indgen(chanNums);
-      if (selectchan) {
-        spwChanSel.resize();
-        spwChanSel = chansel(spw);
-        // complex selection has more than one slice
-        isComplexSel = (spwChanSel.size()>1);
-        // apply selection to chanfreqs and update number of channels
-        getSelFreqsForSpw(spwChanSel, chanFreqs, chanNums);
-        nChan = chanFreqs.nelements();
-      }
-      lastSpw = spw;
-    }
+  // Spws to be calibrated by each caldesc
+  Vector<Int> spwmap(nDesc,-1);
+  for (Int idesc = 0; idesc < nDesc; ++idesc) {
+    CalDescRecord calDescRec(polyTable.getRowDesc(idesc));
+    Vector<Int> spwId;
+    calDescRec.getSpwId(spwId);
+    Int currSpw = spwId(0);
+    spwmap(idesc) = currSpw;
 
-    // Cache the data shapes
-    chshapes_(0,row) = parslice.length();
-    chshapes_(1,row) = nChan;
-    chshapes_(2,row) = 1;  // one row at a time
-    chshapes_(3,row) = 1;  // one antenna per row
-    goodChunk_(row) = True;
-
-    // use ant1 id for cube slicer (for vis, flag, snr)
-    Slicer cubeSlicer;
-    if ((!selectchan) || isComplexSel) {
-      cubeSlicer = Slicer(parslice, Slice(), Slice(ant1));
-    } else {
-      cubeSlicer = Slicer(parslice, spwChanSel(0), Slice(ant1)); 
-    }
-
-    // load axes for each row
-    for(unsigned int i = 0; i < loadAxes.size(); i++) {
-      PMS::Axis axis = loadAxes[i];
-      if (PMS::axisIsData(axis)) {
-        Cube<Complex> cpar, viscube;
-        bpoly->solveAllCPar(spw, cpar);
-        viscube = cpar(cubeSlicer);  // slice poln, chan, ant1
-        // get amp, phase, real, imag from viscube
-        if (isComplexSel) {
-          // process chan slices
-          Cube<Complex> selViscube;
-          getSelectedCube(viscube, spwChanSel, selViscube);
-          getCalDataAxis(axis, selViscube, row);
-        } else {
-          getCalDataAxis(axis, viscube, row);
-        }
-      } else {
-        switch(axis) {
-          case PMS::FLAG: {
-            Cube<Bool> parOK, flagcube;
-            bpoly->solveAllParOK(spw, parOK);
-            // OK=true means flag=false
-            flagcube = !(parOK(cubeSlicer)); // slice poln, chan, ant1
-            if (isComplexSel) {
-              // process chan slices
-              Cube<Bool> selFlagcube;
-              getSelectedCube(flagcube, spwChanSel, selFlagcube);
-              *flag_[row] = selFlagcube;
-            } else {
-              *flag_[row] = flagcube;
-            }
-            break;
-          }
-          case PMS::SNR: {
-            Cube<Float> parSNR, snrcube;
-            bpoly->solveAllParSNR(spw, parSNR);
-            snrcube = parSNR(cubeSlicer); // slice poln, chan, ant1
-            if (isComplexSel) {
-              // process chan slices
-              Cube<Float> selSNRcube;
-              getSelectedCube(snrcube, spwChanSel, selSNRcube);
-              *snr_[row] = selSNRcube;
-            } else {
-              *snr_[row] = snrcube;
-            }
-            break;
-          }
-          case PMS::CHANNEL: {
-            *chan_[row] = chanNums;
-            break;
-          }
-          case PMS::FREQUENCY: {
-            // TBD: Convert freq to desired frame
-            *freq_[row] = chanFreqs;
-            (*freq_[row]) /= 1.0e9; // in GHz
-            break;
-          }
-          default: 
-            loadCalAxis(mcol, dcol, row, axis);
-         }
-      }
-    }
-
-    // If a thread is given, update it.
-    if(thread != nullptr) {
-      double progress = ((double)row) / nrow;
-      thread->setProgress((unsigned int)((progress * 100) + 0.5));
-    }
+    // Set SPW subtable freqs
+    Vector<Double> freq = mschanfreq(currSpw);
+    nct->setSpwFreqs(currSpw, freq);
   }
-}
+  
+  // Solve arrays, so we can fill them
+  Cube<Complex> cparam;
+  Cube<Bool> flag;
+  Cube<Float> err, snr;
+  bool cubeInit(false);
 
-void CalCache::loadCalAxis(ROSolvableVisJonesMCol& mcol,
-    ROCalDescColumns& dcol, Int chunk, PMS::Axis axis) {
-  switch(axis) {
-    case PMS::SCAN:
-      scan_(chunk) = mcol.scanNo()(chunk);
-      break;
-    case PMS::FIELD:
-      field_(chunk) = mcol.fieldId()(chunk);
-      break;
-    case PMS::TIME: 
-      time_(chunk) = mcol.time()(chunk);
-      break;
-    case PMS::TIME_INTERVAL:
-      timeIntr_(chunk) = mcol.interval()(chunk);
-      break;
-    case PMS::SPW: {
-      Int calDescId = mcol.calDescId()(chunk);
-      Vector<Int> spws = dcol.spwId()(calDescId);
-      spw_(chunk) = spws(0);
-      break;
+  // Attach a calibration table columns accessor
+  BJonesPolyMCol maincol(polyTable);
+
+  for (Int row = 0; row < nrows; row++) {
+    // Extract the polynomial coefficients in amplitude and phase
+    Int nAmp = maincol.nPolyAmp().asInt(row);
+    Int nPhase = maincol.nPolyPhase().asInt(row);
+    Array<Double> ampCoeffArray, phaseCoeffArray;
+    maincol.polyCoeffAmp().get(row, ampCoeffArray);
+    maincol.polyCoeffPhase().get(row, phaseCoeffArray);
+
+    Matrix<Double> ampCoeff(nAmp, 2);
+    IPosition ampPos = ampCoeffArray.shape();
+    ampPos = 0;
+    for (Int k = 0; k < 2 * nAmp; k++) {
+      ampPos.setLast(IPosition(1, k));
+      ampCoeff(k % nAmp, k / nAmp) = ampCoeffArray(ampPos);
+    };
+
+    Matrix<Double> phaseCoeff(nPhase, 2);
+    IPosition phasePos = phaseCoeffArray.shape();
+    phasePos = 0;
+    for (Int k = 0; k < 2 * nPhase; k++) {
+      phasePos.setLast(IPosition(1, k));
+      phaseCoeff(k % nPhase, k / nPhase) = phaseCoeffArray(phasePos);
+    };
+
+    // Get frequencies for this spw
+    Int nPol(2);
+    Int thisDesc = maincol.calDescId().asInt(row);
+    Int thisSpw = spwmap(thisDesc);
+    Vector<Double> freq = mschanfreq(thisSpw);
+    Int nChan = freq.nelements();
+
+    // Extract the valid domain for the polynomial
+    Vector<Double> freqDomain(2);
+    maincol.validDomain().get(row, freqDomain);
+    Double x1 = freqDomain(0);
+    Double x2 = freqDomain(1);
+
+    Complex factor = maincol.scaleFactor().asComplex(row);
+    Int thisAnt1 = maincol.antenna1().asInt(row);
+
+    // Resize and initialize solve arrays
+    if (!cubeInit) {
+      cparam.resize(nPol, nChan, nAnt_);
+      cparam.set(Complex(1.0));
+      flag.resize(nPol, nChan, nAnt_);
+      flag.set(true);
+      err.resize(nPol, nChan, nAnt_);
+      err.set(0.0);
+      snr.resize(nPol, nChan, nAnt_);
+      snr.set(1.0);
+      cubeInit = true;
     }
-    case PMS::CORR: {
-      corr_[chunk]->resize(chshapes_(0,chunk));
-      String pol = selection_.corr();
-      if (pol=="" || pol=="RL" || pol=="XY") {
-        indgen(*corr_[chunk]);
-      } else {
-        Int poln = ((pol=="R" || pol=="X") ? 0 : 1);
-        corr_[chunk]->resize(1);
-        corr_[chunk]->set(poln);
+
+    for (Int pol = 0; pol < 2; pol++) {
+      Vector<Double> ac(ampCoeff.column(pol));
+      Vector<Double> pc(phaseCoeff.column(pol));
+      
+      // Only do calculation if coeffs are non-zero
+      if (anyNE(ac, Double(0.0)) || anyNE(pc, Double(0.0)) ) {
+        for (Int chan = 0; chan < nChan; ++chan) {
+          Double ampval(1.0), phaseval(0.0);
+          // Calculate Cheby if freq in domain
+          Double thisFreq(freq(chan));
+          if ((thisFreq >= x1) && (thisFreq <= x2)) {
+            ampval = getChebVal(ac, x1, x2, thisFreq);
+            phaseval = getChebVal(pc, x1, x2, thisFreq);
+            cparam(pol, chan, thisAnt1) = factor *
+              Complex(exp(ampval)) * Complex(cos(phaseval), sin(phaseval));
+            flag(pol, chan, thisAnt1) = false;
+          } else {
+            // Unflagged unit calibration for now
+            cparam(pol, chan, thisAnt1) = Complex(1.0);
+            flag(pol, chan, thisAnt1) = false;
+          }
+        } // chan
       }
-      break;
+    } // pol
+
+    // Every nAnt rows, store the result
+    if ((row + 1) % nAnt_ == 0) {
+      Double thisTime = maincol.time().asdouble(row);
+      Double thisInterval = maincol.interval().asdouble(row);
+      Int thisField = maincol.fieldId().asInt(row);
+      Int thisObs = maincol.obsId().asInt(row);
+      Array<Int> refant = maincol.refAnt().get(row);
+      IPosition first(refant.shape().size(), 0);
+      Int thisRefant = refant(first);
+      Vector<Int> ant1list; // NewCalTable generates antenna ids based on nrows
+
+      nct->fillAntBasedMainRows(nAnt_, thisTime, thisInterval, thisField,
+        thisSpw, thisObs, ant1list, thisRefant, cparam, flag, err, snr);
+
+      // reset arrays next loop
+      cubeInit = false;
     }
-    case PMS::ANTENNA1: { // holds a Vector of antenna ids
-      Vector<Int> ant1(1, mcol.antenna1()(chunk));
-      *antenna1_[chunk] = ant1;
-      break;
-    }
-    case PMS::ROW: {
-      Vector<rownr_t> rows(1, chunk);
-      *row_[chunk] = rows;
-      break;
-    }
-    case PMS::OBSERVATION: {
-      Vector<Int> obsIds(1, mcol.obsId()(chunk));
-      *obsid_[chunk] = obsIds;
-      break;
-    }
-    case PMS::FEED1: { 
-      Vector<Int> feedIds(1, mcol.feed1()(chunk));
-      *feed1_[chunk] = feedIds;
-      break;
-    }
-    case PMS::ANTENNA: { // same as antenna1 (for iteraxis)
-      Vector<Int> ant1(1, mcol.antenna1()(chunk));
-      *antenna_[chunk] = ant1;
-      break;
-    }
-    // handled in loadCalChunks
-    case PMS::CHANNEL:
-    case PMS::FREQUENCY:
-    case PMS::SNR:
-    case PMS::FLAG: {
-      break;
-    }
-    // handled in loadCalChunks/getCalDataAxis
-    case PMS::GAMP:
-    case PMS::AMP:
-    case PMS::GPHASE:
-    case PMS::PHASE:
-    case PMS::GREAL:
-    case PMS::REAL:
-    case PMS::GIMAG:
-    case PMS::IMAG: {
-      break;
-    }
-    // specialized for certain cal types
-    case PMS::ANTENNA2:
-    case PMS::BASELINE:
-    case PMS::DELAY:
-    case PMS::DELAY_RATE:
-    case PMS::OPAC:
-    case PMS::SWP:   // "SPGAIN" in plotcal
-    case PMS::TSYS:
-    case PMS::TEC:
-    case PMS::INTENT: { 
-      String axisName(PMS::axis(axis));
-      throw(AipsError(axisName + " has no meaning for this table"));
-      break;
-    }
-    // not supported:
-    //case PMS::VELOCITY:
-    //case PMS::WT: 
-    //case PMS::AZ0:
-    //case PMS::EL0:
-    //case PMS::HA0: 
-    //case PMS::PA0: 
-    //case PMS::AZIMUTH:
-    //case PMS::ELEVATION:
-    //case PMS::PARANG:
-    default:
-      throw(AipsError("Axis choice not supported for Cal Tables"));
-      break;
-  } // switch
+  }   // rows
+
+  return nct;
 }
 
 void CalCache::getChanFreqsFromMS(Vector< Vector<Double> >& mschanfreqs) {
-  // shape is (nchan, nspw)
+  // shape is (nspw, nchan)
   MeasurementSet ms(msname_);
   MSColumns mscol(ms);
   uInt nspw = mscol.spectralWindow().nrow();
@@ -1251,43 +1168,34 @@ void CalCache::getChanFreqsFromMS(Vector< Vector<Double> >& mschanfreqs) {
   }
 }
 
-void CalCache::getSelFreqsForSpw(Vector<Slice>& chanSel,
-    Vector<Double>& chanFreqs, Vector<Int>& chanNums) {
-  // Apply spw and channel selection to mschanfreqs and generate channel numbers.
-  // Return values in chanFreqs and chanNums Vectors
-  Vector<Double> selChanFreqs;
-  Vector<Int> selChanNums;
-  for (uInt i=0; i<chanSel.size(); ++i) {
-    Slice chanSlice = chanSel(i);
-    Vector<Double> concatChanFreqs =
-        concatenateArray(selChanFreqs, chanFreqs(chanSlice));
-    selChanFreqs.resize();
-    selChanFreqs = concatChanFreqs;
-    Vector<Int> concatChanNums = concatenateArray(selChanNums, chanNums(chanSlice));
-    selChanNums.resize();
-    selChanNums = concatChanNums;
-  }
-  chanFreqs.resize();
-  chanFreqs = selChanFreqs;
-  chanNums.resize();
-  chanNums = selChanNums;
-}
+Double CalCache::getChebVal(const Vector<Double>& coeff, const Double& xinit,
+  const Double& xfinal, const Double& x) {
+// from synthesis/MeasurementComponents/BPoly.cc
+// Compute a Chebyshev polynomial value using the CLIC library
+// Input:
+//    coeff       const Vector<Double>&       Chebyshev coefficients
+//    xinit       const Double&               Domain start
+//    xfinal      const Double&               Domain end
+//    x           const Double&               x-ordinate
+// Output:
+//    getChebVal  Double                      Chebyshev polynomial value
+//
+  // Re-scale x-ordinate
+  Double xcap = ((x - xinit) - (xfinal - x)) / (xfinal - xinit);
 
-template<class T>
-void CalCache::getSelectedCube(const Cube<T>& inputCube, const Vector<Slice>& chanSlices,
-    Cube<T>& outputCube) {
-  // Concatenate channel-sliced arrays
-  // Reorder cube to make channel last axis for concatenate
-  Cube<T> reorderedCube = reorderArray(inputCube, IPosition(3,0,2,1));
-  Cube<T> selectedCube;
-  for (uInt islice=0; islice < chanSlices.size(); ++islice) {
-    Slicer chanSlicer = Slicer(Slice(), Slice(), chanSlices(islice));
-    Cube<T> concatCube = concatenateArray(selectedCube, reorderedCube(chanSlicer));
-    selectedCube.resize();
-    selectedCube = concatCube;
+  // Compute polynomial
+  Int deg = coeff.shape().asVector()(0);
+  Vector<Double> val(deg);
+  Bool check;
+  Int checkval;
+  cheb(&deg, &xcap, val.getStorage(check), &checkval);
+
+  Double soly(0.0);
+  for (Int mm = 0; mm < deg; mm++){
+    soly += coeff[mm] * val[mm];
   }
-  // reorder back to (npol, nchan, nant)
-  outputCube = reorderArray(selectedCube, IPosition(3,0,2,1)); 
+
+  return soly;
 }
 
 // ======================== end BPOLY ==========================
@@ -1310,8 +1218,8 @@ void CalCache::loadGSpline(vector<PMS::Axis>& loadAxes,
   ROGJonesSplineMCol mainCol(selct);
   ROCalDescColumns calDescCol(selct);
   String msname(calDescCol.msName()(0));
-  setMSname(msname);  // add path
-  getNamesFromMS(); // field and antenna
+  setMSname(msname); // add path
+  getNamesFromMS();  // field and antenna
 
   // count and load chunks
   Int nsample(1000); // make time samples to load cache
@@ -1588,7 +1496,7 @@ void CalCache::checkAxes(const vector<PMS::Axis>& loadAxes) {
 }
 
 template<class T>
-void CalCache::getSelectedCube(Cube<T>& inputCube, const Vector<Int> selectedRows) {
+void CalCache::getSelectedCube(Cube<T>& inputCube, const Vector<Int>& selectedRows) {
   // replaces input cube with cube selected by rows in vector
   Cube<T> selectedCube;
   for (uInt irow=0; irow<selectedRows.size(); ++irow) {
