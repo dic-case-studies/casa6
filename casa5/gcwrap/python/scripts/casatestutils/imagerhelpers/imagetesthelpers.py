@@ -142,11 +142,18 @@ class TestHelpers:
 
     def get_peak_res(self, summ):
         """Get Peak Res"""
-        if summ.has_key('summaryminor'):
-            reslist = summ['summaryminor'][1,:]
-            peakres = reslist[ len(reslist)-1 ]
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        peakres = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+
         else:
-            peakres = None
+            if summ.has_key('summaryminor'):
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+                
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
@@ -167,11 +174,16 @@ class TestHelpers:
 
     def get_mod_flux(self, summ):
         """Get Mod Flux"""
-        if summ.has_key('summaryminor'):
-            modlist = summ['summaryminor'][2,:]
-            modflux = modlist[ len(modlist)-1 ]
+        # AW: This can be reduced down for readability but putting in a fix for CAS-13182
+        modflux = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         else:
-            modflux = None
+            if summ.has_key('summaryminor'):
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
@@ -192,10 +204,14 @@ class TestHelpers:
 
     def get_iter_done(self, summ):
         """Get Iterdone"""
-        if summ.has_key('iterdone'):
-            iters = summ['iterdone']
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        iters = None
+        if is_CASA6:
+            if 'iterdone' in summ:
+                iters = summ['iterdone']
         else:
-            iters = None
+            if summ.has_key('iterdone'):
+                iters = summ['iterdone']
         return iters
 
     def verdict(self, boolval):
@@ -536,13 +552,17 @@ class TestHelpers:
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    pstr += TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res")
+                    pstr = pstr + message
                 if modflux != None:
-                    pstr += TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    pstr = pstr + message
                 if iterdone != None:
-                    pstr += TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    pstr = pstr + message
                 if nmajordone != None:
-                    pstr += TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
                 raise
@@ -565,4 +585,19 @@ class TestHelpers:
         if pstr.count("Fail") > 0:
             return False
         return True
+        
+    def write_file(self,filename,str_text):
+        """Save the string in a text file"""
+        inp = filename
+        cmd = str_text
+        # remove file first
+        if os.path.exists(inp):
+            os.remove(inp)
+        # save to a file
+        with open(inp, 'w') as f:
+            f.write(cmd)
+        f.close()
+        return
+        
+
 
