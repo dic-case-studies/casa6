@@ -36,8 +36,6 @@ def listobs(
 
     casalog.origin('listobs')
 
-       # Python script
-       # parameter_printvalues(arg_names,arg_values,arg_types)
     try:
         myms = ms()
         if (type(vis) == str) & os.path.exists(vis):
@@ -61,9 +59,10 @@ def listobs(
 
         # Select the data. Only-parse is set to false.
         myms.msselect(sel, False)
-        myms.summary(
+        obs_dict = myms.summary(
             verbose=verbose, listfile=listfile, listunfl=listunfl,
-            cachesize=cachesize, overwrite=overwrite, wantreturn=False
+            cachesize=cachesize, overwrite=overwrite, wantreturn=True
         )
+        return obs_dict
     finally:
         myms.close()
