@@ -38,10 +38,7 @@ def listobs(
 
     try:
         myms = ms()
-        if (type(vis) == str) & os.path.exists(vis):
-            myms.open(thems=vis, check=True)
-        else:
-            raise Exception('Visibility data set not found - please verify the name')
+        myms.open(thems=vis, check=True)
                 
         sel = {}
         if (selectdata):
