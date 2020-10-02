@@ -5,7 +5,25 @@ CASA uses binary tables which are updated regularly. These tables contain inform
 
 A subset of this runtime data is updated regularly because things like the earth's orientation changes as time progresses. After a couple of months, this data is sufficiently out of date to begin affecting the images which CASA produces.
 
-## Initial Setup
+## quick start
+
+If you came here after getting an error like:
+```
+>>> import casatools
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/export/hypnos/tmp/casa6-home-data/casa6/casatools/build/lib.linux-x86_64-3.6/casatools/__init__.py", line 153, in <module>
+    raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
+ImportError: measures data is not available, visit http://go.nrao.edu/casadata-info for more information
+>>> 
+```
+the easiest solution is to run:
+```
+-bash-4.2$ python3 -m casatools --update-user-data
+```
+This will install CASA's runtime data in ~/.casa/data, and the next time you import casatools you should not encounter this error.
+
+## initial setup
 
 There are two paths to getting CASA's runtime data. One is by installing a Python package that is only available from NRAO's PyPI repository. It is not possible to put the data on standard Python package servers because of the data size and the frequency of the updates.
 

@@ -26,7 +26,8 @@
 #define COLORTRANSFERWIDGET_QO_H
 
 #include <QWidget>
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 #include <ui/ui_ColorTransferWidget.h>
 
 class QwtPlot;

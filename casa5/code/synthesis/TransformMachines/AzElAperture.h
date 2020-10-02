@@ -29,10 +29,11 @@
 #ifndef SYNTHESIS_AZELAPERTURE_H
 #define SYNTHESIS_AZELAPERTURE_H
 
-#include <images/Images/ImageInterface.h>
+#include <casacore/images/Images/ImageInterface.h>
 #include <synthesis/TransformMachines/ATerm.h>
 #include <synthesis/TransformMachines/Utils.h>
 #include <coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 //
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
@@ -49,7 +50,7 @@
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Matrix;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

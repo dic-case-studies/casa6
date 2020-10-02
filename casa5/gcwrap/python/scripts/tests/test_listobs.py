@@ -98,7 +98,7 @@ class listobs_test1(unittest.TestCase):
 
     def test1(self):
         '''Listobs 1: Input MS'''
-        self.assertTrue(listobs(vis=msfile1, listunfl=True))
+        listobs(vis=msfile1, listunfl=True)
 
     def test2(self):
         '''Listobs 2: CSV-591. Check if long field names are fully displayed'''
@@ -220,27 +220,23 @@ class listobs_test1(unittest.TestCase):
     def test_overwrite(self):
         """Test overwrite parameter - CAS-5203"""
         listfile = "CAS-5203.log"
-        self.assertTrue(
-            listobs(vis=msfile1, listfile=listfile)
-        )
+        listobs(vis=msfile1, listfile=listfile)
+
         # test default value is overwrite=False
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             listobs(vis=msfile1, listfile=listfile)
-        )
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             listobs(vis=msfile1, listfile=listfile, overwrite=False)
-        )
+
         expec = _sha1it(listfile)
-        self.assertTrue(
-            listobs(vis=msfile1, listfile=listfile, overwrite=True)
-        )
+        listobs(vis=msfile1, listfile=listfile, overwrite=True)
         got = _sha1it(listfile)
         self.assertTrue(got == expec)
 
     def test_CAS_6733(self):
         """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
         vis = os.path.join(datapath2,"CAS-6733.ms")
-        self.assertTrue(listobs(vis=vis))
+        listobs(vis=vis)
         
 class listobs_cleanup(unittest.TestCase):
     

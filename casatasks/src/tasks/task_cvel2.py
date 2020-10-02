@@ -62,39 +62,25 @@ def cvel2(
     casalog.origin('cvel2')
         
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Input vis is an MMS
     if pdh.isMMSAndNotServer(vis) and keepmms:
         
-        status = True   
-        
         # Work the heuristics of combinespws=True and the separationaxis of the input             
         retval = pdh.validateInputParams()
         if not retval['status']:
-            raise Exception('Unable to continue with MMS processing')
+            raise RuntimeError('Unable to continue with MMS processing')
                         
         pdh.setupCluster('cvel2')
 
         # Execute the jobs
-        try:
-            status = pdh.go()
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
-            return status
-                           
-        return status
+        pdh.go()                          
+        return
 
-
-    # Create local copy of the MSTransform and table tools
-    mtlocal = mttool()
-    tblocal = tbtool()
 
     try:
+        mtlocal = mttool()
         # Gather all the parameters in a dictionary.        
         config = {}
         
@@ -149,12 +135,8 @@ def cvel2(
         # Run the tool
         mtlocal.run()        
             
+    finally:
         mtlocal.done()
-
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
     # Write history to output MS, not the input ms.
     try:
@@ -169,9 +151,5 @@ def cvel2(
                       param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
-        return False
 
     mslocal = None
-    
-    return True
-        

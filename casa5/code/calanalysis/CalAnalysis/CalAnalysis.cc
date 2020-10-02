@@ -3396,7 +3396,7 @@ Bool CalAnalysis::cubeGroup( const NewCalTable& oNCT, const INPUT& oInput,
         IPosition oShape( poCParamCol( uiRow ).shape() );
         oCParamCube.resize( oShape, false );
         oCParamCube = poCParamCol( uiRow );
-        oFParamCube = Array<Float>( oShape, 0.0 );
+        oFParamCube = Array<Float>( oShape, 0.0F );
       } else {
         IPosition oShape( poFParamCol(uiRow).shape() );
         oFParamCube.resize( oShape, false );
@@ -3405,7 +3405,7 @@ Bool CalAnalysis::cubeGroup( const NewCalTable& oNCT, const INPUT& oInput,
       }
 
       // Get the PARAMERR cell from the new format calibration table
-      Array<Float> oParamErrCube( oParamErrCol(uiRow).shape(), 0.0 );
+      Array<Float> oParamErrCube( oParamErrCol(uiRow).shape(), 0.0F );
       oParamErrCube = oParamErrCol( uiRow );
 
       // Get the FLAG cell from the new format calibration table
