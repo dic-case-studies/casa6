@@ -123,6 +123,67 @@ def _sha1it(filename):
 
 class listobs_test_base(unittest.TestCase):
 
+    ref_return = {}
+    ref_return_base =\
+            {'BeginTime': 55248.126073333326,
+             'EndTime': 55248.130800000006,
+             'IntegrationTime': 408.38400173187256,
+             'field_0': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 1.4433872913993107},
+                                       'm1': {'unit': 'rad', 'value': 0.2361430477948328},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'J0530+135'},
+             'field_1': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 0.0},
+                                       'm1': {'unit': 'rad', 'value': 0.0},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'Mars'},
+             'field_2': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 1.6056810952191334},
+                                       'm1': {'unit': 'rad', 'value': -0.14975884913199947},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'J0607-085'},
+             'nfields': 3,
+             'numrecords': 1080,
+             'scan_1': {'0': {'BeginTime': 55248.126073333326,
+                              'EndTime': 55248.12846666667,
+                              'FieldId': 0,
+                              'FieldName': 'J0530+135',
+                              'IntegrationTime': 3.0240000000000187,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 0,
+                              'nRow': 600,
+                              'scanId': 1}},
+             'scan_2': {'0': {'BeginTime': 55248.12877055556,
+                              'EndTime': 55248.13014111111,
+                              'FieldId': 1,
+                              'FieldName': 'Mars',
+                              'IntegrationTime': 3.023999999999993,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 5,
+                              'nRow': 360,
+                              'scanId': 2}},
+             'scan_3': {'0': {'BeginTime': 55248.130450000004,
+                              'EndTime': 55248.130800000006,
+                              'FieldId': 2,
+                              'FieldName': 'J0607-085',
+                              'IntegrationTime': 3.024000000000007,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 8,
+                              'nRow': 120,
+                              'scanId': 3}},
+             'timeref': 'UTC'}
+    ref_return['uid___X02_X3d737_X1_01_small.ms'] = ref_return_base
+    # Numerical differences in MMS
+    ref_return['genmms.mms'] = copy.deepcopy(ref_return_base)
+    ref_return['genmms.mms']['scan_1']['0']['IntegrationTime'] = 3.0240000000000475
+    ref_return['genmms.mms']['scan_2']['0']['IntegrationTime'] = 3.023999999999984
+    ref_return['gentimeavgms.ms'] = ref_return_base
+    ref_return['gentimeavgmms.mms'] = ref_return['genmms.mms']
+
     def setUp(self):
         if not CASA6:
             default(listobs)
@@ -139,70 +200,10 @@ class listobs_test_base(unittest.TestCase):
         @param result: result dictionary from a listob execution
         @param dataset: dataset/vis name
         """
-        ref = {}
-        ref_base =\
-        {'BeginTime': 55248.126073333326,
-         'EndTime': 55248.130800000006,
-         'IntegrationTime': 408.38400173187256,
-         'field_0': {'code': 'none',
-                     'direction': {'m0': {'unit': 'rad', 'value': 1.4433872913993107},
-                                   'm1': {'unit': 'rad', 'value': 0.2361430477948328},
-                                   'refer': 'J2000',
-                                   'type': 'direction'},
-                     'name': 'J0530+135'},
-         'field_1': {'code': 'none',
-                     'direction': {'m0': {'unit': 'rad', 'value': 0.0},
-                                   'm1': {'unit': 'rad', 'value': 0.0},
-                                   'refer': 'J2000',
-                                   'type': 'direction'},
-                     'name': 'Mars'},
-         'field_2': {'code': 'none',
-                     'direction': {'m0': {'unit': 'rad', 'value': 1.6056810952191334},
-                                   'm1': {'unit': 'rad', 'value': -0.14975884913199947},
-                                   'refer': 'J2000',
-                                   'type': 'direction'},
-                     'name': 'J0607-085'},
-         'nfields': 3,
-         'numrecords': 1080,
-         'scan_1': {'0': {'BeginTime': 55248.126073333326,
-                          'EndTime': 55248.12846666667,
-                          'FieldId': 0,
-                          'FieldName': 'J0530+135',
-                          'IntegrationTime': 3.0240000000000187,
-                          'SpwIds': np.array([0, 1], dtype=np.int32),
-                          'StateId': 0,
-                          'nRow': 600,
-                              'scanId': 1}},
-         'scan_2': {'0': {'BeginTime': 55248.12877055556,
-                          'EndTime': 55248.13014111111,
-                          'FieldId': 1,
-                          'FieldName': 'Mars',
-                          'IntegrationTime': 3.023999999999993,
-                          'SpwIds': np.array([0, 1], dtype=np.int32),
-                          'StateId': 5,
-                          'nRow': 360,
-                          'scanId': 2}},
-         'scan_3': {'0': {'BeginTime': 55248.130450000004,
-                          'EndTime': 55248.130800000006,
-                              'FieldId': 2,
-                          'FieldName': 'J0607-085',
-                          'IntegrationTime': 3.024000000000007,
-                          'SpwIds': np.array([0, 1], dtype=np.int32),
-                          'StateId': 8,
-                          'nRow': 120,
-                          'scanId': 3}},
-        'timeref': 'UTC'}
-        ref['uid___X02_X3d737_X1_01_small.ms'] = ref_base
-        # Numerical differences in MMS
-        ref['genmms.mms'] = copy.deepcopy(ref_base)
-        ref['genmms.mms']['scan_1']['0']['IntegrationTime'] = 3.0240000000000475
-        ref['genmms.mms']['scan_2']['0']['IntegrationTime'] = 3.023999999999984
-        ref['gentimeavgms.ms'] = ref_base
-        ref['gentimeavgmms.mms'] = ref['genmms.mms']
 
         filename = os.path.basename(dataset)
         try:
-            np.testing.assert_equal(result, ref[filename])
+            np.testing.assert_equal(result, self.ref_return[filename])
         except AssertionError as exc:
             self.fail('Unexpected different in listobs output dictionary. Details: {}'.
                       format(exc))
