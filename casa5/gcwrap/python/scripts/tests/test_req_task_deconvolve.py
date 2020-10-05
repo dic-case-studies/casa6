@@ -28,9 +28,9 @@
 #  These tests need data stored in casa-data/regression/unittest/clean/refimager
 #  The test_mask_autobox_multithresh_standard_cube_eph test needs data stored in asa-data-req/stakeholders/alma
 #
-#  For a developer build, to get the datasets locally 
-#
-#  --- Get the data: https://open-bitbucket.nrao.edu/projects/CASA/repos/casa-data/browse
+#  For a developer build, to get the datasets locally
+#  - https://open-bitbucket.nrao.edu/projects/CASA/repos/casa-data/browse
+#  - https://open-bitbucket.nrao.edu/scm/casa/casa-data-req.git
 #
 ##########################################################################
 #
@@ -415,7 +415,7 @@ else:
     _me = me
 
     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
-    refdatapath2 = os.environ.get('CASAPATH').split()[0] +  + '/data/stakeholders/alma/'
+    refdatapath2 = os.environ.get('CASAPATH').split()[0] + '/stk_data/stakeholders/alma/'
 
 th = TestHelpers()
 

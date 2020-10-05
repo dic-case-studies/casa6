@@ -338,7 +338,10 @@ class ImagerParameters():
         except Exception as exc:
             if len(errs) > 0:
                 # errs string indicates that maybe this exception was our fault, indicate as such and provide the errs string to the user
-                raise Exception("Parameter Errors : \n{}\nThese errors may have caused the '{}'".format(errs, type(exc))) from exc
+                if is_CASA6:
+                    raise Exception("Parameter Errors : \n{}\nThese errors may have caused the '{}'".format(errs, type(exc)))
+                else:
+                    raise Exception("Parameter Errors : \n{}".format(errs))
             else:
                 # something unforseen happened, just re-throw the exception
                 raise

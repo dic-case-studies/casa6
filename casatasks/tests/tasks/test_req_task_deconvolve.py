@@ -415,7 +415,7 @@ else:
     _me = me
 
     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
-    refdatapath2 = os.environ.get('CASAPATH').split()[0] +  + '/data/stakeholders/alma/'
+    refdatapath2 = os.environ.get('CASAPATH').split()[0] + '/stk_data/stakeholders/alma/'
 
 th = TestHelpers()
 
