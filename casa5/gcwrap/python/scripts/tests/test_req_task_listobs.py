@@ -103,14 +103,15 @@ else:
         # datapath for ref files
         datapath = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/text/'
     else:
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
-        datapath = dataroot + 'unittest/listobs/'
-
-        mesSet = datapath + 'uid___X02_X3d737_X1_01_small.ms'
+        mesSet = os.environ.get('CASAPATH').split()[
+                     0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
         # Data for old test
-        msfile1Orig = datapath + 'ngc5921_ut.ms'
-        msfile2Orig = datapath + 'uid___X02_X3d737_X1_01_small.ms'
-        nep = datapath + 'nep2-shrunk.ms'
+        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921_ut.ms'
+        msfile2Orig = os.environ.get('CASAPATH').split()[
+                          0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
+        nep = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms'
+        # datapath for ref files
+        datapath = os.environ.get('CASAPATH').split()[0] + 'casa-data-req/text/'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
