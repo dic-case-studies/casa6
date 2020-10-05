@@ -522,7 +522,7 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
         String::toString(nChunk_) + ".");
       progress = ((double)chunk + 1) / nChunk_;
       thread->setProgress((unsigned int)((progress * 100) + 0.5));
-	}
+    }
 
     // Set up CT Averager for each averaged chunk
     Int nAntenna1 = ci.antenna1().size();
@@ -545,7 +545,7 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     pmscta.finalizeAverage();
     NewCalTable avgTable = pmscta.avgCalTable();
 
-    if (avgTable.nrow()	> 0) {
+    if (avgTable.nrow() > 0) {
       ROCTIter avgTableCti(avgTable, sortColumns_);
       avgTableCti.reset();
 

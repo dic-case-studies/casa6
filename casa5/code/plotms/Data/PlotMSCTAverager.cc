@@ -50,12 +50,7 @@ PlotMSCTAverager::PlotMSCTAverager(
     blnWtSum_p(),
     initialized_p(false),
     isAccum_p(false),
-    debug_(false)
-{
-  if (debug_) {
-    cout << "PMSCTA::PMSCTA()" << endl;
-  }
-}
+    debug_(false) {}
 
 //----------------------------------------------------------------------------
 
@@ -256,11 +251,11 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   // Accumulated data (PARAM column) and flags
   Complex czero(0.0);
   if (isComplex_p) {
-    avgCParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
-    avgCParam_.set(czero);
+    accumCParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+    accumCParam_.set(czero);
   } else {
-    avgFParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
-    avgFParam_.set(0.0);
+    accumFParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+    accumFParam_.set(0.0);
   }
 
   minTimeOffset_p = DBL_MAX;
@@ -339,9 +334,9 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
 
             // ...so zero the accumulators
             if (isComplex_p) {
-              avgCParam_(ipol, ichan, obln) = 0.0;
+              accumCParam_(ipol, ichan, obln) = 0.0;
             } else {
-              avgFParam_(ipol, ichan, obln) = 0.0;
+              accumFParam_(ipol, ichan, obln) = 0.0;
             }
             blnCount_p(obln) = 0;
           }
@@ -356,9 +351,9 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
         // Accumulate this (pol, chan) if appropriate
         if (accumulate) {
           if (isComplex_p) {
-            avgCParam_(ipol, ichan, obln) += iterCParam(ipol, ichan, ibln);
+            accumCParam_(ipol, ichan, obln) += iterCParam(ipol, ichan, ibln);
           } else {
-            avgFParam_(ipol, ichan, obln) += iterFParam(ipol, ichan, ibln);
+            accumFParam_(ipol, ichan, obln) += iterFParam(ipol, ichan, ibln);
           }
 
           blnCount_p(obln)++; // per-baseline count

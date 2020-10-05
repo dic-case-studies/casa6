@@ -160,8 +160,10 @@ private:
   casacore::Vector<casacore::Int> avgAntenna2_;
   casacore::Vector<casacore::Int> avgBaseline_;
 
-  casacore::Cube<casacore::Complex> avgCParam_;
-  casacore::Cube<casacore::Float> avgFParam_;
+  // Accumulated in accumulate()
+  casacore::Cube<casacore::Complex> accumCParam_;
+  casacore::Cube<casacore::Float> accumFParam_;
+
   casacore::Cube<casacore::Float> avgSnr_;
   casacore::Cube<casacore::Bool> avgFlag_;
 
