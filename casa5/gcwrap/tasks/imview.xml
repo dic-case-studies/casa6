@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="imview" category="utility, visualization" async="never">
+<task async="never" category="utility, visualization" name="imview" type="function">
     <shortdescription>View an image</shortdescription>
     <description>
         The imview task will display images in raster, contour, vector or
@@ -30,34 +25,34 @@
         and analysis tasks that are not available from the command-line start.
     </description>
     <input>
-    <param type="any" name="raster">
-        <description>(Optional)  Raster filename (string) or complete raster config dictionary. The allowed dictionary keys are file (string), scaling (numeric), range (2 element numeric vector), colormap (string), and colorwedge (bool).</description>
-        <any type="variant" limittypes="string record"/>
-            <value type="record"></value>
+    <param name="raster" type="any"><shortdescription>(Optional)  Raster filename (string) or complete raster config dictionary. The allowed dictionary keys are file (string), scaling (numeric), range (2 element numeric vector), colormap (string), and colorwedge (bool).</shortdescription><description>(Optional)  Raster filename (string) or complete raster config dictionary. The allowed dictionary keys are file (string), scaling (numeric), range (2 element numeric vector), colormap (string), and colorwedge (bool).</description>
+        
+        <any limittypes="string record" type="variant"/>
+            <value type="record"/>
     </param>
 
-    <param type="any" name="contour">
-        <description>(Optional)  Contour filename (string) or complete contour config dictionary. The allowed dictionary keys are file (string), levels (numeric vector), unit (float), and base (float).</description>
-        <any type="variant" limittypes="string record"/>
-        <value type="record"></value>
+    <param name="contour" type="any"><shortdescription>(Optional)  Contour filename (string) or complete contour config dictionary. The allowed dictionary keys are file (string), levels (numeric vector), unit (float), and base (float).</shortdescription><description>(Optional)  Contour filename (string) or complete contour config dictionary. The allowed dictionary keys are file (string), levels (numeric vector), unit (float), and base (float).</description>
+        
+        <any limittypes="string record" type="variant"/>
+        <value type="record"/>
     </param>
 
-    <param type="any" name="zoom">
-        <description>(Optional)  zoom can specify intermental zoom (integer), zoom region read from a file (string) or dictionary specifying the zoom region. The dictionary can have two forms. It can be either a simple region specified with blc (2 element vector) and trc (2 element vector) [along with an optional coord key ("pixel" or "world"; pixel is the default) or a complete region rectangle e.g. loaded with "rg.fromfiletorecord( )". The dictionary can also contain a channel (integer) field which indicates which channel should be displayed.</description>
-            <any type="variant" limittypes="int string record"/>
+    <param name="zoom" type="any"><shortdescription>(Optional)  zoom can specify intermental zoom (integer), zoom region read from a file (string) or dictionary specifying the zoom region. The dictionary can have two forms. It can be either a simple region specified with blc (2 element vector) and trc (2 element vector) [along with an optional coord key (&quot;pixel&quot; or &quot;world&quot;; pixel is the default) or a complete region rectangle e.g. loaded with &quot;rg.fromfiletorecord( )&quot;. The dictionary can also contain a channel (integer) field which indicates which channel should be displayed.</shortdescription><description>(Optional)  zoom can specify intermental zoom (integer), zoom region read from a file (string) or dictionary specifying the zoom region. The dictionary can have two forms. It can be either a simple region specified with blc (2 element vector) and trc (2 element vector) [along with an optional coord key (&quot;pixel&quot; or &quot;world&quot;; pixel is the default) or a complete region rectangle e.g. loaded with &quot;rg.fromfiletorecord( )&quot;. The dictionary can also contain a channel (integer) field which indicates which channel should be displayed.</description>
+        
+            <any limittypes="int string record" type="variant"/>
             <value type="int">1</value>
         </param>
 
-        <param type="any" name="axes">
-            <description>(Optional)  this can either be a three element vector (string) where each element describes what should be found on each of the x, y, and z axes or a dictionary containing fields "x", "y" and "z" (string).</description>
-            <any type="variant" limittypes="string record"/>
-            <value type="record"></value>
+        <param name="axes" type="any"><shortdescription>(Optional)  this can either be a three element vector (string) where each element describes what should be found on each of the x, y, and z axes or a dictionary containing fields &quot;x&quot;, &quot;y&quot; and &quot;z&quot; (string).</shortdescription><description>(Optional)  this can either be a three element vector (string) where each element describes what should be found on each of the x, y, and z axes or a dictionary containing fields &quot;x&quot;, &quot;y&quot; and &quot;z&quot; (string).</description>
+            
+            <any limittypes="string record" type="variant"/>
+            <value type="record"/>
         </param>
 
-        <param type="any" name="out">
-            <description>(Optional)  Output filename or complete output config dictionary. If a string is passed, the file extension is used to determine the output type (jpg, pdf, eps, ps, png, xbm, xpm, or ppm). If a dictionary is passed, it can contain the fields, file (string), scale (float), dpi (int), or orient (landscape or portrait). The scale field is used for the bitmap formats (i.e. not ps or pdf) and the dpi parameter is used for scalable formats (pdf or ps).</description>
-            <any type="variant" limittypes="string record"/>
-            <value type="string"></value>
+        <param name="out" type="any"><shortdescription>(Optional)  Output filename or complete output config dictionary. If a string is passed, the file extension is used to determine the output type (jpg, pdf, eps, ps, png, xbm, xpm, or ppm). If a dictionary is passed, it can contain the fields, file (string), scale (float), dpi (int), or orient (landscape or portrait). The scale field is used for the bitmap formats (i.e. not ps or pdf) and the dpi parameter is used for scalable formats (pdf or ps).</shortdescription><description>(Optional)  Output filename or complete output config dictionary. If a string is passed, the file extension is used to determine the output type (jpg, pdf, eps, ps, png, xbm, xpm, or ppm). If a dictionary is passed, it can contain the fields, file (string), scale (float), dpi (int), or orient (landscape or portrait). The scale field is used for the bitmap formats (i.e. not ps or pdf) and the dpi parameter is used for scalable formats (pdf or ps).</description>
+            
+            <any limittypes="string record" type="variant"/>
+            <value type="string"/>
         </param>
 
                 <constraints>
@@ -77,19 +72,19 @@
 
         To open a particular image:
 
-            imview "ngc5921.clean.image"
+            imview &quot;ngc5921.clean.image&quot;
 
         to open an image and overlay a contour:
 
-            imview "ngc5921.clean.image", "ngc5921.clean.image"
+            imview &quot;ngc5921.clean.image&quot;, &quot;ngc5921.clean.image&quot;
 
         or equivalently:
 
-            imview( raster="ngc5921.clean.image", contour="ngc5921.clean.image" )
+            imview( raster=&quot;ngc5921.clean.image&quot;, contour=&quot;ngc5921.clean.image&quot; )
 
         to output an image:
 
-            imview( raster="ngc5921.clean.image", out="ngc5921-01.png" )    
+            imview( raster=&quot;ngc5921.clean.image&quot;, out=&quot;ngc5921-01.png&quot; )    
             
 
         There are five optional parameters for imview -- raster, contour, zoom,
@@ -97,41 +92,41 @@
         are treated as python dictionaries:
 
         raster  -- (string) image file to open
-                   (dict)   file (string)     => image file to open
-                            scaling (float)   => scaling power cycles
-                            range (float*2)   => data range
-                            colormap (string) => name of colormap
-                            colorwedge (bool) => show color wedge?
+                   (dict)   file (string)     =&gt; image file to open
+                            scaling (float)   =&gt; scaling power cycles
+                            range (float*2)   =&gt; data range
+                            colormap (string) =&gt; name of colormap
+                            colorwedge (bool) =&gt; show color wedge?
         contour -- (string) file to load as a contour
-                   (dict)   file (string)     => file to load
-                            levels (float*N)  => relative levels
-                            base (numeric)    => zero in relative levels
-                            unit (numeric)    => one in the relative levels
+                   (dict)   file (string)     =&gt; file to load
+                            levels (float*N)  =&gt; relative levels
+                            base (numeric)    =&gt; zero in relative levels
+                            unit (numeric)    =&gt; one in the relative levels
         zoom    -- (int)    integral zoom level
                    (string) region file to load as the zoom region
-                   (dict)   blc (numeric*2)   => bottom left corner
-                            trc (numeric*2)   => top right corner
-                            coord (string)    => pixel or world
-                            channel (int)     => chanel to display
-                   (dict)   &lt;region record&gt;   => record loaded
+                   (dict)   blc (numeric*2)   =&gt; bottom left corner
+                            trc (numeric*2)   =&gt; top right corner
+                            coord (string)    =&gt; pixel or world
+                            channel (int)     =&gt; chanel to display
+                   (dict)   &lt;region record&gt;   =&gt; record loaded
                                                  e.g. rg.fromfiletorecord( )
         axes    -- (string*3) demension to display on the x, y, and z axes
-                   (dict)     x               => dimension for x-axes
-                              y               => dimension for y-axes
-                              z               => dimension for z-axes
+                   (dict)     x               =&gt; dimension for x-axes
+                              y               =&gt; dimension for y-axes
+                              z               =&gt; dimension for z-axes
         out     -- (string) file with a supported extension
                             [jpg, pdf, eps, ps, png, xbm, xpm, ppm]
-                    (dict)    file (string)   => filename
-                              format (string) => valid ext (filename ext overrides)
-                              scale (numeric) => scale for non-eps, non-ps output
-                              dpi (numeric)   => dpi for eps or ps output
-                              orient (string) => portrait or landscape
+                    (dict)    file (string)   =&gt; filename
+                              format (string) =&gt; valid ext (filename ext overrides)
+                              scale (numeric) =&gt; scale for non-eps, non-ps output
+                              dpi (numeric)   =&gt; dpi for eps or ps output
+                              orient (string) =&gt; portrait or landscape
 
         Examples: 
 
         1)  A subset (zoom) of a raster image. Note the notation of curly brackets:
 
-            imview(raster="ngc5921.clean.image", out="ngc5921-02.png",
+            imview(raster=&quot;ngc5921.clean.image&quot;, out=&quot;ngc5921-02.png&quot;,
                    zoom={'channel': 10, 'blc': [113,109], 'trc': [141,136]} )
 
 
@@ -171,7 +166,7 @@
                         'levels': [-0.2, 0.2, 0.25, 0.3, 0.35, 0.4, 0.6, 0.8] },
                zoom='myregion.rgn')
 
-        specifying "zoom={'file': 'myregion.rgn', 'channel': 10}" would result
+        specifying &quot;zoom={'file': 'myregion.rgn', 'channel': 10}&quot; would result
         in the same level of zoom and would display channel number 10 from
         the cube.
 
