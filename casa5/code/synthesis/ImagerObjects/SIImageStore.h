@@ -215,6 +215,7 @@ class SIImageStore
 
   void setDataPolFrame(StokesImageUtil::PolRep datapolrep) {itsDataPolRep = datapolrep;};
   virtual void calcSensitivity();
+  virtual casacore::Double calcFractionalBandwidth();// Not implemented for SIImageStore. Only for multi-term. 
 
   casacore::CoordinateSystem getCSys(){return itsCoordSys;}
 

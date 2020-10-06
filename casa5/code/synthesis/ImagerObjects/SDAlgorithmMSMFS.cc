@@ -173,6 +173,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	//	itsMTCleaner.setmodel( tix, itsMatModels[tix] );
       }
 
+    // Print some useful info about the frequency setup for this MTMFS run
+    itsImages->calcFractionalBandwidth();
 
   }
 

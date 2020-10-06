@@ -3,9 +3,9 @@
 
 <task category="imaging" name="deconvolve" type="function">
 
-  <shortdescription>Dirty Image Modeling and Deconvolution</shortdescription>
+  <shortdescription>Image-domain deconvolution</shortdescription>
 
-  <description>deconvolve executes the deconvolution, restoration, and automasking of the clean cycle. It can be viewed as the minor cycle of the tclean algorithm. The new functionality that it introduces is the ability to just run the deconvolution step alone.
+  <description>Task deconvolve executes image-domain deconvolution with options for automasking and restoration. It can be viewed as the minor cycle of the iterative image reconstruction offered by the tclean task. The functionality that it introduces is the ability to just run the deconvolution step alone.
   </description>
 
   <input>
