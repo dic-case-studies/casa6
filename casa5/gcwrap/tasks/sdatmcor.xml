@@ -123,10 +123,10 @@
     </param>
 
     <param name="atmtype" type="any">
-        <shortdescription>atmtype. (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</shortdescription>
-        <description>atmtype.(1: tropical, 2: mid lat summer, 3: mid lat winter, etc)</description>
+        <shortdescription>atmtype. (1: tropical, 2: mid lat summer, 3: mid lat winter, 4: sub art summer, 5: sub art winter) (&quot;&quot; =2)</shortdescription>
+        <description>atmtype.(1: tropical, 2: mid lat summer, 3: mid lat winter, 4: sub art summer, 5: sub art winter) (&quot;&quot; =2)</description>
         <any type="variant"  limittypes="string int"/>  
-        <value type="string"></value>
+        <value type="string">2</value>
     </param>
 
     <param name="atmdetail" type="bool">
@@ -190,14 +190,14 @@
         <shortdescription>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
         <description>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</description>
         <any type="variant"  limittypes="string stringArray doubleArray"/>
-        <value type="doubleArray"></value>
+        <value type="string"></value>
     </param>
 
     <param name="layertemperature" type="any" subparam="true">
         <shortdescription>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
         <description>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</description>
         <any type="variant"  limittypes="string stringArray doubleArray"/>
-        <value type="doubleArray"></value>
+        <value type="string"></value>
     </param>
 
     <param name="debug" type="string">
@@ -219,8 +219,8 @@
             <default param="PWV"><value type="string"></value></default>
             <default param="dp"><value type="string"></value></default>
             <default param="dpm"><value type="double">-1</value></default>
-            <default param="layerboundaries"><value type="doubleArray"></value></default>
-            <default param="layertemperature"><value type="doubleArray"></value></default>
+            <default param="layerboundaries"><value type="string"></value></default>
+            <default param="layertemperature"><value type="string"></value></default>
         </equals>
       </when>
     </constraints>

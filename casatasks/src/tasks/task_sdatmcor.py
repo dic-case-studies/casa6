@@ -10,6 +10,14 @@ if is_CASA6:
     from casatools import quanta, table, msmetadata
     from casatools import atmosphere
 
+    # measures #
+    from casatools import measures
+    me = measures()
+
+    # simutil #
+    import casatasks.private.simutil as simutil
+    ut = simutil.simutil()
+
     # mstransform #
     from casatasks import mstransform
 
@@ -28,6 +36,13 @@ else:
 
     # mstransform #
     from tasks import mstransform
+
+    # measure #
+    me = casac.measures()
+
+    # simutil #
+    from simutil import simutil
+    ut = simutil()
 
     msmd = msmetadata()
     tb = tbtool()
@@ -50,7 +65,7 @@ def sdatmcor(
 
 # Information
     casalog.origin(origin)
-    msg = "Revision  sdatmcor 0928 for Release #12 and Code-Review."
+    msg = "Revision sdatmcor 1002 from Release #12. Revising In Progress."
     _msg(msg)
 
 #
@@ -93,13 +108,18 @@ def sdatmcor(
     dpm         = dpm  # through (string or float)
 
 # User-Defined Profile (nothing =[] )
+    if (type(layerboundaries) is str) and (layerboundaries == ''):
+        layerboundaries = []
+    if (type(layertemperature) is str) and layertemperature == '':
+        layertemperature = []
+
+    if(len(layerboundaries) != len(layertemperature)):
+        _msg("Data count mismatches in specified user-defined parameter.", 'ERROR')
+        return False
 
     layerboundaries = _conv_to_doubleArrayList(layerboundaries)
     layertemperature = _conv_to_doubleArrayList(layertemperature)
 
-    if(len(layerboundaries) != len(layertemperature)):
-        _msg("Data count mismatches in specified user-defined parameter.",'ERROR')
-        return False
 
 #
 # Call calc Function
@@ -201,7 +221,7 @@ def _form_value_unit(data, base_unit):
 # (action) check in_para and set default argument.
 #  if in_para is available , return in_para with being converted.
 #  otherwise, retrurns def_para to use as a default parameter.
-
+#
 def _set_float_param(in_arg, def_para):
     if (in_arg != -1)and(in_arg > 0):
         return in_arg
@@ -260,34 +280,67 @@ def _conv_to_doubleArrayList(in_list):
         _msg("Invalid arg type, expecting separated string or list.", 'SEVERE')
         return []   # invalid type
 
+#
+# decide Default Antenna ID
+#
+def get_defaut_antenna(msname, antenna):
+    # chose base-antenna from selected Antena ID 
+    # Search Priority   1 > 2 > 3 > X (only one) 
+    msmd.open(msname)
+    ant_list = msmd.antennaids(antenna)
+    n_ant = len(ant_list)
+
+    # Choose One #
+    if 1 in ant_list:
+        i_ant = 1
+    elif 2 in ant_list:
+        i_ant = 2
+    elif 3 in ant_list:
+        i_ant = 3
+    elif n_ant == 1:
+        i_ant = ant_list[0]
+    else:
+        _msg("INTERNAL ERROR.")
+
+    # INFO 
+    ant_name = msmd.antennanames(i_ant)[0] 
+    _msg("Default Antenna")
+    _msg(" - totally %d antenssas were picked up. [query=%s]" % (n_ant, antenna))
+    _msg(" - Antenna ID  = %d was chosen. Name= %s" % (i_ant, ant_name))
+
+    msmd.close()
+    return i_ant
+
 
 #
-# Logging CASA LOG (INFO/WARN/SEVERE)
+# decide default value of 'Altitude'
+# - This requires to calculate Elevation from Antenna Position Information.
 #
-def _msg(msg, msgtype='INFO'):
-    print(msg)
-    casalog.post(msg, msgtype, origin=origin)
-
-
-#########################
-# Search ANTENNA_ID
-#########################
-def get_antennaId(msname, antennaName):
+def get_default_altitude(msname, antid): 
     tb.open(os.path.join(msname, 'ANTENNA'))
-    # Query
-    queryText = "NAME=='%s'" % antennaName
-    subtb = tb.query(queryText)
 
-    # Access Table
-    rows = subtb.rownumbers()
-    iAnt = rows[0]   # Single Hit is assumed
+    # obtain the antenna Position spified by antid
+    pos = tb.getcell('POSITION', antid)
+    X = float(pos[0]) 
+    Y = float(pos[1])
+    Z = float(pos[2])
 
-    # close
-    subtb.close()
+    # ref
+    ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
+    # translate
+    P = ut.xyz2long(X, Y, Z, 'WGS84')
+
+    # [0]=long, [1]=lati, [2]]=elevation
+    elev = P[2]  # elevation.
+
     tb.close()
-    _msg("get_antennaId:: iAnt = %d" % iAnt)
-    return iAnt
-    
+    _msg("Default Altitude")
+    _msg(" - Antenna ID: %d. " % antid)
+    _msg(" - Ref = %s. " % ref)
+    _msg(" - Position: (%s, %s, %s)." % (X, Y, Z))
+    _msg("Elevation:  %f" % elev )
+    return elev   
+
 
 #
 # show ATM Profile
@@ -322,6 +375,16 @@ def showLayerInfo(at):
 
     _msg(p[0])
     return
+
+
+#
+# Logging CASA LOG (INFO/WARN/SEVERE)
+#
+def _msg(msg, msgtype='INFO'):
+    print(msg)
+    casalog.post(msg, msgtype, origin=origin)
+
+
 #
 # Calculation Method (Replaced to C++ in next develpment.)
 #
@@ -364,7 +427,7 @@ def calc_sdatmcor(
     skipTaskExec = False          # skip execution at the begining of calc_sdatmcor.
     showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
-    interruptCorrectionCnt = 1000  #  (limit count)
+    interruptCorrectionCnt = 200  #  (limit count)
 
     keepMstTemp = False       # keep tempFile(mstransform out) for debug
 
@@ -387,39 +450,10 @@ def calc_sdatmcor(
         _msg(msg)
         return True
 
-    #-----------------------------------------------
-    #   Inside Constant for ATM (from org. script)
-    #-----------------------------------------------
-    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
-    maxalt = 120        ### maxAltitude parameter for at (km)
-    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
-    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
-
-    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
-                        ### set to True if spectral averaging was not employed for the spw
-    dp = 10.0   ### initATMProfile DEFAULT ###
-    dpm = 1.2   ### initATMProfile DEFAULT ###
-
-    # other constant
-    antenna = 1      # default antenna_id
-    altitude = 5073  # default altitude
-    nband = 1         # number of band in initSpectralWindow()
-
-    # normalized spectral response for Hanning window, FWHM=10
-    hanning = [-0.00098041, -0.00202866, -0.00265951, -0.00222265,
-               0.00000000,  0.00465696,  0.01217214,  0.02260546,  0.03556241,
-               0.05017949,  0.06519771,  0.07911911,  0.09042184,  0.09779662,
-               0.10035898,  0.09779662,  0.09042184,  0.07911911,  0.06519771,
-               0.05017949,  0.03556241,  0.02260546,  0.01217214,  0.00465696,
-               0.00000000, -0.00222265, -0.00265951, -0.00202866, -0.00098041]
-
     #
     #  File name section
     #     - 'atmtype' can be used for output file, if necessary.
     #
-
-    # atmtype #
-    atmtype_for_file     = _set_int_param(a_atmtype, atmtype)  # 'atmtype_for_file'  is NotACTIVE, reserved. #
 
     # datacolumn (XML fills default) ,to UPPER CASE #
     datacolumn = p_datacolumn.upper()
@@ -437,7 +471,6 @@ def calc_sdatmcor(
     # default file format (original style) #
     rawms = '%s%s' % (ebuid, ebext)
     calms = '%s%s' % (ebuid, ebext)                    ### name of MS in which (standard-)calibrated spectra are stored
-    corms = '%s.ms.atm%d' % (ebuid, atmtype_for_file)  ### name of MS form (based on Original)
 
     # outfile set (=corms), if atmtype is need in outfile, write here as follows, including atmtype.
     #     corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
@@ -469,13 +502,44 @@ def calc_sdatmcor(
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(corms)
         else:
-            _msg("Overwrite:: Specified outputfile already exist. Abort.",'ERROR')
+            _msg("Overwrite:: Specified outputfile already exist. Abort.", 'ERROR')
             return False
 
-    #########################
+    ##################################################
+    #   Inside Constant for ATM (from org. script)
+    ##################################################
+
+    _msg("Initializing Tool Constant.")
+    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
+    maxalt = 120        ### maxAltitude parameter for at (km)
+    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
+    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
+
+    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
+                        ### set to True if spectral averaging was not employed for the spw
+    dp = 10.0   ### initATMProfile DEFAULT ###
+    dpm = 1.2   ### initATMProfile DEFAULT ###
+
+    #
+    # Antenna and its altitude 
+    #
+    antenna = get_defaut_antenna(rawms, p_antenna)          # default antenna_id   (UNDER CONSTRUCTION: internal is TBD)
+    altitude = get_default_altitude(rawms, antenna)       # default altitude  - extracting from MS/OBSERVATION and ANTENNA
+
+    # other 
+    nband = 1         # number of band in initSpectralWindow()
+
+    # normalized spectral response for Hanning window, FWHM=10
+    hanning = [-0.00098041, -0.00202866, -0.00265951, -0.00222265,
+               0.00000000,  0.00465696,  0.01217214,  0.02260546,  0.03556241,
+               0.05017949,  0.06519771,  0.07911911,  0.09042184,  0.09779662,
+               0.10035898,  0.09779662,  0.09042184,  0.07911911,  0.06519771,
+               0.05017949,  0.03556241,  0.02260546,  0.01217214,  0.00465696,
+               0.00000000, -0.00222265, -0.00265951, -0.00202866, -0.00098041]
+
+    #
     # Data Selection
-    #  (under construction)
-    #########################
+    #
 
     # Temp File (cleaned use)
     tempName = './_AtmCor-Temp'
@@ -508,16 +572,6 @@ def calc_sdatmcor(
         _msg(msg, 'SEVERE')
         return False
 
-    # Antenna ID
-    #   only Single antenna is available.
-    #   multiple antenna  TBD
-
-    # antenna List, when multiple antennas are given
-    ant_list = _list_comma_string(p_antenna, dType='str')
-    _msg("- antenna_list = %s" % ant_list)
-
-    # antenna (this is used inside the script)
-    antenna = get_antennaId(rawms, p_antenna)
 
     # enable Data Selection
     # copy temp-out to calms for input MS.  #
@@ -526,6 +580,11 @@ def calc_sdatmcor(
 
     calms = tempFileName
     _ms_copy(src=tempFileName, dst=corms)
+
+    #
+    # From here, main part of original script starts.
+    # In some sections, additional statement for Task are inserted.
+    #
 
     ################################################################
     # Get metadata
@@ -666,11 +725,15 @@ def calc_sdatmcor(
     #
     _msg("Determine spws, outputspw")
 
-    # set processing SPW #
+    #
+    # set processing SPW 
+    #
     if (p_spw != ''):
         spws = _list_comma_string(p_spw, dType='int')
 
+    #
     # set Output SPW (if no arg, use spws) #
+    #
     if (a_outputspw == ''):
         outputspws = spws                    # use calculated 'spws' above
     else:
@@ -679,7 +742,9 @@ def calc_sdatmcor(
     _msg('- spws %s' % spws)
     _msg('- outputspws %s' % outputspws)    # expected outputspw
 
+    #
     # Check if specified if outputspw is in the list of spws
+    #
     _found = False
     for spw in outputspws:
         if spw in spws:
@@ -733,9 +798,15 @@ def calc_sdatmcor(
         _msg("- set parameters for initATM and obtain zenith opacity")
 
         #
-        # Default Value and Argument parameter set
-        # initial tool parameters are ready. use these is needed.
+        # (Revised part from original)
         #
+        #   Default Value and Argument parameter set
+        #   initial tool parameters are ready. use these is needed.
+        #
+        #   The initial values set up were once extracted from the original
+        #   and Task Argments are to over-written if needed. 
+        #   This section is up to Task Specification rather than original script.
+        # 
         t_dtem_dh     = qa.quantity(lapserate, 'K/km')
         t_h0          = qa.quantity(scaleht, 'km')
         t_atmtype     = atmtype
@@ -749,22 +820,24 @@ def calc_sdatmcor(
         t_dpm         = dpm      # keep float
         t_maxAltitude = qa.quantity(maxalt, 'km')
 
+        #
         # user-defined Profile (example)
         #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
         #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
+        #
         t_layerboundaries  = a_layerboundaries   # array: layer boundary [m]
-        t_layertemperature = a_layerboundaries   # array: layer temerature [K]
+        t_layertemperature = a_layertemperature   # array: layer temerature [K]
 
         #
-        # Overwrite Values, if the Argument is specified.
+        # ATM fundamental 
         #
-
-        # ATM fundamental #
         t_dtem_dh     = _set_floatquantity_param(a_dtem_dh, t_dtem_dh, 'K/km')
         t_h0          = _set_floatquantity_param(a_h0, t_h0, 'km')
         t_atmtype     = _set_int_param(a_atmtype, t_atmtype)
 
+        #
         # Sub parameter, only when atmdetai is True #
+        #
         if t_atmdetail:
             _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
             t_altitude    = _set_floatquantity_param(a_altitude, t_altitude, 'm')
@@ -781,25 +854,30 @@ def calc_sdatmcor(
         else:
             _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
 
-        # print and log to confirm #
-        _msg("==========================================================")
-        _msg("  initATMProfile Parameters to set up. [atmdetail = %s]   " % t_atmdetail)
-        _msg("-----------------+----------------------------------------")
-        _msg(" dTem_dh         |%s" % t_dtem_dh)
-        _msg(" h0              |%s" % t_h0)
-        _msg(" altitude        |%s" % t_altitude)
-        _msg(" temperature     |%s" % t_temperature)
-        _msg(" pressure        |%s" % t_pressure)
-        _msg(" humidity        |%s" % t_humidity)
-        _msg(" pwv             |%s" % t_pwv)
-        _msg(" dp              |%s" % t_dp)
-        _msg(" dpm             |%s" % t_dpm)
-        _msg("*maxAltitude     |%s" % t_maxAltitude)
-        _msg(" layerboundaries |%s" % t_layerboundaries)
-        _msg(" layerboundaries |%s" % t_layertemperature)
-        _msg("-----------------+----------------------------------------")
+        #
+        # print and log to confirm 
+        #
+        _msg("===========================================================")
+        _msg("  initATMProfile Parameters TO SET UP. [atmdetail = %s]   " % t_atmdetail)
+        _msg("------------------+----------------------------------------")
+        _msg(" atmtype          |%s" % t_atmtype)
+        _msg(" dTem_dh          |%s" % t_dtem_dh)
+        _msg(" h0               |%s" % t_h0)
+        _msg(" altitude         |%s" % t_altitude)
+        _msg(" temperature      |%s" % t_temperature)
+        _msg(" pressure         |%s" % t_pressure)
+        _msg(" humidity         |%s" % t_humidity)
+        _msg(" pwv              |%s" % t_pwv)
+        _msg(" dp               |%s" % t_dp)
+        _msg(" dpm              |%s" % t_dpm)
+        _msg("*maxAltitude      |%s" % t_maxAltitude)
+        _msg(" layerboundaries  |%s" % t_layerboundaries)
+        _msg(" layertemperature |%s" % t_layertemperature)
+        _msg("------------------+----------------------------------------")
 
-        # initATMProfile #
+        ###################
+        # initATMProfile 
+        ###################
         atm = at.initAtmProfile(humidity=t_humidity,
                                 temperature=t_temperature,
                                 altitude=t_altitude,
@@ -812,14 +890,20 @@ def calc_sdatmcor(
                                 layerBoundaries=t_layerboundaries,
                                 layerTemperature=t_layertemperature)
 
-        # show intAtm result Information #
+        #
+        # show intAtm result Information 
+        #
         showAtmInfo(atm)
 
+        #
         #  Layer Info (automatically showing, when the arg is specified) #
+        #
         if len(t_layerboundaries) != 0:
             showLayerInfo(at)
-
+     
+        ###################
         # Spectral Window #
+        ###################
         at.initSpectralWindow(nband,
                               qa.quantity(fcenter, 'Hz'),
                               qa.quantity(nchan*chansep, 'Hz'),
@@ -847,6 +931,11 @@ def calc_sdatmcor(
         subtb = tb.query(querytext)
 
         # time data and numPol #
+
+        if datacolumn == 'CORRECTED_DATA':
+            datacolumn = 'DATA'
+            # other FLOAT_DATA, DATA : No change #
+  
         _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
         tmdata = subtb.getcol('TIME')
         data = subtb.getcol(datacolumn)
