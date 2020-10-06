@@ -261,6 +261,8 @@ public:
 
     virtual casacore::Bool areCorrelationsSorted() const;
     virtual casacore::IPosition getValidShape (casacore::Int) const;
+    virtual casacore::Vector<casacore::IPosition> getValidVectorShapes (casacore::Int) const;
+
     virtual VisModelDataI * getVisModelData() const;
 
 
@@ -318,6 +320,10 @@ public:
     virtual casacore::Int nChannels () const;
     virtual casacore::Int nCorrelations () const;
     virtual casacore::rownr_t nRows () const;
+    virtual casacore::rownr_t nShapes () const;
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const;
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const;
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const;
     virtual const casacore::Vector<casacore::Int> & observationId () const;
     virtual void setObservationId (const casacore::Vector<casacore::Int> & value);
     virtual const casacore::MDirection& phaseCenter () const;
@@ -539,6 +545,10 @@ private:
     virtual void fillNChannel (casacore::Int& value) const;
     virtual void fillNCorr (casacore::Int& value) const;
     virtual void fillNRow (casacore::Int& value) const;
+    virtual void fillNShapes (casacore::Int& value) const;
+    virtual void fillNRowPerShape (casacore::Vector<casacore::rownr_t>& value) const;
+    virtual void fillNChannelPerShape (casacore::Vector<casacore::Int>& value) const;
+    virtual void fillNCorrPerShape (casacore::Vector<casacore::Int>& value) const;
     virtual void fillObservationId (casacore::Vector<casacore::Int>& value) const;
     virtual void fillPhaseCenter (casacore::MDirection& value) const;
     virtual void fillPolFrame (casacore::Int& value) const;

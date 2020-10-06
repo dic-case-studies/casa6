@@ -75,7 +75,7 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                                    VisBufferComponent2::VisibilityCubeCorrected,
                                    NcNfNr, false);
     correctedVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesCorrected,
-                                    VisBufferComponent2::VisibilityCubeCorrected,
+                                    VisBufferComponent2::VisibilityCubesCorrected,
                                     NsNcNfNr, false);
     corrType_p.initialize (this, vb, &VisBufferImpl2::fillCorrType,
                            VisBufferComponent2::CorrType, NoCheck, false);
@@ -103,19 +103,19 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     flagCube_p.initialize (this, vb, &VisBufferImpl2::fillFlagCube,
                            VisBufferComponent2::FlagCube, NcNfNr, false);
     flagCubes_p.initialize (this, vb, &VisBufferImpl2::fillFlagCubes,
-                           VisBufferComponent2::FlagCube, NsNcNfNr, false);
+                           VisBufferComponent2::FlagCubes, NsNcNfNr, false);
     flagRow_p.initialize (this, vb, &VisBufferImpl2::fillFlagRow,
                           VisBufferComponent2::FlagRow, Nr, false);
     floatDataCube_p.initialize (this, vb, &VisBufferImpl2::fillFloatData,
                                 VisBufferComponent2::VisibilityCubeFloat, NcNfNr, false);
     floatDataCubes_p.initialize (this, vb, &VisBufferImpl2::fillFloatCubes,
-                                 VisBufferComponent2::VisibilityCubeFloat, NsNcNfNr, false);
+                                 VisBufferComponent2::VisibilityCubesFloat, NsNcNfNr, false);
     imagingWeight_p.initialize (this, vb, &VisBufferImpl2::fillImagingWeight,
                                 VisBufferComponent2::ImagingWeight, NoCheck, false);
     modelVisCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeModel,
                                VisBufferComponent2::VisibilityCubeModel, NcNfNr, false);
     modelVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesModel,
-                               VisBufferComponent2::VisibilityCubeModel, NsNcNfNr, false);
+                               VisBufferComponent2::VisibilityCubesModel, NsNcNfNr, false);
     nAntennas_p.initialize (this, vb, &VisBufferImpl2::fillNAntennas,
                             VisBufferComponent2::NAntennas, false);
     nChannels_p.initialize (this, vb, &VisBufferImpl2::fillNChannel,
@@ -124,6 +124,14 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                                 VisBufferComponent2::NCorrelations);
     nRows_p.initialize (this, vb, &VisBufferImpl2::fillNRow,
                         VisBufferComponent2::NRows, false);
+    nShapes_p.initialize (this, vb, &VisBufferImpl2::fillNShapes,
+                          VisBufferComponent2::NShapes, false);
+    nRowsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNRowPerShape,
+                                VisBufferComponent2::NRowsPerShape, Ns, false);
+    nChannelsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNChannelPerShape,
+                                    VisBufferComponent2::NChannelsPerShape, Ns, false);
+    nCorrelationsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNCorrPerShape,
+                                        VisBufferComponent2::NCorrelationsPerShape, Ns, false);
     observationId_p.initialize (this, vb, &VisBufferImpl2::fillObservationId,
                                 VisBufferComponent2::ObservationId, Nr, true);
     phaseCenter_p.initialize (this, vb, &VisBufferImpl2::fillPhaseCenter,
@@ -157,22 +165,22 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     visCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeObserved,
                           VisBufferComponent2::VisibilityCubeObserved, NcNfNr, false);
     visCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesObserved,
-                           VisBufferComponent2::VisibilityCubeObserved, NsNcNfNr, false);
+                           VisBufferComponent2::VisibilityCubesObserved, NsNcNfNr, false);
     weight_p.initialize (this, vb, &VisBufferImpl2::fillWeight,
                          VisBufferComponent2::Weight, NcNr, false);
     weights_p.initialize (this, vb, &VisBufferImpl2::fillWeights,
-                          VisBufferComponent2::Weight, NsNcNr, false);
+                          VisBufferComponent2::Weights, NsNcNr, false);
     weightSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectrum,
                                  VisBufferComponent2::WeightSpectrum,
                                  NcNfNr, false);
     weightSpectra_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectra,
-                                 VisBufferComponent2::WeightSpectrum,
+                                 VisBufferComponent2::WeightSpectra,
                                  NsNcNfNr, false);
     sigmaSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectrum,
                                 VisBufferComponent2::SigmaSpectrum,
                                 NcNfNr, false);
     sigmaSpectra_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectra,
-                                VisBufferComponent2::SigmaSpectrum,
+                                VisBufferComponent2::SigmaSpectra,
                                 NsNcNfNr, false);
 }
 
@@ -325,6 +333,10 @@ VisBufferImpl2::appendRowsComplete ()
     }
 
     cache_p->nRows_p.setSpecial (state_p->appendSize_p);
+    //Assume that the append happens on the first shape only
+    Vector<rownr_t> nRowsPerShape = cache_p->nRowsPerShape_p.get();
+    nRowsPerShape[0] = state_p->appendSize_p;
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
 
     state_p->appendSize_p = 0; //
 }
@@ -760,6 +772,14 @@ VisBufferImpl2::getValidShape (Int i) const
     return state_p->validShapes_p (i);
 }
 
+Vector<IPosition>
+VisBufferImpl2::getValidVectorShapes (Int i) const
+{
+    ThrowIf (i < 0 || i >= (int) state_p->validVectorShapes_p.nelements(),
+             String::format ("Invalid shape requested: %d", i));
+
+    return state_p->validVectorShapes_p (i);
+}
 
 ViImplementation2 *
 VisBufferImpl2::getViiP () const
@@ -1165,6 +1185,18 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     cache_p->nChannels_p.setSpecial (nChannels);
     cache_p->nCorrelations_p.setSpecial (nCorrelations);
 
+    Vector<rownr_t> nRowsPerShape(1);
+    Vector<Int> nChannelsPerShape(1);
+    Vector<Int> nCorrelationsPerShape(1);
+    nRowsPerShape[0] = nRows;
+    nChannelsPerShape[0] = nChannels;
+    nCorrelationsPerShape[0] = nCorrelations;
+
+    cache_p->nShapes_p.setSpecial (1);
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
+    cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
+    cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);
+
     setupValidShapes ();
 }
 
@@ -1189,6 +1221,18 @@ VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, rownr_t nRows,
     cache_p->nChannels_p.setSpecial(nChannels);
     cache_p->nRows_p.setSpecial(nRows);
 
+    Vector<rownr_t> nRowsPerShape(1);
+    Vector<Int> nChannelsPerShape(1);
+    Vector<Int> nCorrelationsPerShape(1);
+    nRowsPerShape[0] = nRows;
+    nChannelsPerShape[0] = nChannels;
+    nCorrelationsPerShape[0] = nCorrelations;
+
+    cache_p->nShapes_p.setSpecial (1);
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
+    cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
+    cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);
+
     setupValidShapes ();
 }
 
@@ -1202,6 +1246,15 @@ VisBufferImpl2::setupValidShapes ()
     state_p->validShapes_p [I3Nr] = IPosition (2, 3, nRows());
     //state_p->validShapes [NcNfNcatNr] = IPosition (4, nCorrelations(), nChannels(), nCategories(), nRows());
     //   flag_category is not used in CASA, so no need to implement checking.
+
+    state_p->validVectorShapes_p [Ns] = IPosition (1, nShapes());
+    state_p->validVectorShapes_p [NsNcNr].resize(nShapes());
+    state_p->validVectorShapes_p [NsNcNfNr].resize(nShapes());
+    for(size_t iShape = 0; iShape < nShapes(); iShape++)
+    {
+        state_p->validVectorShapes_p [NsNcNr][iShape] = IPosition (2, nCorrelationsPerShape()[iShape], nRowsPerShape()[iShape]);
+        state_p->validVectorShapes_p [NsNcNfNr][iShape] = IPosition (3, nCorrelationsPerShape()[iShape], nChannelsPerShape()[iShape], nRowsPerShape()[iShape]);
+    }
 }
 
 bool
@@ -1733,6 +1786,30 @@ rownr_t
 VisBufferImpl2::nRows () const
 {
     return cache_p->nRows_p.get ();
+}
+
+rownr_t
+VisBufferImpl2::nShapes () const
+{
+    return cache_p->nShapes_p.get ();
+}
+
+const Vector<rownr_t>&
+VisBufferImpl2::nRowsPerShape () const
+{
+    return cache_p->nRowsPerShape_p.get ();
+}
+
+const Vector<Int> &
+VisBufferImpl2::nChannelsPerShape () const
+{
+    return cache_p->nChannelsPerShape_p.get ();
+}
+
+const Vector<Int> &
+VisBufferImpl2::nCorrelationsPerShape () const
+{
+    return cache_p->nCorrelationsPerShape_p.get ();
 }
 
 const Vector<Int> &
@@ -2715,6 +2792,46 @@ VisBufferImpl2::fillNCorr (Int &) const
 
 void
 VisBufferImpl2::fillNRow (Int&) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNShapes (Int&) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNRowPerShape (Vector<rownr_t> &) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNChannelPerShape (Vector<Int> &) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNCorrPerShape (Vector<Int> &) const
 {
   CheckVisIter ();
 
