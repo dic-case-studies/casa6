@@ -25,7 +25,7 @@ if is_CASA6:
     tb = tbtool( )
     ms = mstool( )
 
-    ctsys_resolve = ctsys.resolve
+    datapath = ctsys.resolve('unittest/concat/')
 else:
     from __main__ import default
     from tasks import *
@@ -33,9 +33,9 @@ else:
 
     cb = cbtool( )
 
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata')
-        return os.path.join(dataPath,apath)
+    dataroot = os.environ.get('CASAPATH').split()[0]
+    datapath = os.path.join(dataroot,'casatestdata/unittest/concat/')
+    ephempath = os.path.join(dataroot, 'data/')
 
 myname = 'test_concat'
 
@@ -114,7 +114,6 @@ class test_concat(unittest.TestCase):
         global testmms
         res = None
 
-        datapath=ctsys_resolve('unittest/concat/')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -141,14 +140,14 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not ((mymsname in filespresent) or (mymsname in nonmmsinput)):
                     print("Copying MMS", mymsname)
-                    rval = os.system('cp -R '+datapathmms+'/'+mymsname+' .')
+                    rval = os.system('cp -RH '+datapathmms+'/'+mymsname+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
             for mymsname in nonmmsinput:
                 if not mymsname in filespresent:
                     print("Copying non-MMS ", mymsname)
-                    rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
+                    rval = os.system('cp -RH '+datapath+'/'+mymsname+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
                     
@@ -160,7 +159,7 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
                     print("Copying ", mymsname)
-                    rval = os.system('cp -RL '+os.path.join(datapath,mymsname)+' .')
+                    rval = os.system('cp -RH '+os.path.join(datapath,mymsname)+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
@@ -196,10 +195,16 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                            'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-            ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                            'Jupiter_54708-55437dUTC', 0)
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+                ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                                'Jupiter_54708-55437dUTC', 0)
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+                ms.addephemeris(1,os.path.join(ephempath,'ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                                'Jupiter_54708-55437dUTC', 0)
             ms.close()
             myinputmslist.append('xy1.ms')
             myinputmslist.append('xy1-noephem.ms')
@@ -228,8 +233,13 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                            'Uranus_54708-55437dUTC', '1908-201')
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')
+                
             ms.close()
             myinputmslist.append('xy2.ms')
 
@@ -257,8 +267,13 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
-                            'Uranus_55437-56293dUTC', '1908-201')
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+                                'Uranus_55437-56293dUTC', '1908-201')
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+                                'Uranus_55437-56293dUTC', '1908-201')
+                
             ms.close()
             myinputmslist.append('xy2late.ms')
 
