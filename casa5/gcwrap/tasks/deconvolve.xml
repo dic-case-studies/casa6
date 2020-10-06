@@ -481,7 +481,7 @@
     </param>
 
 
-    <param subparam="true" name="interactive" type="any">
+    <param name="interactive" type="any">
       <shortdescription>Modify masks and parameters at runtime</shortdescription>
       <description>Modify masks and parameters at runtime
 
