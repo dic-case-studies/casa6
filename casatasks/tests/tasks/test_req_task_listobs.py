@@ -101,7 +101,7 @@ else:
                           0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
         nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
         # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/text/'
+        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/'
     else:
         mesSet = os.environ.get('CASAPATH').split()[
                      0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
@@ -111,7 +111,7 @@ else:
                           0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
         nep = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms'
         # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + 'casa-data-req/text/'
+        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
