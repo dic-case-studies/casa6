@@ -28,18 +28,14 @@
 #if ! defined (MSVIS_TransformingVi2_H_121115_0950)
 #define MSVIS_TransformingVi2_H_121115_0950
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <msvis/MSVis/ViImplementation2.h>
 
 #include <map>
 #include <vector>
 
-#include <measures/Measures/Stokes.h>
-
-namespace casacore{
-
-template <typename T> class Vector;
-}
+#include <casacore/measures/Measures/Stokes.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -183,7 +179,7 @@ public:
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const override;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	virtual VisBuffer2 * getVisBuffer () const override {return vb_p;}
 
@@ -511,6 +507,7 @@ public:
     virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
     virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const override;
+    virtual casacore::Int nTimes() const override;
 
     //   +-------------------+
     //   |                   |

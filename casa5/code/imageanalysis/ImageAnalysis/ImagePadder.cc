@@ -53,7 +53,7 @@ ImagePadder::ImagePadder(
 ImagePadder::~ImagePadder() {}
 
 void ImagePadder::setPaddingPixels(
-    const uInt nPixels, const Double value,
+    const uInt nPixels, const Float value,
     const Bool good
 ) {
     _nPixels = nPixels;

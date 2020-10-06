@@ -2058,7 +2058,8 @@ class splitTests(test_base):
         
         # Now, delete only the MS and leave the .flagversions in disk
         os.system('rm -rf '+self.outputms)
-        self.assertFalse(split(vis=self.vis, outputvis=self.outputms, spw='0'),'Expected task to fail.')
+        with self.assertRaises(RuntimeError):
+            split(vis=self.vis, outputvis=self.outputms, spw='0')
         # The next code doesn't work with the __rethrow_casa_exceptions=False in prelude.py
 #         with self.assertRaises(IOError):
 #             split(vis=self.vis, outputvis=self.outputms, spw='0')
@@ -2088,7 +2089,7 @@ class splitTests(test_base):
         ParallelTaskHelper.bypassParallelProcessing(1)
         # This will cause MS NULL selections in some subMSs that have only spw=0
         split(vis=self.testmms, outputvis=self.outputms, spw='1', datacolumn='data',
-                    width=bin1)
+              width=bin1)
         
         ParallelTaskHelper.bypassParallelProcessing(0)
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')
@@ -2261,6 +2262,11 @@ class splitUpdateFlagCmd(test_base):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outputms)
         os.system('rm -rf list.obs')
+        os.system('rm -rf spwnames.txt')
+        # the asdmname isn't available in the class - recover it from the vis name - everything before ".ms"
+        asdmname = self.vis[:self.vis.index('.ms')]
+        os.system('rm -rf '+ asdmname)
+        os.system('rm -rf '+ asdmname+'_cmd.txt')
         
     def test_updateFlagcmd1(self):
         '''split: Do not update FLAG_CMD table when spw selection in FLAG_CMD is by name'''
@@ -2268,7 +2274,6 @@ class splitUpdateFlagCmd(test_base):
         split(vis=self.vis, outputvis=self.outputms, spw='1,2', datacolumn='data')
         flagcmd(self.outputms, action='list', savepars=True, outfile='spwnames.txt', useapplied=True)
         self.assertTrue(filecmp.cmp(self.flagfile, 'spwnames.txt',1))
-        
 
 # Note: this list of tests is only relevant for CASA5, skipped tests must be indicated by the
 # use of the @unittest.skip decorator as shown above in order for those tests to be skipped in CASA6

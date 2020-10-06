@@ -27,7 +27,7 @@
 #ifndef TBPLOTCANVAS_H_
 #define TBPLOTCANVAS_H_
 
-#include <casaqt/QtBrowser/TBPlotCanvas.ui.h>
+#include "ui/ui_TBPlotCanvas.h"
 #include <casaqt/QtBrowser/TBConstants.h>
 #include <graphics/GenericPlotter/PlotOptions.h>
 #include <graphics/GenericPlotter/PlotEventHandler.h>

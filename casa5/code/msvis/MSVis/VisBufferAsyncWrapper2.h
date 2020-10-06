@@ -398,7 +398,7 @@ public:
 
     // Returns the number of rows in this VisBuffer
 
-    virtual casacore::Int nRows () const;
+    virtual casacore::rownr_t nRows () const;
 
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.
@@ -425,7 +425,7 @@ public:
     // the VisBuffer and the row IDs in the underlying casacore::MS main
     // virtual table:  mainTableID [i] = rowIds () [ i];
 
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const; // [nR]
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const; // [nR]
 
     // Returns the spectral window ID for the specified row.
 

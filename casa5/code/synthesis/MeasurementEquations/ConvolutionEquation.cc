@@ -26,8 +26,9 @@
 //# $Id$
 
 #include <synthesis/MeasurementEquations/ConvolutionEquation.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -97,7 +98,7 @@ Bool ConvolutionEquation::evaluate(Array<Float> & result,
       IPosition newtrc(thePsf.ndim(), 0);
       IPosition newblc(thePsf.ndim(), 0);
       for(uInt i = 0; i < thePsf.ndim(); i++){
-	newblc(i) = -min(blc(i), 0);
+	newblc(i) = -std::min(blc(i), (ssize_t)0);
 	newSize(i) = std::max(trc(i)+1, psfSize(i)) + newblc(i);
 	newtrc(i) = newblc(i) + psfSize(i) - 1;
       }
@@ -109,7 +110,7 @@ Bool ConvolutionEquation::evaluate(Array<Float> & result,
       }
       thePsfOrigin = thePsfOrigin + newblc;
       result = thePsf(blc+newblc, trc+newblc);
-      if (!nearAbs(Double(amplitude),1.0))
+      if (!nearAbs(Double(amplitude),Double(1.0)))
 	result = thePsf(blc+newblc, trc+newblc)*amplitude;
       return true;
     }

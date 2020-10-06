@@ -35,7 +35,7 @@ else:
 def listsdm(sdm=None):
 
     if not _setup_successful:
-        return False
+        return {}
 
     # read Scan.xml
     xmlscans = minidom.parse(sdm+'/Scan.xml')
@@ -409,4 +409,3 @@ def listsdm(sdm=None):
     
     # return the scan dictionary
     return scandict
-

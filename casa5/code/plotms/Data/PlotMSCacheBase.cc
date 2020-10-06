@@ -153,8 +153,8 @@ PlotMSCacheBase::PlotMSCacheBase(PlotMSApp* parent, PlotMSPlot* plot):
 	loadedAxesData_.clear();
 	this->iterAxis = PMS::NONE;
 
-	// Default frequency frame
-	freqFrame_ = MFrequency::N_Types;
+    // Undefined until set during cache loading
+	freqFrame_ = MFrequency::Undefined;
 }
 
 PlotMSCacheBase::~PlotMSCacheBase() {
@@ -1999,7 +1999,7 @@ void PlotMSCacheBase::setPlotMask(Int dataIndex, Int chunk) {
 	}
 	else {
 		plmask_[dataIndex][chunk]->resize(nsh);
-		(*plmask_[dataIndex][chunk]) = operator>(partialNFalse(*flag_[chunk],csh).reform(nsh),uInt(0));
+		(*plmask_[dataIndex][chunk]) = operator>(partialNFalse(*flag_[chunk],csh).reform(nsh),0ul);
 	}
 }
 

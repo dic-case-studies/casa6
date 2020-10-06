@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="imregrid" category="analysis">
+<task category="analysis" name="imregrid" type="function">
 <shortdescription>regrid an image onto a template image</shortdescription>
 <description>
 Imregrid will regrid an input image onto a new coordinate system from a template image
@@ -13,54 +8,54 @@ or to a new directional reference frame. If a template image is used, then the i
 template images must have the same coordinate structure.
 </description>
 <input>
-     <param type="string" name="imagename" mustexist="true">
-          <description>Name of the source image</description>
-          <value></value>
+     <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the source image</shortdescription><description>Name of the source image</description>
+          
+          <value/>
      </param>
-     <param type="any" name="template">
+     <param name="template" type="any"><shortdescription>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</shortdescription><description>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</description>
         <any type="variant"/>
-          <description>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</description>
+          
           <value type="string">get</value>
      </param>
 
-     <param type="string" name="output">
-          <description>Name for the regridded image</description>
-          <value></value>
+     <param name="output" type="string"><shortdescription>Name for the regridded image</shortdescription><description>Name for the regridded image</description>
+          
+          <value/>
      </param>
 
-     <param type="bool" direction="in" name="asvelocity">
-        <description>Regrid spectral axis in velocity space rather than frequency space?</description>
+     <param name="asvelocity" direction="in" type="bool"><shortdescription>Regrid spectral axis in velocity space rather than frequency space?</shortdescription><description>Regrid spectral axis in velocity space rather than frequency space?</description>
+        
         <value>True</value>
      </param>
-     <param type="intArray" direction="in" name="axes">
-        <description>The pixel axes to regrid. -1 => all.</description>
+     <param name="axes" direction="in" type="intArray"><shortdescription>The pixel axes to regrid. -1 =&gt; all.</shortdescription><description>The pixel axes to regrid. -1 =&gt; all.</description>
+        
          <value>-1</value>
      </param>
-     <param type="intArray" name="shape" subparam="true">
-        <description>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</description>
+     <param subparam="true" name="shape" type="intArray"><shortdescription>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</shortdescription><description>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</description>
+        
         <value>-1</value>
      </param>
-     <param type="string"  name="interpolation">
-        <description>The interpolation method.  One of "nearest", "linear", "cubic".</description>
+     <param name="interpolation" type="string"><shortdescription>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</shortdescription><description>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</description>
+        
         <value>linear</value>
      </param>
-     <param type="int"  name="decimate">
-     <description>Decimation factor for coordinate grid computation</description>
+     <param name="decimate" type="int"><shortdescription>Decimation factor for coordinate grid computation</shortdescription><description>Decimation factor for coordinate grid computation</description>
+     
      <value>10</value>
      </param>
   
-     <param type="bool"  name="replicate">
-     <description>Replicate image rather than regrid?</description>
+     <param name="replicate" type="bool"><shortdescription>Replicate image rather than regrid?</shortdescription><description>Replicate image rather than regrid?</description>
+     
      <value>False</value>
      </param>
      
-     <param type="bool"  name="overwrite">
-     <description>Overwrite (unprompted) pre-existing output file?</description>
+     <param name="overwrite" type="bool"><shortdescription>Overwrite (unprompted) pre-existing output file?</shortdescription><description>Overwrite (unprompted) pre-existing output file?</description>
+     
      <value>False</value>
      </param>
      <constraints>
         <when param="template">
-            <notequals type="string" value="get">
+            <notequals value="get" type="string">
                 <default param="shape"><value type="intArray"><value>-1</value></value></default>
             </notequals>
         </when>
@@ -99,7 +94,7 @@ output          Name for the regridded image.  Must be specified.
                 example: imagename='orion_shifted.im'
 asvelocity      If True, regrid spectral axis with respect to velocity, not frequency. If False,
                 regrid with respect to frequency. default: True
-axes            The pixel axes to regrid. Default value [-1] => all except Stokes. Ignored
+axes            The pixel axes to regrid. Default value [-1] =&gt; all except Stokes. Ignored
                 if template is set equal to a reference code (in which case only the directional
                 axes are regridded). If specified, this should
                 be provided as an array. example axes=[0,1] (only regrid the first two axes, which
@@ -107,7 +102,7 @@ axes            The pixel axes to regrid. Default value [-1] => all except Stoke
 interpolation   The interpolation method.  One of 'nearest', 'linear', 'cubic'.
 decimate        Decimation factor for coordinate grid computation
 replicate       Replicate image rather than regrid?
-overwrite">     Overwrite (unprompted) pre-existing output file?
+overwrite&quot;&gt;     Overwrite (unprompted) pre-existing output file?
                 
 The new coordinate system is defined by the template parameter, which can be:
 
@@ -260,10 +255,10 @@ an image, use ia.setrestoringbeam().
          
 Basic Examples
 
-# Regrid an image to the "B1950" or "GALACTIC" coordinate systems
+# Regrid an image to the &quot;B1950&quot; or &quot;GALACTIC&quot; coordinate systems
 
-   imregrid(imagename="input.image", output="output.image", template="B1950")
-   imregrid(imagename="input.image", output="output.image", template="GALACTIC")
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;B1950&quot;)
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;GALACTIC&quot;)
 
 Note that when regridding to another coordinate system in the manner above, if the
 input image's direction coordinate is already in the frame specified by template,
@@ -271,10 +266,10 @@ a straight copy of the image is made. No regridding is actually done.
 
 # Obtain a template dictionary from an image and then use it to regrid another image
 
-   temp_dict = imregrid(imagename="target.image", template="get")
-   imregrid(imagename="input.image", output="output.image", template=temp_dict)
+   temp_dict = imregrid(imagename=&quot;target.image&quot;, template=&quot;get&quot;)
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=temp_dict)
 
-In this example, the template="get" option is used in the first command in order to
+In this example, the template=&quot;get&quot; option is used in the first command in order to
 characterize the desired shape and coordinate system used, and a new dictionary,
 temp_dict, is generated accordingly. This is then used when performing the actual
 regridding of input.image in the second command. 
@@ -303,7 +298,7 @@ the output image will have a shape of [20, 30, 70].
 
 # Regrid input.image by directly using target.image as a template
 
-   imregrid(imagename="input.image", output="output.image", template="target.image", shape=[500,500,40,1])
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;target.image&quot;, shape=[500,500,40,1])
 
 In this example, it is assumed that the axis order of the input image is of the
 form (direction_x, direction_y, spectral, Stokes), where 'direction_x' and 'direction_y'
@@ -319,7 +314,7 @@ the spectral axis will be regridded to the same velocity system as that of the t
 Firstly, the user should inspect the type and ordering of the axes with imhead,
 and then correct with imtrans if necessary.
 
-   imregrid(imagename="input.image", output="output.image", template="target.image", axes=[0,1])
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;target.image&quot;, axes=[0,1])
 
 The above command will regrid only the first two axes (normally the directional axes)  of input.image and
 leave all other axes unchanged. The output image will have the shape of the template image along the regridded
@@ -329,7 +324,7 @@ explicitly specified.
 
 # Regrid the third axis, considering velocity rather than frequency units
 
-   imregrid(imagename="input.image", output="output.image", template="target.image", axes=[2], asvelocity=True)
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;target.image&quot;, axes=[2], asvelocity=True)
 
 This example regrids the spectral axis (zero-based axis number 2)  with respect to velocity because the asvelocity parameter
 has been set to True. This is useful when eg, regridding a cube containing one spectral line to match the velocity coordinate
@@ -338,8 +333,8 @@ of another cube containing a different spectral line.
 
 # Regrid the third axis, considering velocity rather than frequency units but first set the rest frequency
 
-   imhead("input.image", mode="put", hdkey="restfreq", hdvalue="110GHz")
-   imregrid(imagename="input.image", output="output.image", template="target.image", axes=[2], asvelocity=True)
+   imhead(&quot;input.image&quot;, mode=&quot;put&quot;, hdkey=&quot;restfreq&quot;, hdvalue=&quot;110GHz&quot;)
+   imregrid(imagename=&quot;input.image&quot;, output=&quot;output.image&quot;, template=&quot;target.image&quot;, axes=[2], asvelocity=True)
 
 The first command in this example uses the imhead task to set the value of the
 image rest frequency to a value of 110GHz in input.image. The following

@@ -280,17 +280,15 @@ class ia_pv_test(unittest.TestCase):
         self.assertTrue(zz and type(zz) == mytype)
         yy.done()
         zz.done()
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             impv(
                  imagename="kk", outfile="x1.im", start=[2,2], end=[20,2],
                  mask=mymask + ">0", stretch=False
             )
-        )
-        self.assertTrue(
-            impv(
-                 imagename="kk", outfile="xyz", start=[2,2], end=[20,2],
-                 mask=mymask + ">0", stretch=True
-            )
+
+        impv(
+            imagename="kk", outfile="xyz", start=[2,2], end=[20,2],
+            mask=mymask + ">0", stretch=True
         )
     
     def test_CAS_2996(self):
@@ -385,12 +383,10 @@ class ia_pv_test(unittest.TestCase):
 
     def test_machine_precision_fix(self):
         """Test fix for finite machine precision issue, CAS-6043"""
-        self.assertTrue(
-            impv(
-                imagename=datapath + 'CAS-6043.im', outfile="CAS-6043.out.im",
-                start=[187,348], end=[228,383]
-            )
-        ) 
+        impv(
+            imagename=datapath + 'CAS-6043.im', outfile="CAS-6043.out.im",
+            start=[187,348], end=[228,383]
+        )
         
     def test_pa(self):
         """Test that when pa is given, the start of the slice is at pa and end is at pa-180deg"""
@@ -429,26 +425,22 @@ class ia_pv_test(unittest.TestCase):
         length = "14arcmin"
         center = [15, 15]
         outfile = "90deg_" + str(length) + ".im"
-        self.assertTrue(
-            impv(
-                 imagename=imagename, outfile=outfile,
-                 center=center, length=length, pa="90deg",
-                 mode="length"
-            )
+        impv(
+            imagename=imagename, outfile=outfile,
+            center=center, length=length, pa="90deg",
+            mode="length"
         )
         outfile = "270deg_" + str(length) + ".im"
-        self.assertTrue(
-            impv(
-                 imagename=imagename, outfile=outfile,
-                 center=center, length=length, pa="270deg",
-                 mode="length"
-            )
+        impv(
+            imagename=imagename, outfile=outfile,
+            center=center, length=length, pa="270deg",
+            mode="length"
         )
 
     def test_history(self):
         """Verify history is written to created image"""
         myia = self.ia
-        imagename = "zz.im"
+        imagename = "zz_pv.im"
         myia.fromshape(imagename, [30, 30, 30])
         length = "14arcmin"
         center = [15, 15]

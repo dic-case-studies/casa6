@@ -680,6 +680,19 @@ def compMS(ms0,ms1,keys=['mean','min','max','rms'],ap="amp",tol=1e-4,verbose=Fal
         if verbose:
             print(("%7s: "%k),s0,s1)
     return status
+
+def is_casa6():
+    try:
+        # CASA 6
+        from casatools import table
+        return True
+    except ImportError:
+        try:
+            # CASA 5
+            from taskinit import tbtool
+            return False
+        except ImportError:
+            raise Exception('Neither CASA5 nor CASA6')
         
     
 

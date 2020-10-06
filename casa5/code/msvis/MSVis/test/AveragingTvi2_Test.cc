@@ -3094,7 +3094,7 @@ void
 Tester::checkCubes (VisBuffer2 * vb, VisibilityIterator2 * vi, Int subchunk,
                     Int firstRow)
 {
-    for (Int row = 0; row < vb->nRows(); row ++){
+    for (rownr_t row = 0; row < vb->nRows(); row ++){
 
         for (Int channel = 0; channel < vb->nChannels(); channel ++){
 
@@ -3136,7 +3136,7 @@ void
 Tester::checkRows (VisBuffer2 * vb, VisibilityIterator2 * vi, Int subchunk,
                    Int firstRow)
 {
-    for (Int row = 0; row < vb->nRows(); row ++){
+    for (rownr_t row = 0; row < vb->nRows(); row ++){
 
         for (RowCheckers::iterator rc = rowCheckers_p.begin();
              rc != rowCheckers_p.end();

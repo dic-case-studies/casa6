@@ -1,12 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-
-<task type="function" name="immath" category="analysis">
+<task category="analysis" name="immath" type="function">
 
 <shortdescription>Perform math operations on images</shortdescription>
 
@@ -14,13 +8,13 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 </description>
 
 <input>
-    <param type="any" name="imagename">
-        <description>a list of input images </description>
-        <any type="variant" limttypes="string stringArray"/>
-        <value type="string"></value>
+    <param name="imagename" type="any"><shortdescription>a list of input images </shortdescription><description>a list of input images </description>
+        
+        <any limttypes="string stringArray" type="variant"/>
+        <value type="string"/>
     </param>
-    <param type="string" name="mode">
-        <description>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</description>
+    <param name="mode" type="string"><shortdescription>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</shortdescription><description>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</description>
+        
         <value>evalexpr</value>
             <allowed kind="enum">
             <value>evalexpr</value>
@@ -32,87 +26,87 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         </allowed>
         <example>'evalexpr', 'spix', 'pola', or 'poli' </example>
     </param>
-    <param type="string" name="outfile">
-        <description>File where the output is saved</description>
+    <param name="outfile" type="string"><shortdescription>File where the output is saved</shortdescription><description>File where the output is saved</description>
+        
         <value>immath_results.im</value>
         <example>outfile=&quot;newimage&quot;</example>
     </param>
-    <param type="string" name="expr" subparam="true">
-        <description>Mathematical expression using images</description>
+    <param subparam="true" name="expr" type="string"><shortdescription>Mathematical expression using images</shortdescription><description>Mathematical expression using images</description>
+        
         <value>IM0</value>
         <example>expr='&quot;sin(image1.im)+(image2.im*2)+real(image3.im)&quot;'</example>
     </param>
-    <param type="any" name="varnames" subparam="true">
-        <description>a list of variable names to use with the image files</description>
-        <any type="variant" limttypes="string stringArray"/>
-        <value type="string"></value>
-    </param>
-    <param type="string" name="sigma" subparam="true">
-        <description>standard deviation of noise for debiasing</description>
-        <value>0.0mJy/beam</value>
-    </param>
-    <param type="string" name="polithresh" subparam="true">
-        <description>Threshold in linear polarization intensity image below which to mask pixels.</description>
+    <param subparam="true" name="varnames" type="any"><shortdescription>a list of variable names to use with the image files</shortdescription><description>a list of variable names to use with the image files</description>
+        
+        <any limttypes="string stringArray" type="variant"/>
         <value type="string"/>
     </param>
-    <param type="string" name="mask">
-        <description>Mask to use. Default is none.</description>
+    <param subparam="true" name="sigma" type="string"><shortdescription>standard deviation of noise for debiasing</shortdescription><description>standard deviation of noise for debiasing</description>
+        
+        <value>0.0mJy/beam</value>
+    </param>
+    <param subparam="true" name="polithresh" type="string"><shortdescription>Threshold in linear polarization intensity image below which to mask pixels.</shortdescription><description>Threshold in linear polarization intensity image below which to mask pixels.</description>
+        
+        <value type="string"/>
+    </param>
+    <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        
         <value/>
     </param>
-    <param type="string" name="region">
-        <description>Region selection. Default is to use the full image.</description>
+    <param name="region" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        
         <value/>
     </param>
-    <param type="string" name="box">
-        <description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+        
         <value/>
     </param>
-    <param type="string" name="chans" >
-        <description>Channels to use. Default is to use all channels.</description>
+    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+        
         <value/>
-    </param >
-    <param type="string" name="stokes">
-        <description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    </param>
+    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+        
         <value/>
         <example>stokes='IQ'</example>
         <example>stokes='RR,LL'</example>
     </param>
-    <param type="bool" direction="in" name="stretch" subparam="true">
-        <description>Stretch the mask if necessary and possible? See help stretch.par </description>
+    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? See help stretch.par </shortdescription><description>Stretch the mask if necessary and possible? See help stretch.par </description>
+        
         <value>False</value>
     </param>
-    <param type="string" name="imagemd">
-        <description>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </description>
+    <param name="imagemd" type="string"><shortdescription>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </shortdescription><description>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </description>
+        
         <value/>
     </param>
-    <param type="string" name="prec">
-        <description>Precision for the output image pixels if mode="evalexpr" or "spix". "float" or "double" (minimum match supported)</description>
+    <param name="prec" type="string"><shortdescription>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</shortdescription><description>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</description>
+        
         <value>float</value>
     </param>
     <constraints>
         <when param="mode">
             <equals value="evalexpr">
-                <default param="expr"><value>""</value></default>
-                <default param="varnames"><value>""</value></default>
+                <default param="expr"><value>&quot;&quot;</value></default>
+                <default param="varnames"><value>&quot;&quot;</value></default>
             </equals>
             <equals value="poli">
-                <default param="sigma"><value>"0.0mJy/beam"</value></default>
+                <default param="sigma"><value>&quot;0.0mJy/beam&quot;</value></default>
             </equals>
             <equals value="lpoli">
-                <default param="sigma"><value>"0.0mJy/beam"</value></default>
+                <default param="sigma"><value>&quot;0.0mJy/beam&quot;</value></default>
             </equals>
             <equals value="tpoli">
-                <default param="sigma"><value>"0.0mJy/beam"</value></default>
+                <default param="sigma"><value>&quot;0.0mJy/beam&quot;</value></default>
             </equals>
             <equals value="pola">
                 <default param="polithresh">
-                    <value>""</value>
+                    <value>&quot;&quot;</value>
                 </default>
             </equals>
             <equals value="spix"/>
         </when>
         <when param="mask">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
@@ -181,14 +175,14 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                           are used to represent these files
                           in the expression. Explicit notations of file names in the 
                           expression are also supported, in which cases the file names must
-                          be enclosed in double quotes (") and imagename is ignored.
+                          be enclosed in double quotes (&quot;) and imagename is ignored.
                           Examples:
                           Make an image that is image1.im - image2.im
                           expr=' (IM0 - IM1 )'
                           or with an explicit notation, 
-                          expr='("image1.im" - "image2.im")'
+                          expr='(&quot;image1.im&quot; - &quot;image2.im&quot;)'
                           Clip an image below a value (0.5 in this case)
-                          expr = ' iif( IM0 >=0.5, IM0, 0.0) '
+                          expr = ' iif( IM0 &gt;=0.5, IM0, 0.0) '
                           Note: iif (a, b, c)   a is the boolean expression
                                                 b is the value if true
                                                 c is the value if false
@@ -196,7 +190,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                           expr = ' sqrt(IM0 * IM0 + IM1 * IM1) '
                           Build an image pixel by pixel from the minimum of (image2.im, 2*image1.im)
                           expr='min(IM1,2*max(IM0))'
-               varnames   For mode="evalexpr". Instead of the default variable names IM0, IM1, ..., use
+               varnames   For mode=&quot;evalexpr&quot;. Instead of the default variable names IM0, IM1, ..., use
                           the names in this array to represent the input images.
     outfile    The output image. Overwriting an existing outfile is not permitted.
                Default: immath_results.im;  Example: outfile='results.im'
@@ -261,14 +255,14 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     (which contains things like the beam(s)), the misc_info record (should one exist in the image
     specified by imagemd), and the units.
     3. If the output image is a spectral image, the brightness units are set to the empty string.
-    4. If the ouptut image is a polarization angle image, the brightness unit is set to "deg" and
+    4. If the ouptut image is a polarization angle image, the brightness unit is set to &quot;deg&quot; and
     the stokes coordinate is set to have a single plane of type of Pangle.
 
     Examples:
     # Double all values in an image.
     immath( imagesname='myimage.im', expr='IM0*2', outfile='double.im' )
     # or with an explicit notation, 
-    immath( expr='"myimage.im"*2', outfile='double.im' )
+    immath( expr='&quot;myimage.im&quot;*2', outfile='double.im' )
 
     # Taking the sin of an image and adding it to another
     # Note that the images need to be the same size
@@ -379,4 +373,3 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 </task>
 
 </casaxml>
-

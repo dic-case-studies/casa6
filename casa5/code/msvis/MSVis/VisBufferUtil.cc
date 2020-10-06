@@ -186,7 +186,7 @@ Bool VisBufferUtil::rotateUVW(const vi::VisBuffer2&vb, const MDirection& desired
     dphase.set(0.0);
     if(uvw.nelements() ==0)
       uvw=vb.uvw();
-    for (Int row=0; row< vb.nRows(); ++row){
+    for (rownr_t row=0; row< vb.nRows(); ++row){
       Vector<Double> eluvw(uvw.column(row));
       uvwMachine.convertUVW(dphase(row), eluvw);
     }

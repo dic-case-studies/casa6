@@ -1102,6 +1102,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
   sortColumns_p(sortColumns),
+  subchunkSortColumns_p(false),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
@@ -1475,7 +1476,6 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
     {
         for (auto sortCol : sortColumns_p.getColumnIds())
         {
-            cout << " sort col " << sortCol<<endl;
             if(sortCol == MS::DATA_DESC_ID)
                 ddIdScope_p = ChunkScope;
         }
@@ -1841,6 +1841,13 @@ Int VisibilityIteratorImpl2::nRowsInChunk() const
 	return msIter_p->table().nrow();
 }
 
+Int VisibilityIteratorImpl2::nTimes() const {
+    static const auto timeName = MeasurementSet::columnName(MSMainEnums::TIME);
+    auto times = ScalarColumn<Double>(msIter_p->table(), timeName).getColumn();
+    std::set<Double> uniqueTimes(times.cbegin(), times.cend());
+    return uniqueTimes.size();
+}
+
 Bool
 VisibilityIteratorImpl2::more() const
 {
@@ -1962,7 +1969,7 @@ VisibilityIteratorImpl2::spectralWindows(Vector<Int> & spws) const
 void
 VisibilityIteratorImpl2::polarizationIds(Vector<Int> & polIds) const
 {
-    // Get's the list of spectral windows for each row in the VB window
+    // Get's the list of polarization Ids for each row in the VB window
 
     Vector<Int> ddis;
     dataDescriptionIds(ddis);
@@ -2112,7 +2119,18 @@ VisibilityIteratorImpl2::origin()
 
 
     if( ! (nRowBlocking_p > 0) )
+    {
+        // Create a MeasurementSet which points
+        // to the current iteration with msIter
+        msSubchunk_p.reset(new casacore::MeasurementSet(msIter_p->table(),
+                                                     &(msIter_p->ms())));
+
+        // Create a MSIter for the subchunk loop which iterates the
+        // the MS created before.
+        msIterSubchunk_p.reset(new casacore::MSIter(*msSubchunk_p,
+                            subchunkSortColumns_p.sortingDefinition()));
         msIterSubchunk_p->origin();
+    }
 
     configureNewSubchunk();
 }
@@ -2923,22 +2941,11 @@ VisibilityIteratorImpl2::configureNewChunk()
     else
     {
         // Columns are attached to the msIter chunk iteration.
-        // This is needed for the call the setTIleCahce() below, which
+        // This is needed for the call of setTileCache() below, which
         // performs some tests on the attached columns
         // Later, in configureNewSubchunk the columns are reset to
         // the subchunk msIterSubchunk_p columns.
         attachColumns(msIter_p->table());
-        // Create a MeasurementSet which points
-        // to the current iteration with msIter
-        msSubchunk_p.reset(new casacore::MeasurementSet(msIter_p->table(),
-                                                     &(msIter_p->ms())));
-
-        // Create a MSIter for the subchunk loop which iterates the
-        // the MS created before.
-        msIterSubchunk_p.reset(new casacore::MSIter(*msSubchunk_p,
-                            subchunkSortColumns_p.sortingDefinition()));
-        msIterSubchunk_p->origin();
-
     }
 
     // Reset channel selectors vector in each chunk
@@ -3200,7 +3207,7 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 }
 
 void
-VisibilityIteratorImpl2::getRowIds(Vector<uInt> & rowIds) const
+VisibilityIteratorImpl2::getRowIds(Vector<rownr_t> & rowIds) const
 {
     if(nRowBlocking_p >0)
     {

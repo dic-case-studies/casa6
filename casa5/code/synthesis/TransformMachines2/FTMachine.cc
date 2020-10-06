@@ -322,11 +322,17 @@ using namespace casa::vi;
       // get the first position of moving source
       if(fixMovingSource_p){
 	//cerr << "obsinfo time " << coords.obsInfo().obsDate() << "    epoch used in frame " <<  MEpoch((mFrame_p.epoch())) << endl;
+        ///Darn vb.time()(0) may not be the earliest time due to sort issues...
+        //so lets try to use the same
+        ///time as SynthesisIUtilMethods::buildCoordinateSystemCore is using
+        mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
+        Double firstTime=romscol_p->time()(0);
         //First convert to HA-DEC or AZEL for parallax correction
         MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
         MDirection tmphadec;
 	if (upcase(movingDir_p.getRefString()).contains("APP")) {
-	  tmphadec = MDirection::Convert((vbutil_p->getEphemDir(vb, phaseCenterTime_p)), outref1)();
+          //cerr << "phaseCenterTime_p " << phaseCenterTime_p << endl;
+	  tmphadec = MDirection::Convert((vbutil_p->getEphemDir(vb, phaseCenterTime_p > 0.0 ? phaseCenterTime_p : firstTime)), outref1)();
 	  MeasComet mcomet(Path((romscol_p->field()).ephemPath(vb.fieldId()(0))).absoluteName());
 	  if (mFrame_p.comet())
 	    mFrame_p.resetComet(mcomet);
@@ -344,6 +350,17 @@ using namespace casa::vi;
 	}
         MDirection::Ref outref(directionCoord.directionType(), mFrame_p);
         firstMovingDir_p=MDirection::Convert(tmphadec, outref)();
+        ////////////////////
+        /*ostringstream ss;
+        Unit epochUnit=(romscol_p->time()).keywordSet().asArrayString("QuantumUnits")(IPosition(1,0));
+        MEpoch(Quantity(vb.time()(0), epochUnit), (romscol_p->timeMeas())(0).getRef()).print(ss);
+        cerr << std::setprecision(15) << "First time " << ss.str() << "field id " << vb.fieldId()(0) << endl;
+        ss.clear();
+        firstMovingDir_p.print(ss);
+        cerr << "firstdir " << ss.str() << "   " << firstMovingDir_p.toString() << endl;
+        */
+        //////////////
+        
 	if(spectralCoord_p.frequencySystem(False)==MFrequency::REST){
 	  ///We want the data frequency to be shifted to the SOURCE frame
 	  ///which is labelled REST as we have never defined the SOURCE frame didn't we
@@ -1434,6 +1451,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
@@ -2233,7 +2252,7 @@ using namespace casa::vi;
 
   Matrix<Double> FTMachine::negateUV(const vi::VisBuffer2& vb){
     Matrix<Double> uvw(vb.uvw().shape());
-    for (Int i=0;i< vb.nRows() ; ++i) {
+    for (rownr_t i=0;i< vb.nRows() ; ++i) {
       for (Int idim=0;idim<2; ++idim) uvw(idim,i)=-vb.uvw()(idim, i);
       uvw(2,i)=vb.uvw()(2,i);
     }
@@ -2496,7 +2515,7 @@ using namespace casa::vi;
       {
 	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
 	
-	if( useWeightImage() && dopsf ) { 
+	if((useWeightImage() && dopsf) || isSD()) { 
 	  getWeightImage( *(imstore->weight())  , sumWeights); 
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.

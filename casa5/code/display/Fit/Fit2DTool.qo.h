@@ -29,7 +29,7 @@
 #include <QProgressDialog>
 #include <QFileDialog>
 #include <casa/aipstype.h>
-#include <display/Fit/Fit2DTool.ui.h>
+#include <ui/ui_Fit2DTool.h>
 #include <display/Fit/FindSourcesDialog.qo.h>
 #include <display/Fit/PixelRangeDialog.qo.h>
 #include <display/Fit/ResidualHistogramDialog.qo.h>

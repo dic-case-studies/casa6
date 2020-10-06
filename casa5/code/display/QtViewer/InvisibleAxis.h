@@ -26,7 +26,7 @@
 #ifndef INVISIBLEAXIS_H_
 #define INVISIBLEAXIS_H_
 
-#include <qwt_scale_draw.h>
+#include <qwt/qwt_scale_draw.h>
 
 namespace casa {
 

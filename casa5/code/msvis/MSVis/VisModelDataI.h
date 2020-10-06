@@ -1,4 +1,5 @@
 
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <casa/aips.h>
 #include <vector>
 #if ! defined (MSVIS_VisModelDataI_H)
@@ -10,8 +11,7 @@ namespace casacore{
   class RecordInterface;
   class String;
   class TableRecord;
-  template <typename T> class Vector;
-  template <typename T> class Matrix;
+
 }
 
 namespace casa {

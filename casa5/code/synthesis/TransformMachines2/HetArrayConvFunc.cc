@@ -26,13 +26,13 @@
 //#
 //# $Id$
 
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/Array.h>
-#include <casa/Arrays/MaskedArray.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Arrays/Slice.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/Cube.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Arrays/MaskedArray.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Slice.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Cube.h>
 #include <scimath/Mathematics/FFTServer.h>
 #include <measures/Measures/MeasTable.h>
 #include <scimath/Mathematics/MathFunc.h>
@@ -1426,7 +1426,7 @@ void HetArrayConvFunc::makerowmap(const vi::VisBuffer2& vb,
 
     uInt ndish=antMath_p.nelements();
     rowMap.resize(vb.nRows());
-    for (Int k=0; k < vb.nRows(); ++k) {
+    for (rownr_t k=0; k < vb.nRows(); ++k) {
         Int index1=antIndexToDiamIndex_p(vb.antenna1()(k));
         Int index2=antIndexToDiamIndex_p(vb.antenna2()(k));
         if(index2 < index1) {
@@ -1454,7 +1454,7 @@ Array<Complex> HetArrayConvFunc::resample(const Array<Complex>& inarray, const D
     Int newNx=shp(0);
     Int newNy=shp(1);
     
-    Array<Complex> out(shp, 0.0);
+    Array<Complex> out(shp, Complex(0.0));
    // cerr << "SHP " << shp << endl;
     
    IPosition incursor=IPosition(inarray.shape().nelements(),1);

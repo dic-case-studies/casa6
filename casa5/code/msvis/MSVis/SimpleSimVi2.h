@@ -43,7 +43,8 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
-#include <casa/Arrays.h>
+#include <casacore/casa/Arrays.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <map>
 #include <vector>
@@ -55,10 +56,9 @@ namespace casacore{
 
 class AipsError;
 class RecordInterface;
-class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
-template <typename T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -208,7 +208,7 @@ public:
   // to find correspondance between a given row in this iteration to the
   // original ms row
 
-  virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const override;
+  virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const override;
 
   virtual VisBuffer2 * getVisBuffer () const override;
 
@@ -360,6 +360,7 @@ public:
   virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
   virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
   virtual casacore::Int nSpectralWindows () const override;
+  virtual casacore::Int nTimes() const override;
 
   // Writeback methods are Irrelevant for non-disk-reading VI2
   virtual void writeBackChanges (VisBuffer2* ) override { SSVi2NotPossible() };

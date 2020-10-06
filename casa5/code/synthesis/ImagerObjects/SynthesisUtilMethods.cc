@@ -399,7 +399,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	//
 	//	Double Tint;
 	MSMainColumns mainCols(selectedMS);
-	Vector<uInt> rowNumbers = selectedMS.rowNumbers();
+	Vector<rownr_t> rowNumbers = selectedMS.rowNumbers();
 	Int nRows=selectedMS.nrow(), 
 	  dRows=nRows/npart;
 	Int rowBegID=0, rowEndID=nRows-1;
@@ -3191,6 +3191,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  	err += readVal( inrec, String("wbawp"), wbAWP );
 	err += readVal( inrec, String("cfcache"), cfCache );
 	err += readVal( inrec, String("usepointing"), usePointing );
+	err += readVal( inrec, String("pointingoffsetsigdev"), pointingOffsetSigDev );
 	err += readVal( inrec, String("dopbcorr"), doPBCorr );
 	err += readVal( inrec, String("conjbeams"), conjBeams );
 	err += readVal( inrec, String("computepastep"), computePAStep );
@@ -3211,6 +3212,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	if( ftmachine=="awprojectft" && cfCache=="" )
 	  {cfCache=imageName+".cf"; }
+
+	if( ftmachine=="awprojectft" && 
+	    usePointing==True && 
+	    pointingOffsetSigDev.nelements() != 2 )
+	  {
+	    // Set the default to a large value so that it behaves like CASA 5.6's usepointing=True.
+	    pointingOffsetSigDev.resize(2);
+	    pointingOffsetSigDev[0]=600.0;
+	    pointingOffsetSigDev[1]=600.0;
+	  }
 
 	err += verify();
 	
@@ -3269,6 +3280,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { err += "The combination of mosaicft gridding with multiple facets is not supported. "
 	  "Please use the awprojectft gridder instead, and set wprojplanes to a value > 1 to trigger AW-Projection. \n"; }
 
+    if( ftmachine=="awprojectft" && usePointing==True && pointingOffsetSigDev.nelements() != 2 )
+      {
+	err += "The pointingoffsetsigdev parameter must be a two-element vector of doubles in order to be used with usepointing=True and the AWProject gridder. Setting it to the default of \n ";
+      }
+
+
+
     // todo: any single-dish specific limitation?
 
     return err;
@@ -3311,6 +3329,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     wbAWP      = true;
     cfCache  = "";
     usePointing = false;
+    pointingOffsetSigDev.resize(0);
+    //    pointingOffsetSigDev.set(30.0);
     doPBCorr   = true;
     conjBeams  = true;
     computePAStep=360.0;
@@ -3358,6 +3378,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     gridpar.define("wbawp", wbAWP);
     gridpar.define("cfcache", cfCache);
     gridpar.define("usepointing",usePointing );
+    gridpar.define("pointingoffsetsigdev", pointingOffsetSigDev);
     gridpar.define("dopbcorr", doPBCorr);
     gridpar.define("conjbeams",conjBeams );
     gridpar.define("computepastep", computePAStep);
@@ -3413,7 +3434,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 	//err += readVal( inrec, String("startmodel"), startModel );
-	// startmodel parsing copied from SynthesisParamImage. Clean this up !!! 
+	// startmodel parsing copied from SynthesisParamsImage. Clean this up !!!
         if( inrec.isDefined("startmodel") ) 
           {
             if( inrec.dataType("startmodel")==TpString )

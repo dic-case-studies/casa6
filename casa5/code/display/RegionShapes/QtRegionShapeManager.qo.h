@@ -31,9 +31,9 @@
 #include <QStackedLayout>
 #include <QtXml>
 
-#include <display/RegionShapes/QtRegionShapeManager.ui.h>
-#include <display/RegionShapes/QtRSFileLoader.ui.h>
-#include <display/RegionShapes/QtRSFileSaver.ui.h>
+#include <ui/ui_QtRegionShapeManager.h>
+#include <ui/ui_QtRSFileLoader.h>
+#include <ui/ui_QtRSFileSaver.h>
 
 #include <display/RegionShapes/RegionShape.h>
 
