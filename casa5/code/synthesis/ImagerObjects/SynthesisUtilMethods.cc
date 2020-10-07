@@ -1992,7 +1992,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     vi2.origin();
     /// This version uses the new vi2/vb2
     // get the first ms for multiple MSes
-    MeasurementSet msobj=vi2.ms();
+    //MeasurementSet msobj=vi2.ms();
     Int fld=vb->fieldId()(0);
 
 	//handling first ms only
@@ -2002,6 +2002,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	Double gfreqmin=1e14;
 	Vector<Int> spwids0;
 	Int j=0;
+        Int minfmsid=0;
 	for (auto forMS0=chansel.begin(); forMS0 !=chansel.end(); ++forMS0, ++j){
     //auto forMS0=chansel.find(0);
 	  map<Int, Vector<Int> > spwsels=forMS0->second;
@@ -2075,13 +2076,62 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				       nChannels,*mss[j], freqFrameValid? freqFrame:MFrequency::REST , True);
 	    //cerr << "after " << freqmin << "   " << freqmax << endl;
 	  }
+
+          //for cube mode ,for a list of MSs, check ms to send to buildCoordSysCore contains start freq/vel
+          String checkspecmode("");
+          if(mode.contains("cube")) {
+            checkspecmode = findSpecMode(mode);
+          } 
+          Double dataFrameStartFreq;
+          Double inStartFreq;
+          MFrequency mstartfreq;
+          if(checkspecmode!="") {
+            if(checkspecmode=="channel") {
+              dataFrameStartFreq = 0;  
+            }
+            else {
+              if(checkspecmode=="frequency") {
+                inStartFreq = freqStart.get("Hz").getValue();  
+              }
+              else if(checkspecmode=="velocity") {
+                //MRadialVelocity mRVal = velStart;
+                MDoppler::Types DopType;
+                MDoppler::getType(DopType, veltype);
+                MDoppler mdop = MDoppler(velStart,DopType);
+                Quantity qrestfreq = restFreq.nelements() >0 ? restFreq[0]: Quantity(0.0, "Hz");
+                //MFrequency mrestfreq = MFrequency(qrestfreq,freqFrame);
+                inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq, freqFrame).getValue(); 
+              }
+              if (freqFrame != dataFrame){
+                MDirection obsdir = MSColumns(*mss[j]).field().phaseDirMeas(fld);
+                String telescopename = MSColumns(*mss[j]).observation().telescopeName()(0);
+                MPosition obsloc; 
+                MeasTable::Observatory(obsloc, telescopename);
+	        MEpoch epoch = MSColumns(*mss[j]).timeMeas()(0);
+                MFrequency::Ref fromRef = MFrequency::Ref(freqFrame, MeasFrame(obsdir, obsloc, epoch));
+                MFrequency::Ref toRef = MFrequency::Ref(dataFrame, MeasFrame(obsdir, obsloc, epoch));
+                MFrequency::Convert freqinDataFrame(Unit("Hz"), fromRef, toRef);
+                dataFrameStartFreq = freqinDataFrame(inStartFreq).get("Hz").getValue();
+              }
+              else {
+                dataFrameStartFreq = inStartFreq;
+              }
+            }
+          }
 	  if(freqmin < gfreqmin) gfreqmin=freqmin;
 	  if(freqmax > gfreqmax) gfreqmax=freqmax;
 	  if(datafstart < gdatafstart) gdatafstart=datafstart;
 	  if(datafend > gdatafend) gdatafend=datafend;
-	}
+          // pick ms to use for setting spectral coord for output images 
+          // when startfreq is specified find first ms that it fall within the freq range
+          // of the ms (with channel selection applied).
+          // startfreq is converted to the data frame freq based on Measure ref (for the direction, epech, location)
+          // of that ms.
+          if (datafstart < dataFrameStartFreq && datafend > dataFrameStartFreq && minfmsid==0) minfmsid=j; 
+        }
     //cerr << "freqmin " <<freqmin << " max " <<freqmax << endl;
-    
+    MeasurementSet msobj = *mss[minfmsid];
+   // return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
     return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
   }
   
