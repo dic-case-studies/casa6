@@ -103,6 +103,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
       itsMCsetup = true;
+      itsCleaner.testBFGS();
     }
 
     // Parts to be repeated at each minor cycle start....

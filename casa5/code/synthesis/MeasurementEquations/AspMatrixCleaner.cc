@@ -70,6 +70,7 @@
 
 #include <LBFGS.h>
 #include <synthesis/MeasurementEquations/lbfgsAsp.h>
+#include <synthesis/MeasurementEquations/lbfgsGaussian.h>
 //#include <synthesis/MeasurementEquations/lbfgsAspZhang.h>
 
 using namespace casacore;
@@ -976,7 +977,7 @@ void AspMatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Flo
   // try 0, width, 2width, 4width and 8width
   itsInitScaleSizes.resize(itsNInitScales, false);
   //itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
-  itsInitScaleSizes = {0.0f, 2.0f, 4.0f, 8.0f, 16.0f};
+  itsInitScaleSizes = {0.0f, 2.0f, 4.0f, 8.0f, 20.0f};
   itsInitScales.resize(itsNInitScales, false);
   itsInitScaleXfrs.resize(itsNInitScales, false);
   FFTServer<Float,Complex> fft(psfShape_p);
@@ -1699,6 +1700,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before lbfgs
     }
 
+
+    //for (unsigned int i = 0; i < length; i+=2) // temp scale up simple
+    //  x[i] = x[i] * 100.0;
+
     cout << "Before: x = " << x.transpose() << endl;
 
     // lbfgs optimization
@@ -1734,9 +1739,14 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // use the initial gradient as a roll back gradient if there is
     // gradient exploding in lbfgs
     if (itsPrevLBFGSGrad == 0.0)
+    {
+      cout << "lbfgs gradient exploded!" << endl;
       itsPrevLBFGSGrad = gclip;
+    }
     //std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
-    std::cout << "After: x = " << x.transpose() << std::endl;
+    cout << "After: x = " << x.transpose() << endl;
+    //for (unsigned int i = 0; i < length; i+=2) // temp scale back simple
+    //  x[i] = x[i] / 100.0;
 
     // x is not changing in LBFGS which causes convergence issue
     // so we use the previous x instead. This is a hack suggested by
@@ -1759,10 +1769,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     bool overflow = false;
     for (unsigned int i = 0; i < length; i+= 2)
     {
-    	if ((fabs(x[i+1]) / fabs(tempx[i+1])) >= 2.0 || 
+    	if ((fabs(x[i+1]) / fabs(tempx[i+1])) >= 2.0 ||
     		  (fabs(x[i]) / fabs(tempx[i])) >= 2.0     ||
-    		  x[i+1] <= 1) 
-    	{	
+    		  x[i+1] <= 1)
+    	{
     		overflow = true;
     		cout << "overflow by: " << tempx[i+1] << " -> " << x[i+1] << " or " << tempx[i] << " -> " << x[i]  << endl;
     		break;
@@ -1770,7 +1780,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }
     if (overflow)
     {
-    	cout << "lbfgs overflow!!! Switched to hogbom" << endl; 
+    	cout << "lbfgs overflow!!! Switched to hogbom" << endl;
     	switchedToHogbom();
     	for (unsigned int i = 0; i < length; i+= 2)
 	    {
@@ -1873,6 +1883,62 @@ void AspMatrixCleaner::switchedToHogbom()
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
   //itsNumHogbomIter = 1000000; //fake it for M31
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
+}
+
+void AspMatrixCleaner::testBFGS()
+{
+  const int N = 256;
+  Matrix<Float> simpleDirty(N, N, 0.0);
+  Matrix<Float> simplePsf(N, N, 0.0);
+  Matrix<Complex> simplePsfFT;
+  const Float scaleSize = 20.0;
+  IPosition simplePos(2, N/2, N/2);
+  vector<IPosition> simCenter;
+  simCenter.push_back(simplePos);
+
+  simplePsf(N/2, N/2) = 1.0;
+  FFTServer<Float,Complex> fft(simplePsf.shape());
+  fft.fft0(simplePsfFT, simplePsf);
+
+  Gaussian2D<Float> gbeam(1.0/(sqrt(2*M_PI)*scaleSize), N/2, N/2, scaleSize, 1, 0);
+
+  for (int j = 0; j < N; j++)
+  {
+    for (int i = 0; i < N; i++)
+    {
+      const int px = i;
+      const int py = j;
+      simpleDirty(i,j) = gbeam(px, py);
+    }
+  }
+  //debug
+  float maxima;
+  IPosition pos;
+  findMaxAbs(simpleDirty, maxima, pos);
+  cout << "peak(simpleDirty) " << max(fabs(simpleDirty));
+  cout << " maxima " << maxima << " pos " << pos << " simpleDirty(pos) " << simpleDirty(pos) << endl;
+
+  // lbfgs optimization
+  LBFGSParam<double> param;
+  /*param.epsilon = 1e-2;
+  param.max_linesearch = 10;
+  param.min_step = 1e-30;
+  param.max_iterations = 2;*/ //M31
+  param.epsilon = 1e-7;
+  param.max_iterations = 30;
+  //param.gclip = itsPrevLBFGSGrad;
+  LBFGSSolver<double> solver(param);
+  GaussianObjFunc funG(simpleDirty, simplePsfFT, simCenter, itsGain);
+  double fxG;
+  double gclipG;
+  VectorXd xG(1);
+
+  xG[0] = 16.00;
+  //xG[0] = 16.00;
+  cout << "Before: xG = " << xG.transpose() << endl;
+  const int niter = solver.minimize(funG, xG, fxG, gclipG);
+  cout << "# iters " << niter << " After: xG = " << xG.transpose() << endl;
+  //
 }
 
 } //# NAMESPACE CASA - END
