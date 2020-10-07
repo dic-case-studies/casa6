@@ -213,12 +213,14 @@ def _inspect_value_unit(data, base_unit):
             # Mismatch #
             _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
             raise Exception
-    else:                    # by value (= int, float)
-        val = str(data)
-        if val == '-1':
+    elif (type(data) is int) or (type(data) is float):  # by value (= int, float)
+        if data == -1:
             return ''    # ignoring #
         else:
-            return val   # available #
+            return str(data)   # available #
+    else:
+        _msg("Internal Error:: Arg type is not expected due to the I/F Design."'SEVERE')
+        raise
 
 #
 # Argument parameter handling
@@ -227,13 +229,12 @@ def _inspect_value_unit(data, base_unit):
 #  if in_para is available , return in_para with being converted.
 #  otherwise, retrurns def_para to use as a default parameter.
 #
-"""
+
 def _set_float_param(in_arg, def_para):
     if (in_arg != -1)and(in_arg > 0):
         return in_arg
     else:
         return  def_para
-"""
 
 def _set_int_param(in_arg, def_para):
     if (in_arg != ''):
@@ -995,7 +996,7 @@ def calc_sdatmcor(
 
         # Skip outputspw
         if not spwid in outputspws:
-        # if not ddis[spwid] in outputspws:
+            # if not ddis[spwid] in outputspws:
             msg = "This spw %d is skipped, due to not in the output spw list." % spwid
             _msg(msg)
             continue
