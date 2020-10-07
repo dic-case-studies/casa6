@@ -22,7 +22,7 @@ else:
     from casa_stack_manip import stack_frame_find
     from __main__ import default
     mslocal = mstool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'/casatestdata/')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
