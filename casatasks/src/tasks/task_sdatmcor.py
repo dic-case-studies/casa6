@@ -107,8 +107,10 @@ def sdatmcor(
     if (type(layertemperature) is str) and layertemperature == '':
         layertemperature = []
 
-    if(len(layerboundaries) != len(layertemperature)):
-        _msg("Data count mismatches in specified user-defined parameter.", 'ERROR')
+    len_1 = len(layerboundaries)
+    len_2 = len(layertemperature)
+    if(len_1 != len_2):
+        _msg("Data count mismatches in specified user-defined parameter. len=[%d, %d]" % (len_1, len_2), 'ERROR')
         return False
 
     layerboundaries = _conv_to_doubleArrayList(layerboundaries)
