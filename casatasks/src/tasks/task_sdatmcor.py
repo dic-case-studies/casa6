@@ -55,7 +55,7 @@ def sdatmcor(
         layerboundaries, layertemperature,
         debug):
 
-# Information #
+    # Information #
     casalog.origin(origin)
     msg = "\nRevision sdatmcor 1006 from Release #12. Revising In Progress(v.2).\n"
     _msg(msg)
@@ -86,18 +86,20 @@ def sdatmcor(
         return False
 
 #
-# Extract value from description with unit
+# Inspect arguments. 
+#  - inspect Unit.
+#  - convert values to string form.
 #
-    dtem_dh     = _form_value_unit(dtem_dh, ['K/km'])
-    h0          = _form_value_unit(h0, ['km'])
+    dtem_dh     = _inspect_value_unit(dtem_dh, ['K/km'])
+    h0          = _inspect_value_unit(h0, ['km'])
 
-    altitude    = _form_value_unit(altitude, ['m'])
-    temperature = _form_value_unit(temperature, ['K'])
-    pressure    = _form_value_unit(pressure, ['mbar', 'hPa'])
-    humidity    = humidity  # through (string or float)
-    PWV         = _form_value_unit(PWV, ['mm'])
-    dp          = _form_value_unit(dp,  ['mbar', 'hPa'])
-    dpm         = dpm  # through (string or float)
+    altitude    = _inspect_value_unit(altitude, ['m'])
+    temperature = _inspect_value_unit(temperature, ['K'])
+    pressure    = _inspect_value_unit(pressure, ['mbar', 'hPa'])
+    humidity    = _inspect_value_unit(humidity, [''])  # through (string or float)
+    PWV         = _inspect_value_unit(PWV, ['mm'])
+    dp          = _inspect_value_unit(dp,  ['mbar', 'hPa'])
+    dpm         = _inspect_value_unit(dpm, [''])       # through (string or float)
 
 # User-Defined Profile (nothing =[] ) #
     if (type(layerboundaries) is str) and (layerboundaries == ''):
@@ -192,23 +194,31 @@ def file_exist(path):
 # Unit handling service
 #
 
-def _form_value_unit(data, base_unit):
-    if (data == ''):
-        return ''
+def _inspect_value_unit(data, base_unit):
 
-    ext_unit = qa.getunit(data)
-    if (ext_unit in base_unit):
-        # With Unit #
-        _msg("Unit Conversion::Data with Unit '%s'" % data)
-        return qa.getvalue(data)[0]
-    elif (ext_unit == ''):
-        # Unit Added #
-        _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
-        return data
-    else:
-        # Mismatch #
-        _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
-        raise Exception
+    if type(data) is str:    # by String #
+        if (data == ''):
+            return ''
+
+        ext_unit = qa.getunit(data)
+        if (ext_unit in base_unit):
+            # With Unit #
+            _msg("Unit Conversion::Data with Unit '%s'" % data)
+            return str(qa.getvalue(data)[0])
+        elif (ext_unit == ''):
+            # Unit Added #
+            _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
+            return data
+        else:
+            # Mismatch #
+            _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
+            raise Exception
+    else:                    # by value (= int, float)
+        val = str(data)
+        if val == '-1':
+            return ''    # ignoring #
+        else:
+            return val   # available #
 
 #
 # Argument parameter handling
@@ -217,12 +227,13 @@ def _form_value_unit(data, base_unit):
 #  if in_para is available , return in_para with being converted.
 #  otherwise, retrurns def_para to use as a default parameter.
 #
+"""
 def _set_float_param(in_arg, def_para):
     if (in_arg != -1)and(in_arg > 0):
         return in_arg
     else:
         return  def_para
-
+"""
 
 def _set_int_param(in_arg, def_para):
     if (in_arg != ''):
@@ -239,14 +250,13 @@ def _set_list_param(in_arg, list_para):
 
 
 def _set_floatquantity_param(in_arg, def_para, unit):
-    if (in_arg != ''):
-        q_val = qa.quantity(float(in_arg), unit)
-        q_val['arg']='SET'
-        return q_val
-    else:
-        def_para['arg']=''
-        return  def_para
-
+    if type(in_arg) is str:
+        if (in_arg != ''):
+            q_val = qa.quantity(float(in_arg), unit)
+            q_val['setup'] = True
+            return q_val
+        else:
+            return  def_para
 
 def _list_comma_string(separated_string, dType):
     # make a list by separated by comma #
@@ -425,6 +435,43 @@ def calc_sdatmcor(
     #   if need to check args,
     #   pleas insert here like:  print('antenna  =', p_antenna, type(p_antenna))
     #
+    if True:  # flag option is reserved. #
+        print("***********************************")
+        print("**   calc_sdatmcor:: 1006-DEBUG  **")
+        print("***********************************")
+        print('infile      =', p_infile)
+        print('datacolumn  =', p_datacolumn)
+        print('outfile     =', p_outfile)
+        print('overwrite   =', p_overwrite)
+        print('field       =', p_field)
+        print('spw         =', p_spw)
+        print('scan        =', p_scan)
+        print('antenna     =', p_antenna)
+        print('correlation =', p_correlation)
+        print('timerange   =', p_timerange)
+        print('intent      =', p_intent)
+        print('observation =', p_observation)
+        print('feed        =', p_feed)
+        print('msselect    =', p_msselect)
+        print('outputspw   =', a_outputspw)
+        print('dtem_dh     =', a_dtem_dh)
+        print('h0          =', a_h0)
+        print('atmtype     =', a_atmtype)
+        print('atmdetail   =', atmdetail)
+
+        print('altitude    =', a_altitude)
+        print('temperature =', a_temperature)
+        print('pressure    =', a_pressure)
+        print('humidity    =', a_humidity)
+        print('PWV         =', a_PWV)
+        print('dp          =', a_dp)
+        print('dpm         =', a_dpm)
+        # reserved #
+        print('layerboundaries   =', a_layerboundaries)
+        print('layertemperature  =', a_layertemperature)
+
+        print('debug       =', debug)
+        print("*****************************")
 
     # debug flags  #
     skipTaskExec = False          # skip execution at the begining of calc_sdatmcor.
@@ -516,8 +563,10 @@ def calc_sdatmcor(
 
     #
     # Following variables have initial parameters.
-    #  - these will be copied/updated to variable named to 't_xxxxxxxxx'
+    #  - these values will be translated with unit to var.'t_xxxxxxxxx'
     #
+
+    # Default constant #
     atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
     maxalt = 120        ### maxAltitude parameter for at (km)
     lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
@@ -821,11 +870,22 @@ def calc_sdatmcor(
         t_altitude    = qa.quantity(altitude, 'm')
         t_temperature = qa.quantity(tground, 'K')              # tground (original)
         t_pressure    = qa.quantity(pground/100.0, 'mbar')     # pground (original) in  [Pa]  convert to [mbar]
-        t_humidity    = hground  # keep float                  # hground  in [percent =%]
-        t_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) im [m] converto to [mm]
+        t_humidity    = qa.quantity(hground, '%' )             # hground (original) in  [%]
+        t_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) in [m] converto to [mm]
         t_dp          = qa.quantity(dp, 'mbar')
-        t_dpm         = dpm      # keep float
+        t_dpm         = qa.quantity(dpm, '')                   # keep float
         t_maxAltitude = qa.quantity(maxalt, 'km')
+
+        # Edit Mark (under construction)#
+        t_dtem_dh['setup'] = False
+        t_h0     ['setup'] = False
+        t_altitude['setup'] = False
+        t_temperature['setup'] = False
+        t_pressure['setup'] = False
+        t_humidity['setup'] = False
+        t_pwv['setup'] = False
+        t_dp ['setup'] = False
+        t_dpm ['setup'] = False
 
         #
         # (from 'help' infomation)
@@ -852,10 +912,11 @@ def calc_sdatmcor(
             t_altitude    = _set_floatquantity_param(a_altitude, t_altitude, 'm')
             t_temperature = _set_floatquantity_param(a_temperature, t_temperature, 'K')
             t_pressure    = _set_floatquantity_param(a_pressure, t_pressure, 'mbar')
-            t_humidity    = _set_float_param(a_humidity, t_humidity)
+            t_humidity    = _set_floatquantity_param(a_humidity, t_humidity, '%')
             t_pwv         = _set_floatquantity_param(a_PWV, t_pwv, 'mm')
             t_dp          = _set_floatquantity_param(a_dp, t_dp, 'mbar')
-            t_dpm         = _set_float_param(a_dpm, t_dpm)
+            t_dpm         = _set_floatquantity_param(a_dpm, t_dpm, '')
+
             # user-defined profile. #
             t_layerboundaries  = _set_list_param(a_layerboundaries, a_layerboundaries)
             t_layertemperature = _set_list_param(a_layertemperature, a_layertemperature)
@@ -866,28 +927,30 @@ def calc_sdatmcor(
         #
         # print and log to confirm 
         #
-        _msg("===========================================================")
-        _msg("  initATMProfile Parameters TO SET UP. [atmdetail = %s]   " % t_atmdetail)
-        _msg("------------------+----------------------------------------")
-        _msg(" atmtype          |%-16s" % t_atmtype)
-        _msg(" dTem_dh          |%-16s [%s] " % (t_dtem_dh['value'], t_dtem_dh['unit']))
-        _msg(" h0               |%-16s [%s] " % (t_h0['value'], t_h0['unit']))
-        _msg(" altitude         |%-16s [%s] " % (t_altitude['value'], t_altitude['unit']))
-        _msg(" temperature      |%-16s [%s] " % (t_temperature['value'], t_temperature['unit']))
-        _msg(" pressure         |%-16s [%s] " % (t_pressure['value'], t_pressure['unit']))
-        _msg(" humidity         |%-16s [percent]" % t_humidity)
-        _msg(" pwv              |%-16s [%s] " % (t_pwv['value'], t_pwv['unit']))
-        _msg(" dp               |%-16s [%s] " % (t_dp['value'], t_dp['unit']))
-        _msg(" dpm              |%-16s " % t_dpm)
-        _msg("*maxAltitude      |%-16s [%s] " % (t_maxAltitude['value'], t_maxAltitude['unit']))
-        _msg(" layerboundaries  |%-16s " % t_layerboundaries)
-        _msg(" layertemperature |%-16s " % t_layertemperature)
+        _msg("=============================================================")
+        _msg("  initATMProfile Parameters     [atmdetail = %s]" % t_atmdetail)
+        _msg("------------------+-----------------------------+------------")
+        _msg("  parameter       | value [unit]                | to set up  ")
+        _msg("------------------+-----------------------------+------------")
+        _msg(" atmtype          |%-18s" % t_atmtype)
+        _msg(" dTem_dh          |%-18s [%5s]   | %s " % (t_dtem_dh['value'], t_dtem_dh['unit'], t_dtem_dh['setup']))
+        _msg(" h0               |%-18s [%5s]   | %s " % (t_h0['value'], t_h0['unit'], t_h0['setup']))
+        _msg(" altitude         |%-18s [%5s]   | %s " % (t_altitude['value'], t_altitude['unit'], t_altitude['setup']))
+        _msg(" temperature      |%-18s [%5s]   | %s " % (t_temperature['value'], t_temperature['unit'], t_temperature['setup']))
+        _msg(" pressure         |%-18s [%5s]   | %s " % (t_pressure['value'], t_pressure['unit'], t_pressure['setup']))
+        _msg(" humidity         |%-18s [%5s]   | %s " % (t_humidity['value'], t_humidity['unit'], t_humidity['setup']))
+        _msg(" pwv              |%-18s [%5s]   | %s " % (t_pwv['value'], t_pwv['unit'], t_pwv['setup']))
+        _msg(" dp               |%-18s [%5s]   | %s " % (t_dp['value'], t_dp['unit'], t_dp['setup']))
+        _msg(" dpm              |%-18s [%5s]   | %s " % (t_dpm['value'], t_dpm['unit'], t_dpm['setup']))
+        _msg("*maxAltitude      |%-18s [%5s]   | (FIXED CONST) " % (t_maxAltitude['value'], t_maxAltitude['unit']))
+        _msg(" layerboundaries  |%-18s " % t_layerboundaries)
+        _msg(" layertemperature |%-18s " % t_layertemperature)
         _msg("------------------+----------------------------------------")
 
         ###################
         # initATMProfile 
         ###################
-        atm = at.initAtmProfile(humidity=t_humidity,
+        atm = at.initAtmProfile(humidity=t_humidity['value'],
                                 temperature=t_temperature,
                                 altitude=t_altitude,
                                 pressure=t_pressure,
@@ -895,7 +958,8 @@ def calc_sdatmcor(
                                 maxAltitude=t_maxAltitude,
                                 h0=t_h0,
                                 dTem_dh=t_dtem_dh,
-                                dP=t_dp, dPm=t_dpm,
+                                dP=t_dp, 
+                                dPm=t_dpm['value'],
                                 layerBoundaries=t_layerboundaries,
                                 layerTemperature=t_layertemperature)
 

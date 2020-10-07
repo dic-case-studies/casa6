@@ -215,7 +215,7 @@
             <default param="altitude"><value type="string"></value></default>
             <default param="temperature"><value type="string"></value></default>
             <default param="pressure"><value type="string"></value></default>
-            <default param="humidity"><value type="string">-1</value></default>
+            <default param="humidity"><value type="double">-1</value></default>
             <default param="PWV"><value type="string"></value></default>
             <default param="dp"><value type="string"></value></default>
             <default param="dpm"><value type="double">-1</value></default>
