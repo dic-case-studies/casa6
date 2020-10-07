@@ -1201,6 +1201,12 @@ class test_stokes(testref_base):
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',deconvolver='mtmfs',nterms=2,parallel=self.parallel)
           report=self.th.checkall(imexist=[self.img+'.image.tt0'],imexistnot=[self.img+'.image.alpha'], imval=[(self.img+'.image.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',2.0,[50,50,1,0]), (self.img+'.image.tt0',3.0,[50,50,2,0]),(self.img+'.image.tt0',4.0,[50,50,3,0]) ])
+          _ia.open(self.img+'.image.tt0')
+          if _ia.brightnessunit() == "Jy/beam":
+               report = report + "(Pass : Units are Jy/beam in the restored image)\n"
+          else:
+               report = report + "(Fail : Units are not Jy/beam in the restored image)\n"
+          _ia.close()
           self.checkfinal(report)
 
 
