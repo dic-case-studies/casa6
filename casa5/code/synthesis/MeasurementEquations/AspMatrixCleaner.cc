@@ -1908,7 +1908,7 @@ void AspMatrixCleaner::testBFGS()
     {
       const int px = i;
       const int py = j;
-      simpleDirty(i,j) = gbeam(px, py);
+      simpleDirty(i,j) = 3 * gbeam(px, py);
     }
   }
   //debug
@@ -1931,10 +1931,10 @@ void AspMatrixCleaner::testBFGS()
   GaussianObjFunc funG(simpleDirty, simplePsfFT, simCenter, itsGain);
   double fxG;
   double gclipG;
-  VectorXd xG(1);
+  VectorXd xG(2);
 
-  xG[0] = 16.00;
-  //xG[0] = 16.00;
+  xG[0] = 1.00;
+  xG[1] = 16.00;
   cout << "Before: xG = " << xG.transpose() << endl;
   const int niter = solver.minimize(funG, xG, fxG, gclipG);
   cout << "# iters " << niter << " After: xG = " << xG.transpose() << endl;

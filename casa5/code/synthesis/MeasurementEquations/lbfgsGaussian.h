@@ -90,10 +90,10 @@ public:
     for (unsigned int k = 0; k < AspLen; k ++)
     {
 
-      //if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue or scale < 0
-      if (isnan(x[k]) || x[k] <= 0) // LBFGS encounters convergense issue or scale < 0
+      if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue or scale < 0
+      //if (isnan(x[k]) || x[k] <= 0) // LBFGS encounters convergense issue or scale < 0
       {
-        std::cout << "nan? " << std::endl;//x[2*k] << " neg scale? " << x[2*k+1] << std::endl;
+        std::cout << "nan? " << x[2*k] << " neg scale? " << x[2*k+1] << std::endl;
         fx = -999.0;
         return fx;
       }
@@ -107,15 +107,15 @@ public:
       casacore::Matrix<casacore::Float> dAsp(nX, nY);
       dAsp = 0.0;
 
-      //const double sigma5 = 5 * x[2*k+1] / 2;
-      const double sigma5 = 5 * x[k] / 2;
+      const double sigma5 = 5 * x[2*k+1] / 2;
+      //const double sigma5 = 5 * x[k] / 2;
       const int minI = std::max(0, (int)(center[k][0] - sigma5));
       const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
       const int minJ = std::max(0, (int)(center[k][1] - sigma5));
       const int maxJ = std::min(nY-1, (int)(center[k][1] + sigma5));
 
-      //casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
-      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[k]), center[k][0], center[k][1], x[k], 1, 0);
+      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
+      //casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[k]), center[k][0], center[k][1], x[k], 1, 0);
       /*for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -127,10 +127,11 @@ public:
           const int px = i;
           const int py = j;
           Asp(i,j) = gbeam(px, py); //verified by python
-          dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[k],2) - 1) / x[k]); // verified by python
+          //dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[k],2) - 1) / x[k]); // verified by python
+          dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
         }
       }
-      std::cout << "peak(Asp) " << max(fabs(Asp)) << " scale " << x[k] << std::endl;
+      std::cout << "peak(Asp) " << max(fabs(Asp)) << " amp " << x[2*k] << " scale " << x[2*k+1] << std::endl;
       std::cout << "peak(dAsp) " << max(fabs(dAsp)) << " dAsp(128,128) " << dAsp(128,128) << std::endl;
       //debug
       for (int j = 125; j <= 130; j++)
@@ -204,7 +205,7 @@ public:
       Eigen::MatrixXf MdAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptrc2, nX, nY);
 
       Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Mres;
-      Mres = Mdirty - MAspConvPsf;
+      Mres = Mdirty - x[2*k] * MAspConvPsf;
       //debug
       for (int j = 125; j <= 130; j++)
       {
@@ -228,6 +229,7 @@ public:
       //GradScale = (-2) * /*amp*/Mres.cwiseProduct(MdAspConvPsf); // this is still wrong. Needs to be element by element multiplication
       itsMatDirty.freeStorage(dptr, ddel);
       AspConvPsf.freeStorage(dptrc, ddelc);
+      dAspConvPsf.freeStorage(dptrc2, ddelc2);
 
       // generate objective function
       // returns the objective function value and gradient evaluated on x
@@ -236,27 +238,38 @@ public:
       {
         for (int i = minI; i <= maxI; i++)
         {*/
-      grad[k] = 0.0;
-      std::cout << "before grad " << k << ": " << grad[k] << std::endl;
+      //grad[k] = 0.0;
+      grad[2*k] = 0.0;
+      grad[2*k+1] = 0.0;
+      std::cout << "before grad " << 2*k << ": " << grad[2*k] << std::endl;
+      std::cout << "before grad " << 2*k+1 << ": " << grad[2*k+1] << std::endl;
       for (int j = 0; j <= nY-1; j++)
       {
         for (int i = 0; i <= nX-1; i++)
         {
-          ////AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + /*itsGain * */x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
-          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
-          ////grad[2*k] = grad[2*k] + double(Grad0(i,j));
-          ////grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
-          //grad[k] = grad[k] + double(Grad1(i,j));
-          GradScale(i,j) = (-2) * /*amp*/Mres(i,j) * MdAspConvPsf(i,j);
-          grad[k] = grad[k] + double(GradScale(i,j));
+          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + x[2*k] * AspConvPsf(i,j); //optimumstrength*PsfConvAspen
+          GradAmp(i,j) = (-2) * Mres(i,j) * MAspConvPsf(i,j);
+          GradScale(i,j) = (-2) * x[2*k] * Mres(i,j) * MdAspConvPsf(i,j);
+          grad[2*k] = grad[2*k] + double(GradAmp(i,j));
+          grad[2*k+1] = grad[2*k+1] + double(GradScale(i,j));
         }
       }
+      //debug
+      for (int j = 125; j <= 130; j++)
+      {
+        for (int i = 125; i <= 130; i++)
+        {
+          std::cout << " GradAmp(" << i << "," << j << ") = " << GradAmp(i,j) << std::endl;
+          std::cout << " GradScale(" << i << "," << j << ") = " << GradScale(i,j) << std::endl;
+        }
+      }
+      //
       std::cout << "verify: GradScale(128,128) " << GradScale(128,128) << std::endl;
       std::cout << "verify: Mres(127,128) " << Mres(127,128) << std::endl;
       std::cout << "verify: MdAspConvPsf(127,128) " << MdAspConvPsf(127,128) << std::endl;
       std::cout << "verify: GradScale(127,128) " << GradScale(127,128) << std::endl;
-      std::cout << "verify: GradScale(128,127) " << GradScale(128,127) << std::endl;
-      std::cout << "after grad " << k << ": " << grad[k] << std::endl;
+      std::cout << "after grad " << 2*k << ": " << grad[2*k] << std::endl;
+      std::cout << "after grad " << 2*k+1 << ": " << grad[2*k+1] << std::endl;
 
       if (minI < minX)
         minX = minI;
