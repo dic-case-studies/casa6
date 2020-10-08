@@ -384,7 +384,7 @@ from casatestutils.imagerhelpers import TestHelpers
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import quanta, measures, image, vpmanager, calibrater
-    from casatasks import casalog, deconvolve, tclean, imtrans, imrebin, imregrid, imval
+    from casatasks import casalog, ctsys, deconvolve, tclean, imtrans, imrebin, imregrid, imval
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
 
