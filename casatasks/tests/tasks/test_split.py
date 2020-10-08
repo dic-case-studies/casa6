@@ -66,7 +66,7 @@ else:
     def lociteritems(adict):
         return adict.iteritems()
 
-datapath = ctsys_resolve('regression/unittest/split')
+datapath = ctsys_resolve('unittest/split/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -260,7 +260,7 @@ class SplitChecker(unittest.TestCase):
 @unittest.skip("split_test_tav is skipped")
 class split_test_tav(SplitChecker):
     need_to_initialize = True
-    inpms = '../../0420+417/0420+417.ms'
+    inpms = '0420+417.ms'
     if datapath.count('unittest_mms')==1:
         inpms = '0420+417.ms'
         
@@ -439,7 +439,7 @@ class split_test_tav(SplitChecker):
 class split_test_cav(SplitChecker):
     need_to_initialize = True
     corrsels = ['', 'rr', 'll']
-    inpms = '../../viewertest/ctb80-vsm.ms'
+    inpms = 'ctb80-vsm.ms'
     if datapath.count('unittest_mms')==1:
         inpms = 'ctb80-vsm.ms'
 
@@ -550,7 +550,7 @@ class split_test_cav(SplitChecker):
 class split_test_cav5(SplitChecker):
     need_to_initialize = True
     corrsels = ['', 'll']
-    inpms = '../../viewertest/ctb80-vsm.ms'
+    inpms = 'ctb80-vsm.ms'
     if datapath.count('unittest_mms')==1:
         inpms = 'ctb80-vsm.ms'
 
@@ -866,7 +866,7 @@ class split_test_cavcd(unittest.TestCase):
     """
     Checks that the CORRECTED_DATA column can be channel averaged.
     """
-    inpms = '../../split/labelled_by_time+ichan.ms'    
+    inpms = 'labelled_by_time+ichan.ms'    
     if datapath.count('unittest_mms')==1:
         inpms = 'labelled_by_time+ichan.ms'
 
@@ -913,7 +913,8 @@ class split_test_genericsubtables(unittest.TestCase):
     """
     Check copying generic subtables
     """
-    inpms = os.path.join(datapath,'2554.ms')
+#    inpms = os.path.join(datapath,'2554.ms')
+    inpms = os.path.join(datapath,'alma_2010_8ant.ms')
     outms = 'musthavegenericsubtables.ms'
 
     def setUp(self):
@@ -952,7 +953,7 @@ class split_test_singchan(unittest.TestCase):
     Check selecting a single channel with the spw:chan syntax
     """
     # rename and make readonly when plotxy goes away.
-    inpms = '../../viewertest/ctb80-vsm.ms'
+    inpms = 'ctb80-vsm.ms'
     if datapath.count('unittest_mms')==1:
         inpms = 'ctb80-vsm.ms'
 
@@ -1004,7 +1005,7 @@ class split_test_blankov(unittest.TestCase):
     Check that outputvis == '' causes a prompt exit.
     """
     # rename and make readonly when plotxy goes away.
-    inpms = '../../viewertest/ctb80-vsm.ms'
+    inpms = 'ctb80-vsm.ms'
     if datapath.count('unittest_mms')==1:
         inpms = 'ctb80-vsm.ms'
 
@@ -1162,7 +1163,8 @@ class split_test_sw_and_fc(SplitChecker):
     Check SPECTRAL_WINDOW and FLAG_CMD with chan selection and averaging.
     """
     need_to_initialize = True
-    inpms = os.path.join(datapath,'2562.ms')
+#    inpms = os.path.join(datapath,'2562.ms')
+    inpms = os.path.join(datapath,'vla_12191+48299_2spw.ms')
     records = {}
 
     # records uses these as keys, so they MUST be tuples, not lists.
@@ -1738,7 +1740,7 @@ class split_test_singlespw_severalchranges(unittest.TestCase):
     ranges within the same SPW, you get as an output a single SPW in the
     data description table. See CAS-11087
     """ 
-    inpms = os.path.join(datapath,'../flagdata/uid___A002_X30a93d_X43e_small.ms')
+    inpms = os.path.join(datapath,'uid___A002_X30a93d_X43e_small.ms')
     outms = 'uid___A002_X30a93d_X43e_small_chanl4.ms'
     
     def setUp(self):
@@ -1940,7 +1942,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
            self.cleanup()
 
-        os.system('cp -RL '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
+        os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
         default(split)
        
     def setUp_3c84(self):
@@ -1955,7 +1957,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
            self.cleanup()
 
-        os.system('cp -RL '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
+        os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
         default(split)
         
     def setUp_mixedpol(self):
@@ -1970,7 +1972,7 @@ class test_base(unittest.TestCase):
         if os.path.exists(self.vis):
            self.cleanup()
 
-        os.system('cp -RL '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
+        os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
         default(split)
         
     def setUp_flags(self):
@@ -1978,7 +1980,7 @@ class test_base(unittest.TestCase):
         self.vis = asdmname+'.ms'
         self.flagfile = asdmname+'_cmd.txt'
 
-        asdmpath=ctsys_resolve('regression/unittest/importasdm')
+        asdmpath=ctsys_resolve('unittest/split/')
         os.system('ln -sf '+os.path.join(asdmpath,asdmname))
         importasdm(asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True, 
                    scans='1', savecmds=True)
@@ -1988,7 +1990,7 @@ class test_base(unittest.TestCase):
         '''Create MMSs for tests with input MMS'''
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
-            os.system('cp -RL '+os.path.join(datapath,msfile)+' '+ msfile)
+            os.system('cp -RH '+os.path.join(datapath,msfile)+' '+ msfile)
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
@@ -2009,7 +2011,7 @@ class splitTests(test_base):
         if testmms:
             self.datapath = datapath
         else:
-            self.datapath = ctsys_resolve('regression/unittest/flagdata')
+            self.datapath = ctsys_resolve('unittest/split/')
         self.setUp_4ants()
         
     def tearDown(self):
@@ -2050,7 +2052,7 @@ class splitTests(test_base):
         '''split: raise an error when .flagversions exist'''
         self.outputms = 'spw0.ms'
         
-        os.system('cp -RL ' + self.vis + ' ' + self.outputms)
+        os.system('cp -RH ' + self.vis + ' ' + self.outputms)
         
         # First, create a .flagversions file
         flagdata(vis=self.outputms, flagbackup=True, spw='0', mode='unflag')
@@ -2140,7 +2142,7 @@ class splitSpwPoln(test_base):
         if testmms:
             self.datapath = datapath
         else:
-            self.datapath = ctsys_resolve('regression/unittest/mstransform')
+            self.datapath = ctsys_resolve('unittest/split/')
         self.setUp_3c84()
 
     def tearDown(self):
@@ -2214,7 +2216,7 @@ class splitUnsortedPoln(test_base):
         if testmms:
             self.datapath = datapath
         else:
-            self.datapath = ctsys_resolve('regression/unittest/mstransform')
+            self.datapath = ctsys_resolve('unittest/split/')
         self.setUp_mixedpol()
 
     def tearDown(self):
