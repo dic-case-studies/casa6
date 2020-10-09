@@ -446,7 +446,7 @@ def calc_sdatmcor(
         p_observation,
         p_feed,
         p_msselect,
-        a_outputspw,
+        p_outputspw,
         a_dtem_dh,
         a_h0,
         a_atmtype,
@@ -485,7 +485,7 @@ def calc_sdatmcor(
         print('observation =', p_observation)
         print('feed        =', p_feed)
         print('msselect    =', p_msselect)
-        print('outputspw   =', a_outputspw)
+        print('outputspw   =', p_outputspw)
         print('dtem_dh     =', a_dtem_dh)
         print('h0          =', a_h0)
         print('atmtype     =', a_atmtype)
@@ -645,7 +645,8 @@ def calc_sdatmcor(
             outfile=tempFileName,   # Temp name is used inside.
             overwrite=p_overwrite,  # passed by the actual ARG.
             field=p_field,
-            spw=p_spw,
+            # spw=p_spw,             (Wrong)
+            spw = p_outputspw,       # use OutputSpw to make selectedMS.
             scan=p_scan,
             antenna=p_antenna,
             correlation=p_correlation,
@@ -711,7 +712,16 @@ def calc_sdatmcor(
         intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
         spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
         spwnames = msmd.namesforspws(spws)
- 
+
+        # Investigation #
+        print(" SN: tm ON  source  = %s" % tmonsource)
+        print(" SN: tm OFF source  = %s" % tmoffsource)
+        print(" SN: fdm    spws = %s" % fdmspws)
+        print(" SN: tdm    spws = %s" % tdmspws)
+        print(" SN: intent spws = %s" % intentspws)
+        print(" SN:        spws = %s" % spws)
+        # print(" SN:    spwnames = %s" % spwnames) 
+
     except Exception as err:
         _msg("ERROR:: opening rawms")
         casalog.post('%s' % err, 'ERROR')
@@ -736,6 +746,24 @@ def calc_sdatmcor(
         _msg(msg, 'SEVERE')
         return False
 
+    #
+    # (Task Section ) 
+    # force to chage  processing SPW 
+    # - If spw is pecified in the arg, set up 'spws'
+    #
+    _msg("Determine outputspw")
+    if (p_spw != ''):
+        spws_param = _list_comma_string(p_spw, dType='int')
+
+        # Here, including check is needed. (UNDER CONSTRUCTION)
+        #  - all the element in spws_param MUST be in Spws
+        if set(spws) >= set(spws_param):   # B is included in A #
+            spws = spws_param   # update
+            _msg(" - updated 'spws'=%s." % spws)
+        else:
+            _msg("Some of specified spw is not in spws. Cannot continue." "ERROR" )
+            return False
+  
     # (original) get chanfreqs[spwid] info.
     for spwid in spws:
         chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
@@ -759,6 +787,8 @@ def calc_sdatmcor(
     msmd.close()
     _msg("closed msmd")
 
+    print(" SN ddis[] = %s" % ddis )
+
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
 
@@ -766,6 +796,38 @@ def calc_sdatmcor(
         bbp = int(spwnames[i].split('#')[2][3])-1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
+
+    #
+    # (Task Section)
+    # Output SPW from Arguments. 'Spw' is already decided.
+    #
+    _msg("Determine outputspw")
+
+    # set Output SPW (if no arg, use spws) #
+    if (p_outputspw == ''):
+        outputspws = spws         # use calculated 'spws' above
+    else:
+        outputspws = _list_comma_string(p_outputspw, dType='int')
+
+    _msg("Determined Spw Information")
+    _msg('- spws %s' % spws)
+    _msg('- outputspws %s' % outputspws)    # expected outputspw
+
+    #
+    # (Task Section)
+    # Check if specified outputspw is in the list of spws
+    #
+    _found = False
+    for spw in outputspws:
+        if spw in spws:
+            _found = True
+            break
+        else:
+            _found = False
+ 
+    if not _found:
+        _msg("None of the output-spws %s is not in the processing spws %s. Abort." % (outputspws, spws), "ERROR")
+        return False
 
     #
     # Data Query on Pointing Table.
@@ -837,47 +899,22 @@ def calc_sdatmcor(
 
     _msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
 
-    #
-    # prepare SPW, output SPW
-    #
-    _msg("Determine spws, outputspw")
-
-    # set processing SPW #
-    if (p_spw != ''):
-        spws = _list_comma_string(p_spw, dType='int')
-
-    # set Output SPW (if no arg, use spws) #
-    if (a_outputspw == ''):
-        outputspws = spws         # use calculated 'spws' above
-    else:
-        outputspws = _list_comma_string(a_outputspw, dType='int')
-
-    _msg("Spw Information")
-    _msg('- spws %s' % spws)
-    _msg('- outputspws %s' % outputspws)    # expected outputspw
-
-    #
-    # Check if specified if outputspw is in the list of spws
-    #
-    _found = False
-    for spw in outputspws:
-        if spw in spws:
-            _found = True
-            break
-        else:
-            _found = False
- 
-    if not _found:
-        msg = "None of the output-spws %s is not in the processing spws %s. Abort." % (outputspws, spws)
-        _msg(msg, 'ERROR')
-        return False
-
     ################################################################
     # Looping over spws
     ################################################################
     _msg("opening corms[%s] to write ATM-Corrected Data." % corms)
     tb.open(corms, nomodify=False)
-    for spwid in spws:
+
+    #
+    # spw for-loop:
+    # - Inside this loop, calculation is done on each swid
+    # - The result is wriiten on OutputFile with selected Spw, which is specified by OutputSpw
+    # - List of OutputSpw must same as List of Spws
+    # (author's change from the original)
+    #
+
+    # for spwid in spws:
+    for spwid in outputspws:
         # Log #
         _msg("Processing spw %d in %s " % (spwid, spws))
 
@@ -1046,17 +1083,10 @@ def calc_sdatmcor(
         # Calculate and apply correction values
         ################################################################
 
-        _msg("- Calculate and apply correction values")
-        _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
-
-        # Skip outputspw
-        if not spwid in outputspws:
-            # if not ddis[spwid] in outputspws:
-            msg = "This spw %d is skipped, due to not in the output spw list." % spwid
-            _msg(msg)
-            continue
+        _msg("\nCalculate and apply correction values.\n")
 
         # original: make ddis[spwid]
+        _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
         querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
         subtb = tb.query(querytext)
   
