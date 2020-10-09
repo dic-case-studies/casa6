@@ -77,6 +77,7 @@ def oldsplit(vis, outputvis, datacolumn, field, spw, width, antenna,
     mylocals = locals()
     rval = True
     try:
+        casalog.post("The oldsplit task is deprecated in CASA version 5.8.  Please use task split instead.",'WARN')
 
         if (keepmms and ParallelDataHelper.isMMSAndNotServer(vis)):
             if (timebin!='0s' and timebin!='-1s'):

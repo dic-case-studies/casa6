@@ -118,6 +118,7 @@ def plotcal(caltable=None,xaxis=None,yaxis=None,
 	yaxis=string.upper(yaxis)
 	poln=string.upper(poln)
 	try:
+                casalog.post("The plotcal task is deprecated in CASA version 5.8. All plotcal features have been made available in plotms in casa 5.8/6.2.",'WARN')
 		# Turn the display of the plot GUI on or off
 		mytp.setgui( showgui );
 

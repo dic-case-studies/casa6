@@ -6,7 +6,7 @@ xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <task type="function" name="oldsplit" category="manipulation" visibility="hidden">
-<shortdescription>Create a visibility subset from an existing visibility set</shortdescription>
+<shortdescription>Create a visibility subset from an existing visibility set (Deprecated in CASA 5.8. Use split instead.)</shortdescription>
 
 <description>
 

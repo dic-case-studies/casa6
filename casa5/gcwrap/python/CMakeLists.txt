@@ -102,7 +102,7 @@ scripts/task_bandpass.py
 scripts/task_blcal.py
 scripts/task_browsetable.py
 scripts/task_calstat.py
-scripts/task_caltabconvert.py
+#scripts/task_caltabconvert.py
 scripts/task_clean.py
 scripts/task_clearcal.py
 scripts/task_clearstat.py

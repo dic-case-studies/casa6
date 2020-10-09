@@ -7,7 +7,7 @@
 
       <task type="function" name="plotcal" category="visualization, calibration">
     
-    <shortdescription>An all-purpose plotter for calibration results </shortdescription>
+    <shortdescription>An all-purpose plotter for calibration results (Deprecated in CASA 5.8. Use plotms instead.)</shortdescription>
     <description>
 An all-purpose plotter for calibration results.  The values for all
 calibration solutions (G, T, GSPLINE, B, BPOLY, D) can be displayed

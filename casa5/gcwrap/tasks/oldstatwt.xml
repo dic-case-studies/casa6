@@ -7,7 +7,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <task type="function" name="oldstatwt" category="manipulation">
 
-  <shortdescription> Reweight visibilities according to their scatter (Experimental)</shortdescription>
+  <shortdescription> Reweight visibilities according to their scatter (Deprecated in CASA 5.8. Use statwt instead.)</shortdescription>
 
 
 <input>
