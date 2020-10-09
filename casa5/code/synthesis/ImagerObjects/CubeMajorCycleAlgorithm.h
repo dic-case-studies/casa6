@@ -65,7 +65,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           void divideModelByWeight(std::shared_ptr<casacore::ImageInterface<casacore::Float> >&submodel, const casacore::Int startchan, const casacore::Int endchan, const casacore::String weightname);
           std::shared_ptr<SIImageStore> subImageStore(const int whichImageId=0);
           std::shared_ptr<SIImageStore> multiTermImageStore(const casacore::Int imId);
-		casacore::String myName_p;
+	  
+	  void copyBeamSet(casacore::ImageInterface<casacore::Float>& subpsf, const casacore::Int imageid);
+	  casacore::String myName_p;
 		casacore::Vector<SynthesisParamsSelect> dataSel_p;
 		casacore::Vector<SynthesisParamsImage> imSel_p;
 		casacore::Vector<SynthesisParamsGrid> gridSel_p;
@@ -76,14 +78,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		casacore::Bool dopsf_p;
 		casacore::Record controlRecord_p;
 		casacore::Record weightParams_p;
+		casacore::Record returnRec_p;
 		casacore::Vector<casacore::Vector<casacore::String> > startmodel_p;
           casacore::Vector<casacore::String> residualNames_p;
           casacore::Vector<casacore::String> psfNames_p;
           casacore::Vector<casacore::String> sumwtNames_p;
 	  casacore::Vector<casacore::String> weightNames_p;
+          casacore::Vector<casacore::String> pbNames_p;
           casacore::String movingSource_p;
 		casacore::Bool status_p;
-		casacore::Bool retuning_p; 
+		casacore::Bool retuning_p;
+          casacore::Bool doPB_p;
           casacore::Vector<casacore::Int> nterms_p;
 	};
 	

@@ -343,7 +343,7 @@ class PySynthesisImager:
     def makePSF(self):
 
         self.makePSFCore()
-        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs'
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs' or ("awproj" in self.allgridpars['0']['gridder'])
         ### Gather PSFs (if needed) and normalize by weight
         for immod in range(0,self.NF):
             #for cube normalization is done in C++
@@ -369,7 +369,7 @@ class PySynthesisImager:
             lastcycle = (self.IBtool.cleanComplete(lastcyclecheck=True) > 0)
         else:
             lastcycle = True
-        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs'
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs' or ("awproj" in self.allgridpars['0']['gridder'])
         ##norm is done in C++ for cubes
         if not divideInPython :
             self.runMajorCycleCore(lastcycle)

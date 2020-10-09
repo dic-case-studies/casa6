@@ -204,11 +204,11 @@ def tclean(
         casalog.post( "The parameter chanchunks is no longer used by tclean. It will be removed in CASA 6.2", "WARN", "task_tclean" )
 
     if((specmode=='cube' or specmode=='cubedata') and parallel==False and mpi_available):
-        casalog.post( "Setting parameter parallel=False with specmode='cube' when launching CASA with mpi has no effect.", "WARN", "task_tclean" )
+        casalog.post( "Setting parameter parallel=False with specmode='cube' when launching CASA with mpi has no effect except for awproject.", "WARN", "task_tclean" )
         
-    if((specmode=='cube' or specmode=='cubedata') and gridder=='awproject'):
-        casalog.post( "The awproject gridder does not currently work with specmode='cube'.", "WARN", "task_tclean" )
-        return
+    if((specmode=='cube' or specmode=='cubedata') and gridder=='awproject') and (parallel):
+        casalog.post( "The awproject gridder still uses the old form python mpi parallelism pre CAS-9386.\n", "WARN", "task_tclean" )
+        #return
       
 
     #####################################################
@@ -253,8 +253,11 @@ def tclean(
     concattype=''
     pcube=False
     if parallel==True and specmode!='mfs':
-        pcube=False
-        parallel=False
+        if specmode!='mfs':
+            pcube=False
+            parallel=False
+        else:
+            pcube=True
     #=========================================================
     ####set the children to load c++ libraries and applicator
     ### make workers ready for c++ based mpicommands
@@ -275,7 +278,7 @@ def tclean(
 
     # catch non operational case (parallel cube tclean with interative=T)
     if pcube and interactive:
-        casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
+        casalog.post( "Interactive mode is not currently supported with parallel apwproject cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
     #print('parameters {}'.format(bparm))    
     paramList=ImagerParameters(**bparm)
@@ -374,13 +377,16 @@ def tclean(
                     imager.initializeIterationControl()
 
             t1=time.time();
-            casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-        
-
+            if(specmode != 'mfs' and ('stand' in gridder)):
+                casalog.post("***Time for making PSF and PB: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            else:
+                casalog.post("***Time for making PSF: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
+            
             imager.makePB()
 
             t2=time.time();
-            casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
+            if(specmode=='mfs' and ('stand' in gridder)):
+                casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
 
         if niter >=0 : 
 

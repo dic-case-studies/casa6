@@ -79,7 +79,10 @@ public:
   //Otherwise it will use this image passed here; useful for parallelization to
   //share one grid to all children process
   casacore::Bool setWeightDensity(const casacore::String& imagename=casacore::String(""));
+  
   void predictModel();
+  //make primary beam for standard gridder
+  bool makePB();
   virtual void makeSdImage(casacore::Bool dopsf=false);
   ///This should replace makeSDImage and makePSF etc in the long run
   ///But for now you can do the following images i.e string recognized by type
@@ -121,6 +124,7 @@ public:
 			  casacore::uInt ntaylorterms=1,
 			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
   virtual void unlockMSs();
+  virtual void lockMSs();
   virtual void lockMS(MeasurementSet& ms);
   virtual void createVisSet(const casacore::Bool writeaccess=false);
   void createFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT, 
@@ -235,7 +239,7 @@ public:
   //  _Image_ spectral grid TBD
   virtual casacore::Record apparentSensitivity();
 
-  bool makePB();
+  
   bool makePrimaryBeam(PBMath& pbMath);
   void  andFreqSelection(const casacore::Int msId, const casacore::Int spwId,  const casacore::Double freqBeg, const casacore::Double freqEnd, const casacore::MFrequency::Types frame);
   void andChanSelection(const casacore::Int msId, const casacore::Int spwId, const casacore::Int startchan, const casacore::Int endchan);
@@ -244,6 +248,7 @@ public:
   //return Direction of moving source is in the frame of vb.phaseCenter() at the time of the first row of the vb
   casacore::Bool getMovingDirection(const vi::VisBuffer2& vb,  casacore::MDirection& movingDir);
   std::tuple<int, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > nSubCubeFitInMemory(const casacore::Int fudge_factor, const casacore::IPosition& imshape, const casacore::Float padding=1.0);
+  void updateImageBeamSet(casacore::Record& returnRec);
    // Other Options
   //casacore::Block<const casacore::MeasurementSet *> mss_p;
   casacore::CountedPtr<vi::VisibilityIterator2>  vi_p;

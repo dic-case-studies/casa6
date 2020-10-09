@@ -145,6 +145,8 @@ int main(int argc, char **argv)
                 rank = casa::applicator.nextProcessDone(*cmc, allDone);
                 cerr << "while rank " << rank << endl;
                 Bool status;
+		Record returnRec;
+		casa::applicator.get(returnRec);
                 casa::applicator.get(status);
                 if(status)
                   cerr << k << " rank " << rank << " successful " << endl;
@@ -183,6 +185,8 @@ int main(int argc, char **argv)
               while (!allDone) {
                 
                 Bool status;
+		Record returnRec;
+		casa::applicator.get(returnRec);
                 casa::applicator.get(status);
                 if(status)
                   cerr << "remainder rank " << rank << " successful " << endl;

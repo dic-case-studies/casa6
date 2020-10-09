@@ -144,14 +144,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //Respect the readonly flag...necessary for multi-process access
     MeasurementSet thisms(selpars.msname, TableLock(TableLock::UserNoReadLocking),
-				selpars.readonly ? Table::Old : Table::Update);
-    thisms.setMemoryResidentSubtables (MrsEligibility::defaultEligible());
-
+                          selpars.readonly ? Table::Old : Table::Update);
     useScratch_p=selpars.usescratch;
     readOnly_p = selpars.readonly;
+    lockMS(thisms);	
+    thisms.setMemoryResidentSubtables (MrsEligibility::defaultEligible());
+
+    
     //    cout << "**************** usescr : " << useScratch_p << "     readonly : " << readOnly_p << endl;
     //if you want to use scratch col...make sure they are there
-    lockMS(thisms);
     ///Need to clear this in first pass only...child processes or loops for cube ///should skip it
     if(!(impars_p.mode.contains("cube")) || ((impars_p.mode.contains("cube")) && doingCubeGridding_p)){
       if(selpars.usescratch && !selpars.readonly){
@@ -239,7 +240,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  mss_p[mss_p.nelements()-1]=new MeasurementSet(thisMSSelected0);
 	  
 	os << "  NRows selected : " << (mss_p[mss_p.nelements()-1])->nrow() << LogIO::POST;
-	unlockMSs();
+	//	unlockMSs();
       }
     else{
       throw(AipsError("Selection for given MS "+selpars.msname+" is invalid"));
@@ -317,6 +318,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           //cerr << "begin " << lowfreq << "  " << topfreq << endl; 
 	      //vi::VisibilityIterator2 tmpvi(mss_p, vi::SortColumns(), false); 
 	      //VisBufferUtil::getFreqRangeFromRange(lowfreq, topfreq,  freqFrame, lowfreq,  topfreq, tmpvi, selFreqFrame_p);
+	      //    lockMS(*(const_cast<MeasurementSet*> (mss_p[mss_p.nelements()-1])));
               if(MSUtil::getFreqRangeInSpw( lowfreq,
 				  topfreq, Vector<Int>(1,chanlist(k,0)), Vector<Int>(1,chanlist(k,1)),
 				  Vector<Int>(1, chanlist(k,2)-chanlist(k,1)+1),
@@ -327,7 +329,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   selectionValid=True;
                   thisSpwSelValid=True;
                 }
-		    
+	      //  unlockMSs();
 		    
 	    }
 	    
@@ -668,6 +670,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	//cerr <<"DECONV " << imparsVec_p[0].deconvolver << " cube gridding " << doingCubeGridding_p << endl;
 	gridparsVec_p.resize(gridparsVec_p.nelements()+1, true);
 	gridparsVec_p[imparsVec_p.nelements()-1]=gridpars_p;
+	//For now as awproject does not work with the c++ mpi cube gridding make sure it works the old way as mfs
+	if(gridparsVec_p[0].ftmachine.contains("awproject"))
+	   setCubeGridding(False);
+	
     return true;
   }
 Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, SynthesisParamsImage& impars, 
@@ -1531,6 +1537,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			
 		}
 		Vector<String> weightnames(Int(imparsVec_p.nelements()),"");
+                Vector<String> pbnames(Int(imparsVec_p.nelements()),"");
 		for(uInt k=0; k < imparsVec_p.nelements(); ++k){
 			Int imageStoreId=k;
 			if(k>0){
@@ -1544,9 +1551,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                           //cerr << "Mosaic weight image " << max(itsMappers.imageStore(imageStoreId)->weight(k)->get()) << endl;
 				weightnames(k)=itsMappers.imageStore(imageStoreId)->weight(k)->name();
                                 
+                                
 			}
+			if(itsMakeVP)
+			  pbnames(k)=itsMappers.imageStore(imageStoreId)->pb(k)->name();
 		}
 		controlRecord.define("weightnames", weightnames);
+                controlRecord.define("pbnames", pbnames);
         // Tell the child processes not to do the dividebyweight process as this is done
 		// tell each child to do the normars stuff
 		controlRecord.define("dividebyweight",  True);
@@ -1632,8 +1643,12 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 rank = casa::applicator.nextProcessDone ( cmc, allDone );
                 //cerr << "while rank " << rank << endl;
                 Bool status;
+		Record returnRec;
+		casa::applicator.get(returnRec);
                 casa::applicator.get ( status );
                 retvals(indexofretval)=status;
+		if(dopsf)
+		  updateImageBeamSet(returnRec);
                 ++indexofretval;
                 if ( status )
                     cerr << k << " rank " << rank << " successful " << endl;
@@ -1668,7 +1683,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         rank = casa::applicator.nextProcessDone ( cmc, allDone );
         while ( !allDone ) {
             Bool status;
+	    Record returnRec;
+	    casa::applicator.get(returnRec);
             casa::applicator.get ( status );
+	    if(dopsf)
+	      updateImageBeamSet(returnRec);
             retvals(indexofretval)=status;
             ++indexofretval;
             if ( status )
@@ -1999,7 +2018,7 @@ void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim:
                 rank = casa::applicator.nextProcessDone ( *cmi, allDone );
                 //cerr << "while rank " << rank << endl;
                 Bool status;
-                casa::applicator.get ( status );
+                casa::applicator.get(status);
                 /*if ( status )
                   cerr << k << " rank " << rank << " successful " << endl;
                 else
@@ -2129,6 +2148,15 @@ void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
     return SynthesisImager::tuneSelectData();
   }
 //////////////////////
+  void SynthesisImagerVi2::lockMSs(){
+    for(uInt i=0;i<mss_p.nelements();i++)
+      { 
+       
+	MeasurementSet *ms_l = 	const_cast<MeasurementSet* >(mss_p[i]);
+	lockMS(*ms_l);
+      }
+
+  }
 void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","unlockMSs",WHERE) );
@@ -2719,6 +2747,7 @@ void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","createVisSet",WHERE) );
     //cerr << "mss_p num" << mss_p.nelements() <<  " sel  " << fselections_p->size() << endl;
+    lockMSs();
     if(mss_p.nelements() > uInt(fselections_p->size()) && (fselections_p->size() !=0)){
       throw(AipsError("Discrepancy between Number of MSs and Frequency selections"));
     }
@@ -2744,6 +2773,7 @@ void SynthesisImagerVi2::unlockMSs()
     vi_p->origin();
     ////make sure to use the latest imaging weight scheme
     vi_p->useImagingWeight(imwgt_p);
+    unlockMSs();
   }// end of createVisSet
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3240,6 +3270,38 @@ void SynthesisImagerVi2::unlockMSs()
 		throw(AipsError("Mappers have not been set for field "+String::toString(fid)));
 	return (itsMappers.getFTM2(fid, ift));
 	  
+  }
+  void SynthesisImagerVi2::updateImageBeamSet(Record& returnRec){
+    if(returnRec.isDefined("imageid") && returnRec.asInt("imageid")==0){
+      ImageInfo ii=(itsMappers.imageStore(0)->psf())->imageInfo();
+      Vector<Int> chanRange(0);
+      if(returnRec.isDefined("chanrange"))
+	chanRange=returnRec.asArrayInt("chanrange");
+      Int npol=(itsMappers.imageStore(0)->psf())->shape()(2);
+      Int nchan=(itsMappers.imageStore(0)->psf())->shape()(3);
+      if(chanRange.nelements() ==2 && chanRange(1) < nchan){
+
+	ImageBeamSet iibeamset=ii.getBeamSet();
+	Matrix<GaussianBeam> mbeams=iibeamset.getBeams();
+	if(mbeams.nelements()==0){
+	  mbeams.resize(itsMappers.imageStore(0)->psf()->shape()(3), itsMappers.imageStore(0)->psf()->shape()(2));
+	  mbeams.set(GaussianBeam(Vector<Quantity>(3, Quantity(1e-12, "arcsec"))));
+	}
+	Cube<Float> recbeams(returnRec.asArrayFloat("beams"));
+	for(Int c=chanRange[0]; c <= chanRange[1]; ++c){
+	  for(Int p=0; p < npol; ++p){
+	    mbeams(c,p)=GaussianBeam(Quantity(recbeams(c-chanRange[0], p, 0),"arcsec"), Quantity(recbeams(c-chanRange[0], p, 1),"arcsec"), Quantity(recbeams(c-chanRange[0], p, 2),"deg"));
+
+	  }
+	}
+	ii.setBeams(ImageBeamSet(mbeams));
+
+      }
+      itsMappers.imageStore(0)->psf()->setImageInfo(ii);
+      itsMappers.imageStore(0)->psf()->unlock();
+
+      
+    }
   }
 
 } //# NAMESPACE CASA - END

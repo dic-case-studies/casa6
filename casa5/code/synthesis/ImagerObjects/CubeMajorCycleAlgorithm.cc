@@ -37,7 +37,7 @@ using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 extern Applicator applicator;
 
-  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), weightNames_p(0), movingSource_p(""),status_p(False), retuning_p(True), nterms_p(0){
+  CubeMajorCycleAlgorithm::CubeMajorCycleAlgorithm() : myName_p("CubeMajorCycleAlgorithm"),  ftmRec_p(0), iftmRec_p(0), polRep_p(0),startmodel_p(0), residualNames_p(0), psfNames_p(0), sumwtNames_p(0), weightNames_p(0), pbNames_p(0), movingSource_p(""),status_p(False), retuning_p(True), doPB_p(False), nterms_p(0){
 	
 }
 CubeMajorCycleAlgorithm::~CubeMajorCycleAlgorithm() {
@@ -127,7 +127,8 @@ void CubeMajorCycleAlgorithm::put() {
 		
   //	}
 	//cerr << "in put " << status_p << endl;
-	applicator.put(status_p);	
+  applicator.put(returnRec_p);
+  applicator.put(status_p);	
 	
 }
 	
@@ -267,6 +268,9 @@ void CubeMajorCycleAlgorithm::task(){
           }
           else{
             subImgr.makePSF();
+	    ////tclean expects a PB to be always there...
+	    //so for standard make it
+	    subImgr.makePB();
             for(uInt k=0; k < subImStor.nelements(); ++k){
               if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight"))
 		{
@@ -282,11 +286,13 @@ void CubeMajorCycleAlgorithm::task(){
                     norm.setupNormalizer(normpars);
                     norm.setImageStore(subImStorShared[k]);
                     norm.dividePSFByWeight();
+		    copyBeamSet(*(subImStorShared[k]->psf()), k);
                   }
                   else{
                     LatticeLocker lock1 (*(subImStor[k]->psf()), FileLocker::Write);
                     LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
                     subImStor[k]->dividePSFByWeight();
+		    copyBeamSet(*(subImStor[k]->psf()), k);
                     //subImStor[k]->psf()->flush();
                   }
 		}
@@ -304,6 +310,11 @@ void CubeMajorCycleAlgorithm::task(){
                 writeBackToFullImage(sumwtNames_p[k], chanBeg, chanEnd, (subImStor[k]->sumwt()));
 		if((subImStor[k]->hasSensitivity()) && Table::isWritable(weightNames_p[k])){
 		  writeBackToFullImage(weightNames_p[k], chanBeg, chanEnd, (subImStor[k]->weight()));
+		  
+		}
+		if( doPB_p && Table::isWritable(pbNames_p[k])){
+		  writeBackToFullImage(pbNames_p[k], chanBeg, chanEnd, (subImStor[k]->pb()));
+		  
 		}
 		
               }
@@ -347,6 +358,7 @@ String&	CubeMajorCycleAlgorithm::name(){
 	shared_ptr<ImageInterface<Float> >subresid=nullptr;
 	shared_ptr<ImageInterface<Float> >submodel=nullptr;
 	shared_ptr<ImageInterface<Float> > subweight=nullptr;
+        shared_ptr<ImageInterface<Float> > subpb=nullptr;
 	//cerr << imId << " sumwt name " << sumwgtname << endl;
 	String workingdir="";
 	if(controlRecord_p.isDefined("workingdirectory"))
@@ -399,18 +411,31 @@ String&	CubeMajorCycleAlgorithm::name(){
         //}
 	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
         Vector<String> weightnams(controlRecord_p.asArrayString("weightnames"));
+        Vector<String> pbnams(controlRecord_p.asArrayString("pbnames"));
+        pbNames_p.resize();
+        pbNames_p=pbnams;
 	weightNames_p.resize();
 	weightNames_p=weightnams;
+        
         if(imId >= int(weightNames_p.nelements()))
           throw(AipsError("Number of weight images does not match number of image fields defined"));
         if(Table::isReadable(workingdir+weightNames_p[imId])){
 		weightNames_p[imId]=workingdir+weightNames_p[imId];
 	}
-
+         if(Table::isReadable(workingdir+pbNames_p[imId])){
+		pbNames_p[imId]=workingdir+pbNames_p[imId];
+	}
+       
 	if(dopsf_p){
           //PagedImage<Float> psf(psfname, TableLock::UserNoReadLocking);
           //subpsf.reset(SpectralImageUtil::getChannel(psf, chanBeg, chanEnd, true));
           getSubImage(subpsf, chanBeg, chanEnd, psfname, False);
+	  //cerr << "PBNAMES " << pbNames_p << endl;
+	  if(Table::isReadable(pbNames_p[imId])){
+
+	    doPB_p=True;
+	    getSubImage(subpb, chanBeg, chanEnd, pbNames_p[imId], False);
+	  }
 	}
 	else{
           //need to loop over all fields somewhere
@@ -451,7 +476,6 @@ String&	CubeMajorCycleAlgorithm::name(){
 		
 	}
 	
-	
 	if(Table::isReadable(weightNames_p[imId])){
 	  //PagedImage<Float> weight(weightnames[imId], TableLock::UserNoReadLocking);
 	  //subweight.reset(SpectralImageUtil::getChannel(weight, chanBeg, chanEnd, true));
@@ -461,7 +485,7 @@ String&	CubeMajorCycleAlgorithm::name(){
         //	subsumwt.reset(SpectralImageUtil::getChannel(sumwt, chanBeg, chanEnd, true));
         getSubImage(subsumwt, chanBeg, chanEnd, sumwgtname, True);
 	bool useweightimage=(subweight) ? true : false;
-        shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, subweight, nullptr, nullptr, subsumwt, nullptr, nullptr, nullptr, nullptr, useweightimage));
+        shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, subweight, nullptr, nullptr, subsumwt, nullptr, subpb, nullptr, nullptr, useweightimage));
 	if(polRep_p[imId]< 0)
 		throw(AipsError("data polarization type is not defined"));
 	StokesImageUtil::PolRep polrep=(StokesImageUtil::PolRep)polRep_p[imId];
@@ -527,14 +551,17 @@ void CubeMajorCycleAlgorithm::reset(){
 		dopsf_p=False;
 		controlRecord_p=Record();
 		weightParams_p=Record();
+		returnRec_p=Record();
 		startmodel_p.resize();
 		status_p=False;
                 residualNames_p.resize();
                 psfNames_p.resize();
                 sumwtNames_p.resize();
 		weightNames_p.resize();
+                pbNames_p.resize();
                 movingSource_p="";
                 retuning_p=True;
+                doPB_p=False;
                 nterms_p.resize();
                 
 	
@@ -570,6 +597,33 @@ void CubeMajorCycleAlgorithm::reset(){
     im.unlock();
     delete tmpptr;
                  
+  }
+  void CubeMajorCycleAlgorithm::copyBeamSet(ImageInterface<Float>& subpsf, const Int imageid){
+    //For now lets do for the main image only
+    if(imageid != 0)
+      return;
+    ImageBeamSet iibeamset=subpsf.imageInfo().getBeamSet();
+    uInt nchan=chanRange_p[1]-chanRange_p[0]+1;
+    if(nchan ==iibeamset.nchan()){
+      Matrix<GaussianBeam> gbs=iibeamset.getBeams();
+      Cube<Float> beams(nchan, iibeamset.nstokes(),3);
+      
+      for (uInt k=0; k < nchan; ++k){
+	for (uInt j=0; j < iibeamset.nstokes(); ++j){
+	  beams(k,j, 0)=gbs(k, 0).getMajor("arcsec");
+	  beams(k,j, 1)=gbs(k, 0).getMinor("arcsec");
+	  beams(k,j, 2)=gbs(k, 0).getPA("deg", True);
+	}
+      }
+      returnRec_p.define("imageid", imageid);
+      returnRec_p.define("chanrange", chanRange_p);
+      returnRec_p.define("beams", beams);
+
+
+    }
+
+
+
   }
 	
 	
