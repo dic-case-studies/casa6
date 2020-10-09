@@ -103,7 +103,7 @@ def sdatmcor(
 
     # atmtype check 'str or int' and the range  #
     if not _inspect_str_int(atmtype, 1, 5):
-        _msg("ERROR:: atmtype (=%d) Out of Range." % atmtype, 'ERROR' )
+        _msg("ERROR:: atmtype (=%s) Out of Range or Unacceptable." % atmtype, 'ERROR' )
         return False
 
 #
@@ -176,33 +176,29 @@ def _file_exist(path):
 #
 # Unit handling service
 #
+
+# inspect the data can be translated to an Int #
 def _inspect_str_int(data, minimum, maximum):
-    print(data, minimum, maximum)
-    
     if type(data) is str:
-        print("STR")
         if data.isdigit():
-            print("DECIMAL") 
             if minimum <= int(data) <= maximum:
                 return True
             else:
                 return False
         else:
-            print("Not DEC String")
             return False
     
     elif type(data) is int:
-        print("INT")
         if minimum <= int(data) <= maximum:
             return True
         else:
             return False
     else:
         _msg( "INTERNAL ERROR, unexpected data type." 'SEVERE')
-   
-    # unexpected path # 
-    return False
+        raise
+    raise
 
+# inspect the data is consistent with the Unit. #
 def _inspect_value_unit(data, base_unit):
 
     if type(data) is str:    # by String #
@@ -570,7 +566,7 @@ def calc_sdatmcor(
     calms_exist =  _file_exist(calms)
     corms_exist =  _file_exist(corms)
 
-    # check #
+    # File Info. #
     _msg("INPUT and OUTPUT")
     _msg("  default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
     _msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
@@ -582,7 +578,7 @@ def calc_sdatmcor(
         _msg("ERROR::Specified infile does not exist..", 'ERROR')
         return False
   
-    # outfile Protection #
+    # outfile Protected #
     if corms_exist:
         if p_overwrite:
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
