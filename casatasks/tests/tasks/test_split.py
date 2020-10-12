@@ -55,7 +55,7 @@ else:
     from casa_stack_manip import stack_frame_find
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 # common function to get a dictionary item iterator
