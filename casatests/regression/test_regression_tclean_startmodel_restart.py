@@ -69,7 +69,7 @@ class test_csys_startmodel(unittest.TestCase):
           os.system('rm -rf savemod.*')
 
      def checkfinal(self,pstr=""):
-          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_regression_tclean_startmodel_restart["+ inspect.stack()[1][3] +"]'])"
+#          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_regression_tclean_startmodel_restart["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
           print("posted %s" % pstr)
           if( pstr.count("(Fail") > 0 ):
