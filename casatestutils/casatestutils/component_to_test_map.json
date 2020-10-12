@@ -24,7 +24,8 @@
     "browsetable": [],          # new test
     "calanalysis": [            # tool
         "test_calanalysis"], 
-    "Calibration": [         
+    "Calibration": [  
+        "test_calstat",       
         "test_fluxscale",
         "test_fringefit",
         "test_gencal",
@@ -41,6 +42,9 @@
     "clean": [],            # IGNORE
     "clearcal": [
         "test_req_task_clearcal"],
+    "clearplot": [],        # IGNORE
+    "clearstat": [
+        "test_clearstat"],
     "CNGI": [],             # IGNORE
     "concat": [
         "test_concat",
@@ -48,7 +52,8 @@
     "cvel": [
         "test_cvel", 
         "test_cvel2"],
-    "deconvolve": [],       # new test
+    "deconvolve": [
+        "test_req_task_deconvolve"],       # new test
     "Documentation": [],    # TBD
     "exportfits": [
         "test_exportfits"],
@@ -85,7 +90,9 @@
     "hanningsmooth": [
         "test_hanningsmooth"],
     "HPC": [
-        "test_casampi_subset"],     # TBD; is it possible?
+        "test_casampi",
+        "test_partition",
+        "test_listpartition"],     # 
     "Image Analysis": [             # Review by Dave
         "test_ia_adddegaxes",
         "test_ia_addnoise",
@@ -183,14 +190,21 @@
     "immoments": [
         "test_immoments"],
     "importasdm": [
-        "test_importasdm"],
+        "test_importasdm",
+        "test_exportasdm"],
     "importfits": [],           # TBD
     "importfitsidi": [
         "test_importfitsidi"],
+    "importfmiriad": [
+        "test_importmiriad"],
     "importuvfits": [
         "test_req_task_importuvfits",
         "test_importuvfits"],
     "importvla": [],            # default
+    "impv": [
+        "test_impv"],
+    "imrebin": [
+        "test_imrebin"],
     "imregrid": [
         "test_imregrid"],
     "imsmooth": [
@@ -202,13 +216,14 @@
     "imval": [
         "test_imval"],
     "Infrastructure": [],       # default
+    "invert": [],               # TBD
     "listcal": [
         "test_req_task_listcal"],
     "listhistory": [
         "test_listhistory",
         "test_req_task_listhistory"],
     "listobs": [
-        "test_listobs"
+        "test_listobs"          # TBD
         "test_req_task_listobs"],
     "listvis": [
         "test_listivis"],
@@ -221,33 +236,48 @@
         "test_mstransform",
         "test_split",
         "test_hanningsmooth",
-        "test_cvel2"],
+        "test_cvel2",
+        "test_req_task_statwt"],
     "ngCASA": [],               # IGNORE
-    "pipeline": [],             # IGNORE
+    "pipeline heuristics": [],    # IGNORE
     "plotants": [
         "test_plotants"],
-    "plotbandpass": [],         # default
+    "plotbandpass": [
+        "test_plotbandpass"],         # new tests
     "plotcal": [],
     "plotms": [
         "test_plotms"],         # NOT SURE WE WILL BE ABLE TO RUN THIS
     "plotweather": [
         "test_plotweather"],
     "plotxy": [],               # IGNORE
-    "polcal": [],               # new test
+    "polcal": [
+        "test_req_task_polcal"],               # new test
     "predictcomp": [
         "test_predictcomp"],
-    "runtime": [],              # TBD
-    "SciDev": [],               # IGNORE
+    "region manager": [
+        "test_rg_frombcs",
+        "test_rg_fromtextfile",
+        "test_rg_selectedchannels"],
+    "rmfit": [
+        "test_req_task_rmfit"],     
+    "runtime": [],                  # TBD
+    "SciDev": [],                   # IGNORE
     "sdbaseline": [
         "test_sdbaseline"],
+    "sdcal": [
+        "test_sdcal"],
     "sdimaging": [
         "test_sdimaging"],
+    "sdsidebandsplit": [
+        "test_sdsidebandsplit"],
+    "sdsmooth": [
+        "test_sdsmooth"],
     "setjy": [
         "test_setjy"],
     "Simulation": [
         "test_req_task_simanalyze",
         "test_simobserve"],
-    "Single Dish": [
+    "Single Dish": [                # TBD
 	"test_importasap.py",
 	"test_importnro.py",
 	'test_nrobeamaverage.py",
@@ -266,8 +296,14 @@
         "test_smoothcal"],
     "specfit": [
         "test_specfit"],
+    "specflux": [
+        "test_specflux"],
     "split": [
         "test_split"],
+    "statwt": [
+        "test_req_task_statwt"],
+    "statwt2": [
+        "test_req_task_statwt"],
     "table": [],                # default
     "tclean": [
         "test_tclean"],
@@ -285,7 +321,10 @@
         "test_req_task_vishead"],
     "visstat": [
         "test_req_task_visstat"],
-    "Visualization": [],        # TBD
+    "Visualization": [
+        "test_plotms",
+        "test_plotcal",
+        "test_plotants"],        # TBD
     "vpmmanager": [             # TOOL
         "test_vpmanager"]       
     "widefield": [],            # IGNORE
