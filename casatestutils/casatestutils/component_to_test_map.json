@@ -247,7 +247,21 @@
     "Simulation": [
         "test_req_task_simanalyze",
         "test_simobserve"],
-    "Single Dish": [],          # to be reviewed by Takeshi
+    "Single Dish": [
+	"test_importasap.py",
+	"test_importnro.py",
+	'test_nrobeamaverage.py",
+	"test_sdbaseline.py",
+	"test_sdcal.py",
+	"test_sdfit.py",
+	"test_sdfixscan.py",
+	"test_sdgaincal.py",
+	"test_sdimaging.py",
+	"test_sdpolaverage.py",
+	"test_sdsidebandsplit.py",
+	"test_sdsmooth.py",
+	"test_sdtimeaverage.py",
+	"test_tsdimaging.py"],
     "smoothcal": [
         "test_smoothcal"],
     "specfit": [
