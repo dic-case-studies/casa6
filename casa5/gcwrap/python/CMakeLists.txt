@@ -175,7 +175,6 @@ scripts/task_plotcal.py
 scripts/task_plotms.py
 scripts/task_plotweather.py
 scripts/task_plotprofilemap.py
-scripts/task_oldsplit.py
 scripts/task_polcal.py
 scripts/task_polfromgain.py
 scripts/task_predictcomp.py
