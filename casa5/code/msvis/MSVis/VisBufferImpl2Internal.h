@@ -706,9 +706,6 @@ public:
         }
     }
 
-    void
-    resizeRows (casacore::Int newNRows){} // no-op
-
     virtual void
     set (const T & newItem) //DONE
     {
