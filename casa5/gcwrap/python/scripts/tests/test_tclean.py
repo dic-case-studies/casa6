@@ -4077,7 +4077,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index, -0.50087647076, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
 #####################################################  
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_onefield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
@@ -4105,7 +4105,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
           
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
@@ -4133,7 +4133,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
           
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwTrue_onefield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
@@ -4161,7 +4161,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index,  -0.61866398217, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
           
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwTrue_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
@@ -4243,7 +4243,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index, -0.500876470767, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
 
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_onefield_upTrue(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
@@ -4271,7 +4271,7 @@ class test_mosaic_cube(testref_base):
           report4 = self.th.checkval(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
           self.checkfinal(report1+report2+report3+report4)
           
-     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
+     #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_twofield_upTrue(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           self.prepCfcache("cfcache_oneshiftpoint_mosaic_cbFalse")
