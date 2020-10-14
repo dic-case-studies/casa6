@@ -802,7 +802,6 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.observation_table = sdutil.get_subtable_name(keys['OBSERVATION'])
         self.pointing_table = sdutil.get_subtable_name(keys['POINTING'])
         self.data_desc_table = sdutil.get_subtable_name(keys['DATA_DESCRIPTION'])
-        self.pointing_table = sdutil.get_subtable_name(keys['POINTING'])
 
     def _get_average_antenna_diameter(self, antenna):
         my_qa = quanta()
