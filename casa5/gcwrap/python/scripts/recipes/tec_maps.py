@@ -29,8 +29,12 @@
 ##                                              using a non-integer 
 ##                                              number instead of an integer will 
 ##                                              result in an error in the future
-##
-##
+##    Modified by gmoellen     2020/08/28  v2.8 Updated TEC retrieval to use more-secure
+##                                              CDDIS server (ftp-ssl), as old
+##                                              service going offline 2020Oct31;
+##                                              other python cleanup
+##                             2020/10/13       python3-ification, for CASA 6.
+##                 
 ##    Tested in CASA 4.3.0 and 4.2.1 on RHEL release 6.4 (Santiago)
 ##    Tested in CASA 4.3.0, 4.2.2, and 4.2.1 on Mac OS 10.8.5
 ##
@@ -143,16 +147,28 @@
 ## =============================================================================
 
 
-import glob, pylab, urllib2, os, datetime
+import glob, pylab, os, datetime
 import numpy as np
 from matplotlib import rc
-from taskinit import *
 import matplotlib.pyplot as plt
 
-tb = tbtool()
-qa = qatool()
-cs = cstool()
-ia = iatool()
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import table, quanta, coordsys, image
+
+    tb = table()
+    qa = quanta()
+    cs = coordsys()
+    ia = image()
+
+else:
+    from casac import *
+    tb = casac.table()
+    qa = casac.quanta()
+    cs = casac.coordsys()
+    ia = casac.image()
+
+
 
 workDir = os.getcwd()+'/'
 
@@ -266,15 +282,16 @@ def create0(ms_name,tec_server='IGS',plot_vla_tec=False,im_name='',username='',u
     ## Gets the day string and the integer number of days of observation (only tested for two continuous days)
     begin_day = qa.time(str(t_min[0])+'s',form='ymd')[0][:10]
     end_day = qa.time(str(t_max[0])+'s',form='ymd')[0][:10]
-    num_of_days = int(np.floor((t_max[0]-t_min[0])/86400.))  # must be an int as used below!
+    num_of_days = int(np.ceil((t_max[0]-ref_time)/86400.))  # must be an int as used below!
 
     ## Set up the number of times we need to go get TEC files
+    # (this is probably superfluous.... 2020Oct13 gmoellen)
     if begin_day == end_day:
         call_num = 1
     elif num_of_days == 0:
         call_num = 2
     else:
-        call_num = num_of_days+1
+        call_num = num_of_days
 
     ## Set up the days for which we need to go get TEC files
     day_list = []
@@ -283,22 +300,32 @@ def create0(ms_name,tec_server='IGS',plot_vla_tec=False,im_name='',username='',u
         day_list.append(next_day)
         next_day = qa.time(str(t_min[0]+86400.*(iter+1))+'s',form='ymd')[0][:10]
 
+    print('IGS files required for: '+str(day_list))
+
     ## Runs the IGS methods
     if tec_server == 'IGS':
         ymd_date_num = 0
-        array = []
+        #array = []
+        lo=0
+        hi=0
         for ymd_date in day_list:
             points_long,points_lat,ref_long,ref_lat,incr_long,incr_lat,incr_time,num_maps,tec_array,tec_type = get_IGS_TEC(ymd_date)
+
             ## Fill a new array with all the full set of TEC/DTEC values for all days in the observation set.
             if tec_type != '':
                 if ymd_date_num == 0:
+                    # first pass make full output tec array
+                    #  (this assumes all files have same number of timestamps (num_maps))
                     full_tec_array = np.zeros((2,int(points_long),int(points_lat),(int(num_maps)-1)*int(call_num)+1))
-                    for iter in range(int(num_maps)):
-                        full_tec_array[:,:,:,iter] = tec_array[:,:,:,iter]
+                    lo=0
+                    hi=int(num_maps)
                 else:
-                    ## We remove map 0 for the current tec_array because it is a repeat of the last map from the previous tec_array
-                    for iter in range(int(num_maps-1)):
-                        full_tec_array[:,:,:,iter+int(num_maps)*ymd_date_num] = tec_array[:,:,:,iter+1]
+                    # First time of each subsequent file duplicates last of previous one, so overwrite it
+                    lo+=(int(num_maps)-1)
+                    hi=lo+int(num_maps)
+
+                full_tec_array[:,:,:,lo:hi] = tec_array[:,:,:,:]
+
             ymd_date_num +=1
 
         if tec_type != '':
@@ -326,7 +353,7 @@ def create0(ms_name,tec_server='IGS',plot_vla_tec=False,im_name='',username='',u
 
     ## Runs the Madrigal methods; requires "madrigalWeb.py" and "globalDownload.py" and "madrigal.head"
     if tec_server == 'MAPGPS':
-        print '\nCurrently, MAPGPS has been set to "False" \nand you must change tec_maps.py at line 306\n'
+        print('\nCurrently, MAPGPS has been set to "False" \nand you must change tec_maps.py at line 306\n')
         CASA_image = ''
         CASA_RMS_image = ''
 
@@ -338,7 +365,7 @@ def create0(ms_name,tec_server='IGS',plot_vla_tec=False,im_name='',username='',u
         mad_file = check_existence(mad_data_file)
         if username!='' and user_email!='' and affiliation!='':
             if mad_file == '': 
-                print 'Retrieving the following MAPGPS files: '+begin_day+' to '+end_day
+                print('Retrieving the following MAPGPS files: '+begin_day+' to '+end_day)
                 begin_mdy = str(begin_day.split('/')[1])+'/'+str(begin_day.split('/')[2])+'/'+str(begin_day.split('/')[0])
                 end_mdy = str(end_day.split('/')[1])+'/'+str(end_day.split('/')[2])+'/'+str(end_day.split('/')[0])
                 os.system('python globalDownload.py --url=http://madrigal.haystack.mit.edu/madrigal --outputDir='+workDir+\
@@ -361,25 +388,25 @@ def create0(ms_name,tec_server='IGS',plot_vla_tec=False,im_name='',username='',u
 
 
                 ## Making the CASA table is expensive, so we do it only once.
-                print 'Making a CASA table of: ', mad_data_file
+                print('Making a CASA table of: '+str(mad_data_file))
                 make_CASA_table(mad_data_file)
 
             try:
                 CASA_image = convert_MAPGPS_TEC(ms_name,mad_data_file,ref_time,ref_start,\
                                                 ref_end,plot_vla_tec,im_name)
             except:
-                print 'An error was encountered retrieving/interpreting the MAPGPS files.'
+                print('An error was encountered retrieving/interpreting the MAPGPS files.')
                 CASA_image = ''
                 CASA_RMS_image = ''
         else:
-            print 'You need to supply your username, e-mail, and affiliation to access the Madrigal server.'
+            print('You need to supply your username, e-mail, and affiliation to access the Madrigal server.')
             CASA_image = ''
             CASA_RMS_image = ''
   
     ## Returns the name of the TEC image generated
-    print 'The following TEC map was generated: '+CASA_image+' & '+CASA_RMS_image
+    print('The following TEC map was generated: '+CASA_image+' & '+CASA_RMS_image)
     if len(plot_name)>0:
-        print 'The following TEC zenith plot was generated: '+plot_name
+        print('The following TEC zenith plot was generated: '+plot_name)
     else:
         plot_name='none'
     return CASA_image,CASA_RMS_image,plot_name
@@ -442,7 +469,10 @@ def get_IGS_TEC(ymd_date):
         dayofyear = '0'+str(dayofyear)
 
     ## Outputing the name of the IONEX file you require.  
-    igs_file = 'igsg'+str(dayofyear)+'0.'+str(list(str(year))[2])+''+str(list(str(year))[3])+'i'
+    #igs_file = 'igsg'+str(dayofyear)+'0.'+str(list(str(year))[2])+''+str(list(str(year))[3])+'i'
+    igs_file = 'igsg'+str(dayofyear)+'0.'+str(year)[2:4]+'i'
+
+    print('\nFor '+ymd_date+', the required IGS file is called: '+igs_file)
 
     ## =========================================================================
     ##
@@ -458,56 +488,56 @@ def get_IGS_TEC(ymd_date):
     ## is not necessary, it is the most straightforward on Linux.
     ##
     ## =========================================================================
+    
+    curlcmd='curl -u anonymous:casa-feedback@nrao.edu --ftp-ssl '
+
     does_exist = ''
     does_exist = check_existence(igs_file)
-    if does_exist == '':
-        print 'Retrieving the following file: ', igs_file
 
-        CDDIS = 'ftp://cddis.gsfc.nasa.gov/gnss/products/ionex'
-        file_location = CDDIS+'/'+str(year)+'/'+str(dayofyear)+'/'
+    #CDDIS = 'ftp://cddis.gsfc.nasa.gov/gnss/products/ionex/'  # pre-2020Nov01 version
+    CDDIS = 'ftp://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/'  # new, more secure ftp-ssl server (2020Nov01)
+    file_location = CDDIS+str(year)+'/'+str(dayofyear)+'/'
 
-        if does_exist == '':        
-            get_file = file_location+igs_file+'.Z'
-            retrieve = test_connection(get_file)
-            if retrieve == True:
-                os.system('curl '+get_file+' > '+workDir+igs_file+'.Z')
-                os.system('uncompress '+igs_file+'.Z')
-            else:
-                print igs_file, 'is unavailable'
-                igs_file = igs_file.replace('igs','igr')
-
-                does_exist = check_existence(igs_file)
-		if does_exist == '':
-                    print 'Retrieving the following file instead: ', igs_file
-                    get_file = file_location+igs_file+'.Z'
-                    retrieve = test_connection(get_file)
-                    if retrieve == True:
-                        os.system('curl '+get_file+' > '+workDir+igs_file+'.Z')
-                        os.system('uncompress '+igs_file+'.Z')
-                    else:
-                        print igs_file, 'is unavailable'
-                        igs_file = igs_file.replace('igr','jpr')
-
-                        does_exist = check_existence(igs_file)
-                        if does_exist == '':
-                            print 'Retrieving the following file instead: ', igs_file
-                            get_file = file_location+igs_file+'.Z'
-                            retrieve = test_connection(get_file)
-                            if retrieve == True:
-                                os.system('curl '+get_file+' > '+workDir+igs_file+'.Z')
-                                os.system('uncompress '+igs_file+'.Z')
-                            else:
-                                print igs_file, 'is unavailable'
-                                print '\nNo data products available. You may try to manually'\
-                                      ' download the products at:\n'\
-                                      'ftp://cddis.gsfc.nasa.gov/gnss/products/ionex\n'
-                                return 0,0,0,0,0,0,0,0,[0],''
-                        else:
-                            pass
-                else:
-                    pass 
+    if does_exist == '':        
+        print('Attempting retrieval of IGS Final product file: '+str(igs_file))
+        get_file = file_location+igs_file+'.Z'
+        retrieve = test_IONEX_connection(get_file)
+        if retrieve == True:
+            os.system(curlcmd+get_file+' > '+workDir+igs_file+'.Z')
+            os.system('uncompress '+igs_file+'.Z')
         else:
-            pass
+            igs_file = igs_file.replace('igs','igr')
+
+            does_exist = check_existence(igs_file)
+            if does_exist == '':
+                print('Attempting retrieval of IGS Rapid product file: '+str(igs_file))
+                get_file = file_location+igs_file+'.Z'
+                retrieve = test_IONEX_connection(get_file)
+                if retrieve == True:
+                    os.system(curlcmd+get_file+' > '+workDir+igs_file+'.Z')
+                    os.system('uncompress '+igs_file+'.Z')
+                else:
+                    igs_file = igs_file.replace('igr','jpr')
+                    
+                    does_exist = check_existence(igs_file)
+                    if does_exist == '':
+                        print('Attempting retrieval of JPL Rapid product file: '+str(igs_file))
+                        get_file = file_location+igs_file+'.Z'
+                        retrieve = test_IONEX_connection(get_file)
+                        if retrieve == True:
+                            os.system(curlcmd+get_file+' > '+workDir+igs_file+'.Z')
+                            os.system('uncompress '+igs_file+'.Z')
+                        else:
+                            print('\nNo data products available. You may try to manually'+\
+                                  ' download the products at:\n'+\
+                                  'ftp://gdc.cddis.eosdis.nasa.gov/gps/products/ionex\n')
+                            return 0,0,0,0,0,0,0,0,[0],''
+                    else:
+                        print('JPL Rapid product file: '+igs_file+' already available in current working directory.')
+            else:
+                print('IGS Rapid product file: '+igs_file+' already available in current working directory.')
+    else:
+        print('IGS Final product file: '+igs_file+' already available in current working directory.')
 
     if igs_file.startswith('igs'):
         tec_type = 'IGS_Final_Product'
@@ -524,7 +554,7 @@ def get_IGS_TEC(ymd_date):
     ## later in this script.
     ##
     ## =========================================================================
-    print 'Transfering IONEX data format to a TEC/DTEC array for ',ymd_date
+    print('Transforming IONEX data format to a TEC/DTEC array for '+str(ymd_date))
 
     ## Opening and reading the IONEX file into memory as a list
     linestring = open(igs_file, 'r').read()
@@ -718,7 +748,7 @@ def make_image(prefix,ref_long,ref_lat,ref_time,incr_long,incr_lat,incr_time,tec
 ##
 ## =============================================================================
     """
-    print 'Trying to make an image of', prefix+appendix+'.im'
+    print('Making image: '+str(prefix+appendix)+'.im')
 
     ## Set the coordinate system for the TEC image
     cs0=cs.newcoordsys(linear=3)
@@ -821,6 +851,7 @@ def ztec_value(my_long,my_lat,points_long,points_lat,ref_long,ref_lat,incr_long,
         rc('ytick', labelsize=15)
         plottimes = [x*incr_time for x in range(num_maps)]
         plt.interactive(False)
+        plt.clf()
         plt.errorbar(plottimes,site_tec[0],site_tec[1])
         plt.axvspan(ref_start/60.0, ref_end/60.0, facecolor='r', alpha=0.5)
         plt.xlabel(r'$\mathrm{Time}$ $\mathrm{(minutes)}$', fontsize=20)
@@ -840,7 +871,7 @@ def ztec_value(my_long,my_lat,points_long,points_lat,ref_long,ref_lat,incr_long,
 
 
 
-def test_connection(reference):
+def test_IONEX_connection(location):
     """
 ## =============================================================================
 ##
@@ -850,7 +881,7 @@ def test_connection(reference):
 ## =============================================================================
 ##
 ## Inputs:
-##    reference    type = string     website/online file to attempt to access
+##    location    type = string     website/online file to attempt to access
 ##
 ## Returns:
 ##    True if the website/online file is accessible and False if not
@@ -858,9 +889,14 @@ def test_connection(reference):
 ## =============================================================================
     """
     try:
-        response = urllib2.urlopen(reference,timeout=5)
-        return True
-    except urllib2.URLError as err: 
+        ok = os.system('curl -u anonymous:casa-feedback@nrao.edu --ftp-ssl -Isf -o/dev/null '+location)
+        if ok==0:
+            return True
+        else:
+            print(location+' unavailable!  (or no internet?)')
+            return False
+    except: 
+        print(location+' unavailable!  (or no internet?)')
         return False
 
 
@@ -919,14 +955,14 @@ def convert_MAPGPS_TEC(ms_name,mad_data_file,ref_time,ref_start,ref_end,plot_vla
     minlat=min(ulat)
     minlong=min(ulong)
 
-    print 'rows',len(utimes)
+    print('rows'+str(len(utimes)))
 
     itime=0
     for t in utimes:
         st1=st0.query('UT1_UNIX=='+str(t),name='bytime')
         n=st1.nrows()
         if itime%100==0:
-            print itime, n
+            print(str(itime)+' '+str(n))
         ilong=st1.getcol('GLON')-minlong
         ilat=st1.getcol('GDLAT')-minlat
         itec=st1.getcol('TEC')
@@ -945,7 +981,7 @@ def convert_MAPGPS_TEC(ms_name,mad_data_file,ref_time,ref_start,ref_end,plot_vla
                 if not thisgood[i,j]:
                     mask=thisgood[(i-1):(i+2),(j-1):(j+2)]
                     if pylab.sum(mask)>4:
-                        #print itime, i,j, pylab.sum(mask)
+                        #print(str(itime)+' '+str(i)+' '+str(j)+str(pylab.sum(mask)))
                         tec_array[0,i,j,itime]=pylab.median(thistec_array[0,(i-1):(i+2),(j-1):(j+2)][mask])
                         tec_array[1,i,j,itime]=pylab.median(thistec_array[1,(i-1):(i+2),(j-1):(j+2)][mask])
         itime+=1

@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-import numpy
+import numpy as np
 import numpy.ma as ma
 import unittest
 
@@ -12,14 +12,22 @@ if is_CASA6:
     ### for testhelper import
     sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
     import testhelper as th
-    from casatools import ctsys
+    from casatools import ctsys, table
     from casatasks import gencal
+
+    # is this right?
+    #import tec_maps
     
+    _tb= table()
+
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
     import testhelper as th
     from tasks import gencal
     from taskinit import *
+    from recipes import tec_maps
+    
+    _tb=tbtool()
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
 
@@ -156,6 +164,8 @@ class gencal_antpostest(unittest.TestCase):
         except URLError as err:
           print("Cannot access %s , skip this test" % evlabslncorrURL)
           self.res=True
+
+
 
 class test_gencal_antpos_alma(unittest.TestCase):
     """
@@ -367,10 +377,71 @@ class test_gencal_antpos_alma(unittest.TestCase):
                                       self.IGNORE_COLS))
         self.remove_caltable(out_caltable)
 
+class gencal_test_tec_vla(unittest.TestCase):
+
+    # Input and output names
+    msfile = 'tdem0003gencal.ms'
+    igsfile= 'igsg1160.10i'
+    tecfile= msfile+'.IGS_TEC.im'
+    rmstecfile= msfile+'.IGS_RMS_TEC.im'
+    caltable= msfile+'_tec.cal'
+
+    def setUp(self):
+        self.tearDown()
+        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
+
+    def tearDown(self):
+        if os.path.exists(self.msfile):
+            shutil.rmtree(self.msfile)
+
+        if os.path.exists(self.igsfile):
+                os.remove(self.igsfile)
+
+        shutil.rmtree(self.tecfile,ignore_errors=True)
+        shutil.rmtree(self.rmstecfile,ignore_errors=True)
+        shutil.rmtree(self.caltable,ignore_errors=True)
+
+    def test_tec_maps(self):
+        """
+        gencal: very basic test of tec_maps and gencal(caltype='tecim')
+        """
+
+        # REMOVE THIS WHEN THIS TEST IS CASA6-READY....
+        if is_CASA6:
+            print('\n\n********** SKIPPING test_tec_maps in CASA6 **********\n\n')
+            return
+
+        try:
+            tec_maps.create0(self.msfile)
+            gencal(vis=self.msfile, caltable=self.caltable, caltype='tecim',infile=self.msfile+'.IGS_TEC.im')
+
+            self.assertTrue(os.path.exists(self.caltable))
+
+            _tb.open(self.caltable)
+            nrows=_tb.nrows()
+            dtecu=abs(13.752-np.mean(_tb.getcol('FPARAM'))/1e16)
+            _tb.close()
+            
+            print(str(nrows)+' '+str(dtecu))
+
+            self.assertTrue(nrows==1577)
+            self.assertTrue(dtecu<1e-3)
+            
+            
+        except:
+            # should catch case of internet access failure?
+            print("ouch?")
+
+
+
+
+
+
 
 def suite():
     return [gencal_antpostest,
-            test_gencal_antpos_alma]
+            test_gencal_antpos_alma,
+            gencal_test_tec_vla]
 
 if is_CASA6:
     if __name__ == '__main__':
