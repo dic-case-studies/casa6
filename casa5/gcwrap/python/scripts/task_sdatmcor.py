@@ -86,7 +86,7 @@ def sdatmcor(
         return False
 
 #
-# Inspect arguments. 
+# Inspect arguments.
 #  - inspect Unit.
 #  - convert values to string form.
 #
@@ -101,7 +101,7 @@ def sdatmcor(
     dp          = _inspect_value_unit(dp,  ['mbar', 'hPa'])
     dpm         = _inspect_value_unit(dpm, [''])       # through (string or float)
 
-    # atmtype check 'str or int' and the range  #
+    # atmtype check 'str or int' and the range, and accept atmtype==''  #
     if not _inspect_str_int(atmtype, 1, 5):
         _msg("ERROR:: atmtype (=%s) Out of Range or Unacceptable." % atmtype, 'ERROR' )
         return False
@@ -110,7 +110,7 @@ def sdatmcor(
 # User-Defined Profile inspection
 # after this step, the two args changes to List
 #
-    # when String form and No Data # 
+    # when String form and No Data #
     if (type(layerboundaries) is str) and (layerboundaries == ''):
         layerboundaries = []
     if (type(layertemperature) is str) and layertemperature == '':
@@ -143,7 +143,7 @@ def sdatmcor(
         debug)
 
 #
-# SUBROUTINES 
+# SUBROUTINES
 #  for Task Handling
 #
 
@@ -180,7 +180,9 @@ def _file_exist(path):
 # inspect the data can be translated to an Int #
 def _inspect_str_int(data, minimum, maximum):
     if type(data) is str:
-        if data.isdigit():
+        if data =='':
+            return True
+        elif data.isdigit():
             if minimum <= int(data) <= maximum:
                 return True
             else:
@@ -201,32 +203,36 @@ def _inspect_str_int(data, minimum, maximum):
 # inspect the data is consistent with the Unit. #
 def _inspect_value_unit(data, base_unit):
 
-    if type(data) is str:    # by String #
-        if (data == ''):
-            return ''
+    try:
+        if type(data) is str:    # by String #
+            if (data == ''):
+                return ''
 
-        ext_unit = qa.getunit(data)
-        if (ext_unit in base_unit):
-            # With Unit #
-            _msg("Unit Conversion::Data with Unit '%s'" % data)
-            return str(qa.getvalue(data)[0])
-        elif (ext_unit == ''):
-            # Unit Added #
-            _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
-            return data
+            ext_unit = qa.getunit(data)
+            if (ext_unit in base_unit):
+                # With Unit #
+                _msg("Unit Conversion::Data with Unit '%s'" % data)
+                return str(qa.getvalue(data)[0])
+            elif (ext_unit == ''):
+                # Unit Added #
+                _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
+                return data
+            else:
+                # Mismatch #
+                _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
+                raise Exception
+        elif (type(data) is int) or (type(data) is float):  # by value (= int, float)
+            if data == -1:
+                return ''    # nothing #
+            else:
+                return str(data)   # available #
         else:
-            # Mismatch #
-            _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
-            raise Exception
-    elif (type(data) is int) or (type(data) is float):  # by value (= int, float)
-        if data == -1:
-            return ''    # nothing #
-        else:
-            return str(data)   # available #
-    else:
-        _msg("Internal Error:: Arg type is not expected due to the I/F Design."'SEVERE')
+            _msg("Internal Error:: Arg type is not expected due to the I/F Design."'SEVERE')
+            raise
+    except Exception as err:
+        _msg("Faital Error in checcking value with Unit.")
+        casalog.post('%s' % err, 'SEVERE')
         raise
-
 #
 # Argument parameter handling
 #
@@ -251,48 +257,59 @@ def _set_list_param(in_arg, list_para):
 def _set_floatquantity_param(in_arg, def_para, unit):
     if type(in_arg) is str:
         if (in_arg != ''):
-            q_val = qa.quantity(float(in_arg), unit)
+            q_val = qa.quantity(float(in_arg), unit)  # CASA5 needs cast to float  ? # 
             return q_val, True
         else:
             return  def_para, False
 
 def _list_comma_string(separated_string, dType):
     # make a list by separated by comma #
-    if type(separated_string) is str:
-        tmp_list = separated_string.split(',')
-        if dType == 'str':
-            out_list = [str(s) for s in tmp_list]  # convert to list['str','str', ...]
-        elif dType == 'int':
-            out_list = [int(s) for s in tmp_list]  # convert to list[int,int, ...]
+    try:
+        if type(separated_string) is str:
+            tmp_list = separated_string.split(',')
+            if dType == 'str':
+                out_list = [str(s) for s in tmp_list]  # convert to list['str','str', ...]
+            elif dType == 'int':
+                out_list = [int(s) for s in tmp_list]  # convert to list[int,int, ...]
+            else:
+                out_list = [s for s in tmp_list]  # No convert list [ data, data, ...]
+            return out_list
+        elif type(separated_string) is list:
+            return separated_string
         else:
-            out_list = [s for s in tmp_list]  # No convert list [ data, data, ...]
-        return out_list
-    elif type(separated_string) is list:
-        return separated_string
-    else:
-        return []
+            return []
+    except Exception as err:
+        _msg("Error in comma-separated string.")
+        casalog.post('%s' % err, 'SEVERE')
+        return False
 
 
 def _conv_to_doubleArrayList(in_list):
     # convert elements in  list or separated str =>  float list. #
-    if  type(in_list) is list:
-        out_list = [float(s) for s in in_list]  # force to convert to list[floatm, ...]
-        return out_list
+    try:
+        if  type(in_list) is list:
+            out_list = [float(s) for s in in_list]  # force to convert to list[floatm, ...]
+            return out_list
 
-    elif type(in_list) is str:
-        tmp_list = in_list.split(',')  # convert to List #
-        out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
-        return out_list
-    else:
-        _msg("Invalid arg type, expecting separated string or list.", 'SEVERE')
-        return []   # invalid type
+        elif type(in_list) is str:
+            tmp_list = in_list.split(',')  # convert to List #
+            out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
+            return out_list
+        else:
+            _msg("Invalid arg type, expecting separated string or list.", 'SEVERE')
+            return []   # invalid type
+
+    except Exception as err:
+        _msg("Error in converting an element in the List.")
+        casalog.post('%s' % err, 'SEVERE')
+        return False
 
 #
 # decide Default Antenna ID
 #
 def get_defaut_antenna(msname, antenna):
-    # chose base-antenna from selected Antena ID 
-    #  - Search Priority ID is   1 > 2 > 3 > x 
+    # chose base-antenna from selected Antena ID
+    #  - Search Priority ID is   1 > 2 > 3 > x
     #  - if one unique antenna(=x) is specified, use this.
     msmd.open(msname)
     ant_list = msmd.antennaids(antenna)
@@ -534,7 +551,6 @@ def calc_sdatmcor(
 
     #
     #  File name section
-    #     - 'atmtype' can be used for output file, if necessary.
     #
 
     # datacolumn (XML fills default) ,to UPPER CASE #
@@ -553,12 +569,6 @@ def calc_sdatmcor(
     # default file format (original style) #
     rawms = '%s%s' % (ebuid, ebext)
     calms = '%s%s' % (ebuid, ebext)    # name of MS in which (standard-)calibrated spectra are stored.
-
-    # outfile set (=corms), if atmtype is need in outfile, write here as follows, including atmtype.
-    #     corms = '%s%s.atm%d' %(ebuid, ebext, atmtype_for_file)     # use same mane as infile #
-    #     corms = '%s%s.atm%d' %(outfile, ebext, atmtype_for_file)   # use same mane as infile +'<infileext>' #
-    #     corms = '%s%s.atm%d' %(outfile, outext, atmtype_for_file)  # use specified outfile name.ext + atm.n #
-    
     corms = '%s%s' % (outfile, outext)     # by specified args. with no other attributes. #
 
     # existence check #
@@ -605,7 +615,7 @@ def calc_sdatmcor(
     #  - these values will be translated with unit to var.'t_xxxxxxxxx' in Task code.
     #
 
-    # Default constant #
+    # Default constant. refer to CAS-13160 #
     atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
     maxalt = 120        ### maxAltitude parameter for at (km)
     lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
@@ -635,9 +645,10 @@ def calc_sdatmcor(
     # Temp File (cleaned use) #
     tempName = './_AtmCor-Temp'
     tempFileName = tempName + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.ms'
-    _msg("- using temp file [%s] for mstransform output." % tempFileName)
 
     # internal Mstransform #
+    _msg("Data Selection in progress.")
+    _msg("- using temp file [%s] for mstransform output." % tempFileName)
     try:
         atmMst(
             infile=rawms,           # Tentatively use 'rawms' name
@@ -714,13 +725,12 @@ def calc_sdatmcor(
         spwnames = msmd.namesforspws(spws)
 
         # Investigation #
-        print(" SN: tm ON  source  = %s" % tmonsource)
-        print(" SN: tm OFF source  = %s" % tmoffsource)
-        print(" SN: fdm    spws = %s" % fdmspws)
-        print(" SN: tdm    spws = %s" % tdmspws)
-        print(" SN: intent spws = %s" % intentspws)
-        print(" SN:        spws = %s" % spws)
-        # print(" SN:    spwnames = %s" % spwnames) 
+        _msg(" - tm ON  source  = %s" % tmonsource)
+        _msg(" - tm OFF source  = %s" % tmoffsource)
+        _msg(" - fdm    spws = %s" % fdmspws)
+        _msg(" - tdm    spws = %s" % tdmspws)
+        _msg(" - intent spws = %s" % intentspws)
+        _msg(" -        spws = %s" % spws)
 
     except Exception as err:
         _msg("ERROR:: opening rawms")
@@ -751,19 +761,21 @@ def calc_sdatmcor(
     # force to chage  processing SPW 
     # - If spw is pecified in the arg, set up 'spws'
     #
-    _msg("Determine outputspw")
+    _msg("Determine spw when spw is specified.")
     if (p_spw != ''):
         spws_param = _list_comma_string(p_spw, dType='int')
 
-        # Here, including check is needed. (UNDER CONSTRUCTION)
+        # Including check
         #  - all the element in spws_param MUST be in Spws
         if set(spws) >= set(spws_param):   # B is included in A #
             spws = spws_param   # update
-            _msg(" - updated 'spws'=%s." % spws)
+            _msg(" - updated 'spws'=%s. by given spw." % spws)
         else:
-            _msg("Some of specified spw is not in spws. Cannot continue." "ERROR" )
+            _msg("Some of the specified 'spw' are not in the raw MS. Cannot continue." "ERROR" )
+            _msg("  - spws (MS)     = %s" % set(spws))
+            _msg("  - spws (arg)    = %s" % set(spws_param))
             return False
-  
+ 
     # (original) get chanfreqs[spwid] info.
     for spwid in spws:
         chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
@@ -787,7 +799,7 @@ def calc_sdatmcor(
     msmd.close()
     _msg("closed msmd")
 
-    print(" SN ddis[] = %s" % ddis )
+    print(" - ddis[] = %s" % ddis )
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
@@ -817,16 +829,13 @@ def calc_sdatmcor(
     # (Task Section)
     # Check if specified outputspw is in the list of spws
     #
-    _found = False
-    for spw in outputspws:
-        if spw in spws:
-            _found = True
-            break
-        else:
-            _found = False
- 
-    if not _found:
-        _msg("None of the output-spws %s is not in the processing spws %s. Abort." % (outputspws, spws), "ERROR")
+
+    if set(spws) >= set(outputspws):   # B is included in A #
+        pass
+    else:
+        _msg("Some of specified 'outputspw' are not in the raw MS. Cannot continue." "ERROR" )
+        _msg("  - spws      = %s" % spws)
+        _msg("  - outputspws = %s" % outputspws)
         return False
 
     #
@@ -1020,11 +1029,11 @@ def calc_sdatmcor(
         #
         # print and log to confirm 
         #
-        _msg("=============================================================")
+        _msg("====================================================================")
         _msg("  initATMProfile Parameters     [atmdetail = %s]" % t_atmdetail)
-        _msg("------------------+-----------------------------+------------")
-        _msg("  parameter       | value [unit]                | to set up  ")
-        _msg("------------------+-----------------------------+------------")
+        _msg("------------------+-----------------------------+-------------------")
+        _msg("  parameter       | value [unit]                | specified by arg. ")
+        _msg("------------------+-----------------------------+-------------------")
         _msg(" atmtype          |%-18s " % at.listAtmosphereTypes()[t_atmtype-1] )  #  type =1,2,3,4,5, no Zero
         _msg(" dTem_dh          |%-18s [%5s]   | %s " % (t_dtem_dh['value'], t_dtem_dh['unit'], t_dtem_dh_set))
         _msg(" h0               |%-18s [%5s]   | %s " % (t_h0['value'], t_h0['unit'], t_h0_set))
@@ -1038,7 +1047,7 @@ def calc_sdatmcor(
         _msg("*maxAltitude      |%-18s [%5s]   | (FIXED CONST) " % (t_maxAltitude['value'], t_maxAltitude['unit']))
         _msg(" layerboundaries  |%-18s " % t_layerboundaries)
         _msg(" layertemperature |%-18s " % t_layertemperature)
-        _msg("------------------+----------------------------------------")
+        _msg("------------------+-----------------------------------------------")
 
         ###################
         # initATMProfile 
@@ -1109,7 +1118,7 @@ def calc_sdatmcor(
         # Correction Main Loop
         ###########################
 
-        _msg("\nExecuting  ATM Correction(N=%d), and wriiting to output MS. \n" % len(tmdata))
+        _msg("\nExecuting  ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
 
         cdata = data.copy()
         for i, t in enumerate(tmdata):
