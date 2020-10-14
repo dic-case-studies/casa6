@@ -2086,6 +2086,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Double inStartFreq;
           MFrequency mstartfreq;
           if(checkspecmode!="") {
+            MFrequency::Types mfreqframe = MFrequency::typeFromString(frame);
             if(checkspecmode=="channel") {
               dataFrameStartFreq = 0;  
             }
@@ -2094,21 +2095,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 inStartFreq = freqStart.get("Hz").getValue();  
               }
               else if(checkspecmode=="velocity") {
-                //MRadialVelocity mRVal = velStart;
                 MDoppler::Types DopType;
                 MDoppler::getType(DopType, veltype);
-                MDoppler mdop = MDoppler(velStart,DopType);
+                MDoppler mdop(velStart,DopType);
                 Quantity qrestfreq = restFreq.nelements() >0 ? restFreq[0]: Quantity(0.0, "Hz");
-                //MFrequency mrestfreq = MFrequency(qrestfreq,freqFrame);
-                inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq, freqFrame).getValue(); 
+                inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq.getValue(Unit("Hz")), mfreqframe).getValue(); 
               }
-              if (freqFrame != dataFrame){
+              if (mfreqframe != dataFrame){
                 MDirection obsdir = MSColumns(*mss[j]).field().phaseDirMeas(fld);
                 String telescopename = MSColumns(*mss[j]).observation().telescopeName()(0);
                 MPosition obsloc; 
                 MeasTable::Observatory(obsloc, telescopename);
 	        MEpoch epoch = MSColumns(*mss[j]).timeMeas()(0);
-                MFrequency::Ref fromRef = MFrequency::Ref(freqFrame, MeasFrame(obsdir, obsloc, epoch));
+                MFrequency::Ref fromRef = MFrequency::Ref(mfreqframe, MeasFrame(obsdir, obsloc, epoch));
                 MFrequency::Ref toRef = MFrequency::Ref(dataFrame, MeasFrame(obsdir, obsloc, epoch));
                 MFrequency::Convert freqinDataFrame(Unit("Hz"), fromRef, toRef);
                 dataFrameStartFreq = freqinDataFrame(inStartFreq).get("Hz").getValue();
