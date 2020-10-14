@@ -84,14 +84,11 @@ except ImportError:
 
     _ia = iatool()
     def ctsys_resolve(apath):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data/casa-data-req/')
-        else:
-            dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casa-data-req/')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/')
         return os.path.join(dataPath,apath)
 
 # location of data
-data_path = ctsys_resolve('stakeholders/alma/')
+data_path = ctsys_resolve('stakeholder/alma/')
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
