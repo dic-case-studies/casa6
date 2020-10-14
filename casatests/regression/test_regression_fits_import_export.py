@@ -45,14 +45,11 @@ ia = image()
 rg = _rg()
 
 if CASA6:
-    casapath = ''
-    datapath = ctsys.resolve("regression/fits-import-export/input/")
+    datapath = ctsys.resolve("regression/fits_import_export/")
     print("DATAPATH: {}".format(datapath))
 else:
-    casapath = os.environ['CASAPATH'].split()[0]
-    datapath = ""
+    datapath = os.environ['CASAPATH'].split()[0] + '/casatestdata/regression/fits_import_export/'
 
-# get the dataset name from the wrapper if possible
 
 if 'datasets' not in (locals()):
     myname = 'fits-import-export_regression :'
@@ -96,14 +93,8 @@ else: # the script has been called from the wrapper, don't need to output name
 
 def checkimage(myfitsimage_name, maxpos_expect, maxposf_expect):
     global myname
-    global datapath
     subtest_passed = True
-    if not os.path.exists(datapath+myfitsimage_name+'.fits'):
-        datapath = casapath + "/data/regression/fits-import-export/input/"
 
-    # import the image
-#    if not CASA6:
-#        default('importfits')
     try:
         print(myname, ' Importing ', datapath+myfitsimage_name+'.fits', ' ...')
         importfits(fitsimage = datapath+myfitsimage_name+'.fits',
