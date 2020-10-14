@@ -618,7 +618,6 @@ class sdtask_template_imaging(sdtask_interface):
         self.observation_table = get_subtable_name(keys['OBSERVATION'])
         self.pointing_table = get_subtable_name(keys['POINTING'])
         self.data_desc_table = get_subtable_name(keys['DATA_DESCRIPTION'])
-        self.pointing_table = get_subtable_name(keys['POINTING'])
 
     def __set_infiles(self):
         if type(self.infiles) == str:
