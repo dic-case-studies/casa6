@@ -27,12 +27,16 @@
 
 #include <casaqt/QtPlotServer/QtPlotServer.qo.h>
 #include <casaqt/QtPlotServer/QtPlotSvrPanel.qo.h>
+#if defined(CASATOOLS)
+//include <casaqt/QtPlotServer/grpcPlotSvrAdaptor.qo.h>
+#else
 #include <casaqt/QtPlotServer/QtDBusPlotSvrAdaptor.qo.h>
-
-
 using namespace casacore;
+#endif
+
 namespace casa {
 
+#if ! defined(CASATOOLS)
     QString QtPlotServer::name_;
 
     const QString &QtPlotServer::name( ) {
@@ -42,15 +46,20 @@ namespace casa {
 	}
 	return name_;
     }
+#endif
 
     QtPlotServer::QtPlotServer( const char *dbus_name ) {
+#if ! defined(CASATOOLS)
 	dbus_name_ = (dbus_name ? dbus_name : 0);
 	dbus_ = new QtDBusPlotSvrAdaptor(this);
 	dbus_->connectToDBus(dbus_name_);
+#endif
     }
 
     QtPlotServer::~QtPlotServer( ) {
+#if ! defined(CASATOOLS)
 	delete dbus_;
+#endif
     }
 
     QtPlotSvrPanel *QtPlotServer::panel( const QString &title, const QString &xlabel, const QString &ylabel, const QString &window_title,

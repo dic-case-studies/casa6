@@ -34,7 +34,9 @@
 
 namespace casa {
 
+#if ! defined(CASATOOLS)
     class QtDBusPlotSvrAdaptor;
+#endif
     class QtPlotSvrPanel;
 
     class QtPlotServer : public QObject {
@@ -44,17 +46,21 @@ namespace casa {
 	    QtPlotServer( const char *dbus_name=0 );
 	    ~QtPlotServer( );
 
+#if ! defined(CASATOOLS)
 	    // name used to initialize connection to dbus
 	    static const QString &name( );
+#endif
 
 	    QtPlotSvrPanel *panel( const QString &title, const QString &xlabel="", const QString &ylabel="", const QString &window_title="",
 				   const QList<int> &size=QList<int>( ), const QString &legend="bottom", const QString &zoom="bottom",
 				   QtPlotSvrPanel *with_panel=0, bool new_row=false  );
 
 	private:
+#if ! defined(CASATOOLS)
 	    static QString name_;
 	    QString dbus_name_;
 	    QtDBusPlotSvrAdaptor* dbus_;
+#endif
 
   };
 
