@@ -54,6 +54,7 @@ import subprocess
 import shutil
 import copy
 import numpy as np
+from casatestutils.compare import compare_dictionaries
 try:
     import casatools
     from casatasks import partition, split, listobs, casalog
@@ -202,11 +203,9 @@ class listobs_test_base(unittest.TestCase):
         """
 
         filename = os.path.basename(dataset)
-        try:
-            np.testing.assert_equal(result, self.ref_return[filename])
-        except AssertionError as exc:
-            self.fail('Unexpected different in listobs output dictionary. Details: {}'.
-                      format(exc))
+        # See CAS-13170. Ref values come from RHEL. There are differences ~10-16 on Mac
+        self.assertTrue(compare_dictionaries(result, self.ref_return[filename]), rtol=1e-13,
+                        atol=1e-13)
 
     def check_file_plus_dict(self, dataset, filename):
         res = listobs(vis=dataset, listfile=filename)
