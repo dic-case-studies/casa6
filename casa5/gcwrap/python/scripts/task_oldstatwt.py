@@ -9,7 +9,7 @@ def oldstatwt(vis, dorms, byantenna, sepacs, fitspw, fitcorr, combine,
     casalog.origin('oldstatwt')
     retval = True
     try:
-        casalog.post("The oldstatwt task is deprecated in CASA version 5.8.  Please use task statwt instead.",'WARN')
+        casalog.post("The oldstatwt task is deprecated in CASA version 5.8 and is not present in CASA 6.2.  Please use task statwt instead.",'WARN')
         myms = mstool()
         mytb = tbtool()
         
