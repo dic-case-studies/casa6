@@ -65,10 +65,10 @@ def sdatmcor(
 #
     # infile oufile, must be specified.
     if infile == '':
-        _msg("ERROR:: infile MUST BE  specified.", 'ERROR')
+        _msg("\nERROR:: infile MUST BE  specified.\n", 'ERROR')
         return False
     if outfile == '':
-        _msg("ERROR:: outfile MUST BE specified.", 'ERROR')
+        _msg("\nERROR:: outfile MUST BE specified.\n", 'ERROR')
         return False
 
     # infile #
@@ -82,7 +82,7 @@ def sdatmcor(
 
     # in case infile == outfile #
     if infile == outfile:
-        _msg("ERROR:: You are attempting to write on input file.", 'ERROR')
+        _msg("\nERROR:: You are attempting to write on input file.\n", 'ERROR')
         return False
 
 #
@@ -103,7 +103,7 @@ def sdatmcor(
 
     # atmtype check 'str or int' and the range, and accept atmtype==''  #
     if not _inspect_str_int(atmtype, 1, 5):
-        _msg("ERROR:: atmtype (=%s) Out of Range or Unacceptable." % atmtype, 'ERROR' )
+        _msg("\nERROR:: atmtype (=%s) Out of Range or Unacceptable.\n" % atmtype, 'ERROR' )
         return False
 
 #
@@ -124,7 +124,7 @@ def sdatmcor(
     len_1 = len(layerboundaries)
     len_2 = len(layertemperature)
     if(len_1 != len_2):
-        _msg("Data count mismatches in specified User-Defined parameter. len=[%d, %d]" % (len_1, len_2), 'ERROR')
+        _msg("\nERROR:: Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2), 'ERROR')
         return False
     else:
         _msg("User-defined parameter was given by %d sets of data." % len_1)
@@ -196,7 +196,7 @@ def _inspect_str_int(data, minimum, maximum):
         else:
             return False
     else:
-        _msg( "INTERNAL ERROR, unexpected data type." 'SEVERE')
+        _msg( "xxxx INTERNAL ERROR xxxx, unexpected data type." 'SEVERE')
         raise
     raise
 
@@ -227,10 +227,9 @@ def _inspect_value_unit(data, base_unit):
             else:
                 return str(data)   # available #
         else:
-            _msg("Internal Error:: Arg type is not expected due to the I/F Design."'SEVERE')
+            _msg("xxxx INTERNAL ERROR xxxx  Arg type is not expected due to the I/F Design."'SEVERE')
             raise
     except Exception as err:
-        _msg("Faital Error in checcking value with Unit.")
         casalog.post('%s' % err, 'SEVERE')
         raise
 #
@@ -296,7 +295,7 @@ def _conv_to_doubleArrayList(in_list):
             out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
             return out_list
         else:
-            _msg("Invalid arg type, expecting separated string or list.", 'SEVERE')
+            _msg("\nERROR::Invalid arg type, expecting separated string or list.\n", 'SEVERE')
             return []   # invalid type
 
     except Exception as err:
@@ -325,7 +324,7 @@ def get_defaut_antenna(msname, antenna):
     elif n_ant == 1:
         i_ant = ant_list[0]
     else:
-        _msg("INTERNAL ERROR. Illegular antenna ID detected.")
+        _msg("\nINTERNAL ERROR. Illegular antenna ID detected.\n")
         return False
 
     # INFO #
@@ -585,7 +584,7 @@ def calc_sdatmcor(
 
     # infile Inaccesible #
     if not rawms_exist:
-        _msg("ERROR::Specified infile does not exist..", 'ERROR')
+        _msg("\nERROR::Specified infile does not exist.\n", 'ERROR')
         return False
   
     # outfile Protected #
@@ -594,7 +593,7 @@ def calc_sdatmcor(
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(corms)
         else:
-            _msg("Overwrite:: Specified outputfile already exist. Abort.", 'ERROR')
+            _msg("\nERROR in Overwrite:: Specified outputfile already exist.\n", 'ERROR')
             return False
 
     #
@@ -676,7 +675,7 @@ def calc_sdatmcor(
 
     # Result check #
     if not _file_exist(tempFileName):
-        _msg("No outfile from  mstransform.", 'SEVERE')
+        _msg("\nERROR:: No outfile generated from  mstransform.\n", 'SEVERE')
         return False
 
     _msg("Data Selection was applied. Use %s as 'calms' " % tempFileName)
@@ -771,7 +770,7 @@ def calc_sdatmcor(
             spws = spws_param   # update
             _msg(" - updated 'spws'=%s. by given spw." % spws)
         else:
-            _msg("Some of the specified 'spw' are not in the raw MS. Cannot continue." "ERROR" )
+            _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n" "ERROR" )
             _msg("  - spws (MS)     = %s" % set(spws))
             _msg("  - spws (arg)    = %s" % set(spws_param))
             return False
@@ -833,7 +832,7 @@ def calc_sdatmcor(
     if set(spws) >= set(outputspws):   # B is included in A #
         pass
     else:
-        _msg("Some of specified 'outputspw' are not in the raw MS. Cannot continue." "ERROR" )
+        _msg("\nERROR:: Some of specified 'outputspw' are not in the raw MS. Cannot continue.\n" "ERROR" )
         _msg("  - spws      = %s" % spws)
         _msg("  - outputspws = %s" % outputspws)
         return False
