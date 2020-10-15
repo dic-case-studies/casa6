@@ -85,12 +85,13 @@ def plotants(vis=None, figfile=None,
 			if len(msname) > 55:
 				title += '\n'
 			title += msname
-		pl.title(title, {'fontsize':12})
 
 		if logpos:
 			plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations)
 		else:
 			plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showplot)
+		pl.title(title, {'fontsize':12})
+		
 		if figfile:
 			pl.savefig(figfile)
 
