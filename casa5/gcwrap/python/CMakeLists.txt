@@ -54,7 +54,6 @@ scripts/init_welcome_helpers.py
 scripts/init_user_pre.py
 scripts/init_user_post.py
 scripts/casapy_engine.py
-scripts/caltab_convert2.py
 scripts/check_exceptionhandling.py
 scripts/check_input_saverestore.py
 scripts/cleanhelper.py
