@@ -2086,7 +2086,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           Double inStartFreq;
           MFrequency mstartfreq;
           if(checkspecmode!="") {
-            MFrequency::Types mfreqframe = MFrequency::typeFromString(frame);
+            MFrequency::Types mfreqframe = frame!="" ? MFrequency::typeFromString(frame):MFrequency::LSRK;
             if(checkspecmode=="channel") {
               dataFrameStartFreq = 0;  
             }
