@@ -32,8 +32,8 @@ namespace casac {
       string map(const string& _v=string("all"));
       record* maprec(const string& _v=string("all"));
       bool fits();
-      std::vector<std::string> angle(const variant& _v=variant( ), int _prec=int(0), const std::vector<std::string>& _form=std::vector<std::string>({}), bool _showform=bool(false));
-      std::vector<std::string> time(const variant& _v=variant( ), int _prec=int(0), const std::vector<std::string>& _form=std::vector<std::string>({}), bool _showform=bool(false));
+      std::vector<std::string> angle(const variant& _v=variant( ), long _prec=long(0), const std::vector<std::string>& _form=std::vector<std::string>({}), bool _showform=bool(false));
+      std::vector<std::string> time(const variant& _v=variant( ), long _prec=long(0), const std::vector<std::string>& _form=std::vector<std::string>({}), bool _showform=bool(false));
       record* add(const variant& _v=variant( ), const variant& _a=variant( ));
       record* sub(const variant& _v=variant( ), const variant& _a=variant( ));
       record* mul(const variant& _v=variant( ), const variant& _a=variant( ));
@@ -63,20 +63,20 @@ namespace casac {
       bool compare(const variant& _v=variant( ), const variant& _a=variant( ));
       bool check(const string& _v=string(""));
       bool checkfreq(const variant& _cm=variant( ));
-      record* pow(const variant& _v=variant( ), int _a=int(1));
+      record* pow(const variant& _v=variant( ), long _a=long(1));
       record* constants(const string& _v=string("pi"));
       bool isangle(const variant& _v=variant( ));
       record* totime(const variant& _v=variant( ));
       record* toangle(const variant& _v=variant( ));
       record* splitdate(const variant& _v=variant( ));
-      string tos(const variant& _v=variant( ), int _prec=int(9));
+      string tos(const variant& _v=variant( ), long _prec=long(9));
       string type();
       bool done(bool _kill=bool(false));
       record* unit(const variant& _v=variant( ), const string& _unitname=string(""));
       bool isquantity(const variant& _v=variant( ));
       bool setformat(const string& _t=string(""), const string& _v=string("F"));
       string getformat(const string& _t=string(""));
-      string formxxx(const variant& _v=variant( ), const string& _format=string("dms"), int _prec=int(2));
+      string formxxx(const variant& _v=variant( ), const string& _format=string("dms"), long _prec=long(2));
 
         ~quanta( );
 
