@@ -77,7 +77,10 @@ public:
   double operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad)
   {
     double fx = 0.0;
-    casacore::Matrix<casacore::Float> AspConvPsfSum(itsMatDirty.shape(), (casacore::Float)0.0);
+    //casacore::Matrix<casacore::Float> AmpAspConvPsfSum(itsMatDirty.shape(), (casacore::Float)0.0);
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> AmpAspConvPsfSum = Eigen::MatrixXf::Zero(nX, nY);
+    //casacore::Matrix<casacore::Float> newResidual(itsMatDirty.shape(), (casacore::Float)0.0);
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> newResidual = Eigen::MatrixXf::Zero(nX, nY);
 
     const int refi = nX/2;
     const int refj = nY/2;
@@ -87,9 +90,9 @@ public:
     int minY = nY - 1;
     int maxY = 0;
 
+    // First, get the amp * AspenConvPsf for each Aspen to update the residual
     for (unsigned int k = 0; k < AspLen; k ++)
     {
-      ////auto start = std::chrono::high_resolution_clock::now();
 
       if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue or scale < 0
       {
@@ -104,107 +107,14 @@ public:
       // x[2k]: Amplitude(k), x[2k+1]: scale(k+1)
       casacore::Matrix<casacore::Float> Asp(nX, nY);
       Asp = 0.0;
+      //casacore::Matrix<casacore::Float> dAsp(nX, nY);
+      //dAsp = 0.0;
 
       const double sigma5 = 5 * x[2*k+1] / 2;
-      /*const int minI = std::max(0, (int)(refi + center[k][0] - sigma5));
-      const int maxI = std::min(nX-1, (int)(refi + center[k][0] + sigma5));
-      const int minJ = std::max(0, (int)(refj + center[k][1] - sigma5));
-      const int maxJ = std::min(nY-1, (int)(refj + center[k][1] + sigma5));*/
       const int minI = std::max(0, (int)(center[k][0] - sigma5));
       const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
       const int minJ = std::max(0, (int)(center[k][1] - sigma5));
       const int maxJ = std::min(nY-1, (int)(center[k][1] + sigma5));
-
-      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1])/*x[2*k]*/, center[k][0], center[k][1], x[2*k+1], 1, 0);
-      for (int j = minJ; j <= maxJ; j++)
-      {
-        for (int i = minI; i <= maxI; i++)
-        {
-          //const int px = i - refi;
-          //const int py = j - refj;
-          const int px = i;
-          const int py = j;
-          Asp(i,j) = gbeam(px, py);
-        }
-      }
-
-      ////auto stop = std::chrono::high_resolution_clock::now();
-      ////auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      ////std::cout << "minI " << minI << " maxI " << maxI << " minJ " << minJ << " maxJ " << maxJ << std::endl;
-      ////std::cout << "LBFGS 1st Asp runtime " << duration.count() << " ms" << std::endl;
-
-      ////start = std::chrono::high_resolution_clock::now();
-      casacore::Matrix<casacore::Complex> AspFT;
-      casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
-      fft.fft0(AspFT, Asp);
-
-      casacore::Matrix<casacore::Complex> cWork;
-      cWork = AspFT * itsPsfFT;
-      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
-      fft.fft0(AspConvPsf, cWork, false);
-      ////stop = std::chrono::high_resolution_clock::now();
-      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      ////std::cout << "LBFGS 2st AspFFT runtime " << duration.count() << " ms" << std::endl;
-      //std::cout << "AspConvPsf shape  " << AspConvPsf.shape() << std::endl;
-      fft.flip(AspConvPsf, false, false); //genie need this?
-
-      // gradient. 0: amplitude; 1: scale
-      // generate derivatives of amplitude
-      ////start = std::chrono::high_resolution_clock::now();
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
-      //casacore::Gaussian2D<casacore::Float> gbeamGradAmp(1, center[k][0], center[k][1], x[2*k+1], 1, 0);
-
-      for (int j = minJ; j <= maxJ; j++)
-      {
-        for (int i = minI; i <= maxI; i++)
-        {
-          //const int px = i - refi;
-          //const int py = j - refj;
-          const int px = i;
-          const int py = j;
-          // generate derivatives of amplitude
-          //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py); // genie
-          //GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * x[2*k+1]; // sanjay: -2*asp/Amp
-          GradAmp(i,j) = (-2) * AspConvPsf(i,j); // try
-          // generate derivative of scale
-          //GradScale(i,j) = (-2)*2*(pow(i-center[k][0],2) + pow(j-center[k][1],2))*Asp(i,j)/pow(x[2*k+1],3); // genie
-          //GradScale(i,j) = 2 * (pow(i-center[k][0],2) + pow(j-center[k][1],2)) * Asp(i,j) / x[2*k+1]; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
-          GradScale(i,j) = (-2) * x[2*k] * ((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) * (AspConvPsf(i,j) / x[2*k+1]); //try
-        }
-      }
-      ////stop = std::chrono::high_resolution_clock::now();
-      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      ////std::cout << "LBFGS 3rd Grad runtime " << duration.count() << " ms" << std::endl;
-
-      ////start = std::chrono::high_resolution_clock::now();
-      casacore::Bool ddel;
-      const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
-      float *ddptr = const_cast<float*>(dptr);
-      Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
-
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
-
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
-      itsMatDirty.freeStorage(dptr, ddel);
-      ////stop = std::chrono::high_resolution_clock::now();
-      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      ////std::cout << "LBFGS 4th product runtime " << duration.count() << " ms" << std::endl;
-
-      ////start = std::chrono::high_resolution_clock::now();
-      // generate objective function
-      // returns the objective function value and gradient evaluated on x
-      //std::cout << "before Asp# " << k << ": fx " << fx << " itsMatDirty " << itsMatDirty(0,0) << " AspConvPsf " << AspConvPsf(0,0) << std::endl;
-      for (int j = minJ; j <= maxJ; j++)
-      {
-        for (int i = minI; i <= maxI; i++)
-        {
-          //fx = fx + abs(double(itsMatDirty(i, j) - AspConvPsf(i,j))); genie: seems wrong
-          AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + /*itsGain * */x[2*k] * AspConvPsf(i,j); //gain*optimumstrength*PsfConvAspen
-          grad[2*k] = grad[2*k] + double(Grad0(i,j));
-          grad[2*k+1] = grad[2*k+1] + double(Grad1(i,j));
-        }
-      }
 
       if (minI < minX)
         minX = minI;
@@ -215,33 +125,213 @@ public:
       if (maxJ > maxY)
         maxY = maxJ;
 
+      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
+      /*for (int j = minJ; j <= maxJ; j++)
+      {
+        for (int i = minI; i <= maxI; i++)
+        {*/
+      for (int j = 0; j <= nY-1; j++)
+      {
+        for (int i = 0; i <= nX-1; i++)
+        {
+          const int px = i;
+          const int py = j;
+          Asp(i,j) = gbeam(px, py); // this is slightly different from below causing AspConvPsf diff a lot.
+          //Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
+          //dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
+        }
+      }
+      std::cout << "peak(Asp) " << max(fabs(Asp)) << " amp " << x[2*k] << " scale " << x[2*k+1] << std::endl;
+      //std::cout << "peak(dAsp) " << max(fabs(dAsp)) << " dAsp(128,128) " << dAsp(128,128) << std::endl;
 
-      ////stop = std::chrono::high_resolution_clock::now();
-      ////duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      ////std::cout << "LBFGS 5th sum up runtime " << duration.count() << " ms" << std::endl;
-    } // end of Aspen
+      casacore::Matrix<casacore::Complex> AspFT;
+      casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
+      fft.fft0(AspFT, Asp);
 
-    ////auto start = std::chrono::high_resolution_clock::now();
+      casacore::Matrix<casacore::Complex> cWork;
+      cWork = AspFT * itsPsfFT;
+      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+      fft.fft0(AspConvPsf, cWork, false);
+      fft.flip(AspConvPsf, false, false); //need this
 
-    for (int j = minY; j < maxY; ++j)
+      /*casacore::Matrix<casacore::Complex> dAspFT;
+      fft.fft0(dAspFT, dAsp);
+      casacore::Matrix<casacore::Complex> dcWork;
+      dcWork = dAspFT * itsPsfFT;
+      casacore::Matrix<casacore::Float> dAspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+      fft.fft0(dAspConvPsf, dcWork, false);
+      fft.flip(dAspConvPsf, false, false); //need this*/
+
+      // gradient. 0: amplitude; 1: scale
+      // generate derivatives of amplitude
+      /*Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
+
+      casacore::Bool ddel;
+      const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
+      float *ddptr = const_cast<float*>(dptr);
+      Eigen::MatrixXf Mdirty = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);*/
+
+      casacore::Bool ddelc;
+      const casacore::Float *dptrc = AspConvPsf.getStorage(ddelc);
+      float *ddptrc = const_cast<float*>(dptrc);
+      Eigen::MatrixXf MAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptrc, nX, nY);
+
+      /*casacore::Bool ddelc2;
+      const casacore::Float *dptrc2 = dAspConvPsf.getStorage(ddelc2);
+      float *ddptrc2 = const_cast<float*>(dptrc2);
+      Eigen::MatrixXf MdAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptrc2, nX, nY);
+
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Mres;*/
+      AmpAspConvPsfSum = AmpAspConvPsfSum + x[2*k] * MAspConvPsf; //optimumstrength*PsfConvAspen
+
+      /*std::cout << "verify: Mdirty(128,128) " << Mdirty(128,128) << std::endl;
+      std::cout << "verify: MAspConvPsf(128,128) " << MAspConvPsf(128,128) << std::endl;
+      std::cout << "verify: Mres(128,128) " << Mres(128,128) << std::endl;
+      std::cout << "verify: MdAspConvPsf(128,128) " << MdAspConvPsf(128,128) << std::endl;*/
+      ////Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
+      ////Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
+      //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1;
+      //Grad1 = Mres * GradScale; // this is wrong. Needs to be element by element multiplication
+      //GradScale = (-2) * /*amp*/Mres.cwiseProduct(MdAspConvPsf); // this is still wrong. Needs to be element by element multiplication
+      /*itsMatDirty.freeStorage(dptr, ddel);
+      AspConvPsf.freeStorage(dptrc, ddelc);
+      dAspConvPsf.freeStorage(dptrc2, ddelc2);*/
+    } // end get amp * AspenConvPsf
+
+    // update the residual
+    casacore::Bool ddel;
+    const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
+    float *ddptr = const_cast<float*>(dptr);
+    Eigen::MatrixXf Mdirty = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
+    newResidual = Mdirty - AmpAspConvPsfSum;
+
+    // returns the gradient evaluated on x
+    for (unsigned int k = 0; k < AspLen; k ++)
+    {
+      casacore::Matrix<casacore::Float> Asp(nX, nY);
+      Asp = 0.0;
+      casacore::Matrix<casacore::Float> dAsp(nX, nY);
+      dAsp = 0.0;
+
+      const double sigma5 = 5 * x[2*k+1] / 2;
+      const int minI = std::max(0, (int)(center[k][0] - sigma5));
+      const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
+      const int minJ = std::max(0, (int)(center[k][1] - sigma5));
+      const int maxJ = std::min(nY-1, (int)(center[k][1] + sigma5));
+
+      if (minI < minX)
+        minX = minI;
+      if (maxI > maxX)
+        maxX = maxI;
+      if (minJ < minY)
+        minY = minJ;
+      if (maxJ > maxY)
+        maxY = maxJ;
+
+      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
+      /*for (int j = minJ; j <= maxJ; j++)
+      {
+        for (int i = minI; i <= maxI; i++)
+        {*/
+      for (int j = 0; j <= nY-1; j++)
+      {
+        for (int i = 0; i <= nX-1; i++)
+        {
+          const int px = i;
+          const int py = j;
+          Asp(i,j) = gbeam(px, py); //verified by python
+          //Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
+          dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
+        }
+      }
+
+      casacore::Matrix<casacore::Complex> AspFT;
+      casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
+      fft.fft0(AspFT, Asp);
+
+      casacore::Matrix<casacore::Complex> cWork;
+      cWork = AspFT * itsPsfFT;
+      casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+      fft.fft0(AspConvPsf, cWork, false);
+      fft.flip(AspConvPsf, false, false); //need this
+
+      casacore::Matrix<casacore::Complex> dAspFT;
+      fft.fft0(dAspFT, dAsp);
+      casacore::Matrix<casacore::Complex> dcWork;
+      dcWork = dAspFT * itsPsfFT;
+      casacore::Matrix<casacore::Float> dAspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+      fft.fft0(dAspConvPsf, dcWork, false);
+      fft.flip(dAspConvPsf, false, false); //need this
+
+      // gradient. 0: amplitude; 1: scale
+      // generate derivatives of amplitude
+      //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
+      //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
+      casacore::Matrix<casacore::Float> GradAmp(itsMatDirty.shape(), (casacore::Float)0.0);
+      casacore::Matrix<casacore::Float> GradScale(itsMatDirty.shape(), (casacore::Float)0.0);
+
+      std::cout << "before Asp# " << k << ": fx " << fx << " simDirty " << max(fabs(itsMatDirty)) << " AspConvPsf " << max(fabs(AspConvPsf)) << std::endl;
+
+      // reset grad to 0. This is important to get the correct optimization.
+      grad[2*k] = 0.0;
+      grad[2*k+1] = 0.0;
+      std::cout << "before grad " << 2*k << ": " << grad[2*k] << std::endl;
+      std::cout << "before grad " << 2*k+1 << ": " << grad[2*k+1] << std::endl;
+      /*for (int j = minJ; j <= maxJ; j++)
+      {
+        for (int i = minI; i <= maxI; i++)
+        {*/
+      for (int j = 0; j <= nY-1; j++)
+      {
+        for (int i = 0; i <= nX-1; i++)
+        {
+          //AspConvPsfSum(i,j) = AspConvPsfSum(i,j) + x[2*k] * AspConvPsf(i,j); //optimumstrength*PsfConvAspen
+          // generate derivatives of amplitude
+          //GradAmp(i,j) = (-2) * Mres(i,j) * MAspConvPsf(i,j);
+          GradAmp(i,j) = (-2) * newResidual(i,j) * AspConvPsf(i,j);
+          // generate derivative of scale
+          //GradScale(i,j) = (-2) * x[2*k] * Mres(i,j) * MdAspConvPsf(i,j);
+          GradScale(i,j) = (-2) * x[2*k] * newResidual(i,j) * dAspConvPsf(i,j);
+          grad[2*k] = grad[2*k] + double(GradAmp(i,j));
+          grad[2*k+1] = grad[2*k+1] + double(GradScale(i,j));
+        }
+      }
+
+      //std::cout << "verify: GradScale(128,128) " << GradScale(128,128) << std::endl;
+      //std::cout << "verify: Mres(127,128) " << Mres(127,128) << std::endl;
+      //std::cout << "verify: MdAspConvPsf(127,128) " << MdAspConvPsf(127,128) << std::endl;
+      //std::cout << "verify: GradScale(127,128) " << GradScale(127,128) << std::endl;
+      std::cout << "after grad " << 2*k << ": " << grad[2*k] << std::endl;
+      std::cout << "after grad " << 2*k+1 << ": " << grad[2*k+1] << std::endl;
+
+    } // end of derivatives
+
+    // generate objective function
+    // returns the objective function value
+    /*for (int j = minY; j < maxY; ++j)
     {
       for(int i = minX; i < maxX; ++i)
+      {*/
+    for (int j = 0; j <= nY-1; j++)
+    {
+      for (int i = 0; i <= nX-1; i++)
       {
-        //std::cout << "after Asp fx " << fx << " double " << double(pow(itsMatDirty(i,j) - AspConvPsfSum(i,j),2)) << " MatDirty " << itsMatDirty(i,j) << " PsfSum " << AspConvPsfSum(i,j) << std::endl;
-        fx = fx + double(pow(itsMatDirty(i, j) - AspConvPsfSum(i,j),2));
+        fx = fx + double(pow(newResidual(i, j), 2));
       }
     }
-    ////auto stop = std::chrono::high_resolution_clock::now();
-    ////auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    ////std::cout << "minX " << minX << " maxX " << maxX << " minY " << minY << " maxY " << maxY << std::endl;
-    ////std::cout << "LBFGS 6th runtime " << duration.count() << " ms" << std::endl;
-    //std::cout << "after Asp fx " << fx << " AspConvPsfSum " << AspConvPsfSum(0,0) << std::endl;
 
-    // memory used
-    //std::cout << "Memory allocated in lbfgs " << double(casacore::HostInfo::memoryUsed()/1024) << " MB." << std::endl;
+    //std::cout << "after simDirty fx " << fx << " AspConvPsfSum " << AspConvPsfSum(128,128) << std::endl;
+    std::cout << "after fx " << fx << std::endl;
 
     return fx;
   }
+
+  ////auto start = std::chrono::high_resolution_clock::now();
+  ////auto stop = std::chrono::high_resolution_clock::now();
+  ////auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  ////std::cout << "minX " << minX << " maxX " << maxX << " minY " << minY << " maxY " << maxY << std::endl;
+  ////std::cout << "LBFGS 6th runtime " << duration.count() << " ms" << std::endl;
 
 };
 

@@ -103,7 +103,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
       itsMCsetup = true;
-      itsCleaner.testBFGS();
+      //for unit test
+      Matrix<Float> tempMat1(itsMatResidual);
+      itsCleaner.setDirty( tempMat1 );
+      itsCleaner.testBFGS(tempMat);
     }
 
     // Parts to be repeated at each minor cycle start....

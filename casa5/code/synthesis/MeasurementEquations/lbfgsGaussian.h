@@ -136,8 +136,16 @@ public:
         {
           const int px = i;
           const int py = j;
-          Asp(i,j) = gbeam(px, py); //verified by python
+          //Asp(i,j) = gbeam(px, py); // this is slightly different from below causing AspConvPsf diff a lot.
+          Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
           //dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
+        }
+      }
+      for (int j = 125; j < 130; j++)
+      {
+        for (int i = 125; i < 130; i++)
+        {
+          std::cout << "Asp(" << i << "," << j << ") = " << Asp(i,j) << std::endl;
         }
       }
       std::cout << "peak(Asp) " << max(fabs(Asp)) << " amp " << x[2*k] << " scale " << x[2*k+1] << std::endl;
@@ -153,50 +161,35 @@ public:
       fft.fft0(AspConvPsf, cWork, false);
       fft.flip(AspConvPsf, false, false); //need this
 
-      /*casacore::Matrix<casacore::Complex> dAspFT;
-      fft.fft0(dAspFT, dAsp);
-      casacore::Matrix<casacore::Complex> dcWork;
-      dcWork = dAspFT * itsPsfFT;
-      casacore::Matrix<casacore::Float> dAspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
-      fft.fft0(dAspConvPsf, dcWork, false);
-      fft.flip(dAspConvPsf, false, false); //need this*/
-
       // gradient. 0: amplitude; 1: scale
       // generate derivatives of amplitude
       /*Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
-
-      casacore::Bool ddel;
-      const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
-      float *ddptr = const_cast<float*>(dptr);
-      Eigen::MatrixXf Mdirty = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);*/
+      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);*/
 
       casacore::Bool ddelc;
       const casacore::Float *dptrc = AspConvPsf.getStorage(ddelc);
       float *ddptrc = const_cast<float*>(dptrc);
       Eigen::MatrixXf MAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptrc, nX, nY);
 
-      /*casacore::Bool ddelc2;
-      const casacore::Float *dptrc2 = dAspConvPsf.getStorage(ddelc2);
-      float *ddptrc2 = const_cast<float*>(dptrc2);
-      Eigen::MatrixXf MdAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptrc2, nX, nY);
-
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Mres;
-      Mres = Mdirty - x[2*k] * MAspConvPsf;*/
       AmpAspConvPsfSum = AmpAspConvPsfSum + x[2*k] * MAspConvPsf; //optimumstrength*PsfConvAspen
+      /*for (int j = 0; j <= nY-1; j++)
+      {
+        for (int i = 0; i <= nX-1; i++)
+        {
+          AmpAspConvPsfSum(i,j) = AmpAspConvPsfSum(i,j) + x[2*k] * AspConvPsf(i,j);
+        }
+      }*/
 
-      /*std::cout << "verify: Mdirty(128,128) " << Mdirty(128,128) << std::endl;
-      std::cout << "verify: MAspConvPsf(128,128) " << MAspConvPsf(128,128) << std::endl;
-      std::cout << "verify: Mres(128,128) " << Mres(128,128) << std::endl;
-      std::cout << "verify: MdAspConvPsf(128,128) " << MdAspConvPsf(128,128) << std::endl;*/
-      ////Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
-      ////Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
-      //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1;
-      //Grad1 = Mres * GradScale; // this is wrong. Needs to be element by element multiplication
-      //GradScale = (-2) * /*amp*/Mres.cwiseProduct(MdAspConvPsf); // this is still wrong. Needs to be element by element multiplication
-      /*itsMatDirty.freeStorage(dptr, ddel);
+      //debug
+      for (int j = 125; j < 130; j++)
+      {
+        for (int i = 125; i < 130; i++)
+        {
+          std::cout << "AspConvPsf(" << i << "," << j << ") = " << AspConvPsf(i,j) << std::endl;
+          std::cout << "AmpAspConvPsfSum(" << i << "," << j << ") = " << AmpAspConvPsfSum(i,j) << std::endl;
+        }
+      }
       AspConvPsf.freeStorage(dptrc, ddelc);
-      dAspConvPsf.freeStorage(dptrc2, ddelc2);*/
     } // end get amp * AspenConvPsf
 
     // update the residual
@@ -205,6 +198,18 @@ public:
     float *ddptr = const_cast<float*>(dptr);
     Eigen::MatrixXf Mdirty = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
     newResidual = Mdirty - AmpAspConvPsfSum;
+    //newResidual = itsMatDirty - AmpAspConvPsfSum;
+
+    // debug
+    for (int j = 125; j < 130; j++)
+    {
+      for (int i = 125; i < 130; i++)
+      {
+        std::cout << "newResidual(" << i << "," << j << ") = " << newResidual(i,j) << std::endl;
+        //std::cout << "Mdirty(" << i << "," << j << ") = " << Mdirty(i,j) << std::endl;
+      }
+    }
+    itsMatDirty.freeStorage(dptr, ddel);
 
     // returns the gradient evaluated on x
     for (unsigned int k = 0; k < AspLen; k ++)
@@ -240,8 +245,16 @@ public:
         {
           const int px = i;
           const int py = j;
-          Asp(i,j) = gbeam(px, py); //verified by python
+          //Asp(i,j) = gbeam(px, py);
+          Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
           dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
+        }
+      }
+      for (int j = 125; j < 130; j++)
+      {
+        for (int i = 125; i < 130; i++)
+        {
+          std::cout << "dAsp(" << i << "," << j << ") = " << dAsp(i,j) << std::endl;
         }
       }
 
@@ -297,7 +310,17 @@ public:
         }
       }
 
-      std::cout << "verify: GradScale(128,128) " << GradScale(128,128) << std::endl;
+      for (int j = 125; j < 130; j++)
+      {
+        for (int i = 125; i < 130; i++)
+        {
+          std::cout << "newResidual(" << i << "," << j << ") = " << newResidual(i,j) << std::endl;
+          std::cout << "dAspConvPsf(" << i << "," << j << ") = " << dAspConvPsf(i,j) << std::endl;
+          std::cout << "GradAmp(" << i << "," << j << ") = " << GradAmp(i,j) << std::endl;
+          std::cout << "GradScale(" << i << "," << j << ") = " << GradScale(i,j) << std::endl;
+        }
+      }
+      //std::cout << "verify: GradScale(128,128) " << GradScale(128,128) << std::endl;
       //std::cout << "verify: Mres(127,128) " << Mres(127,128) << std::endl;
       //std::cout << "verify: MdAspConvPsf(127,128) " << MdAspConvPsf(127,128) << std::endl;
       //std::cout << "verify: GradScale(127,128) " << GradScale(127,128) << std::endl;
@@ -316,7 +339,6 @@ public:
     {
       for (int i = 0; i <= nX-1; i++)
       {
-        //fx = fx + double(pow(itsMatDirty(i, j) - AspConvPsfSum(i,j),2));
         fx = fx + double(pow(newResidual(i, j), 2));
       }
     }

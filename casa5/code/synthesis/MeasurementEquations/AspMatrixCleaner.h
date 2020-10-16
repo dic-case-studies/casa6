@@ -96,7 +96,7 @@ public:
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
   void switchedToHogbom();
-  void testBFGS();
+  void testBFGS(const casacore::Matrix<casacore::Float>& psf);
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
