@@ -73,7 +73,7 @@ Using matplotlib backend: TkAgg
 in startup
 CASA 5.9.9-922 -- Common Astronomy Software Applications [2019.214]
 
-CASA <1>:
+CASA <1>: 
 ```
 
 ### CASA's GUIs
