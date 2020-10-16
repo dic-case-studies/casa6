@@ -178,7 +178,7 @@ synthesisimager::selectdata(const casac::record& selpars)
 
   variant* synthesisimager::estimatememory(){
     *itsLog << casacore::LogOrigin("synthesisimager", __func__);
-    long long mem1=0;
+    long mem1=0;
     variant * mem_ptr=new variant (mem1);
     try 
     {
@@ -274,19 +274,19 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
   
   bool
   synthesisimager::setimage(const std::string& imagename,
-			    const int nx, 
-			    const int ny,			
+			    const long nx, 
+			    const long ny,			
 			    const ::casac::variant& cellx, 
 			    const ::casac::variant& celly,
 			    const std::string& stokes,
 			    const ::casac::variant& phasecenter,
-			    const int nchan,
+			    const long nchan,
 			    const ::casac::variant& freqstart,
 			    const ::casac::variant& freqstep,
 			    const ::casac::variant& restfreq,
-			    const int facets,
+			    const long facets,
 			    const std::string& ftmachine,
-			    const int ntaylorterms,
+			    const long ntaylorterms,
 			    const ::casac::variant& reffreq,
 			    const std::string& projection,
 			    const ::casac::variant& distance,
@@ -297,7 +297,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
 			    const float padding,
 			    const bool useautocorr,
 			    const bool usedoubleprec,
-			    const int wprojplanes,
+			    const long wprojplanes,
 			    const std::string& convfunc,
 			    const std::string& startmodel,
 			    const bool aterm,//    = true,
@@ -425,7 +425,7 @@ bool synthesisimager::setweighting(const std::string& type,
 				   const ::casac::variant& noise,
 				   const double robust,
 				   const ::casac::variant& fieldofview,
-				   const int npixels,
+				   const long npixels,
 				   const bool multifield,
 				   const bool usecubebriggs,
 				   const std::vector<std::string>& uvtaper
@@ -621,7 +621,7 @@ bool synthesisimager::makesdimage()
 }
 
 bool synthesisimager::makeimage(const std::string& type, const std::string& image,
-                       const std::string& compleximage, const int model)
+                       const std::string& compleximage, const long model)
 {
   Bool rstat(true);
 
@@ -655,7 +655,7 @@ bool synthesisimager::makesdpsf()
   }
   return rstat;
 }
-bool synthesisimager::unlockimages(const int id)
+bool synthesisimager::unlockimages(const long id)
 {
   Bool rstat(false);
 
@@ -670,7 +670,7 @@ bool synthesisimager::unlockimages(const int id)
   }
   return rstat;
 }
-synthesisimstore* synthesisimager::getimstore(const int id)
+synthesisimstore* synthesisimager::getimstore(const long id)
 {
   synthesisimstore *rstat;
   try {
@@ -702,7 +702,7 @@ casac::record* synthesisimager::getcsys()
    return rstat;
 }
 
-int synthesisimager::updatenchan()
+long synthesisimager::updatenchan()
 {
   int rstat=-1;
   try
