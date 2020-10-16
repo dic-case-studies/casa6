@@ -1147,6 +1147,54 @@ class visstat_test(unittest.TestCase):
         for entry in ['DATA_DESC_ID=0', 'DATA_DESC_ID=2', 'DATA_DESC_ID=3']:
             self.assertEqual(res[entry]['npts'], 16384)
 
+    def test_doquantiles(self):
+        """test doquantiles parameter"""
+        # doquantiles=True, all stats computed
+        res = visstat(
+            vis=self.msfile, axis='amp', datacolumn='data',
+            useflags=True, reportingaxes='ddid', doquantiles=True
+        )
+        self.assertTrue(
+            res['DATA_DESC_ID=0'] and type(res['DATA_DESC_ID=0']) == dict,
+            'res["DATA_DESC_ID=0"] does not exist or is not a dict' 
+        )
+        res2 = res['DATA_DESC_ID=0']
+        expected_keys = [
+            'firstquartile', 'isMasked', 'isWeighted', 'max', 'maxDatasetIndex',
+            'maxIndex', 'mean', 'medabsdevmed', 'median', 'min', 'minDatasetIndex',
+            'minIndex', 'npts', 'rms', 'stddev', 'sum', 'sumOfWeights', 'sumsq',
+            'thirdquartile', 'variance'
+        ]
+        # for python3 must cast dict.keys() to list
+        got_keys = list(res2.keys())
+        got_keys.sort()
+        self.assertTrue(
+            got_keys == expected_keys,
+            'list of keys for doquantiles=True is incorrect'
+        )
+
+        # doquantiles=False, no quantiles computed
+        res = visstat(
+            vis=self.msfile, axis='amp', datacolumn='data',
+            useflags=True, reportingaxes='ddid', doquantiles=False
+        )
+        self.assertTrue(
+            res['DATA_DESC_ID=0'] and type(res['DATA_DESC_ID=0']) == dict,
+            'res["DATA_DESC_ID=0"] does not exist or is not a dict'
+        )
+        res2 = res['DATA_DESC_ID=0']
+        expected_keys = [
+            'isMasked', 'isWeighted', 'max', 'maxDatasetIndex', 'maxIndex',
+            'mean', 'min', 'minDatasetIndex', 'minIndex', 'npts', 'rms',
+            'stddev', 'sum', 'sumOfWeights', 'sumsq', 'variance'
+        ]
+        # for python3 must cast dict.keys() to list
+        got_keys = list(res2.keys())
+        got_keys.sort()
+        self.assertTrue(
+            got_keys == expected_keys,
+            'list of keys for doquantiles=False is incorrect'
+        )
         
 def suite():
     return[visstat_test]
