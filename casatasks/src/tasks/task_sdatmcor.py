@@ -57,8 +57,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    msg = "\nRevision sdatmcor 1008 from Release #12. Revising In Progress(v.3).\n"
-    _msg(msg)
+    _msg("\nSDATMCOR revision 1016 (16-Oct-2020) .\n")
 
 #
 # Input/Output File Handling
@@ -835,7 +834,7 @@ def calc_sdatmcor(
     if set(spws) >= set(outputspws):   # B is included in A #
         pass
     else:
-        _msg("\nERROR:: Some of specified 'outputspw' are not in the raw MS. Cannot continue.\n" "ERROR" )
+        _msg("\nERROR:: Some of specified 'outputspw' are not in the raw MS. Cannot continue.\n", "ERROR" )
         _msg("  - spws      = %s" % spws)
         _msg("  - outputspws = %s" % outputspws)
         return False
