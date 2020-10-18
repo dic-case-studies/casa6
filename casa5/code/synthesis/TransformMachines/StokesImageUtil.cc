@@ -44,6 +44,7 @@
 #include <lattices/LatticeMath/LatticeConvolver.h>
 #include <scimath/Fitting/NonLinearFitLM.h>
 #include <scimath/Functionals/Gaussian2D.h>
+#include <scimath/Mathematics/Interpolate2D.h>
 #include <casacore/casa/IO/ArrayIO.h>
 
 #include <ms/MeasurementSets/MSColumns.h>
@@ -67,11 +68,14 @@
 #include <casa/Logging/LogSink.h>
 #include <casa/Logging/LogMessage.h>
 
+#include <synthesis/TransformMachines2/Utils.h>
 
 #include <casa/iostream.h>
 
 using namespace casacore;
 namespace casa {
+
+
 
 // <summary> 
 // </summary>
@@ -572,10 +576,174 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf,
 }
 
 
+void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc, Int nrow, Float amin, Int px, Int py, Vector<Double>& deltas, Matrix<Double>& x , Vector<Double>& y, Vector<Double>& sigma,  Matrix<Float>& lpsf){
+    
+    Int maxnpoints=(2*nrow+1)*(2*nrow+1);
+    Matrix<Double> ix(maxnpoints,2);
+    Vector<Double> iy(maxnpoints), isigma(maxnpoints);
+    ix=0.0; iy=0.0; isigma=0.0;
+    npoints = 0;
+    
+    //IPosition blc(2), trc(2);
+//blc = 0; trc = 0;
+    
+    blc(0) = lpsf.shape()(0)-1;
+    blc(1) = lpsf.shape()(1)-1;
+    trc(0) = 0;
+    trc(1) = 0;
+
+    //cout << "1. blc, trc " << blc << ",*," << trc << endl;
+    
+    //cout << "1. findNPoints " << npoints << " " << amin << " "<< maxnpoints << endl;
+    //we sample the central part of a, 2*nrow+1 by 2*nrow+1
+    
+    Int iflip = 1;
+    Int jflip = 1;
+    // loop through rows. Include both above and below in case
+    // we are fitting an image feature
+    for(Int jlo = 0;jlo<2;jlo++) {
+      jflip*=-1;
+      // loop from 0 to nrow then from 1 to nrow
+      for(Int j = jlo;j<nrow;j++) {
+        // the current row under consideration
+        Int jrow = py + j*jflip;
+        // loop down row doing alternate halves. work our way
+        // out from the center until we cross threshold
+        // don't include any sidelobes!
+        for(Int ilo=0;ilo<2;ilo++) {
+      iflip*=-1;
+      // start at center row this may or may not be in the lobe,
+      // if it's narrow and the pa is near 45 degrees
+      Bool inlobe = lpsf(px,jrow)>amin;
+      for(Int i = ilo;i<nrow;i++) {
+        if(npoints < maxnpoints){
+          Int irow = px + i*iflip;
+          // did we step out of the lobe?
+          if (inlobe&&(lpsf(irow,jrow)<amin)) break;
+          if (lpsf(irow,jrow)>amin) {
+            inlobe = true;
+            // the sign on the ra can cause problems.  we just fit
+            // for what the beam "looks" like here, and worry about
+            // it later.
+            ix(npoints,0) = (irow-px)*abs(deltas(0));
+            ix(npoints,1) = (jrow-py)*abs(deltas(1));
+            iy(npoints) = lpsf(irow,jrow);
+            
+              if(blc(0) > irow) blc(0) = irow;
+              if(blc(1) > jrow) blc(1) = jrow;
+              
+              if(trc(0) < irow) trc(0) = irow;
+              if(trc(1) < jrow) trc(1) = jrow;
+              
+            isigma(npoints) = 1.0;
+            ++npoints;
+            if(npoints > (maxnpoints-1)) {
+          inlobe=false;
+          break;
+            }
+          }
+        }
+      }
+        }
+      }
+    }
+    
+    //cout << "2. blc, trc " << blc << ",*," << trc << endl;
+    //Vector<Double> y(npoints), sigma(npoints);
+    //Matrix<Double> x(npoints,2);
+    
+    y.resize(npoints);
+    x.resize(npoints,2);
+    sigma.resize(npoints);
+    
+    //cout << "2. findNPoints " << npoints << " " << amin << endl;
+    
+    for (Int ip=0;ip<npoints;ip++) {
+      x(ip,0)=ix(ip,0); x(ip,1)=ix(ip,1);
+      y(ip)=iy(ip);
+      sigma(ip)=isigma(ip);
+      if(!(isigma(ip)>0.0)) break;
+    }
+    
+    
+    
+}
+
+void StokesImageUtil::ResamplePSF(Matrix<Float>& psf, Int& oversampling, Matrix<Float>& resampledPsf, String& InterpMethod)
+{
+    Int nx = psf.shape()(0);
+    Int ny = psf.shape()(1);
+    Int nxRe = nx*oversampling - oversampling + 1;
+    Int nyRe = ny*oversampling - oversampling + 1;
+    
+    Vector<Double> pos(2);
+    resampledPsf.resize(nxRe,nyRe);
+    
+    Interpolate2D::Method method;
+    if(InterpMethod == "NEAREST") method = Interpolate2D::NEAREST;
+    if(InterpMethod == "LINEAR") method = Interpolate2D::LINEAR;
+    if(InterpMethod == "CUBIC") method = Interpolate2D::CUBIC;
+    if(InterpMethod == "LANCZOS") method = Interpolate2D::LANCZOS;
+    
+    Interpolate2D resampleInterp(method);
+//Interpolate2D resampleInterp(Interpolate2D::CUBIC);
+    
+    Bool ok;
+    Float result;
+    
+    for (Int i=0; i < nxRe ; ++i){
+        for (Int j=0; j < nyRe ; ++j){
+            pos(0) = (Float) i/(Float) oversampling;
+            pos(1) = (Float) j/(Float) oversampling;
+            
+            ok = resampleInterp.interp(result, pos, psf);
+//cout << "pos is" << pos << " result " << result << endl;
+            resampledPsf(i,j) = result;
+        }
+    }
+    
+    
+}
+
+//To do check all the parameters
+//Different interpolation schemes
+//If interp not okay?
+// Add Aips errors
+
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam) {
   
+  cout << "###################### In StokesImageUtil::FitGaussianPSF " << endl;
+      
+  //Temp Code for testing
+  Float threshold;
+  std::string env_name("fit_threshold");
+  threshold = std::stof(std::getenv(env_name.c_str()));
+  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    
+  Float npix;
+  env_name="npix";
+  npix = std::stoi(std::getenv(env_name.c_str()));
+  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    
+  Int expand_pixel;
+  env_name="expand_pixel";
+  expand_pixel = std::stoi(std::getenv(env_name.c_str()));
+  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    
+  Int oversampling;
+  env_name="oversampling";
+  oversampling = std::stoi(std::getenv(env_name.c_str()));
+  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    
+  String InterpMethod;
+  env_name="InterpMethod";
+  InterpMethod = std::getenv(env_name.c_str());
+  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    
+  //##########################################################
+  
   Vector<Double> deltas;
-  deltas=psf.coordinates().increment(); 
+  deltas=psf.coordinates().increment();
   
   Vector<Int> map;
   AlwaysAssert(StokesMap(map, psf.coordinates()), AipsError);
@@ -615,8 +783,10 @@ try{
     os << LogIO::WARN << "Could not find peak " << LogIO::POST;
     return false;
   }
+    
+
   
-  lpsf/=bamp;
+  lpsf/=bamp; //Normalize
 
   // The selection code attempts to avoid including any sidelobes, even
   // if they exceed the threshold, by starting from the center column and
@@ -626,85 +796,59 @@ try{
   // sharply ringing beams inclined at 45 degrees will confuse it, but 
   // that's even more pathological than most VLBI beams.
   
-  Float amin=0.35;
-  Int nrow=5;
+  Float amin=threshold;
+  Int nrow=npix;
   
   //we sample the central part of a, 2*nrow+1 by 2*nrow+1
-  
-  Int npoints=0;
-  Int maxnpoints=(2*nrow+1)*(2*nrow+1);
-  Matrix<Double> ix(maxnpoints,2);
-  Vector<Double> iy(maxnpoints), isigma(maxnpoints);
-  ix=0.0; iy=0.0; isigma=0.0;
   Bool converg=false;
   Vector<Double> solution;
   Int kounter=0;
+    
  while(amin >0.1 && !converg && (kounter < 50)){
-  amin*=bamp;
+  //amin*=bamp;
   kounter+=1;
-  Int iflip = 1;
-  Int jflip = 1;
-  // loop through rows. Include both above and below in case
-  // we are fitting an image feature
-  for(Int jlo = 0;jlo<2;jlo++) {
-    jflip*=-1;
-    // loop from 0 to nrow then from 1 to nrow
-    for(Int j = jlo;j<nrow;j++) { 
-      // the current row under consideration
-      Int jrow = py + j*jflip;
-      // loop down row doing alternate halves. work our way 
-      // out from the center until we cross threshold
-      // don't include any sidelobes!
-      for(Int ilo=0;ilo<2;ilo++) {
-	iflip*=-1;
-	// start at center row this may or may not be in the lobe,
-	// if it's narrow and the pa is near 45 degrees
-	Bool inlobe = lpsf(px,jrow)>amin;
-	for(Int i = ilo;i<nrow;i++) {
-	  if(npoints < maxnpoints){
-	    Int irow = px + i*iflip;
-	    // did we step out of the lobe?
-	    if (inlobe&&(lpsf(irow,jrow)<amin)) break;
-	    if (lpsf(irow,jrow)>amin) {
-	      inlobe = true;
-	      // the sign on the ra can cause problems.  we just fit 
-	      // for what the beam "looks" like here, and worry about 
-	      // it later.
-	      ix(npoints,0) = (irow-px)*abs(deltas(0));
-	      ix(npoints,1) = (jrow-py)*abs(deltas(1));
-	      iy(npoints) = lpsf(irow,jrow);
-	      isigma(npoints) = 1.0;
-	      ++npoints;
-	      if(npoints > (maxnpoints-1)) {
-		inlobe=false;
-		break;
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
   
+     
+  Int npoints=0;
+  
+  Vector<Double> y, sigma;
+  Matrix<Double> x;
+     
+  IPosition blc(2), trc(2);
+  FindNpoints(npoints, blc, trc, nrow, amin, px, py, deltas, x , y, sigma, lpsf);
+  cout << "npoints " << npoints << endl;
+     
+  //Should resampling only be done when condition is met?
+  blc = blc-expand_pixel;
+  trc = trc+expand_pixel;
 
-  Vector<Double> y(npoints), sigma(npoints);
-  Matrix<Double> x(npoints,2);
+  if(blc(0) < 0) blc(0)=0;
+  if(blc(1) < 0) blc(1)=0;
+  if(trc(0) >= lpsf.shape()(0)) trc(0)=lpsf.shape()(0)-1;
+  if(trc(1) >= lpsf.shape()(1)) trc(1)=lpsf.shape()(1)-1;
+     
+  Matrix<Float> lpsfWindowed = lpsf(blc,trc);
+  Matrix<Float> resampledPsf;
   
-  for (Int ip=0;ip<npoints;ip++) {
-    x(ip,0)=ix(ip,0); x(ip,1)=ix(ip,1);
-    y(ip)=iy(ip);
-    sigma(ip)=isigma(ip);
-    if(!(isigma(ip)>0.0)) break;
-  }
+  ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
+  Float minVal, maxVal;
+  IPosition minPos(2);
+  IPosition maxPos(2);
+  minMax(minVal, maxVal, minPos, maxPos, resampledPsf);
+  resampledPsf = resampledPsf/maxVal;
+    
+  Vector<Double> resampledDeltas = deltas/ (Double) oversampling; // /oversampling
+  FindNpoints(npoints, blc, trc, nrow, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
   
-  // Construct the function to be fitted
+  cout << "npoints after resampling " << npoints << endl;
+     
   Gaussian2D<AutoDiff<Double> > gauss2d;
-  gauss2d[0] = 1.0;
-  gauss2d[1] = 0.0;
-  gauss2d[2] = 0.0;
-  gauss2d[3] = 2.5*abs(deltas(0));
-  gauss2d[4] = 0.5;
-  gauss2d[5] = 1.0;
+  gauss2d[0] = 1.0; //Height of Gaussian
+  gauss2d[1] = 0.0; //The center of the Gaussian in the x direction
+  gauss2d[2] = 0.0; //The center of the Gaussian in the y direction.
+  gauss2d[3] = 2.5*abs(resampledDeltas(0)); //The width (FWHM) of the Gaussian on one axis.
+  gauss2d[4] = 0.5; //A modified axial ratio.
+  gauss2d[5] = 1.0; //The position angle.
   
   // Fix height and center
   gauss2d.mask(0) = false;
@@ -1996,3 +2140,5 @@ standardImageCoordinates(const CoordinateSystem& coords) {
 };
 
 } //#End casa namespace
+
+
