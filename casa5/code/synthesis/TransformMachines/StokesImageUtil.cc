@@ -717,28 +717,64 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
   //Temp Code for testing
   Float threshold;
   std::string env_name("fit_threshold");
-  threshold = std::stof(std::getenv(env_name.c_str()));
-  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    if(std::getenv(env_name.c_str()) == NULL)
+    {
+        cout << "Default " << env_name.c_str() << " is " << "0.35" << endl;
+        threshold = 0.35;
+    }else{
+        threshold = std::stof(std::getenv(env_name.c_str()));
+        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    }
     
   Float npix;
   env_name="npix";
-  npix = std::stoi(std::getenv(env_name.c_str()));
-  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    if(std::getenv(env_name.c_str()) == NULL)
+    {
+        cout << "Default " << env_name.c_str() << " is " << "5" << endl;
+        npix = 5;
+    }else{
+        npix = std::stoi(std::getenv(env_name.c_str()));
+        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    }
+ 
+    
     
   Int expand_pixel;
   env_name="expand_pixel";
-  expand_pixel = std::stoi(std::getenv(env_name.c_str()));
-  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+      if(std::getenv(env_name.c_str()) == NULL)
+      {
+          cout << "Default " << env_name.c_str() << " is " << "3" << endl;
+          expand_pixel = 3;
+      }else{
+          expand_pixel = std::stoi(std::getenv(env_name.c_str()));
+          cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+      }
+    
+    
     
   Int oversampling;
   env_name="oversampling";
-  oversampling = std::stoi(std::getenv(env_name.c_str()));
-  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    if(std::getenv(env_name.c_str()) == NULL)
+    {
+        cout << "Default " << env_name.c_str() << " is " << "5" << endl;
+        oversampling = 10;
+    }else{
+        oversampling = std::stoi(std::getenv(env_name.c_str()));
+        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    }
+    
     
   String InterpMethod;
   env_name="InterpMethod";
-  InterpMethod = std::getenv(env_name.c_str());
-  cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+  if(std::getenv(env_name.c_str()) == NULL)
+  {
+      cout << "Default " << env_name.c_str() << " is " << "CUBIC" << endl;
+      InterpMethod = "CUBIC";
+  }else{
+      InterpMethod = std::getenv(env_name.c_str());
+      cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+  }
+  
     
   //##########################################################
   
@@ -838,7 +874,8 @@ try{
   resampledPsf = resampledPsf/maxVal;
     
   Vector<Double> resampledDeltas = deltas/ (Double) oversampling; // /oversampling
-  FindNpoints(npoints, blc, trc, nrow, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
+  Int nrowRe = nrow*oversampling;
+  FindNpoints(npoints, blc, trc, nrowRe, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
   
   cout << "npoints after resampling " << npoints << endl;
      
