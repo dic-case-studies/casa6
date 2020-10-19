@@ -57,7 +57,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1016 (16-Oct-2020) .\n")
+    _msg("\nSDATMCOR revision 1019 (19-Oct-2020) .\n")
 
 #
 # Input/Output File Handling
@@ -111,13 +111,7 @@ def sdatmcor(
 # User-Defined Profile inspection.
 # after this step, the two args changes to List
 #
-    # when String form and No Data #
-    if (type(layerboundaries) is str) and (layerboundaries == ''):
-        layerboundaries = []
-    if (type(layertemperature) is str) and layertemperature == '':
-        layertemperature = []
-
-    # convert to List #
+    # converexpression. an empyt arg makes [] list. #
     layerboundaries = _conv_to_doubleArrayList(layerboundaries)
     layertemperature = _conv_to_doubleArrayList(layertemperature)
 
@@ -127,8 +121,9 @@ def sdatmcor(
     if(len_1 != len_2):
         _msg("\nERROR:: Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2), 'ERROR')
         return False
-    else:
-        _msg("User-defined parameter was given by %d sets of data." % len_1)
+    elif len_1 != 0:
+        _msg("- User-defined parameter was given by %d sets of data." % len_1)
+
 #
 # Call calc Function
 #
@@ -240,27 +235,27 @@ def _inspect_value_unit(data, base_unit):
 #  if in_para is available , return in_para with being converted.
 #  otherwise, retrurns def_para to use as a default parameter.
 #
-def _set_int_param(in_arg, def_para):
-    if (in_arg != ''):
-        return int(in_arg)
+def _set_int_ifactive(set_arg, through_value):
+    if (set_arg != ''):
+        return int(set_arg)
     else:
-        return  def_para
+        return  through_value
 
 
-def _set_list_param(in_arg, list_para):
-    if (len(in_arg) == 0):
+def _copy_list_ifactive(set_list):
+    if (len(set_list) != 0):
+        return set_list
+    else:
         return []
-    else:
-        return list_para
 
 
-def _set_floatquantity_param(in_arg, def_para, unit):
-    if type(in_arg) is str:
-        if (in_arg != ''):
-            q_val = qa.quantity(float(in_arg), unit)  # CASA5 needs cast to float  ? #
-            return q_val, True
+def _set_floatquantity_ifactive(set_arg, through_value, unit):
+    if type(set_arg) is str:
+        if (set_arg != ''):
+            new_val = qa.quantity(float(set_arg), unit)  # CASA5 needs cast to float  ? #
+            return new_val, True
         else:
-            return  def_para, False
+            return  through_value, False
 
 def _list_comma_string(separated_string, dType):
     # make a list by separated by comma #
@@ -286,12 +281,20 @@ def _list_comma_string(separated_string, dType):
 
 def _conv_to_doubleArrayList(in_list):
     # convert elements in  list or separated str =>  float list. #
+
+    # check Empty #
+    if (type(in_list) is str) and (in_list == ''):
+        return [] 
+
+    # conversion (non-decimal expression string will fail.) #
     try:
         if  type(in_list) is list:
+            _msg("- converting a List which contains numerical expression or int/float to Float-List.")
             out_list = [float(s) for s in in_list]  # force to convert to list[floatm, ...]
             return out_list
 
         elif type(in_list) is str:
+            _msg("- converting a Comma-separated string which contains numerical expression or int/float to Float-List.")
             tmp_list = in_list.split(',')  # convert to List #
             out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
             return out_list
@@ -390,6 +393,9 @@ def showAtmInfo(atm):
 def showLayerInfo(at):
     p = at.getProfile()
 
+    #
+    # From Casa Tool Documentation:
+    #
     # returns a tuple of
     # 0 - string listing of layer values, and arrays of layer, 1 - thickness,
     # 2 - temperature, 3 - watermassdensity, 4 - water (number density),
@@ -1013,15 +1019,15 @@ def calc_sdatmcor(
         #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
         #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
         #
-        t_layerboundaries  = a_layerboundaries   # array: layer boundary [m]
-        t_layertemperature = a_layertemperature   # array: layer temperature [K]
+        t_layerboundaries  = []   # initially null-List.   array: layer boundary [m]
+        t_layertemperature = []   # initiallu null-list.   array: layer temperature [K]
 
         #
         # ATM fundamental parameters activation.
         #
-        t_dtem_dh, t_dtem_dh_set = _set_floatquantity_param(a_dtem_dh, t_dtem_dh, 'K/km')
-        t_h0,      t_h0_set      = _set_floatquantity_param(a_h0, t_h0, 'km')
-        t_atmtype   = _set_int_param(a_atmtype, t_atmtype)
+        t_dtem_dh, t_dtem_dh_set = _set_floatquantity_ifactive(a_dtem_dh, t_dtem_dh, 'K/km')
+        t_h0,      t_h0_set      = _set_floatquantity_ifactive(a_h0, t_h0, 'km')
+        t_atmtype   = _set_int_ifactive(a_atmtype, t_atmtype)
 
         #
         # Sub parameter activation
@@ -1029,17 +1035,18 @@ def calc_sdatmcor(
         #
         if t_atmdetail:
             _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
-            t_altitude,    t_altitude_set     = _set_floatquantity_param(a_altitude, t_altitude, 'm')
-            t_temperature, t_temperature_set  = _set_floatquantity_param(a_temperature, t_temperature, 'K')
-            t_pressure,    t_pressure_set     = _set_floatquantity_param(a_pressure, t_pressure, 'mbar')
-            t_humidity,    t_humidity_set     = _set_floatquantity_param(a_humidity, t_humidity, '%')
-            t_pwv,         t_pwv_set          = _set_floatquantity_param(a_PWV, t_pwv, 'mm')
-            t_dp,          t_dp_set           = _set_floatquantity_param(a_dp, t_dp, 'mbar')
-            t_dpm,         t_dpm_set          = _set_floatquantity_param(a_dpm, t_dpm, '')
+            t_altitude,    t_altitude_set     = _set_floatquantity_ifactive(a_altitude, t_altitude, 'm')
+            t_temperature, t_temperature_set  = _set_floatquantity_ifactive(a_temperature, t_temperature, 'K')
+            t_pressure,    t_pressure_set     = _set_floatquantity_ifactive(a_pressure, t_pressure, 'mbar')
+            t_humidity,    t_humidity_set     = _set_floatquantity_ifactive(a_humidity, t_humidity, '%')
+            t_pwv,         t_pwv_set          = _set_floatquantity_ifactive(a_PWV, t_pwv, 'mm')
+            t_dp,          t_dp_set           = _set_floatquantity_ifactive(a_dp, t_dp, 'mbar')
+            t_dpm,         t_dpm_set          = _set_floatquantity_ifactive(a_dpm, t_dpm, '')
 
-            # User-Uefined Profile. #
-            t_layerboundaries  = _set_list_param(a_layerboundaries, a_layerboundaries)
-            t_layertemperature = _set_list_param(a_layertemperature, a_layertemperature)
+            # User-Uefined Profile. 
+            #  when the arg is active, directly pass the arg(a_xxxx) to t_xxxx for initAtmProfile. 
+            t_layerboundaries  = _copy_list_ifactive(a_layerboundaries)
+            t_layertemperature = _copy_list_ifactive(a_layertemperature)
 
         else:
             _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
