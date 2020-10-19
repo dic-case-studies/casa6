@@ -39,14 +39,14 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 
 _rg = rgtool( )
 
 
-datapath = ctsys_resolve('regression/unittest/ia_deviation/')
+datapath = ctsys_resolve('unittest/ia_deviation/')
 
 input0 = datapath + "100x100x2.im"
 ref0 = datapath + "ref0.im"

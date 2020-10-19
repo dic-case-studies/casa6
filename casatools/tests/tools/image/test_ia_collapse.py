@@ -83,7 +83,7 @@ except ImportError:
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
-datapath = ctsys_resolve('regression/unittest/imcollapse/')
+datapath = ctsys_resolve('unittest/ia_collapse/')
 
 def run_collapse(
     imagename, function, axes, outfile, region, box, chans,
