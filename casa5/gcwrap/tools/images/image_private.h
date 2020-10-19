@@ -43,7 +43,7 @@ template<class T> record* _boundingbox(
 ) const;
 
 template <class T> static casac::coordsys* _coordsys(
-    SPIIT image, const std::vector<int>& pixelAxes
+    SPIIT image, const std::vector<long>& pixelAxes
 );
 
 bool _doHistory = true;
@@ -83,14 +83,14 @@ static String _quantityRecToString(const Record& q);
 template <class T> image* _boxcar(
 	SPCIIT myimage, const variant& region,
 	const casac::variant& mask, const std::string& outfile, bool overwrite,
-	bool stretch, int axis, int width, bool drop,
+	bool stretch, long axis, long width, bool drop,
 	const string& dmethod, const casacore::LogOrigin& lor
 );
 
 casacore::Quantity _casaQuantityFromVar(const ::casac::variant& theVar);
 
 template<class T> SPIIT _concat(
-    const string& outfile, const variant& infiles, int axis, bool relax,
+    const string& outfile, const variant& infiles, long axis, bool relax,
     bool tempclose, bool overwrite, bool reorder,
     std::vector<casacore::String>& imageNames, const string& mode
 );
@@ -101,7 +101,7 @@ template<class T> image* _convolve(
 );
 
 template<class T> image* _convolve2d(
-    SPIIT myImage, const string& outFile, const vector<int>& axes,
+    SPIIT myImage, const string& outFile, const vector<long>& axes,
     const string& type, const variant& major, const variant& minor,
     const variant& pa, double in_scale, const variant& region,
     const variant& vmask, bool overwrite, bool stretch,
@@ -118,7 +118,7 @@ template<class T> image* _decimate(
 
 template<class T> bool _fft(
     SPIIT myImage, const string& realOut, const string& imagOut,
-    const string& ampOut, const string& phaseOut, const std::vector<int>& axes,
+    const string& ampOut, const string& phaseOut, const std::vector<long>& axes,
     const variant& region, const variant& vmask, bool stretch,
     const string& complexOut
 );
@@ -142,8 +142,8 @@ casa::ITUPLE _fromarray(
 
 template<class T> casacore::Record _getchunk(
 	SPCIIT myimage,
-	const std::vector<int>& blc, const std::vector<int>& trc,
-	const std::vector<int>& inc, const std::vector<int>& axes,
+	const std::vector<long>& blc, const std::vector<long>& trc,
+	const std::vector<long>& inc, const std::vector<long>& axes,
 	bool list, bool dropdeg
 );
 
@@ -165,7 +165,7 @@ std::shared_ptr<casacore::Record> _getRegion(
 
 template<class T> variant* _getregion2(
     SPIIT image, const variant& region,
-    const std::vector<int>& axes, const variant& mask,
+    const std::vector<long>& axes, const variant& mask,
     bool list, bool dropdeg, bool getmask, bool stretch
 );
 
@@ -183,8 +183,8 @@ template <class T> image* _hanning(
 ) const;
 
 template <class T> record* _histograms(
-    SPIIT myImage, const vector<int>& axes, const variant& region,
-    const variant& mask, int nbins, const vector<double>& includepix, bool cumu,
+    SPIIT myImage, const vector<long>& axes, const variant& region,
+    const variant& mask, long nbins, const vector<double>& includepix, bool cumu,
     bool log, bool stretch
 );
 
@@ -220,7 +220,7 @@ void _processDirection(
 
 template<class T> void _putchunk(
 	SPIIT image, const casac::variant& pixels,
-	const vector<int>& blc, const vector<int>& inc,
+	const vector<long>& blc, const vector<long>& inc,
 	const bool list, const bool locking, const bool replicate
 );
 
@@ -262,9 +262,9 @@ void _remove(bool verbose);
 void _reset();
 
 template <class T> image* _rotate(
-    SPIIT image, const string& outfile, const vector<int>& inshape,
+    SPIIT image, const string& outfile, const vector<long>& inshape,
     const variant& inpa, const variant& region, const variant& vmask,
-    const string& method, int decimate, bool replicate, bool dropdeg,
+    const string& method, long decimate, bool replicate, bool dropdeg,
     bool overwrite, bool stretch
 );
 
@@ -278,19 +278,19 @@ template<class T> void _setrestoringbeam(
 
 template <class T> record* _statistics(
     std::unique_ptr<casa::ImageStatsCalculator<T>>& stats, SPIIT myImage,
-    const vector<int>& axes, const variant& region,
+    const vector<long>& axes, const variant& region,
     const variant& mask, const vector<double>& includepix,
     const vector<double>& excludepix, bool list, bool force, bool disk,
     bool robust, bool verbose, bool stretch, const string& logfile, bool append,
     const string& algorithm, double fence, const string& center, bool lside,
-    double zscore, int maxiter, const string& clmethod, int niter
+    double zscore, long maxiter, const string& clmethod, long niter
 );
 
 template<class T> image* _subimage(
 	std::shared_ptr<casacore::ImageInterface<T> > clone,
 	const casacore::String& outfile, const casac::variant& region,
 	const casac::variant& vmask, bool dropDegenerateAxes, 	bool overwrite,
-	bool list, bool stretch, const vector<int>& keepaxes, bool wantReturn
+	bool list, bool stretch, const vector<long>& keepaxes, bool wantReturn
 );
 
 template <class T> static record* _summary(

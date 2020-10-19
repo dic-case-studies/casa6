@@ -159,7 +159,7 @@ calplot::plot(const std::string& xaxis,
 
 bool
 calplot::savefig( const std::string& filename,
-                const int dpi,
+                const long dpi,
 		const std::string& orientation,
 		const std::string& papertype,
 		const std::string& facecolor,
@@ -186,7 +186,7 @@ calplot::savefig( const std::string& filename,
 }
 
 bool
-calplot::plotoptions(const int subplot,
+calplot::plotoptions(const long subplot,
 		     const bool overplot,
 		     const std::string& iteration,
 		     const std::vector<double>& plotrange,
@@ -214,7 +214,7 @@ calplot::plotoptions(const int subplot,
    return rstat;
 }
 
-bool calplot::markflags(const int /*panel*/, const std::vector<double>& /*region*/){
+bool calplot::markflags(const long /*panel*/, const std::vector<double>& /*region*/){
   bool rstat(false);
 
   try {
@@ -314,7 +314,7 @@ calplot::stopiter( const bool rmplotter )
 }
 
 bool
-calplot::clearplot(const int subplot)
+calplot::clearplot(const long subplot)
 {
 
    bool rstat(false);
