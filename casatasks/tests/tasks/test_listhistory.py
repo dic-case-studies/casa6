@@ -74,24 +74,18 @@ class listhistory_test(unittest.TestCase):
         casalog.setlogfile(logfile)
         res = listhistory(self.msfile)
 
-        # Get the number of lines in file
-        # the number of expected lines differs
+        refnum = 13
+        # In CASA6, this +1 accounts for the following log line (which is not in CASA5):
+        # Task listhistory complete. Start time: 2020-10-19 11:33:40.195569 End time: ...
         if is_CASA6:
-            refnum=17
-            if self.itismms:
-                # this is a guess, not tested
-                refnum = 40
-        else:
-            # for CASA5, get only the relevant lines in the logfile
-            newfile= "newlisth.log"
-            cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
-            print(cmd)
-            os.system(cmd)
-            logfile = newfile
+            refnum += 1
 
-            refnum = 13
-            if self.itismms:
-                refnum = 36
+        # Get only the relevant lines in the logfile, between 'Begin/End Task'
+        newfile= "newlisth.log"
+        cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
+        print(cmd)
+        os.system(cmd)
+        logfile = newfile
 
         if is_CASA6:
             cmd=['wc', '-l', logfile]
