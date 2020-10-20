@@ -67,11 +67,21 @@
 
 ###########################################################################
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+import os
+
+is_CASA6 = False
+try:
+    from casatools import image as iatool
+    from casatools import ctsys
+    is_CASA6 = True
+    datapath = ctsys.resolve('unittest/ia_isconform/')
+except:
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+    datapath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/unittest/ia_isconform/')
+
 
 fits = "jj.fits"
 
@@ -79,10 +89,10 @@ fits = "jj.fits"
 class ia_isconform_test(unittest.TestCase):
 
     def setUp(self):
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/ia_isconform/'
+#        datapath='regression/unittest/ia_isconform/'
         shutil.copy(datapath + fits, fits)
-        self._myia = iatool()
-        self._myia.maketestimage()
+        self._myia = iatool( )
+        self._myia.maketestimage( )
 
     
     def tearDown(self):
@@ -100,7 +110,7 @@ class ia_isconform_test(unittest.TestCase):
         _newia = self._myia.adddegaxes(spectral=True)
         self.assertFalse(_newia.isconform(fits))
       
-    def test_diffaxes(self):
+    def test_diffaxes_cs(self):
         _cs = self._myia.coordsys()
         names = _cs.names()
         _cs.setnames([names[1], names[0]])
@@ -115,3 +125,6 @@ class ia_isconform_test(unittest.TestCase):
         
 def suite():
     return [ia_isconform_test]
+
+if __name__ == '__main__':
+    unittest.main()
