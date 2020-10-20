@@ -114,7 +114,7 @@ def imhead(
             myia.open(imagename)
             if mode.startswith('h'):
                 myia.history()
-                return True
+                return
             elif mode.startswith('s'):
                 return myia.summary(verbose=verbose)
         except Exception as instance:
@@ -158,10 +158,12 @@ def imhead(
             return res
         except Exception as instance:
             casalog.post(str('*** Error *** ') + str(instance), 'SEVERE')
-            return False
+            if is_CASA6:
+                raise
+            else:
+                return False
         finally:
             myimd.done()
         casalog.post('Unknown imhead mode ' + str(mode), 'SEVERE')
         return False
-                
-        
+
