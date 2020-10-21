@@ -415,8 +415,6 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(calresult, -0.1418972)))
 
-    # Add the Xf then D test case
-
     ### Circular Test cases ###
     # only use outcal prefix?
     @unittest.skip("Fix in another ticket")
@@ -432,7 +430,7 @@ class polcal_test(unittest.TestCase):
         refresult = tb.getcol('CPARAM')[:, :, 10:40]
         tb.close()
 
-        self.assertTrue(np.all(np.isclose(calresult, refresult)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     @unittest.skip("Fix in another ticket")
     def test_unpolarizedDfQU(self):
@@ -447,7 +445,7 @@ class polcal_test(unittest.TestCase):
         refresult = tb.getcol('CPARAM')[:, :, 10:40]
         tb.close()
 
-        self.assertTrue(np.all(np.isclose(calresult, refresult)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     @unittest.skip("Fix in another ticket")
     def test_unknownPolDfQU(self):
@@ -462,7 +460,7 @@ class polcal_test(unittest.TestCase):
         refresult = tb.getcol('CPARAM')[:, :, :]
         tb.close()
 
-        self.assertTrue(np.all(np.isclose(calresult, refresult)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     def test_knownPolDflls(self):
         ''' Test polarized calibration with known polarization for Dflls mode '''
@@ -476,9 +474,7 @@ class polcal_test(unittest.TestCase):
         refresult = tb.getcol('CPARAM')[:, :, :]
         tb.close()
 
-        print(refresult - calresult)
-
-        self.assertTrue(np.all(np.isclose(calresult, refresult, atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     ### Xf ###
 
@@ -491,7 +487,7 @@ class polcal_test(unittest.TestCase):
 
         print(calresult)
 
-        self.assertTrue(np.all(np.isclose(calresult, [1 + 0j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [1 + 0j], atol=1e-4)))
 
     def test_XfAlternateQU(self):
         ''' Test poltype Xf and assume alternate Q, U values '''
@@ -500,7 +496,7 @@ class polcal_test(unittest.TestCase):
 
         calresult = getparam(outcal)
 
-        self.assertTrue(np.all(np.isclose(calresult, [0.8 + 0.6j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [0.8 + 0.6j], atol=1e-4)))
 
     def test_XfNegatedQU(self):
         ''' Test poltype Xf and assume Q, U with flipped signs '''
@@ -509,7 +505,7 @@ class polcal_test(unittest.TestCase):
 
         calresult = getparam(outcal)
 
-        self.assertTrue(np.all(np.isclose(calresult, [-1 + 0j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [-1 + 0j], atol=1e-4)))
 
     ### PosAng ###
 
@@ -522,7 +518,7 @@ class polcal_test(unittest.TestCase):
         calresult = tb.getcol('FPARAM')
         tb.close()
 
-        self.assertTrue(np.all(np.isclose(calresult, 0, rtol=1e-4, atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), 0, rtol=1e-4, atol=1e-4)))
 
     def test_PosAngAlternateQU(self):
         ''' Test poltype PosAng and assume alternate Q, U values '''
@@ -533,9 +529,9 @@ class polcal_test(unittest.TestCase):
         calresult = tb.getcol('FPARAM')
         tb.close()
 
-        print(np.mean(np.degrees(calresult)))
+        #print(np.mean(np.degrees(calresult)))
         # Answer is ~ 0.32193175 radians
-        self.assertTrue((np.isclose(np.degrees(np.mean(calresult)), 18.43, atol=1e-3, rtol=1e-3)))
+        self.assertTrue((np.isclose(np.degrees(np.mean(calresult)), 18.43, atol=1e-4, rtol=1e-3)))
 
     def test_PosAngNegatedQU(self):
         ''' Test poltype PosAng and assume Q, U with flipped signs '''
@@ -548,7 +544,7 @@ class polcal_test(unittest.TestCase):
 
         calresult = np.mean(abs(np.degrees(calresult)))
         # ans ~ -1.5706 radians
-        self.assertTrue(np.isclose(calresult, 90, atol=1e-3, rtol=1e-4))
+        self.assertTrue(np.isclose(calresult, 90, atol=1e-4, rtol=1e-4))
     def test_PosAngNegatedQUApply(self):
         ''' Test applying the negated table to a new polcal call '''
         polcal(vis=datacopyCirc, caltable=outcal+'.PA-rel', field='1', spw='', solint='inf',
@@ -562,7 +558,7 @@ class polcal_test(unittest.TestCase):
         calresult = tb.getcol('FPARAM')
         tb.close()
 
-        self.assertTrue(np.all(np.isclose(calresult, 0, atol=1e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), 0, atol=1e-4)))
 
     ### Xfparang+QU
 
@@ -575,7 +571,7 @@ class polcal_test(unittest.TestCase):
 
         print(calresult)
 
-        self.assertTrue(np.all(np.isclose(calresult, [1 + 0j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [1 + 0j], atol=1e-4)))
 
     def test_XfParangQUAlternateQU(self):
         ''' Test poltype XfParang+QU and assume the correct Q, U '''
@@ -584,7 +580,7 @@ class polcal_test(unittest.TestCase):
 
         calresult = getparam(outcal)
 
-        self.assertTrue(np.all(np.isclose(calresult, [0.8 + 0.6j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [0.8 + 0.6j], atol=1e-4)))
 
     def test_XfParangQUNegatedQU(self):
         ''' Test poltype XfParang+QU  and assume Q, U with flipped signs '''
@@ -593,7 +589,7 @@ class polcal_test(unittest.TestCase):
 
         calresult = getparam(outcal)
 
-        self.assertTrue(np.all(np.isclose(calresult, [-1 + 0j], atol=8e-4)))
+        self.assertTrue(np.all(np.isclose(np.mean(calresult), [-1 + 0j], atol=1e-4)))
 
     def test_XfParangQUNegatedQUApply(self):
         ''' Test applying the negated table to a new polcal call '''
