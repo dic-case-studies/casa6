@@ -2101,7 +2101,6 @@ class test_cube(testref_base):
           report=self.th.checkall(ret=ret, imexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report) 
 
-     @unittest.skip("These tests are mainly here as regression tests for multiscale")
      def test_cube_flagged_mosaic_hogbom(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           self.prepData('refim_twochan.ms')
@@ -2112,7 +2111,6 @@ class test_cube(testref_base):
                                   imvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
-     @unittest.skip("These tests are mainly here as regression tests for multiscale")
      def test_cube_flagged_mosaic_clark(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           self.prepData('refim_twochan.ms')
@@ -2133,7 +2131,6 @@ class test_cube(testref_base):
                                   imvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
-     @unittest.skip("These tests are mainly here as regression tests for multiscale")
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           self.prepData('refim_twochan.ms')
