@@ -858,8 +858,9 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     Double maxfreq=max(freq);
     Double origwidth=freq.nelements()==1 ? 1e12 : (maxfreq-minfreq)/(freq.nelements()-1);
     ///Fractional bandwidth which will trigger mutiple PB in one spw
+    
     Double tol=(max(spwfreq))*0.5/100;
-    if(tol < origwidth) tol=origwidth;
+    if(tol < origwidth/2.0) tol=origwidth/2.0;
     Double topFreq=max(spwfreq);
     while (topFreq > maxfreq){
       topFreq -= tol;
@@ -928,8 +929,8 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     //cerr << "USEFULchan " << chanMap << endl;
     return;
   }
-
   /*
+  
     void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
     
 	  
