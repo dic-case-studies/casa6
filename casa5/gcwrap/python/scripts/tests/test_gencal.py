@@ -15,8 +15,8 @@ if is_CASA6:
     from casatools import ctsys, table
     from casatasks import gencal
 
-    # is this right?
-    #import tec_maps
+    # NEAL is this right?
+    from casatasts.private import tec_maps
     
     _tb= table()
 
@@ -386,6 +386,8 @@ class gencal_test_tec_vla(unittest.TestCase):
     rmstecfile= msfile+'.IGS_RMS_TEC.im'
     caltable= msfile+'_tec.cal'
 
+    # NEAL: Please check that these setUp and tearDown functions are ok
+
     def setUp(self):
         self.tearDown()
         shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
@@ -406,7 +408,7 @@ class gencal_test_tec_vla(unittest.TestCase):
         gencal: very basic test of tec_maps and gencal(caltype='tecim')
         """
 
-        # REMOVE THIS WHEN THIS TEST IS CASA6-READY....
+        # NEAL:   REMOVE THIS TO TEST IN CASA6 
         if is_CASA6:
             print('\n\n********** SKIPPING test_tec_maps in CASA6 **********\n\n')
             return
