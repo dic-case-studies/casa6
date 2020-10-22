@@ -962,7 +962,7 @@ class test_mask(testref_base):
 
     # Test 14
     def test_mask_missingfile(self):
-        """ [imgval] test_mask_missingfile """
+        """ [mask] test_mask_missingfile """
         ######################################################################################
         # tst.mask is sometimes required
         ######################################################################################
@@ -990,7 +990,7 @@ class test_mask(testref_base):
 
     # Test 15
     def test_mask_pbmask0(self):
-        """ [imgval] test_mask_pbmask0 """
+        """ [mask] test_mask_pbmask0 """
         ######################################################################################
         # Have deconvolve create the .mask image using the full pb
         ######################################################################################
@@ -1015,7 +1015,7 @@ class test_mask(testref_base):
 
     # Test 16
     def test_mask_pbmask995(self):
-        """ [imgval] test_mask_pbmask995 """
+        """ [mask] test_mask_pbmask995 """
         ######################################################################################
         # Have deconvolve create the .mask image using the pb > 0.995
         ######################################################################################
@@ -1244,7 +1244,7 @@ class test_multirun(testref_base):
 
     # Test 23
     def test_multirun_hogbomhogbom(self):
-        """ [onefield] test_multirun_hogbomhogbom """
+        """ [multirun] test_multirun_hogbomhogbom """
         ######################################################################################
         # Test running hogbom twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         # Note: tclean produced different results when running once with 20 iterations vs twice with 10 iterations, so that is what we are comparing deconvolve against.
@@ -1268,7 +1268,7 @@ class test_multirun(testref_base):
 
     # Test 24
     def test_multirun_clarkclark(self):
-        """ [onefield] test_multirun_clarkclark """
+        """ [multirun] test_multirun_clarkclark """
         ######################################################################################
         # Test running clark twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
@@ -1290,7 +1290,7 @@ class test_multirun(testref_base):
 
     # Test 25
     def test_multirun_clarkstokesclarkstokes(self):
-        """ [onefield] test_multirun_clarkstokesclarkstokes """
+        """ [multirun] test_multirun_clarkstokesclarkstokes """
         ######################################################################################
         # Test running clarkstokes twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
@@ -1312,7 +1312,7 @@ class test_multirun(testref_base):
 
     # Test 26
     def test_multirun_multiscalemultiscale(self):
-        """" [onefield] test_multirun_multiscalemultiscale """
+        """" [multirun] test_multirun_multiscalemultiscale """
         ######################################################################################
         # Test running multiscale twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
@@ -1334,7 +1334,7 @@ class test_multirun(testref_base):
 
     # Test 27
     def test_multirun_mtmfsmtmfs(self):
-        """" [onefield] test_multirun_mtmfsmtmfs """
+        """" [multirun] test_multirun_mtmfsmtmfs """
         ######################################################################################
         # Test running mtmfs twice in a row and show that it gets the same value as one run with twice the iterations. Should produce the same results as tclean.
         ######################################################################################
@@ -1359,7 +1359,7 @@ class test_multirun(testref_base):
 
     # Test 28
     def test_multirun_multiscalehog(self):
-        """ [onefield] test_multirun_multiscalehog """
+        """ [multirun] test_multirun_multiscalehog """
         ######################################################################################
         # Test running multiscale clean followed by hogbom. Should produce the same results as tclean.
         # Note: aren't completely sure of what the value should be at the end. (TODO needs validation)
@@ -1375,7 +1375,7 @@ class test_multirun(testref_base):
 
     # Test 29
     def test_multirun_norestore_restore(self):
-        """ [onefield] test_multirun_norestore_restore """
+        """ [multirun] test_multirun_norestore_restore """
         ######################################################################################
         # Test to test the retore-only feature . Should produce the same results as tclean.
         ######################################################################################
@@ -1495,7 +1495,7 @@ class test_imgval(testref_base):
 
     # Test 32
     def test_imgval_missingimgs_model(self):
-        """ [imgval] test_imgval_missingimgs_models """
+        """ [imgval] test_imgval_missingimgs_model """
         ######################################################################################
         # tst.model is used to continue deconvolution, but is not required.
         ######################################################################################
@@ -1805,7 +1805,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 49
     def test_mtmfsimgval_missingimgs_residual(self):
-        """ [imgval] test_mtmfsimgval_missingimgs_residual """
+        """ [mtmfsimgval] test_mtmfsimgval_missingimgs_residual """
         ######################################################################################
         # tst.residual and tst.psf are always required
         ######################################################################################
@@ -1813,7 +1813,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 50
     def test_mtmfsimgval_missingimgs_psf(self):
-        """ [imgval] test_mtmfsimgval_missingimgs_psf """
+        """ [mtmfsimgval] test_mtmfsimgval_missingimgs_psf """
         ######################################################################################
         # tst.residual and tst.psf are always required
         ######################################################################################
@@ -1822,7 +1822,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 51
     def test_mtmfsimgval_missingimgs_model(self):
-        """ [imgval] test_mtmfsimgval_missingimgs_models """
+        """ [mtmfsimgval] test_mtmfsimgval_missingimgs_model """
         ######################################################################################
         # tst.model is used to continue deconvolution, but is not required.
         ######################################################################################
@@ -1835,7 +1835,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 52
     def test_mtmfsimgval_missingimgs_sumwt(self):
-        """ [imgval] test_mtmfsimgval_missingimgs_sumwt """
+        """ [mtmfsimgval] test_mtmfsimgval_missingimgs_sumwt """
         ######################################################################################
         # tst.sumwt is never required
         ######################################################################################
@@ -1848,7 +1848,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 53
     def test_mtmfsimgval_axesmismatch_residual(self):
-        """ [imgval] test_mtmfsimgval_axesmismatch_residual """
+        """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_residual """
         ######################################################################################
         # all input images must have the axes as they are given in tclean
         ######################################################################################
@@ -1856,7 +1856,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 54
     def test_mtmfsimgval_axesmismatch_psf(self):
-        """ [imgval] test_mtmfsimgval_axesmismatch_psf """
+        """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_psf """
         ######################################################################################
         # all input images must have the axes as they are given in tclean
         ######################################################################################
@@ -1864,7 +1864,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 55
     def test_mtmfsimgval_axesmismatch_model(self):
-        """ [imgval] test_mtmfsimgval_axesmismatch_model """
+        """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_model """
         ######################################################################################
         # all input images must have the axes as they are given in tclean
         ######################################################################################
@@ -1872,7 +1872,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 56
     def test_mtmfsimgval_axesmismatch_pb(self):
-        """ [imgval] test_mtmfsimgval_axesmismatch_pb """
+        """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_pb """
         ######################################################################################
         # all input images must have the axes as they are given in tclean
         ######################################################################################
@@ -1880,7 +1880,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 57
     def test_mtmfsimgval_shapemismatch_residual(self):
-        """ [imgval] test_mtmfsimgval_shapemismatch_residual """
+        """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_residual """
         ######################################################################################
         # All input images should have the same shape as the tst.residual image
         ######################################################################################
@@ -1888,7 +1888,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 58
     def test_mtmfsimgval_shapemismatch_psf(self):
-        """ [imgval] test_mtmfsimgval_shapemismatch_psf """
+        """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_psf """
         ######################################################################################
         # All input images should have the same shape as the tst.residual image
         ######################################################################################
@@ -1896,7 +1896,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 59
     def test_mtmfsimgval_shapemismatch_model(self):
-        """ [imgval] test_mtmfsimgval_shapemismatch_model """
+        """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_model """
         ######################################################################################
         # All input images should have the same shape as the tst.residual image
         ######################################################################################
@@ -1904,7 +1904,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 60
     def test_mtmfsimgval_shapemismatch_pb(self):
-        """ [imgval] test_mtmfsimgval_shapemismatch_pb """
+        """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_pb """
         ######################################################################################
         # All input images should have the same shape as the tst.residual image
         ######################################################################################
@@ -1914,7 +1914,7 @@ class test_mtmfsimgval(testref_base):
     # Test 61
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_empty(self):
-        """ [imgval] test_mtmfsimgval_startmodel_empty """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_empty """
         ######################################################################################
         # Deconvolve should ignore all empty strings entered for the startmodel
         ######################################################################################
@@ -1935,7 +1935,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 62
     def test_mtmfsimgval_startmodel_dne(self):
-        """ [imgval] test_mtmfsimgval_startmodel_dne """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_dne """
         ######################################################################################
         # Throws an error if startmodel is set but does not exist
         ######################################################################################
@@ -1946,7 +1946,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 63
     def test_mtmfsimgval_startmodel_model_exists(self):
-        """ [imgval] test_mtmfsimgval_startmodel_model_exists """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_model_exists """
         ######################################################################################
         # Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
         ######################################################################################
@@ -1962,7 +1962,7 @@ class test_mtmfsimgval(testref_base):
     # Test 64
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_basic_copy(self):
-        """ [imgval] test_mtmfsimgval_startmodel_basic_copy """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_basic_copy """
         ######################################################################################
         # Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
         ######################################################################################
@@ -1977,7 +1977,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 65
     def test_mtmfsimgval_startmodel_axesmismatch(self):
-        """ [imgval] test_mtmfsimgval_startmodel_axesmismatch """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_axesmismatch """
         ######################################################################################
         # Tests the existing functionality. If in the future the logic is added to auto-translate images, this test can be removed.
         ######################################################################################
@@ -1993,7 +1993,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 66
     def test_mtmfsimgval_startmodel_csysmismatch(self):
-        """ [imgval] test_mtmfsimgval_startmodel_csysmismatch """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_csysmismatch """
         ######################################################################################
         # Tests the ability of the deconvolve regrid the csys of the startmodel to that of tst.residual
         ######################################################################################
@@ -2019,7 +2019,7 @@ class test_mtmfsimgval(testref_base):
 
     # Test 67
     def test_mtmfsimgval_startmodel_shapemismatch(self):
-        """ [imgval] test_mtmfsimgval_startmodel_shapemismatch """
+        """ [mtmfsimgval] test_mtmfsimgval_startmodel_shapemismatch """
         ######################################################################################
         # Tests the ability of the deconvolve regrid the shape of the startmodel to that of tst.residual
         ######################################################################################
@@ -2177,7 +2177,7 @@ class test_restoration(testref_base):
 
     # Test 73
     def test_restoration_none(self):
-        """ [onefield] test_onefield_hogbom """
+        """ [restoration] test_restoration_none """
         ######################################################################################
         # Deconvolve but don't restore: should not create a .image image
         ######################################################################################
@@ -2190,7 +2190,7 @@ class test_restoration(testref_base):
 
     # Test 74
     def test_restoration_basic(self):
-        """ [onefield] test_onefield_hogbom """
+        """ [restoration] test_restoration_basic """
         ######################################################################################
         # Deconvolve and restore, and compare results with those from a tclean run
         ######################################################################################
@@ -2203,7 +2203,7 @@ class test_restoration(testref_base):
 
     # Test 75
     def test_restoration_onlyrestore(self):
-        """ [onefield] test_onefield_hogbom """
+        """ [restoration] test_restoration_onlyrestore """
         ######################################################################################
         # Deconvolve and don't restore, then restore and compare results with those from a tclean run
         ######################################################################################
@@ -2219,7 +2219,7 @@ class test_restoration(testref_base):
 
     # Test 76
     def test_restoration_bigbeam(self):
-        """ [onefield] test_onefield_hogbom """
+        """ [restoration] test_restoration_bigbeam """
         ######################################################################################
         # Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
         ######################################################################################
