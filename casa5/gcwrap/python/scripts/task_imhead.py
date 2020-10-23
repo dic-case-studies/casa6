@@ -117,8 +117,6 @@ def imhead(
                 return
             elif mode.startswith('s'):
                 return myia.summary(verbose=verbose)
-        except Exception as instance:
-            raise RuntimeError('*** Error *** ' + str(instance))
         finally:
             myia.done()
     if (
@@ -157,8 +155,6 @@ def imhead(
                 except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
             return
-        except Exception as instance:
-            raise RuntimeError('*** Error *** ' + str(instance))
         finally:
             myimd.done()
 
