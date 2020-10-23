@@ -604,7 +604,7 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
     for(Int jlo = 0;jlo<2;jlo++) {
       jflip*=-1;
       // loop from 0 to nrow then from 1 to nrow
-      for(Int j = jlo;j<nrow;j++) {
+      for(Int j = jlo;j<=nrow;j++) {
         // the current row under consideration
         Int jrow = py + j*jflip;
         // loop down row doing alternate halves. work our way
@@ -615,12 +615,14 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
       // start at center row this may or may not be in the lobe,
       // if it's narrow and the pa is near 45 degrees
       Bool inlobe = lpsf(px,jrow)>amin;
-      for(Int i = ilo;i<nrow;i++) {
+      for(Int i = ilo;i<=nrow;i++) {
         if(npoints < maxnpoints){
           Int irow = px + i*iflip;
           // did we step out of the lobe?
+           // cout << "irow , jrow " << irow - px << ",*," << jrow - py << endl;
           if (inlobe&&(lpsf(irow,jrow)<amin)) break;
           if (lpsf(irow,jrow)>amin) {
+            //cout << "irow , jrow " << irow << "," << jrow << ",*, "<< irow - px << ",*," << jrow - py << ",*, " << lpsf(irow,jrow) << ",*, " << inlobe <<  endl;
             inlobe = true;
             // the sign on the ra can cause problems.  we just fit
             // for what the beam "looks" like here, and worry about
@@ -634,7 +636,7 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
               
               if(trc(0) < irow) trc(0) = irow;
               if(trc(1) < jrow) trc(1) = jrow;
-              
+  
             isigma(npoints) = 1.0;
             ++npoints;
             if(npoints > (maxnpoints-1)) {
@@ -665,6 +667,18 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
       if(!(isigma(ip)>0.0)) break;
     }
     
+    //Ensure that it is square
+    if(blc(0) > blc(1)){
+        blc(1) = blc(0);
+    }else{
+        blc(0) = blc(1);
+    }
+    
+    if(trc(0) > trc(1)){
+        trc(1) = trc(0);
+    }else{
+        trc(0) = trc(1);
+    }
     
     
 }
@@ -697,7 +711,7 @@ void StokesImageUtil::ResamplePSF(Matrix<Float>& psf, Int& oversampling, Matrix<
             pos(1) = (Float) j/(Float) oversampling;
             
             ok = resampleInterp.interp(result, pos, psf);
-//cout << "pos is" << pos << " result " << result << endl;
+//cout << "pos is" << pos << " result " << result << " psf " << psf(i,j)<< endl;
             resampledPsf(i,j) = result;
         }
     }
@@ -752,7 +766,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     
     
     
-  Int oversampling;
+    Int oversampling;
   env_name="oversampling";
     if(std::getenv(env_name.c_str()) == NULL)
     {
@@ -857,11 +871,14 @@ try{
   //Should resampling only be done when condition is met?
   blc = blc-expand_pixel;
   trc = trc+expand_pixel;
-
+     
   if(blc(0) < 0) blc(0)=0;
   if(blc(1) < 0) blc(1)=0;
   if(trc(0) >= lpsf.shape()(0)) trc(0)=lpsf.shape()(0)-1;
   if(trc(1) >= lpsf.shape()(1)) trc(1)=lpsf.shape()(1)-1;
+     
+     
+  //
      
   Matrix<Float> lpsfWindowed = lpsf(blc,trc);
   Matrix<Float> resampledPsf;
@@ -873,10 +890,18 @@ try{
   minMax(minVal, maxVal, minPos, maxPos, resampledPsf);
   resampledPsf = resampledPsf/maxVal;
     
-  Vector<Double> resampledDeltas = deltas/ (Double) oversampling; // /oversampling
-  Int nrowRe = nrow*oversampling;
+  Vector<Double> resampledDeltas = deltas/ (Double) oversampling;
+     
+  Int minLen;
+  if((trc(0) - blc(0)) > (trc(1) - blc(1)) ){
+    minLen = trc(1) - blc(1) + 1;
+  }else{
+    minLen = trc(0) - blc(0) + 1;
+  }
+     
+  Int nrowRe = (Int) (oversampling*minLen - 1)/2;
   FindNpoints(npoints, blc, trc, nrowRe, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
-  
+   
   cout << "npoints after resampling " << npoints << endl;
      
   Gaussian2D<AutoDiff<Double> > gauss2d;
