@@ -1563,7 +1563,8 @@ void VisibilityIteratorImpl2::setMetadataScope()
     // Check if each chunk will receive a unique DDId.
     // For that it must be a sorting column and comparison function should
     // be of the type ObjCompare<Int>
-    bool uniqueDDIdInChunk, uniqueDDIdInSubchunk;
+    bool uniqueDDIdInChunk = false;
+    bool uniqueDDIdInSubchunk = false;
     for(auto& sortDef : sortColumns_p.sortingDefinition())
         if(sortDef.first == MS::columnName(MS::DATA_DESC_ID) &&
            dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
@@ -2144,48 +2145,49 @@ VisibilityIteratorImpl2::originChunks()
 void
 VisibilityIteratorImpl2::applyPendingChanges()
 {
-	if (!pendingChanges_p->empty()) {
+    if (!pendingChanges_p->empty()) {
 
-		Bool exists;
+        Bool exists;
 
-		// Handle a pending frequency selection if it exists.
+        // Handle a pending frequency selection if it exists.
 
-		FrequencySelections * newSelection;
-		std::tie(exists, newSelection) =
-			pendingChanges_p->popFrequencySelections();
+        FrequencySelections * newSelection;
+        std::tie(exists, newSelection) =
+        pendingChanges_p->popFrequencySelections();
 
-		if (exists) {
+        if (exists) {
 
-			delete frequencySelections_p; // out with the old
+            delete frequencySelections_p; // out with the old
 
-			frequencySelections_p = newSelection; // in with the new
-		}
+            frequencySelections_p = newSelection; // in with the new
+            setMetadataScope();
+        }
 
-		// Handle any pending interval change
+        // Handle any pending interval change
 
-		Double newInterval;
-		std::tie(exists, newInterval) = pendingChanges_p->popInterval();
+        Double newInterval;
+        std::tie(exists, newInterval) = pendingChanges_p->popInterval();
 
-		if (exists) {
+        if (exists) {
 
-			msIter_p->setInterval(newInterval);
-			timeInterval_p = newInterval;
-		}
+            msIter_p->setInterval(newInterval);
+            timeInterval_p = newInterval;
+        }
 
-		// Handle any row-blocking change
+        // Handle any row-blocking change
 
-		Int newBlocking;
-		std::tie(exists, newBlocking) = pendingChanges_p->popNRowBlocking();
+        Int newBlocking;
+        std::tie(exists, newBlocking) = pendingChanges_p->popNRowBlocking();
 
-		if (exists) {
+        if (exists) {
 
-			nRowBlocking_p = newBlocking;
+            nRowBlocking_p = newBlocking;
 
-		}
+        }
 
-		// force rewind since window selections may have changed
-		msIterAtOrigin_p = false;
-	}
+        // force rewind since window selections may have changed
+        msIterAtOrigin_p = false;
+    }
 }
 
 void
