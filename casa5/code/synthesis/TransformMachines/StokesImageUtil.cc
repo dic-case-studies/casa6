@@ -71,6 +71,7 @@
 #include <synthesis/TransformMachines2/Utils.h>
 
 #include <casa/iostream.h>
+#include <ctime>
 
 using namespace casacore;
 namespace casa {
@@ -591,16 +592,19 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
     blc(1) = lpsf.shape()(1)-1;
     trc(0) = 0;
     trc(1) = 0;
+    
+    IPosition psf_shape = lpsf.shape();
 
     //cout << "1. blc, trc " << blc << ",*," << trc << endl;
     
-    //cout << "1. findNPoints " << npoints << " " << amin << " "<< maxnpoints << endl;
+    //cout << "1. findNPoints " << npoints << " " << amin << " "<< maxnpoints << " " << lpsf.shape() << endl;
     //we sample the central part of a, 2*nrow+1 by 2*nrow+1
     
     Int iflip = 1;
     Int jflip = 1;
     // loop through rows. Include both above and below in case
     // we are fitting an image feature
+    
     for(Int jlo = 0;jlo<2;jlo++) {
       jflip*=-1;
       // loop from 0 to nrow then from 1 to nrow
@@ -614,15 +618,23 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
       iflip*=-1;
       // start at center row this may or may not be in the lobe,
       // if it's narrow and the pa is near 45 degrees
+      
+      
+      if((jrow > (psf_shape(1)-1)) || (jrow < 0 ) ) break;
+      //cout << "11.** " << maxnpoints << ",*,"<< npoints << ",*," << px << ",*," << jrow << endl;
       Bool inlobe = lpsf(px,jrow)>amin;
+    
+      //cout << "12.** " << maxnpoints << ",*,"<< npoints << ",*," << px << ",*," << jrow << endl;
       for(Int i = ilo;i<=nrow;i++) {
         if(npoints < maxnpoints){
           Int irow = px + i*iflip;
           // did we step out of the lobe?
-           // cout << "irow , jrow " << irow - px << ",*," << jrow - py << endl;
+         
+          if((irow > (psf_shape(0)-1)) || (irow < 0 ) ) break;
+          //cout << "irow , jrow " << irow  << ",*," << jrow  << ",*," << lpsf.shape() << ",*," << px << ",*," << py << endl;
           if (inlobe&&(lpsf(irow,jrow)<amin)) break;
           if (lpsf(irow,jrow)>amin) {
-            //cout << "irow , jrow " << irow << "," << jrow << ",*, "<< irow - px << ",*," << jrow - py << ",*, " << lpsf(irow,jrow) << ",*, " << inlobe <<  endl;
+            //cout << "$%$irow , jrow " << lpsf.shape() << ",*,"<< irow << "," << jrow << ",*, "<< irow - px << ",*," << jrow - py << ",*, " << lpsf(irow,jrow) << ",*, " << inlobe << ",*, " << npoints <<  endl;
             inlobe = true;
             // the sign on the ra can cause problems.  we just fit
             // for what the beam "looks" like here, and worry about
@@ -630,19 +642,25 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
             ix(npoints,0) = (irow-px)*abs(deltas(0));
             ix(npoints,1) = (jrow-py)*abs(deltas(1));
             iy(npoints) = lpsf(irow,jrow);
+              //cout << "1.**" << endl;
             
               if(blc(0) > irow) blc(0) = irow;
               if(blc(1) > jrow) blc(1) = jrow;
               
               if(trc(0) < irow) trc(0) = irow;
               if(trc(1) < jrow) trc(1) = jrow;
+              //cout << "2.**" << endl;
   
             isigma(npoints) = 1.0;
             ++npoints;
+             // cout << "3.** " << maxnpoints << ",*,"<< npoints << endl;
             if(npoints > (maxnpoints-1)) {
           inlobe=false;
-          break;
+              cout << "Over max points .** " << maxnpoints << ",*,"<< npoints << endl;
+          //break;
+                goto endSearch;
             }
+             // cout << "5.** " << maxnpoints << ",*,"<< npoints << endl;
           }
         }
       }
@@ -650,9 +668,12 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
       }
     }
     
+    endSearch:
+    
     //cout << "2. blc, trc " << blc << ",*," << trc << endl;
     //Vector<Double> y(npoints), sigma(npoints);
     //Matrix<Double> x(npoints,2);
+    //cout << "hallo " << endl;
     
     y.resize(npoints);
     x.resize(npoints,2);
@@ -669,9 +690,9 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
     
     //Ensure that it is square
     if(blc(0) > blc(1)){
-        blc(1) = blc(0);
-    }else{
         blc(0) = blc(1);
+    }else{
+        blc(1) = blc(0);
     }
     
     if(trc(0) > trc(1)){
@@ -745,7 +766,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     if(std::getenv(env_name.c_str()) == NULL)
     {
         cout << "Default " << env_name.c_str() << " is " << "5" << endl;
-        npix = 5;
+        npix = 25;
     }else{
         npix = std::stoi(std::getenv(env_name.c_str()));
         cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
@@ -758,7 +779,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
       if(std::getenv(env_name.c_str()) == NULL)
       {
           cout << "Default " << env_name.c_str() << " is " << "3" << endl;
-          expand_pixel = 3;
+          expand_pixel = 10;
       }else{
           expand_pixel = std::stoi(std::getenv(env_name.c_str()));
           cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
@@ -865,8 +886,13 @@ try{
   Matrix<Double> x;
      
   IPosition blc(2), trc(2);
+     
+  clock_t begin = clock();
   FindNpoints(npoints, blc, trc, nrow, amin, px, py, deltas, x , y, sigma, lpsf);
-  cout << "npoints " << npoints << endl;
+  clock_t end = clock();
+  cout << "******First FindNpoints time " << double(end - begin) / CLOCKS_PER_SEC << endl;
+  cout << "npoints " << npoints << " npix " << nrow << endl;
+  //cout << "npoints " << npoints << ",*," << y << ",*," << x/abs(deltas(0)) << ",*," << px <<endl;
      
   //Should resampling only be done when condition is met?
   blc = blc-expand_pixel;
@@ -879,16 +905,29 @@ try{
      
      
   //
+  //blc(0) = px - npix*2 + 1;
+  //blc(1) = py - npix*2 + 1;
+     
+  //trc(0) = px + npix*2 + 1;
+  //trc(1) = py + npix*2 + 1;
      
   Matrix<Float> lpsfWindowed = lpsf(blc,trc);
+  cout << "windowed Psf shape " << lpsfWindowed.shape() << endl;
   Matrix<Float> resampledPsf;
   
+  
+  clock_t begin2 = clock();
   ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
+  clock_t end2 = clock();
+  cout << "******Resample time " << double(end2 - begin2) / CLOCKS_PER_SEC << endl;
+  cout << "resampledPsf shape " << resampledPsf.shape() << endl;
+     
   Float minVal, maxVal;
   IPosition minPos(2);
   IPosition maxPos(2);
   minMax(minVal, maxVal, minPos, maxPos, resampledPsf);
   resampledPsf = resampledPsf/maxVal;
+  //cout << "resampledPsf " << resampledPsf << endl;
     
   Vector<Double> resampledDeltas = deltas/ (Double) oversampling;
      
@@ -900,15 +939,25 @@ try{
   }
      
   Int nrowRe = (Int) (oversampling*minLen - 1)/2;
+  //cout << "nrow" << nrow << ",*," << minLen << endl;
+  //cout << "before 2nd npoints 100 " << nrowRe << ",*," << minLen << ",*," << trc << ",*," << blc << ",*," << resampledPsf.shape() << endl;
+  
+  clock_t begin3 = clock();
   FindNpoints(npoints, blc, trc, nrowRe, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
-   
-  cout << "npoints after resampling " << npoints << endl;
+  clock_t end3 = clock();
+  cout << "******Second FindNpoints time " << double(end3 - begin3) / CLOCKS_PER_SEC << endl;
+     
+     
+  cout << "After resampling: npoints " << npoints << " npix " << nrowRe <<endl;
+  //cout << npoints << ",*," << y << ",*," << x/abs(deltas(0)) << ",*," << px << endl;
+     //cout << "y is " << y << endl;
      
   Gaussian2D<AutoDiff<Double> > gauss2d;
   gauss2d[0] = 1.0; //Height of Gaussian
   gauss2d[1] = 0.0; //The center of the Gaussian in the x direction
   gauss2d[2] = 0.0; //The center of the Gaussian in the y direction.
-  gauss2d[3] = 2.5*abs(resampledDeltas(0)); //The width (FWHM) of the Gaussian on one axis.
+  //gauss2d[3] = 2.5*abs(resampledDeltas(0)); //The width (FWHM) of the Gaussian on one axis.
+  gauss2d[3] = 2.5*abs(deltas(0));
   gauss2d[4] = 0.5; //A modified axial ratio.
   gauss2d[5] = 1.0; //The position angle.
   
@@ -928,7 +977,12 @@ try{
   fitter.setFunction(gauss2d);
   
   // The current parameter values are used as the initial guess.
+  clock_t begin4 = clock();
   solution = fitter.fit(x, y, sigma);
+  clock_t end4 = clock();
+  cout << "******Fit time " << double(end4 - begin4) / CLOCKS_PER_SEC << endl;
+     
+     
   converg=fitter.converged();
   if (!fitter.converged()) {
     beam(0)=2.5*abs(deltas(0))/C::arcsec;
@@ -963,6 +1017,8 @@ try{
      else if (beam(2) < -270.0) beam(2) +=360.0;
      else beam(2)+=180.0;
    }
+     
+     cout << "The beam is " << beam << endl;
    return true;
  }
  else os << LogIO::WARN << "The fit did not coverge; check your PSF" <<
