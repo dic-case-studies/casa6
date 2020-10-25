@@ -786,7 +786,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
       }
     
     
-    
+    /**
     Int oversampling;
   env_name="oversampling";
     if(std::getenv(env_name.c_str()) == NULL)
@@ -796,8 +796,18 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     }else{
         oversampling = std::stoi(std::getenv(env_name.c_str()));
         cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-    }
+    }**/
     
+    Int target_npoints;
+  env_name="target_npoints";
+    if(std::getenv(env_name.c_str()) == NULL)
+    {
+        cout << "Default " << env_name.c_str() << " is " << "501" << endl;
+        target_npoints = 40001;
+    }else{
+        target_npoints = std::stoi(std::getenv(env_name.c_str()));
+        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
+    }
     
   String InterpMethod;
   env_name="InterpMethod";
@@ -917,6 +927,9 @@ try{
   
   
   clock_t begin2 = clock();
+  Int oversampling = (Int) sqrt(target_npoints/(lpsfWindowed.shape()(0)*lpsfWindowed.shape()(1)));
+  cout << "oversampling " << oversampling << endl;
+     
   ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
   clock_t end2 = clock();
   cout << "******Resample time " << double(end2 - begin2) / CLOCKS_PER_SEC << endl;
