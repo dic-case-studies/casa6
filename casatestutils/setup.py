@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="casatestutils", # Replace with your own username
-    version="0.1.7",
+    version="0.1.10",
     author="A. Wells",
     author_email="awells@nrao.edu",
     description="Tools for use with casatest and testing",

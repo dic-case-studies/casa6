@@ -121,7 +121,7 @@ void MSCache::loadIt(vector<PMS::Axis>& loadAxes,
 	}
 
 	// Make volume meter for countChunks to estimate memory requirements
-	vm_ = new MSCacheVolMeter(*inputMS, averaging_, chansel, corrsel);
+	vm_ = new MSCacheVolMeter(*selMS, averaging_, chansel, corrsel);
 
 	// Load Page Header Cache
 	loadPageHeaderCache(*selMS);

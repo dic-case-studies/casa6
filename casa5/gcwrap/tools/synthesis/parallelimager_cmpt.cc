@@ -29,7 +29,7 @@ parallelimager::parallelimager()
 
 casac::record *
 parallelimager::clean(
-	const std::vector<int> &ranks,
+	const std::vector<long> &ranks,
 	const casac::record& clean_params,
 	const casac::record& selection_params,
 	const casac::record& image_params,

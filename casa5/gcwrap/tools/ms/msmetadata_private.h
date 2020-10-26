@@ -20,9 +20,9 @@ void _checkPolId(int id, bool throwIfNegative) const;
 
 std::vector<std::string> _fieldNames(const std::set<int>& ids);
 
-std::set<casacore::ScanKey> _getScanKeys(int scan, int obsid, int arrayid) const;
+std::set<casacore::ScanKey> _getScanKeys(long scan, long obsid, long arrayid) const;
 
-std::set<casacore::ScanKey> _getScanKeys(const vector<int>& scan, int obsid, int arrayid) const;
+std::set<casacore::ScanKey> _getScanKeys(const vector<long>& scan, long obsid, long arrayid) const;
 
 // return the intersection of the elements in v and s. In the returned vector, elements
 // have the same ordering as in the input vector, v.
@@ -40,11 +40,11 @@ void _handleException(const casacore::AipsError& x) const;
 
 static std::vector<double> _setDoubleToVectorDouble(const std::set<casacore::Double>& inset);
 
-static std::vector<int> _setUIntToVectorInt(const std::set<casacore::uInt>& inset);
+static std::vector<long> _setUIntToVectorInt(const std::set<casacore::uInt>& inset);
 
 static std::vector<casacore::uInt> _setUIntToVectorUInt(const std::set<casacore::uInt>& inset);
 
-static std::vector<int> _setIntToVectorInt(const std::set<casacore::Int>& inset);
+static std::vector<long> _setIntToVectorInt(const std::set<casacore::Int>& inset);
 
 static std::vector<std::string> _setStringToVectorString(const std::set<casacore::String>& inset);
 
@@ -52,9 +52,9 @@ static std::vector<std::string> _vectorStringToStdVectorString(const std::vector
 
 static std::vector<casacore::String> _vectorStdStringToVectorString(const std::vector<std::string>& inset);
 
-static std::vector<int> _vectorUIntToVectorInt(const std::vector<casacore::uInt>& inset);
+static std::vector<long> _vectorUIntToVectorInt(const std::vector<casacore::uInt>& inset);
 
-static std::vector<uint> _vectorIntToVectorUInt(const std::vector<casacore::Int>& inset);
+static std::vector<uint> _vectorIntToVectorUInt(const std::vector<long>& inset);
 
 friend class ms;
 

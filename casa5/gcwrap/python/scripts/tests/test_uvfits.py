@@ -176,7 +176,9 @@ class uvfits_test(unittest.TestCase):
         # succeed because overwrite=True
         self.assertTrue(myms.tofits(fitsname, overwrite=True))
         myms.done()
-        self.assertFalse(exportuvfits(msname, fitsname, overwrite=False))
+        with self.assertRaises(RuntimeError):
+            exportuvfits(vis=msname, fitsfile=fitsname, overwrite=False)
+#        self.assertFalse(exportuvfits(msname, fitsname, overwrite=False))
         self.assertTrue(exportuvfits(msname, fitsname, overwrite=True))
             
     def test_badscan(self):
