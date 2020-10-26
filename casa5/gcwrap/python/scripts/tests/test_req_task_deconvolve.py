@@ -462,120 +462,149 @@ def suite():
 
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
-    cachedir = "test_req_task_deconvolve_cache"
+    inptbls = [".residual", ".psf", ".pb", ".model"]
+    img = "tst"
 
     @classmethod
     def setUpClass(cls):
         casalog.setlogfile('testlog.log')
+        cls.msfile = ""           # the filename of the referenced ".ms" measurement set, with the ".ms" extension (note this variable is shadowed by and instance variable by the same name)
+        cls.cachedir = ""         # name of the local directory used in staticCopyToCache() and staticCopyFromCache()
 
     def setUp(self):
-        self.epsilon = 0.05
-        self.msfile = ""
-        self.imgsrc = ""
-        self.cachedir = testref_base.cachedir
-        self.inptbls = [".residual", ".psf", ".pb", ".model"]
-        self.img = "tst"
-        # To use subdir in the output image names in some tests (CAS-10937)
-        self.img_subdir = 'refimager_tst_subdir'
-        self.parallel = False
-        self.nnode = 0
+        self.msfile = ""          # the filename of the referenced ".ms" measurement set, with the ".ms" extension (note this variable shadows the class variable by the same name)
+        self.imgsrc = ""          # the filename of the referenced ".ms" measurement set, without the ".ms" extension
+        self.img = type(self).img # prefix of the image names to generate
+        self.parallel = False     # whether to run tclean in parallel
         if ParallelTaskHelper.isMPIEnabled():
             self.parallel = True
-        self.loglen = len(open('testlog.log').read())
-
-        # self.th = TestHelpers()
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        # self.delData()
-        # leave for input and output (e.g. for debugging)
-        self.delData(delinput=False, deloutput=False)
+        self.delData()
+        # Debugging: leave input and output data
+        # self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
-        # if os.path.exists(cls.cachedir):
-        #     os.system('rm -rf '+cls.cachedir)
-        pass
+        cls.staticDelData(cls.msfile, cls.img)
+        if cls.cachedir != "":
+            os.system('rm -rf '+cls.cachedir)
 
-    def _setImgsrcField(self,imgsrc):
-        if imgsrc.endswith(".ms"):
-            self.msfile = imgsrc
+    def _setImgsrcField(self,msfile):
+        """ Set the self.msfile and self.imgsrc values based off of the given msfile """
+        imgsrc=msfile
+        if msfile.endswith(".ms"):
+            self.msfile = msfile
             imgsrc = imgsrc[:-3]
         if imgsrc != "":
             self.imgsrc = imgsrc
 
-    def copyMS(self,imgsrc):
-        self._setImgsrcField(imgsrc)
-        if (os.path.exists(os.path.join(refdatapath,self.imgsrc+'.ms'))):
-            shutil.copytree(os.path.join(refdatapath,self.imgsrc+'.ms'), self.imgsrc+'.ms')
+    def copyMS(self,msfile):
+        """ Copies the given measurement set file to the working directory """
+        self._setImgsrcField(msfile)
+        type(self).staticCopyMS(self.msfile)
+
+    @classmethod
+    def staticCopyMS(cls,msfile):
+        """ Copies the given measurement set file to the working directory """
+        if (cls.msfile == ""):
+            cls.msfile = msfile
+        if (os.path.exists(os.path.join(refdatapath,msfile))):
+            shutil.copytree(os.path.join(refdatapath,msfile), msfile)
         else:
-            shutil.copytree(os.path.join(refdatapath2,self.imgsrc+'.ms'), self.imgsrc+'.ms')
+            shutil.copytree(os.path.join(refdatapath2,msfile), msfile)
 
-    # Separate functions here, for special-case tests that need their own MS.
-    def prepData(self,imgsrc="",cache=False,tclean_args={},delold=True):
+    @classmethod
+    def staticCopyToCache(cls, msfile, imagename, cachedir):
+        """ Copy all "self.img".* generated image files (eg tst.model/tst.model.tt0) from the working directory to a local directory "cachedir".
+            Also creates the cachedir directory as necessary. """
+        cls.msfile = msfile
+        cls.img = imagename
+        cls.cachedir = cachedir
+        for tbl in cls.inptbls:
+            for ttn in ["", ".tt0", ".tt1", ".tt2", ".tt3", ".tt4", ".tt5"]:
+                ext = tbl+ttn
+                srctbl = imagename + ext
+                dsttbl = os.path.join(cachedir, msfile + ext)
+                if os.path.exists(srctbl):
+                    shutil.copytree(srctbl, dsttbl)
+
+    @classmethod
+    def staticCopyFromCache(cls, msfile="", imagename="", cachedir=""):
+        """ Copy all "self.img".* generated image files (eg tst.model/tst.model.tt0) from the local directory "cachedir" to the working directory.
+            If staticCopyToCache was previously used by this class (does not need to be the same instance of the class), then the msfile, imagename, and cachedir
+            from that staticCopyToCache call will be used. """
+        msfile    = msfile    if msfile!=""    else cls.msfile
+        imagename = imagename if imagename!="" else cls.img
+        cachedir  = cachedir  if cachedir!=""  else cls.cachedir
+        for tbl in cls.inptbls:
+            for ttn in ["", ".tt0", ".tt1", ".tt2", ".tt3", ".tt4", ".tt5"]:
+                ext = tbl+ttn
+                if os.path.exists(os.path.join(cachedir, msfile+ext)):
+                    shutil.copytree(os.path.join(cachedir, msfile+ext), imagename+ext)
+
+    @classmethod
+    def staticPrepData(cls,msfile="",tclean_args={},parallel=False):
         """
-        Copies the .ms file to the local directory and
+        Copies the msfile ".ms" file to the local directory and
         prepares the tclean(niter=0) tst.* tables for use with deconvolve.
-        - cache is mostly useful when running the same test repeatedly during development.
-        - delold is mostly useful when creating mask files, so that the newly created mask isn't removed
 
-        1 if cache=True and test_req_task_deconvolve_residuals/imgsrc.residual exists, skip to (6)
-        2 execute tclean with the given tclean_args
-        3 stop if cache=False, otherwise:
-        4 copy all tst.* tables to test_req_task_deconvolve_residuals/ and remove all tst.* tables
-        5 copy all test_req_task_deconvolve_residuals/imgsrc.* to the working directory
+        1 supplement the given tclean_args with some default values, if those values aren't present
+        2 copy the msfile ms file to the working directory
+        3 execute tclean with the given tclean_args
+
+        @param msfile A measurement set ".ms" file (include ".ms" extension, don't include directory)
+        @param tclean_args Arguments to use when running tclean, for generating the input images to deconvolve.
+        @return the summation of the given tclean_args and the default tclean_args.
         """
-        self._setImgsrcField(imgsrc)
-        if delold:
-            self.delData()
-        if not os.path.exists(self.cachedir):
-            os.system('mkdir ' + self.cachedir)
-        print(refdatapath)
-
-        # set some default values for tclean
-        defs = { 'vis'          : self.imgsrc+'.ms',
-                 'imagename'    : self.img,
+        # (1) set some default values for tclean
+        defs = { 'vis'          : msfile,
+                 'imagename'    : cls.img,
                  'niter'        : 0,
                  'restoration'  : False,
                  'calcres'      : True,
                  'pbcor'        : True,
-                 'parallel'     : self.parallel }
+                 'parallel'     : parallel }
         for k in defs.keys():
             tclean_args[k] = defs[k] if k not in tclean_args else tclean_args[k]
         
-        if (cache):
-            resfiles = [os.path.join(self.cachedir, self.imgsrc + '.residual')]
-            resfiles.append(resfiles[0] + '.tt0')
-            print(resfiles)
+        # (2) copy msfile
+        cls.staticCopyMS(msfile)
 
-            # create the residuals and other feeder tables, as necessary
-            if not os.path.exists(resfiles[0]) and not os.path.exists(resfiles[1]):
-                self.copyMS(imgsrc)
-                # return
-                tclean(**tclean_args)
-                for tbl in self.inptbls:
-                    for ttn in ["", ".tt0", ".tt1", ".tt2", ".tt3", ".tt4", ".tt5"]:
-                        ext = tbl+ttn
-                        srctbl = self.img + ext
-                        dsttbl = os.path.join(self.cachedir, self.imgsrc + ext)
-                        if os.path.exists(srctbl):
-                            shutil.copytree(srctbl, dsttbl)
-                # os.system('rm -rf ' + self.imgsrc + '.*')
-                os.system('rm -rf ' + self.img + '.*')
+        # (3) create the residuals and other feeder tables
+        tclean(**tclean_args)
 
-             # copy necessary files to the working directory
-            for tbl in self.inptbls:
-                for ttn in ["", ".tt0", ".tt1", ".tt2", ".tt3", ".tt4", ".tt5"]:
-                    ext = tbl+ttn
-                    if os.path.exists(os.path.join(self.cachedir, self.imgsrc+ext)):
-                        shutil.copytree(os.path.join(self.cachedir, self.imgsrc+ext), self.img+ext)
-        else:
-            print(self.imgsrc)
+        return tclean_args
 
-            # create the residuals and other feeder tables
-            shutil.copytree(os.path.join(refdatapath,self.imgsrc+'.ms'), self.imgsrc+'.ms')
-            tclean(**tclean_args)
-            # os.system('rm -rf ' + self.imgsrc + '*')
+    # Separate functions here, for special-case tests that need their own MS.
+    def prepData(self,msfile="",tclean_args={},delold=True):
+        """
+        Deletes old data and uses staticPrepData to tclean new input images.
+
+        1 update self.imgsrc and self.msfile with the value from msfile
+        2 delete old data
+        3 copy the ms and evaluate tclean using staticPrepData
+
+        @param msfile A measurement set ".ms" file (include ".ms" extension, don't include directory)
+        @param tclean_args Arguments to use when running tclean, for generating the input images to deconvolve.
+        @param delold True to delete all data with self.delData()
+                      False is mostly useful when creating mask files, so that the newly created mask isn't removed
+        @return the summation of the given tclean_args and the default tclean_args.
+        """
+        # (1) update self.imgsrc and self.msfile
+        self._setImgsrcField(msfile)
+
+        # (2) delete old data
+        if delold:
+            self.delData()
+
+        # print some debugging information
+        print(refdatapath)
+        print(self.imgsrc)
+
+        # (3) evaluted with class method
+        tclean_args = type(self).staticPrepData(self.imgsrc+'.ms', tclean_args, self.parallel)
 
         return tclean_args
 
@@ -595,23 +624,27 @@ class testref_base(unittest.TestCase):
             else:
                 shutil.copytree(image_name, newname, symlinks=True)
 
-    def getLogStr(self):
-        # return only the part of the log that applies to the current test method
-        logstr = open('testlog.log').read()
-        return logstr[self.loglen:]
-
-    def delData(self,msname="",delinput=True,deloutput=True):
-        if msname != "":
-            self.msfile=msname
-        if (os.path.exists(self.msfile) and delinput):
-            os.system('rm -rf ' + self.msfile)
+    @classmethod
+    def staticDelData(cls,msfile="",imagename="",delinput=True,deloutput=True):
+        """ Delete the .ms, imagename.*, and usermask.mask.txt files/directories from the working directory.
+            If previously set from another static method, msfile and imagename will be provided default values. """
+        if (os.path.exists(msfile) and delinput):
+            os.system('rm -rf ' + msfile)
         if (os.path.exists('usermask.mask.txt') and delinput):
             os.system('rm -rf usermask.mask.txt')
-        if deloutput:
-            os.system('rm -rf ' + self.img_subdir)
-            os.system('rm -rf ' + self.img+'*')
+        if deloutput and imagename != "":
+            os.system('rm -rf ' + imagename+'*')
+
+    def delData(self,msfile="",delinput=True,deloutput=True):
+        """ Calls staticDelData with the instance values for self.img, and a default self.msfile is msfile isn't provided. """
+        if msfile != "":
+            self.msfile = msfile
+        elif msfile == "":
+            msfile = self.msfile
+        type(self).staticDelData(msfile, self.img, delinput, deloutput)
 
     def checkfinal(self,pstr=""):
+        """ Fails the test via self.fail() if either of the strings '(Fail' or '( Fail' are present in the given pstr. """
         # pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_deconvolve["+ inspect.stack()[1][3] +"]'])"
         casalog.post(pstr,'INFO')
         if ( re.search('\( ?Fail', pstr) != None ):
@@ -1394,9 +1427,18 @@ class test_multirun(testref_base):
 # Note that all of these tests utilize using the same ms and same tclean args in order to be able to cache the results
 # from tclean in order to execute faster.
 class test_imgval(testref_base):
+    @classmethod
+    def setUpClass(cls):
+        super(test_imgval, cls).setUpClass()
+        msfile='refim_point.ms'
+        cls.staticDelData(msfile)
+        cls.staticPrepData(msfile, tclean_args={'imsize':100, 'cell':['10.0arcsec','30.0arcsec']})
+        cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='imgval_cache')
+
     def ivsetup(self):
-        # we can use "cache" here because every tclean run is being executed the same way
-        self.prepData('refim_point.ms', cache=True, tclean_args={'imsize':100, 'cell':['10.0arcsec','30.0arcsec']})
+        # we can use a cache here because tclean was run only run once, during setUpClass
+        self.delData()
+        type(self).staticCopyFromCache()
         self.mname = self.img + ".model"
         self.mname2 = self.img + "_2.model"
 
@@ -1722,9 +1764,18 @@ class test_imgval(testref_base):
 # Note that all of these tests utilize using the same ms and same tclean args in order to be able to cache the results
 # from tclean in order to execute faster.
 class test_mtmfsimgval(testref_base):
+    @classmethod
+    def setUpClass(cls):
+        super(test_mtmfsimgval, cls).setUpClass()
+        msfile='refim_eptwochan.ms'
+        cls.staticDelData(msfile)
+        cls.staticPrepData(msfile, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'mtmfs'})
+        cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='mtmfsimgval_cache')
+
     def ivsetup(self):
-        # we can use "cache" here because every tclean run for every test method is being executed the same way
-        self.prepData('refim_eptwochan.ms', cache=True, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'mtmfs'})
+        # we can use a cache here because tclean was run only run once, during setUpClass
+        self.delData()
+        type(self).staticCopyFromCache()
         self.mname = self.img + ".model.tt1"
         self.mname2 = self.img + "_2.model.tt1"
 
@@ -2170,10 +2221,19 @@ class test_residual_update(testref_base):
 
 ##Task level tests : verify that image restoration can be controlled with the restoration parameters
 class test_restoration(testref_base):
+    @classmethod
+    def setUpClass(cls):
+        super(test_restoration, cls).setUpClass()
+        msfile='refim_point.ms'
+        cls.staticDelData(msfile)
+        cls.staticPrepData(msfile, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'hogbom'})
+        cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='restoration_cache')
+
     def rsetup(self):
-        # we can use "cache" here because every tclean run for every test method is being executed the same way
-        self.prepData('refim_point.ms', cache=True, tclean_args={'imsize':10, 'cell':'8.0arcsec', 'deconvolver':'hogbom'})
-        os.system("rm -rf try.image")
+        # we can use a cache here because tclean was run only run once, during setUpClass
+        self.delData()
+        type(self).staticCopyFromCache()
+        os.system("rm -rf {}.image".format(self.img))
 
     # Test 73
     def test_restoration_none(self):
