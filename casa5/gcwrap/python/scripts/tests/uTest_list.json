@@ -953,7 +953,7 @@
         {
              "testNumber":"5155",
              "testName":"Visstat",
-             "testScript":"test_visstat",
+             "testScript":"test_req_task_visstat",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Martin Pokorny",
