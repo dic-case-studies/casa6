@@ -121,7 +121,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imval.py
   test_initweights.py
   test_listfits.py
-  test_listobs.py
   test_listpartition.py
   test_listvis.py
   test_makemask.py
