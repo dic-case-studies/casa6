@@ -1913,6 +1913,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
   void SIImageStore::makeImageBeamSet()
   {
+    clock_t begin = clock();
+      
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
     AlwaysAssert( itsImageShape.nelements() == 4, AipsError );
@@ -2014,6 +2016,9 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     ImageInfo ii = psf()->imageInfo();
     ii.setBeams( itsPSFBeams );
     psf()->setImageInfo(ii);
+      
+      clock_t end = clock();
+      cout << "$$$$$$$$$$$$$$ Time to fit gaussian for all channels (in SIImageStore)" << double(end - begin) / CLOCKS_PER_SEC << endl;
     
   }// end of make beam set
 

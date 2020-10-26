@@ -479,7 +479,8 @@ void StokesImageUtil::Constrain(ImageInterface<Float>& image) {
 
 
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam){
-
+  
+    
   Bool retval=true;
   Int freqAx=CoordinateUtil::findSpectralAxis(psf.coordinates());
   Vector<Stokes::StokesTypes> whichPols;
@@ -656,7 +657,7 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
              // cout << "3.** " << maxnpoints << ",*,"<< npoints << endl;
             if(npoints > (maxnpoints-1)) {
           inlobe=false;
-              cout << "Over max points .** " << maxnpoints << ",*,"<< npoints << endl;
+              //cout << "Over max points .** " << maxnpoints << ",*,"<< npoints << endl;
           //break;
                 goto endSearch;
             }
@@ -747,7 +748,7 @@ void StokesImageUtil::ResamplePSF(Matrix<Float>& psf, Int& oversampling, Matrix<
 
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam) {
   
-  cout << "###################### In StokesImageUtil::FitGaussianPSF " << endl;
+  cout << "#####################$ In StokesImageUtil::FitGaussianPSF " << endl;
       
   //Temp Code for testing
   Float threshold;
