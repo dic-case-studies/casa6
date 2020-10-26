@@ -15,7 +15,7 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 _ia = iatool( )
@@ -31,7 +31,7 @@ fail  = 0
 current_test =""
 stars = "*************"
 
-datapath = ctsys_resolve('regression/unittest/imregrid/')
+datapath = ctsys_resolve('unittest/ia_regrid/')
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -300,10 +300,18 @@ class ia_regrid_test(unittest.TestCase):
         csys.setreferencecode('GALACTIC', type='direction', adjust=True)
         zz = myia.regrid(outfile='gal_regrid.image', shape=[300, 300, 1, 46], csys=csys.torecord(), overwrite=True)  
         myia.open(datapath + "gal_regrid.image")
-        self.assertTrue(numpy.max(numpy.abs(zz.getchunk() - myia.getchunk())) < 1e-8)
-        self.assertTrue((zz.getchunk(getmask=True) == myia.getchunk(getmask=True)).all())
+        zzchunk = zz.getchunk()
+        zzchunkmask = zz.getchunk(getmask=True)
+        myiachunk = myia.getchunk()
+        myiachunkmask = myia.getchunk(getmask=True)
         myia.done()
         zz.done()
+        
+#        self.assertTrue(numpy.max(numpy.abs(zz.getchunk() - myia.getchunk())) < 1e-8)
+        self.assertTrue(numpy.max(numpy.abs(zzchunk - myiachunk)) < 1e-8)
+        self.assertTrue((zzchunkmask == myiachunkmask).all())
+#        myia.done()
+#        zz.done()
 
     def test_linear_overlap(self):
         """Test that overlapping linear coordinates works, CAS-5767"""
