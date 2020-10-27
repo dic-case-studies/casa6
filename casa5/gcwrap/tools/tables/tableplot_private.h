@@ -18,6 +18,5 @@ casacore::Int alive;
 
 casa::TPResetCallBack *resetter_p;
 
-PyThreadState *myInterpreter;
-casacore::LogIO *itsLog;
+std::unique_ptr<casacore::LogIO> itsLog;
 

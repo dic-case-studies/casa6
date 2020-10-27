@@ -21,7 +21,7 @@ namespace casac {
 
       mstransformer();
       bool done();
-      bool config(const record& _pars=initialize_record(""""));
+      bool config(const record& _pars=initialize_record(""));
       bool open();
       record* run();
       bool mergespwtables(const std::vector<std::string>& _filenames=std::vector<std::string>({}));
