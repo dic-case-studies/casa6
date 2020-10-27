@@ -13,12 +13,14 @@ import unittest
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys, image, regionmanager, table
+    from casatools import ctsys, image, regionmanager, table, measures, componentlist
     from casatasks import immath, casalog
     _ia = image()
     _rg = regionmanager()
     _cs = coordsys()
     _tb = table()
+    _me = measures()
+    _cl = componentlist()
     ctsys_resolve = ctsys.resolve
 else:
     import casac
@@ -28,6 +30,8 @@ else:
     _rg = rgtool()
     _cs = cstool()
     _tb = tbtool()
+    _me = metool()
+    _cl = cltool()
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
@@ -304,12 +308,12 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue((got == exp).all())
         myia.done()
         self.assertTrue(len(_tb.showcache()) == 0)
-       
+
     def test_ref_code_preserves_position(self):
         """Test that regridding to new refcode preserves source positions"""
         shutil.copytree(ctsys.resolve(os.path.join(datapath,gim)), gim)
-        orig = image( )
-        myme = measures( )
+        orig = _ia
+        myme = _me
         for rah in (0, 4, 8, 12, 16, 20):
             # image has axis units of arcmin
             ra = rah*60*15
@@ -342,22 +346,24 @@ class imregrid_test(unittest.TestCase):
                     orig.open(gim)
                     ofit = orig.fitcomponents(box="850,150,950,250")
                     orig.done()
-                    ocl = componentlist( )
+                    ocl = _cl
                     ocl.add(ofit['results']['component0'])
                     orefdir = ocl.getrefdir(0)
-                    galtool = image( )
+                    galtool = _ia
                     galtool.open(gal)
                     #gfit = galtool.fitcomponents(box="1120,520,1170,570")
                     gfit = galtool.fitcomponents(mask= "'" + gal + "'> 0.001")
                     galtool.done()
-                    gcl = componentlist( )
+                    gcl = _cl
                     gcl.add(gfit['results']['component0'])
                     grefdir = gcl.getrefdir(0)
-                    print("diff", _qa.getvalue(
+                    print(
+                        "diff", _qa.getvalue(
                             _qa.convert(
                                 myme.separation(orefdir, grefdir), "arcsec"
                             )
-                        ))
+                        )
+                    )
                     self.assertTrue(
                         _qa.getvalue(
                             _qa.convert(
@@ -367,13 +373,14 @@ class imregrid_test(unittest.TestCase):
                     )
                     rev = "back_to_J2000" + image_id + ".im"
                     imregrid(gal,template="J2000", output=rev)
-                    revtool = image( )
+                    revtool = _ia
                     revtool.open(rev)
                     rfit = revtool.fitcomponents(box="850,150,950,250")
                     revtool.done()
-                    rcl = componentlist( )
+                    rcl = _cl
                     rcl.add(rfit['results']['component0'])
                     rrefdir = rcl.getrefdir(0)
+                    rcl.done()
                     self.assertTrue(
                         _qa.getvalue(
                             _qa.convert(
@@ -390,8 +397,9 @@ class imregrid_test(unittest.TestCase):
         dicttemp = imregrid(tempfile, template="get")
         dicttemp['csys']['direction0']['crpix'] = [2.5, 2.5]
         output = "out.im"
-        with self.assertRaises(RuntimeError):
-            imregrid (tempfile, template=dicttemp, output=output)
+        self.assertRaises(
+            RuntimeError, imregrid, tempfile, template=dicttemp, output=output
+        )
         
     def test_interpolate(self):
         """Test interpolation parameter is recognized"""
@@ -407,12 +415,12 @@ class imregrid_test(unittest.TestCase):
         template['csys'] = csys.torecord()
         template['shap'] = myia.shape()
         myia.done()
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output="blah", interpolation="x"
-            )
-        output = "blah3"
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output="blah", interpolation="x"
+        )
+        output = 'blah3'
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, interpolation="cubic"
@@ -460,12 +468,14 @@ class imregrid_test(unittest.TestCase):
         template = "template.im"
         myia.fromshape(template, [6, 6, 36, 2])
         outfile = "myout.im"
+        # returns None upon success
         imregrid(imagename=target, template=template, output=outfile)
         self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         self.assertTrue((myia.shape() == [6, 6, 2, 36]).all())
         myia.done()
         outfile = "myout1.im"
+        # returns None upon success
         imregrid(
             imagename=target, template=template,
             output=outfile, axes=[0, 1], decimate=2
@@ -487,6 +497,7 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         output = "aa.out.im"
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5
@@ -508,6 +519,7 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         output = "ab.out.im"
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5
@@ -523,29 +535,26 @@ class imregrid_test(unittest.TestCase):
         myia.done()
         # specifying an output stokes length other than the input stokes length
         # is not allowed
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                shape=[20, 20, 1, 20]
-            )
-
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                shape=[20, 20, 3, 20]
-            )
-
-        # specifying an output stokes length other than the input stokes length
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True,
+            shape=[20, 20, 1, 20]
+        )
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True,
+            shape=[20, 20, 3, 20]
+        )
+        # specifying an output stokes length equal to the input stokes length
         # is allowed
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True,
             shape=[20, 20, 2, 20]
         )
         self.assertTrue(os.path.exists(output))
-        
+
     def test_degenerate_template_stokes_axis_and_input_stokes_length_gt_0(self):
         """Verify correct behavior for the template image having a degenerate stokes axis"""
         myia = _ia
@@ -559,6 +568,7 @@ class imregrid_test(unittest.TestCase):
         myia.done()
         output = "ac.out.im"
         # all input stokes in output if shape and axes not specified
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -568,20 +578,15 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue(myia.shape()[2] == 2)
         myia.done()
         # not allowed if output stokes length different from input stokes length
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, shape=[20, 20, 1, 20],
-                overwrite=True
-            )
-
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, shape=[20, 20, 3, 20],
-                overwrite=True
-            )
-
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, shape=[20, 20, 1, 20], overwrite=True
+        )
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, shape=[20, 20, 3, 20], overwrite=True
+        )
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, shape=[20, 20, 2, 20],
