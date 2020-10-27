@@ -481,7 +481,7 @@ class polcal_test(unittest.TestCase):
     def test_XfCorrectQU(self):
         ''' Test poltype Xf and assume the correct Q, U '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='Xf', smodel=[1.0, 0.08, 0.06, 0], refant='5', gaintable=[datapathCirc+'.Dtrue'])
+               minsnr=0.0, poltype='Xf', smodel=[1.0, 0.08, 0.06, 0], refant='5', gaintable=[calpathCirc])
 
         calresult = getparam(outcal)
 
@@ -492,7 +492,7 @@ class polcal_test(unittest.TestCase):
     def test_XfAlternateQU(self):
         ''' Test poltype Xf and assume alternate Q, U values '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='Xf', smodel=[1.0, 0.1, 0.0, 0], refant='5', gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='Xf', smodel=[1.0, 0.1, 0.0, 0], refant='5', gaintable=[calpathCirc])
 
         calresult = getparam(outcal)
 
@@ -501,7 +501,7 @@ class polcal_test(unittest.TestCase):
     def test_XfNegatedQU(self):
         ''' Test poltype Xf and assume Q, U with flipped signs '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='Xf', smodel=[1.0, -0.08, -0.06, 0], refant='5', gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='Xf', smodel=[1.0, -0.08, -0.06, 0], refant='5', gaintable=[calpathCirc])
 
         calresult = getparam(outcal)
 
@@ -512,7 +512,7 @@ class polcal_test(unittest.TestCase):
     def test_PosAngCorrectQU(self):
         ''' Test poltype PosAng and assume the correct Q, U '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.08, 0.06, 0], gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.08, 0.06, 0], gaintable=[calpathCirc])
 
         tb.open(outcal)
         calresult = tb.getcol('FPARAM')
@@ -523,7 +523,7 @@ class polcal_test(unittest.TestCase):
     def test_PosAngAlternateQU(self):
         ''' Test poltype PosAng and assume alternate Q, U values '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.1, 0.0, 0], gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.1, 0.0, 0], gaintable=[calpathCirc])
 
         tb.open(outcal)
         calresult = tb.getcol('FPARAM')
@@ -536,7 +536,7 @@ class polcal_test(unittest.TestCase):
     def test_PosAngNegatedQU(self):
         ''' Test poltype PosAng and assume Q, U with flipped signs '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[calpathCirc])
 
         tb.open(outcal)
         calresult = tb.getcol('FPARAM')
@@ -548,10 +548,10 @@ class polcal_test(unittest.TestCase):
     def test_PosAngNegatedQUApply(self):
         ''' Test applying the negated table to a new polcal call '''
         polcal(vis=datacopyCirc, caltable=outcal+'.PA-rel', field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[datapathCirc + '.Dtrue'])
+               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[calpathCirc])
 
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
-               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[datapathCirc+'.Dtrue',
+               minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[calpathCirc,
                                                                                        outcal+'.PA-rel'])
 
         tb.open(outcal)
@@ -598,7 +598,7 @@ class polcal_test(unittest.TestCase):
 
         P = polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                    minsnr=0.0, poltype='Xfparang+QU', smodel=[1.0, -0.08, -0.06, 0],
-                   gaintable=[outcal + '.XfpaQU-rel', datapathCirc + '.Dtrue'])
+                   gaintable=[outcal + '.XfpaQU-rel', calpathCirc])
 
         calresult = getparam(outcal)
         print(calresult)
