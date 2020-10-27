@@ -64,7 +64,7 @@ public:
    				    casacore::Bool /*allowShapeChange*/ = false,
                     casacore::Bool /*fetchIfNeeded*/ = true) {}
 
-    virtual void setShape (casacore::Int /*nCorrelations*/, casacore::Int /*nChannels*/, casacore::Int /*nRows*/, casacore::Bool) {}
+    virtual void setShape (casacore::Int /*nCorrelations*/, casacore::Int /*nChannels*/, casacore::rownr_t /*nRows*/, casacore::Bool) {}
     virtual const vi::VisibilityIterator2 * getVi () const {return NULL;}
 
     virtual casacore::Bool isAttached () const {return true;}
@@ -126,8 +126,12 @@ public:
     virtual void setFlag (const casacore::Matrix<casacore::Bool>& /*value*/) {}
     virtual const casacore::Array<casacore::Bool> & flagCategory () const {static casacore::Array<casacore::Bool> dummy; return dummy;}
     virtual void setFlagCategory (const casacore::Array<casacore::Bool>& /*value*/) {}
+    virtual const casacore::Vector<casacore::Array<casacore::Bool>> & flagCategories () const {static casacore::Vector<casacore::Array<casacore::Bool>> dummy; return dummy;}
+    virtual void setFlagCategories (const casacore::Vector<casacore::Array<casacore::Bool>>& /*value*/) {}
     virtual const casacore::Cube<casacore::Bool> & flagCube () const {static casacore::Cube<casacore::Bool> dummy; return dummy;}
     virtual void setFlagCube (const casacore::Cube<casacore::Bool>& /*value*/) {}
+    virtual const casacore::Vector<casacore::Cube<casacore::Bool>> & flagCubes () const {static casacore::Vector<casacore::Cube<casacore::Bool>> dummy; return dummy;}
+    virtual void setFlagCubes (const casacore::Vector<casacore::Cube<casacore::Bool>>& /*value*/) {}
     virtual const casacore::Vector<casacore::Bool> & flagRow () const {static casacore::Vector<casacore::Bool> dummy; return dummy;}
     virtual void setFlagRow (const casacore::Vector<casacore::Bool>& /*value*/) {}
     virtual const casacore::Vector<casacore::Int> & observationId () const {static casacore::Vector<casacore::Int> dummy; return dummy;}
@@ -138,6 +142,8 @@ public:
     virtual void setScan (const casacore::Vector<casacore::Int> & /*value*/) {}
     virtual const casacore::Matrix<casacore::Float> & sigma () const {static casacore::Matrix<casacore::Float> dummy; return dummy;}
     virtual void setSigma (const casacore::Matrix<casacore::Float> & /*value*/) {}
+    virtual const casacore::Vector<casacore::Matrix<casacore::Float>> & sigmas () const {static casacore::Vector<casacore::Matrix<casacore::Float>> dummy; return dummy;}
+    virtual void setSigmas (const casacore::Vector<casacore::Matrix<casacore::Float>> & /*value*/) {}
     virtual const casacore::Matrix<casacore::Float> & sigmaMat () const {static casacore::Matrix<casacore::Float> dummy; return dummy;}
     virtual const casacore::Vector<casacore::Int> & stateId () const {static casacore::Vector<casacore::Int> dummy; return dummy;}
     virtual void setStateId (const casacore::Vector<casacore::Int> & /*value*/) {}
@@ -151,28 +157,43 @@ public:
     virtual void setUvw (const casacore::Matrix<casacore::Double> & /*value*/) {}
     virtual const casacore::Matrix<casacore::Float> & weight () const {static casacore::Matrix<casacore::Float> dummy; return dummy;}
     virtual void setWeight (const casacore::Matrix<casacore::Float>& /*value*/) {}
+    virtual const casacore::Vector<casacore::Matrix<casacore::Float>> & weights () const {static casacore::Vector<casacore::Matrix<casacore::Float>> dummy; return dummy;}
+    virtual void setWeights (const casacore::Vector<casacore::Matrix<casacore::Float>>& /*value*/) {}
     virtual const casacore::Matrix<casacore::Float> & weightMat () const {static casacore::Matrix<casacore::Float> dummy; return dummy;}
     virtual void setWeightMat (const casacore::Matrix<casacore::Float>& /*value*/) {}
     virtual const casacore::Cube<casacore::Float> & weightSpectrum () const {static casacore::Cube<casacore::Float> dummy; return dummy;}
     virtual void setWeightSpectrum (const casacore::Cube<casacore::Float>& /*value*/) {}
+    virtual const casacore::Vector<casacore::Cube<casacore::Float>> & weightSpectra () const {static casacore::Vector<casacore::Cube<casacore::Float>> dummy; return dummy;}
+    virtual void setWeightSpectra (const casacore::Vector<casacore::Cube<casacore::Float>>& /*value*/) {}
     virtual const casacore::Cube<float>& sigmaSpectrum() const {static casacore::Cube<casacore::Float> dummy; return dummy;}
     virtual void setSigmaSpectrum(const casacore::Cube<float>&) {}
+    virtual const casacore::Vector<casacore::Cube<float>>& sigmaSpectra() const {static casacore::Vector<casacore::Cube<casacore::Float>> dummy; return dummy;}
+    virtual void setSigmaSpectra (const casacore::Vector<casacore::Cube<float>>&) {}
 
     virtual const casacore::Cube<casacore::Complex> & visCube () const {static casacore::Cube<casacore::Complex> dummy; return dummy;}
     virtual void setVisCube(const casacore::Complex & /*c*/) {}
     virtual void setVisCube (const casacore::Cube<casacore::Complex> &){}
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubes () const {static casacore::Vector<casacore::Cube<casacore::Complex>> dummy; return dummy;}
+    virtual void setVisCubes (const casacore::Vector<casacore::Cube<casacore::Complex>> &){}
     virtual const casacore::Matrix<CStokesVector> & vis () const {static casacore::Matrix<CStokesVector> dummy; return dummy;}
     virtual void setVis (casacore::Matrix<CStokesVector> &) {}
     virtual const casacore::Cube<casacore::Complex> & visCubeCorrected () const {static casacore::Cube<casacore::Complex> dummy; return dummy;}
     virtual void setVisCubeCorrected (const casacore::Cube<casacore::Complex> &) {}
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesCorrected () const {static casacore::Vector<casacore::Cube<casacore::Complex>> dummy; return dummy;}
+    virtual void setVisCubesCorrected (const casacore::Vector<casacore::Cube<casacore::Complex>> &) {}
     virtual const casacore::Matrix<CStokesVector> & visCorrected () const {static casacore::Matrix<CStokesVector> dummy; return dummy;}
     virtual void setVisCorrected (const casacore::Matrix<CStokesVector> &) {}
     virtual const casacore::Cube<casacore::Float> & visCubeFloat () const {static casacore::Cube<casacore::Float> dummy; return dummy;}
     virtual void setVisCubeFloat (const casacore::Cube<casacore::Float> &) {}
+    virtual const casacore::Vector<casacore::Cube<casacore::Float>> & visCubesFloat () const {static casacore::Vector<casacore::Cube<casacore::Float>> dummy; return dummy;}
+    virtual void setVisCubesFloat (const casacore::Vector<casacore::Cube<casacore::Float>> &) {}
     virtual const casacore::Cube<casacore::Complex> & visCubeModel () const {static casacore::Cube<casacore::Complex> dummy; return dummy;}
     virtual void setVisCubeModel(const casacore::Complex & /*c*/) {}
     virtual void setVisCubeModel(const casacore::Cube<casacore::Complex>& /*vis*/) {}
     virtual void setVisCubeModel(const casacore::Vector<casacore::Float>& /*stokes*/) {}
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesModel () const {static casacore::Vector<casacore::Cube<casacore::Complex>> dummy; return dummy;}
+    virtual void setVisCubesModel(const casacore::Complex & /*c*/) {}
+    virtual void setVisCubesModel(const casacore::Vector<casacore::Cube<casacore::Complex>>& /*vis*/) {}
     virtual const casacore::Matrix<CStokesVector> & visModel () const {static casacore::Matrix<CStokesVector> dummy; return dummy;}
     virtual void setVisModel (casacore::Matrix<CStokesVector> &) {}
 
@@ -187,7 +208,7 @@ public:
 	virtual casacore::Int nAntennas () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nChannels () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nCorrelations () const {static casacore::Int dummy; return dummy;}
-	virtual casacore::Int nRows () const {static casacore::Int dummy; return dummy;}
+	virtual casacore::rownr_t nRows () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Float parang0(casacore::Double /*time*/) const {static casacore::Float dummy; return dummy;}
 	virtual casacore::Vector<casacore::Float> & parang(casacore::Double /*time*/) const {static casacore::Vector<casacore::Float> dummy; return dummy;}
 	virtual const casacore::MDirection& phaseCenter () const {static casacore::MDirection dummy; return dummy;}
@@ -222,7 +243,7 @@ protected:
     virtual void configureNewSubchunk (casacore::Int /*msId*/, const casacore::String & /*msName*/, casacore::Bool /*isNewMs*/,
                                        casacore::Bool /*isNewArrayId*/, casacore::Bool /*isNewFieldId*/,
                                        casacore::Bool /*isNewSpectralWindow*/, const vi::Subchunk & /*subchunk*/,
-                                       casacore::Int /*nRows*/, casacore::Int /*nChannels*/, casacore::Int /*nCorrelations*/,
+                                       casacore::rownr_t /*nRows*/, casacore::Int /*nChannels*/, casacore::Int /*nCorrelations*/,
                                        const casacore::Vector<casacore::Int> & /*correlations*/,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> &,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> &,
@@ -361,7 +382,7 @@ public:
 	const casacore::Vector<casacore::Int>& getChannelNumbers(casacore::Int rowInBuffer) const {return ctCache_p->getChannelNumbers(rowInBuffer);}
 	casacore::Vector<casacore::Int> getChannelNumbersSelected (casacore::Int /* outputChannelIndex */) const { throw casacore::AipsError ("Not Implemented");}
 	const casacore::Vector<casacore::Double>& getFrequencies(casacore::Int rowInBuffer,casacore::Int /*frame*/ = vi::VisBuffer2::FrameNotSpecified) const {return ctCache_p->getFrequencies(rowInBuffer);}
-	casacore::Int nRows() const {return ctCache_p->nRows();}
+	casacore::rownr_t nRows() const {return ctCache_p->nRows();}
 	casacore::Int nChannels() const {return ctCache_p->nChannels();}
 	casacore::Int nCorrelations() const {return ctCache_p->nCorrelations();}
 	const casacore::Vector<casacore::Int> &  spectralWindows () const {
@@ -381,13 +402,20 @@ public:
 	// Methods for efficient synchronization with CTIter
 	void invalidate() {ctCache_p->invalidate();}
 
-        casacore::Vector<bool>& flagRowRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::Cube<bool>& flagCubeRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::Cube<std::complex<float> >& visCubeRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::Cube<std::complex<float> >& visCubeCorrectedRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::Cube<std::complex<float> >& visCubeModelRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::Cube<float >& weightSpectrumRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
-        casacore::IPosition getShape () const { return casacore::IPosition ();}
+    casacore::Vector<bool>& flagRowRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<bool>& flagCubeRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<bool>>& flagCubesRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<std::complex<float> >& visCubeRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<std::complex<float>>>& visCubesRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<std::complex<float> >& visCubeCorrectedRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<std::complex<float>>>& visCubesCorrectedRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<std::complex<float> >& visCubeModelRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<std::complex<float>>>& visCubesModelRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<float >& sigmaSpectrumRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<float>>& sigmaSpectraRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Cube<float >& weightSpectrumRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::Vector<casacore::Cube<float>>& weightSpectraRef() {throw casacore::AipsError ("Not implemented " , __FILE__, __LINE__);}
+    casacore::IPosition getShape () const { return casacore::IPosition ();}
 
 private:
 

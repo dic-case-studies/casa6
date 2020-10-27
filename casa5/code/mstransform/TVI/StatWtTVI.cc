@@ -199,7 +199,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
             IPosition start(3, 0);
             IPosition stop(3, 0);
             IPosition step(3, 1);
-            for (uInt i=0; i<nrows; ++i) {
+            for (size_t i=0; i<nrows; ++i) {
                 auto row = chans.row(i);
                 const auto& spw = row[0];
                 if (_chanSelFlags.find(spw) == _chanSelFlags.end()) {

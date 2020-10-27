@@ -179,14 +179,28 @@ vi::ViImplementation2 * LayeredVi2Factory::createVi () const
 VisIterImpl2LayerFactory::VisIterImpl2LayerFactory(MeasurementSet* ms,
                                                    const IteratingParameters& pars,
                                                    Bool writable,
-						   Bool useMSIter2)
+                                                   Bool useMSIter2)
   : ViiLayerFactory(),
     ms_(ms),
     pars_(pars),
     writable_(writable),
-    useMSIter2_(useMSIter2)
+    useMSIter2_(useMSIter2),
+    fullSortingSpecification_p(false)
 {}
   
+VisIterImpl2LayerFactory::VisIterImpl2LayerFactory(casacore::MeasurementSet * ms,
+                                                   const SortColumns & chunkSortColumns,
+                                                   const SortColumns & subchunkSortColumns,
+                                                   bool writable)
+: ViiLayerFactory(),
+  ms_(ms),
+  writable_(writable),
+  useMSIter2_(false),
+  fullSortingSpecification_p(true),
+  chunkSortColumns_p(chunkSortColumns),
+  subchunkSortColumns_p(subchunkSortColumns)
+{}
+
 void VisIterImpl2LayerFactory::setFrequencySelections(std::shared_ptr<FrequencySelections> selections)
 {
     frequencySelections_p = selections;
@@ -199,11 +213,19 @@ ViImplementation2 * VisIterImpl2LayerFactory::createInstance (ViImplementation2*
   //  Assert(!vii0);
   
   // Make it and return it
-  ViImplementation2 *vii = new VisibilityIteratorImpl2(Block<const MeasurementSet*>(1,ms_),
-                                                       pars_.getSortColumns(),
-                                                       pars_.getChunkInterval(),
-                                                       writable_,
-						       useMSIter2_); 
+  ViImplementation2 *vii;
+  if(fullSortingSpecification_p)
+      vii = new VisibilityIteratorImpl2(Block<const MeasurementSet*>(1,ms_),
+                                        chunkSortColumns_p,
+                                        subchunkSortColumns_p,
+                                        writable_);
+
+  else
+      vii = new VisibilityIteratorImpl2(Block<const MeasurementSet*>(1,ms_),
+                                        pars_.getSortColumns(),
+                                        pars_.getChunkInterval(),
+                                        writable_,
+                                        useMSIter2_);
   
   if(frequencySelections_p)
       vii->setFrequencySelections(*frequencySelections_p);

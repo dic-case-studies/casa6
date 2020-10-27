@@ -670,7 +670,7 @@ VisBufferWrapperAsync2::nCorrelations () const
     return wrappedVb_p->nCorrelations ();
 }
 
-Int
+rownr_t
 VisBufferWrapperAsync2::nRows () const
 {
     return wrappedVb_p->nRows ();

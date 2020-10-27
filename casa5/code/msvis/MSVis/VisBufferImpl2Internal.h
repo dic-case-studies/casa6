@@ -32,7 +32,7 @@ namespace vi {
 
 // Possible array shapes of data coming from the main table cells.
 
-typedef enum {NoCheck, Nr, NfNr, NcNr, NcNfNr, NcNfNcatNr, I3Nr, N_ShapePatterns} ShapePattern;
+typedef enum {NoCheck, Nr, NfNr, NcNr, NcNfNr, Ns, NsNcNr, NsNcNfNr, NcNfNcatNr, I3Nr, N_ShapePatterns} ShapePattern;
 
 class VisBufferCache;
 
@@ -69,7 +69,6 @@ public:
     virtual casacore::Bool isPresent () const = 0;
     virtual casacore::Bool isShapeOk () const = 0;
     virtual void resize (casacore::Bool /*copyValues*/) {}
-    virtual void resizeRows (casacore::Int /*newNRows*/) {}
     virtual void setDirty () = 0;
     virtual casacore::String shapeErrorMessage () const = 0;
 
@@ -525,24 +524,6 @@ public:
         }
     }
 
-    void
-    resizeRows (casacore::Int newNRows)
-    {
-        casacore::IPosition shape = this->getItem().shape();
-
-        if (shapePattern_p != NoCheck){
-
-            // Change the last dimension to be the new number of rows,
-            // then resize, copying values.
-
-            shape.last() = newNRows;
-
-            this->getItem().resize (shape, true);
-
-            this->setDirty();
-        }
-    }
-
     virtual void
     set (const T & newItem)
     {
@@ -663,6 +644,431 @@ private:
     ShapePattern shapePattern_p;
 };
 
+template <typename T, casacore::Bool IsComputed = false>
+class VbCacheItemVectorInt : public VbCacheItem<T, IsComputed> {
+public:
+
+    typedef typename VbCacheItem<T>::Filler Filler;
+    typedef typename T::value_type ElementType;
+
+    VbCacheItemVectorInt(bool isMutable = false)
+    : VbCacheItem<T, IsComputed> (isMutable), shapePattern_p (NoCheck) {}
+    virtual ~VbCacheItemVectorInt () {}
+
+    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate) {} // no-op
+
+    virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow) {} //no-op
+
+    void
+    initialize (VisBufferCache * cache,
+                VisBufferImpl2 * vb,
+                Filler filler,
+                VisBufferComponent2 component,
+                ShapePattern shapePattern,
+                casacore::Bool isKey) //DONE
+    {
+        VbCacheItem<T, IsComputed>::initialize (cache, vb, filler, component, isKey);
+        shapePattern_p = shapePattern;
+    }
+
+
+    virtual casacore::Bool
+    isShapeOk () const //DONE
+    {
+        // Check to see if the shape of this data item is consistent
+        // with the expected shape.
+
+        casacore::Bool result = shapePattern_p == NoCheck;
+        result = result || this->getItem().size() ==
+            this->getVb()->getValidVectorShapes(shapePattern_p).size();
+        return result;
+    }
+
+
+    casacore::Bool isArray () const
+    {
+        return false;
+    }
+
+    void
+    resize (casacore::Bool copyValues) //DONE
+    {
+        if (shapePattern_p != NoCheck){
+
+            auto desiredShape = this->getVb()->getValidVectorShapes (shapePattern_p);
+
+            this->getItem().resize(desiredShape.size(), copyValues);
+
+            if (! copyValues){
+                this->getItem() = typename T::value_type();
+            }
+
+        }
+    }
+
+    virtual void
+    set (const T & newItem) //DONE
+    {
+        ThrowIf (! this->isMutable() && ! this->getVb()->isWritable (), "This VisBuffer is readonly");
+
+        ThrowIf (this->isKey() && ! this->getVb()->isRekeyable (),
+                 "This VisBuffer is does not allow row key values to be changed.");
+
+        // Now check for a conformant shape.
+        if(shapePattern_p != NoCheck)
+            ThrowIf (this->getItem().size() != newItem.size(),
+                    "Invalid parameter shape:: " + sizeErrorMessage (newItem.size()));
+
+        VbCacheItem<T,IsComputed>::set (newItem);
+    }
+
+    template <typename U>
+    void
+    set (const U & newItem) //DONE
+    {
+        if (! this->isPresent()){ // Not present so give it a shape
+            auto desiredShape = this->getVb()->getValidVectorShapes (shapePattern_p);
+            T item(desiredShape.size());
+            set (T (item));
+        }
+
+        VbCacheItem<T,IsComputed>::set (newItem);
+    }
+
+protected:
+
+
+    virtual casacore::String
+    sizeErrorMessage (casacore::Int badSize) const
+    {
+        std::ostringstream os;
+
+        os << "VisBuffer::ShapeError: "
+           << VisBufferComponents2::name (this->getComponent())
+           << " should have shape "
+           << this->getVb()->getValidVectorShapes(shapePattern_p).size()
+           << " but had shape "
+           << badSize;
+
+        return os.str();
+    }
+
+    void
+    assign (T & dst, const T & src) //DONE
+    {
+        dst.assign (src);
+    }
+
+private:
+
+    ShapePattern shapePattern_p;
+};
+
+template <typename T, casacore::Bool IsComputed = false>
+class VbCacheItemVectorArray : public VbCacheItem<T, IsComputed> {
+public:
+
+    typedef typename VbCacheItem<T>::Filler Filler;
+    typedef typename T::value_type::value_type ElementType;
+
+    VbCacheItemVectorArray(bool isMutable = false)
+    : VbCacheItem<T, IsComputed> (isMutable), shapePattern_p (NoCheck) {}
+    virtual ~VbCacheItemVectorArray () {}
+
+    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate)
+    {
+        casacore::IPosition shape = this->getItem().shape();
+        casacore::Int nDims = shape.size();
+        (void)truncate;
+        // Only used when time averaging
+        if (shapePattern_p == NoCheck){
+            // This item is empty or unfillable so leave it alone.
+        }
+        else
+        {
+            resize(true);
+            resizeRows(nRows);
+        }
+    }
+
+    virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow)
+    {
+        copyRowElementAux (this->getItem(), sourceRow, destinationRow);
+    }
+
+    void
+    initialize (VisBufferCache * cache,
+                VisBufferImpl2 * vb,
+                Filler filler,
+                VisBufferComponent2 component,
+                ShapePattern shapePattern,
+                casacore::Bool isKey)
+    {
+        VbCacheItem<T, IsComputed>::initialize (cache, vb, filler, component, isKey);
+        shapePattern_p = shapePattern;
+    }
+
+
+    virtual casacore::Bool
+    isShapeOk () const
+    {
+        // Check to see if the shape of this data item is consistent
+        // with the expected shape.
+
+        casacore::Bool result = shapePattern_p == NoCheck;
+        result = result || this->getItem().size() ==
+            this->getVb()->getValidVectorShapes(shapePattern_p).size();
+        if (result)
+        {
+            for (size_t iElem = 0 ; iElem < this->getItem().size(); ++iElem)
+                result = result ||
+                    this->getItem()[iElem].shape() == this->getVb()->getValidVectorShapes (shapePattern_p)[iElem];
+        }
+        return result;
+    }
+
+
+    casacore::Bool isArray () const
+    {
+        return true;
+    }
+
+    void
+    resize (casacore::Bool copyValues)
+    {
+        if (shapePattern_p != NoCheck){
+
+            auto desiredShape = this->getVb()->getValidVectorShapes (shapePattern_p);
+
+            this->getItem().resize(desiredShape.size(), copyValues);
+            for (size_t iElem = 0 ; iElem < this->getItem().size(); ++iElem)
+                this->getItem()[iElem].resize(desiredShape[iElem], copyValues);
+
+            if (! copyValues){
+                for (size_t iElem = 0 ; iElem < this->getItem().size(); ++iElem)
+                    this->getItem()[iElem] = typename T::value_type::value_type();
+            }
+
+        }
+    }
+
+    void
+    resizeRows (casacore::Int newNRows)
+    {
+        if (shapePattern_p != NoCheck){
+            // This will count the rows of each array and as soon as the number of rows exceeds
+            // the requested one it will resize (shrink) that array. If the total number of rows is
+            // less than the requested one, then the last array is resized (expanded).
+            int nCumRows=0;
+            size_t iElem;
+            for (iElem = 0 ; iElem < this->getItem().size(); ++iElem)
+            {
+                auto & thisShape = this->getItem()[iElem].shape();
+                nCumRows += thisShape.last();
+                if (nCumRows > newNRows)
+                {
+                    casacore::IPosition newShape = thisShape;
+                    newShape.last() = newNRows - (nCumRows - thisShape.last());
+                    this->getItem()[iElem].resize (newShape, true);
+                    break;
+                }
+            }
+            if (nCumRows < newNRows)
+            {
+                casacore::IPosition lastArrayShape = this->getItem()[this->getItem().size()-1].shape();
+                casacore::IPosition newShape = lastArrayShape;
+                newShape.last() = newNRows - nCumRows;
+                this->getItem()[this->getItem().size()-1].resize (newShape, true);
+            }
+            else
+                this->getItem().resize(iElem, true);
+
+            this->setDirty();
+        }
+    }
+
+    virtual void
+    set (const T & newItem)
+    {
+        ThrowIf (! this->isMutable() && ! this->getVb()->isWritable (), "This VisBuffer is readonly");
+
+        ThrowIf (this->isKey() && ! this->getVb()->isRekeyable (),
+                 "This VisBuffer is does not allow row key values to be changed.");
+
+        // Now check for a conformant shape.
+        if(shapePattern_p != NoCheck)
+        {
+            ThrowIf (this->getItem().size() != newItem.size(),
+                    "Invalid parameter shape:: " + sizeErrorMessage (newItem.size()));
+            for (size_t iElem = 0 ; iElem < this->getItem().size(); ++iElem)
+                ThrowIf (this->getItem()[iElem].shape() != newItem[iElem].shape(),
+                        "Invalid parameter shape:: " + shapeErrorMessage (iElem, &(newItem[iElem].shape())));
+        }
+
+        VbCacheItem<T,IsComputed>::set (newItem);
+    }
+
+    template <typename U>
+    void
+    set (const U & newItem)
+    {
+        if (! this->isPresent()){ // Not present so give it a shape
+            auto desiredShape = this->getVb()->getValidVectorShape (shapePattern_p);
+            T item(desiredShape.size());
+            for (size_t iElem = 0 ; iElem < item.size(); ++iElem)
+                item[iElem].resize(desiredShape[iElem]);
+
+            set (T (item));
+        }
+
+        VbCacheItem<T,IsComputed>::set (newItem);
+    }
+
+protected:
+
+    virtual casacore::String
+    shapeErrorMessage (casacore::Int i, const casacore::IPosition * badShape = 0) const
+    {
+
+        ThrowIf (shapePattern_p == NoCheck,
+                 "No shape error message for NoCheck type array");
+
+        ThrowIf (isShapeOk () && badShape == 0,
+                "Shape is OK so no error message.");
+
+        casacore::String badShapeString = (badShape != 0) ? badShape->toString()
+                                                : this->getItem()[i].shape().toString();
+
+        std::ostringstream os;
+
+        os << "VisBuffer::ShapeError: "
+           << VisBufferComponents2::name (this->getComponent())
+           << " should have shape "
+           << this->getVb()->getValidVectorShapes(shapePattern_p)[i].toString()
+           << " but had shape "
+           << badShapeString;
+
+        return os.str();
+    }
+
+    virtual casacore::String
+    sizeErrorMessage (casacore::Int badSize) const
+    {
+        std::ostringstream os;
+
+        os << "VisBuffer::ShapeError: "
+           << VisBufferComponents2::name (this->getComponent())
+           << " should have shape "
+           << this->getVb()->getValidVectorShapes(shapePattern_p).size()
+           << " but had shape "
+           << badSize;
+
+        return os.str();
+    }
+
+    static void
+    copyRowElementAux (casacore::Vector<casacore::Cube<typename T::value_type::value_type>> & cubeVector, casacore::Int sourceRow, casacore::Int destinationRow)
+    {
+        int nCumRows=0, sourceCube =-1, destinationCube = -1;
+        int sourceCubeRow, destinationCubeRow;
+        for (size_t iCube = 0 ; iCube < cubeVector.size(); ++iCube)
+        {
+            auto & thisShape = cubeVector[iCube].shape();
+            nCumRows += thisShape.last();
+            if (nCumRows < sourceCube)
+            {
+                sourceCube = iCube;
+                sourceCubeRow = sourceRow - nCumRows;
+            }
+            if (nCumRows < destinationCube)
+            {
+                destinationCube = iCube;
+                destinationCubeRow = destinationRow - nCumRows;
+            }
+        }
+
+        ThrowIf (sourceCube != destinationCube || sourceCube == -1 || destinationCube == -1,
+                 "Copying rows between incompatible cubes is not allowed");
+
+        casacore::IPosition shape = cubeVector[sourceCube].shape();
+        casacore::Int nI = shape(1);
+        casacore::Int nJ = shape(0);
+
+        for (casacore::Int i = 0; i < nI; i++){
+            for (casacore::Int j = 0; j < nJ; j++){
+                cubeVector[destinationCube] (j, i, destinationCubeRow) = cubeVector[sourceCube] (j, i, sourceCubeRow);
+            }
+        }
+    }
+
+    static void
+    copyRowElementAux (casacore::Vector<casacore::Matrix<typename T::value_type::value_type>> & matrixVector, casacore::Int sourceRow, casacore::Int destinationRow)
+    {
+        int nCumRows=0, sourceMatrix =-1, destinationMatrix = -1;
+        int sourceMatrixRow, destinationMatrixRow;
+        for (casacore::Int iMatrix = 0 ; iMatrix < matrixVector.size(); ++iMatrix)
+        {
+            auto & thisShape = matrixVector[iMatrix].shape();
+            nCumRows += thisShape.last();
+            if (nCumRows < sourceMatrix)
+            {
+                sourceMatrix = iMatrix;
+                sourceMatrixRow = sourceRow - nCumRows;
+            }
+            if (nCumRows < destinationMatrix)
+            {
+                destinationMatrix = iMatrix;
+                destinationMatrixRow = destinationRow - nCumRows;
+            }
+        }
+
+        ThrowIf (sourceMatrix != destinationMatrix || sourceMatrix == -1 || destinationMatrix == -1,
+                 "Copying rows between incompatible matrices is not allowed");
+
+        casacore::IPosition shape = matrixVector[sourceMatrix].shape();
+        casacore::Int nJ = shape(0);
+
+        for (casacore::Int j = 0; j < nJ; j++){
+            matrixVector[destinationMatrix] (j, destinationMatrixRow) = matrixVector[sourceMatrix] (j, sourceMatrixRow);
+        }
+    }
+   
+    static void
+    copyRowElementAux (casacore::Vector<casacore::Vector<typename T::value_type::value_type>> & vectorVector, casacore::Int sourceRow, casacore::Int destinationRow)
+    {
+        int nCumRows=0, sourceVector =-1, destinationVector = -1;
+        int sourceVectorRow, destinationVectorRow;
+        for (size_t iVector = 0 ; iVector < vectorVector.size(); ++iVector)
+        {
+            auto & thisShape = vectorVector[iVector].shape();
+            nCumRows += thisShape.last();
+            if (nCumRows < sourceVector)
+            {
+                sourceVector = iVector;
+                sourceVectorRow = sourceRow - nCumRows;
+            }
+            if (nCumRows < destinationVector)
+            {
+                destinationVector = iVector;
+                destinationVectorRow = destinationRow - nCumRows;
+            }
+        }
+
+        ThrowIf (sourceVector != destinationVector || sourceVector == -1 || destinationVector == -1,
+                 "Copying rows between incompatible matrices is not allowed");
+
+        vectorVector[destinationVector] (destinationVectorRow) = vectorVector[sourceVector] (sourceVectorRow);
+    }
+
+
+private:
+
+    ShapePattern shapePattern_p;
+};
+
+
+
+
 class VisBufferCache {
 
     // Holds the cached values for a VisBuffer object.
@@ -683,6 +1089,7 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Int> > arrayId_p;
     VbCacheItemArray <casacore::Vector<casacore::SquareMatrix<casacore::Complex, 2> >, true> cjones_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > correctedVisCube_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Complex>>> correctedVisCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > correctedVisibility_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > corrType_p;
     VbCacheItem <casacore::Int> dataDescriptionId_p;
@@ -697,16 +1104,24 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Int> > fieldId_p;
 //    VbCacheItemArray <casacore::Matrix<casacore::Bool> > flag_p;
     VbCacheItemArray <casacore::Array<casacore::Bool> > flagCategory_p;
+    VbCacheItemArray <casacore::Vector<casacore::Array<casacore::Bool>>> flagCategories_p;
     VbCacheItemArray <casacore::Cube<casacore::Bool> > flagCube_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Bool>>> flagCubes_p;
     VbCacheItemArray <casacore::Vector<casacore::Bool> > flagRow_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > floatDataCube_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Float>>> floatDataCubes_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > imagingWeight_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > modelVisCube_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Complex>>> modelVisCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > modelVisibility_p;
     VbCacheItem <casacore::Int> nAntennas_p;
     VbCacheItem <casacore::Int> nChannels_p;
     VbCacheItem <casacore::Int> nCorrelations_p;
     VbCacheItem <casacore::Int> nRows_p;
+    VbCacheItem <casacore::Int> nShapes_p;
+    VbCacheItemVectorInt <casacore::Vector<casacore::rownr_t>> nRowsPerShape_p;
+    VbCacheItemVectorInt <casacore::Vector<casacore::Int>> nChannelsPerShape_p;
+    VbCacheItemVectorInt <casacore::Vector<casacore::Int>> nCorrelationsPerShape_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > observationId_p;
     VbCacheItem <casacore::MDirection> phaseCenter_p;
     VbCacheItem <casacore::Int> polFrame_p;
@@ -715,6 +1130,7 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::rownr_t> > rowIds_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > scan_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > sigma_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Matrix<casacore::Float>>> sigmas_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > sigmaMat_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > spectralWindows_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > stateId_p;
@@ -723,11 +1139,15 @@ public:
     VbCacheItemArray <casacore::Vector<casacore::Double> > timeInterval_p;
     VbCacheItemArray <casacore::Matrix<casacore::Double> > uvw_p;
     VbCacheItemArray <casacore::Cube<casacore::Complex> > visCube_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Complex>>> visCubes_p;
 //    VbCacheItemArray <casacore::Matrix<CStokesVector> > visibility_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > weight_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Matrix<casacore::Float>>> weights_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > weightMat_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > weightSpectrum_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Float>>> weightSpectra_p;
     VbCacheItemArray <casacore::Cube<casacore::Float> > sigmaSpectrum_p;
+    VbCacheItemVectorArray <casacore::Vector<casacore::Cube<casacore::Float>>> sigmaSpectra_p;
 
     CacheRegistry registry_p;
 
@@ -842,6 +1262,7 @@ public:
       msId_p (-1),
       pointingTableLastRow_p (-1),
       validShapes_p (N_ShapePatterns),
+      validVectorShapes_p (N_ShapePatterns),
       vi_p (0),
       visModelData_p (0),
       weightScaling_p ( )
@@ -870,6 +1291,7 @@ public:
     mutable casacore::Int pointingTableLastRow_p;
     Subchunk subchunk_p;
     casacore::Vector<casacore::IPosition> validShapes_p;
+    casacore::Vector<casacore::Vector<casacore::IPosition>> validVectorShapes_p;
     ViImplementation2 * vi_p; // [use]
     mutable VisModelDataI * visModelData_p;
     casacore::CountedPtr <WeightScaling> weightScaling_p;

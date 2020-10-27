@@ -666,6 +666,12 @@ void SimpleSimVi2::flag (Cube<Bool> & flags) const {
   flags.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
   flags.set(false);
 }
+
+void SimpleSimVi2::flag (Vector<Cube<Bool>> & flags) const {
+  flags.resize(1);
+  this->flag(flags[0]);
+}
+
 void SimpleSimVi2::flagRow (Vector<Bool> & rowflags) const { rowflags.resize(nRows()); rowflags.set(false); }
 void SimpleSimVi2::observationId (Vector<Int> & obsids) const { obsids.resize(nRows()); obsids.set(0); }
 Int SimpleSimVi2::polarizationId () const { return 0; }
@@ -678,6 +684,7 @@ void SimpleSimVi2::stateId (Vector<Int> & stateids) const { stateids.resize(nRow
 
 Int SimpleSimVi2::spectralWindow () const { return thisSpw_; }
 void SimpleSimVi2::spectralWindows (Vector<Int> & spws) const { spws.resize(nRows()); spws.set(thisSpw_); }
+void SimpleSimVi2::polarizationIds (Vector<Int> & polIds) const { polIds.resize(nRows()); polIds.set(0);}
 void SimpleSimVi2::time (Vector<Double> & t) const { t.resize(nRows()); t.set(thisTime_); }
 void SimpleSimVi2::timeCentroid (Vector<Double> & t) const { t.resize(nRows()); t.set(thisTime_); }
 
@@ -688,11 +695,23 @@ void SimpleSimVi2::visibilityCorrected (Cube<Complex> & vis) const {
   // from DATA, for now
   this->visibilityObserved(vis);
 }
+
+void SimpleSimVi2::visibilityCorrected (Vector<Cube<Complex>> & vis) const {
+  vis.resize(1);
+  this->visibilityCorrected(vis[0]);
+}
+
 void SimpleSimVi2::visibilityModel (Cube<Complex> & vis) const {
   vis.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
   for (int icor=0;icor<pars_.nCorr_;++icor)
     vis(Slice(icor),Slice(),Slice()).set(vis0_(icor,thisField_));
 }
+
+void SimpleSimVi2::visibilityModel (Vector<Cube<Complex>> & vis) const {
+  vis.resize(1);
+  this->visibilityModel(vis[0]);
+}
+
 void SimpleSimVi2::visibilityObserved (Cube<Complex> & vis) const {
   // get basic signals from model
   this->visibilityModel(vis);
@@ -722,13 +741,18 @@ void SimpleSimVi2::visibilityObserved (Cube<Complex> & vis) const {
       specvis.reference(vis(Slice(icorr),Slice(),Slice(irow)));
       specvis*=sqrt( G(icorr/2,a1(irow)) * G(icorr%2,a2(irow)) );
       if (pars_.doNorm_) 
-	specvis/=sqrt( Tsys(icorr/2,a1(irow)) * Tsys(icorr%2,a2(irow)) );
+    specvis/=sqrt( Tsys(icorr/2,a1(irow)) * Tsys(icorr%2,a2(irow)) );
     }
   }
 
   // Now add noise
   if (pars_.doNoise_)
     this->addNoise(vis);
+}
+
+void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
+    vis.resize(1);
+    this->visibilityObserved(vis[0]);
 }
 
 void SimpleSimVi2::floatData (Cube<Float> & fcube) const {
@@ -740,6 +764,11 @@ void SimpleSimVi2::floatData (Cube<Float> & fcube) const {
   // TBD
 }
 
+void SimpleSimVi2::floatData (Vector<Cube<Float>> & fcubes) const {
+  fcubes.resize(1);
+  this->floatData(fcubes[0]);
+}
+
 IPosition SimpleSimVi2::visibilityShape () const { return IPosition(3,pars_.nCorr_,pars_.nChan_(thisSpw_),nRows()); }
 
 void SimpleSimVi2::sigma (Matrix<Float> & sigmat) const {
@@ -748,6 +777,12 @@ void SimpleSimVi2::sigma (Matrix<Float> & sigmat) const {
   this->weight(wtmat);
   sigmat=(1.f/sqrt(wtmat));
 }
+
+void SimpleSimVi2::sigma (Vector<Matrix<Float>> & sigmat) const {
+  sigmat.resize(1);
+  this->sigma(sigmat[0]);
+}
+
 void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
   wtmat.resize(pars_.nCorr_,nRows());
   wtmat.set(wt0_(thisSpw_)); // spw-specific
@@ -756,15 +791,22 @@ void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
   for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
     for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
       if (i!=j) {
-	Array<Float> thiswtmat(wtmat(Slice(),Slice(k)));
-	thiswtmat*=Float(2.0);
+    Array<Float> thiswtmat(wtmat(Slice(),Slice(k)));
+    thiswtmat*=Float(2.0);
       }
       ++k;
     }
   }
 }
+
+void SimpleSimVi2::weight (Vector<Matrix<Float>> & wtmat) const {
+  wtmat.resize(1);
+  this->weight(wtmat[0]);
+}
+
 Bool SimpleSimVi2::weightSpectrumExists () const { return true; }
 Bool SimpleSimVi2::sigmaSpectrumExists () const { return true; } 
+
 void SimpleSimVi2::weightSpectrum (Cube<Float> & wtsp) const {
   wtsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
   wtsp.set(wt0_(thisSpw_));
@@ -782,21 +824,27 @@ void SimpleSimVi2::weightSpectrum (Cube<Float> & wtsp) const {
     for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
       // non-ACs have twice wt0_
       if (i!=j) {
-	Array<Float> thiswtsp(wtsp(Slice(),Slice(),Slice(k)));
-	thiswtsp*=Float(2.0);
+        Array<Float> thiswtsp(wtsp(Slice(),Slice(),Slice(k)));
+        thiswtsp*=Float(2.0);
       }
 
       if (!pars_.doNorm_) {
-	for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
-	  Array<Float> thiswt(wtsp(Slice(icorr),Slice(),Slice(k)));
-	  Float c= Tsys(icorr/2,a1(k))*Tsys(icorr%2,a2(k));
-	  thiswt/=c;
-	}
+        for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
+          Array<Float> thiswt(wtsp(Slice(icorr),Slice(),Slice(k)));
+          Float c= Tsys(icorr/2,a1(k))*Tsys(icorr%2,a2(k));
+          thiswt/=c;
+        }
       }
       ++k;
     }
   }
 }
+
+void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
+  wtsp.resize(1);
+  this->weightSpectrum(wtsp[0]);
+}
+
 void SimpleSimVi2::sigmaSpectrum (Cube<Float> & sigsp) const {
   sigsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
   Cube<Float> wtsp;
@@ -804,6 +852,10 @@ void SimpleSimVi2::sigmaSpectrum (Cube<Float> & sigsp) const {
   sigsp=(1.f/sqrt(wtsp));
 }
 
+void SimpleSimVi2::sigmaSpectrum (Vector<Cube<Float>> & sigsp) const {
+  sigsp.resize(1);
+  this->sigmaSpectrum(sigsp[0]);
+}
 
 const casacore::Vector<casacore::Float>& SimpleSimVi2::feed_pa (casacore::Double t) const
 { 
