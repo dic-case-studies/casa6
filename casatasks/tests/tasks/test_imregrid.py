@@ -1,16 +1,42 @@
+from __future__ import print_function
+import sys
+import traceback
 import os
 import shutil
-import numpy
+import random
+import re
+import time
+import numpy as np
+import glob
+import struct
 import unittest
 
-from casatools import ctsys, image, regionmanager, coordsys, measures, componentlist, table, quanta
-from casatasks import imregrid, imstat
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatools import ctsys, image, regionmanager, table
+    from casatasks import immath, casalog
+    _ia = image()
+    _rg = regionmanager()
+    _cs = coordsys()
+    _tb = table()
+    ctsys_resolve = ctsys.resolve
+else:
+    import casac
+    from tasks import *
+    from taskinit import *
+    _ia = iatool()
+    _rg = rgtool()
+    _cs = cstool()
+    _tb = tbtool()
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
-_tb = table( )
-_ia = image( )
-_rg = regionmanager( )
-_cs = coordsys( )
-_qa = quanta( )
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
+
+sep = os.sep
+datapath = ctsys_resolve(os.path.join('regression','unittest','imregrid'))
 
 IMAGE = 'image.im'
 gim = "gaussian_source.im"
@@ -19,8 +45,6 @@ total = 0
 fail  = 0
 current_test =""
 stars = "*************"
-
-datapath = 'regression/unittest/imregrid'
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -56,7 +80,7 @@ def alleqnum(x,num,tolerance=0):
 def test_start(msg):
     global total, current_test
     total += 1
-    print( )
+    print()
     print(stars + " Test " + msg + " start " + stars)
     current_test = msg
     
@@ -79,10 +103,10 @@ out6 = 'gal_coords.im'
 class imregrid_test(unittest.TestCase):
 
     def setUp(self):
-        self._myia = image( )
+        pass
     
     def tearDown(self):
-        self._myia.done()
+        _ia.done()
         
         for i in (IMAGE, out1, out2, out3, out4, out5, out6):
             if (os.path.exists(i)):
@@ -91,7 +115,7 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue(len(_tb.showcache()) == 0)
         
     def test1(self):    
-        myia = self._myia  
+        myia = _ia  
         myia.maketestimage(outfile = IMAGE)
         
         outim=imregrid(
@@ -118,8 +142,10 @@ class imregrid_test(unittest.TestCase):
                 p2 = im2.pixelvalue([x, y])
                 if p1['mask'] != p2['mask']:
                     raise Exception(p1['mask'] + ' != ' + p2['mask'])
-                if p1['value']['value'] != p2['value']['value']: raise Exception(p1['value']['value'] + ' != ' + p2['value']['value'])
-                if p1['value']['unit'] != p2['value']['unit']: raise Exception(p1['value']['unit'] + ' != ' + p2['value']['unit'])
+                if p1['value']['value'] != p2['value']['value']:
+                    raise Exception(p1['value']['value'] + ' != ' + p2['value']['value'])
+                if p1['value']['unit'] != p2['value']['unit']:
+                    raise Exception(p1['value']['unit'] + ' != ' + p2['value']['unit'])
                 checked += 3
         
         im2.done()
@@ -249,20 +275,22 @@ class imregrid_test(unittest.TestCase):
                 if (  os.path.exists(out1 ) ):
                     shutil.rmtree( out1 )
                     try:
-                        outim=imregrid(imagename = IMAGE,
-                                       template = out5,
-                                       output = out1)
+                        imregrid(
+                            imagename=IMAGE, template=out5,
+                            output=out1
+                        )
                     except RuntimeError as exc:
-                        if not 'All output pixels are masked' in str(exc):
-                            raise
-
+                        self.assertTrue(
+                            'All output pixels are masked' in str(exc),
+                            'Wrong error'
+                        )
         self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_axes(self):
         imagename = "test_axes.im"
         templatename = "test_axes.tmp"
         output = "test_axes.out"
-        myia = self._myia
+        myia = _ia
         myia.fromshape(imagename, [10, 10, 10])
         exp = myia.coordsys().increment()["numeric"]
         myia.fromshape(templatename, [10, 10, 10])
@@ -357,7 +385,7 @@ class imregrid_test(unittest.TestCase):
     def test_get(self):
         """Test using template='get' works"""
         tempfile = "xyz.im"
-        myia = self._myia 
+        myia = _ia 
         myia.fromshape(tempfile,[20,20,20])
         dicttemp = imregrid(tempfile, template="get")
         dicttemp['csys']['direction0']['crpix'] = [2.5, 2.5]
@@ -368,7 +396,7 @@ class imregrid_test(unittest.TestCase):
     def test_interpolate(self):
         """Test interpolation parameter is recognized"""
         imagename = "zzx.im"
-        myia = self._myia
+        myia = _ia
         myia.fromshape(imagename, [30, 30])
         csys = myia.coordsys()
         incr = csys.increment()['numeric']
@@ -393,7 +421,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_default_shape(self):
         """ Verify default shape is what users have requested, CAS-4959"""
-        myia = self._myia
+        myia = _ia
         imagename = "myim.im"
         myia.fromshape(imagename,[20,20,20])
         template = "mytemp.im"
@@ -426,7 +454,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_axis_recognition(self):
         """Test that imregrid recognizes axis by type, not position"""
-        myia = self._myia
+        myia = _ia
         target = "target.im"
         myia.fromshape(target, [4,4,2,30])
         template = "template.im"
@@ -449,7 +477,7 @@ class imregrid_test(unittest.TestCase):
 
     def test_no_output_stokes(self):
         """Test rule that if input image has no stokes and template image has stokes, output image has no stokes"""
-        myia = self._myia
+        myia = _ia
         imagename = "aa.im"
         myia.fromshape(imagename, [20, 20, 20], overwrite=True)
         template = "aa_temp.im"
@@ -470,7 +498,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_no_template_stokes(self):
         """Test rule that if input image has stokes and template image does not have stokes, output image has stokes"""
-        myia = self._myia
+        myia = _ia
         imagename = "ab.im"
         myia.fromshape(imagename, [20, 20, 2, 20])
         template = "ab_temp.im"
@@ -520,7 +548,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_degenerate_template_stokes_axis_and_input_stokes_length_gt_0(self):
         """Verify correct behavior for the template image having a degenerate stokes axis"""
-        myia = self._myia
+        myia = _ia
         imagename = "ac.im"
         myia.fromshape(imagename, [20, 20, 2, 20])
         template = "ac_temp.im"
@@ -563,7 +591,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_template_stokes_length_gt_1_and_input_stokes_length_gt_0(self):
         """Verify correct behavior for the template image having a stokes axis of length > 1"""
-        myia = self._myia
+        myia = _ia
         imagename = "ad.im"
         myia.fromshape(imagename, [20, 20, 4, 20])
         template = "ad_temp.im"
@@ -631,7 +659,7 @@ class imregrid_test(unittest.TestCase):
     
     def test_no_input_spectral(self):
         """Verify if input image has no spectral axis, output will not have spectral axis"""
-        myia = self._myia
+        myia = _ia
         imagename = "ae.im"
         myia.fromshape(imagename, [20, 20, 4])
         template = "ae_temp.im"
@@ -652,7 +680,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_no_template_spectral_axis(self):
         """Verify behavior for when template has no spectral axis, but input does"""
-        myia = self._myia
+        myia = _ia
         imagename = "af.im"
         myia.fromshape(imagename, [20, 20, 4, 20])
         template = "af_temp.im"
@@ -679,7 +707,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_degenerate_template_spectral_axis(self):
         """Verify correct behavior for when template has a degenerate spectral axis"""
-        myia = self._myia
+        myia = _ia
         imagename = "ag.im"
         myia.fromshape(imagename, [20, 20, 4, 20])
         template = "ag_temp.im"
@@ -722,7 +750,7 @@ class imregrid_test(unittest.TestCase):
     
     def test_degenerate_input_spectral_axis(self):
         """Verify correct behavior for when input has a degenerate spectral axis"""
-        myia = self._myia
+        myia = _ia
         imagename = "ah.im"
         myia.fromshape(imagename, [20, 20, 4, 1])
         template = "ah_temp.im"
@@ -771,7 +799,7 @@ class imregrid_test(unittest.TestCase):
     
     def test_bad_shape(self):
         """ Verify that bad shape specification results in exception"""
-        myia = self._myia
+        myia = _ia
         imagename = "aj.im"
         myia.fromshape(imagename, [20, 20, 1, 1])
         template = "aj_temp.im"
@@ -790,7 +818,7 @@ class imregrid_test(unittest.TestCase):
     
     def test_nested_image(self):
         """ Verify that one image which lies completely inside the other will not cause failure"""
-        myia = self._myia
+        myia = _ia
         imagename = "ak.im"
         myia.fromshape(imagename, [20, 20])
         csys = myia.coordsys()
@@ -818,7 +846,7 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue(os.path.exists(output))
 
     def test_template_stokes_length_and_input_stokes_length_gt_1(self):
-        myia = self._myia
+        myia = _ia
         my_image = numpy.zeros([128,128,32,4])
         os.system("rm -rf fake.image")
         myia.fromarray(
@@ -851,7 +879,7 @@ class imregrid_test(unittest.TestCase):
         
     def test_CAS_8345(self):
         """verify fix to CAS-8345, channels not replicating properly"""
-        myia = self._myia
+        myia = _ia
         iname = "CAS_8345.im"
         myia.fromshape(iname, [20, 20, 10])
         myia.addnoise()
@@ -876,7 +904,7 @@ class imregrid_test(unittest.TestCase):
                 
     def test_history(self):
         """Test history writing"""
-        myia = self._myia
+        myia = _ia
         imagename = "zz.im"
         myia.fromshape(imagename, [20, 20, 10])
         myia.done()
