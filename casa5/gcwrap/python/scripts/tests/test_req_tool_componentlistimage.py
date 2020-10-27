@@ -94,15 +94,13 @@ import unittest
 import shutil
 
 if CASA6:
-    estimates_file = casatools.ctsys.resolve('text/2gauss_estimates.txt')
-    climage = casatools.ctsys.resolve('image/simple_cl.im')
+    datapath = casatools.ctsys.resolve('unittest/componentlistimage/')
+    estimates_file = os.path.join(datapath,'2gauss_estimates.txt')
+    climage = os.path.join(datapath, 'simple_cl.im')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        estimates_file = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/2gauss_estimates.txt'
-        climage = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/simple_cl.im'
-    else:
-        estimates_file = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/2gauss_estimates.txt'
-        climage = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/simple_cl.im'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/componentlistimage/'
+    estimates_file = os.path.join(datapath, '2gauss_estimates.txt')
+    climage = os.path.join(datapath, 'simple_cl.im')
 
 class componentlistimage_test(unittest.TestCase):
     
