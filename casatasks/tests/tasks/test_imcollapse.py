@@ -161,19 +161,10 @@ class imcollapse_test(unittest.TestCase):
             box, chans, stokes, mask, overwrite, wantreturn
         ):
             self.assertRaises(
-               Exception, run_imcollapse, imagename,
+               RuntimeError, run_imcollapse, imagename,
                function, axes, outfile, region, box,
                chans, stokes, mask, overwrite
             )
-            # else:
-            #    self.assertFalse(
-            #        run_imcollapse(
-            #            imagename, function, axes,
-            #            outfile, region, box, chans,
-            #            stokes, mask, overwrite
-            #        )
-            #    )
-
         # bogus function given
         testit(good_image, "bogus function", 0, "bugus_func.im", "", "", "", "", "", False, True)
         # bogus region given
@@ -503,7 +494,7 @@ class imcollapse_test(unittest.TestCase):
         bb[:] = 1
         bb[0,0,0] = 0
         myia.putchunk(bb)
-        self.assertRaises(Exception, myia.collapse, axes=[0,1], function="flux")
+        self.assertRaises(RuntimeError, myia.collapse, axes=[0,1], function="flux")
         myia.setrestoringbeam(major="3arcmin", minor="3arcmin", pa="0deg")
         myia.setbrightnessunit("Jy/beam")
         col = myia.collapse(axes=[0,1], function="flux", mask=imagename + "> 0")

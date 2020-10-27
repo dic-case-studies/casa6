@@ -111,7 +111,7 @@ def imcollapse(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return
+        # returns None as per requirement
     finally:
         if myia:
             myia.done()
