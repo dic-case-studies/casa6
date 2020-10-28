@@ -486,6 +486,10 @@ def generate_pyinit(moduledir,tools):
                            return not isinstance(v,str)
                        except TypeError:
                            return False
+                   if hasattr(__user,'nogui'):
+                      print("nogui %s" % nogui)
+                   else :
+                      print("nogui not found in __user")
 
                    if hasattr(__user,'datapath') and is_iter_container(__user.datapath):
                        return list(filter(__os.path.isdir, list(map(__os.path.expanduser,__user.datapath))))
@@ -497,12 +501,13 @@ def generate_pyinit(moduledir,tools):
                ctsys = __utils( )
                _distro_dpath = ""
                _dpath = [ ]
+               _nogui = False
                try:
                    import casadata
                    _distro_dpath = casadata.datapath
                    _dpath = [ _distro_dpath ]
                except: pass
-               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ), False )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path

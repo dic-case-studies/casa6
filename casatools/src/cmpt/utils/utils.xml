@@ -226,6 +226,12 @@ returns true if initalization was performed; returns false if initialization was
   </param>
 </input>
 
+<input>
+  <param type="bool" name="nogui">
+    <description>are guis disabled at startup</description>
+  </param>
+</input>
+
 <returns type="bool"/>
 </method>
 
@@ -295,6 +301,20 @@ elements of the data path.
 </input>
 
 <returns type="string"/>
+</method>
+
+<!-- ******************************************************************************** -->
+
+<!-- ******************** functions to get startup config values ******************** -->
+
+<method type="function" name="getnogui">
+  <shortdescription>gets the nogui config value</shortdescription>
+
+  <description>
+    Returns the value of the nogui parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
 </method>
 
 <!-- ******************************************************************************** -->
