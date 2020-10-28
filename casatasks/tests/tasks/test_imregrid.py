@@ -606,10 +606,11 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         output = "ad.out.im"
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
-            )
+        )
         self.assertTrue(os.path.exists(output))
         myia.open(template)
         csys = myia.coordsys()
@@ -617,24 +618,21 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         # no match between input and template stokes => not allowed
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True
-            )
-
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True
+        )
         csys.setstokes("XX I LL RR")
         myia.open(template)
         myia.setcoordsys(csys.torecord())
         myia.done()
         # specified output stokes axis length != number of common stokes => not allowed
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                shape=[20, 20, 3, 20]
-            )
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True, shape=[20, 20, 3, 20]
+        )
         # no output shape and number of common stokes > 0 => allowed
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -651,6 +649,7 @@ class imregrid_test(unittest.TestCase):
 
         myia.done()
         # no output shape and number of common stokes > 0 => allowed
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -674,6 +673,7 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         output = "ae.out.im"
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -695,6 +695,7 @@ class imregrid_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.done()
         output = "af.out.im"
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -704,10 +705,9 @@ class imregrid_test(unittest.TestCase):
         self.assertTrue((myia.shape() == [20, 20, 4, 20]).all())
         myia.done()
         # Cannot explicitly specify to regrid spectral axis if template has no such axis
-        self.assertRaises(Exception, imregrid,
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                axes=[0, 1, 3]
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True, axes=[0, 1, 3]
         )
         
     def test_degenerate_template_spectral_axis(self):
@@ -723,6 +723,7 @@ class imregrid_test(unittest.TestCase):
         myia.done()
         output = "ag.out.im"
         # input spectral axis copied to output
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -731,18 +732,16 @@ class imregrid_test(unittest.TestCase):
         myia.open(output)
         self.assertTrue((myia.shape() == [20, 20, 4, 20]).all())
         # should fail the image to be overwritten is open
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                axes=[0, 1, 3]
-            )
-
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True, axes=[0, 1, 3]
+        )
         # so close the image and then try to overwrite it
         myia.done() 
         # the spectral axis is removed from the list of axes, a warning is emitted
         # that it cannot be regridded, and the input spectral axis is copied to
         # the ouptut image
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True,
@@ -767,6 +766,7 @@ class imregrid_test(unittest.TestCase):
         output = "ah.out.im"
         # when spectral axis not specified, input spectral axis is copied to
         # output spectral axis
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True
@@ -775,13 +775,10 @@ class imregrid_test(unittest.TestCase):
         myia.open(output)
         self.assertTrue((myia.shape() == [20, 20, 4, 1]).all())
         # should fail because image to be overwritten is open in the table cache
-        with self.assertRaises(RuntimeError):
-            imregrid(
-                imagename=imagename, template=template,
-                output=output, decimate=5, overwrite=True,
-                axes=[0, 1, 3]
-            )
-
+        self.assertRaises(
+            RuntimeError, imregrid, imagename=imagename, template=template,
+            output=output, decimate=5, overwrite=True, axes=[0, 1, 3]
+        )
         # so close it and try again
         myia.done()
         # if explicitly specified in the axis parameter, the template spectral
@@ -789,6 +786,7 @@ class imregrid_test(unittest.TestCase):
         # the same as the template's spectral axis length. The output pixel values
         # are replicated from the input image, all spectral hyperplanes in the output
         # will have identical pixel value arrays.
+        # returns None upon success
         imregrid(
             imagename=imagename, template=template,
             output=output, decimate=5, overwrite=True,
