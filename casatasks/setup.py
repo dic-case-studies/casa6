@@ -294,6 +294,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/task_logging.py',
                     'src/tasks/task_sdintimaging.py',
                     'src/scripts/sdint_helper.py',
+                    'src/scripts/tec_maps.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
