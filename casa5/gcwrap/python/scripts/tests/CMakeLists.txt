@@ -231,6 +231,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_vishead.py
   test_req_task_visstat.py
   test_req_task_rerefant.py
+  test_req_task_polcal.py
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py

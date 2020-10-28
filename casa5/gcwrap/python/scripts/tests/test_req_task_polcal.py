@@ -605,7 +605,7 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(calresult, [1.0 + 0j], atol=1e-4)))
 
-def suite(self):
+def suite():
     return [polcal_test]
 
 
