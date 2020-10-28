@@ -57,7 +57,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception as e:
-            print("Error comparing", val, "to", expval)
+            print("Error comparing {} to {}".format(val, expval))
             raise
 
 class test_nrobeamaverage(unittest.TestCase):
