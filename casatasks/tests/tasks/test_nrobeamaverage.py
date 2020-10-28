@@ -1,11 +1,10 @@
-import shutil
+from __future__ import absolute_import
+from __future__ import print_function
+
 import unittest
 import os
-import numpy
 import math
 import sys
-import filecmp
-import glob
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import nrobeamaverage
