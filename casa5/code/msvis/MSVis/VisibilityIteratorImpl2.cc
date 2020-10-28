@@ -1617,10 +1617,6 @@ void VisibilityIteratorImpl2::setMetadataScope()
         }
     }
 
-    // Warning. In order not to break expectations of current applications,
-    // set the frequency scope granularity to subchunk at most.
-    if (freqSelScope_p == RowScope)
-        freqSelScope_p = SubchunkScope;
 }
 
 VisibilityIteratorImpl2::Cache::Cache()
