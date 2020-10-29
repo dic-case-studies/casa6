@@ -2,7 +2,7 @@
 
 
 
-<task category="information" name="makemask" type="function">
+<task category="imaging" name="makemask" type="function">
 
   <shortdescription>Makes and manipulates image masks</shortdescription>
 

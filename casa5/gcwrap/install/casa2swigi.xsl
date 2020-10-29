@@ -46,6 +46,9 @@
          PyErr_SetString(PyExc_RuntimeError, ae.what());
 	 //PyErr_Print();
          return NULL;
+      } catch (const casac::variant::overflow &amp;of) {
+         PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+         return NULL;
       }
 }
 %include "</xsl:text><xsl:value-of select="@name"/><xsl:text disable-output-escaping="yes">_cmpt.h"
