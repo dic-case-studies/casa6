@@ -15,8 +15,7 @@ if is_CASA6:
     from casatools import ctsys, table
     from casatasks import gencal
 
-    # NEAL is this right?
-    from casatasts.private import tec_maps
+    from casatasks.private import tec_maps
     
     _tb= table()
 
@@ -407,11 +406,6 @@ class gencal_test_tec_vla(unittest.TestCase):
         """
         gencal: very basic test of tec_maps and gencal(caltype='tecim')
         """
-
-        # NEAL:   REMOVE THIS TO TEST IN CASA6 
-        if is_CASA6:
-            print('\n\n********** SKIPPING test_tec_maps in CASA6 **********\n\n')
-            return
 
         try:
             tec_maps.create0(self.msfile)
