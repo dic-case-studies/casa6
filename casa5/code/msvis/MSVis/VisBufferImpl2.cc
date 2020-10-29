@@ -1160,9 +1160,9 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
                                       Bool isNewFieldId,
                                       Bool isNewSpectralWindow,
                                       const Subchunk & subchunk,
-                                      rownr_t nRows,
-                                      Int nChannels,
-                                      Int nCorrelations,
+                                      casacore::Vector<casacore::rownr_t>& nRowsPerShape, 
+                                      casacore::Vector<casacore::Int>& nChannelsPerShape,
+                                      casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                       const Vector<Int> & correlations,
                                       const Vector<Stokes::StokesTypes> & correlationsDefined,
                                       const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -1181,16 +1181,9 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     state_p->frequencies_p.flush();
     state_p->channelNumbers_p.flush();
 
-    cache_p->nRows_p.setSpecial (nRows);
-    cache_p->nChannels_p.setSpecial (nChannels);
-    cache_p->nCorrelations_p.setSpecial (nCorrelations);
-
-    Vector<rownr_t> nRowsPerShape(1);
-    Vector<Int> nChannelsPerShape(1);
-    Vector<Int> nCorrelationsPerShape(1);
-    nRowsPerShape[0] = nRows;
-    nChannelsPerShape[0] = nChannels;
-    nCorrelationsPerShape[0] = nCorrelations;
+    cache_p->nRows_p.setSpecial (std::accumulate(nRowsPerShape.begin(), nRowsPerShape.end(), 0));
+    cache_p->nChannels_p.setSpecial (nChannelsPerShape[0]);
+    cache_p->nCorrelations_p.setSpecial (nCorrelationsPerShape[0]);
 
     cache_p->nShapes_p.setSpecial (1);
     cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
