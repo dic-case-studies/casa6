@@ -2477,10 +2477,16 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
     String msName = ms().tableName();
 
+    Vector<rownr_t> nRowsPerShape(1, rowBounds_p.subchunkNRows_p);
+    Vector<Int> nChannPerShape(1, channelSelectors_p[0]->getNFrequencies());
+    Vector<Int> nCorrsPerShape(1, nCorrelations_p);
+
     vb_p->configureNewSubchunk(
             msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
-            isNewSpectralWindow(), subchunk_p, rowBounds_p.subchunkNRows_p,
-            channelSelectors_p[0]->getNFrequencies(), nCorrelations_p,
+            isNewSpectralWindow(), subchunk_p, 
+            nRowsPerShape,
+            nChannPerShape,
+            nCorrsPerShape,
             correlations, correlationsDefined, correlationsSelected,
             weightScaling_p);
 }

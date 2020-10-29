@@ -927,14 +927,20 @@ Int SimpleSimVi2::nTimes() const {
 
 void SimpleSimVi2::configureNewSubchunk() {
 
+  Vector<rownr_t> nRowsPerShape(1, nRows());
+  Vector<Int> nChannPerShape(1, pars_.nChan_(thisSpw_));
+  Vector<Int> nCorrsPerShape(1, pars_.nCorr_);
+
   // Poke the vb to do this
   vb_->configureNewSubchunk(0,"faked",false,
-			    isNewArrayId(),isNewFieldId(),
-			    isNewSpectralWindow(),getSubchunkId(),
-			    nRows(),pars_.nChan_(thisSpw_),pars_.nCorr_,
-			    getCorrelations(),
-			    corrdef_,corrdef_,
-			    WeightScaling::generateUnityWeightScaling());
+                            isNewArrayId(),isNewFieldId(),
+                            isNewSpectralWindow(),getSubchunkId(),
+                            nRowsPerShape,
+                            nChannPerShape,
+                            nCorrsPerShape,
+                            getCorrelations(),
+                            corrdef_,corrdef_,
+                            WeightScaling::generateUnityWeightScaling());
 }
 
   // Generate noise on data

@@ -115,6 +115,10 @@ TransformingVi2::configureNewSubchunk (){
     Vector<Int> corrs = getCorrelations ();
     Int nCorrs = corrs.nelements();
 
+    casacore::Vector<casacore::rownr_t> nRowsPerShape(1, nRows());
+    casacore::Vector<casacore::Int> nChannelsPerShape(1, nChannels);
+    casacore::Vector<casacore::Int> nCorrelationsPerShape(1, nCorrs);
+
     configureNewSubchunk (msId(), // always the first MS
                           msName(),
                           isNewMs(),
@@ -122,9 +126,9 @@ TransformingVi2::configureNewSubchunk (){
                           isNewFieldId (),
                           isNewSpectralWindow (),
                           getSubchunkId (),
-                          nRows(),
-                          nChannels,
-                          nCorrs,
+                          nRowsPerShape,
+                          nChannelsPerShape,
+                          nCorrelationsPerShape,
                           getCorrelations(),
                           getCorrelationTypesDefined(),
                           getCorrelationTypesSelected(),
@@ -135,7 +139,9 @@ void
 TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isNewMs,
                                        Bool isNewArrayId, Bool isNewFieldId,
                                        Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       Int nRows, Int nChannels, Int nCorrelations,
+                                       casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                                       casacore::Vector<casacore::Int>& nChannelsPerShape,
+                                       casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                        const Vector<Int> & correlations,
                                        const Vector<Stokes::StokesTypes> & correlationsDefined,
                                        const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -148,9 +154,9 @@ TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isN
                                           isNewFieldId,
                                           isNewSpectralWindow,
                                           subchunk,
-                                          nRows,
-                                          nChannels,
-                                          nCorrelations,
+                                          nRowsPerShape,
+                                          nChannelsPerShape,
+                                          nCorrelationsPerShape,
                                           correlations,
                                           correlationsDefined,
                                           correlationsSelected,
