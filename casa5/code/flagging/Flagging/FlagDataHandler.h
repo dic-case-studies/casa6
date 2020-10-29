@@ -920,7 +920,7 @@ public:
 	const casacore::uInt summaryThresholdInc_p = 10;
 	// control report/logging frequency for the per-chunk progress report lines
 	casacore::uInt chunkLineThreshold_p;
-	const casacore::uInt chunkLineThresholdInc_p = 1;
+	const casacore::uInt chunkLineThresholdInc_p = 10;
 
 	casacore::uShort tableTye_p;
 	casacore::Bool loadProcessorTable_p;
