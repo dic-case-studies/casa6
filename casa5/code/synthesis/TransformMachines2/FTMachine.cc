@@ -1829,63 +1829,6 @@ using namespace casa::vi;
     return true;
   }
   
-  /*
-  Bool FTMachine::matchAllSpwChans(const vi::VisBuffer2& vb){
-
-	  //////I have no clue how to get all the channel and data selection from all
-	  ///spectral windows from Visbuffer2...
-	  /// so this function is quite useless
-
-	  Vector<Int>  elspw;
-	  Vector<Int>  elstart;
-	  Vector<Int>  elnchan;
-	  Double elfstart, elfend, elfinc;
-	  spectralCoord_p.toWorld(elfstart, 0.0);
-	  spectralCoord_p.toWorld(elfend, Double(nchan));
-	  if(elfend < elfstart){
-		  Double tmpfreq=elfstart;
-		  elfstart=elfend;
-		  elfend=tmpfreq;
-	  }
-	  elfinc=(spectralCoord_p.increment()(0));
-
-	  cerr << "elfstart " << elfstart << " elfend " << elfend << " elfinc "<< elfinc << endl;
-
-	  MSUtil::getSpwInFreqRangeAllFields(elspw, elstart,
-			  elnchan,vb.getVi()->ms(), elfstart,elfend,elfinc, MFrequency::LSRK);
-	  selectedSpw_p.resize();
-	  selectedSpw_p=elspw;
-	  nVisChan_p.resize();
-	  nVisChan_p=elnchan;
-	  cerr << "elspw " << elspw << " elstart " << elstart  << " elnchan " << endl;
-
-	  //doConversion_p.resize(max(selectedSpw_p)+1);
-	  //doConversion_p.set(true);
-
-      multiChanMap_p.resize(max(selectedSpw_p)+1, true);
-      matchChannel(vb);
-      /*Bool anymatchChan=false;
-      Bool anyTopo=false;
-      for (uInt k=0; k < selectedSpw_p.nelements(); ++k){
-        Bool matchthis=matchChannel(selectedSpw_p[k], vb);
-        anymatchChan= (anymatchChan || matchthis);
-        anyTopo=anyTopo || ((MFrequency::castType(MSColumns(vb.getVi()->ms()).spectralWindow().measFreqRef()(selectedSpw_p[k]))==MFrequency::TOPO) && freqFrameValid_p);
-      }
-
-      // if TOPO and valid frame things may match later but not now  thus we'll go
-      // through the data
-      // hoping the user made the right choice
-      if (!anymatchChan && !anyTopo){
-        logIO() << "No overlap in frequency between image channels and selected data found for this FTMachine \n"
-  	      << " Check your data selection and image parameters if you end up with a blank image"
-  	      << LogIO::WARN << LogIO::POST;
-
-      }
-     //////////////////////
-      return true;
-
-    }
-  */
 
   Vector<Int> FTMachine::channelMap(const vi::VisBuffer2& vb){
     matchChannel(vb);
