@@ -61,6 +61,18 @@ void PassThroughTVI::next()
   return;
 }
 
+PassThroughTVIFactory::PassThroughTVIFactory(ViImplementation2 *inputVII)
+ : inputVii_p(inputVII)
+{}
+
+PassThroughTVIFactory::~PassThroughTVIFactory () {}
+
+ViImplementation2 * PassThroughTVIFactory::createVi () const {
+
+  ViImplementation2* vii = new PassThroughTVI(inputVii_p);
+  return vii;
+}
+
 PassThroughTVILayerFactory::PassThroughTVILayerFactory()
 {
 }

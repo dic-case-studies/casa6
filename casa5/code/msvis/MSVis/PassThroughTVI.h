@@ -29,6 +29,7 @@
 #define PASSTHROUGHTVI_H_
 
 #include <msvis/MSVis/TransformingVi2.h>
+#include <msvis/MSVis/VisibilityIterator2.h>
 #include <msvis/MSVis/ViiLayerFactory.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -47,14 +48,36 @@ public:
   //Constructor
   PassThroughTVI(ViImplementation2 * inputVii);
 
-  void origin();
+  void origin() override;
 
-  void next();
+  void next() override;
 
 };
 
 /*
- * Factory that allows the creation of DataSwappingTVI classes.
+ * Factory that allows the creation of PassThroughTVI classes.
+ * This factory doesn't have any parameter to configure
+ */
+class PassThroughTVIFactory : public ViFactory {
+
+public:
+
+  PassThroughTVIFactory(ViImplementation2 *inputVII);
+
+  ~PassThroughTVIFactory ();
+
+protected:
+
+  virtual ViImplementation2 * createVi () const;
+
+private:
+
+  ViImplementation2 *inputVii_p;;
+};
+
+/*
+ * Factory that allows the creation of PassThroughTVI classes
+ * which act upon an underlying VI2
  * This factory doesn't have any parameter to configure
  */
 class PassThroughTVILayerFactory : public ViiLayerFactory
