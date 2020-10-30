@@ -42,6 +42,7 @@
 #include <measures/Measures/MPosition.h>
 #include <ms/MeasurementSets/MSColumns.h>
 #include <msvis/MSVis/VisBuffer.h>
+#include <msvis/MSVis/VisibilityIterator.h>
 #include <scimath/Mathematics/FFTServer.h>
 #include <synthesis/TransformMachines/FTMachine.h>
 #include <synthesis/TransformMachines/SkyJones.h>
@@ -229,6 +230,13 @@ private:
   void ok();
 
   void init();
+
+  // SDGrid::makeImage helpers
+  void getParamsForFTMachineType(const ROVisibilityIterator& vi, FTMachine::Type in_type,
+          casacore::Bool& out_dopsf, FTMachine::Type& out_type) const;
+
+  void setupVisBufferForFTMachineType(FTMachine::Type in_type,
+          VisBuffer& vb) const;
 
   // Image cache
   casacore::LatticeCache<casacore::Complex> * imageCache;

@@ -1247,143 +1247,103 @@ void SDGrid::get(VisBuffer& vb, Int row)
   interpolateFrequencyFromgrid(vb, data, FTMachine::MODEL);
 }
 
-
-
-  // Make a plain straightforward honest-to-FSM image. This returns
-  // a complex image, without conversion to Stokes. The representation
-  // is that required for the visibilities.
-  //----------------------------------------------------------------------
-  void SDGrid::makeImage(FTMachine::Type type,
-			    ROVisibilityIterator& vi,
-			    ImageInterface<Complex>& theImage,
-			    Matrix<Float>& weight) {
-
+// Make a plain straightforward honest-to-FSM image. This returns
+// a complex image, without conversion to Stokes. The representation
+// is that required for the visibilities.
+//----------------------------------------------------------------------
+void SDGrid::makeImage(FTMachine::Type inType,
+                ROVisibilityIterator& vi,
+                ImageInterface<Complex>& theImage,
+                Matrix<Float>& weight) {
 
     logIO() << LogOrigin("FTMachine", "makeImage0") << LogIO::NORMAL;
 
-    // Loop over all visibilities and pixels
+    // Attach buffer to iterator
     VisBuffer vb(vi);
 
-    // Initialize put (i.e. transform to Sky) for this model
+    // Set CStokesRep
     vi.origin();
+    auto cStokesRep = (vb.polFrame() == MSIter::Linear) ?
+            StokesImageUtil::LINEAR : StokesImageUtil::CIRCULAR;
+    StokesImageUtil::changeCStokesRep(theImage, cStokesRep);
 
-    if(vb.polFrame()==MSIter::Linear) {
-      StokesImageUtil::changeCStokesRep(theImage, StokesImageUtil::LINEAR);
-    }
-    else {
-      StokesImageUtil::changeCStokesRep(theImage, StokesImageUtil::CIRCULAR);
-    }
-    Bool useCorrected= !(vi.msColumns().correctedData().isNull());
-    if((type==FTMachine::CORRECTED) && (!useCorrected))
-      type=FTMachine::OBSERVED;
-    Bool normalize=true;
-    if(type==FTMachine::COVERAGE)
-      normalize=false;
-
-    Int Nx=theImage.shape()(0);
-    Int Ny=theImage.shape()(1);
-    Int Npol=theImage.shape()(2);
-    Int Nchan=theImage.shape()(3);
-    Double memtot=Double(HostInfo::memoryTotal(true))*1024.0; // return in kB
-    Int nchanInMem=Int(memtot/2.0/8.0/Double(Nx*Ny*Npol));
-    Int nloop=nchanInMem >= Nchan ? 1 : Nchan/nchanInMem+1;
-    ImageInterface<Complex> *imCopy=NULL;
-    IPosition blc(theImage.shape());
-    IPosition trc(theImage.shape());
-    blc-=blc; //set all values to 0
-    trc=theImage.shape();
-    trc-=1; // set trc to image size -1
-    if(nloop==1) {
-      imCopy=& theImage;
-      nchanInMem=Nchan;
-    }
-    else
-      logIO()  << "Not enough memory to image in one go \n will process the image in   "
-	       << nloop
-	      << " sections  "
-	      << LogIO::POST;
-
+    //  Weights
+    auto imageShape = theImage.shape();
+    auto Npol  = imageShape(2);
+    auto Nchan = imageShape(3);
     weight.resize(Npol, Nchan);
-    Matrix<Float> wgtcopy(Npol, Nchan);
 
-    Bool isWgtZero=true;
-    for (Int k=0; k < nloop; ++k){
-      Int bchan=k*nchanInMem;
-      Int echan=(k+1)*nchanInMem < Nchan ?  (k+1)*nchanInMem-1 : Nchan-1;
+    initializeToSky(theImage,weight,vb);
+    // Loop over the visibilities, putting VisBuffers
+    for (vi.originChunks(); vi.moreChunks(); vi.nextChunk()) {
+        for (vi.origin(); vi.more(); vi++) {
+            FTMachine::Type actualType;
+            Bool doPSF;
+            getParamsForFTMachineType(vi, inType, doPSF, actualType);
+            setupVisBufferForFTMachineType(actualType,vb);
+            constexpr Int allVbRows = -1;
+            put(vb, allVbRows, doPSF, actualType);
+        }
+    }
+    finalizeToSky();
 
-      if(nloop > 1) {
-	 blc[3]=bchan;
-	 trc[3]=echan;
-	 Slicer sl(blc, trc, Slicer::endIsLast);
-	 imCopy=new SubImage<Complex>(theImage, sl, true);
-	 wgtcopy.resize(npol, echan-bchan+1);
-      }
-      vi.originChunks();
-      vi.origin();
-      initializeToSky(*imCopy,wgtcopy,vb);
+    // Normalize by dividing out weights, etc.
+    auto doNormalize = (inType == FTMachine::COVERAGE) ? false : true;
+    getImage(weight, doNormalize);
 
+    // Warning message
+    if (allEQ(weight,0.0f)) {
+        logIO() << LogIO::SEVERE
+                << "No useful data in SDGrid: all weights are zero"
+                << LogIO::POST;
+    }
+}
 
-      // for minmax clipping
-      logIO() << LogOrigin("SDGrid", "makeImage", WHERE) << LogIO::DEBUGGING
-          << "doclip_ = " << (clipminmax_ ? "TRUE" : "FALSE") << " (" << clipminmax_ << ")" << LogIO::POST;
-      if (clipminmax_) {
-        logIO() << LogOrigin("SDGRID", "makeImage", WHERE)
-             << LogIO::DEBUGGING << "use ggridsd2 for imaging" << LogIO::POST;
-      }
+void SDGrid::getParamsForFTMachineType(const ROVisibilityIterator& vi, FTMachine::Type in_type,
+          casacore::Bool& out_dopsf, FTMachine::Type& out_type) const {
+    
+    // Tune input type of FTMachine
+    auto haveCorrectedData = not (vi.msColumns().correctedData().isNull());
+    auto tunedType = 
+            ((in_type == FTMachine::CORRECTED) && (not haveCorrectedData)) ?
+            FTMachine::OBSERVED : in_type;
 
-      // Loop over the visibilities, putting VisBuffers
-      for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
-	for (vi.origin(); vi.more(); vi++) {
+    // Compute output parameters
+    switch(tunedType) {
+    case FTMachine::RESIDUAL:
+    case FTMachine::MODEL:
+    case FTMachine::CORRECTED:
+        out_dopsf = false;
+        out_type = tunedType;
+        break;
+    case FTMachine::PSF:
+    case FTMachine::COVERAGE:
+        out_dopsf = true;
+        out_type = tunedType;
+        break;
+    default:
+        out_dopsf = false;
+        out_type = FTMachine::OBSERVED;
+        break;
+    }
+}
 
-	  switch(type) {
-	  case FTMachine::RESIDUAL:
-	    vb.visCube()=vb.correctedVisCube();
-	    vb.visCube()-=vb.modelVisCube();
-	    put(vb, -1, false);
-	    break;
-	  case FTMachine::MODEL:
-	    put(vb, -1, false, FTMachine::MODEL);
-	    break;
-	  case FTMachine::CORRECTED:
-	    put(vb, -1, false, FTMachine::CORRECTED);
-	    break;
-	  case FTMachine::PSF:
-	    vb.visCube()=Complex(1.0,0.0);
-	    put(vb, -1, true, FTMachine::PSF);
-	    break;
-	  case FTMachine::COVERAGE:
-	    vb.visCube()=Complex(1.0);
-	    put(vb, -1, true, FTMachine::COVERAGE);
-	    break;
-	  case FTMachine::OBSERVED:
-	  default:
-	    put(vb, -1, false, FTMachine::OBSERVED);
-	    break;
-	  }
-	}
-      }
-      finalizeToSky();
-      // Normalize by dividing out weights, etc.
-      getImage(wgtcopy, normalize);
-      if(max(wgtcopy)==0.0){
-	if(nloop > 1)
-	  logIO() << LogIO::WARN
-		  << "No useful data in SDGrid: weights all zero for image slice  " << k
-		  << LogIO::POST;
-      }
-      else
-	isWgtZero=false;
-
-      weight(Slice(0, Npol), Slice(bchan, echan-bchan+1))=wgtcopy;
-      if(nloop >1) delete imCopy;
-    }//loop k
-    if(isWgtZero)
-      logIO() << LogIO::SEVERE
-	      << "No useful data in SDGrid: weights all zero"
-	      << LogIO::POST;
-  }
-
-
+void SDGrid::setupVisBufferForFTMachineType(FTMachine::Type type, VisBuffer& vb) const {
+    switch(type) {
+    case FTMachine::RESIDUAL:
+        vb.visCube() = vb.correctedVisCube();
+        vb.visCube() -= vb.modelVisCube();
+        break;
+    case FTMachine::PSF:
+        vb.visCube()=Complex(1.0,0.0);
+        break;
+    case FTMachine::COVERAGE:
+        vb.visCube()=Complex(1.0);
+        break;
+    default:
+        break;
+    }
+}
 
 // Finalize : optionally normalize by weight image
 ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
@@ -1559,6 +1519,9 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
 
   Bool dointerp;
   Bool nullPointingTable = false;
+  // const MSPointingColumns& act_mspc =
+  // interpolationRefFrame == InterpolationRefFrame::POINTING ?
+  // vb.msColumns().pointing() : convertedPointing_p ;
   const MSPointingColumns& act_mspc = vb.msColumns().pointing();
   nullPointingTable = (act_mspc.nrow() < 1);
   Int pointIndex = -1;
