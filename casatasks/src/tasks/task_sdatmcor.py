@@ -1,46 +1,35 @@
 import os
 import pylab as pl
 import shutil
-import datetime
 
-# for CASA
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
     from casatools import quanta, table, msmetadata
     from casatools import atmosphere
-
-    # mstransform #
     from casatasks import mstransform
-
-    # simutil #
     import casatasks.private.simutil as simutil
-    ut = simutil.simutil()
 
+    ut = simutil.simutil()
     msmd = msmetadata()
     tb = table()
     qa = quanta()
     at = atmosphere()
 
-    origin = 'sdatmcor'
-
 else:
     from taskinit import tbtool, casalog, qa
     from taskinit import msmdtool as msmetadata
     from casac import casac
-
-    # mstransform #
     from tasks import mstransform
-
-    # simutil #
     from simutil import simutil
-    ut = simutil()
 
+    ut = simutil()
     msmd = msmetadata()
     tb = tbtool()
     at = casac.atmosphere()
 
-    origin = 'sdatmcor'
+# Task name #
+origin = 'sdatmcor'
 
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
@@ -52,38 +41,28 @@ def sdatmcor(
         atmdetail,
         altitude, temperature, pressure, humidity, PWV,
         dp, dpm,
-        layerboundaries, layertemperature,
-        debug):
+        layerboundaries, layertemperature ):
 
     # Information #
     casalog.origin(origin)
     _msg("\nSDATMCOR revision 1019 (19-Oct-2020) .\n")
 
 #
-# Input/Output File Handling
+# Input/Output error check and internal set up.
 #
-    # infile oufile, must be specified.
     if infile == '':
-        _msg("\nERROR:: infile MUST BE  specified.\n", 'ERROR')
-        return False
+        errmsg = "infile MUST BE specified."
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
     if outfile == '':
-        _msg("\nERROR:: outfile MUST BE specified.\n", 'ERROR')
-        return False
-
-    # infile #
-    infile_without_ext = os.path.splitext(os.path.basename(infile))[0]
-    infile_ext = os.path.splitext(os.path.basename(infile))[1]
-    infile = [infile_without_ext, infile_ext]
-    # outfile #
-    outfile_without_ext = os.path.splitext(os.path.basename(outfile))[0]
-    outfile_ext = os.path.splitext(os.path.basename(outfile))[1]
-    outfile = [outfile_without_ext, outfile_ext]
-
-    # in case infile == outfile #
+        errmsg = "outfile MUST BE specified."
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)       
+    # Protection. In case infile == outfile #
     if infile == outfile:
-        _msg("\nERROR:: You are attempting to write on input file.\n", 'ERROR')
-        return False
-
+        errmsg = "You are attempting to write the output on your input file."
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
 #
 # Inspect arguments.
 #  - inspect Unit.
@@ -111,18 +90,17 @@ def sdatmcor(
 # User-Defined Profile inspection.
 # after this step, the two args changes to List
 #
-    # converexpression. an empyt arg makes [] list. #
+    # Type conversion. An empty arg makes [] list. #
     layerboundaries = _conv_to_doubleArrayList(layerboundaries)
     layertemperature = _conv_to_doubleArrayList(layertemperature)
 
     # inspect counts, length of the two args must be same #
     len_1 = len(layerboundaries)
     len_2 = len(layertemperature)
-    if(len_1 != len_2):
-        _msg("\nERROR:: Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2), 'ERROR')
-        return False
-    elif len_1 != 0:
-        _msg("- User-defined parameter was given by %d sets of data." % len_1)
+    if len_1 != len_2:
+        errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)        
 
 #
 # Call calc Function
@@ -135,8 +113,7 @@ def sdatmcor(
         atmdetail,
         altitude, temperature, pressure, humidity, PWV, dp, dpm,
         layerboundaries,
-        layertemperature,
-        debug)
+        layertemperature)
 
 #
 # SUBROUTINES
@@ -144,29 +121,22 @@ def sdatmcor(
 #
 
 #
-# file handling
+# file handling (use Wrapper for readability)
 #
 def _ms_remove(path):
     if (os.path.exists(path)):
-        _msg("- Attempt to delete [%s]." % path)
         if (os.path.isdir(path)):
             shutil.rmtree(path)
         else:
             os.remove(path)
-    else:
-        _msg("- No file to delete [%s]" % path)
 
 
 def _ms_copy(src, dst):
-    _msg("- Copying [%s] ->[%s]." % (src, dst))
     shutil.copytree(src, dst)
 
 
 def _file_exist(path):
-    if (os.path.exists(path)):
-        return True
-    else:
-        return False
+    return os.path.exists(path)
 
 
 #
@@ -179,55 +149,50 @@ def _inspect_str_int(data, minimum, maximum):
         if data == '':
             return True
         elif data.isdigit():
-            if minimum <= int(data) <= maximum:
-                return True
-            else:
-                return False
+            return minimum <= int(data) <= maximum
         else:
             return False
-    
     elif type(data) is int:
-        if minimum <= int(data) <= maximum:
-            return True
-        else:
-            return False
+        return minimum <= data <= maximum
     else:
-        _msg( "xxxx INTERNAL ERROR xxxx, unexpected data type.", 'SEVERE')
-        raise
-    raise
+        # INTERNAL ERROR:: unexpected data type. #
+        assert(False)
 
 # inspect the data is consistent with the Unit. #
 def _inspect_value_unit(data, base_unit):
-
     try:
-        if type(data) is str:    # by String #
+        if type(data) is str:
             if (data == ''):
+                # No data #
                 return ''
-
             ext_unit = qa.getunit(data)
             if (ext_unit in base_unit):
                 # With Unit #
                 _msg("Unit Conversion::Data with Unit '%s'" % data)
                 return str(qa.getvalue(data)[0])
             elif (ext_unit == ''):
-                # Unit Added #
+                # Without Unit and added  #
                 _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
                 return data
             else:
-                # Mismatch #
-                _msg("Unit conversion:: Unexpected Unit '%s' in %s . Abort." % (ext_unit, data), 'SEVERE')
-                raise Exception
-        elif (type(data) is int) or (type(data) is float):  # by value (= int, float)
+                # Mismatch (ERROR) #
+                errmsg = "Unit conversion:: Unexpected Unit '%s' in %s ." % (ext_unit, data)
+                _msg("ERROR::%s" % errmsg, 'ERROR')
+                raise Exception(errmsg)
+        elif (type(data) is int) or (type(data) is float): 
             if data == -1:
-                return ''    # nothing #
+                # float no input #
+                return ''
             else:
-                return str(data)   # available #
+                # float specifiled #
+                return str(data)   # available  input#
         else:
-            _msg("xxxx INTERNAL ERROR xxxx  Arg type is not expected due to the I/F Design.", 'SEVERE')
-            raise
+            # INTERNAL ERROR:: Arg type is not expected due to the I/F Design. #
+            assert(False)
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
-        raise
+        raise Exception("internal function error.")
+
 #
 # Argument parameter handling
 #
@@ -255,7 +220,7 @@ def _set_floatquantity_ifactive(set_arg, through_value, unit):
             new_val = qa.quantity(float(set_arg), unit)  # CASA5 needs cast to float  ? #
             return new_val, True
         else:
-            return  through_value, False
+            return through_value, False
 
 def _list_comma_string(separated_string, dType):
     # make a list by separated by comma #
@@ -310,13 +275,15 @@ def _conv_to_doubleArrayList(in_list):
 #
 # decide Default Antenna ID
 #
-def get_defaut_antenna(msname, antenna):
-    # chose base-antenna from selected Antena ID
+def get_default_antenna(msname, antenna):
+    # Chose base-antenna from selected Antenna ID
     #  - Search Priority ID is   1 > 2 > 3 > x
-    #  - if one unique antenna(=x) is specified, use this.
+    #  - if ONLY one  antenna(=x) is available, use this.
+    # The Rule is defined in CASR discussion. 
     msmd.open(msname)
     ant_list = msmd.antennaids(antenna)
     n_ant = len(ant_list)
+    msmd.close()
 
     # Choose One #
     if 1 in ant_list:
@@ -328,12 +295,13 @@ def get_defaut_antenna(msname, antenna):
     elif n_ant == 1:
         i_ant = ant_list[0]
     else:
-        _msg("\nINTERNAL ERROR. Illegular antenna ID detected.\n")
-        return False
+        errmsg="Illegular antenna ID detected."
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
 
     # INFO #
+    msmd.open(msname)
     ant_name = msmd.antennanames(i_ant)[0]
-    # closse #
     msmd.close()
 
     _msg("Default Antenna")
@@ -342,34 +310,37 @@ def get_defaut_antenna(msname, antenna):
 
     return i_ant
 
-
 #
 # decide default value of 'Altitude'
 # - This requires to calculate Elevation from Antenna Position Information.
 #
 def get_default_altitude(msname, antid):
     tb.open(os.path.join(msname, 'ANTENNA'))
-
-    # obtain the antenna Position spified by antid #
+    # ref #
+    ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
+    # obtain the antenna Position (Earth Center) spified by antid #
     pos = tb.getcell('POSITION', antid)
     X = float(pos[0])
     Y = float(pos[1])
     Z = float(pos[2])
 
-    # ref #
-    ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
-    # translate #
-    P = ut.xyz2long(X, Y, Z, 'WGS84')
-
-    # [0]=long, [1]=lati, [2]]=elevation
-    elev = P[2]  # elevation.
-
+    # 
+    #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
+    #
+    #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point, 
+    #  this method returns geodetic latitude and longitude [radians] and elevation [m]. 
+    #  Elevation is measured relative to the closest point to the (latitude, longitude) 
+    #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
+    P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation
+    elev = P[2]
     tb.close()
+
     _msg("Default Altitude")
     _msg(" - Antenna ID: %d. " % antid)
     _msg(" - Ref = %s. " % ref)
     _msg(" - Position: (%s, %s, %s)." % (X, Y, Z))
-    _msg("Elevation:  %f" % elev)
+    _msg("   Relative Altitude:  %f" % elev)
+
     return elev
 
 
@@ -379,15 +350,19 @@ def get_default_altitude(msname, antid):
 #
 
 def showAtmInfo(atm):
-
+    """
+     Returned atm (from initAtmProfile) may have a different structure.
+     In casa6, additional variable information is assed in Dict type. 
+    """
     version = at.getAtmVersion()
     _msg("\nAtomosphere Tool:: version = %s\n" % version)
+
     # ATM Profile #
-    if is_CASA6:  # CASA6
+    if is_CASA6:
         for s in atm:
             if type(s) is str:
                 _msg(s)
-    else:  # CASA5
+    else:
         _msg(atm)
 
 def showLayerInfo(at):
@@ -415,13 +390,16 @@ def showLayerInfo(at):
 # Logging CASA LOG (INFO/WARN/SEVERE)
 #
 def _msg(msg, msgtype='INFO'):
-    print(msg)
+    # Informatin meesage #
+    if msgtype == 'INFO':
+        print(msg)
+    # other Warning/Error message #
     casalog.post(msg, msgtype, origin=origin)
 
 
 #
 # Data Selection
-# use mstransform, without msselect
+# use mstransform,  msselect being included.
 #
 def atmMst(
     infile, datacolumn, outfile, overwrite,
@@ -446,13 +424,15 @@ def atmMst(
         intent=intent,
         observation=observation,
         feed=feed,
-        # msselect=msselect,      (Not supported, due to CAS-13160 discussion.)
+        # msselect=msselect,   ## task mstransform does not support 'msselect' in args.
         reindex=False)   # Must be False #
 
 ############################################################
-# Calculation Method (Replaced to C++ in next develpment.)
-#    originated by atmcor.py by Sawada san.
-#    formed as a task for CAS-13160.
+# Calculation Method (Replaced to C++ in next development.)
+#    originated by atmcorr_20200602.py by Sawada san.
+#    formed as a casa task by CAS-13160.
+#    - p_xxxx arguments are for task.
+#    - a_xxxx arguments are for Atm-correction.
 ############################################################
 def calc_sdatmcor(
         p_infile,
@@ -482,13 +462,12 @@ def calc_sdatmcor(
         a_dp,
         a_dpm,
         a_layerboundaries,
-        a_layertemperature,
-        debug):
+        a_layertemperature):
 
     #
     # Argument dump.
     #   if need to check args,
-    #   pleas insert here like:  print('antenna  =', p_antenna, type(p_antenna))
+    #   please insert here like:  print('antenna  =', p_antenna, type(p_antenna))
     #
     if True:  # flag option is reserved. #
         print("***********************************")
@@ -525,28 +504,20 @@ def calc_sdatmcor(
         print('layerboundaries   =', a_layerboundaries)
         print('layertemperature  =', a_layertemperature)
 
-        print('debug       =', debug)
         print("*****************************")
 
-    # debug flags  #
-    skipTaskExec = False          # skip execution at the begining of calc_sdatmcor.
+    # TENTATIVE:: Following flags are deleted soon.  
+    skipTaskExec = False          # skip execution at the beginning of calc_sdatmcor.
+
+    # obsoleted debug Vars., soon deleted. #
     showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
 
-    if('skipTaskExec' in debug):
-        skipTaskExec = True
 
-    if('interruptCorrection' in debug):
-        interruptCorrection = True
-
-    if('showCorrection' in debug):
-        showCorrection = True
-
-    # TENTATIVE:: skip task execution for pseudo unit-test. #
+    # TENTATIVE:: skip task execution, until test-MS for UT is ready.  #
     if(skipTaskExec is True):
-        msg = "-------  Task Execution is skipped."
-        _msg(msg)
+        _msg("-------  Task Execution is skipped.")
         return True
 
     #
@@ -558,20 +529,13 @@ def calc_sdatmcor(
     if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
         datacolumn = 'CORRECTED_DATA'
 
-    # infile extension #
-    ebuid = p_infile[0]  # filename(with path) without extension.
-    ebext = p_infile[1]  # given Extension.
+    # rewrite (Under Construction) - simplified.  #
 
-    # outfile, extension #
-    outfile = p_outfile[0]
-    outext = p_outfile[1]
+    rawms = p_infile
+    calms = p_outfile
+    corms = p_outfile
 
-    # default file format (original style) #
-    rawms = '%s%s' % (ebuid, ebext)
-    calms = '%s%s' % (ebuid, ebext)    # name of MS in which (standard-)calibrated spectra are stored.
-    corms = '%s%s' % (outfile, outext)     # by specified args. with no other attributes. #
-
-    # existence check #
+    # existence info.  #
     rawms_exist = _file_exist(rawms)
     calms_exist = _file_exist(calms)
     corms_exist = _file_exist(corms)
@@ -581,7 +545,6 @@ def calc_sdatmcor(
     _msg("  default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
     _msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
     _msg("  default MS file (corms) = %s , Exist =%s" % (corms, corms_exist))
-    _msg("  The 'calms' will soon be swithced to mstransform outfile to use selected data.")
 
     # infile Inaccesible #
     if not rawms_exist:
@@ -642,23 +605,17 @@ def calc_sdatmcor(
     # Data Selection
     #
 
-    # Temp File (cleaned use) #
-    mst_tempfileform = './_AtmCor-Temp'
-    mst_tempfilename = mst_tempfileform + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.ms'
-
     # Data Selection (internally execute mstransform #
     _msg("Data Selection in progress.")
-    _msg("- using temp file [%s] for mstransform output." % mst_tempfilename)
 
     try:
         atmMst(
-            infile=rawms,           # Tentatively use 'rawms' name
+            infile=rawms,
             datacolumn=p_datacolumn,
-            outfile=mst_tempfilename,   # Temp name is used inside.
-            overwrite=p_overwrite,  # passed by the actual ARG.
+            outfile=corms,      
+            overwrite=p_overwrite,
             field=p_field,
-            # spw=p_spw,             (Wrong)
-            spw = p_outputspw,       # use OutputSpw to make selectedMS.
+            spw = p_outputspw,
             scan=p_scan,
             antenna=p_antenna,
             correlation=p_correlation,
@@ -673,33 +630,29 @@ def calc_sdatmcor(
         casalog.post('%s' % err, 'SEVERE')
         return False
 
-    # Resume 'origin'. due to strange behavior in casalog/CASA6 #
+    # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
 
     # Result check if output exists. #
-    if not _file_exist(mst_tempfilename):
+    if not _file_exist(corms):
         _msg("\nERROR:: No outfile has been generated by mstransform.\n", 'SEVERE')
         return False
 
-    _msg("Data Selection was applied. Use %s as 'calms' " % mst_tempfilename)
+    _msg("Data Selection was applied. Output file =  %s " % corms)
 
     #
     # Tool Default constant (CAS-13160)
     # - Antenna and its altitude are determined.
     #
-    antenna = get_defaut_antenna(rawms, p_antenna)        # default antenna_id   (UNDER CONSTRUCTION: internal is TBD)
-    altitude = get_default_altitude(rawms, antenna)       # default altitude  - extracting 'POSITION' from MS/ANTENNA and convert.
+    antenna = get_default_antenna(rawms, p_antenna)       # default antenna_id   (UNDER RE-CONSTRUCTION)
+    altitude = get_default_altitude(rawms, antenna)       # default altitude  - see inside in detail (UNDER RE-CONSTRUCTION)
 
-    # Datacolumn name slide #
+    #
+    # Use 'DATA' after  mstransform.
+    #  only when CORRECTED_DATA is originally specified.  
+    #
     if datacolumn == 'CORRECTED_DATA':
         datacolumn = 'DATA'
-
-    #
-    # Activate Data Selection
-    # - copy mstransform output (temp)  to 'calms'
-    #
-    calms = mst_tempfilename
-    _ms_copy(src=mst_tempfilename, dst=corms)
 
     #
     # CAS-13160
@@ -715,8 +668,8 @@ def calc_sdatmcor(
     _msg("\nSDATMCOR main body starts. rawms=%s\n" % rawms)
 
     try:
-        _msg("msmd.open(rawms)", rawms)
         msmd.open(rawms)
+
         tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
         tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
         fdmspws = msmd.fdmspws()
@@ -733,70 +686,59 @@ def calc_sdatmcor(
         _msg(" - intent spws = %s" % intentspws)
         _msg(" -        spws = %s" % spws)
 
+        # (Task Section) check count of ON/OFF SOURCE
+        n_tmonsource = len(tmonsource)
+        n_tmoffsource = len(tmoffsource)
+        msg = "Target Information. \n"   \
+            + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
+            + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+        _msg(msg)
+
+        # (Task Section) OFF_SOURCE check #
+        if (n_tmoffsource == 0):
+            msg = "Can't find the OFF_SOURCE data."
+            _msg(msg, 'SEVERE')
+            raise(msg)
+
+        # (Task Section) ON_SOURCE check #
+        if (n_tmoffsource == 0):
+            msg = "Can't find the ON_SOURCE data."
+            _msg(msg, 'SEVERE')
+            raise(msg)
+
+        #
+        # (Task Section )
+        # force to change 'processing Spw'
+        # - If spw is pecified in the arg, set up 'spws'
+        #
+        _msg("Determine active spw when spw is in the arg.")
+        if (p_spw != ''):
+            spws_param = _list_comma_string(p_spw, dType='int')
+
+            # Including check
+            #  - all the element in spws_param MUST be in Spws
+            if set(spws) >= set(spws_param):   # B is included in A #
+                spws = spws_param   # update
+                _msg(" - updated 'spws'=%s. by given spw." % spws)
+            else:
+                _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n", "ERROR")
+                _msg("  - spws (MS)     = %s" % set(spws))
+                _msg("  - spws (arg)    = %s" % set(spws_param))
+                ## UNDER CONSTRUCTION. This case can continue ##
+                return False
+ 
+        # (original) get chanfreqs[spwid] info.
+        for spwid in spws:
+            chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
+
     except Exception as err:
         _msg("ERROR:: opening rawms")
         casalog.post('%s' % err, 'ERROR')
-
-        # clean #
-        _ms_remove(mst_tempfilename)
         return False
 
-    # (Task Section) check count of ON/OFF SOURCE
-    n_tmonsource = len(tmonsource)
-    n_tmoffsource = len(tmoffsource)
-    msg = "Target Information. \n"   \
-        + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
-        + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-    _msg(msg)
-
-    # (Task Section) OFF_SOURCE check #
-    if (n_tmoffsource == 0):
-        msg = "Can't find the OFF_SOURCE data."
-        _msg(msg, 'SEVERE')
-
-        # clean #
-        _ms_remove(mst_tempfilename)
-        return False
-
-    # (Task Section) ON_SOURCE check #
-    if (n_tmoffsource == 0):
-        msg = "Can't find the ON_SOURCE data."
-        _msg(msg, 'SEVERE')
-
-        # clean #
-        _ms_remove(mst_tempfilename)
-        return False
-
-    #
-    # (Task Section )
-    # force to change 'processing Spw'
-    # - If spw is pecified in the arg, set up 'spws'
-    #
-    _msg("Determine spw when spw is specified.")
-    if (p_spw != ''):
-        spws_param = _list_comma_string(p_spw, dType='int')
-
-        # Including check
-        #  - all the element in spws_param MUST be in Spws
-        if set(spws) >= set(spws_param):   # B is included in A #
-            spws = spws_param   # update
-            _msg(" - updated 'spws'=%s. by given spw." % spws)
-        else:
-            _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n", "ERROR")
-            _msg("  - spws (MS)     = %s" % set(spws))
-            _msg("  - spws (arg)    = %s" % set(spws_param))
-
-            # clean #
-            _ms_remove(mst_tempfilename)
-            return False
- 
-    # (original) get chanfreqs[spwid] info.
-    for spwid in spws:
-        chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
- 
-    # end metadata
-    msmd.close()
-    _msg("- closed msmd")
+    finally:
+        msmd.close()
+        _msg("msmd was successfully closed.")  # TENTATIVE msg (checking try-finally)
 
     # (original)
     bnd = (pl.diff(tmoffsource) > 1)
@@ -806,12 +748,10 @@ def calc_sdatmcor(
 
     ddis = {}
 
-    _msg("msmd.open(calms).")
     msmd.open(calms)
     for spwid in spws:
         ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     msmd.close()
-    _msg("closed msmd")
 
     print(" - ddis[] = %s" % ddis)
 
@@ -851,8 +791,6 @@ def calc_sdatmcor(
         _msg("  - spws      = %s" % spws)
         _msg("  - outputspws = %s" % outputspws)
 
-        # clean #
-        _ms_remove(mst_tempfilename)
         return False
 
     #
@@ -862,7 +800,6 @@ def calc_sdatmcor(
     #   - tmpointing, elev
     #
     try:
-        _msg("opening calms/POINTING.")
         tb.open(os.path.join(calms, 'POINTING'))  # CAS-13160:: use tempMS, (in org. using rawms)
 
         # (org.) key for ANTENNA_ID select
@@ -876,33 +813,26 @@ def calc_sdatmcor(
 
         subtb.close()
         tb.close()
-        _msg("- closed POINTING.")
 
     except Exception as instance:
         _msg("ERROR:: opening POINTING.")
         casalog.post('%s' % instance, 'ERROR')
-        # clean #
-        _ms_remove(mst_tempfilename)
         raise
 
     ################################################################
     # Get atmospheric parameters for ATM
     ################################################################
     try:
-        _msg("opening rawms/'ASDM_CALWVR'.")
         tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
         # confirm
         _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
         pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                        (tmonsource.min(), tmonsource.max())).getcol('water')
         tb.close()
-        _msg("- closed rawms/'ASDM_CALWVR'.")
 
     except Exception as err:
         _msg("ERROR:: opening rawms/'ASDM_CALWVR'.")
         casalog.post('%s' % err, 'ERROR')
-        # clean #
-        _ms_remove(mst_tempfilename)
         raise
 
     # pick up pwv
@@ -910,7 +840,7 @@ def calc_sdatmcor(
 
     # ASDM_CALATMOSPHERE
     try:
-        _msg("opening rawms/'ASDM_CALATMOSPHERE'.")
+        _msg("reading rawms/'ASDM_CALATMOSPHERE'.")
         tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
         subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                          (tmonsource.min(),
@@ -922,7 +852,6 @@ def calc_sdatmcor(
 
         subtb.close()
         tb.close()
-        _msg("- closed rawms/'ASDM_CALATMOSPHERE'.")
 
     except Exception as err:
         _msg("ERROR:: opening rawms/'ASDM_CALATMOSPHERE'.")
@@ -934,7 +863,6 @@ def calc_sdatmcor(
     ################################################################
     # Looping over spws
     ################################################################
-    _msg("opening corms[%s] to write ATM-Corrected Data." % corms)
     tb.open(corms, nomodify=False)
 
     # Note CAS-13160:
@@ -1199,11 +1127,5 @@ def calc_sdatmcor(
     #
     tb.flush()
     tb.close()
-    _msg("- closed MS[%s] to write." % corms)
-
-    #
-    # delete temp file. (with Tentative debug option)
-    #
-    _ms_remove(mst_tempfilename)
 
     return True
