@@ -42,7 +42,7 @@ import numpy as np
 
 if CASA6:
     datapath = casatools.ctsys.resolve('visibilities/alma/polcal_LINEAR_BASIS.ms')
-    calpath = casatools.ctsys.resolve('caltables/polcal_LINEAR_BASIS.ms.Dtrue')
+    calpathLin = casatools.ctsys.resolve('caltables/polcal_LINEAR_BASIS.ms.Dtrue')
     # circular data
     datapathCirc = casatools.ctsys.resolve('visibilities/vla/polcal_CIRCULAR_BASIS.ms')
     calpathCirc = casatools.ctsys.resolve('caltables/polcal_CIRCULAR_BASIS.ms.Dtrue')
@@ -50,14 +50,14 @@ if CASA6:
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
+        calpathLin = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
         # circular data
         datapathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
         calpathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
 
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
+        calpathLin = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
         # circular data
         datapathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
         calpathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
@@ -140,7 +140,7 @@ def getSelection(table, field='0', spw='0'):
 
 
 outcal = 'polcalTestOutput.ms.Df'
-datacopy = 'polcalTestCopy.ms'
+datacopyLin = 'polcalTestCopy.ms'
 datacopyCirc = 'polcalTestCopyCirc.ms'
 
 
@@ -152,13 +152,13 @@ class polcal_test(unittest.TestCase):
 
     def setUp(self):
         # Use a copy of the MS
-        shutil.copytree(datapath, datacopy)
+        shutil.copytree(datapath, datacopyLin)
         shutil.copytree(datapathCirc, datacopyCirc)
 
     def tearDown(self):
         # After each test remove the copy and the output cal table
-        if os.path.exists(datacopy):
-            shutil.rmtree(datacopy)
+        if os.path.exists(datacopyLin):
+            shutil.rmtree(datacopyLin)
         if os.path.exists(datacopyCirc):
             shutil.rmtree(datacopyCirc)
         if os.path.exists(outcal):
@@ -168,10 +168,10 @@ class polcal_test(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_noPolDflls(self):
+    def test_noPolDfllsLin(self):
         ''' Test on field 0 and spw 0. Use channelized solutions '''
 
-        polcal(vis=datacopy, caltable=outcal, field='0', spw='0', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='0', spw='0', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.0, 0.0, 0.0], refant='5')
 
@@ -181,27 +181,27 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(calresult, 0)))
 
-    def test_noPolDlls(self):
+    def test_noPolDllsLin(self):
         ''' Test on Field 0 and spw 0 there should be no source or instrumental pol. This is probably not a useful case '''
 
-        polcal(vis=datacopy, caltable=outcal, field='0', spw='0', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='0', spw='0', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Dlls',
                smodel=[1.0, 0.0, 0.0, 0.0], refant='5')
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, :10]
         tb.close()
 
         self.assertTrue(np.all(np.isclose(calresult, refresult)))
 
-    def test_sourcePolDflls(self):
+    def test_sourcePolDfllsLin(self):
         ''' Test one Field 1 and spw 0. Channelized solution '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='0', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='0', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
@@ -213,10 +213,10 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(calresult, 0)))
 
-    def test_sourcePolDlls(self):
+    def test_sourcePolDllsLin(self):
         ''' Test on Field 1 and spw 0. Should return the source pol '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='0', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='0', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dlls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
@@ -225,24 +225,24 @@ class polcal_test(unittest.TestCase):
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, :10]
         tb.close()
 
         self.assertTrue(np.all(np.isclose(calresult, refresult)))
 
-    def test_onlyInstPolDflls(self):
+    def test_onlyInstPolDfllsLin(self):
         ''' Test on Field 0 and spw 1. Use channelized solutions '''
 
-        polcal(vis=datacopy, caltable=outcal, field='0', spw='1', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='0', spw='1', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dflls', refant='5',
                smodel=[1.0, 0.0, 0.0, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 10:20]
         tb.close()
@@ -251,78 +251,78 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(resDiff, 0)))
 
-    def test_onlyInstPolDlls(self):
+    def test_onlyInstPolDllsLin(self):
         ''' Test on Field 0 and spw 1. Should clear inst pol and see no source pol. needs refant '''
 
-        polcal(vis=datacopy, caltable=outcal, field='0', spw='1', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='0', spw='1', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dlls', refant='5',
                smodel=[1.0, 0.0, 0.0, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 10:20]
         tb.close()
 
         self.assertTrue(np.all(np.isclose(calresult, refresult)))
 
-    def test_sourceInstPolDflls(self):
+    def test_sourceInstPolDfllsLin(self):
         ''' Test on Field 1 and spw 1. Use channelized solutions '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 10:20]
         tb.close()
 
         np.all(np.isclose(calresult, refresult))
 
-    def test_sourceInstPolDlls(self):
+    def test_sourceInstPolDllsLin(self):
         ''' Test on Field 1 and spw 1. Should see source pol '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf', combine='scan',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf', combine='scan',
                preavg=101.0, minsnr=0.0, poltype='Dlls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 10:20]
         tb.close()
 
         self.assertTrue(np.all(np.isclose(calresult, refresult)))
 
-    def test_sourceInstPolNoise(self):
+    def test_sourceInstPolNoiseLin(self):
         ''' Test on Field 1 and spw 2 or 3. Should see source pol with noise '''
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='2', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 20:30]
         tb.close()
 
         self.assertTrue(np.all(np.isclose(calresult, refresult, atol=9e-4)))
 
-    def test_combineSpw(self):
+    def test_combineSpwLin(self):
         ''' Test that combine spws increases the SNR/ decreases the noise '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='2', solint='inf',
-               combine='scan', preavg=101.0, minsnr=0.0, poltype='Dflls',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2,3', solint='inf',
+               combine='spw', preavg=101.0, minsnr=0.0, poltype='Dlls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
         # TODO come back to this us df?
@@ -330,73 +330,76 @@ class polcal_test(unittest.TestCase):
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
-        refresult = tb.getcol('CPARAM')[:, :, 20:30]
+        refresult = tb.getcol('CPARAM')[:, :, 20:40]
         tb.close()
 
-        allChanMeanDiff = (np.mean(calresult) - np.mean(refresult)) / np.sqrt(8)
-        singleChanMeanDiff = np.mean(refresult) - np.mean(calresult[:, 0, :])
-        meanDiffs = singleChanMeanDiff - allChanMeanDiff
+        # Shape after combine spw = [2,1,80]
+        # Testing on other cases shows mean - mean is the same as mean(diff)
 
-        self.assertTrue(np.isclose(meanDiffs, 0, atol=2e-4))
+        meanDiff = np.mean(calresult) - np.mean(refresult)
 
-    def test_noSourceInstPolNoise(self):
+        self.assertTrue(np.isclose(meanDiff, 0, atol=7e-4))
+
+    def test_noSourceInstPolNoiseLin(self):
         ''' Test on Field 0 and spw 2 or 3. Should just see noise '''
-        polcal(vis=datacopy, caltable=outcal, field='0', spw='3', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='0', spw='3', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.08, 0.06, 0.0])
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
         # get CPARAM values from ref cal
-        tb.open(calpath)
+        tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 30:40]
         tb.close()
 
-        meanDifference = np.mean(calresult) - np.mean(refresult)
+        meanDifference = np.mean(calresult - refresult)
 
         self.assertTrue(np.all(np.isclose(meanDifference, 0, atol=4e-3)))
 
-    def test_poltypeXf(self):
+    def test_poltypeXfLin(self):
+        ''' Test poltype Xf and assume correct and negated QU '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Xf',
-               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpath])
+               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpathLin])
 
         calresult = getparam(outcal)
 
         self.assertTrue(np.all(np.isclose(calresult, [1 + 0j])))
 
         shutil.rmtree(outcal)
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Xf',
-               smodel=[1.0, -0.08, -0.06, 0.0], gaintable=[calpath])
+               smodel=[1.0, -0.08, -0.06, 0.0], gaintable=[calpathLin])
 
         calresult = getparam(outcal)
 
         self.assertTrue(np.all(np.isclose(calresult, [-1 + 0j])))
 
 
-    def test_poltypeXfParangQU(self):
+    def test_poltypeXfParangQULin(self):
+        ''' Test poltypeXfParang+QU and assume the correct QU '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf',
+        resQU = polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='Xfparang+QU',
-               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpath])
+               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpathLin])
 
         # Try flipping the signs here too for smodel
         calresult = getparam(outcal)
 
-        print(calresult)
-
         self.assertTrue(np.all(np.isclose(calresult, [1+0j])))
+        self.assertTrue(np.all(np.isclose([1.0, 0.08, 0.06, 0.0], resQU['J2354-3600']['SpwAve'], atol=1e-4)))
 
-    def test_posAngLinear(self):
+    def test_posAngLin(self):
+        ''' Test poltype PosAng and assume the correct QU '''
 
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='PosAng',
-               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpath])
+               smodel=[1.0, 0.08, 0.06, 0.0], gaintable=[calpathLin])
 
         tb.open(outcal)
         calresult = tb.getcol('FPARAM')
@@ -405,9 +408,9 @@ class polcal_test(unittest.TestCase):
         self.assertTrue(np.all(np.isclose(calresult, 0)))
 
         #with more interesting PosAng
-        polcal(vis=datacopy, caltable=outcal, field='1', spw='1', solint='inf',
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='1', solint='inf',
                combine='scan', preavg=101.0, minsnr=0.0, poltype='PosAng',
-               smodel=[1.0, 0.06, 0.08, 0.0], gaintable=[calpath])
+               smodel=[1.0, 0.06, 0.08, 0.0], gaintable=[calpathLin])
 
         tb.open(outcal)
         calresult = tb.getcol('FPARAM')
@@ -433,7 +436,7 @@ class polcal_test(unittest.TestCase):
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     @unittest.skip("Fix in another ticket")
-    def test_unpolarizedDfQU(self):
+    def test_unpolarizedDfQUCirc(self):
         ''' Test unpolarized calibraion Q=U=0 for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='0', spw='1,2,3', preavg=101.0,
                minsnr=0.0, poltype='Df+QU', smodel=[1.0, 0, 0, 0], refant='5')
@@ -448,7 +451,7 @@ class polcal_test(unittest.TestCase):
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
     @unittest.skip("Fix in another ticket")
-    def test_unknownPolDfQU(self):
+    def test_unknownPolDfQUCirc(self):
         ''' Test polarized calibration with unknown polarization for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', preavg=101.0,
                minsnr=0.0, poltype='Df+QU', smodel=[1.0, 0, 0, 0], refant='5')
@@ -462,7 +465,7 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
-    def test_knownPolDflls(self):
+    def test_knownPolDfllsCirc(self):
         ''' Test polarized calibration with known polarization for Dflls mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', preavg=101.0,
                minsnr=0.0, poltype='Dflls', smodel=[1.0, 0.08, 0.06, 0], refant='5')
@@ -478,18 +481,16 @@ class polcal_test(unittest.TestCase):
 
     ### Xf ###
 
-    def test_XfCorrectQU(self):
+    def test_XfCorrectQUCirc(self):
         ''' Test poltype Xf and assume the correct Q, U '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='Xf', smodel=[1.0, 0.08, 0.06, 0], refant='5', gaintable=[calpathCirc])
 
         calresult = getparam(outcal)
 
-        print(calresult)
-
         self.assertTrue(np.all(np.isclose(np.mean(calresult), [1 + 0j], atol=1e-4)))
 
-    def test_XfAlternateQU(self):
+    def test_XfAlternateQUCirc(self):
         ''' Test poltype Xf and assume alternate Q, U values '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='Xf', smodel=[1.0, 0.1, 0.0, 0], refant='5', gaintable=[calpathCirc])
@@ -498,7 +499,7 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), [0.8 + 0.6j], atol=1e-4)))
 
-    def test_XfNegatedQU(self):
+    def test_XfNegatedQUCirc(self):
         ''' Test poltype Xf and assume Q, U with flipped signs '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='Xf', smodel=[1.0, -0.08, -0.06, 0], refant='5', gaintable=[calpathCirc])
@@ -509,7 +510,7 @@ class polcal_test(unittest.TestCase):
 
     ### PosAng ###
 
-    def test_PosAngCorrectQU(self):
+    def test_PosAngCorrectQUCirc(self):
         ''' Test poltype PosAng and assume the correct Q, U '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.08, 0.06, 0], gaintable=[calpathCirc])
@@ -520,7 +521,7 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), 0, rtol=1e-4, atol=1e-4)))
 
-    def test_PosAngAlternateQU(self):
+    def test_PosAngAlternateQUCirc(self):
         ''' Test poltype PosAng and assume alternate Q, U values '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='PosAng', smodel=[1.0, 0.1, 0.0, 0], gaintable=[calpathCirc])
@@ -529,11 +530,10 @@ class polcal_test(unittest.TestCase):
         calresult = tb.getcol('FPARAM')
         tb.close()
 
-        #print(np.mean(np.degrees(calresult)))
         # Answer is ~ 0.32193175 radians
         self.assertTrue((np.isclose(np.degrees(np.mean(calresult)), 18.43, atol=1e-4, rtol=1e-3)))
 
-    def test_PosAngNegatedQU(self):
+    def test_PosAngNegatedQUCirc(self):
         ''' Test poltype PosAng and assume Q, U with flipped signs '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[calpathCirc])
@@ -545,7 +545,7 @@ class polcal_test(unittest.TestCase):
         calresult = np.mean(abs(np.degrees(calresult)))
         # ans ~ -1.5706 radians
         self.assertTrue(np.isclose(calresult, 90, atol=1e-4, rtol=1e-4))
-    def test_PosAngNegatedQUApply(self):
+    def test_PosAngNegatedQUApplyCirc(self):
         ''' Test applying the negated table to a new polcal call '''
         polcal(vis=datacopyCirc, caltable=outcal+'.PA-rel', field='1', spw='', solint='inf',
                minsnr=0.0, poltype='PosAng', smodel=[1.0, -0.08, -0.06, 0], gaintable=[calpathCirc])
@@ -562,36 +562,46 @@ class polcal_test(unittest.TestCase):
 
     ### Xfparang+QU
 
-    def test_XfParangQUCorrectQU(self):
+    def test_XfParangQUCorrectQUCirc(self):
         ''' Test poltype XfParang+QU and assume the correct Q, U '''
         P = polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                    minsnr=0.0, poltype='Xfparang+QU', smodel=[1.0, 0.08, 0.06, 0])
 
         calresult = getparam(outcal)
-
-        print(calresult)
+        Q = P['J2354-3600']['SpwAve'][1]
+        U = P['J2354-3600']['SpwAve'][2]
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), [1 + 0j], atol=1e-4)))
+        self.assertTrue(np.isclose(Q, 0.1, atol=1e-4))
+        self.assertTrue(np.isclose(U, 0.0, atol=1e-4))
 
-    def test_XfParangQUAlternateQU(self):
+    def test_XfParangQUAlternateQUCirc(self):
         ''' Test poltype XfParang+QU and assume the correct Q, U '''
         P = polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                    minsnr=0.0, poltype='Xfparang+QU', smodel=[1.0, 0.1, 0.0, 0])
 
         calresult = getparam(outcal)
+        Q = P['J2354-3600']['SpwAve'][1]
+        U = P['J2354-3600']['SpwAve'][2]
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), [0.8 + 0.6j], atol=1e-4)))
+        self.assertTrue(np.isclose(Q, 0.1, atol=1e-4))
+        self.assertTrue(np.isclose(U, 0.0, atol=1e-4))
 
-    def test_XfParangQUNegatedQU(self):
+    def test_XfParangQUNegatedQUCirc(self):
         ''' Test poltype XfParang+QU  and assume Q, U with flipped signs '''
         P = polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', solint='inf',
                    minsnr=0.0, poltype='Xfparang+QU', smodel=[1.0, -0.08, -0.06, 0])
 
         calresult = getparam(outcal)
+        Q = P['J2354-3600']['SpwAve'][1]
+        U = P['J2354-3600']['SpwAve'][2]
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), [-1 + 0j], atol=1e-4)))
+        self.assertTrue(np.isclose(Q, 0.1, atol=1e-4))
+        self.assertTrue(np.isclose(U, 0.0, atol=1e-4))
 
-    def test_XfParangQUNegatedQUApply(self):
+    def test_XfParangQUNegatedQUApplyCirc(self):
         ''' Test applying the negated table to a new polcal call '''
         polcal(vis=datacopyCirc, caltable=outcal+'.XfpaQU-rel', field='1', spw='', solint='inf',
                minsnr=0.0, poltype='Xfparang+QU', smodel=[1.0, -0.08, -0.06, 0])
@@ -601,9 +611,12 @@ class polcal_test(unittest.TestCase):
                    gaintable=[outcal + '.XfpaQU-rel', calpathCirc])
 
         calresult = getparam(outcal)
-        print(calresult)
+        Q = P['J2354-3600']['SpwAve'][1]
+        U = P['J2354-3600']['SpwAve'][2]
 
         self.assertTrue(np.all(np.isclose(calresult, [1.0 + 0j], atol=1e-4)))
+        self.assertTrue(np.isclose(Q, 0.1, atol=1e-4))
+        self.assertTrue(np.isclose(U, 0.0, atol=1e-4))
 
 def suite():
     return [polcal_test]
