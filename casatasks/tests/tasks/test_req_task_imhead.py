@@ -54,7 +54,7 @@ import re
 
 
 datapath = ctsys_resolve('unittest/imhead/')
-impath = os.path.join(datapath,'ngc5921.clean.image')
+impath = os.path.join(datapath,'ngc5921.clean.imhead.image')
 
 logfile = casalog.logfile()
 datacopy = 'clean.image'

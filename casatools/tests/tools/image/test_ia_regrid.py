@@ -295,6 +295,7 @@ class ia_regrid_test(unittest.TestCase):
     def test_regrid_galactic(self):
         """Verify fix for CAS-5534"""
         myia = self._myia
+#        shutil.copytree(datapath + "ngc5921.clean.image", "ngc5921.clean.image")
         myia.open(datapath + "ngc5921.clean.image")
         csys = myia.coordsys()
         csys.setreferencecode('GALACTIC', type='direction', adjust=True)
