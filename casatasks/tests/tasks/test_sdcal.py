@@ -5,7 +5,6 @@ import sys
 import shutil
 import re
 import numpy
-import math
 import contextlib
 import unittest
 import listing
@@ -37,7 +36,6 @@ try:
 
             ### for testhelper import
             sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-            from testhelper import copytree_ignore_subversion
 
             tb = table()
 
@@ -55,11 +53,6 @@ except Casa5InitError as e:
     import sdutil
     from sdcal import sdcal
     from partition import partition
-
-    try:
-        from .testutils import copytree_ignore_subversion
-    except:
-        from tests.testutils import copytree_ignore_subversion
 
     # make the CASA5 tool constuctors used here look the CASA6 versions
     ms = mstool
@@ -609,7 +602,7 @@ class sdcal_test_base(unittest.TestCase):
         for f in files:
             if os.path.exists(f):
                 shutil.rmtree(f)
-            copytree_ignore_subversion(self.datapath, f)
+            shutil.copytree(os.path.join(self.datapath, f), f)
 
         default(task)
 
@@ -1301,7 +1294,7 @@ class sdcal_test_otf(unittest.TestCase):
         infile = self.sdcal_params['infile']
         if os.path.exists(infile):
             shutil.rmtree(infile)
-        copytree_ignore_subversion(self.datapath, infile)
+        shutil.copytree(os.path.join(self.datapath, infile), infile)
         # Delete output calibration table if any
         if 'outfile' in self.sdcal_params :
             outfile = self.sdcal_params['outfile']
@@ -1520,7 +1513,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
     def setUp(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
-        copytree_ignore_subversion(self.datapath, self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
 
         default(sdcal)
 

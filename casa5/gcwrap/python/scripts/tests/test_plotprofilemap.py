@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-import sys
 import shutil
 import numpy
 import re
@@ -20,8 +19,6 @@ if is_CASA6:
     from casatools import ctsys
     datapath = ctsys.resolve('regression/unittest/imregrid/')
 
-    from testhelper import copytree_ignore_subversion
-
     # default isn't used in CASA6
     def default(atask):
         pass
@@ -34,12 +31,6 @@ else:
 
     # Data path of input/output
     datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/imregrid/'
-
-    try:
-        from testutils import copytree_ignore_subversion
-    except Exception:
-        from tests.testutils import copytree_ignore_subversion
-
 
 myia = image()
 myrg = regionmanager()
