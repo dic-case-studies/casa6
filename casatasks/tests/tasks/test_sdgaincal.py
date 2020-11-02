@@ -58,6 +58,8 @@ class sdgaincal_test_base(unittest.TestCase):
 
     def tearDown(self):
         to_be_removed = [self.infile, self.outfile]
+        if hasattr(self, 'reffile'):
+            to_be_removed.append(self.reffile)
         for f in to_be_removed:
             if os.path.exists(f):
                 shutil.rmtree(f)

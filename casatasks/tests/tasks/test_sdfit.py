@@ -1033,7 +1033,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
         default(sdfit)
 
     def tearDown(self):
-        self._remove([self.infile])
+        self._remove([self.infile, self.infile + '.flagversions'])
 
     def get_reference_from_base(self, is_center):
         ref_val = {}
