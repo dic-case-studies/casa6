@@ -19,6 +19,8 @@ if is_CASA6:
                 os.path.dirname(__file__))))
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
+    from casatools import calibrater
+    from casatools import ms as mstool
 
     datapath = ctsys.resolve('')
 
@@ -28,6 +30,8 @@ else:
     from tasks import sdatmcor
     from __main__ import default
     from sdutil import tbmanager
+    from taskinit import cbtool as calibrater
+    from taskinit import mstool
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + ''
@@ -59,6 +63,20 @@ def std_with_clip(arr, num_iter=1, factor=3):
         std = arr[np.abs(arr) < std * factor].std()
     return std
 
+
+def read_table(name, spw, cols=['STATE_ID', 'DATA']):
+    ms = mstool()
+    idx = ms.msseltoindex(name, spw=[int(spw)])
+    ddid = idx['dd']
+    with tbmanager(name) as tb:
+        tsel = tb.query('DATA_DESC_ID IN [{}]'.format(','.join([str(i) for i in ddid])))
+        try:
+            result_dict = dict((k, tsel.getcol(k)) for k in cols)
+        finally:
+            tsel.close()
+    return result_dict
+
+
 #
 # Test-MS
 #
@@ -79,7 +97,7 @@ defWorkMsBasic = "uid___A002_Xe770d7_X320b-t.ms"
 
 class test_sdatmcor(unittest.TestCase):
     datapath = ctsys_resolve('visibilities/almasd')
-    infile = 'X320b_sel.ms'
+    infile = 'X320b_sel2.ms'
     outfile = infile + '.atmcor'
 
     local_unit_test = False
@@ -223,47 +241,109 @@ class test_sdatmcor(unittest.TestCase):
     #     # Run Task and check
     #     self.assertTrue(self._run_task(prm))
 
-    def check_result(self):
+    def _check_result_spw(self, spw, is_selected, is_processed):
+
+        contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA'])
+        stateids_after = contents_after['STATE_ID']
+        data_after = contents_after['DATA'].real
+
+        # if is_selected is False, selected data should be empty
+        if not is_selected:
+            self.assertEqual(len(stateids_after), 0)
+            return
+
+        contents_before = read_table(self.infile, spw, ['STATE_ID', 'DATA'])
+        stateids_before = contents_before['STATE_ID']
+        data_before = contents_before['DATA'].real
+
+        # check if spw exist in the data
+        self.assertGreater(len(stateids_after), 0)
+
+        if is_processed:
+            if spw == 23:
+                # examine averaged spectrum
+                #   - exclude edge channels (4 channels)
+                #   - take average along pol and time axes
+                #   - subtract zero order baseline
+                #   - compute std with clipping (3 iterations => 2 clipping)
+                #   - set threshold to 7.5 times std
+                #   - check if any data exceeds threshold for data before correction
+                #   - check if no data exceeds threshold for data after correction
+                edge = 4
+                # data before correction
+                mask0 = np.logical_or(stateids_before == 14, stateids_before == 84)
+                data_on = data_before[:, edge:-edge, mask0]
+                data_mean = data_on.mean(axis=(0, 2))
+                data_sub = data_mean - np.median(data_mean)
+                threshold = 7.5 * std_with_clip(data_sub, num_iter=3)
+                self.assertFalse(np.all(np.abs(data_sub) < threshold))
+                # data after correction
+                mask1 = np.logical_or(stateids_after == 14, stateids_after == 84)
+                data_on = data_after[:, edge:-edge, mask1]
+                data_mean = data_on.mean(axis=(0, 2))
+                data_sub = data_mean - np.median(data_mean)
+                threshold = 7.5 * std_with_clip(data_sub, num_iter=3)
+                self.assertTrue(np.all(np.abs(data_sub) < threshold))
+            elif spw == 19:
+                # examine averaged spectrum
+                #   - take average along pol and time axes
+                #   - take difference of data before and after correction
+                #   - check if mean of difference is around 0.34
+                #   - check if std of difference is small enough
+                mask0 = np.logical_or(stateids_before == 14, stateids_before == 84)
+                data_on_before = data_before[:, :, mask0]
+                data_mean_before = data_on_before.mean(axis=(0, 2))
+                mask1 = np.logical_or(stateids_after == 14, stateids_after == 84)
+                data_on_after = data_after[:, :, mask1]
+                data_mean_after = data_on_after.mean(axis=(0, 2))
+                diff = data_mean_before - data_mean_after
+                diff_mean = diff.mean()
+                diff_std = diff.std()
+                self.assertAlmostEqual(diff_mean, 0.307, places=3)
+                self.assertLess(diff_std, 0.0003)
+
+            # OFF_SOURCE data should not be touched
+            mask0 = np.logical_and(stateids_before != 14, stateids_before != 84)
+            data_off_before = data_before[:, :, mask0]
+            mask1 = np.logical_and(stateids_after != 14, stateids_after != 84)
+            data_off_after = data_after[:, :, mask1]
+            self.assertTrue(np.all(data_off_before == data_off_after))
+        else:
+            self.assertTrue(np.all(data_after == data_before))
+
+    def check_result(self, spwprocess):
+        """Check Result
+
+        Args:
+            spwprocess (dict): key is spw id, value is whether or not the spw is processed
+        """
         # outfile should exist
         self.assertTrue(os.path.exists(self.outfile))
 
         # no temporary files exist
         self.assertEqual(len(self.__get_temporary_files()), 0)
 
-        # examine averaged spectrum
-        #   - exclude edge channels (4 channels)
-        #   - take average along pol and time axes
-        #   - subtract zero order baseline
-        #   - compute std with clipping (3 iterations => 2 clipping)
-        #   - set threshold to 7.5 times std
-        #   - check if no data exceeds threshold
-        with tbmanager(self.outfile) as tb:
-            stateids = tb.getcol('STATE_ID')
-            data = tb.getcol('DATA').real
-
-        edge = 4
-        data_on = data[:, edge:-edge, stateids == 14]
-        data_mean = data_on.mean(axis=(0, 2))
-        data_sub = data_mean - np.median(data_mean)
-        threshold = 7.5 * std_with_clip(data_sub, num_iter=3)
-        self.assertTrue(np.all(np.abs(data_sub) < threshold))
+        for spw in [19, 23]:
+            is_selected = spw in spwprocess
+            is_processed = spwprocess.get(spw, False)
+            self._check_result_spw(spw, is_selected, is_processed)
 
     def test_sdatmcor_normal(self):
         '''test normal usage of sdatmcor'''
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
-        self.check_result()
+        self.check_result({19: True, 23: True})
 
     def test_sdatmcor_explicit_atmtype(self):
         '''test specifying atmtype explicitly'''
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', atmtype=2)
-        self.check_result()
+        self.check_result({19: True, 23: True})
 
     def test_sdatmcor_overwrite(self):
         '''test overwriting existing outfile'''
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=True)
-        self.check_result()
+        self.check_result({19: True, 23: True})
 
     def test_sdatmcor_no_overwrite(self):
         '''test to avoid overwriting existing outfile'''
@@ -282,6 +362,53 @@ class test_sdatmcor(unittest.TestCase):
             self.assertFalse(
                 sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn=colname)
             )
+
+    def test_sdatmcor_corrected(self):
+        '''test if CORRECTED_DATA column is handled properly'''
+        # add CORRECTED_DATA column
+        cb = calibrater()
+        cb.open(self.infile, addcorr=True, addmodel=False)
+        cb.close()
+        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected')
+        self.check_result({19: True, 23: True})
+
+    def test_sdatmcor_spw_select_23(self):
+        '''test data selection: select spw 23'''
+        sdatmcor(infile=self.infile, outputspw='23', outfile=self.outfile, datacolumn='data')
+        self.check_result({23: True})
+
+    def test_sdatmcor_spw_select_all(self):
+        '''test data selection: select 19 and 23 explicitly'''
+        sdatmcor(infile=self.infile, outputspw='19,23', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: True})
+
+    def test_sdatmcor_spw_process_19(self):
+        '''test data selection: process only spw 19'''
+        sdatmcor(infile=self.infile, spw='19', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: False})
+
+    def test_sdatmcor_spw_process_all(self):
+        '''test data selection: declare to process 19 and 23 explicitly'''
+        sdatmcor(infile=self.infile, spw='19,23', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: True})
+
+    def test_sdatmcor_spw_process_23_select_23(self):
+        '''test data selection: select and process spw 23'''
+        sdatmcor(infile=self.infile, spw='23', outputspw='23', outfile=self.outfile, datacolumn='data')
+        self.check_result({23: True})
+
+    def test_sdatmcor_spw_process_all_select_19(self):
+        '''test data selection: process spw 19 and 23 but output only spw 19'''
+        sdatmcor(infile=self.infile, spw='19,23', outputspw='19', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True})
+
+    def test_sdatmcor_spw_process_23_select_all(self):
+        '''test data selection: process only spw 23 but output both 19 and 23'''
+        # TODO: this should not fail
+        self.assertFalse(
+            sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
+        )
+        #self.check_result({19: False, 23: True})
 
 
 def suite():
