@@ -19,7 +19,7 @@ if is_CASA6:
     ### for selection_syntax import
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     import selection_syntax
-    from testhelper import copytree_ignore_subversion, TableCacheValidator
+    from testhelper import TableCacheValidator
 
     # default isn't used in casatasks
     def default(atask):
@@ -28,8 +28,6 @@ if is_CASA6:
     ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
-    from tasks import *
-    from taskinit import *
     from taskinit import metool as measures
     from taskinit import qatool as quanta
     from taskinit import tbtool as table
@@ -44,16 +42,21 @@ else:
         import tests.selection_syntax as selection_syntax
 
     try:
-        from . import testutils
+        from .testutils import TableCacheValidator
     except:
-        from tests.testutils import copytree_ignore_subversion, TableCacheValidator
+        from tests.testutils import TableCacheValidator
 
     from sdimaging import sdimaging
+    from flagdata import flagdata
     from sdutil import tbmanager, toolmanager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+        subdir_hints = ['', 'casa-data-req']
+        for subdir in subdir_hints:
+            path = os.path.join(dataRoot, subdir, apath)
+            if os.path.exists(path):
+                return path
 
 _ia = image()
 _rg = regionmanager()
@@ -61,14 +64,6 @@ me = measures()
 qa = quanta()
 tb = table()
 ms = mstool()
-
-
-def get_data_req_path():
-    data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'casa-data-req/')
-    if not os.path.exists(data_path):
-        data_path = os.path.join(os.environ['CASAPATH'].split()[0], 'data/casa-data-req')
-    print('CASA_DATA_REQ_PATH="{}"'.format(data_path))
-    return data_path
 
 
 #
@@ -578,8 +573,12 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test015(self):
         """Test015: negative minweight"""
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
-        self.assertFalse(res)
+        success = True
+        try:
+            success = sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        except:
+            success = False
+        self.assertFalse(success)
 
 
 ###
@@ -2552,6 +2551,20 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       phasecenter='J2000 00:00:00 00.00.00',
                       restfreq='',overwrite=True)
     unifval = 5.98155
+    refset = {
+        '200GHz': {
+            'beam': dict(major='30.276442arcsec',minor='30.276442arcsec'),
+            'cell': '10.091393059432447arcsec',
+        },
+        '300GHz': {
+            'beam': dict(major='20.339973arcsec',minor='20.339973arcsec'),
+            'cell': '6.727595372954963arcsec',
+        },
+        '300.5GHz': {
+            'beam': dict(major='20.303418arcsec', minor='20.303418arcsec'),
+            'cell': '6.716401370670513arcsec',
+        },
+    }
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2583,11 +2596,25 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self._checkdirax(self.outfile, self.param['phasecenter'],
                          cell_ref, self.param['imsize'])
 
+    def get_reference_from_restfreq(self, restfreq):
+        """Return a set of reference data associated with given rest frequency.
+
+        Arguments:
+            restfreq {string} -- rest frequency as a string composed of value and unit
+
+        Returns:
+           dict  -- reference data associated with given rest frequency
+        """
+        return self.refset.get(restfreq, {})
+
     def test_restfreq_param(self):
         """Rest frequency from restfreq parameter"""
         restfreq='200GHz'
-        beam_ref = dict(major='30.276442arcsec',minor='30.276442arcsec')
-        cell_ref = '10.091393059432447arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs)
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2596,8 +2623,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_source(self):
         """Rest Frequency from SOURCE table"""
         restfreq='300GHz'
-        beam_ref = dict(major='20.339973arcsec',minor='20.339973arcsec')
-        cell_ref = '6.727595372954963arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs)
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
@@ -2606,8 +2636,11 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def test_restfreq_mean(self):
         """Rest frequency from mean of SPW frequencies"""
         restfreq='300.5GHz'
-        beam_ref = dict(major='20.303418arcsec', minor='20.303418arcsec')
-        cell_ref = '6.716401370670513arcsec'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs)
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [10, 10,  0,  9])
         # remove REST_REQUENCY in SOURCE TABLE
@@ -2621,6 +2654,34 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         tb.close()
         self.run_test(restfreq, beam_ref, cell_ref, stats,
                       restfreq='', imsize=[11,11])
+
+    def test_capital_outframe(self):
+        """test outframe='LSRK'"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs)
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        self.run_test(restfreq, beam_ref, cell_ref, stats,
+                      restfreq=restfreq,imsize=[8,8], outframe='LSRK')
+
+    def test_unallowed_outframe(self):
+        """test outframe='lSrK' (will fail)"""
+        restfreq='200GHz'
+        refs = self.get_reference_from_restfreq(restfreq)
+        self.assertTrue('beam' in refs)
+        self.assertTrue('cell' in refs)
+        beam_ref = refs['beam']
+        cell_ref = refs['cell']
+        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
+                                          [7 , 7 ,  0,  9])
+        with self.assertRaises(AssertionError):
+            self.run_test(restfreq, beam_ref, cell_ref, stats,
+                          restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+        print('test_unallowed_outframe: failed as expected')
 
 ###
 #
@@ -2666,7 +2727,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2808,7 +2869,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2978,7 +3039,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
-            copytree_ignore_subversion(self.datapath, infile)
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
 
         # image with clipping
         outfile = self.outfile
@@ -3356,14 +3417,12 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = os.path.join(get_data_req_path(), 'visibilities/almasd')
+    datapath = ctsys_resolve('visibilities/almasd')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move.im'
 
     def setUp(self):
         self.__clear_files()
-
-        self.assertTrue(os.path.exists(self.datapath))
 
         for infile in self.infiles:
             shutil.copytree(os.path.join(self.datapath, infile), infile)
