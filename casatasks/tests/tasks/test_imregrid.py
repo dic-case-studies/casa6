@@ -143,6 +143,18 @@ output_k = "ak.out"
 imagename_l = "al.im"
 template_l = "al_temp.im"
 output_l = "al.out.im"
+dummy = 'dummy.image'
+fake = 'fake.im'
+fake_2 = 'fake_2.im'
+mygal = 'mygalactic*'
+myout = 'myout.im'
+myout_1 = 'myout_1.im'
+target = 'target.im'
+template = 'template.im'
+test_axes = 'test_axes*'
+xyz = 'xyz.im'
+zz_im = 'zz.im'
+zz_out = 'zz_out.im'
 
 class imregrid_test(unittest.TestCase):
 
@@ -165,10 +177,15 @@ class imregrid_test(unittest.TestCase):
             imagename_f, template_f, output_f, imagename_g, template_g, output_g,
             imagename_h, template_h, output_h, imagename_i, template_i, output_i,
             imagename_j, template_j, output_j, imagename_k, output_k,
-            imagename_l, template_l, output_l,  
+            imagename_l, template_l, output_l, dummy, fake, fake_2, gim, mygal,
+            myout, myout_1, target, template, xyz, zz_im, zz_out
         ):
             if (os.path.exists(i)):
-                os.system('rm -rf ' + i)
+                shutil.rmtree(i)
+        for f in glob.glob(mygal):
+            shutil.rmtree(f)
+        for f in glob.glob(test_axes):
+            shutil.rmtree(f)
         
     def test1(self):    
         myia = _ia  
@@ -443,7 +460,7 @@ class imregrid_test(unittest.TestCase):
             
     def test_get(self):
         """Test using template='get' works"""
-        tempfile = "xyz.im"
+        tempfile = xyz
         myia = _ia 
         myia.fromshape(tempfile,[20,20,20])
         dicttemp = imregrid(tempfile, template="get")
@@ -511,18 +528,16 @@ class imregrid_test(unittest.TestCase):
     def test_axis_recognition(self):
         """Test that imregrid recognizes axis by type, not position"""
         myia = _ia
-        target = "target.im"
         myia.fromshape(target, [4,4,2,30])
-        template = "template.im"
         myia.fromshape(template, [6, 6, 36, 2])
-        outfile = "myout.im"
+        outfile = myout
         # returns None upon success
         imregrid(imagename=target, template=template, output=outfile)
         self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         self.assertTrue((myia.shape() == [6, 6, 2, 36]).all())
         myia.done()
-        outfile = "myout1.im"
+        outfile = myout_1
         # returns None upon success
         imregrid(
             imagename=target, template=template,
@@ -867,28 +882,28 @@ class imregrid_test(unittest.TestCase):
     def test_template_stokes_length_and_input_stokes_length_gt_1(self):
         myia = _ia
         my_image = np.zeros([128,128,32,4])
-        os.system("rm -rf fake.image")
+        os.system("rm -rf " + fake)
         myia.fromarray(
-            outfile="fake.image",
+            outfile=fake,
             pixels=my_image,
             overwrite=True
         )
         myia.close()
 
         my_image = np.zeros([128,128,32,3])
-        os.system("rm -rf fake_2.image")
+        os.system("rm -rf " + fake_2)
         myia.fromarray(
-            outfile="fake_2.image",
+            outfile=fake_2,
             pixels=my_image,
             overwrite=True
         )
         myia.close()
 
-        output = "dummy.image"
+        output = dummy
         os.system("rm -rf " + output)
         imregrid(
-            imagename = "fake.image",
-            template="fake_2.image",
+            imagename=fake,
+            template=fake_2,
             output=output,
             axes=[0,1,2]
         )
@@ -921,10 +936,10 @@ class imregrid_test(unittest.TestCase):
     def test_history(self):
         """Test history writing"""
         myia = _ia
-        imagename = "zz.im"
+        imagename = zz_im
         myia.fromshape(imagename, [20, 20, 10])
         myia.done()
-        outfile = "zz_out.im"
+        outfile = zz_out
         # returns None upon success
         imregrid(
             imagename=imagename, output=outfile,
