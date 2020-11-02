@@ -72,6 +72,14 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             return no_gui;
         }
 
+        virtual bool agg( ) const {
+            return do_agg;
+        }
+
+        virtual bool pipeline( ) const {
+            return do_pipeline;
+        }
+
         void clearDataPath( ) {
             // protect critical section...
             std::lock_guard<std::mutex> guard(data_path_mutex);
@@ -129,6 +137,18 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             no_gui = nogui;
         }
 
+        void setAgg(bool agg) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            do_agg = agg;
+        }
+
+        void setPipeline(bool pipeline) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            do_pipeline = pipeline;
+        }
+
         // get map of registrations
         std::list<ServiceId> services( ) { return registrar.services( ); }
         // returns true if a registration for 'id' was found
@@ -155,7 +175,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::string python_path;
         std::string log_path;
         std::string distro_data_path;			// path to data as provide by casadata pkg
-        bool no_gui;
+        bool no_gui, do_agg, do_pipeline;
         Registrar registrar;
     };
 

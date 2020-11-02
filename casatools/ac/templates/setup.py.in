@@ -486,28 +486,41 @@ def generate_pyinit(moduledir,tools):
                            return not isinstance(v,str)
                        except TypeError:
                            return False
-                   if hasattr(__user,'nogui'):
-                      print("nogui %s" % nogui)
-                   else :
-                      print("nogui not found in __user")
 
                    if hasattr(__user,'datapath') and is_iter_container(__user.datapath):
                        return list(filter(__os.path.isdir, list(map(__os.path.expanduser,__user.datapath))))
                    else:
                        return [ ]
 
+               def __find_user_nogui( ):
+                 result = False
+                 if (hasattr(__user,'nogui') and isinstance(__user.nogui,bool)):
+                    result = __user.nogui
+                 return result
+
+               def __find_user_agg( ):
+                 result = False
+                 if (hasattr(__user,'agg') and isinstance(__user.agg,bool)):
+                    result = __user.agg
+                 return result
+
+               def __find_user_pipeline( ):
+                 result = False
+                 if (hasattr(__user,'pipeline') and isinstance(__user.pipeline,bool)):
+                    result = __user.pipeline
+                 return result
+
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
                _distro_dpath = ""
                _dpath = [ ]
-               _nogui = False
                try:
                    import casadata
                    _distro_dpath = casadata.datapath
                    _dpath = [ _distro_dpath ]
                except: pass
-               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ), False )
+               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ), __find_user_nogui( ), __find_user_agg( ), __find_user_pipeline( ) )
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
