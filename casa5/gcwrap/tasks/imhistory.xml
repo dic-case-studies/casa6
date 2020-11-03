@@ -10,7 +10,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 <!-- This is the task interface for imhistory        -->
 <!--                                                          -->
 
-<task type="function" name="imhistory" category="analysis">
+<task type="function" name="imhistory" category="information,analysis">
 <shortdescription>Retrieve and modify image history</shortdescription>
 <description>
 Retrieve and modify image history.

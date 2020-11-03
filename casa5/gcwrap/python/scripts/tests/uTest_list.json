@@ -875,7 +875,7 @@
         {
              "testNumber":"5125",
              "testName":"Listobs",
-             "testScript":"test_listobs",
+             "testScript":"test_req_task_listobs",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",

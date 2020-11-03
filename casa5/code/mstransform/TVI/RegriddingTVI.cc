@@ -94,7 +94,7 @@ Bool RegriddingTVI::parseConfiguration(const Record &configuration)
     		logger_p << LogIO::NORMAL << LogOrigin("RegriddingTVI", __FUNCTION__)
     				<< "Field Id for phase center is " << fieldIdForPhaseCenter << LogIO::POST;
     		if (phaseCenterPar_p) delete phaseCenterPar_p;
-    		phaseCenterPar_p = new casac::variant(fieldIdForPhaseCenter);
+    		phaseCenterPar_p = new casac::variant((long)fieldIdForPhaseCenter);
         }
         else
         {

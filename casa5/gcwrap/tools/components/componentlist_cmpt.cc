@@ -123,7 +123,7 @@ bool componentlist::open(const std::string& filename, const bool nomodify,
   return rstat;
 }
 
-int componentlist::asciitocomponentlist(const std::string& /*filename*/,
+long componentlist::asciitocomponentlist(const std::string& /*filename*/,
                                         const std::string& /*asciifile*/,
                                         const std::string& /*refer*/,
                                         const std::string& /*format*/,
@@ -134,7 +134,7 @@ int componentlist::asciitocomponentlist(const std::string& /*filename*/,
   itsLog->origin(LogOrigin("componentlist", "asciitocomponentlist"));
 
   // TODO : IMPLEMENT ME HERE !
-  int rstat(0);
+  long rstat(0);
   try{
     if(itsList && itsBin)
       *itsLog << LogIO::WARN
@@ -151,7 +151,7 @@ int componentlist::asciitocomponentlist(const std::string& /*filename*/,
 }
 
 bool componentlist::concatenate(const ::casac::variant& list,
-                                const std::vector<int>& which, const bool /*log*/)
+                                const std::vector<long>& which, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "concatenate"));
 
@@ -218,16 +218,15 @@ bool componentlist::concatenate(const ::casac::variant& list,
 }
 
 bool
-componentlist::remove(const std::vector<int>& which, const bool /*log*/)
+componentlist::remove(const std::vector<long>& which, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "remove"));
 
   bool rstat(false);
   try{
-    std::vector<int> witch=which;
-    
+    std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(which, "remove",
+      const Vector<int> intVec = checkIndices(intwhich, "remove",
                                               "No components removed");
       for(uInt c = 0; c < intVec.nelements(); c++)
         itsBin->add(itsList->component(intVec(c)));
@@ -290,7 +289,7 @@ bool componentlist::recover(const bool /*log*/)
   return rstat;
 }
 
-int componentlist::length()
+long componentlist::length()
 {
   itsLog->origin(LogOrigin("componentlist", "length"));
 
@@ -310,12 +309,12 @@ int componentlist::length()
   return rstat;
 }
 
-std::vector<int> componentlist::indices()
+std::vector<long> componentlist::indices()
 {
   itsLog->origin(LogOrigin("componentlist", "indices"));
 
   // TODO : IMPLEMENT ME HERE !
-  std::vector<int> rstat(0);
+  std::vector<long> rstat(0);
   try{
     if(itsList && itsBin){
       *itsLog << LogIO::WARN << "indices not implemented yet" << LogIO::POST;
@@ -357,14 +356,15 @@ bool componentlist::sort(const std::string& criteria, const bool /*log*/)
   return rstat;
 }
 
-bool componentlist::isphysical(const std::vector<int>& which)
+bool componentlist::isphysical(const std::vector<long>& which)
 {
   itsLog->origin(LogOrigin("componentlist", "isphysical"));
 
   bool rstat(false);
   try{
+    std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(which, "is_physical",
+      const Vector<Int> intVec = checkIndices(intwhich, "is_physical",
                                               "Not checking any components");
       rstat = itsList->isPhysical(intVec);
     }
@@ -424,7 +424,7 @@ bool componentlist::rename(const std::string& filename, const bool /*log*/)
   return rstat;
 }
 
-bool componentlist::simulate(const int howmany, const bool /*log*/)
+bool componentlist::simulate(const long howmany, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "simulate"));
 
@@ -581,7 +581,7 @@ bool componentlist::close(const bool log)
   return rstat;
 }
 
-  bool componentlist::edit(const int /*which*/, const bool /*log*/)
+  bool componentlist::edit(const long /*which*/, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "edit"));
 
@@ -626,14 +626,15 @@ bool componentlist::done()
   return rstat;
 }
 
-bool componentlist::select(const std::vector<int>& which)
+bool componentlist::select(const std::vector<long>& which)
 {
   itsLog->origin(LogOrigin("componentlist", "select"));
 
   bool rstat(false);
   try{
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(which, "select",
+      std::vector<int> intwhich(which.begin( ),which.end( ));
+      const Vector<Int> intVec = checkIndices(intwhich, "select",
                                               "No components selected");
       itsList->select(intVec);
       rstat=true;
@@ -650,14 +651,15 @@ bool componentlist::select(const std::vector<int>& which)
   return rstat;
 }
 
-bool componentlist::deselect(const std::vector<int>& which)
+bool componentlist::deselect(const std::vector<long>& which)
 {
   itsLog->origin(LogOrigin("componentlist", "deselect"));
 
   bool rstat(false);
   try{
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(which, "deselect",
+      std::vector<int> intwhich(which.begin( ),which.end( ));
+      const Vector<Int> intVec = checkIndices(intwhich, "deselect",
                                               "No components deselected");
       itsList->deselect(intVec);
        rstat=true;
@@ -673,15 +675,14 @@ bool componentlist::deselect(const std::vector<int>& which)
   return rstat;
 }
 
-std::vector<int> componentlist::selected()
+std::vector<long> componentlist::selected()
 {
   itsLog->origin(LogOrigin("componentlist", "selected"));
 
-  std::vector<int> rstat(0);
   try{
     if(itsList && itsBin){
       Vector<Int> theChosen = itsList->selected();
-      theChosen.tovector(rstat);
+      return std::vector<long>(theChosen.begin( ),theChosen.end( ));
     } else {
       *itsLog << LogIO::WARN
               << "componentlist is not opened, please open first" << LogIO::POST;
@@ -691,10 +692,10 @@ std::vector<int> componentlist::selected()
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x)
   }
-  return rstat;
+  return std::vector<long>(0);
 }
 
-std::string componentlist::getlabel(const int which)
+std::string componentlist::getlabel(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "getlabel"));
 
@@ -715,7 +716,7 @@ std::string componentlist::getlabel(const int which)
   return rstat;
 }
 
-bool componentlist::setlabel(const int which, const std::string& value,
+bool componentlist::setlabel(const long which, const std::string& value,
                              const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setlabel"));
@@ -737,7 +738,7 @@ bool componentlist::setlabel(const int which, const std::string& value,
   return rstat;
 }
 
-std::vector<double> componentlist::getfluxvalue(const int which)
+std::vector<double> componentlist::getfluxvalue(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
   std::vector<double> rstat(0);
@@ -764,7 +765,7 @@ std::vector<double> componentlist::getfluxvalue(const int which)
   return rstat;
 }
 
-std::string componentlist::getfluxunit(const int which)
+std::string componentlist::getfluxunit(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "getfluxunit"));
 
@@ -786,7 +787,7 @@ std::string componentlist::getfluxunit(const int which)
   return rstat;
 }
 
-std::string componentlist::getfluxpol(const int /*which*/)
+std::string componentlist::getfluxpol(const long /*which*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getfluxpol"));
 
@@ -807,7 +808,7 @@ std::string componentlist::getfluxpol(const int /*which*/)
   return rstat;
 }
 
-std::vector<double> componentlist::getfluxerror(const int which) {
+std::vector<double> componentlist::getfluxerror(const long which) {
 	itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
 	try{
 		ThrowIf(
@@ -830,7 +831,7 @@ std::vector<double> componentlist::getfluxerror(const int which) {
 }
 
 bool componentlist::setflux(
-	const int which, const ::casac::variant& varvalue,
+	const long which, const ::casac::variant& varvalue,
 	const std::string& unit,
 	const std::string& polarization,
 	const ::casac::variant& error, const bool /*log*/
@@ -929,7 +930,7 @@ bool componentlist::setflux(
 	return rstat;
 }
 
-bool componentlist::convertfluxunit(const int which, const std::string& unit)
+bool componentlist::convertfluxunit(const long which, const std::string& unit)
 {
   itsLog->origin(LogOrigin("componentlist", "convertfluxunit"));
 
@@ -959,7 +960,7 @@ bool componentlist::convertfluxunit(const int which, const std::string& unit)
   return rstat;
 }
 
-bool componentlist::convertfluxpol(const int which, const std::string& polarization)
+bool componentlist::convertfluxpol(const long which, const std::string& polarization)
 {
   itsLog->origin(LogOrigin("componentlist", "convertfluxpol"));
 
@@ -984,7 +985,7 @@ bool componentlist::convertfluxpol(const int which, const std::string& polarizat
   return rstat;
 }
 
-::casac::record* componentlist::getrefdir(const int which)
+::casac::record* componentlist::getrefdir(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "getrefdir"));
 
@@ -1018,8 +1019,8 @@ bool componentlist::convertfluxpol(const int which, const std::string& polarizat
   return retval;
 }
 
-std::string componentlist::getrefdirra(const int /*which*/, const std::string& /*unit*/,
-                                       const int /*precision*/)
+std::string componentlist::getrefdirra(const long /*which*/, const std::string& /*unit*/,
+                                       const long /*precision*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getrefdirra"));
 
@@ -1039,8 +1040,8 @@ std::string componentlist::getrefdirra(const int /*which*/, const std::string& /
   return rstat;
 }
 
-std::string componentlist::getrefdirdec(const int /*which*/, const std::string& /*unit*/,
-                                        const int /*precision*/)
+std::string componentlist::getrefdirdec(const long /*which*/, const std::string& /*unit*/,
+                                        const long /*precision*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setrefdir"));
 
@@ -1061,7 +1062,7 @@ std::string componentlist::getrefdirdec(const int /*which*/, const std::string& 
   return rstat;
 }
 
-std::string componentlist::getrefdirframe(const int which)
+std::string componentlist::getrefdirframe(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "setrefdir"));
 
@@ -1083,7 +1084,7 @@ std::string componentlist::getrefdirframe(const int which)
   return rstat;
 }
 
-bool componentlist::setrefdir(const int which, const ::casac::variant& ra, 
+bool componentlist::setrefdir(const long which, const ::casac::variant& ra, 
                               const ::casac::variant& dec, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setrefdir"));
@@ -1112,7 +1113,7 @@ bool componentlist::setrefdir(const int which, const ::casac::variant& ra,
   return rstat;
 }
 
-bool componentlist::setrefdirframe(const int which, const std::string& frame,
+bool componentlist::setrefdirframe(const long which, const std::string& frame,
                                    const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setrefdirframe"));
@@ -1142,7 +1143,7 @@ bool componentlist::setrefdirframe(const int which, const std::string& frame,
   return rstat;
 }
 
-bool componentlist::convertrefdir(const int which, const std::string& frame)
+bool componentlist::convertrefdir(const long which, const std::string& frame)
 {
   itsLog->origin(LogOrigin("componentlist", "convertrefdir"));
 
@@ -1172,7 +1173,7 @@ bool componentlist::convertrefdir(const int which, const std::string& frame)
 }
 
 std::string
-componentlist::shapetype(const int which)
+componentlist::shapetype(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "shapetype"));
 
@@ -1252,7 +1253,7 @@ bool componentlist::fromrecord(const ::casac::record& rec)
   return rstat;
 }
 
-::casac::record* componentlist::getshape(const int which)
+::casac::record* componentlist::getshape(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "getshape"));
 
@@ -1282,7 +1283,7 @@ bool componentlist::fromrecord(const ::casac::record& rec)
   return rstat;
 }
 
-bool componentlist::setshape(const int which, const std::string& type,
+bool componentlist::setshape(const long which, const std::string& type,
                              const ::casac::variant& majoraxis,
                              const ::casac::variant& minoraxis,
                              const ::casac::variant& positionangle,
@@ -1384,7 +1385,7 @@ bool componentlist::setshape(const int which, const std::string& type,
   return rstat;
 }
 
-bool componentlist::convertshape(const int /*which*/, const std::string& /*majoraxis*/,
+bool componentlist::convertshape(const long /*which*/, const std::string& /*majoraxis*/,
                                  const std::string& /*minoraxis*/,
                                  const std::string& /*positionangle*/)
 {
@@ -1406,7 +1407,7 @@ bool componentlist::convertshape(const int /*which*/, const std::string& /*major
   return rstat;
 }
 
-std::string componentlist::spectrumtype(const int which)
+std::string componentlist::spectrumtype(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "spectrumtype"));
 
@@ -1427,7 +1428,7 @@ std::string componentlist::spectrumtype(const int which)
   return rstat;
 }
 
-::casac::record* componentlist::getspectrum(const int which)
+::casac::record* componentlist::getspectrum(const long which)
 {
   itsLog->origin(LogOrigin("componentlist", "getspectrum"));
 
@@ -1455,7 +1456,7 @@ std::string componentlist::spectrumtype(const int which)
   return rstat;
 }
 
-bool componentlist::setspectrum(const int which, const std::string& eltype,
+bool componentlist::setspectrum(const long which, const std::string& eltype,
                                 const double index, const std::vector<double>& tabfreqs, const std::vector<double>& tabflux, const std::string& freqframe)
 {
   itsLog->origin(LogOrigin("componentlist", "setspectrum"));
@@ -1539,7 +1540,7 @@ bool componentlist::setspectrum(const int which, const std::string& eltype,
   return rstat;
 }
 
-bool componentlist::setstokesspectrum(const int which, const std::string& eltype,
+bool componentlist::setstokesspectrum(const long which, const std::string& eltype,
 				      const std::vector<double>& index, const std::vector<double>& tabfreqs, const std::vector<double>& tabi, const std::vector<double>& tabq, 
 				      const std::vector<double>& tabu,  const std::vector<double>& tabv, const ::casac::variant& reffreq,  
 				      const std::string& freqframe)
@@ -1642,7 +1643,7 @@ bool componentlist::setstokesspectrum(const int which, const std::string& eltype
   return rstat;
 }
 
-::casac::record* componentlist::getfreq(const int /*which*/)
+::casac::record* componentlist::getfreq(const long /*which*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getfreq"));
 
@@ -1663,7 +1664,7 @@ bool componentlist::setstokesspectrum(const int which, const std::string& eltype
   return rstat;
 }
 
-double componentlist::getfreqvalue(const int /*which*/)
+double componentlist::getfreqvalue(const long /*which*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getfreqvalue"));
 
@@ -1684,7 +1685,7 @@ double componentlist::getfreqvalue(const int /*which*/)
   return rstat;
 }
 
-std::string componentlist::getfrequnit(const int /*which*/)
+std::string componentlist::getfrequnit(const long /*which*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getfrequnit"));
 
@@ -1705,7 +1706,7 @@ std::string componentlist::getfrequnit(const int /*which*/)
   return rstat;
 }
 
-std::string componentlist::getfreqframe(const int /*which*/)
+std::string componentlist::getfreqframe(const long /*which*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getfreqframe"));
 
@@ -1726,7 +1727,7 @@ std::string componentlist::getfreqframe(const int /*which*/)
   return rstat;
 }
 
-bool componentlist::setfreq(const int which, const double value,
+bool componentlist::setfreq(const long which, const double value,
                             const std::string& unit, const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setfreq"));
@@ -1753,7 +1754,7 @@ bool componentlist::setfreq(const int which, const double value,
   return rstat;
 }
 
-bool componentlist::setfreqframe(const int which, const std::string& frame,
+bool componentlist::setfreqframe(const long which, const std::string& frame,
                                  const bool /*log*/)
 {
   itsLog->origin(LogOrigin("componentlist", "setfreqframe"));
@@ -1784,7 +1785,7 @@ bool componentlist::setfreqframe(const int which, const std::string& frame,
   return rstat;
 }
 
-bool componentlist::convertfrequnit(const int which, const std::string& unit)
+bool componentlist::convertfrequnit(const long which, const std::string& unit)
 {
   itsLog->origin(LogOrigin("componentlist", "convertfrequnit"));
   
@@ -1807,7 +1808,7 @@ bool componentlist::convertfrequnit(const int which, const std::string& unit)
 }
 
 
-::casac::record* componentlist::getcomponent(const int which, const bool /*iknow*/)
+::casac::record* componentlist::getcomponent(const long which, const bool /*iknow*/)
 {
   itsLog->origin(LogOrigin("componentlist", "getcomponent"));
 
@@ -1869,8 +1870,8 @@ bool componentlist::add(const ::casac::record& thecomponent, const bool /*iknow*
   return rstat;
 }
 
-bool componentlist::replace(const int /*which*/, const ::casac::record& /*list*/,
-                            const std::vector<int>& /*whichones*/)
+bool componentlist::replace(const long /*which*/, const ::casac::record& /*list*/,
+                            const std::vector<long>& /*whichones*/)
 {
   itsLog->origin(LogOrigin("componentlist", "replace"));
 
@@ -1891,7 +1892,7 @@ bool componentlist::replace(const int /*which*/, const ::casac::record& /*list*/
   return rstat;
 }
 
-bool componentlist::summarize(const int which) {
+bool componentlist::summarize(const long which) {
 	itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
 	Bool rstat = false;
 	try{
@@ -1941,7 +1942,7 @@ bool componentlist::iscomponentlist(const ::casac::variant& /*tool*/)
   return rstat;
 }
 
-Vector<Int> componentlist::checkIndices(int which, const String& function,
+vector<int> componentlist::checkIndices(int which, const String& function,
                                          const String& message) const
 {
   std::vector<int> whichVec(1, which);
@@ -1949,13 +1950,13 @@ Vector<Int> componentlist::checkIndices(int which, const String& function,
 }
 //
 //
-Vector<Int> componentlist::checkIndices(const vector<int>& which,
+vector<int> componentlist::checkIndices(const vector<int>& which,
                                         const String& function,
                                         const String& message) const
 {
   itsLog->origin(LogOrigin("componentlist", function));
   
-  Vector<Int> intVec(which);
+  Vector<int> intVec(which);
   if((intVec.nelements()==1) && (intVec[0]==-1)){
     intVec.resize( itsList->nelements());
     indgen(intVec);
@@ -1972,7 +1973,7 @@ Vector<Int> componentlist::checkIndices(const vector<int>& which,
               << LogIO::EXCEPTION;
     }
   }
-  return intVec;
+  return vector<int>(intVec.begin(),intVec.end());
 }
 
 int componentlist::checkFluxPol(const String& polString)

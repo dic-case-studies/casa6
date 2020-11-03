@@ -5,7 +5,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="testconcat" category="utility, manipulation">
+<task type="function" name="testconcat" category="manipulation">
 <shortdescription>Concatenate the subtables of several visibility data sets, not the MAIN bulk data.</shortdescription>
 
 <input>
