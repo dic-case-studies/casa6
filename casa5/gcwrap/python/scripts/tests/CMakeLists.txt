@@ -24,7 +24,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_agentflagger.py
   test_asdmsummary.py
   test_bandpass.py
-  test_caltabconvert.py
+#  test_caltabconvert.py
   test_calanalysis.py
   test_clean.py
   test_cleanhelper.py
@@ -105,7 +105,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcollapse.py
   test_imcontsub.py
   test_imfit.py
-  test_imhead.py
   test_immath.py
   test_immoments.py
   test_importasap.py
@@ -122,7 +121,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imval.py
   test_initweights.py
   test_listfits.py
-  test_listobs.py
   test_listpartition.py
   test_listvis.py
   test_makemask.py

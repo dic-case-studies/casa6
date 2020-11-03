@@ -66,7 +66,7 @@
         
         <value type="string">1pix</value>
     </param>
-    <param name="interp" type="string"><shortdescription>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;, or &quot;lanczos&quot;. Minimum match supported.</shortdescription><description>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;, or &quot;lanczos&quot;. Minimum match supported.</description>
+    <param name="interp" type="string"><shortdescription>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</shortdescription><description>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</description>
         
         <value>cubic</value>
     </param>

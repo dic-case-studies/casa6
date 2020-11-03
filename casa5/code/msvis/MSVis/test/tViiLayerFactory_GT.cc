@@ -446,116 +446,116 @@ class SubtableChangerTVI : public TransformingVi2
 {
 public:
 
-    //Constructor
-    SubtableChangerTVI(ViImplementation2 * inputVii) :
-        TransformingVi2 (inputVii)
-    {
-        setVisBuffer(createAttachedVisBuffer (VbRekeyable));
-        resetSubtables();
-    }
+  //Constructor
+  SubtableChangerTVI(ViImplementation2 * inputVii) :
+    TransformingVi2 (inputVii)
+  {
+    setVisBuffer(createAttachedVisBuffer (VbRekeyable));
+    resetSubtables();
+  }
 
-    void origin()
-    {
-        // Drive underlying ViImplementation2
-        getVii()->origin();
+  void origin()
+  {
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-        // Synchronize own VisBuffer
-        configureNewSubchunk();
-    }
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+  }
 
-    void next()
-    {
-        // Drive underlying ViImplementation2
-        getVii()->next();
+  void next()
+  {
+    // Drive underlying ViImplementation2
+    getVii()->next();
 
-        // Synchronize own VisBuffer
-        configureNewSubchunk();
-    }
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+  }
 
-    void
-    originChunks(Bool forceRewind) override
-    {
-        // Drive underlying ViImplementation2
-        getVii()->originChunks(forceRewind);
+  void
+  originChunks(Bool forceRewind) override
+  {
+    // Drive underlying ViImplementation2
+    getVii()->originChunks(forceRewind);
 
-        // Potentially the new chunk can be from a different MS
-        resetSubtables();
-    }
+    // Potentially the new chunk can be from a different MS
+    resetSubtables();
+  }
 
-    void
-    nextChunk() override
-    {
-        // Drive underlying ViImplementation2
-        getVii()->nextChunk();
+  void
+  nextChunk() override
+  {
+    // Drive underlying ViImplementation2
+    getVii()->nextChunk();
 
-        // Potentially the new chunk can be from a different MS
-        resetSubtables();
-    }
+    // Potentially the new chunk can be from a different MS
+    resetSubtables();
+  }
 
-    void resetSubtables()
-    {
-        // Note that the creation of a new subtables is done using a
-        // copy of the original subtables. However, to access these we
-        // need to use the method table() of a given column (e. g. name() )
-        // It would be better if the MSAntennaColumns object had
-        // an getter to the MSAntenna object.
-        // The same applies to the other subtables
+  void resetSubtables()
+  {
+    // Note that the creation of a new subtables is done using a
+    // copy of the original subtables. However, to access these we
+    // need to use the method table() of a given column (e. g. name() )
+    // It would be better if the MSAntennaColumns object had
+    // an getter to the MSAntenna object.
+    // The same applies to the other subtables
 
-        // Create antenna subtable
-        auto& underlyingAntennaSubtablecols = getVii()->antennaSubtablecols();
-        auto underlyingAntennaSubtable = underlyingAntennaSubtablecols.name().table();
-        newAntennaSubtable_p = underlyingAntennaSubtable.copyToMemoryTable("SubtableChangerAntennaSubtable");
-        newAntennaSubtablecols_p.reset(new MSAntennaColumns(newAntennaSubtable_p));
-        // Add one antenna
-        newAntennaSubtable_p.addRow();
+    // Create antenna subtable
+    auto& underlyingAntennaSubtablecols = getVii()->antennaSubtablecols();
+    auto underlyingAntennaSubtable = underlyingAntennaSubtablecols.name().table();
+    newAntennaSubtable_p = underlyingAntennaSubtable.copyToMemoryTable("SubtableChangerAntennaSubtable");
+    newAntennaSubtablecols_p.reset(new MSAntennaColumns(newAntennaSubtable_p));
+    // Add one antenna
+    newAntennaSubtable_p.addRow();
 
-        // Create DD subtable
-        auto& underlyingDDSubtablecols = getVii()->dataDescriptionSubtablecols();
-        auto underlyingDDSubtable = underlyingDDSubtablecols.spectralWindowId().table();
-        newDDSubtable_p = underlyingDDSubtable.copyToMemoryTable("SubtableChangerDDSubtable");
-        newDDSubtablecols_p.reset(new MSDataDescColumns(newDDSubtable_p));
-        // Double the rows
-        auto nrowDD = newDDSubtable_p.nrow();
-        for(size_t irow = 0 ; irow < nrowDD; irow++)
-            newDDSubtable_p.addRow();
+    // Create DD subtable
+    auto& underlyingDDSubtablecols = getVii()->dataDescriptionSubtablecols();
+    auto underlyingDDSubtable = underlyingDDSubtablecols.spectralWindowId().table();
+    newDDSubtable_p = underlyingDDSubtable.copyToMemoryTable("SubtableChangerDDSubtable");
+    newDDSubtablecols_p.reset(new MSDataDescColumns(newDDSubtable_p));
+    // Double the rows
+    auto nrowDD = newDDSubtable_p.nrow();
+    for(size_t irow = 0 ; irow < nrowDD; irow++)
+      newDDSubtable_p.addRow();
 
-        // Create spw subtable
-        auto& underlyingSPWSubtablecols = getVii()->spectralWindowSubtablecols();
-        auto underlyingSPWSubtable = underlyingSPWSubtablecols.name().table();
-        newSPWSubtable_p = underlyingSPWSubtable.copyToMemoryTable("SubtableChangerSPWSubtable");
-        newSPWSubtablecols_p.reset(new MSSpWindowColumns(newSPWSubtable_p));
-        // Double the rows
-        auto nrowSPW = newSPWSubtable_p.nrow();
-        for(size_t irow = 0 ; irow < nrowSPW; irow++)
-            newSPWSubtable_p.addRow();
-    }
+    // Create spw subtable
+    auto& underlyingSPWSubtablecols = getVii()->spectralWindowSubtablecols();
+    auto underlyingSPWSubtable = underlyingSPWSubtablecols.name().table();
+    newSPWSubtable_p = underlyingSPWSubtable.copyToMemoryTable("SubtableChangerSPWSubtable");
+    newSPWSubtablecols_p.reset(new MSSpWindowColumns(newSPWSubtable_p));
+    // Double the rows
+    auto nrowSPW = newSPWSubtable_p.nrow();
+    for(size_t irow = 0 ; irow < nrowSPW; irow++)
+      newSPWSubtable_p.addRow();
+  }
 
 
-    const casacore::MSAntennaColumns& antennaSubtablecols() const override
-    {
-        return *newAntennaSubtablecols_p;
-    }
+  const casacore::MSAntennaColumns& antennaSubtablecols() const override
+  {
+    return *newAntennaSubtablecols_p;
+  }
 
-    const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override
-    {
-        return *newDDSubtablecols_p;
-    }
+  const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const override
+  {
+    return *newDDSubtablecols_p;
+  }
 
-    const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override
-    {
-        return *newSPWSubtablecols_p;
-    }
+  const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const override
+  {
+    return *newSPWSubtablecols_p;
+  }
 
 private:
 
-    casacore::MSAntenna newAntennaSubtable_p;
-    std::unique_ptr<casacore::MSAntennaColumns> newAntennaSubtablecols_p;
+  casacore::MSAntenna newAntennaSubtable_p;
+  std::unique_ptr<casacore::MSAntennaColumns> newAntennaSubtablecols_p;
 
-    casacore::MSSpectralWindow newSPWSubtable_p;
-    std::unique_ptr<casacore::MSSpWindowColumns> newSPWSubtablecols_p;
+  casacore::MSSpectralWindow newSPWSubtable_p;
+  std::unique_ptr<casacore::MSSpWindowColumns> newSPWSubtablecols_p;
 
-    casacore::MSDataDescription newDDSubtable_p;
-    std::unique_ptr<casacore::MSDataDescColumns> newDDSubtablecols_p;
+  casacore::MSDataDescription newDDSubtable_p;
+  std::unique_ptr<casacore::MSDataDescColumns> newDDSubtablecols_p;
 
 };
 
@@ -568,7 +568,7 @@ class SubtableChangerTVILayerFactory : public ViiLayerFactory
 
 public:
 
-    SubtableChangerTVILayerFactory()
+  SubtableChangerTVILayerFactory()
   {
   }
 
@@ -595,63 +595,63 @@ class SubtableChangerTest : public MsFactoryTVITester
 {
 public:
 
-    /*
-     * Constructor: create the temporary dir and the MsFactory used later on
-     * to create the MS.
-     */
-    SubtableChangerTest() : 
-        MsFactoryTVITester("tViiLayerFactory","SubtableChangerTest")
-    {
-    }
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  SubtableChangerTest() : 
+    MsFactoryTVITester("tViiLayerFactory","SubtableChangerTest")
+  {
+  }
 
-    /*
-     * Create the synthetic MS and the TVI stack to access it.
-     */
-    void createTVIs()
-    {
-        // Set the number of antennas and SPWs for the MS generated on disk
-        nAntennas = 10;
-        nSPWs = 10;
+  /*
+   * Create the synthetic MS and the TVI stack to access it.
+   */
+  void createTVIs()
+  {
+    // Set the number of antennas and SPWs for the MS generated on disk
+    nAntennas = 10;
+    nSPWs = 10;
 
-        msf_p->addAntennas(nAntennas);
-        msf_p->addSpectralWindows(nSPWs);
+    msf_p->addAntennas(nAntennas);
+    msf_p->addSpectralWindows(nSPWs);
 
-        // Create synthethic MS using the msf_p factory
-        createMS();
+    // Create synthethic MS using the msf_p factory
+    createMS();
 
-        // Create a disk layer type VI Factory
-        IteratingParameters ipar;
-        VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
+    // Create a disk layer type VI Factory
+    IteratingParameters ipar;
+    VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
 
-        // Create a SubtableChangerTVI Factory
-        SubtableChangerTVILayerFactory subtableChangerFac;
+    // Create a SubtableChangerTVI Factory
+    SubtableChangerTVILayerFactory subtableChangerFac;
 
-        // Create a layered factory with all the layers of factories
-        size_t nFac = 2;
-        std::vector<ViiLayerFactory*> facts(nFac);
-        facts[0]=&diskItFac;
-        facts[1]= &subtableChangerFac;
+    // Create a layered factory with all the layers of factories
+    size_t nFac = 2;
+    std::vector<ViiLayerFactory*> facts(nFac);
+    facts[0]=&diskItFac;
+    facts[1]= &subtableChangerFac;
 
-        // Finally create the top VI
-        instantiateVI(facts);
-    }
+    // Finally create the top VI
+    instantiateVI(facts);
+  }
 
-    void checkSubtables()
-    {
-        // Check the antenna tables size (the TVI has added one antenna)
-        EXPECT_EQ(nAntennas + 1, vi_p->antennaSubtablecols().nrow());
+  void checkSubtables()
+  {
+    // Check the antenna tables size (the TVI has added one antenna)
+    EXPECT_EQ(nAntennas + 1, vi_p->antennaSubtablecols().nrow());
 
-        // Check the SPW tables size (the TVI has doubled the number)
-        EXPECT_EQ(nSPWs * 2, vi_p->spectralWindowSubtablecols().nrow());
+    // Check the SPW tables size (the TVI has doubled the number)
+    EXPECT_EQ(nSPWs * 2, vi_p->spectralWindowSubtablecols().nrow());
 
-        // Check the DD tables size (the TVI has doubled the number)
-        EXPECT_EQ(nSPWs * 2, vi_p->dataDescriptionSubtablecols().nrow());
-    }
+    // Check the DD tables size (the TVI has doubled the number)
+    EXPECT_EQ(nSPWs * 2, vi_p->dataDescriptionSubtablecols().nrow());
+  }
 
-    // The number of antennas originally created
-    size_t nAntennas;
-    // The number of SPWs originally created
-    size_t nSPWs;
+  // The number of antennas originally created
+  size_t nAntennas;
+  // The number of SPWs originally created
+  size_t nSPWs;
 };
 
 
@@ -667,3 +667,330 @@ TEST_F(SubtableChangerTest, CheckSubtables)
   checkSubtables();
 }
 
+/*
+ * Gtest fixture used to test defining sorting in a full generic way
+ * for both the outer (chunk) and inner (subchunk) loops.
+ * This class will create a synthetic MS in a temporary directory.
+ */
+class FullSortingDefinitionTest : public MsFactoryTVITester
+{
+public:
+
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  FullSortingDefinitionTest() :
+    MsFactoryTVITester("tViiLayerFactory","FullSortingDefinitionTest")
+  {
+  }
+
+  /*
+   * Set the sortign functions for both the outer loop (chunk)
+   * and inner loop (subchunk)
+   */
+  void setSortingDefinition(SortColumns& sortColumnsChunk,
+                            SortColumns& sortColumnsSubchunk)
+  {
+    sortColumnsChunk_p = sortColumnsChunk;
+    sortColumnsSubchunk_p = sortColumnsSubchunk;
+  }
+
+  /*
+   * Create the synthetic MS and the TVI stack, which only contains
+   * the disk layer VI,  to access it.
+   */
+  void createTVIs()
+  {
+    // Set the number of antennas and SPWs for the MS generated on disk
+    size_t nAntennas = 10;
+    nSPWs_p = 10;
+
+    msf_p->addAntennas(nAntennas);
+    msf_p->addSpectralWindows(nSPWs_p);
+
+    // Create synthethic MS using the msf_p factory
+    createMS();
+
+    // Create a disk layer type VI Factory
+    std::auto_ptr<VisIterImpl2LayerFactory> diskItFac;
+    diskItFac.reset(new VisIterImpl2LayerFactory (ms_p.get(),sortColumnsChunk_p,
+                                                  sortColumnsSubchunk_p,false));
+
+    // Create a layered factory with all the layers of factories
+    size_t nFac = 1;
+    std::vector<ViiLayerFactory*> facts(nFac);
+    facts[0]=diskItFac.get();
+
+    // Finally create the top VI
+    instantiateVI(facts);
+  }
+
+  // Sorting definitions for both inner and outer loop
+  SortColumns sortColumnsChunk_p;
+  SortColumns sortColumnsSubchunk_p;
+
+  // The number of SPWs originally created
+  size_t nSPWs_p;
+};
+
+/*
+ * Comparison function that groups DDIds in "bins"
+ */
+class DDIdGroupCompare : public BaseCompare
+{
+public:
+  explicit DDIdGroupCompare(size_t groupBin, bool ascending = true) : groupBin_p(groupBin), orderFactor_p(2*ascending-1) {}
+  virtual ~DDIdGroupCompare() {}
+  virtual int comp(const void * obj1, const void * obj2) const;
+private:
+  size_t groupBin_p;
+  int orderFactor_p;
+};
+
+int DDIdGroupCompare::comp(const void * obj1, const void * obj2) const
+{
+  Int v1 = *(const Int*)obj1;
+  Int v2 = *(const Int*)obj2;
+
+  // The DDIds are binned in bins with a width of groupBin_p.
+  // Simple integer division gives you that.
+  Int bin1 = v1 / groupBin_p;
+  Int bin2 = v2 / groupBin_p;
+
+  // orderFactor_p is 1 or -1 depending on whether it has been requested
+  // ascending or descending order.
+  return (bin1==bin2 ? 0 : (bin1<bin2 ? -1*orderFactor_p : 1*orderFactor_p));
+}
+
+TEST_F(FullSortingDefinitionTest, GroupSPWs)
+{
+  // Create sorting functions for the chunk (grouping DDiD/SPWs)
+  // and the subchunk (nothing).
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  size_t spwBin = 2;
+  CountedPtr<DDIdGroupCompare> cmpFunc(new DDIdGroupCompare(spwBin));
+  sortColumnsChunk.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  Int spwGroup = 0;
+  visitIterator([&]() -> void {
+    // Get all SPWs for all rows of the VisBuffer and retain only the unique ones
+    std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+    spws.sort();
+    spws.unique();
+    // The unique SPWs is equal the "bin" size. Note that the total
+    // SPWs in this case is proportional to the bin size.
+    ASSERT_EQ(spws.size(), spwBin);
+    int i = 0;
+    for(auto spw : spws)
+    {
+      // Check that for each "bin" of SPWs the id is as expected.
+      ASSERT_EQ(Int(spwGroup * spwBin + i), spw);
+      ++i;
+    }
+    spwGroup++;
+    });
+
+}
+
+TEST_F(FullSortingDefinitionTest, GroupSPWsDescending)
+{
+  // Create sorting functions for the chunk (grouping DDiD/SPWs 
+  // in descending order) and the subchunk (nothing).
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  size_t spwBin = 2;
+  CountedPtr<DDIdGroupCompare> cmpFunc(new DDIdGroupCompare(spwBin, false));
+  sortColumnsChunk.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  // The first subchunk will have the largest SPWs Ids.
+  Int spwGroup = nSPWs_p / spwBin - 1;
+  visitIterator([&]() -> void {
+    std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+    spws.sort();
+    spws.unique();
+    ASSERT_EQ(spws.size(), spwBin);
+    int i = 0;
+    for(auto spw : spws)
+    {
+      ASSERT_EQ(Int(spwGroup * spwBin + i), spw);
+      ++i;
+    }
+    spwGroup--;
+    });
+
+}
+
+TEST_F(FullSortingDefinitionTest, DDIdSortingBothInnerOuterLoop)
+{
+  // This test will create a sorting function for DDId and an empty
+  // one. With loop=0 the DDId sorting function is applied to the chunks,
+  // while with loop=1 it is applied to the subchunks. Both cases should
+  // give the same results
+  for (int loop = 0; loop < 1; loop++)
+  {
+    SortColumns sortColumns1(false);
+    SortColumns sortColumns2(false);
+    CountedPtr<ObjCompare<Int>> cmpFunc(new ObjCompare<Int>());
+    sortColumns1.addSortingColumn(MS::DATA_DESC_ID, cmpFunc);
+
+    if (loop==0)
+      setSortingDefinition(sortColumns1, sortColumns2);
+    else 
+      setSortingDefinition(sortColumns2, sortColumns1);
+
+    createTVIs();
+
+    visitIterator([&]() -> void {
+      std::list<Int> spws (vb_p->spectralWindows().begin(), vb_p->spectralWindows().end());
+      spws.sort();
+      spws.unique();
+      ASSERT_EQ(spws.size(), (size_t)1);
+      });
+  }
+}
+
+/*
+ * Comparison function that groups DDIds in "bins"
+ */
+class TimeDescendingCompare : public BaseCompare
+{
+public:
+  explicit TimeDescendingCompare() {}
+  virtual ~TimeDescendingCompare() {}
+  virtual int comp(const void * obj1, const void * obj2) const;
+};
+
+int TimeDescendingCompare::comp(const void * obj1, const void * obj2) const
+{
+  return (*(const Double*)obj1  > *(const Double*)obj2  ?  -1 :
+    (*(const Double*)obj1 == *(const Double*)obj2  ?  0 : 1));
+}
+
+TEST_F(FullSortingDefinitionTest, InnerLoopGroupingTimeChunksDescending)
+{
+  // This tests how to get subchunks in descending order.
+  // The test indirectly demonstrates that time sorting in subchunk is
+  // guaranteed (contrary to implementation before to CAS-12879)
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  CountedPtr<TimeDescendingCompare> cmpFunc(new TimeDescendingCompare());
+  sortColumnsSubchunk.addSortingColumn(MS::TIME, cmpFunc);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  Double prevTime = -1;
+  visitIterator([&]() -> void {
+    std::list<Int> times (vb_p->time().begin(), vb_p->time().end());
+    times.sort();
+    times.unique();
+    // A single timestamp per subchunk
+    ASSERT_EQ(times.size(), (size_t)1);
+    // Timestamp is lower than previous one.
+    if(prevTime != -1.)
+      ASSERT_LT(times.front(), prevTime);
+    prevTime = times.front();
+    });
+
+}
+
+// Comparison function that allows resetting the start of interval
+class CompareTimeInterval : public BaseCompare
+{
+public:
+  // Construct from the given interval values.
+  CompareTimeInterval(Double interval, Double start) :
+    itsInterval(interval), itsStart(start)
+  {}
+  
+  virtual ~CompareTimeInterval() {};
+  
+  // Compare the interval the left and right value belong to.
+  virtual int comp(const void * obj1, const void * obj2) const
+  {
+    Double v1 = *static_cast<const Double*>(obj1);
+    Double v2 = *static_cast<const Double*>(obj2);
+    // Shortcut if values are equal.
+    if (v1 == v2) return 0;
+    // The times are binned in bins with a width of interval_p.
+    Double t1 = std::floor((v1 - itsStart) / itsInterval);
+    Double t2 = std::floor((v2 - itsStart) / itsInterval);
+    return (t1==t2  ?  0 : (t1<t2 ? -1 : 1));
+  }
+
+  void setStart(Double newStart) { 
+  itsStart = newStart;}
+
+private: 
+  Double itsInterval;
+  Double itsStart;
+};
+
+TEST_F(FullSortingDefinitionTest, ResetTimeStartInnerLoop)
+{
+  // This test demonstrates how to modify the sorting function 
+  // before the subchunk loop.
+  // A use case for that is time chunking resetting the bin 
+  // at the beginning of each chunk.
+  // This test uses a timeInterval of 1.1 in the inner loop and sets
+  // the starting of interval to 0.55. That way a single timestamp 
+  // will be included in each subchunk (time bin is 1 second) 
+  // Without further support, the 5th interval from 4.95s to 6.05s 
+  // will contain 2 timestamps. However, in this test, after the second chunk
+  // (in 5 seconds interval), the starting of interval is reset so that
+  // the fith interval is now 4.45 - 5.55 and contains again one single timestamp
+  
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+  Double timeIntervalSubchunk = 1.1, timeStartSubchunk = -timeIntervalSubchunk/2;
+  Double timeIntervalChunk = 5, timeStartChunk = 0;
+  CountedPtr<CompareTimeInterval> cmpFuncSubchunk(new CompareTimeInterval(timeIntervalSubchunk, timeStartSubchunk));
+  CountedPtr<CompareTimeInterval> cmpFuncChunk(new CompareTimeInterval(timeIntervalChunk, timeStartChunk));
+  sortColumnsSubchunk.addSortingColumn(MS::TIME, cmpFuncSubchunk);
+  sortColumnsChunk.addSortingColumn(MS::TIME, cmpFuncChunk);
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  for (vi_p->originChunks (); vi_p->moreChunks(); vi_p->nextChunk())
+  {
+    // Here is where the interval start is reset before subchunk loop starts.
+    cmpFuncSubchunk->setStart(timeStartSubchunk);
+    timeStartSubchunk += timeIntervalChunk;
+    for (vi_p->origin(); vi_p->more (); vi_p->next())
+    {
+      std::list<Int> times (vb_p->time().begin(), vb_p->time().end());
+      times.sort();
+      times.unique();
+      // A single timestamp per subchunk
+      ASSERT_EQ(times.size(), (size_t)1);
+    }
+  }
+}
+
+TEST_F(FullSortingDefinitionTest, NoSortingFuncAtAll)
+{
+  // If no sorting functions are defined all rows are 
+  // collected in a single subchunk
+  SortColumns sortColumnsChunk(false);
+  SortColumns sortColumnsSubchunk(false);
+
+  setSortingDefinition(sortColumnsChunk, sortColumnsSubchunk);
+
+  createTVIs();
+
+  size_t totalSubchunks = 0;
+  visitIterator([&]() -> void {totalSubchunks++;});
+  ASSERT_EQ(totalSubchunks, (size_t)1);
+}
