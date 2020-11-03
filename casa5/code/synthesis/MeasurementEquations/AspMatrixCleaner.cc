@@ -83,6 +83,7 @@
 #include <synthesis/MeasurementEquations/lbfgsGaussian.h>
 //#include <synthesis/MeasurementEquations/lbfgsAspZhang.h>
 using namespace LBFGSpp;*/
+#include <Eigen/Core>
 using Eigen::VectorXd;
 
 //for CppNumericalSolvers
@@ -1779,7 +1780,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     double fx;
     double gclip;
     ////const int niter = solver.minimize(fun, x, fx, gclip);
-    const int niter = solver.minimize(fun, x, fx, lb, ub, gclip); // with bounds*/
+    const int niter = solver.minimize(fun, x, fx, lb, ub, gclip); // with bounds
 
     //auto stop = high_resolution_clock::now();
     //auto duration = duration_cast<microseconds>(stop - start);
@@ -1793,18 +1794,18 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsPrevLBFGSGrad = gclip;
     }
     //std::cout << "itsPrevLBFGSGrad " << itsPrevLBFGSGrad << std::endl;
-    cout << "After: x = " << x.transpose() /*<< ", # iters " << niter */<< endl;
+    cout << "After: x = " << x.transpose() / *<< ", # iters " << niter * /<< endl;*/
 
     // x is not changing in LBFGS which causes convergence issue
     // so we use the previous x instead. This is a hack suggested by
     // the online community
     bool becomesNegScale = false;
-    if (fx == -999.0)
+    /*if (fx == -999.0)
     { cout << "fx == -999; has convergence issue? Reset x to the previous one." << endl;
       becomesNegScale = true;
       for (unsigned int i = 0; i < length; i++)
         x[i] = tempx[i];
-    }
+    }*/
 
     //prevent lbfgs overadjusting
     /*bool overflow = false;

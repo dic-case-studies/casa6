@@ -200,13 +200,8 @@ void setupSolver(gsl_multimin_fdfminimizer **Solver,
 			   gsl_multimin_function_fdf *my_func,
 			   int NAspen,
 			   void *par[],
-			   //vector<int> *PIndex,
 			   casacore::Matrix<casacore::Float> *dirty,
 			   casacore::Matrix<casacore::Complex> *psfFT
-			   //IMAGETYPE<T>      *MImg,
-			   //FluxonCompList<T> *ModelDI,
-			   //FluxonCompList<T> *FCList,
-			   //FluxonCompList<T> *PSFList
 			   )
 {
   const int NParams = 2 * NAspen;
@@ -216,15 +211,15 @@ void setupSolver(gsl_multimin_fdfminimizer **Solver,
 
   *Solver = gsl_multimin_fdfminimizer_alloc(MinimizerType, NParams);
 
-  bool ddel;
+  /*bool ddel;
   casacore::Float *dptr = dirty->getStorage(ddel);
   par[0] = (void *) dptr;
   bool ddel2;
   casacore::Float *dptr2 = psfFT->getStorage(ddel2);
-  par[1] = (void *) dptr2;
+  par[1] = (void *) dptr2;*/ // Kumar's fix but cause compile error
 
-  //par[0]         = (void *)dirty;
-  //par[1]         = (void *)psfFT;
+  par[0]         = (void *)dirty;
+  par[1]         = (void *)psfFT;
   std::cout << "debug dirty = " << (*dirty)(256,256) << " " << dirty << std::endl;
 
   my_func->f      = &my_f;
