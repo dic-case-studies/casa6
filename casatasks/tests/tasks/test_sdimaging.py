@@ -50,11 +50,11 @@ else:
     from flagdata import flagdata
     from sdutil import tbmanager, toolmanager, table_selector
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    casaRoot = os.environ.get('CASAPATH').split()[0]
     def ctsys_resolve(apath):
-        subdir_hints = ['', 'casa-data-req']
+        subdir_hints = ['data', 'casa-data-req', 'data/casa-data-req']
         for subdir in subdir_hints:
-            path = os.path.join(dataRoot, subdir, apath)
+            path = os.path.join(casaRoot, subdir, apath)
             if os.path.exists(path):
                 return path
 
