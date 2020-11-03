@@ -1178,58 +1178,33 @@ protected:
 
 	typedef casacore::Block <casacore::MeasurementSet> MeasurementSets;
 
-<<<<<<< HEAD
-	class RowBounds {
-	public:
-
-		RowBounds()
-			: chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
-			  subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1),
-			  timeMin_p(-1)
-			{}
-
-		// last row in current chunk
-		ssize_t chunkNRows_p;
-		// first row in current subchunk
-		ssize_t subchunkBegin_p;
-		// last row in current subchunk
-		ssize_t subchunkEnd_p;
-		// # rows in subchunk
-		ssize_t subchunkNRows_p;
-		// subchunk's table row numbers
-		casacore::RefRows subchunkRows_p;
-		// times for each row in the chunk
-		casacore::Vector<casacore::Double> times_p;
-		// max timestamp in the chunk
-		casacore::Double timeMax_p;
-		// min timechunk in the chunk
-		casacore::Double timeMin_p;
-
-	};
-=======
     class RowBounds
     {
     public:
 
         RowBounds() :
             chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
-            subchunkNRows_p(-1), subchunkRows_p(0, 0)
+            subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1), timeMin_p(-1)
         {}
 
         // last row in current chunk
-        casacore::Int chunkNRows_p;
+        ssize_t chunkNRows_p;
         // first row in current subchunk
-        casacore::Int subchunkBegin_p;
+        ssize_t subchunkBegin_p;
         // last row in current subchunk
-        casacore::Int subchunkEnd_p;
+        ssize_t subchunkEnd_p;
         // # rows in subchunk
-        casacore::Int subchunkNRows_p;
+        ssize_t subchunkNRows_p;
         // subchunk's table row numbers
         casacore::RefRows subchunkRows_p;
         // times for each row in the chunk
         casacore::Vector<casacore::Double> times_p;
+        // max timestamp in the chunk
+        casacore::Double timeMax_p;
+        // min timechunk in the chunk
+        casacore::Double timeMin_p;
+
     };
->>>>>>> master
 
 	casacore::Bool autoTileCacheSizing_p;
 	std::map <VisBufferComponent2, BackWriter *> backWriters_p;
