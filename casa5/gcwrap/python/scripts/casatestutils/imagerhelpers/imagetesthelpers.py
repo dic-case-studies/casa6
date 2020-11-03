@@ -29,6 +29,7 @@ if is_CASA6:
     import casatools
     logging.debug("Importing CASAtasks")
     import casatasks
+    _cb = casatools.calibrater()
     _tb = casatools.table()
     _tbt = casatools.table()
     _ia  = casatools.image()
@@ -40,7 +41,7 @@ else:
     # CASA 5
     logging.debug("Import casa6 errors. Trying CASA5...")
     from __main__ import default
-    from taskinit import tbtool, mstool, iatool
+    from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
     try:
@@ -52,6 +53,7 @@ else:
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
+    _cb = cbtool()
     casa = find_casa()
     if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
         casaglobals=True
