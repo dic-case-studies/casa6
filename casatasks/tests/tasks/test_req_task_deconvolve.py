@@ -915,6 +915,7 @@ class test_cube(testref_base):
         return tclean_args
 
     # Test 10
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
     def test_cube_0(self):
         """ [cube] test_cube_0 """
@@ -934,6 +935,7 @@ class test_cube(testref_base):
         self.checkfinal(report)#+report2)
 
     # Test 11
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_cube_chanchunks_auto(self):
         """ [cube] test_cube_chanchunks_auto """
         ######################################################################################
@@ -952,6 +954,7 @@ class test_cube(testref_base):
 class test_mask(testref_base):
 
     # Test 12
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_1(self):
         """ [mask] test_mask_1 """
         ######################################################################################
@@ -973,6 +976,7 @@ class test_mask(testref_base):
         self.checkfinal(report1+report2)
 
     # Test 13
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_2(self):
         """ [mask] test_mask_2 """
         ######################################################################################
@@ -994,6 +998,7 @@ class test_mask(testref_base):
         self.checkfinal(report1+report2)
 
     # Test 14
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_missingfile(self):
         """ [mask] test_mask_missingfile """
         ######################################################################################
@@ -1022,6 +1027,7 @@ class test_mask(testref_base):
             deconvolve(**deconvolve_args)
 
     # Test 15
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_pbmask0(self):
         """ [mask] test_mask_pbmask0 """
         ######################################################################################
@@ -1047,6 +1053,7 @@ class test_mask(testref_base):
         self.assertEqual(10000, stats['sum'][0], "Mask image does not contain the right number of masked pixels (should be 10000 but is {})!".format(stats['sum'][0]))
 
     # Test 16
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_pbmask995(self):
         """ [mask] test_mask_pbmask995 """
         ######################################################################################
@@ -1073,6 +1080,7 @@ class test_mask(testref_base):
 
     # AUTOMASK TESTS
     # Test 17
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh(self):
         """ [mask] test_mask_autobox_multithresh """
         ######################################################################################
@@ -1084,6 +1092,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 18
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_newnoise(self):
         """ [mask] test_mask_autobox_multithresh_newnoise """
         ######################################################################################
@@ -1095,6 +1104,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 19
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_nsigma(self):
         """ [mask] test_mask_autobox_multithresh_with_nsigma """
         ######################################################################################
@@ -1106,6 +1116,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 20
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_nsigma_newnoise(self):
         """ [mask] test_mask_autobox_multithresh_with_nsigma_newnoise """
         ######################################################################################
@@ -1117,6 +1128,7 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 21
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_prune(self):
         """ [mask] test_mask_autobox_multithresh_with_prune """
         ######################################################################################
@@ -1128,9 +1140,13 @@ class test_mask(testref_base):
         self.checkfinal(report)
 
     # Test 22
-    @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_standard_cube_eph(self):
         """ [mask] test_mask_autobox_multithresh_standard_cube_eph """
+        # @unittest.skip("This test takes a long time to evaluate (~12m). It is only necessary to evaluate when we need to show that automasking works before going to validation.")
+        # I was skipping this test because of the long time it takes to run, however it proved instrumental in finding bugs
+        # that were commited to other parts of the codebase before this test ever made it into master, so I'm leaving it uncommented
+        # for its use in exercising more of the codebase, if nothing else.
         ######################################################################################
         # Test multi-threshold Autobox (with pruning). Should produce the same results as tclean.
         ######################################################################################
