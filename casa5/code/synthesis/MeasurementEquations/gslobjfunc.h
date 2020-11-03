@@ -113,6 +113,8 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 
   // Extract the params from the void pointer
   casa::Params MyP(params);
+  itsMatDirty = MyP.dirty();
+  itsPsfFT = MyP.psfFT();
   //casacore::Matrix<casacore::Float>* itsMatDirty = new casacore::Matrix<casacore::Float>(*MyP.dirty());
   //casacore::Matrix<casacore::Complex>* itsPsfFT = new casacore::Matrix<casacore::Complex>(*MyP.psfFT());
 
