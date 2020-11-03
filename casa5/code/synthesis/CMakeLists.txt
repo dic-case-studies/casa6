@@ -23,8 +23,9 @@ BISON_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.yy ${CMAKE_CURRENT_BINARY
 FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.lcc COMPILE_FLAGS "-PCalLibraryGram")
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR}
-                     "/usr/include/eigen3"
-                     "/export/home/genie-rhel/mhsieh/work/dev/lbfgspp/include")
+                     "/usr/include/eigen3")
+                     #"/export/home/genie-rhel/mhsieh/work/dev/lbfgspp2/include")
+                     #"/export/home/genie-rhel/mhsieh/work/dev/cppsolvers/include")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc
@@ -611,7 +612,9 @@ install (FILES
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/lbfgsAsp.h
   MeasurementEquations/lbfgsGaussian.h
+  MeasurementEquations/gslobjfunc.h
   #MeasurementEquations/lbfgsAspZhang.h
+  #MeasurementEquations/objfunc.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h

@@ -96,6 +96,7 @@ public:
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
   void switchedToHogbom();
+  void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
   void testBFGS(const casacore::Matrix<casacore::Float>& psf);
 
   // setter/getter
@@ -183,6 +184,7 @@ private:
   casacore::Float itsOptimumScaleSize;
   double itsUsedMemoryMB;
   float itsPeakResidual;
+  casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsOrigDirty;
 };
 
 } //# NAMESPACE CASA - END

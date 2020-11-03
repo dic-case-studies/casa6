@@ -97,8 +97,8 @@ public:
       if (isnan(x[2*k]) || x[2*k+1] <= 0) // LBFGS encounters convergense issue or scale < 0
       {
         std::cout << "nan? " << x[2*k] << " neg scale? " << x[2*k+1] << std::endl;
-        fx = -999.0;
-        return fx;
+        //fx = -999.0;
+        //return fx;
       }
 
       // generate a gaussian for each Asp in the Aspen set
@@ -125,7 +125,7 @@ public:
       if (maxJ > maxY)
         maxY = maxJ;
 
-      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
+      //casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
       /*for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -137,7 +137,7 @@ public:
           const int px = i;
           const int py = j;
           //Asp(i,j) = gbeam(px, py); // this is slightly different from below causing AspConvPsf diff a lot.
-          Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
+          Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(x[2*k+1])))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
           //dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
         }
       }
@@ -234,7 +234,7 @@ public:
       if (maxJ > maxY)
         maxY = maxJ;
 
-      casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
+      //casacore::Gaussian2D<casacore::Float> gbeam(1.0 / (sqrt(2*M_PI)*x[2*k+1]), center[k][0], center[k][1], x[2*k+1], 1, 0);
       /*for (int j = minJ; j <= maxJ; j++)
       {
         for (int i = minI; i <= maxI; i++)
@@ -246,8 +246,8 @@ public:
           const int px = i;
           const int py = j;
           //Asp(i,j) = gbeam(px, py);
-          Asp(i,j) = (1.0/(sqrt(2*M_PI)*x[2*k+1]))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
-          dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / x[2*k+1]); // verified by python
+          Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(x[2*k+1])))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(x[2*k+1],2));
+          dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(x[2*k+1],2) - 1) / fabs(x[2*k+1])); // verified by python
         }
       }
       for (int j = 125; j < 130; j++)
@@ -324,8 +324,8 @@ public:
       //std::cout << "verify: Mres(127,128) " << Mres(127,128) << std::endl;
       //std::cout << "verify: MdAspConvPsf(127,128) " << MdAspConvPsf(127,128) << std::endl;
       //std::cout << "verify: GradScale(127,128) " << GradScale(127,128) << std::endl;
-      std::cout << "after grad " << 2*k << ": " << grad[2*k] << std::endl;
-      std::cout << "after grad " << 2*k+1 << ": " << grad[2*k+1] << std::endl;
+      std::cout << "after grad " << 2*k << ": " << grad[2*k] << " amp " << x[2*k] << std::endl;
+      std::cout << "after grad " << 2*k+1 << ": " << grad[2*k+1] << " scale " << x[2*k+1] << std::endl;
 
     } // end of derivatives
 
