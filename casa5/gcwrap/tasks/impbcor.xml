@@ -10,7 +10,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 <!-- This is the task interface for impbcor        -->
 <!--                                                          -->
 
-<task type="function" name="impbcor" category="analysis">
+<task type="function" name="impbcor" category="imaging, analysis">
 <shortdescription>Construct a primary beam corrected image from an image and a primary beam pattern.</shortdescription>
 <description>
 Correct an image for primary beam attenuation using an image of the

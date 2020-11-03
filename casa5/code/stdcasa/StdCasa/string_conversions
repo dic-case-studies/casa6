@@ -60,24 +60,24 @@ inline std::string PTR bool ## NAME( bool b ) {				\
 inline std::string PTR NAME( bool b ) {					\
     return b ? NEW std::string("true") : NEW std::string("false");	\
 }									\
-inline std::string PTR int ## NAME( int i ) {			\
+inline std::string PTR int ## NAME( long i ) {			\
     char buff[256];							\
-    sprintf( buff, "%d", i );						\
+    sprintf( buff, "%ld", i );						\
     return NEW std::string( (const char *) buff );			\
 }									\
-inline std::string PTR NAME( int i ) {					\
+inline std::string PTR NAME( long i ) {					\
     char buff[256];							\
-    sprintf( buff, "%d", i );						\
+    sprintf( buff, "%ld", i );						\
     return NEW std::string( (const char *) buff );			\
 }									\
-inline std::string PTR uInt ## NAME( uInt i ) {			\
+inline std::string PTR uInt ## NAME( unsigned long i ) {			\
     char buff[256];							\
-    sprintf( buff, "%u", i );						\
+    sprintf( buff, "%lu", i );						\
     return NEW std::string( (const char *) buff );			\
 }									\
-inline std::string PTR NAME( uInt i ) {					\
+inline std::string PTR NAME( unsigned long i ) {					\
     char buff[256];							\
-    sprintf( buff, "%u", i );						\
+    sprintf( buff, "%lu", i );						\
     return NEW std::string( (const char *) buff );			\
 }									\
 inline std::string PTR long ## NAME( long long  l ) {					\

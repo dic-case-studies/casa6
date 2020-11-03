@@ -86,7 +86,7 @@ bool
 imagepol::imagepoltestimage(const std::string& outfile,
 			    const std::vector<double>& rm,
 			    const double pa0, const double sigma,
-			    const int nx, const int ny, const int nf,
+			    const long nx, const long ny, const long nf,
 			    const double f0, const double bw) {
 
   bool rstat(false);
@@ -419,7 +419,7 @@ bool imagepol::rotationmeasure(
     const std::string& pa0, const std::string& pa0err,
     const std::string& nturns, const std::string& chisq,
     const double sigma, const double rmfq, const double rmmax,
-    const double maxpaerr, const std::string&, const int, const int
+    const double maxpaerr, const std::string&, const long, const long
 ) {
     try {
         *itsLog << LogOrigin("imagepol", __func__);

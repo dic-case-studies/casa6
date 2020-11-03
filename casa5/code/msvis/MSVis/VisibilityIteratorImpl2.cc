@@ -1023,40 +1023,85 @@ VisibilityIteratorImpl2::putColumnRows(
 }
 
 VisibilityIteratorImpl2::VisibilityIteratorImpl2(
-	const Block<const MeasurementSet *> &mss,
-	const SortColumns & sortColumns,
-	Double timeInterval,
-	Bool writable,
-	Bool useMSIter2)
-	: ViImplementation2()
-	, channelSelector_p(nullptr)
-	, channelSelectorCache_p(new ChannelSelectorCache())
-	, columns_p()
-	, floatDataFound_p(false)
-	, frequencySelections_p(nullptr)
-	, measurementFrame_p(VisBuffer2::FrameNotSpecified)
-	, modelDataGenerator_p(VisModelDataI::create2())
-	, more_p(false)
-	, msIndex_p(0)
-	, msIterAtOrigin_p(false)
-	, msIter_p()
-	, nCorrelations_p(-1)
-	, nRowBlocking_p(0)
-	, pendingChanges_p(new PendingChanges())
-	, reportingFrame_p(VisBuffer2::FrameNotSpecified)
-	, sortColumns_p(sortColumns)
-	, spectralWindowChannelsCache_p(new SpectralWindowChannelsCache())
-	, subtableColumns_p(nullptr)
-	, tileCacheModMtx_p(new std::mutex())
-	, tileCacheIsSet_p(new std::vector<bool>())
-	, timeInterval_p(timeInterval)
-	, vb_p(nullptr)
-	, weightScaling_p()
-	, writable_p(writable)
+        const Block<const MeasurementSet *> &mss,
+        const SortColumns & sortColumns,
+        Double timeInterval,
+        Bool writable,
+        Bool useMSIter2)
+: ViImplementation2(),
+  channelSelector_p(nullptr),
+  channelSelectorCache_p(new ChannelSelectorCache()),
+  columns_p(),
+  floatDataFound_p(false),
+  frequencySelections_p(nullptr),
+  measurementFrame_p(VisBuffer2::FrameNotSpecified),
+  modelDataGenerator_p(VisModelDataI::create2()),
+  more_p(false),
+  msIndex_p(0),
+  msIterAtOrigin_p(false),
+  msIter_p(),
+  nCorrelations_p(-1),
+  nRowBlocking_p(0),
+  pendingChanges_p(new PendingChanges()),
+  reportingFrame_p(VisBuffer2::FrameNotSpecified),
+  sortColumns_p(sortColumns),
+  subchunkSortColumns_p(false),
+  spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
+  subtableColumns_p(nullptr),
+  tileCacheModMtx_p(new std::mutex()),
+  tileCacheIsSet_p(new std::vector<bool>()),
+  timeInterval_p(timeInterval),
+  vb_p(nullptr),
+  weightScaling_p(),
+  writable_p(writable)
 {
-	initialize(mss, useMSIter2);
+    // Set the default subchunk iteration sorting scheme, i.e.
+    // unique timestamps in each subchunk.
+    CountedPtr<BaseCompare> singleTimeCompare(new ObjCompare<Double>());
+    subchunkSortColumns_p.addSortingColumn(MS::TIME, singleTimeCompare);
 
-	VisBufferOptions options = writable_p ? VbWritable : VbNoOptions;
+    initialize(mss, useMSIter2);
+
+    VisBufferOptions options = writable_p ? VbWritable : VbNoOptions;
+
+    vb_p = createAttachedVisBuffer(options);
+}
+
+VisibilityIteratorImpl2::VisibilityIteratorImpl2(
+    const casacore::Block<const casacore::MeasurementSet *> & mss,
+    const SortColumns & chunkSortColumns,
+    const SortColumns & subchunkSortColumns,
+    bool isWritable)
+: ViImplementation2(),
+  channelSelector_p(nullptr),
+  channelSelectorCache_p(new ChannelSelectorCache()),
+  columns_p(),
+  floatDataFound_p(false),
+  frequencySelections_p(nullptr),
+  measurementFrame_p(VisBuffer2::FrameNotSpecified),
+  modelDataGenerator_p(VisModelDataI::create2()),
+  more_p(false),
+  msIndex_p(0),
+  msIterAtOrigin_p(false),
+  msIter_p(),
+  nCorrelations_p(-1),
+  nRowBlocking_p(0),
+  pendingChanges_p(new PendingChanges()),
+  reportingFrame_p(VisBuffer2::FrameNotSpecified),
+  sortColumns_p(chunkSortColumns),
+  spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
+  subtableColumns_p(nullptr),
+  tileCacheModMtx_p(new std::mutex()),
+  tileCacheIsSet_p(new std::vector<bool>()),
+  timeInterval_p(0),
+  vb_p(nullptr),
+  weightScaling_p(),
+  writable_p(isWritable),
+  subchunkSortColumns_p(subchunkSortColumns)
+{
+    initialize(mss);
+
+    VisBufferOptions options = writable_p ? VbWritable : VbNoOptions;
 
     vb_p = createAttachedVisBuffer(options);
 }
@@ -1309,49 +1354,85 @@ void
 VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss,
                                     Bool useMSIter2)
 {
-	cache_p.flush();
 
-	msIndex_p = 0;
+    ThrowIf(!sortColumns_p.usingDefaultSortingFunctions(),
+            "Sorting definition for chunks doesn't support generic functions yet");
 
-	frequencySelections_p = new FrequencySelections();
+    cache_p.flush();
 
-	Int nMs = mss.nelements();
-	measurementSets_p.resize(nMs);
-	tileCacheIsSet_p->resize(nMs);
+    msIndex_p = 0;
 
-	for (Int k = 0; k < nMs; ++k) {
-		measurementSets_p[k] = * mss[k];
-		addDataSelection(measurementSets_p[k]);
-		(*tileCacheIsSet_p)[k] = false;
-	}
+    frequencySelections_p = new FrequencySelections();
 
-	if (useMSIter2)
+    Int nMs = mss.nelements();
+    measurementSets_p.resize(nMs);
+    tileCacheIsSet_p->resize(nMs);
 
-		// This version uses the MSSmartInterval for time comparisons in the
-		// Table sort/iteration
-		msIter_p = new MSIter2(measurementSets_p,
-		                       sortColumns_p.getColumnIds(),
-		                       timeInterval_p,
-		                       sortColumns_p.shouldAddDefaultColumns(),
-		                       false);
-	else
-		// The old-fashioned version
-		msIter_p = new MSIter(measurementSets_p,
-		                      sortColumns_p.getColumnIds(),
-		                      timeInterval_p,
-		                      sortColumns_p.shouldAddDefaultColumns(),
-		                      false);
+    for (Int k = 0; k < nMs; ++k) {
+        measurementSets_p[k] = * mss[k];
+        addDataSelection(measurementSets_p[k]);
+        (*tileCacheIsSet_p)[k] = false;
+    }
+
+    if (useMSIter2)
+
+        // This version uses the MSSmartInterval for time comparisons in the
+        // Table sort/iteration
+        msIter_p = new MSIter2(measurementSets_p,
+                sortColumns_p.getColumnIds(),
+                timeInterval_p,
+                sortColumns_p.shouldAddDefaultColumns(),
+                false);
+    else
+        // The old-fashioned version
+        msIter_p = new MSIter(measurementSets_p,
+                sortColumns_p.getColumnIds(),
+                timeInterval_p,
+                sortColumns_p.shouldAddDefaultColumns(),
+                false);
+
+    subtableColumns_p = new SubtableColumns(msIter_p);
 
 
-	subtableColumns_p = new SubtableColumns(msIter_p);
+    // Install default frequency selections.  This will select all
+    // channels in all windows.
+
+    casacore::AipsrcValue<Bool>::find(
+            autoTileCacheSizing_p,
+            VisibilityIterator2::getAipsRcBase() + ".AutoTileCacheSizing", false);
+}
+
+void
+VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
+{
+    cache_p.flush();
+
+    msIndex_p = 0;
+
+    frequencySelections_p = new FrequencySelections();
+
+    Int nMs = mss.nelements();
+    measurementSets_p.resize(nMs);
+    tileCacheIsSet_p->resize(nMs);
+
+    for (Int k = 0; k < nMs; ++k) {
+        measurementSets_p[k] = * mss[k];
+        addDataSelection(measurementSets_p[k]);
+        (*tileCacheIsSet_p)[k] = false;
+    }
+
+    msIter_p = new MSIter(measurementSets_p,
+                sortColumns_p.sortingDefinition());
+
+    subtableColumns_p = new SubtableColumns(msIter_p);
 
 
-	// Install default frequency selections.  This will select all
-	// channels in all windows.
+    // Install default frequency selections.  This will select all
+    // channels in all windows.
 
-	casacore::AipsrcValue<Bool>::find(
-		autoTileCacheSizing_p,
-		VisibilityIterator2::getAipsRcBase() + ".AutoTileCacheSizing", false);
+    casacore::AipsrcValue<Bool>::find(
+            autoTileCacheSizing_p,
+            VisibilityIterator2::getAipsRcBase() + ".AutoTileCacheSizing", false);
 }
 
 VisibilityIteratorImpl2::~VisibilityIteratorImpl2()
@@ -1857,16 +1938,31 @@ VisibilityIteratorImpl2::useImagingWeight(const VisImagingWeight & imWgt)
 void
 VisibilityIteratorImpl2::origin()
 {
-	ThrowIf(rowBounds_p.chunkNRows_p < 0,
-	        "Call to origin without first initializing chunk");
+    ThrowIf(rowBounds_p.chunkNRows_p < 0,
+        "Call to origin without first initializing chunk");
 
-	throwIfPendingChanges();
+    throwIfPendingChanges();
 
-	rowBounds_p.subchunkBegin_p = 0; // begin at the beginning
-	more_p = true;
-	subchunk_p.resetSubChunk();
+    rowBounds_p.subchunkBegin_p = 0; // begin at the beginning
+    more_p = true;
+    subchunk_p.resetSubChunk();
 
-	configureNewSubchunk();
+
+    if( ! (nRowBlocking_p > 0) )
+    {
+        // Create a MeasurementSet which points
+        // to the current iteration with msIter
+        msSubchunk_p.reset(new casacore::MeasurementSet(msIter_p->table(),
+                                                     &(msIter_p->ms())));
+
+        // Create a MSIter for the subchunk loop which iterates the
+        // the MS created before.
+        msIterSubchunk_p.reset(new casacore::MSIter(*msSubchunk_p,
+                            subchunkSortColumns_p.sortingDefinition()));
+        msIterSubchunk_p->origin();
+    }
+
+    configureNewSubchunk();
 }
 
 void
@@ -1956,23 +2052,31 @@ VisibilityIteratorImpl2::positionMsIterToASelectedSpectralWindow()
 void
 VisibilityIteratorImpl2::next()
 {
-	ThrowIf(!more_p, "Attempt to advance subchunk past end of chunk");
+    ThrowIf(!more_p, "Attempt to advance subchunk past end of chunk");
 
-	throwIfPendingChanges(); // throw if unapplied changes exist
+    throwIfPendingChanges(); // throw if unapplied changes exist
 
-	// Attempt to advance to the next subchunk
+    measurementFrame_p = VisBuffer2::FrameNotSpecified; // flush cached value
 
-	rowBounds_p.subchunkBegin_p = rowBounds_p.subchunkEnd_p + 1;
-	measurementFrame_p = VisBuffer2::FrameNotSpecified; // flush cached value
+    if(nRowBlocking_p > 0)
+    {
+        // Attempt to advance to the next subchunk
+        rowBounds_p.subchunkBegin_p = rowBounds_p.subchunkEnd_p + 1;
+        more_p = rowBounds_p.subchunkBegin_p < rowBounds_p.chunkNRows_p;
+    }
+    else
+    {
+        // Increment the subchunk MSIter
+        (*msIterSubchunk_p)++;
+        more_p = msIterSubchunk_p->more();
+    }
 
-	more_p = rowBounds_p.subchunkBegin_p < rowBounds_p.chunkNRows_p;
+    if (more_p) {
 
-	if (more_p) {
+        subchunk_p.incrementSubChunk();
 
-		subchunk_p.incrementSubChunk();
-
-		configureNewSubchunk();
-	}
+        configureNewSubchunk();
+    }
 }
 
 Subchunk
@@ -2049,98 +2153,99 @@ void
 VisibilityIteratorImpl2::configureNewSubchunk()
 {
 
-	// work out how many rows to return for the moment we return all rows with
-	// the same value for time unless row blocking is set, in which case we
-	// return more rows at once.
+    // Only for rowBlocking: work out how many rows to return for the moment
+    // we return all rows with
+    // the same value for time unless row blocking is set, in which case we
+    // return more rows at once.
 
-	if (nRowBlocking_p > 0) {
+    if (nRowBlocking_p > 0) {
+        rowBounds_p.subchunkEnd_p =
+                rowBounds_p.subchunkBegin_p + nRowBlocking_p;
 
-		rowBounds_p.subchunkEnd_p =
-			rowBounds_p.subchunkBegin_p + nRowBlocking_p;
+        if (rowBounds_p.subchunkEnd_p >= rowBounds_p.chunkNRows_p) {
+            rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
+        }
 
-		if (rowBounds_p.subchunkEnd_p >= rowBounds_p.chunkNRows_p) {
-			rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
-		}
 
-		// Scan the subchunk to see if the same channels are selected in each
-		// row.  End the subchunk when a row using different channels is
-		// encountered.
+        // Scan the subchunk to see if the same channels are selected in each
+        // row.  End the subchunk when a row using different channels is
+        // encountered.
+        Double previousRowTime =
+                rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
+        channelSelector_p =
+                determineChannelSelection(previousRowTime, spectralWindow(),
+                        polarizationId(), msId());
 
-		Double previousRowTime =
-			rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
-		channelSelector_p =
-			determineChannelSelection(previousRowTime, spectralWindow(),
-			                          polarizationId(), msId());
+        for (Int i = rowBounds_p.subchunkBegin_p + 1;
+                i <= rowBounds_p.subchunkEnd_p;
+                i++) {
 
-		for (Int i = rowBounds_p.subchunkBegin_p + 1;
-		     i <= rowBounds_p.subchunkEnd_p;
-		     i++) {
+            Double rowTime = rowBounds_p.times_p(i);
 
-			Double rowTime = rowBounds_p.times_p(i);
+            if (rowTime == previousRowTime) {
+                continue; // Same time means same rows.
+            }
 
-			if (rowTime == previousRowTime) {
-				continue; // Same time means same rows.
-			}
+            // Compute the channel selector for this row so it can be compared
+            // with the previous row's channel selector.
 
-			// Compute the channel selector for this row so it can be compared
-			// with the previous row's channel selector.
+            const ChannelSelector * newSelector =
+                    determineChannelSelection(rowTime);
 
-			const ChannelSelector * newSelector =
-				determineChannelSelection(rowTime);
+            if (newSelector != channelSelector_p) {
 
-			if (newSelector != channelSelector_p) {
+                // This row uses different channels than the previous row and so
+                // it cannot be included in this subchunk.  Make the previous
+                // row the end of the subchunk.
 
-				// This row uses different channels than the previous row and so
-				// it cannot be included in this subchunk.  Make the previous
-				// row the end of the subchunk.
+                rowBounds_p.subchunkEnd_p = i - 1;
+            }
+        }
+    }
+    else {
+        // All the information is in the subchunk MSIter
+        rowBounds_p.subchunkNRows_p = msIterSubchunk_p->table().nrow();
 
-				rowBounds_p.subchunkEnd_p = i - 1;
-			}
-		}
-	}
-	else {
+        attachColumns(attachTable());
 
-		// The subchunk will consist of all rows in the chunk having the same
-		// timestamp as the first row.
+        // Fetch all of the times in this chunk and get the min/max
+        // of those times
 
-		Double subchunkTime = rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
-		channelSelector_p = determineChannelSelection(subchunkTime);
+        rowBounds_p.times_p.resize(rowBounds_p.subchunkNRows_p);
+        columns_p.time_p.getColumn(rowBounds_p.times_p);
 
-		for (Int i = rowBounds_p.subchunkBegin_p;
-		     i < rowBounds_p.chunkNRows_p;
-		     i++) {
+        // The subchunk rows refer to the subchunk iterator
+        // and therefore are consecutive.
+        rowBounds_p.subchunkBegin_p = 0;
+        rowBounds_p.subchunkEnd_p = msIterSubchunk_p->table().nrow() - 1;
 
-			if (rowBounds_p.times_p(i) != subchunkTime) {
-				break;
-			}
+        Double subchunkTime = columns_p.time_p(0);
+        channelSelector_p = determineChannelSelection(subchunkTime);
+    }
 
-			rowBounds_p.subchunkEnd_p = i;
-		}
-	}
+    rowBounds_p.subchunkNRows_p =
+            rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
+    rowBounds_p.subchunkRows_p =
+            RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
 
-	rowBounds_p.subchunkNRows_p =
-		rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
-	rowBounds_p.subchunkRows_p =
-		RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
+    // Set flags for current subchunk
 
-	// Set flags for current subchunk
+    Vector<Int> correlations = channelSelector_p->getCorrelations();
+    nCorrelations_p = correlations.nelements();
 
-	Vector<Int> correlations = channelSelector_p->getCorrelations();
-	nCorrelations_p = correlations.nelements();
+    Vector<Stokes::StokesTypes> correlationsDefined =
+            getCorrelationTypesDefined();
+    Vector<Stokes::StokesTypes> correlationsSelected =
+            getCorrelationTypesSelected();
 
-	Vector<Stokes::StokesTypes> correlationsDefined =
-		getCorrelationTypesDefined();
-	Vector<Stokes::StokesTypes> correlationsSelected =
-		getCorrelationTypesSelected();
+    String msName = ms().tableName();
 
-	String msName = ms().tableName();
-
-	vb_p->configureNewSubchunk(
-		msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
-		isNewSpectralWindow(), subchunk_p, rowBounds_p.subchunkNRows_p,
-		channelSelector_p->getNFrequencies(), nCorrelations_p,
-		correlations, correlationsDefined, correlationsSelected,
-		weightScaling_p);
+    vb_p->configureNewSubchunk(
+            msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
+            isNewSpectralWindow(), subchunk_p, rowBounds_p.subchunkNRows_p,
+            channelSelector_p->getNFrequencies(), nCorrelations_p,
+            correlations, correlationsDefined, correlationsSelected,
+            weightScaling_p);
 }
 
 const ChannelSelector *
@@ -2560,53 +2665,58 @@ VisibilityIteratorImpl2::getSpectralWindowChannels(
 void
 VisibilityIteratorImpl2::configureNewChunk()
 {
-	rowBounds_p.chunkNRows_p = msIter_p->table().nrow();
-	rowBounds_p.subchunkBegin_p = -1; // undefined value
-	rowBounds_p.subchunkEnd_p = -1;   // will increment to 1st row
+    rowBounds_p.chunkNRows_p = msIter_p->table().nrow();
+    rowBounds_p.subchunkBegin_p = -1; // undefined value
+    rowBounds_p.subchunkEnd_p = -1;   // will increment to 1st row
 
-	cache_p.chunkRowIds_p.resize(0); // flush cached row number map.
+    cache_p.chunkRowIds_p.resize(0); // flush cached row number map.
 
-	attachColumns(attachTable());
+    // If this is a new MeasurementSet then set up the antenna locations, etc.
 
-	// Fetch all of the times in this chunk and get the min/max
-	// of those times
+    if (msIter_p->newMS()) {
 
-	rowBounds_p.times_p.resize(rowBounds_p.chunkNRows_p);
-	columns_p.time_p.getColumn(rowBounds_p.times_p);
+        // Flush some cache flag values
 
-	IPosition ignore1, ignore2;
-	minMax(rowBounds_p.timeMin_p, rowBounds_p.timeMax_p, ignore1,
-	       ignore2, rowBounds_p.times_p);
+        cache_p.flush();
 
-	// If this is a new MeasurementSet then set up the antenna locations, etc.
+        msd_p.setAntennas(msIter_p->msColumns().antenna());
 
-	if (msIter_p->newMS()) {
+        // Grab the time frame of reference so that it can be converted to UTC
+        // for use in other frame of reference conversions.
 
-		// Flush some cache flag values
+        timeFrameOfReference_p = msIter_p->msColumns().timeMeas()(0).getRef();
 
-		cache_p.flush();
+    }
 
-		msd_p.setAntennas(msIter_p->msColumns().antenna());
+    if (isNewMs()) { // New ms so flush pointing caches(if they exist).
+        pointingDirectionCache_p.reset();
+        pointingSource_p.reset();
+    }
 
-		// Grab the time frame of reference so that it can be converted to UTC
-		// for use in other frame of reference conversions.
+    if (msIter_p->newField() || msIterAtOrigin_p) {
+        msd_p.setFieldCenter(msIter_p->phaseCenter());
+    }
 
-		timeFrameOfReference_p = msIter_p->msColumns().timeMeas()(0).getRef();
+    if(nRowBlocking_p >0)
+    {
+        attachColumns(msIter_p->table());
 
+        // Fetch all of the times in this chunk
 
+        rowBounds_p.times_p.resize(rowBounds_p.chunkNRows_p);
+        columns_p.time_p.getColumn(rowBounds_p.times_p);
+    }
+    else
+    {
+        // Columns are attached to the msIter chunk iteration.
+        // This is needed for the call of setTileCache() below, which
+        // performs some tests on the attached columns
+        // Later, in configureNewSubchunk the columns are reset to
+        // the subchunk msIterSubchunk_p columns.
+        attachColumns(msIter_p->table());
+    }
 
-	}
-
-	if (isNewMs()) { // New ms so flush pointing caches(if they exist).
-		pointingDirectionCache_p.reset();
-		pointingSource_p.reset();
-	}
-
-	if (msIter_p->newField() || msIterAtOrigin_p) {
-		msd_p.setFieldCenter(msIter_p->phaseCenter());
-	}
-
-	setTileCache();
+    setTileCache();
 }
 
 const MSDerivedValues &
@@ -2847,31 +2957,55 @@ VisibilityIteratorImpl2::getReceptor0Angle()
 void
 VisibilityIteratorImpl2::getRowIds(Vector<rownr_t> & rowIds) const
 {
-	// Resize the rowIds vector and fill it with the row numbers contained in
-	// the current subchunk.  These row numbers are relative to the reference
-	// table used by MSIter to define a chunk; thus rowId 0 is the first row in
-	// the chunk.
+    if(nRowBlocking_p >0)
+    {
+        // Resize the rowIds vector and fill it with the row numbers contained in
+        // the current subchunk. These row numbers are relative to the reference
+        // table used by MSIter to define a chunk; thus rowId 0 is the first row in
+        // the chunk.
+        rowIds.resize(rowBounds_p.subchunkNRows_p);
+        rowIds = rowBounds_p.subchunkRows_p.convert();
 
-	rowIds.resize(rowBounds_p.subchunkNRows_p);
-	rowIds = rowBounds_p.subchunkRows_p.convert();
+        if (cache_p.chunkRowIds_p.nelements() == 0) {
+            // Create chunkRowIds_p as a "map" from chunk rows to MS rows. This
+            // needs to be created once per chunk since a new reference table is
+            // created each time the MSIter moves to the next chunk.
+            cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
+        }
 
-	if (cache_p.chunkRowIds_p.nelements() == 0) {
+        // Using chunkRowIds_p as a map from chunk rows to MS rows replace the
+        // chunk-relative row numbers with the actual row number from the MS.
+        for (uInt i = 0; i < rowIds.nelements(); i++) {
+            rowIds(i) = cache_p.chunkRowIds_p(rowIds(i));
+        }
+    }
+    else
+    {
+        // Resize the rowIds vector and fill it with the row numbers contained in
+        // the current subchunk.
+        rowIds.resize(rowBounds_p.subchunkNRows_p);
 
-		// Create chunkRowIds_p as a "map" from chunk rows to MS rows.  This
-		// needs to be created once per chunk since a new reference table is
-		// created each time the MSIter moves to the next chunk.
+        // Initialize the cache it if not yet done
+        // (it is reset each time nextChunk() is called).
+        // The cache contains the mapping between chunk rows and MS rows.
+        // This needs to be created once per chunk since a new reference table is
+        // created each time the MSIter moves to the next chunk.
+        if (cache_p.chunkRowIds_p.size() == 0)
+            cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
 
-		cache_p.chunkRowIds_p = msIter_p->table().rowNumbers(msIter_p->ms());
+        // Now create the map from subchunk rows to chunk rows. This
+        // needs to be created for each subchunk since a new reference table
+        // in the msIterInner_p iterator is created each time the MSIter moves.
+        // Note that what we get are row Ids for msIter_p->table(), which is itself
+        // a reference table.
+        auto subchunkRowIds  = msIterSubchunk_p->table().rowNumbers(msIter_p->table(), true);
 
-	}
-
-	// Using chunkRowIds_p as a map from chunk rows to MS rows replace the
-	// chunk-relative row numbers with the actual row number from the MS.
-
-	for (uInt i = 0; i < rowIds.nelements(); i++) {
-
-		rowIds(i) = cache_p.chunkRowIds_p(rowIds(i));
-	}
+        // Now, for each row in the subchunk (i), get the row in the outer loop
+        // table (subchunkRowId(i)) and use cache_p.chunkRowIds_p to get the row
+        // in the original MS.
+        for (uInt i = 0; i < rowIds.size(); i++)
+            rowIds(i) = cache_p.chunkRowIds_p(subchunkRowIds(i));
+    }
 }
 
 void
@@ -3409,7 +3543,7 @@ VisibilityIteratorImpl2::nRowsViWillSweep() const
 const Table
 VisibilityIteratorImpl2::attachTable() const
 {
-	return msIter_p->table();
+	return msIterSubchunk_p->table();
 }
 
 void
