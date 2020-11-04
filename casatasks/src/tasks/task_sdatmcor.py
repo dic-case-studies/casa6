@@ -95,16 +95,16 @@ def sdatmcor(
 #  - convert values to string form.
 #  - Sub-function calc_sdatmcor() accepts args basically by string.
 #
-    dtem_dh     = _check_unit_and_formtoStr(dtem_dh, ['K/km'])
-    h0          = _check_unit_and_formtoStr(h0, ['km'])
+    dtem_dh     = _check_unit_and_formToStr(dtem_dh, ['K/km'])
+    h0          = _check_unit_and_formToStr(h0, ['km'])
 
-    altitude    = _check_unit_and_formtoStr(altitude, ['m'])
-    temperature = _check_unit_and_formtoStr(temperature, ['K'])
-    pressure    = _check_unit_and_formtoStr(pressure, ['mbar', 'hPa'])
-    humidity    = _check_unit_and_formtoStr(humidity, [''])  # through (string or float)
-    PWV         = _check_unit_and_formtoStr(PWV, ['mm'])
-    dp          = _check_unit_and_formtoStr(dp,  ['mbar', 'hPa'])
-    dpm         = _check_unit_and_formtoStr(dpm, [''])       # through (string or float)
+    altitude    = _check_unit_and_formToStr(altitude, ['m'])
+    temperature = _check_unit_and_formToStr(temperature, ['K'])
+    pressure    = _check_unit_and_formToStr(pressure, ['mbar', 'hPa'])
+    humidity    = _check_unit_and_formToStr(humidity, [''])  # through (string or float)
+    PWV         = _check_unit_and_formToStr(PWV, ['mm'])
+    dp          = _check_unit_and_formToStr(dp,  ['mbar', 'hPa'])
+    dpm         = _check_unit_and_formToStr(dpm, [''])       # through (string or float)
 
     # Inspect  atmtype ('str or int'). The range is checked and accept atmtype==''  #
     if not _inspect_str_int(atmtype, 1, 5):
@@ -184,7 +184,7 @@ def _inspect_str_int(data, minimum, maximum):
         assert(False)
 
 # inspect the data is consistent with the Unit. #
-def _check_unit_and_formtoStr(data, base_unit):
+def _check_unit_and_formToStr(data, base_unit):
     try:
         if type(data) is str:
             if (data == ''):
@@ -193,11 +193,11 @@ def _check_unit_and_formtoStr(data, base_unit):
             ext_unit = qa.getunit(data)
             if (ext_unit in base_unit):
                 # With Unit #
-                _msg("Unit Conversion::Data with Unit '%s'" % data)
+                # _msg("Unit Conversion::Data with Unit '%s'" % data)
                 return str(qa.getvalue(data)[0])
             elif (ext_unit == ''):
                 # Without Unit and added  #
-                _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
+                # _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
                 return data
             else:
                 # Mismatch (ERROR) #
