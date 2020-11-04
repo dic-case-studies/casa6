@@ -225,11 +225,11 @@ def _check_unit_and_formtoStr(data, base_unit):
 #  if in_para is available , return in_para with being converted.
 #  otherwise, returns def_para to use as a default parameter.
 #
-def _set_int_atmparam_from_args(set_arg, through_value):
-    if (set_arg != ''):
-        return int(set_arg)
+def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
+    if (arg_value != ''):
+        return int(arg_value)
     else:
-        return  through_value
+        return  atm_parm_variable
 
 
 def _set_list_atmparam_from_args(set_list):
@@ -239,13 +239,12 @@ def _set_list_atmparam_from_args(set_list):
         return []
 
 
-def _set_float_atmparam_from_args(set_arg, through_value, unit):
-    if type(set_arg) is str:
-        if (set_arg != ''):
-            new_val = qa.quantity(float(set_arg), unit)  # CASA5 needs cast to float  ? #
-            return new_val, True
+def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
+    if type(arg_value) is str:
+        if (arg_value != ''):
+            return qa.quantity(float(arg_value), unit), True
         else:
-            return through_value, False
+            return atm_parm_variable, False
 
 def _make_list_from_separatedstring(separated_string, dType):
     # make a list by separated by comma #
