@@ -188,7 +188,15 @@ if($1){
 
 %typemap(in) variant {
     if ($1){
-        (* $1) = variant(pyobj2variant($input, true));
+        try {
+            (* $1) = variant(pyobj2variant($input, true));
+        } catch (const casacore::AipsError &ae) {
+            PyErr_SetString(PyExc_RuntimeError, ae.what());
+            return NULL;
+        } catch (const casac::variant::overflow &of) {
+            PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+            return NULL;
+        }
     } else {
 	PyErr_SetString (PyExc_RuntimeError, 
                          "BugCheck: Argument not initialized???");
@@ -201,10 +209,16 @@ if($1){
 // suffixed with an integer by swig.
 
 %typemap(in) variant & (std::unique_ptr<variant> deleter) {
-
-    deleter.reset (new variant (pyobj2variant ($input, true)));
-    $1 = deleter.get ();
-
+    try {
+        deleter.reset (new variant (pyobj2variant ($input, true)));
+        $1 = deleter.get ();
+    } catch (const casacore::AipsError &ae) {
+        PyErr_SetString(PyExc_RuntimeError, ae.what());
+        return NULL;
+    } catch (const casac::variant::overflow &of) {
+        PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+        return NULL;
+    }
 }
 
 /* %typemap(freearg) variant& { */
@@ -216,8 +230,16 @@ if($1){
 //}
 
 %typemap(in) variant* (std::unique_ptr<variant> deleter){
-    deleter.reset (new variant (pyobj2variant ($input, true)));
-    $1 = deleter.get ();
+    try {
+        deleter.reset (new variant (pyobj2variant ($input, true)));
+        $1 = deleter.get ();
+    } catch (const casacore::AipsError &ae) {
+        PyErr_SetString(PyExc_RuntimeError, ae.what());
+        return NULL;
+    } catch (const casac::variant::overflow &of) {
+        PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+        return NULL;
+    }
 }
 
 //%typemap(typecheck) variant {
@@ -234,7 +256,7 @@ if($1){
       PyObject *theUnits = PyDict_GetItemString($input, "unit");
       PyObject *theVal = PyDict_GetItemString($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -273,7 +295,7 @@ if($1){
       PyObject *theUnits = PyDict_GetItemString($input, "unit");
       PyObject *theVal = PyDict_GetItemString($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -300,8 +322,16 @@ if($1){
         istringstream iss(inpstring);
         iss >> val >> units;
         myVals.push_back(val);
-        deleter.reset (new Quantity(myVals,units.c_str()));
-        $1 = deleter.get();
+        try {
+            deleter.reset (new Quantity(myVals,units.c_str()));
+            $1 = deleter.get();
+        } catch( const variant::overflow &e ) {
+            PyErr_SetString(PyExc_TypeError,"integer overflow error");
+            return NULL;
+        } catch( ... ) {
+            PyErr_SetString(PyExc_TypeError,"unspecified error occurred");
+            return NULL;
+        }
    } else {
       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
       return NULL;
@@ -313,7 +343,7 @@ if($1){
       PyObject *theUnits = PyDict_GetItemString($input, "unit");
       PyObject *theVal = PyDict_GetItemString($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -352,7 +382,15 @@ if($1){
 
 %typemap(in) record {
    if(PyDict_Check($input)){
-      $1 = pyobj2variant($input, true).asRecord();      
+      try {
+          $1 = pyobj2variant($input, true).asRecord();      
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
    } else {
       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
       return NULL;
@@ -361,9 +399,16 @@ if($1){
 
 %typemap(in) record * (std::unique_ptr<record> deleter){
    if(PyDict_Check($input)){
-       
-       deleter.reset (new record(pyobj2variant($input, true).asRecord()));      
-       $1 = deleter.get();
+      try {
+         deleter.reset (new record(pyobj2variant($input, true).asRecord()));      
+         $1 = deleter.get();
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
    } else {
       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
       return NULL;
@@ -374,8 +419,16 @@ if($1){
    if(PyDict_Check($input)){
 
        // Put value into unique_ptr so it gets free when method exits
-       deleter.reset (new record(pyobj2variant($input, true).asRecord()));
-       $1 = deleter.get(); 
+      try {
+         deleter.reset (new record(pyobj2variant($input, true).asRecord()));
+         $1 = deleter.get(); 
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
    } else {
       PyErr_SetString(PyExc_TypeError,"$1_name is not a dictionary");
       return NULL;
@@ -459,7 +512,7 @@ if($1){
 }
 
 %typemap(in) std::vector<double> & (std::unique_ptr<std::vector<double> > deleter){
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
   
    if(!$1){
        deleter.reset (new std::vector<double>(0));
@@ -493,7 +546,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -525,7 +578,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -554,7 +607,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -580,11 +633,11 @@ if($1){
 %typemap(in) std::vector<long> & (std::unique_ptr<std::vector<long> > deleter){
     if(!$1){
 	deleter.reset (new std::vector<long>(0));
-	$1 = deleter.get():
+	$1 = deleter.get();
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -646,11 +699,27 @@ if($1){
 }
 
 %typemap(out) variant {
-   $result = variant2pyobj($1);
+    try {
+        $result = variant2pyobj($1);
+    } catch (const casacore::AipsError &ae) {
+        PyErr_SetString(PyExc_RuntimeError, ae.what());
+        return NULL;
+    } catch (const casac::variant::overflow &of) {
+        PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+        return NULL;
+    }
 }
 
 %typemap(out) variant& {
-   $result = variant2pyobj($1);
+    try {
+        $result = variant2pyobj($1);
+    } catch (const casacore::AipsError &ae) {
+        PyErr_SetString(PyExc_RuntimeError, ae.what());
+        return NULL;
+    } catch (const casac::variant::overflow &of) {
+        PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+        return NULL;
+    }
 }
 
 %typemap(out) string {
@@ -666,13 +735,21 @@ if($1){
 }
 
 %typemap(out) variant* {
-   if ($1)
-      $result = variant2pyobj(*$1);
-   else{
-     variant temp_v;
-     $result = variant2pyobj(temp_v);
+   try {
+       if ($1)
+          $result = variant2pyobj(*$1);
+       else{
+         variant temp_v;
+         $result = variant2pyobj(temp_v);
+       }
+       delete $1;
+   } catch (const casacore::AipsError &ae) {
+       PyErr_SetString(PyExc_RuntimeError, ae.what());
+       return NULL;
+   } catch (const casac::variant::overflow &of) {
+       PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+       return NULL;
    }
-   delete $1;
 }
 
 %typemap(out) Quantity& {
@@ -744,6 +821,14 @@ if($1){
    $result = casac::map_vector($1);
 }
 
+%typemap(out) std::vector<long> {
+   $result = casac::map_vector($1);
+}
+
+%typemap(out) std::vector<long>& {
+   $result = casac::map_vector($1);
+}
+
 %typemap(out) std::vector<long long> {
    $result = casac::map_vector($1);
 }
@@ -774,7 +859,16 @@ if($1){
    for(record::const_iterator iter = $1.begin(); iter != $1.end(); ++iter){
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
-      PyObject *v = casac::variant2pyobj(val);
+      PyObject *v = NULL;
+      try {
+          v = casac::variant2pyobj(val);
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
       PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
       Py_DECREF(v);
    }
@@ -785,7 +879,16 @@ if($1){
    for(record::const_iterator iter = $1->begin(); iter != $1->end(); ++iter){
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
-      PyObject *v = casac::variant2pyobj(val);
+      PyObject *v = NULL;
+      try {
+          v = casac::variant2pyobj(val);
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
       PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
       Py_DECREF(v);
    }
@@ -797,7 +900,16 @@ if($1){
       for(record::const_iterator iter = $1->begin(); iter != $1->end(); ++iter){
          const std::string &key = (*iter).first;
          const casac::variant &val = (*iter).second;
-         PyObject *v = casac::variant2pyobj(val);
+         PyObject *v = NULL;
+         try {
+             v = casac::variant2pyobj(val);
+         } catch (const casacore::AipsError &ae) {
+             PyErr_SetString(PyExc_RuntimeError, ae.what());
+             return NULL;
+         } catch (const casac::variant::overflow &of) {
+             PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+             return NULL;
+         }
          PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
          Py_DECREF(v);
       }
@@ -922,6 +1034,25 @@ if($1){
    }
 }
 
+%typemap(argout) std::vector<long>& OUTARGVEC {
+   PyObject *o = casac::map_vector(*$1);
+   if((!$result) || ($result == Py_None)){
+      $result = o;
+   } else {
+      PyObject *o2 = $result;
+      if (!PyTuple_Check($result)) {
+         $result = PyTuple_New(1);
+         PyTuple_SetItem($result,0,o2);
+      }
+      PyObject *o3 = PyTuple_New(1);
+      PyTuple_SetItem(o3,0,o);
+      o2 = $result;
+      $result = PySequence_Concat(o2,o3);
+      Py_DECREF(o2);
+      Py_DECREF(o3);
+   }
+}
+
 %typemap(argout) std::vector<double>& OUTARGVEC {
    PyObject *o= casac::map_vector(*$1);
    if((!$result) || ($result == Py_None)){
@@ -946,7 +1077,16 @@ if($1){
    for(record::const_iterator iter = $1->begin(); iter != $1->end(); ++iter){
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
-      PyObject *v = casac::variant2pyobj(val);
+      PyObject *v = NULL;
+      try {
+          v = casac::variant2pyobj(val);
+      } catch (const casacore::AipsError &ae) {
+          PyErr_SetString(PyExc_RuntimeError, ae.what());
+          return NULL;
+      } catch (const casac::variant::overflow &of) {
+          PyErr_SetString(PyExc_RuntimeError, "integer overflow");
+          return NULL;
+      }
       PyDict_SetItem(o, PyString_FromString(key.c_str()), v);
       Py_DECREF(v);
    }

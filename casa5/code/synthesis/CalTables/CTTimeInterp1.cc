@@ -31,7 +31,7 @@
 #include <casa/aips.h>
 #include <casa/BasicSL/Constants.h>
 #include <casa/Arrays/Array.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Logging/LogMessage.h>
 #include <casa/Logging/LogSink.h>

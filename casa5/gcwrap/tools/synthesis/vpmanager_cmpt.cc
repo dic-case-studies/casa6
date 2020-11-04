@@ -12,21 +12,22 @@
 
 #include <iostream>
 #include <vpmanager_cmpt.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/BasicSL/String.h>
-#include <casa/OS/Path.h>
-#include <casa/OS/Directory.h>
-#include <casa/Containers/Record.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Utilities/GenSort.h>
-#include <measures/Measures/MDirection.h>
-#include <measures/Measures/MEpoch.h>
-#include <casa/Quanta.h>
-#include <casa/Quanta/MVTime.h>
-#include <casa/Quanta/MVFrequency.h>
-#include <casa/Quanta/Quantum.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/OS/Path.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Utilities/GenSort.h>
+#include <casacore/measures/Measures/MDirection.h>
+#include <casacore/measures/Measures/MEpoch.h>
+#include <casacore/casa/Quanta.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/casa/Quanta/MVFrequency.h>
+#include <casacore/casa/Quanta/Quantum.h>
 #include <synthesis/MeasurementEquations/VPManager.h>
 #include <synthesis/MeasurementEquations/AntennaResponses.h>
+#include <casacore/casa/Utilities/Regex.h>
 
 using namespace std;
 using namespace casacore;
@@ -442,7 +443,7 @@ bool vpmanager::reset(){
   return true;
 }
 
-bool vpmanager::setuserdefault(const int vplistnum,
+bool vpmanager::setuserdefault(const long vplistnum,
 			       const std::string& telescope,
 			       const std::string& anttype)
 {
@@ -455,7 +456,7 @@ bool vpmanager::setuserdefault(const int vplistnum,
 
 }
 
-int vpmanager::getuserdefault(const std::string& telescope,
+long vpmanager::getuserdefault(const std::string& telescope,
 			      const std::string& anttype)
 {
 
@@ -531,7 +532,7 @@ std::vector<std::string> vpmanager::getanttypes(const std::string& telescope,
 }
   
 
-int vpmanager::numvps(const std::string& telescope,
+long vpmanager::numvps(const std::string& telescope,
 		      const casac::variant& obstime, 
 		      const casac::variant& freq, 
 		      const casac::variant& obsdirection){
@@ -866,16 +867,15 @@ vpmanager::createantresp(const std::string& imdir,
 
     // all input parameters checked, now find all the images
     Directory imDirD(imDir);
-    String imPattern = "*?_*?_*_*_*?_*?_*?_*?_*?_*?_*?_*?_*?_*?_*_*?.im";
-    Vector<String> imNamesV = imDirD.find(Regex::fromPattern(imPattern), true, false); // follow symlinks, non-recursive
+    Vector<String> imNamesV = imDirD.find(Regex("([^_]+_){2}([^_]*_){2}([^_]+_){10}[^_]*_[^_]+"), true, false); // follow symlinks, non-recursive
     
     uInt nIm = imNamesV.size();
 
     *itsLog << LogIO::NORMAL << "Found " << nIm << " response images in directory " << absPathName << LogIO::POST;
 
     {
-      imPattern = "*.im";
-      Vector<String> imNamesV2 = imDirD.find(Regex::fromPattern(imPattern), true, false);
+      String imPattern = "*.im";
+      Vector<String> imNamesV2 = imDirD.find(Regex(Regex::fromPattern(imPattern)), true, false);
 
       if(nIm==0){
 	if(imNamesV2.nelements()==0){
@@ -1160,7 +1160,7 @@ vpmanager::getrespimagename(const std::string& telescope,
 			    const std::string& azimuth,
 			    const std::string& elevation, 
 			    const std::string& rectype,
-			    const int beamnumber)
+			    const long beamnumber)
 {
   std::string rval("");
 

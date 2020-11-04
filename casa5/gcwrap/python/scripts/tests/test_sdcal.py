@@ -10,23 +10,45 @@ import contextlib
 import unittest
 import listing
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, ms, measures
-    from casatasks import casalog, sdcal, partition, initweights
-    from casatasks.private import sdutil
+class Casa5InitError(Exception):
+    pass
 
-    ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from testhelper import copytree_ignore_subversion
+class MixedCasa5Casa6InitError(Casa5InitError):
+    pass
 
-    tb = table()
+try:
+    try:
+        from casatasks.private.casa_transition import is_CASA6
+    except ImportError as e:
+        # Plain CASA5 or older: CASA5 prior to mixed CASA5-CASA6
+        raise Casa5InitError
+    else:
+        # Init Mixed CASA
+        try:
+            if not is_CASA6:
+                raise MixedCasa5Casa6InitError
+        except MixedCasa5Casa6InitError:
+                raise Casa5InitError
+        else:
+            # Init CASA6
+            from casatools import ctsys, table, ms, measures
+            from casatasks import casalog, sdcal, partition, initweights
+            from casatasks.private import sdutil
 
-    ctsys_resolve = ctsys.resolve
-    # default isn't used in CASA6
-    def default(atask):
-        pass
-else:
+            ### for testhelper import
+            sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+            from testhelper import copytree_ignore_subversion
+
+            tb = table()
+
+            ctsys_resolve = ctsys.resolve
+            # default isn't used in CASA6
+            def default(atask):
+                pass
+
+except Casa5InitError as e:
+    # Init Plain CASA5 or older, or Mixed CASA which is CASA5
+    is_CASA6 = False
     from __main__ import default
     from tasks import *
     from taskinit import *
@@ -45,10 +67,40 @@ else:
     # the global tb is also used here
     measures = metool
 
+    # Try these locations in order
+    runUnitTestDataRoot = os.environ.get('TEST_DATADIR')
+    runUnitTestDataReqRoot = None
+    if runUnitTestDataRoot:
+        runUnitTestDataReqRoot = os.path.join(runUnitTestDataRoot,'casa-data-req')
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-    
+    dataReqRoot = os.path.join(dataRoot,'casa-data-req')
+    if not os.path.exists(dataReqRoot):
+        dataRoot2 = os.environ.get('CASAPATH').split()[0]
+        dataReqRoot = os.path.join(dataRoot2,'casa-data-req')
+    def ctsys_resolve(rel_path):
+        "Resolve absolute path of a unit test data directory given as a relative path"
+        data_roots = [runUnitTestDataRoot, runUnitTestDataReqRoot, dataRoot, dataReqRoot]
+        for data_root in data_roots:
+            if not data_root:
+                continue
+            resolved_path = os.path.join(data_root,rel_path)
+            if os.path.exists(resolved_path):
+                return resolved_path
+        # ctsys_resolve is called at module load time, so we don't raise an exception
+        warn_msg = "\n".join([
+            "WARNING: Unable to resolve: {}".format(rel_path),
+            "Under the following root paths:",
+            "\n".join([
+                "    {}".format(data_root)
+                for data_root in data_roots if data_root
+                ])
+            ])
+        print(warn_msg)
+        # when unable to resolve, returning the input relative path instead of None
+        # hopefully will result in more meaningful subsequent error messages
+        return rel_path
+
+
 @contextlib.contextmanager
 def mmshelper(vis, separationaxis='auto'):
     outputvis = vis.rstrip('/') + '.mms'
@@ -771,8 +823,107 @@ class sdcal_test_ps(sdcal_test_base):
         # points" error
         self.result = sdcal(infile=self.infile, outfile=self.outfile, calmode='otfraster')
 
+class DataManager:
+    """
+    Functor decorator to handle data setup/teardown of unit test class methods
+    on a per-test basis
+    """
+    
+    def __init__(self,io_files=None):
+        self.io_files = io_files
 
-class sdcal_test_otfraster(sdcal_test_base):   
+    def setUp(self):
+        input_ms_name = self.io_files['input']['ms_name']
+        input_ms_path = os.path.join(self.io_files['datapath'],input_ms_name)
+        
+        if not os.path.exists(input_ms_path):
+            err_msg = 'Input MS not found:\n{}'.format(input_ms_path)
+            raise Exception(err_msg)
+        
+        input_ms_copy_name = input_ms_name
+        if os.path.exists(input_ms_copy_name):
+            shutil.rmtree(input_ms_copy_name)
+        
+        shutil.copytree(input_ms_path, input_ms_copy_name)
+        
+        output_cal_tbl_name = self.io_files['output']['cal_tbl_name']
+        if os.path.exists(output_cal_tbl_name):
+            shutil.rmtree(output_cal_tbl_name)
+
+    def tearDown(self):
+        input_ms_copy_name = self.io_files['input']['ms_name']
+        if os.path.exists(input_ms_copy_name):
+            shutil.rmtree(input_ms_copy_name)
+        
+        output_cal_tbl_name = self.io_files['output']['cal_tbl_name']
+        if os.path.exists(output_cal_tbl_name):
+            shutil.rmtree(output_cal_tbl_name)
+
+    def __call__(self,func):
+        def wrapped_func(inst_UnitTest):
+            inst_UnitTest.io_files = self.io_files
+            self.setUp()
+            func(inst_UnitTest)
+            self.tearDown()
+
+        return wrapped_func
+
+class sdcal_test_bug_fix_cas_12712(unittest.TestCase):
+    """
+    Test fix for sdcal bug reported in CAS-12712
+    """
+    io_files = None
+
+    @DataManager({ 'input' : { 'ms_name'      : 'uid___A002_X85c183_X36f.ms.sel' },
+                   'output': { 'cal_tbl_name' : 'uid___A002_X85c183_X36f.ms.sel.cal.sky.tbl' },
+                    # Path to search when looking for test input data,
+                    # relative to some root data directory
+                   'datapath' : ctsys_resolve('visibilities/almasd')
+                   })
+    def test_cas_12712_01(self):
+        input_ms = self.io_files['input']['ms_name']
+        output_cal_tbl = self.io_files['output']['cal_tbl_name']
+        
+        spw_sel="23"
+        sdcal(infile=input_ms,
+              outfile=output_cal_tbl,
+              spw=spw_sel,
+              overwrite=True,
+              calmode='ps')
+        
+        cal_tbl_path = os.path.join(os.getcwd(),output_cal_tbl)
+        err_msg = 'Calibration table not found:\n{}'.format(cal_tbl_path)
+        self.assertTrue(os.path.exists(cal_tbl_path), err_msg)
+        
+        # Expected number of calibration table rows for spw=23 and antenna=0: 61
+        expected_rows = 61
+        computed_rows = None
+        ant_id = 0
+        res_tbl = None
+        try:
+            tb.open(cal_tbl_path)
+            qry = 'select * from {tbl_name:} where ( ANTENNA1 == {ant_id:} and ANTENNA2 == {ant_id:} )'.format(
+                tbl_name=output_cal_tbl,
+                ant_id=ant_id
+                )
+            res_tbl = tb.taql(qry)
+            computed_rows=res_tbl.nrows()
+        finally:
+            if tb:
+                tb.close()
+            if res_tbl:
+                res_tbl.close()
+
+            err_msg = "\n".join([
+                "Calibration table: {}".format(cal_tbl_path),
+                "Expected number of rows for ant={} and spw={}: {}".format(
+                    ant_id,spw_sel,expected_rows),
+                "Computed number of rows for ant={} and spw={}: {}".format(
+                    ant_id,spw_sel,computed_rows),
+                ])
+            self.assertEqual(expected_rows,computed_rows,err_msg)
+
+class sdcal_test_otfraster(sdcal_test_base):
     """
     Unit test for task sdcal (OTF raster sky calibration).
     Since basic test case is covered by sdcal_test_ps, only
@@ -2222,7 +2373,9 @@ def suite():
             , sdcal_test_otf
             , sdcal_test_apply
             , sdcal_test_otf_ephem
-            , sdcal_test_single_polarization]
+            , sdcal_test_single_polarization
+            , sdcal_test_bug_fix_cas_12712
+            ]
 
 if is_CASA6:
     if __name__ == '__main__':

@@ -18,9 +18,9 @@ them with pip.
 
 Download the datasets from https://open-bitbucket.nrao.edu/scm/casa/casa-data-req.git
 
-Add to $HOME/.casa/toolrc.py the following line, pointing to the locations of your datasets
+Add to $HOME/.casa/config.py the following line, pointing to the locations of your datasets
 ```
--bash-4.2# cat $HOME/.casa/toolrc.py
+-bash-4.2# cat $HOME/.casa/config.py
 datapath=[ "/your-data-dir/casa-data/" , "/your-data-dir/casa-data-req/","/your-data-dir/mydata/"]
 ```
 ### Run tests
@@ -30,7 +30,7 @@ All tests added to casatests must be able to run with Python.
 #### Run a single test using Python
 
 The following performance test will look for a dataset located in <your_data_dir>/visibilities/alma/.
-Make sure your toolrc.py datapath has an entry pointing to <your_data_dir>. 
+Make sure your config.py datapath has an entry pointing to <your_data_dir>. 
 
 ```
 -bash-4.2# python3 ./casatests/performance/test_perf_tclean_mem_setweighting.py
@@ -56,26 +56,26 @@ First, install the casatestutils wheel using the pip3 from the tarball and run t
 
 The following is the naming convention for tests added to the directories inside casatests. 
 
-#### performance
+#### performance: Tests related to memory, I/O, runtime, number of file descriptors, etc. 
    * test\_perf\_[taskname]\_[description]\_[...].py
    * e.g. test\_perf\_tclean\_mem\_setweighting.py
    * e.g. test\_perf\_tclean\_runtime\_cube\_model\_write.py   
 
-#### stakeholders
+#### stakeholder: Tests exercising specific stakeholders use-cases
    * test\_stk\_[stakeholder]\_[taskname]\_[description].py
    * e.g. test\_stk\_alma\_pipeline\_tclean\_cycle8.py
 
-#### e2e: End-to-End
-   * test\_e2e\_[description]\_[...].py
-   * e.g. test\_e2e\_alma\_m100\_if.py
-   * e.g. test\_e2e\_alma\_m100\_sd.py
+#### regression: Regression scripts, multi-task tests
+   * test\_regression\_[description]\_[...].py
+   * e.g. test\_regression\_alma\_m100\_if.py
+   * e.g. test\_regression\_alma\_m100\_sd.py
 
-#### pipeline
+#### pipeline: Tests exercising the pipelines
    * test\_pipe\_[telescope]\_[use-case]\_[description]\_[...].py
    * e.g. test\_pipe\_vlass\_calib\_[...].py
    * e.g. test\_pipe\_alma\_full\_ephem.py
 
-#### benchmarks
+#### benchmark: Tests measuring benchmarks of CASA tasks/tools
    * test\_bench\_[description]\_[...].py
    
 

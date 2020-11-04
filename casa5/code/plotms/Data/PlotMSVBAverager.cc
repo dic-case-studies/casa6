@@ -516,8 +516,8 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
     Double thisTime(vb.time()(0) - timeRef_p);
     Double thisInterval(vb.timeInterval()(0));
 
-    minTime_p = min(minTime_p, (thisTime - thisInterval/2.0));
-    maxTime_p = max(maxTime_p, (thisTime + thisInterval/2.0));
+    minTime_p = std::min(minTime_p, (thisTime - thisInterval/2.0));
+    maxTime_p = std::max(maxTime_p, (thisTime + thisInterval/2.0));
 
     aveTime_p += (thisTime * vbWt);
     aveInterval_p += vb.timeInterval()(0);
@@ -693,8 +693,8 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
     Double thisTime(vb.time()(0) - timeRef_p);
     Double thisInterval(vb.timeInterval()(0));
 
-    minTime_p = min(minTime_p, (thisTime - thisInterval/2.0));
-    maxTime_p = max(maxTime_p, (thisTime + thisInterval/2.0));
+    minTime_p = std::min(minTime_p, (thisTime - thisInterval/2.0));
+    maxTime_p = std::max(maxTime_p, (thisTime + thisInterval/2.0));
 
     aveTime_p += (thisTime * vbWt);
     aveInterval_p += vb.timeInterval()(0);

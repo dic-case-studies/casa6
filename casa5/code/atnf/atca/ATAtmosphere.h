@@ -29,10 +29,10 @@
 #define ATNF_ATATMOSPHERE_H
 
 //  includes
-#include <casa/aips.h>
-#include <casa/Arrays/Vector.h>
-//#include <complex>
-#include <casa/namespace.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/Complex.h>
+#include <casacore/casa/namespace.h>
 namespace casa {
 
 /**

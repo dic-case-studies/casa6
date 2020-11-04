@@ -28,15 +28,16 @@
 
 #include <imageanalysis/ImageAnalysis/ImageMetaDataBase.h>
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 
-#include <casa/Arrays/ArrayLogical.h>
-#include <casa/Containers/ValueHolder.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <casa/Utilities/DataType.h>
-#include <images/Images/ImageSummary.h>
-#include <images/Images/ImageStatistics.h>
-#include <measures/Measures/MeasureHolder.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
+#include <casacore/casa/Containers/ValueHolder.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/casa/Utilities/DataType.h>
+#include <casacore/images/Images/ImageSummary.h>
+#include <casacore/images/Images/ImageStatistics.h>
+#include <casacore/measures/Measures/MeasureHolder.h>
+#include <casacore/casa/Utilities/Regex.h>
 
 #include <iostream>
 #include <iomanip>

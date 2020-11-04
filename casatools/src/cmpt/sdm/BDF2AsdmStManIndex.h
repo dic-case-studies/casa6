@@ -1,14 +1,13 @@
 #ifndef BDF2ASDMSTMANINDEX
 #define BDF2ASDMSTMANINDEX
 #include <alma/Enumerations/CPrimitiveDataType.h>
-#include <casa/Containers/Block.h>
+#include <casacore/casa/Containers/Block.h>
 #include <asdmstman/AsdmIndex.h>
-#include <casa/Arrays/Array.h>
-#include <casa/Arrays/ArrayIO.h>
-#include <casa/Arrays/ArrayUtil.h>
-#include <casa/Arrays/ArrayLogical.h>
-#include <casa/IO/AipsIO.h>
-#include <casa/Containers/BlockIO.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Arrays/ArrayUtil.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
+#include <casacore/casa/IO/AipsIO.h>
+#include <casacore/casa/Containers/BlockIO.h>
 #include <map>
 
 #include <stdint.h>

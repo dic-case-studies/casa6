@@ -171,10 +171,6 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
     except UserWarning as instance:
         print('*** Warning *** %s' % instance)
 
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
-        raise
-
     finally:
         cb.close()
 

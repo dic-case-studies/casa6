@@ -152,7 +152,7 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt' ]
+public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt', 'src/scripts/__main__.py' ]
 
 private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/casa_transition.py',
@@ -205,7 +205,6 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_delmod.py',
                     'src/tasks/task_imsubimage.py',
                     'src/tasks/task_accor.py',
-                    'src/tasks/task_accum.py',
                     'src/tasks/task_asdmsummary.py',
                     'src/tasks/task_clearcal.py',
                     'src/tasks/task_conjugatevis.py',
@@ -292,6 +291,8 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_plotbandpass.py',
                     'src/scripts/predictcomp_helper.py',
                     'src/scripts/task_logging.py',
+                    'src/tasks/task_sdintimaging.py',
+                    'src/scripts/sdint_helper.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -334,7 +335,6 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/delmod.xml': 'xml/delmod.xml',
               'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
               'casa-source/gcwrap/tasks/accor.xml': 'xml/accor.xml',
-              'casa-source/gcwrap/tasks/accum.xml': 'xml/accum.xml',
               'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
               'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
               'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
@@ -404,6 +404,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
               'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
               'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
+              'casa-source/gcwrap/tasks/sdintimaging.xml': 'xml/sdintimaging.xml',
               'casa-source/gcwrap/tasks/sdpolaverage.xml': 'xml/sdpolaverage.xml',
               'casa-source/gcwrap/tasks/sdsidebandsplit.xml': 'xml/sdsidebandsplit.xml',
               'casa-source/gcwrap/tasks/plotprofilemap.xml': 'xml/plotprofilemap.xml',
@@ -447,7 +448,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/delmod.xml',
               'xml/imsubimage.xml',
               'xml/accor.xml',
-              'xml/accum.xml',
               'xml/asdmsummary.xml',
               'xml/clearcal.xml',
               'xml/conjugatevis.xml',
@@ -517,6 +517,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/plotants.xml',
               'xml/fringefit.xml',
               'xml/plotbandpass.xml',
+              'xml/sdintimaging.xml',
               'xml/sdpolaverage.xml',
               'xml/sdsidebandsplit.xml',
               'xml/plotprofilemap.xml',
@@ -665,14 +666,23 @@ def generate_pyinit(moduledir,tasks):
         fd.write("serial_run = mpi_env_found and not MPIEnvironment.is_mpi_enabled\n")
         fd.write("mpi_run_client = mpi_env_found and MPIEnvironment.is_mpi_enabled and MPIEnvironment.is_mpi_client\n")
         fd.write("nompi_or_serial_or_client = not mpi_env_found or serial_run or mpi_run_client\n")
+        fd.write("telemetry_available=False\n")
         fd.write("if nompi_or_serial_or_client:\n")
         fd.write("  try:\n")
         fd.write("    import casatelemetry\n")
+        fd.write("    telemetry_available=True\n")
         fd.write("  except:\n")
         fd.write('    casalog.post("Can\'t import casatelemetry module.")\n')
-        fd.write("    config.telemetry_enabled=False\n")
-        fd.write("if config.telemetry_enabled and nompi_or_serial_or_client:\n") 
-        fd.write("  telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
+        fd.write("if telemetry_available and config.telemetry_enabled and nompi_or_serial_or_client:\n")
+        fd.write("  try:\n") 
+        fd.write("    telemetrylogdirectory = None\n") 
+        fd.write("    if config.rcdir != None:\n")
+        fd.write("      telemetrylogdirectory = config.rcdir\n")
+        fd.write("    if config.telemetry_log_directory != None:\n")
+        fd.write("      telemetrylogdirectory = casatasks.config.telemetry_log_directory\n")
+        fd.write("    telemetrylogger = casatelemetry.casatelemetry.telemetry(telemetrylogdirectory)\n")
+        fd.write("  except:\n")       
+        fd.write("    telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
         fd.write("  package_variant='wheel'\n")
         fd.write("  try:\n")
         fd.write("    if _clith_spec is not None:\n")
@@ -697,10 +707,10 @@ def generate_pyinit(moduledir,tasks):
         fd.write('    if telemetrylogger.telemetry_enabled:\n')
         fd.write('      telemetrylogger.logger.info(telemetry_starttime + " :: " + str(os.getpid()) + " :: CASAStart :: Starting CASA at: " + telemetry_starttime + \n') 
         fd.write('      " Version " + version_string() + " Platform: " + platform.platform() + " Variant: " + package_variant)\n')
-        fd.write('    if config.crashreporter_enabled:\n')
-        fd.write("      casatelemetry.CrashReporter.init(config.logfile)\n")
         fd.write("    import atexit\n")
         fd.write("    atexit.register(logstop)\n")
+        fd.write('if telemetry_available and config.crashreporter_enabled:\n')
+        fd.write("    casatelemetry.CrashReporter.init(config.logfile)\n")
         
 
 class BuildCasa(build):
