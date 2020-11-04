@@ -864,7 +864,6 @@ def calc_sdatmcor(
     # Looping over spws
     ################################################################
     with open_table(corms, nomodify=False):
-    ##      tb.open(corms, nomodify=False)  ##
 
         # Note CAS-13160:
         # spw for-loop:
@@ -1123,13 +1122,9 @@ def calc_sdatmcor(
             subtb.putcol(datacolumn, cdata)
             subtb.close()
 
-        #
         # end for spwid in spws:
-        #
         tb.flush()
 
         # end of with statement
-
-        ## tb.close()
 
     return True
