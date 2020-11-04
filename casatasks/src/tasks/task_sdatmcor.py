@@ -42,6 +42,17 @@ def open_table(path, nomodify=True):
     finally:
         tb.close()
 
+
+@contextlib.contextmanager
+def open_msmd(path):
+    msmd.open(path)
+    print("tentative::MSMD OPENED.")
+    try:
+        yield msmd
+    finally:
+        print("tentative:MSMD: CLOSED.")
+        msmd.close()
+
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna,
@@ -290,33 +301,31 @@ def get_default_antenna(msname, antenna):
     #  - Search Priority ID is   1 > 2 > 3 > x
     #  - if ONLY one  antenna(=x) is available, use this.
     # The Rule is defined in CASR discussion. 
-    msmd.open(msname)
-    ant_list = msmd.antennaids(antenna)
-    n_ant = len(ant_list)
-    msmd.close()
 
-    # Choose One #
-    if 1 in ant_list:
-        i_ant = 1
-    elif 2 in ant_list:
-        i_ant = 2
-    elif 3 in ant_list:
-        i_ant = 3
-    elif n_ant == 1:
-        i_ant = ant_list[0]
-    else:
-        errmsg="Illegular antenna ID detected."
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
+    with open_msmd(msname) as msmd:
+        ant_list = msmd.antennaids(antenna)
+        n_ant = len(ant_list)
 
-    # INFO #
-    msmd.open(msname)
-    ant_name = msmd.antennanames(i_ant)[0]
-    msmd.close()
+        # Choose One #
+        if 1 in ant_list:
+            i_ant = 1
+        elif 2 in ant_list:
+            i_ant = 2
+        elif 3 in ant_list:
+            i_ant = 3
+        elif n_ant == 1:
+            i_ant = ant_list[0]
+        else:
+            errmsg="Illegular antenna ID detected."
+            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+            raise Exception(errmsg)
 
-    _msg("Default Antenna")
-    _msg(" - totally %d antenssas were picked up. [query=%s]" % (n_ant, antenna))
-    _msg(" - Antenna ID  = %d was chosen. Name= %s" % (i_ant, ant_name))
+        # INFO #
+        ant_name = msmd.antennanames(i_ant)[0]
+
+        _msg("Default Antenna")
+        _msg(" - totally %d antenssas were picked up. [query=%s]" % (n_ant, antenna))
+        _msg(" - Antenna ID  = %d was chosen. Name= %s" % (i_ant, ant_name))
 
     return i_ant
 
