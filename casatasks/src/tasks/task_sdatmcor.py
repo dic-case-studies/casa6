@@ -844,7 +844,6 @@ def calc_sdatmcor(
     try:
         _msg("reading rawms/'ASDM_CALATMOSPHERE'.")
         with open_table(os.path.join(rawms, 'ASDM_CALATMOSPHERE')) as tb:
-        ##      tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
             subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                              (tmonsource.min(),
                               tmonsource.max()))
@@ -854,8 +853,6 @@ def calc_sdatmcor(
             hground = pl.median(subtb.getcol('groundRelHumidity'))
 
             subtb.close()
-            ## tb.close()
-
     except Exception as err:
         _msg("ERROR:: opening rawms/'ASDM_CALATMOSPHERE'.")
         casalog.post('%s' % err, 'ERROR')
@@ -866,269 +863,273 @@ def calc_sdatmcor(
     ################################################################
     # Looping over spws
     ################################################################
-    tb.open(corms, nomodify=False)
+    with open_table(corms, nomodify=False):
+    ##      tb.open(corms, nomodify=False)  ##
 
-    # Note CAS-13160:
-    # spw for-loop:
-    # - Inside this loop, calculation is executed with each spwid
-    # - The result is wriiten upon OutputFile with selected Spw, which is specified by OutputSpw
-    # - List of OutputSpw must be the part of List of Spws
-    # - please see the inserted block.
-    #
-
-    # for spwid in spws:
-    for spwid in outputspws:
-        # Log #
-        _msg("Processing spw %d in %s " % (spwid, spws))
-
-        istdm = False
-        nchan = len(chanfreqs[spwid])
-#       fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
-        fcenter = (chanfreqs[spwid][int(nchan/2)-1]+chanfreqs[spwid][int(nchan/2)])/2.   # PY3
-        chansep = (chanfreqs[spwid][-1]-chanfreqs[spwid][0])/(nchan-1)
-
-        _msg('- checking nchanperbb[bbprs[spwid]]')
-        if nchanperbb[bbprs[spwid]] in [128, 256]:
-
-            _msg('Spw %d seems to be TDM-like. More accurate Hanning smoothing is applied. istdm=True' % spwid)
-
-            # (orginal comment)
-            # ATM model is calculated for finer spectral resolution (5x original),
-            # convolved with Hanning spectral response with FWHM=10,
-            # then resampled to the original channel freqs
-
-            istdm = True
-            nchan *= 5
-            chansep /= 5.
-            chanfreqs_high = chanfreqs[spwid][0] + chansep * pl.arange(nchan)
-#           fcenter = (chanfreqs_high[nchan/2-1]+chanfreqs_high[nchan/2])/2.              # PY2
-            fcenter = (chanfreqs_high[int(nchan/2)-1]+chanfreqs_high[int(nchan/2)])/2.    # PY3
-
-        ################################################################
-        # Set parameters for ATM and obtain zenith opacity
-        # caveat: median values are used for calibrating the entire execution
-        ################################################################
-
-        _msg("- set parameters for initATM and obtain zenith opacity")
-
+        # Note CAS-13160:
+        # spw for-loop:
+        # - Inside this loop, calculation is executed with each spwid
+        # - The result is wriiten upon OutputFile with selected Spw, which is specified by OutputSpw
+        # - List of OutputSpw must be the part of List of Spws
+        # - please see the inserted block.
         #
-        # Note CAS-13160: Revised part from original.
-        #
-        #   Setting up parameter variables.
-        #   - Following codes are mainly extracted from the original script, which used to be
-        #     coded inside the initAtmProfile().
-        #   - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
-        #   - This section is up to Task Specification rather than original script.
-        #
-        atm_dtem_dh     = qa.quantity(lapserate, 'K/km')
-        atm_h0          = qa.quantity(scaleht, 'km')
-        atm_atmtype     = atmtype
-        atm_atmdetail   = atmdetail  # Bool
-        atm_altitude    = qa.quantity(altitude, 'm')
-        atm_temperature = qa.quantity(tground, 'K')              # tground (original)
-        atm_pressure    = qa.quantity(pground/100.0, 'mbar')     # pground (original) in  [Pa]  convert to [mbar]
-        atm_humidity    = qa.quantity(hground, '%' )             # hground (original) in  [%]
-        atm_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) in [m] converto to [mm]
-        atm_dp          = qa.quantity(dp, 'mbar')
-        atm_dpm         = qa.quantity(dpm, '')                   # keep float
-        atm_maxAltitude = qa.quantity(maxalt, 'km')
 
-        # Edit Flag (True: the parameter is given) #
-        atm_dtem_dh_set  = False
-        atm_h0_set       = False
-        atm_altitude_set = False
-        atm_temperature_set  = False
-        atm_pressure_set     = False
-        atm_humidity_set     = False
-        atm_pwv_set      = False
-        atm_dp_set       = False
-        atm_dpm_set      = False
+        # for spwid in spws:
+        for spwid in outputspws:
+            # Log #
+            _msg("Processing spw %d in %s " % (spwid, spws))
 
-        #
-        # (from 'help' infomation)
-        # User-Defined Profile (example)
-        #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
-        #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
-        #
-        atm_layerboundaries  = []   # initially null-List.   array: layer boundary [m]
-        atm_layertemperature = []   # initiallu null-list.   array: layer temperature [K]
+            istdm = False
+            nchan = len(chanfreqs[spwid])
+#           fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
+            fcenter = (chanfreqs[spwid][int(nchan/2)-1]+chanfreqs[spwid][int(nchan/2)])/2.   # PY3
+            chansep = (chanfreqs[spwid][-1]-chanfreqs[spwid][0])/(nchan-1)
 
-        #
-        # ATM fundamental parameters activation.
-        #
-        atm_dtem_dh, atm_dtem_dh_set = _set_float_atmparam_from_args(param_dtem_dh, atm_dtem_dh, 'K/km')
-        atm_h0,      atm_h0_set      = _set_float_atmparam_from_args(param_h0, atm_h0, 'km')
-        atm_atmtype   = _set_int_atmparam_from_args(param_atmtype, atm_atmtype)
+            _msg('- checking nchanperbb[bbprs[spwid]]')
+            if nchanperbb[bbprs[spwid]] in [128, 256]:
 
-        #
-        # Sub parameter activation
-        #  only when atmdetail is True
-        #
-        if atm_atmdetail:
-            _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
-            atm_altitude,    atm_altitude_set     = _set_float_atmparam_from_args(param_altitude, atm_altitude, 'm')
-            atm_temperature, atm_temperature_set  = _set_float_atmparam_from_args(param_temperature, atm_temperature, 'K')
-            atm_pressure,    atm_pressure_set     = _set_float_atmparam_from_args(param_pressure, atm_pressure, 'mbar')
-            atm_humidity,    atm_humidity_set     = _set_float_atmparam_from_args(param_humidity, atm_humidity, '%')
-            atm_pwv,         atm_pwv_set          = _set_float_atmparam_from_args(param_PWV, atm_pwv, 'mm')
-            atm_dp,          atm_dp_set           = _set_float_atmparam_from_args(param_dp, atm_dp, 'mbar')
-            atm_dpm,         atm_dpm_set          = _set_float_atmparam_from_args(param_dpm, atm_dpm, '')
+                _msg('Spw %d seems to be TDM-like. More accurate Hanning smoothing is applied. istdm=True' % spwid)
 
-            # User-Uefined Profile. 
-            #  when the arg is active, directly pass the arg(param_xxxx) to atm_xxxx for initAtmProfile. 
-            atm_layerboundaries  = _copy_list_ifactive(param_layerboundaries)
-            atm_layertemperature = _copy_list_ifactive(param_layertemperature)
+                # (orginal comment)
+                # ATM model is calculated for finer spectral resolution (5x original),
+                # convolved with Hanning spectral response with FWHM=10,
+                # then resampled to the original channel freqs
 
-        else:
-            _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
+                istdm = True
+                nchan *= 5
+                chansep /= 5.
+                chanfreqs_high = chanfreqs[spwid][0] + chansep * pl.arange(nchan)
+#               fcenter = (chanfreqs_high[nchan/2-1]+chanfreqs_high[nchan/2])/2.              # PY2
+                fcenter = (chanfreqs_high[int(nchan/2)-1]+chanfreqs_high[int(nchan/2)])/2.    # PY3
 
-        #
-        # print and log to confirm.
-        #
-        _msg("====================================================================")
-        _msg("  initATMProfile Parameters     [atmdetail = %s]" % atm_atmdetail)
-        _msg("------------------+-----------------------------+-------------------")
-        _msg("  parameter       | value [unit]                | specified by arg. ")
-        _msg("------------------+-----------------------------+-------------------")
-        _msg(" atmtype          |%-18s " % at.listAtmosphereTypes()[atm_atmtype-1] )    # type =1,2,3,4,5, no Zero
-        _msg(" dTem_dh          |%-18s [%5s]   | %s " % (atm_dtem_dh['value'], atm_dtem_dh['unit'], atm_dtem_dh_set))
-        _msg(" h0               |%-18s [%5s]   | %s " % (atm_h0['value'], atm_h0['unit'], atm_h0_set))
-        _msg(" altitude         |%-18s [%5s]   | %s " % (atm_altitude['value'], atm_altitude['unit'], atm_altitude_set))
-        _msg(" temperature      |%-18s [%5s]   | %s " % (atm_temperature['value'], atm_temperature['unit'], atm_temperature_set))
-        _msg(" pressure         |%-18s [%5s]   | %s " % (atm_pressure['value'], atm_pressure['unit'], atm_pressure_set))
-        _msg(" humidity         |%-18s [%5s]   | %s " % (atm_humidity['value'], atm_humidity['unit'], atm_humidity_set))
-        _msg(" pwv              |%-18s [%5s]   | %s " % (atm_pwv['value'], atm_pwv['unit'], atm_pwv_set))
-        _msg(" dp               |%-18s [%5s]   | %s " % (atm_dp['value'], atm_dp['unit'], atm_dp_set))
-        _msg(" dpm              |%-18s [%5s]   | %s " % (atm_dpm['value'], atm_dpm['unit'], atm_dpm_set))
-        _msg("*maxAltitude      |%-18s [%5s]   | (FIXED CONST) " % (atm_maxAltitude['value'], atm_maxAltitude['unit']))
-        _msg(" layerboundaries  |%-18s " % atm_layerboundaries)
-        _msg(" layertemperature |%-18s " % atm_layertemperature)
-        _msg("------------------+-----------------------------------------------")
+            ################################################################
+            # Set parameters for ATM and obtain zenith opacity
+            # caveat: median values are used for calibrating the entire execution
+            ################################################################
 
-        ###################
-        # initATMProfile
-        ###################
-        atm = at.initAtmProfile(humidity=atm_humidity['value'],
-                                temperature=atm_temperature,
-                                altitude=atm_altitude,
-                                pressure=atm_pressure,
-                                atmType=atm_atmtype,
-                                maxAltitude=atm_maxAltitude,
-                                h0=atm_h0,
-                                dTem_dh=atm_dtem_dh,
-                                dP=atm_dp,
-                                dPm=atm_dpm['value'],
-                                layerBoundaries=atm_layerboundaries,
-                                layerTemperature=atm_layertemperature)
+            _msg("- set parameters for initATM and obtain zenith opacity")
 
-        #
-        # show intAtmProfile result
-        #
-        showAtmInfo(atm)
+            #
+            # Note CAS-13160: Revised part from original.
+            #
+            #   Setting up parameter variables.
+            #   - Following codes are mainly extracted from the original script, which used to be
+            #     coded inside the initAtmProfile().
+            #   - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
+            #   - This section is up to Task Specification rather than original script.
+            #
+            atm_dtem_dh     = qa.quantity(lapserate, 'K/km')
+            atm_h0          = qa.quantity(scaleht, 'km')
+            atm_atmtype     = atmtype
+            atm_atmdetail   = atmdetail  # Bool
+            atm_altitude    = qa.quantity(altitude, 'm')
+            atm_temperature = qa.quantity(tground, 'K')              # tground (original)
+            atm_pressure    = qa.quantity(pground/100.0, 'mbar')     # pground (original) in  [Pa]  convert to [mbar]
+            atm_humidity    = qa.quantity(hground, '%' )             # hground (original) in  [%]
+            atm_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) in [m] converto to [mm]
+            atm_dp          = qa.quantity(dp, 'mbar')
+            atm_dpm         = qa.quantity(dpm, '')                   # keep float
+            atm_maxAltitude = qa.quantity(maxalt, 'km')
 
-        #
-        #  Layer Information
-        #   - automatically showing, when the arg is specified)
-        #
-        if len(atm_layerboundaries) != 0:
-            showLayerInfo(at)
+            # Edit Flag (True: the parameter is given and will be applied.) #
+            atm_dtem_dh_set  = False
+            atm_h0_set       = False
+            atm_altitude_set = False
+            atm_temperature_set  = False
+            atm_pressure_set     = False
+            atm_humidity_set     = False
+            atm_pwv_set      = False
+            atm_dp_set       = False
+            atm_dpm_set      = False
+
+            #
+            # (from 'help' infomation)
+            # User-Defined Profile (example)
+            #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
+            #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
+            #
+            atm_layerboundaries  = []   # initially null-List.   array: layer boundary [m]
+            atm_layertemperature = []   # initiallu null-list.   array: layer temperature [K]
+
+            #
+            # ATM fundamental parameters activation.
+            #
+            atm_dtem_dh, atm_dtem_dh_set = _set_float_atmparam_from_args(param_dtem_dh, atm_dtem_dh, 'K/km')
+            atm_h0,      atm_h0_set      = _set_float_atmparam_from_args(param_h0, atm_h0, 'km')
+            atm_atmtype   = _set_int_atmparam_from_args(param_atmtype, atm_atmtype)
+
+            #
+            # Sub parameter activation
+            #  only when atmdetail is True
+            #
+            if atm_atmdetail:
+                _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
+                atm_altitude,    atm_altitude_set     = _set_float_atmparam_from_args(param_altitude, atm_altitude, 'm')
+                atm_temperature, atm_temperature_set  = _set_float_atmparam_from_args(param_temperature, atm_temperature, 'K')
+                atm_pressure,    atm_pressure_set     = _set_float_atmparam_from_args(param_pressure, atm_pressure, 'mbar')
+                atm_humidity,    atm_humidity_set     = _set_float_atmparam_from_args(param_humidity, atm_humidity, '%')
+                atm_pwv,         atm_pwv_set          = _set_float_atmparam_from_args(param_PWV, atm_pwv, 'mm')
+                atm_dp,          atm_dp_set           = _set_float_atmparam_from_args(param_dp, atm_dp, 'mbar')
+                atm_dpm,         atm_dpm_set          = _set_float_atmparam_from_args(param_dpm, atm_dpm, '')
+
+                # User-Uefined Profile. 
+                #  when the arg is active, directly pass the arg(param_xxxx) to atm_xxxx for initAtmProfile. 
+                atm_layerboundaries  = _copy_list_ifactive(param_layerboundaries)
+                atm_layertemperature = _copy_list_ifactive(param_layertemperature)
+
+            else:
+                _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
+
+            #
+            # print and log to confirm.
+            #
+            _msg("====================================================================")
+            _msg("  initATMProfile Parameters     [atmdetail = %s]" % atm_atmdetail)
+            _msg("------------------+-----------------------------+-------------------")
+            _msg("  parameter       | value [unit]                | specified by arg. ")
+            _msg("------------------+-----------------------------+-------------------")
+            _msg(" atmtype          |%-18s " % at.listAtmosphereTypes()[atm_atmtype-1] )    # type =1,2,3,4,5, no Zero
+            _msg(" dTem_dh          |%-18s [%5s]   | %s " % (atm_dtem_dh['value'], atm_dtem_dh['unit'], atm_dtem_dh_set))
+            _msg(" h0               |%-18s [%5s]   | %s " % (atm_h0['value'], atm_h0['unit'], atm_h0_set))
+            _msg(" altitude         |%-18s [%5s]   | %s " % (atm_altitude['value'], atm_altitude['unit'], atm_altitude_set))
+            _msg(" temperature      |%-18s [%5s]   | %s " % (atm_temperature['value'], atm_temperature['unit'], atm_temperature_set))
+            _msg(" pressure         |%-18s [%5s]   | %s " % (atm_pressure['value'], atm_pressure['unit'], atm_pressure_set))
+            _msg(" humidity         |%-18s [%5s]   | %s " % (atm_humidity['value'], atm_humidity['unit'], atm_humidity_set))
+            _msg(" pwv              |%-18s [%5s]   | %s " % (atm_pwv['value'], atm_pwv['unit'], atm_pwv_set))
+            _msg(" dp               |%-18s [%5s]   | %s " % (atm_dp['value'], atm_dp['unit'], atm_dp_set))
+            _msg(" dpm              |%-18s [%5s]   | %s " % (atm_dpm['value'], atm_dpm['unit'], atm_dpm_set))
+            _msg("*maxAltitude      |%-18s [%5s]   | (FIXED CONST) " % (atm_maxAltitude['value'], atm_maxAltitude['unit']))
+            _msg(" layerboundaries  |%-18s " % atm_layerboundaries)
+            _msg(" layertemperature |%-18s " % atm_layertemperature)
+            _msg("------------------+-----------------------------------------------")
+
+            ###################
+            # initATMProfile
+            ###################
+            atm = at.initAtmProfile(humidity=atm_humidity['value'],
+                                    temperature=atm_temperature,
+                                    altitude=atm_altitude,
+                                    pressure=atm_pressure,
+                                    atmType=atm_atmtype,
+                                    maxAltitude=atm_maxAltitude,
+                                    h0=atm_h0,
+                                    dTem_dh=atm_dtem_dh,
+                                    dP=atm_dp,
+                                    dPm=atm_dpm['value'],
+                                    layerBoundaries=atm_layerboundaries,
+                                    layerTemperature=atm_layertemperature)
+
+            #
+            # show intAtmProfile result
+            #
+            showAtmInfo(atm)
+
+            #
+            #  Layer Information
+            #   - automatically showing, when the arg is specified)
+            #
+            if len(atm_layerboundaries) != 0:
+                showLayerInfo(at)
      
-        ###################
-        # Spectral Window #
-        ###################
-        at.initSpectralWindow(nband,
-                              qa.quantity(fcenter, 'Hz'),
-                              qa.quantity(nchan*chansep, 'Hz'),
-                              qa.quantity(chansep, 'Hz'))
+            ###################
+            # Spectral Window #
+            ###################
+            at.initSpectralWindow(nband,
+                                  qa.quantity(fcenter, 'Hz'),
+                                  qa.quantity(nchan*chansep, 'Hz'),
+                                  qa.quantity(chansep, 'Hz'))
 
-        # H2O
-        at.setUserWH2O(atm_pwv)
+            # H2O
+            at.setUserWH2O(atm_pwv)
 
-        ################################################################
-        # Calculate and apply correction values
-        ################################################################
+            ################################################################
+            # Calculate and apply correction values
+             ################################################################
 
-        _msg("\nCalculate and apply correction values.\n")
+            _msg("\nCalculate and apply correction values.\n")
 
-        # original: make ddis[spwid]
-        _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
-        querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
-        subtb = tb.query(querytext)
+            # original: make ddis[spwid]
+            _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
+            querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
+            subtb = tb.query(querytext)
   
-        _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
-        tmdata = subtb.getcol('TIME')
-        data = subtb.getcol(datacolumn)
-        npol = data.shape[0]
+            _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
+            tmdata = subtb.getcol('TIME')
+            data = subtb.getcol(datacolumn)
+            npol = data.shape[0]
       
-        # Smoothing control
-        if nchanperbb[bbprs[spwid]]*npol in [256, 8192]:
-            _msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely not applied).  dosmooth=True' %
-                 (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
-            dosmooth = True
-        else:
-            _msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely applied).  dosmooth=False' %
-                 (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
-            dosmooth = False
+            # Smoothing control
+            if nchanperbb[bbprs[spwid]]*npol in [256, 8192]:
+                _msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely not applied).  dosmooth=True' %
+                     (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
+                dosmooth = True
+            else:
+                _msg('Spw %d in BB_%d (total Nchan within BB is %d, sp avg likely applied).  dosmooth=False' %
+                     (spwid, bbprs[spwid]+1, nchanperbb[bbprs[spwid]]*npol))
+                dosmooth = False
 
-        ###########################
-        # Correction Main Loop
-        ###########################
+            ###########################
+            # Correction Main Loop
+            ###########################
 
-        _msg("\nExecuting  ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
+            _msg("\nExecuting  ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
 
-        cdata = data.copy()
-        for i, t in enumerate(tmdata):
-            #
-            # debug option, interrupt the correction loop.
-            #
-            if interruptCorrection:
-                if i > interruptCorrectionCnt:
-                    msg = "Correction Loop was interrupted. \n---"
-                    _msg(msg)
-                    break
+            cdata = data.copy()
+            for i, t in enumerate(tmdata):
+                #
+                # debug option, interrupt the correction loop.
+                #
+                if interruptCorrection:
+                    if i > interruptCorrectionCnt:
+                        msg = "Correction Loop was interrupted. \n---"
+                        _msg(msg)
+                        break
 
-            # (org script) #
-            dt = tmoffsource - t
-            if (dt < 0).sum() == 0 or (dt > 0).sum() == 0:  ### any data before first OFF or after last OFF are disregarded
-                continue
+                # (org script) #
+                dt = tmoffsource - t
+                if (dt < 0).sum() == 0 or (dt > 0).sum() == 0:  ### any data before first OFF or after last OFF are disregarded
+                    continue
 
-            dtoff0 = dt[dt < 0].max()
-            dtoff1 = dt[dt > 0].min()
-            eon, eoff0, eoff1 = pl.interp([t, t+dtoff0, t+dtoff1], tmpointing, elev)
-            eoff = (dtoff1*eoff0 - dtoff0*eoff1)/(dtoff1-dtoff0)
+                dtoff0 = dt[dt < 0].max()
+                dtoff1 = dt[dt > 0].min()
+                eon, eoff0, eoff1 = pl.interp([t, t+dtoff0, t+dtoff1], tmpointing, elev)
+                eoff = (dtoff1*eoff0 - dtoff0*eoff1)/(dtoff1-dtoff0)
 
-            at.setAirMass(1/pl.cos(pl.pi/2.-eon))
-            tskyon = at.getTrjSkySpec()[1]['value']
+                at.setAirMass(1/pl.cos(pl.pi/2.-eon))
+                tskyon = at.getTrjSkySpec()[1]['value']
 
-            at.setAirMass(1/pl.cos(pl.pi/2.-eoff))
-            tskyoff = at.getTrjSkySpec()[1]['value']
-            tau0 = at.getDryOpacitySpec()[1] + at.getWetOpacitySpec()[1]['value']
-            tauoff = tau0/pl.cos(pl.pi/2.-eoff)
+                at.setAirMass(1/pl.cos(pl.pi/2.-eoff))
+                tskyoff = at.getTrjSkySpec()[1]['value']
+                tau0 = at.getDryOpacitySpec()[1] + at.getWetOpacitySpec()[1]['value']
+                tauoff = tau0/pl.cos(pl.pi/2.-eoff)
 
-            dTa = (tskyon-tskyoff) * pl.exp(tauoff)
-            if istdm:
-                dTa = pl.convolve(dTa, hanning, 'same')
-                dTa = pl.interp(chanfreqs[spwid], chanfreqs_high, dTa)
-            elif dosmooth:
-                dTa = pl.convolve(dTa, [0.25, 0.5, 0.25], 'same')
+                dTa = (tskyon-tskyoff) * pl.exp(tauoff)
+                if istdm:
+                    dTa = pl.convolve(dTa, hanning, 'same')
+                    dTa = pl.interp(chanfreqs[spwid], chanfreqs_high, dTa)
+                elif dosmooth:
+                    dTa = pl.convolve(dTa, [0.25, 0.5, 0.25], 'same')
 
-            #
-            # debug option for task.
-            #
-            if showCorrection:
-                _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
+                #
+                # debug option for task.
+                #
+                if showCorrection:
+                    _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
 
-            # Adjust Body (dTa is vector) #
-            for ipol in range(npol):
-                cdata[ipol, :, i] -= dTa
+                # Adjust Body (dTa is vector) #
+                for ipol in range(npol):
+                    cdata[ipol, :, i] -= dTa
 
-        subtb.putcol(datacolumn, cdata)
-        subtb.close()
+            subtb.putcol(datacolumn, cdata)
+            subtb.close()
 
-    #
-    # end for spwid in spws:
-    #
-    tb.flush()
-    tb.close()
+        #
+        # end for spwid in spws:
+        #
+        tb.flush()
+
+        # end of with statement
+
+        ## tb.close()
 
     return True
