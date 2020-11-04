@@ -270,7 +270,6 @@ def _conv_to_doubleArrayList(in_list):
             return out_list
 
         elif type(in_list) is str:
-            _msg("- converting a Comma-separated string which contains numerical expression or int/float to Float-List.")
             tmp_list = in_list.split(',')  # convert to List #
             out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
             return out_list
@@ -327,7 +326,6 @@ def get_default_antenna(msname, antenna):
 #
 def get_default_altitude(msname, antid):
     with open_table(os.path.join(msname, 'ANTENNA')) as tb:
-
         # ref #
         ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
         # obtain the antenna Position (Earth Center) spified by antid #
@@ -820,8 +818,6 @@ def calc_sdatmcor(
             _msg("- reading column:'TIME' and 'DIRECITON' completed.")
 
             subtb.close()
-            ##   tb.close()
-
     except Exception as instance:
         _msg("ERROR:: opening POINTING.")
         casalog.post('%s' % instance, 'ERROR')
@@ -831,13 +827,11 @@ def calc_sdatmcor(
     # Get atmospheric parameters for ATM
     ################################################################
     try:
-        tb.open(os.path.join(rawms, 'ASDM_CALWVR'))
-        # confirm
-        _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
-        pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
-                       (tmonsource.min(), tmonsource.max())).getcol('water')
-        tb.close()
-
+        with open_table(os.path.join(rawms, 'ASDM_CALWVR')) as tb:
+            # confirm
+            _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
+            pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
+                           (tmonsource.min(), tmonsource.max())).getcol('water')
     except Exception as err:
         _msg("ERROR:: opening rawms/'ASDM_CALWVR'.")
         casalog.post('%s' % err, 'ERROR')
@@ -849,17 +843,18 @@ def calc_sdatmcor(
     # ASDM_CALATMOSPHERE
     try:
         _msg("reading rawms/'ASDM_CALATMOSPHERE'.")
-        tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
-        subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
-                         (tmonsource.min(),
-                          tmonsource.max()))
+        with open_table(os.path.join(rawms, 'ASDM_CALATMOSPHERE')) as tb:
+        ##      tb.open(os.path.join(rawms, 'ASDM_CALATMOSPHERE'))
+            subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
+                             (tmonsource.min(),
+                              tmonsource.max()))
 
-        tground = pl.median(subtb.getcol('groundTemperature'))
-        pground = pl.median(subtb.getcol('groundPressure'))
-        hground = pl.median(subtb.getcol('groundRelHumidity'))
+            tground = pl.median(subtb.getcol('groundTemperature'))
+            pground = pl.median(subtb.getcol('groundPressure'))
+            hground = pl.median(subtb.getcol('groundRelHumidity'))
 
-        subtb.close()
-        tb.close()
+            subtb.close()
+            ## tb.close()
 
     except Exception as err:
         _msg("ERROR:: opening rawms/'ASDM_CALATMOSPHERE'.")
