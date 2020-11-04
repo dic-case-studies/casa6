@@ -741,11 +741,13 @@ def calc_sdatmcor(
                     spws = spws_param   # update
                     _msg(" - updated 'spws'=%s. by given spw." % spws)
                 else:
-                    _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n", "ERROR")
+                    _msg("\nWARNING:: Some of the specified 'spw' are not in the raw MS.\n", 'WARN')
                     _msg("  - spws (MS)     = %s" % set(spws))
                     _msg("  - spws (arg)    = %s" % set(spws_param))
-                    ## UNDER CONSTRUCTION. This case can continue ##
-                    return False
+
+                    # obtain Intersection(=common ones), and try to use.  #
+                    spws = set(spws) & set(spws_param)
+                    _msg("  - Alternatively use spws = %s" % spws)
  
             # (original) get chanfreqs[spwid] info.
             for spwid in spws:
@@ -799,9 +801,11 @@ def calc_sdatmcor(
     # Check if specified outputspw is in the list of spws
     #
 
-    if set(spws) >= set(outputspws):   # B is included in A #
+    if set(spws) >= set(outputspws): 
+        # spws in rawms includes outputspw #
         pass
     else:
+        # any of spw in the outputspw is/are not included in spws in rawms #
         _msg("\nWARNING::Some of specified 'outputspw' are not in the raw MS.\n", 'WARN' )
         _msg("  - spws            = %s" % spws)
         _msg("  - outputspws      = %s" % outputspws)
