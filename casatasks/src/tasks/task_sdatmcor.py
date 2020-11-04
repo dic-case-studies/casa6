@@ -125,8 +125,7 @@ def sdatmcor(
     if len_1 != len_2:
         errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        # raise Exception(errmsg)
-        return False
+        raise Exception(errmsg)
 
 #
 # Call calc Function
@@ -579,8 +578,7 @@ def calc_sdatmcor(
         else:
             errmsg = "Specified outputfile already exist."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            return False
-            # raise Exception(errmsg)
+            raise Exception(errmsg)
 
 
     #
@@ -651,8 +649,7 @@ def calc_sdatmcor(
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
         errmsg = "Something is wrong in atmMst. "
-        return False
-        # raise Exception(errmsg)
+        raise Exception(errmsg)
 
     # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
@@ -806,11 +803,13 @@ def calc_sdatmcor(
     if set(spws) >= set(outputspws):   # B is included in A #
         pass
     else:
-        _msg("\nERROR:: Some of specified 'outputspw' are not in the raw MS. Cannot continue.\n", "ERROR" )
-        _msg("  - spws      = %s" % spws)
-        _msg("  - outputspws = %s" % outputspws)
+        _msg("\nWARNING::Some of specified 'outputspw' are not in the raw MS.\n", 'WARN' )
+        _msg("  - spws            = %s" % spws)
+        _msg("  - outputspws      = %s" % outputspws)
 
-        return False
+        # obtain Intersection(=common ones), and try to use.  #
+        outputspws = set(spws) & set(outputspws)
+        _msg("  - Alternatively use outputspws = %s" % outputspws)
 
     #
     # (Original)
