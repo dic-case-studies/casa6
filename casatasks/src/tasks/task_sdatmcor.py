@@ -337,8 +337,6 @@ def get_default_antenna(msname, antenna):
 #
 def get_default_altitude(msname, antid):
     with open_table(os.path.join(msname, 'ANTENNA')) as tb:
-        # ref #
-        ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
         # obtain the antenna Position (Earth Center) spified by antid #
         pos = tb.getcell('POSITION', antid)
         X = float(pos[0])
@@ -352,8 +350,11 @@ def get_default_altitude(msname, antid):
         #  this method returns geodetic latitude and longitude [radians] and elevation [m]. 
         #  Elevation is measured relative to the closest point to the (latitude, longitude) 
         #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
-        P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation
+        P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation (geodetic elevation)
         geodetic_elevation = P[2]
+
+        # ref #
+        ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
 
     _msg("Default Altitude")
     _msg(" - Antenna ID: %d. " % antid)
