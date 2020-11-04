@@ -125,7 +125,8 @@ def sdatmcor(
     if len_1 != len_2:
         errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)        
+        # raise Exception(errmsg)
+        return False
 
 #
 # Call calc Function
@@ -321,7 +322,7 @@ def get_default_antenna(msname, antenna):
         else:
             errmsg="Illegular antenna ID detected."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            raise Exception(errmsg)
+            # raise Exception(errmsg)
 
         # INFO #
         ant_name = msmd.antennanames(i_ant)[0]
@@ -578,7 +579,8 @@ def calc_sdatmcor(
         else:
             errmsg = "Specified outputfile already exist."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            raise Exception(errmsg)
+            return False
+            # raise Exception(errmsg)
 
 
     #
@@ -649,7 +651,8 @@ def calc_sdatmcor(
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
         errmsg = "Something is wrong in atmMst. "
-        raise Exception(errmsg)
+        return False
+        # raise Exception(errmsg)
 
     # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
