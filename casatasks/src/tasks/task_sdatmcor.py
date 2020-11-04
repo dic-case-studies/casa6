@@ -37,9 +37,11 @@ origin = 'sdatmcor'
 def open_table(path, nomodify=True):
     # tb = table( )
     tb.open(path, nomodify=nomodify)
+    print("tentative::TB OPENED.")
     try:
         yield tb
     finally:
+        print("tentative::TB CLOSED.")
         tb.close()
 
 
@@ -50,7 +52,7 @@ def open_msmd(path):
     try:
         yield msmd
     finally:
-        print("tentative:MSMD: CLOSED.")
+        print("tentative::MSMD CLOSED.")
         msmd.close()
 
 def sdatmcor(
@@ -67,7 +69,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1104 (04-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1104-1513 (04-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -229,7 +231,7 @@ def _set_int_atmparam_from_args(set_arg, through_value):
         return  through_value
 
 
-def _copy_list_ifactive(set_list):
+def _set_list_atmparam_from_args(set_list):
     if (len(set_list) != 0):
         return set_list
     else:
@@ -684,77 +686,75 @@ def calc_sdatmcor(
     _msg("\nSDATMCOR main body starts. rawms=%s\n" % rawms)
 
     try:
-        msmd.open(rawms)
+        with open_msmd(rawms) as msmd:
+            # (original)
+            tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
+            tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
+            fdmspws = msmd.fdmspws()
+            tdmspws = msmd.tdmspws()
+            intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+            spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
+            spwnames = msmd.namesforspws(spws)
 
-        tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
-        tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
-        fdmspws = msmd.fdmspws()
-        tdmspws = msmd.tdmspws()
-        intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
-        spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
-        spwnames = msmd.namesforspws(spws)
+            # show to user. #
+            _msg(" - tm ON  source  = %s" % tmonsource)
+            _msg(" - tm OFF source  = %s" % tmoffsource)
+            _msg(" - fdm    spws = %s" % fdmspws)
+            _msg(" - tdm    spws = %s" % tdmspws)
+            _msg(" - intent spws = %s" % intentspws)
+            _msg(" -        spws = %s" % spws)
 
-        # show to user. #
-        _msg(" - tm ON  source  = %s" % tmonsource)
-        _msg(" - tm OFF source  = %s" % tmoffsource)
-        _msg(" - fdm    spws = %s" % fdmspws)
-        _msg(" - tdm    spws = %s" % tdmspws)
-        _msg(" - intent spws = %s" % intentspws)
-        _msg(" -        spws = %s" % spws)
+            # (Task Section) check count of ON/OFF SOURCE
+            n_tmonsource = len(tmonsource)
+            n_tmoffsource = len(tmoffsource)
+            msg = "Target Information. \n"   \
+                + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
+                + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+            _msg(msg)
 
-        # (Task Section) check count of ON/OFF SOURCE
-        n_tmonsource = len(tmonsource)
-        n_tmoffsource = len(tmoffsource)
-        msg = "Target Information. \n"   \
-            + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
-            + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-        _msg(msg)
+            # (Task Section) OFF_SOURCE check #
+            if (n_tmoffsource == 0):
+                msg = "Can't find the OFF_SOURCE data."
+                _msg(msg, 'SEVERE')
+                raise(msg)
 
-        # (Task Section) OFF_SOURCE check #
-        if (n_tmoffsource == 0):
-            msg = "Can't find the OFF_SOURCE data."
-            _msg(msg, 'SEVERE')
-            raise(msg)
+            # (Task Section) ON_SOURCE check #
+            if (n_tmoffsource == 0):
+                msg = "Can't find the ON_SOURCE data."
+                _msg(msg, 'SEVERE')
+                raise(msg)
 
-        # (Task Section) ON_SOURCE check #
-        if (n_tmoffsource == 0):
-            msg = "Can't find the ON_SOURCE data."
-            _msg(msg, 'SEVERE')
-            raise(msg)
+            #
+            # (Task Section )
+            # force to change 'processing Spw'
+            # - If spw is pecified in the arg, set up 'spws'
+            #
+            _msg("Determine active spw when spw is in the arg.")
+            if (p_spw != ''):
+                spws_param = _list_commA_string(p_spw, dType='int')
 
-        #
-        # (Task Section )
-        # force to change 'processing Spw'
-        # - If spw is pecified in the arg, set up 'spws'
-        #
-        _msg("Determine active spw when spw is in the arg.")
-        if (p_spw != ''):
-            spws_param = _list_commA_string(p_spw, dType='int')
-
-            # Including check
-            #  - all the element in spws_param MUST be in Spws
-            if set(spws) >= set(spws_param):   # B is included in A #
-                spws = spws_param   # update
-                _msg(" - updated 'spws'=%s. by given spw." % spws)
-            else:
-                _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n", "ERROR")
-                _msg("  - spws (MS)     = %s" % set(spws))
-                _msg("  - spws (arg)    = %s" % set(spws_param))
-                ## UNDER CONSTRUCTION. This case can continue ##
-                return False
+                # Including check
+                #  - all the element in spws_param MUST be in Spws
+                if set(spws) >= set(spws_param):   # B is included in A #
+                    spws = spws_param   # update
+                    _msg(" - updated 'spws'=%s. by given spw." % spws)
+                else:
+                    _msg("\nERROR:: Some of the specified 'spw' are not in the raw MS. Cannot continue.\n", "ERROR")
+                    _msg("  - spws (MS)     = %s" % set(spws))
+                    _msg("  - spws (arg)    = %s" % set(spws_param))
+                    ## UNDER CONSTRUCTION. This case can continue ##
+                    return False
  
-        # (original) get chanfreqs[spwid] info.
-        for spwid in spws:
-            chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
+            # (original) get chanfreqs[spwid] info.
+            for spwid in spws:
+                chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
-    except Exception as err:
+            # end of with
+
+    except Exception as err:     ## Under Construction ##
         _msg("ERROR:: opening rawms")
         casalog.post('%s' % err, 'ERROR')
         return False
-
-    finally:
-        msmd.close()
-        _msg("msmd was successfully closed.")  # TENTATIVE msg (checking try-finally)
 
     # (original)
     bnd = (pl.diff(tmoffsource) > 1)
@@ -763,12 +763,9 @@ def calc_sdatmcor(
     tmoffsource = (tmoffsource[w1]+tmoffsource[w2])/2.  ### midpoint of OFF subscan
 
     ddis = {}
-
-    msmd.open(calms)
-    for spwid in spws:
-        ddis[spwid] = msmd.datadescids(spw=spwid)[0]
-    msmd.close()
-
+    with open_msmd(calms) as msmd:
+        for spwid in spws:
+            ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     print(" - ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
@@ -921,8 +918,8 @@ def calc_sdatmcor(
             # Note CAS-13160: Revised part from original.
             #
             #   Setting up parameter variables.
-            #   - Following codes are mainly extracted from the original script, which used to be
-            #     coded inside the initAtmProfile().
+            #   - Following codes are extracted from the original script, which used to be
+            #     embeded inside the initAtmProfile() arguments.
             #   - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
             #   - This section is up to Task Specification rather than original script.
             #
@@ -982,8 +979,8 @@ def calc_sdatmcor(
 
                 # User-Uefined Profile. 
                 #  when the arg is active, directly pass the arg(param_xxxx) to atm_xxxx for initAtmProfile. 
-                atm_layerboundaries  = _copy_list_ifactive(param_layerboundaries)
-                atm_layertemperature = _copy_list_ifactive(param_layertemperature)
+                atm_layerboundaries  = _set_list_atmparam_from_args(param_layerboundaries)
+                atm_layertemperature = _set_list_atmparam_from_args(param_layertemperature)
 
             else:
                 _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
