@@ -354,15 +354,15 @@ def get_default_altitude(msname, antid):
         #  Elevation is measured relative to the closest point to the (latitude, longitude) 
         #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
         P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation
-        elev = P[2]
+        geodetic_elevation = P[2]
 
     _msg("Default Altitude")
     _msg(" - Antenna ID: %d. " % antid)
     _msg(" - Ref = %s. " % ref)
     _msg(" - Position: (%s, %s, %s)." % (X, Y, Z))
-    _msg("   Relative Altitude:  %f" % elev)
+    _msg("   Altitude (geodetic elevation):  %f" % geodetic_elevation)
 
-    return elev
+    return geodetic_elevation
 
 
 #
