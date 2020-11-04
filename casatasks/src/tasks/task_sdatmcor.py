@@ -1,6 +1,7 @@
 import os
 import pylab as pl
 import shutil
+import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -30,6 +31,16 @@ else:
 
 # Task name #
 origin = 'sdatmcor'
+
+# Table/MS safe access (under construction) #
+@contextlib.contextmanager
+def open_table(path, nomodify=True):
+    # tb = table( )
+    tb.open(path, nomodify=nomodify)
+    try:
+        yield tb
+    finally:
+        tb.close()
 
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
@@ -68,7 +79,7 @@ def sdatmcor(
 #  - inspect Unit.
 #  - default value ARE NOT considered here.
 #  - convert values to string form.
-#  - Subfunction calc_sdatmcor() accepts args basically by string.
+#  - Sub-function calc_sdatmcor() accepts args basically by string.
 #
     dtem_dh     = _check_unit_and_formtoStr(dtem_dh, ['K/km'])
     h0          = _check_unit_and_formtoStr(h0, ['km'])
@@ -198,7 +209,7 @@ def _check_unit_and_formtoStr(data, base_unit):
 #
 # (action) check in_para and set default argument.
 #  if in_para is available , return in_para with being converted.
-#  otherwise, retrurns def_para to use as a default parameter.
+#  otherwise, returns def_para to use as a default parameter.
 #
 def _set_int_atmparam_from_args(set_arg, through_value):
     if (set_arg != ''):
@@ -255,7 +266,7 @@ def _conv_to_doubleArrayList(in_list):
     try:
         if  type(in_list) is list:
             _msg("- converting a List which contains numerical expression or int/float to Float-List.")
-            out_list = [float(s) for s in in_list]  # force to convert to list[floatm, ...]
+            out_list = [float(s) for s in in_list]  # force to convert to list[float, ...]
             return out_list
 
         elif type(in_list) is str:
@@ -315,25 +326,25 @@ def get_default_antenna(msname, antenna):
 # - This requires to calculate Elevation from Antenna Position Information.
 #
 def get_default_altitude(msname, antid):
-    tb.open(os.path.join(msname, 'ANTENNA'))
-    # ref #
-    ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
-    # obtain the antenna Position (Earth Center) spified by antid #
-    pos = tb.getcell('POSITION', antid)
-    X = float(pos[0])
-    Y = float(pos[1])
-    Z = float(pos[2])
+    with open_table(os.path.join(msname, 'ANTENNA')) as tb:
 
-    # 
-    #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
-    #
-    #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point, 
-    #  this method returns geodetic latitude and longitude [radians] and elevation [m]. 
-    #  Elevation is measured relative to the closest point to the (latitude, longitude) 
-    #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
-    P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation
-    elev = P[2]
-    tb.close()
+        # ref #
+        ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
+        # obtain the antenna Position (Earth Center) spified by antid #
+        pos = tb.getcell('POSITION', antid)
+        X = float(pos[0])
+        Y = float(pos[1])
+        Z = float(pos[2])
+
+        # 
+        #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
+        #
+        #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point, 
+        #  this method returns geodetic latitude and longitude [radians] and elevation [m]. 
+        #  Elevation is measured relative to the closest point to the (latitude, longitude) 
+        #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
+        P = ut.xyz2long(X, Y, Z, 'WGS84')     #  P[0]=longitude, P[1]=latitude, P[2]=elevation
+        elev = P[2]
 
     _msg("Default Altitude")
     _msg(" - Antenna ID: %d. " % antid)
@@ -798,19 +809,18 @@ def calc_sdatmcor(
     #   - tmpointing, elev
     #
     try:
-        tb.open(os.path.join(calms, 'POINTING'))  # CAS-13160:: use tempMS, (in org. using rawms)
+        with open_table(os.path.join(calms, 'POINTING')) as tb:
+            # (org.) key for ANTENNA_ID select
+            querytext = 'ANTENNA_ID==%s' % antenna
+            subtb = tb.query(querytext)
 
-        # (org.) key for ANTENNA_ID select
-        querytext = 'ANTENNA_ID==%s' % antenna
-        subtb = tb.query(querytext)
+            # (org.) Access Table
+            tmpointing = subtb.getcol('TIME')
+            elev = subtb.getcol('DIRECTION').squeeze()[1]
+            _msg("- reading column:'TIME' and 'DIRECITON' completed.")
 
-        # (org.) Access Table
-        tmpointing = subtb.getcol('TIME')
-        elev = subtb.getcol('DIRECTION').squeeze()[1]
-        _msg("- reading column:'TIME' and 'DIRECITON' completed.")
-
-        subtb.close()
-        tb.close()
+            subtb.close()
+            ##   tb.close()
 
     except Exception as instance:
         _msg("ERROR:: opening POINTING.")
