@@ -269,8 +269,9 @@ def _make_list_from_separatedstring(separated_string, dType):
 
 
 def _convert_userdefinedparam_to_list(in_arg):
-    # convert elements in  list or separated str =>  float list. #
-
+    """
+      convert elements in the arg (list or separated str)  to  float list.
+    """
     # check Empty #
     if (type(in_arg) is str) and (in_arg == ''):
         return [] 
@@ -278,16 +279,15 @@ def _convert_userdefinedparam_to_list(in_arg):
     # conversion (non-decimal expression string will fail.) #
     try:
         if  type(in_arg) is list:
-            # _msg("- converting a List which contains numerical expression or int/float to Float-List.")
+            # converting a List which contains numerical expression or int/float to Float-List.
             out_list = [float(s) for s in in_arg]  # force to convert to list[float, ...]
             return out_list
-
         elif type(in_arg) is str:
-            tmp_list = in_arg.split(',')  # convert to List #
+            tmp_list = in_arg.split(',')
             out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
             return out_list
         else:
-            _msg("\nERROR::Invalid arg type, expecting separated string or list.\n", 'SEVERE')
+            _msg("\nERROR::Invalid arg type. Expecting only separated string or list.\n", 'SEVERE')
             raise Exception("internal function error.")
 
     except Exception as err:
