@@ -116,8 +116,8 @@ def sdatmcor(
 # after this step, the two args changes to List
 #
     # Type conversion. An empty arg makes [] list. #
-    layerboundaries = _conv_to_doubleArrayList(layerboundaries)
-    layertemperature = _conv_to_doubleArrayList(layertemperature)
+    layerboundaries = _convert_userdefinedparam_to_list(layerboundaries)
+    layertemperature = _convert_userdefinedparam_to_list(layertemperature)
 
     # inspect counts, length of the two args must be same #
     len_1 = len(layerboundaries)
@@ -247,7 +247,7 @@ def _set_float_atmparam_from_args(set_arg, through_value, unit):
         else:
             return through_value, False
 
-def _list_commA_string(separated_string, dType):
+def _make_list_from_separatedstring(separated_string, dType):
     # make a list by separated by comma #
     try:
         if type(separated_string) is str:
@@ -266,10 +266,10 @@ def _list_commA_string(separated_string, dType):
     except Exception as err:
         _msg("Error in comma-separated string.")
         casalog.post('%s' % err, 'SEVERE')
-        return False
+        raise Exception("internal function error.")
 
 
-def _conv_to_doubleArrayList(in_list):
+def _convert_userdefinedparam_to_list(in_list):
     # convert elements in  list or separated str =>  float list. #
 
     # check Empty #
@@ -279,7 +279,7 @@ def _conv_to_doubleArrayList(in_list):
     # conversion (non-decimal expression string will fail.) #
     try:
         if  type(in_list) is list:
-            _msg("- converting a List which contains numerical expression or int/float to Float-List.")
+            # _msg("- converting a List which contains numerical expression or int/float to Float-List.")
             out_list = [float(s) for s in in_list]  # force to convert to list[float, ...]
             return out_list
 
@@ -289,12 +289,12 @@ def _conv_to_doubleArrayList(in_list):
             return out_list
         else:
             _msg("\nERROR::Invalid arg type, expecting separated string or list.\n", 'SEVERE')
-            return []   # invalid type
+            raise Exception("internal function error.")
 
     except Exception as err:
         _msg("Error in converting an element in the List.")
         casalog.post('%s' % err, 'SEVERE')
-        return False
+        raise Exception("internal function error.")
 
 #
 # decide Default Antenna ID
@@ -576,8 +576,10 @@ def calc_sdatmcor(
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(corms)
         else:
-            _msg("\nERROR in Overwrite:: Specified outputfile already exist.\n", 'ERROR')
-            return False
+            errmsg = "Specified outputfile already exist."
+            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+            raise Exception(errmsg)
+
 
     #
     # CAS-13160
@@ -645,9 +647,9 @@ def calc_sdatmcor(
             msselect=p_msselect)
 
     except Exception as err:
-        _msg("Exception:: in atmMst. ")
         casalog.post('%s' % err, 'SEVERE')
-        return False
+        errmsg = "Something is wrong in atmMst. "
+        raise Exception(errmsg)
 
     # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
@@ -732,7 +734,7 @@ def calc_sdatmcor(
             #
             _msg("Determine active spw when spw is in the arg.")
             if (p_spw != ''):
-                spws_param = _list_commA_string(p_spw, dType='int')
+                spws_param = _make_list_from_separatedstring(p_spw, dType='int')
 
                 # Including check
                 #  - all the element in spws_param MUST be in Spws
@@ -752,10 +754,10 @@ def calc_sdatmcor(
 
             # end of with
 
-    except Exception as err:     ## Under Construction ##
-        _msg("ERROR:: opening rawms")
+    except Exception as err:
         casalog.post('%s' % err, 'ERROR')
-        return False
+        errmsg = "Error in opening rawms"
+        raise Exception(errmsg)
 
     # (original)
     bnd = (pl.diff(tmoffsource) > 1)
@@ -787,7 +789,7 @@ def calc_sdatmcor(
     if (p_outputspw == ''):
         outputspws = spws         # use calculated 'spws' above
     else:
-        outputspws = _list_commA_string(p_outputspw, dType='int')
+        outputspws = _make_list_from_separatedstring(p_outputspw, dType='int')
 
     _msg("Determined Spw Information")
     _msg('- spws %s' % spws)
@@ -825,10 +827,11 @@ def calc_sdatmcor(
             _msg("- reading column:'TIME' and 'DIRECITON' completed.")
 
             subtb.close()
-    except Exception as instance:
-        _msg("ERROR:: opening POINTING.")
-        casalog.post('%s' % instance, 'ERROR')
-        raise
+
+    except Exception as err:     
+        casalog.post('%s' % err, 'ERROR')
+        errmsg = "Error in opening POINTING."
+        raise Exception(errmsg)
 
     ################################################################
     # Get atmospheric parameters for ATM
@@ -839,10 +842,11 @@ def calc_sdatmcor(
             _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
             pwv = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                            (tmonsource.min(), tmonsource.max())).getcol('water')
+
     except Exception as err:
-        _msg("ERROR:: opening rawms/'ASDM_CALWVR'.")
         casalog.post('%s' % err, 'ERROR')
-        raise
+        errmsg = "Error in opening rawms/'ASDM_CALWVR'."
+        raise Exception(errmsg)
 
     # pick up pwv
     pwv = pl.median(pwv)
@@ -861,9 +865,9 @@ def calc_sdatmcor(
 
             subtb.close()
     except Exception as err:
-        _msg("ERROR:: opening rawms/'ASDM_CALATMOSPHERE'.")
         casalog.post('%s' % err, 'ERROR')
-        raise
+        errmsg = "Error in opening rawms/'ASDM_CALATMOSPHERE'."
+        raise Exception(errmsg)
 
     _msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
 
