@@ -166,7 +166,8 @@ class polcal_test(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        shutil.rmtree('polcalTestOutput.ms.Df.PA-rel/')
+        shutil.rmtree('polcalTestOutput.ms.Df.XfpaQU-rel/')
 
     def test_noPolDfllsLin(self):
         ''' Test on field 0 and spw 0. Use channelized solutions '''
