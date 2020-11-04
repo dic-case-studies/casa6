@@ -269,22 +269,22 @@ def _make_list_from_separatedstring(separated_string, dType):
         raise Exception("internal function error.")
 
 
-def _convert_userdefinedparam_to_list(in_list):
+def _convert_userdefinedparam_to_list(in_arg):
     # convert elements in  list or separated str =>  float list. #
 
     # check Empty #
-    if (type(in_list) is str) and (in_list == ''):
+    if (type(in_arg) is str) and (in_arg == ''):
         return [] 
 
     # conversion (non-decimal expression string will fail.) #
     try:
-        if  type(in_list) is list:
+        if  type(in_arg) is list:
             # _msg("- converting a List which contains numerical expression or int/float to Float-List.")
-            out_list = [float(s) for s in in_list]  # force to convert to list[float, ...]
+            out_list = [float(s) for s in in_arg]  # force to convert to list[float, ...]
             return out_list
 
-        elif type(in_list) is str:
-            tmp_list = in_list.split(',')  # convert to List #
+        elif type(in_arg) is str:
+            tmp_list = in_arg.split(',')  # convert to List #
             out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
             return out_list
         else:
