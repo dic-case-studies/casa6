@@ -209,7 +209,7 @@ def _check_unit_and_formtoStr(data, base_unit):
                 # float no input #
                 return ''
             else:
-                # float specifiled #
+                # float specified #
                 return str(data)   # available  input#
         else:
             # INTERNAL ERROR:: Arg type is not expected due to the I/F Design. #
@@ -299,10 +299,11 @@ def _convert_userdefinedparam_to_list(in_arg):
 # decide Default Antenna ID
 #
 def get_default_antenna(msname, antenna):
-    # Chose base-antenna from selected Antenna ID
+    # Choose base-antenna from selected Antenna ID
     #  - Search Priority ID is   1 > 2 > 3 > x
     #  - if ONLY one  antenna(=x) is available, use this.
-    # The Rule is defined in CASR discussion. 
+    # The Rule is defined in CASR-552
+    #  - iAnt = 1 is experimentally preferable. 
 
     with open_msmd(msname) as msmd:
         ant_list = msmd.antennaids(antenna)
@@ -318,7 +319,7 @@ def get_default_antenna(msname, antenna):
         elif n_ant == 1:
             i_ant = ant_list[0]
         else:
-            errmsg="Illegular antenna ID detected."
+            errmsg="Irregular antenna ID detected."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
             # raise Exception(errmsg)
 
@@ -326,7 +327,7 @@ def get_default_antenna(msname, antenna):
         ant_name = msmd.antennanames(i_ant)[0]
 
         _msg("Default Antenna")
-        _msg(" - totally %d antenssas were picked up. [query=%s]" % (n_ant, antenna))
+        _msg(" - totally %d antenna(s) were picked up. [query=%s]" % (n_ant, antenna))
         _msg(" - Antenna ID  = %d was chosen. Name= %s" % (i_ant, ant_name))
 
     return i_ant
@@ -337,7 +338,7 @@ def get_default_antenna(msname, antenna):
 #
 def get_default_altitude(msname, antid):
     with open_table(os.path.join(msname, 'ANTENNA')) as tb:
-        # obtain the antenna Position (Earth Center) spified by antid #
+        # obtain the antenna Position (Earth Center) specified by antid #
         pos = tb.getcell('POSITION', antid)
         X = float(pos[0])
         Y = float(pos[1])
@@ -373,7 +374,7 @@ def get_default_altitude(msname, antid):
 def showAtmInfo(atm):
     """
      Returned atm (from initAtmProfile) may have a different structure.
-     In casa6, additional variable information is assed in Dict type. 
+     In casa6, additional variable information is added in Dict type. 
     """
     version = at.getAtmVersion()
     _msg("\nAtomosphere Tool:: version = %s\n" % version)
@@ -409,7 +410,7 @@ def showLayerInfo(at):
 # Logging CASA LOG (INFO/WARN/SEVERE)
 #
 def _msg(msg, msgtype='INFO'):
-    # Informatin meesage #
+    # Information message #
     if msgtype == 'INFO':
         print(msg)
     # other Warning/Error message #
@@ -443,7 +444,6 @@ def atmMst(
         intent=intent,
         observation=observation,
         feed=feed,
-        # msselect=msselect,   ## task mstransform does not support 'msselect' in args.
         reindex=False)   # Must be False #
 
 ############################################################
@@ -565,7 +565,7 @@ def calc_sdatmcor(
     _msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
     _msg("  default MS file (corms) = %s , Exist =%s" % (corms, corms_exist))
 
-    # infile Inaccesible #
+    # infile Inaccessible #
     if not rawms_exist:
         _msg("\nERROR::Specified infile does not exist.\n", 'ERROR')
         return False
@@ -596,10 +596,10 @@ def calc_sdatmcor(
 
     #
     # Following variables have initial parameters according to the Original script.
-    #  - these values will be translated with unit to var.'t_xxxxxxxxx' in Task code.
+    #  - these values will be translated with unit to var.:'atm_xxxxxxxxx' in the Task code.
     #
 
-    # Default constant. refer to CAS-13160 #
+    # Default constant. Refer to CAS-13160 #
     atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
     maxalt = 120        ### maxAltitude parameter for at (km)
     lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
@@ -730,7 +730,7 @@ def calc_sdatmcor(
             #
             # (Task Section )
             # force to change 'processing Spw'
-            # - If spw is pecified in the arg, set up 'spws'
+            # - If spw is specified in the arg, arrange 'spws'
             #
             _msg("Determine active spw when spw is in the arg.")
             if (p_spw != ''):
@@ -787,7 +787,7 @@ def calc_sdatmcor(
     #
     _msg("Determine outputspw")
 
-    # set Output Spw (if no arg, use spws) #
+    # set Output Spw. If no arg, use spws, which means all spw(s). #
     if (p_outputspw == ''):
         outputspws = spws         # use calculated 'spws' above
     else:
@@ -880,15 +880,16 @@ def calc_sdatmcor(
     ################################################################
     # Looping over spws
     ################################################################
-    with open_table(corms, nomodify=False):
+    with open_table(corms, nomodify=False) as tb:
 
         # Note CAS-13160:
         # spw for-loop:
         # - Inside this loop, calculation is executed with each spwid
-        # - The result is wriiten upon OutputFile with selected Spw, which is specified by OutputSpw
-        # - List of OutputSpw must be the part of List of Spws
+        # - The corrected result is written upon OutputFile with selected Spw.
+        # - OutputSpw occasionally intend No-Corrected value.  
         # - please see the inserted block.
-        #
+        # (TBD) How to output No-Corrected value to 'corms', directed by 'spw'
+        #       The original script does not explicitly imply the logic.
 
         # for spwid in spws:
         for spwid in outputspws:
@@ -965,7 +966,7 @@ def calc_sdatmcor(
             #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
             #
             atm_layerboundaries  = []   # initially null-List.   array: layer boundary [m]
-            atm_layertemperature = []   # initiallu null-list.   array: layer temperature [K]
+            atm_layertemperature = []   # initially null-list.   array: layer temperature [K]
 
             #
             # ATM fundamental parameters activation.
@@ -988,7 +989,7 @@ def calc_sdatmcor(
                 atm_dp,          atm_dp_set           = _set_float_atmparam_from_args(param_dp, atm_dp, 'mbar')
                 atm_dpm,         atm_dpm_set          = _set_float_atmparam_from_args(param_dpm, atm_dpm, '')
 
-                # User-Uefined Profile. 
+                # User-Defined Profile. 
                 #  when the arg is active, directly pass the arg(param_xxxx) to atm_xxxx for initAtmProfile. 
                 atm_layerboundaries  = _set_list_atmparam_from_args(param_layerboundaries)
                 atm_layertemperature = _set_list_atmparam_from_args(param_layertemperature)
@@ -1101,7 +1102,7 @@ def calc_sdatmcor(
                         _msg(msg)
                         break
 
-                # (org script) #
+                # (original script) #
                 dt = tmoffsource - t
                 if (dt < 0).sum() == 0 or (dt > 0).sum() == 0:  ### any data before first OFF or after last OFF are disregarded
                     continue
