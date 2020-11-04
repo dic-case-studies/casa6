@@ -45,7 +45,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1019 (19-Oct-2020) .\n")
+    _msg("\nSDATMCOR revision 1104 (04-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -359,9 +359,7 @@ def showAtmInfo(atm):
 
     # ATM Profile #
     if is_CASA6:
-        for s in atm:
-            if type(s) is str:
-                _msg(s)
+        _msg(atm[0])
     else:
         _msg(atm)
 
