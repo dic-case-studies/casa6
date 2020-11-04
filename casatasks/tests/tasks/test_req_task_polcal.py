@@ -321,11 +321,10 @@ class polcal_test(unittest.TestCase):
     def test_combineSpwLin(self):
         ''' Test that combine spws increases the SNR/ decreases the noise '''
 
-        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2,3', solint='inf',
-               combine='spw', preavg=101.0, minsnr=0.0, poltype='Dlls',
+        # Combine no channels
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2,3', solint='inf,1ch',
+               combine='scan,spw', preavg=101.0, minsnr=0.0, poltype='Dflls',
                smodel=[1.0, 0.08, 0.06, 0.0])
-
-        # TODO come back to this us df?
 
         # get the CPARAM of the polcal run
         calresult = getparam(outcal)
@@ -333,14 +332,41 @@ class polcal_test(unittest.TestCase):
         tb.open(calpathLin)
         # Each 10 rows is a spectral window
         refresult = tb.getcol('CPARAM')[:, :, 20:40]
+        noNoise = tb.getcol('CPARAM')[:, :, 10:20]
+        print(refresult.shape)
         tb.close()
 
-        # Shape after combine spw = [2,1,80]
-        # Testing on other cases shows mean - mean is the same as mean(diff)
+        combinedOneChan = np.mean(calresult[:, 0, :])
+
+        # Clear old output
+        shutil.rmtree(outcal)
+
+        # Combine 4 channels
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2,3', solint='inf,2ch',
+               combine='scan,spw', preavg=101.0, minsnr=0.0, poltype='Dflls',
+               smodel=[1.0, 0.08, 0.06, 0.0])
+
+        calresult = getparam(outcal)
+        combinedTwoChan = np.mean(calresult[:, 0, :])
+
+        # Clear old output
+        shutil.rmtree(outcal)
+
+        # Combine all channels
+        polcal(vis=datacopyLin, caltable=outcal, field='1', spw='2,3', solint='inf,8ch',
+               combine='scan,spw', preavg=101.0, minsnr=0.0, poltype='Dflls',
+               smodel=[1.0, 0.08, 0.06, 0.0])
+
+        calresult = getparam(outcal)
+
+        # Differences
+        oneDiff = (combinedOneChan - np.mean(noNoise))
+        twoDiff = (combinedTwoChan - np.mean(noNoise))
 
         meanDiff = np.mean(calresult) - np.mean(refresult)
 
-        self.assertTrue(np.isclose(meanDiff, 0, atol=7e-4))
+        self.assertTrue(np.isclose((twoDiff-(oneDiff*np.sqrt(2))), 0, atol=4e-4))
+        self.assertTrue(np.isclose(meanDiff, 0, atol=1e-4))
 
     def test_noSourceInstPolNoiseLin(self):
         ''' Test on Field 0 and spw 2 or 3. Should just see noise '''
