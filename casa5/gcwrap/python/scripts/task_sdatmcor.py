@@ -129,7 +129,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1104-1513 (04-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-XX:XX (06-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -490,9 +490,10 @@ def atmMst(
     correlation, timerange, intent,
     observation, feed, msselect):
 
-    # Antenna Key word for SD #
-    if antenna != '':
-        antenna += '&&&'
+    # Antenna Key word for SD 
+    # If requested, flowing tailing is needed.  
+    #     if antenna != '':
+    #         antenna += '&&&'
 
     mstransform(
         vis=infile,
@@ -1029,7 +1030,7 @@ def calc_sdatmcor(
             atm_dpm_set      = False
 
             #
-            # (from 'help' infomation)
+            # (from 'help' information)
             # User-Defined Profile (example)
             #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
             #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
@@ -1136,7 +1137,12 @@ def calc_sdatmcor(
 
             # original: make ddis[spwid]
             _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
-            querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
+
+            # Query Text (DESC_ID) and  applying MSSELECT if anything is given #
+            querytext = 'DATA_DESC_ID in %s' % ddis[spwid] 
+            if (p_msselect != ''):
+                querytext += p_msselect
+ 
             subtb = tb.query(querytext)
   
             _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
