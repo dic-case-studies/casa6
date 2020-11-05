@@ -429,11 +429,8 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_sdatmcor_spw_process_23_select_all(self):
         '''test data selection: process only spw 23 but output both 19 and 23'''
-        # TODO: this should not fail
-        self.assertFalse(
-            sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
-        )
-        #self.check_result({19: False, 23: True})
+        sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: False, 23: True})
 
     def test_sdatmcor_intent_selection(self):
         '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
