@@ -83,7 +83,8 @@
 #include <synthesis/MeasurementEquations/lbfgsGaussian.h>
 //#include <synthesis/MeasurementEquations/lbfgsAspZhang.h>
 using namespace LBFGSpp;*/
-#include <Eigen/Core>
+
+// for gsl
 using Eigen::VectorXd;
 
 //for CppNumericalSolvers
@@ -2252,18 +2253,34 @@ void AspMatrixCleaner::testBFGS(const Matrix<Float>& psf)
   fftd.fft0(compDirty, cWork, false);
   fftd.flip(compDirty, false, false); //need this
 
-  void* par[2];
-
   gsl_multimin_function_fdf my_func;
   gsl_multimin_fdfminimizer *s = NULL;
 
-  setupSolver(&s,
+  // this block should be equivalent of setupSolver
+  simCenter.push_back(simplePos);
+  //ParamObj optParam(compDirty, *itsXfr, simCenter);
+  ParamObj optParam(msDirty, *itsXfr, simCenter);
+  ParamObj *ptrParam;
+  ptrParam = &optParam;
+  const gsl_multimin_fdfminimizer_type *T;
+  T = gsl_multimin_fdfminimizer_vector_bfgs2;
+  s = gsl_multimin_fdfminimizer_alloc(T, 2);
+  my_func.n      = 2;
+  my_func.f      = my_f; //my_f
+  my_func.df     = my_df; //my_df
+  my_func.fdf    = my_fdf; // my_fdf
+  my_func.params = (void *)ptrParam;
+  cout << "msDirty " << msDirty(256,256) << endl;
+  cout << "*itsXfr " << (*itsXfr)(256,256) << endl;
+
+
+  /*setupSolver(&s,
       gsl_multimin_fdfminimizer_vector_bfgs2,
       &my_func,
       1, // # aspen
       par,
       &compDirty,
-      &simplePsfFT);
+      &simplePsfFT);*/
 
   // Set the initial guess
   gsl_vector *x = NULL;
@@ -2281,92 +2298,6 @@ void AspMatrixCleaner::testBFGS(const Matrix<Float>& psf)
 
   gsl_multimin_fdfminimizer_free(s);
   gsl_vector_free(x);
-
-  //----- below is example-----------//
-  /*params_t   *params = NULL;
-    gsl_matrix *Q      = NULL;
-    gsl_vector *b      = NULL;
-    gsl_vector *x0     = NULL;
-    int        status  = 0;
-    int        k       = -1;
-
-    const gsl_multimin_fdfminimizer_type *T;
-    gsl_multimin_fdfminimizer            *s;
-    gsl_multimin_function_fdf            my_func;
-
-    / ** Set matrix Q and vector b * /
-    Q = gsl_matrix_alloc(2, 2);
-    gsl_matrix_set(Q, 0, 0,  5.0f);
-    gsl_matrix_set(Q, 0, 1, -3.0f);
-    gsl_matrix_set(Q, 1, 0, -3.0f);
-    gsl_matrix_set(Q, 1, 1,  2.0f);
-    b = gsl_vector_alloc(2);
-    gsl_vector_set(b, 0, 0.0f);
-    gsl_vector_set(b, 1, 1.0f);
-
-    / ** Initial guess, x0 = [0, 0] * /
-    x0 = gsl_vector_alloc(2);
-    gsl_vector_set(x0, 0, 0.0f);
-    gsl_vector_set(x0, 1, 0.0f);
-
-    / ** Load Q and b to objective function parameter * /
-    IPosition simplePos(2, N/2, N/2);
-    vector<IPosition> simCenter;
-    simCenter.push_back(simplePos);
-    simCenter.push_back(simplePos);
-    params = (params_t *) malloc(sizeof(params_t));
-    params->Q = Q;
-    params->b = b;
-    //params->itsMatDirty = *itsOrigDirty;
-    //params->itsPsfFT = *itsXfr;
-    //params->center = simCenter;
-    //params->test = test;
-
-    T = gsl_multimin_fdfminimizer_vector_bfgs2;
-    s = gsl_multimin_fdfminimizer_alloc(T, 2);
-    my_func.n      = 2; / ** dimension of x and gradient *
-    my_func.f      = objective_func; //my_f
-    my_func.df     = gradient_func; //my_df
-    my_func.fdf    = fdf; // my_fdf
-    my_func.params = params;
-
-    gsl_multimin_fdfminimizer_set(s,
-                                  &my_func,
-                                  x0,
-                                  0.5,      / ** step size *
-                                  0.0001f); / ** tol * /
-
-    debug_print(s, k);
-    printf("\n---------- BFGS algorithm begin ----------\n");
-
-    k = 0;
-    do {
-        /**
-         * Perform an iteration of optimization.
-         * The function will return GSL_SUCCESS if there is
-         * no calculation errors when calculating
-         * the objective function and its gradient or derivative
-         * function.
-         * /
-        status = gsl_multimin_fdfminimizer_iterate(s);
-
-        /**
-         * Check the gradient difference.
-         * The function will return GSL_SUCCESS if the
-         * termination criteria has satisfiyed.
-         * /
-        status = gsl_multimin_test_gradient(s->gradient, 0.001f);
-
-        debug_print(s, k);
-        ++k;
-    } while(status == GSL_CONTINUE && k < 10);
-    printf("\n----------  BFGS algorithm end  ----------\n");
-
-    free(params);
-    gsl_multimin_fdfminimizer_free(s);
-    gsl_matrix_free(Q);
-    gsl_vector_free(b);
-    gsl_vector_free(x0);*/
 }
 
 } //# NAMESPACE CASA - END
