@@ -212,7 +212,8 @@
 -->
     <constraints>
       <when param="atmdetail">
-        <equals value="True">
+        <equals value="False" type="bool"/>
+        <equals value="True" type="bool">
             <default param="altitude"><value type="string"></value></default>
             <default param="temperature"><value type="string"></value></default>
             <default param="pressure"><value type="string"></value></default>
