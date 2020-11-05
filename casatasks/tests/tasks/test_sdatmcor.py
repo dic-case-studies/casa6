@@ -241,7 +241,7 @@ class test_sdatmcor(unittest.TestCase):
     #     # Run Task and check
     #     self.assertTrue(self._run_task(prm))
 
-    def _check_result_spw(self, spw, is_selected, is_processed):
+    def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
 
         contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA'])
         stateids_after = contents_after['STATE_ID']
@@ -302,16 +302,17 @@ class test_sdatmcor(unittest.TestCase):
                 self.assertAlmostEqual(diff_mean, 0.307, places=3)
                 self.assertLess(diff_std, 0.0003)
 
-            # OFF_SOURCE data should not be touched
-            mask0 = np.logical_and(stateids_before != 14, stateids_before != 84)
-            data_off_before = data_before[:, :, mask0]
-            mask1 = np.logical_and(stateids_after != 14, stateids_after != 84)
-            data_off_after = data_after[:, :, mask1]
-            self.assertTrue(np.all(data_off_before == data_off_after))
+            if not on_source_only:
+                # OFF_SOURCE data should not be touched
+                mask0 = np.logical_and(stateids_before != 14, stateids_before != 84)
+                data_off_before = data_before[:, :, mask0]
+                mask1 = np.logical_and(stateids_after != 14, stateids_after != 84)
+                data_off_after = data_after[:, :, mask1]
+                self.assertTrue(np.all(data_off_before == data_off_after))
         else:
             self.assertTrue(np.all(data_after == data_before))
 
-    def check_result(self, spwprocess):
+    def check_result(self, spwprocess, on_source_only=False):
         """Check Result
 
         Args:
@@ -326,7 +327,7 @@ class test_sdatmcor(unittest.TestCase):
         for spw in [19, 23]:
             is_selected = spw in spwprocess
             is_processed = spwprocess.get(spw, False)
-            self._check_result_spw(spw, is_selected, is_processed)
+            self._check_result_spw(spw, is_selected, is_processed, on_source_only)
 
     def test_sdatmcor_normal(self):
         '''test normal usage of sdatmcor'''
@@ -409,6 +410,11 @@ class test_sdatmcor(unittest.TestCase):
             sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
         )
         #self.check_result({19: False, 23: True})
+
+    def test_sdatmcor_intent_selection(self):
+        '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
+        sdatmcor(infile=self.infile, outfile=self.outfile, intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
+        self.check_result({19: True, 23: True}, on_source_only=True)
 
 
 def suite():
