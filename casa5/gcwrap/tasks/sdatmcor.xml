@@ -4,10 +4,10 @@
      <shortdescription>Offline Atomospheric Lines Correction </shortdescription>
 
 <description>
-    
+
     The task sdatmcor is an SD task for providing Offline Atmosphere Correction
-    over specified time range on selected data set. 
-    
+    over specified time range on selected data set.
+
 </description>
 
 <input>
@@ -21,12 +21,12 @@
     <param type="string" name="datacolumn" ignorecase="true">
         <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
         <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
-        
+
         <value>data</value>
         <allowed kind="enum">
             <value>data</value>
             <value>float_data</value>
-            <value>corrected</value> 
+            <value>corrected</value>
        </allowed>
     </param>
 
@@ -53,7 +53,7 @@
         <description>spw selection (&quot;&quot; = all)</description>
         <value/>
     </param>
-    
+
     <param type="string" name="scan">
         <shortdescription>scan selection. (&quot;&quot; = all)</shortdescription>
         <description>scan selection. (&quot;&quot; = all)</description>
@@ -108,24 +108,31 @@
         <value type="string"></value>
     </param>
 
+    <param name="gainfactor" type="any">
+        <shortdescription>gain factor to multiply correction term</shortdescription>
+        <description>Gain factor to multiply correction term. Default is 1.0. Fixed factor can be given as float value. If factors vary with spw, they can be specified by either dictionary whose keys are spw id or caltable. For caltable, inverse square of stored value is applied.</description>
+        <any type="variant" limittypes="double record string"/>
+        <value type="double">1.0</value>
+    </param>
+
     <param name="dtem_dh" type="any">
         <shortdescription>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default) </shortdescription>
         <description>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default)</description>
-        <any type="variant"  limittypes="string double"/>  
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
     <param name="h0" type="any">
         <shortdescription>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</shortdescription>
         <description>scale height for water. (km) e.g. 2.0 ,(&quot;&quot; = Tool default)</description>
-        <any type="variant"  limittypes="string double"/>  
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
     <param name="atmtype" type="any">
         <shortdescription>atmtype. (1: tropical, 2: mid lat summer, 3: mid lat winter, 4: sub art summer, 5: sub art winter) (&quot;&quot; =2)</shortdescription>
         <description>atmtype.(1: tropical, 2: mid lat summer, 3: mid lat winter, 4: sub art summer, 5: sub art winter) (&quot;&quot; =2)</description>
-        <any type="variant"  limittypes="string int"/>  
+        <any type="variant"  limittypes="string int"/>
         <value type="string">2</value>
     </param>
 
@@ -135,7 +142,7 @@
         <value type="bool">False</value>
     </param>
 
-<!--   
+<!--
    SubParameters  when 'atmdetail' is True
 -->
 
@@ -176,7 +183,7 @@
     <param name="dp" type="any" subparam="true">
         <shortdescription>initial pressure step [mbar].(&quot;&quot; = Tool default)</shortdescription>
         <description>initial pressure step [mbar].(&quot;&quot; = Tool default)</description>
-        <any type="variant"  limittypes="string double"/> 
+        <any type="variant"  limittypes="string double"/>
         <value type="string"></value>
     </param>
 
@@ -221,7 +228,7 @@
 
 </input>
 
-<example>  
+<example>
 -----------------
 Keyword arguments
 -----------------
@@ -229,7 +236,7 @@ infile -- name of input SD dataset
 datacolumn -- name of data column to be used
         options: 'data', 'float_data', or 'corrected'
         default: 'float_data'
-            
+
 field -- select data by field IDs and names
         default: '' (use all fields)
         example: field='3C2*' (all names starting with 3C2)
@@ -258,7 +265,7 @@ antenna -- select data by antenna name or ID
         default: '' (use all antennas)
         example: 'PM03'
 timebin -- bin width for time averaging
-           default: 'all' 
+           default: 'all'
            example: timebin='100s' (time averaging performed over 100 second bins)
                     timebin=''  (use all)
 timespan -- Let the timebin span across scan, state or both.
@@ -270,7 +277,7 @@ timespan -- Let the timebin span across scan, state or both.
 
         default: 'scan' (separate time bins by both of the above)
         options: 'scan', 'state', 'state,scan', ''
-               
+
         examples:
              timespan = 'scan'; can be useful when the scan number
              goes up with each integration as in many WSRT MSs.
