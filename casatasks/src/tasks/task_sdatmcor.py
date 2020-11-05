@@ -960,7 +960,7 @@ def calc_sdatmcor(
             atm_dpm_set      = False
 
             #
-            # (from 'help' infomation)
+            # (from 'help' information)
             # User-Defined Profile (example)
             #    myalt = [ 5071.72200397, 6792.36546384, 15727.0776121, 42464.18192672 ] #meter
             #    mytemp = [ 270., 264., 258., 252. ] #Kelvin
@@ -1067,7 +1067,12 @@ def calc_sdatmcor(
 
             # original: make ddis[spwid]
             _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
-            querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
+
+            # Query Text (DESC_ID) and  applying MSSELECT if anything is given #
+            querytext = 'DATA_DESC_ID in %s' % ddis[spwid] 
+            if (p_msselect != ''):
+                querytext += p_msselect
+ 
             subtb = tb.query(querytext)
   
             _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
