@@ -429,7 +429,9 @@ class PySynthesisImager:
 
 #############################################
     def makePB(self):
-        self.makePBCore()
+        ###for cube standard gridder pb is made in c++ with psf
+        if(not("stand" in self.allgridpars['0']['gridder'] and "cube" in self.allimpars['0']['specmode'])):
+            self.makePBCore()
         for immod in range(0,self.NF):
             self.PStools[immod].normalizeprimarybeam() 
 
