@@ -2,6 +2,8 @@ import os
 import pylab as pl
 import shutil
 import contextlib
+import collections
+import numpy as np
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -56,12 +58,69 @@ def open_msmd(path):
         # print("tentative::MSMD CLOSED.")
         msmd.close()
 
+
+def parse_gainfactor(gainfactor):
+    """Parse gainfactor parameter
+
+    Parse gainfactor parameter.
+
+    Args:
+        gainfactor (float, dict, str): gain factor.
+            if float value is given, it applies to all spws.
+            if dict is given, spw id and corresponding factor
+            should be provided as key-value pair.
+            if str is given, it should be the name of caltable.
+            factors are derived as inverse-square of values
+            stored in the caltable.
+
+    Raises:
+        FileNotFoundError: specified caltable does not exist.
+
+    Returns:
+        dictionary whose keys are spw id in string while values
+        are the factors to be applied to each spw.
+        dictionary is defined as collections.defaultdict that
+        returns 1.0 as a default value.
+    """
+    gaindict = collections.defaultdict(lambda: 1.0)
+    if isinstance(gainfactor, dict):
+        # make sure keys are str
+        d = dict((str(k), v) for k, v in gainfactor.items())
+        gaindict.update(d)
+    elif isinstance(gainfactor, str):
+        # should be the name of caltable
+        if not os.path.exists(gainfactor):
+            raise FileNotFoundError('"{}" should exist.'.format(gainfactor))
+        with open_table(gainfactor) as tb:
+            if 'FPARAM' in tb.colnames():
+                col = 'FPARAM'
+            elif 'CPARAM' in tb.colnames():
+                col = 'CPARAM'
+            else:
+                assert False
+            spw_list = set(tb.getcol('SPECTRAL_WINDOW_ID'))
+            for spw in spw_list:
+                tsel = tb.query('SPECTRAL_WINDOW_ID=={}'.format(spw))
+                try:
+                    v = tsel.getcol(col).real
+                finally:
+                    tsel.close()
+                factor = np.mean(1 / np.square(v))
+                gaindict[str(spw)] = factor
+    else:
+        # should be float
+        v = float(gainfactor)
+        gaindict = collections.defaultdict(lambda: v)
+    return gaindict
+
+
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna,
         correlation, timerange, intent,
         observation, feed, msselect,
         outputspw,
+        gainfactor,
         dtem_dh, h0, atmtype,
         atmdetail,
         altitude, temperature, pressure, humidity, PWV,
@@ -127,6 +186,9 @@ def sdatmcor(
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
 
+    # generate gain factor dictionary
+    gaindict = parse_gainfactor(gainfactor)
+
 #
 # Call calc Function
 #
@@ -134,6 +196,7 @@ def sdatmcor(
         infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna, correlation, timerange, intent, observation, feed, msselect,
         outputspw,
+        gaindict,
         dtem_dh, h0, atmtype,
         atmdetail,
         altitude, temperature, pressure, humidity, PWV, dp, dpm,
@@ -469,6 +532,7 @@ def calc_sdatmcor(
         p_feed,
         p_msselect,
         p_outputspw,
+        gaindict,
         param_dtem_dh,
         param_h0,
         param_atmtype,
@@ -896,6 +960,11 @@ def calc_sdatmcor(
             # Log #
             _msg("Processing spw %d in %s " % (spwid, spws))
 
+            # gain factor
+            spwkey = str(spwid)
+            factor = gaindict[spwkey]
+            _msg('Applying gain factor {} to spw {}'.format(spwkey, factor))
+
             istdm = False
             nchan = len(chanfreqs[spwid])
 #           fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
@@ -1140,7 +1209,7 @@ def calc_sdatmcor(
 
                 # Adjust Body (dTa is vector) #
                 for ipol in range(npol):
-                    cdata[ipol, :, i] -= dTa
+                    cdata[ipol, :, i] -= dTa * factor
 
             subtb.putcol(datacolumn, cdata)
             subtb.close()
