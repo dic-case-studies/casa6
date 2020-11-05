@@ -129,7 +129,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-XX:XX (06-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-BP5 (06-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -147,6 +147,11 @@ def sdatmcor(
         errmsg = "You are attempting to write the output on your input file."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
+
+    # Antenna Key word, form without &&& # 
+    if antenna != '':
+        antenna = antenna.replace('&','')
+
 #
 # Inspect arguments.
 #  - inspect Unit.
@@ -490,10 +495,10 @@ def atmMst(
     correlation, timerange, intent,
     observation, feed, msselect):
 
-    # Antenna Key word for SD 
-    # If requested, flowing tailing is needed.  
-    #     if antenna != '':
-    #         antenna += '&&&'
+    # Antenna Key word, to adjust to mstransform # 
+    if antenna != '':
+        antenna = antenna.replace('&','')
+        antenna += '&&&'
 
     mstransform(
         vis=infile,
