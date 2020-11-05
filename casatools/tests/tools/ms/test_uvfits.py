@@ -20,8 +20,7 @@ Features tested:
   1. When that UVFITS file is read back in, is its data still correct?
 '''
 
-datapath = 'regression/unittest/uvfits/'
-datapath2 = 'regression/'
+datapath = 'unittest/uvfits/'
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -180,7 +179,7 @@ class uvfits_test(unittest.TestCase):
     def test_badscan(self):
         """CAS-10054: Tests intermittent incorrect scan number in last row of single-scan dataset"""
         myms = mstool()
-        fitsname = ctsys.resolve(datapath2 + "ngc4826/fitsfiles/3c273.fits7")
+        fitsname = ctsys.resolve(datapath + "3c273.fits7")
         msname = "ngc4826.tutorial.3c273.7.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()
