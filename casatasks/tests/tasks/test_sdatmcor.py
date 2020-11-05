@@ -350,19 +350,15 @@ class test_sdatmcor(unittest.TestCase):
         '''test to avoid overwriting existing outfile'''
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
-        # TODO: sdatmcor should throw exception
-        self.assertFalse(
+        with self.assertRaises(Exception):
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=False)
-        )
 
     def test_sdatmcor_wrong_datacolumn(self):
         '''test wrong datacolumn'''
         wrong_colnames = ['corrected', 'float_data']
         for colname in wrong_colnames:
-            # TODO: sdatmcor should throw exception
-            self.assertFalse(
+            with self.assertRaises(Exception):
                 sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn=colname)
-            )
 
     def test_sdatmcor_corrected(self):
         '''test if CORRECTED_DATA column is handled properly'''
