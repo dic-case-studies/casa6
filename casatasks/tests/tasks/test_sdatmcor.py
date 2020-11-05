@@ -21,6 +21,7 @@ if is_CASA6:
     from casatools import ctsys
     from casatools import calibrater
     from casatools import ms as mstool
+    from casatasks import gencal, applycal
 
     datapath = ctsys.resolve('')
 
@@ -28,6 +29,7 @@ if is_CASA6:
 
 else:
     from tasks import sdatmcor
+    from tasks import gencal, applycal
     from __main__ import default
     from sdutil import tbmanager
     from taskinit import cbtool as calibrater
@@ -71,10 +73,26 @@ def read_table(name, spw, cols=['STATE_ID', 'DATA']):
     with tbmanager(name) as tb:
         tsel = tb.query('DATA_DESC_ID IN [{}]'.format(','.join([str(i) for i in ddid])))
         try:
-            result_dict = dict((k, tsel.getcol(k)) for k in cols)
+            result_dict = dict((k, tsel.getcol(k)) for k in cols if k in tb.colnames())
         finally:
             tsel.close()
     return result_dict
+
+
+def apply_gainfactor(name, spw, factor):
+    ms = mstool()
+    idx = ms.msseltoindex(name, spw=[int(spw)])
+    ddid = idx['dd'][0]
+    with tbmanager(name, nomodify=False) as tb:
+        colnames = tb.colnames()
+        tsel = tb.query('DATA_DESC_ID=={}'.format(ddid))
+        try:
+            for colname in ['DATA', 'FLOAT_DATA', 'CORRECTED_DATA']:
+                if colname in colnames:
+                    data = tsel.getcol(colname)
+                    tsel.putcol(colname, data * factor)
+        finally:
+            tsel.close()
 
 
 #
@@ -99,6 +117,7 @@ class test_sdatmcor(unittest.TestCase):
     datapath = ctsys_resolve('visibilities/almasd')
     infile = 'X320b_sel2.ms'
     outfile = infile + '.atmcor'
+    caltable = infile + '.k2jycal'
 
     local_unit_test = False
 
@@ -117,12 +136,14 @@ class test_sdatmcor(unittest.TestCase):
 
         smart_remove(self.infile)
         smart_remove(self.outfile)
+        smart_remove(self.caltable)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
 
     def tearDown(self):
         print("tearDown::deleting MSs.")
         smart_remove(self.infile)
         smart_remove(self.outfile)
+        smart_remove(self.caltable)
         for tmp in self.__get_temporary_files():
             smart_remove(tmp)
 
@@ -241,20 +262,26 @@ class test_sdatmcor(unittest.TestCase):
     #     # Run Task and check
     #     self.assertTrue(self._run_task(prm))
 
-    def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
+    def _check_result_spw(self, spw, is_selected, is_processed, on_source_only, factor):
 
-        contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA'])
+        contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA', 'CORRECTED_DATA'])
         stateids_after = contents_after['STATE_ID']
-        data_after = contents_after['DATA'].real
+        if 'CORRECTED_DATA' in contents_after:
+            data_after = contents_after['CORRECTED_DATA']
+        else:
+            data_after = contents_after['DATA'].real
 
         # if is_selected is False, selected data should be empty
         if not is_selected:
             self.assertEqual(len(stateids_after), 0)
             return
 
-        contents_before = read_table(self.infile, spw, ['STATE_ID', 'DATA'])
+        contents_before = read_table(self.infile, spw, ['STATE_ID', 'DATA', 'CORRECTED_DATA'])
         stateids_before = contents_before['STATE_ID']
-        data_before = contents_before['DATA'].real
+        if 'CORRECTED_DATA' in contents_before:
+            data_before = contents_before['CORRECTED_DATA']
+        else:
+            data_before = contents_before['DATA'].real
 
         # check if spw exist in the data
         self.assertGreater(len(stateids_after), 0)
@@ -299,8 +326,8 @@ class test_sdatmcor(unittest.TestCase):
                 diff = data_mean_before - data_mean_after
                 diff_mean = diff.mean()
                 diff_std = diff.std()
-                self.assertAlmostEqual(diff_mean, 0.307, places=3)
-                self.assertLess(diff_std, 0.0003)
+                self.assertAlmostEqual(diff_mean, 0.307 * factor, places=2)
+                self.assertLess(diff_std, 0.0003 * factor)
 
             if not on_source_only:
                 # OFF_SOURCE data should not be touched
@@ -312,7 +339,7 @@ class test_sdatmcor(unittest.TestCase):
         else:
             self.assertTrue(np.all(data_after == data_before))
 
-    def check_result(self, spwprocess, on_source_only=False):
+    def check_result(self, spwprocess, on_source_only=False, factor={}):
         """Check Result
 
         Args:
@@ -327,7 +354,8 @@ class test_sdatmcor(unittest.TestCase):
         for spw in [19, 23]:
             is_selected = spw in spwprocess
             is_processed = spwprocess.get(spw, False)
-            self._check_result_spw(spw, is_selected, is_processed, on_source_only)
+            gainfactor = factor.get(str(spw), 1.0)
+            self._check_result_spw(spw, is_selected, is_processed, on_source_only, gainfactor)
 
     def test_sdatmcor_normal(self):
         '''test normal usage of sdatmcor'''
@@ -411,6 +439,41 @@ class test_sdatmcor(unittest.TestCase):
         '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
         sdatmcor(infile=self.infile, outfile=self.outfile, intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
         self.check_result({19: True, 23: True}, on_source_only=True)
+
+    def test_sdatmcor_gainfactor_float(self):
+        """test gainfactor: float input"""
+        gainfactor = 10.0
+        apply_gainfactor(self.infile, 19, gainfactor)
+        apply_gainfactor(self.infile, 23, gainfactor)
+        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', gainfactor=gainfactor)
+        self.check_result(
+            {19: True, 23: True},
+            factor={'19': gainfactor, '23': gainfactor}
+        )
+
+    def test_sdatmcor_gainfactor_dict(self):
+        """test gainfactor: dict input"""
+        gainfactor = {'19': 10.0, '23': 45.0}
+        apply_gainfactor(self.infile, 19, gainfactor['19'])
+        apply_gainfactor(self.infile, 23, gainfactor['23'])
+        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', gainfactor=gainfactor)
+        self.check_result(
+            {19: True, 23: True},
+            factor=gainfactor
+        )
+
+    def test_sdatmcor_gainfactor_caltable(self):
+        """test gainfactor: caltable input"""
+        gainfactor = {'19': 10.0, '23': 45.0}
+        for k, v in gainfactor.items():
+            p = 1 / np.sqrt(v)
+            gencal(vis=self.infile, caltable=self.caltable, caltype='amp', spw=k, parameter=[p])
+        applycal(vis=self.infile, gaintable=self.caltable, flagbackup=False)
+        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected', gainfactor=gainfactor)
+        self.check_result(
+            {19: True, 23: True},
+            factor=gainfactor
+        )
 
 
 def suite():
