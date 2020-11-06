@@ -4331,7 +4331,7 @@ void MSTransformManager::reindexDDISubTable()
                 rownr -= 1;
             }
 
-        	ddiTable.removeRow(rowsToDelete);
+            ddiTable.removeRow(rowsToDelete);
     	}
 
 

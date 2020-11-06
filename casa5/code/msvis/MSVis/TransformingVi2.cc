@@ -488,19 +488,19 @@ TransformingVi2::nPolarizationIds ()  const
     return getVii()->nPolarizationIds ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRows ()  const
 {
     return getVii()->nRows ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRowsInChunk ()  const
 {
     return getVii()->nRowsInChunk ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRowsViWillSweep ()  const
 {
     return getVii()->nRowsViWillSweep ();
@@ -607,7 +607,7 @@ TransformingVi2::setReportingFrameOfReference (Int frame)
 }
 
 void
-TransformingVi2::setRowBlocking (Int nRows)
+TransformingVi2::setRowBlocking (rownr_t nRows)
 {
      getVii()->setRowBlocking (nRows);
 }

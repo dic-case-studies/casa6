@@ -401,7 +401,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
     Int isCached=checkPBOfField(vb, convFuncRowMap, extraShift, useExtraShift);
     //cout << "isCached " << isCached <<  endl;
-    if(isCached==1 && (convFuncRowMap.shape()[0]==vb.nRows())) {
+    if(isCached==1 && (convFuncRowMap.shape()[0]==(ssize_t)vb.nRows())) {
         /*convFunc.reference(convFunc_p);
         weightConvFunc.reference(weightConvFunc_p);
         convsize=*convSizes_p[actualConvIndex_p];

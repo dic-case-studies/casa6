@@ -1832,13 +1832,13 @@ VisibilityIteratorImpl2::allBeamOffsetsZero() const
 	return msIter_p->allBeamOffsetsZero();
 }
 
-Int
+rownr_t
 VisibilityIteratorImpl2::nRows() const
 {
 	return rowBounds_p.subchunkNRows_p;
 }
 
-Int VisibilityIteratorImpl2::nRowsInChunk() const
+rownr_t VisibilityIteratorImpl2::nRowsInChunk() const
 {
 	return msIter_p->table().nrow();
 }
@@ -1928,7 +1928,7 @@ VisibilityIteratorImpl2::setInterval(Double timeInterval)
 }
 
 void
-VisibilityIteratorImpl2::setRowBlocking(Int nRow)
+VisibilityIteratorImpl2::setRowBlocking(rownr_t nRow)
 {
 	pendingChanges_p->setNRowBlocking(nRow);
 }
@@ -3880,7 +3880,7 @@ VisibilityIteratorImpl2::nPolarizationIds() const
 	return subtableColumns_p->polarization().nrow();
 }
 
-Int
+rownr_t
 VisibilityIteratorImpl2::nRowsViWillSweep() const
 {
 	Int numcoh = 0;

@@ -98,7 +98,7 @@ protected:
 
 		// Get data shape for iteration
 		const casacore::IPosition &inputShape = inputDataCube.shape();
-		auto nRows = inputShape(2);
+		casacore::rownr_t nRows = inputShape(2);
 		auto nCorrs = inputShape(0);
 
 		// Initialize input-output planes
@@ -109,14 +109,14 @@ protected:
 		casacore::Vector<T> inputDataVector;
 		casacore::Vector<T> outputDataVector;
 
-		for (size_t row=0; row < nRows; row++)
+		for (casacore::rownr_t row=0; row < nRows; row++)
 		{
 			// Assign input-output planes by reference
 			transformer.setRowIndex(row);
 			inputDataPlane.reference(inputDataCube.xyPlane(row));
 			outputDataPlane.reference(outputDataCube.xyPlane(row));
 
-			for (size_t corr=0; corr < nCorrs; corr++)
+			for (ssize_t corr=0; corr < nCorrs; corr++)
 			{
 				// Assign input-output vectors by reference
 				transformer.setCorrIndex(corr);
@@ -136,7 +136,7 @@ protected:
 												FreqAxisTransformEngine2<T> &transformer,
 												casacore::Int parallelCorrAxis=-1) const
         {
-		auto nRows = inputShape(2);
+		size_t nRows = inputShape(2);
 		if (parallelCorrAxis >= 0)
 		{
 			for (size_t row=0; row < nRows; row++)
@@ -148,7 +148,7 @@ protected:
 		}
 		else
 		{
-			auto nCorrs = inputShape(0);
+			size_t nCorrs = inputShape(0);
 			for (size_t row=0; row < nRows; row++)
 			{
 				transformer.setRowIndex(row);

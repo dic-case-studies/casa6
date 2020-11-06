@@ -54,7 +54,7 @@ public:
 
     virtual ~VbCacheItemBase () {}
 
-    virtual void appendRows (casacore::Int nRowsToAdd, casacore::Bool truncate = false) = 0;
+    virtual void appendRows (casacore::rownr_t nRowsToAdd, casacore::Bool truncate = false) = 0;
     virtual void clear (casacore::Bool clearStatusOnly = false) = 0;
     virtual void clearDirty () = 0;
     virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow) = 0;
@@ -120,7 +120,7 @@ public:
 
     virtual ~VbCacheItem () {}
 
-    virtual void appendRows (casacore::Int, casacore::Bool)
+    virtual void appendRows (casacore::rownr_t, casacore::Bool)
     {
         // Noop for scalars
     }
@@ -401,7 +401,7 @@ public:
     : VbCacheItem<T, IsComputed> (isMutable), capacity_p (0), shapePattern_p (NoCheck) {}
     virtual ~VbCacheItemArray () {}
 
-    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate)
+    virtual void appendRows (casacore::rownr_t nRows, casacore::Bool truncate)
     {
 
         // Only used when time averaging

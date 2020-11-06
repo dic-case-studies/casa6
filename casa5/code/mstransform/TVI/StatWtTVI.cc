@@ -726,7 +726,7 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
         IPosition blc(3, 0);
         IPosition trc = _newWtSp.shape() - 1;
         const auto ncorr = _newWtSp.shape()[0];
-        for (Int i=0; i<nrows; ++i) {
+        for (rownr_t i=0; i<nrows; ++i) {
             blc[2] = i;
             trc[2] = i;
             if (_combineCorr) {
@@ -793,7 +793,7 @@ void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
     flag(flags);
     getVii()->flagRow(flagRow);
     auto nrows = nRows();
-    for (Int i=0; i<nrows; ++i) {
+    for (rownr_t i=0; i<nrows; ++i) {
         flagRow[i] = allTrue(flags.xyPlane(i));
     }
     _newFlagRow = flagRow.copy();

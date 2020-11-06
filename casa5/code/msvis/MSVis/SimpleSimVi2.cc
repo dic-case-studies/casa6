@@ -736,7 +736,7 @@ void SimpleSimVi2::visibilityObserved (Cube<Complex> & vis) const {
   Array<Complex> specvis;
   Matrix<Float> G(pars_.gain_);
   Matrix<Float> Tsys(pars_.tsys_);
-  for (Int irow=0;irow<nRows();++irow) {
+  for (rownr_t irow=0;irow<nRows();++irow) {
     for (int icorr=0;icorr<pars_.nCorr_;++icorr) {
       specvis.reference(vis(Slice(icorr),Slice(),Slice(irow)));
       specvis*=sqrt( G(icorr/2,a1(irow)) * G(icorr%2,a2(irow)) );
@@ -915,8 +915,8 @@ Int SimpleSimVi2::nAntennas () const { return pars_.nAnt_; }
 Int SimpleSimVi2::nDataDescriptionIds () const { return pars_.nSpw_; }
 Int SimpleSimVi2::nPolarizationIds () const { return Int(1); }
 
-Int SimpleSimVi2::nRowsInChunk () const { SSVi2NotYetImplemented() } // number rows in current chunk
-Int SimpleSimVi2::nRowsViWillSweep () const { SSVi2NotYetImplemented() } // number of rows in all selected ms's
+rownr_t SimpleSimVi2::nRowsInChunk () const { SSVi2NotYetImplemented() } // number rows in current chunk
+rownr_t SimpleSimVi2::nRowsViWillSweep () const { SSVi2NotYetImplemented() } // number of rows in all selected ms's
 
 Int SimpleSimVi2::nSpectralWindows () const { return pars_.nSpw_; }
 
