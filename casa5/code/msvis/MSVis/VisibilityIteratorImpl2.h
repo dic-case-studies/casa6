@@ -1339,8 +1339,6 @@ protected:
     casacore::Int reportingFrame_p;
     // Subchunk row management object (see above)
     RowBounds rowBounds_p;
-    // sort columns specified when creating VI
-    SortColumns sortColumns_p;
     // [own] Info about spectral windows
     mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
     // (chunkN #, subchunk #) pair
@@ -1368,6 +1366,8 @@ protected:
     // Variables for the handling of the subchunk  loop
     std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
     std::shared_ptr<casacore::MSIter> msIterSubchunk_p;
+    // sort columns specified when creating VI
+    SortColumns sortColumns_p;
     SortColumns subchunkSortColumns_p;
 };
 

@@ -1101,8 +1101,6 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   nRowBlocking_p(0),
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
-  sortColumns_p(sortColumns),
-  subchunkSortColumns_p(false),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
@@ -1113,6 +1111,8 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   writable_p(writable),
   ddIdScope_p(UnknownScope),
   timeScope_p(UnknownScope)
+  sortColumns_p(sortColumns),
+  subchunkSortColumns_p(false),
 {
     // Set the default subchunk iteration sorting scheme, i.e.
     // unique timestamps in each subchunk.
@@ -1148,7 +1148,6 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   nRowBlocking_p(0),
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
-  sortColumns_p(chunkSortColumns),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
@@ -1159,6 +1158,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   writable_p(isWritable),
   ddIdScope_p(UnknownScope),
   timeScope_p(UnknownScope),
+  sortColumns_p(chunkSortColumns),
   subchunkSortColumns_p(subchunkSortColumns)
 {
     initialize(mss);
@@ -1323,7 +1323,6 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     nRowBlocking_p = vii.nRowBlocking_p;
     reportingFrame_p = vii.reportingFrame_p;
     rowBounds_p = vii.rowBounds_p;
-    sortColumns_p = vii.sortColumns_p;
     subchunk_p = vii.subchunk_p;
     timeFrameOfReference_p = vii.timeFrameOfReference_p;
     timeInterval_p = vii.timeInterval_p;
@@ -1331,6 +1330,8 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     writable_p = vii.writable_p;
     ddIdScope_p = vii.ddIdScope_p;
     timeScope_p = vii.timeScope_p;
+    sortColumns_p = vii.sortColumns_p;
+    subchunkSortColumns_p = vii.subchunkSortColumns
 
     // move modelDataGenerator_p
     if (modelDataGenerator_p) 
@@ -1520,9 +1521,8 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 
+    // Set the scope of each of the metadata to track
     setMetadataScope();
-    // Install default frequency selections.  This will select all
-    // channels in all windows.
 
     casacore::AipsrcValue<Bool>::find(
             autoTileCacheSizing_p,
@@ -1605,7 +1605,7 @@ void VisibilityIteratorImpl2::setMetadataScope()
     // The scope of the frequency selections is at most the same as the DDID
     freqSelScope_p = ddIdScope_p;
     // If frequency/channel selection also depends on time (selection based on
-    // frequencies), then the scope can be further limited by timestamp scope
+    // frequencies), then the scope can be further limited by row (timestamp) scope
     if (!(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel))
     {
         if(!(freqSelScope_p == RowScope)) // Only if scope is broader than Row can be further restricted
