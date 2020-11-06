@@ -159,7 +159,7 @@ public:
   // Return the number of rows in the current iteration
   // FiltrationTVI may change the number of rows when given vb
   // is partly filtrate
-  virtual casacore::Int nRows() const;
+  virtual casacore::rownr_t nRows() const;
 
   // Return the row ids as from the original root table. This is useful
   // to find correspondance between a given row in this iteration to the

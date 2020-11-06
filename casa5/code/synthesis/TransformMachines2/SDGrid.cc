@@ -1832,20 +1832,20 @@ void SDGrid::pickWeights(const vi::VisBuffer2& vb, Matrix<Float>& weight){
     weight.resize(vb.nChannels(), vb.nRows());
 
     if (weightspec.nelements() == 0) {
-      for (Int k = 0; k < vb.nRows(); ++k) {
+      for (rownr_t k = 0; k < vb.nRows(); ++k) {
         //cerr << "nrow " << vb.nRow() << " " << weight.shape() << "  "  << weight.column(k).shape() << endl;
         weight.column(k).set(mean(vb.weight().column(k)));
       }
     } else {
       Int npol = weightspec.shape()(0);
       if (npol == 1) {
-        for (Int k = 0; k < vb.nRows(); ++k) {
+        for (rownr_t k = 0; k < vb.nRows(); ++k) {
           for (int chan = 0; chan < vb.nChannels(); ++chan) {
             weight(chan, k)=weightspec(0, chan, k);
           }
         }
       } else {
-        for (Int k = 0; k < vb.nRows(); ++k) {
+        for (rownr_t k = 0; k < vb.nRows(); ++k) {
           for (int chan = 0; chan < vb.nChannels(); ++chan) {
             weight(chan, k) = (weightspec(0, chan, k) + weightspec((npol-1), chan, k))/2.0f;
           }
