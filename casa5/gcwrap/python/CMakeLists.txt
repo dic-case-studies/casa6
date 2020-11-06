@@ -54,7 +54,6 @@ scripts/init_welcome_helpers.py
 scripts/init_user_pre.py
 scripts/init_user_post.py
 scripts/casapy_engine.py
-scripts/caltab_convert2.py
 scripts/check_exceptionhandling.py
 scripts/check_input_saverestore.py
 scripts/cleanhelper.py
@@ -94,7 +93,6 @@ scripts/testhelper.py
 scripts/TablePlotQt4Agg.py
 scripts/TablePlotTkAgg.py
 scripts/task_accor.py
-scripts/task_accum.py
 scripts/task_apparentsens.py
 scripts/task_applycal.py
 scripts/task_asdmsummary.py
@@ -102,7 +100,6 @@ scripts/task_bandpass.py
 scripts/task_blcal.py
 scripts/task_browsetable.py
 scripts/task_calstat.py
-scripts/task_caltabconvert.py
 scripts/task_clean.py
 scripts/task_clearcal.py
 scripts/task_clearstat.py
@@ -177,7 +174,6 @@ scripts/task_plotcal.py
 scripts/task_plotms.py
 scripts/task_plotweather.py
 scripts/task_plotprofilemap.py
-scripts/task_oldsplit.py
 scripts/task_polcal.py
 scripts/task_polfromgain.py
 scripts/task_predictcomp.py
@@ -207,12 +203,10 @@ scripts/task_specflux.py
 scripts/task_specsmooth.py
 scripts/task_splattotable.py
 scripts/task_split.py
-#scripts/task_split2.py
 scripts/task_spxfit.py
 scripts/task_oldstatwt.py
 scripts/task_statwt.py
 scripts/task_tclean.py
-scripts/task_tclean2.py
 scripts/task_testconcat.py
 scripts/task_uvcontsub.py
 scripts/task_uvcontsub3.py
