@@ -129,7 +129,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-BP5-2.0GT (06-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-BRZ (06-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -878,7 +878,9 @@ def calc_sdatmcor(
             #
  
             # (original) get chanfreqs[spwid] info.
-            for spwid in spws:
+            ######################
+            for spwid in rawmsSpws:
+            ### for spwid in spws:
                 chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
             # end of with
@@ -896,14 +898,18 @@ def calc_sdatmcor(
 
     ddis = {}
     with open_msmd(calms) as msmd:
-        for spwid in spws:
+        ######################
+        for spwid in rawmsSpws:
+        ## for spwid in spws:
             ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     print(" - ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
 
-    for i, spwid in enumerate(spws):
+    ################################
+    for i, spwid in enumerate(rawmsSpws):
+    ## for i, spwid in enumerate(spws):
         bbp = int(spwnames[i].split('#')[2][3])-1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
