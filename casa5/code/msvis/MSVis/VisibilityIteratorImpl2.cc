@@ -1110,9 +1110,9 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   weightScaling_p(),
   writable_p(writable),
   ddIdScope_p(UnknownScope),
-  timeScope_p(UnknownScope)
+  timeScope_p(UnknownScope),
   sortColumns_p(sortColumns),
-  subchunkSortColumns_p(false),
+  subchunkSortColumns_p(false)
 {
     // Set the default subchunk iteration sorting scheme, i.e.
     // unique timestamps in each subchunk.
@@ -1331,7 +1331,7 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     ddIdScope_p = vii.ddIdScope_p;
     timeScope_p = vii.timeScope_p;
     sortColumns_p = vii.sortColumns_p;
-    subchunkSortColumns_p = vii.subchunkSortColumns
+    subchunkSortColumns_p = vii.subchunkSortColumns_p;
 
     // move modelDataGenerator_p
     if (modelDataGenerator_p) 
