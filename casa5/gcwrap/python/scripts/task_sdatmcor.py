@@ -125,7 +125,7 @@ def sdatmcor(
         atmdetail,
         altitude, temperature, pressure, humidity, PWV,
         dp, dpm,
-        layerboundaries, layertemperature ):
+        layerboundaries, layertemperature):
 
     # Information #
     casalog.origin(origin)
@@ -171,9 +171,10 @@ def sdatmcor(
     dpm         = _check_unit_and_formToStr(dpm, [''])       # through (string or float)
 
     # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''  #
-    if not _inspect_str_int(atmtype, 1, 5):
-        _msg("\nERROR:: atmtype (=%s) Out of Range or Unacceptable.\n" % atmtype, 'ERROR')
-        return False
+    if not _inspect_strint_range(atmtype, 1, 5):
+        errmsg = "atmtype (=%s) Out of Range or Unacceptable." % atmtype
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
 
     #
     # User-Defined Profile inspection.
@@ -235,16 +236,16 @@ def _file_exist(path):
 #
 
 # inspect the input value is in the specified range #
-def _inspect_str_int(data, minimum, maximum):
-    if type(data) is str:
-        if data == '':
+def _inspect_strint_range(indata, minimum, maximum):
+    if type(indata) is str:
+        if indata == '':
             return True
-        elif data.isdigit():
-            return minimum <= int(data) <= maximum
+        elif indata.isdigit():
+            return minimum <= int(indata) <= maximum
         else:
             return False
-    elif type(data) is int:
-        return minimum <= data <= maximum
+    elif type(indata) is int:
+        return minimum <= indata <= maximum
     else:
         # INTERNAL ERROR:: unexpected data type. #
         assert(False)
@@ -558,76 +559,58 @@ def calc_sdatmcor(
 
     #
     # Argument dump.
-    #   if need to check args,
-    #   please insert here like:  print('antenna  =', p_antenna, type(p_antenna))
+    #   if need, set True.
     #
-    if True:  # flag option is reserved. #
-        print("***********************************")
-        print("**   calc_sdatmcor::             **")
-        print("***********************************")
-        print('infile      =', p_infile)
-        print('datacolumn  =', p_datacolumn)
-        print('outfile     =', p_outfile)
-        print('overwrite   =', p_overwrite)
-        print('field       =', p_field)
-        print('spw         =', p_spw)
-        print('scan        =', p_scan)
-        print('antenna     =', p_antenna)
-        print('correlation =', p_correlation)
-        print('timerange   =', p_timerange)
-        print('intent      =', p_intent)
-        print('observation =', p_observation)
-        print('feed        =', p_feed)
-        print('msselect    =', p_msselect)
-        print('outputspw   =', p_outputspw)
-        print('dtem_dh     =', param_dtem_dh)
-        print('h0          =', param_h0)
-        print('atmtype     =', param_atmtype)
-        print('atmdetail   =', atmdetail)
+    if True:
+        _msg("***********************************")
+        _msg("**   calc_sdatmcor::             **")
+        _msg("***********************************")
+        _msg('infile      = %s' % p_infile)
+        _msg('datacolumn  = %s' % p_datacolumn)
+        _msg('outfile     = %s' % p_outfile)
+        _msg('overwrite   = %s' % p_overwrite)
+        _msg('field       = %s' % p_field)
+        _msg('spw         = %s' % p_spw)
+        _msg('scan        = %s' % p_scan)
+        _msg('antenna     = %s' % p_antenna)
+        _msg('correlation = %s' % p_correlation)
+        _msg('timerange   = %s' % p_timerange)
+        _msg('intent      = %s' % p_intent)
+        _msg('observation = %s' % p_observation)
+        _msg('feed        = %s' % p_feed)
+        _msg('msselect    = %s' % p_msselect)
+        _msg('outputspw   = %s' % p_outputspw)
+        _msg('dtem_dh     = %s' % param_dtem_dh)
+        _msg('h0          = %s' % param_h0)
+        _msg('atmtype     = %s' % param_atmtype)
+        _msg('atmdetail   = %s' % atmdetail)
+        _msg('altitude    = %s' % param_altitude)
+        _msg('temperature = %s' % param_temperature)
+        _msg('pressure    = %s' % param_pressure)
+        _msg('humidity    = %s' % param_humidity)
+        _msg('PWV         = %s' % param_PWV)
+        _msg('dp          = %s' % param_dp)
+        _msg('dpm         = %s' % param_dpm)
+        _msg('layerboundaries   = %s' % param_layerboundaries)
+        _msg('layertemperature  = %s' % param_layertemperature)
+        _msg("*****************************")
 
-        print('altitude    =', param_altitude)
-        print('temperature =', param_temperature)
-        print('pressure    =', param_pressure)
-        print('humidity    =', param_humidity)
-        print('PWV         =', param_PWV)
-        print('dp          =', param_dp)
-        print('dpm         =', param_dpm)
-        # reserved #
-        print('layerboundaries   =', param_layerboundaries)
-        print('layertemperature  =', param_layertemperature)
-
-        print("*****************************")
-
-    # TENTATIVE:: Following flags are deleted soon.  
-    skipTaskExec = False          # skip execution at the beginning of calc_sdatmcor.
-
-    # obsoleted debug Vars., soon deleted. #
-    showCorrection = False         # show index information while Correction.
+    # Debug flags. #
+    showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
-
-
-    # TENTATIVE:: skip task execution, until test-MS for UT is ready.  #
-    if(skipTaskExec is True):
-        _msg("-------  Task Execution is skipped.")
-        return True
-
-    #
-    #  File name section
-    #
 
     # datacolumn (XML fills default) ,to UPPER CASE #
     datacolumn = p_datacolumn.upper()
     if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
         datacolumn = 'CORRECTED_DATA'
 
-    # rewrite (Under Construction) - simplified.  #
-
+    # Internal file names  #
     rawms = p_infile
     calms = p_outfile
     corms = p_outfile
 
-    # existence info.  #
+    # Existence info.  #
     rawms_exist = _file_exist(rawms)
     calms_exist = _file_exist(calms)
     corms_exist = _file_exist(corms)
@@ -657,8 +640,8 @@ def calc_sdatmcor(
     #
     # CAS-13160
     # Original Script starts from here
-    #  - in some section, Task-code is inserted.
-    #  - comment is also added to distinguish the original and the task code.
+    #  - in many sections, Task Code is inserted.
+    #  - comment is generally added to distinguish the original and the task code.
     #
 
     ##################################################
@@ -673,6 +656,7 @@ def calc_sdatmcor(
     #
 
     # Default constant. Refer to CAS-13160 #
+
     atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
     maxalt = 120        ### maxAltitude parameter for at (km)
     lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
@@ -695,13 +679,8 @@ def calc_sdatmcor(
                0.05017949,  0.03556241,  0.02260546,  0.01217214,  0.00465696,
                0.00000000, -0.00222265, -0.00265951, -0.00202866, -0.00098041]
 
-    #
     # Data Selection
-    #
-
-    # Data Selection (internally execute mstransform #
-    _msg("Data Selection in progress.")
-
+    _msg("Data Selection in progress. Output file =  %s " % corms)
     try:
         atmMst(
             infile=rawms,
@@ -729,10 +708,8 @@ def calc_sdatmcor(
 
     # Result check if output exists. #
     if not _file_exist(corms):
-        _msg("\nERROR:: No outfile has been generated by mstransform.\n", 'SEVERE')
-        return False
-
-    _msg("Data Selection was applied. Output file =  %s " % corms)
+        errmsg = "No outfile has been generated by mstransform."
+        raise Exception(errmsg)
 
     #
     # Tool Default constant (CAS-13160)
@@ -773,14 +750,14 @@ def calc_sdatmcor(
             spwnames = msmd.namesforspws(spws)
 
             # show to user. #
-            _msg(" - tm ON  source  = %s" % tmonsource)
-            _msg(" - tm OFF source  = %s" % tmoffsource)
+            ## _msg(" - tm ON  source  = %s" % tmonsource)
+            ## _msg(" - tm OFF source  = %s" % tmoffsource)
             _msg(" - fdm    spws = %s" % fdmspws)
             _msg(" - tdm    spws = %s" % tdmspws)
             _msg(" - intent spws = %s" % intentspws)
             _msg(" -        spws = %s" % spws)
 
-            # save spws  #
+            # save spws (CAS-13160) #
             rawmsSpws = spws
 
             # (Task Section) check count of ON/OFF SOURCE
@@ -805,7 +782,7 @@ def calc_sdatmcor(
 
             #
             # (Task Section)
-            #     OutputSpw 
+            #     'OutputSpw' 
             #     must be a set of rawmsSpw
             #
 
@@ -825,7 +802,7 @@ def calc_sdatmcor(
                 outputspws = rawmsSpws
      
             _msg("Determined outputSpws Information")
-            _msg('-     rawms  Spws       = %s' % rawmsSpws)
+            _msg('- rawms      Spws       = %s' % rawmsSpws)
             _msg('- requested  outputSpws = %s' % outputspws_param)
             _msg('- determined outputSpws = %s' % outputspws)
 
@@ -833,7 +810,7 @@ def calc_sdatmcor(
             #
             # (Task Section )
             #     'processing Spw'
-            #      must be a set of rawSpw
+            #      must be a set of rawmsSpw
             #
 
             # request by argument  #
@@ -851,7 +828,7 @@ def calc_sdatmcor(
                 spws = rawmsSpws
 
             _msg("Determined Spws Information")
-            _msg('-     rawms  Spws = %s' % rawmsSpws)
+            _msg('- rawms      Spws = %s' % rawmsSpws)
             _msg('- requested  Spws = %s' % spws_param)
             _msg('- determined Spws = %s' % spws)
 
@@ -955,7 +932,6 @@ def calc_sdatmcor(
 
     # ASDM_CALATMOSPHERE
     try:
-        _msg("reading rawms/'ASDM_CALATMOSPHERE'.")
         with open_table(os.path.join(rawms, 'ASDM_CALATMOSPHERE')) as tb:
             subtb = tb.query('%.3f<=startValidTime && startValidTime<=%.3f' %
                              (tmonsource.min(),
@@ -977,30 +953,31 @@ def calc_sdatmcor(
     # Looping over spws
     ################################################################
     with open_table(corms, nomodify=False) as tb:
-        """
-        Note CAS-13160:
-            spw for-loop:
-              - Inside this loop, calculation is executed with each spwid.
-              - The corrected result is written upon OutputFile with selected Spw.
-              - OutputSpw occasionally intend No-Corrected value.
-              - please see the inserted block.
-              - No-Corrected output is controled by 'noCorSpws' list.
-
-             The original script does not explicitly imply the logic.
-             Such No-corrected output was appended with minimum changes.
-        """  
-        for spwid in outputspws: # this is originally 'in spws' #
+        #
+        # Note CAS-13160:
+        #     spw for-loop:
+        #       - Inside this loop, calculation is executed with each spwid.
+        #       - The corrected result is written upon OutputFile with selected Spw.
+        #       - OutputSpw occasionally intend No-Corrected value.
+        #       - please see the inserted block.
+        #        - No-Corrected output is controled by 'noCorSpws' list.
+        # 
+        #      The original script does not explicitly imply the logic.
+        #      Such No-corrected output was appended with minimum changes.
+  
+        for spwid in outputspws: # this was originally 'in spws' #
             # Log #
-            _msg("\nProcessing spw %d in %s. No Correcting spw %s \n" % (spwid, outputspws, noCorSpws))
+            _msg("\nProcessing spw %d in %s. Correction is not applied to spw %s .\n" % (spwid, outputspws, noCorSpws))
 
             # gain factor
             spwkey = str(spwid)
             factor = gaindict[spwkey]
-            _msg('Applying gain factor {} to spw {}'.format(spwkey, factor))
+            #_msg('Applying gain factor {} to spw {}'.format(spwkey, factor))
+            _msg('Applying gain factor {} to spw {}'.format(factor, spwkey))
 
             istdm = False
             nchan = len(chanfreqs[spwid])
-#           fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
+            # fcenter = (chanfreqs[spwid][nchan/2-1]+chanfreqs[spwid][nchan/2])/2.             # PY2
             fcenter = (chanfreqs[spwid][int(nchan/2)-1]+chanfreqs[spwid][int(nchan/2)])/2.   # PY3
             chansep = (chanfreqs[spwid][-1]-chanfreqs[spwid][0])/(nchan-1)
 
@@ -1018,7 +995,7 @@ def calc_sdatmcor(
                 nchan *= 5
                 chansep /= 5.
                 chanfreqs_high = chanfreqs[spwid][0] + chansep * pl.arange(nchan)
-#               fcenter = (chanfreqs_high[nchan/2-1]+chanfreqs_high[nchan/2])/2.              # PY2
+                # fcenter = (chanfreqs_high[nchan/2-1]+chanfreqs_high[nchan/2])/2.              # PY2
                 fcenter = (chanfreqs_high[int(nchan/2)-1]+chanfreqs_high[int(nchan/2)])/2.    # PY3
 
             ################################################################
@@ -1028,16 +1005,15 @@ def calc_sdatmcor(
 
             _msg("- set parameters for initATM and obtain zenith opacity")
 
-            """
-            Note CAS-13160: Revised part from original.
+            # Note CAS-13160: Revised part from original.
+            #
+            #    Setting up parameter variables to initAtmProfile()
+            #
+            #    - Following codes are extracted from the original script, which used to be
+            #      embeded inside the initAtmProfile() arguments.
+            #    - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
+            #    - The default values are up to Task Specification rather than original script.
 
-               Setting up parameter variables to initAtmProfile()
-
-               - Following codes are extracted from the original script, which used to be
-                 embeded inside the initAtmProfile() arguments.
-               - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
-               - The default values are up to Task Specification rather than original script.
-            """
             atm_dtem_dh     = qa.quantity(lapserate, 'K/km')
             atm_h0          = qa.quantity(scaleht, 'km')
             atm_atmtype     = atmtype
@@ -1045,7 +1021,7 @@ def calc_sdatmcor(
             atm_altitude    = qa.quantity(altitude, 'm')
             atm_temperature = qa.quantity(tground, 'K')              # tground (original)
             atm_pressure    = qa.quantity(pground/100.0, 'mbar')     # pground (original) in  [Pa]  convert to [mbar]
-            atm_humidity    = qa.quantity(hground, '%' )             # hground (original) in  [%]
+            atm_humidity    = qa.quantity(hground, '%')              # hground (original) in  [%]
             atm_pwv         = qa.quantity(pwv * 1000.0, 'mm')        # pwv (original) in [m] converto to [mm]
             atm_dp          = qa.quantity(dp, 'mbar')
             atm_dpm         = qa.quantity(dpm, '')                   # keep float
@@ -1101,14 +1077,14 @@ def calc_sdatmcor(
                 _msg("\nSub Parameters were not used, due to 'atmdetail' is not True.\n")
 
             #
-            # print and log to confirm.
+            # print and log, to confirm Atm parameters.
             #
             _msg("====================================================================")
             _msg("  initATMProfile Parameters     [atmdetail = %s]" % atm_atmdetail)
             _msg("------------------+-----------------------------+-------------------")
             _msg("  parameter       | value [unit]                | specified by arg. ")
             _msg("------------------+-----------------------------+-------------------")
-            _msg(" atmtype          |%-18s " % at.listAtmosphereTypes()[atm_atmtype-1] )    # type =1,2,3,4,5, no Zero
+            _msg(" atmtype          |%-18s " % at.listAtmosphereTypes()[atm_atmtype-1])    # type =1,2,3,4,5, no Zero
             _msg(" dTem_dh          |%-18s [%5s]   | %s " % (atm_dtem_dh['value'], atm_dtem_dh['unit'], atm_dtem_dh_set))
             _msg(" h0               |%-18s [%5s]   | %s " % (atm_h0['value'], atm_h0['unit'], atm_h0_set))
             _msg(" altitude         |%-18s [%5s]   | %s " % (atm_altitude['value'], atm_altitude['unit'], atm_altitude_set))
@@ -1171,13 +1147,17 @@ def calc_sdatmcor(
             # original: make ddis[spwid]
             _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
 
-            # Query Text (DESC_ID) and  applying MSSELECT if anything is given #
+            # Query Text (DESC_ID) #
             querytext = 'DATA_DESC_ID in %s' % ddis[spwid] 
+
+            # Applying MSSELECT if anything is given #
             if (p_msselect != ''):
                 querytext += p_msselect
- 
+
+            # Query # 
             subtb = tb.query(querytext)
   
+            # Data #
             _msg("- getting tm and data. datacolumn [%s] is used." % datacolumn)
             tmdata = subtb.getcol('TIME')
             data = subtb.getcol(datacolumn)
@@ -1197,13 +1177,11 @@ def calc_sdatmcor(
             # Correction Main Loop
             ###########################
 
-            _msg("\nExecuting  ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
+            _msg("\nExecuting ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
 
             cdata = data.copy()
             for i, t in enumerate(tmdata):
-                #
                 # debug option, interrupt the correction loop.
-                #
                 if interruptCorrection:
                     if i > interruptCorrectionCnt:
                         msg = "Correction Loop was interrupted. \n---"
