@@ -129,11 +129,11 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-BP5-2.0GT (06-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-SiVasParaChile (06-Nov-2020) .\n")
 
-#
-# Input/Output error check and internal set up.
-#
+    #
+    # Input/Output error check and internal set up.
+    #
     if infile == '':
         errmsg = "infile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
@@ -152,13 +152,13 @@ def sdatmcor(
     if antenna != '':
         antenna = antenna.replace('&','')
 
-#
-# Inspect arguments.
-#  - inspect Unit.
-#  - default value ARE NOT considered here.
-#  - convert values to string form.
-#  - Sub-function calc_sdatmcor() accepts args basically by string.
-#
+    #
+    # Inspect arguments.
+    #  - inspect Unit.
+    #  - default value ARE NOT considered here.
+    #  - convert values to string form.
+    #  - Sub-function calc_sdatmcor() accepts args basically by string.
+    #
     dtem_dh     = _check_unit_and_formToStr(dtem_dh, ['K/km'])
     h0          = _check_unit_and_formToStr(h0, ['km'])
 
@@ -170,20 +170,21 @@ def sdatmcor(
     dp          = _check_unit_and_formToStr(dp,  ['mbar', 'hPa'])
     dpm         = _check_unit_and_formToStr(dpm, [''])       # through (string or float)
 
-    # Inspect  atmtype ('str or int'). The range is checked and accept atmtype==''  #
+    # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''  #
     if not _inspect_str_int(atmtype, 1, 5):
         _msg("\nERROR:: atmtype (=%s) Out of Range or Unacceptable.\n" % atmtype, 'ERROR')
         return False
 
-#
-# User-Defined Profile inspection.
-# after this step, the two args changes to List
-#
-    # Type conversion. An empty arg makes [] list. #
+    #
+    # User-Defined Profile inspection.
+    # after this step, the two args changes to List
+    #
+
+    #   User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
     layerboundaries = _convert_userdefinedparam_to_list(layerboundaries)
     layertemperature = _convert_userdefinedparam_to_list(layertemperature)
 
-    # inspect counts, length of the two args must be same #
+    #   Length of the two args must be same #
     len_1 = len(layerboundaries)
     len_2 = len(layertemperature)
     if len_1 != len_2:
@@ -194,9 +195,9 @@ def sdatmcor(
     # generate gain factor dictionary
     gaindict = parse_gainfactor(gainfactor)
 
-#
-# Call calc Function
-#
+    #
+    # Call calc Function
+    #
     return calc_sdatmcor(
         infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna, correlation, timerange, intent, observation, feed, msselect,
@@ -213,9 +214,6 @@ def sdatmcor(
 #  for Task Handling
 #
 
-#
-# file handling (use Wrapper for readability)
-#
 def _ms_remove(path):
     if (os.path.exists(path)):
         if (os.path.isdir(path)):
@@ -236,7 +234,7 @@ def _file_exist(path):
 # Unit handling service
 #
 
-# inspect the data can be translated to an Int #
+# inspect the input value is in the specified range #
 def _inspect_str_int(data, minimum, maximum):
     if type(data) is str:
         if data == '':
@@ -251,7 +249,7 @@ def _inspect_str_int(data, minimum, maximum):
         # INTERNAL ERROR:: unexpected data type. #
         assert(False)
 
-# inspect the data is consistent with the Unit. #
+# inspect the input value is consistent with the Unit. #
 def _check_unit_and_formToStr(data, base_unit):
     try:
         if type(data) is str:
@@ -288,9 +286,10 @@ def _check_unit_and_formToStr(data, base_unit):
 
 #
 # Argument parameter handling
+# type : int, list, float 
 #
-# (action) check in_para and set default argument.
-#  if in_para is available , return in_para with being converted.
+# (action) check in_para and returns chosen value either default or argument.
+#  if arg_value is available , return atm_parm_variable with being converted.
 #  otherwise, returns def_para to use as a default parameter.
 #
 def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
@@ -314,6 +313,7 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
         else:
             return atm_parm_variable, False
 
+# convert to List from comma separated form string #
 def _make_list_from_separatedstring(separated_string, dType):
     # No input #
     if separated_string == '':
@@ -602,7 +602,7 @@ def calc_sdatmcor(
     skipTaskExec = False          # skip execution at the beginning of calc_sdatmcor.
 
     # obsoleted debug Vars., soon deleted. #
-    showCorrection = False        # show index information while Correction.
+    showCorrection = False         # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
 
@@ -808,7 +808,6 @@ def calc_sdatmcor(
             #     OutputSpw 
             #     must be a set of rawmsSpw
             #
-            _msg("Inspect and determine outputspw")
 
             # request by argument  #
             outputspws_param = _make_list_from_separatedstring(p_outputspw, dType='int')
@@ -836,14 +835,13 @@ def calc_sdatmcor(
             #     'processing Spw'
             #      must be a set of rawSpw
             #
-            _msg("Inspect and determine spw")
 
             # request by argument  #
             spws_param = _make_list_from_separatedstring(p_spw, dType='int')
 
             # Must be a subset, locate the initial set.  #
             if set(rawmsSpws) >= set(spws_param):
-                spws = set(spws_param)
+                spws = list(set(spws_param))
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try to continue", 'WARN')
                 spws = list(set(rawmsSpws) & set(spws_param))
@@ -862,8 +860,9 @@ def calc_sdatmcor(
             #     outputSpw and Spw Consistency. For example;
             #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
             #      - accept  when Spw=[21], outputSpw = [19,21]
+            noCorSpws = []
             if set(outputspws) >= set(spws):
-                pass
+                noCorSpws = list(set(outputspws) - set(spws))
             else:
                 spws= list(set(outputspws) & set(spws)) 
 
@@ -877,8 +876,9 @@ def calc_sdatmcor(
             # (Original Section)
             #
  
-            # (original) get chanfreqs[spwid] info.
-            for spwid in spws:
+            # CAS-13160 Changed #
+            for spwid in rawmsSpws:
+            ## for spwid in spws:
                 chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
             # end of with
@@ -896,14 +896,18 @@ def calc_sdatmcor(
 
     ddis = {}
     with open_msmd(calms) as msmd:
-        for spwid in spws:
+        # CAS-13160 Changed #
+        for spwid in rawmsSpws:
+        ## for spwid in spws:
             ddis[spwid] = msmd.datadescids(spw=spwid)[0]
-    print(" - ddis[] = %s" % ddis)
+    print("- ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
 
-    for i, spwid in enumerate(spws):
+    # CAS-13160 Changed #
+    for i, spwid in enumerate(rawmsSpws):
+    ## for i, spwid in enumerate(spws):
         bbp = int(spwnames[i].split('#')[2][3])-1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
@@ -973,19 +977,21 @@ def calc_sdatmcor(
     # Looping over spws
     ################################################################
     with open_table(corms, nomodify=False) as tb:
+        """
+        Note CAS-13160:
+            spw for-loop:
+              - Inside this loop, calculation is executed with each spwid.
+              - The corrected result is written upon OutputFile with selected Spw.
+              - OutputSpw occasionally intend No-Corrected value.
+              - please see the inserted block.
+              - No-Corrected output is controled by 'noCorSpws' list.
 
-        # Note CAS-13160:
-        # spw for-loop:
-        # - Inside this loop, calculation is executed with each spwid
-        # - The corrected result is written upon OutputFile with selected Spw.
-        # - OutputSpw occasionally intend No-Corrected value.  
-        # - please see the inserted block.
-        # (TBD) How to output No-Corrected value to 'corms', directed by 'spw'
-        #       The original script does not explicitly imply the logic.
-
-        for spwid in outputspws:
+             The original script does not explicitly imply the logic.
+             Such No-corrected output was appended with minimum changes.
+        """  
+        for spwid in outputspws: # this is originally 'in spws' #
             # Log #
-            _msg("\nProcessing spw %d in %s \n" % (spwid, outputspws))
+            _msg("\nProcessing spw %d in %s. No Correcting spw %s \n" % (spwid, outputspws, noCorSpws))
 
             # gain factor
             spwkey = str(spwid)
@@ -1022,15 +1028,16 @@ def calc_sdatmcor(
 
             _msg("- set parameters for initATM and obtain zenith opacity")
 
-            #
-            # Note CAS-13160: Revised part from original.
-            #
-            #   Setting up parameter variables.
-            #   - Following codes are extracted from the original script, which used to be
-            #     embeded inside the initAtmProfile() arguments.
-            #   - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
-            #   - This section is up to Task Specification rather than original script.
-            #
+            """
+            Note CAS-13160: Revised part from original.
+
+               Setting up parameter variables to initAtmProfile()
+
+               - Following codes are extracted from the original script, which used to be
+                 embeded inside the initAtmProfile() arguments.
+               - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
+               - The default values are up to Task Specification rather than original script.
+            """
             atm_dtem_dh     = qa.quantity(lapserate, 'K/km')
             atm_h0          = qa.quantity(scaleht, 'km')
             atm_atmtype     = atmtype
@@ -1232,11 +1239,19 @@ def calc_sdatmcor(
                 # debug option for task.
                 #
                 if showCorrection:
-                    _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
+                    if spwid not in noCorSpws:
+                        _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
+                    else:
+                        _msg("attempt to write through. spw=%3d, i=%5d" % (spwid, i))
 
-                # Adjust Body (dTa is vector) #
-                for ipol in range(npol):
-                    cdata[ipol, :, i] -= dTa * factor
+                # CAS-13160 changed.
+                # Adjust Body 
+                #  - apply (the spwid is in both outputspws and spws) 
+                #  - no apply (the spwid is in outputspws, but not in spws )
+                #    This may happen in ordinary use-case.
+                if spwid not in noCorSpws:
+                    for ipol in range(npol):
+                        cdata[ipol, :, i] -= dTa * factor
 
             subtb.putcol(datacolumn, cdata)
             subtb.close()

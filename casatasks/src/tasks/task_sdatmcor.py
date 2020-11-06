@@ -843,7 +843,7 @@ def calc_sdatmcor(
 
             # Must be a subset, locate the initial set.  #
             if set(rawmsSpws) >= set(spws_param):
-                spws = set(spws_param)
+                spws = list(set(spws_param))
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try to continue", 'WARN')
                 spws = list(set(rawmsSpws) & set(spws_param))
