@@ -191,6 +191,7 @@ def tclean(
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_tclean" )
         return
 
+
     #####################################################
     #### Construct ImagerParameters object
     #####################################################
@@ -355,6 +356,14 @@ def tclean(
                 ## Get summary from iterbot
                 if type(interactive) != bool:
                     retrec=imager.getSummary();
+                
+                if savemodel!='none' and (interactive==True or usemask=='auto-multithresh'):
+                    if savemodel=='modelcolumn':
+                         savemodelmsg = 'model column'
+                    elif savemodel=='virtual':
+                          savemodelmsg = 'virtual model'
+                    casalog.post("Saving "+savemodelmsg)
+                    imager.predictModel()
 
             ## Restore images.
             if restoration==True:  

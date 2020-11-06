@@ -2450,60 +2450,6 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="bool">True</value>
     </param>
 
-
-    <param type="string" name="savemodel">
-     <shortdescription>Options to save model visibilities (none, virtual, modelcolumn)</shortdescription>
-<description>Options to save model visibilities (none, virtual, modelcolumn)
-
-                       Often, model visibilities must be created and saved in the MS
-                       to be later used for self-calibration (or to just plot and view them).
-
-                          none : Do not save any model visibilities in the MS. The MS is opened
-                                     in readonly mode.
-
-                                     Model visibilities can be predicted in a separate step by
-                                     restarting tclean with niter=0,savemodel=virtual or modelcolumn
-                                     and not changing any image names so that it finds the .model on
-                                     disk (or by changing imagename and setting startmodel to the
-                                     original imagename).
-
-                          virtual : In the last major cycle, save the image model and state of the
-                                       gridder used during imaging within the SOURCE subtable of the
-                                       MS. Images required for de-gridding will also be stored internally.
-                                       All future references to model visibilities will activate the
-                                       (de)gridder to compute them on-the-fly.  This mode is useful
-                                       when the dataset is large enough that an additional model data
-                                       column on disk may be too much extra disk I/O, when the
-                                       gridder is simple enough that on-the-fly recomputing of the
-                                       model visibilities is quicker than disk I/O.
-
-                          modelcolumn : In the last major cycle, save predicted model visibilities
-                                      in the MODEL_DATA column of the MS. This mode is useful when
-                                      the de-gridding cost to produce the model visibilities is higher
-                                      than the I/O required to read the model visibilities from disk.
-                                      This mode is currently required for gridder='awproject'.
-                                      This mode is also required for the ability to later pull out
-                                      model visibilities from the MS into a python array for custom
-                                      processing.
-
-                        Note 1 : The imagename.model  image on disk will always be constructed
-                                      if the minor cycle runs. This savemodel parameter applies only to
-                                      model visibilities created by de-gridding the model image.
-
-                        Note 2 :  It is possible for an MS to have both a virtual model
-                                      as well as a model_data column, but under normal operation,
-                                      the last used mode will get triggered.  Use the delmod task to
-                                      clear out existing models from an MS if confusion arises.
-
-</description>
-      <value type="string">none</value>
-      <allowed kind="enum">
-              <value>none</value>
-              <value>virtual</value>
-              <value>modelcolumn</value>
-      </allowed>
-    </param>
-
 <!--    <param type="string" name="makeimages">
      <shortdescription>List of output images (auto,choose)</shortdescription>
 <description> List of output images.
@@ -2903,7 +2849,6 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="maxpsffraction"><value>0.8</value></default>
          <default param="interactive"><value>False</value></default>
 <!--         <default param="mask"><value>""</value></default> -->
-<!--         <default param="savemodel"><value>"none"</value></default>
          <default param="calcres"><value>True</value></default>
          <default param="calcpsf"><value>True</value></default>  -->
        </notequals>

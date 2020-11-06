@@ -87,7 +87,7 @@ class ImagerParameters():
                  conjbeams = True,
                  computepastep =360.0,
                  rotatepastep =360.0,
-                 pointingoffsetsigdev = [30.0,30.0],
+                 pointingoffsetsigdev =[30.0,30.0],
                  
                  pblimit=0.01,
                  normtype='flatnoise',
@@ -503,6 +503,13 @@ class ImagerParameters():
                     self.iterpars['cycleniter'] = self.iterpars['niter']
                 else:
                     self.iterpars['cycleniter'] = min(self.iterpars['niter'] , 100)
+
+        # saving model is done separately outside of iter. control for interactive clean and or automasking cases
+        if self.iterpars['savemodel']!='none':
+            if self.iterpars['interactive']==True or self.alldecpars['0']['usemask']=='auto-multithresh':
+                self.iterpars['savemodel']='none' 
+                self.allselpars['ms0']['readonly']=True
+                self.allselpars['ms0']['usescratch']=False
 
         return errs
 
