@@ -262,12 +262,12 @@ class test_sdatmcor(unittest.TestCase):
     #     # Run Task and check
     #     self.assertTrue(self._run_task(prm))
 
-    def _check_result_spw(self, spw, is_selected, is_processed, on_source_only, factor):
+    def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
 
         contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA', 'CORRECTED_DATA'])
         stateids_after = contents_after['STATE_ID']
         if 'CORRECTED_DATA' in contents_after:
-            data_after = contents_after['CORRECTED_DATA']
+            data_after = contents_after['CORRECTED_DATA'].real
         else:
             data_after = contents_after['DATA'].real
 
@@ -279,7 +279,7 @@ class test_sdatmcor(unittest.TestCase):
         contents_before = read_table(self.infile, spw, ['STATE_ID', 'DATA', 'CORRECTED_DATA'])
         stateids_before = contents_before['STATE_ID']
         if 'CORRECTED_DATA' in contents_before:
-            data_before = contents_before['CORRECTED_DATA']
+            data_before = contents_before['CORRECTED_DATA'].real
         else:
             data_before = contents_before['DATA'].real
 
@@ -315,8 +315,11 @@ class test_sdatmcor(unittest.TestCase):
                 # examine averaged spectrum
                 #   - take average along pol and time axes
                 #   - take difference of data before and after correction
-                #   - check if mean of difference is around 0.34
-                #   - check if std of difference is small enough
+                #   - check if diff.mean() > 0.95 * data_before_correction.mean()
+                #     which means that most of the continuum-like component is
+                #     originated by residual of atmospheric emission
+                #   - check if std of difference is less than 30% of
+                #     (diff.max() - diff.min())
                 mask0 = np.logical_or(stateids_before == 14, stateids_before == 84)
                 data_on_before = data_before[:, :, mask0]
                 data_mean_before = data_on_before.mean(axis=(0, 2))
@@ -326,8 +329,9 @@ class test_sdatmcor(unittest.TestCase):
                 diff = data_mean_before - data_mean_after
                 diff_mean = diff.mean()
                 diff_std = diff.std()
-                self.assertAlmostEqual(diff_mean, 0.307 * factor, places=2)
-                self.assertLess(diff_std, 0.0003 * factor)
+                diff_std_norm = diff_std / (diff.max() - diff.min())
+                self.assertGreater(diff_mean, data_mean_after.mean() * 0.95)
+                self.assertLess(diff_std_norm, 0.3)
 
             if not on_source_only:
                 # OFF_SOURCE data should not be touched
@@ -339,7 +343,7 @@ class test_sdatmcor(unittest.TestCase):
         else:
             self.assertTrue(np.all(data_after == data_before))
 
-    def check_result(self, spwprocess, on_source_only=False, factor={}):
+    def check_result(self, spwprocess, on_source_only=False):
         """Check Result
 
         Args:
@@ -354,8 +358,7 @@ class test_sdatmcor(unittest.TestCase):
         for spw in [19, 23]:
             is_selected = spw in spwprocess
             is_processed = spwprocess.get(spw, False)
-            gainfactor = factor.get(str(spw), 1.0)
-            self._check_result_spw(spw, is_selected, is_processed, on_source_only, gainfactor)
+            self._check_result_spw(spw, is_selected, is_processed, on_source_only)
 
     def test_sdatmcor_normal(self):
         '''test normal usage of sdatmcor'''
@@ -443,10 +446,7 @@ class test_sdatmcor(unittest.TestCase):
         apply_gainfactor(self.infile, 19, gainfactor)
         apply_gainfactor(self.infile, 23, gainfactor)
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', gainfactor=gainfactor)
-        self.check_result(
-            {19: True, 23: True},
-            factor={'19': gainfactor, '23': gainfactor}
-        )
+        self.check_result({19: True, 23: True})
 
     def test_sdatmcor_gainfactor_dict(self):
         """test gainfactor: dict input"""
@@ -454,10 +454,7 @@ class test_sdatmcor(unittest.TestCase):
         apply_gainfactor(self.infile, 19, gainfactor['19'])
         apply_gainfactor(self.infile, 23, gainfactor['23'])
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', gainfactor=gainfactor)
-        self.check_result(
-            {19: True, 23: True},
-            factor=gainfactor
-        )
+        self.check_result({19: True, 23: True})
 
     def test_sdatmcor_gainfactor_caltable(self):
         """test gainfactor: caltable input"""
@@ -467,10 +464,7 @@ class test_sdatmcor(unittest.TestCase):
             gencal(vis=self.infile, caltable=self.caltable, caltype='amp', spw=k, parameter=[p])
         applycal(vis=self.infile, gaintable=self.caltable, flagbackup=False)
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected', gainfactor=gainfactor)
-        self.check_result(
-            {19: True, 23: True},
-            factor=gainfactor
-        )
+        self.check_result({19: True, 23: True})
 
 
 def suite():
