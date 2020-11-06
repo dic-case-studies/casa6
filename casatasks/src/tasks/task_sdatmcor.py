@@ -129,7 +129,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-BP5 (06-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-BP5-2.0GT (06-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -315,6 +315,9 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
             return atm_parm_variable, False
 
 def _make_list_from_separatedstring(separated_string, dType):
+    # No input #
+    if separated_string == '':
+        return []
     # make a list by separated by comma #
     try:
         if type(separated_string) is str:
@@ -777,6 +780,9 @@ def calc_sdatmcor(
             _msg(" - intent spws = %s" % intentspws)
             _msg(" -        spws = %s" % spws)
 
+            # save spws  #
+            rawmsSpws = spws
+
             # (Task Section) check count of ON/OFF SOURCE
             n_tmonsource = len(tmonsource)
             n_tmoffsource = len(tmoffsource)
@@ -798,27 +804,78 @@ def calc_sdatmcor(
                 raise(msg)
 
             #
-            # (Task Section )
-            # force to change 'processing Spw'
-            # - If spw is specified in the arg, arrange 'spws'
+            # (Task Section)
+            #     OutputSpw 
+            #     must be a set of rawmsSpw
             #
-            _msg("Determine active spw when spw is in the arg.")
-            if (p_spw != ''):
-                spws_param = _make_list_from_separatedstring(p_spw, dType='int')
+            _msg("Inspect and determine outputspw")
 
-                # Including check
-                #  - all the element in spws_param MUST be in Spws
-                if set(spws) >= set(spws_param):   # B is included in A #
-                    spws = spws_param   # update
-                    _msg(" - updated 'spws'=%s. by given spw." % spws)
-                else:
-                    _msg("\nWARNING:: Some of the specified 'spw' are not in the raw MS.\n", 'WARN')
-                    _msg("  - spws (MS)     = %s" % set(spws))
-                    _msg("  - spws (arg)    = %s" % set(spws_param))
+            # request by argument  #
+            outputspws_param = _make_list_from_separatedstring(p_outputspw, dType='int')
 
-                    # obtain Intersection(=common ones), and try to use.  #
-                    spws = set(spws) & set(spws_param)
-                    _msg("  - Alternatively use spws = %s" % spws)
+            # Must be a subset, locate the initial set.  #
+            if set(rawmsSpws) >= set(outputspws_param):
+                outputspws = list(set(outputspws_param))
+            else:
+                _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
+                outputspws = list(set(rawmsSpws) & set(outputspws_param))
+
+
+            # If default, apply all-spws #
+            if (p_outputspw == ''):
+                outputspws = rawmsSpws
+     
+            _msg("Determined outputSpws Information")
+            _msg('-     rawms  Spws       = %s' % rawmsSpws)
+            _msg('- requested  outputSpws = %s' % outputspws_param)
+            _msg('- determined outputSpws = %s' % outputspws)
+
+ 
+            #
+            # (Task Section )
+            #     'processing Spw'
+            #      must be a set of rawSpw
+            #
+            _msg("Inspect and determine spw")
+
+            # request by argument  #
+            spws_param = _make_list_from_separatedstring(p_spw, dType='int')
+
+            # Must be a subset, locate the initial set.  #
+            if set(rawmsSpws) >= set(spws_param):
+                spws = set(spws_param)
+            else:
+                _msg("Some of the specified spw(s) cannot be processed. Try to continue", 'WARN')
+                spws = list(set(rawmsSpws) & set(spws_param))
+
+            # If default, apply all-spws #
+            if (p_spw == ''):
+                spws = rawmsSpws
+
+            _msg("Determined Spws Information")
+            _msg('-     rawms  Spws = %s' % rawmsSpws)
+            _msg('- requested  Spws = %s' % spws_param)
+            _msg('- determined Spws = %s' % spws)
+
+            #
+            # (Task Section )
+            #     outputSpw and Spw Consistency. For example;
+            #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
+            #      - accept  when Spw=[21], outputSpw = [19,21]
+            if set(outputspws) >= set(spws):
+                pass
+            else:
+                spws= list(set(outputspws) & set(spws)) 
+
+            # outputSpw, Spw:: No Target check #
+            if spws == []:
+                raise Exception("No Spw Targets. Abort.")
+            if outputspws == []:
+                raise Exception("No outputSpw targets. Abort.")
+
+            #
+            # (Original Section)
+            #
  
             # (original) get chanfreqs[spwid] info.
             for spwid in spws:
@@ -851,41 +908,6 @@ def calc_sdatmcor(
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
 
-    #
-    # (Task Section)
-    # Output Spw from Arguments. 'Spw' is already decided.
-    #
-    _msg("Determine outputspw")
-
-    # set Output Spw. If no arg, use spws, which means all spw(s). #
-    if (p_outputspw == ''):
-        outputspws = spws         # use calculated 'spws' above
-    else:
-        outputspws = _make_list_from_separatedstring(p_outputspw, dType='int')
-
-    _msg("Determined Spw Information")
-    _msg('- spws %s' % spws)
-    _msg('- outputspws %s' % outputspws)    # expected outputspw
-
-    #
-    # (Task Section)
-    # Check if specified outputspw is in the list of spws
-    #
-
-    if set(spws) >= set(outputspws): 
-        # spws in rawms includes outputspw #
-        pass
-    else:
-        # any of spw in the outputspw is/are not included in spws in rawms #
-        _msg("\nWARNING::Some of specified 'outputspw' are not in the raw MS.\n", 'WARN' )
-        _msg("  - spws            = %s" % spws)
-        _msg("  - outputspws      = %s" % outputspws)
-
-        # obtain Intersection(=common ones), and try to use.  #
-        outputspws = set(spws) & set(outputspws)
-        _msg("  - Alternatively use outputspws = %s" % outputspws)
-
-    #
     # (Original)
     # Data Query on Pointing Table.
     #   output::
@@ -961,10 +983,9 @@ def calc_sdatmcor(
         # (TBD) How to output No-Corrected value to 'corms', directed by 'spw'
         #       The original script does not explicitly imply the logic.
 
-        # for spwid in spws:
         for spwid in outputspws:
             # Log #
-            _msg("Processing spw %d in %s " % (spwid, spws))
+            _msg("\nProcessing spw %d in %s \n" % (spwid, outputspws))
 
             # gain factor
             spwkey = str(spwid)
