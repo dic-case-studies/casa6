@@ -936,6 +936,25 @@ if($1){
    }
 }
 
+%typemap(argout) long& OUTARGINT{
+   PyObject *o = PyLong_FromLong(*$1);
+   if((!$result) || ($result == Py_None)){
+      $result = o;
+   } else {
+      PyObject *o2 = $result;
+      if (!PyTuple_Check($result)) {
+         $result = PyTuple_New(1);
+         PyTuple_SetItem($result,0,o2);
+      }
+      PyObject *o3 = PyTuple_New(1);
+      PyTuple_SetItem(o3,0,o);
+      o2 = $result;
+      $result = PySequence_Concat(o2,o3);
+      Py_DECREF(o2);
+      Py_DECREF(o3);
+   }
+}
+
 %typemap(argout) double& OUTARGDBL{
    PyObject *o = PyFloat_FromDouble(*$1);
    if((!$result) || ($result == Py_None)){
