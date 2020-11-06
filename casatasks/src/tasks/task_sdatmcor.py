@@ -129,7 +129,7 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-BRZ (06-Nov-2020) .\n")
+    _msg("\nSDATMCOR revision 1106-BRZ86 (06-Nov-2020) .\n")
 
 #
 # Input/Output error check and internal set up.
@@ -602,7 +602,7 @@ def calc_sdatmcor(
     skipTaskExec = False          # skip execution at the beginning of calc_sdatmcor.
 
     # obsoleted debug Vars., soon deleted. #
-    showCorrection = False        # show index information while Correction.
+    showCorrection = False         # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
 
@@ -863,7 +863,7 @@ def calc_sdatmcor(
             #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
             #      - accept  when Spw=[21], outputSpw = [19,21]
             if set(outputspws) >= set(spws):
-                pass
+                noCorSpws = list(set(outputspws) - set(spws))
             else:
                 spws= list(set(outputspws) & set(spws)) 
 
@@ -991,7 +991,7 @@ def calc_sdatmcor(
 
         for spwid in outputspws:
             # Log #
-            _msg("\nProcessing spw %d in %s \n" % (spwid, outputspws))
+            _msg("\nProcessing spw %d in %s. No Correcting spw %s \n" % (spwid, outputspws, noCorSpws))
 
             # gain factor
             spwkey = str(spwid)
@@ -1238,11 +1238,19 @@ def calc_sdatmcor(
                 # debug option for task.
                 #
                 if showCorrection:
-                    _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
+                    if spwid not in noCorSpws:
+                        _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
+                    else:
+                        _msg("attempt to write through. spw=%3d, i=%5d" % (spwid, i))
 
-                # Adjust Body (dTa is vector) #
-                for ipol in range(npol):
-                    cdata[ipol, :, i] -= dTa * factor
+                # CAS-13160 changed.
+                # Adjust Body 
+                #  - apply (the spwid is in both outputspws and spws) 
+                #  - no apply (the spwid is in outputspws, but not in spws )
+                #    This may happen in ordinary use-case.
+                if spwid not in noCorSpws:
+                    for ipol in range(npol):
+                        cdata[ipol, :, i] -= dTa * factor
 
             subtb.putcol(datacolumn, cdata)
             subtb.close()
