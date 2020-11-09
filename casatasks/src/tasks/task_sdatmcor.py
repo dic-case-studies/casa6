@@ -129,7 +129,6 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-SiVasParaChile (06-Nov-2020) .\n")
 
     #
     # Input/Output error check and internal set up.
@@ -138,10 +137,12 @@ def sdatmcor(
         errmsg = "infile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
+
     if outfile == '':
         errmsg = "outfile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)       
+
     # Protection. In case infile == outfile #
     if infile == outfile:
         errmsg = "You are attempting to write the output on your input file."
@@ -360,9 +361,8 @@ def _make_list_from_separatedstring(separated_string, dType):
         else:
             return []
     except Exception as err:
-        _msg("Error in comma-separated string.")
         casalog.post('%s' % err, 'SEVERE')
-        raise Exception("internal function error.")
+        raise Exception("Error in comma-separated string.")
 
 # UNDER REVISION #
 def _convert_userdefinedparam_to_list(in_arg):
@@ -383,9 +383,8 @@ def _convert_userdefinedparam_to_list(in_arg):
             raise Exception("internal function error.")
 
     except Exception as err:
-        _msg("Error in converting an element in the List.")
         casalog.post('%s' % err, 'SEVERE')
-        raise Exception("internal function error.")
+        raise Exception("Error in converting an element in the List.")
 
 #
 # decide Default Antenna ID
@@ -402,6 +401,7 @@ def get_default_antenna(msname, antenna):
         n_ant = len(ant_list)
 
         # Choose One #
+        i_ant = 1
         if 1 in ant_list:
             i_ant = 1
         elif 2 in ant_list:
@@ -410,10 +410,14 @@ def get_default_antenna(msname, antenna):
             i_ant = 3
         elif n_ant == 1:
             i_ant = ant_list[0]
-        else:
-            errmsg="Irregular antenna ID detected."
+        elif n_ant == 0:
+            errmsg="No Antenna ID found."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            # raise Exception(errmsg)
+            raise Exception(errmsg)
+        else:
+            errmsg="Unexpected Antenna ID detected."
+            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+            raise Exception(errmsg)
 
         # INFO #
         ant_name = msmd.antennanames(i_ant)[0]
@@ -693,8 +697,7 @@ def calc_sdatmcor(
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
-        errmsg = "Something is wrong in atmMst. "
-        raise Exception(errmsg)
+        raise Exception("Something is wrong in atmMst.")
 
     # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
@@ -855,8 +858,7 @@ def calc_sdatmcor(
 
     except Exception as err:
         casalog.post('%s' % err, 'ERROR')
-        errmsg = "Error in opening rawms"
-        raise Exception(errmsg)
+        raise Exception("Error in opening rawms")
 
     # (original)
     bnd = (pl.diff(tmoffsource) > 1)
@@ -902,8 +904,7 @@ def calc_sdatmcor(
 
     except Exception as err:     
         casalog.post('%s' % err, 'ERROR')
-        errmsg = "Error in opening POINTING."
-        raise Exception(errmsg)
+        raise Exception("Error in opening POINTING.")
 
     ################################################################
     # Get atmospheric parameters for ATM
@@ -917,8 +918,7 @@ def calc_sdatmcor(
 
     except Exception as err:
         casalog.post('%s' % err, 'ERROR')
-        errmsg = "Error in opening rawms/'ASDM_CALWVR'."
-        raise Exception(errmsg)
+        raise Exception("Error in opening rawms/'ASDM_CALWVR'.")
 
     # pick up pwv
     pwv = pl.median(pwv)
@@ -937,8 +937,7 @@ def calc_sdatmcor(
             subtb.close()
     except Exception as err:
         casalog.post('%s' % err, 'ERROR')
-        errmsg = "Error in opening rawms/'ASDM_CALATMOSPHERE'."
-        raise Exception(errmsg)
+        raise Exception("Error in opening rawms/'ASDM_CALATMOSPHERE'.")
 
     _msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
 
