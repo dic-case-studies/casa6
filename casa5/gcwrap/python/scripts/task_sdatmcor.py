@@ -120,7 +120,7 @@ def sdatmcor(
         dp, dpm,
         layerboundaries, layertemperature):
 
-    # Information #
+    # task name #
     casalog.origin(origin)
 
     #
@@ -383,11 +383,13 @@ def _convert_userdefinedparam_to_list(in_arg):
 # decide Default Antenna ID
 #
 def get_default_antenna(msname, antenna):
-    # Choose base-antenna from selected Antenna ID
-    #  - Search Priority ID is   1 > 2 > 3 > x
-    #  - if ONLY one  antenna(=x) is available, use this.
-    # The Rule is defined in CASR-552
+    # Choose base-antenna from Antennas in the specified MS.
+    #  1) Try to find 1, 2, 3 in ant_list. smaller number is prior.
+    #  2) When 1) did not find an antenna and only one antenna is in the list. use this.
+    #  3) In case, no antenna is in the list, Error. 
+    # The Rule is discussed in CASR-552
     #  - iAnt = 1 is experimentally preferable. 
+    #  - iAnt = 0 should be avoided.
 
     with open_msmd(msname) as msmd:
         ant_list = msmd.antennaids(antenna)
