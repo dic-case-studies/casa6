@@ -435,6 +435,11 @@ class test_sdatmcor(unittest.TestCase):
         sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
         self.check_result({19: False, 23: True})
 
+    def test_sdatmcor_spw_process_99_select_all(self):
+        '''test data selection: specify invalid spw to process'''
+        sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: False})
+
     def test_sdatmcor_intent_selection(self):
         '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
         sdatmcor(infile=self.infile, outfile=self.outfile, intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
