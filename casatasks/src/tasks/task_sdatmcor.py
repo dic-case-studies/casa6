@@ -279,11 +279,9 @@ def _check_unit_and_formToStr(data, base_unit):
             ext_unit = qa.getunit(data)
             if (ext_unit in base_unit):
                 # With Unit #
-                # _msg("Unit Conversion::Data with Unit '%s'" % data)
                 return str(qa.getvalue(data)[0])
             elif (ext_unit == ''):
                 # Without Unit and added  #
-                # _msg("Unit Conversion::No unit specified in %s . Assumed '%s'" % (data, base_unit))
                 return data
             else:
                 # Mismatch (ERROR) #
@@ -464,7 +462,7 @@ def get_default_altitude(msname, antid):
 def showAtmInfo(atm):
     """
      Returned atm (from initAtmProfile) may have a different structure.
-     In casa6, additional variable information is added in Dict type. 
+     In casa6, additional variable information is added in Dict type.
     """
     version = at.getAtmVersion()
     _msg("\nAtomosphere Tool:: version = %s\n" % version)
@@ -613,12 +611,7 @@ def calc_sdatmcor(
         _msg('layertemperature  = %s' % param_layertemperature)
         _msg("*****************************")
 
-    # Debug flags. #
-    showCorrection = False        # show index information while Correction.
-    interruptCorrection = False   # Interrupt Correction
-    interruptCorrectionCnt = 200  # (limit count)
-
-    # datacolumn (XML fills default) ,to UPPER CASE #
+    # datacolumn to UPPER CASE  #
     datacolumn = p_datacolumn.upper()
     if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
         datacolumn = 'CORRECTED_DATA'
@@ -1167,12 +1160,6 @@ def calc_sdatmcor(
 
             cdata = data.copy()
             for i, t in enumerate(tmdata):
-                # debug option, interrupt the correction loop.
-                if interruptCorrection:
-                    if i > interruptCorrectionCnt:
-                        msg = "Correction Loop was interrupted. \n---"
-                        _msg(msg)
-                        break
 
                 # (original script) #
                 dt = tmoffsource - t
@@ -1198,15 +1185,6 @@ def calc_sdatmcor(
                     dTa = pl.interp(chanfreqs[spwid], chanfreqs_high, dTa)
                 elif dosmooth:
                     dTa = pl.convolve(dTa, [0.25, 0.5, 0.25], 'same')
-
-                #
-                # debug option for task.
-                #
-                if showCorrection:
-                    if spwid not in noCorSpws:
-                        _msg("spw=%3d, i=%5d, time=%15s, Max(dTa)=%19s, Min(dTa)=%19s" % (spwid, i, t, max(dTa), min(dTa)))
-                    else:
-                        _msg("attempt to write through. spw=%3d, i=%5d" % (spwid, i))
 
                 # CAS-13160 changed.
                 # Adjust Body 
