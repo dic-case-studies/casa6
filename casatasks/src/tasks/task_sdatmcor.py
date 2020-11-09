@@ -34,28 +34,21 @@ else:
 # Task name #
 origin = 'sdatmcor'
 
-# Table/MS safe access #
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
-    # tb = table( )
     tb.open(path, nomodify=nomodify)
-    # print("tentative::TB OPENED.")
     try:
         yield tb
     finally:
-        # print("tentative::TB CLOSED.")
         tb.close()
 
 
-# MS METADATA  safe access #
 @contextlib.contextmanager
 def open_msmd(path):
     msmd.open(path)
-    # print("tentative::MSMD OPENED.")
     try:
         yield msmd
     finally:
-        # print("tentative::MSMD CLOSED.")
         msmd.close()
 
 
