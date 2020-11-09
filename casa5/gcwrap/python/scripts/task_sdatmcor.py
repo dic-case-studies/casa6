@@ -129,11 +129,15 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("\nSDATMCOR revision 1106-SiVasParaChile (06-Nov-2020) .\n")
+    _msg("SDATMCOR ." )
 
-    #
-    # Input/Output error check and internal set up.
-    #
+
+    # File Info. #
+    _msg("INPUT/OUTPUT Files")
+    _msg("  Input  (rawms) = %s " % infile)
+    _msg("  Output (colms) = %s " % outfile)
+
+    # Input/Output error check and internal set up. #
     if infile == '':
         errmsg = "infile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
@@ -141,12 +145,37 @@ def sdatmcor(
     if outfile == '':
         errmsg = "outfile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)       
+        raise Exception(errmsg)
+       
     # Protection. In case infile == outfile #
     if infile == outfile:
         errmsg = "You are attempting to write the output on your input file."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
+
+    # Existence info.  #
+    infile_exist = _file_exist(infile)
+    outfile_exist = _file_exist(outfile)
+
+    # Check:: infile Inaccessible #
+    if not infile_exist:
+        _msg("\nERROR::Specified infile does not exist.\n", 'ERROR')
+        return False
+
+    # Check:: outfile Protected #
+    if outfile_exist:
+        if overwrite:
+            _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
+            _ms_remove(outfile)
+        else:
+            errmsg = "Specified outputfile already exist."
+            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+            raise Exception(errmsg)
+
+    # datacolumn (XML fills default is UPPER CASE) #
+    datacolumn = datacolumn.upper()
+    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
+        datacolumn = 'CORRECTED_DATA'
 
     # Antenna Key word, form without &&& # 
     if antenna != '':
@@ -528,7 +557,7 @@ def atmMst(
 ############################################################
 def calc_sdatmcor(
         p_infile,
-        p_datacolumn,
+        datacolumn,
         p_outfile,
         p_overwrite,
         p_field,
@@ -566,7 +595,7 @@ def calc_sdatmcor(
         _msg("**   calc_sdatmcor::             **")
         _msg("***********************************")
         _msg('infile      = %s' % p_infile)
-        _msg('datacolumn  = %s' % p_datacolumn)
+        _msg('datacolumn  = %s' % datacolumn)
         _msg('outfile     = %s' % p_outfile)
         _msg('overwrite   = %s' % p_overwrite)
         _msg('field       = %s' % p_field)
@@ -595,47 +624,15 @@ def calc_sdatmcor(
         _msg('layertemperature  = %s' % param_layertemperature)
         _msg("*****************************")
 
-    # Debug flags. #
+    # Debug flags. (Invisible to users) #
     showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
-
-    # datacolumn (XML fills default) ,to UPPER CASE #
-    datacolumn = p_datacolumn.upper()
-    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
-        datacolumn = 'CORRECTED_DATA'
 
     # Internal file names  #
     rawms = p_infile
     calms = p_outfile
     corms = p_outfile
-
-    # Existence info.  #
-    rawms_exist = _file_exist(rawms)
-    calms_exist = _file_exist(calms)
-    corms_exist = _file_exist(corms)
-
-    # File Info. #
-    _msg("INPUT and OUTPUT")
-    _msg("  default MS file (rawms) = %s , Exist =%s" % (rawms, rawms_exist))
-    _msg("  default MS file (calms) = %s , Exist =%s" % (calms, calms_exist))
-    _msg("  default MS file (corms) = %s , Exist =%s" % (corms, corms_exist))
-
-    # infile Inaccessible #
-    if not rawms_exist:
-        _msg("\nERROR::Specified infile does not exist.\n", 'ERROR')
-        return False
-  
-    # outfile Protected #
-    if corms_exist:
-        if p_overwrite:
-            _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
-            _ms_remove(corms)
-        else:
-            errmsg = "Specified outputfile already exist."
-            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            raise Exception(errmsg)
-
 
     #
     # CAS-13160
@@ -684,7 +681,7 @@ def calc_sdatmcor(
     try:
         atmMst(
             infile=rawms,
-            datacolumn=p_datacolumn,
+            datacolumn=datacolumn,
             outfile=corms,      
             overwrite=p_overwrite,
             field=p_field,
@@ -727,9 +724,8 @@ def calc_sdatmcor(
 
     #
     # CAS-13160
-    #
-    #   From here, main part of the Original script starts.
-    #   In some sections, additional statements for Task are inserted.
+    #   FROM HERE, MAIN PART OF THE ORIGINAL SCRIPT STARTS.
+    #   In some sections, additional TASK CODE are inserted.
     #
 
     ################################################################
