@@ -98,6 +98,7 @@ class WeightScaling;
 enum VisBufferType : int;
 enum VisBufferOptions : int;
 
+typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
 // <summary>
 // VisibilityIterator2 iterates through one or more readonly MeasurementSets
 // </summary>

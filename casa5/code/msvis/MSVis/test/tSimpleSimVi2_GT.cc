@@ -370,7 +370,6 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_NonTrivial1 ) {
 
 }
 
-
 TEST_F( SimpleSimVi2Test , SimpleSimVi2_SubtTables ) {
   SimpleSimVi2Factory s1f(s1);
   std::unique_ptr<VisibilityIterator2> vi (new VisibilityIterator2(s1f));

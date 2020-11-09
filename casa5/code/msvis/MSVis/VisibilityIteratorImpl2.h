@@ -1294,7 +1294,6 @@ protected:
 
     };
 
-    typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
 
     casacore::Bool autoTileCacheSizing_p;
     std::map <VisBufferComponent2, BackWriter *> backWriters_p;
