@@ -4259,7 +4259,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_onefield_mfs_eph : single field (standard gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_sf_ephem_test.residual')
@@ -4349,7 +4349,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_multifield_mfs_eph : multifield (mosaic gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_mos_ephem_test.residual')
