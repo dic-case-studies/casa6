@@ -341,10 +341,6 @@ public:
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const = 0;
     virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const = 0;
 
-    // Return current SpectralWindow
-
-    virtual casacore::Int spectralWindow () const = 0;
-
     // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const = 0;
 

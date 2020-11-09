@@ -731,8 +731,6 @@ void SimpleSimVi2::stateId (Vector<Int> & stateids) const { stateids.resize(nRow
 
   Int SimpleSimVi2::polFrame () const { return 0; } // SSVi2NotYetImplemented() }
 
-Int SimpleSimVi2::spectralWindow () const { return thisSpw_; }
-
 void SimpleSimVi2::spectralWindows (Vector<Int> & spws) const 
 { 
   spws.resize(nRows()); 

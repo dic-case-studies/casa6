@@ -1945,12 +1945,6 @@ VisibilityIteratorImpl2::polFrame() const
 	return msIter_p->polFrame();
 }
 
-Int
-VisibilityIteratorImpl2::spectralWindow() const
-{
-	return msIter_p->spectralWindowId();
-}
-
 void
 VisibilityIteratorImpl2::spectralWindows(Vector<Int> & spws) const
 {
@@ -2348,7 +2342,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         channelSelectors_p.clear();
         channelSelectorsNrows_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
-            spectralWindow(), polarizationId(), msId()));
+            -1, polarizationId(), msId()));
 
         for (Int i = rowBounds_p.subchunkBegin_p + 1;
                 i <= rowBounds_p.subchunkEnd_p;
@@ -2505,7 +2499,9 @@ VisibilityIteratorImpl2::determineChannelSelection(
 	assert(frequencySelections_p != 0);
 
 	if (spectralWindowId == -1) {
-		spectralWindowId = this->spectralWindow();
+        Vector<Int> spws;
+        this->spectralWindows(spws);
+		spectralWindowId = spws[0];
 	}
 
 	if (msId < 0) {
@@ -2807,16 +2803,14 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 Slice
 VisibilityIteratorImpl2::findChannelsInRange(
-	Double lowerFrequency, Double upperFrequency,
-	const vi::SpectralWindowChannels & spectralWindowChannels) const
+    Double lowerFrequency, Double upperFrequency,
+    const vi::SpectralWindowChannels & spectralWindowChannels) const
 {
-	ThrowIf(spectralWindowChannels.empty(),
-	        String::format(
-		        "No spectral window channel info for window=%d, ms=%d",
-		        spectralWindow(), msId()));
+    ThrowIf(spectralWindowChannels.empty(),
+            String::format(
+            "No spectral window channel info for  ms=%d", msId()));
 
-	return spectralWindowChannels.getIntersection(
-		lowerFrequency, upperFrequency);
+    return spectralWindowChannels.getIntersection(lowerFrequency, upperFrequency);
 }
 
 Int
@@ -3805,31 +3799,33 @@ VisibilityIteratorImpl2::getMeasurementSets() const
 Int
 VisibilityIteratorImpl2::getReportingFrameOfReference() const
 {
-	Int frame;
-	if (reportingFrame_p == VisBuffer2::FrameNotSpecified) {
+    Int frame;
+    if (reportingFrame_p == VisBuffer2::FrameNotSpecified) {
 
-		if (frequencySelections_p != 0) {
+        if (frequencySelections_p != 0) {
 
-			frame = frequencySelections_p->getFrameOfReference();
+            frame = frequencySelections_p->getFrameOfReference();
 
-			if (frame == FrequencySelection::ByChannel) {
+            if (frame == FrequencySelection::ByChannel) {
 
-				// Since selection was done by channels, the frequencies are
-				// native.
+                // Since selection was done by channels, the frequencies are
+                // native.
 
-				measurementFrame_p = getMeasurementFrame(spectralWindow());
-				frame = measurementFrame_p;
-			}
-		}
-		else{
-			frame = VisBuffer2::FrameNotSpecified;
-		}
-	}
-	else{
-		frame = reportingFrame_p;
-	}
+                Vector<Int> spws;
+                spectralWindows(spws);
+                measurementFrame_p = getMeasurementFrame(spws[0]);
+                frame = measurementFrame_p;
+            }
+        }
+        else{
+            frame = VisBuffer2::FrameNotSpecified;
+        }
+    }
+    else{
+        frame = reportingFrame_p;
+    }
 
-	return frame;
+    return frame;
 }
 
 void

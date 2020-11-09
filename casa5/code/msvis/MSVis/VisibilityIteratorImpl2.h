@@ -415,10 +415,6 @@ public:
     virtual void
     sigma(casacore::Vector<casacore::Matrix<casacore::Float>> & sig) const override;
 
-	// Return current SpectralWindow
-	virtual casacore::Int
-	spectralWindow() const override;
-
     // Return spw Ids for each row of the current iteration
     virtual void
     spectralWindows(casacore::Vector<casacore::Int> & spws) const override;

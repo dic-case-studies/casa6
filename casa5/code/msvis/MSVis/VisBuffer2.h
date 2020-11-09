@@ -576,10 +576,7 @@ public:
 
     virtual const casacore::Vector<casacore::rownr_t> & rowIds () const = 0; // [nR]
 
-    // Returns the spectral window ID for the specified row.
-
-    //virtual casacore::Int spectralWindow () const = 0;
-
+    // Returns the spectral window ID for each row.
     virtual const casacore::Vector<casacore::Int> & spectralWindows () const = 0; // [nR]
     virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & spectralWindows) = 0;
 

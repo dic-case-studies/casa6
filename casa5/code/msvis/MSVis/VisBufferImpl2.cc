@@ -1895,16 +1895,10 @@ VisBufferImpl2::setSigmas (const Vector<Matrix<Float>> & sigmas)
 //    return cache_p->sigmaMat_p.get ();
 //}
 
-//Int
-//VisBufferImpl2::spectralWindow () const
-//{
-//    return cache_p->spectralWindow_p.get ();
-//}
-
 const Vector<Int> &
 VisBufferImpl2::spectralWindows () const
 {
-	return cache_p->spectralWindows_p.get ();
+    return cache_p->spectralWindows_p.get ();
 }
 
 void
@@ -2912,14 +2906,6 @@ VisBufferImpl2::fillSigmas (Vector<Matrix<Float>>& value) const
 //  CheckVisIter ();
 //
 //  getViiP()->sigmaMat (value);
-//}
-
-//void
-//VisBufferImpl2::fillSpectralWindow (Int& value) const
-//{
-//  CheckVisIter ();
-//
-//  value = getViiP()->spectralWindow ();
 //}
 
 void

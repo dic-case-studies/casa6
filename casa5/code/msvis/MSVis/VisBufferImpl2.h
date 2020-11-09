@@ -339,7 +339,6 @@ public:
     virtual const casacore::Vector<casacore::Matrix<casacore::Float>> & sigmas () const;
     virtual void setSigmas (const casacore::Vector<casacore::Matrix <casacore::Float>> & value);
     //virtual const casacore::Matrix<casacore::Float> & sigmaMat () const;
-    //virtual casacore::Int spectralWindow () const;
     virtual const casacore::Vector<casacore::Int> & spectralWindows () const;
     virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & spectralWindows);
     virtual const casacore::Vector<casacore::Int> & stateId () const;

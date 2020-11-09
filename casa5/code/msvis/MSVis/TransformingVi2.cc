@@ -109,7 +109,9 @@ TransformingVi2::configureNewSubchunk (){
     // object.  The main addition is the need to provide the name of the MS output and
     // the MS index which is always zero since we only support a single output MS.
 
-    Vector<Int> channels = getChannels (0, 0, spectralWindow (), msId()); // args are ignored
+    Vector<Int> spws;
+    spectralWindows(spws);
+    Vector<Int> channels = getChannels (0, 0, spws[0], msId()); // args are ignored
     Int nChannels = channels.nelements();
 
     Vector<Int> corrs = getCorrelations ();
@@ -642,12 +644,6 @@ String
 TransformingVi2::sourceName ()  const
 {
     return getVii()->sourceName ();
-}
-
-Int
-TransformingVi2::spectralWindow ()  const
-{
-    return getVii()->spectralWindow ();
 }
 
 void

@@ -257,7 +257,6 @@ public:
   virtual casacore::Int polFrame () const override;
   virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
   virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
-  virtual casacore::Int spectralWindow () const override;
   virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
   virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const override;
   virtual void time (casacore::Vector<casacore::Double> & t) const override;
