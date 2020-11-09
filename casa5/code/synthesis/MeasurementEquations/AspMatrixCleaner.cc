@@ -476,7 +476,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // Various ways of stopping:
     //    1. stop if below threshold
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0004/*threshold()*/)
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-7/*threshold()*/)
     {
     	cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
@@ -884,6 +884,8 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
     {
       for (int i = mini; i <= maxi; i++)
       {*/ //with this the max is 0
+    float area = 0.0;
+    float areag = 0.0;
     for (int j = 0; j < ny; j++)
     {
       for (int i = 0; i < nx; i++)
@@ -892,15 +894,19 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
         const int py = j - refj;
         ////iscale(i,j) = gbeam(px, py);
         iscale(i,j) = (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-refi,2) + pow(j-refj,2))*0.5/pow(scaleSize,2));
+        area += iscale(i,j);
+        areag += gbeam(px, py);
       }
     }
+
+    //debug
+    float maxima;
+    IPosition pos;
+    findMaxAbs(iscale, maxima, pos);
+    cout << "peak(iscale) " << max(fabs(iscale)) << " amp " << 1.0/scaleSize;
+    cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos);
+    cout << " area " << area << " areag " << areag << endl;
   }
-  //debug
-  float maxima;
-  IPosition pos;
-  findMaxAbs(iscale, maxima, pos);
-  cout << "peak(iscale) " << max(fabs(iscale)) << " amp " << 1.0/scaleSize;
-  cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos) << endl;
 
 }
 
@@ -1718,6 +1724,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //AspObjFunc<float>::TVector x(length);
     //end trial
 
+    // for lbfgs
+    /*
     VectorXd x(length);
     // Bounds
     VectorXd lb(length);
@@ -1740,7 +1748,52 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before lbfgs
     }
 
-    cout << "Before: x = " << x.transpose() << endl;
+    cout << "Before: x = " << x.transpose() << endl;*/
+
+    // GSL: set the initial guess
+    gsl_vector *x = NULL;
+    x = gsl_vector_alloc(length);
+    gsl_vector_set_zero(x);
+
+    for (unsigned int i = 0; i < length; i+=2)
+    {
+      gsl_vector_set(x, i, tempx[i]);
+      gsl_vector_set(x, i+1, tempx[i+1]);
+
+      // save aspen before optimization
+      itsPrevAspAmplitude.push_back(tempx[i]); // M31 active-set amplitude before lbfgs
+      //itsPrevAspAmplitude.push_back(tempx[i] / 1e8); // G55 active-set amplitude before lbfgs
+      itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before lbfgs
+    }
+
+    // GSL optimization
+    gsl_multimin_function_fdf my_func;
+    gsl_multimin_fdfminimizer *s = NULL;
+
+    // setupSolver
+    ParamObj optParam(*itsDirty, *itsXfr, activeSetCenter);
+    ParamObj *ptrParam;
+    ptrParam = &optParam;
+    const gsl_multimin_fdfminimizer_type *T;
+    T = gsl_multimin_fdfminimizer_vector_bfgs2;
+    s = gsl_multimin_fdfminimizer_alloc(T, length);
+    my_func.n      = length;
+    my_func.f      = my_f;
+    my_func.df     = my_df;
+    my_func.fdf    = my_fdf;
+    my_func.params = (void *)ptrParam;
+
+    const float InitStep = gsl_blas_dnrm2(x);
+    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 1e-3);
+
+    printf("\n---------- BFGS algorithm begin ----------\n");
+    findComponent(10, s);
+    printf("\n----------  BFGS algorithm end  ----------\n");
+    // update x needed here?
+    gsl_vector *optx = NULL;
+    optx = gsl_multimin_fdfminimizer_x(s);
+
+    // end GSL optimization
 
     // trial cppsolvers
     /*AspObjFunc<float> fun(*itsOrigDirty, *itsXfr, activeSetCenter, length);
@@ -1800,7 +1853,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // x is not changing in LBFGS which causes convergence issue
     // so we use the previous x instead. This is a hack suggested by
     // the online community
-    bool becomesNegScale = false;
+    //bool becomesNegScale = false;
     /*if (fx == -999.0)
     { cout << "fx == -999; has convergence issue? Reset x to the previous one." << endl;
       becomesNegScale = true;
@@ -1835,24 +1888,39 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // put the updated x back to the class variables, itsAspAmp and itsAspScale
     for (unsigned int i = 0; i < length; i+= 2)
     {
-      itsAspAmplitude.push_back(x[i]);
-      itsAspScaleSizes.push_back(x[i+1]); //permanent list that doesn't get clear
-      itsGoodAspAmplitude.push_back(x[i]); // M31 active-set amplitude
+      double amp = gsl_vector_get(optx, i);
+      double scale = gsl_vector_get(optx, i+1);
+      scale = (scale = abs(scale)) < 0.4 ? 0.4 : scale;
+
+      itsAspAmplitude.push_back(amp);
+      itsAspScaleSizes.push_back(scale); //permanent list that doesn't get clear
+      itsGoodAspAmplitude.push_back(amp); // M31 active-set amplitude
       //itsGoodAspAmplitude.push_back(x[i] / 1e8); // G55 active-set amplitude
-      itsGoodAspActiveSet.push_back(x[i+1]); // active-set
+      itsGoodAspActiveSet.push_back(scale); // active-set
       itsAspCenter.push_back(activeSetCenter[i/2]);
-      if (becomesNegScale && x[i+1] < 2.0)
+      if (scale < 0.4)
         itsAspGood.push_back(false);
       else
         itsAspGood.push_back(true);
+
+      cout << "optx = " << amp << " " << scale << endl;
     }
 
-    itsStrengthOptimum = x[length - 2]; // the latest aspen is the last element of x
+    itsStrengthOptimum = itsAspAmplitude[itsAspAmplitude.size() -1]; //gsl_vector_get(optx, length - 2); // x[length - 2]; // the latest aspen is the last element of x
     // the above line affects residual image (brighter) (0 scales so far seems problemastic)
-    itsOptimumScaleSize = x[length - 1]; // the latest aspen is the last element of x
+    itsOptimumScaleSize = itsAspScaleSizes[itsAspScaleSizes.size() -1]; //gsl_vector_get(optx, length - 1); //x[length - 1]; // the latest aspen is the last element of x
     itsGoodAspCenter = activeSetCenter;
 
-  } // end of LBFGS optimization
+    // debug
+    cout << "opt strengthOptimum " << itsStrengthOptimum << " opt size " << itsOptimumScaleSize << endl;
+
+    // free GSL stuff
+    gsl_multimin_fdfminimizer_free(s);
+    gsl_vector_free(x);
+    //gsl_vector_free(optx); // free this causes seg fault!!!
+
+  } // finish bfgs optimization
+
   AlwaysAssert(itsGoodAspCenter.size() == itsGoodAspActiveSet.size(), AipsError);
 
   // debug info
