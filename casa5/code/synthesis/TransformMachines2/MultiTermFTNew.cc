@@ -230,7 +230,7 @@ using namespace casa::vi;
       Float freq=0.0,mulfactor=1.0;
       Vector<Double> selfreqlist(vb.getFrequencies(0));
       
-      for (Int row=0; row<vb.nRows(); row++)
+      for (rownr_t row=0; row<vb.nRows(); row++)
 	for (Int chn=0; chn<vb.nChannels(); chn++)
 	  {
 	    freq = selfreqlist(IPosition(1,chn));

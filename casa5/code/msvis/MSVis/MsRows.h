@@ -137,15 +137,15 @@ public:
     // Constructor for read-only access.
     // Attempt to write will throw exception.
 
-    MsRow (casacore::Int row, const vi::VisBuffer2 * vb);
+    MsRow (casacore::rownr_t row, const vi::VisBuffer2 * vb);
 
     // Constructor for read/write access
 
-    MsRow (casacore::Int row, vi::VisBuffer2 * vb);
+    MsRow (casacore::rownr_t row, vi::VisBuffer2 * vb);
 
     virtual ~MsRow () {}
 
-    virtual void changeRow (casacore::Int row) { row_p = row;}
+    virtual void changeRow (casacore::rownr_t row) { row_p = row;}
 
     virtual casacore::Int antenna1 () const = 0;
     virtual casacore::Int antenna2 () const = 0;
