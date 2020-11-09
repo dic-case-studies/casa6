@@ -129,15 +129,11 @@ def sdatmcor(
 
     # Information #
     casalog.origin(origin)
-    _msg("SDATMCOR ." )
+    _msg("\nSDATMCOR revision 1106-SiVasParaChile (06-Nov-2020) .\n")
 
-
-    # File Info. #
-    _msg("INPUT/OUTPUT Files")
-    _msg("  Input  (rawms) = %s " % infile)
-    _msg("  Output (colms) = %s " % outfile)
-
-    # Input/Output error check and internal set up. #
+    #
+    # Input/Output error check and internal set up.
+    #
     if infile == '':
         errmsg = "infile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
@@ -145,37 +141,37 @@ def sdatmcor(
     if outfile == '':
         errmsg = "outfile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
-       
+        raise Exception(errmsg)       
     # Protection. In case infile == outfile #
     if infile == outfile:
         errmsg = "You are attempting to write the output on your input file."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
 
-    # Existence info.  #
+    # File Info. #
+    _msg("INPUT/OUTPUT")
+    _msg("  Input MS file   = %s " % infile)
+    _msg("  Output MS file  = %s " % outfile)
+
+    # Existence #
     infile_exist = _file_exist(infile)
     outfile_exist = _file_exist(outfile)
 
-    # Check:: infile Inaccessible #
+    # infile Inaccessible #
     if not infile_exist:
-        _msg("\nERROR::Specified infile does not exist.\n", 'ERROR')
-        return False
+        errmsg = "Specified infile does not exist."
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
 
-    # Check:: outfile Protected #
+    # outfile Protected #
     if outfile_exist:
         if overwrite:
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(outfile)
         else:
-            errmsg = "Specified outputfile already exist."
+            errmsg = "Specified outfile already exist."
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
             raise Exception(errmsg)
-
-    # datacolumn (XML fills default is UPPER CASE) #
-    datacolumn = datacolumn.upper()
-    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
-        datacolumn = 'CORRECTED_DATA'
 
     # Antenna Key word, form without &&& # 
     if antenna != '':
@@ -343,21 +339,21 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
         else:
             return atm_parm_variable, False
 
-# convert to List from comma separated form string #
+# UNDER REVISION #
 def _make_list_from_separatedstring(separated_string, dType):
     # No input #
     if separated_string == '':
         return []
-    # make a list by separated by comma #
+
     try:
         if type(separated_string) is str:
             tmp_list = separated_string.split(',')
             if dType == 'str':
-                out_list = [str(s) for s in tmp_list]  # convert to list['str','str', ...]
+                out_list = [str(s) for s in tmp_list]
             elif dType == 'int':
-                out_list = [int(s) for s in tmp_list]  # convert to list[int,int, ...]
+                out_list = [int(s) for s in tmp_list]
             else:
-                out_list = [s for s in tmp_list]  # No convert list [ data, data, ...]
+                out_list = [s for s in tmp_list]
             return out_list
         elif type(separated_string) is list:
             return separated_string
@@ -368,24 +364,19 @@ def _make_list_from_separatedstring(separated_string, dType):
         casalog.post('%s' % err, 'SEVERE')
         raise Exception("internal function error.")
 
-
+# UNDER REVISION #
 def _convert_userdefinedparam_to_list(in_arg):
-    """
-      convert elements in the arg (list or separated str)  to  float list.
-    """
-    # check Empty #
+    # No input #
     if (type(in_arg) is str) and (in_arg == ''):
         return [] 
 
-    # conversion (non-decimal expression string will fail.) #
     try:
         if  type(in_arg) is list:
-            # converting a List which contains numerical expression or int/float to Float-List.
-            out_list = [float(s) for s in in_arg]  # force to convert to list[float, ...]
+            out_list = [float(s) for s in in_arg]
             return out_list
         elif type(in_arg) is str:
             tmp_list = in_arg.split(',')
-            out_list = [float(s) for s in tmp_list]  # force to convert to list[float, ...]
+            out_list = [float(s) for s in tmp_list]
             return out_list
         else:
             _msg("\nERROR::Invalid arg type. Expecting only separated string or list.\n", 'SEVERE')
@@ -557,7 +548,7 @@ def atmMst(
 ############################################################
 def calc_sdatmcor(
         p_infile,
-        datacolumn,
+        p_datacolumn,
         p_outfile,
         p_overwrite,
         p_field,
@@ -595,7 +586,7 @@ def calc_sdatmcor(
         _msg("**   calc_sdatmcor::             **")
         _msg("***********************************")
         _msg('infile      = %s' % p_infile)
-        _msg('datacolumn  = %s' % datacolumn)
+        _msg('datacolumn  = %s' % p_datacolumn)
         _msg('outfile     = %s' % p_outfile)
         _msg('overwrite   = %s' % p_overwrite)
         _msg('field       = %s' % p_field)
@@ -624,10 +615,15 @@ def calc_sdatmcor(
         _msg('layertemperature  = %s' % param_layertemperature)
         _msg("*****************************")
 
-    # Debug flags. (Invisible to users) #
+    # Debug flags. #
     showCorrection = False        # show index information while Correction.
     interruptCorrection = False   # Interrupt Correction
     interruptCorrectionCnt = 200  # (limit count)
+
+    # datacolumn (XML fills default) ,to UPPER CASE #
+    datacolumn = p_datacolumn.upper()
+    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
+        datacolumn = 'CORRECTED_DATA'
 
     # Internal file names  #
     rawms = p_infile
@@ -681,7 +677,7 @@ def calc_sdatmcor(
     try:
         atmMst(
             infile=rawms,
-            datacolumn=datacolumn,
+            datacolumn=p_datacolumn,
             outfile=corms,      
             overwrite=p_overwrite,
             field=p_field,
@@ -724,8 +720,9 @@ def calc_sdatmcor(
 
     #
     # CAS-13160
-    #   FROM HERE, MAIN PART OF THE ORIGINAL SCRIPT STARTS.
-    #   In some sections, additional TASK CODE are inserted.
+    #
+    #   From here, main part of the Original script starts.
+    #   In some sections, additional statements for Task are inserted.
     #
 
     ################################################################
