@@ -47,7 +47,7 @@ except ImportError:
     _qa = qatool()
     _imd = imdtool()
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)    
 
 image = "imregion.fits"
@@ -61,7 +61,7 @@ cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
 icrs_image = "icrs.im"
 
-datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
+datapath = ctsys_resolve('/unittest/rgtool/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
