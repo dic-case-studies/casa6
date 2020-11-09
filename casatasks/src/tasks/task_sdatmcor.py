@@ -120,7 +120,7 @@ def sdatmcor(
         dp, dpm,
         layerboundaries, layertemperature):
 
-    # Information #
+    # task name #
     casalog.origin(origin)
 
     #
