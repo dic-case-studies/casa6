@@ -46,7 +46,6 @@ PlotMSCTAverager::PlotMSCTAverager(
     maxTimeOffset_p(0.0),
     aveScan_p(0),
     aveField_p(0),
-    blnCount_p(0),
     blnWtSum_p(),
     initialized_p(false),
     isAccum_p(false),
@@ -79,29 +78,34 @@ void PlotMSCTAverager::finalizeAverage() {
     cparam.set(Complex(0.0));
     casacore::Cube<casacore::Float> fparam(nPoln_p, nChan_p, nBlnOK);
     fparam.set(0.0);
-    casacore::Cube<casacore::Float> flag(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Float> paramerr(nPoln_p, nChan_p, nBlnOK);
+    paramerr.set(0.0);
+    casacore::Cube<casacore::Bool> flag(nPoln_p, nChan_p, nBlnOK);
     flag.set(true);
+    casacore::Cube<casacore::Float> snr(nPoln_p, nChan_p, nBlnOK);
+    snr.set(0.0);
     casacore::Vector<casacore::Int> antenna1(nBlnOK);
     casacore::Vector<casacore::Int> antenna2(nBlnOK);
 
-    // Divide each baseline sum by its count
+    // Divide each baseline sum by its weight/count
     for (Int ibln = 0; ibln < nBlnMax_p; ++ibln) {
       if (blnOK_p(ibln)) {
         // baseline was in unaveraged data
-        Int thisCount(blnCount_p(ibln));
 
         for (Int ichan = 0; ichan < nChan_p; ++ichan) {
           for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
             // normalize ibln data at obln:
-            if (thisCount > 0.0) {
+            Float thisWt(accumWt_(ipol, ichan, ibln));
+            if (thisWt > 0.0) {
               if (isComplex_p) {
-                cparam(ipol, ichan, obln) = accumCParam_(ipol, ichan, ibln) / (float)thisCount;
+                cparam(ipol, ichan, obln) = accumCParam_(ipol, ichan, ibln) / thisWt;
 			  } else {
-                fparam(ipol, ichan, obln) = accumFParam_(ipol, ichan, ibln) / (float)thisCount;
+                fparam(ipol, ichan, obln) = accumFParam_(ipol, ichan, ibln) / thisWt;
               }
+              paramerr(ipol, ichan, obln) = accumParamErr_(ipol, ichan, ibln) / thisWt;
+              snr(ipol, ichan, obln) = accumSnr_(ipol, ichan, ibln) / thisWt;
             }
 
-            // copy flags to obln
             flag(ipol, ichan, obln) = avgFlag_(ipol, ichan, ibln);
           } // icor
         } // ichn
@@ -139,16 +143,18 @@ void PlotMSCTAverager::finalizeAverage() {
       main_row_record.defineAntenna2(antenna2(ibln));
       main_row_record.defineInterval(0); // not supported
       main_row_record.defineScanNo(avgScan_(ibln));
-      if (isComplex_p) {
-        main_row_record.defineCParam(cparam(ibln));
-      } else {
-        main_row_record.defineFParam(fparam(ibln));
-      }
-      main_row_record.defineFlag(flag(ibln));
-      main_row_record.defineSnr(snr(ibln));
-      main_row_record.define(snr(ibln));
 
-      _main_rows.push_back(record);
+      if (isComplex_p) {
+        main_row_record.defineCParam(cparam[ibln]);
+      } else {
+        main_row_record.defineFParam(fparam[ibln]);
+      }
+      main_row_record.defineParamerr(paramerr[ibln]);
+      main_row_record.defineFlag(flag[ibln]);
+      main_row_record.defineSnr(snr[ibln]);
+      main_row_record.defineWeight(accumWt_[ibln]);
+
+      main_rows_.push_back(main_row_record);
     }
     
     // We need to be reinitialized to do more accumulating
@@ -165,15 +171,13 @@ void PlotMSCTAverager::finalizeAverage() {
   }
 }
 
-NewCalTable PlotMSCTAverager::avgCalTable() {
-  // Return NewCalTable filled with averaging results stored in CTMainRecord vector
-  NewCalTable nct;
-
-  for (size_t row = 0; row > main_rows_.size(); ++row) {
-    nct.putRowMain(row, main_rows_[row]);
+void PlotMSCTAverager::fillAvgCalTable(NewCalTable& caltab) {
+  // Fill NewCalTable with averaging results stored in CTMainRecord vector
+  // as rows in main table.
+  // Cal table passed in should have subtables added.
+  for (size_t row = 0; row < main_rows_.size(); ++row) {
+    caltab.putRowMain(row, main_rows_[row]);
   }
-
-  return nct;
 }
 
 //----------------------------------------------------------------------------
@@ -200,6 +204,9 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
     nBlnMax_p = nAnt_p;
   }
 
+  blnOK_p.resize(nBlnMax_p);
+  blnOK_p = false;
+
   if (debug_) {
     cout << "Shapes = " 
          << nPoln_p << " "
@@ -208,9 +215,6 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
          << ntrue(blnOK_p) << " "
          << endl;
   }
-
-  blnOK_p.resize(nBlnMax_p);
-  blnOK_p = false;
 
   // Resize and fill in the antenna numbers for all rows
   avgAntenna1_.resize(nBlnMax_p);
@@ -240,11 +244,10 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   avgTime_.resize(nBlnMax_p, false); 
   avgTime_.set(0.0);
   // Set scan, field for averaged chunk (set -1 later if more than one)
+  avgScan_.resize(nBlnMax_p, false); 
   aveScan_p = cti.thisScan();
+
   aveField_p = cti.thisField();
-  // "Weight" is data count per baseline
-  blnCount_p.resize(nBlnMax_p, false); 
-  blnCount_p.set(0);
   // All cells assumed flagged to start with
   avgFlag_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
   avgFlag_.set(true);
@@ -257,6 +260,12 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
     accumFParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
     accumFParam_.set(0.0);
   }
+  accumParamErr_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumParamErr_.set(0.0);
+  accumSnr_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumSnr_.set(0.0);
+  accumWt_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumWt_.set(0.0);
 
   minTimeOffset_p = DBL_MAX;
   maxTimeOffset_p = -DBL_MAX;
@@ -278,6 +287,10 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
       cout << " PMSCTA::accumulate() " << endl;
   }
 
+  if (!initialized_p) {
+    initialize(cti);
+  }
+
   // TODO
   if (averaging_p.channel()) {
     throw(AipsError("PlotMSCTAverager: channel averaging not implemented."));
@@ -294,13 +307,9 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
     throw(AipsError("PlotMSCTAverager: data shape does not conform"));
   }
 
-  if (!initialized_p) {
-    initialize(cti);
-  }
-
   // Param cubes for this iteration
   Cube<Complex> iterCParam;
-  Cube<Float> iterFParam;
+  Cube<Float> iterFParam, iterParamErr, iterSnr, iterWt;
   if (isComplex_p) {
     iterCParam.reference(cti.cparam());
     if (averaging_p.scalarAve()) {
@@ -308,6 +317,16 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
     }
   } else {
     iterFParam.reference(cti.fparam());
+  }
+  iterParamErr.reference(cti.paramErr());
+  iterSnr.reference(cti.snr());
+  try {
+    iterWt.reference(cti.wt());
+  } catch (const AipsError& err) {
+    casacore::IPosition datashape =
+      (isComplex_p ? iterCParam.shape() : iterFParam.shape());
+    iterWt.resize(datashape);
+    iterWt.set(1.0);
   }
 
   Int iterCount(0); // Sum of counts for this iteration
@@ -324,26 +343,29 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
         //   (output is unflagged, input is flagged)
         Bool accumulate(false);
 
-        IPosition flagPos(3, ipol, ichan, ibln);
-        if (!cti.flag()(flagPos)) { // input UNflagged
+        IPosition inPos(3, ipol, ichan, ibln);
+        IPosition outPos(3, ipol, ichan, obln);
+        if (!cti.flag()(inPos)) { // input UNflagged
           accumulate = true;
 
-          if (avgFlag_(ipol, ichan, obln)) {  // output flagged
+          if (avgFlag_(outPos)) {  // output flagged
             // This cell now NEWLY unflagged in output
-            avgFlag_(ipol, ichan, obln) = false;
+            avgFlag_(outPos) = false;
 
             // ...so zero the accumulators
             if (isComplex_p) {
-              accumCParam_(ipol, ichan, obln) = 0.0;
+              accumCParam_(outPos) = 0.0;
             } else {
-              accumFParam_(ipol, ichan, obln) = 0.0;
+              accumFParam_(outPos) = 0.0;
             }
-            blnCount_p(obln) = 0;
+            accumParamErr_(outPos) = 0.0;
+            accumSnr_(outPos) = 0.0;
+            accumWt_(outPos) = 0.0;
           }
         } else { // input flagged
           // Only accumulate if output is also flagged
           //   (yields average of flagged data if no unflagged data ever found)
-          if (avgFlag_(ipol, ichan, obln)) {
+          if (avgFlag_(outPos)) {
             accumulate = true;
           }
         }
@@ -351,13 +373,15 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
         // Accumulate this (pol, chan) if appropriate
         if (accumulate) {
           if (isComplex_p) {
-            accumCParam_(ipol, ichan, obln) += iterCParam(ipol, ichan, ibln);
+            accumCParam_(outPos) += iterCParam(inPos);
           } else {
-            accumFParam_(ipol, ichan, obln) += iterFParam(ipol, ichan, ibln);
+            accumFParam_(outPos) += iterFParam(inPos);
           }
+          accumParamErr_(outPos) += iterParamErr(inPos);
+          accumSnr_(outPos) += iterSnr(inPos);
+          accumWt_(outPos) += iterWt(inPos);
 
-          blnCount_p(obln)++; // per-baseline count
-          iterCount++;       // per-iteration count
+          iterCount++;        // per-iteration count
         }
       } // pol 
     } // chan
@@ -579,9 +603,9 @@ void PlotMSCTAverager::fillIds(Int nrows) {
   // When you are resizing bigger than number of rows, fill rest of vector
   // or get seg fault from invalid value (whatever is in memory)
   for (Int i = nrows; i < nBlnMax_p; ++i) {
-    field_[i] = field_[nrows-1];
-    spw_[i] = spw_[nrows-1];
-    obsid_[i] = obsid_[nrows-1];
+    avgField_[i] = avgField_[nrows-1];
+    avgSpw_[i] = avgSpw_[nrows-1];
+    avgObsid_[i] = avgObsid_[nrows-1];
   }
 }
 

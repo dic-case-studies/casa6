@@ -93,7 +93,7 @@ public:
   void finalizeAverage();
 
   // Return the result in NewCalTable filled with CTMainRecord vector
-  NewCalTable avgCalTable();
+  void fillAvgCalTable(NewCalTable& tab);
 
 private:
   // Prohibit null constructor, copy constructor and assignment for now
@@ -134,8 +134,6 @@ private:
   casacore::Int aveScan_p;
   // Field value for averaged chunk
   casacore::Int aveField_p;
-  // Counts per baseline
-  casacore::Vector<casacore::Int> blnCount_p;
   // for antenna averaging
   casacore::Vector<casacore::Double> blnWtSum_p;
 
@@ -163,8 +161,9 @@ private:
   // Accumulated in accumulate()
   casacore::Cube<casacore::Complex> accumCParam_;
   casacore::Cube<casacore::Float> accumFParam_;
-
-  casacore::Cube<casacore::Float> avgSnr_;
+  casacore::Cube<casacore::Float> accumParamErr_;
+  casacore::Cube<casacore::Float> accumSnr_;
+  casacore::Cube<casacore::Float> accumWt_;
   casacore::Cube<casacore::Bool> avgFlag_;
 
   // Averaged results

@@ -498,11 +498,15 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   const std::vector<PMS::Axis> loadAxes, ThreadCommunication* thread) {
   // Load chunks using PlotMSCTAverager to accumulate and average chunks
   logLoad("Loading chunks with averaging.....");
-
   // Permit cancel in progress meter:
   if (thread != nullptr) {
     thread->setAllowedOperations(false,false,true);
   }
+
+  // Access to header info and subtables when loading axes
+  String partype = parsAreComplex_ ? "Complex" : "Float";
+  CTDesc caltabdesc(partype, msname_, calType_, basis_);
+  ROCTColumns ctcols(ci.table());
 
   chshapes_.resize(4, nChunk_);
   goodChunk_.resize(nChunk_);
@@ -527,7 +531,6 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     // Set up CT Averager for each averaged chunk
     Int nAntenna1 = ci.antenna1().size();
     PlotMSCTAverager pmscta(pmsAveraging, nAntenna1, parshape_(0));
-    pmscta.setDebug(True);
 
     // Accumulate iterations into chunk
     Int iter(0);
@@ -541,11 +544,16 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       ++iter;
     }
 
-    // Finalize average and get result as a NewCalTable
+    // Finalize average
     pmscta.finalizeAverage();
-    NewCalTable avgTable = pmscta.avgCalTable();
+
+    // Get result as a memory NewCalTable
+    NewCalTable avgTable("avgcaltable.cal", caltabdesc, Table::Scratch, Table::Memory);
+    // Add averaged main rows
+    pmscta.fillAvgCalTable(avgTable);
 
     if (avgTable.nrow() > 0) {
+      // Attach iterator for accessor
       ROCTIter avgTableCti(avgTable, sortColumns_);
       avgTableCti.reset();
 
@@ -555,7 +563,8 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       chshapes_(1, chunk) = avgShape(1);
       chshapes_(2, chunk) = avgShape(2);
       chshapes_(3, chunk) = nAntenna1;
-      
+      goodChunk_(chunk) = true;
+
       // Load axes
       for (auto axis : loadAxes) {
         // Check for cancel before each axis
@@ -566,11 +575,56 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
           return;
         }
 
-        loadCalAxis(avgTableCti, chunk, axis, polsel);
+        switch (axis) {
+          case PMS::CHANNEL:
+          case PMS::FREQUENCY:
+          case PMS::ATM:
+          case PMS::TSKY:
+          case PMS::IMAGESB: {
+            // Use original caltable spectral window subtable for these axes
+            Int spw = avgTableCti.thisSpw();
 
-        // Print atm stats or warning
+            if (axis == PMS::CHANNEL) {
+              Int nchan(ctcols.spectralWindow().numChan()(spw));
+              Vector<Int> chans(nchan);
+              indgen(chans);
+              *chan_[chunk] = chans;
+            } else {
+              Vector<Double> freqs = ctcols.spectralWindow().chanFreq().get(spw);
+              freqs /= 1.0e9; // GHz
+
+              if (axis == PMS::FREQUENCY) {
+                (*freq_[chunk]) = freqs;
+              } else {
+                Int scan = avgTableCti.thisScan();
+                casacore::Vector<casacore::Double> curve(1, 0.0);
+
+                if (axis == PMS::ATM) {
+                  if (plotmsAtm_) {
+                    plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
+                  }
+                  *atm_[chunk] = curve;
+                } else if (axis == PMS::TSKY) {
+                  if (plotmsAtm_) {
+                    plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
+                  }
+                  *tsky_[chunk] = curve;
+                } else {
+                  if (plotmsAtm_) {
+                    plotmsAtm_->calcImageCurve(curve, spw, scan, freqs);
+                  }
+                  *imageSideband_[chunk] = curve;
+                }
+              }
+            }
+            break;
+          }
+          default:
+            loadCalAxis(avgTableCti, chunk, axis, polsel);
+        }
+
         if ((axis == PMS::ATM) || (axis == PMS::TSKY)) {
-          // Stats when scan changes
+          // Print stats when scan changes
           thisscan = avgTableCti.thisScan();
           if (thisscan != lastscan) {
             printAtmStats(thisscan);
@@ -633,7 +687,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
         case PMS::SPW:
             spw_(chunk) = cti.thisSpw();
             break;
-        case PMS::CHANNEL: 
+        case PMS::CHANNEL:
             cti.chan(*chan_[chunk]);
             break;
         case PMS::FREQUENCY: {
@@ -688,8 +742,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             break;
         }
         case PMS::ANTPOS: {
-            if (!calType_.startsWith("KAntPos"))
+            if (!calType_.startsWith("KAntPos")) {
                 throw(AipsError( "ANTPOS has no meaning for this table"));
+            }
             Cube<Float> fArray = cti.fparam();
             *antpos_[chunk] = fArray(parSlice1, Slice(), Slice());
             break;
@@ -853,11 +908,12 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             break;
         }
         case PMS::FLAG: {
-            if (polnRatio_)
+            if (polnRatio_) {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice()) |
                     cti.flag()(parSlice2, Slice(), Slice());
-            else
+            } else {
                 *flag_[chunk] = cti.flag()(parSlice1, Slice(), Slice());
+            }
             break;
         }
         /*
