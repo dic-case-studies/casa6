@@ -14,7 +14,7 @@ def rmfit(
     tmpim = ""
     try:
         if len(imagename) == 0:
-            raise Exception, "imagename must be specified."
+            raise ValueError("imagename must be specified.")
         if type(imagename) == type(['s']):
             # negative axis value means concatenate along spectral axis
             tmpim = tempfile.mkdtemp(suffix=".im", prefix="_rmfit_concat")
@@ -23,12 +23,12 @@ def rmfit(
                 axis=-1, overwrite=True
             )
             if not myia:
-                raise Exception("Unable to concatenate images.")
+                raise RuntimeError(("Unable to concatenate images.")
             myia.done()
             mypo.open(tmpim)
         else:
             if (not mypo.open(imagename)):
-                raise Exception, "Cannot create image analysis tool using " + imagename
+                raise RuntimeError("Cannot create image analysis tool using " + imagename)
         mypo.rotationmeasure(
             rm=rm, rmerr=rmerr, pa0=pa0, pa0err=pa0err, nturns=nturns, chisq=chisq,
             sigma=sigma, rmfg=rmfg, rmmax=rmmax, maxpaerr=maxpaerr
@@ -43,11 +43,7 @@ def rmfit(
                 )
         except Exception, instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-
-        return True
-    except Exception, instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+        # tasks no longer return bools
     finally:
         if (myia):
             myia.done()
@@ -56,6 +52,6 @@ def rmfit(
         if len(tmpim) > 0:
             try:
                 shutil.rmtree(tmpim)
-            except Exception, e:
-                print "Could not remove " + tmpim + " because " + str(e)
+            except Exception as e:
+                casalog.post("Could not remove " + tmpim + " because " + str(e))
             

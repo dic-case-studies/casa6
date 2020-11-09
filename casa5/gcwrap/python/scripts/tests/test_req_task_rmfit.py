@@ -29,31 +29,35 @@ try:
     CASA6 = True
     myia = casatools.image()
     tb = casatools.table()
+    mypo = casatools.imagepol()
+    myia = casatools.image()
+    ctsys_resolve = casatools.ctsys.resolve
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    mypo = potool()
     myia = iatool()
+    def ctsys_resolve(data):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
+        else:
+            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+
 import sys
 import os
 import numpy
 import unittest
 import shutil
 from filecmp import dircmp
-
+import math
 
 ## DATA ## 
-
-if CASA6:
-    casaim = casatools.ctsys.resolve('image/ngc5921.clean.image/')
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaim = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        casaim = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
-    
+casaim = ctsys_resolve('image/ngc5921.clean.image/')
+eq_beams = ctsys_resolve('fits/pol_eq_beams.fits')
+neq_beams = ctsys_resolve('fits/pol_neq_beams.fits')
 outfile = 'out.im'
 
 def table_comp(im1, im2):
@@ -80,18 +84,12 @@ class rmfit_test(unittest.TestCase):
         myia.done()
     
     def tearDown(self):
-        
-        shutil.rmtree(outfile)
-        
-        if os.path.exists('rm.im'):
-            shutil.rmtree('rm.im')
-        
-        if os.path.exists('out2.im'):
-            shutil.rmtree('out2.im')
-            
-        if os.path.exists('rm2.im'):
-            shutil.rmtree('rm2.im')
-    
+        mypo.done()
+        for f in (
+            outfile, 'rm.im', 'out2.im', 'rm2.im', 'rm1.im',
+            'rm_input.im', 'xx.im', 'yy.im'
+        ):
+            shutil.rmtree(f)
     
     def test_makesImage(self):
         '''
