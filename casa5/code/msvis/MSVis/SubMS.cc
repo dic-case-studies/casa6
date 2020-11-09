@@ -5414,8 +5414,6 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
 
     String tempNewName = ms_p.tableName()+".spwCombined"; // temporary name for the MS to store the result
 
-    Bool allScratchColsPresent = false;
-
     { // begin scope for MS related objects
 
       // find all existing spws, 
@@ -6272,8 +6270,6 @@ Bool SubMS::fillAllTables(const Vector<MS::PredefinedColumns>& datacols)
       Bool FLAGColIsOK = !FLAGCol.isNull();
       Bool FLAG_CATEGORYColIsOK = false; // to be set to the correct value further below
       
-      allScratchColsPresent = CORRECTED_DATAColIsOK && MODEL_DATAColIsOK;
-
       // initialize arrays to store combined column data
       if(CORRECTED_DATAColIsOK){
 	newCorrectedData.resize(newShape);
