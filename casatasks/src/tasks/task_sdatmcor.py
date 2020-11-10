@@ -740,6 +740,9 @@ def calc_sdatmcor(
             # save spws (CAS-13160) #
             rawmsSpws = spws
 
+            # CAS-13160 atmcorr_20200807.py Change
+            #  No more use of tmonsource in the new algorithm..
+
             # (Task Section) check count of ON/OFF SOURCE
             # n_tmonsource = len(tmonsource)
             n_tmoffsource = len(tmoffsource)
@@ -751,12 +754,6 @@ def calc_sdatmcor(
             # (Task Section) OFF_SOURCE check #
             if (n_tmoffsource == 0):
                 msg = "Can't find the OFF_SOURCE data."
-                _msg(msg, 'SEVERE')
-                raise(msg)
-
-            # (Task Section) ON_SOURCE check #
-            if (n_tmoffsource == 0):
-                msg = "Can't find the ON_SOURCE data."
                 _msg(msg, 'SEVERE')
                 raise(msg)
 
