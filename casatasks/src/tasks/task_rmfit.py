@@ -1,19 +1,24 @@
 import tempfile
 import shutil
 
-from casatasks import casalog
-
-from casatools import image, imagepol
-from .ialib import write_image_history
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import image, imagepol
+    from .ialib import write_image_history
+else:
+    from ialib import write_image_history
+    image = iatool
+    imagepol = potool
 
 def rmfit(
     imagename, rm, rmerr, pa0, pa0err, nturns, chisq,
-    sigma, rmfg, rmmax, maxpaerr,
+    sigma, rmfg, rmmax, maxpaerr
 ):
     casalog.origin('prom')
-    myia = image( )
+    myia = image()
     myia.dohistory(False)
-    mypo = imagepol( )
+    mypo = imagepol()
     tmpim = ""
     try:
         if len(imagename) == 0:
@@ -30,7 +35,7 @@ def rmfit(
             myia.done()
             mypo.open(tmpim)
         else:
-            if (not mypo.open(imagename)):
+            if not mypo.open(imagename):
                 raise RuntimeError("Cannot create image analysis tool using " + imagename)
         mypo.rotationmeasure(
             rm=rm, rmerr=rmerr, pa0=pa0, pa0err=pa0err, nturns=nturns, chisq=chisq,
@@ -46,7 +51,7 @@ def rmfit(
                 )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-
+        # tasks no longer return bools
     finally:
         if (myia):
             myia.done()
@@ -56,4 +61,5 @@ def rmfit(
             try:
                 shutil.rmtree(tmpim)
             except Exception as e:
-                print("Could not remove " + tmpim + " because " + str(e))
+                casalog.post("Could not remove " + tmpim + " because " + str(e))
+
