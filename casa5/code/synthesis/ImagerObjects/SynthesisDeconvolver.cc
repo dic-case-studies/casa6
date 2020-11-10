@@ -634,8 +634,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         if(itsPosMask){
           minorCycleControlRec.define("posmaskname", itsPosMask->name());
         }
-	Int numprocs = applicator.numProcs(); 
-          cerr << "Number of procs: " << numprocs << endl;
+	//Int numprocs = applicator.numProcs(); 
+        //cerr << "Number of procs: " << numprocs << endl;
           
           Int numchan=itsImages->residual()->shape()[3];
           Vector<Int> startchans;
@@ -786,7 +786,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    if(doAutoMask < 1)
 	      mergeReturnRecord(retval, returnRecord, chanRangeProcessed[0]);
             if(retval.nfields() >0)
-              cerr << "deconv remainder rank " << rank << " successful " << endl;
+              //cerr << "deconv remainder rank " << rank << " successful " << endl;
+              cerr << "";
             else
               cerr << "deconv remainder rank " << rank << " failed " << endl;
             

@@ -58,7 +58,7 @@ void CubeMajorCycleAlgorithm::get() {
 	applicator.get(vecGridParsRec);
 	// get which channel to process #4
 	applicator.get(chanRange_p);
-	cerr <<"GET chanRange " << chanRange_p << endl;
+	//cerr <<"GET chanRange " << chanRange_p << endl;
 	// psf or residual CubeMajorCycleAlgorithm #5
 	applicator.get(dopsf_p);
 	// store modelvis and other controls #6

@@ -1629,8 +1629,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		// For now this contains lastcycle if necessary in the future this
 		// should come from the master control record
         
-        Int numprocs = applicator.numProcs();
-        cerr << "Number of procs: " << numprocs << endl;
+                //Int numprocs = applicator.numProcs();
+        //cerr << "Number of procs: " << numprocs << endl;
         Int rank ( 0 );
         Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
         Bool allDone ( false );
@@ -1651,7 +1651,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  updateImageBeamSet(returnRec);
                 ++indexofretval;
                 if ( status )
-                    cerr << k << " rank " << rank << " successful " << endl;
+                  //cerr << k << " rank " << rank << " successful " << endl;
+                  cerr << "" ;
                 else
                     cerr << k << " rank " << rank << " failed " << endl;
                 assigned = casa::applicator.nextAvailProcess ( cmc, rank );
@@ -1691,7 +1692,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             retvals(indexofretval)=status;
             ++indexofretval;
             if ( status )
-                cerr << "remainder rank " << rank << " successful " << endl;
+              //cerr << "remainder rank " << rank << " successful " << endl;
+              cerr << "";
             else
                 cerr << "remainder rank " << rank << " failed " << endl;
 
