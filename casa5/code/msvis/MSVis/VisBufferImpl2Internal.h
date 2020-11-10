@@ -418,7 +418,7 @@ public:
             // avoid a copy.  This leaves the storage unchanged and merely
             // changes the associated bookkeeping values.
 
-            AssertCc (nRows <= shape.last());
+            AssertCc ((ssize_t)nRows <= shape.last());
 
             shape.last() = nRows;
 
@@ -655,9 +655,9 @@ public:
     : VbCacheItem<T, IsComputed> (isMutable), shapePattern_p (NoCheck) {}
     virtual ~VbCacheItemVectorInt () {}
 
-    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate) {} // no-op
+    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate) {(void)nRows;(void)truncate;} // no-op
 
-    virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow) {} //no-op
+    virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow) {(void)sourceRow;(void)destinationRow;} //no-op
 
     void
     initialize (VisBufferCache * cache,
@@ -778,7 +778,6 @@ public:
     virtual void appendRows (casacore::Int nRows, casacore::Bool truncate)
     {
         casacore::IPosition shape = this->getItem().shape();
-        casacore::Int nDims = shape.size();
         (void)truncate;
         // Only used when time averaging
         if (shapePattern_p == NoCheck){
@@ -970,7 +969,7 @@ protected:
     copyRowElementAux (casacore::Vector<casacore::Cube<typename T::value_type::value_type>> & cubeVector, casacore::Int sourceRow, casacore::Int destinationRow)
     {
         int nCumRows=0, sourceCube =-1, destinationCube = -1;
-        int sourceCubeRow, destinationCubeRow;
+        int sourceCubeRow = 0, destinationCubeRow = 0;
         for (size_t iCube = 0 ; iCube < cubeVector.size(); ++iCube)
         {
             auto & thisShape = cubeVector[iCube].shape();
@@ -1005,8 +1004,8 @@ protected:
     copyRowElementAux (casacore::Vector<casacore::Matrix<typename T::value_type::value_type>> & matrixVector, casacore::Int sourceRow, casacore::Int destinationRow)
     {
         int nCumRows=0, sourceMatrix =-1, destinationMatrix = -1;
-        int sourceMatrixRow, destinationMatrixRow;
-        for (casacore::Int iMatrix = 0 ; iMatrix < matrixVector.size(); ++iMatrix)
+        casacore::rownr_t sourceMatrixRow = 0, destinationMatrixRow = 0;
+        for (casacore::rownr_t iMatrix = 0 ; iMatrix < matrixVector.size(); ++iMatrix)
         {
             auto & thisShape = matrixVector[iMatrix].shape();
             nCumRows += thisShape.last();

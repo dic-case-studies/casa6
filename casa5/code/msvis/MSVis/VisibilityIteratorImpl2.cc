@@ -1583,7 +1583,7 @@ void VisibilityIteratorImpl2::setMetadataScope()
         ddIdScope_p = RowScope;
 
     // Similar for time
-    bool uniqueTimeInChunk, uniqueTimeInSubchunk;
+    bool uniqueTimeInChunk = false, uniqueTimeInSubchunk = false;
     for(auto& sortDef : sortColumns_p.sortingDefinition())
         if(sortDef.first == MS::columnName(MS::TIME) &&
            dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))

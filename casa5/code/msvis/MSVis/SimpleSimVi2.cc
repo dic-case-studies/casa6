@@ -60,7 +60,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters() :
   doAC_(false),
   c0_(Complex(0.0)),
   autoPol_(false),
-  doParang_(false)
+  doParang_(false),
+  spwScope_(ChunkScope)
 {
   
   Vector<Int> nTimePerField(nTimePerField_);
@@ -574,15 +575,18 @@ Bool SimpleSimVi2::more () const
 void SimpleSimVi2::next () {
   // Advance counter and time
   ++iSubChunk_;
-  thisTime_+=pars_.dt_;
 
-  // Change SPW once all times have been served
-  if(pars_.spwScope_ == SubchunkScope)
-    thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+  if(iSubChunk_<nSubchunk_)
+  {
+    thisTime_+=pars_.dt_;
 
-  // Keep VB sync'd
-  this->configureNewSubchunk();
+    // Change SPW once all times have been served
+    if(pars_.spwScope_ == SubchunkScope)
+      thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
 
+    // Keep VB sync'd
+    this->configureNewSubchunk();
+  }
 }
 
 Subchunk SimpleSimVi2::getSubchunkId () const { return Subchunk(iChunk_,iSubChunk_);}
@@ -987,7 +991,9 @@ Int SimpleSimVi2::nTimes() const {
 void SimpleSimVi2::configureNewSubchunk() {
 
   Vector<rownr_t> nRowsPerShape(1, nRows());
-  Vector<Int> nChannPerShape(1, pars_.nChan_(thisSpw_));
+  Vector<Int> spws;
+  spectralWindows(spws);
+  Vector<Int> nChannPerShape(1, pars_.nChan_(spws(0)));
   Vector<Int> nCorrsPerShape(1, pars_.nCorr_);
 
   // Poke the vb to do this
