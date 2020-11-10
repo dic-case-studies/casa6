@@ -202,8 +202,8 @@ def sdatmcor(
     #
 
     #   User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
-    layerboundaries = _convert_userdefinedparam_to_list(layerboundaries)
-    layertemperature = _convert_userdefinedparam_to_list(layertemperature)
+    layerboundaries = _convert_to_list(layerboundaries, float)
+    layertemperature = _convert_to_list(layertemperature, float)
 
     #   Length of the two args must be same #
     len_1 = len(layerboundaries)
@@ -337,52 +337,43 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
             return atm_parm_variable, False
 
 
-def _make_list_from_separatedstring(separated_string, dType):
-    """ UNDER REVISION """
-    # No input #
-    if separated_string == '':
-        return []
+def _convert_to_list(in_arg, out_ele_type=float):
+    """ Convert input to List
+     in_arg:               List or String (comma-separated string)
+     output element type:  float(def), int, string
 
-    try:
-        if type(separated_string) is str:
-            tmp_list = separated_string.split(',')
-            if dType == 'str':
-                out_list = [str(s) for s in tmp_list]
-            elif dType == 'int':
-                out_list = [int(s) for s in tmp_list]
-            else:
-                out_list = [s for s in tmp_list]
-            return out_list
-        elif type(separated_string) is list:
-            return separated_string
-        else:
+     return:               List of values (type= int or float)
+     Exception:            internal conversion error     (Exception)
+                           in_arg is not string or list.        (Bug)
+                           out_ele_type is not float/int/string (Bug)
+    """
+    if type(in_arg) is list:
+        if in_arg == []:
             return []
-    except Exception as err:
-        casalog.post('%s' % err, 'SEVERE')
-        raise Exception("Error in comma-separated string.")
 
+        if out_ele_type == float:
+            return [float(s) for s in in_arg]
+        elif out_ele_type == int:
+            return [int(s) for s in in_arg]
+        elif out_ele_type == str:
+            return [str(s) for s in in_arg]
+        assert(False)
 
-def _convert_userdefinedparam_to_list(in_arg):
-    """ UNDER REVISION """
-    # No input #
-    if (type(in_arg) is str) and (in_arg == ''):
-        return []
+    elif type(in_arg) is str:
+        if in_arg == '':
+            return []
 
-    try:
-        if type(in_arg) is list:
-            out_list = [float(s) for s in in_arg]
-            return out_list
-        elif type(in_arg) is str:
-            tmp_list = in_arg.split(',')
-            out_list = [float(s) for s in tmp_list]
-            return out_list
-        else:
-            _msg("\nERROR::Invalid arg type. Expecting only separated string or list.\n", 'SEVERE')
-            raise Exception("internal function error.")
+        tmp_list = in_arg.split(',')
+        if out_ele_type == float:
+            return [float(s) for s in tmp_list]
+        elif out_ele_type == int:
+            return [int(s) for s in tmp_list]
+        elif out_ele_type == str:
+            return [str(s) for s in in_arg]
+        assert(False)
 
-    except Exception as err:
-        casalog.post('%s' % err, 'SEVERE')
-        raise Exception("Error in converting an element in the List.")
+    else:
+        assert(False)  # invalid argument.  #
 
 
 def get_default_antenna(msname, antenna):
@@ -776,7 +767,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            outputspws_param = _make_list_from_separatedstring(p_outputspw, dType='int')
+            outputspws_param = _convert_to_list(p_outputspw, int)
 
             # Must be a subset, locate the initial set.  #
             if set(outputspws_param).issubset(set(rawmsSpws)):
@@ -801,7 +792,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            spws_param = _make_list_from_separatedstring(p_spw, dType='int')
+            spws_param = _convert_to_list(p_spw, int)
 
             # Must be a subset, locate the initial set.  #
             if set(spws_param).issubset(set(rawmsSpws)):
