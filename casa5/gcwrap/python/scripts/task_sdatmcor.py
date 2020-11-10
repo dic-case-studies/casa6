@@ -938,7 +938,7 @@ def calc_sdatmcor(
 
         for spwid in outputspws:  # (original) for spwid in spws #
 
-            _msg("\nProcessing spw %d in %s. Correction is not applied to spw %s .\n" % (spwid, outputspws, noCorSpws))
+            _msg("\nProcessing spw %d in %s. Correction is not applied on spw %s.\n" % (spwid, outputspws, noCorSpws))
 
             # gain factor
             spwkey = str(spwid)
