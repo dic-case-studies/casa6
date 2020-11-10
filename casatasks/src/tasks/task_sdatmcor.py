@@ -779,7 +779,7 @@ def calc_sdatmcor(
             outputspws_param = _make_list_from_separatedstring(p_outputspw, dType='int')
 
             # Must be a subset, locate the initial set.  #
-            if set(rawmsSpws) >= set(outputspws_param):
+            if set(outputspws_param).issubset(set(rawmsSpws)):
                 outputspws = list(set(outputspws_param))
             else:
                 _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
@@ -804,7 +804,7 @@ def calc_sdatmcor(
             spws_param = _make_list_from_separatedstring(p_spw, dType='int')
 
             # Must be a subset, locate the initial set.  #
-            if set(rawmsSpws) >= set(spws_param):
+            if set(spws_param).issubset(set(rawmsSpws)):
                 spws = list(set(spws_param))
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try to continue", 'WARN')
@@ -825,10 +825,10 @@ def calc_sdatmcor(
             #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
             #      - accept  when Spw=[21], outputSpw = [19,21]
             noCorSpws = []
-            if set(outputspws) >= set(spws):
-                noCorSpws = list(set(outputspws) - set(spws))
+            if set(spws).issubset(set(outputspws)):
+                noCorSpws = list(set(outputspws).difference(set(spws)))
             else:
-                spws = list(set(outputspws) & set(spws))
+                spws = list(set(spws).intersection(set(outputspws)))
 
             # outputSpw, Spw:: No Target check #
             if spws == []:
