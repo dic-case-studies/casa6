@@ -1,8 +1,6 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
-import pprint
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
