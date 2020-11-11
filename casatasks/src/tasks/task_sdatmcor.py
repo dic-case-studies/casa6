@@ -177,6 +177,7 @@ def sdatmcor(
     #  - inspect Unit.
     #  - default value ARE NOT considered here.
     #  - convert values to string form.
+    #  - if (-1) parameter is specified, '' string is set.
     #  - Sub-function calc_sdatmcor() accepts args basically by string.
     #
     dtem_dh = _check_unit_and_formToStr(dtem_dh, ['K/km'])
@@ -193,6 +194,12 @@ def sdatmcor(
     # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''  #
     if not _inspect_strint_range(atmtype, 1, 5):
         errmsg = "atmtype (=%s) Out of Range or Unacceptable." % atmtype
+        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+        raise Exception(errmsg)
+
+    # Inspect humidity (float). The range must be 0.0 gt. Humidity  gt. 100.0 [%]  #
+    if not _inspect_strfloat_range(humidity, 0.0, 100.0):
+        errmsg = "humidity (=%s) Out of Range or Unacceptable." % humidity
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
 
@@ -261,12 +268,23 @@ def _inspect_strint_range(indata, minimum, maximum):
     if type(indata) is str:
         if indata == '':
             return True
-        elif indata.isdigit():
+        elif indata.isdecimal():
             return minimum <= int(indata) <= maximum
         else:
             return False
     elif type(indata) is int:
         return minimum <= indata <= maximum
+    else:
+        # INTERNAL ERROR:: unexpected data type. #
+        assert(False)
+
+
+def _inspect_strfloat_range(str_data, minimum, maximum):
+    if type(str_data) is str:
+        if str_data == '':
+            return True
+        else:
+            return minimum <= float(str_data) <= maximum
     else:
         # INTERNAL ERROR:: unexpected data type. #
         assert(False)
@@ -723,7 +741,7 @@ def calc_sdatmcor(
     try:
         with open_msmd(rawms) as msmd:
             # (original)
-            #tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
+            # tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
             tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
             fdmspws = msmd.fdmspws()
             tdmspws = msmd.tdmspws()
@@ -751,7 +769,9 @@ def calc_sdatmcor(
             #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
             # _msg(msg)
 
-            # (Task Section) OFF_SOURCE check #
+            # (Task Section) OFF_SOURCE Error check #
+            msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+            _msg(msg)
             if (n_tmoffsource == 0):
                 msg = "Can't find the OFF_SOURCE data."
                 _msg(msg, 'SEVERE')
@@ -906,15 +926,15 @@ def calc_sdatmcor(
         casalog.post('%s' % err, 'ERROR')
         raise Exception("Error in opening rawms/'ASDM_CALATMOSPHERE'.")
 
-    #_msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
+    # _msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
     pwv, tground, pground, hground = [], [], [], []
     tmatm = pl.unique(tmatm_all)
     for tt in tmatm:
         deltat = abs(tmpwv_all-tt)
-        pwv.append(pl.median(pwv_all[deltat==deltat.min()]))
-        tground.append(pl.median(tground_all[tmatm_all==tt]))
-        pground.append(pl.median(pground_all[tmatm_all==tt]))
-        hground.append(pl.median(hground_all[tmatm_all==tt]))
+        pwv.append(pl.median(pwv_all[deltat == deltat.min()]))
+        tground.append(pl.median(tground_all[tmatm_all == tt]))
+        pground.append(pl.median(pground_all[tmatm_all == tt]))
+        hground.append(pl.median(hground_all[tmatm_all == tt]))
         print('PWV = %fm, T = %fK, P = %fPa, H = %f%% at %s' % (pwv[-1], tground[-1], pground[-1], hground[-1], qa.time('%fs' % tt, form='fits')[0]))
 
     ################################################################
@@ -941,7 +961,6 @@ def calc_sdatmcor(
             # gain factor
             spwkey = str(spwid)
             factor = gaindict[spwkey]
-            #_msg('Applying gain factor {} to spw {}'.format(spwkey, factor))
             _msg('Applying gain factor {} to spw {}'.format(factor, spwkey))
 
             istdm = False
@@ -1021,10 +1040,10 @@ def calc_sdatmcor(
                 eon, eoff0, eoff1 = pl.interp([t, t + dtoff0, t + dtoff1], tmpointing, elev)
                 eoff = (dtoff1 * eoff0 - dtoff0 * eoff1) / (dtoff1 - dtoff0)
 
-                tt = tmatm[tmatm<t] # timestamps of CalAtmosphere results earlier than t
-                if len(tt)==0:
+                tt = tmatm[tmatm < t]  # timestamps of CalAtmosphere results earlier than t
+                if len(tt) == 0:
                     continue
-                if tt[-1]!=prevtmatm:
+                if tt[-1] != prevtmatm:
                     ################################################################
                     # Set parameters for ATM and obtain zenith opacity
                     # caveat: median values are used for calibrating the entire execution
@@ -1040,8 +1059,9 @@ def calc_sdatmcor(
                     #      embeded inside the initAtmProfile() arguments.
                     #    - Overwrite the  'parameter' to 'atm' arguments of initAtmProfile.
                     #    - The default values are up to Task Specification rather than original script.
-                    print('Initializing ATM profile.  Data timestamp %s, weather data timestamp %s' % (qa.time('%fs' % t, form='fits')[0], qa.time('%fs' % tt[-1], form='fits')[0]))
-                    idx = pl.where(tmatm==tt[-1])[0][0]
+                    _msg('Initializing ATM profile.  Data timestamp %s, weather data timestamp %s' %
+                         (qa.time('%fs' % t, form='fits')[0], qa.time('%fs' % tt[-1], form='fits')[0]))
+                    idx = pl.where(tmatm == tt[-1])[0][0]
                     atm_dtem_dh = qa.quantity(lapserate, 'K/km')
                     atm_h0 = qa.quantity(scaleht, 'km')
                     atm_atmtype = atmtype                                # int
@@ -1178,7 +1198,7 @@ def calc_sdatmcor(
                 dTa = (tskyon - tskyoff) * pl.exp(tauoff)
                 if istdm:
                     dTa = pl.convolve(dTa, hanning, 'same')
-                    if chanfreqs[spwid][0]<chanfreqs[spwid][1]:
+                    if chanfreqs[spwid][0] < chanfreqs[spwid][1]:
                         dTa = pl.interp(chanfreqs[spwid], chanfreqs_high, dTa)
                     else:
                         dTa = pl.flipud(pl.interp(pl.flipud(chanfreqs[spwid]), pl.flipud(chanfreqs_high), pl.flipud(dTa)))
