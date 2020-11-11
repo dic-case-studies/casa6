@@ -135,7 +135,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
                 # Print to a file
                 if ffout is not None:
-                    print(text,file=ffout)
+                    ffout.write(text + '\n')
                 else:
                     # Print to the logger
                     casalog.post(text)
