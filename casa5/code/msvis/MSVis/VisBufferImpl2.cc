@@ -1181,6 +1181,9 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     state_p->frequencies_p.flush();
     state_p->channelNumbers_p.flush();
 
+    // Initialize the API methods that do not support several shapes with the first shape
+    // Clients which use this "old" API should work as expected as long as there is one
+    // single shape in the VisBuffer.
     cache_p->nRows_p.setSpecial (std::accumulate(nRowsPerShape.begin(), nRowsPerShape.end(), 0));
     cache_p->nChannels_p.setSpecial (nChannelsPerShape[0]);
     cache_p->nCorrelations_p.setSpecial (nCorrelationsPerShape[0]);
@@ -2457,7 +2460,7 @@ VisBufferImpl2::fillDirection1 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna1 (), feed1 (), feedPa1 ());
 
-  value.resize(antenna1 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2470,7 +2473,7 @@ VisBufferImpl2::fillDirection2 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna2 (), feed2 (), feedPa2 ());
 
-  value.resize(antenna2 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2479,7 +2482,7 @@ VisBufferImpl2::fillDirectionAux (Vector<MDirection>& value,
                                   const Vector<Int> &feed,
                                   const Vector<Float> & feedPa) const
 {
-    value.resize (antenna.nelements()); // could also use nRow()
+    value.resize (nRows());
 
 //    const MSPointingColumns & mspc = getViiP()->subtableColumns ().pointing();
 //    state_p->pointingTableLastRow_p = mspc.pointingIndex (antenna (0),
@@ -2568,7 +2571,7 @@ VisBufferImpl2::fillFeedPa1 (Vector <Float> & feedPa) const
   antenna1 ();
   time ();
 
-  feedPa.resize(antenna1().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna1 (), feed1 ());
 }
@@ -2585,7 +2588,7 @@ VisBufferImpl2::fillFeedPa2 (Vector <Float> & feedPa) const
   antenna2();
   time();
 
-  feedPa.resize(antenna2().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna2(), feed2 ());
 }
