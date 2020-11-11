@@ -6,7 +6,6 @@
 ################################################
 
 from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import shutil
@@ -253,7 +252,7 @@ def tclean(
          #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
          concattype='copyvirtual'
     else:
-         print('Invalid parallel combination in doClean.')
+         casalog.post('Invalid parallel combination in doClean.', 'ERROR')
          return
     
     retrec={}
@@ -297,7 +296,7 @@ def tclean(
              
             imager.makePSF()
             if((psfphasecenter != '') and (gridder=='mosaic')):
-                print("doing with different phasecenter psf")
+                casalog.post("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
                 psfParameters['phasecenter']=psfphasecenter
@@ -375,7 +374,6 @@ def tclean(
             imager.deleteTools() 
 
     if (pcube):
-        print("running concatImages ...")
         casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
         imager.concatImages(type=concattype)
 
