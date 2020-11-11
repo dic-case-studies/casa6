@@ -241,7 +241,7 @@ simulator::observe(const std::string& sourcename, const std::string& spwname, co
 		   const bool state_ref,
 		   const double state_cal,
 		   const double state_load,
-		   const int state_sub_scan,
+		   const long state_sub_scan,
 		   const std::string& state_obs_mode,
 		   const std::string& observername,
 		   const std::string& projectname)
@@ -285,7 +285,7 @@ simulator::observemany(const std::vector<string>& sourcenames, const std::string
 		       const bool state_ref,
 		       const double state_cal,
 		       const double state_load,
-		       const int state_sub_scan,
+		       const long state_sub_scan,
 		       const std::string& state_obs_mode,
 		       const std::string& observername,
 		       const std::string& projectname)
@@ -500,8 +500,8 @@ simulator::setfield(const std::string& sourcename, const ::casac::variant& sourc
 bool
 simulator::setmosaicfield(const std::string& sourcename, 
 			  const std::string& calcode, 
-			  const ::casac::variant& fieldcenter, const int xmosp,
-			  const int ymosp, const ::casac::variant& mosspacing, 
+			  const ::casac::variant& fieldcenter, const long xmosp,
+			  const long ymosp, const ::casac::variant& mosspacing, 
 			  const ::casac::variant& distance)
 {
 
@@ -541,7 +541,7 @@ simulator::setspwindow(const std::string& spwname,
 		       const ::casac::variant& deltafreq, 
 		       const ::casac::variant& freqresolution, 
 		       const std::string& refcode,
-		       const int nchannels, const std::string& stokes)
+		       const long nchannels, const std::string& stokes)
 {
 
 Bool rstat(false);
@@ -579,7 +579,7 @@ Bool rstat(false);
 }
 
 bool
-simulator::setdata(const std::vector<int>& spwid, const std::vector<int>& fieldid, const std::string& msselect)
+simulator::setdata(const std::vector<long>& spwid, const std::vector<long>& fieldid, const std::string& msselect)
 {
 
  Bool rstat(false);
@@ -653,11 +653,11 @@ simulator::predict(const std::vector<std::string>& modelImage, const std::string
 }
 
 bool
-simulator::setoptions(const std::string& ftmachine, const int cache, 
-		      const int tile, const std::string& gridfunction, 
+simulator::setoptions(const std::string& ftmachine, const long cache, 
+		      const long tile, const std::string& gridfunction, 
 		      const ::casac::variant& location, const double padding,
-		      const int facets, const double maxdata, 
-		      const int wprojplanes)
+		      const long facets, const double maxdata, 
+		      const long wprojplanes)
 {
 
   Bool rstat(false);
@@ -801,7 +801,7 @@ simulator::setapply(const std::string& table,
 		    const ::casac::variant& field,
 		    const std::string& interp,
 		    const bool calwt,
-		    const std::vector<int>& spwmap,
+		    const std::vector<long>& spwmap,
 		    const double opacity)
 {
   Bool rstat(false);
@@ -994,7 +994,7 @@ simulator::setnoise(const std::string& mode,
 		    const double tcmb,
 		    const bool OTF,
 		    const double senscoeff, 
-		    const int rxtype
+		    const long rxtype
 		    ) {
   Bool rstat(false);
   try {
@@ -1051,7 +1051,7 @@ simulator::setpa(const std::string& mode, const std::string& table,
 }
 
 bool
-simulator::setseed(const int seed)
+simulator::setseed(const long seed)
 {
 
   Bool rstat(false);

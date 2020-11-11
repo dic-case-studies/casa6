@@ -2285,7 +2285,7 @@ using namespace casa::vi;
 
   Matrix<Double> FTMachine::negateUV(const vi::VisBuffer2& vb){
     Matrix<Double> uvw(vb.uvw().shape());
-    for (Int i=0;i< vb.nRows() ; ++i) {
+    for (rownr_t i=0;i< vb.nRows() ; ++i) {
       for (Int idim=0;idim<2; ++idim) uvw(idim,i)=-vb.uvw()(idim, i);
       uvw(2,i)=vb.uvw()(2,i);
     }

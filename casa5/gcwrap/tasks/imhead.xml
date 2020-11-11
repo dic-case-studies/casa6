@@ -1,52 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
-
-
- 
- 
-
-<task category="analysis, information, manipulation" name="imhead" type="function">
+<task category="information, analysis, manipulation" name="imhead" type="function">
 <shortdescription>List, get and put image header parameters</shortdescription>
 <description>
 List, get and put image header parameters.

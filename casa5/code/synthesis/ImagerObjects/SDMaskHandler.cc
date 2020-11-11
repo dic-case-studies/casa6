@@ -2351,15 +2351,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int polAxis = CoordinateUtil::findStokesAxis(whichPols, imcoord);
     Int nchan = -1;
     Int npol = -1;
-    Bool specaxisLast(True);
     if (specAxis != -1) {
       nchan = imshp(specAxis);
     }
     if (polAxis != -1 ) {
       npol = imshp(polAxis);
-      if (specAxis != -1 && specAxis < polAxis) {
-        specaxisLast=False; // pol and spec axes are reversed
-      }
     }  
     //Int specAxis = CoordinateUtil::findSpectralAxis(res.coordinates());
     // here, now chindx really means index to extract per-plane
