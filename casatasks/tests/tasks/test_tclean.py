@@ -2799,7 +2799,7 @@ class test_widefield(testref_base):
           ret=tclean(vis="refim_mawproject.ms",field="*",spw="1",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="mfs",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel)
 
           # need to add check of the actual coordinates of the peak of psf. That would match with psfphasecenter value...
-          report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imval=[(self.img+'.image',0.96,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
 
           self.checkfinal(report)
 
@@ -2809,7 +2809,7 @@ class test_widefield(testref_base):
           """
           self.prepData("refim_mawproject.ms")
           ret=tclean(vis="refim_mawproject.ms",field="*",spw="*",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="cube",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel)
-          report=self.th.checkall(imexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'], imval=[(self.img+'.image',0.99,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'], imgval=[(self.img+'.image',0.99,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
           self.checkfinal(report)
 
 
@@ -4299,7 +4299,7 @@ class test_mosaic_cube(testref_base):
           phasecenter = ''
           field='0'
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
-          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10409939289,[512,596,0,0]),(self.img+'.image.pbcor',0.983174622059,[512,596,0,1]),(self.img+'.image.pbcor',0.896172583103,[512,596,0,2])])
+          report1=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.10409939289,[512,596,0,0]),(self.img+'.image.pbcor',0.983174622059,[512,596,0,1]),(self.img+'.image.pbcor',0.896172583103,[512,596,0,2])])
 
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
@@ -4309,7 +4309,7 @@ class test_mosaic_cube(testref_base):
           report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
 
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
-          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10441792011,[512,596,0,0]),(self.img+'.image.pbcor',0.98375672102,[512,596,0,1]),(self.img+'.image.pbcor',0.897617280483,[512,596,0,2])])
+          report3=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.10441792011,[512,596,0,0]),(self.img+'.image.pbcor',0.98375672102,[512,596,0,1]),(self.img+'.image.pbcor',0.897617280483,[512,596,0,2])])
 
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
@@ -4326,7 +4326,7 @@ class test_mosaic_cube(testref_base):
           phasecenter = '' 
           field='0'
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=512, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=-1, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
-          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',1.09958565,[256,340,0,0]),(self.img+'.image.pbcor',0.97893494,[256,340,0,1]),(self.img+'.image.pbcor',0.89169014,[256,340,0,2])])
+          report1=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.09958565,[256,340,0,0]),(self.img+'.image.pbcor',0.97893494,[256,340,0,1]),(self.img+'.image.pbcor',0.89169014,[256,340,0,2])])
           
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,2])
@@ -4336,7 +4336,7 @@ class test_mosaic_cube(testref_base):
           report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=512, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=-1, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
-          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',1.10441792011,[256,340,0,0]),(self.img+'.image.pbcor',0.98375672102,[256,340,0,1]),(self.img+'.image.pbcor',0.897617280483,[256,340,0,2])])
+          report3=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.10441792011,[256,340,0,0]),(self.img+'.image.pbcor',0.98375672102,[256,340,0,1]),(self.img+'.image.pbcor',0.897617280483,[256,340,0,2])])
           
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[256,340,0,2])
@@ -4352,7 +4352,7 @@ class test_mosaic_cube(testref_base):
           phasecenter = 'J2000 19h59m28.5 +40d40m01.5' # pointing center of field0 
           field='0,1'
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4,  pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
-          report1=self.th.checkall(imval=[(self.img+'.image.pbcor',0.894496798515,[512,596,0,0]),(self.img+'.image.pbcor',0.701376080513,[512,596,0,1]),(self.img+'.image.pbcor',0.539906442165,[512,596,0,2])])
+          report1=self.th.checkall(imgval=[(self.img+'.image.pbcor',0.894496798515,[512,596,0,0]),(self.img+'.image.pbcor',0.701376080513,[512,596,0,1]),(self.img+'.image.pbcor',0.539906442165,[512,596,0,2])])
           
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
@@ -4363,7 +4363,7 @@ class test_mosaic_cube(testref_base):
 
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
  
-          report3=self.th.checkall(imval=[(self.img+'.image.pbcor',0.894754827023,[512,596,0,0]),(self.img+'.image.pbcor',0.701884686947,[512,596,0,1]),(self.img+'.image.pbcor',0.540905594826,[512,596,0,2])])
+          report3=self.th.checkall(imgval=[(self.img+'.image.pbcor',0.894754827023,[512,596,0,0]),(self.img+'.image.pbcor',0.701884686947,[512,596,0,1]),(self.img+'.image.pbcor',0.540905594826,[512,596,0,2])])
           
           source_flux_v0 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,0])
           source_flux_v2 = self.th.get_pix(self.img+'.image.pbcor',[512,596,0,2])
