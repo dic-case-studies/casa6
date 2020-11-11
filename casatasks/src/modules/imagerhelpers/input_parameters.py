@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import math
 import shutil
@@ -339,7 +338,6 @@ class ImagerParameters():
         if len(errs) > 0:
 #            casalog.post('Parameter Errors : \n' + errs,'WARN')
             raise Exception("Parameter Errors : \n" + errs)
- #           return False
         return True
 
     ###### Start : Parameter-checking functions ##################
@@ -355,7 +353,7 @@ class ImagerParameters():
                 ok=False
 
         if ok==True:
-            #print("Already in correct format")
+            #casalog.post("Already in correct format")
             return errs
 
         # msname, field, spw, etc must all be equal-length lists of strings, or all except msname must be of length 1.
@@ -395,7 +393,7 @@ class ImagerParameters():
                 selparlist[ 'ms'+str(ms) ] = synu.checkselectionparams( selparlist[ 'ms'+str(ms)] )
                 synu.done()
 
-#            print(selparlist)
+            # casalog.post(selparlist)
 
             self.allselpars = selparlist
 
@@ -404,7 +402,7 @@ class ImagerParameters():
 
     def makeImagingParamLists(self, parallel ):
         errs=""
-        #print "specmode=",self.allimpars['0']['specmode'], " parallel=",parallel
+        # casalog.post("specmode=",self.allimpars['0']['specmode'], " parallel=",parallel)
         ## Multiple images have been specified. 
         ## (1) Parse the outlier file and fill a list of imagedefinitions
         ## OR (2) Parse lists per input parameter into a list of parameter-sets (imagedefinitions)
@@ -414,7 +412,7 @@ class ImagerParameters():
         if len(self.outlierfile)>0:
             outlierpars,parseerrors = self.parseOutlierFile(self.outlierfile) 
             if parallel:
-                print("CALLING checkParallelMFMixModes...")
+                casalog.post("CALLING checkParallelMFMixModes...")
                 errs = self.checkParallelMFMixedModes(self.allimpars,outlierpars)
                 if len(errs): 
                     return errs 
@@ -438,10 +436,10 @@ class ImagerParameters():
             self.alldecpars[ modelid ][ 'id' ] = immod+1  ## Try to eliminate.
 
 
-        #print(self.allimpars)
+        # casalog.post(self.allimpars)
 
 #
-#        print("REMOVING CHECKS to check...")
+#        casalog.post("REMOVING CHECKS to check...")
 #### This does not handle the conversions of the csys correctly.....
 ####
 #        for immod in self.allimpars.keys() :
@@ -539,7 +537,7 @@ class ImagerParameters():
             if len(aline)>0 and aline.find('#')!=0:
                 parpair = aline.split("=")  
                 parpair[0] = parpair[0].replace(' ','')
-                #print(parpair)
+                # casalog.post(parpair)
                 if len(parpair) != 2:
                     errs += 'Error in line containing : ' + oneline + '\n'
                 if parpair[0] == 'imagename' and tempimpar != {}:
@@ -567,7 +565,7 @@ class ImagerParameters():
                     tempnormpar[ parpair[0] ] = parpair[1]
                     usepar=True
                 if usepar==False:
-                    print('Ignoring unknown parameter pair : ' + oneline)
+                    casalog.post('Ignoring unknown parameter pair : ' + oneline)
 
         if len(errs)==0:
             returnlist.append( {'impars':tempimpar,'gridpars':tempgridpar, 'weightpars':tempweightpar, 'decpars':tempdecpar, 'normpars':tempnormpar} )
@@ -583,7 +581,7 @@ class ImagerParameters():
 #        returnlist = self.evalToTarget( returnlist, 'impars', 'reffreq', 'strvec' )
 
 
-        #print(returnlist)
+        # casalog.post(returnlist)
         return returnlist, errs
 
 
@@ -603,7 +601,7 @@ class ImagerParameters():
 
                     globalpars[ fld ][subparkey][parname] = val_e
         except:
-            print('Cannot evaluate outlier field parameter "' + parname + '"')
+            casalog.post('Cannot evaluate outlier field parameter "' + parname + '"', 'ERROR')
 
         return globalpars
 
@@ -645,7 +643,7 @@ class ImagerParameters():
                             maxid = val
             newimagename = dirname[2:] + prefix + '_' + str(maxid+1)
 
-        print('Using : ',  newimagename)
+        casalog.post('Using : ',  newimagename)
         return newimagename
 
     def incrementImageNameList(self, inpnamelist ):
@@ -713,11 +711,11 @@ class ImagerParameters():
             else:
                 newimagenamelist[immod] = dirnames[immod][2:] + prefixes[immod] + '_' + str(maxid+1) 
 
-#        print('Input : ',  inpnamelist)
-#        print('Dirs : ', dirnames)
-#        print('Pre : ', prefixes)
-#        print('Max id : ', maxid)
-#        print('Using : ',  newimagenamelist)
+#        casalog.post('Input : ',  inpnamelist)
+#        casalog.post('Dirs : ', dirnames)
+#        casalog.post('Pre : ', prefixes)
+#        casalog.post('Max id : ', maxid)
+#        casalog.post('Using : ',  newimagenamelist)
         return newimagenamelist
 
     ## Guard against numpy int32,int64 types which don't convert well across tool boundary.
@@ -738,10 +736,10 @@ class ImagerParameters():
     #  (e.g. combination cube and continuum for main and outlier fields)
     def checkParallelMFMixedModes(self,allimpars,outlierpars):
         errmsg=''
-        print("outlierpars==",outlierpars)
+        casalog.post("outlierpars==",outlierpars)
         mainspecmode= allimpars['0']['specmode']
         mainnchan = allimpars['0']['nchan'] 
-        print("mainspecmode=",mainspecmode, "mainnchan=",mainnchan)
+        casalog.post("mainspecmode=",mainspecmode, "mainnchan=",mainnchan)
         cubeoutlier = False
         contoutlier = False
         isnchanmatch = True
