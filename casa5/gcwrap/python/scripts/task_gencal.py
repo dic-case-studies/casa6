@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import os
 import warnings
@@ -60,7 +59,7 @@ def gencal(vis=None,caltable=None,caltype=None,infile=None,
               #_cb.close()
        
        except UserWarning as instance:
-              print('*** Warning *** %s' % instance)
+              casalog.post('*** UserWarning *** %s' % instance, 'WARN')
 
        finally:
               _cb.close()

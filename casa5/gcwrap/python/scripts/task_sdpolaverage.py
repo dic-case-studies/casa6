@@ -345,7 +345,7 @@ def sdpolaverage(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
+                    #casalog.post("width =", width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -353,7 +353,7 @@ def sdpolaverage(
                             for i in xrange(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
+    #                        casalog.post('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -362,7 +362,7 @@ def sdpolaverage(
                                 w = chanbin
                             for i in xrange(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
+    #                casalog.post('widths =', widths )
                     for rownum in xrange(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -374,11 +374,11 @@ def sdpolaverage(
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
+                                #casalog.post('sch1 =', sch1)
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
+                                #casalog.post('sch2 =', sch2)
+                                ##casalog.post('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
