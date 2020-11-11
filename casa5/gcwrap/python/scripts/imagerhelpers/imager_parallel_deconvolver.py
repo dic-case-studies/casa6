@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import math
 import shutil
@@ -43,8 +42,8 @@ class PyParallelDeconvolver(PySynthesisImager):
         #self.NN = self.PH.NN
         self.NN = len(self.listOfNodes);
         if self.NF != self.NN:
-             print('For now, cannot handle nfields != nnodes. Will implement round robin allocation later.')
-             print('Using only ', self.NN, ' fields and nodes')
+             casalog.post('For now, cannot handle nfields != nnodes. Will implement round robin allocation later.')
+             casalog.post('Using only ', self.NN, ' fields and nodes')
              
 
 #############################################
@@ -81,12 +80,12 @@ class PyParallelDeconvolver(PySynthesisImager):
         for immod in self.listOfNodes:
              retrec = self.PH.pullval("initrec", immod )
              self.IBtool.mergeinitrecord( retrec[immod] )
-#             print "Peak res of field ",immod, " on node ", immod , ": " ,retrec[immod]['peakresidual']
-#             casalog.post("["+self.allimpars[str(immod)]['imagename']+"] : Peak residual : %5.5f"%(initrec['peakresidual']), "INFO")
+             # casalog.post("Peak res of field ",immod, " on node ", immod , ": " ,retrec[immod]['peakresidual'])
+             # casalog.post("["+self.allimpars[str(immod)]['imagename']+"] : Peak residual : %5.5f"%(initrec['peakresidual']), "INFO")
 
         # Check with the iteration controller about convergence.
         stopflag = self.IBtool.cleanComplete()
-        print('Converged : ', stopflag)
+        casalog.post('Converged : ', stopflag)
         if( stopflag>0 ):
             stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 5 times from the previous major cycle','peak residual increased by more than 5 times from the minimum reached']
             casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
