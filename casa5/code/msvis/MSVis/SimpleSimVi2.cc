@@ -575,11 +575,10 @@ Bool SimpleSimVi2::more () const
 void SimpleSimVi2::next () {
   // Advance counter and time
   ++iSubChunk_;
+  thisTime_+=pars_.dt_;
 
-  if(iSubChunk_<nSubchunk_)
+  if(iSubChunk_ < nSubchunk_)
   {
-    thisTime_+=pars_.dt_;
-
     // Change SPW once all times have been served
     if(pars_.spwScope_ == SubchunkScope)
       thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
