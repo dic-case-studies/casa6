@@ -55,5 +55,5 @@ def rmfit(
         if len(tmpim) > 0:
             try:
                 shutil.rmtree(tmpim)
-            except Exception as e:
-                print("Could not remove " + tmpim + " because " + str(e))
+            except Exception as exc:
+                casalog.post("Could not remove " + tmpim + " because " + str(exc), 'ERROR')

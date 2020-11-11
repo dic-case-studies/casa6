@@ -157,7 +157,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                     
                         antok[iant]=True;
 
-                        #print 'Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant='+str(iant), '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(r[iant]),'q='+str(q[iant]),'u='+str(u[iant]),'p='+str(p),'x='+str(x)
+                        # casalog.post('Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant='+str(iant), '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(r[iant]),'q='+str(q[iant]),'u='+str(u[iant]),'p='+str(p),'x='+str(x))
                         casalog.post('Fld='+fldnames[ifld]+' Spw='+str(ispw)+' Ant='+str(iant)+' (PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)'+' q='+str(q[iant])+' u='+str(u[iant])+' p='+str(p)+' x='+str(x)+' Gx/Gy='+str(sqrt(r[iant])))
 
                         if rempol:
