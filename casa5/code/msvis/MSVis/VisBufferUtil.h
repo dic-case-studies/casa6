@@ -178,7 +178,7 @@ public:
   void rejectConsecutive(const casacore::Vector<casacore::Double>& t, casacore::Vector<casacore::Double>& retval, casacore::Vector<casacore::Int>& indx);
   //A quicker pointing index finder
   //void pointingIndex(const casacore::MSPointing& pcols, const casacore::Int antenna, const casacore::Int ntimes,  casacore::Double*& ptime, casacore::Vector<casacore::Int>& indices,casacore::Vector<casacore::MDirection>& direction );
-  void pointingIndex( casacore::Double*& timecol, casacore::Int*& antcol, casacore::Double*& intervalcol, const casacore::Int nrow, const casacore::Int antenna, const casacore::Int ntimes,  casacore::Double*& ptime, casacore::Vector<casacore::Int>& indices );
+  void pointingIndex( casacore::Double*& timecol, casacore::Int*& antcol, casacore::Double*& intervalcol, const casacore::rownr_t nrow, const casacore::Int antenna, const casacore::Int ntimes,  casacore::Double*& ptime, casacore::Vector<ssize_t>& indices );
   //get ephemeris based direction corrected for parallax for the position in the frame
   casacore::MDirection getEphemBasedPhaseDir(const vi::VisBuffer2& vb, const casacore::String& ephemPath, const casacore::MDirection&refDir,  const casacore::Double t);
   // A casacore::MeasFrame for conversions

@@ -214,7 +214,7 @@ public:
     const casacore::Array<casacore::Bool> & flagCategory () const; // [nC,nF,nCategories,nR]
 
 	casacore::IPosition getShape () const;
-	casacore::Int nRows () const;
+	casacore::rownr_t nRows () const;
 	casacore::Int nChannels () const;
 	casacore::Int nCorrelations () const;
 	casacore::Int nAntennas () const;
