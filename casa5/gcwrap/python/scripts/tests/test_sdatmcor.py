@@ -8,6 +8,7 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdatmcor
+    import casatasks.private.task_sdatmcor as sdatmcor_impl
     # default isn't used in casatasks
 
     def default(atask):
@@ -29,6 +30,8 @@ if is_CASA6:
 
 else:
     from tasks import sdatmcor
+    import task_sdatmcor as sdatmcor_impl
+
     from tasks import gencal, applycal
     from __main__ import default
     from sdutil import tbmanager
@@ -437,13 +440,18 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_sdatmcor_spw_process_99_select_all(self):
         '''test data selection: specify invalid spw to process'''
-        sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23', outfile=self.outfile, datacolumn='data')
-        self.check_result({19: True, 23: False})
+        with self.assertRaises(Exception):
+            sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23', outfile=self.outfile, datacolumn='data')
 
     def test_sdatmcor_intent_selection(self):
         '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
         sdatmcor(infile=self.infile, outfile=self.outfile, intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
         self.check_result({19: True, 23: True}, on_source_only=True)
+
+    def test_sdatmcor_spw_process_less_than_20_select_all(self):
+        '''test data selection: specify invalid spw to process'''
+        sdatmcor(infile=self.infile, spw='<20', outputspw='', outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: False})
 
     def test_sdatmcor_gainfactor_float(self):
         """test gainfactor: float input"""
@@ -470,6 +478,35 @@ class test_sdatmcor(unittest.TestCase):
         applycal(vis=self.infile, gaintable=self.caltable, flagbackup=False)
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected', gainfactor=gainfactor)
         self.check_result({19: True, 23: True})
+
+    def test_parse_spw(self):
+        """test utility functio, parse_spw"""
+        test_cases = [
+            ('', [19, 23]),
+            ('*', [19, 23]),
+            ('19,23', [19, 23]),
+            ('19', [19]),
+            ('<20', [19]),
+            ('17,19,21', [19]),
+            ('>20', [23]),
+            ('0', []),
+            ('1000', RuntimeError),
+            ([19], TypeError),
+        ]
+        for spw, expected in test_cases:
+            if isinstance(expected, list):
+                actual = sdatmcor_impl.parse_spw(self.infile, spw)
+                self.assertEqual(
+                    actual,
+                    expected,
+                    msg='failed: input {} result {} expected {}'.format(
+                        spw, actual, expected
+                    )
+                )
+            else:
+                # error cases
+                with self.assertRaises(expected):
+                    actual = sdatmcor_impl.parse_spw(self.infile, spw)
 
 
 def suite():
