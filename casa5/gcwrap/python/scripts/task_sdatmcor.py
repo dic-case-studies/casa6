@@ -353,7 +353,7 @@ def _inspect_strint_range(indata, minimum, maximum):
     elif type(indata) is int:
         return minimum <= indata <= maximum
     else:
-        raise Exception("INTERNAL ERROR:: unexpected data type.")
+        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
         
 
 
@@ -364,7 +364,7 @@ def _inspect_strfloat_range(str_data, minimum, maximum):
         else:
             return minimum <= float(str_data) <= maximum
     else:
-        raise Exception("INTERNAL ERROR:: unexpected data type.")
+        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
 
 
 # inspect the input value is consistent with the Unit #
@@ -394,7 +394,7 @@ def _check_unit_and_formToStr(data, base_unit):
                 # float specified #
                 return str(data)   # available  input#
         else:
-            raise Exception("INTERNAL ERROR:: Arg type is not expected due to the I/F Design.")
+            raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
@@ -453,7 +453,7 @@ def _convert_to_list(in_arg, out_ele_type=float):
         elif out_ele_type == str:
             return [str(s) for s in in_arg]
 
-        raise Exception("INTERNAL ERROR:: unexpected data type.")
+        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
 
     elif type(in_arg) is str:
         if in_arg == '':
@@ -467,10 +467,10 @@ def _convert_to_list(in_arg, out_ele_type=float):
         elif out_ele_type == str:
             return [str(s) for s in in_arg]
 
-        raise Exception("INTERNAL ERROR:: unexpected data type.")
+        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
 
     else:
-        raise Exception("INTERNAL ERROR:: unexpected argument type.")
+        raise Exception("INTERNAL ERROR:: (assert) Unexpected argument type.")
 
 
 def get_default_antenna(msname, antenna):
