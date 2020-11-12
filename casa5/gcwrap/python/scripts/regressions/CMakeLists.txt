@@ -32,7 +32,7 @@ casa_add_python( tools tools_regressions_python lib/python${PYTHONV}/regressions
   3c129_tutorial_regression.py
   3C219D_regression.py
   3C391polim_regression.py
-  accum_regression.py
+#  accum_regression.py
   alma-m100-analysis-regression.py
   alma-m100-analysis-hpc-regression.py
   alma-m100-analysis-hpc-regression-tclean.py
