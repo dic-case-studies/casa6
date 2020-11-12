@@ -1835,7 +1835,13 @@ VisibilityIteratorImpl2::allBeamOffsetsZero() const
 rownr_t
 VisibilityIteratorImpl2::nRows() const
 {
-	return rowBounds_p.subchunkNRows_p;
+    return rowBounds_p.subchunkNRows_p;
+}
+
+rownr_t
+VisibilityIteratorImpl2::nShapes() const
+{
+    return 1;
 }
 
 rownr_t VisibilityIteratorImpl2::nRowsInChunk() const

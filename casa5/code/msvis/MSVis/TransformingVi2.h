@@ -172,8 +172,10 @@ public:
     virtual casacore::Bool isNewSpectralWindow () const override;
 
     // Return the number of rows in the current iteration
-
     virtual casacore::rownr_t nRows () const override;
+
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t nShapes () const override;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the

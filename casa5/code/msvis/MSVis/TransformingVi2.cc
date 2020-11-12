@@ -496,6 +496,12 @@ TransformingVi2::nRows ()  const
 }
 
 rownr_t
+TransformingVi2::nShapes ()  const
+{
+    return getVii()->nShapes ();
+}
+
+rownr_t
 TransformingVi2::nRowsInChunk ()  const
 {
     return getVii()->nRowsInChunk ();
