@@ -207,10 +207,6 @@ def sdatmcor(
             _msg("\nERROR::%s\n" % errmsg, 'ERROR')
             raise Exception(errmsg)
 
-    # Antenna Key word, form without &&& #
-    if antenna != '':
-        antenna = antenna.replace('&', '')
-
     #
     # Inspect arguments.
     #  - inspect Unit.
@@ -442,6 +438,9 @@ def get_default_antenna(msname, antenna):
     #  - iAnt = 1 is experimentally preferable.
     #  - iAnt = 0 should be avoided.
 
+    if antenna != '':
+        antenna = antenna.replace('&', '')
+
     with open_msmd(msname) as msmd:
         ant_list = msmd.antennaids(antenna)
         n_ant = len(ant_list)
@@ -569,11 +568,6 @@ def atmMst(
         field, spw, scan, antenna,
         correlation, timerange, intent,
         observation, feed, msselect):
-
-    # Antenna Key word, to adjust to mstransform #
-    if antenna != '':
-        antenna = antenna.replace('&', '')
-        antenna += '&&&'
 
     mstransform(
         vis=infile,
