@@ -268,7 +268,7 @@ def _inspect_strint_range(indata, minimum, maximum):
     if type(indata) is str:
         if indata == '':
             return True
-        elif indata.isdecimal():
+        elif indata.isdigit():
             return minimum <= int(indata) <= maximum
         else:
             return False
