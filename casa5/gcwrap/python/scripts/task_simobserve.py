@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import re
 import pylab as pl
@@ -974,7 +973,7 @@ def simobserve(
             if totalsec < totalscansec:
                 msg("Not all pointings in the mosaic will be observed - check mosaic setup and exposure time parameters!",priority="warn")
                 ###
-                #print "you need at least %16.12e sec but you have %16.12e sec (%f < %f = %s)" % (totalscansec, totalsec, totalsec, totalscansec, str(totalsec<totalscansec))
+                #casalog.post("you need at least %16.12e sec but you have %16.12e sec (%f < %f = %s)" % (totalscansec, totalsec, totalsec, totalscansec, str(totalsec<totalscansec)))
                 ###
 
             # sm.observemany
@@ -1433,7 +1432,7 @@ def plotpb(pb,axes,lims=None,color='k'):
         pblegend.set_alpha(0.7)
         axes.add_artist(pblegend)
     except:
-        print("Using old matplotlib substituting with circle")
+        casalog.post("Using old matplotlib substituting with circle")
         # work around for old matplotlib
         boxsize = pb*1.1
         if not lims: lims = axes.get_xlim(),axes.get_ylim()
