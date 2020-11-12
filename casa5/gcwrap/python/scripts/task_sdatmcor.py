@@ -10,25 +10,23 @@ if is_CASA6:
     from casatasks import casalog
     from casatools import quanta, table, msmetadata
     from casatools import atmosphere
+    from casatools import ms as mstool
     from casatasks import mstransform
     import casatasks.private.simutil as simutil
 
     ut = simutil.simutil()
-    msmd = msmetadata()
-    tb = table()
     qa = quanta()
     at = atmosphere()
 
 else:
-    from taskinit import tbtool, casalog, qa
+    from taskinit import tbtool as table
+    from taskinit import mstool, casalog, qa
     from taskinit import msmdtool as msmetadata
     from casac import casac
     from tasks import mstransform
     from simutil import simutil
 
     ut = simutil()
-    msmd = msmetadata()
-    tb = tbtool()
     at = casac.atmosphere()
 
 # Task name #
@@ -37,6 +35,7 @@ origin = 'sdatmcor'
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
+    tb = table()
     tb.open(path, nomodify=nomodify)
     try:
         yield tb
@@ -46,6 +45,7 @@ def open_table(path, nomodify=True):
 
 @contextlib.contextmanager
 def open_msmd(path):
+    msmd = msmetadata()
     msmd.open(path)
     try:
         yield msmd
@@ -106,6 +106,45 @@ def parse_gainfactor(gainfactor):
         v = float(gainfactor)
         gaindict = collections.defaultdict(lambda: v)
     return gaindict
+
+
+def parse_spw(msname, spw=''):
+    """Parse spw selection into list of spw ids
+
+    Parse spw selection into list of spw ids that have
+    associated data in the MAIN table of given MS.
+
+    Args:
+        msname (str): name of MS
+        spw (str): spw selection
+
+    Raises:
+        TypeError: spw selection is not str
+        RuntimeError: spw selection cause empty result
+
+    Returns:
+        list: list of selected spw ids
+    """
+    if not isinstance(spw, str):
+        raise TypeError('spw selection must be string')
+
+    with open_table(msname) as tb:
+        ddids = np.unique(tb.getcol('DATA_DESC_ID'))
+        print(ddids)
+    with open_msmd(msname) as msmd:
+        spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
+        print(spws_all)
+
+    if len(spw) == 0:
+        # '' indicates all spws, which is equivalent to '*'
+        spwsel = '*'
+    else:
+        spwsel = spw
+    ms = mstool()
+    sel = ms.msseltoindex(msname, spw=spwsel)
+    spws = set(spws_all).intersection(set(sel['spw']))
+
+    return list(spws)
 
 
 def sdatmcor(
@@ -784,7 +823,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            outputspws_param = _convert_to_list(p_outputspw, int)
+            outputspws_param = parse_spw(corms, '')
 
             # Must be a subset, locate the initial set.  #
             if set(outputspws_param).issubset(set(rawmsSpws)):
@@ -809,7 +848,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            spws_param = _convert_to_list(p_spw, int)
+            spws_param = parse_spw(rawms, p_spw)
 
             # Must be a subset, locate the initial set.  #
             if set(spws_param).issubset(set(rawmsSpws)):
