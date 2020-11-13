@@ -19,12 +19,14 @@ if is_CASA6:
 
     from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 else:
     from taskinit import *
 
     from imagerhelpers.imager_deconvolver import PyDeconvolver
     from imagerhelpers.input_parameters import ImagerParameters
     from imregrid import imregrid
+    from parallel.parallel_task_helper import ParallelTaskHelper
 
 def check_requiredmask_exists(usemask, mask):
     if usemask != "user":        # don't use the mask parameter
@@ -149,6 +151,10 @@ def deconvolve(
     Runs the minor cycle only of tclean.
     Most of this code is copied directly from tclean.
     """
+
+    # check to make sure we're running in a valid environment
+    if ParallelTaskHelper.isMPIEnabled():
+        raise RuntimeError("Runtime Error: task Deconvolve cannot be executed in parallel (mpi) mode!")
 
     # discard empty start model strings
     if type(startmodel) is list:
