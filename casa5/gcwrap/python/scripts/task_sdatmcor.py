@@ -130,10 +130,10 @@ def parse_spw(msname, spw=''):
 
     with open_table(msname) as tb:
         ddids = np.unique(tb.getcol('DATA_DESC_ID'))
-        # print(ddids)
+        print(ddids)
     with open_msmd(msname) as msmd:
         spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
-        # print(spws_all)
+        print(spws_all)
 
     if len(spw) == 0:
         # '' indicates all spws, which is equivalent to '*'
@@ -142,8 +142,7 @@ def parse_spw(msname, spw=''):
         spwsel = spw
     ms = mstool()
     sel = ms.msseltoindex(msname, spw=spwsel)
-    # (not desired work) spws = set(spws_all).intersection(set(sel['spw']))
-    spws = set(sel['spw'])
+    spws = set(spws_all).intersection(set(sel['spw']))
     return list(spws)
 
 
