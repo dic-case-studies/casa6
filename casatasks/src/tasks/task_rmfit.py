@@ -7,6 +7,7 @@ if is_CASA6:
     from casatools import image, imagepol
     from .ialib import write_image_history
 else:
+    from taskinit import *
     from ialib import write_image_history
     image = iatool
     imagepol = potool
