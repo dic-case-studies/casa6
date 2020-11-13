@@ -89,7 +89,8 @@ class rmfit_test(unittest.TestCase):
             outfile, 'rm.im', 'out2.im', 'rm2.im', 'rm1.im',
             'rm_input.im', 'xx.im', 'yy.im'
         ):
-            shutil.rmtree(f)
+            if os.path.exists(f):
+                shutil.rmtree(f)
     
     def test_makesImage(self):
         '''
@@ -162,7 +163,7 @@ class rmfit_test(unittest.TestCase):
             
             Test that the maxpaerr parameter changes the max allowed position angle
         '''
-        
+
         try:
             rmfit(imagename=outfile, rm='rm.im', maxpaerr=1)
         except Exception:
@@ -204,8 +205,8 @@ class rmfit_test(unittest.TestCase):
             rmfit(imagename=outfile, rm='rm.im')
         except Exception:
             self.fail()
-            
-        if CASA6:
+
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=outfile2, rm ='rm2.im')
         else:
@@ -223,12 +224,12 @@ class rmfit_test(unittest.TestCase):
         myia.fromshape(outfile2, [20,20,4,5])
         myia.addnoise()
         myia.done()
-    
+
         try:
             rmfit(imagename=[outfile, outfile2], rm='rm.im')
         except Exception:
             self.fail()
-            
+ 
     def test_rmmax(self):
         '''
             test_rmmax
@@ -252,7 +253,7 @@ class rmfit_test(unittest.TestCase):
         tb.close()
         
         self.assertFalse(numpy.all(rmCol == rm2Col))
-
+        
     # Merged in test cases
     def test_rmfit_basics(self):
         """Sanity tests for task rmfit"""
@@ -270,7 +271,7 @@ class rmfit_test(unittest.TestCase):
         self.assertTrue((myia.shape() == [20, 20]).all())
         got1 = myia.statistics(list=True, verbose=True)['sumsq']
         myia.done()
-        
+     
         # test concatenation of images
         outfile = "yy.im"
         myia.fromshape(outfile, [20, 20, 4, 20])
@@ -294,7 +295,7 @@ class rmfit_test(unittest.TestCase):
         self.assertTrue(abs(got1 - got2) > 0.1)
         tb.done()
         self.assertTrue(len(tb.showcache()) == 0)
-    
+
     def test_algorithm(self):
         """Test rotation measure computation algorithm"""
         #myia = iatool()
@@ -336,7 +337,7 @@ class rmfit_test(unittest.TestCase):
         myia.done(remove=True)
         tb.done()
         self.assertTrue(len(tb.showcache()) == 0)
-        
+
         
         
 def suite():

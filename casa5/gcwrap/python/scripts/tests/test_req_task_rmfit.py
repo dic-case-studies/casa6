@@ -89,7 +89,8 @@ class rmfit_test(unittest.TestCase):
             outfile, 'rm.im', 'out2.im', 'rm2.im', 'rm1.im',
             'rm_input.im', 'xx.im', 'yy.im'
         ):
-            shutil.rmtree(f)
+            if os.path.exists(f):
+                shutil.rmtree(f)
     
     def test_makesImage(self):
         '''
@@ -147,7 +148,10 @@ class rmfit_test(unittest.TestCase):
             Test that the sigma parameter gives the thermal noise in Stokes U and Q
         '''
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', sigma=3))
+        try:
+            rmfit(imagename=outfile, rm='rm.im', sigma=3)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -159,8 +163,11 @@ class rmfit_test(unittest.TestCase):
             
             Test that the maxpaerr parameter changes the max allowed position angle
         '''
-        
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', maxpaerr=1))
+
+        try:
+            rmfit(imagename=outfile, rm='rm.im', maxpaerr=1)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -173,7 +180,10 @@ class rmfit_test(unittest.TestCase):
             Test that rmfg is used to specify a foreground rmvalue which is subtracted
         '''
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', rmfg=1))
+        try:
+            rmfit(imagename=outfile, rm='rm.im', rmfg=1)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -191,8 +201,11 @@ class rmfit_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im'))
-        
+        try:
+            rmfit(imagename=outfile, rm='rm.im')
+        except Exception:
+            self.fail()
+
         if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=outfile2, rm ='rm2.im')
@@ -211,9 +224,12 @@ class rmfit_test(unittest.TestCase):
         myia.fromshape(outfile2, [20,20,4,5])
         myia.addnoise()
         myia.done()
-    
-        self.assertTrue(rmfit(imagename=[outfile, outfile2], rm='rm.im'))
-        
+
+        try:
+            rmfit(imagename=[outfile, outfile2], rm='rm.im')
+        except Exception:
+            self.fail()
+ 
     def test_rmmax(self):
         '''
             test_rmmax
@@ -238,6 +254,90 @@ class rmfit_test(unittest.TestCase):
         
         self.assertFalse(numpy.all(rmCol == rm2Col))
         
+    # Merged in test cases
+    def test_rmfit_basics(self):
+        """Sanity tests for task rmfit"""
+        #myia = iatool()
+        outfile = "xx.im"
+        myia.fromshape(outfile, [20, 20, 4, 20])
+        myia.addnoise()
+        myia.done()
+        myrm = "rm1.im"
+        try:
+            rmfit(imagename=outfile, rm=myrm)
+        except Exception:
+            self.fail()
+        myia.open(myrm)
+        self.assertTrue((myia.shape() == [20, 20]).all())
+        got1 = myia.statistics(list=True, verbose=True)['sumsq']
+        myia.done()
+     
+        # test concatenation of images
+        outfile = "yy.im"
+        myia.fromshape(outfile, [20, 20, 4, 20])
+        myia.addnoise()
+        csys = myia.coordsys()
+        refval = csys.referencevalue()['numeric']
+        refval[3] = 1.5e9
+        csys.setreferencevalue(refval)
+        myia.setcoordsys(csys.torecord())
+        myia.done()
+        images = ["xx.im", "yy.im"]
+        myrm = "rm2.im"
+        try:
+            rmfit(imagename=images, rm=myrm)
+        except Exception:
+            self.fail()
+        myia.open(myrm)
+        self.assertTrue((myia.shape() == [20, 20]).all())
+        got2 = myia.statistics(list=True, verbose=True)['sumsq']
+        myia.done()
+        self.assertTrue(abs(got1 - got2) > 0.1)
+        tb.done()
+        self.assertTrue(len(tb.showcache()) == 0)
+
+    def test_algorithm(self):
+        """Test rotation measure computation algorithm"""
+        #myia = iatool()
+        imagename = "rm_input.im"
+        myia.fromshape(imagename, [20, 20, 4, 20])
+        csys = myia.coordsys()
+        incr = csys.increment()['numeric']
+        incr[3] = 1000*incr[3]
+        csys.setincrement(incr)
+        myia.setcoordsys(csys.torecord())
+        pixvals = myia.getchunk()
+        # U values all 1
+        U = 1
+        pixvals[:,:,2,:] = U
+        c = 29979245800.0/100
+        RM = 9.6
+        pa0deg = 22.5
+        pa0 = pa0deg/180*math.pi
+        for chan in range(myia.shape()[3]):
+            freq = myia.toworld([0,0,0,chan])['numeric'][3]
+            lam = c/freq
+            Q = U/math.tan(2*(pa0 + RM*lam*lam))
+            pixvals[:,:,1,chan] = Q
+        myia.putchunk(pixvals)
+        myia.done()
+        rmim = "rm.im"
+        pa0im = "pa0.im"
+        sigma = 10e-8
+        rmfit(imagename=imagename, rm=rmim, pa0=pa0im, sigma=sigma)
+        myia.open(rmim)
+        stats = myia.statistics(list=True, verbose=True)
+        self.assertTrue((abs(stats['min'][0] - RM)) < 1e-4)
+        self.assertTrue((abs(stats['max'][0] - RM)) < 1e-4)
+        myia.done(remove=True)
+        myia.open(pa0im)
+        stats = myia.statistics(list=True, verbose=True)
+        self.assertTrue((abs(stats['min'][0] - pa0deg)) < 1e-4)
+        self.assertTrue((abs(stats['max'][0] - pa0deg)) < 1e-4)
+        myia.done(remove=True)
+        tb.done()
+        self.assertTrue(len(tb.showcache()) == 0)
+
         
         
 def suite():
