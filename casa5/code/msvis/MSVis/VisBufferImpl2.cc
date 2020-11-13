@@ -1188,7 +1188,7 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     cache_p->nChannels_p.setSpecial (nChannelsPerShape[0]);
     cache_p->nCorrelations_p.setSpecial (nCorrelationsPerShape[0]);
 
-    cache_p->nShapes_p.setSpecial (1);
+    cache_p->nShapes_p.setSpecial (nRowsPerShape.size());
     cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
     cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
     cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);

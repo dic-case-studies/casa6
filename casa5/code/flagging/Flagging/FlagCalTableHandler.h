@@ -208,7 +208,11 @@ public:
 	virtual casacore::Int nAntennas () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nChannels () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nCorrelations () const {static casacore::Int dummy; return dummy;}
-	virtual casacore::rownr_t nRows () const {static casacore::Int dummy; return dummy;}
+    virtual casacore::rownr_t nRows () const {static casacore::Int dummy; return dummy;}
+    virtual casacore::rownr_t nShapes () const {return 1;}
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const {static casacore::Vector<casacore::rownr_t> dummy ; return dummy;}
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const {static casacore::Vector<casacore::Int> dummy ; return dummy;}
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const {static casacore::Vector<casacore::Int> dummy ; return dummy;}
 	virtual casacore::Float parang0(casacore::Double /*time*/) const {static casacore::Float dummy; return dummy;}
 	virtual casacore::Vector<casacore::Float> & parang(casacore::Double /*time*/) const {static casacore::Vector<casacore::Float> dummy; return dummy;}
 	virtual const casacore::MDirection& phaseCenter () const {static casacore::MDirection dummy; return dummy;}

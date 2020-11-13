@@ -551,6 +551,15 @@ public:
     // Returns the number of distinct cube/array shapes in this VisBuffer
     virtual casacore::rownr_t nShapes () const = 0;
 
+    // Returns the number of rows per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const = 0;
+
+    // Returns the number of channels per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const = 0;
+
+    // Returns the number of correlation per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const = 0;
+
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.
 

@@ -634,13 +634,13 @@ Bool SimpleSimVi2::existsColumn (VisBufferComponent2 id) const
 }
 
 casacore::rownr_t SimpleSimVi2::nRows () const
-{ 
-  return nRows_; 
+{
+  return nRows_;
 };
 
 casacore::rownr_t SimpleSimVi2::nShapes () const
-{ 
-  return nShapes_; 
+{
+  return nShapes_;
 };
 
 // Return the row ids as from the original root table. This is useful
