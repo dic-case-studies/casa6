@@ -130,10 +130,10 @@ def parse_spw(msname, spw=''):
 
     with open_table(msname) as tb:
         ddids = np.unique(tb.getcol('DATA_DESC_ID'))
-        print(ddids)
+        # print(ddids)
     with open_msmd(msname) as msmd:
         spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
-        print(spws_all)
+        # print(spws_all)
 
     if len(spw) == 0:
         # '' indicates all spws, which is equivalent to '*'
@@ -142,8 +142,8 @@ def parse_spw(msname, spw=''):
         spwsel = spw
     ms = mstool()
     sel = ms.msseltoindex(msname, spw=spwsel)
-    spws = set(spws_all).intersection(set(sel['spw']))
-
+    # (not desired work) spws = set(spws_all).intersection(set(sel['spw']))
+    spws = set(sel['spw'])
     return list(spws)
 
 
@@ -166,6 +166,7 @@ def sdatmcor(
     #
     # Input/Output error check and internal set up.
     #
+    # File Info. #
     if infile == '':
         errmsg = "infile MUST BE specified."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
@@ -190,7 +191,6 @@ def sdatmcor(
     # Existence #
     infile_exist = _file_exist(infile)
     outfile_exist = _file_exist(outfile)
-
     # infile Inaccessible #
     if not infile_exist:
         errmsg = "Specified infile does not exist."
@@ -354,7 +354,6 @@ def _inspect_strint_range(indata, minimum, maximum):
         return minimum <= indata <= maximum
     else:
         raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
-        
 
 
 def _inspect_strfloat_range(str_data, minimum, maximum):
@@ -793,7 +792,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            outputspws_param = parse_spw(corms, '')
+            outputspws_param = parse_spw(corms, p_outputspw)
 
             # Must be a subset, locate the initial set.  #
             if set(outputspws_param).issubset(set(rawmsSpws)):
@@ -824,17 +823,12 @@ def calc_sdatmcor(
             if set(spws_param).issubset(set(rawmsSpws)):
                 spws = list(set(spws_param))
             else:
-                _msg("Some of the specified spw(s) cannot be processed. Try to continue", 'WARN')
+                _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
                 spws = list(set(rawmsSpws) & set(spws_param))
 
             # If default, apply all-spws #
             if (p_spw == ''):
                 spws = rawmsSpws
-
-            _msg("Determined Spws Information")
-            _msg('- rawms      Spws = %s' % rawmsSpws)
-            _msg('- requested  Spws = %s' % spws_param)
-            _msg('- determined Spws = %s' % spws)
 
             #
             # (Task Section )
@@ -849,9 +843,15 @@ def calc_sdatmcor(
 
             # outputSpw, Spw:: No Target check #
             if spws == []:
-                raise Exception("No Spw Targets. Abort.")
+                raise Exception("No available Spw Targets. Abort.")
             if outputspws == []:
-                raise Exception("No outputSpw targets. Abort.")
+                raise Exception("No available outputSpw targets. Abort.")
+
+            _msg("Final Determined Spws Information")
+            _msg('-- Rawms         Spws = %s' % rawmsSpws)
+            _msg('-- Output        Spws = %s' % outputspws)
+            _msg('-- Correcting    Spws = %s' % spws)
+            _msg('-- No Correcting Spws = %s' % noCorSpws)
 
             #
             # (Original Section)
@@ -939,7 +939,7 @@ def calc_sdatmcor(
     pwv, tground, pground, hground = [], [], [], []
     tmatm = pl.unique(tmatm_all)
     for tt in tmatm:
-        deltat = abs(tmpwv_all-tt)
+        deltat = abs(tmpwv_all - tt)
         pwv.append(pl.median(pwv_all[deltat == deltat.min()]))
         tground.append(pl.median(tground_all[tmatm_all == tt]))
         pground.append(pl.median(pground_all[tmatm_all == tt]))
@@ -964,8 +964,10 @@ def calc_sdatmcor(
 
         prevtmatm = 0.
         for spwid in outputspws:  # (original) for spwid in spws #
-
-            _msg("\nProcessing spw %d in %s. Correction is not applied on spw %s.\n" % (spwid, outputspws, noCorSpws))
+            _msg("\nProcessing spw %d in %s. \n" % (spwid, outputspws))
+            if (spwid in noCorSpws) is True:
+                _msg("- No Correction is spplied on spwid =%d ." % spwid)
+                continue
 
             # gain factor
             spwkey = str(spwid)
@@ -999,7 +1001,7 @@ def calc_sdatmcor(
             # Calculate and apply correction values
             ################################################################
 
-            _msg("\nCalculate and apply correction values.\n")
+            _msg("Calculate and apply correction values.")
 
             # original: make ddis[spwid]
             _msg("- Selecting DATA_DESC_ID == %s" % ddis[spwid])
@@ -1214,14 +1216,8 @@ def calc_sdatmcor(
                 elif dosmooth:
                     dTa = pl.convolve(dTa, [0.25, 0.5, 0.25], 'same')
 
-                # CAS-13160 changed.
-                # Adjust Body
-                #  - apply (the spwid is in both outputspws and spws)
-                #  - no apply (the spwid is in outputspws, but not in spws )
-                #    This may happen in ordinary use-case.
-                if spwid not in noCorSpws:
-                    for ipol in range(npol):
-                        cdata[ipol, :, i] -= dTa * factor
+                for ipol in range(npol):
+                    cdata[ipol, :, i] -= dTa * factor
 
             subtb.putcol(p_datacolumn, cdata)
             subtb.close()
