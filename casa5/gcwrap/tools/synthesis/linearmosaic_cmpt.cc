@@ -47,8 +47,8 @@ linearmosaic::~linearmosaic()
 
 
 bool 
-linearmosaic::defineoutputimage(const int nx,
-		      const int ny, 
+linearmosaic::defineoutputimage(const long nx,
+		      const long ny, 
 		      const ::casac::variant& cellx,
 		      const ::casac::variant& celly,
 		      const ::casac::variant& imagecenter,
@@ -80,7 +80,7 @@ linearmosaic::defineoutputimage(const int nx,
   return rstat;
 }
 //-------------------------------------------------------------------------
-bool linearmosaic::setoutputimage(const  string& outputimage, const  string& outputweight,  int  imageweight, int weighttype){
+bool linearmosaic::setoutputimage(const  string& outputimage, const  string& outputweight,  long  imageweight, long weighttype){
 	 Bool rstat(false);
 	  try {
 		  	  itsMos->setOutImages(outputimage, outputweight, imageweight, weighttype);
@@ -114,7 +114,7 @@ bool linearmosaic::setlinmostype(const  string& linmostype){
 }
 
   // ---------------------------------------------------------------------
-  bool linearmosaic::makemosaic(const casac::variant& inimages,  const casac::variant& inweightimages, const int imagewgttype, const int wgttype){
+  bool linearmosaic::makemosaic(const casac::variant& inimages,  const casac::variant& inweightimages, const long imagewgttype, const long wgttype){
 
  Bool rstat(true);
   try {

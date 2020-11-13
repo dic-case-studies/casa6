@@ -281,7 +281,7 @@ void DJones::setUpForPolSolve(vi::VisBuffer2& vb) {
     Vector<Float> ampCorr(nCorr);
     Vector<Int> n(nCorr,0);
     Complex sI(0.0);
-    for (Int irow=0;irow<vb.nRows();++irow) {
+    for (rownr_t irow=0;irow<vb.nRows();++irow) {
       if (!vb.flagRow()(irow)) {
 	ampCorr=0.0f;
 	n=0;

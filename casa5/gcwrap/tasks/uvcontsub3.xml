@@ -5,7 +5,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="uvcontsub3" category="modeling, manipulation" visibility="experimental">
+<task type="function" name="uvcontsub3" category="manipulation" visibility="experimental">
 <shortdescription>An experimental clone of uvcontsub</shortdescription>
 <description>
 <!-- description is a decoy!  Use the example tag for now. -->

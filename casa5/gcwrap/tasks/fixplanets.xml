@@ -8,7 +8,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <!-- Documentation here.                                                -->
 
-<task type="function" name="fixplanets" category="editing, maninpulation, calibration" >
+<task type="function" name="fixplanets" category="manipulation, calibration" >
 
 <shortdescription>Changes FIELD and SOURCE table entries based on user-provided direction or POINTING table, optionally fixes the UVW coordinates</shortdescription>
 <description>
