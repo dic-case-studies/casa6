@@ -386,3 +386,196 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_SubtTables ) {
   auto& polSubtablecols = vi->polarizationSubtablecols();
   EXPECT_EQ(uInt(1), polSubtablecols.nrow());
 }
+
+class SimpleSimVi2ScopeTest : public ::testing::Test {
+
+protected:
+
+  virtual void SetUp() {
+
+
+  }
+  
+ // SimpleSimVi2Parameters sParm;
+
+};
+
+TEST(SimpleSimVi2ScopeTest , SimpleSimVi2_SPWChunkScope) {
+  int nSpwMax=10;
+  //1=Chunk, 2=Subchunk, 3=Row
+  for(MetadataScope spwScope : {ChunkScope, SubchunkScope, RowScope})
+  {
+    for(int nSpw=1; nSpw<=nSpwMax; nSpw++)
+    {
+      Vector<Int> ntpf(NFLD);
+      indgen(ntpf); ntpf+=1;  ntpf*=NTIMEPERFIELD;
+      Matrix<Float> stokes(4,NFLD,0.0);
+      Matrix<Float> gain(1,1,GAIN);
+      Matrix<Float> tsys(1,1,TSYS);
+      //Channels multiply by 2 for subsequent SPW
+      Vector<Int> nchan(nSpw);
+      Vector<Double> freq(nSpw,FREQ), df(nSpw,DF);
+      indgen(nchan);
+      nchan+=1;
+      nchan=pow(2,nchan);
+      SimpleSimVi2Parameters sParm(NFLD, NSCAN,
+                                   nSpw, NANT, NCORR,
+                                   ntpf,
+                                   nchan, "2016/01/06/00:00:00.",
+                                   DT,
+                                   freq,
+                                   df,
+                                   stokes,
+                                   false,
+                                   gain,
+                                   tsys,
+                                   DONORM,
+                                   POLBASIS,
+                                   DOAC,
+                                   Complex(0.0f),
+                                   false,
+                                   spwScope);
+      // Create the VI2
+      SimpleSimVi2Factory sf(sParm);
+      std::unique_ptr<VisibilityIterator2> vi (new VisibilityIterator2(sf));
+      VisBuffer2 *vb = vi->getImpl()->getVisBuffer();
+
+      vi->originChunks();
+      vi->origin();
+
+      // Check values which don't depend on the iteration
+      EXPECT_EQ(NANT,vb->nAntennas());
+      rownr_t nBln(NANT*(NANT-1)/2);  // no ACs
+      Vector<Int> vba1(vb->antenna1());
+      Vector<Int> vba2(vb->antenna2());
+      rownr_t k=0;
+      for (Int a1=0;a1<(NANT-1);++a1) {
+        for (Int a2=a1+1;a2<NANT;++a2) {
+          EXPECT_EQ(a1,vba1(k));
+          EXPECT_EQ(a2,vba2(k));
+          ++k;
+        }
+      }
+      ASSERT_EQ(nBln,k);
+
+      ASSERT_EQ(FREQ+DF/2,vb->getFrequencies(0)(0));  // row=0, chan=0
+
+      // Start the iteration
+      Int nchunk(0),niter(0),eniter(0);
+      for (vi->originChunks();vi->moreChunks();vi->nextChunk()) {
+        vi->origin();
+        Int fldid(vb->fieldId()(0));
+        if (sParm.spwScope_ == ChunkScope || sParm.spwScope_ == RowScope)
+          eniter+=(NTIMEPERFIELD*(fldid+1));
+        else if (sParm.spwScope_ == SubchunkScope)
+          eniter+=nSpw*(NTIMEPERFIELD*(fldid+1));
+
+        // Start the subchunk iteration
+        int isubchunk = 0;
+        for (vi->origin();vi->more();vi->next()) {
+          // Check for shapes and number of rows
+          if (sParm.spwScope_ == RowScope)
+          {
+            ASSERT_EQ(nBln * nSpw, vb->nRows());
+            ASSERT_EQ((rownr_t)nSpw, vb->nShapes());
+            for (auto nRows : vb->nRowsPerShape())
+              ASSERT_EQ(nBln, nRows);
+            EXPECT_EQ(vb->nChannelsPerShape().size(), vb->nShapes());
+            for (rownr_t iShape=0; iShape < vb->nShapes(); iShape++)
+              EXPECT_EQ(vb->nChannelsPerShape()[iShape], nchan[iShape]);
+          }
+          else
+          {
+            ASSERT_EQ(nBln, vb->nRows());
+            ASSERT_EQ(1u, vb->nShapes());
+            ASSERT_EQ(vb->nRows(), vb->nRowsPerShape()[0]);
+            EXPECT_EQ(vb->nChannelsPerShape()[0],vb->nChannels());
+            EXPECT_EQ(vb->nChannelsPerShape().size(),1u);
+          }
+          EXPECT_EQ(NCORR,vb->nCorrelations());
+
+          // Check exposure, scan and field
+          if (sParm.spwScope_ == ChunkScope)
+          {
+            EXPECT_EQ(nchunk/nSpw+1,vb->scan()(0));
+            EXPECT_EQ((nchunk/nSpw)%NFLD,fldid);  
+          }
+          else
+          {
+            EXPECT_EQ(nchunk+1,vb->scan()(0));
+            EXPECT_EQ(nchunk%NFLD,fldid);
+          }
+          EXPECT_TRUE(allEQ(vb->exposure(),DT));
+
+          // Check spw and channel related info
+          if (sParm.spwScope_ == ChunkScope)
+          {
+            EXPECT_EQ((nchunk%nSpw),vb->spectralWindows()(0));
+            EXPECT_EQ(nchan[nchunk%nSpw],vb->nChannels());
+          }
+          else if (sParm.spwScope_ == SubchunkScope)
+          {
+            EXPECT_EQ((isubchunk/(NTIMEPERFIELD*(fldid+1))),vb->spectralWindows()(0));
+            EXPECT_EQ(nchan[isubchunk/(NTIMEPERFIELD*(fldid+1))],vb->nChannels());
+          }
+          else if (sParm.spwScope_ == RowScope)
+          {
+            //nChannels() API cannot cope with several shapes in the same buffer, 
+            //it returns the number of channels of first SPW
+            EXPECT_EQ(nchan[0],vb->nChannels());
+            rownr_t iRow=0, iRowShapeStart;
+            Int spw=0;
+            for (auto nRows : vb->nRowsPerShape())
+            {
+              iRowShapeStart = iRow;
+              for (iRow=iRowShapeStart; iRow < iRowShapeStart + nRows ; ++iRow)
+                EXPECT_EQ(vb->spectralWindows()(iRow), spw);
+              spw++;
+            }
+          }
+ 
+          // Check cubes
+          // Cube API can retrieve only the first shape, i.e., the first spw within the VisBuffer
+          IPosition dsh(3,NCORR,nchan[vb->spectralWindows()(0)],nBln);
+          EXPECT_EQ(dsh, vb->visCube().shape());
+          EXPECT_EQ(dsh, vb->visCubeModel().shape());
+          EXPECT_EQ(dsh, vb->visCubeCorrected().shape());
+
+          // Check vector cubes
+          if (sParm.spwScope_ == ChunkScope || sParm.spwScope_ == SubchunkScope)
+          {
+            EXPECT_EQ(1u, vb->visCubes().size());
+            EXPECT_EQ(dsh, vb->visCubes()[0].shape());
+            EXPECT_EQ(1u, vb->visCubesModel().size());
+            EXPECT_EQ(dsh, vb->visCubesModel()[0].shape());
+            EXPECT_EQ(1u, vb->visCubesCorrected().size());
+            EXPECT_EQ(dsh, vb->visCubesCorrected()[0].shape());
+          }
+          else if (sParm.spwScope_ == RowScope) //TODO
+          {
+            EXPECT_EQ(vb->visCubes().size(), vb->nShapes());
+            EXPECT_EQ(vb->visCubesModel().size(), vb->nShapes());
+            EXPECT_EQ(vb->visCubesCorrected().size(), vb->nShapes());
+            for (rownr_t iShape=0; iShape < vb->nShapes(); iShape++)
+            {
+              IPosition ish(3,NCORR,nchan[iShape],nBln);
+              EXPECT_EQ(ish, vb->visCubes()[iShape].shape());
+              EXPECT_EQ(ish, vb->visCubesModel()[iShape].shape());
+              EXPECT_EQ(ish, vb->visCubesCorrected()[iShape].shape());
+            }
+          }
+
+          ++isubchunk;
+          ++niter;
+        }
+        ++nchunk;
+      }
+      if (sParm.spwScope_ == ChunkScope)
+        ASSERT_EQ(NSCAN*nSpw,nchunk);
+      else
+        ASSERT_EQ(NSCAN,nchunk);
+
+      ASSERT_EQ(eniter,niter);
+    }
+  }
+}
