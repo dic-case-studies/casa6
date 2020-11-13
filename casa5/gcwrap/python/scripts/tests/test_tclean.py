@@ -2087,7 +2087,8 @@ class test_cube(testref_base):
           self.assertTrue( self.th.check_modelchan(self.msfile,5) > 0.0 and self.th.check_modelchan(self.msfile,18) > 0.0 )
           self.checkfinal(report)
           
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")     
+#     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     @unittest.skip('Skip. This test deprecated. no longer need mtmfs for cube use msclean')
      def test_cube_mtmfs_nterms1(self):		
           """ [cube] Test mtmfs with cube and nterms = 1 """		
           self.prepData('refim_eptwochan.ms')		
@@ -2095,7 +2096,8 @@ class test_cube(testref_base):
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report)		
           
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")     
+     #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     @unittest.skip('Skip. This test deprecated. no longer need mtmfs for cube use msclean')
      def test_cubedata_mtmfs_nterms1(self):		
           """ [cube] Test mtmfs with cube data and nterms = 1 """		
           self.prepData('refim_eptwochan.ms')		
@@ -4306,7 +4308,7 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
+          report2 = self.th.check_val(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
 
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
           report3=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.10441792011,[512,596,0,0]),(self.img+'.image.pbcor',0.98375672102,[512,596,0,1]),(self.img+'.image.pbcor',0.897617280483,[512,596,0,2])])
@@ -4316,11 +4318,11 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report4 = self.th.checkval(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          report4 = self.th.check_val(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
+          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
 
      def test_cube_wproj_onefield_autowprojplanes(self):
-          """ [test_mosaic_cube] test_cube_wproj_onefield_auotwprojplanes : One field, widefield cube imaging, gridder='wproject', automaticalluy calculate wprojplanes  """
+          """ [test_mosaic_cube] test_cube_wproj_onefield_autowprojplanes : One field, widefield cube imaging, gridder='wproject', automaticalluy calculate wprojplanes  """
           # reduce the imsize to 512 so for faster excution
           self.prepData('refim_oneshiftpoint.mosaic.ms')
           phasecenter = '' 
@@ -4333,7 +4335,7 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report2 = self.th.checkval(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
+          report2 = self.th.check_val(spectral_index,  -0.51459974954, valname='Spectral flux', exact=False)
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=512, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=-1, pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
           report3=self.th.checkall(imgval=[(self.img+'.image.pbcor',1.10441792011,[256,340,0,0]),(self.img+'.image.pbcor',0.98375672102,[256,340,0,1]),(self.img+'.image.pbcor',0.897617280483,[256,340,0,2])])
@@ -4343,8 +4345,8 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report4 = self.th.checkval(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          report4 = self.th.check_val(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
+          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
           
      def test_cube_wproj_twofield(self):
           """ [test_mosaic_cube] test_cube_wproj_twofield : Two fields, widefield cube imaging with wprojection """
@@ -4359,7 +4361,7 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report2 = self.th.checkval(spectral_index,-1.24515141863, valname='Spectral flux', exact=False)
+          report2 = self.th.check_val(spectral_index,-1.24515141863, valname='Spectral flux', exact=False)
 
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='cube',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='wproject',field=field, wprojplanes=4,pblimit=0.1,reffreq='1.5GHz',pbcor=True,parallel=self.parallel)
  
@@ -4370,8 +4372,8 @@ class test_mosaic_cube(testref_base):
           v0 = 1.2 #In GHz
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
-          report4 = self.th.checkval(spectral_index, -1.24130281995, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          report4 = self.th.check_val(spectral_index, -1.24130281995, valname='Spectral flux', exact=False)
+          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
 
 ###########################################################
 ###########################################################

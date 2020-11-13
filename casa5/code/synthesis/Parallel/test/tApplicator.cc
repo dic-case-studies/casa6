@@ -148,7 +148,7 @@ int main(Int argc, Char *argv[]){
 
    if(casa::applicator.isController()){
       Int rank(1);
-      casa::applicator.nextAvailProcess(testMe, rank);
+      casa::applicator.nextAvailProcess(*testMe, rank);
       // nextAvailProcess does a put(int)!
 
       // This sequence of puts must match the sequence of gets in the "algorithm" above
@@ -230,7 +230,7 @@ int main(Int argc, Char *argv[]){
       dcarray3d = DComplex(VALDOUBLE, -VALDOUBLE);
       casa::applicator.put(dcarray3d);
 
-      casa::applicator.apply(testMe);
+      casa::applicator.apply(*testMe);
       Bool status;
       casa::applicator.get(status);
 /*
