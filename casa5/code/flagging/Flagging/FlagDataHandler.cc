@@ -1582,6 +1582,19 @@ FlagDataHandler::preFetchColumns()
 			case VisBufferComponent2::VisibilityCubeFloat:
 			case VisBufferComponent2::WeightScaled:
 			case VisBufferComponent2::WeightSpectrumScaled:
+            case VisBufferComponent2::Sigmas:
+            case VisBufferComponent2::SigmaSpectra:
+            case VisBufferComponent2::NRowsPerShape:
+            case VisBufferComponent2::NShapes:
+            case VisBufferComponent2::VisibilityCubesCorrected:
+            case VisBufferComponent2::NCorrelationsPerShape:
+            case VisBufferComponent2::WeightSpectra:
+            case VisBufferComponent2::NChannelsPerShape:
+            case VisBufferComponent2::VisibilityCubesObserved:
+            case VisBufferComponent2::VisibilityCubesModel:
+            case VisBufferComponent2::VisibilityCubesFloat:
+            case VisBufferComponent2::Weights:
+            case VisBufferComponent2::FlagCubes:
 
 			    break; // nothing for these right now
 		}
