@@ -98,6 +98,7 @@ class WeightScaling;
 enum VisBufferType : int;
 enum VisBufferOptions : int;
 
+typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
 // <summary>
 // VisibilityIterator2 iterates through one or more readonly MeasurementSets
 // </summary>
@@ -209,7 +210,7 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
-    virtual void setRowBlocking (casacore::Int nRows = 0) = 0;
+    virtual void setRowBlocking (casacore::rownr_t nRows = 0) = 0;
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const = 0;
 
@@ -221,8 +222,10 @@ public:
     virtual casacore::Bool isNewSpectralWindow () const = 0;
 
     // Return the number of rows in the current iteration
+    virtual casacore::rownr_t nRows () const = 0;
 
-    virtual casacore::Int nRows () const = 0;
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t nShapes () const = 0;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
@@ -339,10 +342,6 @@ public:
 
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const = 0;
     virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const = 0;
-
-    // Return current SpectralWindow
-
-    virtual casacore::Int spectralWindow () const = 0;
 
     // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const = 0;
@@ -564,8 +563,8 @@ public:
     virtual casacore::Int nAntennas () const = 0;
     virtual casacore::Int nDataDescriptionIds () const = 0;
     virtual casacore::Int nPolarizationIds () const = 0;
-    virtual casacore::Int nRowsInChunk () const = 0; // number rows in current chunk
-    virtual casacore::Int nRowsViWillSweep () const = 0; // number of rows in all selected ms's
+    virtual casacore::rownr_t nRowsInChunk () const = 0; // number rows in current chunk
+    virtual casacore::rownr_t nRowsViWillSweep () const = 0; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const = 0;
     // number of unique time stamps in chunk
     virtual casacore::Int nTimes() const = 0;

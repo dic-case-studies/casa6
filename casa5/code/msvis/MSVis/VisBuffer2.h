@@ -546,8 +546,19 @@ public:
     virtual casacore::Int nCorrelations () const = 0;
 
     // Returns the number of rows in this VisBuffer
-
     virtual casacore::rownr_t nRows () const = 0;
+
+    // Returns the number of distinct cube/array shapes in this VisBuffer
+    virtual casacore::rownr_t nShapes () const = 0;
+
+    // Returns the number of rows per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const = 0;
+
+    // Returns the number of channels per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const = 0;
+
+    // Returns the number of correlation per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const = 0;
 
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.
@@ -576,10 +587,7 @@ public:
 
     virtual const casacore::Vector<casacore::rownr_t> & rowIds () const = 0; // [nR]
 
-    // Returns the spectral window ID for the specified row.
-
-    //virtual casacore::Int spectralWindow () const = 0;
-
+    // Returns the spectral window ID for each row.
     virtual const casacore::Vector<casacore::Int> & spectralWindows () const = 0; // [nR]
     virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & spectralWindows) = 0;
 

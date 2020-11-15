@@ -1181,11 +1181,14 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     state_p->frequencies_p.flush();
     state_p->channelNumbers_p.flush();
 
+    // Initialize the API methods that do not support several shapes with the first shape
+    // Clients which use this "old" API should work as expected as long as there is one
+    // single shape in the VisBuffer.
     cache_p->nRows_p.setSpecial (std::accumulate(nRowsPerShape.begin(), nRowsPerShape.end(), 0));
     cache_p->nChannels_p.setSpecial (nChannelsPerShape[0]);
     cache_p->nCorrelations_p.setSpecial (nCorrelationsPerShape[0]);
 
-    cache_p->nShapes_p.setSpecial (1);
+    cache_p->nShapes_p.setSpecial (nRowsPerShape.size());
     cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
     cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
     cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);
@@ -1895,16 +1898,10 @@ VisBufferImpl2::setSigmas (const Vector<Matrix<Float>> & sigmas)
 //    return cache_p->sigmaMat_p.get ();
 //}
 
-//Int
-//VisBufferImpl2::spectralWindow () const
-//{
-//    return cache_p->spectralWindow_p.get ();
-//}
-
 const Vector<Int> &
 VisBufferImpl2::spectralWindows () const
 {
-	return cache_p->spectralWindows_p.get ();
+    return cache_p->spectralWindows_p.get ();
 }
 
 void
@@ -2088,11 +2085,11 @@ VisBufferImpl2::setVisCubesModel (const Vector<Cube<Complex>> & value)
     cache_p->modelVisCubes_p.set (value);
 }
 
-void
-VisBufferImpl2::setVisCubesModel (const Complex & value)
-{
+//void
+//VisBufferImpl2::setVisCubesModel (const Complex & value)
+//{
 //    cache_p->modelVisCubes_p.set (value);
-}
+//}
 
 ms::MsRow *
 VisBufferImpl2::getRow (Int row) const
@@ -2463,7 +2460,7 @@ VisBufferImpl2::fillDirection1 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna1 (), feed1 (), feedPa1 ());
 
-  value.resize(antenna1 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2476,7 +2473,7 @@ VisBufferImpl2::fillDirection2 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna2 (), feed2 (), feedPa2 ());
 
-  value.resize(antenna2 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2485,7 +2482,7 @@ VisBufferImpl2::fillDirectionAux (Vector<MDirection>& value,
                                   const Vector<Int> &feed,
                                   const Vector<Float> & feedPa) const
 {
-    value.resize (antenna.nelements()); // could also use nRow()
+    value.resize (nRows());
 
 //    const MSPointingColumns & mspc = getViiP()->subtableColumns ().pointing();
 //    state_p->pointingTableLastRow_p = mspc.pointingIndex (antenna (0),
@@ -2574,7 +2571,7 @@ VisBufferImpl2::fillFeedPa1 (Vector <Float> & feedPa) const
   antenna1 ();
   time ();
 
-  feedPa.resize(antenna1().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna1 (), feed1 ());
 }
@@ -2591,7 +2588,7 @@ VisBufferImpl2::fillFeedPa2 (Vector <Float> & feedPa) const
   antenna2();
   time();
 
-  feedPa.resize(antenna2().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna2(), feed2 ());
 }
@@ -2912,14 +2909,6 @@ VisBufferImpl2::fillSigmas (Vector<Matrix<Float>>& value) const
 //  CheckVisIter ();
 //
 //  getViiP()->sigmaMat (value);
-//}
-
-//void
-//VisBufferImpl2::fillSpectralWindow (Int& value) const
-//{
-//  CheckVisIter ();
-//
-//  value = getViiP()->spectralWindow ();
 //}
 
 void

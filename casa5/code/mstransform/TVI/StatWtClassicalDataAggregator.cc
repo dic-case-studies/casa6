@@ -207,7 +207,7 @@ void StatWtClassicalDataAggregator::_computeVariances(
         auto dataForBLCB = data.find(blcb)->second;
         auto flagsForBLCB = flags.find(blcb)->second;
         auto exposuresForBLCB = exposures.find(blcb)->second;
-        for (size_t corr=0; corr<ncorr; ++corr) {
+        for (ssize_t corr=0; corr<ncorr; ++corr) {
             IPosition start(3, 0);
             auto end = dataForBLCB.shape() - 1;
             if (! _combineCorr) {

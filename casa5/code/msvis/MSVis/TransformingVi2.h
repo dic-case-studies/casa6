@@ -160,7 +160,7 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
-    virtual void setRowBlocking (casacore::Int nRows) override;
+    virtual void setRowBlocking (casacore::rownr_t nRows) override;
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const override;
 
@@ -172,8 +172,10 @@ public:
     virtual casacore::Bool isNewSpectralWindow () const override;
 
     // Return the number of rows in the current iteration
+    virtual casacore::rownr_t nRows () const override;
 
-    virtual casacore::Int nRows () const override;
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t nShapes () const override;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
@@ -292,10 +294,6 @@ public:
 
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
     virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
-
-    // Return current SpectralWindow
-
-    virtual casacore::Int spectralWindow () const override;
 
     // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
@@ -504,8 +502,8 @@ public:
     virtual casacore::Int nAntennas () const override;
     virtual casacore::Int nDataDescriptionIds () const override;
     virtual casacore::Int nPolarizationIds () const override;
-    virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
-    virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
+    virtual casacore::rownr_t nRowsInChunk () const override; // number rows in current chunk
+    virtual casacore::rownr_t nRowsViWillSweep () const override; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const override;
     virtual casacore::Int nTimes() const override;
 

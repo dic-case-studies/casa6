@@ -1101,8 +1101,6 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   nRowBlocking_p(0),
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
-  sortColumns_p(sortColumns),
-  subchunkSortColumns_p(false),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
@@ -1112,7 +1110,9 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   weightScaling_p(),
   writable_p(writable),
   ddIdScope_p(UnknownScope),
-  timeScope_p(UnknownScope)
+  timeScope_p(UnknownScope),
+  sortColumns_p(sortColumns),
+  subchunkSortColumns_p(false)
 {
     // Set the default subchunk iteration sorting scheme, i.e.
     // unique timestamps in each subchunk.
@@ -1148,7 +1148,6 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   nRowBlocking_p(0),
   pendingChanges_p(new PendingChanges()),
   reportingFrame_p(VisBuffer2::FrameNotSpecified),
-  sortColumns_p(chunkSortColumns),
   spectralWindowChannelsCache_p(new SpectralWindowChannelsCache()),
   subtableColumns_p(nullptr),
   tileCacheModMtx_p(new std::mutex()),
@@ -1159,6 +1158,7 @@ VisibilityIteratorImpl2::VisibilityIteratorImpl2(
   writable_p(isWritable),
   ddIdScope_p(UnknownScope),
   timeScope_p(UnknownScope),
+  sortColumns_p(chunkSortColumns),
   subchunkSortColumns_p(subchunkSortColumns)
 {
     initialize(mss);
@@ -1323,7 +1323,6 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     nRowBlocking_p = vii.nRowBlocking_p;
     reportingFrame_p = vii.reportingFrame_p;
     rowBounds_p = vii.rowBounds_p;
-    sortColumns_p = vii.sortColumns_p;
     subchunk_p = vii.subchunk_p;
     timeFrameOfReference_p = vii.timeFrameOfReference_p;
     timeInterval_p = vii.timeInterval_p;
@@ -1331,6 +1330,8 @@ VisibilityIteratorImpl2::operator=(VisibilityIteratorImpl2&& vii)
     writable_p = vii.writable_p;
     ddIdScope_p = vii.ddIdScope_p;
     timeScope_p = vii.timeScope_p;
+    sortColumns_p = vii.sortColumns_p;
+    subchunkSortColumns_p = vii.subchunkSortColumns_p;
 
     // move modelDataGenerator_p
     if (modelDataGenerator_p) 
@@ -1520,9 +1521,8 @@ VisibilityIteratorImpl2::initialize(const Block<const MeasurementSet *> &mss)
 
     subtableColumns_p = new SubtableColumns(msIter_p);
 
+    // Set the scope of each of the metadata to track
     setMetadataScope();
-    // Install default frequency selections.  This will select all
-    // channels in all windows.
 
     casacore::AipsrcValue<Bool>::find(
             autoTileCacheSizing_p,
@@ -1583,7 +1583,7 @@ void VisibilityIteratorImpl2::setMetadataScope()
         ddIdScope_p = RowScope;
 
     // Similar for time
-    bool uniqueTimeInChunk, uniqueTimeInSubchunk;
+    bool uniqueTimeInChunk = false, uniqueTimeInSubchunk = false;
     for(auto& sortDef : sortColumns_p.sortingDefinition())
         if(sortDef.first == MS::columnName(MS::TIME) &&
            dynamic_cast<ObjCompare<Int>*>(sortDef.second.get()))
@@ -1605,7 +1605,7 @@ void VisibilityIteratorImpl2::setMetadataScope()
     // The scope of the frequency selections is at most the same as the DDID
     freqSelScope_p = ddIdScope_p;
     // If frequency/channel selection also depends on time (selection based on
-    // frequencies), then the scope can be further limited by timestamp scope
+    // frequencies), then the scope can be further limited by row (timestamp) scope
     if (!(frequencySelections_p->getFrameOfReference() == FrequencySelection::ByChannel))
     {
         if(!(freqSelScope_p == RowScope)) // Only if scope is broader than Row can be further restricted
@@ -1832,13 +1832,19 @@ VisibilityIteratorImpl2::allBeamOffsetsZero() const
 	return msIter_p->allBeamOffsetsZero();
 }
 
-Int
+rownr_t
 VisibilityIteratorImpl2::nRows() const
 {
-	return rowBounds_p.subchunkNRows_p;
+    return rowBounds_p.subchunkNRows_p;
 }
 
-Int VisibilityIteratorImpl2::nRowsInChunk() const
+rownr_t
+VisibilityIteratorImpl2::nShapes() const
+{
+    return 1;
+}
+
+rownr_t VisibilityIteratorImpl2::nRowsInChunk() const
 {
 	return msIter_p->table().nrow();
 }
@@ -1928,7 +1934,7 @@ VisibilityIteratorImpl2::setInterval(Double timeInterval)
 }
 
 void
-VisibilityIteratorImpl2::setRowBlocking(Int nRow)
+VisibilityIteratorImpl2::setRowBlocking(rownr_t nRow)
 {
 	pendingChanges_p->setNRowBlocking(nRow);
 }
@@ -1943,12 +1949,6 @@ Int
 VisibilityIteratorImpl2::polFrame() const
 {
 	return msIter_p->polFrame();
-}
-
-Int
-VisibilityIteratorImpl2::spectralWindow() const
-{
-	return msIter_p->spectralWindowId();
 }
 
 void
@@ -2348,7 +2348,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         channelSelectors_p.clear();
         channelSelectorsNrows_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
-            spectralWindow(), polarizationId(), msId()));
+            -1, polarizationId(), msId()));
 
         for (Int i = rowBounds_p.subchunkBegin_p + 1;
                 i <= rowBounds_p.subchunkEnd_p;
@@ -2505,7 +2505,9 @@ VisibilityIteratorImpl2::determineChannelSelection(
 	assert(frequencySelections_p != 0);
 
 	if (spectralWindowId == -1) {
-		spectralWindowId = this->spectralWindow();
+        Vector<Int> spws;
+        this->spectralWindows(spws);
+		spectralWindowId = spws[0];
 	}
 
 	if (msId < 0) {
@@ -2807,16 +2809,14 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 Slice
 VisibilityIteratorImpl2::findChannelsInRange(
-	Double lowerFrequency, Double upperFrequency,
-	const vi::SpectralWindowChannels & spectralWindowChannels) const
+    Double lowerFrequency, Double upperFrequency,
+    const vi::SpectralWindowChannels & spectralWindowChannels) const
 {
-	ThrowIf(spectralWindowChannels.empty(),
-	        String::format(
-		        "No spectral window channel info for window=%d, ms=%d",
-		        spectralWindow(), msId()));
+    ThrowIf(spectralWindowChannels.empty(),
+            String::format(
+            "No spectral window channel info for  ms=%d", msId()));
 
-	return spectralWindowChannels.getIntersection(
-		lowerFrequency, upperFrequency);
+    return spectralWindowChannels.getIntersection(lowerFrequency, upperFrequency);
 }
 
 Int
@@ -3805,31 +3805,33 @@ VisibilityIteratorImpl2::getMeasurementSets() const
 Int
 VisibilityIteratorImpl2::getReportingFrameOfReference() const
 {
-	Int frame;
-	if (reportingFrame_p == VisBuffer2::FrameNotSpecified) {
+    Int frame;
+    if (reportingFrame_p == VisBuffer2::FrameNotSpecified) {
 
-		if (frequencySelections_p != 0) {
+        if (frequencySelections_p != 0) {
 
-			frame = frequencySelections_p->getFrameOfReference();
+            frame = frequencySelections_p->getFrameOfReference();
 
-			if (frame == FrequencySelection::ByChannel) {
+            if (frame == FrequencySelection::ByChannel) {
 
-				// Since selection was done by channels, the frequencies are
-				// native.
+                // Since selection was done by channels, the frequencies are
+                // native.
 
-				measurementFrame_p = getMeasurementFrame(spectralWindow());
-				frame = measurementFrame_p;
-			}
-		}
-		else{
-			frame = VisBuffer2::FrameNotSpecified;
-		}
-	}
-	else{
-		frame = reportingFrame_p;
-	}
+                Vector<Int> spws;
+                spectralWindows(spws);
+                measurementFrame_p = getMeasurementFrame(spws[0]);
+                frame = measurementFrame_p;
+            }
+        }
+        else{
+            frame = VisBuffer2::FrameNotSpecified;
+        }
+    }
+    else{
+        frame = reportingFrame_p;
+    }
 
-	return frame;
+    return frame;
 }
 
 void
@@ -3880,7 +3882,7 @@ VisibilityIteratorImpl2::nPolarizationIds() const
 	return subtableColumns_p->polarization().nrow();
 }
 
-Int
+rownr_t
 VisibilityIteratorImpl2::nRowsViWillSweep() const
 {
 	Int numcoh = 0;
