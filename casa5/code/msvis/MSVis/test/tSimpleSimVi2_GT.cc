@@ -551,7 +551,7 @@ TEST(SimpleSimVi2ScopeTest , SimpleSimVi2_SPWChunkScope) {
             EXPECT_EQ(1u, vb->visCubesCorrected().size());
             EXPECT_EQ(dsh, vb->visCubesCorrected()[0].shape());
           }
-          else if (sParm.spwScope_ == RowScope) //TODO
+          else if (sParm.spwScope_ == RowScope)
           {
             EXPECT_EQ(vb->visCubes().size(), vb->nShapes());
             EXPECT_EQ(vb->visCubesModel().size(), vb->nShapes());

@@ -2085,11 +2085,11 @@ VisBufferImpl2::setVisCubesModel (const Vector<Cube<Complex>> & value)
     cache_p->modelVisCubes_p.set (value);
 }
 
-void
-VisBufferImpl2::setVisCubesModel (const Complex & value)
-{
+//void
+//VisBufferImpl2::setVisCubesModel (const Complex & value)
+//{
 //    cache_p->modelVisCubes_p.set (value);
-}
+//}
 
 ms::MsRow *
 VisBufferImpl2::getRow (Int row) const
