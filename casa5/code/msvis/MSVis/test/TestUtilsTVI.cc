@@ -313,6 +313,13 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                          " buffer " + std::to_string(buffer) +
                          " Spw " + std::to_string(refVb->spectralWindows()[0]) + 
                          " scan " + std::to_string(refVb->scan()[0]));
+std::cout << string("Comparing chunk ") + std::to_string(chunk) +
+                         " buffer " + std::to_string(buffer) +
+                         " Spw " + std::to_string(refVb->spectralWindows()[0]) +
+                         " scan " + std::to_string(refVb->scan()[0]) +
+                         " test Spw " + std::to_string(testVb->spectralWindows()[0]) +
+                         " test scan " + std::to_string(testVb->scan()[0]) << std::endl;
+
 
             if (columns.contains(VisBufferComponent2::NRows))
             {

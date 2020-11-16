@@ -563,11 +563,11 @@ void SimpleSimVi2::origin ()
 
   // Keep VB sync'd
   this->configureNewSubchunk();
-
 }
 
 Bool SimpleSimVi2::more () const
 {
+
   // true if still more subchunks for this scan's field
   return (iSubChunk_<nSubchunk_);
 }
@@ -664,7 +664,7 @@ VisBuffer2 * SimpleSimVi2::getVisBuffer (const VisibilityIterator2 * vi)
 }
   */
 
-VisBuffer2 * SimpleSimVi2::getVisBuffer () const { return vb_.get(); }
+VisBuffer2 * SimpleSimVi2::getVisBuffer () const { std::cout << " En SimpleSimVi2::getVisBuffer " << this << std::endl; return vb_.get(); }
 
   //   +=========================+
   //   |                         |
@@ -792,7 +792,7 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
   Vector<Int> a2;
   this->antenna1(a1);
   this->antenna2(a2);
-  
+
   Array<Complex> specvis;
   Matrix<Float> G(pars_.gain_);
   Matrix<Float> Tsys(pars_.tsys_);
@@ -1068,7 +1068,6 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
 
 void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
 
-  //cout << "****corruptByParang..." << thisTime_ << " " << nBsln_;// << endl;
 
   // Assumes constant time in this subchunk
   Vector<Float> pa(this->feed_pa(thisTime_));

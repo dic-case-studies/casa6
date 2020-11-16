@@ -45,12 +45,12 @@ class PassThroughTVI : public TransformingVi2
 {
 public:
   
-  //Constructor
-  PassThroughTVI(ViImplementation2 * inputVii);
+    //Constructor
+    PassThroughTVI(ViImplementation2 * inputVii);
 
-  void origin() override;
+    void origin() override;
 
-  void next() override;
+    void next() override;
 
 };
 
@@ -58,21 +58,22 @@ public:
  * Factory that allows the creation of PassThroughTVI classes.
  * This factory doesn't have any parameter to configure
  */
-class PassThroughTVIFactory : public ViFactory {
+class PassThroughTVIFactory : public ViFactory 
+{
 
 public:
 
-  PassThroughTVIFactory(ViImplementation2 *inputVII);
+    PassThroughTVIFactory(ViImplementation2 *inputVII);
 
-  ~PassThroughTVIFactory ();
+    ~PassThroughTVIFactory ();
 
 protected:
 
-  virtual ViImplementation2 * createVi () const;
+    virtual ViImplementation2 * createVi () const;
 
 private:
 
-  ViImplementation2 *inputVii_p;;
+    ViImplementation2 *inputVii_p;;
 };
 
 /*
@@ -85,13 +86,13 @@ class PassThroughTVILayerFactory : public ViiLayerFactory
 
 public:
 
-  PassThroughTVILayerFactory();
+    PassThroughTVILayerFactory();
 
-  virtual ~PassThroughTVILayerFactory();
+    virtual ~PassThroughTVILayerFactory();
 
 protected:
 
-  virtual ViImplementation2 * createInstance(ViImplementation2* vii0) const;
+    virtual ViImplementation2 * createInstance(ViImplementation2* vii0) const;
 };
 
 

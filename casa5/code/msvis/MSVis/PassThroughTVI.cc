@@ -33,44 +33,47 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 namespace vi { //# NAMESPACE VI - BEGIN
 
-PassThroughTVI::PassThroughTVI(ViImplementation2 * inputVii) :
-    TransformingVi2 (inputVii)
+PassThroughTVI::PassThroughTVI(ViImplementation2 * inputVii)
+ :  TransformingVi2 (inputVii)
 {
-  setVisBuffer(createAttachedVisBuffer (VbRekeyable));
+    setVisBuffer(createAttachedVisBuffer (VbRekeyable));
 }
 
 void PassThroughTVI::origin()
 {
-  // Drive underlying ViImplementation2
-  getVii()->origin();
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-  // Synchronize own VisBuffer
-  configureNewSubchunk();
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
 
-  return;
+    return;
 }
 
 void PassThroughTVI::next()
 {
-  // Drive underlying ViImplementation2
-  getVii()->next();
+    // Drive underlying ViImplementation2
+    getVii()->next();
 
-  // Synchronize own VisBuffer
-  configureNewSubchunk();
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
 
-  return;
+    return;
 }
 
 PassThroughTVIFactory::PassThroughTVIFactory(ViImplementation2 *inputVII)
  : inputVii_p(inputVII)
-{}
+{
+}
 
-PassThroughTVIFactory::~PassThroughTVIFactory () {}
+PassThroughTVIFactory::~PassThroughTVIFactory ()
+{
+}
 
 ViImplementation2 * PassThroughTVIFactory::createVi () const {
 
-  ViImplementation2* vii = new PassThroughTVI(inputVii_p);
-  return vii;
+    ViImplementation2* vii = new PassThroughTVI(inputVii_p);
+    return vii;
 }
 
 PassThroughTVILayerFactory::PassThroughTVILayerFactory()
@@ -81,13 +84,14 @@ PassThroughTVILayerFactory::~PassThroughTVILayerFactory()
 {
 }
 
-ViImplementation2 * PassThroughTVILayerFactory::createInstance(ViImplementation2* vii0) const
+ViImplementation2 * 
+PassThroughTVILayerFactory::createInstance(ViImplementation2* vii0) const
 {
-  ViImplementation2 *vii = new PassThroughTVI(vii0);
-  return vii;
+    // Make the PassThroughTVI, using supplied ViImplementation2, and return it
+    ViImplementation2 *vii = new PassThroughTVI(vii0);
+    return vii;
 }
 
 } //# NAMESPACE VI - END
 
 } //# NAMESPACE CASA - END
-

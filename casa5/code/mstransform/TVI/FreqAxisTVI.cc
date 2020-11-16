@@ -85,32 +85,31 @@ void FreqAxisTVI::initialize()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::formChanMap()
 {
-	// This triggers realization of the channel selection
-	inputVii_p->originChunks();
+    // This triggers realization of the channel selection
+    inputVii_p->originChunks();
 
-	// Refresh map
-	spwInpChanIdxMap_p.clear();
+    // Refresh map
+    spwInpChanIdxMap_p.clear();
 
-	for (Int ispw = 0; ispw < inputVii_p->nSpectralWindows(); ++ispw)
-	{
+    for (Int ispw = 0; ispw < inputVii_p->nSpectralWindows(); ++ispw)
+    {
+        // TBD trap unselected spws with a continue
 
-		// TBD trap unselected spws with a continue
+        Vector<Int> chansV;
+        chansV.reference(inputVii_p->getChannels(0.0, -1, ispw, 0));
 
-		Vector<Int> chansV;
-		chansV.reference(inputVii_p->getChannels(0.0, -1, ispw, 0));
+        Int nChan = chansV.nelements();
+        if (nChan > 0)
+        {
+            spwInpChanIdxMap_p[ispw].clear(); // creates ispw's map
+            for (Int ich = 0; ich < nChan; ++ich)
+            {
+                spwInpChanIdxMap_p[ispw].push_back(chansV[ich]); // accum into map
+            }
+        }
+    } // ispw
 
-		Int nChan = chansV.nelements();
-		if (nChan > 0)
-		{
-			spwInpChanIdxMap_p[ispw].clear(); // creates ispw's map
-			for (Int ich = 0; ich < nChan; ++ich)
-			{
-				spwInpChanIdxMap_p[ispw].push_back(chansV[ich]); // accum into map
-			}
-		}
-	} // ispw
-
-	return;
+    return;
 }
 
 // -----------------------------------------------------------------------

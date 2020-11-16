@@ -157,7 +157,7 @@ public:
   virtual ~SimpleSimVi2 ();
 
   // Report the the ViImplementation type
-  virtual casacore::String ViiType() const override {return casacore::String("Simulated(*)"); };
+  virtual casacore::String ViiType() const override {std::cout << " ViiType " << this << std::endl; return casacore::String("Simulated(*)"); };
 
   //   +==================================+
   //   |                                  |
