@@ -271,7 +271,7 @@ def sdatmcor(
             outputvis=outfile,
             datacolumn=datacolumn,
             field=field,
-            spw=spw,
+            spw=outputspw,   # use 'outputspw' for Data Selection. #
             scan=scan,
             antenna=antenna,
             correlation=correlation,
@@ -791,7 +791,7 @@ def calc_sdatmcor(
             #
 
             # request by argument  #
-            outputspws_param = parse_spw(corms, p_outputspw)
+            outputspws_param = parse_spw(corms, '')
 
             # Must be a subset, locate the initial set.  #
             if set(outputspws_param).issubset(set(rawmsSpws)):
@@ -834,11 +834,14 @@ def calc_sdatmcor(
             #     outputSpw and Spw Consistency. For example;
             #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
             #      - accept  when Spw=[21], outputSpw = [19,21]
+
+            """" DELETE SOON 
             noCorSpws = []
             if set(spws).issubset(set(outputspws)):
                 noCorSpws = list(set(outputspws).difference(set(spws)))
             else:
                 spws = list(set(spws).intersection(set(outputspws)))
+            """
 
             # outputSpw, Spw:: No Target check #
             if spws == []:
@@ -850,7 +853,6 @@ def calc_sdatmcor(
             _msg('-- Rawms         Spws = %s' % rawmsSpws)
             _msg('-- Output        Spws = %s' % outputspws)
             _msg('-- Correcting    Spws = %s' % spws)
-            _msg('-- No Correcting Spws = %s' % noCorSpws)
 
             #
             # (Original Section)
@@ -956,17 +958,17 @@ def calc_sdatmcor(
         #       - The corrected result is written upon OutputFile with selected Spw.
         #       - OutputSpw occasionally intend No-Corrected value.
         #       - please see the inserted block.
-        #        - No-Corrected output is controled by 'noCorSpws' list.
         #
         #      The original script does not explicitly imply the logic.
         #      Such No-corrected output was appended with minimum changes.
 
+        # original. #
         prevtmatm = 0.
-        for spwid in outputspws:  # (original) for spwid in spws #
-            _msg("\nProcessing spw %d in %s. \n" % (spwid, outputspws))
-            if (spwid in noCorSpws) is True:
-                _msg("- No Correction is spplied on spwid =%d ." % spwid)
-                continue
+
+        # spws loop  spws_loop only contains correlation-required Spw.  #
+        spws_loop = list(set(spws_param).intersection(set(outputspws)))
+        for spwid in spws_loop:  # (original) for spwid in spws #
+            _msg("\nProcessing spw %d in %s. \n" % (spwid, spws_loop))
 
             # gain factor
             spwkey = str(spwid)
