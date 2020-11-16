@@ -61,7 +61,7 @@ cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
 icrs_image = "icrs.im"
 
-datapath = ctsys_resolve('/unittest/rgtool/')
+datapath = ctsys_resolve('unittest/rgtool/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
