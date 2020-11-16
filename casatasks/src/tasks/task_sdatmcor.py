@@ -257,11 +257,6 @@ def sdatmcor(
     # generate gain factor dictionary
     gaindict = parse_gainfactor(gainfactor)
 
-    # datacolumn to UPPER CASE  #
-    datacolumn = datacolumn.upper()
-    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
-        datacolumn = 'CORRECTED_DATA'
-
     # Data Selection by mstransform #
     _msg("Data Selection in progress. Output file =  %s " % outfile)
 
@@ -678,6 +673,11 @@ def calc_sdatmcor(
         _msg('layerboundaries   = %s' % param_layerboundaries)
         _msg('layertemperature  = %s' % param_layertemperature)
         _msg("*****************************")
+
+    # datacolumn to UPPER CASE  #
+    datacolumn = p_datacolumn.upper()
+    if (datacolumn == 'CORRECTED'):    # 'CORRECTED' means column:'CORRECTED_DATA'
+        datacolumn = 'CORRECTED_DATA'
 
     # Internal file names  #
     rawms = p_infile
