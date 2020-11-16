@@ -643,7 +643,7 @@ class ImagerParameters():
                             maxid = val
             newimagename = dirname[2:] + prefix + '_' + str(maxid+1)
 
-        casalog.post('Using : ',  newimagename)
+        casalog.post('Using : {}'.format(newimagename))
         return newimagename
 
     def incrementImageNameList(self, inpnamelist ):
@@ -736,10 +736,10 @@ class ImagerParameters():
     #  (e.g. combination cube and continuum for main and outlier fields)
     def checkParallelMFMixedModes(self,allimpars,outlierpars):
         errmsg=''
-        casalog.post("outlierpars==",outlierpars)
+        casalog.post("outlierpars=={}".format(outlierpars))
         mainspecmode= allimpars['0']['specmode']
         mainnchan = allimpars['0']['nchan'] 
-        casalog.post("mainspecmode=",mainspecmode, "mainnchan=",mainnchan)
+        casalog.post("mainspecmode={} mainnchan={}".format(mainspecmode, mainnchan))
         cubeoutlier = False
         contoutlier = False
         isnchanmatch = True
