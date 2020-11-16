@@ -27,11 +27,14 @@ try:
     import casatools
     from casatasks import polcal, casalog
     tb = casatools.table()
+    dataroot = casatools.ctsys.resolve('unittest/polcal/')
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polcal/'
+    
 import sys
 import os
 import unittest
@@ -39,28 +42,11 @@ import shutil
 import numpy as np
 
 ### DATA ###
-
-if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/polcal_LINEAR_BASIS.ms')
-    calpathLin = casatools.ctsys.resolve('caltables/polcal_LINEAR_BASIS.ms.Dtrue')
-    # circular data
-    datapathCirc = casatools.ctsys.resolve('visibilities/vla/polcal_CIRCULAR_BASIS.ms')
-    calpathCirc = casatools.ctsys.resolve('caltables/polcal_CIRCULAR_BASIS.ms.Dtrue')
-
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpathLin = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
-        # circular data
-        datapathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
-        calpathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
-
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpathLin = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
-        # circular data
-        datapathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
-        calpathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
+datapath = os.path.join(dataroot, 'polcal_LINEAR_BASIS.ms')
+calpathLin = os.path.join(dataroot, 'polcal_LINEAR_BASIS.ms.Dtrue')
+# circular data
+datapathCirc = os.path.join(dataroot, 'polcal_CIRCULAR_BASIS.ms')
+calpathCirc = os.path.join(dataroot, 'polcal_CIRCULAR_BASIS.ms.Dtrue')
 
 
 def getparam(caltable, colname='CPARAM'):
