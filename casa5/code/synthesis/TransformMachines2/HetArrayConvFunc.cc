@@ -401,7 +401,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
     Int isCached=checkPBOfField(vb, convFuncRowMap, extraShift, useExtraShift);
     //cout << "isCached " << isCached <<  endl;
-    if(isCached==1 && (convFuncRowMap.shape()[0]==vb.nRows())) {
+    if(isCached==1 && (convFuncRowMap.shape()[0]==(ssize_t)vb.nRows())) {
         /*convFunc.reference(convFunc_p);
         weightConvFunc.reference(weightConvFunc_p);
         convsize=*convSizes_p[actualConvIndex_p];
@@ -1426,7 +1426,7 @@ void HetArrayConvFunc::makerowmap(const vi::VisBuffer2& vb,
 
     uInt ndish=antMath_p.nelements();
     rowMap.resize(vb.nRows());
-    for (Int k=0; k < vb.nRows(); ++k) {
+    for (rownr_t k=0; k < vb.nRows(); ++k) {
         Int index1=antIndexToDiamIndex_p(vb.antenna1()(k));
         Int index2=antIndexToDiamIndex_p(vb.antenna2()(k));
         if(index2 < index1) {

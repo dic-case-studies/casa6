@@ -18,7 +18,7 @@ using vi::VisBuffer2;
 
 #define AssertWritable() ThrowIf (! isWritable_p, "Cannot write to this MsRow object")
 
-MsRow::MsRow (Int row, const VisBuffer2 * vb)
+MsRow::MsRow (rownr_t row, const VisBuffer2 * vb)
 : isWritable_p (false),
   row_p (row),
   vb_p (const_cast<VisBuffer2 * > (vb)) // take const into our own hands ;-(
@@ -27,7 +27,7 @@ MsRow::MsRow (Int row, const VisBuffer2 * vb)
 }
 
 
-MsRow::MsRow (Int row, VisBuffer2 * vb)
+MsRow::MsRow (rownr_t row, VisBuffer2 * vb)
 : isWritable_p (true), row_p (row), vb_p (vb)
 {
     ThrowIf (vb == 0, "VisBuffer cannot be null.");
@@ -56,7 +56,7 @@ MsRows::MsRows (vi::VisBuffer2 * vb)
 {
     rows_p.resize (vb->nRows());
 
-    for (Int i = 0; i < vb->nRows(); i ++){
+    for (rownr_t i = 0; i < vb->nRows(); i ++){
         rows_p [i] = vb->getRow(i);
     }
 }
