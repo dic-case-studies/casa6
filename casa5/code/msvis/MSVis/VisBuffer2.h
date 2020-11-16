@@ -478,7 +478,7 @@ public:
     virtual void setVisCubeModel(const casacore::Cube<casacore::Complex>& vis) = 0; // [nC,nF,nR]
     virtual void setVisCubeModel(const casacore::Vector<casacore::Float>& stokes) = 0; // [1..4]
     virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesModel () const = 0; // [nC,nF,nR]
-    virtual void setVisCubesModel(const casacore::Complex & c) = 0;
+    //virtual void setVisCubesModel(const casacore::Complex & c) = 0;
     virtual void setVisCubesModel(const casacore::Vector<casacore::Cube<casacore::Complex>>& vis) = 0; // [nC,nF,nR]
 //    virtual const casacore::Matrix<CStokesVector> & visModel () const = 0; // [nF,nR]
 //    virtual void setVisModel (casacore::Matrix<CStokesVector> &) = 0; // [nF,nR]
