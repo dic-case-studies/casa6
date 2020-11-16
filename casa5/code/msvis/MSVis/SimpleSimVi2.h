@@ -43,7 +43,8 @@
 #include <msvis/MSVis/VisBuffer2.h>
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
-#include <casa/Arrays.h>
+#include <casacore/casa/Arrays.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 #include <map>
 #include <vector>
@@ -55,10 +56,9 @@ namespace casacore{
 
 class AipsError;
 class RecordInterface;
-class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
-template <typename T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -189,7 +189,7 @@ public:
   virtual void setFrequencySelections (const FrequencySelections & selection) override;
 
   // Set the 'blocking' size for returning data.
-  virtual void setRowBlocking (casacore::Int) override { SSVi2NotPossible() };
+  virtual void setRowBlocking (casacore::rownr_t) override { SSVi2NotPossible() };
   
   virtual casacore::Bool existsColumn (VisBufferComponent2 id) const override;
   
@@ -202,13 +202,13 @@ public:
 
   // Return the number of rows in the current iteration
 
-  virtual casacore::Int nRows () const override { return nBsln_; };
+  virtual casacore::rownr_t nRows () const override { return nBsln_; };
   
   // Return the row ids as from the original root table. This is useful
   // to find correspondance between a given row in this iteration to the
   // original ms row
 
-  virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const override;
+  virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const override;
 
   virtual VisBuffer2 * getVisBuffer () const override;
 
@@ -347,8 +347,8 @@ public:
   virtual casacore::Int nAntennas () const override;
   virtual casacore::Int nDataDescriptionIds () const override;
   virtual casacore::Int nPolarizationIds () const override;
-  virtual casacore::Int nRowsInChunk () const override; // number rows in current chunk
-  virtual casacore::Int nRowsViWillSweep () const override; // number of rows in all selected ms's
+  virtual casacore::rownr_t nRowsInChunk () const override; // number rows in current chunk
+  virtual casacore::rownr_t nRowsViWillSweep () const override; // number of rows in all selected ms's
   virtual casacore::Int nSpectralWindows () const override;
   virtual casacore::Int nTimes() const override;
 

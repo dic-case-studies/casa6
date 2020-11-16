@@ -34,12 +34,9 @@
 #include <display/Display/PixelCanvasColorTable.h>
 #include <display/Display/PCVGBuffer.h>
 #include <display/Display/DLFont.h>
-
-namespace casacore{
-
-	template <class T> class Vector;
-	template <class T> class Matrix;
-}
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/aipstype.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

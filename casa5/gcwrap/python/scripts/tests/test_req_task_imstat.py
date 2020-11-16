@@ -44,6 +44,10 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
+
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
     # not a local tool
     _tb = tbtool()
     _qa = qatool()
@@ -243,8 +247,9 @@ class imstat_test(unittest.TestCase):
             )
         except:
             OK = True
-        # CASA 5 returns False, CASA 6 returns exception
-        self.assertTrue(OK == is_CASA6)
+        # CASA 5 returns False (depending on __rethrow_casa_exceptions),
+        # CASA 6 returns exception
+        self.assertTrue(OK == is_CASA6 or casa_stack_rethrow)
         zz = imstat(
             imagename=imagename, mask=mymask + ">0", stretch=True
         )

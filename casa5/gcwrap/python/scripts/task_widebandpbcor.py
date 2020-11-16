@@ -48,8 +48,8 @@ def widebandpbcor(vis='',
 
    # Check nterms
    if nterms < 1:
-       casalog.post('Please specify a valid number of Taylor-terms (>0)', 'SEVERE')
-       return False
+       raise ValueError('Please specify a valid number of Taylor-terms (>0)')
+
 
    # Check that all required input images exist on disk
    taylorlist=[]
@@ -58,11 +58,9 @@ def widebandpbcor(vis='',
         taylorlist.append(imagename+'.image.tt'+str(i));
         residuallist.append(imagename+'.residual.tt'+str(i));
         if(not os.path.exists(taylorlist[i])):
-            casalog.post('Taylor-coeff Restored Image : ' + taylorlist[i] + ' not found.','SEVERE')
-            return False
+            raise RuntimeError('Taylor-coeff Restored Image : ' + taylorlist[i] + ' not found.')
         if(not os.path.exists(residuallist[i])):
-            casalog.post('Taylor-coeff Residual Image : ' + residuallist[i] + ' not found.','SEVERE')
-            return False
+            raise RuntimeError('Taylor-coeff Residual Image : ' + residuallist[i] + ' not found.')
 
    casalog.post('Using images ' + str(taylorlist) + ' and ' + str(residuallist), 'NORMAL')
 
@@ -91,8 +89,8 @@ def widebandpbcor(vis='',
    casalog.post('Using imsize : ' + str(imsize) + ' and cellsize : ' + str(cellx) + ', ' + str(celly) + ' with phasecenter : ' + phasecenter + ' and reffreq : ' + reffreq, 'NORMAL')
 
    if type(threshold) != str:
-       casalog.post('Please specify imthreshold as a string with units','SEVERE')
-       return False
+       raise ValueError('Please specify imthreshold as a string with units')
+
    imthreshold = qa.convert( qa.quantity(threshold) , 'Jy' )['value']
 
 
@@ -105,16 +103,14 @@ def widebandpbcor(vis='',
        casalog.post('Using a pblimit of ' + str(pbthreshold))
 
        if len(chanlist) < nterms or len(spwlist) < nterms or len(weightlist) < nterms:
-           casalog.post('Please specify channel/spw/weight lists of lengths >= nterms', 'SEVERE')
-           return False
+           raise ValueError('Please specify channel/spw/weight lists of lengths >= nterms')
 
        # Make a list of PBs from all the specifield spw/chan pairs.
        if len(chanlist) != len(spwlist) :
-           casalog.post("Spwlist and Chanlist must be the same length", 'SEVERE')
-           return False
+           raise ValueError("Spwlist and Chanlist must be the same length")
+
        if len(spwlist) != len(weightlist) :
-           casalog.post("Spwlist and Weightlist must be the same length", 'SEVERE')
-           return False
+           raise ValueError("Spwlist and Weightlist must be the same length")
 
        casalog.post('Calculating PBs for spws : ' + str(spwlist) + '  weightlist : ' + str(weightlist) + '  chanlist : ' + str(chanlist) , 'NORMAL');
 
@@ -123,8 +119,6 @@ def widebandpbcor(vis='',
            os.system('mkdir '+pbdirname)
 
        pblist = _makePBList(msname=vis, pbprefix=pbdirname + '/' + imagename+'.pb.', field=field, spwlist=spwlist, chanlist=chanlist, imsize=imsize, cellx=cellx, celly=celly, phasecenter=phasecenter)
-       if len(pblist)==0:
-           return False
 
        pbcubename = pbdirname + '/' + imagename+'.pb.cube'
 
@@ -147,23 +141,20 @@ def widebandpbcor(vis='',
            
        # Calculate Taylor Coeffs from this cube
        ret = _calcTaylorFromCube(imtemplate=imagename+'.image.tt0',reffreq=reffreq,cubename=pbcubename,newtay=pblist, pbthreshold=pbthreshold, weightlist=weightlist);
-       if ret==False:
-           return False
 
        # Calculate PB alpha and beta ( just for information )
        pbalphaname = pbdirname+'/'+imagename+'.pb.alpha'
-       _calcPBAlpha(pbtay=pblist, pbthreshold=pbthreshold,pbalphaname=pbalphaname)
+       ret = _calcPBAlpha(pbtay=pblist, pbthreshold=pbthreshold,pbalphaname=pbalphaname)
 
        # Divide out the PB polynomial
-       ret = _dividePBTaylor(imlist,pblist,imlistpbcor,pbthreshold);
-       if ret==False:
-           return False
+       ret = _dividePBTaylor(imlist,pblist,imlistpbcor,pbthreshold)
 
    # Recalculate Alpha.
    if(ret==True or action=='calcalpha'):
        if nterms==1:
            casalog.post('Cannot compute spectral index with only one image', 'WARN')
-           return True
+           return
+
        if ret==True:
            imname = imagename+'.pbcor'
        else:
@@ -225,8 +216,8 @@ def _makePBList(msname='',pbprefix='',field='',spwlist=[],chanlist=[], imsize=[]
          sspw = str(spwlist[aspw])+':'+str(chanlist[aspw])
          ret = im.selectvis(field=field, spw=sspw);
          if(ret==False):
-             casalog.post('Error in constructing PBs at the specified spw:chan of '+ sspw ,'SEVERE')
-             return []
+             msg = 'Error in constructing PBs at the specified spw:chan of '+ sspw
+             raise RuntimeError(msg)
          im.defineimage(nx=imsize[0],ny=imsize[1], cellx=cellx,celly=celly, 
                              nchan=1,start=chanlist[aspw], stokes='I',
                              mode='channel',spw=[spwlist[aspw]],phasecenter=phasecenter);
@@ -236,10 +227,11 @@ def _makePBList(msname='',pbprefix='',field='',spwlist=[],chanlist=[], imsize=[]
          pblist.append(pbname)
          im.close();
 #     shutil.rmtree('evlavp.tab')
-   except Exception as e:
-      casalog.post('Exception from task widebandpbcor : ' + str(e), "SEVERE", "task_widebandpbcor")
-      casalog.post('Error in constructing PBs at the specified frequencies. Please check spwlist/chanlist','SEVERE','task_widebandpbcor')
-      return []
+   except Exception as exc:
+      msg = ('Error in constructing PBs at the specified frequencies. Please check spwlist'
+             '/chanlist. Exception: {}'.format(exc))
+      raise RuntimeError(msg)
+
    return pblist
     
 
@@ -269,8 +261,7 @@ def _calcTaylorFromCube(imtemplate="",reffreq='1.42GHz',cubename="sim.pb",newtay
    elif(csys.axiscoordinatetypes()[3] == 'Tabular'):
        freqlist = (csys.torecord()['tabular2']['worldvalues'])/1e+09;
    else:
-       casalog.post('Unknown frequency axis. Exiting.','SEVERE');
-       return False;
+       raise RuntimeError('Unknown frequency axis. Exiting.')
 
    reffreqGHz = qa.convert(qa.quantity(reffreq), 'GHz')['value']
    freqs = (np.array(freqlist,'f')-reffreqGHz)/reffreqGHz;
@@ -283,15 +274,14 @@ def _calcTaylorFromCube(imtemplate="",reffreq='1.42GHz',cubename="sim.pb",newtay
      weightarr = np.ones( freqs.shape )
    else:
      if len(weightlist) != nfreqs:
-       casalog.post('Weight list must be the same length as nFreq : ' + nfreqs , 'SEVERE')
-       return False
+       raise RuntimeError('Weight list must be the same length as nFreq : ' + nfreqs)
      else:
        weightarr = np.array(weightlist)
 
    nterms = len(newtay);
    if(nterms>5):
-     casalog.post('Cannot handle more than 5 terms for PB computation','SEVERE')
-     return False;
+     raise RuntimeError('Cannot handle more than 5 terms for PB computation')
+
    ptays=[];
    if(nterms>0):
      ia.open(newtay[0]);
@@ -431,11 +421,10 @@ def _dividePBTaylor(imlist=[],pblist=[],imlistpbcor=[],pbthreshold=0.1):
    casalog.post("Dividing the Image polynomial by the PB polynomial",'NORMAL')
 
    if len(imlist) != len(pblist):
-       casalog.post("Image list and PB list must be of the same length",'SEVERE')
-       return False
+       raise RuntimeError("Image list and PB list must be of the same length")
+
    if len(imlist) != len(imlistpbcor):
-       casalog.post("Image list and imlistpbcor must be of the same length",'SEVERE')
-       return False
+       raise RuntimeError("Image list and imlistpbcor must be of the same length")
 
    nterms = len(imlist)
 
@@ -443,8 +432,8 @@ def _dividePBTaylor(imlist=[],pblist=[],imlistpbcor=[],pbthreshold=0.1):
    pbcoeffs=[]
    for tay in range(0,nterms):
       if(not os.path.exists(pblist[tay])):
-           casalog.post("PB Coeff " + pblist[tay] + " does not exist ", 'SEVERE');
-           return False;
+           raise RuntimeError("PB Coeff " + pblist[tay] + " does not exist ")
+
       ia.open(pblist[tay]);
       pbcoeffs.append(ia.getchunk());
       ia.close();
@@ -453,8 +442,8 @@ def _dividePBTaylor(imlist=[],pblist=[],imlistpbcor=[],pbthreshold=0.1):
    inpimages=[];   
    for tay in range(0,nterms):
       if(not os.path.exists(imlist[tay])):
-           casalog.post("Image Coeff " + imlist[tay] + " does not exist ", 'SEVERE');
-           return False;
+           raise RuntimeError("Image Coeff " + imlist[tay] + " does not exist ", 'SEVERE');
+
       ia.open(imlist[tay]);
       inpimages.append(ia.getchunk());
       ia.close();
@@ -463,8 +452,7 @@ def _dividePBTaylor(imlist=[],pblist=[],imlistpbcor=[],pbthreshold=0.1):
    normedims = _dividePB(nterms,pbcoeffs,inpimages);
  
    if(len(normedims)==0):
-      casalog.post("Could not divide the beam",'SEVERE');
-      return False;    
+      raise RuntimeError("Could not divide the beam")
 
    for tay in range(0,nterms):
       imtemp = imlist[0]
@@ -480,7 +468,7 @@ def _dividePBTaylor(imlist=[],pblist=[],imlistpbcor=[],pbthreshold=0.1):
       ia.calcmask(mask='"'+pblist[0]+'"'+'>'+str(pbthreshold));
       ia.close();
 
-   return True;
+   return True
 ###################################################
 
 ####################################################

@@ -186,7 +186,8 @@ class ParallelDataHelper(ParallelTaskHelper):
             
         flagversions = self.__args['outputvis']+".flagversions"
         if os.path.exists(flagversions):
-            raise IOError("The flagversions %s for the output MS already exist. Please delete it."%flagversions)
+            raise RuntimeError('The flagversions {} for the output MS already exists. Please'
+                               ' delete it.'.format(flagversions))
         
         return True 
         
@@ -1505,7 +1506,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # {'path/outputvis.data/SUBMSS/outputvis.0000.ms':True,
         #  'path/outuputvis.data/SUBMSS/outputvis.0001.ms':False}
         outputList = {}
-      
+
 #        if (ParallelTaskHelper.getBypassParallelProcessing()==1):
         if (self._cluster == None):
             # This is the list of output SubMSs
@@ -1516,42 +1517,45 @@ class ParallelDataHelper(ParallelTaskHelper):
             # Format list in the form of vis dict
             for command_response in command_response_list:
                 outvis = command_response['parameters']['outputvis']
-                outputList[outvis] = command_response['ret']
-                     
+                outputList[outvis] = command_response['successful']
+
+        casalog.post('postExecution dict of commands and success values: {}'.format(
+            outputList), 'DEBUG')
+
         # List of failed MSs. TBD
         nFailures = []
-        
+
         subMSList = []
 
         nFailures = [v for v in outputList.values() if v == False]
-    
+
         for subMS in outputList:
-            # Only use the successful output MSs
+            # Only use the successful (as per command response fields) output MSs
             if outputList[subMS]:
                 subMSList.append(subMS)
-                           
+
         subMSList.sort()
 
         if len(subMSList) == 0:
             casalog.post("Error: no subMSs were successfully created.", 'WARN')
             return False
-                
+
         # When separationaxis='scan' there is no need to give ddistart. 
         # The tool looks at the whole spw selection and
         # creates the indices from it. After the indices are worked out, 
         # it applies MS selection. We do not need to consolidate either.
-                                       
+
         # If axis is spw, give a list of the subMSs
         # that need to be consolidated. This list is pre-organized
         # inside the separation functions above.
-        
+
         # Only when input is MS or MS-like and createmms=True
         # Only partition and mstransform have the createmms parameter
         if 'createmms' in self._arg and self._arg['createmms'] == True and self._arg['separationaxis'] == 'spw':
 #            if (self._arg['separationaxis'] == 'spw' or 
 #                self._arg['separationaxis'] == 'auto'):   
 #            if (self._arg['separationaxis'] == 'spw'):   
-                
+
                 casalog.post('Consolidate the sub-tables')
              
                 toUpdateList = list(self.__ddidict.values())

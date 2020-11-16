@@ -213,7 +213,7 @@ BaselineIndex::configure (Int nAntennas, Int nSpw, const VisBuffer2 * vb)
     // averaged together so that is the ordering the index should
     // capture.
 
-    for (Int i = 0; i < vb->nRows(); i++){
+    for (rownr_t i = 0; i < vb->nRows(); i++){
 
         // Eagerly flesh out the Spw's index
 
@@ -334,11 +334,11 @@ class MsRowAvg : public ms::Vbi2MsRow {
 
 public:
 
-    MsRowAvg (Int row, const VbAvg * vb);
+    MsRowAvg (rownr_t row, const VbAvg * vb);
 
     // Constructor for read/write access
 
-    MsRowAvg (Int row, VbAvg * vb);
+    MsRowAvg (rownr_t row, VbAvg * vb);
 
     virtual ~MsRowAvg () {}
 
@@ -767,7 +767,7 @@ private:
 //    Averagers vbAveragers_p;
 //};
 
-MsRowAvg::MsRowAvg (Int row, const VbAvg * vb)
+MsRowAvg::MsRowAvg (rownr_t row, const VbAvg * vb)
 : Vbi2MsRow (row, vb),
   countsCache_p (& VbAvg::counts),
   normalizationFactor_p(0.0),
@@ -779,7 +779,7 @@ MsRowAvg::MsRowAvg (Int row, const VbAvg * vb)
 
 // Constructor for read/write access
 
-MsRowAvg::MsRowAvg (Int row, VbAvg * vb)
+MsRowAvg::MsRowAvg (rownr_t row, VbAvg * vb)
 : Vbi2MsRow (row, vb),
   countsCache_p (& VbAvg::counts),
   normalizationFactor_p(0.0),
@@ -934,7 +934,7 @@ VbAvg::accumulate (const VisBuffer2 * vb, const Subchunk & subchunk)
     MsRowAvg * rowAveraged = getRowMutable (0);
     MsRow * rowInput = vb->getRow (0);
 
-    for (Int row = 0; row < vb->nRows(); row ++){
+    for (rownr_t row = 0; row < vb->nRows(); row ++){
 
         rowInput->changeRow (row);
         Int baselineIndex = getBaselineIndex (rowInput);
@@ -1904,7 +1904,7 @@ VbAvg::setupVbAvg (const VisBuffer2 * vb)
 
     set<uInt> spwInVb;
 
-    for (int i = 0; i < vb->nRows(); i++){
+    for (rownr_t i = 0; i < vb->nRows(); i++){
         spwInVb.insert (vb->dataDescriptionIds()(i));
     }
 
@@ -2785,7 +2785,7 @@ void AveragingTvi2::exposure (casacore::Vector<double> & expo) const
     return;
 }
 
-void AveragingTvi2::getRowIds (casacore::Vector<casacore::uInt> & rowids) const
+void AveragingTvi2::getRowIds (Vector<rownr_t> & rowids) const
 {
     VisBuffer2* vb = getVisBuffer();
     rowids = vb->rowIds();

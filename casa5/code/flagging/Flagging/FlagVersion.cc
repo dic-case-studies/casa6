@@ -29,17 +29,17 @@
 
 //# Includes
 
-#include <tables/Tables/ScaColDesc.h>
-#include <tables/Tables/ArrColDesc.h>
-#include <tables/Tables/SetupNewTab.h>
-#include <tables/DataMan/TiledShapeStMan.h>
-#include <tables/DataMan/DataManError.h>
+#include <casacore/tables/Tables/ScaColDesc.h>
+#include <casacore/tables/Tables/ArrColDesc.h>
+#include <casacore/tables/Tables/SetupNewTab.h>
+#include <casacore/tables/DataMan/TiledShapeStMan.h>
+#include <casacore/tables/DataMan/DataManError.h>
+#include <casacore/casa/IO/ArrayIO.h>
+#include <casacore/casa/System/ProgressMeter.h>
 
-#include <casa/System/ProgressMeter.h>
-
-#include <casa/OS/RegularFile.h>
-#include <casa/OS/Directory.h>
-#include <casa/OS/SymLink.h>
+#include <casacore/casa/OS/RegularFile.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/casa/OS/SymLink.h>
 
 #include <flagging/Flagging/SLog.h>
 

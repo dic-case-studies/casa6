@@ -23,7 +23,7 @@ namespace casa {
 namespace ms {
 
 
-Vbi2MsRow::Vbi2MsRow (Int row, const VisBufferImpl2 * vb)
+Vbi2MsRow::Vbi2MsRow (rownr_t row, const VisBufferImpl2 * vb)
 : MsRow (row, vb),
   correctedCache_p (& VisBufferImpl2::visCubeCorrected),
   flagCache_p (& VisBufferImpl2::flagCube),
@@ -39,7 +39,7 @@ Vbi2MsRow::Vbi2MsRow (Int row, const VisBufferImpl2 * vb)
 }
 
 
-Vbi2MsRow::Vbi2MsRow (Int row, VisBufferImpl2 * vb)
+Vbi2MsRow::Vbi2MsRow (rownr_t row, VisBufferImpl2 * vb)
 : MsRow (row, vb),
   correctedCache_p (& VisBufferImpl2::visCubeCorrected),
   flagCache_p (& VisBufferImpl2::flagCube),
@@ -78,7 +78,7 @@ Vbi2MsRow::clearArrayCaches ()
 }
 
 void
-Vbi2MsRow::changeRow (Int row)
+Vbi2MsRow::changeRow (rownr_t row)
 {
     MsRow::changeRow (row);
     clearArrayCaches ();

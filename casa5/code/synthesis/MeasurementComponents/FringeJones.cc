@@ -714,9 +714,9 @@ public:
         nCorrelations(sdbs.nCorrelations() > 1 ? 2 : 1),
         corrStep(sdbs.nCorrelations() > 2 ? 3 : 1),
         activeAntennas(activeAntennas_),
-        activeCorr(-1),
         parameterFlags(),
-        parameterMap()
+        parameterMap(),
+        activeCorr(-1)
         // corrStep(3)
         {
             Int last_index = sdbs.nSDB() - 1 ;
@@ -724,10 +724,7 @@ public:
             Double tlast = sdbs(last_index).time()(0);
             reftime = 0.5*(t0 + tlast);
 
-            uInt n = paramActive.nelements();
-            for (Int i=0; i < n; i++) {   
-                parameterFlags.push_back(paramActive(i));
-            }
+            parameterFlags = paramActive.tovector();
             Int j = 0; // The CASA parameter index (0=peculiar phase, 1=delay, 2=rate, 3=dispersive)
             Int i = 0; // the Least Squares parameter vector index, depending on what's being solved for
             for (auto p=parameterFlags.begin(); p!=parameterFlags.end(); p++) {
@@ -801,7 +798,9 @@ public:
     get_param_corr_param_index(size_t iant0, size_t ipar) {
         if (iant0 == refant) return -1;
         int iant1 = antennaIndexMap[iant0];
-        if (iant1 > refant) iant1 -= 1;
+        if (iant1 > antennaIndexMap[refant]) {
+            iant1 -= 1;
+        }
         int ipar1;
         auto p = parameterMap.find(ipar);
         if (p==parameterMap.end()) {
@@ -1608,7 +1607,7 @@ least_squares_inner_driver (const size_t maxiter,
 
       Double fnorm = gsl_blas_dnrm2(w->f);      
       s = 0.5 * fnorm * fnorm;
-      if ((iter >= 0) && DEVDEBUG) {
+      if (DEVDEBUG) {
           cerr << "Iter: " << iter << " ";
           cerr << "Parameters: " << endl;
           print_gsl_vector(w->x);
@@ -1991,26 +1990,31 @@ void FringeJones::setApply(const Record& apply) {
     // Use the "physical" (centroid) frequency, per spw 
     MSSpectralWindow msSpw(ct_->spectralWindow());
     MSSpWindowColumns msCol(msSpw);
+    Vector<Double> tmpfreqs;
     Vector<Double> chanfreq;
-    KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
-    for (Int ispw=0;ispw<nSpw();++ispw) {
+    tmpfreqs.resize(msSpw.nrow());
+    for (rownr_t ispw=0;ispw<msSpw.nrow();++ispw) {
       if (ispw < msSpw.nrow()) {
 	msCol.chanFreq().get(ispw,chanfreq,true);  // reshape, if nec.
 	Int nch=chanfreq.nelements();
-	KrefFreqs_(ispw)=chanfreq(nch/2);
+	tmpfreqs(ispw)=chanfreq(nch/2);
       }
     }
-    KrefFreqs_/=1.0e9;  // in GHz
+
+    KrefFreqs_.resize(nSpw()); KrefFreqs_.set(0.0);
+    for (rownr_t ispw=0;ispw<(rownr_t)nSpw();++ispw) {
+        if (ispw < tmpfreqs.nelements())
+            KrefFreqs_(ispw)=tmpfreqs(ispw);
+    }
 
     /// Re-assign KrefFreq_ according spwmap (if any)
     if (spwMap().nelements()>0) {
-      Vector<Double> tmpfreqs;
-      tmpfreqs.assign(KrefFreqs_);
       for (uInt ispw=0;ispw<spwMap().nelements();++ispw)
-	if (spwMap()(ispw)>-1)
+	if (spwMap()(ispw)>-1 && ispw < tmpfreqs.nelements())
 	  KrefFreqs_(ispw)=tmpfreqs(spwMap()(ispw));
     }
 
+    KrefFreqs_/=1.0e9;  // in GHz
 }
 
 void FringeJones::setApply() {

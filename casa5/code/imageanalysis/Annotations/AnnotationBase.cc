@@ -26,13 +26,13 @@
 
 #include <imageanalysis/Annotations/AnnotationBase.h>
 
-#include <casa/Exceptions/Error.h>
-#include <casa/Quanta/MVAngle.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
-#include <measures/Measures/MCDirection.h>
-#include <measures/Measures/VelocityMachine.h>
-#include <casa/Quanta/UnitMap.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/measures/Measures/MCDirection.h>
+#include <casacore/measures/Measures/VelocityMachine.h>
+#include <casacore/casa/Quanta/UnitMap.h>
 
 #include <iomanip>
 
@@ -200,6 +200,7 @@ void AnnotationBase::_init() {
 		&& _directionRefFrame != MDirection::GALACTIC
 		&& _directionRefFrame != MDirection::J2000
 		&& _directionRefFrame != MDirection::SUPERGAL
+		&& _directionRefFrame != MDirection::ICRS
 	) {
 		throw AipsError(preamble
 			+ "Unsupported coordinate frame for regions "
