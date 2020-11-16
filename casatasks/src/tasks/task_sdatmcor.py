@@ -843,24 +843,18 @@ def calc_sdatmcor(
             #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
             #      - accept  when Spw=[21], outputSpw = [19,21]
 
-            """" DELETE SOON
-            noCorSpws = []
-            if set(spws).issubset(set(outputspws)):
-                noCorSpws = list(set(outputspws).difference(set(spws)))
-            else:
-                spws = list(set(spws).intersection(set(outputspws)))
-            """
-
             # outputSpw, Spw:: No Target check #
             if spws == []:
                 raise Exception("No available Spw Targets. Abort.")
             if outputspws == []:
                 raise Exception("No available outputSpw targets. Abort.")
 
+            processing_spws = list(set(spws).intersection(set(outputspws)))
+
             _msg("Final Determined Spws Information")
             _msg('-- Rawms         Spws = %s' % rawmsSpws)
             _msg('-- Output        Spws = %s' % outputspws)
-            _msg('-- Correcting    Spws = %s' % spws)
+            _msg('-- Correcting    Spws = %s' % processing_spws)
 
             #
             # (Original Section)
@@ -973,10 +967,9 @@ def calc_sdatmcor(
         # original. #
         prevtmatm = 0.
 
-        # spws loop  spws_loop only contains correlation-required Spw.  #
-        spws_loop = list(set(spws_param).intersection(set(outputspws)))
-        for spwid in spws_loop:  # (original) for spwid in spws #
-            _msg("\nProcessing spw %d in %s. \n" % (spwid, spws_loop))
+        # spws loop::  'processing_spws' shows spw to be processed.  #
+        for spwid in processing_spws:  # (original) for spwid in spws #
+            _msg("\nProcessing spw %d in %s. \n" % (spwid, processing_spws))
 
             # gain factor
             spwkey = str(spwid)
