@@ -208,12 +208,14 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | regionmanager        | Create and manipulate regions of interest                       |
 | sakura               | New single dish tool interface using sakura                     |
 | sdm                  | Manipulate or examine SDM datasets                              |
+| sidebandseparator    | Tool for sideband separation                                    |
 | simulator            | Tool for simulation                                             |
 | singledishms         | New single dish tool interface to process an MS                 |
 | spectralline         | spectral line tool                                              |
 | synthesisdeconvolver | tool for synthesis imaging                                      |
 | synthesisimager      | tool for synthesis imaging                                      |
 | synthesisimstore     | tool for synthesis imaging                                      |
+| synthesismaskhandler | tool for mask handling in sysnthesis imaging                    |
 | synthesisnormalizer  | tool for synthesis imaging                                      |
 | synthesisutils       | tool for synthesis imaging                                      |
 | table                | Access tables from casapy                                       |
