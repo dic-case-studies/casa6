@@ -305,7 +305,7 @@ class PyParallelCubeSynthesisImager():
             if self.exitflag[str(node)]==False:
                 rest = self.PH.pullval("maskchanged", node )
                 retval = retval or rest[node]
-                casalog.post("Node " + str(node) + " maskchanged : ", str(rest[node]) , "INFO")
+                casalog.post("Node " + str(node) + " maskchanged : " + str(rest[node]) , "INFO")
 
         return retval
 

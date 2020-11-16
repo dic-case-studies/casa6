@@ -4198,12 +4198,12 @@ def extractAntennaInfo(msname='', antnamelist=[], outfile=''):
     """
     ## Check that the MS exists
     if(not os.path.exists(msname)):
-          casalog.post("Cannot find MS : ", msname)
+          casalog.post("Cannot find MS : {}".format(msname))
           return False;
     
     ## If outfile exists, delete it
     if(os.path.exists(outfile)):
-          casalog.post("Replacing existing file : ", outfile)
+          casalog.post("Replacing existing file : {}".format(outfile))
           rmcmd = "rm -rf "+outfile;
           os.system(rmcmd);
     
@@ -4230,7 +4230,7 @@ def extractAntennaInfo(msname='', antnamelist=[], outfile=''):
     
     ## Open a new file and write this info into it, if requested
     if(outfile != ''):
-          casalog.post("Making new file : ", outfile)
+          casalog.post("Making new file : {}".format(outfile))
           writeAntennaList(outfile, antlist);
     ## always return the dictionary anyway.
     return antlist;

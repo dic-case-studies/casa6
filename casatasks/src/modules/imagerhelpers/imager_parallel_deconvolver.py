@@ -43,7 +43,7 @@ class PyParallelDeconvolver(PySynthesisImager):
         self.NN = len(self.listOfNodes);
         if self.NF != self.NN:
              casalog.post('For now, cannot handle nfields != nnodes. Will implement round robin allocation later.')
-             casalog.post('Using only ', self.NN, ' fields and nodes')
+             casalog.post('Using only {} fields and nodes'.format(self.NN))
              
 
 #############################################
@@ -85,7 +85,7 @@ class PyParallelDeconvolver(PySynthesisImager):
 
         # Check with the iteration controller about convergence.
         stopflag = self.IBtool.cleanComplete()
-        casalog.post('Converged : ', stopflag)
+        casalog.post('Converged : {}'.format(stopflag))
         if( stopflag>0 ):
             stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 5 times from the previous major cycle','peak residual increased by more than 5 times from the minimum reached']
             casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
