@@ -31,13 +31,20 @@
 #
 
 ###########################################################################
-import os
+import os.path
 import numpy
-
-from casatools import image, regionmanager, quanta
-from casatasks import casalog
-
-_qa = quanta( )
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, regionmanager, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history, get_created_images
+else:
+    from taskinit import *
+    from taskinit import iatool as image
+    from ialib import write_image_history, get_created_images
+    image = iatool
+    regionmanager = rgtool
+    quanta = qatool
 
 def specflux(
     imagename, region, box, chans, stokes, mask, stretch,
@@ -46,6 +53,7 @@ def specflux(
     casalog.origin('specflux')
     myia = image()
     myrg = regionmanager()
+    _qa = quanta()
     try:
         if logfile and not overwrite and os.path.exists(logfile):
             raise Exception(logfile + " exists and overwrite is False")
@@ -69,7 +77,7 @@ def specflux(
         try:
             axis = myia.coordsys().axiscoordinatetypes().index("Spectral")
         except Exception:
-            raise Exception("Image does not have a spectral coordinate, cannot proceed")
+            raise RuntimeError("Image does not have a spectral coordinate, cannot proceed")
         if myia.shape()[axis] == 1:
             raise Exception("This application only supports multi-channel images")
         csys = myia.coordsys()
@@ -185,11 +193,11 @@ def specflux(
         if (logfile):
             with open(logfile, "w") as myfile:
                 myfile.write(header)
-
+        # tasks no longer return bool
     finally:
-        if (myia):
-            myia.done()
-            myrg.done()
+        myia.done()
+        myrg.done()
+        _qa.done()
 
 def _no_unit_no_beam_message():
     # CAS-10791
