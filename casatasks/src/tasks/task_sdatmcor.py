@@ -44,6 +44,16 @@ def open_table(path, nomodify=True):
 
 
 @contextlib.contextmanager
+def open_ms(path):
+    ms = mstool()
+    ms.open(path)
+    try:
+        yield ms
+    finally:
+        ms.close()
+
+
+@contextlib.contextmanager
 def open_msmd(path):
     msmd = msmetadata()
     msmd.open(path)
@@ -130,8 +140,10 @@ def parse_spw(msname, spw=''):
 
     with open_table(msname) as tb:
         ddids = np.unique(tb.getcol('DATA_DESC_ID'))
+        print(ddids)
     with open_msmd(msname) as msmd:
         spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
+        print(spws_all)
 
     if len(spw) == 0:
         # '' indicates all spws, which is equivalent to '*'
@@ -478,48 +490,47 @@ def _convert_to_list(in_arg, out_ele_type=float):
 
 
 def get_default_antenna(msname, antenna):
-    # Choose base-antenna from Antennas in the specified MS.
-    #  1) Try to find 1, 2, 3 in ant_list. smaller number is prior.
-    #  2) When 1) did not find an antenna and only one antenna is in the list. use this.
-    #  3) In case, no antenna is in the list, Error.
-    # The Rule is discussed in CASR-552
-    #  - iAnt = 1 is experimentally preferable.
-    #  - iAnt = 0 should be avoided.
 
-    if antenna != '':
-        antenna = antenna.replace('&', '')
+    # set default (=All) if no arg. #
+    if antenna == '':
+        antenna = '*&&&'
 
+    # Parse antenna on msselect grammar #
+    with open_ms(msname) as ms:
+        sel = ms.msseltoindex(msname, baseline=antenna)
+        ant = sel['antenna1']  # antenna ID list
+
+    # get antenna names List by antenna Id #
     with open_msmd(msname) as msmd:
-        ant_list = msmd.antennaids(antenna)
-        n_ant = len(ant_list)
+        ant_name = [msmd.antennanames(i)[0] for i in ant]
 
-        # Choose One #
-        i_ant = 1
-        if 1 in ant_list:
-            i_ant = 1
-        elif 2 in ant_list:
-            i_ant = 2
-        elif 3 in ant_list:
-            i_ant = 3
-        elif n_ant == 1:
-            i_ant = ant_list[0]
-        elif n_ant == 0:
-            errmsg = "No Antenna ID found."
-            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            raise Exception(errmsg)
+    # No Available antenna #
+    if len(ant) == 0:
+        err = "No Antenna was found."
+        raise Exception(err)
+
+    #
+    # Antenna Select algorithm
+    # (under construction)
+    #
+    excluded_ant = 'PM01'
+
+    # Woops, PM01 #
+    if (len(ant) == 1) and (ant_name[0] == excluded_ant):
+        _msg("Woops. only PM01 ... you have to use.")
+        return ant[0]
+
+    # Found 1 ID. But this is PM01, and should be avoided.
+    for i, antid in enumerate(ant):
+        print("ANTENNA:: i=%d, ID=%d , name=%s" % (i, antid, ant_name[i]))
+
+    for i, antid in enumerate(ant):
+        if ant_name[i] == excluded_ant:
+            pass
         else:
-            errmsg = "Unexpected Antenna ID detected."
-            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-            raise Exception(errmsg)
+            return antid
 
-        # INFO #
-        ant_name = msmd.antennanames(i_ant)[0]
-
-        _msg("Default Antenna")
-        _msg(" - totally %d antenna(s) were picked up. [query=%s]" % (n_ant, antenna))
-        _msg(" - Antenna ID  = %d was chosen. Name= %s" % (i_ant, ant_name))
-
-    return i_ant
+    assert(False)
 
 
 def get_default_altitude(msname, antid):
