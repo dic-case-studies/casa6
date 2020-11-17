@@ -124,7 +124,8 @@ def specflux(
         fd = rec['values']
         vals = fd
         flux = numpy.sum(fd*increments)
-        header += "# Total flux: " + str(f'{flux:.12g}') + " " + rec['yUnit'] + "." + xunit + "\n"
+        # formatting commands are necessarily different between CASA 5 and 6
+        header += "# Total flux: " + '{:.12g}'.format(flux) + " " + rec['yUnit'] + "." + xunit + "\n"
         # now compute the requested function
         real_func = ""
         agg_title = "Flux_density"
