@@ -1961,15 +1961,12 @@ FlagAgentBase::chunkSummary()
 	if (chunkFlags_p > 0)
 	{
 		tableFlags_p +=  chunkFlags_p;
-		if (flag_p)
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data flagged so far " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
+		std::string flagStr = "unflagged";
+		if (flag_p) {
+		   flagStr = "flagged";
 		}
-		else
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data unflagged so far: " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
-		}
-
+		*logger_p << LogIO::NORMAL << "=> "  << "Data " << flagStr << " so far " <<
+		   100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
 	}
 
 	// Only the clipping agent is capable of detecting this, and besides in general

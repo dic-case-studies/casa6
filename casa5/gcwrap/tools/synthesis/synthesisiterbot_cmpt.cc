@@ -106,7 +106,7 @@ casac::record* synthesisiterbot::pauseforinteraction()
   return rstat;
 }
 /*
-std::vector<int> synthesisiterbot::pauseforinteraction()
+std::vector<long> synthesisiterbot::pauseforinteraction()
 {
   std::vector<int> rstat;
 
@@ -142,7 +142,7 @@ casac::record* synthesisiterbot::getiterationsummary()
 
 
 
-  int synthesisiterbot::cleanComplete(const bool lastcyclecheck)
+  long synthesisiterbot::cleanComplete(const bool lastcyclecheck)
 {
   Int rstat=0;
 
