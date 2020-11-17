@@ -22,15 +22,15 @@ namespace casac {
     public:
 
       synthesisutils();
-      record* contdatapartition(const record& _selpars=initialize_record(""""), int _npart=int(1));
-      record* cubedatapartition(const record& _selpars=initialize_record(""""), int _npart=int(1), const variant& _fstart=variant( ), const variant& _fend=variant( ), const string& _frame=string("LSRK"));
-      record* cubeimagepartition(const record& _impars=initialize_record(""""), int _npart=int(1));
-      record* cubedataimagepartition(const record& _selpars=initialize_record(""""), const record& _incsys=initialize_record(""""), int _npart=int(1), int _nchannel=int(1));
-      record* checkselectionparams(const record& _selpars=initialize_record(""""));
-      record* checkimageparams(const record& _impars=initialize_record(""""));
-      record* checkgridparams(const record& _gridpars=initialize_record(""""));
-      record* updateimpars(const record& _impars=initialize_record(""""));
-      int getOptimumSize(int _size=int(100));
+      record* contdatapartition(const record& _selpars=initialize_record(""), long _npart=long(1));
+      record* cubedatapartition(const record& _selpars=initialize_record(""), long _npart=long(1), const variant& _fstart=variant( ), const variant& _fend=variant( ), const string& _frame=string("LSRK"));
+      record* cubeimagepartition(const record& _impars=initialize_record(""), long _npart=long(1));
+      record* cubedataimagepartition(const record& _selpars=initialize_record(""), const record& _incsys=initialize_record(""), long _npart=long(1), long _nchannel=long(1));
+      record* checkselectionparams(const record& _selpars=initialize_record(""));
+      record* checkimageparams(const record& _impars=initialize_record(""));
+      record* checkgridparams(const record& _gridpars=initialize_record(""));
+      record* updateimpars(const record& _impars=initialize_record(""));
+      long getOptimumSize(long _size=long(100));
       bool done();
 
         ~synthesisutils( );

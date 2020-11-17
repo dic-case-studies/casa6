@@ -1003,7 +1003,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numcoh+=Double(mss_p[k]->nrow());
       ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+      rownr_t cohDone=0;
 
 
     	if(!dopsf)itsMappers.initializeDegrid(*vb);
@@ -1095,7 +1095,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  numcoh+=Double(mss_p[k]->nrow());
 	ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Seting model column to zero":"pre-Major Cycle", "","","",True);
-	Int cohDone=0;
+        rownr_t cohDone=0;
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
 	  {
 	    
@@ -1146,7 +1146,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 	 ProgressMeter pm(1.0, numcoh, 
 			  dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+	rownr_t cohDone=0;
 
 
 	itsMappers.getFTM2(gmap, False)->reset();
@@ -1253,7 +1253,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeDegrid(*vb);
       for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
@@ -1303,7 +1303,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeGrid(*vi_p,dopsf);
       for (vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
@@ -2130,7 +2130,8 @@ void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","dryGridding",WHERE) );
 
-    Int cohDone=0, whichFTM=0;
+    rownr_t cohDone=0;
+    Int whichFTM=0;
     (void)cfList;
     // If not an AWProject-class FTM, make this call a NoOp.  Might be
     // useful to extend it to other projection FTMs -- but later.
@@ -2377,7 +2378,7 @@ void SynthesisImagerVi2::unlockMSs()
 	{
 	  for (vi_p->origin(); vi_p->more(); vi_p->next())
 	    {
-	      Int nRow=vb->nRows();
+	      auto nRow=vb->nRows();
 	      const Vector<Bool>& rowFlags(vb->flagRow());
 
 	      const Vector<Int>& a1(vb->antenna1()), a2(vb->antenna2());
@@ -2396,7 +2397,7 @@ void SynthesisImagerVi2::unlockMSs()
 	      Int nChanWt=wtc.shape()(1);  // Might be 1 (no WtSp)
 
 	      Cube<Bool> flagCube(vb->flagCube());
-	      for (Int row=0; row<nRow; row++) {
+	      for (rownr_t row=0; row<nRow; row++) {
 		if (!rowFlags(row) && a1(row)!=a2(row)) {  // exclude ACs
 
 		  for (Int ich=0;ich<vb->nChannels();++ich) {

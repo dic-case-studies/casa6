@@ -94,7 +94,7 @@ Bool RegriddingTVI::parseConfiguration(const Record &configuration)
     		logger_p << LogIO::NORMAL << LogOrigin("RegriddingTVI", __FUNCTION__)
     				<< "Field Id for phase center is " << fieldIdForPhaseCenter << LogIO::POST;
     		if (phaseCenterPar_p) delete phaseCenterPar_p;
-    		phaseCenterPar_p = new casac::variant(fieldIdForPhaseCenter);
+    		phaseCenterPar_p = new casac::variant((long)fieldIdForPhaseCenter);
         }
         else
         {
@@ -437,7 +437,7 @@ void RegriddingTVI::initFrequencyTransformationEngine() const
 	VisBuffer2 *vb = getVii()->getVisBuffer();
 
 	// Check if frequency transformation engine has to be re-constructed
-	uInt rowId = vb->rowIds()[0];
+	auto rowId = vb->rowIds()[0];
 	if (freqTransEngineRowId_p != rowId)
 	{
 		// Mark this rowId as the current one

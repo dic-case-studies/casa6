@@ -5,9 +5,9 @@
       xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
       file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-      <task type="function" name="plotcal" category="visualization, calibration">
+      <task type="function" name="plotcal" category="visualization, calibration" visibility="deprecated">
     
-    <shortdescription>An all-purpose plotter for calibration results </shortdescription>
+    <shortdescription>An all-purpose plotter for calibration results (Deprecated in CASA 5.8. Not present in CASA 6.2.  Use plotms instead.)</shortdescription>
     <description>
 An all-purpose plotter for calibration results.  The values for all
 calibration solutions (G, T, GSPLINE, B, BPOLY, D) can be displayed

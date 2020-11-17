@@ -152,7 +152,7 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt' ]
+public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt', 'src/scripts/__main__.py' ]
 
 private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/casa_transition.py',
@@ -205,7 +205,6 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_delmod.py',
                     'src/tasks/task_imsubimage.py',
                     'src/tasks/task_accor.py',
-                    'src/tasks/task_accum.py',
                     'src/tasks/task_asdmsummary.py',
                     'src/tasks/task_clearcal.py',
                     'src/tasks/task_conjugatevis.py',
@@ -337,7 +336,6 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/delmod.xml': 'xml/delmod.xml',
               'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
               'casa-source/gcwrap/tasks/accor.xml': 'xml/accor.xml',
-              'casa-source/gcwrap/tasks/accum.xml': 'xml/accum.xml',
               'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
               'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
               'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
@@ -452,7 +450,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/delmod.xml',
               'xml/imsubimage.xml',
               'xml/accor.xml',
-              'xml/accum.xml',
               'xml/asdmsummary.xml',
               'xml/clearcal.xml',
               'xml/conjugatevis.xml',
