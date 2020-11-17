@@ -491,46 +491,42 @@ def _convert_to_list(in_arg, out_ele_type=float):
 
 def get_default_antenna(msname, antenna):
 
+    # Not unpreferable antenna #
+    excluded_ant = 'PM01'
+
     # set default (=All) if no arg. #
     if antenna == '':
         antenna = '*&&&'
 
-    # Parse antenna on msselect grammar #
+    # Parse antenna by msselect grammar #
     with open_ms(msname) as ms:
         sel = ms.msseltoindex(msname, baseline=antenna)
-        ant = sel['antenna1']  # antenna ID list
+        ant_list = sel['antenna1']  # antenna ID list
 
     # get antenna names List by antenna Id #
     with open_msmd(msname) as msmd:
-        ant_name = [msmd.antennanames(i)[0] for i in ant]
+        ant_name = [msmd.antennanames(i)[0] for i in ant_list]
 
     # No Available antenna #
-    if len(ant) == 0:
-        err = "No Antenna was found."
-        raise Exception(err)
+    if len(ant_list) == 0:
+        raise Exception("No Antenna was found.")
 
-    #
-    # Antenna Select algorithm
-    # (under construction)
-    #
-    excluded_ant = 'PM01'
+    # Only unpreferable antenna (PM01) found.  #
+    if (len(ant_list) == 1) and (ant_name[0] == excluded_ant):
+        _msg("Only %s was found. You have to use this.", 'WARN')
+        return ant_list[0]
 
-    # Woops, PM01 #
-    if (len(ant) == 1) and (ant_name[0] == excluded_ant):
-        _msg("Woops. only PM01 ... you have to use.")
-        return ant[0]
-
-    # Found 1 ID. But this is PM01, and should be avoided.
-    for i, antid in enumerate(ant):
-        print("ANTENNA:: i=%d, ID=%d , name=%s" % (i, antid, ant_name[i]))
-
-    for i, antid in enumerate(ant):
+    # Try to find an ID, except PM01 #
+    _msg("Antenna ID info")
+    for i, antid in enumerate(ant_list):
+        print(" - ID=%d , name=%s" % (antid, ant_name[i]))
+    for i, antid in enumerate(ant_list):
         if ant_name[i] == excluded_ant:
             pass
         else:
             return antid
 
-    assert(False)
+    raise Exception("INTERNAL ERROR: never comes here.")
 
 
 def get_default_altitude(msname, antid):
