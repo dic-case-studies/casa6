@@ -144,7 +144,7 @@ quanta::getformat(const std::string& /*t*/)
 
 // form.x(v) -> format value acoording to type x
 std::string
-quanta::formxxx(const ::casac::variant& v, const std::string& format, const int prec)
+quanta::formxxx(const ::casac::variant& v, const std::string& format, const long prec)
 {
   string out("");
   try {
@@ -389,7 +389,7 @@ quanta::fits()
 // output in angle format
 // angle (v, prec=0, form="") -> formatted string of angle/time unit
 std::vector<std::string>
-quanta::angle(const ::casac::variant& v, const int prec, const std::vector<std::string>& form, const bool showform)
+quanta::angle(const ::casac::variant& v, const long prec, const std::vector<std::string>& form, const bool showform)
 {
   //  Quantum<Vector<Double> > val(Vector<Double>(v.value), String(v.units));
   casacore::Quantity q = casaQuantity(v);
@@ -432,7 +432,7 @@ quanta::angle(const ::casac::variant& v, const int prec, const std::vector<std::
 // output in time format
 // time (v, prec=0, form="") -> formatted string of time/angle unit
 std::vector<std::string>
-quanta::time(const ::casac::variant& v, const int prec,
+quanta::time(const ::casac::variant& v, const long prec,
 	     const std::vector<std::string>& form, const bool showform)
 {
   //  Quantum<Vector<Double> > val(Vector<Double>(v.value), String(v.units));
@@ -679,7 +679,7 @@ quanta::checkfreq(const ::casac::variant& cm)
 
 // raise to power
 ::casac::record*
-quanta::pow(const ::casac::variant& v, const int a)
+quanta::pow(const ::casac::variant& v, const long a)
 {
   return recordFromQuantity(casacore::pow(casaQuantity(v),a));
 }
@@ -770,7 +770,7 @@ quanta::splitdate(const ::casac::variant& v)
 
 // Quantum to String
 std::string
-quanta::tos(const ::casac::variant& v, const int prec)
+quanta::tos(const ::casac::variant& v, const long prec)
 {
   std::string retval;
 
@@ -928,7 +928,7 @@ quanta::frqcv(const casacore::Quantity val, const casacore::Quantity arg) {
 
 // tfreq - table freq formatter
 Vector<String>
-quanta:: tfreq(const Quantum<Vector<Double> > &val, const Vector<Int> &arg,
+quanta:: tfreq(const Quantum<Vector<Double> > &val, const Vector<int> &arg,
 	       const String &form, const Bool form2) {
   Vector<String> retval;
 
