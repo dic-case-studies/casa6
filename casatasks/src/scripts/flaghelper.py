@@ -670,8 +670,7 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
     elif type(reason) == list:
         myreaslist = reason
     else:
-        casalog.post('Cannot read reason; it contains unknown variable types',
-                     'ERROR')
+        casalog.post('Cannot read reason; it contains unknown variable types', 'ERROR')
         return
  
     # Separate per ' ', then per '='
