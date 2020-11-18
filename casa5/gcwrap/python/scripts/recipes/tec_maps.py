@@ -462,11 +462,8 @@ def get_IGS_TEC(ymd_date):
     ## Gives the day of the year of any given year
     dayofyear = datetime.datetime.strptime(''+str(year)+' '+str(month)+' '+str(day)+'', '%Y %m %d').timetuple().tm_yday
 
-    ## Prepare the 3-digit day of the year for use to find the right IONEX file
-    if dayofyear < 10:
-        dayofyear = '00'+str(dayofyear)
-    if dayofyear < 100 and dayofyear >= 10:
-        dayofyear = '0'+str(dayofyear)
+    ## Convert dayofyear to 3-digit string, padded with zeros for IONEX filename format
+    dayofyear = str(dayofyear).zfill(3)
 
     ## Outputing the name of the IONEX file you require.  
     #igs_file = 'igsg'+str(dayofyear)+'0.'+str(list(str(year))[2])+''+str(list(str(year))[3])+'i'
