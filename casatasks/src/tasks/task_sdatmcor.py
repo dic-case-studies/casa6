@@ -253,11 +253,11 @@ def sdatmcor(
     # after this step, the two args changes to List
     #
 
-    #   User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
+    # User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
     layerboundaries = _convert_to_list(layerboundaries, float)
     layertemperature = _convert_to_list(layertemperature, float)
 
-    #   Length of the two args must be same #
+    # Length of the two args must be same #
     len_1 = len(layerboundaries)
     len_2 = len(layertemperature)
     if len_1 != len_2:
@@ -334,7 +334,7 @@ def sdatmcor(
 
 #
 # SUBROUTINES
-#  for Task Handling
+# for Task Handling
 #
 
 
@@ -403,12 +403,7 @@ def _check_unit_and_formToStr(data, base_unit):
                 _msg("ERROR::%s" % errmsg, 'ERROR')
                 raise Exception(errmsg)
         elif (type(data) is int) or (type(data) is float):
-            if data == -1:
-                # float no input #
-                return ''
-            else:
-                # float specified #
-                return str(data)   # available  input#
+            return '' if data == -1 else str(data)  # (-1)= default #
         else:
             raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
 
