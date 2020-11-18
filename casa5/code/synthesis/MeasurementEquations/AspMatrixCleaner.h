@@ -97,6 +97,7 @@ public:
 
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
+  void setMaxPsfConvInitScales();
   void testBFGS(const casacore::Matrix<casacore::Float>& psf);
 
   // setter/getter
@@ -185,6 +186,7 @@ private:
   double itsUsedMemoryMB;
   float itsPeakResidual;
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsOrigDirty;
+  casacore::Vector<casacore::Float> maxPsfConvInitScales;
 };
 
 } //# NAMESPACE CASA - END

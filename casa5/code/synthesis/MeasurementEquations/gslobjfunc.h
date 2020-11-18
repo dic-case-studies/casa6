@@ -98,9 +98,11 @@ double my_f (const gsl_vector *x, void *params)
       double amp = gsl_vector_get(x, 2*k);
       double scale = gsl_vector_get(x, 2*k+1);
 
-	  if (isnan(amp) || scale <= 0) // LBFGS encounters convergense issue or scale < 0
+	  if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
 	    std::cout << "nan? " << amp << " neg scale? " << scale << std::endl;
+	    scale = (scale = fabs(scale)) < 0.4 ? 0.4 : scale;
+	    std::cout << "reset neg scale to " << scale << std::endl;
 	    //fx = -999.0;
 	    //return fx;
 	  }
@@ -131,6 +133,7 @@ double my_f (const gsl_vector *x, void *params)
 	  {
 	    for (int i = minI; i <= maxI; i++)
 	    {*/
+	  double area = 0.0;
 	  for (int j = 0; j <= nY-1; j++)
 	  {
 	    for (int i = 0; i <= nX-1; i++)
@@ -139,16 +142,18 @@ double my_f (const gsl_vector *x, void *params)
 	      const int py = j;
 
 	      Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
+	      //Asp(i,j) = (1.0/(2*M_PI*pow(scale,2)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
+	      area += Asp(i,j);
 	    }
 	  }
-	  for (int j = 125; j < 130; j++)
+	  /*for (int j = 125; j < 130; j++)
 	  {
 	    for (int i = 125; i < 130; i++)
 	    {
 	      std::cout << "Asp(" << i << "," << j << ") = " << Asp(i,j) << std::endl;
 	    }
-	  }
-	  std::cout << "peak(Asp) " << max(fabs(Asp)) << " amp " << amp << " scale " << scale << std::endl;
+	  }*/
+	  std::cout << "peak(Asp " << k << ") " << max(fabs(Asp)) << " amp " << amp << " scale " << scale << " area " << area << std::endl;
 
 	  casacore::Matrix<casacore::Complex> AspFT;
 	  casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
@@ -168,14 +173,14 @@ double my_f (const gsl_vector *x, void *params)
 	  AmpAspConvPsfSum = AmpAspConvPsfSum + amp * MAspConvPsf; //optimumstrength*PsfConvAspen
 
 	  //debug
-	  for (int j = 125; j <130; j++)
+	  /*for (int j = 125; j <130; j++)
 	  {
 	    for (int i = 125; i < 130; i++)
 	    {
 	      std::cout << "AspConvPsf(" << i << "," << j << ") = " << AspConvPsf(i,j) << std::endl;
 	      std::cout << "AmpAspConvPsfSum(" << i << "," << j << ") = " << AmpAspConvPsfSum(i,j) << std::endl;
 	    }
-	  }
+	  }*/
 	  AspConvPsf.freeStorage(dptrc, ddelc);
 	} // end get amp * AspenConvPsf
 
@@ -188,7 +193,7 @@ double my_f (const gsl_vector *x, void *params)
 	itsMatDirty.freeStorage(dptr, ddel);
 
     //debug
-	  for (int j = 125; j < 130; j++)
+	  /*for (int j = 125; j < 130; j++)
 	  {
 	    for (int i = 125; i < 130; i++)
 	    {
@@ -196,7 +201,7 @@ double my_f (const gsl_vector *x, void *params)
 	      std::cout << "Mdirty(" << i << "," << j << ") = " << Mdirty(i,j) << std::endl;
 	      std::cout << "newResidual(" << i << "," << j << ") = " << newResidual(i,j) << std::endl;
 	    }
-	  }
+	  }*/
 
 	  // update newResidual back to the ParamObj
 	  MyP->setterRes(newResidual);
@@ -254,6 +259,13 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	  double amp = gsl_vector_get(x, 2*k);
       double scale = gsl_vector_get(x, 2*k+1);
 
+      if (isnan(amp) || scale < 0.4) // GSL scale < 0
+	  {
+	    std::cout << "grad: nan? " << amp << " neg scale? " << scale << std::endl;
+	    scale = (scale = fabs(scale)) < 0.4 ? 0.4 : scale;
+	    std::cout << "reset neg scale to " << scale << std::endl;
+	  }
+
 	  const double sigma5 = 5 * scale / 2;
 	  const int minI = std::max(0, (int)(center[k][0] - sigma5));
 	  const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
@@ -272,16 +284,17 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	      const int py = j;
 
 	      Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
+	      //Asp(i,j) = (1.0/(2*M_PI*pow(scale,2)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
 	      dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(scale,2) - 1) / fabs(scale)); // verified by python
 	    }
 	  }
-	  for (int j = 125; j < 130; j++)
+	  /*for (int j = 125; j < 130; j++)
 	  {
 	    for (int i = 125; i < 130; i++)
 	    {
 	      std::cout << "dAsp(" << i << "," << j << ") = " << dAsp(i,j) << std::endl;
 	    }
-	  }
+	  }*/
 
 	  casacore::Matrix<casacore::Complex> AspFT;
 	  casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
@@ -330,7 +343,7 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	    }
 	  }
 
-	  for (int j = 125; j < 130; j++)
+	  /*for (int j = 125; j < 130; j++)
 	  {
 	    for (int i = 125; i < 130; i++)
 	    {
@@ -339,7 +352,7 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	      std::cout << "GradAmp(" << i << "," << j << ") = " << GradAmp(i,j) << std::endl;
 	      std::cout << "GradScale(" << i << "," << j << ") = " << GradScale(i,j) << std::endl;
 	    }
-	  }
+	  }*/
 
 	  gsl_vector_set(grad, 2*k, dA);
 	  gsl_vector_set(grad, 2*k+1, dS);
@@ -437,10 +450,12 @@ int findComponent(int NIter, gsl_multimin_fdfminimizer *s)
   {
 	// Make the move!
 	status = gsl_multimin_fdfminimizer_iterate(s);
-	if (status == GSL_ENOPROG)
+	std::cout << "debug: gsl status " << status << std::endl;
+	if (status == GSL_ENOPROG) // 27: not making progress towards solution
 		gsl_multimin_fdfminimizer_restart(s);
 
 	status = gsl_multimin_test_gradient(s->gradient, 1E-3);
+	std::cout << "debug: grad status " << status << std::endl;
     debug_print(s, iter);
 
 	iter++;
