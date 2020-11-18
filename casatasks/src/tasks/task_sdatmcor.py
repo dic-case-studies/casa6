@@ -494,9 +494,9 @@ def get_default_antenna(msname, antenna):
         antenna = '*&&&'
 
     # Parse antenna by msselect grammar #
-    with open_ms(msname) as ms:
-        sel = ms.msseltoindex(msname, baseline=antenna)
-        ant_list = sel['antenna1']  # antenna ID list
+    ms = mstool()
+    sel = ms.msseltoindex(msname, baseline=antenna)
+    ant_list = sel['antenna1']  # antenna ID list
 
     # get antenna names List by antenna Id #
     with open_msmd(msname) as msmd:

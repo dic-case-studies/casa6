@@ -253,11 +253,11 @@ def sdatmcor(
     # after this step, the two args changes to List
     #
 
-    #   User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
+    # User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
     layerboundaries = _convert_to_list(layerboundaries, float)
     layertemperature = _convert_to_list(layertemperature, float)
 
-    #   Length of the two args must be same #
+    # Length of the two args must be same #
     len_1 = len(layerboundaries)
     len_2 = len(layertemperature)
     if len_1 != len_2:
@@ -334,7 +334,7 @@ def sdatmcor(
 
 #
 # SUBROUTINES
-#  for Task Handling
+# for Task Handling
 #
 
 
@@ -403,12 +403,7 @@ def _check_unit_and_formToStr(data, base_unit):
                 _msg("ERROR::%s" % errmsg, 'ERROR')
                 raise Exception(errmsg)
         elif (type(data) is int) or (type(data) is float):
-            if data == -1:
-                # float no input #
-                return ''
-            else:
-                # float specified #
-                return str(data)   # available  input#
+            return '' if data == -1 else str(data)  # (-1)= default #
         else:
             raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
 
@@ -491,17 +486,17 @@ def _convert_to_list(in_arg, out_ele_type=float):
 
 def get_default_antenna(msname, antenna):
 
-    # Not unpreferable antenna #
-    excluded_ant = 'PM01'
+    # Unpreferable (problematic) antenna #
+    excluded_ant = ['PM01']
 
     # set default (=All) if no arg. #
     if antenna == '':
         antenna = '*&&&'
 
     # Parse antenna by msselect grammar #
-    with open_ms(msname) as ms:
-        sel = ms.msseltoindex(msname, baseline=antenna)
-        ant_list = sel['antenna1']  # antenna ID list
+    ms = mstool()
+    sel = ms.msseltoindex(msname, baseline=antenna)
+    ant_list = sel['antenna1']  # antenna ID list
 
     # get antenna names List by antenna Id #
     with open_msmd(msname) as msmd:
@@ -511,8 +506,8 @@ def get_default_antenna(msname, antenna):
     if len(ant_list) == 0:
         raise Exception("No Antenna was found.")
 
-    # Only unpreferable antenna (PM01) found.  #
-    if (len(ant_list) == 1) and (ant_name[0] == excluded_ant):
+    # Unpreferable antenna (PM01) found.  #
+    if (len(ant_list) == 1) and (ant_name[0] in excluded_ant):
         _msg("Only %s was found. You have to use this.", 'WARN')
         return ant_list[0]
 
@@ -521,7 +516,7 @@ def get_default_antenna(msname, antenna):
     for i, antid in enumerate(ant_list):
         print(" - ID=%d , name=%s" % (antid, ant_name[i]))
     for i, antid in enumerate(ant_list):
-        if ant_name[i] == excluded_ant:
+        if ant_name[i] in excluded_ant:
             pass
         else:
             return antid
@@ -813,10 +808,6 @@ def calc_sdatmcor(
                 _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
                 outputspws = list(set(rawmsSpws) & set(outputspws_param))
 
-            # If default, apply all-spws #
-            if (p_outputspw == ''):
-                outputspws = rawmsSpws
-
             _msg("Determined outputSpws Information")
             _msg('- rawms      Spws       = %s' % rawmsSpws)
             _msg('- requested  outputSpws = %s' % outputspws_param)
@@ -837,10 +828,6 @@ def calc_sdatmcor(
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
                 spws = list(set(rawmsSpws) & set(spws_param))
-
-            # If default, apply all-spws #
-            if (p_spw == ''):
-                spws = rawmsSpws
 
             #
             # (Task Section )
