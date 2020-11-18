@@ -844,7 +844,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_standard_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1107,7 +1107,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_standard_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1467,7 +1467,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_standard_mtmfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1743,7 +1743,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of est_standard_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1774,7 +1774,7 @@ class Test_standard(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
+            fastnoise=False, savemodel='none', parallel=False, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -1802,7 +1802,7 @@ class Test_standard(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel, verbose=True)
+            savemodel='none', parallel=False, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
@@ -2001,7 +2001,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_standard_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2033,7 +2033,7 @@ class Test_standard(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
+            fastnoise=False, savemodel='none', parallel=False, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -2061,7 +2061,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
             fastnoise=False, restart=True, calcres=False, calcpsf=False, \
-            savemodel='none', parallel=self.parallel, verbose=True)
+            savemodel='none', parallel=False, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mtmfs'))
 
@@ -2356,7 +2356,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_standard_mtmfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2385,7 +2385,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, \
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, savemodel='none', \
-            parallel=self.parallel, verbose=True)
+            parallel=False, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -2410,7 +2410,7 @@ class Test_standard(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.1, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, savemodel='none', \
-            parallel=self.parallel, verbose=True)
+            parallel=False, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
@@ -2614,6 +2614,7 @@ class Test_standard(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
+# End of test_standard_cal
 
 ###############################################
 ###############################################
@@ -2987,7 +2988,7 @@ class Test_mosaic(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_mosaic_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3049,9 +3050,7 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
-        self.save_dict_to_disk(report0, 'myreport0')
-        print("REPORT0=",report0)
-        print("*********** report0 end ****")
+        #self.save_dict_to_disk(report0, 'myreport0')
 
         # .image report (test_mosaic_mfs)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
@@ -3307,6 +3306,7 @@ class Test_mosaic(test_tclean_base):
             #msg = report)
             msg = failed)
 
+# End of  test_mosaic_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3739,6 +3739,8 @@ class Test_mosaic(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
+# End of test_mosaic_mtmfs
+
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4058,7 +4060,7 @@ class Test_mosaic(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of est_mosaic_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4089,7 +4091,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
+            fastnoise=False, savemodel='none', parallel=False, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -4117,7 +4119,7 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
-            parallel=self.parallel, verbose=True)
+            parallel=False, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
@@ -4370,7 +4372,7 @@ class Test_mosaic(test_tclean_base):
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
-
+# End of test_mosaic_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4402,7 +4404,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
             growiterations=75, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
+            fastnoise=False, savemodel='none', parallel=False, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -4430,7 +4432,7 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
-            parallel=self.parallel, verbose=True)
+            parallel=False, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
 
@@ -4798,6 +4800,8 @@ class Test_mosaic(test_tclean_base):
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
+
+# End of test_mosaic_mtmfs_eph
 
 
 def suite():
