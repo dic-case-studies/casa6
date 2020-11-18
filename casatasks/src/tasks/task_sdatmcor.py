@@ -813,10 +813,6 @@ def calc_sdatmcor(
                 _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
                 outputspws = list(set(rawmsSpws) & set(outputspws_param))
 
-            # If default, apply all-spws #
-            if (p_outputspw == ''):
-                outputspws = rawmsSpws
-
             _msg("Determined outputSpws Information")
             _msg('- rawms      Spws       = %s' % rawmsSpws)
             _msg('- requested  outputSpws = %s' % outputspws_param)
@@ -837,10 +833,6 @@ def calc_sdatmcor(
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
                 spws = list(set(rawmsSpws) & set(spws_param))
-
-            # If default, apply all-spws #
-            if (p_spw == ''):
-                spws = rawmsSpws
 
             #
             # (Task Section )
