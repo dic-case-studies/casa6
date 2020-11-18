@@ -491,8 +491,8 @@ def _convert_to_list(in_arg, out_ele_type=float):
 
 def get_default_antenna(msname, antenna):
 
-    # Not unpreferable antenna #
-    excluded_ant = 'PM01'
+    # Unpreferable (problematic) antenna #
+    excluded_ant = ['PM01']
 
     # set default (=All) if no arg. #
     if antenna == '':
@@ -511,8 +511,8 @@ def get_default_antenna(msname, antenna):
     if len(ant_list) == 0:
         raise Exception("No Antenna was found.")
 
-    # Only unpreferable antenna (PM01) found.  #
-    if (len(ant_list) == 1) and (ant_name[0] == excluded_ant):
+    # Unpreferable antenna (PM01) found.  #
+    if (len(ant_list) == 1) and (ant_name[0] in excluded_ant):
         _msg("Only %s was found. You have to use this.", 'WARN')
         return ant_list[0]
 
@@ -521,7 +521,7 @@ def get_default_antenna(msname, antenna):
     for i, antid in enumerate(ant_list):
         print(" - ID=%d , name=%s" % (antid, ant_name[i]))
     for i, antid in enumerate(ant_list):
-        if ant_name[i] == excluded_ant:
+        if ant_name[i] in excluded_ant:
             pass
         else:
             return antid
