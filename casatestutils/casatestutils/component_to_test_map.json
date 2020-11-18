@@ -2015,7 +2015,7 @@
             "testType":"regression",
             "maintainer":"CASA DEV",
             "maintainerEmail":"noreply@nrao.edu",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":[],
             "timeout":0,
             "comment":""
@@ -2695,7 +2695,7 @@
             "testType":"stakeholder",
             "maintainer":"Sandra Castro",
             "maintainerEmail":"scastro@eso.org",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":[],
             "timeout":0,
             "comment":""
@@ -2705,7 +2705,7 @@
             "testType":"stakeholder",
             "maintainer":"Sandra Castro",
             "maintainerEmail":"scastro@eso.org",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":[],
             "timeout":0,
             "comment":""
