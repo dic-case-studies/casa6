@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="single dish" name="sdbaseline" type="function">
+<task type="function" name="sdbaseline" category="single dish">
 
   <shortdescription>Fit/subtract a spectral baseline </shortdescription>
 
@@ -25,12 +25,12 @@ pipeline processing for huge dataset.
 
   <input>
 
-    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
+    <param type="path" name="infile" mustexist="true"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
         
         <value/>
     </param>
 
-    <param ignorecase="true" name="datacolumn" type="string"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
+    <param type="string" name="datacolumn" ignorecase="true"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
         
         <value>data</value>
         <allowed kind="enum">
@@ -40,48 +40,48 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param name="antenna" type="string"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
+    <param type="string" name="antenna"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
         
         <value/>
     </param> 
 
-    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="spw" type="string"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="spw"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="timerange" type="string"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
+    <param type="string" name="timerange"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
         
         <value/>
     </param>
 
-    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="pol" type="string"><shortdescription>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</shortdescription><description>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="pol"><shortdescription>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</shortdescription><description>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="intent" type="string"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="intent"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="reindex" type="bool">
+    <param type="bool" name="reindex">
          <shortdescription>Re-index indices in subtables based on data selection</shortdescription>
         <description>Re-index indices in subtables based on data selection. Ignored when blmode='apply'.</description>
         <value>True</value>
     </param>
 
-    <param ignorecase="true" name="maskmode" type="string">
+    <param type="string" name="maskmode" ignorecase="true">
         <shortdescription>mode of setting additional channel masks</shortdescription>
 
         <description>mode of setting additional channel masks. &quot;list&quot; and &quot;auto&quot; are available now.</description>
@@ -93,40 +93,40 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param subparam="true" name="thresh" type="double"><shortdescription>S/N threshold for linefinder</shortdescription><description>S/N threshold for linefinder</description>
+    <param type="double" name="thresh" subparam="true"><shortdescription>S/N threshold for linefinder</shortdescription><description>S/N threshold for linefinder</description>
         
         <value>5.0</value>
     </param>
 
-    <param subparam="true" name="avg_limit" type="int"><shortdescription>channel averaging for broad lines</shortdescription><description>channel averaging for broad lines</description>
+    <param type="int" name="avg_limit" subparam="true"><shortdescription>channel averaging for broad lines</shortdescription><description>channel averaging for broad lines</description>
         
         <value>4</value>
     </param>
 
-    <param subparam="true" name="minwidth" type="int"><shortdescription>the minimum channel width to detect as a line</shortdescription><description>the minimum channel width to detect as a line</description>
+    <param type="int" name="minwidth" subparam="true"><shortdescription>the minimum channel width to detect as a line</shortdescription><description>the minimum channel width to detect as a line</description>
         
         <value>4</value>
     </param>
 
-    <param subparam="true" name="edge" type="intArray"><shortdescription>channels to drop at beginning and end of spectrum</shortdescription><description>channels to drop at beginning and end of spectrum</description>
+    <param type="intVec" name="edge" subparam="true"><shortdescription>channels to drop at beginning and end of spectrum</shortdescription><description>channels to drop at beginning and end of spectrum</description>
         
-        <value type="intArray"><value>0</value><value>0</value></value>
+        <value type="intVec"><value>0</value><value>0</value></value>
     </param>
 
-    <param ignorecase="true" name="blmode" type="string"><shortdescription>baselining mode [&quot;fit&quot; or &quot;apply&quot;]</shortdescription><description>baselining mode [&quot;fit&quot; or &quot;apply&quot;]</description>
+    <param type="string" name="blmode" ignorecase="true"><shortdescription>baselining mode [&quot;fit&quot; or &quot;apply&quot;]</shortdescription><description>baselining mode [&quot;fit&quot; or &quot;apply&quot;]</description>
         
         <value>fit</value>
     </param>
 
-    <param subparam="true" name="dosubtract" type="bool"><shortdescription>subtract baseline from input data [True, False] </shortdescription><description>subtract baseline from input data [True, False] </description>
+    <param type="bool" name="dosubtract" subparam="true"><shortdescription>subtract baseline from input data [True, False] </shortdescription><description>subtract baseline from input data [True, False] </description>
         
         <value>True</value>
     </param>
 
-    <param subparam="true" ignorecase="true" name="blformat" type="any">
+    <param type="any" name="blformat" ignorecase="true" subparam="true">
         <shortdescription>format(s) of file(s) in which best-fit parameters are written</shortdescription>
         <description>format(s) of file(s) in which best-fit parameters are written [&quot;text&quot;, &quot;csv&quot;, &quot;table&quot; or &quot;&quot;]</description>
-        <any limittypes="string stringArray" type="variant"/>
+        <type>string</type><type>stringVec</type>
         <value type="string">text</value>
         <allowed kind="enum">
             <value>table</value>
@@ -136,18 +136,18 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param subparam="true" name="bloutput" type="any"><shortdescription>name(s) of file(s) in which best-fit parameters are written</shortdescription><description>name(s) of file(s) in which best-fit parameters are written</description>
+    <param type="any" name="bloutput" subparam="true"><shortdescription>name(s) of file(s) in which best-fit parameters are written</shortdescription><description>name(s) of file(s) in which best-fit parameters are written</description>
         
-        <any limittypes="string stringArray" type="variant"/>
+        <type>string</type><type>stringVec</type>
         <value type="string"/>
     </param>
 
-    <param subparam="true" name="bltable" type="string"><shortdescription>name of baseline table to apply</shortdescription><description>name of baseline table to apply</description>
+    <param type="string" name="bltable" subparam="true"><shortdescription>name of baseline table to apply</shortdescription><description>name of baseline table to apply</description>
         
         <value/>
     </param>
 
-    <param ignorecase="true" name="blfunc" type="string">
+    <param type="string" name="blfunc" ignorecase="true">
         <shortdescription>baseline model function</shortdescription>
         <description>baseline model function [&quot;poly&quot;, &quot;chebyshev&quot;, &quot;cspline&quot;, &quot;sinusoid&quot;, or &quot;variable&quot;(expert mode)]</description>
         <value>poly</value>
@@ -160,22 +160,22 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param subparam="true" name="order" type="int"><shortdescription>order of baseline model function</shortdescription><description>order of baseline model function</description>
+    <param type="int" name="order" subparam="true"><shortdescription>order of baseline model function</shortdescription><description>order of baseline model function</description>
         
         <value>5</value>
     </param>
 
-    <param subparam="true" name="npiece" type="int"><shortdescription>number of element polynomials for cubic spline curve</shortdescription><description>number of element polynomials for cubic spline curve</description>
+    <param type="int" name="npiece" subparam="true"><shortdescription>number of element polynomials for cubic spline curve</shortdescription><description>number of element polynomials for cubic spline curve</description>
         
         <value>2</value>
     </param>
 
-    <param subparam="true" name="applyfft" type="bool"><shortdescription>automatically set wave numbers of sinusoids</shortdescription><description>automatically set wave numbers of sinusoids</description>
+    <param type="bool" name="applyfft" subparam="true"><shortdescription>automatically set wave numbers of sinusoids</shortdescription><description>automatically set wave numbers of sinusoids</description>
         
         <value>True</value>
     </param>
 
-    <param subparam="true" ignorecase="true" name="fftmethod" type="string">
+    <param type="string" name="fftmethod" ignorecase="true" subparam="true">
         <shortdescription>method for automatically set wave numbers of sinusoids [&quot;fft&quot;]</shortdescription>
         <description>method for automatically set wave numbers of sinusoids</description>
         <value>fft</value>
@@ -184,49 +184,49 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param subparam="true" name="fftthresh" type="any"><shortdescription>threshold to select wave numbers of sinusoids</shortdescription><description>threshold to select wave numbers of sinusoids</description>
+    <param type="any" name="fftthresh" subparam="true"><shortdescription>threshold to select wave numbers of sinusoids</shortdescription><description>threshold to select wave numbers of sinusoids</description>
         
         <value type="double">3.0</value>
     </param>
 
-    <param subparam="true" name="addwn" type="any"><shortdescription>additional wave numbers to use</shortdescription><description>additional wave numbers to use</description>
+    <param type="any" name="addwn" subparam="true"><shortdescription>additional wave numbers to use</shortdescription><description>additional wave numbers to use</description>
         
-        <value type="intArray"><value>0</value></value>
+        <value type="intVec"><value>0</value></value>
     </param>
 
-    <param subparam="true" name="rejwn" type="any"><shortdescription>wave numbers NOT to use</shortdescription><description>wave numbers NOT to use</description>
+    <param type="any" name="rejwn" subparam="true"><shortdescription>wave numbers NOT to use</shortdescription><description>wave numbers NOT to use</description>
         
-        <value type="intArray"/>
+        <value type="intVec"/>
     </param>
 
-    <param subparam="true" name="clipthresh" type="double"><shortdescription>clipping threshold for iterative fitting</shortdescription><description>clipping threshold for iterative fitting</description>
+    <param type="double" name="clipthresh" subparam="true"><shortdescription>clipping threshold for iterative fitting</shortdescription><description>clipping threshold for iterative fitting</description>
         
         <value>3.0</value>
     </param>
 
-    <param subparam="true" name="clipniter" type="int"><shortdescription>maximum iteration number for iterative fitting</shortdescription><description>maximum iteration number for iterative fitting</description>
+    <param type="int" name="clipniter" subparam="true"><shortdescription>maximum iteration number for iterative fitting</shortdescription><description>maximum iteration number for iterative fitting</description>
         
         <value>0</value>
     </param>
 
-    <param subparam="true" name="blparam" type="string"><shortdescription>text file that stores per spectrum fit parameters</shortdescription><description>text file that stores per spectrum fit parameters</description>
+    <param type="string" name="blparam" subparam="true"><shortdescription>text file that stores per spectrum fit parameters</shortdescription><description>text file that stores per spectrum fit parameters</description>
         
         <value/>
     </param>
 
-    <param subparam="true" name="verbose" type="bool">
+    <param type="bool" name="verbose" subparam="true">
         <shortdescription>output fitting parameters to logger [True, False]</shortdescription>
         <description>output fitting parameters to logger</description>
         <value>False</value>
     </param>
 
-    <param name="updateweight" type="bool">
+    <param type="bool" name="updateweight">
         <shortdescription>update WEIGHT column [True, False]</shortdescription>
         <description>update WEIGHT column based on sigmavalue computed over unmasked range</description>
         <value>False</value>
     </param>
 
-    <param subparam="true" name="sigmavalue" type="string">
+    <param type="string" name="sigmavalue" subparam="true">
         <shortdescription>value used for computing weight</shortdescription>
         <description>value used for computing weight</description>
         <value>stddev</value>
@@ -236,23 +236,23 @@ pipeline processing for huge dataset.
         </allowed>
     </param>
 
-    <param name="showprogress" type="bool">
+    <param type="bool" name="showprogress">
         <shortdescription>(NOT SUPPORTED YET) show progress status for large data [True, False] (NOT SUPPORTED YET)</shortdescription>
         <description>(NOT SUPPORTED YET) show progress status for large data</description>
         <value>False</value>
     </param>
 
-    <param subparam="true" name="minnrow" type="int"><shortdescription>(NOT SUPPORTED YET) minimum number of input spectra to show progress status</shortdescription><description>(NOT SUPPORTED YET) minimum number of input spectra to show progress status</description>
+    <param type="int" name="minnrow" subparam="true"><shortdescription>(NOT SUPPORTED YET) minimum number of input spectra to show progress status</shortdescription><description>(NOT SUPPORTED YET) minimum number of input spectra to show progress status</description>
         
         <value>1000</value>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>name of output file</shortdescription><description>name of output file</description>
+    <param type="string" name="outfile"><shortdescription>name of output file</shortdescription><description>name of output file</description>
         
         <value/>
     </param>
 
-    <param name="overwrite" type="bool">
+    <param type="bool" name="overwrite">
         <shortdescription>overwrite the output file if already exists [True, False] </shortdescription>
         <description>overwrite the output file if already exists</description>
         <value>False</value>
@@ -299,8 +299,8 @@ pipeline processing for huge dataset.
                         <default param="applyfft"><value>True</value></default>
                         <default param="fftmethod"><value type="string">fft</value></default>
                         <default param="fftthresh"><value type="double">3.0</value></default>
-                        <default param="addwn"><value type="intArray"><value>0</value></value></default>
-                        <default param="rejwn"><value type="intArray"/></default>
+                        <default param="addwn"><value type="intVec"><value>0</value></value></default>
+                        <default param="rejwn"><value type="intVec"/></default>
                         <default param="clipthresh"><value>3.0</value></default>
                         <default param="clipniter"><value>0</value></default>
                 </equals> 
@@ -310,14 +310,14 @@ pipeline processing for huge dataset.
                 </equals>
             </when>
             <when param="updateweight">
-                <equals value="False" type="bool"/>
-                <equals value="True" type="bool">
+                <equals type="bool" value="False"/>
+                <equals type="bool" value="True">
                         <default param="sigmavalue"><value type="string">stddev</value></default>
                 </equals>
             </when>
             <when param="showprogress">
-                <equals value="False" type="bool"/>
-                <equals value="True" type="bool">
+                <equals type="bool" value="False"/>
+                <equals type="bool" value="True">
                         <default param="minnrow"><value>1000</value></default>
                 </equals>
             </when>

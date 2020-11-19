@@ -155,7 +155,7 @@ def parseCoeff(txt):
         ret.append(float(c.split('=')[1]))
     return ret
 
-    
+
 def parseRms(txt):
     t = txt.lstrip().rstrip('\n')[6:]
     return float(t)

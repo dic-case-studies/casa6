@@ -22,17 +22,18 @@ else:
     from taskinit import gentools, casalog
     from mstools import write_history
     import sdutil
-    ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
+    ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
+
 
 @contextlib.contextmanager
 def open_table(vis, nomodify=True):
-    #(tb,) = gentools(['tb'])
     tb.open(vis, nomodify=nomodify)
     try:
         yield tb
     finally:
         tb.close()
-        
+
+
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,

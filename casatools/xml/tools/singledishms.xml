@@ -1,0 +1,826 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+   <tool module="singledishms" name="singledishms">
+   <shortdescription>New single dish tool interface to process an MS</shortdescription>
+
+
+<code>
+	<include>singledishms_forward.h</include>
+<private>
+	<include>singledishms_private.h</include>
+</private>
+</code>
+ 
+   <method name="singledishms" type="constructor">
+   <shortdescription>Construct singledishms tool</shortdescription>
+   
+<description>
+This is used to construct a singledishms tool instance. The created instance is 
+just like the default one ('sdms') but physically independent from it. 
+This is useful when users want to create their own tool instance inside scripts/modules 
+to avoid possible conflicts that may happen when using the default tool instance 
+from various places.
+</description>
+<input>
+</input>
+<returns type="singledishms"/>
+<example>
+Manual tool construction is done this way:
+
+ssd = casac.singledishms()
+
+</example>
+</method>
+
+<method name="open" type="function">
+   <shortdescription>Open a new MeasurementSet for processing after closing current MeasurementSet
+   </shortdescription>
+<description>
+Close the current MeasurementSet and open a new MeasurementSet
+instead. The current state of sdms is retained, except for
+the data selection.
+</description>
+<input>
+     <param mustexist="True" name="ms_name" type="path">
+     <description>New MeasurementSet to be processed</description>
+     <value/>
+     </param>
+</input>
+<returns type="bool">
+</returns>
+<example>
+sdms.open('m100_sd.ms')
+</example>
+</method>
+
+<method name="close" type="function">
+   <shortdescription>Close the sdms tool, with data written on disk, keeping sdms running for future use
+   </shortdescription>
+   <description>
+This is used to close sdms tools. Note that the
+data is written to disk and detached from sdms tool.
+This is a synonym for done.
+   </description>
+   <returns type="bool"/>
+   <example>
+sdms.close()
+   </example>
+</method>
+
+<method name="done" type="function">
+  <shortdescription>Close the sdms tool</shortdescription>
+
+  <description>
+This is used to close and sdms tools. Note that the
+data is written to disk  and detached from sdms tool.
+This is a synonym for close.
+  </description>
+  <returns type="bool"/>
+   <example>
+sdms.done()
+   </example>
+</method>
+
+<method name="name" type="function">
+  <shortdescription>Provide the name of the attached MeasurementSet</shortdescription>
+  <description>
+    Returns the name of the attached MeasurementSet.
+  </description>
+  <returns type="string"/>
+  <example>
+sdms.name()
+  </example>
+</method>
+
+<method name="subtract_baseline" type="function">
+  <shortdescription>Invoke baseline subtraction
+  </shortdescription>
+  <description>
+Fit baseline and subtract it from selected spectra
+  </description>
+  <input>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+    <param name="bloutput" type="string">
+      <description>The name(s) of Baseline to be output</description>
+      <value/>
+    </param>
+
+    <param name="dosubtract" type="bool">
+      <description>Execute baseline subtraction from the input data</description>
+      <value>true</value>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="updateweight" type="bool">
+      <description>Update weight based on sigmavalue of residual data</description>
+      <value>false</value>
+    </param>
+
+    <param name="sigmavalue" type="string">
+      <description>sigma value for computing weight</description>
+      <value>stddev</value>
+    </param>
+
+    <param name="blfunc" type="string">
+      <description>baseline function</description>
+      <value>poly</value>
+    </param>
+
+    <param name="order" type="int">
+      <description>polynomial order</description>
+      <value>5</value>
+    </param>
+
+    <param name="clip_threshold_sigma" type="float">
+      <description>threshold for clipping in unit of sigma</description>
+      <value>3.0</value>
+    </param>
+
+    <param name="num_fitting_max" type="int">
+      <description>maximum number of recursive clipping</description>
+      <value>1</value>
+    </param>
+
+    <param name="linefinding" type="bool">
+      <description>do line finding</description>
+      <value>false</value>
+    </param>
+
+    <param subparam="true" name="threshold" type="float">
+        <description>S/N threshold for line finder</description>
+        <value>5.0</value>
+    </param>
+
+    <param name="avg_limit" type="int">
+        <description>channel averaging for broad lines in line finding</description>
+        <value>4</value>
+    </param>
+
+    <param name="minwidth" type="int">
+        <description>the minimum channel width to detect as a line by line finder</description>
+        <value>4</value>
+    </param>
+
+    <param name="edge" type="intVec">
+        <description>channels to drop at beginning and end of spectrum in line finding</description>
+        <value type="vector"><value>0</value><value>0</value></value>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.subtract_baseline(order=3,clip_threshold_sigma=5.0,num_fitting_max=6)
+  </example>
+</method>
+
+<method name="subtract_baseline_cspline" type="function">
+  <shortdescription>Invoke baseline subtraction
+  </shortdescription>
+  <description>
+Fit baseline and subtract it from selected spectra
+  </description>
+  <input>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+    <param name="bloutput" type="string">
+      <description>The name(s) of Baseline to be output</description>
+      <value/>
+    </param>
+
+    <param name="dosubtract" type="bool">
+      <description>Execute baseline subtraction from the input data</description>
+      <value>true</value>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="updateweight" type="bool">
+      <description>Update weight based on sigmavalue of residual data</description>
+      <value>false</value>
+    </param>
+
+    <param name="sigmavalue" type="string">
+      <description>sigma value for computing weight</description>
+      <value>stddev</value>
+    </param>
+
+    <param name="npiece" type="int">
+      <description>cspline npiece</description>
+      <value>5</value>
+    </param>
+
+    <param name="clip_threshold_sigma" type="float">
+      <description>threshold for clipping in unit of sigma</description>
+      <value>3.0</value>
+    </param>
+
+    <param name="num_fitting_max" type="int">
+      <description>maximum number of recursive clipping</description>
+      <value>1</value>
+    </param>
+
+    <param name="linefinding" type="bool">
+      <description>do line finding</description>
+      <value>false</value>
+    </param>
+
+    <param subparam="true" name="threshold" type="float">
+        <description>S/N threshold for line finder</description>
+        <value>5.0</value>
+    </param>
+
+    <param name="avg_limit" type="int">
+        <description>channel averaging for broad lines in line finding</description>
+        <value>4</value>
+    </param>
+
+    <param name="minwidth" type="int">
+        <description>the minimum channel width to detect as a line by line finder</description>
+        <value>4</value>
+    </param>
+
+    <param name="edge" type="intVec">
+        <description>channels to drop at beginning and end of spectrum in line finding</description>
+        <value type="vector"><value>0</value><value>0</value></value>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.subtract_baseline_cspline(npiece=3,clip_threshold_sigma=5.0,num_fitting_max=6)
+  </example>
+</method>
+
+
+<method name="subtract_baseline_sinusoid" type="function">
+  <shortdescription>Invoke baseline subtraction
+  </shortdescription>
+  <description>
+Fit baseline and subtract it from selected spectra
+  </description>
+  <input>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+    <param name="bloutput" type="string">
+      <description>The name(s) of Baseline to be output</description>
+      <value/>
+    </param>
+
+    <param name="dosubtract" type="bool">
+      <description>Execute baseline subtraction from the input data</description>
+      <value>true</value>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="updateweight" type="bool">
+      <description>Update weight based on sigmavalue of residual data</description>
+      <value>false</value>
+    </param>
+
+    <param name="sigmavalue" type="string">
+      <description>sigma value for computing weight</description>
+      <value>stddev</value>
+    </param>
+
+    <param name="addwn" type="string">
+      <description>additional wave numbers to use</description>
+      <value>0</value>
+    </param>
+
+    <param name="rejwn" type="string">
+      <description>reject specified wave numbers</description>
+      <value/>
+    </param>
+
+    <param name="applyfft" type="bool">
+      <description>automatically set wave numbers of sinusoids</description>
+      <value>false</value>
+    </param>
+
+    <param name="fftmethod" type="string">
+      <description>method to automatically set wave numbers of sinusoids ['fft']</description>
+      <value>fft</value>
+    </param>
+
+    <param name="fftthresh" type="any">
+      <description>threshold to select wave numbers of sinusoids</description>
+      <any type="variant"/>
+      <value>3.0</value>
+    </param>
+
+    <param name="clip_threshold_sigma" type="float">
+      <description>threshold for clipping in unit of sigma</description>
+      <value>3.0</value>
+    </param>
+
+    <param name="num_fitting_max" type="int">
+      <description>maximum number of recursive clipping</description>
+      <value>1</value>
+    </param>
+
+    <param name="linefinding" type="bool">
+      <description>do line finding</description>
+      <value>false</value>
+    </param>
+
+    <param subparam="true" name="threshold" type="float">
+        <description>S/N threshold for line finder</description>
+        <value>5.0</value>
+    </param>
+
+    <param name="avg_limit" type="int">
+        <description>channel averaging for broad lines in line finding</description>
+        <value>4</value>
+    </param>
+
+    <param name="minwidth" type="int">
+        <description>the minimum channel width to detect as a line by line finder</description>
+        <value>4</value>
+    </param>
+
+    <param name="edge" type="intVec">
+        <description>channels to drop at beginning and end of spectrum in line finding</description>
+        <value type="vector"><value>0</value><value>0</value></value>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.subtract_baseline_sinusoid(applyfft=True,clip_threshold_sigma=5.0,num_fitting_max=6)
+  </example>
+</method>
+
+<method name="subtract_baseline_variable" type="function">
+  <shortdescription>Invoke baseline subtraction by parameters stored in a file.
+  </shortdescription>
+  <description>
+Fit baseline and subtract it from selected spectra.
+Fit parameters for each spectrum are obtained from a text file.
+  </description>
+  <input>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+    <param name="bloutput" type="string">
+      <description>The name(s) of Baseline to be output</description>
+      <value/>
+    </param>
+
+    <param name="dosubtract" type="bool">
+      <description>Execute baseline subtraction from the input data</description>
+      <value>true</value>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="updateweight" type="bool">
+      <description>Update weight based on sigmavalue of residual data</description>
+      <value>false</value>
+    </param>
+
+    <param name="sigmavalue" type="string">
+      <description>sigma value for computing weight</description>
+      <value>stddev</value>
+    </param>
+
+    <param mustexist="True" name="blparam" type="path">
+      <description>The name of text file that stores fit parameters for each spectrum of selected MS</description>
+      <value/>
+    </param>
+
+    <param name="verbose" type="bool">
+      <description>Print fitting parameters of each spectrum to logger</description>
+      <value>false</value>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.subtract_baseline_variable('m100_fitparam.txt')
+  </example>
+</method>
+
+<method name="apply_baseline_table" type="function">
+  <shortdescription>Apply baseline table to MS.
+  </shortdescription>
+  <description>
+For each row of given baseline table, read baseline parameters, 
+construct baseline, then subtract it from the corresponding spectrum 
+in the MS.
+  </description>
+  <input>
+
+    <param name="bltable" type="string">
+      <description>The name of input Baseline Table</description>
+      <value/>
+    </param>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="updateweight" type="bool">
+      <description>Update weight based on sigmavalue of residual data</description>
+      <value>false</value>
+    </param>
+
+    <param name="sigmavalue" type="string">
+      <description>sigma value for computing weight</description>
+      <value>stddev</value>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.apply_baseline_table('m100_sd.bltable')
+  </example>
+</method>
+
+<method name="fit_line" type="function">
+  <shortdescription>Invoke line fitting
+  </shortdescription>
+  <description>
+Fit line profile to selected spectra and obtain the best-fit parameter values
+  </description>
+  <input>
+
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	<value>data</value>
+	<value>float_data</value>
+	<value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="spw" type="any">
+      <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="pol" type="any">
+      <description>Select data by polarization(s)</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+
+    <param name="timebin" type="string">
+        <description>Bin width for time averaging</description>     
+        <value/>
+    </param>
+    
+    <param name="timespan" type="string">
+        <description>Span the timebin across 'scan', 'state', 'field', or a combination of them (e.g., 'scan,state')</description>
+        <value/>
+    </param>
+
+    <param name="polaverage" type="string">
+        <description>polarization averaging mode ('', 'stokes', or 'geometric')</description>
+        <allowed kind="enum">
+            <value/>
+            <value>stokes</value>
+            <value>geometric</value>
+        </allowed>
+        <value/>
+    </param>
+
+    <param name="fitfunc" type="string">
+      <description>Function of line profile</description>
+      <value>gaussian</value>
+      <allowed kind="enum">
+	<value>gaussian</value>
+	<value>lorentzian</value>
+      </allowed>
+    </param>
+
+    <param name="nfit" type="string">
+      <description>Comma-separated numbers of gaussian/lorentzian lines to fit in maskline region. ignored when linefinding=true.</description>
+      <value>0</value>
+    </param>
+
+    <param name="linefinding" type="bool">
+      <description>do line finding</description>
+      <value>false</value>
+    </param>
+
+    <param name="threshold" type="float">
+        <description>S/N threshold for line finder</description>
+        <value>5.0</value>
+    </param>
+
+    <param name="avg_limit" type="int">
+        <description>channel averaging for broad lines in line finding</description>
+        <value>4</value>
+    </param>
+
+    <param name="minwidth" type="int">
+        <description>the minimum channel width to detect as a line by line finder</description>
+        <value>4</value>
+    </param>
+
+    <param name="edge" type="intVec">
+        <description>channels to drop at beginning and end of spectrum in line finding</description>
+        <value type="vector"><value>0</value><value>0</value></value>
+    </param>
+
+    <param name="tempfile" type="string">
+      <description>The name of temporary file to keep fitting results</description>
+      <value/>
+    </param>
+
+    <param name="tempoutfile" type="string">
+      <description>The name of temporary ms file</description>
+      <value/>
+    </param>
+
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.open('m100_sd.ms')
+sdms.set_selection(field='M100')
+sdms.fit_line(fitfunc='gauss',spw='0:1000~2000;4000~5000',nfit=[1,1])
+  </example>
+</method>
+
+<method name="set_selection" type="function">
+  <shortdescription>Select Measurementset to process</shortdescription>
+  
+  <description>
+
+  </description>
+  <input>
+    
+     <param name="spw" type="any">
+     <description>Spectral Window Ids (0 relative) to select; -1 interpreted as all</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="field" type="any">
+     <any type="variant"/>
+     <description>Field Ids (0 relative) or Field names (msselection syntax and wilcards are used) to select</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="antenna" type="any">
+     <description>Antenna Ids (0 relative) or Antenna names (msselection syntax and wilcards are used) to select</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="timerange" type="any">
+     <description>Limit data selected to be within a given time range. Syntax is defined in the msselection link</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="scan" type="any">
+     <description>Limit data selected on scan numbers. Syntax is defined in the msselection link</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+     
+     <param name="observation" type="any">
+     <description>Select data by observation ID(s). Syntax is the same as for scan numbers.</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+     
+     <param name="polarization" type="any">
+     <description>Select data by polarization(s)</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+     
+     <param name="beam" type="any">
+     <description>Beam Ids (0 relative) to select; CURRENTLY NOT AVAILABLE!!!</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="intent" type="any">
+     <description>Select data by intent(s)</description>
+     <value/>
+     </param>
+
+     <param name="taql" type="string">
+     <description>For the TAQL experts, flexible data selection using the TAQL syntax</description>
+     <value/>
+     </param>
+
+    <param name="reindex" type="bool">
+      <description>Re-index indices in subtables based on data selection</description>
+      <value>true</value>
+    </param>
+ 
+  </input>
+  <returns type="bool"/>
+  <example>
+sdms.set_selection(field='M100', spw='3,5')
+  </example>
+</method>
+
+<method name="smooth" type="function">
+  <shortdescription>Smooth data with arbitrary smoothing kernel</shortdescription>
+  
+  <description>
+  NOTE: currently only Gaussian kernel is supported.
+  </description>
+  <input>
+    <param name="type" type="string">
+      <description>Smoothing kernel type</description>
+      <value>gaussian</value>
+      <allowed kind="enum">
+        <value>gaussian</value>
+      </allowed>
+    </param>
+    
+    <param name="width" type="float">
+      <description>Smoothing kernel width</description>
+      <value>0.0</value>
+    </param>
+      
+    <param name="datacolumn" type="string">
+      <description>The name of data column to process ('data', 'float_data', or 'corrected')</description>
+      <value>data</value>
+      <allowed kind="enum">
+	    <value>data</value>
+	    <value>float_data</value>
+	    <value>corrected</value>
+      </allowed>
+    </param>
+
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+  </input> 
+  
+  <returns type="bool"/>
+  <example>
+  </example> 
+</method>
+
+<method name="importasap" type="function">
+  <shortdescription>Import ASAP Scantable to MS.</shortdescription>
+  
+  <description>
+  Import ASAP Scantable data to MeasurementSet.
+  </description>
+  <input>
+    <param name="infile" type="string">
+      <description>The name of input ASAP Scantable</description>
+      <value/>
+    </param>
+    
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+    
+    <param name="parallel" type="bool">
+      <description>Turn on parallel execution</description>
+      <value>false</value>
+    </param>
+  </input> 
+  
+  <returns type="bool"/>
+  <example>
+  </example> 
+</method>
+
+<method name="importnro" type="function">
+  <shortdescription>Import NOSTAR data to MS.</shortdescription>
+  
+  <description>
+  Import NOSTAR data to MeasurementSet.
+  </description>
+  <input>
+    <param name="infile" type="string">
+      <description>The name of input NOSTAR data</description>
+      <value/>
+    </param>
+    
+    <param name="outfile" type="string">
+      <description>The name of output MeasurementSet</description>
+      <value/>
+    </param>
+
+    <param name="parallel" type="bool">
+      <description>Turn on parallel execution</description>
+      <value>false</value>
+    </param>
+  </input> 
+  
+  <returns type="bool"/>
+  <example>
+  </example> 
+</method>
+
+</tool>
+</casaxml>
