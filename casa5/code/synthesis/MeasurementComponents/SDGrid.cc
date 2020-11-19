@@ -1249,52 +1249,6 @@ void SDGrid::makeImage(FTMachine::Type inType,
     }
 }
 
-void SDGrid::getParamsForFTMachineType(const ROVisibilityIterator& vi, FTMachine::Type in_type,
-          casacore::Bool& out_dopsf, FTMachine::Type& out_type) const {
-    
-    // Tune input type of FTMachine
-    auto haveCorrectedData = not (vi.msColumns().correctedData().isNull());
-    auto tunedType = 
-            ((in_type == FTMachine::CORRECTED) && (not haveCorrectedData)) ?
-            FTMachine::OBSERVED : in_type;
-
-    // Compute output parameters
-    switch(tunedType) {
-    case FTMachine::RESIDUAL:
-    case FTMachine::MODEL:
-    case FTMachine::CORRECTED:
-        out_dopsf = false;
-        out_type = tunedType;
-        break;
-    case FTMachine::PSF:
-    case FTMachine::COVERAGE:
-        out_dopsf = true;
-        out_type = tunedType;
-        break;
-    default:
-        out_dopsf = false;
-        out_type = FTMachine::OBSERVED;
-        break;
-    }
-}
-
-void SDGrid::setupVisBufferForFTMachineType(FTMachine::Type type, VisBuffer& vb) const {
-    switch(type) {
-    case FTMachine::RESIDUAL:
-        vb.visCube() = vb.correctedVisCube();
-        vb.visCube() -= vb.modelVisCube();
-        break;
-    case FTMachine::PSF:
-        vb.visCube() = Complex(1.0,0.0);
-        break;
-    case FTMachine::COVERAGE:
-        vb.visCube() = Complex(1.0);
-        break;
-    default:
-        break;
-    }
-}
-
 // Finalize : optionally normalize by weight image
 ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
 					  Bool normalize)
