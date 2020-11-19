@@ -142,10 +142,8 @@ def parse_spw(msname, spw=''):
 
     with open_table(msname) as tb:
         ddids = np.unique(tb.getcol('DATA_DESC_ID'))
-        print(ddids)
     with open_msmd(msname) as msmd:
         spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
-        print(spws_all)
 
     if len(spw) == 0:
         # '' indicates all spws, which is equivalent to '*'
@@ -325,9 +323,8 @@ def sdatmcor(
     # Call calc Function
     #
     calc_sdatmcor(
-        infile, datacolumn, outfile, overwrite,
-        field, spw, scan, antenna, correlation, timerange, intent, observation, feed,
-        outputspw,
+        infile, datacolumn, outfile,
+        spw,
         gaindict,
         dtem_dh, h0, atmtype,
         atmdetail,
@@ -489,20 +486,12 @@ def _convert_to_list(in_arg, out_ele_type=float):
         raise Exception("INTERNAL ERROR:: (assert) Unexpected argument type.")
 
 
-def get_default_antenna(msname, antenna):
+def get_default_antenna(msname):
 
     # Unpreferable (problematic) antenna #
     excluded_ant = ['PM01']
 
-    # # set default (=All) if no arg. #
-    # if antenna == '':
-    #     antenna = '*&&&'
-
-    # # Parse antenna by msselect grammar #
-    # ms = mstool()
-    # sel = ms.msseltoindex(msname, baseline=antenna)
-    # ant_list = sel['antenna1']  # antenna ID list
-
+    # get list of antenna Ids from MAIN table
     with open_table(msname) as tb:
         ant_list = np.unique(tb.getcol('ANTENNA1'))
 
@@ -630,17 +619,7 @@ def calc_sdatmcor(
         p_infile,
         p_datacolumn,
         p_outfile,
-        p_overwrite,
-        p_field,
         p_spw,
-        p_scan,
-        p_antenna,
-        p_correlation,
-        p_timerange,
-        p_intent,
-        p_observation,
-        p_feed,
-        p_outputspw,
         gaindict,
         param_dtem_dh,
         param_h0,
@@ -667,17 +646,7 @@ def calc_sdatmcor(
         _msg('infile      = %s' % p_infile)
         _msg('datacolumn  = %s' % p_datacolumn)
         _msg('outfile     = %s' % p_outfile)
-        _msg('overwrite   = %s' % p_overwrite)
-        _msg('field       = %s' % p_field)
         _msg('spw         = %s' % p_spw)
-        _msg('scan        = %s' % p_scan)
-        _msg('antenna     = %s' % p_antenna)
-        _msg('correlation = %s' % p_correlation)
-        _msg('timerange   = %s' % p_timerange)
-        _msg('intent      = %s' % p_intent)
-        _msg('observation = %s' % p_observation)
-        _msg('feed        = %s' % p_feed)
-        _msg('outputspw   = %s' % p_outputspw)
         _msg('dtem_dh     = %s' % param_dtem_dh)
         _msg('h0          = %s' % param_h0)
         _msg('atmtype     = %s' % param_atmtype)
@@ -743,7 +712,7 @@ def calc_sdatmcor(
     # Tool Default constant (CAS-13160)
     # - Antenna and its altitude are determined.
     #
-    antenna = get_default_antenna(rawms, p_antenna)       # default antenna_id   (UNDER RE-CONSTRUCTION)
+    antenna = get_default_antenna(rawms)       # default antenna_id   (UNDER RE-CONSTRUCTION)
     altitude = get_default_altitude(rawms, antenna)       # default altitude  - see inside in detail (UNDER RE-CONSTRUCTION)
 
     #
