@@ -2005,7 +2005,7 @@
             "testType":"regression",
             "maintainer":"CASA DEV",
             "maintainerEmail":"noreply@nrao.edu",
-            "testOptions":["mpi"],
+            "testOptions":[],
             "testGroup":[],
             "timeout":0,
             "comment":""
