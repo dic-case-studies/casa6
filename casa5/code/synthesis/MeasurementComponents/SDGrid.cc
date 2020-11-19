@@ -1230,7 +1230,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
             FTMachine::Type actualType;
             Bool doPSF;
             getParamsForFTMachineType(vi, inType, doPSF, actualType);
-            setupVisBufferForFTMachineType(actualType,vb);
+            setupVisBufferForFTMachineType(actualType, vb);
             constexpr Int allVbRows = -1;
             put(vb, allVbRows, doPSF, actualType);
         }
