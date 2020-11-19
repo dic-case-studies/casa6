@@ -643,6 +643,21 @@ casacore::rownr_t SimpleSimVi2::nShapes () const
   return nShapes_;
 };
 
+const casacore::Vector<casacore::rownr_t>& SimpleSimVi2::nRowsPerShape () const
+{
+  return nRowsPerShape_;
+}
+
+const casacore::Vector<casacore::Int>& SimpleSimVi2::nChannelsPerShape () const
+{
+  return nChannPerShape_;
+}
+
+const casacore::Vector<casacore::Int>& SimpleSimVi2::nCorrelationsPerShape () const
+{
+  return nCorrsPerShape_;
+}
+
 // Return the row ids as from the original root table. This is useful
 // to find correspondance between a given row in this iteration to the
 // original ms row
@@ -1068,7 +1083,6 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
 
 void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
 
-  //cout << "****corruptByParang..." << thisTime_ << " " << nBsln_;// << endl;
 
   // Assumes constant time in this subchunk
   Vector<Float> pa(this->feed_pa(thisTime_));

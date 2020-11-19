@@ -177,6 +177,15 @@ public:
     // Return the number of distinct array/cube shapes in the current iteration
     virtual casacore::rownr_t nShapes () const override;
 
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const override;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const override;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const override;
+
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
     // original ms row
@@ -642,9 +651,9 @@ protected:
     void configureNewSubchunk (casacore::Int msId, const casacore::String & msName, casacore::Bool isNewMs,
                                casacore::Bool isNewArrayId, casacore::Bool isNewFieldId,
                                casacore::Bool isNewSpectralWindow, const Subchunk & subchunk,
-                               casacore::Vector<casacore::rownr_t>& nRowsPerShape,
-                               casacore::Vector<casacore::Int>& nChannelsPerShape, 
-                               casacore::Vector<casacore::Int>& nCorrelationsPerShape,
+                               const casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                               const casacore::Vector<casacore::Int>& nChannelsPerShape, 
+                               const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                const casacore::Vector<casacore::Int> & correlations,
                                const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsDefined,
                                const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsSelected,
