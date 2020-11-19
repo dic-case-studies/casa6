@@ -321,7 +321,7 @@ def sdatmcor(
     #
     calc_sdatmcor(
         infile, datacolumn, outfile, overwrite,
-        field, spw, scan, antenna, correlation, timerange, intent, observation, feed, msselect,
+        field, spw, scan, antenna, correlation, timerange, intent, observation, feed,
         outputspw,
         gaindict,
         dtem_dh, h0, atmtype,
@@ -632,7 +632,6 @@ def calc_sdatmcor(
         p_intent,
         p_observation,
         p_feed,
-        p_msselect,
         p_outputspw,
         gaindict,
         param_dtem_dh,
@@ -670,7 +669,6 @@ def calc_sdatmcor(
         _msg('intent      = %s' % p_intent)
         _msg('observation = %s' % p_observation)
         _msg('feed        = %s' % p_feed)
-        _msg('msselect    = %s' % p_msselect)
         _msg('outputspw   = %s' % p_outputspw)
         _msg('dtem_dh     = %s' % param_dtem_dh)
         _msg('h0          = %s' % param_h0)
@@ -1002,10 +1000,6 @@ def calc_sdatmcor(
 
             # Query Text (DESC_ID) #
             querytext = 'DATA_DESC_ID in %s' % ddis[spwid]
-
-            # CAS-13160 Applying MSSELECT if anything is given #
-            if (p_msselect != ''):
-                querytext += p_msselect
 
             # Query #
             subtb = tb.query(querytext)
