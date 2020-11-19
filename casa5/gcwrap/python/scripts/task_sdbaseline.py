@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import numpy
 import os
+import contextlib
 from collections import Counter
 
 # get is_CASA6 and is_python3
@@ -13,16 +14,25 @@ if is_CASA6:
     from .mstools import write_history
     from . import sdutil
 
-    ms = mstool( )
-    sdms = singledishms( )
-    tb = table( )
-    msmd = msmetadata( )
+    ms = mstool()
+    sdms = singledishms()
+    tb = table()
+    msmd = msmetadata()
 else:
     from taskinit import gentools, casalog
     from mstools import write_history
     import sdutil
     ms,sdms,tb,msmd = gentools(['ms','sdms','tb', 'msmd'])
 
+@contextlib.contextmanager
+def open_table(vis, nomodify=True):
+    #(tb,) = gentools(['tb'])
+    tb.open(vis, nomodify=nomodify)
+    try:
+        yield tb
+    finally:
+        tb.close()
+        
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,
@@ -30,8 +40,10 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                blformat=None, bloutput=None, bltable=None, blfunc=None,
                order=None, npiece=None, applyfft=None, fftmethod=None,
                fftthresh=None, addwn=None, rejwn=None, clipthresh=None,
-               clipniter=None, blparam=None, verbose=None, showprogress=None,
-               minnrow=None, outfile=None, overwrite=None):
+               clipniter=None, blparam=None, verbose=None, 
+               updateweight=None, sigmavalue=None,
+               showprogress=None, minnrow=None, 
+               outfile=None, overwrite=None):
 
     casalog.origin('sdbaseline')
     try:
@@ -74,6 +86,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             sdms.apply_baseline_table(bltable=bltable,
                                       datacolumn=datacolumn,
                                       spw=spw,
+                                      updateweight=updateweight,
+                                      sigmavalue=sigmavalue,
                                       outfile=outfile)
             sdms.close()
             
@@ -129,12 +143,24 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                                                   clip_threshold_sigma=clipthresh,
                                                   num_fitting_max=clipniter+1,
                                                   blparam=blparam,
-                                                  verbose=verbose)
+                                                  verbose=verbose,
+                                                  updateweight=updateweight,
+                                                  sigmavalue=sigmavalue)
             func(**params)
             sdms.close()
             
             if (blfunc == 'variable'):
                 restore_sorted_table_keyword(infile, sorttab_info)
+
+        # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
+        if updateweight:
+            with open_table(outfile, False) as mytb:
+                cols_remove = []
+                for col in ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']:
+                    if col in tb.colnames():
+                        cols_remove.append(col)
+                if len(cols_remove) > 0:
+                    mytb.removecols(' '.join(cols_remove))
 
         # Write history to outfile
         param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
@@ -330,7 +356,8 @@ def prepare_for_baselining(**keywords):
     funcname = 'subtract_baseline'
 
     blfunc = keywords['blfunc']
-    keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw']
+    keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw', 
+            'updateweight', 'sigmavalue']
     if blfunc in ['poly', 'chebyshev']:
         keys += ['blfunc', 'order']
     elif blfunc == 'cspline':

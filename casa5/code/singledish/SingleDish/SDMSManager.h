@@ -79,8 +79,12 @@ public:
 			  casacore::Cube<casacore::Float> const &data_cube,
 			  casacore::Cube<casacore::Bool> const *flag_cube);
 
-protected:
+  void fillCubeToOutputMs(vi::VisBuffer2 *vb,
+			  casacore::Cube<casacore::Float> const &data_cube,
+			  casacore::Cube<casacore::Bool> const *flag_cube,
+			  casacore::Matrix<casacore::Float> const *weight_matrix);
 
+protected:
   void fillCubeToDataCols(vi::VisBuffer2 *vb,casacore::RefRows &rowRef,
 			  casacore::Cube<casacore::Float> const &data_cube,
 			  casacore::Cube<casacore::Bool> const *flag_cube);

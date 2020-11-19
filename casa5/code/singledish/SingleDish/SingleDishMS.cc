@@ -109,6 +109,45 @@ inline void GetCubeFromFloat(VisBuffer2 const &vb, Cube<Float> &cube) {
   inline void GetCubeDefault(VisBuffer2 const& /*vb*/, Cube<Float>& /*cube*/) {
   throw AipsError("Data accessor for VB2 is not properly configured.");
 }
+
+  inline float compute_weight(size_t const num_data,
+			      float const data[/*num_data*/],
+			      bool const mask[/*num_data*/],
+			      string const &sigma_value) {
+    int num_data_effective = 0;
+    float sum = 0.0;
+    float sum_sq = 0.0;
+    for (size_t i = 0; i < num_data; ++i) {
+      if (mask[i]) {
+	num_data_effective++;
+	sum += data[i];
+	sum_sq += data[i] * data[i];
+      }
+    }
+
+    float weight = 0.0;
+    if (num_data_effective > 0) {
+      float factor = 1.0 / static_cast<float>(num_data_effective);
+      float mean = sum * factor;
+      float mean_sq = sum_sq * factor;
+
+      float variance;
+      if (sigma_value == "stddev") {
+	variance = mean_sq - mean * mean;
+      } else if (sigma_value == "rms") {
+	variance = mean_sq;
+      }
+
+      if (variance > 0.0) {
+	weight = 1.0 / variance;
+      } else {
+	LogIO os(_ORIGIN);
+	os << "Weight set to 0 for a bad data." << LogIO::WARN;
+      }
+    }
+
+    return weight;
+  }
 } // anonymous namespace
 
 using namespace casacore;
@@ -242,7 +281,7 @@ void SingleDishMS::setSelection(Record const &selection, bool const verbose) {
     	}
     }
     if (!any_selection)
-      os << "No valid selection parameter is set." << LogIO::WARN;
+      os << "No valid selection pa<rameter is set." << LogIO::WARN;
   }
 }
 
@@ -756,6 +795,16 @@ void SingleDishMS::set_spectrum_to_cube(Cube<Float> &data_cube,
     data_cube(plane, i, row) = static_cast<Float>(in_data[i]);
 }
 
+void SingleDishMS::get_weight_matrix(vi::VisBuffer2 const &vb,
+    Matrix<Float> &weight_matrix) {
+  weight_matrix = vb.weight();
+}
+
+void SingleDishMS::set_weight_to_matrix(Matrix<Float> &weight_matrix, size_t const row,
+    size_t const plane, float in_weight) {
+  weight_matrix(plane, row) = static_cast<Float>(in_weight);
+}
+
 void SingleDishMS::get_flag_cube(vi::VisBuffer2 const &vb,
     Cube<Bool> &flag_cube) {
   flag_cube = vb.flagCube();
@@ -1182,6 +1231,8 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
                                       string const& out_bloutput_name,
                                       bool const& do_subtract,
                                       string const& in_spw,
+                                      bool const& update_weight,
+                                      string const& sigma_value,
                                       LIBSAKURA_SYMBOL(Status)& status,
                                       std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts,
                                       size_t const bltype,
@@ -1271,6 +1322,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
       float *spec_data = spec.data();
       bool *mask_data = mask.data();
       bool *mask2_data = mask2.data();
+      Matrix<Float> weight_matrix(num_pol, num_row, Array<Float>::uninitialized);
 
       auto get_wavenumber_upperlimit = [&](){ return static_cast<int>(num_chan) / 2 - 1; };
 
@@ -1316,6 +1368,11 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
       // get data/flag cubes (npol*nchan*nrow) from VisBuffer
       get_data_cube_float(*vb, data_chunk);
       get_flag_cube(*vb, flag_chunk);
+
+      // get weight matrix (npol*nrow) from VisBuffer
+      if (update_weight) {
+	get_weight_matrix(*vb, weight_matrix);
+      }
 
       // loop over MS rows
       for (size_t irow = 0; irow < num_row; ++irow) {
@@ -1506,6 +1563,11 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
           if (do_subtract) {
             set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
           }
+	  // update weight
+          if (update_weight) {
+	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+	  }
 
         } // end of polarization loop
 
@@ -1713,7 +1775,11 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         }
       } // end of chunk row loop
       // write back data cube to VisBuffer
-      sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      if (update_weight) {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+      } else {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      }
     } // end of vi loop
   } // end of chunk loop
 
@@ -1745,6 +1811,8 @@ void SingleDishMS::subtractBaseline(string const& in_column_name,
                                     string const& out_bloutput_name,
                                     bool const& do_subtract,
                                     string const& in_spw,
+                                    bool const& update_weight,
+                                    string const& sigma_value,
                                     string const& blfunc,
                                     int const order,
                                     float const clip_threshold_sigma,
@@ -1780,6 +1848,8 @@ void SingleDishMS::subtractBaseline(string const& in_column_name,
                      out_bloutput_name,
                      do_subtract,
                      in_spw,
+                     update_weight,
+                     sigma_value,
                      status,
                      bl_contexts,
                      bltype,
@@ -1840,6 +1910,8 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
                                            string const& out_bloutput_name,
                                            bool const& do_subtract,
                                            string const& in_spw,
+                                           bool const& update_weight,
+                                           string const& sigma_value,
                                            int const npiece,
                                            float const clip_threshold_sigma,
                                            int const num_fitting_max,
@@ -1873,6 +1945,8 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
                      out_bloutput_name,
                      do_subtract,
                      in_spw,
+                     update_weight,
+                     sigma_value,
                      status,
                      bl_contexts,
                      bltype,
@@ -1939,6 +2013,8 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
                                             string const& out_bloutput_name,
                                             bool const& do_subtract,
                                             string const& in_spw,
+                                            bool const& update_weight,
+                                            string const& sigma_value,
                                             string const& addwn0,
                                             string const& rejwn0,
                                             bool const applyfft,
@@ -1998,6 +2074,8 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
                      out_bloutput_name,
                      do_subtract,
                      in_spw,
+                     update_weight,
+                     sigma_value,
                      status,
                      bl_contexts,
                      bltype,
@@ -2059,8 +2137,11 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
 
 // Apply baseline table to MS
 void SingleDishMS::applyBaselineTable(string const& in_column_name,
-    string const& in_bltable_name, string const& in_spw,
-    string const& out_ms_name) {
+				      string const& in_bltable_name,
+				      string const& in_spw,
+                                      bool const& update_weight,
+                                      string const& sigma_value,
+				      string const& out_ms_name) {
   LogIO os(_ORIGIN);
   os << "Apply baseline table " << in_bltable_name << " to MS. " << LogIO::POST;
 
@@ -2131,6 +2212,7 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
       Cube<Bool> flag_chunk(num_pol, num_chan, num_row);
       Vector<bool> mask(num_chan);
       bool *mask_data = mask.data();
+      Matrix<Float> weight_matrix(num_pol, num_row, Array<Float>::uninitialized);
 
       bool new_nchan = false;
       get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask,
@@ -2148,6 +2230,11 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
       // get data/flag cubes (npol*nchan*nrow) from VisBuffer
       get_data_cube_float(*vb, data_chunk);
       get_flag_cube(*vb, flag_chunk);
+
+      // get weight matrix (npol*nrow) from VisBuffer
+      if (update_weight) {
+	get_weight_matrix(*vb, weight_matrix);
+      }
 
       // loop over MS rows
       for (size_t irow = 0; irow < num_row; ++irow) {
@@ -2242,11 +2329,24 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 
           // set back a spectrum to data cube
           set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
+	  // update weight
+          if (update_weight) {
+	    // convert flag to mask by taking logical NOT of flag
+	    for (size_t ichan = 0; ichan < num_chan; ++ichan) {
+	      mask_data[ichan] = !(mask_data[ichan]);
+	    }
+	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+	  }
         } // end of polarization loop
 
       } // end of chunk row loop
       // write back data and flag cube to VisBuffer
-      sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      if (update_weight) {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+      } else {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      }
     } // end of vi loop
   } // end of chunk loop
 
@@ -2588,6 +2688,8 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
                                             string const& out_bloutput_name,
                                             bool const& do_subtract,
                                             string const& in_spw,
+                                            bool const& update_weight,
+                                            string const& sigma_value,
                                             string const& param_file,
 					    bool const& verbose) {
 
@@ -2686,6 +2788,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       float *spec_data = spec.data();
       bool *mask_data = mask.data();
       bool *mask2_data = mask2.data();
+      Matrix<Float> weight_matrix(num_pol, num_row, Array<Float>::uninitialized);
 
       uInt final_mask[num_pol];
       uInt final_mask2[num_pol];
@@ -2704,6 +2807,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       // get data/flag cubes (npol*nchan*nrow) from VisBuffer
       get_data_cube_float(*vb, data_chunk);
       get_flag_cube(*vb, flag_chunk);
+
+      // get weight matrix (npol*nrow) from VisBuffer
+      if (update_weight) {
+	get_weight_matrix(*vb, weight_matrix);
+      }
 
       // loop over MS rows
       for (size_t irow = 0; irow < num_row; ++irow) {
@@ -3007,6 +3115,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           if (do_subtract) {
             set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
           }
+	  // update weight
+          if (update_weight) {
+	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+	  }
         } // end of polarization loop
 
         // output results of fitting
@@ -3145,7 +3258,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
         }
       } // end of chunk row loop
       // write back data and flag cube to VisBuffer
-      sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      if (update_weight) {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+      } else {
+	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+      }
     } // end of vi loop
   } // end of chunk loop
 
@@ -3312,4 +3429,3 @@ bool SingleDishMS::importNRO(string const &infile, string const &outfile, bool c
 }
 
 }  // End of casa namespace.
-

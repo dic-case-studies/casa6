@@ -86,6 +86,8 @@ public:
 			string const& out_bloutput_name,
 			bool const& do_subtract,
 			string const& in_spw,
+                        bool const& update_weight,
+                        string const& sigma_value,
 			string const& blfunc,
 			int const order,
 			float const clip_threshold_sigma,
@@ -102,6 +104,8 @@ public:
 			       string const& out_bloutput_name,
 			       bool const& do_subtract,
 			       string const& in_spw,
+                               bool const& update_weight,
+                               string const& sigma_value,
 			       int const npiece,
 			       float const clip_threshold_sigma,
 			       int const num_fitting_max,
@@ -117,6 +121,8 @@ public:
 				 string const& out_bloutput_name,
 				 bool const& do_subtract,
 				 string const& in_spw,
+                                 bool const& update_weight,
+                                 string const& sigma_value,
 				 string const& addwn0,
 				 string const& rejwn0,
 				 bool const applyfft,
@@ -136,13 +142,18 @@ public:
 				string const& out_bloutput_name,
 				bool const& do_subtract,
 				string const& in_spw,
+                                bool const& update_weight,
+                                string const& sigma_value,
 				string const& param_file,
 				bool const& verbose = true);
 
   // apply baseline table
   void applyBaselineTable(string const& in_column_name,
-      string const& in_bltable_name, string const& in_spw,
-      string const& out_ms_name);
+			  string const& in_bltable_name,
+			  string const& in_spw,
+			  bool const& update_weight,
+			  string const& sigma_value,
+			  string const& out_ms_name);
 
   // fit line profile
   void fitLine(string const& in_column_name, string const& in_spw,
@@ -338,6 +349,8 @@ private:
                           string const& out_bloutput_name,
 			  bool const& do_subtract,
 			  string const& in_spw,
+			  bool const& update_weight,
+			  string const& sigma_value,
 			  LIBSAKURA_SYMBOL(Status)& status,
 			  std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts,
 			  size_t const bltype,
@@ -372,6 +385,11 @@ private:
   // get data cube (npol*nchan*nvirow) in in_column_ from visbuffer
   // and convert it to float cube
   void get_data_cube_float(vi::VisBuffer2 const &vb, casacore::Cube<casacore::Float> &data_cube);
+  // get weight matrix (npol*nvirow) from visbuffer
+  void get_weight_matrix(vi::VisBuffer2 const &vb, casacore::Matrix<casacore::Float> &weight_matrix);
+  // set a weight at the row and plane (polarization) to weight matrix
+  void set_weight_to_matrix(casacore::Matrix<casacore::Float> &weight_matrix, size_t const row,
+      size_t const plane, float in_weight);
   // get flag cube (npol*nchan*nvirow) from visbuffer
   void get_flag_cube(vi::VisBuffer2 const &vb, casacore::Cube<casacore::Bool> &flag_cube);
   // retrieve a flag at the row and plane (polarization) from flag cube
