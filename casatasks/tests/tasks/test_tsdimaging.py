@@ -19,8 +19,9 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
+    from casatestutils import selection_syntax
+
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
     from testhelper import copytree_ignore_subversion, TableCacheValidator
 
     # default isn't used in casatasks
