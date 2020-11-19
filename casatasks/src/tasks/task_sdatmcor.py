@@ -8,6 +8,7 @@ import numpy as np
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
+    from casatasks.private import sdutil
     from casatools import quanta, table, msmetadata
     from casatools import atmosphere
     from casatools import ms as mstool
@@ -25,6 +26,7 @@ else:
     from casac import casac
     from tasks import mstransform
     from simutil import simutil
+    import sdutil
 
     ut = simutil()
     at = casac.atmosphere()
@@ -277,6 +279,9 @@ def sdatmcor(
         errmsg = "Specified column name (%s) Unacceptable." % datacolumn
         raise Exception(errmsg)
 
+    # tweak antenna selection string to include autocorr data
+    antenna_autocorr = sdutil.get_antenna_selection_include_autocorr(infile, antenna)
+
     try:
         mstransform(
             vis=infile,
@@ -285,7 +290,7 @@ def sdatmcor(
             field=field,
             spw=outputspw,   # use 'outputspw' for Data Selection. #
             scan=scan,
-            antenna=antenna,
+            antenna=antenna_autocorr,
             correlation=correlation,
             timerange=timerange,
             intent=intent,
@@ -489,14 +494,17 @@ def get_default_antenna(msname, antenna):
     # Unpreferable (problematic) antenna #
     excluded_ant = ['PM01']
 
-    # set default (=All) if no arg. #
-    if antenna == '':
-        antenna = '*&&&'
+    # # set default (=All) if no arg. #
+    # if antenna == '':
+    #     antenna = '*&&&'
 
-    # Parse antenna by msselect grammar #
-    ms = mstool()
-    sel = ms.msseltoindex(msname, baseline=antenna)
-    ant_list = sel['antenna1']  # antenna ID list
+    # # Parse antenna by msselect grammar #
+    # ms = mstool()
+    # sel = ms.msseltoindex(msname, baseline=antenna)
+    # ant_list = sel['antenna1']  # antenna ID list
+
+    with open_table(msname) as tb:
+        ant_list = np.unique(tb.getcol('ANTENNA1'))
 
     # get antenna names List by antenna Id #
     with open_msmd(msname) as msmd:

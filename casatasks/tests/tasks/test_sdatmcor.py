@@ -9,6 +9,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdatmcor
     import casatasks.private.task_sdatmcor as sdatmcor_impl
+    import casatasks.private.sdutil as sdutil
     # default isn't used in casatasks
 
     def default(atask):
@@ -37,6 +38,7 @@ else:
     from sdutil import tbmanager
     from taskinit import cbtool as calibrater
     from taskinit import mstool
+    import sdutil
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + ''
@@ -453,6 +455,16 @@ class test_sdatmcor(unittest.TestCase):
         sdatmcor(infile=self.infile, spw='<20', outputspw='', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
+    def test_sdatmcor_antenna_selection(self):
+        """Test antenna selection"""
+        sdatmcor(infile=self.infile, antenna='PM02', outfile=self.outfile)
+        self.check_result({19: True, 23: True})
+
+    def test_sdatmcor_msselect(self):
+        """Test msselect"""
+        sdatmcor(infile=self.infile, msselect='ANTNNA1 == 1', outfile=self.outfile)
+        self.check_result({19: True, 23: True})
+
     def test_sdatmcor_gainfactor_float(self):
         """test gainfactor: float input"""
         gainfactor = 10.0
@@ -507,6 +519,40 @@ class test_sdatmcor(unittest.TestCase):
                 # error cases
                 with self.assertRaises(expected):
                     actual = sdatmcor_impl.parse_spw(self.infile, spw)
+
+    def test_tweak_antenna_selection(self):
+        """Test tweak of antenna selection"""
+        # common test cases
+        test_cases0 = [
+            ('', ''),
+            ('PM02', 'PM02&&&'),
+            ('PM02&', 'PM02&&&'),
+            ('PM02&&', 'PM02&&'),
+            ('PM02&&&', 'PM02&&&'),
+            ('0', '0&&&'),
+            ('0&', '0&&&'),
+            ('0&&', '0&&'),
+            ('0&&&', '0&&&'),
+            ('0&1', '0&&&;1&&&'),
+            ('0&&1', '0&&&;1&&&'),
+            ('0;1', '0&&&;1&&&'),
+        ]
+        # specific to convert_antenna_spec_autocorr
+        test_cases1 = [
+            ('0&;1&&', '0&&&;1&&'),
+            ('0&&&;1', '0&&&;1&&&')
+        ]
+        for antenna, expected in test_cases0 + test_cases1:
+            actual = sdutil.convert_antenna_spec_autocorr(antenna)
+            self.assertEqual(actual, expected)
+        # specific to get_antenna_selection_include_autocorr
+        test_cases2 = [
+            ('0&;1&&', '0&;1&&'),
+            ('0&&&;1', '0&&&;1'),
+        ]
+        for antenna, expected in test_cases0 + test_cases2:
+            actual = sdutil.get_antenna_selection_include_autocorr(self.infile, antenna)
+            self.assertEqual(actual, expected)
 
 
 def suite():

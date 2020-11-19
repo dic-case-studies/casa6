@@ -12,6 +12,7 @@ import contextlib
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import quanta, table, calibrater, imager
+    from casatools import ms as mstool
     from casatools.platform import bytes2str
     from casatasks import casalog
 else:
@@ -22,7 +23,8 @@ else:
     from taskinit import tbtool as table
     from taskinit import cbtool as calibrater
     from taskinit import imtool as imager
-    
+    from taskinit import mstool
+
     #import asap as sd
     #from asap import _to_list
     #from asap.scantable import is_scantable, is_ms, scantable
@@ -32,10 +34,10 @@ else:
 def toolmanager(vis, ctor, *args, **kwargs):
     if is_CASA6:
         # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
-        # call this method with a tool constructor directly 
+        # call this method with a tool constructor directly
         tool = ctor()
     else:
-        # CASA5 code can invoke this with a tool name, shared CASA5 and CASA6 source 
+        # CASA5 code can invoke this with a tool name, shared CASA5 and CASA6 source
         # uses the CASA6 syntax - use callable to tell the difference
         if callable(ctor):
             tool = ctor()
@@ -82,7 +84,7 @@ def table_selector(table, taql, *args, **kwargs):
 
 def asaptask_decorator(func):
     """
-    This is a decorator function for sd tasks. 
+    This is a decorator function for sd tasks.
     Currently the decorator does:
 
        1) set origin to the logger
@@ -97,10 +99,10 @@ def asaptask_decorator(func):
 
         retval = None
         # Any errors are handled outside the task.
-        # however, the implementation below is effectively 
+        # however, the implementation below is effectively
         # equivalent to handling it inside the task.
         try:
-            # execute task 
+            # execute task
             retval = func(*args, **kwargs)
         except Exception as e:
             traceback_info = format_trace(traceback.format_exc())
@@ -112,17 +114,17 @@ def asaptask_decorator(func):
 
 def sdtask_decorator(func):
     """
-    This is a decorator function for sd tasks. 
+    This is a decorator function for sd tasks.
     Currently the decorator does:
 
-       1) set origin to the logger 
+       1) set origin to the logger
        2) handle exception
 
-    So, you don't need to set origin in the task any more. 
-    Also, you don't need to write anything about error 
-    handling in the task. If you have something to do 
-    at the end of the task execution, those should be 
-    written in the destructor of worker class, not in 
+    So, you don't need to set origin in the task any more.
+    Also, you don't need to write anything about error
+    handling in the task. If you have something to do
+    at the end of the task execution, those should be
+    written in the destructor of worker class, not in
     the 'finally' block.
     """
     @functools.wraps(func)
@@ -132,7 +134,7 @@ def sdtask_decorator(func):
 
         retval = None
         # Any errors are handled outside the task.
-        # however, the implementation below is effectively 
+        # however, the implementation below is effectively
         # equivalent to handling it inside the task.
         try:
             # execute task
@@ -193,7 +195,7 @@ class sdtask_interface(object):
     execute(), and finalize().
     """
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self, **kwargs):
         for (k,v) in kwargs.items():
             setattr(self, k, v)
@@ -278,7 +280,7 @@ class sdtask_template(sdtask_interface):
                 self.rasterrow = self.raster
             else:
                 self.rasteriter = self.raster
-        
+
         # set self.scan
         self.initialize_scan()
 
@@ -298,14 +300,14 @@ class sdtask_template(sdtask_interface):
     def save(self):
         # do nothing by default
         pass
-        
+
     def cleanup(self):
         # do nothing by default
         pass
 
     """
     def get_selector(self, scantb=None):
-        
+
         #Get selector instance that select scan(s), IF(s), polarization(s),
         #beam(s), field(s), and timerange set to this class.
         #This method parses attributes of string selection parameter,
@@ -324,12 +326,12 @@ class sdtask_template(sdtask_interface):
                 scantb = self.scan
             else:
                 raise Exception, "Internal Error. No valid scantable."
-        
+
         attributes = ['scanno','spw','polno','beamno','field']
         for a in attributes:
             if not hasattr(self,a): setattr(self,a,"")
 
-        
+
         self.scanlist = scantb.parse_idx_selection("SCAN",self.scanno)
         self.iflist = []
         if self.spw != "":
@@ -343,7 +345,7 @@ class sdtask_template(sdtask_interface):
             self.iflist = masklist.keys()
         self.pollist = scantb.parse_idx_selection("POL",self.polno)
         self.beamlist = scantb.parse_idx_selection("BEAM",self.beamno)
-        
+
         attributes = ['scanlist','iflist','pollist','beamlist',
                       'rowlist','field']
         for a in attributes:
@@ -382,7 +384,7 @@ class sdtask_template(sdtask_interface):
                 scantb = self.scan
             else:
                 raise Exception, "Internal Error. No valid scantable."
-    
+
         if base_selector is None:
             selector = sd.selector()
         else:
@@ -438,12 +440,12 @@ class sdtask_template(sdtask_interface):
                         else:
                             selector.set_query(taql_for_raster)
                         casalog.post('taql: \'%s\''%(selector.get_query()), priority='INFO')
-                    
+
         return selector
     """
     """
     def set_selection(self, scantb=None):
-        
+
         #Set selection that select scan(s), IF(s), polarization(s),
         #beam(s), field(s), and timerange set to this class.
         #This method parses attributes of string selection parameter,
@@ -454,7 +456,7 @@ class sdtask_template(sdtask_interface):
         #    scantb : A scantable instance to apply selection.
         #             The scantable defined as self.scan is used if scantb
         #             is not defined (default).
-        
+
         if not scantb:
             if hasattr(self,'scan') and isinstance(self.scan, scantable):
                 scantb = self.scan
@@ -474,7 +476,7 @@ class sdtask_template(sdtask_interface):
                 rf.append(self.restfreq[in_ifno.index(if_idx)])
             self.selected_restfreq = rf
     """
-    
+
     def assert_no_channel_selection_in_spw(self, mode='warn'):
         """
         Assert 'spw' does not have channel selection
@@ -497,10 +499,10 @@ class sdtask_template(sdtask_interface):
                 raise ValueError("spw parameter should not contain channel selection.")
             elif mode.upper().startswith('W'):
                 casalog.post("Channel selection found in spw parameter. It would be ignored", priority='WARN')
-        
+
         return has_chan
-        
-        
+
+
     def set_to_scan(self):
         if hasattr(self,'fluxunit'):
             set_fluxunit(self.scan, self.fluxunit, self.telescopeparam)
@@ -590,7 +592,7 @@ class sdtask_template_imaging(sdtask_interface):
             if not is_ms(self.infiles[idx]):
                 msg='input data sets must be in MS format'
                 raise Exception(msg)
-        
+
         self.parameter_check()
         self.compile()
 
@@ -605,7 +607,7 @@ class sdtask_template_imaging(sdtask_interface):
 
     def cleanup(self):
         pass
-        
+
     def __set_subtable_name(self):
         self.open_table(self.infiles[0])
         keys = self.table.getkeywords()
@@ -637,7 +639,7 @@ class sdtask_engine(sdtask_interface):
                 setattr(self, k, v)
         #super(sdtask_engine,self).__init__(**self.worker.__dict__)
         #if hasattr(self,'scan'): del self.scan
-    
+
 def get_abspath(filename):
     return os.path.abspath(expand_path(filename))
 
@@ -771,20 +773,20 @@ def get_restfreq_in_Hz(s_restfreq):
 #     value = 0.0
 #     unit = ""
 #     s = s_restfreq.replace(" ","")
-# 
+#
 #     for i in range(len(s))[::-1]:
 #         if s[i].isalpha():
 #             unit = s[i] + unit
 #         else:
 #             value = float(s[0:i+1])
 #             break
-# 
+#
 #     if (unit == "") or (unit.lower() == "hz"):
 #         return value
 #     elif (len(unit) == 3) and (unit[1:3].lower() == "hz"):
 #         unitprefix = unit[0]
 #         factor = 1.0
-# 
+#
 #         if (unitprefix == "a"):
 #             factor = 1.0e-18
 #         elif (unitprefix == "f"):
@@ -809,7 +811,7 @@ def get_restfreq_in_Hz(s_restfreq):
 #             factor = 1.0e+15
 #         elif (unitprefix == "E"):
 #             factor = 1.0e+18
-#         
+#
 #         return value*factor
 #     else:
 #         mesg = "wrong unit of restfreq."
@@ -828,7 +830,7 @@ def normalise_restfreq(in_restfreq):
             if len(in_restfreq.shape) > 1:
                 mesg = "given in numpy.ndarray, in_restfreq must be 1-D."
                 raise Exception(mesg)
-        
+
         res = []
         for i in range(len(in_restfreq)):
             elem = in_restfreq[i]
@@ -886,7 +888,7 @@ def set_freqframe(s, frame):
 
 def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
     ret = None
-    
+
     # check current fluxunit
     # for GBT if not set, set assumed fluxunit, Kelvin
     antennaname = s.get_antennaname()
@@ -907,7 +909,7 @@ def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
     else:
         fluxunit_local = fluxunit
 
-        
+
     # fix the fluxunit if necessary
     if ( telescopeparam == 'FIX' or telescopeparam == 'fix' ):
         if ( fluxunit_local != '' ):
@@ -974,19 +976,19 @@ def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
             #print "Assume phys.diam D = %5.1f m" % (D)
             casalog.post( "Assume phys.diam D = %5.1f m" % (D) )
             ret = s.convert_flux(eta=eta,d=D,insitu=insitu)
-            
+
             #print "Successfully converted fluxunit to "+fluxunit
             casalog.post( "Successfully converted fluxunit to "+fluxunit_local )
         elif ( antennaname in ['AT','ATPKSMB', 'ATPKSHOH', 'ATMOPRA', 'DSS-43', 'CEDUNA', 'HOBART']):
             ret = s.convert_flux(insitu=insitu)
-            
+
         else:
             # Unknown telescope type
             #print "Unknown telescope - cannot convert"
             casalog.post( "Unknown telescope - cannot convert", priority = 'WARN' )
 
     return ret
-    
+
 def save(s, outfile, outform, overwrite):
     assert_outfile_canoverwrite_or_nonexistent(outfile,
                                                outform,
@@ -1024,6 +1026,77 @@ def dochannelrange(s, channelrange):
             casalog.post( "Split spectrum in the range [%d, %d]" % (channelrange[0], channelrange[1]) )
             s._reshape( int(channelrange[0]), int(channelrange[1]) )
 
+
+def convert_antenna_spec_autocorr(antenna):
+    """Convert antenna (baseline) specification(s) to include autocorr data.
+
+    Args:
+        antenna (str): antenna specification
+
+    Returns:
+        str: tweaked antenna specification
+    """
+    if len(antenna) == 0:
+        return antenna
+    elif antenna.find(';') >= 0:
+        # antenna selection is semi-colon separated list of baseline
+        # specifications: 'SEL1;SEL2...'
+        return ';'.join(map(convert_antenna_spec_autocorr, antenna.split(';')))
+    elif antenna.find('&') < 0:
+        # no '&' in the selection string
+        #  -> 'ANT&&&'
+        return antenna + '&&&'
+    elif antenna.endswith('&&'):
+        # 'ANT&&' or 'ANT&&&'
+        #  -> as is
+        return antenna
+    elif antenna.endswith('&'):
+        # 'ANT&'
+        #  -> 'ANT&&&'
+        return antenna.strip('&') + '&&&'
+    else:
+        # 'ANT1&ANT2' or 'ANT1&&ANT2'
+        #  -> 'ANT1&&&;ANT2&&&'
+        specs = [a for a in antenna.split('&') if len(a) > 0]
+        return ';'.join(map(convert_antenna_spec_autocorr, specs))
+
+
+def get_antenna_selection_include_autocorr(msname, antenna):
+    """Get antenna selection string that includes autocorr data.
+
+    Args:
+        msname (str): name of MS
+        antenna (str): antenna selection string
+
+    Raises:
+        RuntimeError: failed to handle antenna selection string
+
+    Returns:
+        str: antenna selection string including autocorr data
+    """
+    if len(antenna) == 0:
+        # if no selection is specified, do nothing
+        return antenna
+
+    # test if given antenna selection is valid and if contains any autocorr data
+    ms = mstool()
+    sel = ms.msseltoindex(msname, baseline=antenna)
+    if any([b[0] == b[1] for b in sel['baselines']]):
+        antenna_autocorr = antenna
+    else:
+        antenna_autocorr = convert_antenna_spec_autocorr(antenna)
+        casalog.post(
+            'Tweaked antenna selection to include autocorr data: original "{}" tweaked "{}"'.format(
+                antenna, antenna_autocorr
+            )
+        )
+        # test if tweaked selection is valid
+        sel = ms.msseltoindex(msname, baseline=antenna_autocorr)
+        if all([b[0] != b[1] for b in sel['baselines']]):
+            raise RuntimeError('Cannot handle antenna selection properly. Abort.')
+    return antenna_autocorr
+
+
 """
 def doaverage(s, scanaverage, timeaverage, tweight, polaverage, pweight,
               averageall=False, docopy=False):
@@ -1050,7 +1123,7 @@ def doaverage(s, scanaverage, timeaverage, tweight, polaverage, pweight,
         else:
             sret = stave
         #    spave=stave.copy()
-        
+
     else:
         #if ( scanaverage ):
         #        # scan average if the input is a scantable
@@ -1129,8 +1202,8 @@ class scantable_restore_null(scantable_restore_interface):
 
     def restore(self):
         pass
-    
-        
+
+
 class scantable_restore_impl(scantable_restore_interface):
     def __init__(self, s, fluxunit, specunit, frame, doppler, restfreq=''):
         super(scantable_restore_impl,self).__init__()
@@ -1156,12 +1229,12 @@ class scantable_restore_impl(scantable_restore_interface):
     def restore(self):
         if self.restore_not_done:
             self.scntab.set_selection()
-        
+
             casalog.post('Restoreing header information in input scantable')
             self._restore()
 
         self.restore_not_done = False
-                         
+
     def _restore(self):
         if self.fluxset:
             self.scntab.set_fluxunit(self.fluxunit)
@@ -1237,7 +1310,7 @@ def get_cellx_celly(c,unit='arcsec'):
     else:
         cellx = celly = __to_quantity_string(c,unit)
     return (cellx, celly)
-                
+
 def get_map_center(c,frame='J2000',unit='rad'):
     map_center = ''
     if isinstance(c, str):
@@ -1303,7 +1376,7 @@ def split_date_string(date_string, full=True):
     if full and len(elements_list) > 1 and date_string.find('.') == -1:
         elements_list += ['0']
     return elements_list
-        
+
 def get_full_description(date_string, year='YYYY', month='MM', day='DD', hour='hh', minute='mm', second='ss', subsecond='ff', default=None):
     number_of_slashes = date_string.count('/')
     number_of_colons = date_string.count(':')
@@ -1319,7 +1392,7 @@ def get_full_description(date_string, year='YYYY', month='MM', day='DD', hour='h
         default_values = split_date_string(default)
         if len(default_values) < 7:
             default_values = default_values + ['00']
-            
+
     values = default_values[:7-len(elements_list)] + elements_list
 
     return template.safe_substitute(**dict(zip(keys, values)))
@@ -1347,7 +1420,7 @@ def to_timedelta(delta):
 def add_time(date, delta):
     t = to_datetime(date)
     dt = to_timedelta(delta)
-    return t+dt    
+    return t+dt
 
 def sub_time(date, delta):
     t = to_datetime(date)
@@ -1382,8 +1455,8 @@ def select_by_timerange(data, timerange):
                   'hour': str(date_dict['hour']),
                   'minute': str(date_dict['min']),
                   'second': str(date_dict['sec']),
-                  'subsecond': str(date_dict['usec'])}    
-    
+                  'subsecond': str(date_dict['usec'])}
+
     if re.match('.+~.+', timerange):
         # This is case 1: 'T0~T1'
         dates_list = split_timerange(timerange, '~')
@@ -1476,19 +1549,19 @@ def get_spwids(selection, infile=None):
     return ','.join(l)
 
 def get_spwchs(selection, infile):
-    # return a string containing spw IDs, nchans and edge 
-    # indices of selected regions. 
-    # parameters: 
+    # return a string containing spw IDs, nchans and edge
+    # indices of selected regions.
+    # parameters:
     #     selection: an output of ms.msseltoindex()
     # format of returned value:
-    #     one or more 'IFNO:NCHAN:IDX' strings connected 
-    #     by comma. 'IDX' contains edge indices of selected 
-    #     channel regions connected by semicolon. 
-    # example: 
-    #     if two channel regions from 100 to 200 and from 
-    #     250 to 350 are selected for IF=3 (nchan=1024) and 
-    #     all channels are selected for IF=4 (nchan=2048), 
-    #     the returned value will be 
+    #     one or more 'IFNO:NCHAN:IDX' strings connected
+    #     by comma. 'IDX' contains edge indices of selected
+    #     channel regions connected by semicolon.
+    # example:
+    #     if two channel regions from 100 to 200 and from
+    #     250 to 350 are selected for IF=3 (nchan=1024) and
+    #     all channels are selected for IF=4 (nchan=2048),
+    #     the returned value will be
     #     '3:1024:100;200;250;350,4:2048:0;2047'.
 
     with tbmanager(os.path.join(infile, 'SPECTRAL_WINDOW')) as tb:
@@ -1762,7 +1835,7 @@ def _to_list(param, ptype=int, convert=False):
     """
     if isinstance(param, ptype): # a string or a number
         if ptype is str: return param.split()
-        elif convert: 
+        elif convert:
             return [ ptype(param) ]
         else: return [ param ]
     if _is_sequence_or_number(param, ptype):
