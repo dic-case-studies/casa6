@@ -1238,7 +1238,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
     finalizeToSky();
 
     // Normalize by dividing out weights, etc.
-    auto doNormalize = (inType == FTMachine::COVERAGE) ? false : true;
+    auto doNormalize = not (inType == FTMachine::COVERAGE);
     getImage(weight, doNormalize);
 
     // Warning message
