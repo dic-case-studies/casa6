@@ -216,8 +216,8 @@ public:
   void andChanSelection(const casacore::Int msId, const casacore::Int spwId, const casacore::Int startchan, const casacore::Int endchan);
   void tuneChunk(const casacore::Int gmap);
   //Set up tracking direction ; return False if no tracking is set.
-  //return Direction of moving source is in the frame of vb.phaseCenter() at the time of the first row of the vb
-  casacore::Bool getMovingDirection(const vi::VisBuffer2& vb,  casacore::MDirection& movingDir);
+  //return Direction of moving source is in the frame of vb.phaseCenter() at the time of the first row of the vb ..or if useImageEpoch is set at the obsTime in the image header
+  casacore::Bool getMovingDirection(const vi::VisBuffer2& vb,  casacore::MDirection& movingDir, const casacore::Bool useImageEpoch=false);
   
    // Other Options
   //casacore::Block<const casacore::MeasurementSet *> mss_p;

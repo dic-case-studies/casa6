@@ -2508,7 +2508,7 @@ void SynthesisImagerVi2::unlockMSs()
     ///////if tracking a moving source
     MDirection origMovingDir;
     MDirection newPhaseCenter;
-    Bool trackBeam=getMovingDirection(*vb, origMovingDir);
+    Bool trackBeam=getMovingDirection(*vb, origMovingDir, True);
     //////
     for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
       {
@@ -2541,10 +2541,15 @@ void SynthesisImagerVi2::unlockMSs()
     return True;
   }// end makePB
 
-  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir){
+  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir, const Bool useImageEpoch){
     MDirection movingDir;
     Bool trackBeam=False;
+      
     MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+    if(useImageEpoch){
+      mFrame.resetEpoch((itsMappers.imageStore(0))->getCSys().obsInfo().obsDate());
+
+    }
     if(movingSource_p != ""){
       MDirection::Types refType;
       trackBeam=True;
@@ -2565,7 +2570,7 @@ void SynthesisImagerVi2::unlockMSs()
       }
       else if(upcase(movingSource_p)=="TRACKFIELD"){
         VisBufferUtil vbU(vb);
-	movingDir=vbU.getEphemDir(vb, -1.0);
+	movingDir=vbU.getEphemDir(vb, MEpoch(mFrame.epoch()).get("s").getValue());
       }
       else{
 	throw(AipsError("Erroneous tracking direction set to make pb"));
@@ -2581,7 +2586,7 @@ void SynthesisImagerVi2::unlockMSs()
     }
       return trackBeam;
 
-  }
+    }
 
 
 } //# NAMESPACE CASA - END
