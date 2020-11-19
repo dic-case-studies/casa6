@@ -1463,7 +1463,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, \
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, savemodel='none', \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -1489,7 +1489,7 @@ class Test_standard(test_tclean_base):
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, restart=True, \
             calcres=False, calcpsf=False, savemodel='none', \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
@@ -3715,7 +3715,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=15.0, minbeamfrac=0.3, \
             growiterations=50, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=False, verbose=True)
+            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -3741,7 +3741,7 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=15.0, minbeamfrac=0.3, growiterations=50, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, savemodel='none', calcres=False, calcpsf=False, \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
   
