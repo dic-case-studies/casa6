@@ -175,7 +175,8 @@ class SetjyUnitTestBase(unittest.TestCase):
         '''Create MMSs for tests with input MMS'''
         prefix = msname.rstrip('.ms')
         if not os.path.exists(msname):
-            os.system('cp -RL '+os.path.join(datapath,msname)+' '+ msname)
+#            os.system('cp -RH '+os.path.join(datapath,msname)+' '+ msname)
+            shutil.copytree(os.path.join(datapath,msname), msname)
         
         # Create an MMS for the tests
         self.inpmms = prefix + ".test.mms"
