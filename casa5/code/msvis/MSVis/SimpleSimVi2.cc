@@ -567,7 +567,6 @@ void SimpleSimVi2::origin ()
 
 Bool SimpleSimVi2::more () const
 {
-
   // true if still more subchunks for this scan's field
   return (iSubChunk_<nSubchunk_);
 }
@@ -664,7 +663,7 @@ VisBuffer2 * SimpleSimVi2::getVisBuffer (const VisibilityIterator2 * vi)
 }
   */
 
-VisBuffer2 * SimpleSimVi2::getVisBuffer () const { std::cout << " En SimpleSimVi2::getVisBuffer " << this << std::endl; return vb_.get(); }
+VisBuffer2 * SimpleSimVi2::getVisBuffer () const { return vb_.get(); }
 
   //   +=========================+
   //   |                         |
