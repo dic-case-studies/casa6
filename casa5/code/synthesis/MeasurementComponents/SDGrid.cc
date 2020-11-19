@@ -876,228 +876,178 @@ extern "C" {
 }
 
 void SDGrid::put(const VisBuffer& vb, Int row, Bool dopsf,
-		 FTMachine::Type type)
+        FTMachine::Type type)
 {
-  LogIO os(LogOrigin("SDGrid", "put"));
+    LogIO os(LogOrigin("SDGrid", "put"));
 
-  gridOk(convSupport);
+    gridOk(convSupport);
 
-  //Check if ms has changed then cache new spw and chan selection
-  if(vb.newMS()){
-    matchAllSpwChans(vb);
-    lastIndex_p=0;
-    if (lastIndexPerAnt_p.nelements() < (size_t)vb.numberAnt()) {
-      lastIndexPerAnt_p.resize(vb.numberAnt());
+    // Check if ms has changed then cache new spw and chan selection
+    if (vb.newMS()){
+        matchAllSpwChans(vb);
+        lastIndex_p = 0;
+        if (lastIndexPerAnt_p.nelements() < (size_t)vb.numberAnt()) {
+            lastIndexPerAnt_p.resize(vb.numberAnt());
+        }
+        lastIndexPerAnt_p = 0;
     }
-    lastIndexPerAnt_p=0;
-  }
-  //Here we redo the match or use previous match
 
-  //Channel matching for the actual spectral window of buffer
-  if(doConversion_p[vb.spectralWindow()]){
-    matchChannel(vb.spectralWindow(), vb);
-  }
-  else{
-    chanMap.resize();
-    chanMap=multiChanMap_p[vb.spectralWindow()];
-  }
-  //No point in reading data if its not matching in frequency
-  if(max(chanMap)==-1)
-    return;
+    // Here we redo the match or use previous match
+    // Channel matching for the actual spectral window of buffer
+    if (doConversion_p[vb.spectralWindow()]) {
+        matchChannel(vb.spectralWindow(), vb);
+    }
+    else {
+        chanMap.resize();
+        chanMap = multiChanMap_p[vb.spectralWindow()];
+    }
 
-  Matrix<Float> imagingweight;
-  //imagingweight=&(vb.imagingWeight());
-  pickWeights(vb, imagingweight);
+    // No point in reading data if its not matching in frequency
+    if (max(chanMap)==-1)
+      return;
 
-  if(type==FTMachine::PSF || type==FTMachine::COVERAGE)
-    dopsf=true;
-  if(dopsf) type=FTMachine::PSF;
-  Cube<Complex> data;
-  //Fortran gridder need the flag as ints
-  Cube<Int> flags;
-  Matrix<Float> elWeight;
-  interpolateFrequencyTogrid(vb, imagingweight,data, flags, elWeight, type);
-  //cerr << "number of rows " << vb.nRow() << " data shape " << data.shape() << endl;
-  Bool iswgtCopy;
-  const Float *wgtStorage;
-  wgtStorage=elWeight.getStorage(iswgtCopy);
-  Bool isCopy;
-  const Complex *datStorage=0;
-  if(!dopsf)
-    datStorage=data.getStorage(isCopy);
+    Matrix<Float> imagingweight;
+    pickWeights(vb, imagingweight);
 
-  // If row is -1 then we pass through all rows
-  Int startRow, endRow, nRow;
-  if (row==-1) {
-    nRow=vb.nRow();
-    startRow=0;
-    endRow=nRow-1;
-  } else {
-    nRow=1;
-    startRow=row;
-    endRow=row;
-  }
+    if (type==FTMachine::PSF || type==FTMachine::COVERAGE)
+        dopsf = true;
+    if (dopsf) type=FTMachine::PSF;
 
+    Cube<Complex> data;
+    //Fortran gridder need the flag as ints
+    Cube<Int> flags;
+    Matrix<Float> elWeight;
+    interpolateFrequencyTogrid(vb, imagingweight,data, flags, elWeight, type);
 
-  Vector<Int> rowFlags(vb.flagRow().nelements());
-  rowFlags=0;
-  for (Int rownr=startRow; rownr<=endRow; rownr++) {
-    if(vb.flagRow()(rownr)) rowFlags(rownr)=1;
-  }
+    Bool iswgtCopy;
+    const Float *wgtStorage;
+    wgtStorage=elWeight.getStorage(iswgtCopy);
+    Bool isCopy;
+    const Complex *datStorage = nullptr;
+    if (!dopsf)
+        datStorage = data.getStorage(isCopy);
 
-  // Take care of translation of Bools to Integer
-  Int idopsf=0;
-  if(dopsf) idopsf=1;
+    // If row is -1 then we pass through all rows
+    Int startRow, endRow, nRow;
+    if (row == -1) {
+        nRow = vb.nRow();
+        startRow = 0;
+        endRow = nRow - 1;
+    } else {
+        nRow = 1;
+        startRow = endRow = row;
+    }
 
-  /*if(isTiled) {
+    Vector<Int> rowFlags(vb.flagRow().nelements(),0);
     for (Int rownr=startRow; rownr<=endRow; rownr++) {
-
-      if(getXYPos(vb, rownr)) {
-
-	IPosition centerLoc2D(2, Int(xyPos(0)), Int(xyPos(1)));
-	Array<Complex>* dataPtr=getDataPointer(centerLoc2D, false);
-	Array<Float>*  wDataPtr=getWDataPointer(centerLoc2D, false);
-	Int aNx=dataPtr->shape()(0);
-	Int aNy=dataPtr->shape()(1);
-	Vector<Double> actualPos(2);
-	for (Int i=0;i<2;i++) {
-	  actualPos(i)=xyPos(i)-Double(offsetLoc(i));
-	}
-	// Now use FORTRAN to do the gridding. Remember to
-	// ensure that the shape and offsets of the tile are
-	// accounted for.
-	{
-	  Bool del;
-	  //	  IPosition s(data.shape());
-	  const IPosition& fs=flags.shape();
-	  std::vector<Int> s(fs.begin(), fs.end());
-
-	  ggridsd(actualPos.getStorage(del),
-		  datStorage,
-		  &s[0],
-		  &s[1],
-		  &idopsf,
-		  flags.getStorage(del),
-		  rowFlags.getStorage(del),
-		  wgtStorage,
-		  &s[2],
-		  &rownr,
-		  dataPtr->getStorage(del),
-		  wDataPtr->getStorage(del),
-		  &aNx,
-		  &aNy,
-		  &npol,
-		  &nchan,
-		  &convSupport,
-		  &convSampling,
-		  convFunc.getStorage(del),
-		  chanMap.getStorage(del),
-		  polMap.getStorage(del),
-		  sumWeight.getStorage(del));
-	}
-      }
+        if (vb.flagRow()(rownr)) rowFlags(rownr) = 1;
     }
-  }
-  else*/
-  {
-    Matrix<Double> xyPositions(2, endRow-startRow+1);
-    xyPositions=-1e9; // make sure failed getXYPos does not fall on grid
-    for (Int rownr=startRow; rownr<=endRow; rownr++) {
-      if(getXYPos(vb, rownr)) {
-	xyPositions(0, rownr)=xyPos(0);
-	xyPositions(1, rownr)=xyPos(1);
-      }
+
+    // Take care of translation of Bools to Integer
+    Int idopsf = dopsf ? 1 : 0;
+
+    /*if(isTiled) {
     }
+    else*/
     {
-      Bool del;
-      //      IPosition s(data.shape());
-      const IPosition& fs=flags.shape();
-      std::vector<Int> s(fs.begin(), fs.end());
-      Bool datCopy, wgtCopy;
-      Complex * datStor=griddedData.getStorage(datCopy);
-      Float * wgtStor=wGriddedData.getStorage(wgtCopy);
+        Matrix<Double> xyPositions(2, endRow - startRow + 1);
+        xyPositions = -1e9; // make sure failed getXYPos does not fall on grid
+        for (Int rownr=startRow; rownr<=endRow; rownr++) {
+            if (getXYPos(vb, rownr)) {
+                xyPositions(0, rownr) = xyPos(0);
+                xyPositions(1, rownr) = xyPos(1); 
+            }
+        }
+        {
+            Bool del;
+            //      IPosition s(data.shape());
+            const IPosition& fs=flags.shape();
+            std::vector<Int> s(fs.begin(), fs.end());
+            Bool datCopy, wgtCopy;
+            Complex * datStor=griddedData.getStorage(datCopy);
+            Float * wgtStor=wGriddedData.getStorage(wgtCopy);
 
-      Bool call_ggridsd = !clipminmax_ || dopsf;
+            Bool call_ggridsd = !clipminmax_ || dopsf;
 
-      if (call_ggridsd) {
+            if (call_ggridsd) {
 
-      ggridsd(xyPositions.getStorage(del),
-	      datStorage,
-	      &s[0],
-	      &s[1],
-	      &idopsf,
-	      flags.getStorage(del),
-	      rowFlags.getStorage(del),
-	      wgtStorage,
-	      &s[2],
-	      &row,
-	      datStor,
-	      wgtStor,
-	      &nx,
-	      &ny,
-	      &npol,
-	      &nchan,
-	      &convSupport,
-	      &convSampling,
-	      convFunc.getStorage(del),
-	      chanMap.getStorage(del),
-	      polMap.getStorage(del),
-	      sumWeight.getStorage(del));
+                ggridsd(xyPositions.getStorage(del),
+                    datStorage,
+                    &s[0],
+                    &s[1],
+                    &idopsf,
+                    flags.getStorage(del),
+                    rowFlags.getStorage(del),
+                    wgtStorage,
+                    &s[2],
+                    &row,
+                    datStor,
+                    wgtStor,
+                    &nx,
+                    &ny,
+                    &npol,
+                    &nchan,
+                    &convSupport,
+                    &convSampling,
+                    convFunc.getStorage(del),
+                    chanMap.getStorage(del),
+                    polMap.getStorage(del),
+                    sumWeight.getStorage(del));
 
-      } else {
-        Bool gminCopy;
-        Complex *gminStor = gmin_.getStorage(gminCopy);
-        Bool gmaxCopy;
-        Complex *gmaxStor = gmax_.getStorage(gmaxCopy);
-        Bool wminCopy;
-        Float *wminStor = wmin_.getStorage(wminCopy);
-        Bool wmaxCopy;
-        Float *wmaxStor = wmax_.getStorage(wmaxCopy);
-        Bool npCopy;
-        Int *npStor = npoints_.getStorage(npCopy);
+            } 
+            else {
+                Bool gminCopy;
+                Complex *gminStor = gmin_.getStorage(gminCopy);
+                Bool gmaxCopy;
+                Complex *gmaxStor = gmax_.getStorage(gmaxCopy);
+                Bool wminCopy;
+                Float *wminStor = wmin_.getStorage(wminCopy);
+                Bool wmaxCopy;
+                Float *wmaxStor = wmax_.getStorage(wmaxCopy);
+                Bool npCopy;
+                Int *npStor = npoints_.getStorage(npCopy);
 
-        ggridsdclip(xyPositions.getStorage(del),
-          datStorage,
-          &s[0],
-          &s[1],
-          &idopsf,
-          flags.getStorage(del),
-          rowFlags.getStorage(del),
-          wgtStorage,
-          &s[2],
-          &row,
-          datStor,
-          wgtStor,
-          npStor,
-          gminStor,
-          wminStor,
-          gmaxStor,
-          wmaxStor,
-          &nx,
-          &ny,
-          &npol,
-          &nchan,
-          &convSupport,
-          &convSampling,
-          convFunc.getStorage(del),
-          chanMap.getStorage(del),
-          polMap.getStorage(del),
-          sumWeight.getStorage(del));
+                ggridsdclip(xyPositions.getStorage(del),
+                    datStorage,
+                    &s[0],
+                    &s[1],
+                    &idopsf,
+                    flags.getStorage(del),
+                    rowFlags.getStorage(del),
+                    wgtStorage,
+                    &s[2],
+                    &row,
+                    datStor,
+                    wgtStor,
+                    npStor,
+                    gminStor,
+                    wminStor,
+                    gmaxStor,
+                    wmaxStor,
+                    &nx,
+                    &ny,
+                    &npol,
+                    &nchan,
+                    &convSupport,
+                    &convSampling,
+                    convFunc.getStorage(del),
+                    chanMap.getStorage(del),
+                    polMap.getStorage(del),
+                    sumWeight.getStorage(del));
 
-        gmin_.putStorage(gminStor, gminCopy);
-        gmax_.putStorage(gmaxStor, gmaxCopy);
-        wmin_.putStorage(wminStor, wminCopy);
-        wmax_.putStorage(wmaxStor, wmaxCopy);
-        npoints_.putStorage(npStor, npCopy);
-      }
-      griddedData.putStorage(datStor, datCopy);
-      wGriddedData.putStorage(wgtStor, wgtCopy);
+                gmin_.putStorage(gminStor, gminCopy);
+                gmax_.putStorage(gmaxStor, gmaxCopy);
+                wmin_.putStorage(wminStor, wminCopy);
+                wmax_.putStorage(wmaxStor, wmaxCopy);
+                npoints_.putStorage(npStor, npCopy);
+            }
+            griddedData.putStorage(datStor, datCopy);
+            wGriddedData.putStorage(wgtStor, wgtCopy);
+        }
     }
-  }
-  if(!dopsf)
-    data.freeStorage(datStorage, isCopy);
-  elWeight.freeStorage(wgtStorage,iswgtCopy);
-
+    if (!dopsf)
+        data.freeStorage(datStorage, isCopy);
+    elWeight.freeStorage(wgtStorage,iswgtCopy);
 }
 
 void SDGrid::get(VisBuffer& vb, Int row)
@@ -1258,7 +1208,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
 
     logIO() << LogOrigin("FTMachine", "makeImage0") << LogIO::NORMAL;
 
-    // Attach buffer to iterator
+    // Attach visibility buffer to visibility iterator
     VisBuffer vb(vi);
 
     // Set CStokesRep
