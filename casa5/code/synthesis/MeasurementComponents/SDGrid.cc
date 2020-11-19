@@ -1285,10 +1285,10 @@ void SDGrid::setupVisBufferForFTMachineType(FTMachine::Type type, VisBuffer& vb)
         vb.visCube() -= vb.modelVisCube();
         break;
     case FTMachine::PSF:
-        vb.visCube()=Complex(1.0,0.0);
+        vb.visCube() = Complex(1.0,0.0);
         break;
     case FTMachine::COVERAGE:
-        vb.visCube()=Complex(1.0);
+        vb.visCube() = Complex(1.0);
         break;
     default:
         break;
