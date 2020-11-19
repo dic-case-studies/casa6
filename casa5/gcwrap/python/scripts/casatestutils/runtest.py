@@ -60,6 +60,10 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 HAVE_CASA6 = False
+
+# JIRA BRANCH TO CHECKOUT
+JIRA_BRANCH = None
+
 try:
     import casatools
     import casatasks
@@ -236,7 +240,7 @@ def list_tests():
         for t in readfile(LISTofTESTS):
             print(t)
 
-def git_fetch_casa_tests(path):
+def git_fetch_casa_tests_branch(path, branch):
 
     cwd = os.getcwd()
     if os.path.exists(path):
@@ -247,34 +251,22 @@ def git_fetch_casa_tests(path):
     os.makedirs(path)
 
     os.chdir(path)
-    subprocess.call(["git","init", "--quiet"])
+
     FNULL = open(os.devnull, 'w')
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("CHECKING OUT BRANCH: {}".format(branch))
+    subprocess.call(["git","clone", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    os.chdir(path + 'casa6')
+    subprocess.call(["git","checkout","{}".format(branch)], stdout=FNULL, stderr=subprocess.STDOUT)
+    shutil.move(path + 'casa6/casatools', path + 'casatools')
+    shutil.move(path + 'casa6/casatasks', path + 'casatasks')
+    shutil.move(path + 'casa6/casatestutils', path + 'casatestutils')
+    shutil.move(path + 'casa6/casatests', path + 'casatests')
+    shutil.move(path + 'casa6/casa5', path + 'casa5')
+    shutil.rmtree(path + 'casa6')
 
-    print("casatasks/tests/tasks", file=open(".git/info/sparse-checkout", "a"))
-    
-    print("casatools/tests/tools/agentflagger", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/calanalysis", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/componentlist", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/coordsys", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/image", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/imagepol", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/measures", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/ms", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/msmetadata", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/regionmanager", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/sdm", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
-
-    print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
-
-    subprocess.call(["git","pull","--quiet","origin","master"])
     os.chdir(cwd)
+
+
 def gather_all_tests(path, workpath):
 
     if sys.version_info[0] > 2:
@@ -462,11 +454,18 @@ def run(testnames):
                             
                         # Check to see if tests need to be pulled from git. Only needs to be done once
                         if not test.endswith(".py") and gittest == True:
-                            print("Fetching Tests From Git Since No Local Test is Given")
-                            git_fetch_casa_tests( workpath + 'casa6')
-                            os.makedirs(workdir + "tests/")
-                            gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                            gittest = False
+                            if JIRA_BRANCH is not None:
+                                git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
+                                os.makedirs(workdir + "tests/")
+                                gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                gittest = False
+
+                            else:
+                                print("Fetching Tests From Git Main Since No Local Test is Given")
+                                git_fetch_casa_tests( workpath + 'casa6/')
+                                os.makedirs(workdir + "tests/")
+                                gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                gittest = False
                             
                         if test.endswith(".py"):
                             try:
@@ -784,6 +783,9 @@ if __name__ == "__main__":
     # Component Arguments
     parser.add_argument("-p","--components", help='Comma separated list of components', required=False)
     parser.add_argument("-e","--mapfile", nargs='?', type=argparse.FileType('r'), help='Component to test map file', required=False)
+
+    parser.add_argument("-b","--branch", help='JIRA Branch to checkout', required=False)
+
     if not IS_CASA6:
         if "-c" in sys.argv:
             i = sys.argv.index("-c")
@@ -806,11 +808,15 @@ if __name__ == "__main__":
             import casatestutils as _;
             with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
                 component_to_test_map = json.load(ctt)
+        
         for c in components:
+            _isComponent = False
             component = c.strip()
-            if component in component_to_test_map.keys():
-                testnames.extend(component_to_test_map[component])
-            else:
+            for myDict in component_to_test_map["testlist"]:
+                if component in myDict["testGroup"]:
+                    _isComponent = True
+                    testnames.append(myDict["testScript"])
+            if not _isComponent:
                 print("No Tests for Component: {}".format(component))
 
     if args.verbose:
@@ -847,7 +853,11 @@ if __name__ == "__main__":
     if args.mem: # run specific tests in mem mode
         logger.info('Setting Mem Mode')
         MEM = 1
-        
+
+
+    if args.branch is not None:
+        JIRA_BRANCH = args.branch
+
     for arg in unknownArgs:
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
@@ -879,7 +889,8 @@ if __name__ == "__main__":
         #sys.exit()
         #raise Exception("List of tests is empty")
 
-
+#    print(testnames)
+#    sys.exit()
     try:
         run(testnames)
 

@@ -761,16 +761,6 @@
             "comment":""
         },
         {
-            "testScript":"test_hanningsmooth",
-            "testType":"casatasks",
-            "maintainer":"Sandra Castro",
-            "maintainerEmail":"scastro@eso.org",
-            "testOptions":[],
-            "testGroup":["hanningsmooth","mstransform"],
-            "timeout":0,
-            "comment":""
-        },
-        {
             "testScript":"test_ia_adddegaxes",
             "testType":"casatools",
             "maintainer":"David Mehringer",
@@ -2659,16 +2649,6 @@
             "testGroup":[],
             "timeout":0,
             "comment":""
-        },
-        {
-            "testScript":"test_split",
-            "testType":"casatasks",
-            "maintainer":"Sandra Castro",
-            "maintainerEmail":"scastro@eso.org",
-            "testOptions":[],
-            "testGroup":["default","mstransform","split"],
-            "timeout":0,
-            "comment":"DEFAULT"
         },
         {
             "testScript":"test_split",
