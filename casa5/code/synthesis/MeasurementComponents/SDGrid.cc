@@ -1242,7 +1242,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
     getImage(weight, doNormalize);
 
     // Warning message
-    if (allEQ(weight,0.0f)) {
+    if (allEQ(weight, 0.0f)) {
         logIO() << LogIO::SEVERE
                 << "No useful data in SDGrid: all weights are zero"
                 << LogIO::POST;
