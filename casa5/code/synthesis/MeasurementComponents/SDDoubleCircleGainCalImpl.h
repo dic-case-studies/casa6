@@ -17,6 +17,7 @@
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/casa/Logging/LogIO.h>
 #include <casacore/casa/BasicSL/Constants.h>
+#include <casacore/casa/Containers/Block.h>
 
 namespace casa { // namespace casa START
 

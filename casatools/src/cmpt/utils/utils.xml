@@ -201,6 +201,35 @@ file:///opt/casa/code/tools/xml/casa.xsd">
 </method>
 
 <!-- ******************** function to initialize CASAtools ************************** -->
+<method type="function" name="tryit">
+<description>
+test variant convesion
+</description>
+<input>
+  <param type="record" name="input">
+    <description>testing variant</description>
+  </param>
+</input>
+<returns type="double"/>
+</method>
+
+<method type="function" name="maxint">
+    <description>maximum number an C++ int can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="minint">
+    <description>minimum number an C++ int can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="maxlong">
+    <description>maximum number an C++ long can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="minlong">
+    <description>minimum number an C++ long can hold</description>
+    <returns type="int"/>
+</method>
+
 <method type="function" name="initialize">
 <shortdescription>initialize CASAtools</shortdescription>
 
@@ -211,6 +240,12 @@ returns true if initalization was performed; returns false if initialization was
 <input>
   <param type="string" name="python_path">
 	<description>path to python executable</description>
+  </param>
+</input>
+
+<input>
+  <param type="string" name="distro_data_path">
+	<description>path to the data provided by the casadata pkg</description>
   </param>
 </input>
 

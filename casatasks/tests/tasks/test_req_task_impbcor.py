@@ -37,6 +37,9 @@ except ImportError:
     from tasks import *
     from taskinit import *
     from __main__ import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
     image = iatool
     _ia = iatool()
     _tb = tbtool()
@@ -130,7 +133,7 @@ class impbcor_test(unittest.TestCase):
             imagename, pbimage, outfile, overwrite, region,
             box, chans, stokes, mask, mode, cutoff, wantreturn
         ):
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 self.assertRaises(
                     Exception, run_impbcor, imagename=imagename,
                     pbimage=pbimage, outfile=outfile, overwrite=overwrite,
@@ -220,14 +223,13 @@ class impbcor_test(unittest.TestCase):
             if j == 1:
                 pbimage = pbpix
             outfile = outfile
-            res = run_impbcor(
+            run_impbcor(
                 imagename=imagename, pbimage=pbimage,
                 outfile=outfile, overwrite=overwrite,
                 region=region, box=box, chans=chans,
                 stokes=stokes, mask=mask, mode=mode,
                 cutoff=cutoff
             )
-            self.assertTrue(res)
             self.checkImage(outfile, expected, epsilon)
             shutil.rmtree(outfile)
 
@@ -286,7 +288,7 @@ class impbcor_test(unittest.TestCase):
         yy.done()
         xx.done()
         # CASA6 raises an exception, CASA5 returns False
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 RuntimeError,
                 impbcor,
@@ -299,10 +301,11 @@ class impbcor_test(unittest.TestCase):
                 mask=mymask + ">0", stretch=False
             )
             self.assertFalse(zz)
-        zz = impbcor(
-            imagename=im2, pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+        outname = "blahblah"
+        impbcor(
+            imagename=im2, pbimage=pb2, outfile=outname, mask=mymask + ">0", stretch=True
         )
-        self.assertTrue(zz)
+        self.assertTrue(os.path.exists(outname))
         
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""

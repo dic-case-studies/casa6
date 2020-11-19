@@ -32,6 +32,8 @@
 #include <mutex>
 #include <sys/file.h>
 
+#include <casatools/Config/State.h>
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -368,6 +370,7 @@ bool logsink::setlogfile(const std::string& filename)
    //
    // Also set for any watchers.
    CasapyWatcher::logChanged_(logname);
+   casatools::get_state( ).setLogPath(logname);
 
    return rstat;
 }
@@ -407,7 +410,7 @@ logsink::logfile()
   return logname ;
 }
 
-int
+long
 logsink::ompNumThreadsTest()
 {
 	Int num_thread(-1);
@@ -423,7 +426,7 @@ logsink::ompNumThreadsTest()
 	return num_thread;
 }
 
-int
+long
 logsink::ompGetNumThreads()
 {
 	Int num_threads(-1);
@@ -442,7 +445,7 @@ logsink::ompGetNumThreads()
 }
 
 bool
-logsink::ompSetNumThreads(int numThreads)
+logsink::ompSetNumThreads(long numThreads)
 {
 	Int res(true);
 
@@ -453,31 +456,31 @@ logsink::ompSetNumThreads(int numThreads)
 	return res;
 }
 
-int
-logsink::setMemoryTotal(int memory)
+long
+logsink::setMemoryTotal(long memory)
 {
 	return HostInfo::setMemoryTotal(memory);
 }
 
-int
-logsink::setMemoryFraction(int memfrac)
+long
+logsink::setMemoryFraction(long memfrac)
 {
 	return HostInfo::setMemoryFraction(memfrac);
 }
 
-int
-logsink::setNumCPUs(int numCPUs)
+long
+logsink::setNumCPUs(long numCPUs)
 {
 	return HostInfo::setNumCPUs(numCPUs);
 }
 
-int
+long
 logsink::getMemoryTotal(bool use_aipsrc)
 {
 	return HostInfo::memoryTotal(use_aipsrc);
 }
 
-int
+long
 logsink::getNumCPUs(bool use_aipsrc)
 {
 	return HostInfo::numCPUs(use_aipsrc);

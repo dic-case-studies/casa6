@@ -59,181 +59,175 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
         """
         #Python script
 
-        try:
-                casalog.origin('exportasdm')
-                parsummary = 'vis=\"'+str(vis)+'\", asdm=\"'+str(asdm)+'\", datacolumn=\"'+str(datacolumn)+'\",'
-                casalog.post(parsummary)
-                parsummary = 'archiveid=\"'+str(archiveid)+'\", rangeid=\"'+str(rangeid)+'\", subscanduration=\"'+str(subscanduration)+'\",'
-                casalog.post(parsummary)
-                parsummary = 'sbduration=\"'+str(sbduration)+'\", apcorrected='+str(apcorrected)+', verbose='+str(verbose)+','
-                casalog.post(parsummary)
-                parsummary = 'showversion='+str(showversion)+', useversion=\"'+str(useversion)+'\"'
-                casalog.post(parsummary)
+        casalog.origin('exportasdm')
+        parsummary = 'vis=\"'+str(vis)+'\", asdm=\"'+str(asdm)+'\", datacolumn=\"'+str(datacolumn)+'\",'
+        casalog.post(parsummary)
+        parsummary = 'archiveid=\"'+str(archiveid)+'\", rangeid=\"'+str(rangeid)+'\", subscanduration=\"'+str(subscanduration)+'\",'
+        casalog.post(parsummary)
+        parsummary = 'sbduration=\"'+str(sbduration)+'\", apcorrected='+str(apcorrected)+', verbose='+str(verbose)+','
+        casalog.post(parsummary)
+        parsummary = 'showversion='+str(showversion)+', useversion=\"'+str(useversion)+'\"'
+        casalog.post(parsummary)
 
-                if not (type(vis)==str) or not (os.path.exists(vis)):
-                        raise Exception('Visibility data set not found - please verify the name')
-                
-                if (asdm == ""):
-                        raise Exception("Must provide output data set name in parameter asdm.")            
-                
-                if os.path.exists(asdm):
-                        raise Exception("Output ASDM %s already exists - will not overwrite." % asdm)
+        if not (type(vis)==str) or not (os.path.exists(vis)):
+                raise ValueError('Visibility data set not found - please verify the name')
 
-                # determine sb and subscan duration
-                ssdur_secs = 24.*3600 # default is one day, i.e. there will be only one subscan per scan
-                if not(subscanduration==""):
-                        if (_qa.canonical(subscanduration)['unit'].find('s') < 0):
-                                raise TypeError("subscanduration is not a valid time quantity: %s" % subscanduration)
-                        else:
-                                ssdur_secs = _qa.canonical(subscanduration)['value']
+        if (asdm == ""):
+                raise ValueError("Must provide output data set name in parameter asdm.")
 
-                sbdur_secs = 2700. # default is 45 minutes
-                if not(sbduration==""):
-                        if (_qa.canonical(sbduration)['unit'].find('s') < 0):
-                                raise TypeError("sbduration is not a valid time quantity: %s" % sbduration)
-                        else:
-                                sbdur_secs = _qa.canonical(sbduration)['value']
+        if os.path.exists(asdm):
+                raise ValueError("Output ASDM %s already exists - will not overwrite." % asdm)
 
-                # create timesorted copy of the input ms
-                tsortvis = vis+'-tsorted'
-                os.system('rm -rf '+tsortvis)
-                _ms.open(vis)
-                _ms.timesort(tsortvis)
-                _ms.close()
+        # determine sb and subscan duration
+        ssdur_secs = 24.*3600 # default is one day, i.e. there will be only one subscan per scan
+        if not(subscanduration==""):
+                if (_qa.canonical(subscanduration)['unit'].find('s') < 0):
+                        raise TypeError("subscanduration is not a valid time quantity: %s" % subscanduration)
+                else:
+                        ssdur_secs = _qa.canonical(subscanduration)['value']
 
-                # Prepare for actual exportasdm
-                casalog.post("Checking timesorted MS for potential problems ... ")
-                _tb.open(tsortvis)
-                a = _tb.getcol('PROCESSOR_ID')
-                a0 = a[0]
-                candoit = True
-                for i in range(0,len(a)-1):
-                        if(a[i]!=a[i+1]):
-                                candoit = False
-                                break
+        sbdur_secs = 2700. # default is 45 minutes
+        if not(sbduration==""):
+                if (_qa.canonical(sbduration)['unit'].find('s') < 0):
+                        raise TypeError("sbduration is not a valid time quantity: %s" % sbduration)
+                else:
+                        sbdur_secs = _qa.canonical(sbduration)['value']
+
+        # create timesorted copy of the input ms
+        tsortvis = vis+'-tsorted'
+        os.system('rm -rf '+tsortvis)
+        _ms.open(vis)
+        _ms.timesort(tsortvis)
+        _ms.close()
+
+        # Prepare for actual exportasdm
+        casalog.post("Checking timesorted MS for potential problems ... ")
+        _tb.open(tsortvis)
+        a = _tb.getcol('PROCESSOR_ID')
+        a0 = a[0]
+        candoit = True
+        for i in range(0,len(a)-1):
+                if(a[i]!=a[i+1]):
+                        candoit = False
+                        break
+        _tb.close()
+
+        if candoit:
+                casalog.post("   Checking if PROCESSOR and MAIN need modifications ...")
+                _tb.open(tsortvis+'/PROCESSOR')
+                nprocrows = _tb.nrows()
                 _tb.close()
-
-                if candoit:
-                        casalog.post("   Checking if PROCESSOR and MAIN need modifications ...")
+                if ((nprocrows>0) and (a0>-1)):
                         _tb.open(tsortvis+'/PROCESSOR')
-                        nprocrows = _tb.nrows()
+                        therow = _tb.nrows()-1
+                        mode0 = _tb.getcell('MODE_ID',a0)
                         _tb.close()
-                        if ((nprocrows>0) and (a0>-1)):
-                                _tb.open(tsortvis+'/PROCESSOR')
-                                therow = _tb.nrows()-1 
-                                mode0 = _tb.getcell('MODE_ID',a0)
+                        offset = 1
+                        if nprocrows>1:
+                                casalog.post("   Modifying PROCESSOR subtable ...")
+                                while (nprocrows>1 and therow>0):
+                                        _tb.open(tsortvis+'/PROCESSOR', nomodify=False)
+                                        therow = _tb.nrows()-offset
+                                        if(_tb.getcell('MODE_ID',therow)!=mode0):
+                                                _tb.removerows([therow])
+                                        else:
+                                                offset += 1
+                                        nprocrows = _tb.nrows()
+                                casalog.post("... done.")
+
+                                casalog.post("   Modifying processor ids in main table ...")
+                                a = a - a # set all precessor ids to zero
+                                _tb.open(tsortvis, nomodify=False)
+                                _tb.putcol('PROCESSOR_ID', a)
                                 _tb.close()
-                                offset = 1
-                                if nprocrows>1:
-                                        casalog.post("   Modifying PROCESSOR subtable ...")
-                                        while (nprocrows>1 and therow>0):
-                                                _tb.open(tsortvis+'/PROCESSOR', nomodify=False)
-                                                therow = _tb.nrows()-offset
-                                                if(_tb.getcell('MODE_ID',therow)!=mode0):
-                                                        _tb.removerows([therow])
-                                                else:
-                                                        offset += 1
-                                                nprocrows = _tb.nrows()
-                                        casalog.post("... done.")
+                                casalog.post(" ... done.")
+                        else:
+                                casalog.post("   No modifications to proc id in PROCESSOR and MAIN necessary.")
+                casalog.post("   Checking if SYSCAL needs modifications ...")
+                if(os.path.exists(tsortvis+'/SYSCAL')):
+                        for cname in ['TANT_SPECTRUM',
+                                      'TSYS_SPECTRUM',
+                                      'TANT_TSYS_SPECTRUM',
+                                      'TCAL_SPECTRUM',
+                                      'TRX_SPECTRUM',
+                                      'TSKY_SPECTRUM',
+                                      'PHASE_DIFF_SPECTRUM']:
+                                _tb.open(tsortvis+'/SYSCAL', nomodify=False)
+                                if(cname in _tb.colnames()):
+                                        cdesc = _tb.getcoldesc(cname)
+                                        if 'ndim' in cdesc and (cdesc['ndim']==-1):
+                                                _tb.removecols([cname])
+                                                casalog.post('   Removed empty array column '+cname+' from table SYSCAL.')
+                                _tb.close()
 
-                                        casalog.post("   Modifying processor ids in main table ...")
-                                        a = a - a # set all precessor ids to zero
-                                        _tb.open(tsortvis, nomodify=False)
-                                        _tb.putcol('PROCESSOR_ID', a)
-                                        _tb.close()
-                                        casalog.post(" ... done.")
-                                else:
-                                        casalog.post("   No modifications to proc id in PROCESSOR and MAIN necessary.")
-                        casalog.post("   Checking if SYSCAL needs modifications ...")
-                        if(os.path.exists(tsortvis+'/SYSCAL')):
-                                for cname in ['TANT_SPECTRUM',
-                                              'TSYS_SPECTRUM',
-                                              'TANT_TSYS_SPECTRUM',
-                                              'TCAL_SPECTRUM',
-                                              'TRX_SPECTRUM',
-                                              'TSKY_SPECTRUM',
-                                              'PHASE_DIFF_SPECTRUM']:
-                                        _tb.open(tsortvis+'/SYSCAL', nomodify=False)
-                                        if(cname in _tb.colnames()):
-                                                cdesc = _tb.getcoldesc(cname)
-                                                if 'ndim' in cdesc and (cdesc['ndim']==-1):
-                                                        _tb.removecols([cname])
-                                                        casalog.post('   Removed empty array column '+cname+' from table SYSCAL.')
-                                        _tb.close()
-
-                        casalog.post("   Checking if OBSERVATION needs modifications ...")
-                        _tb.open(tsortvis+'/OBSERVATION')
-                        nobsrows = _tb.nrows()
+                casalog.post("   Checking if OBSERVATION needs modifications ...")
+                _tb.open(tsortvis+'/OBSERVATION')
+                nobsrows = _tb.nrows()
+                _tb.close()
+                if(nobsrows>0):
+                        _tb.open(tsortvis+'/OBSERVATION', nomodify=False)
+                        cdesc = _tb.getcoldesc('LOG')
+                        if 'ndim' in cdesc and (cdesc['ndim']>0):
+                                b = _tb.getvarcol('LOG')
+                                if not (type(b['r1'])==bool):
+                                        kys = b.keys()
+                                        modified = False
+                                        b2 = []
+                                        for i in range(0,len(kys)):
+                                                k = 'r'+str(i+1)
+                                                if (b[k][0] == [''])[0]:
+                                                        b[k][0] = ["-"]
+                                                        modified = True
+                                                b2.append([b[k][0][0]])
+                                        if modified:
+                                                _tb.putcol('LOG',b2)
+                                                casalog.post("   Modified log column in OBSERVATION table.")
                         _tb.close()
-                        if(nobsrows>0):
-                                _tb.open(tsortvis+'/OBSERVATION', nomodify=False)
-                                cdesc = _tb.getcoldesc('LOG')
-                                if 'ndim' in cdesc and (cdesc['ndim']>0):
-                                        b = _tb.getvarcol('LOG')
-                                        if not (type(b['r1'])==bool):
-                                                kys = b.keys()
-                                                modified = False
-                                                b2 = []
-                                                for i in range(0,len(kys)):
-                                                        k = 'r'+str(i+1)
-                                                        if (b[k][0] == [''])[0]:
-                                                                b[k][0] = ["-"]
-                                                                modified = True
-                                                        b2.append([b[k][0][0]])
-                                                if modified:
-                                                        _tb.putcol('LOG',b2)
-                                                        casalog.post("   Modified log column in OBSERVATION table.")
-                                _tb.close()
-                        casalog.post("Done.")
-                else:
-                        raise Exception("More than one processor id in use in the main table. Cannot proceed.")                    
-                
-                if is_CASA6:
-                        # sdm tool
-                        _sdm = sdm(asdm)
-                        rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
-                        # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
-                        os.system('rm -rf '+tsortvis)
-                        return rval
-                else:
-                        # use MS2asdm executable
-                        execute_string=  '--datacolumn \"' + datacolumn 
-                        execute_string+= '\" --archiveid \"' + archiveid + '\" --rangeid \"' + rangeid
-                        execute_string+= '\" --subscanduration \"' + str(ssdur_secs)
-                        execute_string+= '\" --schedblockduration \"' + str(sbdur_secs) 
-                        execute_string+= '\" --logfile \"' + casalog.logfile() +'\"'
-                
-                        if(not apcorrected):
-                                execute_string+= ' --apuncorrected'
-                        if(verbose):
-                                execute_string+= ' --verbose'
-                        if(showversion):
-                                execute_string+= ' --revision'
+                casalog.post("Done.")
+        else:
+                raise RuntimeError("More than one processor id in use in the main table. Cannot proceed.")
 
+        if is_CASA6:
+                # sdm tool
+                _sdm = sdm(asdm)
+                rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
+                # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
+                os.system('rm -rf '+tsortvis)
+                if not rval:
+                        raise RuntimeError('The sdm tool method fromms failed')
+        else:
+                # use MS2asdm executable
+                execute_string=  '--datacolumn \"' + datacolumn
+                execute_string+= '\" --archiveid \"' + archiveid + '\" --rangeid \"' + rangeid
+                execute_string+= '\" --subscanduration \"' + str(ssdur_secs)
+                execute_string+= '\" --schedblockduration \"' + str(sbdur_secs)
+                execute_string+= '\" --logfile \"' + casalog.logfile() +'\"'
+
+                if(not apcorrected):
+                        execute_string+= ' --apuncorrected'
+                if(verbose):
+                        execute_string+= ' --verbose'
+                if(showversion):
+                        execute_string+= ' --revision'
+
+                theexecutable = 'MS2asdm'
+                if (useversion == 'v3'):
                         theexecutable = 'MS2asdm'
-                        if (useversion == 'v3'):
-                                theexecutable = 'MS2asdm'
 
-                        execute_string += ' ' + tsortvis + ' ' + asdm
+                execute_string += ' ' + tsortvis + ' ' + asdm
 
-                        execute_string = theexecutable+' '+execute_string
+                execute_string = theexecutable+' '+execute_string
 
-                        if(verbose):
-                                casalog.post('Running '+theexecutable+' standalone invoked as:')
-                                casalog.post(execute_string)
-                        else:
-                                print(execute_string)
+                if(verbose):
+                        casalog.post('Running '+theexecutable+' standalone invoked as:')
+                        casalog.post(execute_string)
+                else:
+                        print(execute_string)
 
-                        rval = os.system(execute_string)
+                rval = os.system(execute_string)
 
-                        os.system('rm -rf '+tsortvis)
-                
-                        if(rval == 0):
-                                return True
-                        else:
-                                casalog.post(theexecutable+' terminated with exit code '+str(rval),'WARN')
-                                return False
-        
-        except Exception as instance:
-                casalog.post("Error: %s" % instance, 'SEVERE')
-                raise
+                os.system('rm -rf '+tsortvis)
+
+                if(rval != 0):
+                        raise RuntimeError(theexecutable + ' terminated with exit '
+                                           'code ' + str(rval),'WARN')

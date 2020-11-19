@@ -199,7 +199,7 @@ Bool StatWtTVI::_parseConfiguration(const Record& config) {
             IPosition start(3, 0);
             IPosition stop(3, 0);
             IPosition step(3, 1);
-            for (uInt i=0; i<nrows; ++i) {
+            for (size_t i=0; i<nrows; ++i) {
                 auto row = chans.row(i);
                 const auto& spw = row[0];
                 if (_chanSelFlags.find(spw) == _chanSelFlags.end()) {
@@ -648,7 +648,7 @@ void StatWtTVI::_computeWeightSpectrumAndFlags() const {
     antenna1(ant1);
     antenna2(ant2);
     spectralWindows(spws);
-    Vector<uInt> rowIDs;
+    Vector<rownr_t> rowIDs;
     getRowIds(rowIDs);
     Vector<Double> exposures;
     exposure(exposures);
@@ -726,7 +726,7 @@ void StatWtTVI::weight(Matrix<Float> & wtmat) const {
         IPosition blc(3, 0);
         IPosition trc = _newWtSp.shape() - 1;
         const auto ncorr = _newWtSp.shape()[0];
-        for (Int i=0; i<nrows; ++i) {
+        for (rownr_t i=0; i<nrows; ++i) {
             blc[2] = i;
             trc[2] = i;
             if (_combineCorr) {
@@ -793,7 +793,7 @@ void StatWtTVI::flagRow(Vector<Bool>& flagRow) const {
     flag(flags);
     getVii()->flagRow(flagRow);
     auto nrows = nRows();
-    for (Int i=0; i<nrows; ++i) {
+    for (rownr_t i=0; i<nrows; ++i) {
         flagRow[i] = allTrue(flags.xyPlane(i));
     }
     _newFlagRow = flagRow.copy();

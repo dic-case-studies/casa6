@@ -23,7 +23,7 @@
 #include <stdcasa/StdCasa/CasacSupport.h>
 
 //DEBUG
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 using namespace std;
 using namespace casacore;
@@ -151,7 +151,7 @@ variant* functional::f(const variant& v) {
 	);
 }
 
-int functional::ndim() {
+long functional::ndim() {
 	_FUNC(
 		return _functional->ndim();
 	)

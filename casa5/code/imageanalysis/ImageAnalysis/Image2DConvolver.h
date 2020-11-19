@@ -30,18 +30,16 @@
 
 #include <imageanalysis/ImageAnalysis/ImageTask.h>
 
-#include <casa/aips.h>
-#include <casa/Arrays/Array.h>
-#include <scimath/Mathematics/VectorKernel.h>
-#include <casa/Quanta/Quantum.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/scimath/Mathematics/VectorKernel.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore {
 
 template <class T> class ImageInterface;
-template <class T> class Matrix;
-template <class T> class Vector;
 class String;
-class IPosition;
 class CoordinateSystem;
 class ImageInfo;
 class Unit;

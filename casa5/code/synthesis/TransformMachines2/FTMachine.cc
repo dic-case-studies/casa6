@@ -1451,6 +1451,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
@@ -2250,7 +2252,7 @@ using namespace casa::vi;
 
   Matrix<Double> FTMachine::negateUV(const vi::VisBuffer2& vb){
     Matrix<Double> uvw(vb.uvw().shape());
-    for (Int i=0;i< vb.nRows() ; ++i) {
+    for (rownr_t i=0;i< vb.nRows() ; ++i) {
       for (Int idim=0;idim<2; ++idim) uvw(idim,i)=-vb.uvw()(idim, i);
       uvw(2,i)=vb.uvw()(2,i);
     }
@@ -2513,7 +2515,7 @@ using namespace casa::vi;
       {
 	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
 	
-	if( useWeightImage() && dopsf ) { 
+	if((useWeightImage() && dopsf) || isSD()) { 
 	  getWeightImage( *(imstore->weight())  , sumWeights); 
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.

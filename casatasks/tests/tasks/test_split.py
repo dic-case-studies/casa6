@@ -1572,7 +1572,6 @@ class split_test_tav_then_cvel(SplitChecker):
         shutil.rmtree(self.records['cvms'])
         #self.__class__.n_tests_passed += 1
 
-@unittest.skip("split_test_wttosig is skipped")
 class split_test_wttosig(SplitChecker):
     """
     Check WEIGHT and SIGMA after various datacolumn selections and averagings.
@@ -1588,7 +1587,9 @@ class split_test_wttosig(SplitChecker):
                 ('corrected', '1', '0s'), # straight CORRECTED -> DATA.
                 ('data', '2', '0s'),      # channel averaged DATA
                 ('data', '1', '60s'),     # time averaged DATA
+                ('data', '1', '30s'),     # time averaged DATA with interval the same as the data itself
                 ('corrected', '2', '0s'), # channel averaged CORRECTED -> DATA
+                ('corrected', '1', '30s'), # time averaged CORRECTED -> DATA with interval the same as the data itself
                 ('corrected', '1', '60s')) # time averaged CORRECTED -> DATA
     
 
@@ -1675,24 +1676,44 @@ class split_test_wttosig(SplitChecker):
                               [ 0.70710677,  0.70710677,  0.70710677,  0.70710677]]),
                  0.001)
 
+    def test_wt_tav30data(self):
+        """WEIGHT after time averaging 30s DATA."""
+        check_eq(self.records[('data', '1', '30s')]['wt'],
+                 numpy.array([[ 0.0625    ,  0.11111111,  0.25      ,  1.        ],
+                              [ 0.0625    ,  0.11111111,  0.25      ,  1.        ],
+                              [ 1.        ,  0.25      ,  0.11111111,  0.0625    ],
+                              [ 0.04      ,  0.02777778,  0.02040816,  0.015625  ],
+                              [ 1.        ,  1.        ,  1.        ,  1.        ]]),
+                 0.001)
+
+    def test_sig_tav30sdata(self):
+        """SIGMA after time averaging 30s DATA."""
+        check_eq(self.records[('data', '1', '30s')]['sigma'],
+                 numpy.array([[4.,     3.,       2.,       1.],
+                              [4.,     3.,       2.,       1.],
+                              [1.,     2.,       3.,       4.],
+                              [5.,     6.,       7.,       8.],
+                              [1.,     1.,       1.,       1.]]), 0.001)
+
     def test_wt_tavdata(self):
         """WEIGHT after time averaging DATA."""
         check_eq(self.records[('data', '1', '60s')]['wt'],
-                 numpy.array([[  7.99999908e-02,   5.55555597e-02,   1.19209290e-07,       3.12500000e-02],
-                        [  6.04081601e-02,   1.03999996e+00,   4.81859408e-02,       1.02777767e+00],
-                        [  4.00189018e+00,   2.00000000e+00,   1.00189030e+00,       5.00000000e+00],
-                        [  2.00000000e+00,   2.00000000e+00,   2.00000000e+00,       2.00000000e+00],
-                        [  2.00000000e+00,   2.00000000e+00,   2.00000000e+00,       2.00000000e+00]]),
+                 numpy.array([[ 0.125    ,  0.22222222,  0.5       ,  2.        ],
+                              [ 0.125    ,  0.22222222,  0.5       ,  2.        ],
+                              [ 2.       ,  0.5       ,  0.22222222,  0.125     ],
+                              [ 0.08     ,  0.05555556,  0.04081633,  0.03125   ],
+                              [ 2.       ,  2.        ,  2.        ,  2.        ]]),
                  0.001)
 
     def test_sig_tavdata(self):
         """SIGMA after time averaging DATA."""
         check_eq(self.records[('data', '1', '60s')]['sigma'],
-                 numpy.array([[  3.53553414e+00,   4.24264050e+00,   2.89630933e+03,   5.65685415e+00],
-                        [  4.06866741e+00,   9.80580688e-01,   4.55553961e+00,   9.86393988e-01],
-                        [  4.99881893e-01,   7.07106769e-01,   9.99056160e-01,   4.47213590e-01],
-                        [  7.07106769e-01,   7.07106769e-01,   7.07106769e-01,   7.07106769e-01],
-                        [  7.07106769e-01,   7.07106769e-01,   7.07106769e-01,   7.07106769e-01]]), 0.001)
+                 numpy.array([[2.82842708, 2.12132025, 1.41421354, 0.70710677],
+                              [2.82842708, 2.12132025, 1.41421354, 0.70710677],
+                              [0.70710677, 1.41421354, 2.12132025, 2.82842708],
+                              [3.53553414, 4.2426405 , 4.94974756, 5.65685415],
+                              [0.70710677, 0.70710677, 0.70710677, 0.70710677]]),
+                              0.001)
 
     def test_wt_cavcorr(self):
         """WEIGHT after channel averaging CORRECTED_DATA."""
@@ -1714,23 +1735,25 @@ class split_test_wttosig(SplitChecker):
                         [ 0.70710677,  0.70710677,  0.70710677,  0.70710677]]),
                  0.001)
 
+#After reenabling split_test_wttosig in the context of CAS-11139,
+#he tests with time averaging seem not to be working yet. 
     def test_wt_tavcorr(self):
         """WEIGHT after time averaging CORRECTED_DATA."""
         check_eq(self.records[('corrected', '1', '60s')]['wt'],
-                 numpy.array([[2.,     2.,       0.,       2.],
-                              [4.,    16.,       0.,       1.],
-                              [4.,     4.,       4.,       4.],
-                              [2.,     2.,       2.,       2.],
-                              [2.,     2.,       2.,       2.]]), 0.001)
+                 numpy.array([[2.      ,8.      ,18.     ,32.     ],
+                              [0.125   ,0.222211,0.5     ,2.      ],
+                              [2.      ,0.5     ,0.222221,0.125   ],
+                              [2.      ,2.      ,2.      ,2.      ],
+                              [2.      ,2.      ,2.      ,2.      ]]), 0.001)
 
     def test_sig_tavcorr(self):
         """SIGMA after time averaging CORRECTED_DATA."""
         check_eq(self.records[('corrected', '1', '60s')]['sigma'],
-                 numpy.array([[  7.07106769e-01,   7.07106769e-01,   2.89630933e+03,       7.07106769e-01],
-                        [  5.00000000e-01,   2.50000000e-01,   2.04800000e+03,       1.00000000e+00],
-                        [  5.00000000e-01,   5.00000000e-01,   5.00000000e-01,       5.00000000e-01],
-                        [  7.07106769e-01,   7.07106769e-01,   7.07106769e-01,       7.07106769e-01],
-                        [  7.07106769e-01,   7.07106769e-01,   7.07106769e-01,       7.07106769e-01]]), 0.001)
+                 numpy.array([[0.70710677, 0.35355338, 0.23570228, 0.17677669],
+                              [2.82842708, 2.12137389, 1.41421354, 0.70710677],
+                              [0.70710677, 1.41421354, 2.12132621, 2.82842708],
+                              [0.70710677, 0.70710677, 0.70710677, 0.70710677],
+                              [0.70710677, 0.70710677, 0.70710677, 0.70710677]]), 0.001)
 
 class split_test_singlespw_severalchranges(unittest.TestCase):
     """
@@ -2058,7 +2081,8 @@ class splitTests(test_base):
         
         # Now, delete only the MS and leave the .flagversions in disk
         os.system('rm -rf '+self.outputms)
-        self.assertFalse(split(vis=self.vis, outputvis=self.outputms, spw='0'),'Expected task to fail.')
+        with self.assertRaises(RuntimeError):
+            split(vis=self.vis, outputvis=self.outputms, spw='0')
         # The next code doesn't work with the __rethrow_casa_exceptions=False in prelude.py
 #         with self.assertRaises(IOError):
 #             split(vis=self.vis, outputvis=self.outputms, spw='0')
@@ -2088,7 +2112,7 @@ class splitTests(test_base):
         ParallelTaskHelper.bypassParallelProcessing(1)
         # This will cause MS NULL selections in some subMSs that have only spw=0
         split(vis=self.testmms, outputvis=self.outputms, spw='1', datacolumn='data',
-                    width=bin1)
+              width=bin1)
         
         ParallelTaskHelper.bypassParallelProcessing(0)
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')
@@ -2294,7 +2318,7 @@ def suite():
             split_test_cavcd, 
             split_test_almapol,
             split_test_singlespw_severalchranges,
-#            split_test_wttosig, 
+            split_test_wttosig, 
 #            split_test_fc
             splitTests,
             splitSpwPoln,
