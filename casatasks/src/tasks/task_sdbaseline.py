@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import numpy
 import os
+import contextlib
 from collections import Counter
 
 # get is_CASA6 and is_python3
@@ -24,6 +25,7 @@ else:
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
 
+@contextlib.contextmanager
 def open_table(vis, nomodify=True):
     tb.open(vis, nomodify=nomodify)
     try:
