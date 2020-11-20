@@ -118,12 +118,13 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNthHogbom(0),
   itsSwitchedToMS(false),
   //itsStrenThres(0.19), //m31_gaussian_trynorm8
-  itsStrenThres(0.4), //m31_gaussian_trynorm8
+  //itsStrenThres(0.4), //m31_gaussian_trynorm8
   //itsStrenThres(0.0001), //m31norm_hog, 5k->10k
   //itsStrenThres(0.003), //SNorm_hog
   //itsStrenThres(0.0001), //SNorm_nohog
   //itsStrenThres(0.00036), //SNorm_hog 5k->10k
   //itsStrenThres(0.00003), //m31Norm_nohog
+  itsStrenThres(15.8), //GSL with der
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0),
   itsPeakResidual(1000.0), // temp. should this be changed to MAX?
@@ -424,7 +425,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
@@ -434,13 +435,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.002) // G55 value, new Asp, old normalization
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
-    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6)
+    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-5) // GSL with der, with new norm this is not needed.
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
 	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
-	    itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
-      //itsStrenThres = itsStrenThres - 0.02;
+	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
 
 	    switchedToHogbom();
     }
@@ -487,6 +488,16 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       converged = 1;
       break;
     }
+    // with new norm this is not needed
+    /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.0 && abs(itsStrengthOptimum) < 1e-7/ *threshold()* /)
+    {
+      cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
+      os << "Reached stopping threshold " << threshold() << " at iteration "<<
+            ii << LogIO::POST;
+      os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
+      converged = 1;
+      break;
+    }*/
     //    2. negatives on largest scale?
     if ((itsNscales > 1) && itsStopAtLargeScaleNegative  &&
         //optimumScale == (itsNscales-1) &&
@@ -1321,15 +1332,16 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
-      /*if (scale > 0)
+      if (scale > 0)
       {
 	      float normalization;
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good on M31 but bad on G55
-	      normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
+	      //normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
+        normalization = sqrt(2 * M_PI *itsInitScaleSizes[scale]); //GSL trial. Need to recover and re-norm later
 	      maxima(scale) /= normalization;
 	      //cout << "normalization[" << scale << "] " << normalization << endl;
-      }*/ //sanjay's code doesn't normalize peak here
+      } //sanjay's code doesn't normalize peak here, but this works well with GSL with derivatives
       /*maxima(scale) /= maxPsfConvInitScales(scale); // mimic MS-clean. This seems wrong b/c Asp doesn't use scaleBias
       cout << "maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;*/
@@ -1353,6 +1365,10 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
     const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. Seems it can be in the loop as well.
 
+    //trial of recover
+    strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
+    //
+
     strengthOptimum /= normalization;
     cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
   } //genie's
@@ -1360,7 +1376,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
 
-
+// wrong
 /*bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Float threshold)
 {
   const int nX = itsDirty->shape()(0);
@@ -1430,6 +1446,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   return false;
 }*/
 
+/* for lbfgs
 Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
 {
   const int nX = itsDirty->shape()(0);
@@ -1443,10 +1460,10 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
   Gaussian2D<Float> gbeam(1.0 / (sqrt(2*M_PI)*scale), center[0], center[1], scale, 1, 0);
 
   const double sigma5 = 5 * scale / 2;
-  /*const int minI = std::max(0, (int)(refi + center[0] - sigma5));
+  / *const int minI = std::max(0, (int)(refi + center[0] - sigma5));
   const int maxI = std::min(nX-1, (int)(refi + center[0] + sigma5));
   const int minJ = std::max(0, (int)(refj + center[1] - sigma5));
-  const int maxJ = std::min(nY-1, (int)(refj + center[1] + sigma5));*/
+  const int maxJ = std::min(nY-1, (int)(refj + center[1] + sigma5));* /
   const int minI = std::max(0, (int)(center[0] - sigma5));
   const int maxI = std::min(nX-1, (int)(center[0] + sigma5));
   const int minJ = std::max(0, (int)(center[1] - sigma5));
@@ -1470,7 +1487,7 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
   GradAmp = 0.0;
   // generate derivative of scale
   Matrix<Float> GradScale(nX, nY);
-  GradScale = 0.0;*/
+  GradScale = 0.0;* /
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
   Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
   //Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
@@ -1509,9 +1526,80 @@ Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
       lenDirVec += sqrt(pow(Grad0(i,j), 2) + pow(Grad1(i,j), 2));
     }
   }
-
   return lenDirVec;
+}*/
 
+// GSL
+Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
+{
+    const int nX = itsDirty->shape()(0);
+    const int nY = itsDirty->shape()(1);
+    const int refi = nX/2;
+    const int refj = nY/2;
+    const double sigma5 = 5 * scale / 2;
+    const int minI = std::max(0, (int)(center[0] - sigma5));
+    const int maxI = std::min(nX-1, (int)(center[0] + sigma5));
+    const int minJ = std::max(0, (int)(center[1] - sigma5));
+    const int maxJ = std::min(nY-1, (int)(center[1] + sigma5));
+
+    casacore::Matrix<casacore::Float> Asp(nX, nY);
+    Asp = 0.0;
+    casacore::Matrix<casacore::Float> dAsp(nX, nY);
+    dAsp = 0.0;
+
+    for (int j = 0; j <= nY-1; j++)
+    {
+      for (int i = 0; i <= nX-1; i++)
+      {
+        const int px = i;
+        const int py = j;
+
+        Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scale,2));
+        dAsp(i,j)= Asp(i,j) * (((pow(i-center[0],2) + pow(j-center[1],2)) / pow(scale,2) - 1) / fabs(scale));
+      }
+    }
+
+    casacore::Matrix<casacore::Complex> AspFT;
+    casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsDirty->shape());
+    fft.fft0(AspFT, Asp);
+
+    casacore::Matrix<casacore::Complex> cWork;
+    cWork = AspFT * (*itsXfr);
+    casacore::Matrix<casacore::Float> AspConvPsf(itsDirty->shape(), (casacore::Float)0.0);
+    fft.fft0(AspConvPsf, cWork, false);
+    fft.flip(AspConvPsf, false, false); //need this
+
+    casacore::Matrix<casacore::Complex> dAspFT;
+    fft.fft0(dAspFT, dAsp);
+    casacore::Matrix<casacore::Complex> dcWork;
+    dcWork = dAspFT * (*itsXfr);
+    casacore::Matrix<casacore::Float> dAspConvPsf(itsDirty->shape(), (casacore::Float)0.0);
+    fft.fft0(dAspConvPsf, dcWork, false);
+    fft.flip(dAspConvPsf, false, false); //need this
+
+    casacore::Matrix<casacore::Float> GradAmp(itsDirty->shape(), (casacore::Float)0.0);
+    casacore::Matrix<casacore::Float> GradScale(itsDirty->shape(), (casacore::Float)0.0);
+
+    // calculate the length of the direvative vector
+    Float lenDirVec = 0.0;
+    /*for (int j = minJ; j <= maxJ; j++)
+    {
+      for (int i = minI; i <= maxI; i++)
+      {*/
+    for (int j = 0; j <= nY-1; j++)
+    {
+      for (int i = 0; i <= nX-1; i++)
+      {
+        // generate derivatives of amplitude
+        GradAmp(i,j) = (-2) * (*itsDirty)(i,j) * AspConvPsf(i,j);
+        // generate derivative of scale
+        GradScale(i,j) = (-2) * amp * (*itsDirty)(i,j) * dAspConvPsf(i,j);
+
+        lenDirVec += sqrt(pow(GradAmp(i,j), 2) + pow(GradScale(i,j), 2));
+      }
+    }
+
+    return lenDirVec;
 }
 
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
@@ -1775,40 +1863,53 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     }
 
     // GSL optimization
-    /*gsl_multimin_function_fdf my_func;
-    gsl_multimin_fdfminimizer *s = NULL;*/ //fdf
-    gsl_multimin_function my_func;
-    gsl_multimin_fminimizer *s = NULL;
+    //fdf
+    gsl_multimin_function_fdf my_func;
+    gsl_multimin_fdfminimizer *s = NULL;
+    // f only
+    /*gsl_multimin_function my_func;
+    gsl_multimin_fminimizer *s = NULL;*/
 
     // setupSolver
     ParamObj optParam(*itsDirty, *itsXfr, activeSetCenter);
+    //ParamObj optParam(*itsOrigDirty, *itsXfr, activeSetCenter); // sanjay uses orig dirty
     ParamObj *ptrParam;
     ptrParam = &optParam;
-    /*const gsl_multimin_fdfminimizer_type *T;
+    // fdf
+    const gsl_multimin_fdfminimizer_type *T;
     T = gsl_multimin_fdfminimizer_vector_bfgs2;
     s = gsl_multimin_fdfminimizer_alloc(T, length);
     my_func.n      = length;
     my_func.f      = my_f;
     my_func.df     = my_df;
     my_func.fdf    = my_fdf;
-    my_func.params = (void *)ptrParam;*/ //fdf
+    my_func.params = (void *)ptrParam;
+    // f only
+    /*
     const gsl_multimin_fminimizer_type *T;
     T = gsl_multimin_fminimizer_nmsimplex2rand; //20.77, 31.63
-    //T = gsl_multimin_fminimizer_nmsimplex2; //-1.72 313
+    //T = gsl_multimin_fminimizer_nmsimplex2; //-1.72 313 -->bad
     s = gsl_multimin_fminimizer_alloc(T, length);
     my_func.n      = length;
     my_func.f      = my_f; //my_f
-    my_func.params = (void *)ptrParam;
+    my_func.params = (void *)ptrParam;*/
 
-    /*const float InitStep = gsl_blas_dnrm2(x);
-    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/ *1e-3* /);*/
+    // fdf
+    const float InitStep = gsl_blas_dnrm2(x);
+    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/*1e-3*/);
+    // f only
+    /*
     gsl_vector *ss = NULL;
     ss = gsl_vector_alloc (length);
     gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
-    gsl_multimin_fminimizer_set(s, &my_func, x, ss);
+    gsl_multimin_fminimizer_set(s, &my_func, x, ss);*/
 
     printf("\n---------- BFGS algorithm begin ----------\n");
-    //findComponent(10, s); //fdf
+    // fdf
+    findComponent(10, s);
+
+    // f only
+    /*
     size_t iter = 0;
     int status = 0;
     double size;
@@ -1834,12 +1935,12 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
                 gsl_vector_get (s->x, 1),
                 s->fval, size);
       }
-    while (status == GSL_CONTINUE && iter < 20);
+    while (status == GSL_CONTINUE && iter < 20);*/
     printf("\n----------  BFGS algorithm end  ----------\n");
     // update x needed here?
     gsl_vector *optx = NULL;
-    //optx = gsl_multimin_fdfminimizer_x(s); //fdf
-    optx = gsl_multimin_fminimizer_x(s);
+    optx = gsl_multimin_fdfminimizer_x(s); //fdf
+    //optx = gsl_multimin_fminimizer_x(s); // f only
 
     // end GSL optimization
 
@@ -1963,8 +2064,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     cout << "opt strengthOptimum " << itsStrengthOptimum << " opt size " << itsOptimumScaleSize << endl;
 
     // free GSL stuff
-    //gsl_multimin_fdfminimizer_free(s); //fdf
-    gsl_multimin_fminimizer_free(s);
+    gsl_multimin_fdfminimizer_free(s); //fdf
+    //gsl_multimin_fminimizer_free(s); // f only
     gsl_vector_free(x);
     //gsl_vector_free(optx); // free this causes seg fault!!!
 
@@ -2038,9 +2139,9 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
   //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
-  //itsNumHogbomIter = ceil(2 + 2 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
+  itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
   //itsNumHogbomIter = ceil(65 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm4 5k
-  itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
+  //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
   //itsNumHogbomIter = 1000000; //fake it for M31
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }

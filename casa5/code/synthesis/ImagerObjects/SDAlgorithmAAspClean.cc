@@ -158,7 +158,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setaspcontrol(cycleNiter, 0.9/*0.5*//*loopgain*/, thresh, Quantity(0.0, "%"));
+    itsCleaner.setaspcontrol(cycleNiter, /*0.9*/0.8/*loopgain*/, thresh, Quantity(0.0, "%"));
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model

@@ -451,8 +451,11 @@ int findComponent(int NIter, gsl_multimin_fdfminimizer *s)
 	// Make the move!
 	status = gsl_multimin_fdfminimizer_iterate(s);
 	std::cout << "debug: gsl status " << status << std::endl;
-	if (status == GSL_ENOPROG) // 27: not making progress towards solution
-		gsl_multimin_fdfminimizer_restart(s);
+	/*if (status == GSL_ENOPROG) // 27: not making progress towards solution
+		gsl_multimin_fdfminimizer_restart(s);*/
+	if (status)
+        break;
+
 
 	status = gsl_multimin_test_gradient(s->gradient, 1E-3);
 	std::cout << "debug: grad status " << status << std::endl;
