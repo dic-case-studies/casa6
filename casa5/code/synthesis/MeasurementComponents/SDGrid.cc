@@ -743,16 +743,29 @@ void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
 
     // clipping related stuff
     if (clipminmax_) {
-      gmin_.resize(gridShape);
-      gmin_ = Complex(FLT_MAX);
-      gmax_.resize(gridShape);
-      gmax_ = Complex(-FLT_MAX);
-      wmin_.resize(gridShape);
-      wmin_ = 0.0f;
-      wmax_.resize(gridShape);
-      wmax_ = 0.0f;
-      npoints_.resize(gridShape);
-      npoints_ = 0;
+        gmin_.resize(gridShape);
+        gmin_ = Complex(FLT_MAX);
+        gmax_.resize(gridShape);
+        gmax_ = Complex(-FLT_MAX);
+        wmin_.resize(gridShape);
+        wmin_ = 0.0f;
+        wmax_.resize(gridShape);
+        wmax_ = 0.0f;
+        npoints_.resize(gridShape);
+        npoints_ = 0;
+    }
+
+    // debug messages
+    LogOrigin msgOrigin("SDGrid", "initializeToSky", WHERE);
+    auto & logger = logIO();
+    logger << msgOrigin << LogIO::DEBUGGING;
+    logger.output() << "clipminmax_ = " << std::boolalpha << clipminmax_
+                    << " (" << std::noboolalpha << clipminmax_ << ")";
+    logger << LogIO::POST;
+    if (clipminmax_) {
+        logger << msgOrigin << LogIO::DEBUGGING
+               << "will use clipping-capable Fortran gridder ggridsd2 for imaging"
+               << LogIO::POST;
     }
   }
   AlwaysAssert(lattice, AipsError);
