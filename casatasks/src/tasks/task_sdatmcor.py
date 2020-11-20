@@ -294,6 +294,7 @@ def sdatmcor(
             intent=intent,
             observation=observation,
             feed=feed,
+            taql=msselect,
             reindex=False)   # Must be False #
 
     except Exception as err:

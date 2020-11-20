@@ -462,8 +462,11 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_sdatmcor_msselect(self):
         """Test msselect"""
-        sdatmcor(infile=self.infile, msselect='ANTNNA1 == 1', outfile=self.outfile)
+        sdatmcor(infile=self.infile, msselect='ANTENNA1 == 1', outfile=self.outfile)
         self.check_result({19: True, 23: True})
+
+        with self.assertRaises(Exception):
+            sdatmcor(infile=self.infile, msselect='ANTENNA1 == 2', outfile=self.outfile)
 
     def test_sdatmcor_gainfactor_float(self):
         """test gainfactor: float input"""
