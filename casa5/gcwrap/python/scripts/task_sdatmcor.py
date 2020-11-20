@@ -254,8 +254,8 @@ def sdatmcor(
     #
 
     # User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
-    layerboundaries = _convert_to_list(layerboundaries, float)
-    layertemperature = _convert_to_list(layertemperature, float)
+    layerboundaries = _convert_to_list(layerboundaries)
+    layertemperature = _convert_to_list(layertemperature)
 
     # Length of the two args must be same #
     len_1 = len(layerboundaries)
@@ -446,45 +446,25 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
             return atm_parm_variable, False
 
 
-def _convert_to_list(in_arg, out_ele_type):
+def _convert_to_list(in_arg):
     """ Convert input to List
      in_arg:               List or String (comma-separated string)
-     output element type:  float(def), int, string
 
-     return:               List of values (type= int or float)
-     Exception:            internal conversion error     (Exception)
-                           in_arg is not string or list.        (Bug)
-                           out_ele_type is not float/int/string (Bug)
+     return:               List of values (type=float)
+     Exception:            internal conversion error.
+                           (=in_arg is not string or list.)
     """
     if type(in_arg) is list:
-        if in_arg == []:
-            return []
-
-        if out_ele_type == float:
-            return [float(s) for s in in_arg]
-        elif out_ele_type == int:
-            return [int(s) for s in in_arg]
-        elif out_ele_type == str:
-            return [str(s) for s in in_arg]
-
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
+        return [float(i) for i in in_arg]
 
     elif type(in_arg) is str:
         if in_arg == '':
             return []
-
-        tmp_list = in_arg.split(',')
-        if out_ele_type == float:
-            return [float(s) for s in tmp_list]
-        elif out_ele_type == int:
-            return [int(s) for s in tmp_list]
-        elif out_ele_type == str:
-            return [str(s) for s in in_arg]
-
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
+        else:
+            return [float(i) for i in in_arg.split(',')]
 
     else:
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected argument type.")
+        raise Exception("INTERNAL ERROR::Unexpected argument type.")
 
 
 def get_default_antenna(msname):
