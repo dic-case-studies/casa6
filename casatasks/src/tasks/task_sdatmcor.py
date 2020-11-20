@@ -446,7 +446,7 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
             return atm_parm_variable, False
 
 
-def _convert_to_list(in_arg, out_ele_type=float):
+def _convert_to_list(in_arg, out_ele_type):
     """ Convert input to List
      in_arg:               List or String (comma-separated string)
      output element type:  float(def), int, string
