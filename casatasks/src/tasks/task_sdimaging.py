@@ -478,18 +478,14 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         imgtype_suffix = {'singledish': '', 'coverage' : '.weight'}
         for img_type, img_suffix in imgtype_suffix.items():
             img_file = self.outfile + img_suffix
-            msg_fmt = "{state} {img_type} image {img_file}".format(
-                                state='{state}',
+            msg_fmt = string.Template("$state {img_type} image {img_file}".format(
                                 img_type=img_type,
                                 img_file=img_file)
-            casalog.post(msg_fmt.format(state="Generating"), "INFO")
+            casalog.post(msg_fmt.substitute(state="Generating"), "INFO")
             self.imager.makeimage(type=img_type, image=img_file)
             if not os.path.exists(img_file):
-                raise RuntimeError("Failed to generate {img_type} image {img_file}".format(
-                                        img_type=img_type,
-                                        img_file=img_file)
-                                  )
-            casalog.post(msg_fmt.format(state="Generated"), "INFO")
+                raise RuntimeError(msg_fmt.substitute(state="Failed to generate"))
+            casalog.post(msg_fmt.substitute(state="Generated"), "INFO")
         # Close imager
         self.close_imager()
 
