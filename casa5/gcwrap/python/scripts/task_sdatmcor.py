@@ -391,28 +391,25 @@ def _check_unit_and_formToStr(data, base_unit):
     try:
         if type(data) is str:
             if (data == ''):
-                # No data #
                 return ''
             ext_unit = qa.getunit(data)
             if (ext_unit in base_unit):
-                # With Unit #
                 return str(qa.getvalue(data)[0])
             elif (ext_unit == ''):
-                # Without Unit and added  #
                 return data
             else:
-                # Mismatch (ERROR) #
                 errmsg = "Unit conversion:: Unexpected Unit '%s' in %s ." % (ext_unit, data)
                 _msg("ERROR::%s" % errmsg, 'ERROR')
                 raise Exception(errmsg)
         elif (type(data) is int) or (type(data) is float):
-            return '' if data == -1 else str(data)  # (-1)= default #
+            return '' if data == -1 else str(data)  # CAS-13160 defines (-1)= default in humidity and dpm. #
         else:
             raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
         raise Exception("internal function error.")
+
 
 #
 # Argument parameter handling
