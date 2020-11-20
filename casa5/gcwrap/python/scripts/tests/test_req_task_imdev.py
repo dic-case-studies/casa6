@@ -160,11 +160,6 @@ class imdev_test(unittest.TestCase):
         else:
             self.assertTrue(False, "Unhandled type " + str(mytype))
     
-    def test_imagename(self):
-        ''' Check that the imagename parameter selects the image to preform the task on '''
-
-        self.assertTrue(imdev(imagename=datapath))
-    
     def test_outfile(self):
         ''' Check that the outfile parameter passes the name out the output image to be produced '''
 
