@@ -211,7 +211,6 @@ class test_tclean_base(unittest.TestCase):
             dictionary
         """
         self._myia.open(image)
-        print("IT's image=",image)
         imagename=os.path.basename(image)
         stats_dict = {}
 
@@ -310,7 +309,6 @@ class test_tclean_base(unittest.TestCase):
 
         # stats returned for .image(.tt0)
         if 'image' in imagename:
-            print("image=%s, GET COMMONBEAM" % image)
             commonbeam = self._myia.commonbeam()
             stats_dict['com_bmin'] = commonbeam['minor']['value']
             stats_dict['com_bmaj'] = commonbeam['major']['value']
