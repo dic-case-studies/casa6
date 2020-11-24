@@ -34,37 +34,29 @@
 using namespace casacore;
 namespace casa {
 
-RegionTextList::RegionTextList()
-    : _lines(),
-    _csys(CoordinateSystem()), _shape(IPosition()),
-    _canGetRegion(false), _union(), _composite() {}
+RegionTextList::RegionTextList() {}
 
 
 RegionTextList::RegionTextList(
     const CoordinateSystem& csys,
     const IPosition shape
-) : _lines(),
-    _csys(csys),_shape(shape), _canGetRegion(true), _union(), _composite() {}
+) : _csys(csys), _shape(shape), _canGetRegion(true) {}
 
 RegionTextList::RegionTextList(
     const String& filename, const CoordinateSystem& csys,
     const IPosition shape,
     const String& prependRegion, const String& globalOverrideChans, const String& globalOverrrideStokes,
     const Int requireAtLeastThisVersion, Bool verbose, Bool requireImageRegion
-) : _lines(),
-    _csys(csys), _shape(shape), _canGetRegion(true), _union(), _composite() {
+) : _csys(csys), _shape(shape), _canGetRegion(true) {
     RegionTextParser parser(
         filename, csys, shape, requireAtLeastThisVersion,
         prependRegion,
         globalOverrideChans, globalOverrrideStokes,
         verbose, requireImageRegion
     );
-    vector<AsciiAnnotationFileLine> lines = parser.getLines();
-    vector<AsciiAnnotationFileLine>::const_iterator iter = lines.begin();
-    vector<AsciiAnnotationFileLine>::const_iterator end = lines.end();
-    while (iter != end) {
-        addLine(*iter);
-        ++iter;
+    const auto lines = parser.getLines();
+    for (const auto& line: lines) {
+        addLine(line);
     }
 }
 
@@ -73,31 +65,27 @@ RegionTextList::RegionTextList(
     const IPosition shape, const String& prependRegion,
     const String& globalOverrideChans, const String& globalOverrrideStokes,
     Bool verbose, Bool requireImageRegion
-) : _lines(),
-    _csys(csys), _shape(shape), _canGetRegion(true), _union(), _composite() {
+) : _csys(csys), _shape(shape), _canGetRegion(true) {
     RegionTextParser parser(
         csys, shape, text, prependRegion, globalOverrideChans,
         globalOverrrideStokes, verbose, requireImageRegion
     );
-    Vector<AsciiAnnotationFileLine> lines = parser.getLines();
-    for (
-        Vector<AsciiAnnotationFileLine>::const_iterator iter=lines.begin();
-        iter != lines.end(); ++iter
-    ) {
-        addLine(*iter);
+    const auto lines = parser.getLines();
+    for (const auto& line: lines) {
+        addLine(line);
     }
 }
 
 RegionTextList::~RegionTextList() {}
 
 void RegionTextList::addLine(const AsciiAnnotationFileLine& line) {
-    AsciiAnnotationFileLine x = line;
+    const auto x = line;
     _lines.resize(_lines.size()+1, true);
     _lines[_lines.size()-1] = x;
     if (x.getType() == AsciiAnnotationFileLine::ANNOTATION && _canGetRegion) {
-        CountedPtr<const AnnotationBase> annotation = x.getAnnotationBase();
+        const auto annotation = x.getAnnotationBase();
         if (annotation->isRegion()) {
-            const AnnRegion *region = dynamic_cast<const AnnRegion *>(annotation.get());
+            const auto *region = dynamic_cast<const AnnRegion *>(annotation.get());
             if (! region->isAnnotationOnly()) {
                 auto wcregion = region->getRegion2();
                 if (region->isDifference() && _regions.size() == 0) {
@@ -105,7 +93,7 @@ void RegionTextList::addLine(const AsciiAnnotationFileLine& line) {
                     _csys.toWorld(blc, IPosition(_csys.nPixelAxes(), 0));
                     _csys.toWorld(trc, _shape);
                     Vector<Quantity> qblc(blc.size()), qtrc(trc.size());
-                    Vector<String> wUnits = _csys.worldAxisUnits();
+                    const auto wUnits = _csys.worldAxisUnits();
                     Vector<Int> absRel(blc.size(), RegionType::Abs);
                     for (uInt i=0; i<qblc.size(); i++) {
                         qblc[i] = Quantity(blc[i], wUnits[i]);
@@ -141,7 +129,7 @@ CountedPtr<const WCRegion> RegionTextList::getRegion() const {
         "for forming composite region. Use another constructor."
     );
     if (_regions.size() == 0) {
-        return 0;
+        return nullptr;
     }
     if (_regions.size() == 1) {
         _composite = _regions[0];
@@ -199,16 +187,16 @@ AsciiAnnotationFileLine RegionTextList::lineAt(
 }
 
 ostream& RegionTextList::print(ostream& os) const {
-    String vString = String::toString(RegionTextParser::CURRENT_VERSION);
+    const auto vString = String::toString(RegionTextParser::CURRENT_VERSION);
     os << "#CRTFv" + vString
         << " CASA Region Text Format version "
         << vString << endl;
     for (
-        Vector<AsciiAnnotationFileLine>::const_iterator iter=_lines.begin();
-        iter != _lines.end(); iter++
+        auto iter=_lines.cbegin();
+        iter != _lines.cend(); iter++
     ) {
         if (
-            iter == _lines.begin()
+            iter == _lines.cbegin()
             && iter->getType() == AsciiAnnotationFileLine::COMMENT
             && iter->getComment().contains(
                 Regex(RegionTextParser::MAGIC.regexp() + "v[0-9]+")
