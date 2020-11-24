@@ -197,18 +197,14 @@ def sdatmcor(
     _msg("  Input MS file   = %s " % infile)
     _msg("  Output MS file  = %s " % outfile)
 
-    # Existence #
-    infile_exist = _file_exist(infile)
-    outfile_exist = _file_exist(outfile)
-
     # infile Inaccessible #
-    if not infile_exist:
+    if not _file_exist(infile):
         errmsg = "Specified infile does not exist."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
 
     # outfile Protected #
-    if outfile_exist:
+    if _file_exist(outfile):
         if overwrite:
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(outfile)
