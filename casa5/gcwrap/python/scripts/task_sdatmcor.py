@@ -156,6 +156,104 @@ def parse_spw(msname, spw=''):
     return list(spws)
 
 
+def get_mount_off_source_commands(msname):
+    """Return list of flag commands whose reason is "Mount_is_off_source".
+
+    Args:
+        msname (str): name of MS
+
+    Returns:
+        np.ndarray: list of flag commands
+    """
+    with open_table(os.path.join(msname, 'FLAG_CMD')) as tb:
+        tsel = tb.query('REASON="Mount_is_off_source"')
+        try:
+            commands = tsel.getcol('COMMAND')
+        finally:
+            tsel.close()
+    return commands
+
+
+def get_antenna_name(antenna_selection):
+    """Extract antenna name from the antenna selection string.
+
+    Here, antenna_selection is assumed to be a string
+    in the form '<ANTENNA_NAME>&&*'.
+
+    Args:
+        antenna_selection (str): antenna selection string
+
+    Returns:
+        str: antenna name
+    """
+    return antenna_selection.split('=')[1].strip("'&*")
+
+
+def get_time_delta(time_range):
+    """Convert time range string into time duration in sec.
+
+    Here, time_range is assumed to be a string in the form
+    'YYYY/MM/DD/hh:mm:ss~YYYY/MM/DD/hh:mm:ss'
+
+    Args:
+        time_range (str): time range string
+
+    Returns:
+        float: time duration in sec
+    """
+    timestrs = time_range.split('=')[1].strip("'").split('~')
+    timequanta = [qa.quantity(t) for t in timestrs]
+    timedelta = qa.convert(qa.sub(timequanta[1], timequanta[0]), 's')['value']
+    return abs(timedelta)
+
+
+def cmd_to_ant_and_time(cmd):
+    """Extract antenna name and time duration from the flag command.
+
+    Args:
+        cmd (str): flag command
+
+    Returns:
+        tuple: antenna name and time duration
+    """
+    sels = cmd.split()
+    asel = list(filter(lambda x: x.startswith('antenna'), sels))[0]
+    tsel = list(filter(lambda x: x.startswith('time'), sels))[0]
+
+    antenna_name = get_antenna_name(asel)
+    time_delta = get_time_delta(tsel)
+
+    return antenna_name, time_delta
+
+
+def inspect_flag_cmd(msname):
+    """Inspect FLAG_CMD table.
+
+    Search flag commands whose reason is Mount_is_off_source and
+    extract antenna name and time duration from the commands.
+
+    Args:
+        msname (str): name of MS
+
+    Returns:
+        tuple: two dictionaries containing the inspection result.
+               The first one is number of command counts per antenna
+               while the second one is total duration flagged by the
+               commands per antenna.
+    """
+    commands = get_mount_off_source_commands(msname)
+
+    cmd_counts = collections.defaultdict(lambda: 0)
+    time_counts = collections.defaultdict(lambda: 0)
+
+    for cmd in commands:
+        ant, dt = cmd_to_ant_and_time(cmd)
+        cmd_counts[ant] += 1
+        time_counts[ant] += dt
+
+    return cmd_counts, time_counts
+
+
 def sdatmcor(
         infile, datacolumn, outfile, overwrite,
         field, spw, scan, antenna,
@@ -488,38 +586,48 @@ def _convert_to_list(in_arg, out_ele_type=float):
 
 
 def get_default_antenna(msname):
+    """Determine default antenna id based on the FLAG_CMD table.
 
-    # Unpreferable (problematic) antenna #
-    excluded_ant = ['PM01']
+    Args:
+        msname (str): name of MS
 
+    Raises:
+        Exception: no antenna was found in the MAIN table
+
+    Returns:
+        int: default antenna id
+    """
     # get list of antenna Ids from MAIN table
     with open_table(msname) as tb:
         ant_list = np.unique(tb.getcol('ANTENNA1'))
 
-    # get antenna names List by antenna Id #
-    with open_msmd(msname) as msmd:
-        ant_name = [msmd.antennanames(i)[0] for i in ant_list]
-
-    # No Available antenna #
+    # No Available antenna
     if len(ant_list) == 0:
         raise Exception("No Antenna was found.")
 
-    # Unpreferable antenna (PM01) found.  #
-    if (len(ant_list) == 1) and (ant_name[0] in excluded_ant):
-        _msg("Only %s was found. You have to use this.", 'WARN')
-        return ant_list[0]
+    # get antenna names list by antenna Id
+    with open_msmd(msname) as msmd:
+        ant_name = [msmd.antennanames(i)[0] for i in ant_list]
 
-    # Try to find an ID, except PM01 #
-    _msg("Antenna ID info")
-    for i, antid in enumerate(ant_list):
-        print(" - ID=%d , name=%s" % (antid, ant_name[i]))
-    for i, antid in enumerate(ant_list):
-        if ant_name[i] in excluded_ant:
-            pass
-        else:
-            return antid
+    # dictionary to map antenna name to antenna Id
+    ant_dict = dict((k, v) for k, v in zip(ant_name, ant_list))
 
-    raise Exception("INTERNAL ERROR: never comes here.")
+    # determine defdault antenna id
+    cmd_counts, flagged_durations = inspect_flag_cmd(msname)
+    min_duration = min(flagged_durations.values())
+    candidate_antennas = [k for k, v in flagged_durations.items() if v == min_duration]
+
+    if len(candidate_antennas) == 1:
+        default_name = candidate_antennas[0]
+        default_id = ant_dict[default_name]
+    else:
+        _counts = [cmd_counts[a] for a in candidate_antennas]
+        min_count = min(_counts)
+        candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
+        default_name = candidate_antennas2[0]
+        default_id = ant_dict[default_name]
+    _msg('Select {} (ID {}) as a default antenna'.format(default_name, default_id))
+    return default_id
 
 
 def get_default_altitude(msname, antid):
