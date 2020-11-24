@@ -724,7 +724,6 @@ def calc_sdatmcor(
             _msg(" -        spws = %s" % spws)
 
             # save spws (CAS-13160) #
-            rawmsSpws = spws
 
             # CAS-13160 atmcorr_20200807.py Change
             #  No more use of tmonsource in the new algorithm..
@@ -748,39 +747,39 @@ def calc_sdatmcor(
             #
             # (Task Section)
             #     'OutputSpw'
-            #     must be a set of rawmsSpw
+            #     must be a set of spw
             #
 
             # request by argument  #
             outputspws_param = parse_spw(corms, '')
 
             # Must be a subset, locate the initial set.  #
-            if set(outputspws_param).issubset(set(rawmsSpws)):
+            if set(outputspws_param).issubset(set(spws)):
                 outputspws = list(set(outputspws_param))
             else:
                 _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
-                outputspws = list(set(rawmsSpws) & set(outputspws_param))
+                outputspws = list(set(spws) & set(outputspws_param))
 
             _msg("Determined outputSpws Information")
-            _msg('- rawms      Spws       = %s' % rawmsSpws)
+            _msg('- Spws                  = %s' % spws)
             _msg('- requested  outputSpws = %s' % outputspws_param)
             _msg('- determined outputSpws = %s' % outputspws)
 
             #
             # (Task Section )
             #     'processing Spw'
-            #      must be a set of rawmsSpw
+            #      must be a set of Spws
             #
 
             # request by argument  #
             spws_param = parse_spw(rawms, p_spw)
 
             # Must be a subset, locate the initial set.  #
-            if set(spws_param).issubset(set(rawmsSpws)):
+            if set(spws_param).issubset(set(spws)):
                 spws = list(set(spws_param))
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
-                spws = list(set(rawmsSpws) & set(spws_param))
+                spws = list(set(spws) & set(spws_param))
 
             #
             # (Task Section )
@@ -797,7 +796,7 @@ def calc_sdatmcor(
             processing_spws = list(set(spws).intersection(set(outputspws)))
 
             _msg("Final Determined Spws Information")
-            _msg('-- Rawms         Spws = %s' % rawmsSpws)
+            _msg('-- Spws               = %s' % spws)
             _msg('-- Output        Spws = %s' % outputspws)
             _msg('-- Correcting    Spws = %s' % processing_spws)
 
@@ -805,8 +804,7 @@ def calc_sdatmcor(
             # (Original Section)
             #
 
-            # CAS-13160 Changed #
-            for spwid in rawmsSpws:  # (orginal) for spwid in spws:
+            for spwid in spws:
                 chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
             # end of with
@@ -823,17 +821,14 @@ def calc_sdatmcor(
 
     ddis = {}
     with open_msmd(calms) as msmd:
-        # CAS-13160 Changed #
-        for spwid in rawmsSpws:
-            # for spwid in spws:
+        for spwid in spws:
             ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     print("- ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
 
-    # CAS-13160 Changed #
-    for i, spwid in enumerate(rawmsSpws):  # (original) for i, spwid in enumerate(spws):
+    for i, spwid in enumerate(spws):
         bbp = int(spwnames[i].split('#')[2][3]) - 1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
