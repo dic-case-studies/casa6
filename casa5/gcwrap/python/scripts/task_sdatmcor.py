@@ -295,18 +295,14 @@ def sdatmcor(
     _msg("  Input MS file   = %s " % infile)
     _msg("  Output MS file  = %s " % outfile)
 
-    # Existence #
-    infile_exist = _file_exist(infile)
-    outfile_exist = _file_exist(outfile)
-
     # infile Inaccessible #
-    if not infile_exist:
+    if not _file_exist(infile):
         errmsg = "Specified infile does not exist."
         _msg("\nERROR::%s\n" % errmsg, 'ERROR')
         raise Exception(errmsg)
 
     # outfile Protected #
-    if outfile_exist:
+    if _file_exist(outfile):
         if overwrite:
             _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
             _ms_remove(outfile)
@@ -352,8 +348,8 @@ def sdatmcor(
     #
 
     # User-Defined-Profile parameters  conversion. An empty arg makes [] list. #
-    layerboundaries = _convert_to_list(layerboundaries, float)
-    layertemperature = _convert_to_list(layertemperature, float)
+    layerboundaries = _convert_to_list(layerboundaries)
+    layertemperature = _convert_to_list(layertemperature)
 
     # Length of the two args must be same #
     len_1 = len(layerboundaries)
@@ -489,28 +485,25 @@ def _check_unit_and_formToStr(data, base_unit):
     try:
         if type(data) is str:
             if (data == ''):
-                # No data #
                 return ''
             ext_unit = qa.getunit(data)
             if (ext_unit in base_unit):
-                # With Unit #
                 return str(qa.getvalue(data)[0])
             elif (ext_unit == ''):
-                # Without Unit and added  #
                 return data
             else:
-                # Mismatch (ERROR) #
                 errmsg = "Unit conversion:: Unexpected Unit '%s' in %s ." % (ext_unit, data)
                 _msg("ERROR::%s" % errmsg, 'ERROR')
                 raise Exception(errmsg)
         elif (type(data) is int) or (type(data) is float):
-            return '' if data == -1 else str(data)  # (-1)= default #
+            return '' if data == -1 else str(data)  # CAS-13160 defines (-1)= default in humidity and dpm. #
         else:
             raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
         raise Exception("internal function error.")
+
 
 #
 # Argument parameter handling
@@ -544,45 +537,25 @@ def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
             return atm_parm_variable, False
 
 
-def _convert_to_list(in_arg, out_ele_type=float):
+def _convert_to_list(in_arg):
     """ Convert input to List
      in_arg:               List or String (comma-separated string)
-     output element type:  float(def), int, string
 
-     return:               List of values (type= int or float)
-     Exception:            internal conversion error     (Exception)
-                           in_arg is not string or list.        (Bug)
-                           out_ele_type is not float/int/string (Bug)
+     return:               List of values (type=float)
+     Exception:            internal conversion error.
+                           (=in_arg is not string or list.)
     """
     if type(in_arg) is list:
-        if in_arg == []:
-            return []
-
-        if out_ele_type == float:
-            return [float(s) for s in in_arg]
-        elif out_ele_type == int:
-            return [int(s) for s in in_arg]
-        elif out_ele_type == str:
-            return [str(s) for s in in_arg]
-
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
+        return [float(i) for i in in_arg]
 
     elif type(in_arg) is str:
         if in_arg == '':
             return []
-
-        tmp_list = in_arg.split(',')
-        if out_ele_type == float:
-            return [float(s) for s in tmp_list]
-        elif out_ele_type == int:
-            return [int(s) for s in tmp_list]
-        elif out_ele_type == str:
-            return [str(s) for s in in_arg]
-
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
+        else:
+            return [float(i) for i in in_arg.split(',')]
 
     else:
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected argument type.")
+        raise Exception("INTERNAL ERROR::Unexpected argument type.")
 
 
 def get_default_antenna(msname):
@@ -855,7 +828,6 @@ def calc_sdatmcor(
             _msg(" -        spws = %s" % spws)
 
             # save spws (CAS-13160) #
-            rawmsSpws = spws
 
             # CAS-13160 atmcorr_20200807.py Change
             #  No more use of tmonsource in the new algorithm..
@@ -879,39 +851,39 @@ def calc_sdatmcor(
             #
             # (Task Section)
             #     'OutputSpw'
-            #     must be a set of rawmsSpw
+            #     must be a set of spw
             #
 
             # request by argument  #
             outputspws_param = parse_spw(corms, '')
 
             # Must be a subset, locate the initial set.  #
-            if set(outputspws_param).issubset(set(rawmsSpws)):
+            if set(outputspws_param).issubset(set(spws)):
                 outputspws = list(set(outputspws_param))
             else:
                 _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
-                outputspws = list(set(rawmsSpws) & set(outputspws_param))
+                outputspws = list(set(spws) & set(outputspws_param))
 
             _msg("Determined outputSpws Information")
-            _msg('- rawms      Spws       = %s' % rawmsSpws)
+            _msg('- Spws                  = %s' % spws)
             _msg('- requested  outputSpws = %s' % outputspws_param)
             _msg('- determined outputSpws = %s' % outputspws)
 
             #
             # (Task Section )
             #     'processing Spw'
-            #      must be a set of rawmsSpw
+            #      must be a set of Spws
             #
 
             # request by argument  #
             spws_param = parse_spw(rawms, p_spw)
 
             # Must be a subset, locate the initial set.  #
-            if set(spws_param).issubset(set(rawmsSpws)):
+            if set(spws_param).issubset(set(spws)):
                 spws = list(set(spws_param))
             else:
                 _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
-                spws = list(set(rawmsSpws) & set(spws_param))
+                spws = list(set(spws) & set(spws_param))
 
             #
             # (Task Section )
@@ -928,7 +900,7 @@ def calc_sdatmcor(
             processing_spws = list(set(spws).intersection(set(outputspws)))
 
             _msg("Final Determined Spws Information")
-            _msg('-- Rawms         Spws = %s' % rawmsSpws)
+            _msg('-- Spws               = %s' % spws)
             _msg('-- Output        Spws = %s' % outputspws)
             _msg('-- Correcting    Spws = %s' % processing_spws)
 
@@ -936,8 +908,7 @@ def calc_sdatmcor(
             # (Original Section)
             #
 
-            # CAS-13160 Changed #
-            for spwid in rawmsSpws:  # (orginal) for spwid in spws:
+            for spwid in spws:
                 chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
             # end of with
@@ -954,17 +925,14 @@ def calc_sdatmcor(
 
     ddis = {}
     with open_msmd(calms) as msmd:
-        # CAS-13160 Changed #
-        for spwid in rawmsSpws:
-            # for spwid in spws:
+        for spwid in spws:
             ddis[spwid] = msmd.datadescids(spw=spwid)[0]
     print("- ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
 
-    # CAS-13160 Changed #
-    for i, spwid in enumerate(rawmsSpws):  # (original) for i, spwid in enumerate(spws):
+    for i, spwid in enumerate(spws):
         bbp = int(spwnames[i].split('#')[2][3]) - 1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
