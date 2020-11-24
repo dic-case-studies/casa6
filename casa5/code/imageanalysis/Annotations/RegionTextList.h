@@ -153,7 +153,7 @@ private:
     std::vector<casacore::Bool> _union;
     // _myDiff is for memory management only, it holds new pointers that
     // aren't otherwise memory managed
-    mutable std::vector<std::shared_ptr<const casacore::WCDifference>> _myDiff;
+    mutable std::vector<std::shared_ptr<const casacore::WCDifference>> _ptrMgr;
     mutable std::shared_ptr<const casacore::WCRegion> _composite;
 };
 

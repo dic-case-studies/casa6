@@ -169,17 +169,17 @@ CountedPtr<const WCRegion> RegionTextList::getRegion() const {
         else {
             WCUnion myUnion(false, unionRegions);
             const WCDifference *myDiff = new WCDifference(myUnion, *_regions[count]);
-            // _myDiff is used solely for pointer management, so that the pointers are
+            // _ptrMgr is used solely for pointer management, so that the pointers are
             // deleted when this object goes out of scope, because PtrBlocks do no
             // memory management
-            _myDiff.push_back(std::shared_ptr<const WCDifference>(myDiff));
-            unionRegions.resize(1);
+            _ptrMgr.push_back(std::shared_ptr<const WCDifference>(myDiff));
+            unionRegions.resize(1, true);
             unionRegions[0] = myDiff;
         }
         ++count;
     }
     if (unionRegions.size() == 1) {
-        _composite = _myDiff[_myDiff.size() - 1];
+        _composite = _ptrMgr[_ptrMgr.size() - 1];
     }
     else {
         _composite.reset(new WCUnion(false, unionRegions));
