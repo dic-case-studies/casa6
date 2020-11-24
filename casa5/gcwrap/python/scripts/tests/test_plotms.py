@@ -12,10 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
-calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
-overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):   
@@ -58,18 +55,18 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(altdatapath,self.testms2),
+            shutil.copytree(os.path.join(datapath,self.testms2),
                     self.ms2, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(calpath,self.testms2), 
+            shutil.copytree(os.path.join(datapath,self.testms2), 
                     self.ms2, symlinks=True)
         testcaltable = os.path.join(self.outputDir, self.caltable)
         if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(calpath, self.testcaltable),
+            shutil.copytree(os.path.join(datapath, self.testcaltable),
                     self.caltable, symlinks=True)
 
     def setUpPointingData(self):
@@ -79,7 +76,7 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
+            shutil.copytree(os.path.join(datapath,self.testms4),
                     self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
@@ -709,7 +706,7 @@ class test_calibration(plotms_test_base):
 
     def test_calibration_callib(self):
         '''test_calibration_callib: CAS-3034, CAS-7502 callib parameter for OTF calibration'''
-        if os.path.exists(calpath):
+        if os.path.exists(datapath):
             self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
             self.removePlotfile()
             time.sleep(5)

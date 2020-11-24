@@ -62,20 +62,20 @@ class wvrgcal_test(unittest.TestCase):
         self.rval = False
 
         if(not os.path.exists(self.vis_f)):
-            rval = os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/wvrgcal/input/multisource_unittest.ms .')
+            rval = os.system('cp -RH '+os.environ['CASAPATH'].split()[0]+'/casatestdata//unittest/wvrgcal/multisource_unittest.ms .')
             if rval!=0:
                 raise Exception, "Error copying input data"
         if(not os.path.exists(self.vis_g)):
-            rval = os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/wvrgcal/input/wvrgcal4quasar_10s.ms .')
+            rval = os.system('cp -RH '+os.environ['CASAPATH'].split()[0]+'/casatestdata/unittest/wvrgcal/wvrgcal4quasar_10s.ms .')
             if rval!=0:
                 raise Exception, "Error copying input data"
         if(not os.path.exists(self.vis_h)):
-            rval = os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/wvrgcal/input/uid___A002_X8ca70c_X5_shortened.ms .')
+            rval = os.system('cp -RH '+os.environ['CASAPATH'].split()[0]+'/casatestdata/unittest/wvrgcal/uid___A002_X8ca70c_X5_shortened.ms .')
             if rval!=0:
                 raise Exception, "Error copying input data"
         for i in range(0,len(self.ref)):
             if(not os.path.exists(self.ref[i])):
-                rval = os.system('cp -R '+os.environ['CASAPATH'].split()[0]+'/data/regression/unittest/wvrgcal/input/'+self.ref[i]+' .')
+                rval = os.system('cp -RH '+os.environ['CASAPATH'].split()[0]+'/casatestdata/unittest/wvrgcal/wvrgcal_reference/'+self.ref[i]+' .')
                 if rval!=0:
                     raise Exception, "Error copying input data"
 

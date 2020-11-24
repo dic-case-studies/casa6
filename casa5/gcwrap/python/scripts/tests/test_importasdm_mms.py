@@ -49,6 +49,9 @@ asdmname = myms_dataset_name+'.asdm'
 # name of the reimported MS
 reimp_msname = 'reimported-'+myms_dataset_name
 
+# Path to input data
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/importasdm/'
+
 # make local copies of the tools
 tblocal = tbtool()
 mslocal = mstool()
@@ -156,15 +159,12 @@ class test_base(unittest.TestCase):
         if(os.path.exists(myasdm_dataset_name)):
             shutil.rmtree(myasdm_dataset_name)
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/asdm-import/input/'
         shutil.copytree(datapath + myasdm_dataset_name, myasdm_dataset_name)
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/exportasdm/input/'
         shutil.copytree(datapath + myms_dataset_name, myms_dataset_name)
         default(importasdm)
 
     def setUp_xosro(self):
         self.asdm = 'X_osro_013.55979.93803716435'
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/flagdata/'
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+self.asdm +' '+self.asdm)
             
@@ -173,7 +173,6 @@ class test_base(unittest.TestCase):
 
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+self.asdm +' '+self.asdm)
             
@@ -183,7 +182,6 @@ class test_base(unittest.TestCase):
         res = None
         myasdmname = 'uid___A002_X72bc38_X000' # ACA example ASDM with mixed pol/channelisation
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/asdm-import/input/'
         os.system('ln -sf '+datapath+myasdmname)
         default(importasdm)
 
@@ -191,7 +189,6 @@ class test_base(unittest.TestCase):
         res = None
         myasdmname = 'uid___A002_X71e4ae_X317_short' # 12m example ASDM with mixed pol/channelisation
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/asdm-import/input/'
         os.system('ln -sf '+datapath+myasdmname)
         default(importasdm)
 
@@ -199,7 +196,6 @@ class test_base(unittest.TestCase):
         res = None
         myasdmname = 'uid___A002_X997a62_X8c-short' # 12m example ASDM with ephemerides
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/asdm-import/input/'
         os.system('ln -sf '+datapath+myasdmname)
         default(importasdm)
 
@@ -207,7 +203,6 @@ class test_base(unittest.TestCase):
         res = None
         myasdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
         os.system('ln -sf '+datapath+myasdmname)
         default(importasdm)
 
@@ -216,7 +211,6 @@ class test_base(unittest.TestCase):
         # Single-dish ASDM, 1 scan, 9 spws, 4 antennas, 10 baselines,  4 auto-corrs + cross
         myasdmname = 'uid___A002_X6218fb_X264'  
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/alma-sd/M100/'
         os.system('ln -sf '+datapath+myasdmname)
         default(importasdm)
 
@@ -684,7 +678,8 @@ class asdm_import10(test_base):
        
     def tearDown(self):
         for myasdmname in ['uid___A002_X6218fb_X264']:
-            os.system('rm -f '+myasdmname) # a link
+ #           os.system('rm -f '+myasdmname) # a link
+            os.unlink('uid___A002_X6218fb_X264')
             shutil.rmtree(myasdmname+".ms",ignore_errors=True)
             shutil.rmtree(myasdmname+'.ms.flagversions',ignore_errors=True)
 
