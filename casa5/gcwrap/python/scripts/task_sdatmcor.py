@@ -666,7 +666,7 @@ def get_default_altitude(msname, antid):
 # https://casa.nrao.edu/docs/CasaRef/atmosphere-Tool.html#x995-10120004.1.1
 #
 
-def showAtmInfo(atm):
+def show_atm_info(atm):
     """
      Returned atm (from initAtmProfile) may have a different structure.
      In casa6, additional variable information is added in Dict type.
@@ -681,7 +681,7 @@ def showAtmInfo(atm):
         _msg(atm)
 
 
-def showLayerInfo(at):
+def show_iayer_info(at):
     p = at.getProfile()
 
     #
@@ -1015,7 +1015,7 @@ def calc_sdatmcor(
         #       - please see the inserted block.
         #
         #      The original script does not explicitly show outputspw/spw handling logic.
-        #      When intended spw is not in 'spws', no-corrected output is performed. 
+        #      When intended spw is not in 'spws', no-corrected output is performed.
 
         # original. #
         prevtmatm = 0.
@@ -1227,14 +1227,14 @@ def calc_sdatmcor(
                     #
                     # show intAtmProfile result
                     #
-                    showAtmInfo(atm)
+                    show_atm_info(atm)
 
                     #
                     #  Layer Information
                     #   - automatically showing, when the arg is specified)
                     #
                     if len(atm_layerboundaries) != 0:
-                        showLayerInfo(at)
+                        show_iayer_info(at)
 
                     ###################
                     # Spectral Window #
