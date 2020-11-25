@@ -276,7 +276,7 @@ Bool BeamSkyJones::changedBuffer(const vi::VisBuffer2& vb, Int row1, Int& row2)
 // BeamSkyJones, this method can use BeamSkyJones::changed in a loop
 Bool BeamSkyJones::change(const vi::VisBuffer2& vb)
 {
-  for (Int i=0;i<vb.nRows();++i)
+  for (rownr_t i=0;i<vb.nRows();++i)
        if (changed(vb,i)) return true;
   return false;
 };

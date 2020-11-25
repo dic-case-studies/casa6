@@ -39,7 +39,7 @@ synthesisutils::~synthesisutils()
   done();
 }
 
-  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const int npart)
+  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -56,7 +56,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const int npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
+  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const long npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
 {
   casac::record* rstat(0);
 
@@ -82,7 +82,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const int npart)
+  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -100,7 +100,7 @@ synthesisutils::~synthesisutils()
 }
 
   casac::record* synthesisutils::cubedataimagepartition(const casac::record& selpars, const casac::record& incsysrec,
-                                                      const int npart, const int nchannel)
+                                                      const long npart, const long nchannel)
 {
    casac::record* rstat(0);
 
@@ -232,7 +232,7 @@ synthesisutils::~synthesisutils()
 ***/
 
 
-  int  synthesisutils::getOptimumSize(const int size)
+  long  synthesisutils::getOptimumSize(const long size)
 {
    int rstat(size);
 

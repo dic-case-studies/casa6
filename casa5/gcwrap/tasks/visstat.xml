@@ -167,6 +167,10 @@
                 </allowed>
             </param>
 
+            <param type="bool" name="doquantiles">
+                <description>If False, quantile-like statistics are not computed. These include the first and third quartiles, the median, and the median of the absolute deviation from the median.</description>
+                <value>True</value>
+            </param>
 
             <constraints>
                 <when param="axis">

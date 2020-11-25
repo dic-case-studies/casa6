@@ -1,6 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task category="modeling, calibration" name="predictcomp" type="function">
+<task category="imaging, calibration" name="predictcomp" type="function">
   <shortdescription>Make a component list for a known calibrator</shortdescription>
   <description>
           Writes a component list named clist to disk and returns a dict of
