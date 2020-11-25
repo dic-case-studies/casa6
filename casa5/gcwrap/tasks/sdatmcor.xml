@@ -202,14 +202,14 @@
 
     <param name="layerboundaries" type="any" subparam="true">
         <shortdescription>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
-        <description>altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</description>
+        <description>altitude of user-defined temperature profile [m]. Number of values should be identical to the number for layertemperature. (&quot;&quot; = Tool default)</description>
         <any type="variant"  limittypes="string stringArray doubleArray"/>
         <value type="string"></value>
     </param>
 
     <param name="layertemperature" type="any" subparam="true">
         <shortdescription>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
-        <description>user-defined temperature profile [K]. (&quot;&quot; = Tool default)</description>
+        <description>user-defined temperature profile [K]. Number of values should be identical to the number for layerboundaries. (&quot;&quot; = Tool default)</description>
         <any type="variant"  limittypes="string stringArray doubleArray"/>
         <value type="string"></value>
     </param>
