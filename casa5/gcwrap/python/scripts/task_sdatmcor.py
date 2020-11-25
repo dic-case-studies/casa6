@@ -319,16 +319,16 @@ def sdatmcor(
     #  - if (-1) parameter is specified, '' string is set.
     #  - Sub-function calc_sdatmcor() accepts args basically by string.
     #
-    dtem_dh = _check_unit_and_formToStr(dtem_dh, ['K/km'])
-    h0 = _check_unit_and_formToStr(h0, ['km'])
+    dtem_dh = _check_unit_and_form_to_str(dtem_dh, ['K/km'])
+    h0 = _check_unit_and_form_to_str(h0, ['km'])
 
-    altitude = _check_unit_and_formToStr(altitude, ['m'])
-    temperature = _check_unit_and_formToStr(temperature, ['K'])
-    pressure = _check_unit_and_formToStr(pressure, ['mbar', 'hPa'])
-    humidity = _check_unit_and_formToStr(humidity, [''])  # through (string or float)
-    PWV = _check_unit_and_formToStr(PWV, ['mm'])
-    dp = _check_unit_and_formToStr(dp, ['mbar', 'hPa'])
-    dpm = _check_unit_and_formToStr(dpm, [''])       # through (string or float)
+    altitude = _check_unit_and_form_to_str(altitude, ['m'])
+    temperature = _check_unit_and_form_to_str(temperature, ['K'])
+    pressure = _check_unit_and_form_to_str(pressure, ['mbar', 'hPa'])
+    humidity = _check_unit_and_form_to_str(humidity, [''])  # through (string or float)
+    PWV = _check_unit_and_form_to_str(PWV, ['mm'])
+    dp = _check_unit_and_form_to_str(dp, ['mbar', 'hPa'])
+    dpm = _check_unit_and_form_to_str(dpm, [''])       # through (string or float)
 
     # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''  #
     if not _inspect_strint_range(atmtype, 1, 5):
@@ -487,7 +487,7 @@ def _inspect_strfloat_range(str_data, minimum, maximum):
 
 
 # inspect the input value is consistent with the Unit #
-def _check_unit_and_formToStr(data, base_unit):
+def _check_unit_and_form_to_str(data, base_unit):
     try:
         if type(data) is str:
             if (data == ''):
