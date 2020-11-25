@@ -239,7 +239,7 @@ void CubeMajorCycleAlgorithm::task(){
                   }
                   else{
                     LatticeLocker lock1 (*(subImStor[k]->residual()), FileLocker::Write);
-                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
+                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Write);
                     subImStor[k]->divideResidualByWeight();
                     //subImStor[k]->residual()->flush();
                   }
@@ -290,7 +290,7 @@ void CubeMajorCycleAlgorithm::task(){
                   }
                   else{
                     LatticeLocker lock1 (*(subImStor[k]->psf()), FileLocker::Write);
-                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Read);
+                    LatticeLocker lock2 (*(subImStor[k]->sumwt()), FileLocker::Write);
                     subImStor[k]->dividePSFByWeight();
 		    copyBeamSet(*(subImStor[k]->psf()), k);
                     //subImStor[k]->psf()->flush();
@@ -526,8 +526,8 @@ String&	CubeMajorCycleAlgorithm::name(){
                         norm.setupNormalizer(normpars);
                         shared_ptr<ImageInterface<Float> > subweight=nullptr;
                         getSubImage(subweight, startchan, endchan, weightname, True);
-			LatticeLocker lock1(*(subweight), FileLocker::Read);
-			LatticeLocker lock2(*(submodel), FileLocker::Read);
+			LatticeLocker lock1(*(subweight), FileLocker::Write);
+			LatticeLocker lock2(*(submodel), FileLocker::Write);
                         std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, nullptr, nullptr, subweight, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, True));
                         norm.setImageStore(subimstor);
                         norm.divideModelByWeight();
@@ -569,9 +569,9 @@ void CubeMajorCycleAlgorithm::reset(){
 }
 	
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
-    PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
+    PagedImage<Float> im(imagename, TableLock::UserLocking);
     //PagedImage<Float> im(imagename, TableLock::AutoNoReadLocking);
-    im.lock(FileLocker::Read, 1000);
+    im.lock(FileLocker::Write, 1000);
     SubImage<Float> *tmpptr=nullptr;
     tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
     subimptr.reset(new TempImage<Float>(TiledShape(tmpptr->shape(), tmpptr->niceCursorShape()), tmpptr->coordinates()));

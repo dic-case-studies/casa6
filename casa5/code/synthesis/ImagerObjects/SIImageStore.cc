@@ -580,6 +580,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             {
             LatticeLocker lock1(*imPtr, FileLocker::Write);
 	    imPtr->set(0.0);
+	    imPtr->flush();
             imPtr->unlock();
             }
 	  }
@@ -873,7 +874,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //os << LogIO::WARN << "unlock" << LogIO::POST;
     im->unlock();
     //os << LogIO::WARN << "tempClose" << LogIO::POST;
-    im->tempClose();
+    //im->tempClose();
     //os << LogIO::WARN << "NULL" << LogIO::POST;
     im.reset();  // This was added to allow modification by modules independently
   }
