@@ -1594,6 +1594,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		String workingdir="";
         //Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
         for(Int k=0; k < itsMappers.nMappers(); ++k){
+	  //copy the imageinfo of main image here
+	  cubePsfImageInfo_p=(itsMappers.imageStore(0)->psf())->imageInfo();
 			if(dopsf){
 				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
                                   ///TESTOO
@@ -1715,6 +1717,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             ///ignore copy mask error and proceed as this happens with interactive
           }
         }
+	else{
+	  LatticeLocker lock1 (*(itsMappers.imageStore(0)->psf()), FileLocker::Write);
+	  itsMappers.imageStore(0)->psf()->setImageInfo(cubePsfImageInfo_p);
+	  itsMappers.imageStore(0)->psf()->unlock();
+	}
 
         }  
 	  
@@ -3256,7 +3263,7 @@ void SynthesisImagerVi2::unlockMSs()
       MDirection::Ref outref1(MDirection::AZEL, mFrame);
       MDirection tmphazel=MDirection::Convert(movingDir, outref1)();
       MDirection::Ref outref(vb.phaseCenter().getRef().getType(), mFrame);
-      outDir=MDirection::Convert(tmphazel, outref)();
+      outDir=MDirection::Convert(tmphazel, outref)();  
     }
     else{
       outDir=vb.phaseCenter();
@@ -3276,18 +3283,18 @@ void SynthesisImagerVi2::unlockMSs()
   }
   void SynthesisImagerVi2::updateImageBeamSet(Record& returnRec){
     if(returnRec.isDefined("imageid") && returnRec.asInt("imageid")==0){
-      ImageInfo ii=(itsMappers.imageStore(0)->psf())->imageInfo();
+      //ImageInfo ii=(itsMappers.imageStore(0)->psf())->imageInfo();
       Vector<Int> chanRange(0);
       if(returnRec.isDefined("chanrange"))
 	chanRange=returnRec.asArrayInt("chanrange");
-      Int npol=(itsMappers.imageStore(0)->psf())->shape()(2);
-      Int nchan=(itsMappers.imageStore(0)->psf())->shape()(3);
+      Int npol=(itsMappers.imageStore(0)->getShape())(2);
+      Int nchan=(itsMappers.imageStore(0)->getShape())(3);
       if(chanRange.nelements() ==2 && chanRange(1) < nchan){
 
-	ImageBeamSet iibeamset=ii.getBeamSet();
+	ImageBeamSet iibeamset=cubePsfImageInfo_p.getBeamSet();
 	Matrix<GaussianBeam> mbeams=iibeamset.getBeams();
 	if(mbeams.nelements()==0){
-	  mbeams.resize(itsMappers.imageStore(0)->psf()->shape()(3), itsMappers.imageStore(0)->psf()->shape()(2));
+	  mbeams.resize(itsMappers.imageStore(0)->getShape()(3), itsMappers.imageStore(0)->getShape()(2));
 	  mbeams.set(GaussianBeam(Vector<Quantity>(3, Quantity(1e-12, "arcsec"))));
 	}
 	Cube<Float> recbeams(returnRec.asArrayFloat("beams"));
@@ -3297,11 +3304,11 @@ void SynthesisImagerVi2::unlockMSs()
 
 	  }
 	}
-	ii.setBeams(ImageBeamSet(mbeams));
+	cubePsfImageInfo_p.setBeams(ImageBeamSet(mbeams));
 
       }
-      itsMappers.imageStore(0)->psf()->setImageInfo(ii);
-      itsMappers.imageStore(0)->psf()->unlock();
+      //itsMappers.imageStore(0)->psf()->setImageInfo(ii);
+      //itsMappers.imageStore(0)->psf()->unlock();
 
       
     }
