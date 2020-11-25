@@ -393,7 +393,7 @@ def sdatmcor(
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
-        raise Exception("Something is wrong in atmMst.")
+        raise
 
     # Resume 'origin'. A strange behavior in casalog/CASA6 #
     casalog.origin(origin)
@@ -417,16 +417,22 @@ def sdatmcor(
     #
     # Call calc Function
     #
-    calc_sdatmcor(
-        infile, datacolumn, outfile,
-        spw,
-        gaindict,
-        dtem_dh, h0, atmtype,
-        atmdetail,
-        altitude, temperature, pressure, humidity, PWV, dp, dpm,
-        layerboundaries,
-        layertemperature)
+    try:
+        calc_sdatmcor(
+            infile, datacolumn, outfile,
+            spw,
+            gaindict,
+            dtem_dh, h0, atmtype,
+            atmdetail,
+            altitude, temperature, pressure, humidity, PWV, dp, dpm,
+            layerboundaries,
+            layertemperature)
 
+    except Exception as err:
+        casalog.post('%s' % err, 'SEVERE')
+        raise
+
+    # Normal End (without True) # 
     return
 
 #
@@ -502,7 +508,7 @@ def _check_unit_and_formToStr(data, base_unit):
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
-        raise Exception("internal function error.")
+        raise
 
 
 #
@@ -810,112 +816,107 @@ def calc_sdatmcor(
     chanfreqs = {}
     _msg("\nSDATMCOR main body starts. rawms=%s\n" % rawms)
 
-    try:
-        with open_msmd(rawms) as msmd:
-            # (original)
-            # tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
-            tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
-            fdmspws = msmd.fdmspws()
-            tdmspws = msmd.tdmspws()
-            intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
-            spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
-            spwnames = msmd.namesforspws(spws)
+    with open_msmd(rawms) as msmd:
+        # (original)
+        # tmonsource = msmd.timesforintent('OBSERVE_TARGET#ON_SOURCE')
+        tmoffsource = msmd.timesforintent('OBSERVE_TARGET#OFF_SOURCE')
+        fdmspws = msmd.fdmspws()
+        tdmspws = msmd.tdmspws()
+        intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+        spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
+        spwnames = msmd.namesforspws(spws)
 
-            # show to user. #
-            _msg(" - fdm    spws = %s" % fdmspws)
-            _msg(" - tdm    spws = %s" % tdmspws)
-            _msg(" - intent spws = %s" % intentspws)
-            _msg(" -        spws = %s" % spws)
+        # show to user. #
+        _msg(" - fdm    spws = %s" % fdmspws)
+        _msg(" - tdm    spws = %s" % tdmspws)
+        _msg(" - intent spws = %s" % intentspws)
+        _msg(" -        spws = %s" % spws)
 
-            # save spws (CAS-13160) #
+        # save spws (CAS-13160) #
 
-            # CAS-13160 atmcorr_20200807.py Change
-            #  No more use of tmonsource in the new algorithm..
+        # CAS-13160 atmcorr_20200807.py Change
+        #  No more use of tmonsource in the new algorithm..
 
-            # (Task Section) check count of ON/OFF SOURCE
-            # n_tmonsource = len(tmonsource)
-            n_tmoffsource = len(tmoffsource)
-            # msg = "Target Information. \n"   \
-            #     + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
-            #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-            # _msg(msg)
+        # (Task Section) check count of ON/OFF SOURCE
+        # n_tmonsource = len(tmonsource)
+        n_tmoffsource = len(tmoffsource)
+        # msg = "Target Information. \n"   \
+        #     + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
+        #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+        # _msg(msg)
 
-            # (Task Section) OFF_SOURCE Error check #
-            msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-            _msg(msg)
-            if (n_tmoffsource == 0):
-                msg = "Can't find the OFF_SOURCE data."
-                _msg(msg, 'SEVERE')
-                raise(msg)
+        # (Task Section) OFF_SOURCE Error check #
+        msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+        _msg(msg)
+        if (n_tmoffsource == 0):
+            msg = "Can't find the OFF_SOURCE data."
+            _msg(msg, 'SEVERE')
+            raise(msg)
 
-            #
-            # (Task Section)
-            #     'OutputSpw'
-            #     must be a set of spw
-            #
+        #
+        # (Task Section)
+        #     'OutputSpw'
+        #     must be a set of spw
+        #
 
-            # request by argument  #
-            outputspws_param = parse_spw(corms, '')
+        # request by argument  #
+        outputspws_param = parse_spw(corms, '')
 
-            # Must be a subset, locate the initial set.  #
-            if set(outputspws_param).issubset(set(spws)):
-                outputspws = list(set(outputspws_param))
-            else:
-                _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
-                outputspws = list(set(spws) & set(outputspws_param))
+        # Must be a subset, locate the initial set.  #
+        if set(outputspws_param).issubset(set(spws)):
+            outputspws = list(set(outputspws_param))
+        else:
+            _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
+            outputspws = list(set(spws) & set(outputspws_param))
 
-            _msg("Determined outputSpws Information")
-            _msg('- Spws                  = %s' % spws)
-            _msg('- requested  outputSpws = %s' % outputspws_param)
-            _msg('- determined outputSpws = %s' % outputspws)
+        _msg("Determined outputSpws Information")
+        _msg('- Spws                  = %s' % spws)
+        _msg('- requested  outputSpws = %s' % outputspws_param)
+        _msg('- determined outputSpws = %s' % outputspws)
 
-            #
-            # (Task Section )
-            #     'processing Spw'
-            #      must be a set of Spws
-            #
+        #
+        # (Task Section )
+        #     'processing Spw'
+        #      must be a set of Spws
+        #
 
-            # request by argument  #
-            spws_param = parse_spw(rawms, p_spw)
+        # request by argument  #
+        spws_param = parse_spw(rawms, p_spw)
 
-            # Must be a subset, locate the initial set.  #
-            if set(spws_param).issubset(set(spws)):
-                spws = list(set(spws_param))
-            else:
-                _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
-                spws = list(set(spws) & set(spws_param))
+        # Must be a subset, locate the initial set.  #
+        if set(spws_param).issubset(set(spws)):
+            spws = list(set(spws_param))
+        else:
+            _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
+            spws = list(set(spws) & set(spws_param))
 
-            #
-            # (Task Section )
-            #     outputSpw and Spw Consistency. For example;
-            #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
-            #      - accept  when Spw=[21], outputSpw = [19,21]
+        #
+        # (Task Section )
+        #     outputSpw and Spw Consistency. For example;
+        #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
+        #      - accept  when Spw=[21], outputSpw = [19,21]
 
-            # outputSpw, Spw:: No Target check #
-            if spws == []:
-                raise Exception("No available Spw Targets. Abort.")
-            if outputspws == []:
-                raise Exception("No available outputSpw targets. Abort.")
+        # outputSpw, Spw:: No Target check #
+        if spws == []:
+            raise Exception("No available Spw Targets. Abort.")
+        if outputspws == []:
+            raise Exception("No available outputSpw targets. Abort.")
 
-            processing_spws = list(set(spws).intersection(set(outputspws)))
+        processing_spws = list(set(spws).intersection(set(outputspws)))
 
-            _msg("Final Determined Spws Information")
-            _msg('-- Spws               = %s' % spws)
-            _msg('-- Output        Spws = %s' % outputspws)
-            _msg('-- Correcting    Spws = %s' % processing_spws)
+        _msg("Final Determined Spws Information")
+        _msg('-- Spws               = %s' % spws)
+        _msg('-- Output        Spws = %s' % outputspws)
+        _msg('-- Correcting    Spws = %s' % processing_spws)
 
-            #
-            # (Original Section)
-            #
+        #
+        # (Original Section)
+        #
 
-            for spwid in spws:
-                chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
+        for spwid in spws:
+            chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
-            # end of with
-
-    except Exception as err:
-        casalog.post('%s' % err, 'ERROR')
-        raise Exception("Error in opening rawms")
+        # end of with
 
     # (original)
     bnd = (pl.diff(tmoffsource) > 1)
@@ -941,46 +942,36 @@ def calc_sdatmcor(
     # Data Query on Pointing Table.
     #   output
     #   - tmpointing, elev
-    try:
-        with open_table(os.path.join(calms, 'POINTING')) as tb:
-            # (org.) key for ANTENNA_ID select
-            querytext = 'ANTENNA_ID==%s' % antenna
-            subtb = tb.query(querytext)
 
-            # (org.) Access Table
-            tmpointing = subtb.getcol('TIME')
-            elev = subtb.getcol('DIRECTION').squeeze()[1]
-            _msg("- reading column:'TIME' and 'DIRECITON' completed.")
+    with open_table(os.path.join(calms, 'POINTING')) as tb:
+        # (org.) key for ANTENNA_ID select
+        querytext = 'ANTENNA_ID==%s' % antenna
+        subtb = tb.query(querytext)
 
-            subtb.close()
+        # (org.) Access Table
+        tmpointing = subtb.getcol('TIME')
+        elev = subtb.getcol('DIRECTION').squeeze()[1]
+        _msg("- reading column:'TIME' and 'DIRECITON' completed.")
 
-    except Exception as err:
-        casalog.post('%s' % err, 'ERROR')
-        raise Exception("Error in opening POINTING.")
+        subtb.close()
 
     ################################################################
     # Get atmospheric parameters for ATM
     ################################################################
-    try:
-        with open_table(os.path.join(rawms, 'ASDM_CALWVR')) as tb:
-            # confirm
-            # _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
-            tmpwv_all = tb.getcol('startValidTime')
-            pwv_all = tb.getcol('water')
-    except Exception as err:
-        casalog.post('%s' % err, 'ERROR')
-        raise Exception("Error in opening rawms/'ASDM_CALWVR'.")
+
+    # ASDM_CALWVR
+    with open_table(os.path.join(rawms, 'ASDM_CALWVR')) as tb:
+        # confirm
+        # _msg("tmonsource: %f, %f" % (tmonsource.min(), tmonsource.max()))
+        tmpwv_all = tb.getcol('startValidTime')
+        pwv_all = tb.getcol('water')
 
     # ASDM_CALATMOSPHERE
-    try:
-        with open_table(os.path.join(rawms, 'ASDM_CALATMOSPHERE')) as tb:
-            tmatm_all = tb.getcol('startValidTime')
-            tground_all = tb.getcol('groundTemperature')
-            pground_all = tb.getcol('groundPressure')
-            hground_all = tb.getcol('groundRelHumidity')
-    except Exception as err:
-        casalog.post('%s' % err, 'ERROR')
-        raise Exception("Error in opening rawms/'ASDM_CALATMOSPHERE'.")
+    with open_table(os.path.join(rawms, 'ASDM_CALATMOSPHERE')) as tb:
+        tmatm_all = tb.getcol('startValidTime')
+        tground_all = tb.getcol('groundTemperature')
+        pground_all = tb.getcol('groundPressure')
+        hground_all = tb.getcol('groundRelHumidity')
 
     # _msg("median PWV = %fm, T = %fK, P = %fPa, H = %f%%" % (pwv, tground, pground, hground))
     pwv, tground, pground, hground = [], [], [], []
