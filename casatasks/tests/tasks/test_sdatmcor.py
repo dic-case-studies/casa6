@@ -576,6 +576,13 @@ class test_sdatmcor(unittest.TestCase):
         default_antenna = sdatmcor_impl.get_default_antenna(self.infile)
         self.assertEqual(default_antenna, 1)
 
+        # check if the task can handle empty FLAG_CMD table
+        with sdutil.tbmanager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
+            tb.removerows(np.fromiter(range(tb.nrows()), dtype=int))
+            self.assertEqual(tb.nrows(), 0)
+        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+        self.check_result({19: True, 23: True})
+
 
 def suite():
     return [test_sdatmcor]

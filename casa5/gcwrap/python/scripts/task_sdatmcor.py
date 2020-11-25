@@ -561,6 +561,17 @@ def _convert_to_list(in_arg):
 def get_default_antenna(msname):
     """Determine default antenna id based on the FLAG_CMD table.
 
+    Procedure is as follows.
+
+      (1) extract flag commands whose reason is "Mount_is_off_source".
+      (2) compile the commands into a number of commands and flagged
+          time durations for each antenna.
+      (3) select antenna with the shortest flagged duration.
+      (4) if multiple antennas match in (3), select antnena with
+          the least number of commands among them.
+      (5) if multiple antennas match in (4), select the first
+          antenna among them.
+
     Args:
         msname (str): name of MS
 
@@ -585,20 +596,27 @@ def get_default_antenna(msname):
     # dictionary to map antenna name to antenna Id
     ant_dict = dict((k, v) for k, v in zip(ant_name, ant_list))
 
-    # determine defdault antenna id
+    # determine default antenna id
     cmd_counts, flagged_durations = inspect_flag_cmd(msname)
-    min_duration = min(flagged_durations.values())
-    candidate_antennas = [k for k, v in flagged_durations.items() if v == min_duration]
 
-    if len(candidate_antennas) == 1:
-        default_name = candidate_antennas[0]
-        default_id = ant_dict[default_name]
+    if len(cmd_counts) == 0:
+        # No flag command exists. All the antennas should be healthy
+        # so just pick up the first antenna.
+        default_id = ant_list[0]
+        default_name = ant_name[0]
     else:
-        _counts = [cmd_counts[a] for a in candidate_antennas]
-        min_count = min(_counts)
-        candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
-        default_name = candidate_antennas2[0]
-        default_id = ant_dict[default_name]
+        min_duration = min(flagged_durations.values())
+        candidate_antennas = [k for k, v in flagged_durations.items() if v == min_duration]
+
+        if len(candidate_antennas) == 1:
+            default_name = candidate_antennas[0]
+            default_id = ant_dict[default_name]
+        else:
+            _counts = [cmd_counts[a] for a in candidate_antennas]
+            min_count = min(_counts)
+            candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
+            default_name = candidate_antennas2[0]
+            default_id = ant_dict[default_name]
     _msg('Select {} (ID {}) as a default antenna'.format(default_name, default_id))
     return default_id
 
