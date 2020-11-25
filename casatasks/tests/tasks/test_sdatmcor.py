@@ -557,6 +557,25 @@ class test_sdatmcor(unittest.TestCase):
             actual = sdutil.get_antenna_selection_include_autocorr(self.infile, antenna)
             self.assertEqual(actual, expected)
 
+    def test_get_default_antenna(self):
+        """test get_default_antenna and relevant function"""
+        duration_ref = {
+            'PM01': 1024.320,
+            'PM02': 1019.808,
+            'PM03': 1027.728,
+            'PM04': 1046.112,
+        }
+        count_ref = {'PM01': 474, 'PM02': 475, 'PM03': 474, 'PM04': 474}
+        counts, durations = sdatmcor_impl.inspect_flag_cmd(self.infile)
+        for k, v in count_ref.items():
+            self.assertEqual(v, counts[k])
+        for k, v in duration_ref.items():
+            self.assertAlmostEqual(v, durations[k], places=4)
+
+        # default antenna should be PM02 (ID 1)
+        default_antenna = sdatmcor_impl.get_default_antenna(self.infile)
+        self.assertEqual(default_antenna, 1)
+
 
 def suite():
     return [test_sdatmcor]
