@@ -76,7 +76,8 @@ numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan), in sdtimeimaging.ms
 # Numerical Error Limit
 
 errLimit = 1.0e-9   # numerical error Limit of ZeroSum. NonZeroSum
-errLimit2 = 1.0e-9  # numerical error Limit of Sigma and Weight
+errLimit2 = 1.0e-9  # absolute numerical error Limit of Sigma^2 vs 1/Weight
+errLimit3 = 1.0e-7  # relative numerical error Limit of Weight
 testInterval = 1.0   # fundamental INTERVAL in TEST-MS (tunable)
 
 ##############
@@ -331,8 +332,8 @@ class test_sdtimeaverage(unittest.TestCase):
         print("Sigma      :{0}".format(self.sgm))
 
         # Check (based on Formula about Sigma and Weight) #
-        check1 = (self.wgt[0] == weight_ref)
-        check2 = (self.wgt[1] == weight_ref)
+        check1 = (self.wgt[0] - weight_ref) / weight_ref < errLimit3
+        check2 = (self.wgt[1] - weight_ref) / weight_ref < errLimit3
         check3 = ((1.0 / self.wgt[0]) -
                   (self.sgm[0] * self.sgm[0]) < errLimit2)
         check4 = ((1.0 / self.wgt[1]) -
