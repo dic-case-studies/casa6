@@ -515,7 +515,7 @@ def _check_unit_and_form_to_str(data, base_unit):
 # Argument parameter handling
 # type : int, list, float
 #
-# (popose) To simplify argument overwriting on original script for code-transport.
+# (purpose) To simplify argument overwriting on original script for code-transport.
 # (action) returns either default or value in argument.
 #  if arg_value is available, return atm_parm_variable (converted to int)
 #  otherwise, returns def_para to use as a default parameter.
@@ -681,7 +681,7 @@ def show_atm_info(atm):
         _msg(atm)
 
 
-def show_iayer_info(at):
+def show_layer_info(at):
     p = at.getProfile()
 
     #
@@ -1234,7 +1234,7 @@ def calc_sdatmcor(
                     #   - automatically showing, when the arg is specified)
                     #
                     if len(atm_layerboundaries) != 0:
-                        show_iayer_info(at)
+                        show_layer_info(at)
 
                     ###################
                     # Spectral Window #
