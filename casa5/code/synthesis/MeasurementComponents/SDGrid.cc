@@ -1273,7 +1273,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
 
     logIO() << LogOrigin("FTMachine", "makeImage0") << LogIO::NORMAL;
 
-    // Attach visibility buffer to visibility iterator
+    // Attach visibility buffer (VisBuffer) to visibility iterator (VisibilityIterator)
     VisBuffer vb(vi);
 
     // Set CStokesRep
