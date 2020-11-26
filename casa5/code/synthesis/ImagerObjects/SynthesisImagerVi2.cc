@@ -1592,11 +1592,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			vecGridParsRec.defineRecord(String::toString(k), gridparsRec);
 		}
 		String workingdir="";
-        //Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
+		//Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
+		//copy the imageinfo of main image here
+		if(dopsf)
+		  cubePsfImageInfo_p=(itsMappers.imageStore(0)->psf())->imageInfo();
         for(Int k=0; k < itsMappers.nMappers(); ++k){
-	  //copy the imageinfo of main image here
-	  cubePsfImageInfo_p=(itsMappers.imageStore(0)->psf())->imageInfo();
+	 
 			if(dopsf){
+			   
 				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
                                   ///TESTOO
                                   //(itsMappers.imageStore(k))->psf(j)->set(0.0);
@@ -1624,7 +1627,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 				(itsMappers.imageStore(k))->sumwt(j)->unlock();
 				(itsMappers.imageStore(k))->releaseLocks();
 			}
-		}		
+	}		
 		//Send the working directory as the child and master may be at different places
 		
 		controlRecord.define("workingdirectory", workingdir);
