@@ -103,7 +103,7 @@ def parse_gainfactor(gainfactor):
             elif 'CPARAM' in tb.colnames():
                 col = 'CPARAM'
             else:
-                assert False
+                raise RuntimeError('{} is not a caltable'.format(gainfactor))
             spw_list = set(tb.getcol('SPECTRAL_WINDOW_ID'))
             for spw in spw_list:
                 tsel = tb.query('SPECTRAL_WINDOW_ID=={}'.format(spw))
@@ -432,7 +432,7 @@ def sdatmcor(
         casalog.post('%s' % err, 'SEVERE')
         raise
 
-    # Normal End (without True) # 
+    # Normal End (without True) #
     return
 
 #

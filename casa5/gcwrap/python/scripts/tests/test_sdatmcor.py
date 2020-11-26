@@ -494,6 +494,11 @@ class test_sdatmcor(unittest.TestCase):
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected', gainfactor=gainfactor)
         self.check_result({19: True, 23: True})
 
+    def test_parse_gainfactor_exception(self):
+        """test exception raised in parse_gainfactor"""
+        with self.assertRaises(RuntimeError):
+            sdatmcor_impl.parse_gainfactor(self.infile)
+
     def test_parse_spw(self):
         """test utility functio, parse_spw"""
         test_cases = [
