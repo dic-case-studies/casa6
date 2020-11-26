@@ -449,10 +449,6 @@ def _ms_remove(path):
             os.remove(path)
 
 
-def _ms_copy(src, dst):
-    shutil.copytree(src, dst)
-
-
 def _file_exist(path):
     return os.path.exists(path)
 
