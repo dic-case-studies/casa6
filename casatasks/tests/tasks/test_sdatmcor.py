@@ -1,4 +1,3 @@
-import glob
 import os
 import numpy as np
 import shutil
@@ -19,13 +18,10 @@ if is_CASA6:
         os.path.dirname(
             os.path.abspath(
                 os.path.dirname(__file__))))
-    from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
     from casatools import calibrater
     from casatools import ms as mstool
     from casatasks import gencal, applycal
-
-    datapath = ctsys.resolve('')
 
     ctsys_resolve = ctsys.resolve
 
@@ -35,13 +31,9 @@ else:
 
     from tasks import gencal, applycal
     from __main__ import default
-    from sdutil import tbmanager
     from taskinit import cbtool as calibrater
     from taskinit import mstool
     import sdutil
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + ''
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'data')
@@ -75,7 +67,7 @@ def read_table(name, spw, cols=['STATE_ID', 'DATA']):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd']
-    with tbmanager(name) as tb:
+    with sdutil.tbmanager(name) as tb:
         tsel = tb.query('DATA_DESC_ID IN [{}]'.format(','.join([str(i) for i in ddid])))
         try:
             result_dict = dict((k, tsel.getcol(k)) for k in cols if k in tb.colnames())
@@ -88,7 +80,7 @@ def apply_gainfactor(name, spw, factor):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd'][0]
-    with tbmanager(name, nomodify=False) as tb:
+    with sdutil.tbmanager(name, nomodify=False) as tb:
         colnames = tb.colnames()
         tsel = tb.query('DATA_DESC_ID=={}'.format(ddid))
         try:
@@ -100,24 +92,6 @@ def apply_gainfactor(name, spw, factor):
             tsel.close()
 
 
-#
-# Test-MS
-#
-
-# template MS (to copy from)
-defInputMs = "uid___A002_Xe770d7_X320b.ms"
-
-# testing MS (set up basic conditions)
-defWorkMsBasic = "uid___A002_Xe770d7_X320b-t.ms"
-
-# output MS #
-
-
-##############
-# Test Entry
-##############
-
-
 class test_sdatmcor(unittest.TestCase):
     datapath = ctsys_resolve('visibilities/almasd')
     infile = 'X320b_sel2.ms'
@@ -125,9 +99,6 @@ class test_sdatmcor(unittest.TestCase):
     caltable = infile + '.k2jycal'
 
     local_unit_test = False
-
-    def __get_temporary_files(self):
-        return glob.glob('_AtmCor_Temp*,ms')
 
     def setUp(self):
         default(sdatmcor)
@@ -149,123 +120,6 @@ class test_sdatmcor(unittest.TestCase):
         smart_remove(self.infile)
         smart_remove(self.outfile)
         smart_remove(self.caltable)
-        for tmp in self.__get_temporary_files():
-            smart_remove(tmp)
-
-# private function #
-
-    def _copy_remote_file(self, infile, outfile):
-        print("Copying temp MS from Remote to Local.")
-
-    def _if_exist(self, msname):
-        _filePath = os.path.join("./", msname)
-        if os.path.exists(_filePath):
-            return True
-        else:
-            return False
-
-#
-# Class Method
-#
-    @classmethod
-    def setUpClass(cls):
-        print("setUpClass::deleting existing work-MS.")
-
-    @classmethod
-    def tearDownClass(cls):
-        print("tearDownClass::deleting work-MS.")
-
-##############
-# Run Task
-##############
-    def _run_task(self, auxArgs=None):
-        print("_run_task::starts")
-
-        if auxArgs is not None:
-            for k in auxArgs:
-                self.args[k] = auxArgs[k]
-
-        if not self.local_unit_test:   # FORCE to change
-            self.args = {
-                'debug': 'skipTaskExec',
-                'infile' : infile,
-                'outfile': outfile,
-                'overwrite':  True }
-
-        # Execution.
-        #  if success, returns True
-        #  if any error, returns False.
-        try:
-            return sdatmcor(**self.args)
-        except Exception:
-            return False
-
-#################
-# Check Result
-#################
-
-
-######################
-# check time
-######################
-
-
-######################
-# check Output
-######################
-
-
-##################################
-# Read Data from Specified MS
-##################################
-    # MAIN #
-    def _get_main(self, msname):
-        # get MAIN table data
-        with tbmanager(msname) as tb:
-            # Key data
-            self.tm = tb.getcol('TIME')
-            self.a1 = tb.getcol('ANTENNA1')
-            self.a2 = tb.getcol('ANTENNA2')
-            self.sc = tb.getcol('SCAN_NUMBER')
-            self.fd = tb.getcol('FIELD_ID')
-
-    # DATA (spectra) #
-    def _get_spectra(self, msname, row):
-        with tbmanager(msname) as tb:
-            # Spectra Data
-            self.data = tb.getcell('FLOAT_DATA', row)
-            self.wgt = tb.getcell('WEIGHT', row)
-            self.sgm = tb.getcell('SIGMA', row)
-
-        return self.data
-
-#####################################
-# Generate Data on FLOAT_DATA column
-#####################################
-    def _generate_data(self, msName, stateOption=False):
-        pass
-
-##############
-# MISC
-##############
-
-
-############################
-# TEST FIXTURE
-############################
-
-
-    # def test_param1(self):
-    #     '''sdatmcor::1:: file1  '''
-
-    #     infile = 'uid___A002_Xe770d7_X320b-t.ms'
-    #     outfile = 'sdatmcor-out1.ms'
-    #     prm = {'debug': 'skipTaskExec',
-    #            'infile' : infile,
-    #            'outfile': outfile,
-    #            'overwrite':  True }
-    #     # Run Task and check
-    #     self.assertTrue(self._run_task(prm))
 
     def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
 
@@ -356,9 +210,6 @@ class test_sdatmcor(unittest.TestCase):
         """
         # outfile should exist
         self.assertTrue(os.path.exists(self.outfile))
-
-        # no temporary files exist
-        self.assertEqual(len(self.__get_temporary_files()), 0)
 
         for spw in [19, 23]:
             is_selected = spw in spwprocess
@@ -609,13 +460,3 @@ def suite():
 if is_CASA6:
     if __name__ == '__main__':
         unittest.main()
-"""
-History
-
-3-AUG-2020   Revised for Unit-Test until the Task body is completed.
-             - added 'skipTaskExec'  on debug argument.
-
-17-SEP-2020  Totally simplified, by minimum functions.
-             - This calls the Task with skipTaskExec.
-               simply called and returns soon.
-"""
