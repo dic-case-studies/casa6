@@ -522,13 +522,11 @@ def _convert_to_list(in_arg):
     """
     if type(in_arg) is list:
         return [float(i) for i in in_arg]
-
     elif type(in_arg) is str:
         if in_arg == '':
             return []
         else:
             return [float(i) for i in in_arg.split(',')]
-
     else:
         raise Exception("INTERNAL ERROR::Unexpected argument type.")
 
