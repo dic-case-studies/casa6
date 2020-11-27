@@ -584,8 +584,9 @@ def get_default_antenna(msname):
         default_id = ant_list[0]
         default_name = ant_name[0]
     else:
-        min_duration = min(flagged_durations.values())
-        candidate_antennas = [k for k, v in flagged_durations.items() if v == min_duration]
+        flagged_durations_filtered = dict((k, flagged_durations[k]) for k in ant_dict.keys())
+        min_duration = min(flagged_durations_filtered.values())
+        candidate_antennas = [k for k, v in flagged_durations_filtered.items() if v == min_duration]
 
         if len(candidate_antennas) == 1:
             default_name = candidate_antennas[0]

@@ -581,6 +581,19 @@ class test_sdatmcor(unittest.TestCase):
         default_antenna = sdatmcor_impl.get_default_antenna(self.infile)
         self.assertEqual(default_antenna, 1)
 
+    def test_default_antenna_with_selection(self):
+        """Test default antenna determination with data selection excluding the best one"""
+        # check if the "best" antenna is not in the MAIN table
+        with sdutil.tbmanager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
+            # replace antenna name to simulate the data selection excluding PM02
+            # PM01 <-> PM02
+            tb.putcell('NAME', 0, 'PM02')
+            tb.putcell('NAME', 1, 'PM01')
+        sdatmcor(infile=self.infile, outfile=self.outfile, spw='19', datacolumn='data')
+        self.check_result({19: True, 23: False})
+
+    def test_default_antenna_with_no_flag_commands(self):
+        """Test default antenna determination for empty FLAG_CMD table"""
         # check if the task can handle empty FLAG_CMD table
         with sdutil.tbmanager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
             tb.removerows(np.fromiter(range(tb.nrows()), dtype=int))
