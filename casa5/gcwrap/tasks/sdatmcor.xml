@@ -80,8 +80,8 @@
     </param>
 
     <param type="string" name="timerange">
-        <shortdescription>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all) (see examples in help)</shortdescription>
-        <description>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all) (see examples in help)</description>
+        <shortdescription>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all)</shortdescription>
+        <description>timerange selection, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot; = all)</description>
         <value/>
     </param>
 
