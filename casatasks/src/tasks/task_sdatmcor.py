@@ -354,7 +354,7 @@ def sdatmcor(
     gaindict = parse_gainfactor(gainfactor)
 
     # Data Selection by mstransform
-    _msg("Data Selection in progress. Output file =  %s " % outfile)
+    _msg("Calling mstransform for Data Selection. Output file = %s " % outfile)
 
     # datacolumn check (by XML definition)
     datacolumn = datacolumn.upper()
@@ -752,8 +752,6 @@ def calc_sdatmcor(
     #   Inside Constant for ATM
     ##################################################
 
-    _msg("Initializing Tool Constant.")
-
     # Following variables have initial parameters according to the Original script.
     #  - these values will be translated with unit to var.:'atm_xxxxxxxxx' in the Task code.
 
@@ -805,11 +803,11 @@ def calc_sdatmcor(
         spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
         spwnames = msmd.namesforspws(spws)
 
-        # show to user.
-        _msg(" - fdm    spws = %s" % fdmspws)
-        _msg(" - tdm    spws = %s" % tdmspws)
-        _msg(" - intent spws = %s" % intentspws)
-        _msg(" -        spws = %s" % spws)
+        # show initial spw info (DEBUG)
+        _msg(" - fdm    spws = %s" % fdmspws, 'DEBUG1')
+        _msg(" - tdm    spws = %s" % tdmspws, 'DEBUG1')
+        _msg(" - intent spws = %s" % intentspws, 'DEBUG1')
+        _msg(" -        spws = %s" % spws, 'DEBUG1')
 
         # Note:
         # CAS-13160 atmcorr_20200807.py
@@ -844,10 +842,11 @@ def calc_sdatmcor(
             _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
             outputspws = list(set(spws) & set(outputspws_param))
 
-        _msg("Determined outputSpws Information")
-        _msg('- Spws                  = %s' % spws)
-        _msg('- requested  outputSpws = %s' % outputspws_param)
-        _msg('- determined outputSpws = %s' % outputspws)
+        # spw info with requested parameters (DEBUG)
+        _msg("Determined outputSpws Information", 'DEBUG1')
+        _msg('- Spws                  = %s' % spws, 'DEBUG1')
+        _msg('- requested  outputSpws = %s' % outputspws_param, 'DEBUG1')
+        _msg('- determined outputSpws = %s' % outputspws, 'DEBUG1')
 
         # (Task Section )
         #     'processing Spw' must be a set of Spws
@@ -863,9 +862,9 @@ def calc_sdatmcor(
             spws = list(set(spws) & set(spws_param))
 
         # (Task Section )
-        #     outputSpw and Spw Consistency. For example;
-        #      - reject  when Spw=[17,19,21], outputSpw=[19,21]
-        #      - accept  when Spw=[21], outputSpw = [19,21]
+        #     outputSpw and Spw Consistency. There are flowing cases.
+        #      - when Spw=[17,19,21], outputSpw=[19,21]
+        #      - when Spw=[21], outputSpw = [19,21]
 
         # outputSpw, Spw:: No Target check
         if spws == []:
