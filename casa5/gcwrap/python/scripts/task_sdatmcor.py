@@ -270,102 +270,99 @@ def sdatmcor(
     # task name
     casalog.origin(origin)
 
-    # Input/Output error check and internal set up.
-    if infile == '':
-        errmsg = "infile MUST BE specified."
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
-
-    if outfile == '':
-        errmsg = "outfile MUST BE specified."
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
-
-    # Protection. In case infile == outfile
-    if infile == outfile:
-        errmsg = "You are attempting to write the output on your input file."
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
-
-    # File Info
-    _msg("INPUT/OUTPUT")
-    _msg("  Input MS file   = %s " % infile)
-    _msg("  Output MS file  = %s " % outfile)
-
-    # infile Inaccessible
-    if not _file_exist(infile):
-        errmsg = "Specified infile does not exist."
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
-
-    # outfile Protected
-    if _file_exist(outfile):
-        if overwrite:
-            _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
-            _ms_remove(outfile)
-        else:
-            errmsg = "Specified outfile already exist."
-            _msg("\nERROR::%s\n" % errmsg, 'ERROR')
+    try:
+        # Input/Output error check and internal set up.
+        if infile == '':
+            errmsg = "infile MUST BE specified."
             raise Exception(errmsg)
 
-    # Inspect arguments.
-    #  - inspect Unit.
-    #  - default value ARE NOT considered here.
-    #  - convert values to string form.
-    #  - if (-1) parameter is specified, '' string is set.
-    #  - Sub-function calc_sdatmcor() accepts args basically by string.
+        if outfile == '':
+            errmsg = "outfile MUST BE specified."
+            raise Exception(errmsg)
 
-    dtem_dh = _check_unit_and_form_to_str(dtem_dh, ['K/km'])
-    h0 = _check_unit_and_form_to_str(h0, ['km'])
+        # Protection, in case infile == outfile
+        if infile == outfile:
+            errmsg = "You are attempting to write the output on your input file."
+            raise Exception(errmsg)
 
-    altitude = _check_unit_and_form_to_str(altitude, ['m'])
-    temperature = _check_unit_and_form_to_str(temperature, ['K'])
-    pressure = _check_unit_and_form_to_str(pressure, ['mbar', 'hPa'])
-    humidity = _check_unit_and_form_to_str(humidity, [''])
-    PWV = _check_unit_and_form_to_str(PWV, ['mm'])
-    dp = _check_unit_and_form_to_str(dp, ['mbar', 'hPa'])
-    dpm = _check_unit_and_form_to_str(dpm, [''])
+        # File Info
+        _msg("INPUT/OUTPUT")
+        _msg("  Input MS file   = %s " % infile)
+        _msg("  Output MS file  = %s " % outfile)
 
-    # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''
-    if not _inspect_strint_range(atmtype, 1, 5):
-        errmsg = "atmtype (=%s) Out of Range or Unacceptable." % atmtype
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
+        # infile Inaccessible
+        if not _file_exist(infile):
+            errmsg = "Specified infile does not exist."
+            raise Exception(errmsg)
 
-    # Inspect humidity (float). The range must be 0.0 gt. Humidity  gt. 100.0 [%]
-    if not _inspect_strfloat_range(humidity, 0.0, 100.0):
-        errmsg = "humidity (=%s) Out of Range or Unacceptable." % humidity
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
+        # outfile Protected
+        if _file_exist(outfile):
+            if overwrite:
+                _msg("Overwrite:: Overwrite specified. Once delete the existing output file. ")
+                _ms_remove(outfile)
+            else:
+                errmsg = "Specified outfile already exist."
+                raise Exception(errmsg)
 
-    # User-Defined-Profile parameters conversion. An empty arg makes [] list.
-    layerboundaries = _convert_to_list(layerboundaries)
-    layertemperature = _convert_to_list(layertemperature)
+        # Inspect arguments.
+        #  - inspect Unit.
+        #  - default value ARE NOT considered here.
+        #  - convert values to string form.
+        #  - if (-1) parameter is specified, '' string is set.
+        #  - Sub-function calc_sdatmcor() accepts args basically by string.
 
-    # Length of the two args must be same
-    len_1 = len(layerboundaries)
-    len_2 = len(layertemperature)
-    if len_1 != len_2:
-        errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
-        _msg("\nERROR::%s\n" % errmsg, 'ERROR')
-        raise Exception(errmsg)
+        dtem_dh = _check_unit_and_form_to_str(dtem_dh, ['K/km'])
+        h0 = _check_unit_and_form_to_str(h0, ['km'])
 
-    # generate gain factor dictionary
-    gaindict = parse_gainfactor(gainfactor)
+        altitude = _check_unit_and_form_to_str(altitude, ['m'])
+        temperature = _check_unit_and_form_to_str(temperature, ['K'])
+        pressure = _check_unit_and_form_to_str(pressure, ['mbar', 'hPa'])
+        humidity = _check_unit_and_form_to_str(humidity, [''])
+        PWV = _check_unit_and_form_to_str(PWV, ['mm'])
+        dp = _check_unit_and_form_to_str(dp, ['mbar', 'hPa'])
+        dpm = _check_unit_and_form_to_str(dpm, [''])
 
-    # Data Selection by mstransform
-    _msg("Calling mstransform for Data Selection. Output file = %s " % outfile)
+        # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''
+        if not _inspect_strint_range(atmtype, 1, 5):
+            errmsg = "atmtype (=%s) Out of Range or Unacceptable." % atmtype
+            raise Exception(errmsg)
 
-    # datacolumn check (by XML definition)
-    datacolumn = datacolumn.upper()
-    if datacolumn not in ['DATA', 'CORRECTED', 'FLOAT_DATA']:
-        errmsg = "Specified column name (%s) Unacceptable." % datacolumn
-        raise Exception(errmsg)
+        # Inspect humidity (float). The range must be 0.0 gt. Humidity  gt. 100.0 [%]
+        if not _inspect_strfloat_range(humidity, 0.0, 100.0):
+            errmsg = "humidity (=%s) Out of Range or Unacceptable." % humidity
+            raise Exception(errmsg)
 
-    # tweak antenna selection string to include autocorr data
-    antenna_autocorr = sdutil.get_antenna_selection_include_autocorr(infile, antenna)
+        # User-Defined-Profile parameters conversion. An empty arg makes [] list.
+        layerboundaries = _convert_to_list(layerboundaries)
+        layertemperature = _convert_to_list(layertemperature)
 
+        # Length of the two args must be same
+        len_1 = len(layerboundaries)
+        len_2 = len(layertemperature)
+        if len_1 != len_2:
+            errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
+            raise Exception(errmsg)
+
+        # generate gain factor dictionary
+        gaindict = parse_gainfactor(gainfactor)
+
+    except Exception as err:
+        casalog.post('\nERROR::　%s' % err, 'SEVERE')
+        raise
+
+    # Data Selection Section
     try:
+        _msg("Calling mstransform for Data Selection. Output file = %s " % outfile)
+
+        # datacolumn check (by XML definition)
+        datacolumn = datacolumn.upper()
+        if datacolumn not in ['DATA', 'CORRECTED', 'FLOAT_DATA']:
+            errmsg = "Specified column name (%s) Unacceptable." % datacolumn
+            raise Exception(errmsg)
+
+        # tweak antenna selection string to include autocorr data
+        antenna_autocorr = sdutil.get_antenna_selection_include_autocorr(infile, antenna)
+
         mstransform(
             vis=infile,
             outputvis=outfile,
@@ -382,17 +379,17 @@ def sdatmcor(
             taql=msselect,
             reindex=False)   # Must be False
 
+        # resume 'origin'. A strange behavior in casalog/CASA6
+        casalog.origin(origin)
+
+        # result check if output was generated
+        if not _file_exist(outfile):
+            errmsg = "No outfile was generated by mstransform."
+            raise Exception(errmsg)
+
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
         raise
-
-    # Resume 'origin'. A strange behavior in casalog/CASA6
-    casalog.origin(origin)
-
-    # Result check if output was generated
-    if not _file_exist(outfile):
-        errmsg = "No outfile was generated by mstransform."
-        raise Exception(errmsg)
 
     # Column Name Change
     # 1) datacolumn name 'CORRECTED' will be renamed to 'CORRECTED_DATA' to access with right name.
@@ -405,8 +402,7 @@ def sdatmcor(
     if datacolumn == 'CORRECTED_DATA':
         datacolumn = 'DATA'
 
-    # Call  main body Function
-    #  catch every Exception here.
+    # Call main body Function
     try:
         calc_sdatmcor(
             infile, datacolumn, outfile,
@@ -422,7 +418,7 @@ def sdatmcor(
         casalog.post('%s' % err, 'SEVERE')
         raise
 
-    # Normal End (without True)
+    # Normal End
     return
 
 
