@@ -166,7 +166,7 @@ def get_mount_off_source_commands(msname):
         np.ndarray: list of flag commands
     """
     with open_table(os.path.join(msname, 'FLAG_CMD')) as tb:
-        tsel = tb.query('REASON="Mount_is_off_source"')
+        tsel = tb.query('REASON=="Mount_is_off_source"')
         try:
             commands = tsel.getcol('COMMAND')
         finally:
