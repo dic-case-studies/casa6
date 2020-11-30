@@ -347,7 +347,7 @@ def sdatmcor(
         gaindict = parse_gainfactor(gainfactor)
 
     except Exception as err:
-        casalog.post('\nERROR::　%s' % err, 'SEVERE')
+        casalog.post('\nERROR:: %s' % err, 'SEVERE')
         raise
 
     # Data Selection Section
