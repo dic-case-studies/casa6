@@ -107,7 +107,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Matrix<Float> tempMat1(itsMatResidual);
       itsCleaner.setOrigDirty( tempMat1 );
       //itsCleaner.setMaxPsfConvInitScales();
-      itsCleaner.testBFGS(tempMat);
+      //itsCleaner.testBFGS(tempMat);
     }
 
     // Parts to be repeated at each minor cycle start....

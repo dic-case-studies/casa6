@@ -354,8 +354,10 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	    }
 	  }*/
 
-	  gsl_vector_set(grad, 2*k, dA);
-	  gsl_vector_set(grad, 2*k+1, dS);
+	  //gsl_vector_set(grad, 2*k, dA); //M31
+	  //gsl_vector_set(grad, 2*k+1, dS); //M31
+	  gsl_vector_set(grad, 2*k, dA * 1e2); //G55 test scale up
+	  gsl_vector_set(grad, 2*k+1, dS * 1e6); //G55 test scale up
 	  std::cout << "after grad " << 2*k << ": " << gsl_vector_get(grad, 2*k) << " amp " << amp << std::endl;
 	  std::cout << "after grad " << 2*k+1 << ": " << gsl_vector_get(grad, 2*k+1) << " scale " << scale << std::endl;
 	} // end of derivatives
