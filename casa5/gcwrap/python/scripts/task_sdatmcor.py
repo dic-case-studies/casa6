@@ -796,90 +796,9 @@ def calc_sdatmcor(
         intentspws = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
         spws = list(set(intentspws) & (set(fdmspws) | set(tdmspws)))
         spwnames = msmd.namesforspws(spws)
-
-        # show initial spw info (DEBUG)
-        _msg(" - fdm    spws = %s" % fdmspws, 'DEBUG1')
-        _msg(" - tdm    spws = %s" % tdmspws, 'DEBUG1')
-        _msg(" - intent spws = %s" % intentspws, 'DEBUG1')
-        _msg(" -        spws = %s" % spws, 'DEBUG1')
-
-        # Note:
-        # CAS-13160 atmcorr_20200807.py
-        #     No more use of tmonsource in the new algorithm..
-
-        # (Task Section) check count of ON/OFF SOURCE
-        # n_tmonsource = len(tmonsource)
-        n_tmoffsource = len(tmoffsource)
-        # msg = "Target Information. \n"   \
-        #     + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
-        #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-        # _msg(msg)
-
-        # (Task Section) OFF_SOURCE Error check
-        msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-        _msg(msg)
-        if (n_tmoffsource == 0):
-            msg = "Can't find the OFF_SOURCE data."
-            _msg(msg, 'SEVERE')
-            raise(msg)
-
-        # (Task Section)
-        #     'OutputSpw' must be a set of spw
-
-        # request by argument
-        outputspws_param = parse_spw(corms, '')
-
-        # Must be a subset, locate the initial set.
-        if set(outputspws_param).issubset(set(spws)):
-            outputspws = list(set(outputspws_param))
-        else:
-            _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
-            outputspws = list(set(spws) & set(outputspws_param))
-
-        # spw info with requested parameters (DEBUG)
-        _msg("Determined outputSpws Information", 'DEBUG1')
-        _msg('- Spws                  = %s' % spws, 'DEBUG1')
-        _msg('- requested  outputSpws = %s' % outputspws_param, 'DEBUG1')
-        _msg('- determined outputSpws = %s' % outputspws, 'DEBUG1')
-
-        # (Task Section )
-        #     'processing Spw' must be a set of Spws
-
-        # request by argument
-        spws_param = parse_spw(rawms, p_spw)
-
-        # Must be a subset, locate the initial set.
-        if set(spws_param).issubset(set(spws)):
-            spws = list(set(spws_param))
-        else:
-            _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
-            spws = list(set(spws) & set(spws_param))
-
-        # (Task Section )
-        #     outputSpw and Spw Consistency. There are flowing cases.
-        #      - when Spw=[17,19,21], outputSpw=[19,21]
-        #      - when Spw=[21], outputSpw = [19,21]
-
-        # outputSpw, Spw:: No Target check
-        if spws == []:
-            raise Exception("No available Spw Targets. Abort.")
-        if outputspws == []:
-            raise Exception("No available outputSpw targets. Abort.")
-
-        processing_spws = list(set(spws).intersection(set(outputspws)))
-
-        _msg("Final Determined Spws Information")
-        _msg('-- Spws               = %s' % spws)
-        _msg('-- Output        Spws = %s' % outputspws)
-        _msg('-- Correcting    Spws = %s' % processing_spws)
-
-        # (Original Section)
         for spwid in spws:
             chanfreqs[spwid] = msmd.chanfreqs(spw=spwid)
 
-        # end of with:
-
-    # (original)
     bnd = (pl.diff(tmoffsource) > 1)
     w1 = pl.append([True], bnd)
     w2 = pl.append(bnd, [True])
@@ -889,15 +808,89 @@ def calc_sdatmcor(
     with open_msmd(calms) as msmd:
         for spwid in spws:
             ddis[spwid] = msmd.datadescids(spw=spwid)[0]
-    print("- ddis[] = %s" % ddis)
 
     nchanperbb = [0, 0, 0, 0]
     bbprs = {}
-
     for i, spwid in enumerate(spws):
         bbp = int(spwnames[i].split('#')[2][3]) - 1
         bbprs[spwid] = bbp
         nchanperbb[bbp] += len(chanfreqs[spwid])
+
+    # show initial spw info (DEBUG)
+    _msg(" - fdm    spws = %s" % fdmspws, 'DEBUG1')
+    _msg(" - tdm    spws = %s" % tdmspws, 'DEBUG1')
+    _msg(" - intent spws = %s" % intentspws, 'DEBUG1')
+    _msg(" -        spws = %s" % spws, 'DEBUG1')
+
+    # Note:
+    # CAS-13160 atmcorr_20200807.py
+    #     No more use of tmonsource in the new algorithm..
+
+    # (Task Section) check count of ON/OFF SOURCE
+    # n_tmonsource = len(tmonsource)
+    n_tmoffsource = len(tmoffsource)
+    # msg = "Target Information. \n"   \
+    #     + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
+    #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+    # _msg(msg)
+
+    # (Task Section) OFF_SOURCE Error check
+    msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
+    _msg(msg)
+    if (n_tmoffsource == 0):
+        msg = "Can't find the OFF_SOURCE data."
+        _msg(msg, 'SEVERE')
+        raise(msg)
+
+    # (Task Section)
+    #     'OutputSpw' must be a set of spw
+
+    # request by argument
+    outputspws_param = parse_spw(corms, '')
+
+    # Must be a subset, locate the initial set.
+    if set(outputspws_param).issubset(set(spws)):
+        outputspws = list(set(outputspws_param))
+    else:
+        _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
+        outputspws = list(set(spws) & set(outputspws_param))
+
+    # spw info with requested parameters (DEBUG)
+    _msg("Determined outputSpws Information", 'DEBUG1')
+    _msg('- Spws                  = %s' % spws, 'DEBUG1')
+    _msg('- requested  outputSpws = %s' % outputspws_param, 'DEBUG1')
+    _msg('- determined outputSpws = %s' % outputspws, 'DEBUG1')
+
+    # (Task Section )
+    #     'processing Spw' must be a set of Spws
+
+    # request by argument
+    spws_param = parse_spw(rawms, p_spw)
+
+    # Must be a subset, locate the initial set.
+    if set(spws_param).issubset(set(spws)):
+        spws = list(set(spws_param))
+    else:
+        _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
+        spws = list(set(spws) & set(spws_param))
+
+    # (Task Section )
+    #     outputSpw and Spw Consistency. There are flowing cases.
+    #      - when Spw=[17,19,21], outputSpw=[19,21]
+    #      - when Spw=[21], outputSpw = [19,21]
+
+    # outputSpw, Spw:: No Target check
+    if spws == []:
+        raise Exception("No available Spw Targets. Abort.")
+    if outputspws == []:
+        raise Exception("No available outputSpw targets. Abort.")
+
+    processing_spws = list(set(spws).intersection(set(outputspws)))
+
+    _msg("Final Determined Spws Information")
+    _msg('-- Spws               = %s' % spws)
+    _msg('-- Output        Spws = %s' % outputspws)
+    _msg('-- Correcting    Spws = %s' % processing_spws)
 
     # (Original)
     # Data Query on Pointing Table.
