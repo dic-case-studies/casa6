@@ -180,6 +180,10 @@ void VisModelData::clearModel(const MeasurementSet& thems){
     }
     return;
   }
+  newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().lock(True);   
+  }
   LogIO logio;
   logio << "Clearing all model records in MS header."
 	  << LogIO::POST;
@@ -221,6 +225,10 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	   newTab.rwKeywordSet().removeField("definedmodel_field_"+String::toString(fields[k]));
       }
   }
+  newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   ////Cleaning out orphaned image disk models
   String srctable=thems.source().isNull() ? "" : thems.source().tableName();
   Vector<String> possibleFT(2); 
@@ -249,6 +257,11 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   if(!newTab.isWritable())
     return;
 
+  newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().lock(True);   
+  }
+  
   MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
   Int nfields=0;
@@ -355,8 +368,11 @@ void VisModelData::clearModel(const MeasurementSet& thems){
     
   }
   
+  newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   
-
   }
 
   Bool VisModelData::removeSpw(TableRecord& therec, const Vector<Int>& spws, const Vector<Int>& fields){

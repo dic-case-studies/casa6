@@ -252,6 +252,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	throw(AipsError("Data selection ended with 0 rows"));
       //Sill have some valid ms's so return false and do not proceed to do 
       //channel selection
+      unlockMSs();
       return False;
     }
 
@@ -2128,7 +2129,8 @@ void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
       thisms.freqOffset().lock(false);
 	//True here as we can write in that
     if(!thisms.history().isNull())
-      thisms.history().lock(!readOnly_p);
+    // thisms.history().lock(!readOnly_p);
+      thisms.history().lock(false);
     if(!thisms.pointing().isNull())
       thisms.pointing().lock(false);
 	//we write virtual model here
