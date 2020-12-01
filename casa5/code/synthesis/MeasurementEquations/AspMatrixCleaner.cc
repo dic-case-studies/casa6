@@ -425,7 +425,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
@@ -437,6 +437,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der M31
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2.2e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL without der, G55 , with new norm this is not needed.
+    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.1e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -1904,7 +1905,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
     printf("\n---------- BFGS algorithm begin ----------\n");
     // fdf
-    findComponent(10, s);
+    findComponent(5, s);
 
     // f only
     /*size_t iter = 0;
