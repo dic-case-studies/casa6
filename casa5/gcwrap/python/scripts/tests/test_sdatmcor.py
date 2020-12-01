@@ -306,6 +306,14 @@ class test_sdatmcor(unittest.TestCase):
         sdatmcor(infile=self.infile, spw='<20', outputspw='', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
+    def test_sdatmcor_scan_selection(self):
+        """test data selection: select only one scan (scan 5)"""
+        # just to confirm the task completes without error
+        try:
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', scan='5')
+        except Exception:
+            self.fail('sdatmcor should not raise any Exception')
+
     def test_sdatmcor_antenna_selection(self):
         """Test antenna selection"""
         sdatmcor(infile=self.infile, antenna='PM02', outfile=self.outfile)

@@ -951,8 +951,6 @@ def calc_sdatmcor(
         #     When intended spw is not in 'spws', no-corrected output is performed.
 
         # (original)
-        prevtmatm = 0.
-
         for spwid in processing_spws:  # (original) for spwid in spws
             _msg("\nProcessing spw %d in %s. \n" % (spwid, processing_spws))
 
@@ -1021,6 +1019,7 @@ def calc_sdatmcor(
 
             _msg("\nExecuting ATM Correction(N=%d), and writing to output MS. \n" % len(tmdata))
 
+            prevtmatm = 0.
             cdata = data.copy()
             for i, t in enumerate(tmdata):
 
