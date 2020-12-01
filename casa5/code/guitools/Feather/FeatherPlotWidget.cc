@@ -28,12 +28,14 @@
 #include <QGridLayout>
 #include <QMouseEvent>
 #include <QtCore/qmath.h>
-#include <qwt_plot_picker.h>
-#include <qwt_plot_marker.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot_picker.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_symbol.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 #if QWT_VERSION >= 0x060000
-#include <qwt_picker_machine.h>
+#include <qwt/qwt_picker_machine.h>
 #endif
 
 #include <limits>

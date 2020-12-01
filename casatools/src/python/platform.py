@@ -21,15 +21,17 @@ if pyversion < 3:
 else:
     numpy_string_coding = "U"
     def str_encode(s):
-        if isinstance(s,bytearray):
-            return s
+        if isinstance(s,list):
+            return [ val if isinstance(val,bytearray) else bytes(str(val),_sys.getdefaultencoding()) for val in s ]
         else:
-            return bytes(str(s),_sys.getdefaultencoding())
+            return s if isinstance(s,bytearray) else bytes(str(s),_sys.getdefaultencoding())
+
     def str_decode(bs):
-        if isinstance(bs,bytearray) or isinstance(bs,bytes):
-            return bs.decode(_sys.getdefaultencoding( ),"strict")
+        if isinstance(bs,list):
+            return [ val.decode(_sys.getdefaultencoding( ),"strict") if isinstance(val,bytearray) or isinstance(val,bytes) else val for val in bs ]
         else:
-            return bs
+            return bs.decode(_sys.getdefaultencoding( ),"strict") if isinstance(bs,bytearray) or isinstance(bs,bytes) else bs
+
     def byte_encode(bs,enc):
         if isinstance(bs,bytearray):
             return bs

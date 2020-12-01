@@ -27,7 +27,7 @@
 #define MOLECULARLINE_H_
 
 #include <QString>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot_marker.h>
 #include <casa/aips.h>
 
 class QTextStream;

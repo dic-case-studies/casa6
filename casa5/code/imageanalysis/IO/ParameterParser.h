@@ -27,14 +27,9 @@
 #define IMAGEANALYSIS_PARAMETERPARSER_H
 
 #include <casacore/casa/aips.h>
-
+#include <casacore/casa/Arrays/ArrayFwd.h>
+#include <casacore/casa/BasicSL/String.h>
 #include <vector>
-
-namespace casacore{
-
-class String;
-template <class T> class Vector;
-}
 
 namespace casa {
 

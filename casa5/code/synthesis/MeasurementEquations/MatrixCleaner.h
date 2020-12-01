@@ -30,6 +30,7 @@
 #define SYNTHESIS_MATRIXCLEANER_H
 
 //# Includes
+
 #include <casa/aips.h>
 #include <casa/Quanta/Quantum.h>
 #include <lattices/Lattices/TempLattice.h>

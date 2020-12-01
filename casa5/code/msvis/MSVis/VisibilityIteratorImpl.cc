@@ -1150,7 +1150,7 @@ VisibilityIteratorReadImpl::getReceptor0Angle ()
     return receptor0Angle;
 }
 
-Vector<uInt>
+Vector<rownr_t>
 VisibilityIteratorReadImpl::getRowIds () const
 {
     update_rowIds ();
@@ -1159,8 +1159,8 @@ VisibilityIteratorReadImpl::getRowIds () const
 }
 
 
-Vector<uInt> &
-VisibilityIteratorReadImpl::rowIds (Vector<uInt> & rowids) const
+Vector<rownr_t> &
+VisibilityIteratorReadImpl::rowIds (Vector<rownr_t> & rowids) const
 {
     /* Calculate the row numbers in the original MS only when needed,
      i.e. when this function is called */

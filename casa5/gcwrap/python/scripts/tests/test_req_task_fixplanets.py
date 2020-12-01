@@ -135,8 +135,10 @@ class fixplanets_test(unittest.TestCase):
         fielddiff = compRows(copyFIELD1, dataFIELD, 'DELAY_DIR')
         
         self.assertFalse(np.all([sourcediff, fielddiff]) == True)
-        self.assertFalse(fixplanets(copypath, field='1', direction='wrongdir'))
-        self.assertFalse(fixplanets(copypath, field='1', direction=fakefile))
+        with self.assertRaises(RuntimeError):
+            fixplanets(copypath, field='1', direction='wrongdir')
+        with self.assertRaises(RuntimeError):
+            fixplanets(copypath, field='1', direction=fakefile)
         
     def test_takesvis(self):
         '''
@@ -146,8 +148,11 @@ class fixplanets_test(unittest.TestCase):
             Check that the task takes a MS
         '''
         
-        self.assertTrue(fixplanets(copypath))
-        
+        try:
+            fixplanets(copypath)
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
+
     def test_fixuvw(self):
         '''
             test_fixuvw
@@ -235,7 +240,8 @@ class fixplanets_test(unittest.TestCase):
             Check failure to find the POINTING table rows depending on antenna and time
         '''
         
-        self.assertFalse(fixplanets(copypath, field='1'))
+        with self.assertRaises(RuntimeError):
+            fixplanets(copypath, field='1')
         
     
     

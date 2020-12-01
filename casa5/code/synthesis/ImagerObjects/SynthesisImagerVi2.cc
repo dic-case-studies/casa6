@@ -620,7 +620,7 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
 			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
-			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,gridpars.pointingOffsetSigDev.tovector(),
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
 			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
@@ -1003,7 +1003,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numcoh+=Double(mss_p[k]->nrow());
       ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+      rownr_t cohDone=0;
 
 
     	if(!dopsf)itsMappers.initializeDegrid(*vb);
@@ -1095,7 +1095,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  numcoh+=Double(mss_p[k]->nrow());
 	ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Seting model column to zero":"pre-Major Cycle", "","","",True);
-	Int cohDone=0;
+        rownr_t cohDone=0;
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
 	  {
 	    
@@ -1115,6 +1115,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  }
       }// setting model to zero
 
+    //Need to inialize the the forward ft machine to save the virtual model on first pass of each ms.
+    if(!dopsf && savevirtualmodel){
+      vi::VisBuffer2* vb=vi_p->getVisBuffer();
+      vi_p->originChunks();
+      vi_p->origin();
+      itsMappers.initializeDegrid(*vb, -1);
+    }
     
     for(Int gmap=0;gmap<itsMappers.nMappers();gmap++)
        {
@@ -1139,7 +1146,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 	 ProgressMeter pm(1.0, numcoh, 
 			  dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+	rownr_t cohDone=0;
 
 
 	itsMappers.getFTM2(gmap, False)->reset();
@@ -1246,7 +1253,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeDegrid(*vb);
       for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
@@ -1296,7 +1303,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeGrid(*vi_p,dopsf);
       for (vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
@@ -1543,6 +1550,8 @@ void SynthesisImagerVi2::unlockMSs()
 					const Bool wbAWP,            //= true,
 					   const String cfCache,        //= "",
 					   const Bool usePointing,       //= false,
+					   // const Vector<Float> pointingOffsetSigDev, //= 10.0,
+					   const vector<float> pointingOffsetSigDev,// = {10,10}
 					   const Bool doPBCorr,         //= true,
 					   const Bool conjBeams,        //= true,
 					const Float computePAStep,         //=360.0
@@ -1605,7 +1614,7 @@ void SynthesisImagerVi2::unlockMSs()
       createAWPFTMachine(theFT, theIFT, ftname, facets, wprojplane, 
 			 padding, useAutocorr, useDoublePrec, gridFunction,
 			 aTermOn, psTermOn, mTermOn, wbAWP, cfCache, 
-			 usePointing, doPBCorr, conjBeams, computePAStep,
+			 usePointing, pointingOffsetSigDev, doPBCorr, conjBeams, computePAStep,
 			 rotatePAStep, cache,tile,imageNamePrefix);
     }
     else if ( ftname == "mosaic" || ftname== "mosft" || ftname == "mosaicft" || ftname== "MosaicFT"){
@@ -1693,29 +1702,30 @@ void SynthesisImagerVi2::unlockMSs()
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void SynthesisImagerVi2::createAWPFTMachine(CountedPtr<refim::FTMachine>& theFT, CountedPtr<refim::FTMachine>& theIFT, 
-					   const String&,// ftmName,
-					   const Int,// facets,            //=1
-					   //------------------------------
-					   const Int wprojPlane,        //=1,
-					   const Float,// padding,         //=1.0,
-					   const Bool,// useAutocorr,      //=false,
-					   const Bool useDoublePrec,    //=true,
-					   const String,// gridFunction,   //=String("SF"),
-					   //------------------------------
-					   const Bool aTermOn,          //= true,
-					   const Bool psTermOn,         //= true,
-					   const Bool mTermOn,          //= false,
-					   const Bool wbAWP,            //= true,
-					   const String cfCache,        //= "",
-					   const Bool usePointing,       //= false,
-					   const Bool doPBCorr,         //= true,
-					   const Bool conjBeams,        //= true,
-					   const Float computePAStep,   //=360.0
-					   const Float rotatePAStep,    //=5.0
-					   const Int cache,             //=1000000000,
-					   const Int tile,               //=16
-					   const String imageNamePrefix
-					)
+					      const String&,// ftmName,
+					      const Int,// facets,            //=1
+					      //------------------------------
+					      const Int wprojPlane,        //=1,
+					      const Float,// padding,         //=1.0,
+					      const Bool,// useAutocorr,      //=false,
+					      const Bool useDoublePrec,    //=true,
+					      const String,// gridFunction,   //=String("SF"),
+					      //------------------------------
+					      const Bool aTermOn,          //= true,
+					      const Bool psTermOn,         //= true,
+					      const Bool mTermOn,          //= false,
+					      const Bool wbAWP,            //= true,
+					      const String cfCache,        //= "",
+					      const Bool usePointing,       //= false,
+					      const vector<Float> pointingOffsetSigDev,//={10,10},
+					      const Bool doPBCorr,         //= true,
+					      const Bool conjBeams,        //= true,
+					      const Float computePAStep,   //=360.0
+					      const Float rotatePAStep,    //=5.0
+					      const Int cache,             //=1000000000,
+					      const Int tile,               //=16
+					      const String imageNamePrefix
+					      )
 
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","createAWPFTMachine",WHERE));
@@ -1764,8 +1774,6 @@ void SynthesisImagerVi2::unlockMSs()
 									   psTermOn, (wprojPlane > 1),
 									   mTermOn, wbAWP, conjBeams);
 
-    CountedPtr<refim::PointingOffsets> po = new refim::PointingOffsets(awConvFunc->getOversampling());
-    awConvFunc->setPointingOffsets(po);
     //
     // Construct the appropriate re-sampler.
     //
@@ -1798,7 +1806,7 @@ void SynthesisImagerVi2::unlockMSs()
     theFT = new refim::AWProjectWBFTNew(wprojPlane, cache/2, 
 			      cfCacheObj, awConvFunc, 
 			      visResampler,
-			      /*true */usePointing, doPBCorr, 
+					/*true */usePointing, pointingOffsetSigDev ,doPBCorr, 
 			      tile, computePAStep, pbLimit_l, true,conjBeams,
 			      useDoublePrec);
 
@@ -2122,7 +2130,8 @@ void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","dryGridding",WHERE) );
 
-    Int cohDone=0, whichFTM=0;
+    rownr_t cohDone=0;
+    Int whichFTM=0;
     (void)cfList;
     // If not an AWProject-class FTM, make this call a NoOp.  Might be
     // useful to extend it to other projection FTMs -- but later.
@@ -2369,7 +2378,7 @@ void SynthesisImagerVi2::unlockMSs()
 	{
 	  for (vi_p->origin(); vi_p->more(); vi_p->next())
 	    {
-	      Int nRow=vb->nRows();
+	      auto nRow=vb->nRows();
 	      const Vector<Bool>& rowFlags(vb->flagRow());
 
 	      const Vector<Int>& a1(vb->antenna1()), a2(vb->antenna2());
@@ -2388,7 +2397,7 @@ void SynthesisImagerVi2::unlockMSs()
 	      Int nChanWt=wtc.shape()(1);  // Might be 1 (no WtSp)
 
 	      Cube<Bool> flagCube(vb->flagCube());
-	      for (Int row=0; row<nRow; row++) {
+	      for (rownr_t row=0; row<nRow; row++) {
 		if (!rowFlags(row) && a1(row)!=a2(row)) {  // exclude ACs
 
 		  for (Int ich=0;ich<vb->nChannels();++ich) {

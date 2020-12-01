@@ -43,14 +43,18 @@ class plotants_test(unittest.TestCase):
 
     def test1(self):
        '''Test 1: Default parameters'''
-       self.res = plotants()
-       self.assertFalse(self.res)
+#       self.res = plotants()
+#       self.assertFalse(self.res)
+       with self.assertRaises(RuntimeError):
+           plotants()
 
     def test2(self):
         '''Test 2: Bad input file'''
         msfile = 'badfile'
-        self.res = plotants(vis=msfile)
-        self.assertFalse(self.res)
+#         self.res = plotants(vis=msfile)
+#         self.assertFalse(self.res)
+        with self.assertRaises(RuntimeError):
+            plotants(vis=msfile)
 
     def test3(self):
         '''Test 3: Good input file and output exists'''

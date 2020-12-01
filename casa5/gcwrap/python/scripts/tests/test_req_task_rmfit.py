@@ -33,6 +33,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     myia = iatool()
 import sys
 import os
@@ -110,7 +112,7 @@ class rmfit_test(unittest.TestCase):
             This test checks that if the image provided doesn't have Stokes Q, U, or V the task will fail to execute
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=casaim, rm='rm.im')
         else:
@@ -193,7 +195,7 @@ class rmfit_test(unittest.TestCase):
         
         self.assertTrue(rmfit(imagename=outfile, rm='rm.im'))
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=outfile2, rm ='rm2.im')
         else:

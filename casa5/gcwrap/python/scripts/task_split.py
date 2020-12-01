@@ -57,11 +57,7 @@ def split(vis,
     pdh = ParallelDataHelper("split", locals()) 
         
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Input vis is an MMS
     if pdh.isMMSAndNotServer(vis) and keepmms:
@@ -73,20 +69,12 @@ def split(vis,
         pdh.setupCluster('split')
 
         # Execute the jobs
-        try:
-            pdh.go()
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
-            return False
-                    
-        return True
+        pdh.go()
+        return
         
 
-    # Create local copy of the MSTransform tool
-    mtlocal = mttool( )
-
     try:
-                    
+        mtlocal = mttool()
         # Gather all the parameters in a dictionary.        
         config = {}
         
@@ -179,10 +167,8 @@ def split(vis,
             
         mtlocal.done()
 
-    except Exception as instance:
+    finally:
         mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
     # Local copy of ms tool
     mslocal = mstool()
@@ -274,17 +260,10 @@ def split(vis,
                 else:
                     casalog.post('FLAG_CMD table contains spw selection by name. Will not update it!','DEBUG')
                 
-            mytb.close()
-            
-        except Exception as instance:
+        finally:
             if isopen:
                 mytb.close()
-            mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),'SEVERE')
-            return False
-
-    mytb = None
 
     # Write history to output MS, not the input ms.
     try:
@@ -298,9 +277,5 @@ def split(vis,
                       param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
-        return False
 
     mslocal = None
-    
-    return True
-

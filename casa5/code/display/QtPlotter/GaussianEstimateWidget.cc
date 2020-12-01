@@ -29,9 +29,9 @@
 #include <QDebug>
 #include <QDoubleValidator>
 #include <casaqt/QwtConfig.h>
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_grid.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_grid.h>
 
 using namespace casacore;
 namespace casa {

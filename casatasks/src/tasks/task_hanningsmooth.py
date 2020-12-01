@@ -51,11 +51,7 @@ def hanningsmooth(vis=None,
     pdh = ParallelDataHelper("hanningsmooth", locals()) 
 
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Input vis is an MMS
     if pdh.isMMSAndNotServer(vis) and keepmms:
@@ -66,23 +62,15 @@ def hanningsmooth(vis=None,
         pdh.setupCluster('hanningsmooth')
 
         # Execute the jobs
-        try:
-            pdh.go()
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
-            return False
-                    
-        return True
+        pdh.go()
+        return
 
-
-    # Actual task code starts here
-
-    # Create local copies of the MSTransform and ms tools
-    mtlocal = mstransformer()
     mslocal = ms()
 
-    try:
-                    
+    # Actual task code starts here
+    try:    
+        mtlocal = mstransformer()
+
         # Gather all the parameters in a dictionary.        
         config = {}
         
@@ -118,12 +106,8 @@ def hanningsmooth(vis=None,
         casalog.post('Apply Hanning smoothing on data')
         mtlocal.run()        
             
+    finally:
         mtlocal.done()
-                    
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
     # Write history to output MS, not the input ms.
     try:
@@ -138,10 +122,7 @@ def hanningsmooth(vis=None,
                       param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
-        return False
 
     mslocal = None
-    
-    return True
  
  

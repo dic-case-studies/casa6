@@ -54,7 +54,7 @@ public:
 
     virtual ~VbCacheItemBase () {}
 
-    virtual void appendRows (casacore::Int nRowsToAdd, casacore::Bool truncate = false) = 0;
+    virtual void appendRows (casacore::rownr_t nRowsToAdd, casacore::Bool truncate = false) = 0;
     virtual void clear (casacore::Bool clearStatusOnly = false) = 0;
     virtual void clearDirty () = 0;
     virtual void copyRowElement (casacore::Int sourceRow, casacore::Int destinationRow) = 0;
@@ -69,7 +69,6 @@ public:
     virtual casacore::Bool isPresent () const = 0;
     virtual casacore::Bool isShapeOk () const = 0;
     virtual void resize (casacore::Bool /*copyValues*/) {}
-    virtual void resizeRows (casacore::Int /*newNRows*/) {}
     virtual void setDirty () = 0;
     virtual casacore::String shapeErrorMessage () const = 0;
 
@@ -121,7 +120,7 @@ public:
 
     virtual ~VbCacheItem () {}
 
-    virtual void appendRows (casacore::Int, casacore::Bool)
+    virtual void appendRows (casacore::rownr_t, casacore::Bool)
     {
         // Noop for scalars
     }
@@ -402,7 +401,7 @@ public:
     : VbCacheItem<T, IsComputed> (isMutable), capacity_p (0), shapePattern_p (NoCheck) {}
     virtual ~VbCacheItemArray () {}
 
-    virtual void appendRows (casacore::Int nRows, casacore::Bool truncate)
+    virtual void appendRows (casacore::rownr_t nRows, casacore::Bool truncate)
     {
 
         // Only used when time averaging
@@ -518,27 +517,10 @@ public:
             capacity_p = desiredShape.last();
 
             if (! copyValues){
-                this->getItem() = typename T::value_type();
+                //this->getItem() = typename T::value_type();
+                std::fill(this->getItem().begin( ),this->getItem().end( ),typename T::value_type());
             }
 
-        }
-    }
-
-    void
-    resizeRows (casacore::Int newNRows)
-    {
-        casacore::IPosition shape = this->getItem().shape();
-
-        if (shapePattern_p != NoCheck){
-
-            // Change the last dimension to be the new number of rows,
-            // then resize, copying values.
-
-            shape.last() = newNRows;
-
-            this->getItem().resize (shape, true);
-
-            this->setDirty();
         }
     }
 
@@ -711,7 +693,7 @@ public:
     VbCacheItem <casacore::Int> polFrame_p;
     VbCacheItem <casacore::Int> polarizationId_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > processorId_p;
-    VbCacheItemArray <casacore::Vector<casacore::uInt> > rowIds_p;
+    VbCacheItemArray <casacore::Vector<casacore::rownr_t> > rowIds_p;
     VbCacheItemArray <casacore::Vector<casacore::Int> > scan_p;
     VbCacheItemArray <casacore::Matrix<casacore::Float> > sigma_p;
     //VbCacheItemArray <casacore::Matrix<casacore::Float> > sigmaMat_p;

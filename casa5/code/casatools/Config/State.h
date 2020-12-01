@@ -44,7 +44,13 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
 
         State( ) { }
 
-        virtual bool initialized( ) const { return true; }
+        virtual bool initialized( ) const {
+#if defined(CASATOOLS)
+            return true;
+#else
+            return false;
+#endif
+        }
 
         virtual std::list<std::string> dataPath( ) const {
             return data_path;
@@ -52,6 +58,14 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
 
         virtual std::string pythonPath( ) const {
             return python_path;
+        }
+
+        virtual std::string distroDataPath( ) const {
+            return distro_data_path;
+        }
+
+        virtual std::string logPath( ) const {
+            return log_path;
         }
 
         void clearDataPath( ) {
@@ -93,6 +107,18 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             python_path = pypath;
         }
 
+        void setDistroDataPath(const std::string &path) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            distro_data_path = path;
+        }
+
+        void setLogPath(const std::string &logpath) {
+            // protect critical section...
+            std::lock_guard<std::mutex> guard(data_path_mutex);
+            log_path = logpath;
+        }
+
         // get map of registrations
         std::list<ServiceId> services( ) { return registrar.services( ); }
         // returns true if a registration for 'id' was found
@@ -117,6 +143,8 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::mutex data_path_mutex;
         std::list<std::string> data_path;
         std::string python_path;
+        std::string log_path;
+        std::string distro_data_path;			// path to data as provide by casadata pkg
         Registrar registrar;
     };
 
