@@ -38,6 +38,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cvelfreqs.py
   test_exportasdm.py
   test_exportfits.py
+  test_exportuvfits.py
   test_fixplanets.py
   test_fixvis.py
   test_flagcmd.py
