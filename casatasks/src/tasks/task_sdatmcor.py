@@ -483,12 +483,13 @@ def _check_unit_and_form_to_str(data, base_unit):
 
 
 # Argument parameter handling
-# type : int, list, float
+# type : int, quantity(float), list
 #
 # (purpose) To simplify argument passing to original script.
-# (action) returns value in argument or default-value.
-#  if arg_value is available, return atm_parm_variable (converted to int)
-#  otherwise, returns def_para to use as a default parameter.
+# (action) Returns value of input argument or default-value.
+#  if arg_value is available, return atm_parm_variable,
+#  with being converted to int/quantity(float).
+#  otherwise, returns def_para is directly returned to provide the default parameter.
 
 
 def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
@@ -498,19 +499,19 @@ def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
         return atm_parm_variable
 
 
-def _set_list_atmparam_from_args(set_list):
-    if (len(set_list) != 0):
-        return set_list
-    else:
-        return []
-
-
 def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
     if type(arg_value) is str:
         if (arg_value != ''):
             return qa.quantity(float(arg_value), unit), True
         else:
             return atm_parm_variable, False
+
+
+def _set_list_atmparam_from_args(set_list):
+    if (len(set_list) != 0):
+        return set_list
+    else:
+        return []
 
 
 def _convert_to_list(in_arg):
