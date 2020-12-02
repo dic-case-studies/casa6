@@ -1216,7 +1216,9 @@ void SDGrid::makeImage(FTMachine::Type inType,
     // Attach visibility buffer (VisBuffer) to visibility iterator (VisibilityIterator)
     VisBuffer vb(vi);
 
-    // Set CStokesRep
+    // Set the Stokes Representation
+    // of image's Stokes Coordinate Axis
+    // based on first data in first MS
     vi.origin();
     auto cStokesRep = (vb.polFrame() == MSIter::Linear) ?
             StokesImageUtil::LINEAR : StokesImageUtil::CIRCULAR;
