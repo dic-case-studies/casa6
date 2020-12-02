@@ -201,7 +201,9 @@ void VisModelData::clearModel(const MeasurementSet& thems){
     }
     return;
   }
-  newTab.lock(True);
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
   if(Table::isReadable(newTab.sourceTableName())){
     newTab.source().lock(True);   
   }
@@ -246,7 +248,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	   newTab.rwKeywordSet().removeField("definedmodel_field_"+String::toString(fields[k]));
       }
   }
-  newTab.unlock();
+  if(!alreadyLocked)
+    newTab.unlock();
   if(Table::isReadable(newTab.sourceTableName())){
     newTab.source().unlock();   
   }
@@ -277,8 +280,9 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   }
   if(!newTab.isWritable())
     return;
-
-  newTab.lock(True);
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
   if(Table::isReadable(newTab.sourceTableName())){
     newTab.source().lock(True);   
   }
@@ -384,7 +388,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
     }
     
   }
-  newTab.unlock();
+  if(!alreadyLocked)
+    newTab.unlock();
   if(Table::isReadable(newTab.sourceTableName())){
     newTab.source().unlock();   
   }
