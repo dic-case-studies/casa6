@@ -1216,7 +1216,7 @@ void SDGrid::makeImage(FTMachine::Type inType,
     // Attach visibility buffer (VisBuffer) to visibility iterator (VisibilityIterator)
     VisBuffer vb(vi);
 
-    // Set the Stokes Representation
+    // Set the Polarization Representation
     // of image's Stokes Coordinate Axis
     // based on first data in first MS
     vi.origin();
