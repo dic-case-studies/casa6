@@ -61,7 +61,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters() :
   c0_(Complex(0.0)),
   autoPol_(false),
   doParang_(false),
-  spwScope_(ChunkScope)
+  spwScope_(ChunkScope),
+  antennaScope_(RowScope)
 {
   
   Vector<Int> nTimePerField(nTimePerField_);
@@ -105,7 +106,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
   c0_(c0),
   autoPol_(autoPol),
   doParang_(doParang),
-  spwScope_(ChunkScope)
+  spwScope_(ChunkScope),
+  antennaScope_(RowScope)
 {
 
   Vector<Double> refFreq(nSpw_,100.0e9);
@@ -140,7 +142,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
         Bool doNorm,
         String polBasis, Bool doAC,
         Complex c0, Bool doParang,
-        MetadataScope spwScope) :
+        MetadataScope spwScope,
+        MetadataScope antennaScope) :
   nField_(nField),
   nScan_(nScan),
   nSpw_(nSpw),
@@ -161,7 +164,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
   doAC_(doAC),
   c0_(c0),
   doParang_(doParang),
-  spwScope_(spwScope)
+  spwScope_(spwScope),
+  antennaScope_(antennaScope)
 {
 
   // Generic initialization
@@ -197,6 +201,7 @@ SimpleSimVi2Parameters& SimpleSimVi2Parameters::operator=(const SimpleSimVi2Para
     c0_=other.c0_;
     doParang_=other.doParang_;
     spwScope_=other.spwScope_;
+    antennaScope_=other.antennaScope_;
   }
   return *this;
 
@@ -308,6 +313,8 @@ void SimpleSimVi2Parameters::initialize(const Vector<Int>& nTimePerField,const V
   else
     tsys_=tsys;  // will throw if shapes mismatch
 
+  if(antennaScope_ == ChunkScope)
+    SSVi2NotYetImplemented();
 }
 
 
@@ -540,10 +547,13 @@ void SimpleSimVi2::nextChunk ()
 
 void SimpleSimVi2::origin ()
 {
+  rownr_t spwSubchunkFactor = 1, antennaSubchunkFactor = 1;
   if(pars_.spwScope_ == SubchunkScope)
-    nSubchunk_ = pars_.nSpw_ * pars_.nTimePerField_(thisField_);
-  else
-    nSubchunk_ = pars_.nTimePerField_(thisField_);
+    spwSubchunkFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == SubchunkScope)
+    antennaSubchunkFactor = nBsln_;
+
+  nSubchunk_ = spwSubchunkFactor * antennaSubchunkFactor * pars_.nTimePerField_(thisField_);
 
   // First subchunk this chunk
   iSubChunk_=0;
@@ -551,15 +561,24 @@ void SimpleSimVi2::origin ()
   // time is first time of the chunk
   thisTime_=iChunkTime0_;
 
+  rownr_t spwRowFactor = 1, antennaRowFactor = 1;
   // row counter
-  if(pars_.spwScope_ == ChunkScope || pars_.spwScope_ == SubchunkScope)
-   iRow0_+=nBsln_;
-  else
-   iRow0_+=pars_.nSpw_ * nBsln_;
+  if(pars_.spwScope_ == RowScope)
+    spwRowFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == RowScope)
+    antennaRowFactor = nBsln_;
+
+  iRow0_ += spwRowFactor * antennaRowFactor;
 
   // Start with SPW=0 if scope is Subchunk. 
   if(pars_.spwScope_ == SubchunkScope || pars_.spwScope_ == RowScope)
     thisSpw_ = 0;
+
+  if(pars_.antennaScope_ == SubchunkScope)
+  {
+      thisAntenna1_ = 0;
+      thisAntenna2_ = (pars_.doAC_ ? 0 : 1);
+  }
 
   // Keep VB sync'd
   this->configureNewSubchunk();
@@ -574,13 +593,25 @@ Bool SimpleSimVi2::more () const
 void SimpleSimVi2::next () {
   // Advance counter and time
   ++iSubChunk_;
-  thisTime_+=pars_.dt_;
 
   if(iSubChunk_ < nSubchunk_)
   {
     // Change SPW once all times have been served
     if(pars_.spwScope_ == SubchunkScope)
       thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+
+    if(pars_.antennaScope_ == SubchunkScope)
+    {
+      thisAntenna2_++;
+      if(thisAntenna2_ == pars_.nAnt_)
+      {
+          thisAntenna1_++;
+          thisAntenna2_ = (pars_.doAC_ ? thisAntenna1_ : thisAntenna1_ + 1);
+          thisTime_+=pars_.dt_;
+      }
+    }
+    else
+        thisTime_+=pars_.dt_;
 
     // Keep VB sync'd
     this->configureNewSubchunk();
@@ -688,23 +719,39 @@ VisBuffer2 * SimpleSimVi2::getVisBuffer () const { return vb_.get(); }
   
   // Return info
 void SimpleSimVi2::antenna1 (Vector<Int> & ant1) const {
-  ant1.resize(nBsln_);
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      ant1[k]=i;
-      ++k;
+  if(pars_.antennaScope_ == RowScope)
+  {
+    ant1.resize(nBsln_);
+    Int k=0;
+    for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
+      for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
+          ant1[k]=i;
+          ++k;
+      }
     }
+  }
+  else
+  {
+    ant1.resize(1);
+    ant1(0) = thisAntenna1_;
   }
 }
 void SimpleSimVi2::antenna2 (Vector<Int> & ant2) const {
-  ant2.resize(nBsln_);
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      ant2[k]=j;
-      ++k;
+  if(pars_.antennaScope_ == RowScope)
+  {
+    ant2.resize(nBsln_);
+    Int k=0;
+    for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
+      for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
+        ant2[k]=j;
+        ++k;
+      }
     }
+  }
+  else
+  {
+    ant2.resize(1);
+    ant2(0) = thisAntenna2_;
   }
 }
 
@@ -1011,21 +1058,21 @@ Int SimpleSimVi2::nTimes() const {
 
 
 void SimpleSimVi2::configureNewSubchunk() {
-  nRows_ = 0;
-  nShapes_ = 0;
-  if(pars_.spwScope_ == ChunkScope || pars_.spwScope_ == SubchunkScope)
-  {
-    nRows_ = nBsln_;
-    nShapes_ = 1;
-  }
-  else if(pars_.spwScope_ == RowScope)
-  {
-    nRows_ = nBsln_*pars_.nSpw_;
+  nShapes_ = 1;
+  rownr_t spwRowFactor = 1, antennaRowFactor = 1;
+
+  if(pars_.spwScope_ == RowScope)
+    spwRowFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == RowScope)
+    antennaRowFactor = nBsln_;
+
+  if(pars_.spwScope_ == RowScope)
     nShapes_ = pars_.nSpw_;
-  }
+
+  nRows_ = spwRowFactor * antennaRowFactor;
 
   nRowsPerShape_.resize(nShapes_);
-  nRowsPerShape_ = nBsln_;
+  nRowsPerShape_ = nRows_ / nShapes_;
 
   Vector<Int> spws;
   spectralWindows(spws);
