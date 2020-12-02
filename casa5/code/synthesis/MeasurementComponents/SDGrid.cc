@@ -227,11 +227,9 @@ extern "C" {
 //----------------------------------------------------------------------
 void SDGrid::init() {
 
-  logIO() << LogOrigin("SDGrid", "init")  << LogIO::NORMAL;
+    logIO() << LogOrigin("SDGrid", "init")  << LogIO::NORMAL;
 
-  //pfile = fopen("ptdata.txt","w");
-
-  ok();
+    ok();
 
   /*if((image->shape().product())>cachesize) {
     isTiled=true;
@@ -666,80 +664,66 @@ void SDGrid::finalizeToVis()
 }
 
 
-// Initialize the FFT to the Sky. Here we have to setup and initialize the
-// grid.
+// Initialize the FFT to the Sky.
+// Here we have to setup and initialize the grid.
 void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
-			     Matrix<Float>& weight, const VisBuffer& vb)
+        Matrix<Float>& weight, const VisBuffer& vb)
 {
-  // image always points to the image
-  image=&iimage;
+    // image always points to the image
+    image=&iimage;
 
-  ok();
+    ok();
 
-  init();
+    init();
 
-  if(convType=="pb") {
-    findPBAsConvFunction(*image, vb);
-  }
+    if (convType == "pb") findPBAsConvFunction(*image, vb);
 
-  // reset msId_p and lastAntID_p to -1
-  // this is to ensure correct antenna position in getXYPos
-  msId_p = -1;
-  lastAntID_p = -1;
+    // reset msId_p and lastAntID_p to -1
+    // this is to ensure correct antenna position in getXYPos
+    msId_p = -1;
+    lastAntID_p = -1;
 
-  // Initialize the maps for polarization and channel. These maps
-  // translate visibility indices into image indices
-  initMaps(vb);
-  //cerr << "ToSky cachesize " << cachesize << " im shape " << (image->shape().product()) << endl;
-  /*if((image->shape().product())>cachesize) {
-    isTiled=true;
-  }
-  else {
+    // Initialize the maps for polarization and channel.
+    // These maps translate visibility indices into image indices
+    initMaps(vb);
+
+    // No longer using isTiled
     isTiled=false;
-  }
-  */
-  //////////////No longer using isTiled
-  isTiled=false;
-  nx    = image->shape()(0);
-  ny    = image->shape()(1);
-  npol  = image->shape()(2);
-  nchan = image->shape()(3);
+    nx    = image->shape()(0);
+    ny    = image->shape()(1);
+    npol  = image->shape()(2);
+    nchan = image->shape()(3);
 
-  sumWeight=0.0;
-  weight.resize(sumWeight.shape());
-  weight=0.0;
+    sumWeight = 0.0;
+    weight.resize(sumWeight.shape());
+    weight = 0.0;
 
-  // First get the CoordinateSystem for the image and then find
-  // the DirectionCoordinate
-  CoordinateSystem coords=image->coordinates();
-  Int directionIndex=coords.findCoordinate(Coordinate::DIRECTION);
-  AlwaysAssert(directionIndex>=0, AipsError);
-  directionCoord=coords.directionCoordinate(directionIndex);
+    // First get the CoordinateSystem for the image
+    // and then find the DirectionCoordinate
+    CoordinateSystem coords = image->coordinates();
+    Int directionIndex = coords.findCoordinate(Coordinate::DIRECTION);
+    AlwaysAssert(directionIndex >= 0, AipsError);
+    directionCoord = coords.directionCoordinate(directionIndex);
 
-  // Initialize for in memory or to disk gridding. lattice will
-  // point to the appropriate Lattice, either the ArrayLattice for
-  // in memory gridding or to the image for to disk gridding.
-  /*if(isTiled) {
-    imageCache->flush();
-    image->set(Complex(0.0));
-    lattice=image;
-    wLattice=wImage;
-  }
-  else*/
-  {
+    // Initialize for in memory gridding.
+    // lattice will point to the ArrayLattice
     IPosition gridShape(4, nx, ny, npol, nchan);
     logIO() << LogOrigin("SDGrid", "initializeToSky", WHERE) << LogIO::DEBUGGING
         << "gridShape = " << gridShape << LogIO::POST;
+
     griddedData.resize(gridShape);
-    griddedData=Complex(0.0);
-    if(arrayLattice) delete arrayLattice; arrayLattice=0;
+    griddedData = Complex(0.0);
+    if (arrayLattice) delete arrayLattice;
     arrayLattice = new ArrayLattice<Complex>(griddedData);
-    lattice=arrayLattice;
+    lattice = arrayLattice;
+    AlwaysAssert(lattice, AipsError);
+
     wGriddedData.resize(gridShape);
     wGriddedData=0.0;
-    if(wArrayLattice) delete wArrayLattice; wArrayLattice=0;
+    if (wArrayLattice) delete wArrayLattice;
     wArrayLattice = new ArrayLattice<Float>(wGriddedData);
-    wLattice=wArrayLattice;
+    wLattice = wArrayLattice;
+    AlwaysAssert(wLattice, AipsError);
 
     // clipping related stuff
     if (clipminmax_) {
@@ -767,29 +751,12 @@ void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
                << "will use clipping-capable Fortran gridder ggridsd2 for imaging"
                << LogIO::POST;
     }
-  }
-  AlwaysAssert(lattice, AipsError);
-  AlwaysAssert(wLattice, AipsError);
 }
 
 void SDGrid::finalizeToSky()
 {
-
-  // Now we flush the cache and report statistics
-  // For memory based, we don't write anything out yet.
-  /*if(isTiled) {
-    logIO() << LogOrigin("SDGrid", "finalizeToSky")  << LogIO::NORMAL;
-
-    AlwaysAssert(image, AipsError);
-    AlwaysAssert(imageCache, AipsError);
-    imageCache->flush();
-    ostringstream o;
-    imageCache->showCacheStatistics(o);
-    logIO() << o.str() << LogIO::POST;
-  }
-  */
-
-  if(pointingToImage) delete pointingToImage; pointingToImage=0;
+    if (pointingToImage) delete pointingToImage;
+    pointingToImage = nullptr;
 }
 
 Array<Complex>* SDGrid::getDataPointer(const IPosition& centerLoc2D,
@@ -1412,7 +1379,7 @@ void SDGrid::getWeightImage(ImageInterface<Float>& weightImage, Matrix<Float>& w
 }
 
 void SDGrid::ok() {
-  AlwaysAssert(image, AipsError);
+    AlwaysAssert(image, AipsError);
 }
 
 // Get the index into the pointing table for this time. Note that the
