@@ -224,6 +224,16 @@ extern "C" {
    void grdjinc1(Double*, Double*, Int*, Double*);
 }
 
+void SDGrid::dumpConvolutionFunction(const casacore::String &outfile,
+        const casacore::Vector<casacore::Float> &f) const {
+
+    ofstream ofs(outfile.c_str());
+    for (size_t i = 0 ; i < f.nelements() ; i++) {
+        ofs << i << " " << f[i] << endl;
+    }
+    ofs.close();
+}
+
 //----------------------------------------------------------------------
 void SDGrid::init() {
 
@@ -231,168 +241,131 @@ void SDGrid::init() {
 
     ok();
 
-  /*if((image->shape().product())>cachesize) {
-    isTiled=true;
-  }
-  else {
     isTiled=false;
-    }*/
-  isTiled=false;
-  nx    = image->shape()(0);
-  ny    = image->shape()(1);
-  npol  = image->shape()(2);
-  nchan = image->shape()(3);
+    nx    = image->shape()(0);
+    ny    = image->shape()(1);
+    npol  = image->shape()(2);
+    nchan = image->shape()(3);
 
-  sumWeight.resize(npol, nchan);
+    sumWeight.resize(npol, nchan);
 
-  // Set up image cache needed for gridding. For BOX-car convolution
-  // we can use non-overlapped tiles. Otherwise we need to use
-  // overlapped tiles and additive gridding so that only increments
-  // to a tile are written.
-  if(imageCache) delete imageCache; imageCache=0;
+    // Set up image cache needed for gridding. For BOX-car convolution
+    // we can use non-overlapped tiles. Otherwise we need to use
+    // overlapped tiles and additive gridding so that only increments
+    // to a tile are written.
+    if (imageCache) delete imageCache;
+    imageCache = nullptr;
 
-  convType=downcase(convType);
-  logIO() << "Convolution function : " << convType << LogIO::DEBUG1 << LogIO::POST;
-  if(convType=="pb") {
-    //cerr << "CNVFunc " << convFunc << endl;
+    convType = downcase(convType);
+    logIO() << "Convolution function : " << convType << LogIO::DEBUG1 << LogIO::POST;
 
-  }
-  else if(convType=="box") {
-    convSupport=(userSetSupport_p >= 0) ? userSetSupport_p : 0;
-    logIO() << "Support : " << convSupport << " pixels" << LogIO::POST;
-    convSampling=100;
-    convSize=convSampling*(2*convSupport+2);
-    convFunc.resize(convSize);
-    convFunc=0.0;
-    for (Int i=0;i<convSize/2;i++) {
-      convFunc(i)=1.0;
+    // Compute convolution function
+    if (convType=="pb") {
+        // Do nothing
     }
-  }
-  else if(convType=="sf") {
-    // SF
-    convSupport=(userSetSupport_p >= 0) ? userSetSupport_p : 3;
-    logIO() << "Support : " << convSupport << " pixels" << LogIO::POST;
-    convSampling=100;
-    convSize=convSampling*(2*convSupport+2);
-    convFunc.resize(convSize);
-    convFunc=0.0;
-    for (Int i=0;i<convSampling*convSupport;i++) {
-      Double nu=Double(i)/Double(convSupport*convSampling);
-      Double val;
-      grdsf(&nu, &val);
-      convFunc(i)=(1.0-nu*nu)*val;
-    }
-  }
-  else if(convType=="gauss") {
-    // default is b=1.0 (Mangum et al. 2007)
-    Double hwhm=(gwidth_p > 0.0) ? Double(gwidth_p) : sqrt(log(2.0));
-    Float truncate=(truncate_p >= 0.0) ? truncate_p : 3.0*hwhm;
-    convSampling=100;
-    Int itruncate=(Int)(truncate*Double(convSampling)+0.5);
-    logIO() << LogIO::DEBUG1 << "hwhm=" << hwhm << LogIO::POST;
-    logIO() << LogIO::DEBUG1 << "itruncate=" << itruncate << LogIO::POST;
-    //convSupport=(Int)(truncate+0.5);
-    convSupport = (Int)(truncate);
-    convSupport += (((truncate-(Float)convSupport) > 0.0) ? 1 : 0);
-    convSize=convSampling*(2*convSupport+2);
-    convFunc.resize(convSize);
-    convFunc=0.0;
-    Double val, x;
-    for (Int i = 0 ; i <= itruncate ; i++) {
-      x = Double(i)/Double(convSampling);
-      grdgauss(&hwhm, &x, &val);
-      convFunc(i)=val;
-    }
-
-//     String outfile = convType + ".dat";
-//     ofstream ofs(outfile.c_str());
-//     for (Int i = 0 ; i < convSize ; i++) {
-//       ofs << i << " " << convFunc[i] << endl;
-//     }
-//     ofs.close();
-  }
-  else if (convType=="gjinc") {
-    // default is b=2.52, c=1.55 (Mangum et al. 2007)
-    Double hwhm = (gwidth_p > 0.0) ? Double(gwidth_p) : sqrt(log(2.0))*2.52;
-    Double c = (jwidth_p > 0.0) ? Double(jwidth_p) : 1.55;
-    //Float truncate = truncate_p;
-    convSampling = 100;
-    Int itruncate=(Int)(truncate_p*Double(convSampling)+0.5);
-    logIO() << LogIO::DEBUG1 << "hwhm=" << hwhm << LogIO::POST;
-    logIO() << LogIO::DEBUG1 << "c=" << c << LogIO::POST;
-    logIO() << LogIO::DEBUG1 << "itruncate=" << itruncate << LogIO::POST;
-    //convSupport=(truncate_p >= 0.0) ? (Int)(truncate_p+0.5) : (Int)(2*c+0.5);
-    Float convSupportF = (truncate_p >= 0.0) ? truncate_p : (2*c);
-    convSupport = (Int)convSupportF;
-    convSupport += (((convSupportF-(Float)convSupport) > 0.0) ? 1 : 0);
-    convSize=convSampling*(2*convSupport+2);
-    convFunc.resize(convSize);
-    convFunc=0.0;
-    //UNUSED: Double r;
-    Double x, val1, val2;
-    Int normalize = 1;
-    if (itruncate >= 0) {
-      for (Int i = 0 ; i < itruncate ; i++) {
-        x = Double(i) / Double(convSampling);
-        //r = Double(i) / (Double(hwhm)*Double(convSampling));
-        grdgauss(&hwhm, &x, &val1);
-        grdjinc1(&c, &x, &normalize, &val2);
-        convFunc(i) = val1 * val2;
-      }
-    }
-    else {
-      // default is to truncate at first null
-      for (Int i=0;i<convSize;i++) {
-        x = Double(i) / Double(convSampling);
-        //r = Double(i) / (Double(hwhm)*Double(convSampling));
-        grdjinc1(&c, &x, &normalize, &val2);
-        if (val2 <= 0.0) {
-          logIO() << LogIO::DEBUG1 << "convFunc is automatically truncated at radius " << x << LogIO::POST;
-          break;
+    else if (convType=="box") {
+        convSupport=(userSetSupport_p >= 0) ? userSetSupport_p : 0;
+        logIO() << "Support : " << convSupport << " pixels" << LogIO::POST;
+        convSampling=100;
+        convSize=convSampling*(2*convSupport+2);
+        convFunc.resize(convSize);
+        convFunc=0.0;
+        for (Int i=0;i<convSize/2;i++) {
+            convFunc(i)=1.0;
         }
-        grdgauss(&hwhm, &x, &val1);
-        convFunc(i) = val1 * val2;
-      }
     }
-
-//    String outfile = convType + ".dat";
-//    ofstream ofs(outfile.c_str());
-//    for (Int i = 0 ; i < convSize ; i++) {
-//      ofs << i << " " << convFunc[i] << endl;
-//    }
-//    ofs.close();
-  }
-  else {
-    logIO_p << "Unknown convolution function " << convType << LogIO::EXCEPTION;
-  }
-
-  if(wImage) delete wImage; wImage=0;
-  wImage = new TempImage<Float>(image->shape(), image->coordinates());
-
-  /*if(isTiled) {
-    Float tileOverlap=0.5;
-    if(convType=="box") {
-      tileOverlap=0.0;
+    else if (convType=="sf") {
+        convSupport=(userSetSupport_p >= 0) ? userSetSupport_p : 3;
+        logIO() << "Support : " << convSupport << " pixels" << LogIO::POST;
+        convSampling=100;
+        convSize=convSampling*(2*convSupport+2);
+        convFunc.resize(convSize);
+        convFunc=0.0;
+        for (Int i=0;i<convSampling*convSupport;i++) {
+            Double nu=Double(i)/Double(convSupport*convSampling);
+            Double val;
+            grdsf(&nu, &val);
+            convFunc(i)=(1.0-nu*nu)*val;
+        }
+    }
+    else if (convType=="gauss") {
+        // default is b=1.0 (Mangum et al. 2007)
+        Double hwhm=(gwidth_p > 0.0) ? Double(gwidth_p) : sqrt(log(2.0));
+        Float truncate=(truncate_p >= 0.0) ? truncate_p : 3.0*hwhm;
+        convSampling=100;
+        Int itruncate=(Int)(truncate*Double(convSampling)+0.5);
+        logIO() << LogIO::DEBUG1 << "hwhm=" << hwhm << LogIO::POST;
+        logIO() << LogIO::DEBUG1 << "itruncate=" << itruncate << LogIO::POST;
+        //convSupport=(Int)(truncate+0.5);
+        convSupport = (Int)(truncate);
+        convSupport += (((truncate-(Float)convSupport) > 0.0) ? 1 : 0);
+        convSize=convSampling*(2*convSupport+2);
+        convFunc.resize(convSize);
+        convFunc=0.0;
+        Double val, x;
+        for (Int i = 0 ; i <= itruncate ; i++) {
+            x = Double(i)/Double(convSampling);
+            grdgauss(&hwhm, &x, &val);
+            convFunc(i)=val;
+        }
+    }
+    else if (convType=="gjinc") {
+        // default is b=2.52, c=1.55 (Mangum et al. 2007)
+        Double hwhm = (gwidth_p > 0.0) ? Double(gwidth_p) : sqrt(log(2.0))*2.52;
+        Double c = (jwidth_p > 0.0) ? Double(jwidth_p) : 1.55;
+        //Float truncate = truncate_p;
+        convSampling = 100;
+        Int itruncate=(Int)(truncate_p*Double(convSampling)+0.5);
+        logIO() << LogIO::DEBUG1 << "hwhm=" << hwhm << LogIO::POST;
+        logIO() << LogIO::DEBUG1 << "c=" << c << LogIO::POST;
+        logIO() << LogIO::DEBUG1 << "itruncate=" << itruncate << LogIO::POST;
+        //convSupport=(truncate_p >= 0.0) ? (Int)(truncate_p+0.5) : (Int)(2*c+0.5);
+        Float convSupportF = (truncate_p >= 0.0) ? truncate_p : (2*c);
+        convSupport = (Int)convSupportF;
+        convSupport += (((convSupportF-(Float)convSupport) > 0.0) ? 1 : 0);
+        convSize=convSampling*(2*convSupport+2);
+        convFunc.resize(convSize);
+        convFunc=0.0;
+        //UNUSED: Double r;
+        Double x, val1, val2;
+        Int normalize = 1;
+        if (itruncate >= 0) {
+            for (Int i = 0 ; i < itruncate ; i++) {
+                x = Double(i) / Double(convSampling);
+                //r = Double(i) / (Double(hwhm)*Double(convSampling));
+                grdgauss(&hwhm, &x, &val1);
+                grdjinc1(&c, &x, &normalize, &val2);
+                convFunc(i) = val1 * val2;
+            }
+        }
+        else {
+            // default is to truncate at first null
+            for (Int i=0;i<convSize;i++) {
+                x = Double(i) / Double(convSampling);
+                //r = Double(i) / (Double(hwhm)*Double(convSampling));
+                grdjinc1(&c, &x, &normalize, &val2);
+                if (val2 <= 0.0) {
+                    logIO() << LogIO::DEBUG1 
+                        << "convFunc is automatically truncated at radius "
+                        << x << LogIO::POST;
+                    break;
+                }
+                grdgauss(&hwhm, &x, &val1);
+                convFunc(i) = val1 * val2;
+            }
+        }
     }
     else {
-      tileOverlap=0.5;
-      tilesize=max(12,tilesize);
+        logIO_p << "Unknown convolution function " << convType << LogIO::EXCEPTION;
     }
-    IPosition tileShape=IPosition(4,tilesize,tilesize,npol,nchan);
-    Vector<Float> tileOverlapVec(4);
-    tileOverlapVec=0.0;
-    tileOverlapVec(0)=tileOverlap;
-    tileOverlapVec(1)=tileOverlap;
-    imageCache=new LatticeCache <Complex> (*image, cachesize, tileShape,
-					   tileOverlapVec,
-					   (tileOverlap>0.0));
 
-    wImageCache=new LatticeCache <Float> (*wImage, cachesize, tileShape,
-					   tileOverlapVec,
-					   (tileOverlap>0.0));
+    // Convolution function debug
+    // String outfile = convType + ".dat";
+    // dumpConvolutionFunction(outfile,convFunc);
 
-  }
-  */
+    if (wImage) delete wImage;
+    wImage = new TempImage<Float>(image->shape(), image->coordinates());
+
 }
 
 // This is nasty, we should use CountedPointers here.

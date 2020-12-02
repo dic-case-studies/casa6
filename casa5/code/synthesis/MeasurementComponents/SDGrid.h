@@ -319,6 +319,8 @@ private:
 
   //for debugging
   //FILE *pfile;
+
+  void dumpConvolutionFunction(const casacore::String &outfile, const casacore::Vector<casacore::Float> &f) const;
 };
 
 } //# NAMESPACE CASA - END
