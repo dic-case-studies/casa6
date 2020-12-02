@@ -241,7 +241,7 @@ void SDGrid::init() {
 
     ok();
 
-    isTiled=false;
+    isTiled = false;
     nx    = image->shape()(0);
     ny    = image->shape()(1);
     npol  = image->shape()(2);
@@ -1221,12 +1221,6 @@ void SDGrid::makeImage(FTMachine::Type inType,
     auto cStokesRep = (vb.polFrame() == MSIter::Linear) ?
             StokesImageUtil::LINEAR : StokesImageUtil::CIRCULAR;
     StokesImageUtil::changeCStokesRep(theImage, cStokesRep);
-
-    //  Weights
-    auto imageShape = theImage.shape();
-    auto Npol  = imageShape(2);
-    auto Nchan = imageShape(3);
-    weight.resize(Npol, Nchan);
 
     initializeToSky(theImage,weight,vb);
     // Loop over the visibilities, putting VisBuffers
