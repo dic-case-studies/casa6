@@ -227,6 +227,15 @@ public:
     // Return the number of distinct array/cube shapes in the current iteration
     virtual casacore::rownr_t nShapes () const = 0;
 
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const = 0;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const = 0;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const = 0;
+
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
     // original ms row

@@ -1844,9 +1844,27 @@ VisibilityIteratorImpl2::nShapes() const
     return 1;
 }
 
+const casacore::Vector<casacore::rownr_t>&
+VisibilityIteratorImpl2::nRowsPerShape () const
+{
+    return nRowsPerShape_p;
+}
+
+const casacore::Vector<casacore::Int>&
+VisibilityIteratorImpl2::nChannelsPerShape () const
+{
+    return nChannPerShape_p;
+}
+
+const casacore::Vector<casacore::Int>&
+VisibilityIteratorImpl2::nCorrelationsPerShape () const
+{
+    return nCorrsPerShape_p;
+}
+
 rownr_t VisibilityIteratorImpl2::nRowsInChunk() const
 {
-	return msIter_p->table().nrow();
+    return msIter_p->table().nrow();
 }
 
 Int VisibilityIteratorImpl2::nTimes() const {
@@ -2477,16 +2495,16 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
     String msName = ms().tableName();
 
-    Vector<rownr_t> nRowsPerShape(1, rowBounds_p.subchunkNRows_p);
-    Vector<Int> nChannPerShape(1, channelSelectors_p[0]->getNFrequencies());
-    Vector<Int> nCorrsPerShape(1, nCorrelations_p);
+    nRowsPerShape_p = Vector<rownr_t>(1, rowBounds_p.subchunkNRows_p);
+    nChannPerShape_p = Vector<Int>(1, channelSelectors_p[0]->getNFrequencies());
+    nCorrsPerShape_p = Vector<Int>(1, nCorrelations_p);
 
     vb_p->configureNewSubchunk(
             msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
             isNewSpectralWindow(), subchunk_p, 
-            nRowsPerShape,
-            nChannPerShape,
-            nCorrsPerShape,
+            nRowsPerShape_p,
+            nChannPerShape_p,
+            nCorrsPerShape_p,
             correlations, correlationsDefined, correlationsSelected,
             weightScaling_p);
 }

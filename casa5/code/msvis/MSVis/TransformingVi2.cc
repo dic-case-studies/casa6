@@ -103,23 +103,6 @@ TransformingVi2::azel0 (Double time)  const
 void
 TransformingVi2::configureNewSubchunk (){
 
-
-    // Configure the VisBuffer for the new subchunk.  Most information comes from
-    // the Transforming VI2 superclass which in turn gets it from its VI implementation
-    // object.  The main addition is the need to provide the name of the MS output and
-    // the MS index which is always zero since we only support a single output MS.
-    Vector<Int> spws;
-    spectralWindows(spws);
-    Vector<Int> channels = getChannels (0, 0, spws(0), msId()); // args are ignored
-    Int nChannels = channels.nelements();
-
-    Vector<Int> corrs = getCorrelations ();
-    Int nCorrs = corrs.nelements();
-
-    casacore::Vector<casacore::rownr_t> nRowsPerShape(1, nRows());
-    casacore::Vector<casacore::Int> nChannelsPerShape(1, nChannels);
-    casacore::Vector<casacore::Int> nCorrelationsPerShape(1, nCorrs);
-
     configureNewSubchunk (msId(), // always the first MS
                           msName(),
                           isNewMs(),
@@ -127,9 +110,9 @@ TransformingVi2::configureNewSubchunk (){
                           isNewFieldId (),
                           isNewSpectralWindow (),
                           getSubchunkId (),
-                          nRowsPerShape,
-                          nChannelsPerShape,
-                          nCorrelationsPerShape,
+                          nRowsPerShape(),
+                          nChannelsPerShape(),
+                          nCorrelationsPerShape(),
                           getCorrelations(),
                           getCorrelationTypesDefined(),
                           getCorrelationTypesSelected(),
@@ -140,9 +123,9 @@ void
 TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isNewMs,
                                        Bool isNewArrayId, Bool isNewFieldId,
                                        Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       casacore::Vector<casacore::rownr_t>& nRowsPerShape,
-                                       casacore::Vector<casacore::Int>& nChannelsPerShape,
-                                       casacore::Vector<casacore::Int>& nCorrelationsPerShape,
+                                       const casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                                       const casacore::Vector<casacore::Int>& nChannelsPerShape,
+                                       const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                        const Vector<Int> & correlations,
                                        const Vector<Stokes::StokesTypes> & correlationsDefined,
                                        const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -499,6 +482,24 @@ rownr_t
 TransformingVi2::nShapes ()  const
 {
     return getVii()->nShapes ();
+}
+
+const casacore::Vector<casacore::rownr_t>&
+TransformingVi2::nRowsPerShape () const
+{
+    return getVii()->nRowsPerShape ();
+}
+
+const casacore::Vector<casacore::Int>&
+TransformingVi2::nChannelsPerShape () const
+{
+    return getVii()->nChannelsPerShape ();
+}
+
+const casacore::Vector<casacore::Int>&
+TransformingVi2::nCorrelationsPerShape () const
+{
+    return getVii()->nCorrelationsPerShape ();
 }
 
 rownr_t

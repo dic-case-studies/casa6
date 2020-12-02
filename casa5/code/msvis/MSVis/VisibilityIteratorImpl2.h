@@ -592,6 +592,18 @@ public:
     virtual casacore::rownr_t
     nShapes() const override;
 
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& 
+    nRowsPerShape () const override;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& 
+    nChannelsPerShape () const override;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& 
+    nCorrelationsPerShape () const override;
+
 	// Return the row ids as from the original root table. This is useful
 	// to find correspondance between a given row in this iteration to the
 	// original ms row
@@ -1342,6 +1354,12 @@ protected:
     mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
     // (chunkN #, subchunk #) pair
     Subchunk subchunk_p;
+    // Number of rows for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::rownr_t> nRowsPerShape_p;
+    // Number of channels for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::Int> nChannPerShape_p;
+    // Number of correlations for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::Int> nCorrsPerShape_p;
     // [own] Allows const access to casacore::MS's subtable columns
     SubtableColumns * subtableColumns_p;
     casacore::MeasRef<casacore::MEpoch> timeFrameOfReference_p;
