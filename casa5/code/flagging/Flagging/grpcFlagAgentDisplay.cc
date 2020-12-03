@@ -34,7 +34,7 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-constexpr int FlagAgentDisplay::DELAY;
+constexpr int FlagAgentDisplay::TIMEOUT;
 
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
 // C++ is so ridiculous... trim from start (in place)
@@ -374,7 +374,7 @@ bool FlagAgentDisplay::plotter_t::launch(std::string plotserver_path) {
     ::google::protobuf::Empty resp;
     ::google::protobuf::Empty msg;
     auto ping = casatools::rpc::Ping::NewStub( grpc::CreateChannel( plot_uri, grpc::InsecureChannelCredentials( ) ) );
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     ::grpc::Status st = ping->now( &context, msg, &resp );
     bool ping_result = st.ok( );
@@ -491,7 +491,7 @@ bool FlagAgentDisplay::done( std::shared_ptr<FlagAgentDisplay::plotter_t> plotte
             fflush(stderr);
         }
         auto shutdown = casatools::rpc::Shutdown::NewStub( grpc::CreateChannel( plotter->plot_uri, grpc::InsecureChannelCredentials( ) ) );
-        auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+        auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
         context.set_deadline(deadline);
         shutdown->now( &context, req, &resp );
 
@@ -554,7 +554,7 @@ int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
     }
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     ::grpc::Status st = plot->plot->panel(&context,panel,&result);
     bool stat = st.ok( );
@@ -572,7 +572,7 @@ void FlagAgentDisplay::erase( std::shared_ptr<plotter_t> plot, int panel ) {
     ::google::protobuf::Empty resp;
     ::rpc::gui::Id id;
     id.set_id(panel);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->erase(&context,id,&resp);
 }
@@ -586,7 +586,7 @@ void FlagAgentDisplay::setlabel( std::shared_ptr<plotter_t> plot, int panel,
     label.set_xlabel(xlabel);
     label.set_ylabel(ylabel);
     label.set_title(title);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->setlabel(&context,label,&resp);
 }
@@ -599,7 +599,7 @@ int FlagAgentDisplay::create_dock( std::shared_ptr<plotter_t> plot, int panel, s
     spec.set_loc("bottom");
     spec.add_dockable("top");
     spec.mutable_panel( )->set_id(panel);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->loaddock(&context,spec,&result);
     return result.id( );
@@ -615,7 +615,7 @@ int FlagAgentDisplay::raster( std::shared_ptr<plotter_t> plot, int panel, const 
     raster.set_sizey(sizey);
     raster.set_colormap("Hot Metal 1");
 
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->raster(&context,raster,&result);
     return result.id( );
@@ -630,7 +630,7 @@ int FlagAgentDisplay::line( std::shared_ptr<plotter_t> plot, int panel, const st
     *line.mutable_y( ) = { ydata.begin( ), ydata.end( ) };
     line.set_color(color);
     line.set_label(label);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->line(&context,line,&result);
     return result.id( );
@@ -650,7 +650,7 @@ int FlagAgentDisplay::scatter( std::shared_ptr<plotter_t> plot, int panel, const
     scatter.set_symbol(symbol);
     scatter.set_symbol_size(symbol_size);
     scatter.set_dot_size(dot_size);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(DELAY);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     plot->plot->scatter(&context,scatter,&result);
     return result.id( );
