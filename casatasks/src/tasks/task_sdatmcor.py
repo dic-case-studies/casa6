@@ -485,12 +485,12 @@ def _check_unit_and_form_to_str(data, base_unit):
 # Argument parameter handling
 # type : int, quantity(float), list
 #
-# (purpose) To simplify argument passing from Task to original script.
-# (action) Returns input argument values or default-value.
-#  - if arg_value is available, return atm_parm_variable, with being
-#    converted to int/quantity(float).
+# (purpose) To simplify passing an argument from Task to Original script.
+# (action) Returns an input argument values or default value.
+#  - if 'arg_value' is available, this function returns 'atm_parm_variable',
+#    with being converted to int/quantity(float).
 #  - otherwise, def_para is directly returned to as a default parameter.
-
+#  - _convert_to_list() only checks 'in_arg' is available or not. 
 
 def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
     if (arg_value != ''):
