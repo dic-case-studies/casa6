@@ -187,6 +187,8 @@ private:
   float itsPeakResidual;
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsOrigDirty;
   casacore::Vector<casacore::Float> maxPsfConvInitScales;
+
+  const casacore::Int defaultNorm=1;
 };
 
 } //# NAMESPACE CASA - END

@@ -56,7 +56,7 @@
 
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
-#include <synthesis/TransformMachines/Utils.h>
+#include <synthesis/TransformMachines2/Utils.h>
 #include <coordinates/Coordinates/TabularCoordinate.h>
 
 #ifdef _OPENMP
@@ -101,9 +101,7 @@ using namespace cppoptlib;*/
 
 using namespace casacore;
 using namespace std::chrono;
-
 namespace casa { //# NAMESPACE CASA - BEGIN
-
 AspMatrixCleaner::AspMatrixCleaner():
   MatrixCleaner(),
   itsInitScaleSizes(0),
@@ -1334,8 +1332,9 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
-      string normMethod = getenv("ASP_NORM");
-      if (normMethod == "norm1")
+      Int normMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", defaultNorm);
+
+      if (normMethod == 1)
 	{
 	  cerr<<"Norm method is : "<<normMethod << endl;
 	}
