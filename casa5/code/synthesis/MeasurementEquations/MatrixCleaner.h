@@ -40,10 +40,10 @@
 #include <lattices/LatticeMath/LatticeCleaner.h>
 #include <images/Images/ImageInterface.h>
 
-namespace casacore{
+// namespace casacore{
 
-template <class T> class Matrix;
-}
+// template <class T> class Matrix;
+// }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

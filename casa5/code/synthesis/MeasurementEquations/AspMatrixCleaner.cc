@@ -29,7 +29,7 @@
 #include <casa/Arrays/Cube.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/MatrixMath.h>
-#include <casa/Arrays/ArrayIO.h>
+//#include <casa/Arrays/ArrayIO.h>
 #include <casa/BasicMath/Math.h>
 #include <casa/BasicSL/Complex.h>
 #include <casa/Logging/LogIO.h>

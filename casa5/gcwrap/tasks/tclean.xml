@@ -1286,7 +1286,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
 
-
+			aasp : ASP clean [Bhatnagar and Cornwell 2004]
+			      
 
 </description>
       <value type="string">hogbom</value>
@@ -1299,7 +1300,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>multiscale</value>
               <value>mtmfs</value>
               <value>mem</value>
-
+              <value>aasp</value>
       </allowed>
     </param>
 
