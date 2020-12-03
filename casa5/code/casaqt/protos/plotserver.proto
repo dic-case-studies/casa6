@@ -2,7 +2,9 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-service app {
+package rpc.gui;
+
+service plotserver {
     rpc panel(NewPanel) returns (Id);
     rpc colors(google.protobuf.Empty) returns (Colors);
     rpc colormaps(google.protobuf.Empty) returns (ColorMaps);
@@ -18,6 +20,7 @@ service app {
     rpc hide(Id) returns (google.protobuf.Empty);
     rpc show(Id) returns (google.protobuf.Empty);
     rpc loaddock(DockSpec) returns (Id);
+    rpc done (google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 message Id {
@@ -53,7 +56,8 @@ message NewLine {
     repeated double x = 1;
     repeated double y = 2;
     string color = 3;
-    Id panel = 4;
+    string label = 4;
+    Id panel = 5;
 }
 
 message NewScatter {
