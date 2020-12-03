@@ -1,11 +1,10 @@
-import shutil
+from __future__ import absolute_import
+from __future__ import print_function
+
 import unittest
 import os
-import numpy
 import math
 import sys
-import filecmp
-import glob
 
 from casatestutils import testhelper as th
 
@@ -61,7 +60,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception as e:
-            print("Error comparing", val, "to", expval)
+            print("Error comparing {} to {}".format(val, expval))
             raise
 
 class test_nrobeamaverage(unittest.TestCase):
@@ -69,7 +68,7 @@ class test_nrobeamaverage(unittest.TestCase):
         default(nrobeamaverage)
 
         self.i_ms = "onon.ms"
-        os.system('cp -RL '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
+        os.system('cp -RH '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
         self.o_ms = "bave.ms"
         self.args = {'infile': self.i_ms, 'outfile': self.o_ms}
 

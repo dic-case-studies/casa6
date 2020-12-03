@@ -91,6 +91,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_putregion.py
   test_ia_pv.py
   test_ia_rebin.py
+  test_ia_regrid.py
   test_ia_replacemaskedpixels.py
   test_ia_restoringbeam.py
   test_ia_rotate.py
@@ -230,6 +231,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+  test_req_task_imdev.py
   test_req_task_rerefant.py
   test_req_task_polcal.py
 

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os
-import sys
 import shutil
 import numpy
 import re
@@ -19,26 +21,18 @@ if is_CASA6:
     from casatools import ctsys
     datapath = ctsys.resolve('unittest/plotprofilemap/')
 
-#    from testhelper import copytree_ignore_subversion
-
     # default isn't used in CASA6
     def default(atask):
         pass
 else:
     from __main__ import default
-    from tasks import protprofilemap
+    from tasks import plotprofilemap
     from tasks import exportfits
     from taskinit import iatool as image
     from taskinit import rgtool as regionmanager
 
     # Data path of input/output
     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotprofilemap/'
-
-#     try:
-#         from testutils import copytree_ignore_subversion
-#     except Exception:
-#         from tests.testutils import copytree_ignore_subversion
-
 
 myia = image()
 myrg = regionmanager()
@@ -83,7 +77,7 @@ class plotprofilemap_test(unittest.TestCase):
             pl.ioff()
 
         # copy input image
-        copytree_ignore_subversion(datapath, self.imagename_ref, self.imagename)
+        shutil.copytree(os.path.join(datapath, self.imagename_ref), self.imagename)
 
         # make parameters default
         default(plotprofilemap)
@@ -310,7 +304,7 @@ class plotprofilemap_test(unittest.TestCase):
     def test_image_not_exist(self):
         """test_image_not_exist: input image does not exist (causes error)"""
         imagename = 'blabla.im'
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(Exception) as cm:
             res = self.run_task(imagename=imagename)
 
     def test_not_overwrite(self):
@@ -343,7 +337,7 @@ class plotprofilemap_test(unittest.TestCase):
         """test_plotmasked_invalid: unsupported plotmasked value (causes error)"""
         # invalid plotmasked value
         plotmasked = 'shadow'
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(Exception) as cm:
             res = self.run_task(plotmasked=plotmasked)
 
     def test_numpanel_5x5(self):

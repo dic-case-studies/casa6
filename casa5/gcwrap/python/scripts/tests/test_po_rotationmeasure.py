@@ -105,7 +105,7 @@ class po_rotationmeasure_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         myrm = "rm1.im"
-        self.assertTrue(rmfit(imagename=outfile, rm=myrm))
+        rmfit(imagename=outfile, rm=myrm)
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got1 = myia.statistics(list=True, verbose=True)['sumsq']
@@ -123,7 +123,7 @@ class po_rotationmeasure_test(unittest.TestCase):
         myia.done()
         images = ["xx.im", "yy.im"]
         myrm = "rm2.im"
-        self.assertTrue(rmfit(imagename=images, rm=myrm))
+        rmfit(imagename=images, rm=myrm)
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got2 = myia.statistics(list=True, verbose=True)['sumsq']

@@ -32,7 +32,6 @@ if is_CASA6:
     _ms = ms( )
     _tb = table( )
 
-    # enhanced later using ctsys.resolve
     datapath = ctsys.resolve('unittest/importfitsidi/')
 else:
     from __main__ import default

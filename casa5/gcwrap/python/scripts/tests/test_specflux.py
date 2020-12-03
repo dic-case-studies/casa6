@@ -95,59 +95,60 @@ class specflux_test(unittest.TestCase):
         pass
     
     def tearDown(self):
-        pass
+        for i in range(1, 11):
+            f = 'log' + str(i)
+            if os.path.exists(f):
+                os.remove(f)
     
     def test_default(self):
         """Test default settings"""
         logfile = "log1"
-        self.assertTrue(specflux(im1, logfile=logfile))
+        specflux(im1, logfile=logfile)
         self._compare(logfile)
         logfile = "log2"
-        self.assertTrue(specflux(im2, logfile=logfile))
+        specflux(im2, logfile=logfile)
         self._compare(logfile)
         
     def test_box_chans(self):
         """test setting box and channel range"""
         logfile = "log3"
-        self.assertTrue(specflux(im1, box="4,4,15,15", chans="5~20", logfile=logfile))
+        specflux(im1, box="4,4,15,15", chans="5~20", logfile=logfile)
         self._compare(logfile)
         logfile = "log4"
-        self.assertTrue(specflux(im2, box="10,10,19,19", chans="30~35", logfile=logfile))
+        specflux(im2, box="10,10,19,19", chans="30~35", logfile=logfile)
         self._compare(logfile)
         
     def test_box_chans_mask(self):
         """test setting box and chans with a mask"""
         logfile = "log5"
-        self.assertTrue(
-            specflux(
-                im1, box="4,4,15,15", chans="5~20",
-                mask="'" + im1 + "'" + ">0", logfile=logfile
-            )
+        specflux(
+            im1, box="4,4,15,15", chans="5~20",
+            mask="'" + im1 + "'" + ">0", logfile=logfile
         )
         self._compare(logfile)
         logfile = "log6"
-        self.assertTrue(
-            specflux(im2, box="10,10,19,19", chans="30~35",
-            mask="'" + im2 + "'" + "<0", logfile=logfile)
+        specflux(
+            im2, box="10,10,19,19", chans="30~35",
+            mask="'" + im2 + "'" + "<0", logfile=logfile
         )
         self._compare(logfile)
         
     def test_unit(self):
         """test setting spectral unit"""
         logfile = "log7"
-        self.assertTrue(specflux(im1, unit="GHz", logfile=logfile))
+        specflux(im1, unit="GHz", logfile=logfile)
         self._compare(logfile)
         logfile = "log8"
-        self.assertTrue(specflux(im2, unit="kHz", logfile=logfile))
+        specflux(im2, unit="kHz", logfile=logfile)
         self._compare(logfile)
         
     def test_beam(self):
         """test setting beam info"""
         logfile = "log9"
-        self.assertTrue(specflux(im1, major="8arcmin", minor="6arcmin", logfile=logfile))
+        specflux(im1, major="8arcmin", minor="6arcmin", logfile=logfile)
         self._compare(logfile)
         logfile = "log10"
-        self.assertTrue(specflux(im2, major="8arcmin", minor="6arcmin", logfile=logfile))
+        specflux(im2, major="8arcmin", minor="6arcmin", logfile=logfile)
         # brightness unit is K, so setting beam should have no effect
         self._compare(logfile, "log2")
         
