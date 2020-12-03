@@ -56,6 +56,7 @@
 
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
+#include <synthesis/TransformMachines/Utils.h>
 #include <coordinates/Coordinates/TabularCoordinate.h>
 
 #ifdef _OPENMP
@@ -1333,6 +1334,15 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
+      string normMethod = getenv("ASP_NORM");
+      if (normMethod == "norm1")
+	{
+	  cerr<<"Norm method is : "<<normMethod << endl;
+	}
+      else
+	{
+	  cerr<<"Norm method is : "<<normMethod << endl;
+	}
       /*if (scale > 0)
       {
 	      float normalization;
