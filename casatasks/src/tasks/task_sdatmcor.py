@@ -489,8 +489,8 @@ def _check_unit_and_form_to_str(data, base_unit):
 # (action) Returns an input argument values or default value.
 #  - if 'arg_value' is available, this function returns 'atm_parm_variable',
 #    with being converted to int/quantity(float).
-#  - otherwise, def_para is directly returned to as a default parameter.
-#  - _convert_to_list() only checks 'in_arg' is available or not. 
+#  - otherwise, 'def_para' is directly returned as a default parameter.
+#  - _convert_to_list() only checks that 'in_arg' is available or not.
 
 def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
     if (arg_value != ''):
