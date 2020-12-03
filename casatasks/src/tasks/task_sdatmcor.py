@@ -603,8 +603,7 @@ def get_default_altitude(msname, antid):
     """
     with open_table(os.path.join(msname, 'ANTENNA')) as tb:
         # obtain the antenna Position (Earth Center) specified by antid
-        pos = tb.getcell('POSITION', antid)
-        X, Y, Z = (float(i) for i in pos)
+        X, Y, Z = (float(i) for i in tb.getcell('POSITION', antid))
 
         #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
         #
