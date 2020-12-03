@@ -2149,7 +2149,7 @@ ia.close()             # close to unlock disk image
             <value type="string">1pix</value>
         </param>
         <param type="string" name="interp">
-            <description>Interpolation algorithm to use. One of "nearest", "linear", "cubic", or "lanczos". Minimum match supported.</description>
+            <description>Interpolation algorithm to use. One of "nearest", "linear", or "cubic". Minimum match supported.</description>
             <value>cubic</value>
         </param>
         <param type="string" name="stattype">
@@ -3406,7 +3406,7 @@ of the final image and will calculate the parameters of the Gaussian to use
 in the convolution so that this target resolution is achieved.
 
 Masked pixels will be assigned the value 0.0 before convolution.
-The output mask is the combination (logical OR) of the default input
+The output mask is the intersection (logical AND) of the default input
 \pixelmask\ (if any) and the OTF mask.  Any other input \pixelmasks\
 will not be copied.  The function
 <link anchor="images:image.maskhandler.function">maskhandler</link>

@@ -37,6 +37,7 @@
 #include <coordinates/Coordinates/SpectralCoordinate.h>
 #include <coordinates/Coordinates/StokesCoordinate.h>
 #include <coordinates/Coordinates/Projection.h>
+#include <casacore/lattices/Lattices/LatticeLocker.h>
 #include <ms/MeasurementSets/MSColumns.h>
 #include <casa/BasicSL/Constants.h>
 #include <synthesis/TransformMachines2/FTMachine.h>
@@ -322,11 +323,17 @@ using namespace casa::vi;
       // get the first position of moving source
       if(fixMovingSource_p){
 	//cerr << "obsinfo time " << coords.obsInfo().obsDate() << "    epoch used in frame " <<  MEpoch((mFrame_p.epoch())) << endl;
+        ///Darn vb.time()(0) may not be the earliest time due to sort issues...
+        //so lets try to use the same
+        ///time as SynthesisIUtilMethods::buildCoordinateSystemCore is using
+        mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
+        Double firstTime=romscol_p->time()(0);
         //First convert to HA-DEC or AZEL for parallax correction
         MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
         MDirection tmphadec;
 	if (upcase(movingDir_p.getRefString()).contains("APP")) {
-	  tmphadec = MDirection::Convert((vbutil_p->getEphemDir(vb, phaseCenterTime_p)), outref1)();
+          //cerr << "phaseCenterTime_p " << phaseCenterTime_p << endl;
+	  tmphadec = MDirection::Convert((vbutil_p->getEphemDir(vb, phaseCenterTime_p > 0.0 ? phaseCenterTime_p : firstTime)), outref1)();
 	  MeasComet mcomet(Path((romscol_p->field()).ephemPath(vb.fieldId()(0))).absoluteName());
 	  if (mFrame_p.comet())
 	    mFrame_p.resetComet(mcomet);
@@ -344,6 +351,17 @@ using namespace casa::vi;
 	}
         MDirection::Ref outref(directionCoord.directionType(), mFrame_p);
         firstMovingDir_p=MDirection::Convert(tmphadec, outref)();
+        ////////////////////
+        /*ostringstream ss;
+        Unit epochUnit=(romscol_p->time()).keywordSet().asArrayString("QuantumUnits")(IPosition(1,0));
+        MEpoch(Quantity(vb.time()(0), epochUnit), (romscol_p->timeMeas())(0).getRef()).print(ss);
+        cerr << std::setprecision(15) << "First time " << ss.str() << "field id " << vb.fieldId()(0) << endl;
+        ss.clear();
+        firstMovingDir_p.print(ss);
+        cerr << "firstdir " << ss.str() << "   " << firstMovingDir_p.toString() << endl;
+        */
+        //////////////
+        
 	if(spectralCoord_p.frequencySystem(False)==MFrequency::REST){
 	  ///We want the data frequency to be shifted to the SOURCE frame
 	  ///which is labelled REST as we have never defined the SOURCE frame didn't we
@@ -944,7 +962,7 @@ using namespace casa::vi;
     
 	
 	  
-      if((imageFreq_p.nelements()==1) || (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)||  (vb.nChannels()==1)){
+      if((imageFreq_p.nelements()==1) || (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)||  (vb.nChannels()==1) ){
         Cube<Bool> modflagCube;
         setSpectralFlag(vb,modflagCube);
 	
@@ -1020,7 +1038,7 @@ using namespace casa::vi;
 	
     if((imageFreq_p.nelements()==1) || 
        (vb.nChannels()==1) || 
-       (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour)){
+       (freqInterpMethod_p== InterpolateArray1D<Double, Complex>::nearestNeighbour) ){
         origdata->reference(data);
         return false;
       }
@@ -1042,6 +1060,7 @@ using namespace casa::vi;
 			Double newIncr= (imageFreq_p[1]-imageFreq_p[0])/std::floor(width);
 			Double newStart=imageFreq_p[0]-(imageFreq_p[1]-imageFreq_p[0])/2.0+newIncr/2.0;
 			Cube<Complex> newflipgrid(flipgrid.shape()[0], flipgrid.shape()[1], newNchan);
+                        
 			for (Int k=0; k < newNchan; ++k){
 				newImFreq[k]=newStart+k*newIncr;
 				Int oldchan=k/Int(std::floor(width));
@@ -1059,6 +1078,16 @@ using namespace casa::vi;
       Cube<Complex> flipdata((origdata->shape())(0),(origdata->shape())(2),
   			   (origdata->shape())(1)) ;
       flipdata.set(Complex(0.0));
+
+      ///TESTOO  
+      //Cube<Bool> inflag(flipgrid.shape());
+      //inflag.set(False);
+      //Cube<Bool> outflag(flipdata.shape());
+      //InterpolateArray1D<Double,Complex>::
+      //  interpolate(flipdata,outflag,visFreq,newImFreq,flipgrid,inflag,freqInterpMethod_p, False, True);
+
+      //cerr << "OUTFLAG " << anyEQ(True, outflag) << " chanmap " << chanMap << endl;
+      /////End TESTOO
       InterpolateArray1D<Double,Complex>::
         interpolate(flipdata,visFreq, newImFreq, flipgrid,freqInterpMethod_p);
       
@@ -1066,6 +1095,7 @@ using namespace casa::vi;
       
       Cube<Bool>  copyOfFlag;
       //Vector<Int> mychanmap=multiChanMap_p[vb.spectralWindows()[0]];
+      matchChannel(vb);
       copyOfFlag.assign(vb.flagCube());
       for (uInt k=0; k< chanMap.nelements(); ++ k)
 	if(chanMap(k) == -1)
@@ -1434,6 +1464,8 @@ using namespace casa::vi;
     //
     outRecord.define("name", this->name());
     if(withImage){
+      if(image==nullptr)
+        throw(AipsError("Programmer error: saving to record without proper initialization"));
       CoordinateSystem cs=image->coordinates();
       DirectionCoordinate dircoord=cs.directionCoordinate(cs.findCoordinate(Coordinate::DIRECTION));
       dircoord.setReferenceValue(mImage_p.getAngle().getValue());
@@ -1913,8 +1945,18 @@ using namespace casa::vi;
       c=0.0;
       Vector<Double> f(1);
       Int nFound=0;
-
-
+      
+      Double minFreq;
+      Double maxFreq;
+      spectralCoord_p.toWorld(minFreq, Double(0));
+      spectralCoord_p.toWorld(maxFreq, Double(nchan));
+      if(maxFreq < minFreq){
+        f(0)=minFreq;
+        minFreq=maxFreq;
+        maxFreq=f(0);      
+      }
+        
+      
       //cout.precision(10);
       for (Int chan=0;chan<nvischan;chan++) {
         f(0)=lsrFreq[chan];
@@ -1943,11 +1985,13 @@ using namespace casa::vi;
 	  if(nvischan > 1){
 	    Double fwidth=lsrFreq[1]-lsrFreq[0];
 	    Double limit=0;
-	    Double where=c(0)*fabs(spectralCoord_p.increment()(0));
+	    //Double where=c(0)*fabs(spectralCoord_p.increment()(0));
 	    if( freqInterpMethod_p==InterpolateArray1D<Double,Complex>::linear)
 	      limit=2;
 	    else if( freqInterpMethod_p==InterpolateArray1D<Double,Complex>::cubic ||  freqInterpMethod_p==InterpolateArray1D<Double,Complex>::spline)
 	      limit=4;
+            //cerr<< "where " << where << " pixel " << pixel << " fwidth " << fwidth << endl;
+            /*
 	    if(((pixel<0) && (where >= (0-limit*fabs(fwidth)))) )
 	      chanMap(chan)=-2;
 	    if((pixel>=nchan) ) {
@@ -1957,6 +2001,14 @@ using namespace casa::vi;
 	      if( ( (fwidth >0) &&where < (fend+limit*fwidth))  || ( (fwidth <0) &&where > (fend+limit*fwidth)) )
 		chanMap(chan)=-2;
 	    }
+            */
+            
+            if((f(0) <  (maxFreq + limit*fabs(fwidth))) && (f(0) >(maxFreq-0.5*fabs(fwidth)))){
+              chanMap(chan)=-2;
+            }
+            if((f(0) < minFreq+0.5*fabs(fwidth)) &&  (f(0) > (minFreq-limit*fabs(fwidth)))){
+              chanMap(chan)=-2;
+            }
 	  }
 
 
@@ -2233,7 +2285,7 @@ using namespace casa::vi;
 
   Matrix<Double> FTMachine::negateUV(const vi::VisBuffer2& vb){
     Matrix<Double> uvw(vb.uvw().shape());
-    for (Int i=0;i< vb.nRows() ; ++i) {
+    for (rownr_t i=0;i< vb.nRows() ; ++i) {
       for (Int idim=0;idim<2; ++idim) uvw(idim,i)=-vb.uvw()(idim, i);
       uvw(2,i)=vb.uvw()(2,i);
     }
@@ -2428,10 +2480,11 @@ using namespace casa::vi;
     AlwaysAssert(imstore->getNTaylorTerms(false)==1, AipsError);
 
     Matrix<Float> tempWts;
-
+    
     if(!(imstore->forwardGrid()).get())
       throw(AipsError("FTMAchine::InitializeToVisNew error imagestore has no valid grid initialized"));
     // Convert from Stokes planes to Correlation planes
+    LatticeLocker lock1 (*(imstore->model()), FileLocker::Read);
     stokesToCorrelation(*(imstore->model()), *(imstore->forwardGrid()));
 
     if(vb.polarizationFrame()==MSIter::Linear) {
@@ -2494,15 +2547,26 @@ using namespace casa::vi;
     // Straightforward case. No extra primary beams. No image mosaic
     if(sj_p.nelements() == 0 ) 
       {
-	correlationToStokes( getImage(sumWeights, false) , ( dopsf ? *(imstore->psf()) : *(imstore->residual()) ), dopsf);
-	
-	if( useWeightImage() && dopsf ) { 
-	  getWeightImage( *(imstore->weight())  , sumWeights); 
+        // cerr << "TYPEID " << typeid( *(imstore->psf())).name() << "     " << typeid(typeid( *(imstore->psf())).name()).name() << endl;
+        shared_ptr<ImageInterface<Float> > theim=dopsf ? imstore->psf() : imstore->residual();
+        //static_cast<decltype(imstore->residual())>(theim)->lock();
+        { LatticeLocker lock1 (*theim, FileLocker::Write);
+          correlationToStokes( getImage(sumWeights, false) , *theim, dopsf);
+        }
+	theim->unlock();
+        
+	if( (useWeightImage() && dopsf) || isSD() ) {
+          
+          LatticeLocker lock1 (*(imstore->weight()), FileLocker::Write);
+	  getWeightImage( *(imstore->weight())  , sumWeights);
+          imstore->weight()->unlock();
+
 	  // Fill weight image only once, during PSF generation. Remember.... it is normalized only once
 	  // during PSF generation.
 	}
 	
 	// Take sumWeights from corrToStokes here....
+        LatticeLocker lock1 (*(imstore->sumwt()), FileLocker::Write);
 	Matrix<Float> sumWeightStokes( (imstore->sumwt())->shape()[2], (imstore->sumwt())->shape()[3]   );
 	StokesImageUtil::ToStokesSumWt( sumWeightStokes, sumWeights );
 
@@ -2510,6 +2574,7 @@ using namespace casa::vi;
 		      ((imstore->sumwt())->shape()[3] == sumWeightStokes.shape()[1] ) , AipsError );
 
 	(imstore->sumwt())->put( sumWeightStokes.reform((imstore->sumwt())->shape()) );
+        imstore->sumwt()->unlock();
 	
       }
     //------------------------------------------------------------------------------------

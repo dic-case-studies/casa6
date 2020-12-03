@@ -32,9 +32,9 @@
 #include <QDebug>
 #include <QtCore/qmath.h>
 #include <casaqt/QwtConfig.h>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_marker.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_symbol.h>
 
 using namespace casacore;
 namespace casa {

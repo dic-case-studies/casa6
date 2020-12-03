@@ -51,8 +51,8 @@ bool atcafiller::fill()
     return itsATCAFiller->fill();
 }
 
-bool atcafiller::select(int firstScan, int lastScan, 
-       const std::vector<int>& spw, 
+bool atcafiller::select(long firstScan, long lastScan, 
+       const std::vector<long>& spw, 
 		   const Quantity& lowFreq, const Quantity& highFreq,
 		   const std::vector<std::string>& fieldList,float edge)
 {

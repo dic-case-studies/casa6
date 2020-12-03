@@ -180,7 +180,7 @@ protected:
 
     T &accessUnmapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
-    	return parentCube_p->at(i1,i2,i3);
+    	return (*parentCube_p)(i1,i2,i3);
     }
 
     T &accessMapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
@@ -188,46 +188,46 @@ protected:
     	casacore::uInt i1_index = polarizations_p->at(i1);
     	casacore::uInt i2_index = channels_p->at(i2);
     	casacore::uInt i3_index = rows_p->at(i3);
-    	return parentCube_p->at(i1_index,i2_index,i3_index);
+    	return (*parentCube_p)(i1_index,i2_index,i3_index);
     }
 
     T &accessIndex1Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i1_index = polarizations_p->at(i1);
-    	return parentCube_p->at(i1_index,i2,i3);
+    	return (*parentCube_p)(i1_index,i2,i3);
     }
 
     T &accessIndex2Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i2_index = channels_p->at(i2);
-    	return parentCube_p->at(i1,i2_index,i3);
+    	return (*parentCube_p)(i1,i2_index,i3);
     }
 
     T &accessIndex3Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i3_index = rows_p->at(i3);
-    	return parentCube_p->at(i1,i2,i3_index);
+    	return (*parentCube_p)(i1,i2,i3_index);
     }
 
     T &accessIndex12Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i1_index = polarizations_p->at(i1);
     	casacore::uInt i2_index = channels_p->at(i2);
-    	return parentCube_p->at(i1_index,i2_index,i3);
+    	return (*parentCube_p)(i1_index,i2_index,i3);
     }
 
     T &accessIndex13Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i1_index = polarizations_p->at(i1);
     	casacore::uInt i3_index = rows_p->at(i3);
-    	return parentCube_p->at(i1_index,i2,i3_index);
+    	return (*parentCube_p)(i1_index,i2,i3_index);
     }
 
     T &accessIndex23Mapped(casacore::uInt i1, casacore::uInt i2, casacore::uInt i3)
     {
     	casacore::uInt i2_index = channels_p->at(i2);
     	casacore::uInt i3_index = rows_p->at(i3);
-    	return parentCube_p->at(i1,i2_index,i3_index);
+    	return (*parentCube_p)(i1,i2_index,i3_index);
     }
 
 private:
@@ -913,8 +913,15 @@ public:
 	casacore::uInt64 chunkCounts_p;
 	casacore::uInt64 progressCounts_p;
 	casacore::uInt64 msCounts_p;
-	casacore::uShort summaryThreshold_p;
 	bool printChunkSummary_p;
+
+	// control report/logging frequency for the per-agent partial (ongoing) summaries
+	casacore::uInt summaryThreshold_p;
+	const casacore::uInt summaryThresholdInc_p = 10;
+	// control report/logging frequency for the per-chunk progress report lines
+	casacore::uInt chunkLineThreshold_p;
+	const casacore::uInt chunkLineThresholdInc_p = 10;
+
 	casacore::uShort tableTye_p;
 	casacore::Bool loadProcessorTable_p;
 

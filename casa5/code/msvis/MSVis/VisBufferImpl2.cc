@@ -540,86 +540,6 @@ VisBufferImpl2::copyRow (Int sourceRow, Int destinationRow)
 }
 
 void
-VisBufferImpl2::deleteRows (const Vector<Int> & rowsToDelete)
-{
-
-    // Deletes the specified rows.  This involves copying the undeleted
-    // rows down to fill in the holes left by the deletions.  The current
-    // approach preserves the order of the undeleted rows; however, this
-    // causes all rows after the first deletion to be copied.  If preserving
-    // the order is not important then any deletion could be filled by copying
-    // a row from the end of the VB into the holes.  For the moment the simpler
-    // approach is implemented.
-
-    if (rowsToDelete.empty()){
-        return;
-    }
-
-    Int deleteIndex = 0;
-    Int rowToDelete = rowsToDelete (0);
-    Int destinationRow = 0;
-
-    for (Int sourceRow = 0; sourceRow < nRows(); sourceRow ++){
-
-        if (sourceRow == rowToDelete){
-
-            // This row is being deleted so don't copy it down.
-            // Advance the deletion index and get the next row
-            // to be deleted.
-
-            deleteIndex ++;
-
-            if (deleteIndex < (int) rowsToDelete.nelements()){
-
-                Int oldRowToDelete = rowToDelete;
-
-                rowToDelete = rowsToDelete (deleteIndex);
-
-                Assert (oldRowToDelete < rowToDelete);
-                UnusedVariable (oldRowToDelete);
-            }
-        }
-        else if (destinationRow != sourceRow){
-
-            // Copy this row down to the next empty row.  Advance
-            // the destination row.
-
-            copyRow (sourceRow, destinationRow);
-
-            destinationRow ++;
-        }
-        else{
-            destinationRow ++;
-        }
-    }
-
-    Int newNRows = nRows() - rowsToDelete.nelements();
-
-    setShape (nCorrelations (), nChannels (), newNRows, false);
-
-    resizeRows (newNRows);
-}
-
-void
-VisBufferImpl2::resizeRows (Int newNRows)
-{
-
-    // Resize each member of the cache to use the new number of rows.
-    // The resizing will preserve the unaffected data values.
-
-    for (CacheRegistry::iterator i = cache_p->registry_p.begin();
-         i != cache_p->registry_p.end();
-         i++){
-
-        if (! (* i)->isPresent()){
-            continue;
-        }
-
-        (* i)->resizeRows (newNRows);
-    }
-}
-
-void
 VisBufferImpl2::dirtyComponentsAdd (const VisBufferComponents2 & additionalDirtyComponents)
 {
     // Loop through all of the cached VB components and mark them dirty if
@@ -933,7 +853,7 @@ VisBufferImpl2::normalize()
 
     // Normalize each row.
 
-    for (Int row = 0; row < nRows (); row++) {
+    for (rownr_t row = 0; row < nRows (); row++) {
 
         if (rowFlagged (row)){
 
@@ -974,7 +894,7 @@ VisBufferImpl2::phaseCenterShift(const Vector<Double>& phase)
 
 	Complex cph;
 	Double ph, udx;
-	for (Int row_idx = 0; row_idx < nRows(); ++row_idx)
+	for (rownr_t row_idx = 0; row_idx < nRows(); ++row_idx)
 	{
 		udx = phase(row_idx) * -2.0 * C::pi / C::c; // in radian/Hz
 
@@ -1109,7 +1029,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
       Cube<Float> wtsp(nCorrelations(),nChannels(),nRows(),0.0);
       const Cube <Float> & sigmaSpec = this->sigmaSpectrum ();
 
-      for (Int irow=0;irow<nRows();++irow) {
+      for (rownr_t irow=0;irow<nRows();++irow) {
 	for (Int ichan=0;ichan<nChannels();++ichan) {
 	  for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	    const Float &s=sigmaSpec(icorr,ichan,irow);
@@ -1126,7 +1046,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
       Cube<Float> wtsp(nCorrelations(),nChannels(),nRows(),0.0);
       const Matrix <Float> & sigma = this->sigma ();
 
-      for (Int irow=0;irow<nRows();++irow) {
+      for (rownr_t irow=0;irow<nRows();++irow) {
 	for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	  const Float &s=sigma(icorr,irow);
 	  wtsp(Slice(icorr,1,1),Slice(),Slice(irow,1,1)) =
@@ -1142,7 +1062,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
     Matrix<Float> wtm(nCorrelations(),nRows(),0.0);
     const Matrix <Float> & sigma = this->sigma ();
     
-    for (Int irow=0;irow<nRows();++irow) {
+    for (rownr_t irow=0;irow<nRows();++irow) {
       for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	const Float &s=sigma(icorr,irow);
 	wtm(icorr,irow) = (s>0.0 ? 1.0f/square(s) : 0.0);
@@ -1199,7 +1119,7 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
                                       Bool isNewFieldId,
                                       Bool isNewSpectralWindow,
                                       const Subchunk & subchunk,
-                                      Int nRows,
+                                      rownr_t nRows,
                                       Int nChannels,
                                       Int nCorrelations,
                                       const Vector<Int> & correlations,
@@ -1234,7 +1154,7 @@ VisBufferImpl2::setRekeyable (Bool isRekeyable)
 }
 
 void
-VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, Int nRows,
+VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, rownr_t nRows,
                           Bool clearTheCache)
 {
     ThrowIf (hasShape() && ! isRekeyable(),
@@ -1758,7 +1678,7 @@ VisBufferImpl2::nCorrelations () const
     return cache_p->nCorrelations_p.get();
 }
 
-Int
+rownr_t
 VisBufferImpl2::nRows () const
 {
     return cache_p->nRows_p.get ();
@@ -1806,7 +1726,7 @@ VisBufferImpl2::setProcessorId (const Vector<Int> & value)
     cache_p->processorId_p.set (value);
 }
 
-const Vector<uInt> &
+const Vector<rownr_t> &
 VisBufferImpl2::rowIds () const
 {
     return cache_p->rowIds_p.get ();
@@ -2617,7 +2537,7 @@ VisBufferImpl2::fillProcessorId (Vector<Int>& value) const
 }
 
 void
-VisBufferImpl2::fillRowIds (Vector<uInt>& value) const
+VisBufferImpl2::fillRowIds (Vector<rownr_t>& value) const
 {
   CheckVisIter ();
 
@@ -2768,7 +2688,7 @@ VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
 
         // jagonzal (TODO): Review this filling code (it should be row/channel/correlation)
         //                  Or even better direct array assignment
-        for (Int row = 0; row < nRows(); row ++){
+        for (rownr_t row = 0; row < nRows(); row ++){
 
             for (Int correlation = 0; correlation < nCorrelations (); correlation ++){
 
@@ -2796,9 +2716,9 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
     }
     else{
 
-        int nRows = this->nRows();
-        int nCorrelations = this->nCorrelations ();
-        int nChannels = this->nChannels();
+        auto nRows = this->nRows();
+        auto nCorrelations = this->nCorrelations ();
+        auto nChannels = this->nChannels();
 
         // Sigma spectrum doesn't exist so create on using the sigma column.
 
@@ -2812,7 +2732,7 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
         // jagonzal (TODO): Review this filling code (it should be row/channel/correlation)
         //                  Or even better direct array assignment
 
-        for (Int row = 0; row < nRows; row ++){
+        for (rownr_t row = 0; row < nRows; row ++){
 
             for (Int correlation = 0; correlation < nCorrelations; correlation ++){
 

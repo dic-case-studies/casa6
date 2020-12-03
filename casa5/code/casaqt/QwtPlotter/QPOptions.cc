@@ -29,6 +29,7 @@
 #include <casaqt/QwtPlotter/QPOptions.h>
 
 #include <QPainter>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -447,7 +448,7 @@ QwtLinearColorMap* QPOptions::standardRasterMap() {
     return colorMap;
 }
 
-QwtLinearColorMap* QPOptions::rasterMap(const vector<double>& vals) {
+QwtLinearColorMap* QPOptions::rasterMap(const std::vector<double>& vals) {
     QwtLinearColorMap* colorMap = new QwtLinearColorMap(QColor("#000000"), QColor("#FFFFFF"));
     
     unsigned int white = 0xFFFFFF;

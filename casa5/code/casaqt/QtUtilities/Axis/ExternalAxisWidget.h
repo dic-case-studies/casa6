@@ -28,7 +28,7 @@
 #include <casaqt/QwtPlotter/QPOptions.h>
 #include <casa/BasicSL/String.h>
 #include <QWidget>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 
 namespace casa {

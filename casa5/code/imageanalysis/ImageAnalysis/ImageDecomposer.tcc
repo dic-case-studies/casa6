@@ -29,7 +29,7 @@
 
 #include <casa/Arrays/Slicer.h>
 #include <casa/Arrays/Cube.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <lattices/Lattices/TiledShape.h>
 #include <scimath/Fitting/FitGaussian.h>
 #include <coordinates/Coordinates/CoordinateSystem.h>

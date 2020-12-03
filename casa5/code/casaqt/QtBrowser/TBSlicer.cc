@@ -36,7 +36,7 @@ namespace casa {
 
 // Constructors/Destructors //
 
-TBSlicer::TBSlicer(vector<int> d): QWidget(), spinners(), values(),
+TBSlicer::TBSlicer(std::vector<int> d): QWidget(), spinners(), values(),
                                           oldR(-1), oldC(-1){
     setupUi(this);
     hboxLayout->removeWidget(spinBox);
@@ -76,7 +76,7 @@ TBSlicer::~TBSlicer() { }
 
 void TBSlicer::emitSliceChanged() {
     if(shouldEmit && oldR >= 0 && oldC >= 0) {
-        vector<int> v(values);
+        std::vector<int> v(values);
 
         v[oldR] = TBConstants::SLICER_ROW_AXIS;
         v[oldC] = TBConstants::SLICER_COL_AXIS;

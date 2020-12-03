@@ -26,8 +26,8 @@
 #define CANVASHOLDER_QO_H
 
 #include <QWidget>
-#include <qwt_legend.h>
-#include <display/QtPlotter/CanvasHolder.ui.h>
+#include <qwt/qwt_legend.h>
+#include <ui/ui_CanvasHolder.h>
 #include <display/QtPlotter/QtCanvas.qo.h>
 
 namespace casa {

@@ -64,7 +64,7 @@ public:
    				    casacore::Bool /*allowShapeChange*/ = false,
                     casacore::Bool /*fetchIfNeeded*/ = true) {}
 
-    virtual void setShape (casacore::Int /*nCorrelations*/, casacore::Int /*nChannels*/, casacore::Int /*nRows*/, casacore::Bool) {}
+    virtual void setShape (casacore::Int /*nCorrelations*/, casacore::Int /*nChannels*/, casacore::rownr_t /*nRows*/, casacore::Bool) {}
     virtual const vi::VisibilityIterator2 * getVi () const {return NULL;}
 
     virtual casacore::Bool isAttached () const {return true;}
@@ -187,13 +187,13 @@ public:
 	virtual casacore::Int nAntennas () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nChannels () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int nCorrelations () const {static casacore::Int dummy; return dummy;}
-	virtual casacore::Int nRows () const {static casacore::Int dummy; return dummy;}
+	virtual casacore::rownr_t nRows () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Float parang0(casacore::Double /*time*/) const {static casacore::Float dummy; return dummy;}
 	virtual casacore::Vector<casacore::Float> & parang(casacore::Double /*time*/) const {static casacore::Vector<casacore::Float> dummy; return dummy;}
 	virtual const casacore::MDirection& phaseCenter () const {static casacore::MDirection dummy; return dummy;}
 	virtual casacore::Int polarizationFrame () const {static casacore::Int dummy; return dummy;}
 	virtual casacore::Int polarizationId () const {static casacore::Int dummy; return dummy;}
-	virtual const casacore::Vector<casacore::uInt> & rowIds () const {static casacore::Vector<casacore::uInt> dummy; return dummy;}
+	virtual const casacore::Vector<casacore::rownr_t> & rowIds () const {static casacore::Vector<casacore::rownr_t> dummy; return dummy;}
 	virtual casacore::Int spectralWindow () const {static casacore::Int dummy; return dummy;}
 	virtual const casacore::Vector<casacore::Int> & spectralWindows () const {static casacore::Vector<casacore::Int> dummy; return dummy;}
         virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & /*spectralWindows*/) {}
@@ -222,7 +222,7 @@ protected:
     virtual void configureNewSubchunk (casacore::Int /*msId*/, const casacore::String & /*msName*/, casacore::Bool /*isNewMs*/,
                                        casacore::Bool /*isNewArrayId*/, casacore::Bool /*isNewFieldId*/,
                                        casacore::Bool /*isNewSpectralWindow*/, const vi::Subchunk & /*subchunk*/,
-                                       casacore::Int /*nRows*/, casacore::Int /*nChannels*/, casacore::Int /*nCorrelations*/,
+                                       casacore::rownr_t /*nRows*/, casacore::Int /*nChannels*/, casacore::Int /*nCorrelations*/,
                                        const casacore::Vector<casacore::Int> & /*correlations*/,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> &,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> &,
@@ -361,7 +361,7 @@ public:
 	const casacore::Vector<casacore::Int>& getChannelNumbers(casacore::Int rowInBuffer) const {return ctCache_p->getChannelNumbers(rowInBuffer);}
 	casacore::Vector<casacore::Int> getChannelNumbersSelected (casacore::Int /* outputChannelIndex */) const { throw casacore::AipsError ("Not Implemented");}
 	const casacore::Vector<casacore::Double>& getFrequencies(casacore::Int rowInBuffer,casacore::Int /*frame*/ = vi::VisBuffer2::FrameNotSpecified) const {return ctCache_p->getFrequencies(rowInBuffer);}
-	casacore::Int nRows() const {return ctCache_p->nRows();}
+	casacore::rownr_t nRows() const {return ctCache_p->nRows();}
 	casacore::Int nChannels() const {return ctCache_p->nChannels();}
 	casacore::Int nCorrelations() const {return ctCache_p->nCorrelations();}
 	const casacore::Vector<casacore::Int> &  spectralWindows () const {

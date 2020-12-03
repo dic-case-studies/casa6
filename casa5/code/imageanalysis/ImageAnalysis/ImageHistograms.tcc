@@ -31,7 +31,7 @@
 #include <images/Images/ImageInterface.h>
 #include <images/Images/ImageUtilities.h>
 #include <lattices/LatticeMath/LatticeHistograms.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Logging/LogIO.h>
 #include <casa/BasicSL/String.h>
 

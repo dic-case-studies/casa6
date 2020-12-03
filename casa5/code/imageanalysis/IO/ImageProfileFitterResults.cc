@@ -442,7 +442,7 @@ void ImageProfileFitterResults::_setResults() {
     Array<Bool> validArr(fitterShape, False);
     IPosition wcShape(1, (Int)NAXISTYPES);
     wcShape.append(fitterShape);
-    _worldCoords = Array<String>(wcShape, "");
+    _worldCoords = Array<String>(wcShape, String(""));
     Array<Int> niterArr(fitterShape, -1);
     // pfcArrays. Zeroth structure (zeroth vector) index corresponds to
     // solution type (amp, center, etc). First structure (first vector)
@@ -472,7 +472,7 @@ void ImageProfileFitterResults::_setResults() {
     }
     IPosition typeShape(1, nComps);
     typeShape.prepend(fitterShape);
-    Array<String> typeArr(typeShape, "UNDEF");
+    Array<String> typeArr(typeShape, String("UNDEF"));
     Array<Int> nCompArr(fitterShape, -1);
     Bool returnDirection = _setAxisTypes();
     Array<String> directionInfo(fitterShape);

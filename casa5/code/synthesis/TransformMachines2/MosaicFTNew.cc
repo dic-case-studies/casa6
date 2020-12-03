@@ -124,6 +124,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
     else {
       logIO() << LogIO::WARN << "No useful data in MosaicFTNew: weights all zero"
 	      << LogIO::POST;
+      image->set(0.0);
     }
   }
   else {
@@ -208,6 +209,7 @@ ImageInterface<Complex>& MosaicFTNew::getImage(Matrix<Float>& weights,
 
     //if(!isTiled) 
     {
+      LatticeLocker lock1 (*(image), FileLocker::Write);
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2,
 		    (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
@@ -235,10 +237,16 @@ void MosaicFTNew::getWeightImage(ImageInterface<Float>& weightImage,
   
   weights.resize(sumWeight.shape());
   convertArray(weights,sumWeight);
-
-  Float inx = skyCoverage_p->shape()(0);
-  Float iny = skyCoverage_p->shape()(1);
-
+  Record rec=skyCoverage_p->miscInfo();
+  Float inx=1;
+  Float iny=1;
+  Bool isscaled=rec.isDefined("isscaled") && rec.asBool("isscaled");
+  //cerr << "isscaled " << isscaled << " max " << max(skyCoverage_p->get()) << endl;
+  if( !isscaled){
+    inx = skyCoverage_p->shape()(0);
+    iny = skyCoverage_p->shape()(1);
+  }
+  //cerr << "inx, iny " << inx << "   " << iny << endl;
   weightImage.copyData( (LatticeExpr<Float>) ( (*skyCoverage_p)*inx*iny ) );
  
    skyCoverage_p->tempClose();

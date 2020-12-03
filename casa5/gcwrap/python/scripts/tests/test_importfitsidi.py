@@ -32,8 +32,7 @@ if is_CASA6:
     _ms = ms( )
     _tb = table( )
 
-    # enhanced later using ctsys.resolve
-    datapath = 'regression/fitsidi_import/input'
+    datapath = ctsys.resolve('regression/fitsidi_import/input/')
 else:
     from __main__ import default
     from tasks import *

@@ -48,8 +48,18 @@ public:
 
   SynthesisImagerVi2();
   virtual ~SynthesisImagerVi2();
+  using SynthesisImager::selectData;
   virtual casacore::Bool selectData(const SynthesisParamsSelect& selpars);
   virtual casacore::Bool defineImage(SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
+  virtual casacore::Vector<SynthesisParamsSelect> tuneSelectData();
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, const casacore::String& ftmachine);
+  //Define image via a predefined SIImageStore object and ftmachines
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
+                                     const casacore::Record& ftmachine, const casacore::Record& invftmachine);
+  //This version is for premade imstor but passing extra parameters that may be needed to 
+  //make facets 
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
+                                     SynthesisParamsImage& impars, const SynthesisParamsGrid& gridpars);
   virtual casacore::Bool weight(const casacore::String& type="natural", 
 	      const casacore::String& rmode="norm",
 	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 
@@ -62,12 +72,17 @@ public:
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+  //set the weight from a Record generated from SynthesisUtils::fillWeightRecord
+  virtual casacore::Bool weight(const Record& inrec);
   //set the weight density to the visibility iterator
   //the default is to set it from the imagestore griwt() image
   //Otherwise it will use this image passed here; useful for parallelization to
   //share one grid to all children process
   casacore::Bool setWeightDensity(const casacore::String& imagename=casacore::String(""));
+  
   void predictModel();
+  //make primary beam for standard gridder
+  bool makePB();
   virtual void makeSdImage(casacore::Bool dopsf=false);
   ///This should replace makeSDImage and makePSF etc in the long run
   ///But for now you can do the following images i.e string recognized by type
@@ -85,8 +100,16 @@ public:
 		   const casacore::Bool& aTermOn,
 		   const casacore::Bool& conjBeams);
   void reloadCFCache();
+  ///load the weightimage in the MosaicFT machine if it has already been done
+  //this can be called only after defineimage
+  void loadMosaicSensitivity();
+  //Some access methods
+  casacore::CountedPtr<vi::VisibilityIterator2> getVi();
+  casacore::CountedPtr<refim::FTMachine> getFTM(const casacore::Int whichfield=0,
+												casacore::Bool ift=true);
 
  protected:
+  virtual void makeComplexCubeImage(const casacore::String& cimage, const refim::FTMachine::Type imtype, const Int whichModel=0);
   void appendToMapperList(casacore::String imagename, 
 			  casacore::CoordinateSystem& csys, 
 			  casacore::IPosition imshape,
@@ -101,6 +124,8 @@ public:
 			  casacore::uInt ntaylorterms=1,
 			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
   virtual void unlockMSs();
+  virtual void lockMSs();
+  virtual void lockMS(MeasurementSet& ms);
   virtual void createVisSet(const casacore::Bool writeaccess=false);
   void createFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT, 
 		       casacore::CountedPtr<casa::refim::FTMachine>& theIFT,  
@@ -121,6 +146,8 @@ public:
 		       const casacore::Bool wbAWP      = true,
 		       const casacore::String cfCache  = "",
 		       const casacore::Bool usePointing = false,
+		       /* const casacore::Vector<casacore::Float> pointingOffsetSigDev=std::vector<casacore::Float>({10,10}), */
+		       const std::vector<float> pointingOffsetSigDev = {10,10},
 		       const casacore::Bool doPBCorr   = true,
 		       const casacore::Bool conjBeams  = true,
 		       const casacore::Float computePAStep   = 360.0,
@@ -133,11 +160,11 @@ public:
 		       const casacore::String imageNamePrefix="",
 		       const casacore::String &pointingDirCol=casacore::String("direction"),
 		       const casacore::Float skyPosThreshold=0.0,
-           const casacore::Int convSupport=-1,
-           const casacore::Quantity &truncateSize=casacore::Quantity(-1),
-           const casacore::Quantity &gwidth=casacore::Quantity(-1),
-           const casacore::Quantity &jwidth=casacore::Quantity(-1),
-           const casacore::Float minWeight=0.1,
+		       const casacore::Int convSupport=-1,
+		       const casacore::Quantity &truncateSize=casacore::Quantity(-1),
+		       const casacore::Quantity &gwidth=casacore::Quantity(-1),
+		       const casacore::Quantity &jwidth=casacore::Quantity(-1),
+		       const casacore::Float minWeight=0.1,
 		       const casacore::Bool clipMinMax=false,
 		       const casacore::Bool pseudoI=false);
 
@@ -156,7 +183,9 @@ public:
 			  const casacore::Bool mTermOn,      
 			  const casacore::Bool wbAWP,        
 			  const casacore::String cfCache,    
-			  const casacore::Bool usePointing,   
+			  const casacore::Bool usePointing,
+			  /* const casacore::Vector<casacore::Float> pointingOffsetSigDev, */
+			  const vector<float> pointingOffsetSigDev,
 			  const casacore::Bool doPBCorr,     
 			  const casacore::Bool conjBeams,    
 			  const casacore::Float computePAStep,
@@ -185,9 +214,13 @@ public:
  
 // Do the major cycle
   virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
-
+  //Version for cubes
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  
+  virtual bool runCubeGridding(casacore::Bool dopsf=false, casacore::Bool savemodel=false);
+  
  
  void createMosFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT,
                          casacore::CountedPtr<casa::refim::FTMachine>&  theIFT,
@@ -206,7 +239,7 @@ public:
   //  _Image_ spectral grid TBD
   virtual casacore::Record apparentSensitivity();
 
-  bool makePB();
+  
   bool makePrimaryBeam(PBMath& pbMath);
   void  andFreqSelection(const casacore::Int msId, const casacore::Int spwId,  const casacore::Double freqBeg, const casacore::Double freqEnd, const casacore::MFrequency::Types frame);
   void andChanSelection(const casacore::Int msId, const casacore::Int spwId, const casacore::Int startchan, const casacore::Int endchan);
@@ -214,7 +247,8 @@ public:
   //Set up tracking direction ; return False if no tracking is set.
   //return Direction of moving source is in the frame of vb.phaseCenter() at the time of the first row of the vb
   casacore::Bool getMovingDirection(const vi::VisBuffer2& vb,  casacore::MDirection& movingDir);
-  
+  std::tuple<int, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > nSubCubeFitInMemory(const casacore::Int fudge_factor, const casacore::IPosition& imshape, const casacore::Float padding=1.0);
+  void updateImageBeamSet(casacore::Record& returnRec);
    // Other Options
   //casacore::Block<const casacore::MeasurementSet *> mss_p;
   casacore::CountedPtr<vi::VisibilityIterator2>  vi_p;
@@ -226,6 +260,12 @@ public:
   std::map<casacore::Int, std::map<casacore::Int, casacore::Vector<casacore::Int> > >  channelSelections_p;
   //	///temporary variable as we carry that for tunechunk
   casacore::MFrequency::Types selFreqFrame_p;
+  casacore::Vector<SynthesisParamsImage> imparsVec_p;
+  casacore::Vector<SynthesisParamsGrid> gridparsVec_p;
+  casacore::Record weightParams_p;
+  /// need this as writing imageinfo often seems to truncate psf size back to
+  /// 0 and back to normal size...so do it only once
+  casacore::ImageInfo cubePsfImageInfo_p;
 };
 } //# NAMESPACE CASA - END
 

@@ -106,11 +106,7 @@ def partition(vis,
     pdh = ParallelDataHelper('partition', locals()) 
     
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     if createmms:   
 
@@ -123,12 +119,8 @@ def partition(vis,
         pdh.setupCluster(thistask='partition')
             
         # Execute the jobs using cluster
-        try:
-            pdh.go()
-            pdh.bypassParallelProcessing(0)
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
-            return False
+        pdh.go()
+        pdh.bypassParallelProcessing(0)
                     
         # Create a backup of the flags that are in the MMS
         casalog.origin('partition')
@@ -150,16 +142,13 @@ def partition(vis,
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')
-            return False
 
-        return True
+        return
 
-    # Create local copies of the MSTransform and ms tools
-    mtlocal = mstransformer()
-    mslocal = ms()
         
     try:
-                    
+        mtlocal = mstransformer()
+
         # Gather all the parameters in a dictionary.        
         config = {}
         config = pdh.setupParameters(inputms=vis, outputms=outputvis, field=field, 
@@ -169,28 +158,20 @@ def partition(vis,
         
         # ddistart will be used in the tool when re-indexing the spw table
         config['ddistart'] = ddistart
-        
+
         config['datacolumn'] = datacolumn
 
         # Configure the tool and all the parameters
-        
+
         casalog.post('%s'%config, 'DEBUG1')
         mtlocal.config(config)
-        
+
         # Open the MS, select the data and configure the output
         mtlocal.open()
-        
+
         # Run the tool
         casalog.post('Run the tool to partition the MS')
         mtlocal.run()        
-            
-        mtlocal.done()
-                    
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
-    mslocal = None
-    
-    return True
+    finally:
+        mtlocal.done()

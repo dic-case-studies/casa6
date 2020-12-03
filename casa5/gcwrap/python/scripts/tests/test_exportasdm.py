@@ -213,15 +213,14 @@ class exportasdm_test(unittest.TestCase):
         myvis = self.vis_e
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        self.rval = exportasdm(
-            vis = 'myinput.ms',
-            asdm = self.out,
-            archiveid="S1",
-            apcorrected=False,
-            useversion = 'v3'
+        with self.assertRaises(RuntimeError):
+            exportasdm(
+                vis = 'myinput.ms',
+                asdm = self.out,
+                archiveid="S1",
+                apcorrected=False,
+                useversion = 'v3'
             )
-
-        self.assertFalse(self.rval)
 
     def test6(self):
         '''Test 6: simulated input MS with pointing table, default output, v3'''
