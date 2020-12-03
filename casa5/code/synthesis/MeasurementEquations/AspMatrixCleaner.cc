@@ -425,7 +425,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // trigger hogbom when itsStrengthOptimum is small enough
     // consider scale 5e-7 down every time this is triggered to see if imaging is improved
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 5e-7) // G55 value, no box
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0/*itsStrenThres*/) //try
     //if (!itsSwitchedToHogbom && itsStrengthOptimum < 1e-7) // G55 value, with box
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 4) // old M31 value
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.55) // M31 value - new Asp: 5k->10k good
@@ -435,8 +435,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.002) // G55 value, new Asp, old normalization
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
-    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der
-    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-5) // GSL with der, with new norm this is not needed.
+    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der M31
+    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2.2e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL without der, G55 , with new norm this is not needed.
+    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.1e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -1332,7 +1333,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
-      if (scale > 0)
+      /*if (scale > 0)
       {
 	      float normalization;
 	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
@@ -1341,7 +1342,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         normalization = sqrt(2 * M_PI *itsInitScaleSizes[scale]); //GSL trial. Need to recover and re-norm later
 	      maxima(scale) /= normalization;
 	      //cout << "normalization[" << scale << "] " << normalization << endl;
-      } //sanjay's code doesn't normalize peak here, but this works well with GSL with derivatives
+      } //sanjay's code doesn't normalize peak here, but this works well with GSL with derivatives*/
       /*maxima(scale) /= maxPsfConvInitScales(scale); // mimic MS-clean. This seems wrong b/c Asp doesn't use scaleBias
       cout << "maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;*/
@@ -1366,7 +1367,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. Seems it can be in the loop as well.
 
     //trial of recover
-    strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
+    //strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
     //
 
     strengthOptimum /= normalization;
@@ -1885,8 +1886,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     my_func.fdf    = my_fdf;
     my_func.params = (void *)ptrParam;
     // f only
-    /*
-    const gsl_multimin_fminimizer_type *T;
+    /*const gsl_multimin_fminimizer_type *T;
     T = gsl_multimin_fminimizer_nmsimplex2rand; //20.77, 31.63
     //T = gsl_multimin_fminimizer_nmsimplex2; //-1.72 313 -->bad
     s = gsl_multimin_fminimizer_alloc(T, length);
@@ -1898,19 +1898,17 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     const float InitStep = gsl_blas_dnrm2(x);
     gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/*1e-3*/);
     // f only
-    /*
-    gsl_vector *ss = NULL;
+    /*gsl_vector *ss = NULL;
     ss = gsl_vector_alloc (length);
     gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
     gsl_multimin_fminimizer_set(s, &my_func, x, ss);*/
 
     printf("\n---------- BFGS algorithm begin ----------\n");
     // fdf
-    findComponent(10, s);
+    findComponent(5, s);
 
     // f only
-    /*
-    size_t iter = 0;
+    /*size_t iter = 0;
     int status = 0;
     double size;
     do
