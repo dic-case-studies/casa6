@@ -1,7 +1,6 @@
 {
     "testlist": [
         {
-        {
             "testScript":"test_agentflagger",
             "testType":"casatools",
             "maintainer":"Sandra Castro",
@@ -1092,7 +1091,6 @@
             "comment":""
         },
         {
-        {
             "testScript":"test_msmetadata",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
@@ -1917,7 +1915,7 @@
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":['default"],
+            "testOptions":["default"],
             "testGroup":[],
             "timeout":0,
             "comment":"DEFAULT"
@@ -2181,6 +2179,6 @@
             "testGroup":["wvrgcal"],
             "timeout":0,
             "comment":""
-        },
+        }
     ]
 }
