@@ -807,19 +807,9 @@ def calc_sdatmcor(
     _msg(" - intent spws = %s" % intentspws, 'DEBUG1')
     _msg(" -        spws = %s" % spws, 'DEBUG1')
 
-    # Note:
-    # CAS-13160 atmcorr_20200807.py
-    #     No more use of tmonsource in the new algorithm..
-
-    # (Task Section) check count of ON/OFF SOURCE
-    # n_tmonsource = len(tmonsource)
+    # (Task Section)
+    # OFF_SOURCE Error check
     n_tmoffsource = len(tmoffsource)
-    # msg = "Target Information. \n"   \
-    #     + "# ON_SOURCE: count of tmonsource   = %d\n" % n_tmonsource  \
-    #     + "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
-    # _msg(msg)
-
-    # (Task Section) OFF_SOURCE Error check
     msg = "# OFF_SOURCE: count of tmoffsource = %d" % n_tmoffsource
     _msg(msg)
     if (n_tmoffsource == 0):
@@ -827,55 +817,27 @@ def calc_sdatmcor(
         _msg(msg, 'SEVERE')
         raise(msg)
 
-    # (Task Section)
-    #     'OutputSpw' must be a set of spw
-
-    # request by argument
+    # requested list of output spws
     outputspws_param = parse_spw(corms, '')
 
-    # Must be a subset, locate the initial set.
-    if set(outputspws_param).issubset(set(spws)):
-        outputspws = list(set(outputspws_param))
-    else:
-        _msg("Some of the specified outputspw(s) cannot be processed. Try to continue", 'WARN')
-        outputspws = list(set(spws) & set(outputspws_param))
-
-    # spw info with requested parameters (DEBUG)
-    _msg("Determined outputSpws Information", 'DEBUG1')
-    _msg('- Spws                  = %s' % spws, 'DEBUG1')
-    _msg('- requested  outputSpws = %s' % outputspws_param, 'DEBUG1')
-    _msg('- determined outputSpws = %s' % outputspws, 'DEBUG1')
-
-    # (Task Section )
-    #     'processing Spw' must be a set of Spws
-
-    # request by argument
+    # requested list of processing spws
     spws_param = parse_spw(rawms, p_spw)
 
-    # Must be a subset, locate the initial set.
-    if set(spws_param).issubset(set(spws)):
-        spws = list(set(spws_param))
-    else:
+    # processing_spws must be a subset of spws as well as outputspws_param
+    all_processing_spws = set(spws).intersection(set(outputspws_param))
+    if not set(spws_param).issubset(all_processing_spws):
         _msg("Some of the specified spw(s) cannot be processed. Try possible one(s)", 'WARN')
-        spws = list(set(spws) & set(spws_param))
+    processing_spws = list(all_processing_spws.intersection(set(spws_param)))
 
-    # (Task Section )
-    #     outputSpw and Spw Consistency. There are flowing cases.
-    #      - when Spw=[17,19,21], outputSpw=[19,21]
-    #      - when Spw=[21], outputSpw = [19,21]
-
-    # outputSpw, Spw:: No Target check
-    if spws == []:
+    # Spw:: No Target check
+    if len(processing_spws) == 0:
         raise Exception("No available Spw Targets. Abort.")
-    if outputspws == []:
-        raise Exception("No available outputSpw targets. Abort.")
-
-    processing_spws = list(set(spws).intersection(set(outputspws)))
 
     _msg("Final Determined Spws Information")
-    _msg('-- Spws               = %s' % spws)
-    _msg('-- Output        Spws = %s' % outputspws)
-    _msg('-- Correcting    Spws = %s' % processing_spws)
+    _msg('-- Target     Spws = %s' % spws)
+    _msg('-- Output     Spws = %s' % outputspws_param)
+    _msg('-- Requested  Spws = %s' % spws_param)
+    _msg('-- Correcting Spws = %s' % processing_spws)
 
     # (Original)
     # Data Query on Pointing Table.
