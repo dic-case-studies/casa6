@@ -10,8 +10,6 @@ import unittest
 import matplotlib
 import pylab as pl
 
-from casatestutils.testhelper import copytree_ignore_subversion
-
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import plotprofilemap
