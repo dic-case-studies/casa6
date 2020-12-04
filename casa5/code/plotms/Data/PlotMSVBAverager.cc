@@ -427,7 +427,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
 
-  for (Int ibln=0; ibln<vb.nRows(); ++ibln) {
+  for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
     // Calculate row from antenna numbers with the hash function.
     Int ant1 = vb.antenna1()(ibln);
     Int ant2 = vb.antenna2()(ibln);
@@ -585,7 +585,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
 
-  for (Int ibln=0; ibln<vb.nRows(); ++ibln) {
+  for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
 
     // The antennas in the baseline
     Vector<Int> oblnij(2);

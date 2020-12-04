@@ -142,7 +142,7 @@ def imregrid(
                 vars = locals( )
                 param_vals = [vars[p] for p in param_names]
             else:
-                param_vals = [eval(p) for p in param_names]
+                param_vals = [eval(p) for p in param_names]   
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
@@ -151,7 +151,7 @@ def imregrid(
             casalog.post(
                 "*** Error \'%s\' updating HISTORY" % (instance), 'WARN'
             )
-
+        return
     finally:
         if _myia:
             _myia.done()

@@ -18,7 +18,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <task type="function" name="clean" category="imaging">
 
-  <shortdescription>Invert and deconvolve images with selected algorithm</shortdescription>
+  <shortdescription>Invert and deconvolve images with selected algorithm (Deprecated in CASA 5.8. Not present in CASA 6.2. Please use tclean instead.)</shortdescription>
 <description>
 CLEAN WILL BE DEPRECATED IN THE NEAR FUTURE - PLEASE USE TCLEAN
 INSTEAD. 
