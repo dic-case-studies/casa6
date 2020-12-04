@@ -197,7 +197,7 @@
       <value type="string"/>
     </param>
 
-    <param name="datacolumn" type="string"> 
+    <param name="datacolumn" type="string">
      <shortdescription>Data column to image(data,corrected)</shortdescription>
 <description>Data column to image (data or observed, corrected)
                      default:'corrected'
@@ -265,7 +265,7 @@
       <value type="string"/>
     </param>
 
-    <param name="imsize" type="any"> 
+    <param name="imsize" type="any">
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
          example :  imsize = [350,250]
@@ -277,7 +277,7 @@
       <value type="intArray">100</value>
     </param>
 
-    <param name="cell" type="any"> 
+    <param name="cell" type="any">
      <shortdescription>Cell size</shortdescription>
 <description>Cell size
                example: cell=['0.5arcsec,'0.5arcsec'] or
@@ -288,7 +288,7 @@
       <value type="stringArray">&quot;1arcsec&quot;</value>
     </param>
 
-    <param name="phasecenter" type="any"> 
+    <param name="phasecenter" type="any">
      <shortdescription>Phase center of the image</shortdescription>
 <description>Phase center of the image (string or field id); if the phasecenter is the name known major solar system object ('MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON') or is an ephemerides table then that source is tracked and the background sources get smeared. There is a special case, when phasecenter='TRACKFIELD', which will use the ephemerides or polynomial phasecenter in the FIELD table of the MS's as the source center to track.
                example: phasecenter=6
@@ -305,7 +305,7 @@
     </param>
 
 
-    <param name="stokes" type="string"> 
+    <param name="stokes" type="string">
      <shortdescription>Stokes Planes to make</shortdescription>
 <description>Stokes Planes to make
                default='I'; example: stokes='IQUV';
@@ -345,7 +345,7 @@
       </allowed>
     </param>
 
-    <param name="projection" type="string"> 
+    <param name="projection" type="string">
      <shortdescription>Coordinate projection </shortdescription>
 <description>Coordinate projection
                      Examples : SIN,   NCP
@@ -358,7 +358,7 @@
       <value type="string">SIN</value>
     </param>
 
-    <param name="startmodel" type="any"> 
+    <param name="startmodel" type="any">
      <shortdescription>Name of starting model image</shortdescription>
 <description>Name of starting model image
 
@@ -427,7 +427,7 @@
                                                            data display options window.)
 
 
-                                               
+
 
                         mode='cubedata' : Spectral line imaging with one or more channels
                                                         There is no internal software Doppler tracking so
@@ -621,7 +621,7 @@
                          When calculating weight density for Briggs
                          style weighting in a cube, this parameter
                          determines whether to calculate the weight
-                         density for each channel independently 
+                         density for each channel independently
                          (the default, True)
                          or a common weight density for all of the selected
                          data. This parameter has no
@@ -666,7 +666,7 @@
                          to use perchanweightdensity=True to avoid
                          surprisingly varying sensitivity and psfs
                          across the concatenated cube.
-             
+
 </description>
       <value type="bool">True</value>
     </param>
@@ -838,7 +838,7 @@
       <value type="int">1</value>
     </param>
 
-<param subparam="true" name="psfphasecenter" type="any"> 
+<param subparam="true" name="psfphasecenter" type="any">
      <shortdescription>optional direction to calculate psf for mosaic (default is image phasecenter)</shortdescription>
      <description>For mosaic use psf centered on this
                              optional direction. You may need to use
@@ -964,17 +964,17 @@
 
     <param subparam="true" name="psterm" type="bool">
            <shortdescription>Use prolate spheroidal during gridding</shortdescription>
-     <description>Include the Prolate Spheroidal (PS) funtion as the anti-aliasing 
+     <description>Include the Prolate Spheroidal (PS) funtion as the anti-aliasing
                         operator in the gridding convolution functions used for gridding.
 
-                        Setting this parameter to true is necessary when aterm is set to 
-                        false.  It can be set to false when aterm is set to true, though 
-                        with this setting effects of aliasing may be there in the image, 
+                        Setting this parameter to true is necessary when aterm is set to
+                        false.  It can be set to false when aterm is set to true, though
+                        with this setting effects of aliasing may be there in the image,
                         particularly near the edges.
 
                         When set to true, the .pb images will contain the fourier transform
                         of the of the PS funtion. The table below enumarates the functional
-                        effects of the psterm, aterm and wprojplanes settings. PB referes to 
+                        effects of the psterm, aterm and wprojplanes settings. PB referes to
                         the Primary Beam and FT() refers to the Fourier transform operation.
 
                         Operation       aterm   psterm  wprojplanes  Contents of the .pb image
@@ -1006,18 +1006,18 @@
            <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
 <description>Use conjugate frequency for wideband A-terms
 
-                       While gridding data from one frequency channel, choose a convolution 
-                       function from a 'conjugate' frequency such that the resulting baseline 
-                       primary beam is approximately constant across frequency. For a system in 
-                       which the primary beam scales with frequency, this step will eliminate 
-                       instrumental spectral structure from the measured data and leave only the 
+                       While gridding data from one frequency channel, choose a convolution
+                       function from a 'conjugate' frequency such that the resulting baseline
+                       primary beam is approximately constant across frequency. For a system in
+                       which the primary beam scales with frequency, this step will eliminate
+                       instrumental spectral structure from the measured data and leave only the
                        sky spectrum for the minor cycle to model and reconstruct [Bhatnagar et al., ApJ, 2013].
 
-                       As a rough guideline for when this is relevant, a source at the half power 
-                       point of the PB at the center frequency will see an artificial spectral 
-                       index of -1.4 due to the frequency dependence of the PB [Sault and Wieringa, 1994].  
-                       If left uncorrected during gridding, this spectral structure must be modeled 
-                       in the minor cycle (using the mtmfs algorithm) to avoid dynamic range limits 
+                       As a rough guideline for when this is relevant, a source at the half power
+                       point of the PB at the center frequency will see an artificial spectral
+                       index of -1.4 due to the frequency dependence of the PB [Sault and Wieringa, 1994].
+                       If left uncorrected during gridding, this spectral structure must be modeled
+                       in the minor cycle (using the mtmfs algorithm) to avoid dynamic range limits
                        (of a few hundred for a 2:1 bandwidth).
                        This works for specmode='mfs' and its value is ignored for cubes
 
@@ -1033,14 +1033,14 @@
                        This cache is filled at the beginning of an imaging run. This step can be time
                        consuming but the cache can be reused across multiple imaging runs that
                        use the same image parameters (cell size, image size , spectral data
-                       selections, wprojplanes, wbawp, psterm, aterm).  The effect of the wbawp, 
+                       selections, wprojplanes, wbawp, psterm, aterm).  The effect of the wbawp,
                        psterm and aterm settings is frozen-in in the cfcache. Using an existing cfcache
                        made with a different setting of these parameters will not reflect the current
                        settings.
 
-                       In a parallel execution, the construction of the cfcache is also parallelized 
-                       and the time to compute scales close to linearly with the number of compute 
-                       cores used.   With the re-computation of Convolution Functions (CF) due to PA 
+                       In a parallel execution, the construction of the cfcache is also parallelized
+                       and the time to compute scales close to linearly with the number of compute
+                       cores used.   With the re-computation of Convolution Functions (CF) due to PA
                        rotation turned-off (the computepastep parameter), the total number of in the
                        cfcache can be computed as [No. of wprojplanes x No. of selected spectral windows x 4]
 
@@ -1063,11 +1063,11 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                        This parameter controls the accuracy of the aperture illumination function
                        used with AProjection for alt-az mount dishes where the AIF rotates on the
-                       sky as the synthesis image is built up.  Once the PA in the data changes by  
+                       sky as the synthesis image is built up.  Once the PA in the data changes by
                        the given interval, AIFs are re-computed at the new PA.
 
                        A value of 360.0 deg (the default) implies no re-computation due to PA rotation.
-                       AIFs are computed for the PA value of the first valid data received and used for 
+                       AIFs are computed for the PA value of the first valid data received and used for
                        all of the data.
 
 </description>
@@ -1076,7 +1076,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param subparam="true" name="rotatepastep" type="double">
      <shortdescription>Parallactic angle interval after which the nearest AIF is rotated (deg) </shortdescription>
-<description>Parallactic angle interval after which the nearest AIF is rotated (deg) 
+<description>Parallactic angle interval after which the nearest AIF is rotated (deg)
 
                        Instead of recomputing the AIF for every timestep's parallactic angle,
                        the nearest existing AIF is used and rotated
@@ -1091,56 +1091,56 @@ to use the correct direction in which the antenna is pointing with respect to th
 </description>
       <value type="double">360.0</value>
     </param>
-    
-    
+
+
     <param subparam="true" name="pointingoffsetsigdev" type="any">
      <shortdescription> Pointing offset threshold to determine heterogeneity of pointing corrections for the AWProject gridder</shortdescription>
-<description> 
-                         Corrections for heterogenous and time-dependent pointing 
-                         offsets via AWProjection are controlled by this parameter. 
-                         It is a vector of 2 ints or doubles each of which is interpreted 
-                         in units of arcsec. Based on the first threshold, a clustering 
-                         algorithm is applied to entries from the POINTING subtable 
+<description>
+                         Corrections for heterogenous and time-dependent pointing
+                         offsets via AWProjection are controlled by this parameter.
+                         It is a vector of 2 ints or doubles each of which is interpreted
+                         in units of arcsec. Based on the first threshold, a clustering
+                         algorithm is applied to entries from the POINTING subtable
                          of the MS to determine how distinct antenna groups for which
-                         the pointing offset must be computed separately.  The second 
-                         number controls how much a pointing change across time can 
-                         be ignored and after which an antenna rebinning is required.   
+                         the pointing offset must be computed separately.  The second
+                         number controls how much a pointing change across time can
+                         be ignored and after which an antenna rebinning is required.
 
 
                         Note : The default value of this parameter is [], due a programmatic constraint.
                                    If run with this value, it will internally pick [600,600] and exercise the
                                    option of using large tolerances (10arcmin) on both axes. Please choose
-                                   a setting explicitly for runs that need to use this parameter. 
+                                   a setting explicitly for runs that need to use this parameter.
 
 	                Note : This option is available only for gridder='awproject' and usepointing=True and
                                    and has been validated primarily with VLASS on-the-fly mosaic data
                                    where POINTING subtables have been modified after the data are recorded.
 
 
-		        Examples of parameter usage : 
+		        Examples of parameter usage :
 
-                        [100.0,100.0] : Pointing offsets of 100 arcsec or less are considered 
+                        [100.0,100.0] : Pointing offsets of 100 arcsec or less are considered
                                                 small enough to be ignored.  Using large values for both
                                                 indicates a homogeneous array.
-                                
 
-                        [10.0, 100.0] : Based on entries in the POINTING subtable, antennas 
-                                               are grouped into clusters based on a 10arcsec bin size. 
+
+                        [10.0, 100.0] : Based on entries in the POINTING subtable, antennas
+                                               are grouped into clusters based on a 10arcsec bin size.
                                                All antennas in a bin are given a pointing offset calculated
                                                as the average of the offsets of all antennas in the bin.
                                                On the time axis, offset changes upto 100 arcsec will be ignored.
 
                         [10.0,10.0] : Calculate separate pointing offsets for each antenna group
-                                             (with a 10 arcsec bin size). As a function of time, recalculate 
+                                             (with a 10 arcsec bin size). As a function of time, recalculate
                                              the antenna binning if the POINTING table entries change by
                                              more than 10 arcsec w.r.to the previously computed binning.
-                                              
-                        [1.0, 1.0] :  Tight tolerances will imply a fully heterogenous situation where 
-                                           each antenna gets its own pointing offset. Also, time-dependent 
-                                           offset changes greater than 1 arcsec will trigger recomputes of 
-                                           the phase gradients. This is the most general situation and is also 
-                                           the most expensive option as it constructs and uses separate 
-                                           phase gradients for all baselines and timesteps. 
+
+                        [1.0, 1.0] :  Tight tolerances will imply a fully heterogenous situation where
+                                           each antenna gets its own pointing offset. Also, time-dependent
+                                           offset changes greater than 1 arcsec will trigger recomputes of
+                                           the phase gradients. This is the most general situation and is also
+                                           the most expensive option as it constructs and uses separate
+                                           phase gradients for all baselines and timesteps.
 
                         For VLASS 1.1 data with two kinds of pointing offsets, the recommended
                         setting is [ 30.0, 30.0 ].
@@ -1148,16 +1148,16 @@ to use the correct direction in which the antenna is pointing with respect to th
                         For VLASS 1.2 data with only the time-dependent pointing offsets, the
                         recommended setting is [ 300.0, 30.0 ] to turn off the antenna grouping
                         but to retain the time dependent corrections required from one timestep
-                        to the next. 
+                        to the next.
 
 
 
 </description>
       <any limittypes="intArray doubleArray" type="variant"/>
       <value type="doubleArray"/>
-    </param>   
-    
-    
+    </param>
+
+
 
     <param subparam="true" name="pblimit" type="double">
      <shortdescription>PB gain level at which to cut off normalizations </shortdescription>
@@ -1221,7 +1221,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param name="deconvolver" type="string">
       <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)</shortdescription>
-<description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)
+<description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)
 
                        Each of the following algorithms operate on residual images and psfs
                        from the gridder and produce output model and restored images.
@@ -1286,8 +1286,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
 
-			aasp : ASP clean [Bhatnagar and Cornwell 2004]
-			      
+			                 asp : ASP clean [Bhatnagar and Cornwell 2004]
+
 
 </description>
       <value type="string">hogbom</value>
@@ -1300,7 +1300,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>multiscale</value>
               <value>mtmfs</value>
               <value>mem</value>
-              <value>aasp</value>
+              <value>asp</value>
       </allowed>
     </param>
 
@@ -1383,12 +1383,12 @@ to use the correct direction in which the antenna is pointing with respect to th
                       The peak from each scale's smoothed residual is
                       multiplied by ( 1 - smallscalebias * scale/maxscale )
                       to increase or decrease the amplitude relative to other scales,
-                      before the scale with the largest peak is chosen. 
-                      Smallscalebias can be varied between -1.0 and 1.0. 
-                      A score of 0.0 gives all scales equal weight (default). 
-		      A score larger than 0.0 will bias the solution towards smaller scales. 
+                      before the scale with the largest peak is chosen.
+                      Smallscalebias can be varied between -1.0 and 1.0.
+                      A score of 0.0 gives all scales equal weight (default).
+		      A score larger than 0.0 will bias the solution towards smaller scales.
 		      A score smaller than 0.0 will bias the solution towards larger scales.
-		      The effect of smallscalebias is more pronounced when using multi-scale relative to mtmfs. 
+		      The effect of smallscalebias is more pronounced when using multi-scale relative to mtmfs.
 </description>
       <value type="double">0.0</value>
     </param>
@@ -1631,11 +1631,11 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
     <param subparam="true" name="noise" type="any"><shortdescription>noise parameter for briggs abs mode weighting</shortdescription><description>noise parameter for briggs abs mode weighting</description>
-      
+
       <any type="variant"/>
       <value type="string">1.0Jy</value>
     </param>
-    
+
     <param subparam="true" name="npixels" type="int">
            <shortdescription>Number of pixels to determine uv-cell size </shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
@@ -1700,7 +1700,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 <description>Maximum number of iterations
 
                        A stopping criterion based on total iteration count.
-                       Currently the parameter type is defined as an integer therefore the integer value 
+                       Currently the parameter type is defined as an integer therefore the integer value
                        larger than 2147483647 will not be set properly as it causes an overflow.
 
                        Iterations are typically defined as the selecting one flux component
@@ -1761,7 +1761,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        multiscale clean with an appropriate set of scale sizes will tolerate
                        a higher loop gain than Clark clean (for example).
 
-                       
+
 
 </description>
       <value type="double">0.1</value>
@@ -1814,8 +1814,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
                        Set nsigma=0.0 to preserve the previous tclean behavior without this feature.
-                       The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
-                       to determine the threshold. 
+                       The top level parameter, fastnoise is relevant for the rms noise calculation which is used
+                       to determine the threshold.
 
 </description>
       <value type="double">0.0</value>
@@ -1952,7 +1952,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    
+
 
     <param name="usemask" type="string">
            <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
@@ -1978,8 +1978,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                           if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
                           image statistics in determination of the threshold.
 
-                      
-                       
+
+
 
                        Note: By default the intermediate mask generated by automask at each deconvolution cycle
                              is over-written in the next cycle but one can save them by setting
@@ -1997,12 +1997,12 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-    
+
     <param subparam="true" name="mask" type="any">
      <shortdescription>Mask (a list of image name(s) or region file(s) or region string(s) )</shortdescription>
 <description>Mask (a list of image name(s) or region file(s) or region string(s)
 
-    
+
                        The name of a CASA image or region file or region string that specifies
                        a 1/0 mask to be used for deconvolution. Only locations with value 1 will
                        be considered for the centers of flux components in the minor cycle.
@@ -2011,8 +2011,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                        Manual mask options/examples :
 
                        mask='xxx.mask'  : Use this CASA image named xxx.mask and containing
-                                                       ones and zeros as the mask. 
-                                                       If the mask is only different in spatial coordinates from what is being made 
+                                                       ones and zeros as the mask.
+                                                       If the mask is only different in spatial coordinates from what is being made
                                                        it will be resampled to the target coordinate system before being used.
                                                        The mask has to have the same shape in velocity and Stokes planes
                                                        as the output image. Exceptions are single velocity and/or single
@@ -2037,7 +2037,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        mask=['xxx.mask','xxx.crtf', 'circle[[40pix,40pix],10pix]']  : a list of masks
 
 
-              
+
 
 
                        Note : Mask images for deconvolution must contain 1 or 0 in each pixel.
@@ -2068,10 +2068,10 @@ to use the correct direction in which the antenna is pointing with respect to th
 </description>
       <value type="double">0.0</value>
     </param>
-    
-    
-    
-    
+
+
+
+
     <param subparam="true" name="sidelobethreshold" type="double">
            <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
            <value type="double">3.0</value>
@@ -2167,21 +2167,21 @@ to use the correct direction in which the antenna is pointing with respect to th
     <param name="fastnoise" type="bool">
            <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
            <value type="bool">True</value>
-<description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
+<description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used.
                         In this case, the threshold values are determined based on classic statistics (using all
                         unmasked pixels for the calculations).
-                          
+
                         If it is set to False,  the new noise calculation
-                        method is used based on pre-existing mask.   
- 
+                        method is used based on pre-existing mask.
+
                         Case 1: no exiting mask
-                        Calculate image statistics using Chauvenet algorithm 
-                        
+                        Calculate image statistics using Chauvenet algorithm
+
                         Case 2: there is an existing mask
                         Calculate image statistics by classical method on the region
                         outside the mask and inside the primary beam mask.
 
-                        In all cases above RMS noise is calculated from MAD. 
+                        In all cases above RMS noise is calculated from MAD.
 </description>
     </param>
 
@@ -2269,7 +2269,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                        column on disk may be too much extra disk I/O, when the
                                        gridder is simple enough that on-the-fly recomputing of the
                                        model visibilities is quicker than disk I/O.
-                                       For e.g. that gridder='awproject' does not support virtual model. 
+                                       For e.g. that gridder='awproject' does not support virtual model.
 
                           modelcolumn : In the last major cycle, save predicted model visibilities
                                       in the MODEL_DATA column of the MS. This mode is useful when
@@ -2288,7 +2288,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                       as well as a model_data column, but under normal operation,
                                       the last used mode will get triggered.  Use the delmod task to
                                       clear out existing models from an MS if confusion arises.
-                       Note 3:    when parallel=True, use savemodel='none'; Other options are not yet ready 
+                       Note 3:    when parallel=True, use savemodel='none'; Other options are not yet ready
                                   for use in parallel. If model visibilities need to be saved (virtual or modelcolumn):
                                   please run tclean in serial mode with niter=0; after the parallel run
 
@@ -2436,7 +2436,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="chanchunks"><value>1</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
-       
+
        <equals value="cubedata" type="string">
          <default param="nchan"><value>-1</value></default>
          <default param="start"><value>&quot;&quot;</value></default>
@@ -2473,7 +2473,7 @@ to use the correct direction in which the antenna is pointing with respect to th
        <equals value="mosaic" type="string">
          <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
-         <default param="usepointing"><value>False</value></default> 
+         <default param="usepointing"><value>False</value></default>
          <default param="mosweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
          <default param="conjbeams"><value>False</value></default>
@@ -2512,7 +2512,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="pointingoffsetsigdev"><value type="doubleArray"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
-	 
+
 	 <default param="pblimit"><value>0.2</value></default>
 	 <default param="conjbeams"><value>False</value></default>
 	 <default param="mosweight"><value>False</value></default>
@@ -2569,9 +2569,9 @@ to use the correct direction in which the antenna is pointing with respect to th
        <equals value="mtmfs" type="string">
          <default param="scales"><value type="intArray"/></default>
          <default param="nterms"><value>2</value></default>
-	 <default param="smallscalebias"><value>0.0</value></default>
+	       <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals value="aasp" type="string">
+       <equals value="asp" type="string">
        </equals>
      </when>
 
@@ -2609,11 +2609,11 @@ to use the correct direction in which the antenna is pointing with respect to th
        <equals value="pb" type="string">
          <default param="pbmask"><value type="double">0.2</value></default>
        </equals>
-       
-       
-       
-       
-       
+
+
+
+
+
        <equals value="auto-multithresh" type="string">
          <default param="pbmask"><value>0.2</value></default>
          <default param="sidelobethreshold"><value>3.0</value></default>
@@ -2627,9 +2627,9 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="dogrowprune"><value type="bool">True</value></default>
          <default param="minpercentchange"><value>-1.0</value></default>
          <default param="verbose"><value type="bool">False</value></default>
-         
+
        </equals>
-       
+
    </when>
 
 

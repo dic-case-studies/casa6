@@ -134,7 +134,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  {
 	    itsDeconvolver.reset(new SDAlgorithmMEM( "entropy" ));
 	  }
-	else if (decpars.algorithm==String("aasp"))
+	else if (decpars.algorithm==String("asp"))
 	  {
 	    itsDeconvolver.reset(new SDAlgorithmAAspClean());
 	  }

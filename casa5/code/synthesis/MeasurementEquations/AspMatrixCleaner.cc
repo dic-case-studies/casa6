@@ -257,7 +257,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   LogIO os(LogOrigin("AspMatrixCleaner", "aspclean()", WHERE));
 
   cout << "Enter aspclean, itsNscales " << itsNscales << endl;
-  os << LogIO::NORMAL1 << "AAsp clean algorithm" << LogIO::POST;
+  os << LogIO::NORMAL1 << "Asp clean algorithm" << LogIO::POST;
 
 
   Int scale;
@@ -436,7 +436,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.0002) // G55 value, new Asp, sanjay's normalization
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der M31
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2.2e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL without der, G55 , with new norm this is not needed.
-    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.1e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
+    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.1e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL with scaled der, G55 , with new norm this is not needed.
+    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
     {
 	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
 	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -577,8 +578,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     makeBoxesSameSize(blc, trc, blcPsf, trcPsf);*/
     IPosition blcPsf(blc);
     IPosition trcPsf(trc);
-    cout << "itsPositionPeakPsf " << itsPositionPeakPsf << " blc " << blc;
-    cout << " trc " << trc << " blcPsf " << blcPsf << " trcPsf " << trcPsf << endl;
+    //cout << "itsPositionPeakPsf " << itsPositionPeakPsf << " blc " << blc;
+    //cout << " trc " << trc << " blcPsf " << blcPsf << " trcPsf " << trcPsf << endl;
     blcDirty = blc;
     trcDirty = trc;
 
@@ -715,13 +716,6 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     cout << "current peakres " << itsPeakResidual << " posmin " << posmin << " val " << (*itsDirty)(posmin);
     cout << " posmax " << posmax << " val " << (*itsDirty)(posmax) << endl;
     cout << "after: itsDirty optPos " << (*itsDirty)(itsPositionOptimum) << endl;
-
-
-    // cout << "before dirtySub(100,100) = " << itsDirtyConvScales[0](100,100) << endl;
-    //Matrix<Float> dirtySub=(itsDirtyConvScales[0])(blc,trc); //old
-    //cout << "dirtySub shape " << dirtySub.shape() << endl;
-    //cout << "before dirtySub(608,640) = " << dirtySub(608,640) << endl; //G55
-    //cout << "before itsDirty(608,695) = " << (*itsDirty)(608,695) << endl; //G55
 
     //genie If we switch to hogbom (i.e. only have 0 scale size)
     // there is no need to do the following Aspen update
@@ -864,7 +858,6 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
   cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
 
   itsPsfWidth = float(ceil((xpixels + ypixels)/2));
-  //itsPsfWidth = 2.0f;
 
   return itsPsfWidth;
 }
@@ -915,12 +908,12 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
     }
 
     //debug
-    float maxima;
+    /*float maxima;
     IPosition pos;
     findMaxAbs(iscale, maxima, pos);
     cout << "peak(iscale) " << max(fabs(iscale));
     cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos);
-    cout << " area " << area << " areag " << areag << endl;
+    cout << " area " << area << " areag " << areag << endl;*/
   }
 
 }
@@ -961,7 +954,7 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     {
       for (int i = mini; i <= maxi; i++)
       {*/ //with this the max is 0
-    double area = 0.0;
+    //double area = 0.0;
     for (int j = 0; j < ny; j++)
     {
       for (int i = 0; i < nx; i++)
@@ -971,15 +964,15 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
         ////iscale(i,j) = gbeam(px, py);
         iscale(i,j) = (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
         //iscale(i,j) = (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
-        area += iscale(i,j);
+        //area += iscale(i,j);
       }
     }
     //debug
-    float maxima;
+    /*float maxima;
     IPosition pos;
     findMaxAbs(iscale, maxima, pos);
     cout << "peak(iscale) " << max(fabs(iscale)) << " area " << area;
-    cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos) << endl;
+    cout << " maxima " << maxima << " pos " << pos << " iscale(pos) " << iscale(pos) << endl;*/
   }
 }
 
@@ -1280,6 +1273,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     cout << "orig itsDirty : min " << minVal << " max " << maxVal << endl;
     cout << "posmin " << posmin << " posmax " << posmax << endl;
+    Int normMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", itsDefaultNorm);
 
     for (scale=0; scale < itsNInitScales; ++scale)
     {
@@ -1332,26 +1326,19 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
-      Int normMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", defaultNorm);
-
-      if (normMethod == 1)
-	{
-	  cerr<<"Norm method is : "<<normMethod << endl;
-	}
-      else
-	{
-	  cerr<<"Norm method is : "<<normMethod << endl;
-	}
-      /*if (scale > 0)
+      if (normMethod == 2)
       {
-	      float normalization;
-	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
-	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good on M31 but bad on G55
-	      //normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
-        normalization = sqrt(2 * M_PI *itsInitScaleSizes[scale]); //GSL trial. Need to recover and re-norm later
-	      maxima(scale) /= normalization;
-	      //cout << "normalization[" << scale << "] " << normalization << endl;
-      } //sanjay's code doesn't normalize peak here, but this works well with GSL with derivatives*/
+        if (scale > 0)
+        {
+  	      float normalization;
+  	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 2); //sanjay's
+  	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good on M31 but bad on G55
+  	      //normalization = sqrt(2 * M_PI) / pow(itsInitScaleSizes[scale], 1); // M31 new asp gold
+          normalization = sqrt(2 * M_PI *itsInitScaleSizes[scale]); //GSL trial. Need to recover and re-norm later
+  	      maxima(scale) /= normalization;
+  	      //cout << "normalization[" << scale << "] " << normalization << endl;
+        } //sanjay's code doesn't normalize peak here, but this works well with GSL with derivatives
+      }
       /*maxima(scale) /= maxPsfConvInitScales(scale); // mimic MS-clean. This seems wrong b/c Asp doesn't use scaleBias
       cout << "maxPsfconvinitscale[" << scale << "] = " << maxPsfConvInitScales(scale) << endl;
       cout << "after: maxima[" << scale << "] = " << maxima(scale) << endl;*/
@@ -1375,9 +1362,9 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
     const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. Seems it can be in the loop as well.
 
-    //trial of recover
-    //strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
-    //
+    // norm method 2 recovers the optimal strength and then normalize it to get the init guess
+    if (normMethod == 2)
+      strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
 
     strengthOptimum /= normalization;
     cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
@@ -1385,159 +1372,6 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
-
-// wrong
-/*bool AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center, Float threshold)
-{
-  const int nX = itsDirty->shape()(0);
-  const int nY = itsDirty->shape()(1);
-
-  Matrix<Float> Asp(nX, nY);
-  Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
-  for (int j = 0; j < nY; ++j)
-  {
-    for(int i = 0; i < nX; ++i)
-    {
-      int px = i - nX/2;
-      int py = j - nY/2;
-      Asp(i,j) = gbeam(px, py);
-    }
-  }
-
-  // gradient. 0: amplitude; 1: scale
-  // generate derivative of amplitude
-  Matrix<Float> GradAmp(nX, nY);
-  Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
-  for (int j = 0; j < nY; ++j)
-  {
-    for(int i = 0; i < nX; ++i)
-    {
-      int px = i - nX/2;
-      int py = j - nY/2;
-      GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
-    }
-  }
-  Matrix<Float> Grad0 = product(transpose(*itsDirty), GradAmp);
-
-  // generate derivative of scale
-  Matrix<Float> GradScale(nX, nY);
-  for (int j = 0; j < nY; ++j)
-  {
-    for(int i = 0; i < nX; ++i)
-      GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
-  }
-  Matrix<Float> Grad1 = product(transpose(*itsDirty), GradScale);
-
-  // calculate the length of the direvative vector
-  Float lenDirVec = 0.0;
-  for (int j = 0; j < Grad0.shape()(1); ++j)
-  {
-    for(int i = 0; i < Grad0.shape()(0); ++i)
-    {
-      lenDirVec += sqrt(pow(Grad0(i,j), 2));
-    }
-  }
-
-  for (int j = 0; j < Grad1.shape()(1); ++j)
-  {
-    for(int i = 0; i < Grad1.shape()(0); ++i)
-    {
-      lenDirVec += sqrt(pow(Grad1(i,j), 2));
-    }
-  }
-
-  cout << "scale " << scale << " amp " << amp << " center " << center << " lenDirVec " << lenDirVec << " threshold " << threshold << endl;
-  if (lenDirVec >= threshold)
-  {
-    //cout << "lenDirVec " << lenDirVec << " threshold " << threshold << endl;
-    return true;
-  }
-
-  return false;
-}*/
-
-/* for lbfgs
-Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
-{
-  const int nX = itsDirty->shape()(0);
-  const int nY = itsDirty->shape()(1);
-  const int refi = nX/2;
-  const int refj = nY/2;
-
-  Matrix<Float> Asp(nX, nY);
-  Asp = 0.0;
-  //Gaussian2D<Float> gbeam(amp, center[0], center[1], scale, 1, 0);
-  Gaussian2D<Float> gbeam(1.0 / (sqrt(2*M_PI)*scale), center[0], center[1], scale, 1, 0);
-
-  const double sigma5 = 5 * scale / 2;
-  / *const int minI = std::max(0, (int)(refi + center[0] - sigma5));
-  const int maxI = std::min(nX-1, (int)(refi + center[0] + sigma5));
-  const int minJ = std::max(0, (int)(refj + center[1] - sigma5));
-  const int maxJ = std::min(nY-1, (int)(refj + center[1] + sigma5));* /
-  const int minI = std::max(0, (int)(center[0] - sigma5));
-  const int maxI = std::min(nX-1, (int)(center[0] + sigma5));
-  const int minJ = std::max(0, (int)(center[1] - sigma5));
-  const int maxJ = std::min(nY-1, (int)(center[1] + sigma5));
-
-  for (int j = minJ; j <= maxJ; j++)
-  {
-    for (int i = minI; i <= maxI; i++)
-    {
-      //const int px = i - refi;
-      //const int py = j - refj;
-      const int px = i;
-      const int py = j;
-      Asp(i,j) = gbeam(px, py);
-    }
-  }
-
-  // gradient. 0: amplitude; 1: scale
-  // generate derivative of amplitude
-  /*Matrix<Float> GradAmp(nX, nY);
-  GradAmp = 0.0;
-  // generate derivative of scale
-  Matrix<Float> GradScale(nX, nY);
-  GradScale = 0.0;* /
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradAmp = Eigen::MatrixXf::Zero(nX, nY);
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> GradScale = Eigen::MatrixXf::Zero(nX, nY);
-  //Gaussian2D<Float> gbeamGradAmp(1, center[0], center[1], scale, 1, 0);
-  for (int j = minJ; j <= maxJ; j++)
-  {
-    for (int i = minI; i <= maxI; i++)
-    {
-      //const int px = i - refi;
-      //const int py = j - refj;
-      const int px = i;
-      const int py = j;
-      //GradAmp(i,j) = (-2) * gbeamGradAmp(px, py);
-      //GradAmp(i,j) = (-2) * Asp(i,j) * sqrt(2*M_PI) * scale; // sanjay: -2*asp/Amp
-      GradAmp(i,j) = (-2) * Asp(i,j); // try
-      //GradScale(i, j) = (-2)*2*(pow(i-center[0],2) + pow(j-center[1],2))*Asp(i,j)/pow(scale,3);
-      //GradScale(i,j) = 2 * (pow(i-center[0],2) + pow(j-center[1],2)) * Asp(i,j) / scale; //sanjay: 2*Asp*((x-xc)^2 + (y-yc)^2)/scale
-      GradScale(i,j) = (-2) * amp * ((pow(i-center[0],2) + pow(j-center[1],2)) / pow(scale,2) - 1) * (Asp(i,j) / scale); //try
-    }
-  }
-
-  Bool ddel;
-  const Float *dptr = itsDirty->getStorage(ddel);
-
-  float *ddptr = const_cast<float*>(dptr);
-  Eigen::MatrixXf M = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(ddptr, nX, nY);
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad0 = M * GradAmp;
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Grad1 = M * GradScale;
-  itsDirty->freeStorage(dptr, ddel);
-
-  // calculate the length of the direvative vector
-  Float lenDirVec = 0.0;
-  for (int j = minJ; j <= maxJ; j++)
-  {
-    for (int i = minI; i <= maxI; i++)
-    {
-      lenDirVec += sqrt(pow(Grad0(i,j), 2) + pow(Grad1(i,j), 2));
-    }
-  }
-  return lenDirVec;
-}*/
 
 // GSL
 Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
@@ -1764,6 +1598,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<IPosition> activeSetCenter;
 
     vector<pair<Float,int>> vp; //(LenDev, idx)
+    // don't really need this since we use the latest aspen only
+    /*
     for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
     {
     	//if (vp.size() >= 3) // limit the # active set to 3
@@ -1790,6 +1626,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 	    else
 	    	itsAspGood[i] = false;
     }
+    */
 
     sort(vp.begin(),vp.end(), [](const pair<Float,int> &l, const pair<Float,int> &r) {return l.first > r.first;});
 
