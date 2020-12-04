@@ -767,7 +767,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     if(std::getenv(env_name.c_str()) == NULL)
     {
         cout << "Default " << env_name.c_str() << " is " << "5" << endl;
-        npix = 25;
+        npix = 20;
     }else{
         npix = std::stoi(std::getenv(env_name.c_str()));
         cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
@@ -780,7 +780,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
       if(std::getenv(env_name.c_str()) == NULL)
       {
           cout << "Default " << env_name.c_str() << " is " << "3" << endl;
-          expand_pixel = 10;
+          expand_pixel = 5;
       }else{
           expand_pixel = std::stoi(std::getenv(env_name.c_str()));
           cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
@@ -804,7 +804,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     if(std::getenv(env_name.c_str()) == NULL)
     {
         cout << "Default " << env_name.c_str() << " is " << "501" << endl;
-        target_npoints = 40001;
+        target_npoints = 3001;
     }else{
         target_npoints = std::stoi(std::getenv(env_name.c_str()));
         cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
@@ -929,6 +929,11 @@ try{
   
   clock_t begin2 = clock();
   Int oversampling = (Int) sqrt(target_npoints/(lpsfWindowed.shape()(0)*lpsfWindowed.shape()(1)));
+  
+   if(oversampling == 0){
+         oversampling = 1;
+   }
+     
   cout << "oversampling " << oversampling << endl;
      
   ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
