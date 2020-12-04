@@ -643,11 +643,11 @@ def show_layer_info(at):
     # 2 - temperature, 3 - watermassdensity, 4 - water (number density),
     # 5 - pressure, 6 - O3 (number density), 7 - CO, 8 - N2O
 
-#    for i in range(at.getNumLayers()):
-#        Print atmospheric profile returned by at.getProfile():
-#        Layer thickness (idx=1), Temperature (idx=2),
-#        Number density of water vapor(idx=4), and Pressure (idx=5)
-#        print(p[1]['value'][i],p[2]['value'][i],p[4]['value'][i],p[5]['value'][i])
+    # for i in range(at.getNumLayers()):
+    #     # Print atmospheric profile returned by at.getProfile():
+    #     # Layer thickness (idx=1), Temperature (idx=2),
+    #     # Number density of water vapor(idx=4), and Pressure (idx=5)
+    #     print(p[1]['value'][i],p[2]['value'][i],p[4]['value'][i],p[5]['value'][i])
 
     _msg(p[0])
     return
