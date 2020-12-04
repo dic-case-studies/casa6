@@ -656,12 +656,12 @@ def show_layer_info(at):
 #
 # Logging CASA LOG (INFO/WARN/SEVERE)
 #
-def _msg(msg, msgtype='INFO'):
+def _msg(msg, priority='INFO'):
     # Information message
-    if msgtype == 'INFO':
-        print(msg)
+    # if priority == 'INFO':
+    #     print(msg)
     # other Warning/Error message
-    casalog.post(msg, msgtype, origin=origin)
+    casalog.post(msg, priority=priority, origin=origin)
 
 
 ############################################################
@@ -883,7 +883,7 @@ def calc_sdatmcor(
         tground.append(pl.median(tground_all[tmatm_all == tt]))
         pground.append(pl.median(pground_all[tmatm_all == tt]))
         hground.append(pl.median(hground_all[tmatm_all == tt]))
-        print('PWV = %fm, T = %fK, P = %fPa, H = %f%% at %s' % (pwv[-1], tground[-1], pground[-1], hground[-1], qa.time('%fs' % tt, form='fits')[0]))
+        _msg('PWV = %fm, T = %fK, P = %fPa, H = %f%% at %s' % (pwv[-1], tground[-1], pground[-1], hground[-1], qa.time('%fs' % tt, form='fits')[0]))
 
     ################################################################
     # Looping over spws
