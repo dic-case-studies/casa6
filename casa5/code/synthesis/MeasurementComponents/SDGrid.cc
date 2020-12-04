@@ -836,7 +836,7 @@ void SDGrid::put(const VisBuffer& vb, Int row, Bool dopsf,
     gridOk(convSupport);
 
     // Check if ms has changed then cache new spw and chan selection
-    if (vb.newMS()){
+    if (vb.newMS()) {
         matchAllSpwChans(vb);
         lastIndex_p = 0;
         if (lastIndexPerAnt_p.nelements() < (size_t)vb.numberAnt()) {
@@ -1227,10 +1227,13 @@ void SDGrid::makeImage(FTMachine::Type inType,
     initializeToSky(theImage,weight,vb);
     // Loop over the visibilities, putting VisBuffers
     for (vi.originChunks(); vi.moreChunks(); vi.nextChunk()) {
-        for (vi.origin(); vi.more(); vi++) {
-            FTMachine::Type actualType;
-            Bool doPSF;
+        FTMachine::Type actualType;
+        Bool doPSF;
+        if (vi.newMS()) {
+            // Note: the first MS is a new MS
             getParamsForFTMachineType(vi, inType, doPSF, actualType);
+        }
+        for (vi.origin(); vi.more(); vi++) {
             setupVisBufferForFTMachineType(actualType, vb);
             constexpr Int allVbRows = -1;
             put(vb, allVbRows, doPSF, actualType);
