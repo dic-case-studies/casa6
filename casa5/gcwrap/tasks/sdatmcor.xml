@@ -116,8 +116,24 @@
     </param>
 
     <param name="gainfactor" type="any">
-        <shortdescription>gain factor to multiply correction term</shortdescription>
-        <description>Gain factor to multiply correction term. Default is 1.0. Fixed factor can be given as float value. If factors vary with spw, they can be specified by either dictionary whose keys are spw id or caltable. For caltable, inverse square of stored value is applied.</description>
+        <shortdescription>Gain factor to multiply correction term</shortdescription>
+        <description>Gain factor to multiply correction term.
+
+                       The value can be float, dict, or string. Default is 1.0.
+
+                       Float value is interpreted as fixed factor, which is applied to all spws.
+
+                       Dict should be the pair of spw id (key) and the factor to be applied (value).
+                       Key should be string rather than int.
+
+                       If string is given, it should be the name of caltable. For caltable,
+                       inverse square of stored value is applied.
+
+                       Default: 1.0
+                       Example: 10.0
+                                {'17': 45.0, '19': 43.5, '21': 42.0, '23': 40.0}
+                                'k2jycal.tbl'
+        </description>
         <any type="variant" limittypes="double record string"/>
         <value type="double">1.0</value>
     </param>
