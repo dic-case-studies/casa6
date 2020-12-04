@@ -1,5 +1,5 @@
 //# SimplePBConvFunc.cc: implementation of SimplePBConvFunc
-//# Copyright (C) 2007-2016
+//# Copyright (C) 2007-2020
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This library is free software; you can redistribute it and/or modify it
@@ -843,8 +843,95 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
   void SimplePBConvFunc::setSkyJones(SkyJones* sj){
     sj_p=sj;
   }
-
+  
+  
   void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
+    
+	  
+	Int spw=vb.spectralWindows()(0);
+	bandName_p=vb.subtableColumns().spectralWindow().name()(spw);
+        Vector<Double> spwfreq=vb.subtableColumns().spectralWindow().chanFreq()(spw);
+        Double spwfreqwidth=abs(Vector<Double>(vb.subtableColumns().spectralWindow().chanWidth()(spw))(0));
+	chanMap.resize(freq.nelements());
+    Vector<Double> localfreq=vb.getFrequencies(0, MFrequency::TOPO);
+    Double minfreq=min(freq);
+    Double maxfreq=max(freq);
+    Double origwidth=freq.nelements()==1 ? 1e12 : (maxfreq-minfreq)/(freq.nelements()-1);
+    ///Fractional bandwidth which will trigger mutiple PB in one spw
+    
+    Double tol=(max(spwfreq))*0.5/100;
+    if(tol < origwidth/2.0) tol=origwidth/2.0;
+    Double topFreq=max(spwfreq);
+    while (topFreq > maxfreq){
+      topFreq -= tol;
+    }
+    // For large tol
+    if(topFreq < minfreq)
+       topFreq += tol;
+    //Int nchan=Int(lround((max(freq)-min(freq))/tol));
+    Double bottomFreq=topFreq;
+    Int nchan=0;
+    //cerr << std::setprecision(12) << "top " << bottomFreq << " minFreq " << minfreq << " maxFreq " << maxfreq << endl;
+     while(bottomFreq > minfreq){
+       ++nchan;
+       bottomFreq -= tol;
+     }
+     if(nchan > 1){
+       nchan-=1;
+       bottomFreq+=tol;
+     }
+     
+     //cerr  << "TOLERA " << tol << " nchan " << nchan << " bot " << bottomFreq << " vb.nchan " << vb.nChannels() << endl;
+    //Number of beams that matters are the ones in the data
+     if(nchan > vb.nChannels()){
+      nchan=vb.nChannels();
+      tol=spwfreqwidth;
+      bottomFreq=min(localfreq);
+     }
+   
+    chanFreqs.resize();
+    if(nchan >= (Int)(freq.nelements()-1)) { indgen(chanMap); chanFreqs=freq; return;}
+    if((nchan==0) || (freq.nelements()==1)) { chanFreqs=Vector<Double>(1, bottomFreq);chanMap.set(0); return;}
+
+    chanFreqs.resize(nchan);
+    for(Int k=0; k < nchan; ++k){
+      chanFreqs[k]=k*tol+bottomFreq;
+    }
+    
+  
+    Int activechan=0;
+    chanMap.set(0);
+    for (uInt k=0; k < chanMap.nelements(); ++k){
+      Double mindiff=DBL_MAX;
+      Int nearestchan=0;
+      while((activechan< nchan) && Double(abs(freq[k]-chanFreqs[activechan])) > Double(tol/Double(2.0))){
+        if(mindiff > Double(abs(freq[k]-chanFreqs[activechan]))){
+          mindiff=Double(abs(freq[k]-chanFreqs[activechan]));
+          nearestchan=activechan;
+        }
+          
+        //	cerr << "k " << k << " atcivechan " << activechan << " comparison " 
+	//     << freq[k] << "    " << chanFreqs[activechan]  << endl;	
+	++activechan;
+      }
+      if(activechan != nchan){
+	chanMap[k]=activechan;
+      }
+      //////////////////
+      else{
+        //cerr << std::setprecision(10) << "freq diffs " << freq[k]-chanFreqs << "  TOL " << tol/2.0 << endl;
+        chanMap[k]=nearestchan;
+      }
+      ///////////////////////////
+      activechan=0;
+    }
+    //cerr << "chanfreqs "  << chanFreqs << endl;
+    //cerr << "USEFULchan " << chanMap << endl;
+    return;
+  }
+  /*
+  
+    void SimplePBConvFunc::findUsefulChannels(Vector<Int>& chanMap, Vector<Double>& chanFreqs,  const vi::VisBuffer2& vb, const Vector<Double>& freq){
     
 	  
 	Int spw=vb.spectralWindows()(0);
@@ -903,8 +990,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     //cerr << chanMap << endl;
     return;
   }
-
-
+  */
   Bool SimplePBConvFunc::checkPBOfField(const vi::VisBuffer2& vb){
     //Int fieldid=vb.fieldId();
     String msid=vb.msName(true);
@@ -955,6 +1041,7 @@ void SimplePBConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
 
   }
+  
 
   ImageInterface<Float>&  SimplePBConvFunc::getFluxScaleImage(){
 

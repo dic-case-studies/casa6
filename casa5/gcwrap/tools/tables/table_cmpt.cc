@@ -380,6 +380,23 @@ table::iswritable()
  return rstat;
 }
 
+bool
+table::isopened(const std::string& tabname)
+{
+ *itsLog << LogOrigin(__func__, name());
+ Bool rstat(false);
+ try {
+   rstat= casacore::Table::isOpened(casacore::String(tabname));
+	 
+ } catch (AipsError x) {
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    RETHROW(x);
+ }
+ return rstat;
+}
+
+
+  
 std::string
 table::endianformat()
 {

@@ -29,7 +29,7 @@ parallelimager::parallelimager()
 
 casac::record *
 parallelimager::clean(
-	const std::vector<long> &ranks,
+	const std::vector<long> &rankour,
 	const casac::record& clean_params,
 	const casac::record& selection_params,
 	const casac::record& image_params,
@@ -43,6 +43,8 @@ parallelimager::clean(
 	// imager. If the rank of this process in MPI_COMM_WORLD is not in the given
 	// list, we return an empty Record immediately.
 	int world_rank;
+        //MPI wants int so
+        std::vector<int> ranks(rankour.begin(), rankour.end());
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	if (std::find(ranks.begin(), ranks.end(), world_rank) != ranks.end()) {
 		// Starting from MPI_COMM_WORLD, create a communicator solely for the
