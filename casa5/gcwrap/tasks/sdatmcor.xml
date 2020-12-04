@@ -175,8 +175,8 @@
     </param>
 
     <param name="humidity" type="double" subparam="true">
-        <shortdescription>humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</shortdescription>
-        <description>humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</description>
+        <shortdescription>relative humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</shortdescription>
+        <description>relative humidity [percent]. -1 or the value (0.0 - 100.0) (&quot;&quot; = Tool default(-1))</description>
         <value type="double">-1</value>
     </param>
 
