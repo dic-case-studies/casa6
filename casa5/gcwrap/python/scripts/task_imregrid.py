@@ -69,7 +69,7 @@ def imregrid(
                         "*** Error \'%s\' updating HISTORY" % (instance), 'WARN'
                     )
                 outia.done()
-                return True
+                return
             else:
                 if (
                     not os.path.isdir(template)
@@ -111,7 +111,7 @@ def imregrid(
                     # eliminate dups
                     axestoregrid = list(set(axestoregrid))
                     if len(axestoregrid) == 0:
-                        raise Exception("Found no axes to regrid!")
+                        raise RuntimeError("Found no axes to regrid!")
                     axestoregrid.sort()
                 if (len(shape) == 1 and shape[0] == -1):
                     shape = _imregrid_handle_default_shape(
@@ -130,37 +130,28 @@ def imregrid(
 
         # The actual regridding.
         _myia.open(imagename)
-        # put this in its own try/catch so, if exception, the message is not
-        # logged twice
+        outia = _myia.regrid(
+            outfile=output, shape=shape, csys=csys.torecord(),
+            axes=axes, asvelocity=asvelocity,
+            method=interpolation, decimate=decimate,
+            replicate=replicate, overwrite=overwrite
+        )
         try:
-            outia = _myia.regrid(
-                outfile=output, shape=shape, csys=csys.torecord(),
-                axes=axes, asvelocity=asvelocity,
-                method=interpolation, decimate=decimate,
-                replicate=replicate, overwrite=overwrite
+            param_names = imregrid.__code__.co_varnames[:imregrid.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]   
+            write_image_history(
+                outia, sys._getframe().f_code.co_name,
+                param_names, param_vals, casalog
             )
-            try:
-                param_names = imregrid.__code__.co_varnames[:imregrid.__code__.co_argcount]
-                if is_python3:
-                    vars = locals( )
-                    param_vals = [vars[p] for p in param_names]
-                else:
-                    param_vals = [eval(p) for p in param_names]   
-                write_image_history(
-                    outia, sys._getframe().f_code.co_name,
-                    param_names, param_vals, casalog
-                )
-            except Exception as instance:
-                casalog.post(
-                    "*** Error \'%s\' updating HISTORY" % (instance), 'WARN'
-                )
-            return True
-        except Exception:
-            # The error message has already been logged by ia.regrid()
-            return False
-    except Exception as instance:
-        casalog.post("Error: " + str(instance), "SEVERE")
-        raise
+        except Exception as instance:
+            casalog.post(
+                "*** Error \'%s\' updating HISTORY" % (instance), 'WARN'
+            )
+        return
     finally:
         if _myia:
             _myia.done()

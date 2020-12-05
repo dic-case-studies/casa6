@@ -33,14 +33,14 @@ namespace casac {
       record* setpbpoly(const string& _telescope=string("VLA"), const string& _othertelescope=string(""), bool _dopb=bool(true), const std::vector<double>& _coeff=std::vector<double>({-1}), const variant& _maxrad=variant( ), const variant& _reffreq=variant( ), const string& _isthispb=string("PB"), const variant& _squintdir=variant( ), const variant& _squintreffreq=variant( ), bool _dosquint=bool(false), const variant& _paincrement=variant( ), bool _usesymmetricbeam=bool(false));
       bool setpbantresptable(const string& _telescope=string(""), const string& _othertelescope=string(""), bool _dopb=bool(true), const string& _antresppath=string(""));
       bool reset();
-      bool setuserdefault(int _vplistnum=int(-1), const string& _telescope=string(""), const string& _anttype=string(""));
-      int getuserdefault(const string& _telescope=string(""), const string& _anttype=string(""));
+      bool setuserdefault(long _vplistnum=long(-1), const string& _telescope=string(""), const string& _anttype=string(""));
+      long getuserdefault(const string& _telescope=string(""), const string& _anttype=string(""));
       std::vector<std::string> getanttypes(const string& _telescope=string(""), const variant& _obstime=variant( ), const variant& _freq=variant( ), const variant& _obsdirection=variant( ));
-      int numvps(const string& _telescope=string(""), const variant& _obstime=variant( ), const variant& _freq=variant( ), const variant& _obsdirection=variant( ));
+      long numvps(const string& _telescope=string(""), const variant& _obstime=variant( ), const variant& _freq=variant( ), const variant& _obsdirection=variant( ));
       record* getvp(const string& _telescope=string(""), const string& _antennatype=string(""), const variant& _obstime=variant( ), const variant& _freq=variant( ), const variant& _obsdirection=variant( ));
       record* getvps(const string& _telescope=string(""), const std::vector<std::string>& _antennas=std::vector<std::string>({}), const variant& _obstimestart=variant( ), const variant& _obstimeend=variant( ), const variant& _minfreq=variant( ), const variant& _maxfreq=variant( ), const variant& _obsdirection=variant( ));
       bool createantresp(const string& _imdir=string(""), const string& _starttime=string(""), const std::vector<std::string>& _bandnames=std::vector<std::string>({}), const std::vector<std::string>& _bandminfreq=std::vector<std::string>({}), const std::vector<std::string>& _bandmaxfreq=std::vector<std::string>({}));
-      string getrespimagename(const string& _telescope=string(""), const string& _starttime=string(""), const string& _frequency=string(""), const string& _functype=string("ANY"), const string& _anttype=string(""), const string& _azimuth=string("0deg"), const string& _elevation=string("45deg"), const string& _rectype=string(""), int _beamnumber=int(0));
+      string getrespimagename(const string& _telescope=string(""), const string& _starttime=string(""), const string& _frequency=string(""), const string& _functype=string("ANY"), const string& _anttype=string(""), const string& _azimuth=string("0deg"), const string& _elevation=string("45deg"), const string& _rectype=string(""), long _beamnumber=long(0));
 
         ~vpmanager( );
 

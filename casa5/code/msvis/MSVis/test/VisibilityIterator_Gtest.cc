@@ -155,7 +155,7 @@ printMs (MeasurementSet * ms)
 
             for (int i = 0; i < vb.nRow(); i++){
 
-                printf ("r=%d ", vb.rowIds () [i]);
+                printf ("r=%llu ", vb.rowIds () [i]);
                 printf ("t=%.0f ", vb.time () [i]);
                 printf ("a1=%d ", vb.antenna1() [i]);
                 printf ("a2=%d ", vb.antenna2 () [i]);
