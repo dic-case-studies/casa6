@@ -3,6 +3,7 @@ if is_CASA6:
     from casatasks import casalog
     from casatools import sidebandseparator, quanta
 else:
+    from taskinit import casalog
     from taskinit import qatool as quanta
     from casac import casac
 
