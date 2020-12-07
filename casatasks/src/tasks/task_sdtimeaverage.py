@@ -4,21 +4,24 @@ import numpy
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
-    from casatools import quanta, ms, table, mstransformer
+    from casatools import ms as mstool
+    from casatools import quanta, table, mstransformer
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from .update_spw import update_spwchan
     from . import sdutil
-
-    qa = quanta()  # to make compatible CASA6 / CASA5
-
 else:
     from taskinit import mttool as mstransformer
-    from taskinit import mstool as ms
+    from taskinit import mstool as mstool
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
+    from taskinit import casalog
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
+    from update_spw import update_spwchan
+    import sdutil
+
+qa = quanta()
 
 
 def sdtimeaverage(
@@ -108,7 +111,7 @@ def use_alternative_column(infile, datacolumn):
     """
      Alternatively use datacolumn if the specified column does not exist.
        In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
-       and vice versa.
+       and vice versa. (For user's convenience)
     """
     #  obtain the existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
@@ -194,8 +197,8 @@ def do_mst(
     pdh.setupIO()
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mstransformer()  # CASA6 changed.
-    mslocal = ms()            # CASA6 changed.
+    mtlocal = mstransformer()
+    mslocal = mstool()
 
     try:
         # Gather all the parameters in a dictionary.
@@ -293,7 +296,6 @@ def do_mst(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    # casalog.post('width =', width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -301,7 +303,6 @@ def do_mst(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-                            # casalog.post('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                               spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -310,7 +311,6 @@ def do_mst(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-                    # casalog.post('widths =', widths)
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -322,11 +322,8 @@ def do_mst(
                             # in that case.
                             cmd = ''
                             try:
-                                # casalog.post('sch1 =', sch1)
                                 sch2 = update_spwchan(
                                     infile, spw, sch1, truncate=True, widths=widths)
-                                # casalog.post('sch2 =', sch2)
-                                # casalog.post('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
@@ -351,7 +348,6 @@ def do_mst(
                     casalog.post(
                         'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
 
-
         finally:
             mytb.close()
             mslocal = None
@@ -370,19 +366,15 @@ def add_history(
         timespan,
         antenna,
         outfile):
-    """ partly revised for CASA6 """
-    mslocal = ms()
+    mslocal = mstool()
     # Write history to output MS, not the input ms.
     try:
-        code_object = sdtimeaverage.__code__                             # CASA6
-        # CASA6
+        code_object = sdtimeaverage.__code__
         param_names = code_object.co_varnames[:code_object.co_argcount]
-        local_vals = locals()                                            # CASA6
-        param_vals = [local_vals.get(p, None)
-                      for p in param_names]      # CASA6
+        local_vals = locals()
+        param_vals = [local_vals.get(p, None) for p in param_names]
         write_history(mslocal, outfile, 'sdtimeaverage', param_names,
                       param_vals, casalog)
-
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')

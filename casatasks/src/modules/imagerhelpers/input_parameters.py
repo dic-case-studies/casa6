@@ -6,6 +6,7 @@ import string
 import time
 import re
 import copy
+import pprint
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -86,7 +87,7 @@ class ImagerParameters():
                  conjbeams = True,
                  computepastep =360.0,
                  rotatepastep =360.0,
-                 pointingoffsetsigdev =[30.0,30.0],
+                 pointingoffsetsigdev = [30.0,30.0],
                  
                  pblimit=0.01,
                  normtype='flatnoise',
@@ -159,6 +160,10 @@ class ImagerParameters():
                  clipminmax=False
                  ):
         self.allparameters=dict(locals())
+        ############TESTOO for debugging Felipe's crash
+        #params_str=pprint.pformat(self.allparameters)
+        #casalog.post('ALLPARAMS : ' + params_str, 'WARN', 'CAS-9386-DEBUG')
+        ################################################
         del self.allparameters['self']
         self.defaultKey="0";
         ## Selection params. For multiple MSs, all are lists.

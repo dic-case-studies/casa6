@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import datetime
 import re
 import unittest
@@ -76,7 +79,8 @@ numOfScan = int(nRow / nInScan)   # test-MS2 (for timespan), in sdtimeimaging.ms
 # Numerical Error Limit
 
 errLimit = 1.0e-9   # numerical error Limit of ZeroSum. NonZeroSum
-errLimit2 = 1.0e-9  # numerical error Limit of Sigma and Weight
+errLimit2 = 1.0e-9  # absolute numerical error Limit of Sigma^2 vs 1/Weight
+errLimit3 = 1.0e-7  # relative numerical error Limit of Weight
 testInterval = 1.0   # fundamental INTERVAL in TEST-MS (tunable)
 
 ##############
@@ -197,7 +201,7 @@ class test_sdtimeaverage(unittest.TestCase):
         #  if success, returns True
         #  if any error, returns False.
         try:
-            return sdtimeaverage(**self.args)
+            sdtimeaverage(**self.args)
         except Exception as exc:
             print('Exception running sdtimeaverage: {}'.format(exc))
             raise
@@ -332,8 +336,8 @@ class test_sdtimeaverage(unittest.TestCase):
         print("Sigma      :{0}".format(self.sgm))
 
         # Check (based on Formula about Sigma and Weight) #
-        check1 = (self.wgt[0] == weight_ref)
-        check2 = (self.wgt[1] == weight_ref)
+        check1 = (self.wgt[0] - weight_ref) / weight_ref < errLimit3
+        check2 = (self.wgt[1] - weight_ref) / weight_ref < errLimit3
         check3 = ((1.0 / self.wgt[0]) -
                   (self.sgm[0] * self.sgm[0]) < errLimit2)
         check4 = ((1.0 / self.wgt[1]) -
@@ -779,7 +783,7 @@ class test_sdtimeaverage(unittest.TestCase):
             self._run_task(prm)
 
     def test_param43E(self):
-        '''sdtimeaverage::42E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
+        '''sdtimeaverage::43E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
 
         prm = {'antenna': 'gBT&&&'}
         # Run Task and check
@@ -897,12 +901,12 @@ class test_sdtimeaverage(unittest.TestCase):
         self._checkOutputRec(defOutputMs, nRowOrg)
 
     def test_param116(self):
-        '''sdtimeagerage::115:: timebin='-1' (Error. Not acceptable)    '''
+        '''sdtimeagerage::116:: timebin='-1' (Error. Not acceptable)    '''
 
         # Run Task
         prm = {'timebin': '-1'}
         # Run Task and check
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self._run_task(prm)
 
 #

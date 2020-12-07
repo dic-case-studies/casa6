@@ -3,15 +3,18 @@ import re
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
-    from casatools import quanta, ms, table, mstransformer
+    from casatools import ms as mstool
+    from casatools import mstransformer as mttool
+    from casatools import quanta, table
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from . import flaghelper as fh
     from .update_spw import update_spwchan
     from .callibrary import callibrary
 else:
-    from taskinit import mttool as mstransformer
-    from taskinit import mstool as ms
+    from taskinit import casalog
+    from taskinit import mttool
+    from taskinit import mstool
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
     from mstools import write_history
@@ -19,6 +22,8 @@ else:
     import flaghelper as fh
     from update_spw import update_spwchan
     from callibrary import callibrary
+
+qa = quanta()
 
 """
 The following code is based on the mstransform code, with
@@ -111,7 +116,7 @@ def sdpolaverage(
     # Process the input Multi-MS
     if ParallelDataHelper.isMMSAndNotServer(infile) == True and monolithic_processing == False:
         '''
-        retval{'status': True,  'axis':''}         --> can run in parallel      
+        retval{'status': True,  'axis':''}         --> can run in parallel
         retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
         retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
         '''
@@ -159,8 +164,8 @@ def sdpolaverage(
         return
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mstransformer()
-    mslocal = ms()
+    mtlocal = mttool()
+    mslocal = mstool()
 
     try:
         # Gather all the parameters in a dictionary.
@@ -231,7 +236,7 @@ def sdpolaverage(
             config['hanning'] = True
 
         if regridms:
-            casalog.post('Parse regridding parameters')            
+            casalog.post('Parse regridding parameters')
             config['regridms'] = True
             # Reset the defaults depending on the mode
             # Only add non-empty string parameters to config dictionary
@@ -257,7 +262,7 @@ def sdpolaverage(
 
         # Only parse timeaverage parameters when timebin > 0s
         if timeaverage:
-            tb = quanta.convert(quanta.quantity(timebin), 's')['value']
+            tb = qa.convert(qa.quantity(timebin), 's')['value']
             if not tb > 0:
                 raise ValueError("Parameter timebin must be > '0s' to do time averaging")
 
@@ -306,7 +311,6 @@ def sdpolaverage(
     finally:
         mtlocal.done()
 
-
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
 
@@ -338,7 +342,6 @@ def sdpolaverage(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #casalog.post("width =", width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -346,7 +349,6 @@ def sdpolaverage(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-                            #casalog.post('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(
                                 vis=infile,
                                 spw='*')['spw'])
@@ -356,7 +358,6 @@ def sdpolaverage(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-                    #casalog.post('widths =', widths)
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -368,11 +369,8 @@ def sdpolaverage(
                             # in that case.
                             cmd = ''
                             try:
-                                #casalog.post('sch1 =', sch1)
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #casalog.post('sch2 =', sch2)
-                                ##casalog.post('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
