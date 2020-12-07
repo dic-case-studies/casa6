@@ -293,7 +293,6 @@
                          5: subarctic winter)
 
         </description>
-        <any type="variant"  limittypes="int"/>
         <value>2</value>
     </param>
 
