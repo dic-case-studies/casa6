@@ -144,6 +144,7 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsPrevAspAmplitude.resize(0);
   itsUsedMemoryMB = double(HostInfo::memoryUsed()/2014);
   maxPsfConvInitScales.resize(0);
+  itsNormMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", itsDefaultNorm);
 }
 
 AspMatrixCleaner::~AspMatrixCleaner()
@@ -437,14 +438,27 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 6) // GSL without der M31
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2.2e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL without der, G55 , with new norm this is not needed.
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.1e-4 && abs(itsStrengthOptimum) < 1e-4) // GSL with scaled der, G55 , with new norm this is not needed.
-    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
+    //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
+    if (itsNormMethod == 1) // only Nomr Method 1 needs hogbom for speedup
     {
-	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
-	    //itsStrenThres = itsStrenThres/3.0; //box3
-	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
-	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
+      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // GSL with der, Points ,with new norm this is not needed.
+      {
+  	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
+  	    //itsStrenThres = itsStrenThres/3.0; //box3
+  	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
+  	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
 
-	    switchedToHogbom();
+  	    switchedToHogbom();
+      }
+      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // GSL with der, Points ,with new norm this is not needed.
+      {
+        cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
+        //itsStrenThres = itsStrenThres/3.0; //box3
+        //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
+        //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
+
+        switchedToHogbom();
+      }
     }
 
     if (!itsSwitchedToHogbom)
@@ -480,7 +494,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // Various ways of stopping:
     //    1. stop if below threshold
-    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-7/*threshold()*/)
+    /*if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-7/*threshold()* /)
     {
     	cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
@@ -488,9 +502,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
       break;
-    }
+    }*/
     // with new norm this is not needed
-    /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.0 && abs(itsStrengthOptimum) < 1e-7/ *threshold()* /)
+    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2e-4 /*&& abs(itsStrengthOptimum) < 1e-7*//*threshold()*/)
     {
       cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
@@ -498,7 +512,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
       break;
-    }*/
+    }
     //    2. negatives on largest scale?
     if ((itsNscales > 1) && itsStopAtLargeScaleNegative  &&
         //optimumScale == (itsNscales-1) &&
@@ -1034,6 +1048,7 @@ void AspMatrixCleaner::setInitScaleXfrs(/*const Array<Float> arrpsf, */const Flo
     //cout << "itsInitScaleXfrs[" << scale << "](262,291) = " << (itsInitScaleXfrs[scale])(262,291) << endl;
     //cout << "max itsInitScaleXfrs[" << scale << "] = " << max(abs(itsInitScaleXfrs[scale])) << endl;
   }
+  cout << "Norm Method is " << itsNormMethod << endl;
 }
 
 // calculate the convolutions of the psf with the initial scales
@@ -1273,7 +1288,6 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     cout << "orig itsDirty : min " << minVal << " max " << maxVal << endl;
     cout << "posmin " << posmin << " posmax " << posmax << endl;
-    Int normMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", itsDefaultNorm);
 
     for (scale=0; scale < itsNInitScales; ++scale)
     {
@@ -1326,7 +1340,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
         //findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
         findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
 
-      if (normMethod == 2)
+      if (itsNormMethod == 2)
       {
         if (scale > 0)
         {
@@ -1363,7 +1377,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. Seems it can be in the loop as well.
 
     // norm method 2 recovers the optimal strength and then normalize it to get the init guess
-    if (normMethod == 2)
+    if (itsNormMethod == 2)
       strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
 
     strengthOptimum /= normalization;

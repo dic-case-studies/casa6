@@ -189,6 +189,7 @@ private:
   casacore::Vector<casacore::Float> maxPsfConvInitScales;
 
   const casacore::Int itsDefaultNorm = 1;
+  casacore::Int itsNormMethod;
 };
 
 } //# NAMESPACE CASA - END
