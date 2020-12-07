@@ -75,12 +75,13 @@
                        Note that spw specifies the list of spw ids to apply correction.
                        Spw ids to output should be specified by outputspw.
 
+                       Note also that channel selection is not available for this task.
+
                        Default: ''=all spectral windows
                        Example:
-                          spw='0~2,4'; spectral windows 0,1,2,4 (all channels)
+                          spw='0~2,4'; spectral windows 0,1,2,4
                           spw='&lt;2';   spectral windows less than 2 (i.e. 0,1)
                           spw='0,10'; spw 0,10
-                          spw='0~2:2~6'; spw 0,1,2 with channels 2 through 6 in each.
 
         </description>
         <value/>
@@ -110,11 +111,11 @@
 
                        Default: '' (all)
                        Example:
-                       antenna='5\&amp;6'; baseline between antenna index 5 and
+                       antenna='5&amp;6'; baseline between antenna index 5 and
                                      index 6.
-                       antenna='VA05\&amp;VA06'; baseline between VLA antenna 5
+                       antenna='VA05&amp;VA06'; baseline between VLA antenna 5
                                            and 6.
-                       antenna='5\&amp;6;7\&amp;8'; baselines 5-6 and 7-8
+                       antenna='5&amp;6;7&amp;8'; baselines 5-6 and 7-8
                        antenna='5'; all baselines with antenna index 5
                        antenna='05'; all baselines with antenna number 05
                                     (VLA old name)
@@ -213,6 +214,8 @@
                        Note that outputspw specifies the list of spw ids to output.
                        Spw ids to be corrected should be specified by spw.
 
+                       Note also that channel selection is not available for this task.
+
         </description>
         <value type="string"></value>
     </param>
@@ -221,6 +224,12 @@
         <shortdescription>Gain factor to multiply correction term</shortdescription>
         <description>Gain factor to multiply correction term.
 
+                       In ALMA data reduction, intensity of calibrated spectra, antenna
+                       temperature Ta* in unit of Kelvin, is converted to Jansky (Jy)
+                       by multiplying conversion factor. This parameter is intended to
+                       apply exactly the same multiplicative factor to correction term.
+                       If no conversion is applied to spectral data, gainfactor should
+                       be 1.0, which means that the correction is in unit of Ta*.
                        The value can be float, dict, or string. Default is 1.0.
 
                        Float value is interpreted as fixed factor, which is applied to all spws.
