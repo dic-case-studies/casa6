@@ -3277,8 +3277,6 @@ class Test_mosaic(test_tclean_base):
             'npts_real': [True, 15876]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
-        print("REPORT9 = ", report9 )
-
 
         # report combination (test_mosaic_mfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \

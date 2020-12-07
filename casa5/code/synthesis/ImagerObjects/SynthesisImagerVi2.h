@@ -263,6 +263,9 @@ public:
   casacore::Vector<SynthesisParamsImage> imparsVec_p;
   casacore::Vector<SynthesisParamsGrid> gridparsVec_p;
   casacore::Record weightParams_p;
+  /// need this as writing imageinfo often seems to truncate psf size back to
+  /// 0 and back to normal size...so do it only once
+  casacore::ImageInfo cubePsfImageInfo_p;
 };
 } //# NAMESPACE CASA - END
 

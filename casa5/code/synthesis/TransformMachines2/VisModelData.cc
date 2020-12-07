@@ -201,6 +201,12 @@ void VisModelData::clearModel(const MeasurementSet& thems){
     }
     return;
   }
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().lock(True);   
+  }
   LogIO logio;
   logio << "Clearing all model records in MS header."
 	  << LogIO::POST;
@@ -242,6 +248,11 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	   newTab.rwKeywordSet().removeField("definedmodel_field_"+String::toString(fields[k]));
       }
   }
+  if(!alreadyLocked)
+    newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   ////Cleaning out orphaned image disk models
   String srctable=thems.source().isNull() ? "" : thems.source().tableName();
   Vector<String> possibleFT(2); 
@@ -269,6 +280,12 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   }
   if(!newTab.isWritable())
     return;
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().lock(True);   
+  }
 
   MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
@@ -365,13 +382,17 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	      
 	
 	    
-    }
+	}
       else
 	logio << " " << fldnames[fields[k]] << " (id = " << fields[k] << ") not found." << LogIO::POST;
     }
     
   }
-  
+  if(!alreadyLocked)
+    newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   
 
   }
