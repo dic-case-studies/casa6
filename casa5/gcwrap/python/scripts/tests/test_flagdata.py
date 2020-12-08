@@ -19,8 +19,8 @@ if is_CASA6:
     from casatasks.private import flaghelper as fh
 
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
 
     # CASA6 doesn't need defaul
     def default(atask):
@@ -34,11 +34,13 @@ else:
     from __main__ import default
     from parallel.parallel_task_helper import ParallelTaskHelper
     import flaghelper as fh
-    import testhelper as th
+    #import testhelper as th
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)
+
+from casatestutils import testhelper as th
 
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 

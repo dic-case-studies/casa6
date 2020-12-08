@@ -19,8 +19,8 @@ if is_CASA6:
     ### for selection_syntax import
     from casatestutils import selection_syntax
 
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from testhelper import copytree_ignore_subversion, TableCacheValidator
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
 
     # default isn't used in casatasks
     def default(atask):
@@ -40,12 +40,12 @@ else:
     from taskinit import msmdtool as msmetadata
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 
     try:
-        from . import testutils
+        from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
     except:
         from tests.testutils import copytree_ignore_subversion, TableCacheValidator
 

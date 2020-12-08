@@ -19,8 +19,9 @@ if is_CASA6:
     ### for selection_syntax import
     from casatestutils import selection_syntax
 
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from testhelper import copytree_ignore_subversion
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #from testhelper import copytree_ignore_subversion
+    from casatestutils.testhelper import copytree_ignore_subversion
 
     tb = table()
 
@@ -43,7 +44,7 @@ else:
         import tests.selection_syntax as selection_syntax
         
     try:
-        from . import testutils
+        from casatestutils.testhelper import copytree_ignore_subversion
     except:
         import tests.testutils as testutils
     copytree_ignore_subversion = testutils.copytree_ignore_subversion

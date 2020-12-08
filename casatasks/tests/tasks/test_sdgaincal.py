@@ -17,8 +17,8 @@ if is_CASA6:
     from casatasks.private import sdutil
 
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from testhelper import copytree_ignore_subversion
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils.testhelper import copytree_ignore_subversion
 
     # this distinction doesn't exist in casatasks
     mstransform_cli = mstransform
@@ -31,11 +31,11 @@ else:
     from sdcal_cli import sdcal_cli
     import sdutil
 
-    try:
-        from .testutils import copytree_ignore_subversion
-    except:
-        from tests.testutils import copytree_ignore_subversion
-
+    #try:
+    #    from .testutils import copytree_ignore_subversion
+    #except:
+    #    from tests.testutils import copytree_ignore_subversion
+    from casatestutils.testhelper import copytree_ignore_subversion
 
 class sdgaincal_test_base(unittest.TestCase):
     """

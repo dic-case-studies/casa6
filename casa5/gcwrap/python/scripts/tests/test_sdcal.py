@@ -36,8 +36,8 @@ try:
             from casatasks.private import sdutil
 
             ### for testhelper import
-            sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-            from testhelper import copytree_ignore_subversion
+            #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+            from casatestutils.testhelper import copytree_ignore_subversion
 
             tb = table()
 
@@ -57,7 +57,7 @@ except Casa5InitError as e:
     from partition import partition
 
     try:
-        from .testutils import copytree_ignore_subversion
+        from casatestutils.testhelper import copytree_ignore_subversion
     except:
         from tests.testutils import copytree_ignore_subversion
 

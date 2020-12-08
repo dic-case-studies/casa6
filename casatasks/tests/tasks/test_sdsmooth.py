@@ -14,7 +14,8 @@ if is_CASA6:
     from casatools import ctsys, table, ms
     from casatasks import sdsmooth
     from casatasks.private import sdutil
-    from testhelper import copytree_ignore_subversion
+    from casatestutils.testhelper import copytree_ignore_subversion
+    #from testhelper import copytree_ignore_subversion
 
     tb = table( )
 else:
@@ -25,11 +26,11 @@ else:
     from sdsmooth import sdsmooth
     from taskinit import mstool as ms
 
-    try:
-        from .testutils import copytree_ignore_subversion
-    except:
-        from tests.testutils import copytree_ignore_subversion
-
+    #try:
+    #    from .testutils import copytree_ignore_subversion
+    #except:
+    #    from tests.testutils import copytree_ignore_subversion
+    from casatestutils.testhelper import copytree_ignore_subversion
     # the global tb tool is used here
 
 def gaussian_kernel(nchan, kwidth):

@@ -8,8 +8,9 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#import testhelper as th
+from casatestutils import testhelper as th
 
 subdir = 'visibilities/vla/'
 if th.is_casa6():

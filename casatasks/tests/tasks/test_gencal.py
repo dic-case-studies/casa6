@@ -10,18 +10,20 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
     from casatools import ctsys
     from casatasks import gencal
     
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
-    import testhelper as th
+    #import testhelper as th
     from tasks import gencal
     from taskinit import *
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
+
+from casatestutils import testhelper as th
 
 '''
 Unit tests for gencal 

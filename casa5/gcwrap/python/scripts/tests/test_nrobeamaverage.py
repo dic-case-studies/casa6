@@ -10,7 +10,8 @@ import glob
 from tasks import nrobeamaverage
 from taskinit import mstool, tbtool
 from __main__ import default
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 from sdutil import tbmanager, toolmanager, table_selector
 
 # Define the root for the data files

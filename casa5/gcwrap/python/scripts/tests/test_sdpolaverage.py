@@ -10,7 +10,7 @@ import glob
 from tasks import sdpolaverage
 from taskinit import mstool, tbtool, msmdtool, aftool
 from __main__ import default
-import testhelper as th
+from casatestutils import testhelper as th
 from sdutil import tbmanager, toolmanager, table_selector
 
 # Define the root for the data files

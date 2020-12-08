@@ -16,8 +16,7 @@ if is_CASA6:
     from casatools import regionmanager
     from casatools import ctsys
     datapath = ctsys.resolve('regression/unittest/imregrid/')
-
-    from testhelper import copytree_ignore_subversion
+    from casatestutils.testhelper import copytree_ignore_subversion
 
     # default isn't used in CASA6
     def default(atask):
