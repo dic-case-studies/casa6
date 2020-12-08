@@ -179,7 +179,15 @@ def cvel(vis, outputvis,
                  default = False
     
     """
-    
+
+    # Note: this is duplicated in task_cvel, and really needing CASA-wide harmonization
+    # (CAS-12871)
+    def copy_ms(src, dest):
+        """ This is a MMS-safe copy of an MMS tree directory.
+        :param src: path to the source MS
+        :param dest: path to the destination MS
+        """
+        shutil.copytree(src, dest, symlinks=True)
 
     #Python script
 
@@ -191,7 +199,7 @@ def cvel(vis, outputvis,
         casalog.origin('cvel')
 
         if not ((type(vis)==str) & (os.path.exists(vis))):
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
 
         assert outputvis != '', "Must provide output data set name in parameter outputvis."
         assert not os.path.exists(outputvis), "Output MS %s already exists - will not overwrite." % outputvis
@@ -252,7 +260,7 @@ def cvel(vis, outputvis,
                 message += " was selected as phasecenter but is not among the fields selected for output: "
                 message += str(_ms.msseltoindex(vis,field=field)['field'])
                 _ms.close()
-                raise Exception(message)
+                raise RuntimeError(message)
 
             _tb.open(vis+"/FIELD")
             try:
@@ -270,7 +278,7 @@ def cvel(vis, outputvis,
                 _tb.close()
                 message = "phasecenter field id " + str(phasecenter) + " is not valid"
                 _ms.close()
-                raise Exception(message)
+                raise RuntimeError(message)
 
         if(mode=='frequency'):
             ## reset the default values
@@ -382,7 +390,7 @@ def cvel(vis, outputvis,
         elif (mpresent and not cpresent and not dpresent):
             datacolumn = 'model_data'
         else:
-            raise Exception("Neither DATA nor CORRECTED_DATA nor MODEL_DATA column present. Cannot proceed.")
+            raise RuntimeError("Neither DATA nor CORRECTED_DATA nor MODEL_DATA column present. Cannot proceed.")
 
         if(doselection and not dopreaverage):
             casalog.post("Creating selected SubMS ...", 'INFO')
@@ -399,7 +407,7 @@ def cvel(vis, outputvis,
             if(hanning):
                 casalog.post("Creating working copy for Hanning-smoothing ...", 'INFO')
                 shutil.rmtree(outputvis+'TMP',ignore_errors=True)
-                shutil.copytree(vis,outputvis+'TMP')
+                copy_ms(vis, outputvis+'TMP')
                 _ms.open(outputvis+'TMP', nomodify=False)
                 _ms.hanningsmooth(datacolumn=datacolumn)
                 _ms.close()
@@ -449,7 +457,7 @@ def cvel(vis, outputvis,
             # no selection or preaveraging necessary, just copy
             casalog.post("Creating working copy ...", 'INFO')
             shutil.rmtree(outputvis,ignore_errors=True)
-            shutil.copytree(vis,outputvis)
+            copy_ms(vis, outputvis)
 
         # Combine and if necessary regrid it
         _ms.open(outputvis, nomodify=False)
@@ -462,7 +470,7 @@ def cvel(vis, outputvis,
                         phasec=newphasecenter, restfreq=restfreq,
                         outframe=outframe, veltype=veltype, hanning=hanning):
             _ms.close()
-            raise Exception("Error in regridding step ...")
+            raise RuntimeError("Error in regridding step ...")
         _ms.close()
 
         # deal with the passall option
@@ -517,7 +525,7 @@ def cvel(vis, outputvis,
                     _ms.close()
                     shutil.rmtree(outputvis+temp_suffix)
                     if not rval:
-                        raise Exception("Error in attaching passed-through data ...")
+                        raise RuntimeError("Error in attaching passed-through data ...")
 
                 # II) deselected fields and selected spws
                 if not (fielddesel == ""):
@@ -540,7 +548,7 @@ def cvel(vis, outputvis,
                     _ms.close()
                     shutil.rmtree(outputvis+temp_suffix)
                     if not rval:
-                        raise Exception("Error in attaching passed-through data ...")
+                        raise RuntimeError("Error in attaching passed-through data ...")
 
         # Write history to output MS
         try:
@@ -556,14 +564,8 @@ def cvel(vis, outputvis,
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')
 
-        return True
-
-    except Exception as instance:
-        print('*** Error *** ',instance)
+    finally:
         # delete temp output (comment out for debugging)
         if os.path.exists(outputvis+".spwCombined"):
             casalog.post("Deleting temporary output files ...", 'INFO')
             shutil.rmtree(outputvis+".spwCombined")
-        raise
-    
-

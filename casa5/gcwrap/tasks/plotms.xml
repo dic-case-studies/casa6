@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="plotms" category="visualization, information,editing, manipulation, utility" async="never">
+<task async="never" category="visualization, information,editing, manipulation" name="plotms" type="function">
 <shortdescription>A plotter/interactive flagger for visibility data.</shortdescription>
 
-<returns type="void" />
+<returns type="void"/>
 
 <description>
 
@@ -24,7 +20,7 @@
 
                 Most of the basic plotms functions will work for calibration tables.
                 The correlation selection string may be used to select polarization
-                in a cal table, including ratio plots ("/").  The antenna selection
+                in a cal table, including ratio plots (&quot;/&quot;).  The antenna selection
                 string is used to select antenna1 only, rather than baselines as in
                 an MS. When plotting parameterized CalTables, such as delays, antpos,
                 gaincurve, or opacity, plotms will currently just plot the simple
@@ -42,49 +38,45 @@
 
 <input>
 
-<!--
-###############################################################################
-MS Parameters
-###############################################################################
--->
-  <param type="string" name="vis" kind="ms">
-    <description>Input MS or CalTable (blank for none)</description>
-    <value />
+
+  <param kind="ms" name="vis" type="string"><shortdescription>Input MS or CalTable (blank for none)</shortdescription><description>Input MS or CalTable (blank for none)</description>
+    
+    <value/>
   </param>
   
   
   
-  <param type="int" name="gridrows">
-    <description>Number of subplot rows</description>
+  <param name="gridrows" type="int"><shortdescription>Number of subplot rows</shortdescription><description>Number of subplot rows</description>
+    
     <value>1</value>
   </param>
   
-  <param type="int" name="gridcols">
-    <description>Number of subplot columns</description>
+  <param name="gridcols" type="int"><shortdescription>Number of subplot columns</shortdescription><description>Number of subplot columns</description>
+    
     <value>1</value>
   </param>
   
-   <param type="int" name="rowindex">
-       <description>Row location of the plot (0-based)</description>
+   <param name="rowindex" type="int"><shortdescription>Row location of the plot (0-based)</shortdescription><description>Row location of the plot (0-based)</description>
+       
        <value>0</value>
    </param>
 
-   <param type="int" name="colindex">
-       <description>Column location of the plot (0-based)</description>
+   <param name="colindex" type="int"><shortdescription>Column location of the plot (0-based)</shortdescription><description>Column location of the plot (0-based)</description>
+       
        <value>0</value>
    </param>
   
-   <param type="int" name="plotindex">
-       <description>Index to address a subplot (0-based)</description>
+   <param name="plotindex" type="int"><shortdescription>Index to address a subplot (0-based)</shortdescription><description>Index to address a subplot (0-based)</description>
+       
        <value>0</value>
    </param>
 
 
-  <param type="string" name="xaxis">
-    <description>Plot x-axis (blank for default/current)</description>
-    <value />
+  <param name="xaxis" type="string"><shortdescription>Plot x-axis (blank for default/current)</shortdescription><description>Plot x-axis (blank for default/current)</description>
+    
+    <value/>
     <allowed kind="enum">
-      <value />
+      <value/>
       <value>scan</value>
       <value>Scan</value>
       <value>field</value>
@@ -240,11 +232,11 @@ MS Parameters
     </allowed>
   </param>
   
-    <param type="string" name="xdatacolumn" subparam="true" >
-      <description>Data column to use for x-axis (blank for default/current).  Note that unspecified residuals are complex (vector) differences or ratios.</description>
-      <value />
+    <param subparam="true" name="xdatacolumn" type="string"><shortdescription>Data column to use for x-axis (blank for default/current).  Note that unspecified residuals are complex (vector) differences or ratios.</shortdescription><description>Data column to use for x-axis (blank for default/current).  Note that unspecified residuals are complex (vector) differences or ratios.</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value />
+        <value/>
         <value>data</value>
         <value>corrected</value>
         <value>model</value>
@@ -265,11 +257,11 @@ MS Parameters
       </allowed>
     </param>
     
-    <param type="string" name="xframe" subparam="true">
-      <description>Coordinate frame to use for x-axis</description>
-      <value />
+    <param subparam="true" name="xframe" type="string"><shortdescription>Coordinate frame to use for x-axis</shortdescription><description>Coordinate frame to use for x-axis</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value />
+        <value/>
         <value>icrs</value>
         <value>j2000</value>
         <value>b1950</value>
@@ -278,26 +270,26 @@ MS Parameters
       </allowed>
     </param>
     
-    <param type="string" name="xinterp" subparam="true">
-      <description>Interpolation method for x-axis</description>
-      <value />
+    <param subparam="true" name="xinterp" type="string"><shortdescription>Interpolation method for x-axis</shortdescription><description>Interpolation method for x-axis</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value />
+        <value/>
         <value>nearest</value>
         <value>cubic spline</value>
-        <!--  allow also shorter equivalent for 'cubic spline': -->
+        
         <value>spline</value>
       </allowed>
     </param>
     
     
-  <param type="any" name="yaxis">
-  <description>Plot y-axis (blank for default/current)</description>
-  <any type="variant" limittype="string stringArray"/>
-   <value type="string" />
-   <value type="stringArray" ><value></value></value>
+  <param name="yaxis" type="any"><shortdescription>Plot y-axis (blank for default/current)</shortdescription><description>Plot y-axis (blank for default/current)</description>
+  
+  <any limittype="string stringArray" type="variant"/>
+   <value type="string"/>
+   <value type="stringArray"><value/></value>
    <allowed kind="enum">
-      <value />
+      <value/>
       <value>scan</value>
       <value>Scan</value>
       <value>field</value>
@@ -456,11 +448,11 @@ MS Parameters
     </allowed>
     </param>
     
-    <param type="any" name="ydatacolumn" subparam="true" >
-      <description>Data column to use for y-axis (blank for default/current). Note that unspecified residuals are complex (vector) differences or ratios.</description>
-      <any type="variant" limittype='string stringArray'/>
+    <param subparam="true" name="ydatacolumn" type="any"><shortdescription>Data column to use for y-axis (blank for default/current). Note that unspecified residuals are complex (vector) differences or ratios.</shortdescription><description>Data column to use for y-axis (blank for default/current). Note that unspecified residuals are complex (vector) differences or ratios.</description>
+      
+      <any limittype="string stringArray" type="variant"/>
       <value type="string"/>
-      <allowed kind="enum" type="string">
+      <allowed type="string" kind="enum">
         <value/>
         <value>data</value>
         <value>corrected</value>
@@ -482,12 +474,12 @@ MS Parameters
       </allowed>
     </param>
     
-    <param type="any" name="yframe" subparam="true">
-      <description>Coordinate frame to use for y-axis</description>
-      <any type="variant" limittype='string stringArray'/>
+    <param subparam="true" name="yframe" type="any"><shortdescription>Coordinate frame to use for y-axis</shortdescription><description>Coordinate frame to use for y-axis</description>
+      
+      <any limittype="string stringArray" type="variant"/>
       <value type="string"/>
-      <allowed kind="enum" type="string">
-        <value />
+      <allowed type="string" kind="enum">
+        <value/>
         <value>icrs</value>
         <value>j2000</value>
         <value>b1950</value>
@@ -496,172 +488,160 @@ MS Parameters
       </allowed>
     </param>
     
-    <param type="any" name="yinterp" subparam="true">
-      <description>Interpolation method for y-axis</description>
-      <any type="variant" limittype='string stringArray'/>
+    <param subparam="true" name="yinterp" type="any"><shortdescription>Interpolation method for y-axis</shortdescription><description>Interpolation method for y-axis</description>
+      
+      <any limittype="string stringArray" type="variant"/>
       <value type="string"/>
-      <allowed kind="enum" type="string">
-        <value />
+      <allowed type="string" kind="enum">
+        <value/>
         <value>nearest</value>
         <value>cubic spline</value>
-        <!--  allow also shorter equivalent for 'cubic spline': -->
+        
         <value>spline</value>
       </allowed>
     </param>
     
     
-    <param type="any" name="yaxislocation" subparam="false">
-      <description>Location of the y-axis (blank for default: left)</description>
-      <any type="variant" limittype='string stringArray'/>
-      <value type="string" />
-      <allowed kind="enum" type="string">
-        <value />
+    <param subparam="false" name="yaxislocation" type="any"><shortdescription>Location of the y-axis (blank for default: left)</shortdescription><description>Location of the y-axis (blank for default: left)</description>
+      
+      <any limittype="string stringArray" type="variant"/>
+      <value type="string"/>
+      <allowed type="string" kind="enum">
+        <value/>
         <value>left</value>
         <value>right</value>
       </allowed>
     </param>
     
   
-<!--
-###############################################################################
-MS Selection parameters
-###############################################################################
--->
 
-  <param type="bool" name="selectdata">
-    <description>Enable data selection parameters</description>
+
+  <param name="selectdata" type="bool"><shortdescription>Enable data selection parameters</shortdescription><description>Enable data selection parameters</description>
+    
     <value>True</value>
   </param>
   
-    <param type="string" name="field" subparam="true">
-      <description>Field names or ids (blank for all)</description>
-      <value />
+    <param subparam="true" name="field" type="string"><shortdescription>Field names or ids (blank for all)</shortdescription><description>Field names or ids (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="spw" subparam="true">
-      <description>Spectral windows:channels (blank for all)</description>
-      <value />
+    <param subparam="true" name="spw" type="string"><shortdescription>Spectral windows:channels (blank for all)</shortdescription><description>Spectral windows:channels (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="timerange" subparam="true">
-      <description>Time range (blank for all)</description>
-      <value />
+    <param subparam="true" name="timerange" type="string"><shortdescription>Time range (blank for all)</shortdescription><description>Time range (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="uvrange" subparam="true">
-      <description>UV range (blank for all)</description>
-      <value />
+    <param subparam="true" name="uvrange" type="string"><shortdescription>UV range (blank for all)</shortdescription><description>UV range (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="antenna" subparam="true">
-      <description>Baseline/antenna names or ids (blank for all)</description>
-      <value />
+    <param subparam="true" name="antenna" type="string"><shortdescription>Baseline/antenna names or ids (blank for all)</shortdescription><description>Baseline/antenna names or ids (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="scan" subparam="true">
-      <description>Scan numbers (blank for all)</description>
-      <value />
+    <param subparam="true" name="scan" type="string"><shortdescription>Scan numbers (blank for all)</shortdescription><description>Scan numbers (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="correlation" subparam="true">
-      <description>Correlations/polarizations (blank for all)</description>
-      <value />
+    <param subparam="true" name="correlation" type="string"><shortdescription>Correlations/polarizations (blank for all)</shortdescription><description>Correlations/polarizations (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="array" subparam="true">
-      <description>(Sub)array numbers (blank for all)</description>
-      <value />
+    <param subparam="true" name="array" type="string"><shortdescription>(Sub)array numbers (blank for all)</shortdescription><description>(Sub)array numbers (blank for all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="observation" subparam="true">
-      <description>Observation IDs (blank for all)</description>
-      <value />
+    <param subparam="true" name="observation" type="string"><shortdescription>Observation IDs (blank for all)</shortdescription><description>Observation IDs (blank for all)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="intent" subparam="true">
-      <description>Observing intent (blank for all)</description>
-      <value />
+    <param subparam="true" name="intent" type="string"><shortdescription>Observing intent (blank for all)</shortdescription><description>Observing intent (blank for all)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="feed" subparam="true">
-      <description>Feed numbers (blank for all)</description>
-      <value />
+    <param subparam="true" name="feed" type="string"><shortdescription>Feed numbers (blank for all)</shortdescription><description>Feed numbers (blank for all)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="msselect" subparam="true">
-      <description>MSSelection TaQL string (blank for none)</description>
-      <value />
+    <param subparam="true" name="msselect" type="string"><shortdescription>MSSelection TaQL string (blank for none)</shortdescription><description>MSSelection TaQL string (blank for none)</description>
+      
+      <value/>
     </param>
 
 
-<!--
-###############################################################################
-MS Averaging Parameters
-###############################################################################
--->
 
-  <param type="bool" name="averagedata">
-    <description>Enable data averaging parameters</description>
+
+  <param name="averagedata" type="bool"><shortdescription>Enable data averaging parameters</shortdescription><description>Enable data averaging parameters</description>
+    
     <value>True</value>
   </param>
   
-    <param type="string" name="avgchannel" subparam="true">
-      <description>Average over channel (blank = False, otherwise value in channels)</description>
-      <value />
+    <param subparam="true" name="avgchannel" type="string"><shortdescription>Average over channel (blank = False, otherwise value in channels)</shortdescription><description>Average over channel (blank = False, otherwise value in channels)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="avgtime" subparam="true">
-      <description>Average over time (blank = False, otherwise value in seconds)</description>
-      <value />
+    <param subparam="true" name="avgtime" type="string"><shortdescription>Average over time (blank = False, otherwise value in seconds)</shortdescription><description>Average over time (blank = False, otherwise value in seconds)</description>
+      
+      <value/>
     </param>
     
-    <param type="bool" name="avgscan" subparam="true">
-      <description>Average over scans. Only valid with time averaging</description>
+    <param subparam="true" name="avgscan" type="bool"><shortdescription>Average over scans. Only valid with time averaging</shortdescription><description>Average over scans. Only valid with time averaging</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="avgfield" subparam="true">
-      <description>Average over fields. Only valid with time averaging</description>
+    <param subparam="true" name="avgfield" type="bool"><shortdescription>Average over fields. Only valid with time averaging</shortdescription><description>Average over fields. Only valid with time averaging</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="avgbaseline" subparam="true">
-      <description>Average over all baselines (mutually exclusive with avgantenna)</description>
+    <param subparam="true" name="avgbaseline" type="bool"><shortdescription>Average over all baselines (mutually exclusive with avgantenna)</shortdescription><description>Average over all baselines (mutually exclusive with avgantenna)</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="avgantenna" subparam="true">
-      <description>Average per antenna (mutually exclusive with avgbaseline)</description>
+    <param subparam="true" name="avgantenna" type="bool"><shortdescription>Average per antenna (mutually exclusive with avgbaseline)</shortdescription><description>Average per antenna (mutually exclusive with avgbaseline)</description>
+      
       <value>False</value>
     </param>
     
-    <param type="bool" name="avgspw" subparam="true">
-      <description>Average over all spectral windows</description>
-      <value>False</value>
-    </param>
-
-    <param type="bool" name="scalar" subparam="true">
-      <description>Scalar averaging (False=vector averaging)</description>
+    <param subparam="true" name="avgspw" type="bool"><shortdescription>Average over all spectral windows</shortdescription><description>Average over all spectral windows</description>
+      
       <value>False</value>
     </param>
 
+    <param subparam="true" name="scalar" type="bool"><shortdescription>Scalar averaging (False=vector averaging)</shortdescription><description>Scalar averaging (False=vector averaging)</description>
+      
+      <value>False</value>
+    </param>
 
-<!--
-###############################################################################
-MS Data Transformation Parameters
-###############################################################################
--->
 
-  <param type="bool" name="transform">
-    <description>Enable data transformations</description>
+
+
+  <param name="transform" type="bool"><shortdescription>Enable data transformations</shortdescription><description>Enable data transformations</description>
+    
     <value>True</value>
   </param>
 
-    <param type="string" name="freqframe" subparam="true">
-      <description>The frame in which to render frequency and velocity axes</description>
-      <value />
+    <param subparam="true" name="freqframe" type="string"><shortdescription>The frame in which to render frequency and velocity axes</shortdescription><description>The frame in which to render frequency and velocity axes</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value />
+        <value/>
         <value>LSRK</value>
         <value>LSRD</value>
         <value>BARY</value>
@@ -673,13 +653,13 @@ MS Data Transformation Parameters
       </allowed>
     </param>
 
-   <param type="string" name="restfreq" subparam="true">
-       <description>Rest frequency to use for velocity conversions </description>
-       <value></value>
+   <param subparam="true" name="restfreq" type="string"><shortdescription>Rest frequency to use for velocity conversions </shortdescription><description>Rest frequency to use for velocity conversions </description>
+       
+       <value/>
     </param>
 
-    <param type="string" name="veldef" subparam="true">
-      <description>The definition in which to render velocity </description>
+    <param subparam="true" name="veldef" type="string"><shortdescription>The definition in which to render velocity </shortdescription><description>The definition in which to render velocity </description>
+      
       <value>RADIO</value>
       <allowed kind="enum">
         <value>RADIO</value>
@@ -688,8 +668,8 @@ MS Data Transformation Parameters
       </allowed>
     </param>
 
-   <param type="doubleArray" name="shift" subparam="true">
-       <description>Adjust phases by this approximate phase center shift [dx,dy] (arcsec)</description>
+   <param subparam="true" name="shift" type="doubleArray"><shortdescription>Adjust phases by this approximate phase center shift [dx,dy] (arcsec)</shortdescription><description>Adjust phases by this approximate phase center shift [dx,dy] (arcsec)</description>
+       
        <value type="doubleArray">
            <value>0.0</value>
            <value>0.0</value>
@@ -699,78 +679,33 @@ MS Data Transformation Parameters
 
 
 
-<!--
-###############################################################################
-Flag Extension Parameters
-###############################################################################
--->
 
-  <param type="bool" name="extendflag">
-    <description>Extend flagging to other data points not plotted</description>
+
+  <param name="extendflag" type="bool"><shortdescription>Extend flagging to other data points not plotted</shortdescription><description>Extend flagging to other data points not plotted</description>
+    
     <value>False</value>
   </param>
     
-    <param type="bool" name="extcorr" subparam="true">
-      <description>Extend flags based on correlation </description>
+    <param subparam="true" name="extcorr" type="bool"><shortdescription>Extend flags based on correlation </shortdescription><description>Extend flags based on correlation </description>
+      
       <value>False</value>
     </param>
-<!--
-  ### eventually, we'll permit pol-dep extension on corr, but not yet
 
-      <value />
+    
+    <param subparam="true" name="extchannel" type="bool"><shortdescription>Extend flags based on channel</shortdescription><description>Extend flags based on channel</description>
+      
+      <value>False</value>
+    </param>
+
+
+
+
+
+   <param name="iteraxis" type="string"><shortdescription>The axis over which to iterate</shortdescription><description>The axis over which to iterate</description>
+      
+      <value/>
       <allowed kind="enum">
-        <value />
-        <value>all</value>
-        <value>poln-dep</value>
-      </allowed>
--->
-    
-    <param type="bool" name="extchannel" subparam="true">
-      <description>Extend flags based on channel</description>
-      <value>False</value>
-    </param>
-
-<!--
-
-####  the following flag extend options are not available yet
-    
-    <param type="bool" name="extspw" subparam="true">
-      <description>extend flags based on spw?</description>
-      <value>False</value>
-    </param>
-    
-    <param type="string" name="extantenna" subparam="true">
-      <description>extend flags based on antenna? (blank = none, \'all\' = all baselines, otherwise antenna-based value)</description>
-      <value />
-    </param>
-    
-    <param type="bool" name="exttime" subparam="true">
-      <description>extend flags based on time (within scans)?</description>
-      <value>False</value>
-    </param>
-    
-    <param type="bool" name="extscans" subparam="true">
-      <description>only valid if exttime is true.  extend flags based on scans?</description>
-      <value>False</value>
-    </param>
-    
-    <param type="bool" name="extfield" subparam="true">
-      <description>only valid if exttime is true.  extend flags based on field?</description>
-      <value>False</value>
-    </param>
--->
-
-<!--
-###############################################################################
-Iteration Parameters
-###############################################################################
--->
-
-   <param type="string" name="iteraxis">
-      <description>The axis over which to iterate</description>
-      <value />
-      <allowed kind="enum">
-        <value />
+        <value/>
         <value>scan</value>
         <value>Scan</value>
         <value>field</value>
@@ -788,45 +723,41 @@ Iteration Parameters
       </allowed>
    </param>
 
-   <param type="bool" name="xselfscale" subparam="true">
-       <description>When True, iterated plots have a common x-axis range (scale).</description>
+   <param subparam="true" name="xselfscale" type="bool"><shortdescription>When True, iterated plots have a common x-axis range (scale).</shortdescription><description>When True, iterated plots have a common x-axis range (scale).</description>
+       
        <value>False</value>
    </param>
 
-   <param type="bool" name="yselfscale" subparam="true">
-       <description>When True, iterated plots have a common y-axis range (scale).</description>
+   <param subparam="true" name="yselfscale" type="bool"><shortdescription>When True, iterated plots have a common y-axis range (scale).</shortdescription><description>When True, iterated plots have a common y-axis range (scale).</description>
+       
        <value>False</value>
    </param>
    
-   <param type="bool" name="xsharedaxis" subparam="true">
-       <description>Iterated plots on a grid share a common external x-axis per column. Must also set xselfscale=True and gridrows>1.</description>
+   <param subparam="true" name="xsharedaxis" type="bool"><shortdescription>Iterated plots on a grid share a common external x-axis per column. Must also set xselfscale=True and gridrows&gt;1.</shortdescription><description>Iterated plots on a grid share a common external x-axis per column. Must also set xselfscale=True and gridrows&gt;1.</description>
+       
        <value>False</value>
    </param>
 
-   <param type="bool" name="ysharedaxis" subparam="true">
-       <description>Iterated plots on a grid share a common external y-axis per row. Must also set yselfscale=True and gridcols>1.</description>
+   <param subparam="true" name="ysharedaxis" type="bool"><shortdescription>Iterated plots on a grid share a common external y-axis per row. Must also set yselfscale=True and gridcols&gt;1.</shortdescription><description>Iterated plots on a grid share a common external y-axis per row. Must also set yselfscale=True and gridcols&gt;1.</description>
+       
        <value>False</value>
    </param>
 
  
-<!--
-###############################################################################
-Display Parameters
-###############################################################################
--->
+
    
     
-    <param type="any" name="customsymbol">
-        <description>Enable custom symbol(s) for unflagged points</description>
-         <any type="variant" limittype="bool boolArray"/>
+    <param name="customsymbol" type="any"><shortdescription>Enable custom symbol(s) for unflagged points</shortdescription><description>Enable custom symbol(s) for unflagged points</description>
+        
+         <any limittype="bool boolArray" type="variant"/>
         <value>False</value>
     </param>
 
-    <param type="any" name="symbolshape" subparam="true">
-        <description>Shape of plotted unflagged symbols</description>
-        <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="symbolshape" type="any"><shortdescription>Shape of plotted unflagged symbols</shortdescription><description>Shape of plotted unflagged symbols</description>
+        
+        <any limittype="string stringArray" type="variant"/>
         <value type="string">autoscaling</value>
-        <allowed kind="enum" type="string">
+        <allowed type="string" kind="enum">
             <value>nosymbol</value>
             <value>autoscaling</value>
             <value>circle</value>
@@ -836,23 +767,23 @@ Display Parameters
         </allowed>
     </param>
 
-    <param type="any" name="symbolsize" subparam="true">
-        <description>Size of plotted unflagged symbols</description>
-         <any type="variant" limittype="int intArray"/>
+    <param subparam="true" name="symbolsize" type="any"><shortdescription>Size of plotted unflagged symbols</shortdescription><description>Size of plotted unflagged symbols</description>
+        
+         <any limittype="int intArray" type="variant"/>
         <value type="int">2</value>
     </param>
 
-    <param type="any" name="symbolcolor" subparam="true">
-        <description>Color (name or hex code) of plotted unflagged symbols</description>
-         <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="symbolcolor" type="any"><shortdescription>Color (name or hex code) of plotted unflagged symbols</shortdescription><description>Color (name or hex code) of plotted unflagged symbols</description>
+        
+         <any limittype="string stringArray" type="variant"/>
         <value type="string">0000ff</value>
     </param>
 
-    <param type="any" name="symbolfill" subparam="true">
-        <description>Fill type of plotted unflagged symbols</description>
-        <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="symbolfill" type="any"><shortdescription>Fill type of plotted unflagged symbols</shortdescription><description>Fill type of plotted unflagged symbols</description>
+        
+        <any limittype="string stringArray" type="variant"/>
         <value type="string">fill</value>
-        <allowed kind="enum" type="string">
+        <allowed type="string" kind="enum">
             <value>fill</value>
             <value>mesh1</value>
             <value>mesh2</value>
@@ -861,17 +792,17 @@ Display Parameters
         </allowed>
     </param>
 
-    <param type="any" name="symboloutline" subparam="true">
-        <description>Outline plotted unflagged symbols</description>
-         <any type="variant" limittype="bool boolArray"/>
+    <param subparam="true" name="symboloutline" type="any"><shortdescription>Outline plotted unflagged symbols</shortdescription><description>Outline plotted unflagged symbols</description>
+        
+         <any limittype="bool boolArray" type="variant"/>
         <value type="bool">False</value>
     </param>
 
-    <param type="string" name="coloraxis">
-        <description>Selects data axis for colorizing</description>
-        <value />
+    <param name="coloraxis" type="string"><shortdescription>Selects data axis for colorizing</shortdescription><description>Selects data axis for colorizing</description>
+        
+        <value/>
         <allowed kind="enum">
-            <value />
+            <value/>
             <value>scan</value>
             <value>Scan</value>
             <value>field</value>
@@ -900,17 +831,17 @@ Display Parameters
         </allowed>
     </param>
 
-    <param type="any" name="customflaggedsymbol">
-        <description>Enable custom symbol(s) for flagged points</description>
-        <any type="variant" limittype="bool boolArray"/>
+    <param name="customflaggedsymbol" type="any"><shortdescription>Enable custom symbol(s) for flagged points</shortdescription><description>Enable custom symbol(s) for flagged points</description>
+        
+        <any limittype="bool boolArray" type="variant"/>
         <value type="bool">False</value>
     </param>
 
-    <param type="any" name="flaggedsymbolshape" subparam="true">
-        <description>Shape of plotted flagged symbols</description>
-        <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="flaggedsymbolshape" type="any"><shortdescription>Shape of plotted flagged symbols</shortdescription><description>Shape of plotted flagged symbols</description>
+        
+        <any limittype="string stringArray" type="variant"/>
         <value type="string">circle</value>
-        <allowed kind="enum" type="string">
+        <allowed type="string" kind="enum">
             <value>nosymbol</value>
             <value>autoscaling</value>
             <value>circle</value>
@@ -920,23 +851,23 @@ Display Parameters
         </allowed>
     </param>
 
-    <param type="any" name="flaggedsymbolsize" subparam="true">
-        <description>Size of plotted flagged symbols</description>
-        <any type="variant" limittype="int intArray"/>
+    <param subparam="true" name="flaggedsymbolsize" type="any"><shortdescription>Size of plotted flagged symbols</shortdescription><description>Size of plotted flagged symbols</description>
+        
+        <any limittype="int intArray" type="variant"/>
         <value type="int">2</value>
     </param>
 
-    <param type="any" name="flaggedsymbolcolor" subparam="true">
-        <description>Color (name or hex code) of plotted flagged symbols</description>
-        <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="flaggedsymbolcolor" type="any"><shortdescription>Color (name or hex code) of plotted flagged symbols</shortdescription><description>Color (name or hex code) of plotted flagged symbols</description>
+        
+        <any limittype="string stringArray" type="variant"/>
         <value type="string">ff0000</value>
     </param>
 
-    <param type="any" name="flaggedsymbolfill" subparam="true">
-        <description>Fill type of plotted flagged symbols</description>
-        <any type="variant" limittype="string stringArray"/>
+    <param subparam="true" name="flaggedsymbolfill" type="any"><shortdescription>Fill type of plotted flagged symbols</shortdescription><description>Fill type of plotted flagged symbols</description>
+        
+        <any limittype="string stringArray" type="variant"/>
         <value type="string">fill</value>
-        <allowed kind="enum" type="string">
+        <allowed type="string" kind="enum">
             <value>fill</value>
             <value>mesh1</value>
             <value>mesh2</value>
@@ -945,97 +876,85 @@ Display Parameters
         </allowed>
     </param>
 
-    <param type="any" name="flaggedsymboloutline" subparam="true">
-        <description>Outline plotted flagged symbols</description>
-        <any type="variant" limittype="bool boolArray"/>
+    <param subparam="true" name="flaggedsymboloutline" type="any"><shortdescription>Outline plotted flagged symbols</shortdescription><description>Outline plotted flagged symbols</description>
+        
+        <any limittype="bool boolArray" type="variant"/>
         <value type="bool">False</value>
     </param>
 
-    <param type="string" name="xconnector">
-        <description>Set connector for data points (blank="none"; "line","step")</description>
-        <value />
+    <param name="xconnector" type="string"><shortdescription>Set connector for data points (blank=&quot;none&quot;; &quot;line&quot;,&quot;step&quot;)</shortdescription><description>Set connector for data points (blank=&quot;none&quot;; &quot;line&quot;,&quot;step&quot;)</description>
+        
+        <value/>
     <allowed kind="enum">
-      <value />
+      <value/>
             <value>none</value>
             <value>line</value>
             <value>step</value>
         </allowed>
     </param>
-    <param type="bool" name="timeconnector" subparam="true">
-        <description>Connect points by time rather than x-axis</description>
+    <param subparam="true" name="timeconnector" type="bool"><shortdescription>Connect points by time rather than x-axis</shortdescription><description>Connect points by time rather than x-axis</description>
+        
         <value>False</value>
     </param>
 
 
-<!--
-###############################################################################
-Plot range Parameter
-###############################################################################
--->
 
-    <param type="doubleArray" name="plotrange">
-        <description>Plot axes ranges: [xmin,xmax,ymin,ymax]</description>
-        <value />
+
+    <param name="plotrange" type="doubleArray"><shortdescription>Plot axes ranges: [xmin,xmax,ymin,ymax]</shortdescription><description>Plot axes ranges: [xmin,xmax,ymin,ymax]</description>
+        
+        <value/>
     </param>
 
-<!--
-###############################################################################
-Label Parameters
-###############################################################################
--->
 
-  <param type="string" name="title">    
-    <description>Title at top of plot</description>
-    <value />
+
+  <param name="title" type="string"><shortdescription>Title at top of plot</shortdescription><description>Title at top of plot</description>    
+    
+    <value/>
   </param>
   
-  <param type="int" name="titlefont">
-    <description>Font size for plot title</description>
+  <param name="titlefont" type="int"><shortdescription>Font size for plot title</shortdescription><description>Font size for plot title</description>
+    
     <value>0</value>
   </param>
 
-  <param type="string" name="xlabel">    
-    <description>Text for horizontal x-axis. Blank for default.</description>
-    <value />
+  <param name="xlabel" type="string"><shortdescription>Text for horizontal x-axis. Blank for default.</shortdescription><description>Text for horizontal x-axis. Blank for default.</description>    
+    
+    <value/>
   </param>
   
-  <param type="int" name="xaxisfont">
-    <description>Font size for x-axis label</description>
+  <param name="xaxisfont" type="int"><shortdescription>Font size for x-axis label</shortdescription><description>Font size for x-axis label</description>
+    
     <value>0</value>
   </param>
 
-  <param type="string" name="ylabel">    
-    <description>Text for vertical y-axis. Blank for default.</description>
-    <value />
+  <param name="ylabel" type="string"><shortdescription>Text for vertical y-axis. Blank for default.</shortdescription><description>Text for vertical y-axis. Blank for default.</description>    
+    
+    <value/>
   </param>
 
-  <param type="int" name="yaxisfont">
-    <description>Font size for y-axis label</description>
+  <param name="yaxisfont" type="int"><shortdescription>Font size for y-axis label</shortdescription><description>Font size for y-axis label</description>
+    
     <value>0</value>
   </param>
 
 
-<!--
-###############################################################################
-Canvas Parameters
-###############################################################################
--->
 
 
-<param type="bool" name="showmajorgrid" subparam="false">
-    <description>Show major grid lines</description>
+
+<param subparam="false" name="showmajorgrid" type="bool"><shortdescription>Show major grid lines</shortdescription><description>Show major grid lines</description>
+    
     <value>False</value>
 </param>
 
-<param type="int" name="majorwidth" subparam="true">
-    <description>Line width in pixels of major grid lines</description>
+<param subparam="true" name="majorwidth" type="int"><shortdescription>Line width in pixels of major grid lines</shortdescription><description>Line width in pixels of major grid lines</description>
+    
     <value>1</value>
 </param>
 
-<param type="string" name="majorstyle" subparam="true">
-    <description>Major grid line style</description>
+<param subparam="true" name="majorstyle" type="string"><shortdescription>Major grid line style</shortdescription><description>Major grid line style</description>
+    
     <allowed kind="enum">
-        <value />
+        <value/>
         <value>solid</value>
         <value>dash</value>
         <value>dot</value>
@@ -1043,27 +962,27 @@ Canvas Parameters
     </allowed>
 </param>
 
-<param type="string" name="majorcolor" subparam="true">
-    <description>Color (name or hex code) of major grid lines</description>
+<param subparam="true" name="majorcolor" type="string"><shortdescription>Color (name or hex code) of major grid lines</shortdescription><description>Color (name or hex code) of major grid lines</description>
+    
     <value>B0B0B0</value>
 </param>
 
 
 
-<param type="bool" name="showminorgrid" subparam="false">
-    <description>Show minor grid lines</description>
+<param subparam="false" name="showminorgrid" type="bool"><shortdescription>Show minor grid lines</shortdescription><description>Show minor grid lines</description>
+    
     <value>False</value>
 </param>
 
-<param type="int" name="minorwidth" subparam="true">
-    <description>Line width in pixels of minor grid lines</description>
+<param subparam="true" name="minorwidth" type="int"><shortdescription>Line width in pixels of minor grid lines</shortdescription><description>Line width in pixels of minor grid lines</description>
+    
     <value>1</value>
 </param>
 
-<param type="string" name="minorstyle" subparam="true">
-    <description>Minor grid line style</description>
+<param subparam="true" name="minorstyle" type="string"><shortdescription>Minor grid line style</shortdescription><description>Minor grid line style</description>
+    
     <allowed kind="enum">
-        <value />
+        <value/>
         <value>solid</value>
         <value>dash</value>
         <value>dot</value>
@@ -1071,22 +990,22 @@ Canvas Parameters
     </allowed>
 </param>
 
-<param type="string" name="minorcolor" subparam="true">
-    <description>Color (name or hex code) of minor grid lines</description>
+<param subparam="true" name="minorcolor" type="string"><shortdescription>Color (name or hex code) of minor grid lines</shortdescription><description>Color (name or hex code) of minor grid lines</description>
+    
     <value>D0D0D0</value>
 </param>
 
 
-<param type="bool" name="showlegend" subparam="false">
-    <description>Show a legend on the plot.</description>
+<param subparam="false" name="showlegend" type="bool"><shortdescription>Show a legend on the plot.</shortdescription><description>Show a legend on the plot.</description>
+    
     <value>False</value>
 </param>
 
-<param type="string" name="legendposition" subparam="true">
-    <description>Legend position, default upperRight.</description>
-    <value></value>
+<param subparam="true" name="legendposition" type="string"><shortdescription>Legend position, default upperRight.</shortdescription><description>Legend position, default upperRight.</description>
+    
+    <value/>
     <allowed kind="enum">
-        <value />
+        <value/>
         <value>upperRight</value>
         <value>upperLeft</value>
         <value>lowerRight</value>
@@ -1098,22 +1017,18 @@ Canvas Parameters
     </allowed>
 </param>
 
-<!--
-###############################################################################
-Export plot as image Parameters
-###############################################################################
--->
 
 
 
-    <param type="string" name="plotfile">
-      <description>Name of plot file to save automatically</description>
+
+    <param name="plotfile" type="string"><shortdescription>Name of plot file to save automatically</shortdescription><description>Name of plot file to save automatically</description>
+      
     </param>
 
-    <param type="string" name="expformat" subparam="true">
-        <description>Export format type. If not provided, plotfile extension will be used to determine type.</description>
+    <param subparam="true" name="expformat" type="string"><shortdescription>Export format type. If not provided, plotfile extension will be used to determine type.</shortdescription><description>Export format type. If not provided, plotfile extension will be used to determine type.</description>
+        
         <allowed kind="enum">
-            <value />
+            <value/>
             <value>jpg</value>
             <value>png</value>
             <value>pdf</value>
@@ -1122,212 +1037,112 @@ Export plot as image Parameters
         </allowed>
     </param>
 
-     <param type="bool" name="verbose" subparam="true">
-         <description>Include metadata in text export</description>
+     <param subparam="true" name="verbose" type="bool"><shortdescription>Include metadata in text export</shortdescription><description>Include metadata in text export</description>
+         
          <value>True</value>
      </param>
 
-    <param type="string" name="exprange" subparam="true">
-        <description>Range of iteration plots to export, one plotfile per page.  Multipage pdf exports are not supported.</description>
+    <param subparam="true" name="exprange" type="string"><shortdescription>Range of iteration plots to export, one plotfile per page.  Multipage pdf exports are not supported.</shortdescription><description>Range of iteration plots to export, one plotfile per page.  Multipage pdf exports are not supported.</description>
+        
         <allowed kind="enum">
-            <value />
+            <value/>
             <value>current</value>
             <value>all</value>
         </allowed>
     </param>
 
-     <param type="bool" name="highres" subparam="true">
-         <description>Use high resolution</description>
+     <param subparam="true" name="highres" type="bool"><shortdescription>Use high resolution</shortdescription><description>Use high resolution</description>
+         
          <value>False</value>
      </param>
-     <param type="int" name="dpi" subparam="true">
-         <description>DPI of exported plot</description>
+     <param subparam="true" name="dpi" type="int"><shortdescription>DPI of exported plot</shortdescription><description>DPI of exported plot</description>
+         
          <value>-1</value>
      </param>
-     <param type="int" name="width" subparam="true">
-         <description>Width in pixels of exported plot</description>
+     <param subparam="true" name="width" type="int"><shortdescription>Width in pixels of exported plot</shortdescription><description>Width in pixels of exported plot</description>
+         
          <value>-1</value>
      </param>
-     <param type="int" name="height" subparam="true">
-         <description>Height in pixels of exported plot</description>
+     <param subparam="true" name="height" type="int"><shortdescription>Height in pixels of exported plot</shortdescription><description>Height in pixels of exported plot</description>
+         
          <value>-1</value>
      </param>
-     <param type="bool" name="overwrite" subparam="true">
-         <description>Overwrite plot file if it already exists</description>
+     <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite plot file if it already exists</shortdescription><description>Overwrite plot file if it already exists</description>
+         
          <value>False</value>
      </param>
-<!--
-###############################################################################
-    Misc Parameters
-###############################################################################
--->
-     <param type="bool" name="showgui">
-        <description>Show GUI</description>
+
+     <param name="showgui" type="bool"><shortdescription>Show GUI</shortdescription><description>Show GUI</description>
+        
         <value>True</value>
      </param>
      
-     <param type="bool" name="clearplots" subparam="true">
-        <description>Remove any existing plots so new ones can replace them.</description>
+     <param subparam="true" name="clearplots" type="bool"><shortdescription>Remove any existing plots so new ones can replace them.</shortdescription><description>Remove any existing plots so new ones can replace them.</description>
+        
         <value>True</value>
      </param>
      
-     <param type="stringArray" name="callib">
-        <description>Calibration library string or filename for on-the-fly calibration.</description>
-        <value></value>
+     <param name="callib" type="stringArray"><shortdescription>Calibration library string or filename for on-the-fly calibration.</shortdescription><description>Calibration library string or filename for on-the-fly calibration.</description>
+        
+        <value/>
      </param>
      
-     <param type="string" name="headeritems" >
-        <description>Comma-separated list of pre-defined page header items.</description>
-        <value></value>
+     <param name="headeritems" type="string"><shortdescription>Comma-separated list of pre-defined page header items.</shortdescription><description>Comma-separated list of pre-defined page header items.</description>
+        
+        <value/>
      </param>
 
-     <param type="bool" name="showatm">
-        <description>Compute and overlay the atmospheric transmission curve</description>
+     <param name="showatm" type="bool"><shortdescription>Compute and overlay the atmospheric transmission curve</shortdescription><description>Compute and overlay the atmospheric transmission curve</description>
+        
         <value>False</value>
      </param>
      
-     <param type="bool" name="showtsky">
-        <description>Compute and overlay the sky temperature curve</description>
+     <param name="showtsky" type="bool"><shortdescription>Compute and overlay the sky temperature curve</shortdescription><description>Compute and overlay the sky temperature curve</description>
+        
         <value>False</value>
      </param>
      
-     <param type="bool" name="showimage">
-        <description>Compute and overlay the image sideband curve</description>
+     <param name="showimage" type="bool"><shortdescription>Compute and overlay the image sideband curve</shortdescription><description>Compute and overlay the image sideband curve</description>
+        
         <value>False</value>
      </param>
   
-<!--
-###############################################################################
-Plotxy Compliance Parameters
-###############################################################################
--->
 
 
-<!--
 
-  ### we really don't want these around
 
-  <param type="bool" name="plotxycomp">
-    <description>use plotxy compliance parameters?</description>
-    <value>False</value>
-  </param>
-  
-    <param type="string" name="datacolumn" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use xdatacolumn and ydatacolumn instead</description>
-      <value>data</value>
-      <allowed kind="enum">
-        <value>data</value>
-        <value>corrected</value>
-        <value>model</value>
-        <value>residual</value>
-      </allowed>
-    </param>
-    
-    <param type="string" name="timebin" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use avgtime instead</description>
-      <value>0</value>
-    </param>
-    
-    <param type="bool" name="crossscans" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use avgscan instead</description>
-      <value>False</value>
-    </param>
-    
-    <param type="bool" name="crossbls" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use avgbaseline instead</description>
-      <value>False</value>
-    </param>
-    
-    <param type="string" name="width" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use avgchannel or avgspw instead</description>
-      <value>1</value>
-    </param>
-    
-    <param type="string" name="extendcorr" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use extcorrelation instead</description>
-      <value />
-      <allowed kind="enum">
-        <value />
-        <value>all</value>
-        <value>half</value>
-      </allowed>
-    </param>
-    
-    <param type="string" name="extendchan" subparam="true">
-      <description>PLOYXY COMPLIANCE PARAMETER; use extchanngel instead</description>
-      <value />
-      <allowed kind="enum">
-        <value />
-        <value>all</value>
-      </allowed>
-    </param>
-    
-    <param type="string" name="extendspw" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use extspw instead</description>
-      <value />
-      <allowed kind="enum">
-        <value />
-        <value>all</value>
-      </allowed>
-    </param>
-    
-    <param type="string" name="extendant" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use extantenna instead</description>
-      <value />
-      <allowed kind="enum">
-        <value />
-        <value>all</value>
-      </allowed>
-    </param>
-    
-    <param type="string" name="extendtime" subparam="true">
-      <description>PLOTXY COMPLIANCE PARAMETER; use exttime, extscans, and extfield instead</description>
-      <value />
-      <allowed kind="enum">
-        <value />
-        <value>all</value>
-        <value>scan</value>
-        <value>field</value>
-      </allowed>
-    </param>
 
--->
 
-<!--
-###############################################################################
-Constraints
-###############################################################################
--->
 
   <constraints>
   
     <when param="xaxis">
-      <equals type="string" value="" />
-      <equals type="string" value="amp">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="" type="string"/>
+      <equals value="amp" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="amplitude">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="amplitude" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="phase">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="phase" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="real">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="real" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="imag">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="imag" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="imaginary">
-        <default param="xdatacolumn"><value type="string" /></default>
+      <equals value="imaginary" type="string">
+        <default param="xdatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="ant-ra">
-        <default param="xframe"><value type="string" /></default>
-        <default param="xinterp"><value type="string" /></default>
+      <equals value="ant-ra" type="string">
+        <default param="xframe"><value type="string"/></default>
+        <default param="xinterp"><value type="string"/></default>
       </equals>
-      <equals type="string" value="ant-dec">
-        <default param="xframe"><value type="string" /></default>
-        <default param="xinterp"><value type="string" /></default>
+      <equals value="ant-dec" type="string">
+        <default param="xframe"><value type="string"/></default>
+        <default param="xinterp"><value type="string"/></default>
       </equals>
       <equals value="scan"/>
        <equals value="Scan"/>
@@ -1395,32 +1210,32 @@ Constraints
 
     
     <when param="yaxis">
-      <equals type="string" value="" />
-      <equals type="string" value="amp">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="" type="string"/>
+      <equals value="amp" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="amplitude">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="amplitude" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="phase">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="phase" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="real">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="real" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="imag">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="imag" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="imaginary">
-        <default param="ydatacolumn"><value type="string" /></default>
+      <equals value="imaginary" type="string">
+        <default param="ydatacolumn"><value type="string"/></default>
       </equals>
-      <equals type="string" value="ant-ra">
-        <default param="yframe"><value type="string" /></default>
-        <default param="yinterp"><value type="string" /></default>
+      <equals value="ant-ra" type="string">
+        <default param="yframe"><value type="string"/></default>
+        <default param="yinterp"><value type="string"/></default>
       </equals>
-      <equals type="string" value="ant-dec">
-        <default param="yframe"><value type="string" /></default>
-        <default param="yinterp"><value type="string" /></default>
+      <equals value="ant-dec" type="string">
+        <default param="yframe"><value type="string"/></default>
+        <default param="yinterp"><value type="string"/></default>
       </equals>
       <equals value="scan"/>
        <equals value="Scan"/>
@@ -1486,27 +1301,27 @@ Constraints
     </when>
     
     <when param="selectdata">
-      <equals type="bool" value="True">
-        <default param="field"><value type="string" /></default>
-        <default param="spw"><value type="string" /></default>
-        <default param="timerange"><value type="string" /></default>
-        <default param="uvrange"><value type="string" /></default>
-        <default param="antenna"><value type="string" /></default>
-        <default param="scan"><value type="string" /></default>
-        <default param="correlation"><value type="string" /></default>
-        <default param="array"><value type="string" /></default>
+      <equals value="True" type="bool">
+        <default param="field"><value type="string"/></default>
+        <default param="spw"><value type="string"/></default>
+        <default param="timerange"><value type="string"/></default>
+        <default param="uvrange"><value type="string"/></default>
+        <default param="antenna"><value type="string"/></default>
+        <default param="scan"><value type="string"/></default>
+        <default param="correlation"><value type="string"/></default>
+        <default param="array"><value type="string"/></default>
         <default param="observation"><value type="string"/></default>
         <default param="intent"><value type="string"/></default>
         <default param="feed"><value type="string"/></default>
-        <default param="msselect"><value type="string" /></default>
+        <default param="msselect"><value type="string"/></default>
       </equals>
-      <equals type="bool" value="False" />
+      <equals value="False" type="bool"/>
     </when>
     
     <when param="averagedata">
-      <equals type="bool" value="True">
-        <default param="avgchannel"><value type="string" /></default>
-        <default param="avgtime"><value type="string" /></default>
+      <equals value="True" type="bool">
+        <default param="avgchannel"><value type="string"/></default>
+        <default param="avgtime"><value type="string"/></default>
         <default param="avgscan"><value type="bool">False</value></default>
         <default param="avgfield"><value type="bool">False</value></default>
         <default param="avgbaseline"><value type="bool">False</value></default>
@@ -1514,46 +1329,37 @@ Constraints
         <default param="avgspw"><value type="bool">False</value></default>
         <default param="scalar"><value type="bool">False</value></default>
       </equals>
-      <equals type="bool" value="False" />
+      <equals value="False" type="bool"/>
     </when>
     <when param="transform">
-      <equals type="bool" value="False" />
-      <equals type="bool" value="True">
-        <default param="freqframe"><value type="string" /></default>
-        <default param="restfreq"><value type="string"></value></default>
+      <equals value="False" type="bool"/>
+      <equals value="True" type="bool">
+        <default param="freqframe"><value type="string"/></default>
+        <default param="restfreq"><value type="string"/></default>
         <default param="veldef"><value type="string">RADIO</value></default>
         <default param="shift"><value type="doubleArray"><value>0.0</value><value>0.0</value></value></default>
       </equals>
     </when>
     <when param="extendflag">
-      <equals type="bool" value="False" />
-      <equals type="bool" value="True">
+      <equals value="False" type="bool"/>
+      <equals value="True" type="bool">
         <default param="extcorr"><value type="bool">False</value></default>
         <default param="extchannel"><value type="bool">False</value></default>
-<!--
-        <default param="extspw"><value type="bool">False</value></default>
-        <default param="extantenna"><value type="string" /></default>
-        <default param="exttime"><value type="bool">False</value></default>
-        <default param="extscans"><value type="bool">False</value></default>
-        <default param="extfield"><value type="bool">False</value></default>
--->
+
       </equals>
     </when>
     <when param="iteraxis">
-        <notequals type="string" value="">
+        <notequals value="" type="string">
             <default param="xselfscale"><value>False</value></default>
             <default param="yselfscale"><value>False</value></default>
             <default param="xsharedaxis"><value>False</value></default>
             <default param="ysharedaxis"><value>False</value></default>
         </notequals>
     </when>
-    <!--<when param="exprange">
-        <notequals type="string" value="">
-        </notequals>
-    </when> -->
+    
     <when param="customsymbol">
-        <equals type="bool" value="False" />
-        <equals type="bool" value="True">
+        <equals value="False" type="bool"/>
+        <equals value="True" type="bool">
             <default param="symbolshape">
                 <value type="string">autoscaling</value>
             </default>
@@ -1573,8 +1379,8 @@ Constraints
     </when>
 
     <when param="customflaggedsymbol">
-        <equals type="bool" value="False" />
-        <equals type="bool" value="True">
+        <equals value="False" type="bool"/>
+        <equals value="True" type="bool">
             <default param="flaggedsymbolshape">
                 <value type="string">nosymbol</value>
             </default>
@@ -1594,7 +1400,7 @@ Constraints
     </when>
 
     <when param="plotfile">
-        <notequals type="string" value="">
+        <notequals value="" type="string">
             <default param="expformat"><value type="string"/></default>
             <default param="verbose"><value type="bool">True</value></default>
             <default param="exprange"><value type="string"/></default>
@@ -1607,60 +1413,44 @@ Constraints
     </when>
     
     <when param="showgui">
-        <equals type="bool" value="True">
+        <equals value="True" type="bool">
             <default param="clearplots"><value type="bool">True</value></default>
         </equals>
-        <equals type="bool" value="False">
+        <equals value="False" type="bool">
             <default param="clearplots"><value type="bool">True</value></default>
         </equals>
     </when>    
 
     <when param="showmajorgrid">
-      <equals type="bool" value="False" />
-      <equals type="bool" value="True">
-        <default param="majorwidth"><value type="int" >0</value></default>
-        <default param="majorstyle"><value type="string" /></default>
-        <default param="majorcolor"><value type="string"></value></default>
+      <equals value="False" type="bool"/>
+      <equals value="True" type="bool">
+        <default param="majorwidth"><value type="int">0</value></default>
+        <default param="majorstyle"><value type="string"/></default>
+        <default param="majorcolor"><value type="string"/></default>
       </equals>
     </when>
 
     <when param="showminorgrid">
-      <equals type="bool" value="False" />
-      <equals type="bool" value="True">
+      <equals value="False" type="bool"/>
+      <equals value="True" type="bool">
         <default param="minorwidth"><value type="int">0</value></default>
-        <default param="minorstyle"><value type="string" /></default>
-        <default param="minorcolor"><value type="string"></value></default>
+        <default param="minorstyle"><value type="string"/></default>
+        <default param="minorcolor"><value type="string"/></default>
       </equals>
     </when>
 
     <when param="xconnector">
-      <equals type="string" value="" />
-      <equals type="string" value="none" />
-      <equals type="string" value="line">
+      <equals value="" type="string"/>
+      <equals value="none" type="string"/>
+      <equals value="line" type="string">
         <default param="timeconnector"><value type="bool">False</value></default>
       </equals>
-      <equals type="string" value="step">
+      <equals value="step" type="string">
         <default param="timeconnector"><value type="bool">False</value></default>
       </equals>
     </when>
 
-<!--    
-    <when param="plotxycomp">
-      <equals type="bool" value="False" />
-      <equals type="bool" value="True">
-        <default param="datacolumn"><value type="string">data</value></default>
-        <default param="timebin"><value type="string">0</value></default>
-        <default param="crossscans"><value type="bool">False</value></default>
-        <default param="crossbls"><value type="bool">False</value></default>
-        <default param="width"><value type="string">0</value></default>
-        <default param="extendcorr"><value type="string" /></default>
-        <default param="extendchan"><value type="string" /></default>
-        <default param="extendspw"><value type="string" /></default>
-        <default param="extendant"><value type="string" /></default>
-        <default param="extendtime"><value type="string" /></default>
-      </equals>
-    </when>
--->    
+    
 
 
   </constraints>
@@ -1797,7 +1587,7 @@ Constraints
                   and see help par.selectdata for more detailed 
                   information on syntax; also, visit
                   http://casa.nrao.edu/other_doc.shtml and click
-                  on "Measurement Set selection syntax" for more
+                  on &quot;Measurement Set selection syntax&quot; for more
                   tips on using data selection parameters in CASA)
 
       &gt;&gt;&gt; selectdata expandable parameters:
@@ -1872,7 +1662,7 @@ Constraints
       array -- Select the array id
                default: ''  (all array ids)
       observation -- Select by observation ID(s).
-                     default: ''-->all;
+                     default: ''--&gt;all;
                      observation='0' (select obsID 0)
       intent -- Select observing intent  
                 default: ''  (no selection by intent)  
@@ -1940,9 +1730,9 @@ Constraints
         xselfscale -- When True, iterated plots have a common x-axis range (scale).
         yselfscale -- When True, iterated plots have a common y-axis range (scale).
                       default: false, which will scale all plots individually
-        xsharedaxis -- Iterated plots on a grid share a common external x-axis per column (must also set xselfscale=True and gridcols>1) 
+        xsharedaxis -- Iterated plots on a grid share a common external x-axis per column (must also set xselfscale=True and gridcols&gt;1) 
                       default: false, each plot will have its own x-axis.
-        ysharedaxis -- Iterated plots on a grid share a common external y-axis per row (must also set yselfscale=True and gridrows>1)
+        ysharedaxis -- Iterated plots on a grid share a common external y-axis per row (must also set yselfscale=True and gridrows&gt;1)
                       default: false, each plot will have its own y-axis.              
 
     customsymbol -- If true, use a custom symbol for drawing unflagged points
@@ -1993,7 +1783,7 @@ Constraints
                  [0,0,-2.0,14.0]; autoscale the xaxis, and use 
                                   ymin=-2.0, ymax=14.0
 
-    title  -- title along top of plot (called "canvas" in some places)
+    title  -- title along top of plot (called &quot;canvas&quot; in some places)
     titlefont -- plot title font size
                  default: 0 (autosize depending on grid)
     xlabel -- text to label horizontal axis, with formatting using '%%'
@@ -2055,90 +1845,12 @@ Constraints
                 default: ''
                 example: 'filename,projid,targname'
 
-<!--
 
-        extspw - extend flags based on spw?
-                  default: False.
-        extantenna - extend flags based on antenna?  should be either blank,
-                      'all' for all baselines, or an antenna-based value.
-                      default: ''.
-        exttime - extend flags based on time (within scans)?
-                   default: False.
-        extscans - extend flags based on scans?  only valid if time extension
-                    is turned on.
-                    default: False.
-        extfield - extend flags based on field?  only valid if time extension
-                    is turned on.
-                    default: False.
-    
-
-    plotxycomp - use plotxy compliance parameters?  WARNING: if used,
-                  subparameters will override their corresponding plotms
-                  parameter values.
-                  default: False.
-      &gt;&gt;&gt; plotxycomp expandable parameters
-        datacolumn - maps to xdatacolumn and ydatacolumn.
-                      default: 'data'.
-        timebin - maps to avgtime.
-                   default: '0'.
-        crossscans - maps to avgscan.
-                      default: False.
-        crossbls - maps to avgbaseline.
-                    default: False.
-        width - maps to avgchannel and/or avgspw.  'all' is ignored, 'allspw'
-                 sets avgspw to true, any other value is set for avgchannel.
-                 default: '1'.
-        extendcorr - maps to extcorr.  'half' is mapped to 'poln-dep'.
-                      default: ''.
-        extendchan - maps to extchannel.  '' means False, 'all' means True.
-                      default: ''.
-        extendspw - maps to extspw.  '' means False, 'all' means True.
-                     default: ''.
-        extendant - maps to extantenna.  '' means False, 'all' means True.
-                     default: ''.
-        extendtime - maps to exttime and/or extscans and/or extfield.  ''
-                      means False for all, 'all' means True for exttime, 'scan'
-                      means True for exttime and extscans, 'field' means True
-                      for exttime and extfield.
-                      default: ''.
--->
 
 </example>
 
 </task>
 
-<!--
-###############################################################################
-Unimplemented parameters from plotxy in plotms
-* iteration
-* feed
-* averagemode
-* crossarrays
-* stackspw
-* restfreq
-* frame
-* doppler
-* subplot
-* plotsymbol
-* plotcolor
-* markersize
-* linewidth
-* plotrange
-* multicolor
-* selectplot
-* overplot
-* newplot
-* clearpanel
-* skipnrows
-* title
-* xlabels
-* ylabels
-* fontsize
-* windowsize
-* showflags
-* interactive
-* figfile
-###############################################################################
--->
+
 
 </casaxml>

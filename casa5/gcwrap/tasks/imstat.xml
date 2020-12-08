@@ -1,136 +1,130 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the image statitics task                         -->
 
-<task type="function" name="imstat" category="analysis, information">
+
+<task category="information, analysis" name="imstat" type="function">
 <shortdescription>Displays statistical information from an image or image region</shortdescription>
 
 <input>
-    <param type="string" name="imagename" kind="image" mustexist="true" >
-        <description>Name of the input image</description>
+    <param mustexist="true" kind="image" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        
         <value/>
         <example>imagename=ngc5921_task.image</example>
     </param>
-    <param type="any" name="axes">
+    <param name="axes" type="any"><shortdescription>List of axes to evaluate statistics over. Default is all axes.</shortdescription><description>List of axes to evaluate statistics over. Default is all axes.</description>
         <any type="variant"/>
-        <description>List of axes to evaluate statistics over. Default is all axes.</description>
+        
         <value>-1</value>
         <example>[0, 1]</example> 
     </param>
-    <param type="string" name="region">
-        <description>Region selection. Default is to use the full image.</description>
+    <param name="region" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        
         <type>path</type>
         <type>string</type>
         <type>record</type>
         <value type="string"/>
     </param>
-    <param type="string" name="box">
-        <description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+        
         <value/>
     </param>
-    <param type="string" name="chans" >
-    <description>Channels to use. Default is to use all channels.</description>
+    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    
         <value/>
     </param>
-    <param type="string" name="stokes">
-        <description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+        
         <value/>
         <example>stokes=&quot;IQ&quot;</example>
         <example>stokes=&quot;RR,LL&quot;</example>
     </param>
-    <param type="bool" name="listit">
-        <description>Print stats and bounding box to logger?</description>
+    <param name="listit" type="bool"><shortdescription>Print stats and bounding box to logger?</shortdescription><description>Print stats and bounding box to logger?</description>
+        
         <value>True</value>
     </param>
-    <param type="bool" name="verbose">
-        <description>Print additional messages to logger?</description>
+    <param name="verbose" type="bool"><shortdescription>Print additional messages to logger?</shortdescription><description>Print additional messages to logger?</description>
+        
         <value>True</value>
     </param>
-    <param type="string" direction="in" name="mask">
-        <description>Mask to use. Default is none.</description>
+    <param name="mask" direction="in" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        
         <value/>
     </param>
-    <param type="bool" direction="in" name="stretch" subparam="true">
-        <description>Stretch the mask if necessary and possible? </description>
+    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+        
         <value>False</value>
     </param>
-    <param type="string" name="logfile">
-        <description>Name of file to write fit results.</description>
+    <param name="logfile" type="string"><shortdescription>Name of file to write fit results.</shortdescription><description>Name of file to write fit results.</description>
+        
         <value/>
-        <example>logfile="myimfitlog.txt"</example>
+        <example>logfile=&quot;myimfitlog.txt&quot;</example>
     </param>
-    <param type="bool" name="append" subparam="true"> 
-        <description>If logfile exists, append to it if True or overwrite it if False</description>
+    <param subparam="true" name="append" type="bool"><shortdescription>If logfile exists, append to it if True or overwrite it if False</shortdescription><description>If logfile exists, append to it if True or overwrite it if False</description> 
+        
         <value>True</value>
         <example>append=True</example>
     </param>
-    <param type="string"  name="algorithm">
-          <description>Algorithm to use. Supported values are "biweight", "chauvenet", "classic", "fit-half", and "hinges-fences". Minimum match is supported.</description>
+    <param name="algorithm" type="string"><shortdescription>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</shortdescription><description>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</description>
+          
           <value>classic</value>
      </param>
-     <param type="double" name="fence" subparam="true">
-          <description>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the "classic" algorithm). Ignored if algorithm is not "hinges-fences".</description>
+     <param subparam="true" name="fence" type="double"><shortdescription>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</description>
+          
           <value>-1</value>
      </param>
-     <param type="string"  name="center" subparam="true">
-          <description>Center to use for fit-half. Valid choices are "mean", "median", and "zero". Ignored if algorithm is not "fit-half".</description>
+     <param subparam="true" name="center" type="string"><shortdescription>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</description>
+          
           <value>mean</value>
      </param>
-     <param type="bool"  name="lside" subparam="true">
-          <description>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not "fit-half".</description>
+     <param subparam="true" name="lside" type="bool"><shortdescription>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</description>
+          
           <value>True</value>
      </param>
-     <param type="double"  name="zscore" subparam="true">
-          <description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not "chauvenet".</description>
+     <param subparam="true" name="zscore" type="double"><shortdescription>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
+          
           <value>-1</value>
      </param>
-     <param type="int"  name="maxiter" subparam="true">
-         <description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not "chauvenet".</description>
+     <param subparam="true" name="maxiter" type="int"><shortdescription>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
+         
          <value>-1</value>
      </param>
-     <param type="string"  name="clmethod" subparam="true">
-         <description>Method to use for calculating classical statistics. Supported methods are "auto", "tiled", and "framework". Ignored if algorithm is not "classic".</description>
+     <param subparam="true" name="clmethod" type="string"><shortdescription>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</shortdescription><description>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</description>
+         
          <value>auto</value>
      </param>
-     <param type="int"  name="niter" subparam="true">
-          <description>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not "biweight".</description>
+     <param subparam="true" name="niter" type="int"><shortdescription>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</shortdescription><description>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</description>
+          
           <value>3</value>
      </param>
      <constraints>
         <when param="mask">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="stretch">
                     <value type="bool">False</value>
                 </default>
             </notequals>
         </when>
         <when param="logfile">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="append">
                     <value>True</value>
                 </default>
             </notequals>
         </when>
         <when param="algorithm">
-            <!-- note the default algorithm, classic, must come first in this list, because ... CASA -->
-            <equals type="string" value="classic">
+            
+            <equals value="classic" type="string">
                 <default param="clmethod">
                     <value type="string">auto</value>
                 </default>
             </equals>
-            <equals type="string" value="hinges-fences">
+            <equals value="hinges-fences" type="string">
                 <default param="fence">
                     <value>-1</value>
                 </default>
             </equals>
-            <equals type="string" value="fit-half">
+            <equals value="fit-half" type="string">
                 <default param="center">
                     <value type="string">mean</value>
                 </default>
@@ -138,7 +132,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                     <value>True</value>
                 </default>
             </equals>
-            <equals type="string" value="chauvenet">
+            <equals value="chauvenet" type="string">
                 <default param="zscore">
                     <value>-1</value>
                 </default>
@@ -146,7 +140,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                     <value>-1</value>
                 </default>
             </equals>
-            <equals type="string" value="biweight">
+            <equals value="biweight" type="string">
                 <default param="niter">
                     <value>3</value>
                 </default>
@@ -169,7 +163,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 Keyword arguments:
 imagename    Name of input image
              Default: none; Example: imagename='ngc5921_task.im'
-axes         axes to compute statistics over. -1 => all axes.
+axes         axes to compute statistics over. -1 =&gt; all axes.
 region       Region selection. Default is
              to use the full image.
 box          Rectangular region(s) to select in direction plane. See
@@ -187,24 +181,24 @@ mask         Mask to use. Default is none.
 stretch      Stretch the mask if necessary and possible? 
 logfile      Name of file to write fit results.
 append       If logfile exists, append to it (True) or overwrite it (False).
-alogortihm   Algorithm to use to compute statistics. Supported values are "classic"
-             and "hinges-fences" (minimum match supported.)
-fence        Fence factor when algorithm = "hinges-fences". Negative values are not
+alogortihm   Algorithm to use to compute statistics. Supported values are &quot;classic&quot;
+             and &quot;hinges-fences&quot; (minimum match supported.)
+fence        Fence factor when algorithm = &quot;hinges-fences&quot;. Negative values are not
              applicable and in these cases, the classic algorithm is used.
-center       Center to use for "fit-half". Valid choices are "mean" (mean value of the
-             selected pixels), "median" (median value of the selected pixels), and "zero"
-             (0.0 is used as the center value). Ignored if algorithm is not "fit-half".
+center       Center to use for &quot;fit-half&quot;. Valid choices are &quot;mean&quot; (mean value of the
+             selected pixels), &quot;median&quot; (median value of the selected pixels), and &quot;zero&quot;
+             (0.0 is used as the center value). Ignored if algorithm is not &quot;fit-half&quot;.
 lside        For fit-half, use values &lt;= center for the real data? If false, use
-             values &gt;= center as the real data. Ignored if algorithm is not "fit-half"
+             values &gt;= center as the real data. Ignored if algorithm is not &quot;fit-half&quot;
 zscore       For chauvenet, this is the target maximum number of standard deviations data
              may have to be included. If negative, use Chauvenet's criterion. Ignored if
-             algorithm is not "chauvenet".
+             algorithm is not &quot;chauvenet&quot;.
 maxiter      For chauvenet, this is the maximum number of iterations to attempt. Iterating
              will stop when either this limit is reached, or the zscore criterion is met.
              If negative, iterate until the zscore criterion is met. Ignored if algorithm is
-             not "chauvenet".
-clmethod     Method to use for calculating classical statistics. Supported methods are "auto",
-             "tiled", and "framework". Ignored if algorithm is not "classic".
+             not &quot;chauvenet&quot;.
+clmethod     Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;,
+             &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.
              
       General procedure:
 
@@ -269,8 +263,8 @@ input image has dimensions of 300x400x4x80 (RA x Dec x Stokes x Freq) and axes=[
 in the absence of a region selection, the shape of the output statistic arrays will be
 4x80. If there is a region selection, the shape of the output statistic arrays will be
 determined by the number of planes along the display axes chosen in the region selection.
-For example, continuing with our example, if axes=[0,1], chans="5~15;30~70", and
-stokes="IV", the output statistic arrays will have shapes of 2x52. Only the selected
+For example, continuing with our example, if axes=[0,1], chans=&quot;5~15;30~70&quot;, and
+stokes=&quot;IV&quot;, the output statistic arrays will have shapes of 2x52. Only the selected
 planes will be displayed in the logger output if verbose=True.
 
 In the case where the image has a pixel mask, and/or the mask parameter is specified,
@@ -281,7 +275,7 @@ using the numpy.extract() method. For example, to compute the minimum rms value,
 including any fully masked planes, one could use
 
 stats = imstat(...)
-rmsmin = numpy.min(numpy.extract(stats['npts']>0, stats['rms']))
+rmsmin = numpy.min(numpy.extract(stats['npts']&gt;0, stats['rms']))
 
 Thus in the computation of rmsmin, only the rms elements are considered which have
 associated values of npts that are not zero.
@@ -292,14 +286,14 @@ Several types of statistical algorithms are supported:
 
 * classic: This is the familiar algorithm, in which all unmasked pixels are used. One may choose
   one of two methods, which vary only by performance, for computing classic statistics, via the
-  clmethod parameter. The "tiled" method is the old method and is fastest in cases where there are
+  clmethod parameter. The &quot;tiled&quot; method is the old method and is fastest in cases where there are
   a large number of individual sets of statistics to be computed and a small number of data points
   per set. This can occur when one sets the axes parameter, which causes several individual sets of
-  statistics to be computed. The "framework" method uses the new statistics framework to compute
+  statistics to be computed. The &quot;framework&quot; method uses the new statistics framework to compute
   statistics. This method is fastest in the regime where one has a small number of individual sets
   of statistics to calculate, and each set has a large number of points. For example, this method
   is fastest when computing statistics over an entire image in one go (no axes specified). A third
-  option, "auto", chooses which method to use by predicting which be faster based on the number of
+  option, &quot;auto&quot;, chooses which method to use by predicting which be faster based on the number of
   pixels in the image and the choice of the axes parameter.
   
 * fit-half: This algorithm calculates statistics on a dataset created from real and virtual pixel values.
@@ -311,7 +305,7 @@ Several types of statistical algorithms are supported:
   are &gt;= center. The virtual part of the dataset is then created by reflecting all the real values
   through the center value, to create a perfectly symmetric dataset composed of a real and a virtual
   component. Statistics are then calculated on this resultant dataset. These two parameters are
-  ignored if algorithm is not "fit-half". Because the maximum value is virtual if lside is True and the
+  ignored if algorithm is not &quot;fit-half&quot;. Because the maximum value is virtual if lside is True and the
   minimum value is virtual if lside is False, the value of the maximum position (if lside=True) or
   minimum position (if lside=False) is not reported in the returned record.
   
@@ -322,7 +316,7 @@ Several types of statistical algorithms are supported:
   indicate that the full distribution is to be used (ie, the classic algorithm is used). Sufficiently
   large values of f will also be equivalent to using the classic algorithm. For f = 0, only data
   in the inner quartile range is used for computing statistics. The value of fence is silently
-  ignored if algorithm is not "hinges-fences".
+  ignored if algorithm is not &quot;hinges-fences&quot;.
 
 * chauvenet: The idea behind this algorithm is to eliminate outliers based on a maximum z-score value.
   A z-score is the number of standard deviations a point is from the mean of a distribution. This
@@ -331,7 +325,7 @@ Several types of statistical algorithms are supported:
   closer to forming a normal distribution. Iterating stops when no additional points lie beyond the
   specified zscore value, or, if zscore is negative, when Chauvenet's criterion is met (see below).
   The parameter maxiter can be set to a non-negative value to prematurely abort this iterative
-  process. When verbose=T, the "N iter" column in the table that is logged represents the number
+  process. When verbose=T, the &quot;N iter&quot; column in the table that is logged represents the number
   of iterations that were executed.
   
   Chauvenet's criterion allows the target z-score to decrease as the number of points in the
@@ -344,8 +338,8 @@ Several types of statistical algorithms are supported:
   where erfc() is the complementary error function. As iterating proceeds, the number of remaining
   points decreases as outliers are discarded, and so z_max likewise decreases. Convergence occurs when
   all remaining points fall within a z-score of z_max. Below is an illustrative table of z_max values
-  and their corresponding npts values. For example, it is likely that there will be a 5-sigma "noise
-  bump" in a perfectly noisy image with one million independent elements.
+  and their corresponding npts values. For example, it is likely that there will be a 5-sigma &quot;noise
+  bump&quot; in a perfectly noisy image with one million independent elements.
   
   z_max    npts
   1.0                1
@@ -394,7 +388,7 @@ will be the frequency unit of the spectral axis (eg, if the brightness unit is K
 frequency unit is Hz, the resulting flux unit will be K.arcsec2.Hz). 
 
 In both cases of flux density or flux being computed, the resulting numerical value is
-assigned to the "flux" key in the output dictionary.
+assigned to the &quot;flux&quot; key in the output dictionary.
 
 ADDITIONAL EXAMPLES
 
@@ -409,7 +403,7 @@ ADDITIONAL EXAMPLES
         # Select all channels greater the 20 as well as channel 0.
         # Then the mean and standard deviation are printed
         results = imstat( 'myImage', chans='&gt;20;0' )
-        print "Mean is: ", results['mean'], "  s.d. ", results['sigma']
+        print &quot;Mean is: &quot;, results['mean'], &quot;  s.d. &quot;, results['sigma']
 
         # Find statistical information for the Q stokes value only
         # then the I stokes values only, and printing out the statistical
@@ -417,11 +411,11 @@ ADDITIONAL EXAMPLES
         s1 = imstat( 'myimage', stokes='Q' )
         s2 = imstat( 'myimage', stokes='I' )
         print &quot;       |  MIN  |   MAX  | MEAN&quot;
-        print &quot;  Q    | &quot;,s1['min'][0],&quot;  |  ",s1['max'][0],&quot;  |  ",,&quot;  |  ",s1['mean'][0]
-        print &quot;  I    | &quot;,s2['min'][0],&quot;  |  ",s2['max'][0],&quot;  |  ",,&quot;  |  ",s2['mean'][0]
+        print &quot;  Q    | &quot;,s1['min'][0],&quot;  |  &quot;,s1['max'][0],&quot;  |  &quot;,,&quot;  |  &quot;,s1['mean'][0]
+        print &quot;  I    | &quot;,s2['min'][0],&quot;  |  &quot;,s2['max'][0],&quot;  |  &quot;,,&quot;  |  &quot;,s2['mean'][0]
 
 # evaluate statistics for each spectral plane in an ra x dec x frequency image
-myim = "noisy.im"
+myim = &quot;noisy.im&quot;
 ia.fromshape(myim, [20,30,40])
 # give pixels non-zero values
 ia.addnoise()
@@ -432,7 +426,7 @@ ia.done()
 # display the rms for each frequency plane (your mileage will vary with
 # the values).
 stats = imstat(imagename=myim, axes=[0,1])
- stats["rms"]
+ stats[&quot;rms&quot;]
   Out[10]: 
 array([ 0.99576014,  1.03813124,  0.97749186,  0.97587883,  1.04189885,
         1.03784776,  1.03371549,  1.03153074,  1.00841606,  0.947155  ,

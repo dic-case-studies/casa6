@@ -42,6 +42,7 @@
 #include <casacore/casa/Utilities/GenSort.h>
 
 #include <casacore/tables/Tables/ArrColData.h>
+#include <casacore/tables/Tables/ArrColDesc.h>
 #include <casacore/tables/DataMan/TiledShapeStMan.h>
 
 #include <casacore/ms/MeasurementSets/MeasurementSet.h>
@@ -90,20 +91,20 @@ struct VerboseDeleterForNew {
 template<class T>
 struct Filler {
   static void FillArrayReference(MeasurementSet const &ms,
-      String const &columnName, Vector<uInt> const &rowIds, Array<T> &data) {
+      String const &columnName, Vector<rownr_t> const &rowIds, Array<T> &data) {
     //cout << "Start " << __func__ << endl;
     ArrayColumn<T> col(ms, columnName);
     RefRows rows(rowIds);
     col.getColumnCells(rows, data);
   }
   static void FillScalarReference(MeasurementSet const &ms,
-      String const &columnName, Vector<uInt> const &rowIds, Vector<T> &data) {
+      String const &columnName, Vector<rownr_t> const &rowIds, Vector<T> &data) {
     ScalarColumn<T> col(ms, columnName);
     RefRows rows(rowIds);
 //    Vector<T> vref(data);
     col.getColumnCells(rows, data);
   }
-  static void FillWeightSp(MeasurementSet const &ms, Vector<uInt> const &rowIds,
+  static void FillWeightSp(MeasurementSet const &ms, Vector<rownr_t> const &rowIds,
       Array<Float> &weightSp) {
     // weightSp must be resized to appropriate shape
     if (ms.tableDesc().isColumn("WEIGHT_SPECTRUM")) {
@@ -252,7 +253,7 @@ private:
 
   template<class T>
   static void ValidateDataColumn(Array<T> const &data, MeasurementSet const &ms,
-      String const &columnName, Vector<uInt> const &rowIds) {
+      String const &columnName, Vector<rownr_t> const &rowIds) {
     cout << "Start " << __func__ << endl;
     ASSERT_EQ(data.shape()[0], (ssize_t )1);
     Array<T> baseData;
@@ -269,7 +270,7 @@ private:
 
   static void ValidateWeightColumn(Array<Float> const &weight,
       MeasurementSet const &ms, String const &columnName,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ASSERT_EQ(weight.shape()[0], (ssize_t )1);
     Array<Float> baseWeight;
     Filler<Float>::FillArrayReference(ms, columnName, rowIds, baseWeight);
@@ -285,27 +286,27 @@ public:
     ASSERT_TRUE(allEQ(corrType, (Int )Stokes::I));
   }
   static void ValidateData(Array<Complex> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateDataColumn(data, ms, "DATA", rowIds);
   }
 
   static void ValidateCorrected(Cube<Complex> const &data,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ValidateDataColumn(data, ms, "CORRECTED_DATA", rowIds);
   }
 
   static void ValidateModel(Cube<Complex> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateDataColumn(data, ms, "MODEL_DATA", rowIds);
   }
 
   static void ValidateFloat(Cube<Float> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateDataColumn(data, ms, "FLOAT_DATA", rowIds);
   }
 
   static void ValidateFlag(Cube<Bool> const &flag, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     Array<Bool> baseFlag;
     Filler<Bool>::FillArrayReference(ms, "FLAG", rowIds, baseFlag);
     Cube<Bool> ref(flag.shape(), True);
@@ -326,7 +327,7 @@ public:
   }
 
   static void ValidateFlagRow(Vector<Bool> const &flag,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ASSERT_EQ(flag.size(), rowIds.size());
     Vector<Bool> ref;
     Filler<Bool>::FillScalarReference(ms, "FLAG_ROW", rowIds, ref);
@@ -335,12 +336,12 @@ public:
   }
 
   static void ValidateWeight(Matrix<Float> const &weight,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ValidateWeightColumn(weight, ms, "WEIGHT", rowIds);
   }
 
   static void ValidateWeightSp(Cube<Float> const &weight,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     if (ms.tableDesc().isColumn("WEIGHT_SPECTRUM")) {
       // WEIGHT_SPECTRUM exists
       ValidateWeightColumn(weight, ms, "WEIGHT_SPECTRUM", rowIds);
@@ -379,35 +380,35 @@ public:
     }
   }
   static void ValidateData(Array<Complex> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(data, ms, "DATA", rowIds);
   }
   static void ValidateCorrected(Cube<Complex> const &data,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(data, ms, "CORRECTED_DATA", rowIds);
   }
   static void ValidateModel(Cube<Complex> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(data, ms, "MODEL_DATA", rowIds);
   }
   static void ValidateFloat(Cube<Float> const &data, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(data, ms, "FLOAT_DATA", rowIds);
   }
   static void ValidateFlag(Cube<Bool> const &flag, MeasurementSet const &ms,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(flag, ms, "FLAG", rowIds);
   }
   static void ValidateFlagRow(Vector<Bool> const &flag,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ValidateScalarColumn(flag, ms, "FLAG_ROW", rowIds);
   }
   static void ValidateWeight(Matrix<Float> const &weight,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     ValidateArrayColumn(weight, ms, "WEIGHT", rowIds);
   }
   static void ValidateWeightSp(Cube<Float> const &weight,
-      MeasurementSet const &ms, Vector<uInt> const &rowIds) {
+      MeasurementSet const &ms, Vector<rownr_t> const &rowIds) {
     if (ms.tableDesc().isColumn("WEIGHT_SPECTRUM")) {
       ValidateArrayColumn(weight, ms, "WEIGHT_SPECTRUM", rowIds);
     }
@@ -416,7 +417,7 @@ private:
   template<class T>
   static void ValidateArrayColumn(Array<T> const &data,
       MeasurementSet const &ms, String const &columnName,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     Array<T> ref;
     Filler<T>::FillArrayReference(ms, columnName, rowIds, ref);
     EXPECT_EQ(data.shape(), ref.shape());
@@ -425,7 +426,7 @@ private:
   template<class T>
   static void ValidateScalarColumn(Array<T> const &data,
       MeasurementSet const &ms, String const &columnName,
-      Vector<uInt> const &rowIds) {
+      Vector<rownr_t> const &rowIds) {
     Vector<T> ref;
     Filler<T>::FillScalarReference(ms, columnName, rowIds, ref);
     EXPECT_EQ(data.shape(), ref.shape());
@@ -904,7 +905,7 @@ protected:
 
         cout << "---" << endl;
         Int nRowSubchunk = vb->nRows();
-        Vector<uInt> rowIds = vb->rowIds();
+        Vector<rownr_t> rowIds = vb->rowIds();
         for (auto iter = rowIds.begin(); iter != rowIds.end(); ++iter) {
           swept[*iter] += 1;
         }

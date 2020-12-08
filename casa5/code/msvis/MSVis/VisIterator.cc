@@ -150,7 +150,7 @@ public:
   // Return the row ids as from the original root table. This is useful
   // to find correspondance between a given row in this iteration to the
   // original ms row
-  Vector<uInt>& rowIds(Vector<uInt>& rowids) const;
+  Vector<rownr_t>& rowIds(Vector<rownr_t>& rowids) const;
 
   // Need to override this and not use getColArray
   Vector<RigidVector<Double,3> >& uvw(Vector<RigidVector<Double,3> >& uvwvec) const;
@@ -515,7 +515,7 @@ ROVisIteratorImpl::setTileCache()
   const ColumnDescSet& cds=thems.tableDesc().columnDescSet();
 
   // Get the first row number for this DDID.
-  Vector<uInt> rownums;
+  Vector<rownr_t> rownums;
   rowIds(rownums);
   uInt startrow = rownums[0];
 
@@ -875,8 +875,8 @@ void ROVisIteratorImpl::setSelTable()
     // Vector<Vector<Slice> > and a RefRows parameter to get-/putColumn.
     // Such put/get functions must be first implemented.
 
-    Vector<uInt> rows(curNumRow_p);
-    indgen(rows,uInt(curStartRow_p));
+    Vector<rownr_t> rows(curNumRow_p);
+    indgen(rows,curStartRow_p);
     selTable_p=msIter_p.table()(rows);
     attachColumns(attachTable());
 }
@@ -1454,7 +1454,7 @@ void VisIterator::putDataColumn(DataColumn whichOne,
     getImpl () -> putDataColumn (whichOne, data);
 };  
 
-Vector<uInt>& ROVisIteratorImpl::rowIds(Vector<uInt>& rowids) const
+Vector<rownr_t>& ROVisIteratorImpl::rowIds(Vector<rownr_t>& rowids) const
 {
   rowids.resize(curNumRow_p);
   rowids=selTable_p.rowNumbers();

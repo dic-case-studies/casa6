@@ -27,12 +27,13 @@
 
 #include <imageanalysis/ImageAnalysis/ImageProfileFitter.h>
 
-#include <casa/Quanta/MVAngle.h>
-#include <casa/Quanta/MVTime.h>
-#include <images/Images/ImageUtilities.h>
-#include <images/Images/PagedImage.h>
-#include <images/Images/TempImage.h>
-#include <scimath/Mathematics/Combinatorics.h>
+#include <casacore/casa/Quanta/MVAngle.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/images/Images/ImageUtilities.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/scimath/Mathematics/Combinatorics.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
 
 #include <imageanalysis/ImageAnalysis/ProfileFitResults.h>
 
@@ -42,7 +43,7 @@
 #include <imageanalysis/IO/ImageProfileFitterResults.h>
 
 // debug
-#include <casa/OS/PrecTimer.h>
+#include <casacore/casa/OS/PrecTimer.h>
 
 using namespace casacore;
 namespace casa {
@@ -271,7 +272,7 @@ Record ImageProfileFitter::fit(Bool doDetailedResults) {
                 AxesSpecifier(), False
             );
             if (_sigma.get()) {
-                Array<Bool> sigmaMask = _sigma->get() != Array<Float>(_sigma->shape(), 0.0);
+                Array<Bool> sigmaMask = _sigma->get() != Array<Float>(_sigma->shape(), 0.0f);
                 if (anyTrue(! sigmaMask)) {
                     if (_sigma->hasPixelMask()) {
                         sigmaMask = sigmaMask && _sigma->pixelMask().get();
@@ -429,7 +430,7 @@ void ImageProfileFitter::setSigma(const Array<Float>& sigma) {
 }
 
 void ImageProfileFitter::setSigma(const ImageInterface<Float>* const &sigma) {
-    if (anyTrue(sigma->get() < Array<Float>(sigma->shape(), 0.0))) {
+    if (anyTrue(sigma->get() < Array<Float>(sigma->shape(), 0.0f))) {
         *_getLog() << "All sigma values must be non-negative" << LogIO::EXCEPTION;
     }
     Float mymax = fabs(max(sigma->get()));
@@ -748,7 +749,7 @@ void ImageProfileFitter::_fitProfiles(Bool showProgress) {
     if (checkMinPts) {
         fitMask = (
             partialNTrue(fitData->getMask(False), IPosition(1, _fitAxis))
-            >= _minGoodPoints
+            >= (long unsigned int) _minGoodPoints
         );
         IPosition oldShape = fitMask.shape();
         IPosition newShape(fitMask.ndim() + 1);

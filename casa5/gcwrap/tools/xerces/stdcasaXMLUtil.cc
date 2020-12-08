@@ -165,8 +165,8 @@ bool stdcasaXMLUtil::fromCasaRecord(ostream &oss, const record &inRec)
             oss << "type=\"intVec\">" << endl;
             oss << "<value>" << endl;
             {
-                const vector<int> &tVec =(*iter).second.getIntVec();
-                for(vector<int>::const_iterator iter2 = tVec.begin();
+                auto tVec =(*iter).second.getIntVec();
+                for(auto iter2 = tVec.begin();
                 iter2 != tVec.end(); iter2++){
                     oss << "<value>" << *iter2 << "</value>" <<endl;
                 }
@@ -711,7 +711,7 @@ variant *stdcasaXMLUtil::tovariant(variant::TYPE theType, string &theInput, bool
     case variant::INT :
     case variant::INTVEC :
     {
-        int val(0);
+        long val(0);
         if(theInput != "none"){
             istringstream iss(theInput.c_str());
             iss >> val;
@@ -719,7 +719,7 @@ variant *stdcasaXMLUtil::tovariant(variant::TYPE theType, string &theInput, bool
             val = INT_MAX;
         }
         if(isVector || theType == variant::INTVEC)
-            rstat = new variant(vector<int>(1,val));
+            rstat = new variant(vector<long>(1,val));
         else
             rstat = new variant(val);
     }
@@ -806,7 +806,7 @@ variant *stdcasaXMLUtil::itsvalue(DOMNode *theNode, variant::TYPE itsType){
             else if(itsType == variant::BOOLVEC) rstatus = new variant(vector<bool>());
             else if(itsType == variant::DOUBLEVEC) rstatus = new variant(vector<double>());
             else if(itsType == variant::COMPLEXVEC) rstatus = new variant(vector<complex<double> >());
-            else if(itsType == variant::INTVEC) rstatus = new variant(vector<int>());            
+            else if(itsType == variant::INTVEC) rstatus = new variant(vector<long>());
         } else if(aValue) {
             rstatus = tovariant(itsType, sValue, isVector);
         }
@@ -898,7 +898,7 @@ variant *stdcasaXMLUtil::itsvalue(DOMNode *theNode, variant::TYPE itsType){
                     double myval;
                     iss >> myval;
                     (*rangeRec)[rangeType].asRecord()["value"].asDoubleVec().push_back(myval);
-                    (*rangeRec)[rangeType].asRecord()["value"].shape() = vector<int>(1,
+                    (*rangeRec)[rangeType].asRecord()["value"].shape() = vector<ssize_t>(1,
                             (*rangeRec)[rangeType].asRecord()["value"].asDoubleVec().size());
                 }
                 XMLString::release(&rangeType);
@@ -986,7 +986,7 @@ void stdcasaXMLUtil::addtovariant(variant *theVariant, variant::TYPE theType, st
         } 
         //vector<bool> &members = theVariant->asBoolVec();
         theVariant->getBoolVecMod().push_back(val);
-        theVariant->shape() = vector<int>(1, theVariant->asBoolVec().size());
+        theVariant->shape() = vector<ssize_t>(1, theVariant->asBoolVec().size());
     }
     break;
     case variant::INT:
@@ -1001,7 +1001,7 @@ void stdcasaXMLUtil::addtovariant(variant *theVariant, variant::TYPE theType, st
         }
         // vector<int> &members = theVariant->asIntVec();
         theVariant->getIntVecMod().push_back(val);
-        theVariant->shape() = vector<int>(1, theVariant->asIntVec().size());
+        theVariant->shape() = vector<ssize_t>(1, theVariant->asIntVec().size());
     }
     break;
     case variant::DOUBLE:
@@ -1016,7 +1016,7 @@ void stdcasaXMLUtil::addtovariant(variant *theVariant, variant::TYPE theType, st
         }
         //vector<double> &members = theVariant->asDoubleVec();
         theVariant->getDoubleVecMod().push_back(val);
-        theVariant->shape() = vector<int>(1, theVariant->asDoubleVec().size());
+        theVariant->shape() = vector<ssize_t>(1, theVariant->asDoubleVec().size());
     }
     break;
     case variant::COMPLEX:
@@ -1031,7 +1031,7 @@ void stdcasaXMLUtil::addtovariant(variant *theVariant, variant::TYPE theType, st
         }
         //vector<complex<double> > &members = theVariant->asComplexVec();
         theVariant->getComplexVecMod().push_back(val);
-        theVariant->shape() = vector<int>(1, theVariant->asComplexVec().size());
+        theVariant->shape() = vector<ssize_t>(1, theVariant->asComplexVec().size());
     }
     break;
     case variant::STRING :

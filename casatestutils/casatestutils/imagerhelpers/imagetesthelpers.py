@@ -29,6 +29,7 @@ if is_CASA6:
     import casatools
     logging.debug("Importing CASAtasks")
     import casatasks
+    _cb = casatools.calibrater()
     _tb = casatools.table()
     _tbt = casatools.table()
     _ia  = casatools.image()
@@ -40,7 +41,7 @@ else:
     # CASA 5
     logging.debug("Import casa6 errors. Trying CASA5...")
     from __main__ import default
-    from taskinit import tbtool, mstool, iatool
+    from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
     try:
@@ -52,6 +53,7 @@ else:
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
+    _cb = cbtool()
     casa = find_casa()
     if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
         casaglobals=True
@@ -63,6 +65,101 @@ else:
 ##################################       imagerhelpers       ###############################
 ############################################################################################
 class TestHelpers:
+
+    def delmodels(self,msname="",modcol='nochange'):
+       TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
+       if modcol=='delete':
+           TestHelpers().delmodelcol(msname) ## Delete model column
+       if modcol=='reset0':
+           TestHelpers().resetmodelcol(msname,0.0)  ## Set model column to zero
+       if modcol=='reset1':
+           TestHelpers().resetmodelcol(msname,1.0)  ## Set model column to one
+
+    def delmodkeywords(self,msname=""):
+        #delmod(msname)
+        _tb.open( msname+'/SOURCE', nomodify=False )
+        keys = _tb.getkeywords()
+        for key in keys:
+            _tb.removekeyword( key )
+        _tb.close()
+
+    def resetmodelcol(self,msname="",val=0.0):
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if not hasmodcol:
+            _cb.open(msname)
+            _cb.close()
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')
+            dat.fill( complex(val,0.0) )
+            _tb.putcol('MODEL_DATA', dat)
+        _tb.close();
+
+
+
+    def delmodelcol(self,msname=""):
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            _tb.removecols('MODEL_DATA')
+        _tb.close()
+
+    def get_coordsys(self,imname):
+        try:
+            _ia.open(imname)
+            csys = _ia.coordsys()
+            csys_rec = csys.torecord()
+            csys.done()
+        finally:
+            _ia.close()
+
+        return csys_rec
+        
+    def check_spec_frame(self,imname,frame, crval=0.0, cdelt=0.0):
+        testname = "check_spec_frame"
+        pstr = ""
+        if os.path.exists(imname):
+           res = True
+           expcrval=""
+           expcdelt=""
+           thecval=""
+           thecdelt=""
+           coordsys = TestHelpers().get_coordsys(imname)
+           baseframe = coordsys['spectral2']['system']
+           basecrval = coordsys['spectral2']['wcs']['crval']
+           basecdelt = coordsys['spectral2']['wcs']['cdelt']
+           if baseframe != frame:
+                res = False
+           else:
+                res = True
+                if crval!=0.0:
+                     if abs(basecrval - crval)/abs(crval) > 1.0e-6:
+                          res = False
+                     thecrval = " with crval " + str(basecrval)
+                     expcrval = " with expected crval " + str(crval)
+                else:
+                     # skip the crval test
+                     thecrval = ""
+                     expcrval = ""
+                if cdelt!=0.0:
+                     if abs(basecdelt - cdelt)/abs(cdelt) > 1.0e-6:
+                          res = False
+                     thecdelt = " with cdelt " + str(basecdelt)
+                     expcdelt = " with expected cdelt " + str(cdelt)
+                else:
+                     # skip the crval test
+                     thecdelt = ""
+           thecorrectans = frame +  expcrval + expcdelt
+           pstr =  "[" + testname + "] " + imname + ": Spec frame is " +\
+           str(baseframe) + thecrval + thecdelt + " (" +\
+           TestHelpers().verdict(res) +" : should be " + thecorrectans +" )"
+           print(pstr)
+           pstr=pstr+"\n"
+           
+        #self.checkfinal(pstr)
+        return pstr
+
     def check_model(self, msname=""):
         """Check hasmodcol, modsum, hasvirmod"""
         logging.debug("Executing: check_model(msname={})".format(msname))
@@ -140,18 +237,30 @@ class TestHelpers:
         """ Image exists """
         return os.path.exists(imname)
 
+    def exists(self, imname):
+        # AW: This is a duplicate function, but it helps maintain uniformity to test_tclean.py
+        """ Exists """
+        return os.path.exists(imname)
+
     def get_peak_res(self, summ):
         """Get Peak Res"""
-        if summ.has_key('summaryminor'):
-            reslist = summ['summaryminor'][1,:]
-            peakres = reslist[ len(reslist)-1 ]
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        peakres = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+
         else:
-            peakres = None
+            if summ.has_key('summaryminor'):
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+                
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
         """Check Peak Res"""
-        peakres = get_peak_res(summ)
+        peakres = TestHelpers().get_peak_res(summ)
         out = True
         if correctres == None and peakres != None:
             out = False
@@ -167,16 +276,21 @@ class TestHelpers:
 
     def get_mod_flux(self, summ):
         """Get Mod Flux"""
-        if summ.has_key('summaryminor'):
-            modlist = summ['summaryminor'][2,:]
-            modflux = modlist[ len(modlist)-1 ]
+        # AW: This can be reduced down for readability but putting in a fix for CAS-13182
+        modflux = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         else:
-            modflux = None
+            if summ.has_key('summaryminor'):
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
         """Check Mod Flux"""
-        modflux = get_mod_flux(summ)
+        modflux = TestHelpers().get_mod_flux(summ)
         out = True
         if correctmod == None and modflux != None:
             out = False
@@ -190,12 +304,46 @@ class TestHelpers:
                 return out,modflux
         return out,modflux
 
+    def check_chanvals(self,msname,vallist, epsilon = 0.05): # list of tuples of (channumber, relation, value) e.g. (10,">",1.0)
+        testname = "check_chanvals"
+        pstr = ""
+        for val in vallist:
+            if len(val)==3:
+                thisval = TestHelpers().check_modelchan(msname,val[0])
+                if val[1]==">":
+                    ok = thisval > val[2]
+                elif val[1]=="==":     
+                    ok = abs( (thisval - val[2])/val[2] ) < epsilon
+                elif val[1]=="<":     
+                    ok = thisval < val[2]
+                else:
+                    ok=False
+        pstr = pstr + "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
+
+        print(pstr)
+        return pstr
+
+    def check_modelchan(self,msname="",chan=0):
+        _tb.open( msname )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        modsum=0.0
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')[:,chan,:]
+            modsum=dat.mean()
+        _tb.close()
+        ##print(modsum)
+        return modsum
+
     def get_iter_done(self, summ):
         """Get Iterdone"""
-        if summ.has_key('iterdone'):
-            iters = summ['iterdone']
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        iters = None
+        if is_CASA6:
+            if 'iterdone' in summ:
+                iters = summ['iterdone']
         else:
-            iters = None
+            if summ.has_key('iterdone'):
+                iters = summ['iterdone']
         return iters
 
     def verdict(self, boolval):
@@ -435,8 +583,9 @@ class TestHelpers:
         retres = True
         _ia.open(imname)
         csys = _ia.coordsys()
-        _ia.close()
+        _ia.done()
         reffreq = csys.referencevalue()['numeric'][3]
+        csys.done()
         if  abs(reffreq - theval)/theval > epsilon:
             retres = False
         else:
@@ -506,13 +655,13 @@ class TestHelpers:
                 pstr += stopstr
         return pstr
 
-    def check_reffreq(self, reffreq):
+    def check_reffreq(self, reffreq, epsilon=0.05):
         pstr = ''
         if reffreq != None:
             if type(reffreq) == list:
                 for ii in reffreq:
                     if type(ii) == tuple and len(ii) == 2:
-                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1])
+                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
     def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
@@ -535,13 +684,17 @@ class TestHelpers:
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    pstr += TestHelpers().check_val(val=get_peak_res(ret), correctval=peakres, valname="peak res")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res", epsilon=epsilon)
+                    pstr = pstr + message
                 if modflux != None:
-                    pstr += TestHelpers().check_val(val=get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux", epsilon=epsilon)
+                    pstr = pstr + message
                 if iterdone != None:
-                    pstr += TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    pstr = pstr + message
                 if nmajordone != None:
-                    pstr += TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
                 raise
@@ -553,7 +706,7 @@ class TestHelpers:
         pstr += TestHelpers().check_immask(imgmask)
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
-        pstr += TestHelpers().check_reffreq(reffreq)
+        pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
         return pstr
 
     def check_final(self, pstr=""):
@@ -564,4 +717,93 @@ class TestHelpers:
         if pstr.count("Fail") > 0:
             return False
         return True
+        
+    def write_file(self,filename,str_text):
+        """Save the string in a text file"""
+        inp = filename
+        cmd = str_text
+        # remove file first
+        if os.path.exists(inp):
+            os.remove(inp)
+        # save to a file
+        with open(inp, 'w') as f:
+            f.write(cmd)
+        f.close()
+        return
 
+    def mergeParaCubeResults(self,
+                     ret=None,
+                     parlist=[]
+                     #peakres=None, # a float
+                     #modflux=None, # a float
+                     #iterdone=None, # an int
+                     #nmajordone=None, # an int
+                     #imexist=None,  # list of image names
+                     #imexistnot=None, # list of image names
+                     #imval=None,  # list of tuples of (imagename,val,pos)
+                     #imvalexact=None, # list of tuples of (imagename,val,pos)
+                     #immask=None,  #list of tuples to check mask value
+                     #tabcache=True,
+                     #stopcode=None,
+                     #reffreq=None # list of tuples of (imagename, reffreq)
+                     ):
+        if ret!=None and isinstance(ret,dict):
+            if list(ret.keys())[0].count('node'):
+                mergedret={}
+                nodenames = list(ret.keys())
+                # must be parallel cube results
+                if parlist.count('iterdone'):
+                    retIterdone = 0
+                    for inode in nodenames:
+                        #print("ret[",inode,"]=",ret[inode])
+                        #print("inode.strip = ", int(inode.strip('node')))
+                        retIterdone+=ret[inode][int(inode.strip('node'))]['iterdone']
+                    mergedret['iterdone']=retIterdone
+                if parlist.count('nmajordone'):
+                    retNmajordone = 0
+                    for inode in nodenames:
+                        retNmajordone = max(ret[inode][int(inode.strip('node'))]['nmajordone'],retNmajordone)
+                    mergedret['nmajordone']=retNmajordone
+                if parlist.count('peakres'):
+                    #retPeakres = 0
+                    #for inode in nodenames:
+                        #tempreslist = ret[inode][int(inode.strip('node'))]['summaryminor'][1,:]
+                        #if len(tempreslist)>0:
+                        #    tempresval = tempreslist[len(tempreslist)-1]
+                        #else:
+                        #    tempresval=0.0
+                        #retPeakres = max(tempresval,retPeakres)
+                    #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
+                    if 'summaryminor' not in mergedret:
+                        for inode in nodenames:
+                            nodeid = int(inode.strip('node'))
+                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                                lastnode = inode
+                                lastid = nodeid
+                           
+                        mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
+                if parlist.count('modflux'):
+                    #retModflux = 0
+                    #for inode in nodenames:
+                    #    tempmodlist = ret[inode][int(inode.strip('node'))]['summaryminor'][2,:]
+                    #    print "tempmodlist for ",inode,"=",tempmodlist
+                    #    if len(tempmodlist)>0:
+                    #         tempmodval=tempmodlist[len(tempmodlist)-1]
+                    #    else:
+                    #         tempmodval=0.0
+                    #    retModflux += tempmodval
+                    #mergedret['modflux']=retModflux
+                    if 'summaryminor' not in mergedret:
+                        for inode in nodenames:
+                            nodeid = int(inode.strip('node'))
+                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                                lastnode = inode
+                                lastid = nodeid
+                           
+                        mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
+                if parlist.count('stopcode'):
+                    mergedret['stopcode']=ret['node1'][1]['stopcode']
+            else:
+                mergedret=ret
+
+        return mergedret

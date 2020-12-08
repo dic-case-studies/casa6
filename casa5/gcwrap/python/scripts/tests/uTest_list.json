@@ -66,20 +66,7 @@
              "suppressEmail": false,
              "comment":""
         },
-        {
-             "testNumber":"3025",
-             "testName":"Importevla",
-             "testScript":"test_importevla",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Sandra Castro",
-             "MaintainerEmail":"scastro@eso.org",
-             "priority":"3",
-             "tag":"importExport",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
+         {
              "testNumber":"3030",
              "testName":"Importfitsidi",
              "testScript":"test_importfitsidi",
@@ -184,19 +171,6 @@
              "comment":""
         },
         {
-             "testNumber":"3125",
-             "testName":"Cvelfreqs",
-             "testScript":"test_cvelfreqs",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Dirk Petry",
-             "MaintainerEmail":"dpetry@eso.org",
-             "priority":"3",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"3130",
              "testName":"Hanningsmooth",
              "testScript":"test_hanningsmooth",
@@ -209,46 +183,7 @@
              "suppressEmail": false,
              "comment":""
         },
-        {
-             "testNumber":"3135",
-             "testName":"Hanningsmooth2",
-             "testScript":"test_hanningsmooth2",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Sandra Castro",
-             "MaintainerEmail":"scastro@eso.org",
-             "priority":"3",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"3140",
-             "testName":"Imtrans",
-             "testScript":"test_imtrans",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"David Mehringer",
-             "MaintainerEmail":"dmehring@nrao.edu",
-             "priority":"2",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"3145",
-             "testName":"Msmoments",
-             "testScript":"test_msmoments",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Takeshi Nakazato",
-             "MaintainerEmail":"takeshi.nakazato@nao.ac.jp",
-             "priority":"3",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
+         {
              "testNumber":"3150",
              "testName":"Mstransform",
              "testScript":"test_mstransform",
@@ -301,28 +236,28 @@
              "comment":""
         },
         {
-             "testNumber":"3170",
-             "testName":"Oldtatwt",
-             "testScript":"test_oldstatwt",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Takahiro Tsutsumi",
-             "MaintainerEmail":"ttsutsum@nrao.edu",
-             "priority":"1",
-             "tag":"manipulation",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"3171",
              "testName":"Statwt",
-             "testScript":"test_statwt",
+             "testScript":"test_req_task_statwt",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
              "MaintainerEmail":"dmehring@nrao.edu",
              "priority":"3",
              "tag":"manipulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"3172",
+             "testName":"Rerefant",
+             "testScript":"test_req_task_rerefant",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Neal Schweighart",
+             "MaintainerEmail":"nschweig@nrao.edu",
+             "priority":"3",
+             "tag":"calibration",
              "suppressEmail": false,
              "comment":""
         },
@@ -391,20 +326,7 @@
              "suppressEmail": false,
              "comment":""
         },
-        {
-             "testNumber":"3415",
-             "testName":"Caltabconvert",
-             "testScript":"test_caltabconvert",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"George Moellenbrock",
-             "MaintainerEmail":"gmoellen@nrao.edu",
-             "priority":"1",
-             "tag":"calibration",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
+         {
              "testNumber":"3420",
              "testName":"Fluxscale",
              "testScript":"test_fluxscale",
@@ -420,7 +342,7 @@
         {
              "testNumber":"3425",
              "testName":"Gaincal",
-             "testScript":"test_gaincal",
+             "testScript":"test_req_task_gaincal",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"George Moellenbrock",
@@ -490,19 +412,6 @@
              "testLevel":"critical",
              "Maintainer":"Dirk Petry",
              "MaintainerEmail":"dpetry@eso.org",
-             "priority":"3",
-             "tag":"calibration",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"3455",
-             "testName":"Rerefant",
-             "testScript":"test_rerefant",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Mark Kettenis",
-             "MaintainerEmail":"kettenis@jive.eu",
              "priority":"3",
              "tag":"calibration",
              "suppressEmail": false,
@@ -640,8 +549,8 @@
         },
         {
              "testNumber":"4556",
-             "testName":"Sdtpimaging",
-             "testScript":"test_sdtpimaging",
+             "testName":"Sdtimeaverage",
+             "testScript":"test_sdtimeaverage",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Takeshi Nakazato",
@@ -653,21 +562,8 @@
         },
         {
              "testNumber":"4559",
-             "testName":"Tsdbaseline",
-             "testScript":"test_tsdbaseline",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Kana Sugimoto",
-             "MaintainerEmail":"kana.sugi@nao.ac.jp",
-             "priority":"3",
-             "tag":"singleDish",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"4562",
-             "testName":"Tsdcal",
-             "testScript":"test_tsdcal",
+             "testName":"Sdbaseline",
+             "testScript":"test_sdbaseline",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Kana Sugimoto",
@@ -679,8 +575,8 @@
         },
         {
              "testNumber":"4565",
-             "testName":"Tsdfit",
-             "testScript":"test_tsdfit",
+             "testName":"Sdfit",
+             "testScript":"test_sdfit",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Kana Sugimoto",
@@ -691,22 +587,9 @@
              "comment":""
         },
         {
-             "testNumber":"4566",
-             "testName":"Tsdimaging",
-             "testScript":"test_tsdimaging",
-             "testType":"functionalTest",
-             "testLevel":"accepted",
-             "Maintainer":"Takeshi Nakazato",
-             "MaintainerEmail":"takeshi.nakazato@nao.ac.jp",
-             "priority":"3",
-             "tag":"singleDish",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"4568",
-             "testName":"Tsdsmooth",
-             "testScript":"test_tsdsmooth",
+             "testName":"Sdsmooth",
+             "testScript":"test_sdsmooth",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Kana Sugimoto",
@@ -769,19 +652,6 @@
              "comment":""
         },
         {
-             "testNumber":"4715",
-             "testName":"Plotuv",
-             "testScript":"test_plotuv",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Pam Ford",
-             "MaintainerEmail":"pford@nrao.edu",
-             "priority":"1",
-             "tag":"plotting",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"4720",
              "testName":"Plotweather",
              "testScript":"test_plotweather",
@@ -810,7 +680,7 @@
         {
              "testNumber":"5105",
              "testName":"Imhead",
-             "testScript":"test_imhead",
+             "testScript":"test_req_task_imhead",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -823,7 +693,7 @@
         {
              "testNumber":"5110",
              "testName":"Imhistory",
-             "testScript":"test_imhistory",
+             "testScript":"test_req_task_imhistory",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -862,7 +732,7 @@
         {
              "testNumber":"5120",
              "testName":"Listhistory",
-             "testScript":"test_listhistory",
+             "testScript":"test_req_task_listhistory",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Sandra Castro",
@@ -875,7 +745,7 @@
         {
              "testNumber":"5125",
              "testName":"Listobs",
-             "testScript":"test_listobs",
+             "testScript":"test_req_task_listobs",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -924,23 +794,10 @@
              "suppressEmail": false,
              "comment":""
         },
-        {
-             "testNumber":"5140",
-             "testName":"Report",
-             "testScript":"test_report",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Ville Suoranta",
-             "MaintainerEmail":"vsuorant@nrao.edu",
-             "priority":"2",
-             "tag":"information",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
+         {
              "testNumber":"5145",
              "testName":"Vishead",
-             "testScript":"test_vishead",
+             "testScript":"test_task_req_vishead",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"Sandra Castro",
@@ -951,26 +808,13 @@
              "comment":""
         },
         {
-             "testNumber":"5150",
-             "testName":"Visstat Old",
-             "testScript":"test_visstatold",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Martin Pokorny",
-             "MaintainerEmail":"mpokorny@nrao.edu",
-             "priority":"3",
-             "tag":"information",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"5155",
              "testName":"Visstat",
-             "testScript":"test_visstat",
+             "testScript":"test_req_task_visstat",
              "testType":"functionalTest",
              "testLevel":"critical",
-             "Maintainer":"Martin Pokorny",
-             "MaintainerEmail":"mpokorny@nrao.edu",
+             "Maintainer":"Dave Mehringer",
+             "MaintainerEmail":"dmehring@nrao.edu",
              "priority":"3",
              "tag":"information",
              "suppressEmail": false,
@@ -1008,8 +852,8 @@
              "testScript":"test_measures",
              "testType":"functionalTest",
              "testLevel":"critical",
-             "Maintainer":"Andy Hale",
-             "MaintainerEmail":"ahale@nrao.edu",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
              "priority":"1",
              "tag":"utility",
              "suppressEmail": false,
@@ -1057,7 +901,7 @@
         {
              "testNumber":"5615",
              "testName":"Impbcor",
-             "testScript":"test_impbcor",
+             "testScript":"test_req_task_impbcor",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -1096,7 +940,7 @@
         {
              "testNumber":"5630",
              "testName":"Imstat",
-             "testScript":"test_imstat",
+             "testScript":"test_req_task_imstat",
              "testType":"functionalTest",
              "testLevel":"critical",
              "Maintainer":"David Mehringer",
@@ -1114,6 +958,19 @@
              "testLevel":"critical",
              "Maintainer":"Kanako Sugimoto",
              "MaintainerEmail":"kana.sugi@ezweb.ne.jp",
+             "priority":"3",
+             "tag":"simulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"Simanalyze",
+             "testScript":"test_req_task_simanalyze",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
              "priority":"3",
              "tag":"simulation",
              "suppressEmail": false,
@@ -1991,32 +1848,6 @@
              "comment":""
         },
         {
-             "testNumber":"6405",
-             "testName":"Boxit",
-             "testScript":"test_boxit",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"David Mehringer",
-             "MaintainerEmail":"dmehring@nrao.edu",
-             "priority":"3",
-             "tag":"imaging",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"6410",
-             "testName":"Clean",
-             "testScript":"test_clean",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Kumar Golap",
-             "MaintainerEmail":"kgolap@nrao.edu",
-             "priority":"3",
-             "tag":"imaging",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"6415",
              "testName":"Cleanhelper",
              "testScript":"test_cleanhelper",
@@ -2038,19 +1869,6 @@
              "Maintainer":"David Mehringer",
              "MaintainerEmail":"dmehring@nrao.edu",
              "priority":"1",
-             "tag":"imaging",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"6425",
-             "testName":"Csvclean",
-             "testScript":"test_csvclean",
-             "testType":"functionalTest",
-             "testLevel":"critical",
-             "Maintainer":"Kumar Golap",
-             "MaintainerEmail":"kgolap@nrao.edu",
-             "priority":"3",
              "tag":"imaging",
              "suppressEmail": false,
              "comment":""
@@ -2123,7 +1941,7 @@
         {
              "testNumber":"6905",
              "testName":"MPI Applycal",
-             "testScript":"test_applycal",
+             "testScript":"test_req_task_applycal",
              "testType":"functionalTest",
              "testLevel":"accepted",
              "Maintainer":"Sandra Castro",
@@ -2160,19 +1978,6 @@
              "comment":""
         },
         {
-             "testNumber":"6920",
-             "testName":"MPI Importasdm",
-             "testScript":"test_importasdm",
-             "testType":"functionalTest",
-             "testLevel":"accepted",
-             "Maintainer":"Sandra Castro",
-             "MaintainerEmail":"scastro@eso.org",
-             "priority":"3",
-             "tag":"mpi",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"6925",
              "testName":"MPI Importasdm Mms",
              "testScript":"test_importasdm_mms",
@@ -2189,19 +1994,6 @@
              "testNumber":"6930",
              "testName":"MPI Mpi4Casa",
              "testScript":"test_mpi4casa",
-             "testType":"functionalTest",
-             "testLevel":"accepted",
-             "Maintainer":"Sandra Castro",
-             "MaintainerEmail":"scastro@eso.org",
-             "priority":"3",
-             "tag":"mpi",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"6931",
-             "testName":"MPI Mpi4Casa Subset",
-             "testScript":"test_mpi4casa_subset",
              "testType":"functionalTest",
              "testLevel":"accepted",
              "Maintainer":"Sandra Castro",
@@ -2237,20 +2029,7 @@
              "suppressEmail": false,
              "comment":""
         },
-        {
-             "testNumber":"6945",
-             "testName":"MPI Refimager",
-             "testScript":"test_refimager_parallel",
-             "testType":"functionalTest",
-             "testLevel":"accepted",
-             "Maintainer":"Urvashi R.V.",
-             "MaintainerEmail":"rurvashi@nrao.edu",
-             "priority":"3",
-             "tag":"mpi",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
+         {
              "testNumber":"6950",
              "testName":"MPI Split",
              "testScript":"test_split",
@@ -2298,19 +2077,6 @@
              "Maintainer":"Sandra Castro",
              "MaintainerEmail":"scastro@eso.org",
              "priority":"3",
-             "tag":"",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"8315",
-             "testName":"Accum Test",
-             "testScript":"accum_regression",
-             "testType":"regression",
-             "testLevel":"critical",
-             "Maintainer":"Sandra Castro",
-             "MaintainerEmail":"scastro@eso.org",
-             "priority":"2",
              "tag":"",
              "suppressEmail": false,
              "comment":""
@@ -2381,19 +2147,6 @@
              "comment":""
         },
         {
-             "testNumber":"8333",
-             "testName":"Async-Segfault",
-             "testScript":"async-segfault_regression",
-             "testType":"regression",
-             "testLevel":"critical",
-             "Maintainer":"Dirk Petry",
-             "MaintainerEmail":"dpetry@eso.org",
-             "priority":"1",
-             "tag":"",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
              "testNumber":"8336",
              "testName":"Calstat Test",
              "testScript":"calstat_test",
@@ -2401,32 +2154,6 @@
              "testLevel":"critical",
              "Maintainer":"George Moellenbrock",
              "MaintainerEmail":"gmoellen@nrao.edu",
-             "priority":"3",
-             "tag":"",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"8339",
-             "testName":"Cleanhelper Test",
-             "testScript":"cleanhelper_regression",
-             "testType":"regression",
-             "testLevel":"critical",
-             "Maintainer":"Remy Indebetouw",
-             "MaintainerEmail":"rindebet@nrao.edu",
-             "priority":"1",
-             "tag":"",
-             "suppressEmail": false,
-             "comment":""
-        },
-        {
-             "testNumber":"8342",
-             "testName":"Cleanchan Test",
-             "testScript":"cleanchan_regression",
-             "testType":"regression",
-             "testLevel":"critical",
-             "Maintainer":"Remy Indebetouw",
-             "MaintainerEmail":"rindebet@nrao.edu",
              "priority":"3",
              "tag":"",
              "suppressEmail": false,
@@ -2989,6 +2716,45 @@
              "MaintainerEmail":"awells@nrao.edu",
              "priority":"4",
              "tag":"casaguide",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"Sdintimaging",
+             "testScript":"test_req_task_sdintimaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@nrao.edu",
+             "priority":"4",
+             "tag":"functionalTest",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"STK VLASS TEST",
+             "testScript":"test_stk_vlass_pipeline_imaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
+             "priority":"4",
+             "tag":"stakeholder",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
+             "testNumber":"0000",
+             "testName":"STK ALMA TEST",
+             "testScript":"test_stk_alma_pipeline_imaging",
+             "testType":"functionalTest",
+             "testLevel":"accepted",
+             "Maintainer":"Sandra Castro",
+             "MaintainerEmail":"scastro@eso.org",
+             "priority":"4",
+             "tag":"stakeholder",
              "suppressEmail": false,
              "comment":""
         }

@@ -38,14 +38,6 @@
 #include <casa/BasicSL/Complex.h>
 
 #include <casa/namespace.h>
-namespace casacore{
-
-template <class T> class Vector;
-}
-
-namespace casa { //# NAMESPACE CASA - BEGIN
-} //# NAMESPACE CASA - END
-
 
 // <summary></summary>
 

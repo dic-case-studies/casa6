@@ -119,7 +119,10 @@ class PySynthesisImager:
         for fld in range(0,self.NF):
             #print("self.allimpars=",self.allimpars,"\n")
             self.SItool.defineimage( self.allimpars[str(fld)] , self.allgridpars[str(fld)] )
-    
+
+        ###for cases when synthesisnormalizer is setup in c++ send the normalizer info
+        ###all images have the same normtype etc..so first one is good enough 
+        self.SItool.normalizerinfo(self.allnormpars['0'])
         ###commenting this out so that tuneSelect is done after weighting
         ###CAS-11687
         # For cube imaging:  align the data selections and image setup
@@ -187,13 +190,14 @@ class PySynthesisImager:
 
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
-        self.plotReport( summ, fignum )
+        #self.plotReport( summ, fignum )
         return summ
 
 #############################################
     def deleteImagers(self):
         if self.SItool != None:
             self.SItool.done()
+            self.SItool=None
 
     def deleteDeconvolvers(self):
          for immod in range(0,len(self.SDtools)):
@@ -209,6 +213,10 @@ class PySynthesisImager:
 
     def deleteCluster(self):
 #         print('no cluster to delete')
+        return
+
+    def deleteWorkDir(self):
+        # No .workdirectory to delete
         return
 
     def initDefaults(self):
@@ -228,6 +236,7 @@ class PySynthesisImager:
          self.deleteDeconvolvers()
          self.deleteNormalizers()
          self.deleteIterBot()
+         self.deleteWorkDir()
          self.initDefaults()
          self.deleteCluster()
 
@@ -235,9 +244,11 @@ class PySynthesisImager:
 
     def hasConverged(self):
         # Merge peak-res info from all fields to decide iteration parameters
+         time0=time.time()
          self.IBtool.resetminorcycleinfo() 
          for immod in range(0,self.NF):
-              initrec =  self.SDtools[immod].initminorcycle() 
+              initrec =  self.SDtools[immod].initminorcycle()
+              #print('INIT Minor cycle dict {}'.format(initrec))
               self.IBtool.mergeinitrecord( initrec );
 
 #         # Run interactive masking (and threshold/niter editors)
@@ -246,16 +257,17 @@ class PySynthesisImager:
          # Check with the iteration controller about convergence.
          #print("check convergence")
          stopflag = self.IBtool.cleanComplete()
+         #print('STOPFLAG {}'.format(stopflag))
          #print('Converged : ', stopflag)
          if( stopflag>0 ):
              #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
              stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
              casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
 
-             # revert the current automask to the previous one 
+             # revert the current automask to the previous one
              #if self.iterpars['interactive']:
              for immod in range(0,self.NF):
-                     if self.alldecpars[str(immod)]['usemask'].count('auto')>0:
+                     if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) :
                         prevmask = self.allimpars[str(immod)]['imagename']+'.prev.mask'
                         if os.path.isdir(prevmask):
                           # Try to force rmtree even with an error as an nfs mounted disk gives an error 
@@ -276,19 +288,22 @@ class PySynthesisImager:
                           else: 
                               shutil.move(prevmask,self.allimpars[str(immod)]['imagename']+'.mask')
                           casalog.post("[" + str(self.allimpars[str(immod)]['imagename']) + "] : Reverting output mask to one that was last used ", "INFO")
-
+         casalog.post("***Time taken in checking hasConverged "+str(time.time()-time0), "INFO3")
          return (stopflag>0)
 
 #############################################
     def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
+        time0=time.time()
         for immod in range(0,self.NF):
             maskchanged = maskchanged | self.SDtools[immod].setupmask() 
         
         # Run interactive masking (and threshold/niter editors), if interactive=True
         maskchanged = maskchanged | self.runInteractiveGUI2()
 
+        time1=time.time();
+        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3")
         ## Return a flag to say that the mask has changed or not.
         return maskchanged
 
@@ -328,11 +343,13 @@ class PySynthesisImager:
     def makePSF(self):
 
         self.makePSFCore()
-
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs' or ("awproj" in self.allgridpars['0']['gridder'])
         ### Gather PSFs (if needed) and normalize by weight
         for immod in range(0,self.NF):
-            self.PStools[immod].gatherpsfweight() 
-            self.PStools[immod].dividepsfbyweight()
+            #for cube normalization is done in C++
+            if divideInPython :
+                self.PStools[immod].gatherpsfweight() 
+                self.PStools[immod].dividepsfbyweight()
             if self.SDtools != []:
                 if immod <= len(self.SDtools) - 1:
                     self.SDtools[immod].checkrestoringbeam()
@@ -347,14 +364,22 @@ class PySynthesisImager:
 #############################################
 
     def runMajorCycle(self):
-        for immod in range(0,self.NF):
-            self.PStools[immod].dividemodelbyweight()
-            self.PStools[immod].scattermodel() 
-
+        
         if self.IBtool != None:
             lastcycle = (self.IBtool.cleanComplete(lastcyclecheck=True) > 0)
         else:
             lastcycle = True
+        divideInPython=self.allimpars['0']['specmode'] == 'mfs' or self.allimpars['0']['deconvolver'] == 'mtmfs' or ("awproj" in self.allgridpars['0']['gridder'])
+        ##norm is done in C++ for cubes
+        if not divideInPython :
+            self.runMajorCycleCore(lastcycle)
+            if self.IBtool != None:
+                self.IBtool.endmajorcycle()
+            return
+       
+        for immod in range(0,self.NF):
+            self.PStools[immod].dividemodelbyweight()
+            self.PStools[immod].scattermodel() 
         self.runMajorCycleCore(lastcycle)
 
         if self.IBtool != None:
@@ -404,7 +429,9 @@ class PySynthesisImager:
 
 #############################################
     def makePB(self):
-        self.makePBCore()
+        ###for cube standard gridder pb is made in c++ with psf
+        if(not("stand" in self.allgridpars['0']['gridder'] and "cube" in self.allimpars['0']['specmode'])):
+            self.makePBCore()
         for immod in range(0,self.NF):
             self.PStools[immod].normalizeprimarybeam() 
 
@@ -455,8 +482,9 @@ class PySynthesisImager:
         ##moved the tuneselect after weighting so that
         ##the weight densities use all the data selected CAS-11687
         ###For cube imaging:  align the data selections and image setup
-        if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
-            self.SItool.tuneselectdata()
+        ### the tuneSelect is now done in C++ CubeMajorCycleAlgorith.cc
+        #if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
+        #    self.SItool.tuneselectdata()
         
  #       print("get set density from python")
  #       self.SItool.getweightdensity()
@@ -478,7 +506,7 @@ class PySynthesisImager:
 #############################################
 
     def runMinorCycle(self):
-        self.runMinorCycleCore()
+        return self.runMinorCycleCore()
 #############################################
 
     def runMinorCycleCore(self):
@@ -499,6 +527,7 @@ class PySynthesisImager:
         #
         # Run minor cycle
         self.ncycle+=1
+        retval=False
         for immod in range(0,self.NF):  
             if self.stopMinor[str(immod)]<3 :
 
@@ -508,10 +537,15 @@ class PySynthesisImager:
                     tempresname = self.allimpars[str(immod)]['imagename']+'.inputres'+str(self.ncycle)
                     if os.path.isdir(resname):
                         shutil.copytree(resname, tempresname)
+                    modname = self.allimpars[str(immod)]['imagename']+'.model'
+                    tempmodname = self.allimpars[str(immod)]['imagename']+'.inputmod'+str(self.ncycle)
+                    if os.path.isdir(modname):
+                        shutil.copytree(modname, tempmodname)
 
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
 
-                #print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
+                ##print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
+                retval= retval or exrec['iterdone'] > 0
                 self.IBtool.mergeexecrecord( exrec )
                 if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
@@ -522,14 +556,16 @@ class PySynthesisImager:
                 # Some what duplicated as above but keep a copy of the previous mask
                 # for interactive automask to revert to it if the current mask
                 # is not used (i.e. reached deconvolution stopping condition).
+                ## no longer needed as of CAS-9386 for cubes.
                 #if self.iterpars['interactive'] and self.alldecpars[str(immod)]['usemask']=='auto-thresh':
-                if self.alldecpars[str(immod)]['usemask'].count('auto')>0:
+                if (self.alldecpars[str(immod)]['usemask'].count('auto')>0) :
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     prevmaskname=self.allimpars[str(immod)]['imagename']+'.prev.mask'
                     if os.path.isdir(maskname):
                         if os.path.isdir(prevmaskname):
                             shutil.rmtree(prevmaskname)
                         shutil.copytree(maskname, prevmaskname)
+        return retval
 
 #############################################
     def runMajorMinorLoops(self):

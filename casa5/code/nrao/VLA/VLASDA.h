@@ -38,12 +38,6 @@
 #include <measures/Measures/Stokes.h>
 
 #include <casa/namespace.h>
-namespace casacore{
-
-template <class T> class Vector;
-template <class T> class Matrix;
-class String;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 } //# NAMESPACE CASA - END

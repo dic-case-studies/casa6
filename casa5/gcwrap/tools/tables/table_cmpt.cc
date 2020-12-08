@@ -11,7 +11,9 @@
  Note to self what happens when we open another table if one is already opened?
  ***/
 
+#include <climits>
 #include <iostream>
+#include <algorithm>
 #include <table_cmpt.h>
 #include <casa/aips.h>
 #include <tables/DataMan/IncrementalStMan.h>
@@ -113,7 +115,7 @@ table::create(const std::string& tablename, const ::casac::record& tabledesc,
                                                // "little", or "big".
 	      const std::string& memtype,      // "memory" -> Table::Memory,
                                                // anything else -> Table::Plain.
-	      int nrow,                        // 0 seems like a good default.
+	      long nrow,                        // 0 seems like a good default.
   	      const ::casac::record& dminfo)
 {
  Bool rstat(false);
@@ -199,7 +201,7 @@ table::close()
  return rstat;
 }
 casac::table* 
-table::fromfits(const std::string& tablename, const std::string& fitsfile, const int whichhdu, const std::string& storage, const std::string& convention, const bool /*nomodify*/, const bool /*ack*/){
+table::fromfits(const std::string& tablename, const std::string& fitsfile, const long whichhdu, const std::string& storage, const std::string& convention, const bool /*nomodify*/, const bool /*ack*/){
 
  *itsLog << LogOrigin(__func__, name());
 
@@ -325,7 +327,7 @@ table::copy(const std::string& newtablename, const bool deep, const bool valueco
 }
 
 bool
-table::copyrows(const std::string& outtable, const int startrowin, const int startrowout, const int nrow)
+table::copyrows(const std::string& outtable, const long startrowin, const long startrowout, const long nrow)
 {
  *itsLog << LogOrigin(__func__, name());
  Bool rstat(false);
@@ -378,6 +380,23 @@ table::iswritable()
  return rstat;
 }
 
+bool
+table::isopened(const std::string& tabname)
+{
+ *itsLog << LogOrigin(__func__, name());
+ Bool rstat(false);
+ try {
+   rstat= casacore::Table::isOpened(casacore::String(tabname));
+	 
+ } catch (AipsError x) {
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    RETHROW(x);
+ }
+ return rstat;
+}
+
+
+  
 std::string
 table::endianformat()
 {
@@ -397,7 +416,7 @@ table::endianformat()
 }
 
 bool
-table::lock(const bool write, const int nattempts)
+table::lock(const bool write, const long nattempts)
 {
  *itsLog << LogOrigin(__func__, name());
  Bool rstat(false);
@@ -716,8 +735,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
      *itsLog << LogIO::SEVERE << "Result is a table tool please use table.taql for now till the developers fix this " << LogIO::POST;
    }
    else{
-     std::vector<int> shape;
-     Vector<uInt> rownrs (result.node().nrow());
+     Vector<rownr_t> rownrs (result.node().nrow());
      indgen (rownrs);
      //cerr << "rownrs " << result.node().nrow() << "  is scalar " << result.node().isScalar() << endl;
      if(result.node().isScalar())
@@ -726,7 +744,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpBool:{
 	 Array<Bool> oBool;
 	 oBool=result.node().getColumnBool(rownrs);
-	 oBool.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oBool.shape().begin( ),oBool.shape().end( ));
 	 std::vector<bool> s_bool(oBool.begin(), oBool.end());
 	 rstat=new ::casac::variant(s_bool, shape);
        }
@@ -734,55 +752,55 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpUChar:{
 	 Array<uChar> ouChar;
 	 ouChar=result.node().getColumnuChar(rownrs);
-	 ouChar.shape().asVector().tovector(shape);
-	 std::vector<int> s_uchar(ouChar.begin(), ouChar.end());
+     std::vector<ssize_t> shape(ouChar.shape().begin( ),ouChar.shape().end( ));
+	 std::vector<long> s_uchar(ouChar.begin(), ouChar.end());
 	 rstat=new ::casac::variant(s_uchar, shape);
        }
 	 break;
        case TpShort:{
 	 Array<Short> oShort;
 	 oShort=result.node().getColumnShort(rownrs);
-	 oShort.shape().asVector().tovector(shape);
-	 std::vector<int> s_short(oShort.begin(), oShort.end());
+     std::vector<ssize_t> shape(oShort.shape().begin( ),oShort.shape().end( ));
+	 std::vector<long> s_short(oShort.begin(), oShort.end());
 	 rstat=new ::casac::variant(s_short, shape);
        }
 	 break;
 	case TpUShort:{
 	 Array<uShort> oushort;
 	 oushort=result.node().getColumnuShort(rownrs);
-	 oushort.shape().asVector().tovector(shape);
-	 std::vector<int> s_ushort(oushort.begin(), oushort.end());
+     std::vector<ssize_t> shape(oushort.shape().begin( ),oushort.shape().end( ));
+	 std::vector<long> s_ushort(oushort.begin(), oushort.end());
 	 rstat=new ::casac::variant(s_ushort, shape);
        }
 	 break; 
        case TpInt:{
 	 Array<Int> oInt;
 	 oInt=result.node().getColumnInt(rownrs);
-	 oInt.shape().asVector().tovector(shape);
-	 std::vector<int> s_int(oInt.begin(), oInt.end());
+     std::vector<ssize_t> shape(oInt.shape().begin( ),oInt.shape().end( ));
+	 std::vector<long> s_int(oInt.begin(), oInt.end());
 	 rstat=new ::casac::variant(s_int, shape);
        }
 	 break;
        case TpInt64:{
 	 Array<Int64> oInt;
 	 oInt=result.node().getColumnInt64(rownrs);
-	 oInt.shape().asVector().tovector(shape);
-	 std::vector<int> s_int(oInt.begin(), oInt.end());
+     std::vector<ssize_t> shape(oInt.shape().begin( ),oInt.shape().end( ));
+	 std::vector<long> s_int(oInt.begin(), oInt.end());
 	 rstat=new ::casac::variant(s_int, shape);
        }
 	 break;
        case TpUInt:{
 	 Array<uInt> ouInt;
 	 ouInt=result.node().getColumnuInt(rownrs);
-	 ouInt.shape().asVector().tovector(shape);
-	 std::vector<int> s_uint(ouInt.begin(), ouInt.end());
+     std::vector<ssize_t> shape(ouInt.shape().begin( ),ouInt.shape().end( ));
+	 std::vector<unsigned long> s_uint(ouInt.begin(), ouInt.end());
 	 rstat=new ::casac::variant(s_uint, shape);
        } 
 	 break;
        case TpFloat:{
 	 Array<Float> oFloat;
 	 oFloat=result.node().getColumnFloat(rownrs);
-	 oFloat.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oFloat.shape().begin( ),oFloat.shape().end( ));
 	 std::vector<double> s_float(oFloat.begin(), oFloat.end());
 	 rstat=new ::casac::variant(s_float, shape);
        }
@@ -790,7 +808,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpDouble:{
 	 Array<Double> oDouble;
 	 oDouble=result.node().getColumnDouble(rownrs);
-	 oDouble.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oDouble.shape().begin( ),oDouble.shape().end( ));
 	 std::vector<double> s_double(oDouble.begin(), oDouble.end());
 	 rstat=new ::casac::variant(s_double, shape);
        }	
@@ -798,7 +816,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpComplex:{
 	 Array<Complex> oComplex;
 	 oComplex=result.node().getColumnComplex(rownrs);
-	 oComplex.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oComplex.shape().begin( ),oComplex.shape().end( ));
 	 std::vector<std::complex<double> > s_complex(oComplex.begin(), oComplex.end());
 	 rstat=new ::casac::variant(s_complex, shape);
        }	
@@ -806,7 +824,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpDComplex:{
 	 Array<DComplex> odComplex;
 	 odComplex=result.node().getColumnDComplex(rownrs);
-	 odComplex.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(odComplex.shape().begin( ),odComplex.shape().end( ));
 	 std::vector<std::complex<double> > s_dcomplex(odComplex.begin(), odComplex.end());
 	 rstat=new ::casac::variant(s_dcomplex, shape);
        }	
@@ -814,7 +832,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
        case TpString:{
 	 Array<String> oString;
 	 oString=result.node().getColumnString(rownrs);
-	 oString.shape().asVector().tovector(shape);
+     std::vector<ssize_t> shape(oString.shape().begin( ),oString.shape().end( ));
 	 std::vector<string> s_string(oString.begin(), oString.end());
 	 rstat=new ::casac::variant(s_string, shape);
        }	
@@ -869,7 +887,7 @@ table::calc(const std::string& expr, const std::string& prefix, const bool showt
 }
 
 ::casac::table*
-table::selectrows(const std::vector<int>& rownrs, const std::string& name)
+table::selectrows(const std::vector<long>& rownrs, const std::string& name)
 {
  *itsLog << LogOrigin(__func__, this->name());
  ::casac::table *rstat(0);
@@ -1051,11 +1069,11 @@ table::colnames()
  return rstat;
 }
 
-std::vector<int>
-table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
+std::vector<long>
+table::rownumbers(const ::casac::record& /*tab*/, const long /*nbytes*/)
 {
  *itsLog << LogOrigin(__func__, name());
- std::vector<int> rstat(0);
+ std::vector<long long int> rstat(0);
  try {
 	 if(itsTable){
 		 TableProxy dummy;
@@ -1069,11 +1087,16 @@ table::rownumbers(const ::casac::record& /*tab*/, const int /*nbytes*/)
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ std::vector<long> result(rstat.size( ));
+ std::transform( rstat.begin( ), rstat.end( ), result.begin( ),
+                 []( long long int e ) {
+                     return e >= INT_MIN && e <= INT_MAX  ? e : -1;
+                 } );
+ return result;
 }
 
 bool
-table::setmaxcachesize(const std::string& columnname, const int nbytes)
+table::setmaxcachesize(const std::string& columnname, const long nbytes)
 {
  *itsLog << LogOrigin(__func__, columnname);
  Bool rstat(false);
@@ -1162,15 +1185,15 @@ table::colarraytype(const std::string& columnname)
    return myArrayTypeName;
 }
 
-int
+long
 table::ncols()
 {
  *itsLog << LogOrigin(__func__, name());
- int rstat(0);
+ Int64 rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int> myshape = itsTable->shape();
-	    rstat = myshape[0];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[0] >= INT_MIN && myshape[0] <= INT_MAX ? myshape[0] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -1178,18 +1201,18 @@ table::ncols()
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ return (int) rstat;
 }
 
-int
+long
 table::nrows()
 {
  *itsLog << LogOrigin(__func__, name());
- Int rstat(0);
+ Int64 rstat(0);
  try {
 	 if(itsTable){
-	    Vector<Int> myshape = itsTable->shape();
-	    rstat = myshape[1];
+	    Vector<long long int> myshape = itsTable->shape();
+	    rstat = myshape[1] >= INT_MIN && myshape[1] <= INT_MAX ? myshape[1] : -1;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -1197,11 +1220,11 @@ table::nrows()
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
- return rstat;
+ return (int) rstat;
 }
 
 bool
-table::addrows(const int nrow)
+table::addrows(const long nrow)
 {
  *itsLog << LogOrigin(__func__, name());
  Bool rstat(false);
@@ -1220,7 +1243,7 @@ table::addrows(const int nrow)
 }
 
 bool
-table::removerows(const std::vector<int>& rownrs)
+table::removerows(const std::vector<long>& rownrs)
 {
  *itsLog << LogOrigin(__func__, name());
  Bool rstat(false);
@@ -1301,7 +1324,7 @@ table::removecols(const std::vector<std::string>& columnames)
 }
 
 bool
-table::iscelldefined(const std::string& columnname, const int rownr)
+table::iscelldefined(const std::string& columnname, const long rownr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  Bool rstat(false);
@@ -1320,7 +1343,7 @@ table::iscelldefined(const std::string& columnname, const int rownr)
 }
 
 ::casac::variant*
-table::getcell(const std::string& columnname, const int rownr)
+table::getcell(const std::string& columnname, const long rownr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::variant *rstat(0);
@@ -1339,7 +1362,7 @@ table::getcell(const std::string& columnname, const int rownr)
 }
 
 ::casac::variant*
-table::getcellslice(const std::string& columnname, const int rownr, const std::vector<int>& blc, const std::vector<int>& trc, const std::vector<int>& incr)
+table::getcellslice(const std::string& columnname, const long rownr, const std::vector<long>& blc, const std::vector<long>& trc, const std::vector<long>& incr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::variant *rstat(0);
@@ -1358,7 +1381,7 @@ table::getcellslice(const std::string& columnname, const int rownr, const std::v
 }
 
 ::casac::variant*
-table::getcol(const std::string& columnname, const int startrow, const int nrow, const int rowincr)
+table::getcol(const std::string& columnname, const long startrow, const long nrow, const long rowincr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::variant *rstat(0);
@@ -1378,7 +1401,7 @@ table::getcol(const std::string& columnname, const int startrow, const int nrow,
 }
 
 ::casac::record*
-table::getvarcol(const std::string& columnname, const int startrow, const int nrow, const int rowincr)
+table::getvarcol(const std::string& columnname, const long startrow, const long nrow, const long rowincr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::record *rstat(0);
@@ -1397,7 +1420,7 @@ table::getvarcol(const std::string& columnname, const int startrow, const int nr
 }
 
 ::casac::variant*
-table::getcolslice(const std::string& columnname, const std::vector<int>& blc, const std::vector<int>& trc, const std::vector<int>& incr, const int startrow, const int nrow, const int rowincr)
+table::getcolslice(const std::string& columnname, const std::vector<long>& blc, const std::vector<long>& trc, const std::vector<long>& incr, const long startrow, const long nrow, const long rowincr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::variant *rstat(0);
@@ -1417,7 +1440,7 @@ table::getcolslice(const std::string& columnname, const std::vector<int>& blc, c
 }
 
 bool
-table::putcell(const std::string& columnname, const std::vector<int>& rownr,
+table::putcell(const std::string& columnname, const std::vector<long>& rownr,
                const ::casac::variant& thevalue)
 {
   Bool rstat(false);
@@ -1448,9 +1471,9 @@ table::putcell(const std::string& columnname, const std::vector<int>& rownr,
 }
 
 bool
-table::putcellslice(const std::string& columnname, const int rownr,
-                    const ::casac::variant& value, const std::vector<int>& blc,
-                    const std::vector<int>& trc, const std::vector<int>& incr)
+table::putcellslice(const std::string& columnname, const long rownr,
+                    const ::casac::variant& value, const std::vector<long>& blc,
+                    const std::vector<long>& trc, const std::vector<long>& incr)
 {
   Bool rstat(false);
 
@@ -1481,7 +1504,7 @@ table::putcellslice(const std::string& columnname, const int rownr,
 
 bool
 table::putcol(const std::string& columnname, const ::casac::variant& value,
-              const int startrow, const int nrow, const int rowincr)
+              const long startrow, const long nrow, const long rowincr)
 {
  Bool rstat(false);
 
@@ -1512,7 +1535,7 @@ table::putcol(const std::string& columnname, const ::casac::variant& value,
 
 bool
 table::putvarcol(const std::string& columnname, const ::casac::record& value,
-                 const int startrow, const int nrow, const int rowincr)
+                 const long startrow, const long nrow, const long rowincr)
 {
   Bool rstat(false);
 
@@ -1543,9 +1566,9 @@ table::putvarcol(const std::string& columnname, const ::casac::record& value,
 
 bool
 table::putcolslice(const std::string& columnname, const ::casac::variant& value,
-                   const std::vector<int>& blc, const std::vector<int>& trc,
-                   const std::vector<int>& incr, const int startrow,
-                   const int nrow, const int rowincr)
+                   const std::vector<long>& blc, const std::vector<long>& trc,
+                   const std::vector<long>& incr, const long startrow,
+                   const long nrow, const long rowincr)
 {
   Bool rstat(false);
 
@@ -1580,7 +1603,7 @@ table::putcolslice(const std::string& columnname, const ::casac::variant& value,
 }
 
 std::vector<std::string>
-table::getcolshapestring(const std::string& columnname, const int startrow, const int nrow, const int rowincr)
+table::getcolshapestring(const std::string& columnname, const long startrow, const long nrow, const long rowincr)
 {
  *itsLog << LogOrigin(__func__, columnname);
  std::vector<std::string> rstat(0);
@@ -2069,7 +2092,7 @@ table::getLockOptions(casac::record &lockoptions){
 
 	return new TableLock(opt, interval, maxWait);
 }
-bool table::fromascii(const std::string& tablename, const std::string& asciifile, const std::string& headerfile, const bool autoheader, const std::vector<int>& /*autoshape*/, const std::string& sep, const std::string& commentmarker, const int firstline, const int lastline, const bool /*nomodify*/, const std::vector<string> &columnnames, const std::vector<string> &datatypes){
+bool table::fromascii(const std::string& tablename, const std::string& asciifile, const std::string& headerfile, const bool autoheader, const std::vector<long>& /*autoshape*/, const std::string& sep, const std::string& commentmarker, const long firstline, const long lastline, const bool /*nomodify*/, const std::vector<string> &columnnames, const std::vector<string> &datatypes){
 
    bool rstatus(false);
 
@@ -2356,13 +2379,13 @@ bool table::testincrstman(const std::string& column)
 			}
 
 			uInt offenndingCursor = 0;
-			uInt offendingBucketStartRow = 0;
+			rownr_t offendingBucketStartRow = 0;
 			uInt offendingBucketNrow = 0;
 			uInt offendingBucketNr = 0;
 			uInt offendingCol = 0;
 			uInt offendingIndex = 0;
-			uInt offendingRow = 0;
-			uInt offendingPrevRow = 0;
+			rownr_t offendingRow = 0;
+			rownr_t offendingPrevRow = 0;
 
 			ROIncrementalStManAccessor acc(itsTable->table(), dataManagerGroup);
 			ok = acc.checkBucketLayout (	offenndingCursor,

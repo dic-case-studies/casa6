@@ -1306,7 +1306,7 @@ Bool WBCleanImageSkyModel::mergeDataError(ImageInterface<Float> &data, ImageInte
        QualityCoordinate qualAxis(quality);
        newCSys.addCoordinate(qualAxis);
 
-       Array<Float> outData=Array<Float>(newShape, 0.0);
+       Array<Float> outData=Array<Float>(newShape, 0.0f);
        Array<Bool>  outMask;
 
        // get all the data values

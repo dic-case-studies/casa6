@@ -197,7 +197,7 @@ public:
     casacore::Vector<casacore::Int>& processorId(casacore::Vector<casacore::Int>& /*procIDs*/) const { NotPrefetched; }
     casacore::Int polarizationId() const { NotPrefetched; }
     const casacore::Cube<casacore::Double>& receptorAngles() const; // { NotImplementedROVIA; }
-    casacore::Vector<casacore::uInt>& rowIds(casacore::Vector<casacore::uInt>& ) const { NotImplementedROVIA; }
+    casacore::Vector<casacore::rownr_t>& rowIds(casacore::Vector<casacore::rownr_t>& ) const { NotImplementedROVIA; }
     casacore::Vector<casacore::Int>& scan(casacore::Vector<casacore::Int>& ) const { NotPrefetched; }
     casacore::Vector<casacore::Float>& sigma(casacore::Vector<casacore::Float>& ) const { NotPrefetched; }
     casacore::Matrix<casacore::Float>& sigmaMat(casacore::Matrix<casacore::Float>& ) const { NotPrefetched; }

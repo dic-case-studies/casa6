@@ -710,12 +710,12 @@ void ImagePolarimetry::rotationMeasure(
         whereChiSq = 0;
     }
     Array<Bool> tmpMaskRM(IPosition(shapeRM.size(), 1), true);
-    Array<Float> tmpValueRM(IPosition(shapeRM.size(), 1), 0.0);
+    Array<Float> tmpValueRM(IPosition(shapeRM.size(), 1), 0.0f);
     Array<Bool> tmpMaskPA(IPosition(shapePA.size(), 1), true);
-    Array<Float> tmpValuePA(IPosition(shapePA.size(), 1), 0.0);
-    Array<Float> tmpValueNTurns(IPosition(shapeNTurns.size(), 1), 0.0);
+    Array<Float> tmpValuePA(IPosition(shapePA.size(), 1), 0.0f);
+    Array<Float> tmpValueNTurns(IPosition(shapeNTurns.size(), 1), 0.0f);
     Array<Bool> tmpMaskNTurns(IPosition(shapeNTurns.size(), 1), true);
-    Array<Float> tmpValueChiSq(IPosition(shapeChiSq.size(), 1), 0.0);
+    Array<Float> tmpValueChiSq(IPosition(shapeChiSq.size(), 1), 0.0f);
     Array<Bool> tmpMaskChiSq(IPosition(shapeChiSq.size(), 1), true);
     // Iterate
     const IPosition tileShape = pa.niceCursorShape();
