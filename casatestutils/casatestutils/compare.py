@@ -459,6 +459,12 @@ def compare_dictionaries(  dictionary1, dictionary2, skipkeys = None, rtol=8e-7,
             if not numpy.isclose(dictionary1[key],dictionary2[key],rtol = rtol, atol=atol):
                 logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
                 return False
+        elif isinstance(dictionary1[key], dict) and isinstance(dictionary2[key], dict):
+            # Recursively compare dicts inside this dict
+            res = compare_dictionaries(dictionary1[key], dictionary2[key], skipkeys,
+                                       rtol, atol)
+            if not res:
+                return res
         else:
             try:
                 if dictionary1[key] != dictionary2[key]:

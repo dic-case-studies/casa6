@@ -5,7 +5,7 @@
       xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
       file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="flagcmd" category="data editing">
+<task type="function" name="flagcmd" category="flagging">
     <shortdescription>Flagging task based on batches of flag-commands</shortdescription>
     <description>
     The flagcmd task will flag the visibility data or calibration

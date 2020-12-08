@@ -3,7 +3,7 @@
 
 
 
-<task category="analysis, information" name="imstat" type="function">
+<task category="information, analysis" name="imstat" type="function">
 <shortdescription>Displays statistical information from an image or image region</shortdescription>
 
 <input>
