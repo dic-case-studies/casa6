@@ -248,7 +248,7 @@ const Vector<Int> & MSTransformBufferImpl::spectralWindows () const
 		}
 		else
 		{
-			for (uInt rowIdx = 0; rowIdx<nRows_p;rowIdx++)
+			for (rownr_t rowIdx = 0; rowIdx<nRows_p;rowIdx++)
 			{
 				spectralWindows_p(rowIdx) = dataDescriptionIds_p(rowIdx);
 			}
@@ -1547,7 +1547,7 @@ IPosition MSTransformBufferImpl::getShape () const
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-Int MSTransformBufferImpl::nRows () const
+rownr_t MSTransformBufferImpl::nRows () const
 {
 	if (not nRowsOk_p)
 	{

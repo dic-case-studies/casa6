@@ -52,13 +52,67 @@ namespace vi {
 
 SortColumns::SortColumns (const Block<Int> & columnIds, Bool addDefaultColumns)
 : addDefaultColumns_p (addDefaultColumns),
-  columnIds_p (columnIds)
-{}
+  columnIds_p (columnIds),
+  usingDefaultSortingFunctions_p (true)
+{
+    for (auto colId : columnIds)
+        sortingDefinition_p.push_back(
+            std::make_pair(MS::columnName(casacore::MS::PredefinedColumns(colId)), nullptr));
+}
+
+SortColumns::SortColumns (Bool usingDefaultSortingFunctions)
+: usingDefaultSortingFunctions_p (usingDefaultSortingFunctions)
+{
+}
+
+SortColumns::SortColumns (const std::vector<std::pair<casacore::MS::PredefinedColumns, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition)
+: addDefaultColumns_p (false),
+  usingDefaultSortingFunctions_p (false)
+{
+    for (auto pair : sortingDefinition)
+        sortingDefinition_p.push_back(
+            std::make_pair(MS::columnName(pair.first), pair.second));
+}
+
+SortColumns::SortColumns (const std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition)
+: addDefaultColumns_p (false),
+  sortingDefinition_p(sortingDefinition),
+  usingDefaultSortingFunctions_p (false)
+{
+}
+
+void SortColumns::addSortingColumn(casacore::MS::PredefinedColumns colId,
+    casacore::CountedPtr<casacore::BaseCompare> sortingFunction)
+{
+    if (usingDefaultSortingFunctions_p)
+        throw AipsError("SortColumns invalid construction. "
+                        "Cannot add generic sorting functions.");
+    sortingDefinition_p.push_back(
+        std::make_pair(MS::columnName(colId), sortingFunction));
+    usingDefaultSortingFunctions_p = false;
+}
+
+void SortColumns::addSortingColumn(casacore::String colName,
+    casacore::CountedPtr<casacore::BaseCompare> sortingFunction)
+{
+    if (usingDefaultSortingFunctions_p)
+        throw AipsError("SortColumns invalid construction. "
+                        "Cannot add generic sorting functions.");
+    sortingDefinition_p.push_back(
+        std::make_pair(colName, sortingFunction));
+    usingDefaultSortingFunctions_p = false;
+}
 
 Bool
 SortColumns::shouldAddDefaultColumns () const
 {
     return addDefaultColumns_p;
+}
+
+bool
+SortColumns::usingDefaultSortingFunctions () const
+{
+    return usingDefaultSortingFunctions_p;
 }
 
 const Block<Int> &
@@ -67,6 +121,11 @@ SortColumns::getColumnIds () const
     return columnIds_p;
 }
 
+const std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> &
+SortColumns::sortingDefinition() const
+{
+    return sortingDefinition_p;
+}
 
 CountedPtr <WeightScaling>
 WeightScaling::generateUnityWeightScaling ()
@@ -333,7 +392,7 @@ VisibilityIterator2::originChunks (Bool forceRewind)
 }
 
 void
-VisibilityIterator2::setRowBlocking (Int nRows) // for use by Async I/O *ONLY
+VisibilityIterator2::setRowBlocking (rownr_t nRows) // for use by Async I/O *ONLY
 {
     CheckImplementationPointer ();
     impl_p->setRowBlocking (nRows);
@@ -346,7 +405,7 @@ VisibilityIterator2::slurp () const
     impl_p->slurp ();
 }
 
-Int
+rownr_t
 VisibilityIterator2::nRowsInChunk () const
 {
     CheckImplementationPointer ();

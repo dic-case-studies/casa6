@@ -102,7 +102,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      vector<int> vbRow2BLMap_p;
      vector<bool> blNeedsNewPOPG_p;
      int blType_p;
-     int vbRows_p;
+     rownr_t vbRows_p;
      /* casacore::Matrix<int> mapAntGrp_p, mapBLGroup_p, cachedmapBLGroup_p; */
      vector<float> sigmaDev = {0.0,0.0};
      casacore::CountedPtr<CFBuffer> cachedCFBPtr_p;
