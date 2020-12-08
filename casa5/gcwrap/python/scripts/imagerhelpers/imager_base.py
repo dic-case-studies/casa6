@@ -190,7 +190,7 @@ class PySynthesisImager:
 
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
-        self.plotReport( summ, fignum )
+        #self.plotReport( summ, fignum )
         return summ
 
 #############################################
