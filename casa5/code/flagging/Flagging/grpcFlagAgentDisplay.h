@@ -23,15 +23,36 @@
 #ifndef FlagAgentDisplay_H_
 #define FlagAgentDisplay_H_
 
+#include <mutex>
 #include <vector>
+#include <future>
 #include <flagging/Flagging/FlagAgentBase.h>
 #include "plotserver.grpc.pb.h"
 #include "plotserver_events.grpc.pb.h"
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
+    struct grpcFlagAgentState {
+        grpcFlagAgentState( );
+        // GUI parameters
+        std::string userChoice_p;
+        std::string userFixA1_p, userFixA2_p;
+        casacore::Int skipScan_p, skipSpw_p, skipField_p;
+
+        std::string antenna1_p;
+        std::string antenna2_p;
+
+        std::mutex set_values;			// protect state within object
+        bool input_received;			// state object has received input
+        bool input_needed;				// chaged to true when the controlling
+										// thread is waiting for input
+        std::promise<bool> output;		// control thread needs input
+    };
+
     class grpcFlagAgentResponse : public ::rpc::gui::plotserver_events::Service {
     public:
+        grpcFlagAgentResponse( std::shared_ptr<grpcFlagAgentState> s ) : state(s) { }
+
         ::grpc::Status button( ::grpc::ServerContext *context,
                                const ::rpc::gui::ButtonEvent *req,
                                ::google::protobuf::Empty* );
@@ -53,6 +74,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         ::grpc::Status closing( ::grpc::ServerContext *context,
                                 const ::rpc::gui::ClosingEvent *req,
                                 ::google::protobuf::Empty* );
+    protected:
+        std::shared_ptr<grpcFlagAgentState> state;
     };
 
     class FlagAgentDisplay : public FlagAgentBase {
@@ -79,7 +102,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             std::unique_ptr<rpc::gui::plotserver::Stub> plot;
             std::unique_ptr<rpc::gui::plotserver_events::Service> response;
             bool launch(std::string plotserver_path);
-            plotter_t( );
+            plotter_t(std::shared_ptr<grpcFlagAgentState> state);
         protected:
             bool active_;
             bool start_response_manager( );
@@ -141,14 +164,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         void DisplayLineScatterError(std::shared_ptr<plotter_t> plotter, casacore::String &plottype, casacore::Vector<casacore::Float> &xdata, casacore::Vector<casacore::Float> &ydata, casacore::String &errortype, casacore::Vector<casacore::Float> &error, casacore::String label, casacore::String color, int frame);
 
         // Plotter members
+        std::shared_ptr<grpcFlagAgentState> gui_state;
         std::shared_ptr<plotter_t> dataplotter_p;
         std::shared_ptr<plotter_t> reportplotter_p;
-
-        // GUI parameters
-        casacore::String userChoice_p;
-        casacore::String userFixA1_p, userFixA2_p;
-
-        casacore::Int skipScan_p, skipSpw_p, skipField_p;
 
         // Control parameters
         casacore::Bool pause_p;
@@ -161,8 +179,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         casacore::Int spwId_p;
         casacore::uInt nPolarizations_p;
         casacore::Vector<casacore::Double> freqList_p;
-        casacore::String antenna1_p;
-        casacore::String antenna2_p;
 
         casacore::Bool dataDisplay_p, reportDisplay_p; // show per chunk plots and/or end-of-casacore::MS plots
         casacore::String reportFormat_p;

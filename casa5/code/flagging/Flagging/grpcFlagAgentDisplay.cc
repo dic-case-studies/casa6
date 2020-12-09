@@ -76,16 +76,41 @@ static std::string trim_trailing_slash( const char *str ) {
     return result;
 }
 
+grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_p(""), userFixA2_p(""),
+                                            skipScan_p(-1), skipSpw_p(-1), skipField_p(-1),
+                                            antenna1_p(""),antenna2_p(""), input_received(false) { }
+
 ::grpc::Status grpcFlagAgentResponse::button( ::grpc::ServerContext *context,
                                               const ::rpc::gui::ButtonEvent *req,
                                               ::google::protobuf::Empty* ) {
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
-        std::cerr << "plotserver button event received " <<
+        std::cerr << "plotserver '" << req->name( ) << "' button event received " <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
     }
+
+    // Manage buttons from: Data Plot Window
+    if ( req->name( ) == "NextBaseline" || req->name( ) == "PrevBaseline" ||
+         req->name( ) == "NextScan" || req->name( ) == "NextField" ||
+         req->name( ) == "NextSpw" || req->name( ) == "StopDisplay" || req->name( ) == "Quit") {
+        std::lock_guard<std::mutex> lock(state->set_values);
+        state->userChoice_p = req->name( );		// set input
+        state->input_received = true;			// set whenever state object is modified
+        if ( state->input_needed )
+            state->output.set_value(true);		// signal controlling thread that wait is over
+    }
+
+    // Manage buttons from: Report Plot Window
+    if ( req->name( ) == "Next" || req->name( ) == "Prev" || req->name( ) == "Quit") {
+        std::lock_guard<std::mutex> lock(state->set_values);
+        state->userChoice_p = req->name( );		// set input
+        state->input_received = true;			// set whenever state object is modified
+        if ( state->input_needed )
+            state->output.set_value(true);		// signal controlling thread that wait is over
+    }
+
     return grpc::Status::OK;
 }
 ::grpc::Status grpcFlagAgentResponse::check( ::grpc::ServerContext *context,
@@ -93,10 +118,28 @@ static std::string trim_trailing_slash( const char *str ) {
                                              ::google::protobuf::Empty* ) {
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
-        std::cerr << "plotserver check event received " <<
+        std::cerr << "plotserver " << req->name( ) <<
+            " [" << req->state( ) << "] check event received " <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
+    }
+
+    // Manage check boxes from: Data Plot Window
+    if ( req->name( ) == "FixAntenna1" ) {
+        std::lock_guard<std::mutex> lock(state->set_values);
+        state->userChoice_p = "Continue";
+        state->userFixA1_p = (req->state( ) == 0) ? "" : state->antenna1_p;
+        state->input_received = true;
+        if ( state->input_needed )
+            state->output.set_value(true);		// signal controlling thread that wait is over
+    } else if ( req->name( ) == "FixAntenna2" ) {
+        std::lock_guard<std::mutex> lock(state->set_values);
+        state->userChoice_p = "Continue";
+        state->userFixA2_p = (req->state( ) == 0 ) ? "" : state->antenna2_p;
+        state->input_received = true;
+        if ( state->input_needed )
+            state->output.set_value(true);		// signal controlling thread that wait is over
     }
     return grpc::Status::OK;
 }
@@ -105,7 +148,8 @@ static std::string trim_trailing_slash( const char *str ) {
                                              ::google::protobuf::Empty* ) {
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
-        std::cerr << "plotserver radio event received " <<
+        std::cerr << "plotserver " << req->name( ) <<
+            " [" << req->state( ) << "] radio event received " <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
@@ -117,7 +161,8 @@ static std::string trim_trailing_slash( const char *str ) {
                                                 ::google::protobuf::Empty* ) {
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
-        std::cerr << "plotserver linetext event received " <<
+        std::cerr << "plotserver " << req->name( ) <<
+            " [" << req->text( ) << "] linetext event received " <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
@@ -129,7 +174,8 @@ static std::string trim_trailing_slash( const char *str ) {
                                                   ::google::protobuf::Empty* ) {
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
-        std::cerr << "plotserver slidevalue event received " <<
+        std::cerr << "plotserver " << req->name( ) <<
+            "[" << req->value( ) << "] slidevalue event received " <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
@@ -391,8 +437,8 @@ bool FlagAgentDisplay::plotter_t::launch(std::string plotserver_path) {
 }
 
 
-FlagAgentDisplay::plotter_t::plotter_t( ) : active_(false), response_svc(new grpcFlagAgentResponse),
-                                            plot_started_(false) {
+FlagAgentDisplay::plotter_t::plotter_t(std::shared_ptr<grpcFlagAgentState> state) :
+        active_(false), response_svc(new grpcFlagAgentResponse(state)), plot_started_(false) {
     static const auto debug = getenv("GRPC_DEBUG");
 
     if ( debug ) {
@@ -436,19 +482,17 @@ FlagAgentDisplay::plotter_t::plotter_t( ) : active_(false), response_svc(new grp
 
 
 FlagAgentDisplay::FlagAgentDisplay(double) : FlagAgentBase(0.0) {
-    dataplotter_p.reset(new plotter_t( ));
+    dataplotter_p.reset(new plotter_t(gui_state));
     fprintf( stderr, "creating plotter panel............\n" );
     create_panel( dataplotter_p, 0 );
 }
 
 FlagAgentDisplay::FlagAgentDisplay(FlagDataHandler *dh, Record config, Bool writePrivateFlagCube):
         		FlagAgentBase(dh,config,ANTENNA_PAIRS_INTERACTIVE,writePrivateFlagCube),
-        		dataplotter_p(NULL),reportplotter_p(NULL),
-        		userChoice_p("Continue"), userFixA1_p(""), userFixA2_p(""),
-        		skipScan_p(-1), skipSpw_p(-1), skipField_p(-1),pause_p(false),
+            	gui_state(new grpcFlagAgentState),
+        		dataplotter_p(NULL),reportplotter_p(NULL), pause_p(false),
         		fieldId_p(-1), fieldName_p(""), scanStart_p(-1), scanEnd_p(-1), spwId_p(-1),
         		nPolarizations_p(1), freqList_p(Vector<Double>()),
-        		antenna1_p(""),antenna2_p(""),
         		dataDisplay_p(false), reportDisplay_p(false),reportFormat_p("screen"),
         		stopAndExit_p(false),/* reportReturn_p(false),*/ showBandpass_p(false)
 {
@@ -783,20 +827,32 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 	{
 
 		// Check whether to skip the rest of this chunk or not
-		if(skipSpw_p != -1)
+		if(gui_state->skipSpw_p != -1)
 		{
-			if(skipSpw_p == spwId_p) {dataDisplay_p=false;} // Skip the rest of this SPW
-			else {skipSpw_p = -1; dataDisplay_p=true;} // Reached next SPW. Reset state
+			if(gui_state->skipSpw_p == spwId_p) {dataDisplay_p=false;} // Skip the rest of this SPW
+			else {
+                std::lock_guard<std::mutex> lock(gui_state->set_values);
+                gui_state->skipSpw_p = -1;
+                dataDisplay_p=true;
+            } // Reached next SPW. Reset state
 		}
-		if(skipField_p != -1)
+		if(gui_state->skipField_p != -1)
 		{
-			if(skipField_p == fieldId_p) {dataDisplay_p=false;} // Skip the rest of this Field
-			else {skipField_p = -1; dataDisplay_p=true;} // Reached next Field. Reset state
+			if(gui_state->skipField_p == fieldId_p) {dataDisplay_p=false;} // Skip the rest of this Field
+			else {
+                std::lock_guard<std::mutex> lock(gui_state->set_values);
+                gui_state->skipField_p = -1;
+                dataDisplay_p=true;
+            } // Reached next Field. Reset state
 		}
-		if(skipScan_p != -1)
+		if(gui_state->skipScan_p != -1)
 		{
-			if(skipScan_p == scanEnd_p) {dataDisplay_p=false;} // Skip the rest of this Scan
-			else {skipScan_p = -1; dataDisplay_p=true;} // Reached next Scan. Reset state
+			if(gui_state->skipScan_p == scanEnd_p) {dataDisplay_p=false;} // Skip the rest of this Scan
+			else {
+                std::lock_guard<std::mutex> lock(gui_state->set_values);
+                gui_state->skipScan_p = -1;
+                dataDisplay_p=true;
+            } // Reached next Scan. Reset state
 		}
 
 
@@ -815,7 +871,7 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 
 				// If antenna constraints exist, keep going back until first match is found.
 				// If not found, stay on current baseline (continue)
-				if( userFixA1_p != String("") || userFixA2_p != String("") )
+				if( gui_state->userFixA1_p != "" || gui_state->userFixA2_p != "" )
 				{
 					antennaPairMapIterator tempIterator;
 					bool found=false;
@@ -830,9 +886,9 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 					else
 					{
 						*logger_p << "No Previous baseline in this chunk with Ant1 : "
-								<< ( (userFixA1_p==String(""))?String("any"):userFixA1_p )
+								<< ( (gui_state->userFixA1_p != "") ? gui_state->userFixA1_p : "any" )
 								<< "  and Ant2 : "
-								<< ( (userFixA2_p==String(""))?String("any"):userFixA2_p )
+								<< ( (gui_state->userFixA2_p != "") ? gui_state->userFixA2_p : "any" )
 								<< LogIO::POST;
 
 						// Stay on current baseline
@@ -862,7 +918,7 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 				getUserInput(); // Fills in userChoice_p. userfix
 
 				// React to user-input
-				if(userChoice_p=="Quit")
+				if(gui_state->userChoice_p=="Quit")
 				{
 					dataDisplay_p = false;
 					stopAndExit_p = true;
@@ -874,7 +930,7 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 					flagDataHandler_p->stopIteration();
 					return ;
 				}
-				else if(userChoice_p=="StopDisplay")
+				else if(gui_state->userChoice_p=="StopDisplay")
 				{
 					dataDisplay_p = false;
 					*logger_p << "Stopping display. Continuing flagging." << LogIO::POST;
@@ -883,28 +939,31 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
                         dataplotter_p=NULL;
                     }
 				}
-				else if(userChoice_p=="PrevBaseline")
+				else if(gui_state->userChoice_p=="PrevBaseline")
 				{
 					if( myAntennaPairMapIterator==antennaPairMap_ptr->begin() )
 						*logger_p << "Already on first baseline..." << LogIO::POST;
 					stepback=true;
 				}
-				else if(userChoice_p=="NextScan")
+				else if(gui_state->userChoice_p=="NextScan")
 				{
 					//*logger_p << "Next Scan " << LogIO::POST;
-					skipScan_p = scanEnd_p;
+                    std::lock_guard<std::mutex> lock(gui_state->set_values);
+					gui_state->skipScan_p = scanEnd_p;
 				}
-				else if(userChoice_p=="NextSpw")
+				else if(gui_state->userChoice_p=="NextSpw")
 				{
 					//*logger_p << "Next SPW " << LogIO::POST;
-					skipSpw_p = spwId_p;
+                    std::lock_guard<std::mutex> lock(gui_state->set_values);
+					gui_state->skipSpw_p = spwId_p;
 				}
-				else if(userChoice_p=="NextField")
+				else if(gui_state->userChoice_p=="NextField")
 				{
 					//*logger_p << "Next Field " << LogIO::POST;
-					skipField_p = fieldId_p;
+                    std::lock_guard<std::mutex> lock(gui_state->set_values);
+					gui_state->skipField_p = fieldId_p;
 				}
-				else if(userChoice_p=="Continue")
+				else if(gui_state->userChoice_p=="Continue")
 				{
 					//*logger_p << "Next chunk " << LogIO::POST; // Right now, a chunk is one baseline !
 					return;
@@ -923,10 +982,11 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 Bool
 FlagAgentDisplay::skipBaseline(std::pair<Int,Int> antennaPair)
 {
-	String antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antennaPair.first);
-	String antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antennaPair.second);
+	std::string antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antennaPair.first);
+	std::string antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antennaPair.second);
 	//	    if(userFixA2_p != "") cout << "*********** userfixa2 : " << userFixA2_p << "   thisant : " << antenna1Name << " && " << antenna2Name << LogIO::POST;
-	return  (  (userFixA1_p != ""  && userFixA1_p != antenna1Name)  ||   (userFixA2_p != ""  && userFixA2_p != antenna2Name) ) ;
+	return  (  (gui_state->userFixA1_p != ""  && gui_state->userFixA1_p != antenna1Name)  ||
+               (gui_state->userFixA2_p != ""  && gui_state->userFixA2_p != antenna2Name) ) ;
 }
 
 bool
@@ -944,8 +1004,11 @@ FlagAgentDisplay::computeAntennaPairFlags(const vi::VisBuffer2 &visBuffer,
 	String antenna1Name = flagDataHandler_p->antennaNames_p->operator()(antenna1);
 	String antenna2Name = flagDataHandler_p->antennaNames_p->operator()(antenna2);
 	String baselineName = antenna1Name + "&&" + antenna2Name;
-	antenna1_p = antenna1Name;
-	antenna2_p = antenna2Name;
+    {
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->antenna1_p = antenna1Name;
+        gui_state->antenna2_p = antenna2Name;
+    }
 
 	String scanRange = (scanStart_p!=scanEnd_p)?String::toString(scanStart_p)+"~"+String::toString(scanEnd_p) : String::toString(scanStart_p);
 	String spwName = String::toString(visBuffer.spectralWindows()(0));
@@ -1303,7 +1366,7 @@ FlagAgentDisplay::displayReports(FlagReport &combinedReport)
 					getReportUserInput();
 
 					// React to user-input
-					if(userChoice_p=="Quit")
+					if(gui_state->userChoice_p=="Quit")
 					{
 						dataDisplay_p = false;
 						stopAndExit_p = true;
@@ -1314,7 +1377,7 @@ FlagAgentDisplay::displayReports(FlagReport &combinedReport)
                         }
 						return true;
 					}
-					else if(userChoice_p=="Prev")
+					else if(gui_state->userChoice_p=="Prev")
 					{
 						//*logger_p << "Prev Plot" << LogIO::POST;
 						if( reportid==0 )
@@ -1323,7 +1386,7 @@ FlagAgentDisplay::displayReports(FlagReport &combinedReport)
 							--reportid;
 						stepback=true;
 					}
-					else if(userChoice_p=="Continue" || userChoice_p=="Next")
+					else if(gui_state->userChoice_p=="Continue" || gui_state->userChoice_p=="Next")
 					{
 						//*logger_p << "Next Plot " << LogIO::POST;
 						if( reportid==nReports-1 )
@@ -1372,7 +1435,7 @@ Bool FlagAgentDisplay::buildDataPlotWindow()
 	setDataLayout();
 	AlwaysAssert( dock_xml_p != NULL , AipsError );
 
-	dataplotter_p.reset(new plotter_t( ));
+	dataplotter_p.reset(new plotter_t(gui_state));
 
 	Int nrows;
 	if(showBandpass_p==true) nrows=3;
@@ -1439,7 +1502,7 @@ Bool FlagAgentDisplay::buildReportPlotWindow()
 	setReportLayout();
 	AlwaysAssert( report_dock_xml_p != NULL , AipsError );
 
-	reportplotter_p.reset(new plotter_t( ));
+	reportplotter_p.reset(new plotter_t(gui_state));
 
 	report_panels_p.resize(1);
 	string zoomloc="";
@@ -1453,77 +1516,44 @@ Bool FlagAgentDisplay::buildReportPlotWindow()
 
 
 
-void FlagAgentDisplay :: getUserInput()
-{
-#if 0
-	userChoice_p = "Continue";
-	String returnvalue;
+void FlagAgentDisplay :: getUserInput() {
 
-	Bool exitEventLoop=false;
+    if ( gui_state->input_received ) {
+        // GUI input received while this thread was preoccupied...
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->input_received = false;
+        return;
+    } else  {
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->userChoice_p = "Continue";
+        gui_state->output = std::promise<bool>( );
+        gui_state->input_needed = true;
+    }
 
-	while( ! exitEventLoop)
-	{
-
-		returnvalue = dataplotter_p->eventloop();
-		if(returnvalue == "NextBaseline" || returnvalue == "PrevBaseline" || returnvalue == "NextScan"
-				|| returnvalue == "NextField" || returnvalue == "NextSpw"
-						|| returnvalue == "StopDisplay" || returnvalue == "Quit")
-		{
-			userChoice_p = returnvalue;
-			exitEventLoop=true;
-		}
-		else if(returnvalue == "FixAntenna1:0" || returnvalue == "FixAntenna1:2" )
-		{
-			userChoice_p = "Continue";
-			//	    userFixA1_p=(returnvalue.lastchar()=='0')?-1:antenna1_p;
-			userFixA1_p=(returnvalue.lastchar()=='0')?String(""):antenna1_p;
-			exitEventLoop=false;
-		}
-		else if(returnvalue == "FixAntenna2:0" || returnvalue == "FixAntenna2:2" )
-		{
-			userChoice_p = "Continue";
-			//	    userFixA2_p=(returnvalue.lastchar()=='0')?-1:antenna2_p;
-			userFixA2_p=(returnvalue.lastchar()=='0')?String(""):antenna2_p;
-			exitEventLoop=false;
-		}
-		else *logger_p << LogIO::DEBUG2 << "Unknown GUI choice : " << returnvalue << LogIO::POST;
-
-		//    *logger_p << "ReturnValue : " << returnvalue << "   userChoice : " << userChoice_p << "  userFixA1 : " << userFixA1_p << "  userFixA2 : " << userFixA2_p << LogIO::POST;
-
-	}
-#endif
-
-	return;
+    auto fut = gui_state->output.get_future();
+    fut.get( );
 }
 
 
 
 void FlagAgentDisplay :: getReportUserInput()
 {
-#if 0
-	userChoice_p = "Continue";
-	String returnvalue;
+    if ( gui_state->input_received ) {
+        // GUI input received while this thread was preoccupied...
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->input_received = false;
+        return;
+    } else  {
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->userChoice_p = "Continue";
+        gui_state->output = std::promise<bool>( );
+        gui_state->input_needed = true;
+    }
 
-	Bool exitEventLoop=false;
-
-	while( ! exitEventLoop)
-	{
-
-		returnvalue = reportplotter_p->eventloop();
-		if(returnvalue == "Next" || returnvalue == "Prev" || returnvalue == "Quit")
-		{
-			userChoice_p = returnvalue;
-			exitEventLoop=true;
-		}
-		else *logger_p << LogIO::DEBUG2 << "Unknown GUI choice (Not sure why eventloop is exiting without user-click... re-entering... )" << returnvalue << LogIO::POST;
-
-		//*logger_p << "ReturnValue : " << returnvalue << "   userChoice : " << userChoice_p  << LogIO::POST;
-
-	}
-#endif
-
-	return;
+    auto fut = gui_state->output.get_future();
+    fut.get( );
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////   Plot functions
