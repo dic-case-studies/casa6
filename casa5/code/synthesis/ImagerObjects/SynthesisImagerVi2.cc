@@ -999,7 +999,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	log_l << "Facetted image has to be the first of multifields" << LogIO::EXCEPTION;
 
      TcleanProcessingInfo procInfo;
-     if(chanchunks<1)
+     // chanchunks calculation block. Should always run (CAS-12204), and eventually
+     // chanchunks should be removed form the inputs to this method.
 	{
 	  log_l << "Automatically calculate chanchunks";
 	  log_l << " using imshape : " << imshape << LogIO::POST;
