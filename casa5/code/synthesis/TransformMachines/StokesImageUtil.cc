@@ -478,9 +478,8 @@ void StokesImageUtil::Constrain(ImageInterface<Float>& image) {
 }
 
 
-Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam){
+Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam, Float psfcutoff){
   
-    
   Bool retval=true;
   Int freqAx=CoordinateUtil::findSpectralAxis(psf.coordinates());
   Vector<Stokes::StokesTypes> whichPols;
@@ -501,7 +500,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& e
     Slicer slc(blc, trc, Slicer::endIsLast);
     SubImage<Float> subpsf(psf, slc, false);
     try{
-      fitted(k)=FitGaussianPSF(subpsf, tempBeam(k,0));
+      fitted(k)=FitGaussianPSF(subpsf, tempBeam(k,0), psfcutoff);
     }
     catch (AipsError x_error){
       Int ik=k;
@@ -563,11 +562,11 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& e
 }
 
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, 
-				     GaussianBeam& beam)
+				     GaussianBeam& beam, Float psfcutoff)
 {
 	Vector<Float> vbeam(3, 0.0);
   Bool status=true;
-  if(!FitGaussianPSF(psf, vbeam)) status=false;
+  if(!FitGaussianPSF(psf, vbeam, psfcutoff)) status=false;
   beam = GaussianBeam(
 		  Quantity(abs(vbeam[0]),"arcsec"),
 		  Quantity(abs(vbeam[1]),"arcsec"),
@@ -596,9 +595,6 @@ void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc,
     
     IPosition psf_shape = lpsf.shape();
 
-    //cout << "1. blc, trc " << blc << ",*," << trc << endl;
-    
-    //cout << "1. findNPoints " << npoints << " " << amin << " "<< maxnpoints << " " << lpsf.shape() << endl;
     //we sample the central part of a, 2*nrow+1 by 2*nrow+1
     
     Int iflip = 1;
@@ -741,87 +737,17 @@ void StokesImageUtil::ResamplePSF(Matrix<Float>& psf, Int& oversampling, Matrix<
     
 }
 
-//To do check all the parameters
-//Different interpolation schemes
-//If interp not okay?
-// Add Aips errors
 
-Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam) {
+Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam, Float psfcutoff) {
   
-  cout << "#####################$ In StokesImageUtil::FitGaussianPSF " << endl;
-      
-  //Temp Code for testing
-  Float threshold;
-  std::string env_name("fit_threshold");
-    if(std::getenv(env_name.c_str()) == NULL)
-    {
-        cout << "Default " << env_name.c_str() << " is " << "0.35" << endl;
-        threshold = 0.35;
-    }else{
-        threshold = std::stof(std::getenv(env_name.c_str()));
-        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-    }
+  LogIO os(LogOrigin("StokesImageUtil", "FitGaussianPSF()",WHERE));
+  os << LogIO::DEBUG1 << "Psfcutoff is  " << psfcutoff << LogIO::POST;
     
-  Float npix;
-  env_name="npix";
-    if(std::getenv(env_name.c_str()) == NULL)
-    {
-        cout << "Default " << env_name.c_str() << " is " << "5" << endl;
-        npix = 20;
-    }else{
-        npix = std::stoi(std::getenv(env_name.c_str()));
-        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-    }
- 
-    
-    
-  Int expand_pixel;
-  env_name="expand_pixel";
-      if(std::getenv(env_name.c_str()) == NULL)
-      {
-          cout << "Default " << env_name.c_str() << " is " << "3" << endl;
-          expand_pixel = 5;
-      }else{
-          expand_pixel = std::stoi(std::getenv(env_name.c_str()));
-          cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-      }
-    
-    
-    /**
-    Int oversampling;
-  env_name="oversampling";
-    if(std::getenv(env_name.c_str()) == NULL)
-    {
-        cout << "Default " << env_name.c_str() << " is " << "5" << endl;
-        oversampling = 10;
-    }else{
-        oversampling = std::stoi(std::getenv(env_name.c_str()));
-        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-    }**/
-    
-    Int target_npoints;
-  env_name="target_npoints";
-    if(std::getenv(env_name.c_str()) == NULL)
-    {
-        cout << "Default " << env_name.c_str() << " is " << "501" << endl;
-        target_npoints = 3001;
-    }else{
-        target_npoints = std::stoi(std::getenv(env_name.c_str()));
-        cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-    }
-    
-  String InterpMethod;
-  env_name="InterpMethod";
-  if(std::getenv(env_name.c_str()) == NULL)
-  {
-      cout << "Default " << env_name.c_str() << " is " << "CUBIC" << endl;
-      InterpMethod = "CUBIC";
-  }else{
-      InterpMethod = std::getenv(env_name.c_str());
-      cout << "The " << env_name.c_str() << " is " << std::getenv(env_name.c_str()) << endl;
-  }
-  
-    
+  Float npix = 20;
+  Int expand_pixel = 5;
+  Int target_npoints = 3001;
+  String InterpMethod = "CUBIC";
+
   //##########################################################
   
   Vector<Double> deltas;
@@ -849,7 +775,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     throw(AipsError("Peak of psf is outside the inner quarter of defined image"));
   }
 
-  LogIO os(LogOrigin("StokesImageUtil", "FitGaussianPSF()",WHERE));
+ 
   if((bamp > 1.1) || (bamp < 0.9)) // No warning if 10% error in PSF peak
     os << LogIO::WARN << "Peak of PSF is " << bamp << LogIO::POST;
 
@@ -878,7 +804,7 @@ try{
   // sharply ringing beams inclined at 45 degrees will confuse it, but 
   // that's even more pathological than most VLBI beams.
   
-  Float amin=threshold;
+  Float amin=psfcutoff;
   Int nrow=npix;
   
   //we sample the central part of a, 2*nrow+1 by 2*nrow+1
@@ -886,26 +812,16 @@ try{
   Vector<Double> solution;
   Int kounter=0;
     
- while(amin >0.1 && !converg && (kounter < 50)){
-  //amin*=bamp;
+ while(amin > 0.009 && !converg && (kounter < 50)){
   kounter+=1;
-  
-     
   Int npoints=0;
-  
   Vector<Double> y, sigma;
   Matrix<Double> x;
-     
   IPosition blc(2), trc(2);
      
-  clock_t begin = clock();
   FindNpoints(npoints, blc, trc, nrow, amin, px, py, deltas, x , y, sigma, lpsf);
-  clock_t end = clock();
-  cout << "******First FindNpoints time " << double(end - begin) / CLOCKS_PER_SEC << endl;
-  cout << "npoints " << npoints << " npix " << nrow << endl;
-  //cout << "npoints " << npoints << ",*," << y << ",*," << x/abs(deltas(0)) << ",*," << px <<endl;
+  os << LogIO::DEBUG1 << "First FindNpoints is " << npoints << LogIO::POST;
      
-  //Should resampling only be done when condition is met?
   blc = blc-expand_pixel;
   trc = trc+expand_pixel;
      
@@ -914,39 +830,24 @@ try{
   if(trc(0) >= lpsf.shape()(0)) trc(0)=lpsf.shape()(0)-1;
   if(trc(1) >= lpsf.shape()(1)) trc(1)=lpsf.shape()(1)-1;
      
-     
-  //
-  //blc(0) = px - npix*2 + 1;
-  //blc(1) = py - npix*2 + 1;
-     
-  //trc(0) = px + npix*2 + 1;
-  //trc(1) = py + npix*2 + 1;
-     
   Matrix<Float> lpsfWindowed = lpsf(blc,trc);
-  cout << "windowed Psf shape " << lpsfWindowed.shape() << endl;
+  os << LogIO::DEBUG1 << "The windowed Psf shape is " << lpsfWindowed.shape() << LogIO::POST;
   Matrix<Float> resampledPsf;
-  
-  
-  clock_t begin2 = clock();
+     
   Int oversampling = (Int) sqrt(target_npoints/(lpsfWindowed.shape()(0)*lpsfWindowed.shape()(1)));
-  
    if(oversampling == 0){
          oversampling = 1;
    }
-     
-  cout << "oversampling " << oversampling << endl;
+   os << LogIO::DEBUG1 << "The oversampling is " << oversampling << LogIO::POST;
      
   ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
-  clock_t end2 = clock();
-  cout << "******Resample time " << double(end2 - begin2) / CLOCKS_PER_SEC << endl;
-  cout << "resampledPsf shape " << resampledPsf.shape() << endl;
+  os << LogIO::DEBUG1 << "The resampled windowed Psf shape is " << lpsfWindowed.shape() << LogIO::POST;
      
   Float minVal, maxVal;
   IPosition minPos(2);
   IPosition maxPos(2);
   minMax(minVal, maxVal, minPos, maxPos, resampledPsf);
   resampledPsf = resampledPsf/maxVal;
-  //cout << "resampledPsf " << resampledPsf << endl;
     
   Vector<Double> resampledDeltas = deltas/ (Double) oversampling;
      
@@ -958,19 +859,9 @@ try{
   }
      
   Int nrowRe = (Int) (oversampling*minLen - 1)/2;
-  //cout << "nrow" << nrow << ",*," << minLen << endl;
-  //cout << "before 2nd npoints 100 " << nrowRe << ",*," << minLen << ",*," << trc << ",*," << blc << ",*," << resampledPsf.shape() << endl;
-  
-  clock_t begin3 = clock();
   FindNpoints(npoints, blc, trc, nrowRe, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
-  clock_t end3 = clock();
-  cout << "******Second FindNpoints time " << double(end3 - begin3) / CLOCKS_PER_SEC << endl;
-     
-     
-  cout << "After resampling: npoints " << npoints << " npix " << nrowRe <<endl;
-  //cout << npoints << ",*," << y << ",*," << x/abs(deltas(0)) << ",*," << px << endl;
-     //cout << "y is " << y << endl;
-     
+  os << LogIO::DEBUG1 << "Second FindNpoints is " << npoints << LogIO::POST;
+
   Gaussian2D<AutoDiff<Double> > gauss2d;
   gauss2d[0] = 1.0; //Height of Gaussian
   gauss2d[1] = 0.0; //The center of the Gaussian in the x direction
@@ -996,12 +887,8 @@ try{
   fitter.setFunction(gauss2d);
   
   // The current parameter values are used as the initial guess.
-  clock_t begin4 = clock();
   solution = fitter.fit(x, y, sigma);
-  clock_t end4 = clock();
-  cout << "******Fit time " << double(end4 - begin4) / CLOCKS_PER_SEC << endl;
-     
-     
+
   converg=fitter.converged();
   if (!fitter.converged()) {
     beam(0)=2.5*abs(deltas(0))/C::arcsec;
@@ -1010,6 +897,8 @@ try{
 
     //fit did not coverge...reduce the minimum i.e expand the field a bit
     amin/=1.5;
+    
+    os << LogIO::WARN << "The fit did not coverge; another atempt will be made with psfcutoff " << amin << LogIO::POST;
   }
   
  }
@@ -1037,7 +926,6 @@ try{
      else beam(2)+=180.0;
    }
      
-     cout << "The beam is " << beam << endl;
    return true;
  }
  else os << LogIO::WARN << "The fit did not coverge; check your PSF" <<

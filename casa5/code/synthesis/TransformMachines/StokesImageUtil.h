@@ -82,9 +82,9 @@ public:
   
   // Fit a Gaussian PSF
   //<group>
-      static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::Vector<casacore::Float>& beam);
-  static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::GaussianBeam& beam);
-  static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::ImageBeamSet& beam);
+      static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::Vector<casacore::Float>& beam, casacore::Float psfcutoff = 0.35);
+  static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::GaussianBeam& beam, casacore::Float psfcutoff = 0.35);
+  static casacore::Bool FitGaussianPSF(casacore::ImageInterface<casacore::Float>& psf, casacore::ImageBeamSet& beam, casacore::Float psfcutoff = 0.35);
   static void FindNpoints(casacore::Int& npoints , casacore::IPosition& blc,  casacore::IPosition& trc, casacore::Int nrow, casacore::Float amin,  casacore::Int px, casacore::Int py, casacore::Vector<casacore::Double>& deltas, casacore::Matrix<casacore::Double>& x , casacore::Vector<casacore::Double>& y, casacore::Vector<casacore::Double>& sigma, casacore::Matrix<casacore::Float>& lpsf);
     static  void ResamplePSF(casacore::Matrix<casacore::Float>& psf, casacore::Int& oversampling, casacore::Matrix<casacore::Float>& resampledPsf,casacore::String& InterpMethod);
   //</group>

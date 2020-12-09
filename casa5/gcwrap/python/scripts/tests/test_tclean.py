@@ -658,6 +658,37 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
           self.checkfinal(pstr=checkimage+report)
+          
+     def test_onefield_psf_fit(self):
+          """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+          
+          self.prepData('refim_point.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          report1 = self.th.checkval(beam_3ppb[0], 55.77472686767578, exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          report2 = self.th.checkval(beam_5ppb[0], 51.443878173828125, exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          report3 = self.th.checkval(beam_20ppb[0], 51.55984878540039, exact=False)
+
+          self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################

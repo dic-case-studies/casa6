@@ -207,8 +207,8 @@ class testref_base(unittest.TestCase):
 
 ##############################################
 ##############################################
-
 ##Task level tests : one field, 2chan.
+
 class test_onefield(testref_base):
      
      def test_onefield_defaults(self):
@@ -657,10 +657,41 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
           self.checkfinal(pstr=checkimage+report)
+          
+     def test_onefield_psf_fit(self):
+        """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+        
+        self.prepData('refim_point.ms')
+ 
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        report1 = self.th.checkval(beam_3ppb[0], 55.77472686767578, exact=False)
+        
+        self.prepData('refim_point.ms')
+        
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        report2 = self.th.checkval(beam_5ppb[0], 51.443878173828125, exact=False)
+        
+        self.prepData('refim_point.ms')
+        
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        report3 = self.th.checkval(beam_20ppb[0], 51.55984878540039, exact=False)
+        
+        self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
-
 ##Task level tests : iteration controls
 class test_iterbot(testref_base):
 
@@ -3385,28 +3416,27 @@ class test_pbcor(testref_base):
 #####################################################
 ### Heterogeneous array imaging
 class test_hetarray_imaging(testref_base):
-     '''
-     Tests for all kinds of heterogeneous imaging.
-
-     Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
-     Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
-
-     Current Test list : 
-     test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
-     test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
-
-     Tests to add later : 
-     test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
-     test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
-     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
-     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
-     '''     
+     
+#     Tests for all kinds of heterogeneous imaging.
+#
+#     Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.
+#     Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
+#
+#     Current Test list :
+#     test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
+#     test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
+#
+#     Tests to add later :
+#     test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+#     test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
+#     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.
+#     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable.
+#
           
      def test_het_pointing_offsets_awproject_cube(self):
-          '''
-          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
-          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
-          '''
+#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
+#          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy.
+          
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
@@ -3509,10 +3539,10 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
      def test_het_pointing_offsets_awproject_mtmfs(self):
-          '''
-          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
-          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
-          '''
+        
+#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
+#          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True).
+          
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
@@ -4434,7 +4464,6 @@ class test_ephemeris(testref_base):
 
           report = report1 + report2 + report3
           self.checkfinal(pstr=report)
-
 
 if is_CASA6:
      if __name__ == '__main__':

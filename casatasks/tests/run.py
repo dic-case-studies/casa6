@@ -109,6 +109,7 @@ if len(sys.argv) == 1:
     tests = [ ]
     run_py = os.path.realpath(__file__)
     test_dir = os.path.dirname(run_py)
+    
     for dir, subdirs, files in os.walk(test_dir):
         for f in files:
             if f.endswith(".py") and f.startswith("test_"):
@@ -158,6 +159,7 @@ else:
         ## note directory
         suite_path = os.path.dirname(i)
         test_paths.add(suite_path)
+        print(suite_path,test_paths)
         ## discover module name
         suite_module, xxx = os.path.splitext(os.path.basename(i))
         test_modules.append(suite_module)

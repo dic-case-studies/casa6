@@ -69,6 +69,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                        itsNFacets(1)
   {
     itsFacetImageStores.resize(0);
+    itsPBLimit = 0.35;
   }
   
   SynthesisNormalizer::~SynthesisNormalizer() 
@@ -86,6 +87,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     try
       {
+        if( normpars.isDefined("psfcutoff") )  // A single string
+        {
+            normpars.get( RecordFieldId("psfcutoff") , itsPsfcutoff  );
+        }else
+        {
+            throw( AipsError("psfcutoff not specified"));
+        }
+          
+          
 
       if( normpars.isDefined("imagename") )  // A single string
 	{ itsImageName = normpars.asString( RecordFieldId("imagename")); }
@@ -315,8 +325,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       // Check PSF quality by fitting beams
     {
       itsImages->calcSensitivity();
-
-      itsImages->makeImageBeamSet();
+    
+      itsImages->makeImageBeamSet(itsPsfcutoff);
       Bool verbose(False);
       if (itsUseBeam=="common") verbose=True;
       itsImages->printBeamSet(verbose);
