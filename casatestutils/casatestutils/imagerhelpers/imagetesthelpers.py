@@ -19,7 +19,6 @@ import six
 
 casa5 = False
 casa6 = False
-__bypass_parallel_processing = 0
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -45,12 +44,6 @@ else:
     from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
     from mpi4casa.MPIEnvironment import MPIEnvironment
     _tb = tbtool()
     _tbt = tbtool()
