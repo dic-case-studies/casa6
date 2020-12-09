@@ -407,6 +407,57 @@
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoringbeam='100.0arcsec'
 #testname: test_restoration_bigbeam(self):
 #
+#
+#
+#N Iter Params tests: verify that we perform the same number of iterations as tclean for the same iteration parameters
+#77. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+#'gain':0.2
+#testname: test_niterparms_gain_1
+#
+#78. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+#'gain':0.3
+#testname: test_niterparms_gain_2
+#
+#79. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
+#'threshold':0.22
+#testname: test_niterparms_threshold_1
+#
+#80. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
+#'threshold':0.18
+#testname: test_niterparms_threshold_2
+#
+#81. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
+#'nsigma':0.9, 'maxpsffraction':0
+#testname: test_niterparms_nsigma_1
+#
+#82. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+#'nsigma':1.5, 'maxpsffraction':0
+#testname: test_niterparms_nsigma_2
+#
+#83. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
+#'cyclefactor':0.1
+#testname: test_niterparms_cyclefactor_1
+#
+#84. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
+#'cyclefactor':2.0
+#testname: test_niterparms_cyclefactor_2
+#
+#85. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
+#'minpsffraction':0.5
+#testname: test_niterparms_minpsffraction_1
+#
+#86. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
+#'minpsffraction':0.2
+#testname: test_niterparms_minpsffraction_2
+#
+#87. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
+#'maxpsffraction':0.01
+#testname: test_niterparms_maxpsffraction_1
+#
+#88. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
+#'maxpsffraction':0.05
+#testname: test_niterparms_maxpsffraction_2
+#
 ##########################################################################
 
 from __future__ import absolute_import
@@ -2368,6 +2419,143 @@ class test_restoration(testref_base):
                              imgval=[(self.img+'.image',1.436,[5,5,0,0])],
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
+
+##############################################
+##############################################
+
+##Task level tests : verify that we perform the same number of iterations as tclean for the same iteration parameters
+class test_niterparms(testref_base):
+
+    def helper_deconvolve_check_iterdone(self, param_name, param_val, expected_iter, extra_params=None):
+        casalog.post(f"Executing deconvolve with {param_name}={param_val}, expected iterations: {expected_iter}", "WARN")
+
+        # prepare arguments dicts
+        ta = {'imsize':100, 'cell':'8.0arcsec', 'deconvolver':'clark', 'threshold':'1mJy', 'gain':0.1}
+        da = {'threshold':'1mJy', 'gain':0.1}
+        ta[param_name] = param_val
+        da[param_name] = param_val
+        if extra_params != None:
+            for ep_name in extra_params:
+                ta[ep_name] = extra_params[ep_name]
+                da[ep_name] = extra_params[ep_name]
+
+        # run tclean(niter=0) to get the image ready to work with
+        self.prepData('refim_twochan.ms', tclean_args=ta)
+
+        # run deconvolve
+        results2 = deconvolve(imagename=self.img, deconvolver=ta['deconvolver'], niter=100, interactive=0, restoration=False, **da)
+
+        # verify results
+        report = th.checkall(ret=results2['retrec'], iterdone=expected_iter)
+        return report
+
+    # Test 77
+    def test_niterparms_gain_1(self):
+        """ [restoration] test_niterparms_gain_1 """
+        ######################################################################################
+        # Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.2, expected_iter=10)
+        self.checkfinal(report)
+
+    # Test 78
+    def test_niterparms_gain_2(self):
+        """ [restoration] test_niterparms_gain_2 """
+        ######################################################################################
+        # Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.3, expected_iter=7)
+        self.checkfinal(report)
+
+    # Test 79
+    def test_niterparms_threshold_1(self):
+        """ [restoration] test_niterparms_threshold_1 """
+        ######################################################################################
+        # Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.22, expected_iter=16)
+        self.checkfinal(report)
+
+    # Test 80
+    def test_niterparms_threshold_2(self):
+        """ [restoration] test_niterparms_threshold_2 """
+        ######################################################################################
+        # Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.18, expected_iter=19)
+        self.checkfinal(report)
+
+    # Test 81
+    def test_niterparms_nsigma_1(self):
+        """ [restoration] test_niterparms_nsigma_1 """
+        ######################################################################################
+        # Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=0.9, expected_iter=72, extra_params={'maxpsffraction':0})
+        self.checkfinal(report)
+
+    # Test 82
+    def test_niterparms_nsigma_2(self):
+        """ [restoration] test_niterparms_nsigma_2 """
+        ######################################################################################
+        # Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=1.5, expected_iter=60, extra_params={'maxpsffraction':0})
+        self.checkfinal(report)
+
+    # Test 83
+    def test_niterparms_cyclefactor_1(self):
+        """ [restoration] test_niterparms_cyclefactor_1 """
+        ######################################################################################
+        # Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=0.1, expected_iter=40)
+        self.checkfinal(report)
+
+    # Test 84
+    def test_niterparms_cyclefactor_2(self):
+        """ [restoration] test_niterparms_cyclefactor_2 """
+        ######################################################################################
+        # Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=2.0, expected_iter=13)
+        self.checkfinal(report)
+
+    # Test 85
+    def test_niterparms_minpsffraction_1(self):
+        """ [restoration] test_niterparms_minpsffraction_1 """
+        ######################################################################################
+        # Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.5, expected_iter=7)
+        self.checkfinal(report)
+
+    # Test 86
+    def test_niterparms_minpsffraction_2(self):
+        """ [restoration] test_niterparms_minpsffraction_2 """
+        ######################################################################################
+        # Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.2, expected_iter=16)
+        self.checkfinal(report)
+
+    # Test 87
+    def test_niterparms_maxpsffraction_1(self):
+        """ [restoration] test_niterparms_maxpsffraction_1 """
+        ######################################################################################
+        # Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.01, expected_iter=78)
+        self.checkfinal(report)
+
+    # Test 88
+    def test_niterparms_maxpsffraction_2(self):
+        """ [restoration] test_niterparms_maxpsffraction_2 """
+        ######################################################################################
+        # Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.05, expected_iter=40)
+        self.checkfinal(report)
 
 if __name__ == '__main__':
     unittest.main()
