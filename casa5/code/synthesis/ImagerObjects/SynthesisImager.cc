@@ -971,6 +971,8 @@ bool SynthesisImager::unlockImages()
       controlRecord.get("nmajorcycles", nMajorCycles);
 
     Bool lastcycle=false;
+
+    
     if( controlRecord.isDefined("lastcycle") )
       {
 	controlRecord.get( "lastcycle" , lastcycle );
@@ -985,7 +987,7 @@ bool SynthesisImager::unlockImages()
     try
       {
 	if( (itsMaxShape[3] > 1 || impars_p.mode.contains("cube"))&& doingCubeGridding_p ){/// and valid ftmachines
-		runMajorCycleCube(false, lastcycle);
+		runMajorCycleCube(false, controlRecord);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )
@@ -993,6 +995,14 @@ bool SynthesisImager::unlockImages()
 	 else
 		{	runMajorCycle2(false, lastcycle);}
 	
+	}
+	if(lastcycle){
+	  String mess="";
+	  if(controlRecord.isDefined("usemask")  && controlRecord.asString("usemask").contains("auto")){
+	    mess="\nFor Automasking most  major cycles may appear wrongly as  the last one ";
+	  }
+	 
+	  itsMappers.cleanupTempFiles(mess);
 	}
 	itsMappers.releaseImageLocks();
 
@@ -1015,7 +1025,7 @@ bool SynthesisImager::unlockImages()
       try
       {
 	if(  (itsMaxShape[3] >1 || impars_p.mode.contains("cube")) && doingCubeGridding_p){///and valid ftmachines
-		runMajorCycleCube(true, false);
+		runMajorCycleCube(true);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )

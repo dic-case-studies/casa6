@@ -498,7 +498,10 @@ class PySynthesisImager:
 #############################################
 ## Overloaded for parallel runs
     def runMajorCycleCore(self, lastcycle):
-        self.SItool.executemajorcycle(controls={'lastcycle':lastcycle})
+        controldict={'lastcycle':lastcycle}
+        if(self.alldecpars.has_key('0') and self.alldecpars['0'].has_key('usemask')):
+            controldict['usemask']=self.alldecpars['0']['usemask']
+        self.SItool.executemajorcycle(controls=controldict)
 #############################################
 ## Overloaded for parallel runs
     def predictModelCore(self):
