@@ -151,6 +151,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                    casalog.post('Internal (T/F) masks in %s: %s' % (inpimage, printinmasks),'INFO')
                _ia.close()
  
+        # === setdefaultmask mode ===
         elif mode == 'setdefaultmask':
             inpOK=checkinput(inpmask)
             if inpOK:
@@ -170,6 +171,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         casalog.post('Current internal masks are %s' % str(inmasklist), 'INFO')
                 _ia.close()
 
+        # === delete mode ===
         elif mode == 'delete':
             inpOK=checkinput(inpmask)
             if inpOK:
@@ -192,6 +194,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 _ia.close()
 
         else:
+           # PREPROCESS STAGE for mode='copy' and 'expand'
            #DEBUG
            #casalog.post("mode=",mode)
            # copy can have multiple input masks, expand has only one.
@@ -220,6 +223,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                # is text file?
                if type(masklet)==str: # text file or image
                    if os.path.exists(masklet):
+                       # region file or image
                        if (subprocess_getoutput('file '+masklet).count('directory')):
                           if os.path.exists(masklet+'/table.f1'):
                               #casalog.post("%s is not in a recognized format for inpmask, ignored." % masklet, 'WARN') 
@@ -227,14 +231,17 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                           else:
                           # probably image file (with no mask extension)
                               imgfiles.append(masklet)
+                       # text file (CRTF)
                        elif (subprocess_getoutput('file '+masklet).count('text')):
                           rgfiles.append(masklet)
                        else:
                           #casalog.post("%s does not recognized format for inpmask, ignored." % masklet, 'WARN')
                           raise ValueError("%s is not in a recognized format for inpmask" % masklet)
                    else:
+                       # direct string specification
                        if masklet.count('[') and masklet.count(']'): # rough check on region specification 
                            rglist.append(masklet) 
+                       # extract internal mask from the input image
                        else:
                            (parentim, mask)=extractmaskname(masklet)
                            if mask!='':
@@ -288,6 +295,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
            #casalog.post("output=",output, " is exist?=",os.path.isdir(output))
            #casalog.post("outparentim=",outparentim, " is exist?=",os.path.isdir(outparentim))
 
+    # MAIN PROCESS for 'copy' or 'expand' mode
     # the following code is somewhat duplicated among the modes but keep separated from each mode
     # for now.... copy now handle merge as well
     # === old copy mode === NOW combined to 'merge mode'
@@ -651,13 +659,13 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 if os.path.exists(tmp_outmaskimage):
                     shutil.rmtree(tmp_outmaskimage)
 
-    # === now called copy mode: copy/merge mode ===
+    # === main process for copy mode: also does merge of masks ===
         # copy is a just special case of merge mode
         # CHANGE:
         # all input masks should be specified in inpmask 
         # type of inpmask accepted: 1/0 mask, T/F mask, region file, and region expression in a string 
         # already stored internally in seperate lists
-        #   rgfiles - region files
+        #   rgfiles - region files (binary or CRTF-format text file)
         #   imgfiles - 1/0 image masks
         #   rglist - region expression in strings
         #   bmasks - T/F internal masks
@@ -666,7 +674,6 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
         # input inpimage as a template or image used for defining regions when it is given in inpmask 
         # inpmask as list of all the masks to be merged (image masks, T/F internal masks, regions)
 
-        #was: if mode=='merge':
         if mode=='copy':
             sum_tmp_outfile='__tmp_outputmask_'+pid
             tmp_inmask='__tmp_frominmask_'+pid
@@ -728,10 +735,6 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     _ia.maskhandler('delete',origmasks)
                     _ia.close()
                      
-                #if type(inpimage)==str:
-                #    inpimage=[inpimage]
-                #if type(inpmask)==str:
-                #    inpmask=[inpmask]
                 if len(imgfiles)>0:
                     # summing all the images
                     casalog.post('Summing all mask images in inpmask and  normalized to 1 for mask','INFO')
@@ -814,39 +817,34 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     shutil.copytree(tmp_allrgmaskim,tmp_rgmaskim)
 
                     if len(rgfiles)>0:
+                        # Here only CRTF format file is expected 
                         nrgn=0
                         for rgn in rgfiles:
-                            firstline=True
                             subnrgn=0
                             with open(rgn) as f:
-                                for line in f:
-                                    if firstline:
-                                        if line.count('#CRTF')==0:
-                                            raise Exception("Input text file does not seems to be in a correct format \
-                                                              (must contains #CRTF)")
-                                        firstline=False
-                                    else:     
-                                        try:
-                                            if line.count('^#'):
-                                                pass
-                                            else:
-                                               if len(line)!=0:
-                                                  # reset temp mask image
-                                                  if _ia.isopen(): _ia.close()
-                                                  _ia.open(tmp_rgmaskim)
-                                                  _ia.set(pixels=0.0)
-                                                  _ia.close()
-                                                  #casalog.post("tshp=",tshp)
-                                                  #casalog.post("tcsys.torecord=",tcsys.torecord())
-                                                  inrgn=_rg.fromtext(line, tshp, tcsys.torecord())
-                                                  #casalog.post("inrgn=",inrgn)
-                                                  _im.regiontoimagemask(tmp_rgmaskim,region=inrgn)
-                                                  addimagemask(tmp_allrgmaskim,tmp_rgmaskim)
-                                                  #shutil.rmtree(tmp_rgmaskim)
-                                                  subnrgn +=1
-                                                  nrgn +=1
-                                        except:
-                                            break
+                                # check if it has '#CRTF' in the first line
+                                firstline=f.readline()
+                                if firstline.count('#CRTF')==0:
+                                    raise Exception("Input text file does not seems to be in a correct format \
+                                                              (must contains #CRTF in the first line)")
+                                else:     
+                                    try:
+                                        # reset temp mask image
+                                        if _ia.isopen(): _ia.close()
+                                        _ia.open(tmp_rgmaskim)
+                                        _ia.set(pixels=0.0)
+                                        _ia.close()
+                                        #casalog.post... "tshp=",tshp
+                                        #casalog.post... "tcsys.torecord=",tcsys.torecord()
+                                        inrgn=_rg.fromtextfile(rgn, tshp, tcsys.torecord())
+                                        #casalog.post... "inrgn=",inrgn
+                                        _im.regiontoimagemask(tmp_rgmaskim,region=inrgn)
+                                        addimagemask(tmp_allrgmaskim,tmp_rgmaskim)
+                                        #shutil.rmtree(tmp_rgmaskim)
+                                        subnrgn +=1
+                                        nrgn +=1
+                                    except:
+                                        break
                             if subnrgn>0:
                                 usedrgfiles.append(rgn)    
                         casalog.post("Converted %s regions from %s region files to image mask" % (nrgn,len(rgfiles)),"INFO")
