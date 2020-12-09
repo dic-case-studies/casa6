@@ -75,7 +75,8 @@ namespace casa {
                 ping_service(new plotserver::grpcPing( )) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "sending plotserver events to " << response_uri << " (thread " <<
+            std::cerr << "sending plotserver events to " << response_uri <<
+            " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -89,7 +90,8 @@ namespace casa {
         static const auto debug = getenv("GRPC_DEBUG");
 
         if (debug) {
-            std::cerr << "received grpc done( ) event... (thread " <<
+            std::cerr << "received grpc done( ) event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -104,7 +106,8 @@ namespace casa {
                                            ::rpc::gui::Id *reply) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc panel event... (thread " <<
+            std::cerr << "received grpc panel event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -143,7 +146,8 @@ namespace casa {
 
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "creating qt panel... (thread " <<
+                    std::cerr << "creating qt panel..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -164,7 +168,8 @@ namespace casa {
             } );
 
         if (debug) {
-            std::cerr << "waiting for grpc panel result... (thread " <<
+            std::cerr << "waiting for grpc panel result..." <<
+            " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -172,8 +177,8 @@ namespace casa {
         fut.wait( );
         auto ret = fut.get( );
         if (debug) {
-            std::cerr << "returning grpc panel result: " <<
-                ret << " (thread " <<
+            std::cerr << "returning grpc panel result: " << ret <<
+            " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -217,7 +222,8 @@ namespace casa {
                                          ::rpc::gui::Id* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc line event... (thread " <<
+            std::cerr << "received grpc line event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -245,7 +251,8 @@ namespace casa {
 
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "creating qwt line... (thread " <<
+                    std::cerr << "creating qwt line..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -270,8 +277,8 @@ namespace casa {
         fut.wait( );
         auto data_id = fut.get( );
         if (debug) {
-            std::cerr << "returning grpc line result: " <<
-                data_id << " (thread " <<
+            std::cerr << "returning grpc line result: " << data_id <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -287,7 +294,8 @@ namespace casa {
                                             ::rpc::gui::Id* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc scatter event... (thread " <<
+            std::cerr << "received grpc scatter event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -320,7 +328,8 @@ namespace casa {
         qtGO( [&]( ) {
 
                 if (debug) {
-                    std::cerr << "creating qwt scatter... (thread " <<
+                    std::cerr << "creating qwt scatter..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -345,8 +354,8 @@ namespace casa {
         fut.wait( );
         auto data_id = fut.get( );
         if (debug) {
-            std::cerr << "returning grpc scatter result: " <<
-                data_id << " (thread " <<
+            std::cerr << "returning grpc scatter result: " << data_id <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -362,7 +371,8 @@ namespace casa {
                                               ::rpc::gui::Id* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc histogram event... (thread " <<
+            std::cerr << "received grpc histogram event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -388,7 +398,8 @@ namespace casa {
 
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "creating qwt histogram... (thread " <<
+                    std::cerr << "creating qwt histogram..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -413,8 +424,8 @@ namespace casa {
         fut.wait( );
         auto data_id = fut.get( );
         if (debug) {
-            std::cerr << "returning grpc histogram result: " <<
-                data_id << " (thread " <<
+            std::cerr << "returning grpc histogram result: " << data_id <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -430,7 +441,8 @@ namespace casa {
                                            ::rpc::gui::Id* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc raster event... (thread " <<
+            std::cerr << "received grpc raster event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -456,7 +468,8 @@ namespace casa {
 
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "creating qwt raster... (thread " <<
+                    std::cerr << "creating qwt raster..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -481,8 +494,8 @@ namespace casa {
         fut.wait( );
         auto data_id = fut.get( );
         if (debug) {
-            std::cerr << "returning grpc raster result: " <<
-                data_id << " (thread " <<
+            std::cerr << "returning grpc raster result: " << data_id <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -498,7 +511,8 @@ namespace casa {
                                              ::google::protobuf::Empty* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc setlabel event... (thread " <<
+            std::cerr << "received grpc setlabel event..." <<
+                " (process " << getpid( ) << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -529,7 +543,8 @@ namespace casa {
         std::promise<bool> prom;
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "setting label... (thread " <<
+                    std::cerr << "setting label..." <<
+                        " (process " << getpid( ) << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -546,7 +561,8 @@ namespace casa {
         auto status = fut.get( );
         if (debug) {
             std::cerr << "returning after setting labels" <<
-                " (thread " << std::this_thread::get_id() << ")" << std::endl;
+                " (process " << std::this_thread::get_id() << ", thread " << 
+                std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
         return grpc::Status::OK;
@@ -558,7 +574,8 @@ namespace casa {
                                           ::google::protobuf::Empty* response ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc erase event... (thread " <<
+            std::cerr << "received grpc erase event..." <<
+                " (process " << std::this_thread::get_id() << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -644,7 +661,8 @@ namespace casa {
                                           ::google::protobuf::Empty* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc close event... (thread " <<
+            std::cerr << "received grpc close event..." <<
+                " (process " << std::this_thread::get_id() << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -692,7 +710,8 @@ namespace casa {
 
         if (debug) {
             std::cerr << "returning after closing panel" <<
-                " (thread " << std::this_thread::get_id() << ")" << std::endl;
+                " (process " << std::this_thread::get_id() << ", thread " <<
+                std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
         return grpc::Status::OK;
@@ -798,7 +817,8 @@ namespace casa {
                                              ::rpc::gui::Id* reply) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cerr << "received grpc loaddock event... (thread " <<
+            std::cerr << "received grpc loaddock event..." <<
+                " (process " << std::this_thread::get_id() << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
@@ -818,7 +838,8 @@ namespace casa {
                 std::promise<std::pair<QDockWidget*,QString>> prom;
                 qtGO( [&]( ) {
                         if (debug) {
-                            std::cerr << "creating qwt dock... (thread " <<
+                            std::cerr << "creating qwt dock..." <<
+                                " (process " << std::this_thread::get_id() << ", thread " <<
                                 std::this_thread::get_id() << ")" << std::endl;
                             fflush(stderr);
                         }
@@ -852,7 +873,8 @@ namespace casa {
         std::promise<std::pair<QDockWidget*,QString>> prom;
         qtGO( [&]( ) {
                 if (debug) {
-                    std::cerr << "creating qwt dock... (thread " <<
+                    std::cerr << "creating qwt dock..." <<
+                        " (process " << std::this_thread::get_id() << ", thread " <<
                         std::this_thread::get_id() << ")" << std::endl;
                     fflush(stderr);
                 }
@@ -956,7 +978,8 @@ namespace casa {
                                                                                      grpc::InsecureChannelCredentials( ) ) )) {
         static const auto debug = getenv("GRPC_DEBUG");
         if ( debug ) {
-            std::cerr << "grpcPlotServer::grpcPlotServer( ) (thread " <<
+            std::cerr << "grpcPlotServer::grpcPlotServer( )" <<
+                " (process " << std::this_thread::get_id() << ", thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
