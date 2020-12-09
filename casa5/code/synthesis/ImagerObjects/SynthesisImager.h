@@ -55,8 +55,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  class SIIterBot;
  class VisImagingWeight;
 
-// <summary> Class that contains functions needed for imager </summary>
+ /**
+ * Holds technical processing info related to parallelization and memory use, as introduced
+ * in CAS-12204. This is meant to go into the image meta-info, such as the 'miscinfo' record.
+ * The TcleanProcessingInfo holds: number of subcubes (chanchunks), number of MPI
+ * processors used for these calculations, memory available, estimated required memory.
+ */
+struct TcleanProcessingInfo
+{
+  unsigned int mpiprocs = 0;
+  unsigned int chnchnks = 0;
+  float memavail = -.1;
+  float memreq = -.1;
+};
 
+// <summary> Class that contains functions needed for imager </summary>
 class SynthesisImager 
 {
  public:
@@ -283,9 +296,10 @@ protected:
 					 casacore::String mappertype="default", 
 					 casacore::uInt ntaylorterms=1,
 					 casacore::Quantity distance=casacore::Quantity(0.0, "m"),
+					 const TcleanProcessingInfo &procInfo = TcleanProcessingInfo(),
 					 casacore::uInt facets=1,
 					 casacore::Bool useweightimage=false,
-					 casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+					 const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
   
   // Choose between different types of Mappers (single term, multiterm, imagemosaic, faceted)
   casacore::CountedPtr<SIMapper> createSIMapper(casacore::String mappertype,  
@@ -362,7 +376,7 @@ protected:
 			  casacore::String mappertype=casacore::String("default"),
 			  float padding=1.0,
 			  casacore::uInt ntaylorterms=1,
-			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+			  const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
 
   virtual void unlockMSs();
 

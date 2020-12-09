@@ -989,7 +989,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 					   String mappertype,
 					   Float padding,
 					   uInt ntaylorterms,
-					   Vector<String> startmodel)
+					   const Vector<String> &startmodel)
     {
       LogIO log_l(LogOrigin("SynthesisImagerVi2", "appendToMapperList(ftm)"));
       //---------------------------------------------
@@ -998,6 +998,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
       if(facets > 1 && itsMappers.nMappers() > 0)
 	log_l << "Facetted image has to be the first of multifields" << LogIO::EXCEPTION;
 
+     TcleanProcessingInfo procInfo;
      if(chanchunks<1)
 	{
 	  log_l << "Automatically calculate chanchunks";
@@ -1018,8 +1019,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			fudge_factor = 9;
 		}
 
-		auto a=nSubCubeFitInMemory(fudge_factor, imshape, padding);
-		chanchunks=std::get<0>(a);
+                std::tie(procInfo, std::ignore, std::ignore) =
+                    nSubCubeFitInMemory(fudge_factor, imshape, padding);
+                chanchunks = procInfo.chnchnks;
+
 		/*log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
                  << "\nAvailable memory " << memory_avail / 1024. / 1024 / 1024.
                  << " (rc: memory fraction " << usr_memfrac << "% rc memory " << usr_mem / 1024.
@@ -1047,7 +1050,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
       MSColumns msc(*(mss_p[0]));
-      imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
+      imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance, procInfo, facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
       if( facets<2 && chanchunks<2) // One facet. Just add the above imagestore to the mapper list.
@@ -1098,7 +1101,13 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
   /////////////////////////
-  std::tuple<int, Vector<Int>, Vector<Int> > SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
+  /**
+   * Calculations of memory required / available -> nchunks .
+   *
+   * Returns a tuple with a TcleanProcessingInfo, vector of start channels per subchunk,
+   * vector of end channels.
+   */
+  std::tuple<TcleanProcessingInfo, Vector<Int>, Vector<Int> > SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
 	Double required_mem = fudge_factor * sizeof(Float);
 	int nsubcube=1;
 	CompositeNumber cn(uInt(imshape[0] * 2));
@@ -1187,8 +1196,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 }
 	}
 	 
-	//cerr << "nsubcube " << nsubcube << " start " << start << " end " << end << endl; 
-	return make_tuple(nsubcube, start, end); 
+        //cerr << "nsubcube " << nsubcube << " start " << start << " end " << end << endl;
+        TcleanProcessingInfo procInfo;
+        procInfo.mpiprocs = nlocal_procs;
+        procInfo.chnchnks = nsubcube;
+        const float toGB = 1024.0 * 1024.0 * 1024.0;
+        procInfo.memavail = memory_avail / toGB;
+        procInfo.memreq = required_mem / toGB;
+        return make_tuple(procInfo, start, end);
   }
   
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
@@ -1502,7 +1517,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
 			fudge_factor = 9;
 		}
-		std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+                TcleanProcessingInfo procInfo;
+		std::tie(procInfo, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+                numchunks = procInfo.chnchnks;
 		////TESTOO
 		//numchunks=2;
 		//startchan.resize(2);startchan[0]=0; startchan[1]=2;
@@ -2016,8 +2033,9 @@ void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim:
         else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
             fudge_factor = 9;
         }
-        std::tie(numchunks, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
-      
+        TcleanProcessingInfo  procInfo;
+        std::tie(procInfo, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+        numchunks = procInfo.chnchnks;
         
 		Int imageType=Int(imtype);
 		Int rank(0);
