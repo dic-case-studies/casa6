@@ -55,21 +55,21 @@ tableindex::setchanged(const std::vector<std::string>& /*columns*/)
   return false;
 }
 
-int
+long
 tableindex::rownr(const ::casac::record& /*key*/)
 {
 
-    int rstat(0);
+    long rstat(0);
     return rstat;
     // TODO : IMPLEMENT ME HERE !
 }
 
-std::vector<int>
+std::vector<long>
 tableindex::rownrs(const ::casac::record& /*key*/, const ::casac::record& /*upperkey*/, const bool /*lowerincl*/, const bool /*upperincl*/)
 {
 
     // TODO : IMPLEMENT ME HERE !
-   return std::vector<int>(0);
+   return std::vector<long>(0);
 }
 
 bool

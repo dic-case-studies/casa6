@@ -39,12 +39,13 @@ class SpectralImageUtil {
   //Returns a pointer to a subimage of the requested plane
   //Note caller is responsible for deleting the subimage object
   // If writeaccess is true ...modification on the subimage will get recorded on the original image if it is writeable
-  static casacore::SubImage<casacore::Float>* getChannel(casacore::ImageInterface<casacore::Float>& theIm, casacore::Int begchannel=0,  casacore::Int endchannel=-1, casacore::Bool writeAccess=false);
+  template <typename T> static casacore::SubImage<T>* getChannel(casacore::ImageInterface<T>& theIm, casacore::Int begchannel=0,  casacore::Int endchannel=-1, casacore::Bool writeAccess=false);
   //Frequency at a given pixel along the spectral axis (value returned is in Hz)
   static casacore::Double worldFreq(const casacore::CoordinateSystem& cs, casacore::Double spectralpix=0.0);
 
 };//end of class
 
+#include <imageanalysis/Utilities/SpectralImageUtil.tcc>
 } //# NAMESPACE CASA - END
 
 #endif

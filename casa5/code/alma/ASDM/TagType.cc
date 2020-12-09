@@ -236,6 +236,8 @@ const TagType* TagType::SwitchCycle = new TagType("SwitchCycle") ;
 
 	
 
+	
+
 
 map<string, const TagType*> fillName2TagType_m() {
 	map<string, const TagType*> result;
@@ -427,6 +429,8 @@ map<string, const TagType*> fillName2TagType_m() {
 
 	
 	result["SwitchCycle"] = TagType::SwitchCycle ;
+	
+
 	
 
 	

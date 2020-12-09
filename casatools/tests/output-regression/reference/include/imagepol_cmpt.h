@@ -22,10 +22,10 @@ namespace casac {
     public:
 
       imagepol();
-      bool imagepoltestimage(const string& _outfile=string("imagepol.iquv"), const std::vector<double>& _rm=std::vector<double>({0.0}), double _pa0=double(0.0), double _sigma=double(0.01), int _nx=int(32), int _ny=int(32), int _nf=int(32), double _f0=double(1.4e9), double _bw=double(128.0e6));
+      bool imagepoltestimage(const string& _outfile=string("imagepol.iquv"), const std::vector<double>& _rm=std::vector<double>({0.0}), double _pa0=double(0.0), double _sigma=double(0.01), long _nx=long(32), long _ny=long(32), long _nf=long(32), double _f0=double(1.4e9), double _bw=double(128.0e6));
       bool complexlinpol(const string& _outfile=string(""));
       bool complexfraclinpol(const string& _outfile=string(""));
-      casac::image* depolratio(const string& _infile=string(""""), bool _debias=bool(false), double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
+      casac::image* depolratio(const string& _infile=string(""), bool _debias=bool(false), double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
       bool close();
       bool done();
       bool fourierrotationmeasure(const string& _complex=string(""), const string& _amp=string(""), const string& _pa=string(""), const string& _real=string(""), const string& _imag=string(""), bool _zerolag0=bool(false));
@@ -36,9 +36,9 @@ namespace casac {
       bool makecomplex(const string& _complex=string(""), const string& _real=string(""), const string& _imag=string(""), const string& _amp=string(""), const string& _phase=string(""));
       bool open(const variant& _image=variant( ));
       casac::image* pol(const string& _which=string(""), bool _debias=bool(false), double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
-      bool rotationmeasure(const string& _rm=string(""), const string& _rmerr=string(""), const string& _pa0=string(""), const string& _pa0err=string(""), const string& _nturns=string(""), const string& _chisq=string(""), double _sigma=double(-1), double _rmfg=double(0.0), double _rmmax=double(0.0), double _maxpaerr=double(1e30), const string& _plotter=string(""), int _nx=int(5), int _ny=int(5));
+      bool rotationmeasure(const string& _rm=string(""), const string& _rmerr=string(""), const string& _pa0=string(""), const string& _pa0err=string(""), const string& _nturns=string(""), const string& _chisq=string(""), double _sigma=double(-1), double _rmfg=double(0.0), double _rmmax=double(0.0), double _maxpaerr=double(1e30), const string& _plotter=string(""), long _nx=long(5), long _ny=long(5));
       double sigma(double _clip=double(10.0));
-      casac::image* sigmadepolratio(const string& _infile=string(""""), bool _debias=bool(false), double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
+      casac::image* sigmadepolratio(const string& _infile=string(""), bool _debias=bool(false), double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
       casac::image* sigmafraclinpol(double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
       casac::image* sigmafractotpol(double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));
       double sigmalinpolint(double _clip=double(10.0), double _sigma=double(-1), const string& _outfile=string(""));

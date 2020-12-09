@@ -218,6 +218,7 @@ void MSTransformManager::initialize()
 	inputWeightSpectrumAvailable_p = false;
 	weightSpectrumFromSigmaFilled_p = false;
 	correctedToData_p = false;
+	bothDataColumnsAreOutput_p = false;
 	doingData_p = false;
 	doingCorrected_p = false;
 	doingModel_p = false;
@@ -824,7 +825,7 @@ void MSTransformManager::parseRefFrameTransParams(Record &configuration)
     		logger_p << LogIO::NORMAL << LogOrigin("MSTransformManager", __FUNCTION__)
     				<< "Field Id for phase center is " << fieldIdForPhaseCenter << LogIO::POST;
     		if (phaseCenterPar_p) delete phaseCenterPar_p;
-    		phaseCenterPar_p = new casac::variant(fieldIdForPhaseCenter);
+    		phaseCenterPar_p = new casac::variant((long)fieldIdForPhaseCenter);
         }
         else
         {
@@ -1507,7 +1508,7 @@ void MSTransformManager::setup()
 	// Check if we really need to combine SPWs
 	if (combinespws_p)
 	{
-		uInt nInputSpws = outputMs_p->spectralWindow().nrow();
+		auto nInputSpws = outputMs_p->spectralWindow().nrow();
 		if (nInputSpws < 2)
 		{
 			logger_p << LogIO::WARN << LogOrigin("MSTransformManager", __FUNCTION__)
@@ -2259,7 +2260,7 @@ void MSTransformManager::initDataSelectionParams()
         // jagonzal (CAS-7149): Have to remove duplicates: With multiple pols per SPW
         // each SPWId appears various (see times test_chanavg_spw_with_diff_pol_shape)
         vector<Int> noDupSpwList;
-        for (uInt idx=0;idx < spwchan.nrow(); idx++)
+        for (size_t idx=0;idx < spwchan.nrow(); idx++)
         {
             if (find(noDupSpwList.begin(),noDupSpwList.end(),spwchan(idx,0)) == noDupSpwList.end())
             {
@@ -2285,7 +2286,7 @@ void MSTransformManager::initDataSelectionParams()
                 freqbin_p.resize(spwList.size(),True);
                 freqbin_p = freqbin;
 
-                for (uInt spw_i=0;spw_i<spwList.size();spw_i++)
+                for (size_t spw_i=0;spw_i<spwList.size();spw_i++)
                 {
                     freqbinMap_p[spwList(spw_i)] = freqbin_p(spw_i);
 
@@ -2323,7 +2324,7 @@ void MSTransformManager::initDataSelectionParams()
             }
             else
             {
-                for (uInt spw_i=0;spw_i<spwList.size();spw_i++)
+                for (size_t spw_i=0;spw_i<spwList.size();spw_i++)
                 {
                     freqbinMap_p[spwList(spw_i)] = freqbin_p(spw_i);
                     // jagonzal (new WEIGHT/SIGMA convention)
@@ -2372,9 +2373,9 @@ void MSTransformManager::initDataSelectionParams()
             std::sort(polddids.begin(), polddids.end());
 
             // Make the in/out DD mapping
-            uInt nddids = polddids.size();
+            size_t nddids = polddids.size();
             Int dd;
-            for(uInt ii=0;ii<nddids;ii++)
+            for(size_t ii=0;ii<nddids;ii++)
             {
                 // Get dd id and set the input-output dd map
                 dd = polddids[ii];
@@ -2555,7 +2556,7 @@ void MSTransformManager::regridSpwSubTable()
 {
   // Access Spectral Window sub-table
   MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-  uInt nInputSpws = spwTable.nrow();
+  auto nInputSpws = spwTable.nrow();
   MSSpWindowColumns spwCols(spwTable);
 
   // Access columns which have to be modified
@@ -2569,7 +2570,7 @@ void MSTransformManager::regridSpwSubTable()
   ScalarColumn<Int> measFreqRefCol = spwCols.measFreqRef();
 
   Int spwId;
-  for(uInt spw_idx=0; spw_idx<nInputSpws; ++spw_idx) {
+  for(rownr_t spw_idx=0; spw_idx<nInputSpws; ++spw_idx) {
     if (outputInputSPWIndexMap_p.size() > 0) {
       spwId = outputInputSPWIndexMap_p[spw_idx];
     } else {
@@ -2647,7 +2648,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Access Spectral Window sub-table
     MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
 
     // Access columns which have to be modified
@@ -2662,7 +2663,7 @@ void MSTransformManager::regridAndCombineSpwSubtable()
 
     // Create list of input channels
     vector<channelInfo> inputChannels;
-    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
     {
     	Int spwId;
 		if (outputInputSPWIndexMap_p.size())
@@ -3160,8 +3161,8 @@ void MSTransformManager::separateFeedSubtable()
 				phasedFeedId = feedCols.phasedFeedId().getColumn();
 			}
 
-			uInt nRowsPerSpw = feedCols.spectralWindowId().nrow();
-		    uInt rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = feedCols.spectralWindowId().nrow();
+		    auto rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3285,8 +3286,8 @@ void MSTransformManager::separateSourceSubtable()
 			}
 
 
-			uInt nRowsPerSpw = sourceCols.spectralWindowId().nrow();
-		    uInt rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = sourceCols.spectralWindowId().nrow();
+		    auto rowIndex = nRowsPerSpw;
 		    for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 		    {
 		    	// Add rows
@@ -3508,8 +3509,8 @@ void MSTransformManager::separateSyscalSubtable()
 			}
 
 
-			uInt nRowsPerSpw = syscalCols.spectralWindowId().nrow();
-			uInt rowIndex = nRowsPerSpw;
+			auto nRowsPerSpw = syscalCols.spectralWindowId().nrow();
+			auto rowIndex = nRowsPerSpw;
 			for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 			{
 				// Add rows
@@ -3678,8 +3679,8 @@ void MSTransformManager::separateFreqOffsetSubtable()
 
     		// NOTE (jagonzal): FreqOffset does not have optional columns
 
-    		uInt nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
-    		uInt rowIndex = nRowsPerSpw;
+    		auto nRowsPerSpw = freqoffsetCols.spectralWindowId().nrow();
+    		auto rowIndex = nRowsPerSpw;
     		for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
     		{
     			// Add rows
@@ -3892,8 +3893,8 @@ void MSTransformManager::separateSysPowerSubtable()
 			if (MSTransformDataHandler::columnOk(requantizerGainCol))
 				requantizerGain = requantizerGainCol.getColumn();
 
-	    	uInt nRowsPerSpw = spectralWindowId.nelements();
-	        uInt rowIndex = nRowsPerSpw;
+	    	auto nRowsPerSpw = spectralWindowId.nelements();
+	        auto rowIndex = nRowsPerSpw;
 	        for (uInt spw_i=1; spw_i<nspws_p; spw_i++)
 	        {
 	        	// Add rows
@@ -3951,8 +3952,8 @@ Int MSTransformManager::getAveragedPolarizationId() {
   logger_p << LogOrigin("MSTransformManager", __func__, WHERE);
   MSPolarizationColumns cols(outputMs_p->polarization());
   Int polId = -1;
-  Int nrow = cols.nrow();
-  for (Int i = 0; i < nrow; ++i) {
+  auto nrow = cols.nrow();
+  for (rownr_t i = 0; i < nrow; ++i) {
     auto const numCorr = cols.numCorr()(i);
     auto const flagRow = cols.flagRow()(i);
     if (numCorr == 1 && flagRow == False) {
@@ -3989,12 +3990,12 @@ void MSTransformManager::reindexPolarizationIdInDataDesc(Int newPolarizationId) 
   logger_p << "new polid is " << newPolarizationId << LogIO::POST;
   MSDataDescColumns ddcols(outputMs_p->dataDescription());
   MSPolarizationColumns pcols(outputMs_p->polarization());
-  Int nrow = ddcols.nrow();
+  rownr_t nrow = ddcols.nrow();
   auto __isValidType = [&](Vector<Int> const &ctype) {
     return (anyEQ(ctype, (Int)Stokes::XX) && anyEQ(ctype, (Int)Stokes::YY))
       || (anyEQ(ctype, (Int)Stokes::RR) && anyEQ(ctype, (Int)Stokes::LL));
   };
-  for (Int i = 0; i < nrow; ++i) {
+  for (rownr_t i = 0; i < nrow; ++i) {
     Int const polarizationId = ddcols.polarizationId()(i);
     Int nCorr = pcols.numCorr()(polarizationId);
     Vector<Int> corrType = pcols.corrType()(polarizationId);
@@ -4223,7 +4224,7 @@ void MSTransformManager::initGridForRegridTClean(const Vector<Double> &originalC
 // -----------------------------------------------------------------------
 void MSTransformManager::reindexColumn(ScalarColumn<Int> &inputCol, Int value)
 {
-	for(uInt idx=0; idx<inputCol.nrow(); idx++)
+	for(rownr_t idx=0; idx<inputCol.nrow(); idx++)
 	{
 		inputCol.put(idx,value);
 	}
@@ -4253,7 +4254,7 @@ void MSTransformManager::reindexSourceSubTable()
         std::vector<rownr_t> duplicateIdx;
     	std::vector< std::pair<uInt,uInt> > sourceIdSpwIdMap;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> sourceIdSpwId = std::make_pair(spectralWindowId(idx),sourceId(idx));
 
@@ -4320,18 +4321,18 @@ void MSTransformManager::reindexDDISubTable()
     	}
 
     	// Delete the old rows  
-    	uInt nrowsToDelete = ddiCols.nrow()-nspws_p;
+    	rownr_t nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
-        	uInt rownr = ddiCols.nrow()-1;
+            rownr_t rownr = ddiCols.nrow()-1;
             Vector<rownr_t> rowsToDelete(nrowsToDelete);
-        	for(uInt idx=0; idx<nrowsToDelete; idx++)
-        	{
-        		rowsToDelete(idx) = rownr;
-        		rownr -= 1;
-        	}
+            for(rownr_t idx=0; idx<nrowsToDelete; idx++)
+            {
+                rowsToDelete(idx) = rownr;
+                rownr -= 1;
+            }
 
-        	ddiTable.removeRow(rowsToDelete);
+            ddiTable.removeRow(rowsToDelete);
     	}
 
 
@@ -4368,7 +4369,7 @@ void MSTransformManager::reindexFeedSubTable()
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4428,7 +4429,7 @@ void MSTransformManager::reindexSysCalSubTable()
     	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4488,7 +4489,7 @@ void MSTransformManager::reindexFreqOffsetSubTable()
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double > antennaFeedTimeMap;
     	std::map< std::pair < std::pair<uInt,uInt> , uInt> , Double >::iterator antennaFeedTimeIter;
 
-    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
     	{
     		std::pair < std::pair<uInt,uInt> , uInt> antennaFeedPair = std::make_pair(std::make_pair(antenna1(idx),antenna2(idx)),feedId(idx));
     		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4550,7 +4551,7 @@ void MSTransformManager::reindexGenericTimeDependentSubTable(const String& subta
 	    	std::map< std::pair<uInt,uInt> , Double > antennaFeedTimeMap;
 	    	std::map< std::pair<uInt,uInt> , Double >::iterator antennaFeedTimeIter;
 
-	    	for (uInt idx = 0; idx < spectralWindowId.nrow(); idx++)
+	    	for (rownr_t idx = 0; idx < spectralWindowId.nrow(); idx++)
 	    	{
 	    		std::pair<uInt,uInt> antennaFeedPair = std::make_pair(antennaId(idx),feedId(idx));
 	    		antennaFeedTimeIter = antennaFeedTimeMap.find(antennaFeedPair);
@@ -4613,12 +4614,12 @@ void MSTransformManager::getInputNumberOfChannels()
 {
     // Access spectral window sub-table
     MSSpectralWindow spwTable = inputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
 
     // Get number of output channels per input spw
-    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
     {
     	numOfInpChanMap_p[spw_idx] = numChanCol(spw_idx);
     }
@@ -4633,7 +4634,7 @@ void MSTransformManager::dropNonUniformWidthChannels()
 {
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-	uInt nInputSpws = spwTable.nrow();
+	auto nInputSpws = spwTable.nrow();
 	MSSpWindowColumns spwCols(spwTable);
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
     ArrayColumn<Double> chanWidthCol = spwCols.chanWidth();
@@ -4644,7 +4645,7 @@ void MSTransformManager::dropNonUniformWidthChannels()
 
 	uInt nChans;
 	Int spwId;
-	for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+	for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
 	{
 		nChans = numChanCol(spw_idx);
 		Vector<Double> widthVector = chanWidthCol(spw_idx);
@@ -4768,7 +4769,7 @@ void MSTransformManager::getOutputNumberOfChannels()
 
 	// Access spectral window sub-table
 	MSSpectralWindow spwTable = outputMs_p->spectralWindow();
-    uInt nInputSpws = spwTable.nrow();
+    auto nInputSpws = spwTable.nrow();
     MSSpWindowColumns spwCols(spwTable);
     ScalarColumn<Int> numChanCol = spwCols.numChan();
     ArrayColumn<Double> chanFreqCol = spwCols.chanFreq();
@@ -4786,7 +4787,7 @@ void MSTransformManager::getOutputNumberOfChannels()
     {
 	    // Get number of output channels per input spw
 	    Int spwId;
-	    for(uInt spw_idx=0; spw_idx<nInputSpws; spw_idx++)
+	    for(rownr_t spw_idx=0; spw_idx<nInputSpws; spw_idx++)
 	    {
 	    	if (outputInputSPWIndexMap_p.size()>0)
 	    	{
@@ -5102,6 +5103,9 @@ void MSTransformManager::checkDataColumnsToFill()
 			timeAvgOptions_p |= vi::AveragingOptions::AverageCorrected;
 			timeAvgOptions_p |= vi::AveragingOptions::CorrectedFlagWeightAvgFromWEIGHT;
 		}
+        if (dataColumnAvailable_p && correctedDataColumnAvailable_p)
+            bothDataColumnsAreOutput_p = true;
+
 
 		if (modelDataColumnAvailable_p)
 		{
@@ -5186,6 +5190,8 @@ void MSTransformManager::checkDataColumnsToFill()
 			timeAvgOptions_p |= vi::AveragingOptions::CorrectedFlagWeightAvgFromWEIGHT;
 		}
 
+        if (dataColumnAvailable_p && correctedDataColumnAvailable_p)
+            bothDataColumnsAreOutput_p = true;
 		if (modelDataColumnAvailable_p)
 		{
 			if (!mainColSet)
@@ -5791,7 +5797,7 @@ void MSTransformManager::fillOutputMs(vi::VisBuffer2 *vb)
 	if (not bufferMode_p)
 	{
 		// Create RowRef object to fill new rows
-		uInt currentRows = outputMs_p->nrow();
+		auto currentRows = outputMs_p->nrow();
 		RefRows rowRef( currentRows, currentRows + nRowsToAdd_p/nspws_p - 1);
 
 		// Add new rows to output MS
@@ -5939,166 +5945,201 @@ void MSTransformManager::initFrequencyTransGrid(vi::VisBuffer2 *vb)
 // ----------------------------------------------------------------------------------------
 void MSTransformManager::fillIdCols(vi::VisBuffer2 *vb,RefRows &rowRef)
 {
-	// Declare common auxiliary variables
-	RefRows absoluteRefRows(rowRef.firstRow(),rowRef.firstRow()+nRowsToAdd_p-1);
-	Vector<Int> tmpVectorInt(nRowsToAdd_p,0);
-	Vector<Double> tmpVectorDouble(nRowsToAdd_p,0.0);
-	Vector<Bool> tmpVectorBool(nRowsToAdd_p,false);
+    // Declare common auxiliary variables
+    RefRows absoluteRefRows(rowRef.firstRow(),rowRef.firstRow()+nRowsToAdd_p-1);
+    Vector<Int> tmpVectorInt(nRowsToAdd_p,0);
+    Vector<Double> tmpVectorDouble(nRowsToAdd_p,0.0);
+    Vector<Bool> tmpVectorBool(nRowsToAdd_p,false);
 
-	// Special case for Data description Id
-	if (transformDDIVector(vb->dataDescriptionIds(),tmpVectorInt))
-	{
-		outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,tmpVectorInt);
-	}
-	else
-	{
-		outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,vb->dataDescriptionIds());
-	}
+    // Special case for Data description Id
+    if (transformDDIVector(vb->dataDescriptionIds(),tmpVectorInt))
+    {
+        outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,tmpVectorInt);
+    }
+    else
+    {
+        outputMsCols_p->dataDescId().putColumnCells(absoluteRefRows,vb->dataDescriptionIds());
+    }
 
-	// Re-indexable Columns
-	transformAndWriteReindexableVector(	vb->observationId(),tmpVectorInt,true,
-										inputOutputObservationIndexMap_p,
-										outputMsCols_p->observationId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->arrayId(),tmpVectorInt,true,
-										inputOutputArrayIndexMap_p,
-										outputMsCols_p->arrayId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->fieldId(),tmpVectorInt,!timespan_p.contains("field"),
-										inputOutputFieldIndexMap_p,
-										outputMsCols_p->fieldId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->stateId(),tmpVectorInt,!timespan_p.contains("state"),
-										inputOutputScanIntentIndexMap_p,
-										outputMsCols_p->stateId(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->antenna1(),tmpVectorInt,false,
-										inputOutputAntennaIndexMap_p,
-										outputMsCols_p->antenna1(),absoluteRefRows);
-	transformAndWriteReindexableVector(	vb->antenna2(),tmpVectorInt,false,
-										inputOutputAntennaIndexMap_p,
-										outputMsCols_p->antenna2(),absoluteRefRows);
+    // Re-indexable Columns
+    transformAndWriteReindexableVector(vb->observationId(),tmpVectorInt,true,
+                                       inputOutputObservationIndexMap_p,
+                                       outputMsCols_p->observationId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->arrayId(),tmpVectorInt,true,
+                                       inputOutputArrayIndexMap_p,
+                                       outputMsCols_p->arrayId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->fieldId(),tmpVectorInt,!timespan_p.contains("field"),
+                                       inputOutputFieldIndexMap_p,
+                                       outputMsCols_p->fieldId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->stateId(),tmpVectorInt,!timespan_p.contains("state"),
+                                       inputOutputScanIntentIndexMap_p,
+                                       outputMsCols_p->stateId(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->antenna1(),tmpVectorInt,false,
+                                       inputOutputAntennaIndexMap_p,
+                                       outputMsCols_p->antenna1(),absoluteRefRows);
+    transformAndWriteReindexableVector(vb->antenna2(),tmpVectorInt,false,
+                                       inputOutputAntennaIndexMap_p,
+                                       outputMsCols_p->antenna2(),absoluteRefRows);
 
-	// Not Re-indexable Columns
-	transformAndWriteNotReindexableVector(vb->scan(),tmpVectorInt,!timespan_p.contains("scan"),outputMsCols_p->scanNumber(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->processorId(),tmpVectorInt,false,outputMsCols_p->processorId(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->feed1(),tmpVectorInt,false,outputMsCols_p->feed1(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->feed2(),tmpVectorInt,false,outputMsCols_p->feed2(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->time(),tmpVectorDouble,false,outputMsCols_p->time(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->timeCentroid(),tmpVectorDouble,false,outputMsCols_p->timeCentroid(),absoluteRefRows);
-	transformAndWriteNotReindexableVector(vb->timeInterval(),tmpVectorDouble,false,outputMsCols_p->interval(),absoluteRefRows);
+    // Not Re-indexable Columns
+    transformAndWriteNotReindexableVector(vb->scan(),tmpVectorInt,!timespan_p.contains("scan"),outputMsCols_p->scanNumber(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->processorId(),tmpVectorInt,false,outputMsCols_p->processorId(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->feed1(),tmpVectorInt,false,outputMsCols_p->feed1(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->feed2(),tmpVectorInt,false,outputMsCols_p->feed2(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->time(),tmpVectorDouble,false,outputMsCols_p->time(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->timeCentroid(),tmpVectorDouble,false,outputMsCols_p->timeCentroid(),absoluteRefRows);
+    transformAndWriteNotReindexableVector(vb->timeInterval(),tmpVectorDouble,false,outputMsCols_p->interval(),absoluteRefRows);
 
-	// Special case for vectors that have to be averaged
-	if (combinespws_p)
-	{
-		mapAndAverageVector(vb->flagRow(),tmpVectorBool);
-		outputMsCols_p->flagRow().putColumnCells(absoluteRefRows, tmpVectorBool);
+    // Special case for vectors that have to be averaged
+    if (combinespws_p)
+    {
+        mapAndAverageVector(vb->flagRow(),tmpVectorBool);
+        outputMsCols_p->flagRow().putColumnCells(absoluteRefRows, tmpVectorBool);
 
-		// jagonzal: We average exposures by default, if they are the same we obtain the same results
-		mapAndAverageVector(vb->exposure(),tmpVectorDouble);
-		outputMsCols_p->exposure().putColumnCells(absoluteRefRows, tmpVectorDouble);
-	}
-	else
-	{
-		transformAndWriteNotReindexableVector(vb->flagRow(),tmpVectorBool,false,outputMsCols_p->flagRow(),absoluteRefRows);
-		transformAndWriteNotReindexableVector(vb->exposure(),tmpVectorDouble,false,outputMsCols_p->exposure(),absoluteRefRows);
-	}
+        // jagonzal: We average exposures by default, if they are the same we obtain the same results
+        mapAndAverageVector(vb->exposure(),tmpVectorDouble);
+        outputMsCols_p->exposure().putColumnCells(absoluteRefRows, tmpVectorDouble);
+    }
+    else
+    {
+        transformAndWriteNotReindexableVector(vb->flagRow(),tmpVectorBool,false,outputMsCols_p->flagRow(),absoluteRefRows);
+        transformAndWriteNotReindexableVector(vb->exposure(),tmpVectorDouble,false,outputMsCols_p->exposure(),absoluteRefRows);
+    }
 
-	if (combinespws_p)
-	{
-		Matrix<Double> tmpUvw(IPosition(2,3,rowRef.nrows()),0.0);
-		Matrix<Float> tmpMatrixFloat(IPosition(2,vb->nCorrelations(),rowRef.nrows()),0.0);
+    if (combinespws_p)
+    {
+        Matrix<Double> tmpUvw(IPosition(2,3,rowRef.nrows()),0.0);
+        Matrix<Float> tmpMatrixFloat(IPosition(2,vb->nCorrelations(),rowRef.nrows()),0.0);
 
-		mapMatrix(vb->uvw(),tmpUvw);
-		writeMatrix(tmpUvw,outputMsCols_p->uvw(),rowRef,nspws_p);
+        mapMatrix(vb->uvw(),tmpUvw);
+        writeMatrix(tmpUvw,outputMsCols_p->uvw(),rowRef,nspws_p);
 
-		// WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
-		if (not spectrumTransformation_p)
-		{
-			if (newWeightFactorMap_p.size() > 0)
-			{
-				mapAndScaleMatrix(vb->weight(),tmpMatrixFloat,newWeightFactorMap_p,vb->spectralWindows());
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
-			}
-			else
-			{
-				// jagonzal: According to dpetry we have to copy weights from the first SPW
-				// This is justified since the rows to be combined _must_ be from the
-				// same baseline and therefore have the same UVW coordinates in the MS (in meters).
-				// They could therefore be regarded to also have the same WEIGHT, at least to
-				// a good approximation.
-				mapMatrix(vb->weight(),tmpMatrixFloat);
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
-			}
+        // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
+        if (not spectrumTransformation_p)
+        {
+            if (newWeightFactorMap_p.size() > 0)
+            {
+                mapAndScaleMatrix(vb->weight(),tmpMatrixFloat,newWeightFactorMap_p,vb->spectralWindows());
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
+            }
+            else
+            {
+                // jagonzal: According to dpetry we have to copy weights from the first SPW
+                // This is justified since the rows to be combined _must_ be from the
+                // same baseline and therefore have the same UVW coordinates in the MS (in meters).
+                // They could therefore be regarded to also have the same WEIGHT, at least to
+                // a good approximation.
+                mapMatrix(vb->weight(),tmpMatrixFloat);
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->weight(),rowRef,nspws_p);
+            }
 
 
-			// Sigma must be redefined to 1/weight when corrected data becomes data
-			if (correctedToData_p)
-			{
-				arrayTransformInPlace(tmpMatrixFloat, vi::AveragingTvi2::weightToSigma);
-				outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
-				writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-			else
-			{
-				if (newSigmaFactorMap_p.size() > 0)
-				{
-					mapAndScaleMatrix(vb->sigma(),tmpMatrixFloat,newSigmaFactorMap_p,vb->spectralWindows());
-					outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
-					writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-				}
-				else
-				{
-					// jagonzal: According to dpetry we have to copy weights from the first SPW
-					// This is justified since the rows to be combined _must_ be from the
-					// same baseline and therefore have the same UVW coordinates in the MS (in meters).
-					// They could therefore be regarded to also have the same WEIGHT, at least to
-					// a good approximation.
-					mapMatrix(vb->sigma(),tmpMatrixFloat);
-					writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
-				}
-			}
-		}
+            // Sigma must be redefined to 1/weight when corrected data becomes data
+            if (correctedToData_p)
+            {
+                arrayTransformInPlace(tmpMatrixFloat, vi::AveragingTvi2::weightToSigma);
+                outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
+                writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+            }
+            else
+            {
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    mapAndScaleMatrix(vb->sigma(),tmpMatrixFloat,newSigmaFactorMap_p,vb->spectralWindows());
+                    outputMsCols_p->sigma().putColumnCells(rowRef, tmpMatrixFloat);
+                    writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+                }
+                else
+                {
+                    // jagonzal: According to dpetry we have to copy weights from the first SPW
+                    // This is justified since the rows to be combined _must_ be from the
+                    // same baseline and therefore have the same UVW coordinates in the MS (in meters).
+                    // They could therefore be regarded to also have the same WEIGHT, at least to
+                    // a good approximation.
+                    mapMatrix(vb->sigma(),tmpMatrixFloat);
+                    writeMatrix(tmpMatrixFloat,outputMsCols_p->sigma(),rowRef,nspws_p);
+                }
+            }
+        }
 
-	}
-	else
-	{
-		writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
+    }
+    else
+    {
+        writeMatrix(vb->uvw(),outputMsCols_p->uvw(),rowRef,nspws_p);
 
-		// WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
-		if (not spectrumTransformation_p)
-		{
-			Matrix<Float> weights = vb->weight();
-			if (newWeightFactorMap_p.size() > 0)
-			{
-				if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
-						(newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
-				{
-					weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
-				}
-			}
-			writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
+        // WEIGHT/SIGMA are defined as the median of WEIGHT_SPECTRUM / SIGMA_SPECTRUM in the case of SPECTRUM transformation
+        if (not spectrumTransformation_p)
+        {
+            if (correctedToData_p) {
 
-			// Sigma must be redefined to 1/weight when corrected data becomes data
-			if (correctedToData_p)
-			{
-				arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
-				writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-			else
-			{
-				Matrix<Float> sigma = vb->sigma();
-				if (newSigmaFactorMap_p.size() > 0)
-				{
-					if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
-							(newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
-					{
-						sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
-					}
-				}
-				writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
-			}
-		}
+              // weight -> weight
+                Matrix<Float> weights = vb->weight();
+                if (newWeightFactorMap_p.size() > 0)
+                {
+                    if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
+                            (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                         weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
 
-	}
+                // weight -> sigma
+                arrayTransformInPlace(weights, vi::AveragingTvi2::weightToSigma);
+                writeMatrix(weights,outputMsCols_p->sigma(),rowRef,nspws_p);
 
-	return;
+            }
+            else if(!bothDataColumnsAreOutput_p)
+            {
+                // sigma -> sigma
+                Matrix<Float> sigma = vb->sigma();
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
+                            (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                        sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
+
+                // sigma -> weight
+                arrayTransformInPlace(sigma, vi::AveragingTvi2::sigmaToWeight);
+                writeMatrix(sigma, outputMsCols_p->weight(), rowRef, nspws_p);
+            }
+            // If both DATA and DATA_CORRECTED are input and output then
+            // SIGMA(_SPECTRUM) and WEIGHT(_SPECTRUM) should maintain their alignment
+            // with DATA and CORRECTED_DATA, respectively and nothing is done. See CAS-11139
+            else
+            {
+                // weight -> weight
+                Matrix<Float> weights = vb->weight();
+                if (newWeightFactorMap_p.size() > 0)
+                {
+                    if ( (newWeightFactorMap_p.find(vb->spectralWindows()(0))  != newWeightFactorMap_p.end()) and
+                            (newWeightFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                         weights *= newWeightFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(weights,outputMsCols_p->weight(),rowRef,nspws_p);
+
+                // sigma -> sigma
+                Matrix<Float> sigma = vb->sigma();
+                if (newSigmaFactorMap_p.size() > 0)
+                {
+                    if ( (newSigmaFactorMap_p.find(vb->spectralWindows()(0)) != newSigmaFactorMap_p.end()) and
+                            (newSigmaFactorMap_p[vb->spectralWindows()(0)] != 1) )
+                    {
+                        sigma *= newSigmaFactorMap_p[vb->spectralWindows()(0)];
+                    }
+                }
+                writeMatrix(sigma,outputMsCols_p->sigma(),rowRef,nspws_p);
+            }
+        }
+    }
+
+    return;
 }
 
 // ------------------------------------------------------------------------------------
@@ -6199,7 +6240,7 @@ void MSTransformManager::mapAndAverageVector(	const Vector<Double> &inputVector,
 		// Compute combined value from each SPW
 		counts = 0;
 
-		for (vector<uInt>::iterator iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
+		for (auto iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
 		{
 			row = *iter_row;
 			if (counts == 0)
@@ -6245,7 +6286,7 @@ void MSTransformManager::mapAndAverageVector(	const Vector<Bool> &inputVector,
 		// Compute combined value from each SPW
 		counts = 0;
 
-		for (vector<uInt>::iterator iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
+		for (auto iter_row = baselineRows.begin();iter_row != baselineRows.end(); iter_row++)
 		{
 			row = *iter_row;
 			if (counts == 0)
@@ -7083,9 +7124,9 @@ template <class T> void MSTransformManager::writeMatrix(	const Matrix<T> &inputM
 		// jagonzal (CAS-8492): Huge bug, each input row must
 		// be copied n times not the whole matrix n times
 		uInt outRowIdx = 0;
-		uInt nInputRows = inputMatrix.shape()(1);
+		size_t nInputRows = inputMatrix.shape()(1);
 		Matrix<T> outputMatrix(IPosition(2,3,nInputRows*nBlocks));
-		for (uInt inputRowIdx = 0; inputRowIdx<nInputRows; inputRowIdx++)
+		for (size_t inputRowIdx = 0; inputRowIdx<nInputRows; inputRowIdx++)
 		{
 			for (uInt blockIdx = 0; blockIdx<nBlocks; blockIdx++)
 			{
