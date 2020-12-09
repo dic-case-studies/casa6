@@ -63,6 +63,8 @@ namespace CorrelatorNameMod
   { 
     ALMA_ACA /*!< ACA correlator */
      ,
+    ALMA_ACASPEC /*!< ACA spectrometer */
+     ,
     ALMA_BASELINE /*!<  */
      ,
     ALMA_BASELINE_ATF /*!<  */
@@ -103,6 +105,8 @@ class CCorrelatorName {
 	  */  
 	
 	static const std::string& sALMA_ACA; /*!< A const string equal to "ALMA_ACA".*/
+	
+	static const std::string& sALMA_ACASPEC; /*!< A const string equal to "ALMA_ACASPEC".*/
 	
 	static const std::string& sALMA_BASELINE; /*!< A const string equal to "ALMA_BASELINE".*/
 	
