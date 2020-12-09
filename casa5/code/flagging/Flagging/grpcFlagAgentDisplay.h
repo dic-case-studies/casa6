@@ -121,7 +121,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     private:
 
-        static constexpr int TIMEOUT = 300;
+        static constexpr int TIMEOUT = 80000;
     
         casacore::Bool setDataLayout();
         casacore::Bool setReportLayout();
