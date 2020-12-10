@@ -125,11 +125,7 @@ pipeline processing for huge dataset.
         <value>True</value>
     </param>
 
-<<<<<<< HEAD
     <param type="any" name="blformat" subparam="true">
-=======
-    <param subparam="true" ignorecase="true" name="blformat" type="any">
->>>>>>> master
         <shortdescription>format(s) of file(s) in which best-fit parameters are written</shortdescription>
         <description>format(s) of file(s) in which best-fit parameters are written [&quot;text&quot;, &quot;csv&quot;, &quot;table&quot; or &quot;&quot;]</description>
         <any limittypes="string stringArray" type="variant"/>
@@ -153,11 +149,7 @@ pipeline processing for huge dataset.
         <value/>
     </param>
 
-<<<<<<< HEAD
     <param type="string" name="blfunc">
-=======
-    <param ignorecase="true" name="blfunc" type="string">
->>>>>>> master
         <shortdescription>baseline model function</shortdescription>
         <description>baseline model function [&quot;poly&quot;, &quot;chebyshev&quot;, &quot;cspline&quot;, &quot;sinusoid&quot;, or &quot;variable&quot;(expert mode)]</description>
         <value>poly</value>
@@ -185,13 +177,8 @@ pipeline processing for huge dataset.
         <value>True</value>
     </param>
 
-<<<<<<< HEAD
     <param type="string" name="fftmethod" subparam="true">
         <shortdescription>method for automatically set wave numbers of sinusoids ["fft"]</shortdescription>
-=======
-    <param subparam="true" ignorecase="true" name="fftmethod" type="string">
-        <shortdescription>method for automatically set wave numbers of sinusoids [&quot;fft&quot;]</shortdescription>
->>>>>>> master
         <description>method for automatically set wave numbers of sinusoids</description>
         <value>fft</value>
         <allowed kind="enum" ignorecase="true">
