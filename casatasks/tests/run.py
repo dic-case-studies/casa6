@@ -159,7 +159,6 @@ else:
         ## note directory
         suite_path = os.path.dirname(i)
         test_paths.add(suite_path)
-        print(suite_path,test_paths)
         ## discover module name
         suite_module, xxx = os.path.splitext(os.path.basename(i))
         test_modules.append(suite_module)
