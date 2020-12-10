@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import glob
 import os
 import math
 #import pdb
@@ -27,6 +28,13 @@ if is_CASA6:
     im = imager( )
     msmd=msmetadata( )
 
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = image
+
+    def _casa_version_string():
+        """ produce a version string with the same format as the mstools.write_history. """
+        return  'version: ' + ctsys.version_string() + ' ' + ctsys.version_desc()
+
 else:
     # possibly not an exact equivalent, but as used here it is
     import commands as subprocess
@@ -46,6 +54,13 @@ else:
     im = casac.imager()
     msmd=casac.msmetadata()
     default_casalog = casalog
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = casac.image
+
+    def _casa_version_string():
+        casa_glob = find_casa()
+        return 'version: ' + casa_glob['build']['version'] + ' ' + casa_glob['build']['time']
+
 
 class cleanhelper:
     def __init__(self, imtool='', vis='', usescratch=False, casalog=default_casalog):
@@ -3535,3 +3550,50 @@ def convert_numpydtype(listobj):
       temparr = listobj
       return temparr
     return temparr.tolist()
+
+def get_func_params(func, loc_vars):
+    """ returns a dictionary of parameter name:vale for all the parameters of a function
+
+    :param func: function object (for example a task function)
+    :param loc_vars: locals() from inside the function.
+    """
+    param_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    params = [(name, loc_vars[name]) for name in param_names]
+    return params
+
+def write_tclean_history(imagename, tname, params, clog):
+        """
+        Update image/logtable with the taskname, CASA version and all task parameters
+        CASR-571. Replicates the same format as mstools.write_history.
+
+        :param imagename: imagename prefi as used in tclean
+        :param tname: task name to use as origin of the history
+        :param params: list of task parameters as a tuple (name, value)
+        :param clog: casa log object
+        """
+        iat = iatool()
+        img_exts = glob.glob(imagename + '.*')
+        clog.post("Writing history into these images: {}".format(img_exts))
+
+        for img in img_exts:
+            iat_open = False
+            try:
+                history = ['taskname={0}'.format(tname)]
+                history.append(_casa_version_string())
+                # Add all task arguments.
+                for name, val in params:#range(len(param_names)):
+                    msg = "%-11s = " % name
+                    if type(val) == str:
+                        msg += '"'
+                    msg += str(val)
+                    if type(val) == str:
+                        msg += '"'
+                    history.append(msg)
+
+                iat.open(img)
+                iat_open = True
+                iat.sethistory(origin=tname, history=history)
+
+            finally:
+                if iat_open:
+                    iat.close()
