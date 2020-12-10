@@ -982,7 +982,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 					   IPosition imshape,
 					    CountedPtr<refim::FTMachine>& ftm,
 					    CountedPtr<refim::FTMachine>& iftm,
-					   Quantity distance, 
+					   Quantity distance,
 					   Int facets,
 					   Int chanchunks,
 					   const Bool overwrite,
@@ -999,8 +999,20 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	log_l << "Facetted image has to be the first of multifields" << LogIO::EXCEPTION;
 
      TcleanProcessingInfo procInfo;
-     // chanchunks calculation block. Should always run (CAS-12204), and eventually
-     // chanchunks should be removed form the inputs to this method.
+     CompositeNumber cn(uInt(imshape[0] * 2));
+     // heuristic factors multiplied to imshape based on gridder
+     size_t fudge_factor = 15;
+     if (ftm->name()=="MosaicFTNew") {
+         fudge_factor = 20;
+     }
+     else if (ftm->name()=="GridFT") {
+         fudge_factor = 9;
+     }
+     std::tie(procInfo, std::ignore, std::ignore) =
+         nSubCubeFitInMemory(fudge_factor, imshape, padding);
+
+     // chanchunks auto-calculation block, for now still here for awproject (CAS-12204)
+     if(chanchunks<-1)
 	{
 	  log_l << "Automatically calculate chanchunks";
 	  log_l << " using imshape : " << imshape << LogIO::POST;
@@ -1010,18 +1022,6 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  // This runs once per cube partition, and will see only its own partition's shape
 		chanchunks=1;
 
-		CompositeNumber cn(uInt(imshape[0] * 2));
-		// heuristic factors multiplied to imshape based on gridder
-		size_t fudge_factor = 15;
-		if (ftm->name()=="MosaicFTNew") {
-			fudge_factor = 20;
-		}
-		else if (ftm->name()=="GridFT") {
-			fudge_factor = 9;
-		}
-
-                std::tie(procInfo, std::ignore, std::ignore) =
-                    nSubCubeFitInMemory(fudge_factor, imshape, padding);
                 chanchunks = procInfo.chnchnks;
 
 		/*log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
