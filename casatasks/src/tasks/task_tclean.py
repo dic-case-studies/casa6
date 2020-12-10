@@ -21,6 +21,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
+    from cleanhelper import write_tclean_history, get_func_params
     from casatools import table
     from casatools import synthesisimager
 else:
@@ -30,6 +31,7 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from cleanhelper import write_tclean_history, get_func_params
     table=casac.table
     synthesisimager=casac.synthesisimager
 try:
@@ -444,7 +446,14 @@ def tclean(
                     imager.pbcorImages()
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-######### niter >=0  end if 
+        ######### niter >=0  end if
+
+        try:
+            params = get_func_params(tclean, locals())
+            write_tclean_history(imagename, 'tclean', params, casalog)
+        except Exception as exc:
+            casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
+
     except Exception as e:
     #    #print 'Exception : ' + str(e)
     #    if(cppparallel):
