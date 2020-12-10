@@ -43,6 +43,7 @@
 #include <casa/OS/Timer.h>
 #include <casa/System/AppState.h>
 #include <casa/OS/Directory.h>
+#include <casatools/Config/State.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -168,20 +169,46 @@ namespace casa{
         Bool found = False;
         String fullFileName;
         const std::list<std::string> &data_path = AppStateSource::fetch( ).dataPath( );
-        
+        const std::string distrodata_path =casatools::get_state().distroDataPath( );
+        cerr<<"distrodata_path="<<distrodata_path<<endl; 
+        //cerr<<"DATA PATH==="<< *data_path <<endl;
         // The data path search need to be rewritten to adopt the recommanded setting via python
         // file for CASA6. 
         // For now, only the first path that actually exist will be set to the data path (TT 2018.12.10)
         if (data_path.size() > 0 ) {
           for ( std::list<std::string>::const_iterator it=data_path.begin(); ! found && it != data_path.end(); ++it ) {
             Path lpath = Path(*it);
+            //os<<"Here to datapath="<<lpath<<LogIO::POST;
+            //Path lpath = Path(data_path);
             String slpath = lpath.absoluteName();
-            Directory ddir(slpath);
-            if  (ddir.exists()) {
-              found = True;
-              fullFileName=slpath;
-              break;
+            String subdirname;
+            if(obsName_p=="VLA" || obsName_p=="EVLA") {
+                subdirname="/nrao/VLA";
             }
+            else if(obsName_p=="ALMA"){
+                subdirname="/alma/response";
+            }
+            //Directory ddir(slpath+subdirname);
+            try {
+               Directory ddir(slpath+subdirname);
+               ddir.exists();
+               found = True;
+               fullFileName=slpath;
+               break;
+            }
+            catch (...)  {
+            }
+           
+            //if  (ddir.exists()) {
+            //  cerr<<" ddir exists:"<<slpath<<subdirname<<endl;
+            //  found = True;
+            //  fullFileName=slpath;
+            //  break;
+            //}
+          }
+          if (!found && distrodata_path!="") {
+             fullFileName = distrodata_path;
+             found = True;
           }
         } 
         else if(!found) {
@@ -192,6 +219,8 @@ namespace casa{
           fullFileName=aipsPath;
           fullFileName+="/data";
         }
+            cerr<<"NOW fullFileName="<<fullFileName<<endl;
+
 
 	if(obsName_p=="VLA" && antType_p=="STANDARD"){
 	  os <<  LogIO::NORMAL << "Will use default geometries for VLA STANDARD." << LogIO::POST;
