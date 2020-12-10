@@ -143,7 +143,7 @@ class OldImagerBasedTools(object):
 
     def test(self, vis):
         with self.open_old_imager(vis) as im:
-            print('test')
+            casalog.post('test')
             raise RuntimeError('ERROR!')
 
     def get_pointing_sampling_params(self, vis, field, spw, baseline, scan, intent, outref, movingsource, pointingcolumntouse, antenna_name):

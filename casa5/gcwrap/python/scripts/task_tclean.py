@@ -6,7 +6,6 @@
 ################################################
 
 from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import shutil
@@ -280,7 +279,7 @@ def tclean(
     if pcube and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel apwproject cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
-    #print('parameters {}'.format(bparm))    
+    #casalog.post('parameters {}'.format(bparm))    
     paramList=ImagerParameters(**bparm)
     ## Setup Imager objects, for different parallelization schemes.
     imagerInst=PySynthesisImager
@@ -297,7 +296,7 @@ def tclean(
          #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
          concattype='copyvirtual'
     else:
-         print('Invalid parallel combination in doClean.')
+         casalog.post('Invalid parallel combination in doClean.', 'ERROR')
          return
     
     retrec={}
@@ -349,9 +348,9 @@ def tclean(
                 mytb.open(psfname)
                 miscinf=mytb.getkeyword('miscinfo')
                 iminf=mytb.getkeyword('imageinfo')
-                #print ('miscinfo {} {}'.format(miscinf, iminf))
+                #casalog.post ('miscinfo {} {}'.format(miscinf, iminf))
                 mytb.done()
-                print("doing with different phasecenter psf")
+                casalog.post("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
                 psfParameters['phasecenter']=psfphasecenter
@@ -463,7 +462,7 @@ def tclean(
             si=synthesisimager()
             si.releasempi()
         if (pcube):
-            print("running concatImages ...")
+            casalog.post("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
             imager.concatImages(type=concattype)
         # CAS-10721 
