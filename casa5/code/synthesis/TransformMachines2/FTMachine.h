@@ -384,7 +384,7 @@ public:
   virtual casacore::Long estimateRAM(const casacore::CountedPtr<SIImageStore>& imstore);
   ///call this to clear temporary file
   // for e.g imaging weight column associated with this ftmachine
-  virtual void cleanupTempFiles(const casacore::String& message);
+  virtual casacore::Vector<casacore::String> cleanupTempFiles(const casacore::String& message);
 protected:
 
   friend class VisModelData;

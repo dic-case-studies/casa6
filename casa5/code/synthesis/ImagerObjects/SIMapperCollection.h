@@ -94,7 +94,7 @@ class SIMapperCollection
 
   casacore::CountedPtr<SIImageStore> imageStore(const casacore::Int id=0);
   casacore::Bool releaseImageLocks();
-  void cleanupTempFiles(const casacore::String& mes=casacore::String(""));
+  std::vector<casacore::String> cleanupTempFiles(const casacore::String& mes=casacore::String(""));
   void checkOverlappingModels(casacore::String action); // action='blank' or 'restore'
 
   casacore::Bool anyNonZeroModels();

@@ -1656,6 +1656,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 retvals(indexofretval)=status;
 		if(dopsf)
 		  updateImageBeamSet(returnRec);
+		if(returnRec.isDefined("tempfilenames")){
+		  std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+		  tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+		}
+		  
                 ++indexofretval;
                 if ( status )
                   //cerr << k << " rank " << rank << " successful " << endl;
@@ -1696,6 +1701,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             casa::applicator.get ( status );
 	    if(dopsf)
 	      updateImageBeamSet(returnRec);
+	    if(returnRec.isDefined("tempfilenames")){
+	      std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+	      tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+	    }
             retvals(indexofretval)=status;
             ++indexofretval;
             if ( status )

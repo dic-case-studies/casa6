@@ -183,7 +183,7 @@ class SynthesisImager
   casacore::CountedPtr<SIImageStore> imageStore(const casacore::Int id=0);
 
   //casacore::Record getMajorCycleControls();
-  void executeMajorCycle(const casacore::Record& controls);
+  Record executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
   void makePSF();
@@ -229,6 +229,7 @@ class SynthesisImager
   void normalizerinfo(const casacore::Record& normpars);
 
   virtual bool unlockImages();
+  virtual void cleanupTempFiles();
 protected:
  
   /////////////// Internal Functions
@@ -438,6 +439,7 @@ protected:
   casacore::Bool doingCubeGridding_p;
   
   casacore::Record normpars_p;
+  std::vector<casacore::String> tempFileNames_p;
 };
 
 

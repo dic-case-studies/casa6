@@ -2040,7 +2040,7 @@ using namespace casa::vi;
     }
 
 
-  void FTMachine::cleanupTempFiles(const String& mess){
+  Vector<String> FTMachine::cleanupTempFiles(const String& mess){
     briggsWeightor_p=nullptr;
     for(uInt k=0; k < tempFileNames_p.nelements(); ++k){
       if(Table::isReadable(tempFileNames_p[k])){
@@ -2048,11 +2048,11 @@ using namespace casa::vi;
 	  Table::deleteTable(tempFileNames_p[k]);
 	else{
 	  logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
-	  logIO() << "YOU have to delete the temporary file " << tempFileNames_p[k] << " because " << mess << LogIO::WARN << LogIO::POST;
+	  logIO() << "YOU have to delete the temporary file " << tempFileNames_p[k] << " because " << mess << LogIO::DEBUG1 << LogIO::POST;
 	}
       }
     }
-      
+    return tempFileNames_p;
   }
   void FTMachine::gridOk(Int convSupport){
     
