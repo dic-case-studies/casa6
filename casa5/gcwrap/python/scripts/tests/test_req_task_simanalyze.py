@@ -34,11 +34,11 @@ except ImportError:
     is_CASA6 = False
 
 if is_CASA6:
-    import casatools # not a good idea inside the casashell...perhaps os.path.exists(casatools.__file__) instead
-    ia = casatools.image()
-    cs = casatools.coordsys()
-    cl = casatools.componentlist()
-    qa = casatools.quanta()
+    from casatools import ctsys, image, coordsys, componentlist, quanta
+    ia = image()
+    cs = coordsys()
+    cl = componentlist()
+    qa = quanta()
     from casatasks import tclean, simobserve, simanalyze, casalog
 else:
     from __main__ import default
@@ -47,19 +47,23 @@ else:
  
 # DATA #
 if is_CASA6:
-    dataroot = casatools.ctsys.resolve()
-    configpath_int      = casatools.ctsys.resolve('alma/simmos/vla.a.cfg')
-    imagepath_int       = casatools.ctsys.resolve('nrao/VLA/CalModels/3C286_Q.im/')
-    configpath_both_int = casatools.ctsys.resolve('alma/simmos/aca.cycle7.cfg')
-    configpath_sd       = casatools.ctsys.resolve('alma/simmos/aca.tp.cfg')
-    mspath_sd           = casatools.ctsys.resolve((os.path.join(dataroot, 'unittest/simanalyze/refim_twopoints_twochan.ms')))
+    ctsys_resolve = ctsys.resolve
+    configpath_int      = ctsys_resolve('alma/simmos/vla.a.cfg')
+    imagepath_int       = ctsys_resolve('nrao/VLA/CalModels/3C286_Q.im/')
+    configpath_both_int = ctsys_resolve('alma/simmos/aca.cycle7.cfg')
+    configpath_sd       = ctsys_resolve('alma/simmos/aca.tp.cfg')
 else:
     dataroot = os.environ.get('CASAPATH').split()[0]
     configpath_int      = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
     imagepath_int       = os.path.join(dataroot, 'data/nrao/VLA/CalModels/3C286_Q.im/')
     configpath_both_int = os.path.join(dataroot, 'data/alma/simmos/aca.cycle7.cfg')
     configpath_sd       = os.path.join(dataroot, 'data/alma/simmos/aca.tp.cfg')
-    mspath_sd           = os.path.join(dataroot, 'casatestdata/unittest/simanalyze/refim_twopoints_twochan.ms')
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+        return os.path.join(dataPath,apath)
+    
+# Path to MS data
+mspath_sd = ctsys_resolve('unittest/simanalyze/refim_twopoints_twochan.ms')
 
 logpath = casalog.logfile()
 
@@ -212,6 +216,7 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
         '''
 
         visname_sd = str(sd_project +'/'+ sd_project + '.' + configpath_sd.split('/')[-1][:-3] +'sd.ms')
+        print(visname_sd)
 
         # this is not the subject of this test
         simanalyze(project=sd_project, image=True, vis=visname_sd, modelimage='', imsize = [],
