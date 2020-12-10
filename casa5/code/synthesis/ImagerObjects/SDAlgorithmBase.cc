@@ -387,6 +387,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     if( imagestore->hasResidualImage() )  imagestore->restore( itsRestoringBeam, itsUseBeam );
     else{os << "Cannot restore with a residual image" << LogIO::POST;}
+      
 
    
   }
