@@ -901,7 +901,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SIImageStore","setModelImage",WHERE) );
 
-    if( modelnames.nelements() > 1 ) 
+    if( modelnames.nelements() > 1 )
       {throw( AipsError("Multiple starting model images are currently not supported. Please merge them before supplying as input to startmodel"));
 	/// If needed, THIS is the place to add code to support lists of model images... perhaps regrid separately and add them up or some such thing.
       }
