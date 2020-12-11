@@ -10,7 +10,7 @@
     which results from the subtle difference of elevation angle between
     ON_SOURCE and OFF_SOURCE measurements.
 
-    The correction fator is derived from the atmosphere model based on
+    The correction factor is derived from the atmosphere model based on
     the atmospheric properties (temperature, pressure, etc.) measured
     during the observation. The model is constructed by the atmosphere
     (at) tool.
@@ -60,7 +60,7 @@
 
     <param type="string" name="field">
         <shortdescription>field(s) to select</shortdescription>
-        <description>Select fields to image or mosaic.  Use field id(s) or name(s).
+        <description>Select fields. Use field id(s) or name(s).
 
                        If field string is a non-negative integer, it is assumed to
                        be a field index otherwise, it is assumed to be a field name.
