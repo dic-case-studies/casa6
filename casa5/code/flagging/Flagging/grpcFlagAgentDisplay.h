@@ -95,7 +95,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::string discover_executable( );
 
         struct plotter_t {
-            bool active( ) { return active_; }
+            bool active( ) const { return active_; }
             pid_t pid;
             std::string plot_uri;
             std::unique_ptr<rpc::gui::plotserver::Stub> plot;
@@ -166,6 +166,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::shared_ptr<grpcFlagAgentState> gui_state;
         std::shared_ptr<plotter_t> dataplotter_p;
         std::shared_ptr<plotter_t> reportplotter_p;
+        bool active( ) const { return (dataplotter_p && dataplotter_p->active( )) || (reportplotter_p && reportplotter_p->active( )); }
 
         // Control parameters
         casacore::Bool pause_p;

@@ -587,11 +587,14 @@ int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent 
     panel.set_new_row(false);
     panel.set_hidden(false);
     if ( debug ) {
-        std::cerr << "FlagAgentDisplay creating panel " <<
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay creating panel " : "FlagAgentDisplay create ERROR plot not active ") <<
             " (process " << getpid( ) << ", thread " << 
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
     }
+
+    if ( ! plot->active( ) ) return -1;
+
     auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
     ::grpc::Status st = plot->plot->panel(&context,panel,&result);
@@ -606,9 +609,20 @@ int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent 
 }
 
 void FlagAgentDisplay::erase( std::shared_ptr<plotter_t> plot, int panel ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::google::protobuf::Empty resp;
     ::rpc::gui::Id id;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay erase " : "FlagAgentDisplay erase ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return;
+
     id.set_id(panel);
     auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(TIMEOUT);
     context.set_deadline(deadline);
@@ -617,9 +631,20 @@ void FlagAgentDisplay::erase( std::shared_ptr<plotter_t> plot, int panel ) {
     
 void FlagAgentDisplay::setlabel( std::shared_ptr<plotter_t> plot, int panel,
                                  std::string xlabel, std::string ylabel, std::string title ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::google::protobuf::Empty resp;
     ::rpc::gui::Label label;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay setlabel " : "FlagAgentDisplay setlabel ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return;
+
     label.mutable_panel( )->set_id(panel);
     label.set_xlabel(xlabel);
     label.set_ylabel(ylabel);
@@ -630,9 +655,20 @@ void FlagAgentDisplay::setlabel( std::shared_ptr<plotter_t> plot, int panel,
 }
 
 int FlagAgentDisplay::create_dock( std::shared_ptr<plotter_t> plot, int panel, std::string xml ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::rpc::gui::DockSpec spec;
     ::rpc::gui::Id result;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay create_dock " : "FlagAgentDisplay create_dock ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return -1;
+
     spec.set_file_or_xml(xml);
     spec.set_loc("bottom");
     spec.add_dockable("top");
@@ -644,9 +680,20 @@ int FlagAgentDisplay::create_dock( std::shared_ptr<plotter_t> plot, int panel, s
 }
 
 int FlagAgentDisplay::raster( std::shared_ptr<plotter_t> plot, int panel, const std::vector<float> &data, ssize_t sizex, ssize_t sizey ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::rpc::gui::Id result;
     ::rpc::gui::NewRaster raster;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay raster " : "FlagAgentDisplay raster ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return -1;
+
     raster.mutable_panel( )->set_id(panel);
     *raster.mutable_matrix( ) = { data.begin( ), data.end( ) };
     raster.set_sizex(sizex);
@@ -660,9 +707,20 @@ int FlagAgentDisplay::raster( std::shared_ptr<plotter_t> plot, int panel, const 
 }    
 
 int FlagAgentDisplay::line( std::shared_ptr<plotter_t> plot, int panel, const std::vector<float> &xdata, const std::vector<float> &ydata, std::string color, std::string label ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::rpc::gui::Id result;
     ::rpc::gui::NewLine line;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay line " : "FlagAgentDisplay line ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return -1;
+
     line.mutable_panel( )->set_id(panel);
     *line.mutable_x( ) = { xdata.begin( ), xdata.end( ) };
     *line.mutable_y( ) = { ydata.begin( ), ydata.end( ) };
@@ -677,9 +735,20 @@ int FlagAgentDisplay::line( std::shared_ptr<plotter_t> plot, int panel, const st
 int FlagAgentDisplay::scatter( std::shared_ptr<plotter_t> plot, int panel, const std::vector<float> &xdata,
                                const std::vector<float> &ydata, std::string color, std::string label,
                                std::string symbol, int symbol_size, int dot_size ) {
+    static const auto debug = getenv("GRPC_DEBUG");
     grpc::ClientContext context;
     ::rpc::gui::Id result;
     ::rpc::gui::NewScatter scatter;
+
+    if ( debug ) {
+        std::cerr << (plot->active( ) ? "FlagAgentDisplay scatter " : "FlagAgentDisplay scatter ERROR plot not active ") <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! plot->active( ) ) return -1;
+
     scatter.mutable_panel( )->set_id(panel);
     *scatter.mutable_x( ) = { xdata.begin( ), xdata.end( ) };
     *scatter.mutable_y( ) = { ydata.begin( ), ydata.end( ) };
@@ -1512,6 +1581,18 @@ Bool FlagAgentDisplay::buildReportPlotWindow()
 
 void FlagAgentDisplay :: getUserInput() {
 
+    static const auto debug = getenv("GRPC_DEBUG");
+    if ( debug ) {
+        std::cerr << ( active( ) ? 
+                       "FlagAgentDisplay getUserInput " : 
+                       "FlagAgentDisplay getUserInput ERROR no active GUIs " ) <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! active( ) ) return;
+
     if ( gui_state->input_received ) {
         // GUI input received while this thread was preoccupied...
         std::lock_guard<std::mutex> lock(gui_state->set_values);
@@ -1530,8 +1611,20 @@ void FlagAgentDisplay :: getUserInput() {
 
 
 
-void FlagAgentDisplay :: getReportUserInput()
-{
+void FlagAgentDisplay :: getReportUserInput() {
+
+    static const auto debug = getenv("GRPC_DEBUG");
+    if ( debug ) {
+        std::cerr << ( active( ) ? 
+                       "FlagAgentDisplay getReportUserInput " : 
+                       "FlagAgentDisplay getReportUserInput ERROR no active GUIs " ) <<
+            " (process " << getpid( ) << ", thread " << 
+            std::this_thread::get_id() << ")" << std::endl;
+        fflush(stderr);
+    }
+
+    if ( ! active( ) ) return;
+
     if ( gui_state->input_received ) {
         // GUI input received while this thread was preoccupied...
         std::lock_guard<std::mutex> lock(gui_state->set_values);
