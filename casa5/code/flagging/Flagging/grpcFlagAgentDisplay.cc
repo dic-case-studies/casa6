@@ -100,10 +100,9 @@ grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_
         state->input_received = true;			// set whenever state object is modified
         if ( state->input_needed )
             state->output.set_value(true);		// signal controlling thread that wait is over
-    }
 
     // Manage buttons from: Report Plot Window
-    if ( req->name( ) == "Next" || req->name( ) == "Prev" || req->name( ) == "Quit") {
+    } else if ( req->name( ) == "Next" || req->name( ) == "Prev" || req->name( ) == "Quit") {
         std::lock_guard<std::mutex> lock(state->set_values);
         state->userChoice_p = req->name( );		// set input
         state->input_received = true;			// set whenever state object is modified
@@ -480,12 +479,6 @@ FlagAgentDisplay::plotter_t::plotter_t(std::shared_ptr<grpcFlagAgentState> state
 
 }
 
-
-FlagAgentDisplay::FlagAgentDisplay(double) : FlagAgentBase(0.0) {
-    dataplotter_p.reset(new plotter_t(gui_state));
-    fprintf( stderr, "creating plotter panel............\n" );
-    create_panel( dataplotter_p, 0 );
-}
 
 FlagAgentDisplay::FlagAgentDisplay(FlagDataHandler *dh, Record config, Bool writePrivateFlagCube):
         		FlagAgentBase(dh,config,ANTENNA_PAIRS_INTERACTIVE,writePrivateFlagCube),

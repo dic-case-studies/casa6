@@ -81,7 +81,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     class FlagAgentDisplay : public FlagAgentBase {
     public:
       
-        FlagAgentDisplay(double);
         FlagAgentDisplay(FlagDataHandler *dh, casacore::Record config, casacore::Bool writePrivateFlagCube = false);
         ~FlagAgentDisplay();
 

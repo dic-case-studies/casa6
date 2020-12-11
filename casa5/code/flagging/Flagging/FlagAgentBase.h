@@ -196,8 +196,6 @@ public:
 		ANTENNA_PAIRS_PREPROCESS_BUFFER
 	};
 
- FlagAgentBase(double) : visibilityBuffer_p(0), commonFlagCube_p(0), privateFlagCube_p(0), commonFlagRow_p(0),
-                         originalFlagRow_p(0), privateFlagRow_p(0) { /*** DUMMY DO NOT COMMIT OR MERGE ***/ }
 	FlagAgentBase(FlagDataHandler *dh, casacore::Record config, casacore::uShort iterationApproach, casacore::Bool writePrivateFlagCube = false, casacore::Bool flag = true);
 	virtual ~FlagAgentBase ();
 	static FlagAgentBase *create (FlagDataHandler *dh,casacore::Record config);
