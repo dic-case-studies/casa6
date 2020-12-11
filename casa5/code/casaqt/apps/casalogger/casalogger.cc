@@ -70,7 +70,9 @@ int main( int argc, char ** argv )
     // std::cerr << "Logviewer wants: " << mylog << std::endl;
     casa::LogViewer mw(mylog);
     mw.setAttribute(Qt::WA_ShowWithoutActivating);
-    mw.show();
+    // CAS-13044
+    mw.showMaximized();
+    mw.showNormal();
 
     return a.exec();
 }
