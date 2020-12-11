@@ -94,7 +94,7 @@ using namespace casa::refim;
 		   Long icachesize, Int itilesize, 
 		     Bool usezero, Bool useDoublePrec, Bool useConjConvFunc, Bool usePointing)
   : FTMachine(), sj_p(sj),
-    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(0),
+    imageCache(0),  cachesize(icachesize), tilesize(itilesize), gridder(nullptr),
     isTiled(false),
     maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
     mspc(0), msac(0), pointingToImage(0), usezero_p(usezero), convSampling(1),
@@ -161,13 +161,13 @@ MosaicFT& MosaicFT::operator=(const MosaicFT& other)
     else
       convWeightImage_p=0;
     if(other.gridder==0)
-      gridder=0;
+      gridder.reset(nullptr);
     else{
       uvScale=other.uvScale;
       uvOffset=other.uvOffset;
-      gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						     uvScale, uvOffset,
-						     "SF");
+      gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                         uvScale, uvOffset,
+                                                         "SF"));
 	  
     }
     useConjConvFunc_p=other.useConjConvFunc_p;
@@ -226,10 +226,9 @@ void MosaicFT::init() {
   uvOffset(0)=nx/2;
   uvOffset(1)=ny/2;
   
-  if(gridder) delete gridder; gridder=0;
-  gridder = new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
-						 uvScale, uvOffset,
-						 "SF");
+  gridder.reset(new ConvolveGridder<Double, Complex>(IPosition(2, nx, ny),
+                                                     uvScale, uvOffset,
+                                                     "SF"));
 
   // Set up image cache needed for gridding. 
   if(imageCache) delete imageCache; imageCache=0;
@@ -282,7 +281,7 @@ void MosaicFT::findConvFunction(const ImageInterface<Complex>& iimage,
   if(pbConvFunc_p.null())
     pbConvFunc_p=new SimplePBConvFunc();
   if(sj_p)
-    pbConvFunc_p->setSkyJones(sj_p);
+    pbConvFunc_p->setSkyJones(sj_p.get());
   ////TEST for HetArray only for now
   if(pbConvFunc_p->name()=="HetArrayConvFunc"){
     if(convSampling <10) 
@@ -720,6 +719,16 @@ void MosaicFT::finalizeToSky()
   if(pointingToImage) delete pointingToImage; pointingToImage=0;
 }
 
+void MosaicFT::setWeightImage(CountedPtr<TempImage<Float> >& wgtimage){
+  skyCoverage_p=wgtimage;
+  Record rec=skyCoverage_p->miscInfo();
+  //For mosaicFTNew it has the nx*ny factor already in
+  rec.define("isscaled", True);
+  skyCoverage_p->setMiscInfo(rec);
+  //cerr << "IN SET " << max(wgtimage->get()) << endl;
+  pbConvFunc_p->setWeightImage(skyCoverage_p);
+  doneWeightImage_p=true;
+}
 
 Array<Complex>* MosaicFT::getDataPointer(const IPosition& centerLoc2D,
 					 Bool readonly) {
@@ -1800,6 +1809,7 @@ ImageInterface<Complex>& MosaicFT::getImage(Matrix<Float>& weights,
 
     //if(!isTiled) 
     {
+      LatticeLocker lock1 (*(image), FileLocker::Write);
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2,
 		    (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
@@ -1833,7 +1843,8 @@ void MosaicFT::getWeightImage(ImageInterface<Float>& weightImage,
 			    (*skyCoverage_p),0.0)));
   */
   weightImage.copyData(*skyCoverage_p);
-
+  //cerr << "getWeightIm " << max(sumWeight) << "    " << max(skyCoverage_p->get()) << endl;
+  
    skyCoverage_p->tempClose();
 
 }
@@ -1951,7 +1962,7 @@ Bool MosaicFT::fromRecord(String& error,
     String pbname;
     PBMath::whichCommonPBtoUse(tel, freq, band, pbtype, pbname);
     if(pbtype != PBMath::UNKNOWN)
-      sj_p=new VPSkyJones(tel,pbtype); 
+      sj_p.reset(new VPSkyJones(tel,pbtype));
   }
 
   inRec.get("name", machineName_p);
@@ -1998,7 +2009,7 @@ Bool MosaicFT::fromRecord(String& error,
   else{
     pbConvFunc_p=0;
   }
-  gridder=nullptr;
+  gridder.reset(nullptr);
    return retval;
 }
 

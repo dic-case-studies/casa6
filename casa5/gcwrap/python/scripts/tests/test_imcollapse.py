@@ -160,24 +160,11 @@ class imcollapse_test(unittest.TestCase):
             imagename, function, axes, outfile, region,
             box, chans, stokes, mask, overwrite, wantreturn
         ):
-            if is_CASA6:
-                pass
-                # FIXME None is being returned; exception not raised, not sure
-                # what's up with that
-                # self.assertRaises(
-                #    Exception, run_imcollapse, imagename,
-                #    function, axes, outfile, region, box,
-                #    chans, stokes, mask, overwrite
-                # )
-            else:
-                self.assertFalse(
-                    run_imcollapse(
-                        imagename, function, axes,
-                        outfile, region, box, chans,
-                        stokes, mask, overwrite
-                    )
-                )
-
+            self.assertRaises(
+               RuntimeError, run_imcollapse, imagename,
+               function, axes, outfile, region, box,
+               chans, stokes, mask, overwrite
+            )
         # bogus function given
         testit(good_image, "bogus function", 0, "bugus_func.im", "", "", "", "", "", False, True)
         # bogus region given
@@ -197,11 +184,11 @@ class imcollapse_test(unittest.TestCase):
         shutil.copy(ctsys_resolve(os.path.join(datapath,expected)), expected)
         for axis in (0 ,"r", "right"):
             outname = "test_1_0" + "_" + str(axis) + ".im"
-            res = run_imcollapse(
+            # None is returned upon success
+            run_imcollapse(
                 good_image, "mean", axis, outname, "", "",
                 "", "", "", False
             )
-            self.assertTrue(res)
             self.checkImage(outname, expected)
             shutil.rmtree(outname)
         os.remove(expected)
@@ -214,11 +201,10 @@ class imcollapse_test(unittest.TestCase):
         for axis in (2, "f", "freq"):
             outname = "test_2_" + str(axis) + ".im"
             outname = outname + "imcollapse"
-            self.assertTrue(
-                run_imcollapse(
-                    good_image, "mean", 2, outname, "", "",
-                    "", "", "", False
-                )
+            # None is returned upon success
+            run_imcollapse(
+                good_image, "mean", 2, outname, "", "",
+                "", "", "", False
             )
             self.checkImage(outname, expected)
             shutil.rmtree(outname)
@@ -234,17 +220,13 @@ class imcollapse_test(unittest.TestCase):
         outname = "test_3_.im"
         outname = outname + "imcollapse"
         # check that can overwrite previous output. Then check output image
-        self.assertTrue(
-            run_imcollapse(
-                 good_image, "sum", 1, outname, "", box,
-                chans, stokes, "", False
-            )
+        # None is returned upon success
+        run_imcollapse(
+            good_image, "sum", 1, outname, "", box, chans, stokes, "", False
         )
-        self.assertTrue(
-            run_imcollapse(
-                 good_image, "sum", 1, outname, "", box,
-                chans, stokes, "", True
-            )
+        run_imcollapse(
+            good_image, "sum", 1, outname, "", box,
+            chans, stokes, "", True
         )
         self.checkImage(outname, expected)
         shutil.rmtree(outname)
@@ -272,11 +254,11 @@ class imcollapse_test(unittest.TestCase):
         shutil.copy(ctsys_resolve(os.path.join(datapath,expected)), expected)
         for axes in ([0, 1], ["r", "d"], ["right", "dec"]):
             outfile = "test_7.out"
-            res = run_imcollapse(
+            # None is returned upon success
+            run_imcollapse(
                 good_image, "mean", [0, 1], outfile, "", "",
                 "", "", "", overwrite=True
             )
-            self.assertTrue(res)
             self.checkImage(outfile, expected)
             shutil.rmtree(outfile)
         os.remove(expected)
@@ -306,11 +288,10 @@ class imcollapse_test(unittest.TestCase):
                 xx.done()
             for func in ["mean", "median"]:
                 outfile = "test_8_" + str(j) + func
-                self.assertTrue(
-                    run_imcollapse(
-                        good_image_im, func, axes, outfile, "", "",
-                        "", "", mask, True
-                    )
+                # None is returned upon success
+                run_imcollapse(
+                    good_image_im, func, axes, outfile, "", "",
+                    "", "", mask, True
                 )
                 mytool.open(outfile)
                 npts = mytool.statistics()["npts"]
@@ -424,11 +405,10 @@ class imcollapse_test(unittest.TestCase):
         yy.setcoordsys(mycs)
         yy.done()
         outfile = "test_stretch.im"
-        self.assertTrue(
-            run_imcollapse(
-                good_image, "mean", 0, outfile, "", "", "",
-                "", maskim + ">0", False, stretch=True
-            )
+        # None is returned upon success
+        run_imcollapse(
+            good_image, "mean", 0, outfile, "", "", "",
+            "", maskim + ">0", False, stretch=True
         )
         shutil.rmtree(outfile)
         shutil.rmtree(maskim)
@@ -514,7 +494,7 @@ class imcollapse_test(unittest.TestCase):
         bb[:] = 1
         bb[0,0,0] = 0
         myia.putchunk(bb)
-        self.assertRaises(Exception, myia.collapse, axes=[0,1], function="flux")
+        self.assertRaises(RuntimeError, myia.collapse, axes=[0,1], function="flux")
         myia.setrestoringbeam(major="3arcmin", minor="3arcmin", pa="0deg")
         myia.setbrightnessunit("Jy/beam")
         col = myia.collapse(axes=[0,1], function="flux", mask=imagename + "> 0")
