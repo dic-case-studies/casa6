@@ -184,6 +184,8 @@ namespace asdm {
 	
 	      name2Table_["TotalPower"] = ASDM_TOTALPOWER::instance();	
 	
+	      name2Table_["VLAWVR"] = ASDM_VLAWVR::instance();	
+	
 	      name2Table_["WVMCal"] = ASDM_WVMCAL::instance();	
 	
 	      name2Table_["Weather"] = ASDM_WEATHER::instance();	
