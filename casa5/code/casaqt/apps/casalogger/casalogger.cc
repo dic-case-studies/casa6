@@ -71,9 +71,13 @@ int main( int argc, char ** argv )
     casa::LogViewer mw(mylog);
     mw.setAttribute(Qt::WA_ShowWithoutActivating);
     // CAS-13044
-    mw.showMaximized();
-    mw.showNormal();
-
+    #if defined(__APPLE__)
+        mw.showMaximized();
+        mw.showNormal();
+    #else 
+        mw.show();
+    #endif
+ 
     return a.exec();
 }
 
