@@ -219,7 +219,6 @@ namespace casa{
           fullFileName=aipsPath;
           fullFileName+="/data";
         }
-            cerr<<"NOW fullFileName="<<fullFileName<<endl;
 
 
 	if(obsName_p=="VLA" && antType_p=="STANDARD"){
