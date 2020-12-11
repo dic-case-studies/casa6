@@ -20,6 +20,7 @@
 //#  MA 02111-1307  USA
 //# $Id: rurvashi 28 Nov 2011$
 
+#include <array>
 #include <thread>
 #include <unistd.h>
 #include <sys/types.h>
