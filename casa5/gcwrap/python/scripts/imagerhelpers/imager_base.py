@@ -499,7 +499,7 @@ class PySynthesisImager:
 ## Overloaded for parallel runs
     def runMajorCycleCore(self, lastcycle):
         controldict={'lastcycle':lastcycle}
-        if(self.alldecpars.has_key('0') and self.alldecpars['0'].has_key('usemask')):
+        if(('0' in self.alldecpars) and ('usemask' in self.alldecpars['0'])):
             controldict['usemask']=self.alldecpars['0']['usemask']
         self.SItool.executemajorcycle(controls=controldict)
 #############################################
