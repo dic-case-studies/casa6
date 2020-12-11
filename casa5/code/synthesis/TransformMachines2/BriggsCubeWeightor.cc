@@ -240,7 +240,9 @@ using namespace casa::vi;
 					rownr_t nRows=vb->nRows();
 					//Int nChans=vb->nChannels();
 					Vector<uInt> msId(nRows, uInt(vb->msId()));
-					RowNumbers rowids=vb->rowIds();
+					RowNumbers rowidsnr=vb->rowIds();
+                                        Vector<uInt>rowids(rowidsnr.nelements());
+                                        convertArray(rowids, rowidsnr);
 					wgtTab_p->addRow(nRows, False);
 					rownr_t endrow=wgtTab_p->nrow()-1;
 					rownr_t beginrow=endrow-nRows+1;
@@ -256,6 +258,7 @@ using namespace casa::vi;
 					ScalarColumn<uInt> col2(*wgtTab_p,"MSID");
 					col2.putColumnRange(sl2, msId);
 					ScalarColumn<uInt> col3(*wgtTab_p, "ROWID");
+                                        
 					col3.putColumnRange(sl2, rowids);
 				}
 			}
