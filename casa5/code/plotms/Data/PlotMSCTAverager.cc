@@ -39,6 +39,9 @@ PlotMSCTAverager::PlotMSCTAverager(
     nPoln_p(nPoln),
     nChan_p(0),
     nBlnMax_p(0),
+    avgChan_p(false),
+    nChanPerBin_p(1),
+    nAvgChan_p(0),
     isComplex_p(True),
     blnOK_p(),
     timeRef_p(0.0),
@@ -87,12 +90,14 @@ void PlotMSCTAverager::finalizeAverage() {
     casacore::Vector<casacore::Int> antenna1(nBlnOK);
     casacore::Vector<casacore::Int> antenna2(nBlnOK);
 
+    int nchan = avgChan_p ? nAvgChan_p : nChan_p;
+
     // Divide each baseline sum by its weight/count
     for (Int ibln = 0; ibln < nBlnMax_p; ++ibln) {
       if (blnOK_p(ibln)) {
         // baseline was in unaveraged data
 
-        for (Int ichan = 0; ichan < nChan_p; ++ichan) {
+        for (Int ichan = 0; ichan < nchan; ++ichan) {
           for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
             // normalize ibln data at obln:
             Float thisWt(accumWt_(ipol, ichan, ibln));
@@ -195,13 +200,34 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   timeRef_p = cti.thisTime();
 
   // Immutables:
-  nChan_p = cti.nchan(); // TODO: channel averaging
   isComplex_p = cti.table().isComplex();
 
+  // Set number of baselines
   if (averaging_p.baseline()) {
     nBlnMax_p = 1;
   } else {
     nBlnMax_p = nAnt_p;
+  }
+
+  // Set number of channels
+  nChan_p = cti.nchan();
+
+  // Revise if averaging channels
+  if (averaging_p.channel()) {
+    avgChan_p = true;
+    nChanPerBin_p = averaging_p.channelValue();
+
+    if (nChanPerBin_p <= 1) {
+        avgChan_p = false; // averaging 0 or 1 chan is no averaging
+    }
+
+    if (avgChan_p) {
+      if (nChanPerBin_p > nChan_p) {
+        nChanPerBin_p = nChan_p; // average all channels
+      }
+
+      nAvgChan_p = nChan_p / nChanPerBin_p;
+    }
   }
 
   blnOK_p.resize(nBlnMax_p);
@@ -210,7 +236,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   if (debug_) {
     cout << "Shapes = " 
          << nPoln_p << " "
-         << nChan_p << " "
+         << (avgChan_p ? nAvgChan_p : nChan_p) << " "
          << nBlnMax_p << " "
          << ntrue(blnOK_p) << " "
          << endl;
@@ -246,25 +272,28 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   // Set scan, field for averaged chunk (set -1 later if more than one)
   avgScan_.resize(nBlnMax_p, false); 
   aveScan_p = cti.thisScan();
-
   aveField_p = cti.thisField();
+
+  // Resize accumulated data (PARAM column) and flags
+  Int numchan = (avgChan_p ? nAvgChan_p : nChan_p);
+
   // All cells assumed flagged to start with
-  avgFlag_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  avgFlag_.resize(nPoln_p, numchan, nBlnMax_p, false);
   avgFlag_.set(true);
-  // Accumulated data (PARAM column) and flags
+ 
   Complex czero(0.0);
   if (isComplex_p) {
-    accumCParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+    accumCParam_.resize(nPoln_p, numchan, nBlnMax_p, false);
     accumCParam_.set(czero);
   } else {
-    accumFParam_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+    accumFParam_.resize(nPoln_p, numchan, nBlnMax_p, false);
     accumFParam_.set(0.0);
   }
-  accumParamErr_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumParamErr_.resize(nPoln_p, numchan, nBlnMax_p, false);
   accumParamErr_.set(0.0);
-  accumSnr_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumSnr_.resize(nPoln_p, numchan, nBlnMax_p, false);
   accumSnr_.set(0.0);
-  accumWt_.resize(nPoln_p, nChan_p, nBlnMax_p, false);
+  accumWt_.resize(nPoln_p, numchan, nBlnMax_p, false);
   accumWt_.set(0.0);
 
   minTimeOffset_p = DBL_MAX;
@@ -292,9 +321,6 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
   }
 
   // TODO
-  if (averaging_p.channel()) {
-    throw(AipsError("PlotMSCTAverager: channel averaging not implemented."));
-  }
   if (averaging_p.baseline()) {
     throw(AipsError("PlotMSCTAverager: baseline averaging not implemented."));
   }
@@ -303,7 +329,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
   }
 
   // Only accumulate chunks with the same number of channels
-  if (!averaging_p.channel() && (cti.nchan() != nChan_p)) {
+  if (cti.nchan() != nChan_p) {
     throw(AipsError("PlotMSCTAverager: data shape does not conform"));
   }
 
@@ -337,14 +363,28 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
     // This baseline occurs in input, so preserve in output
     blnOK_p(obln) = true;
 
-    for (Int ichan = 0; ichan < cti.nchan(); ++ichan) {
-      for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
+    for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
+      Int outchan(-1);
+      for (Int ichan = 0; ichan < cti.nchan(); ++ichan) {
         // Assume we won't accumulate anything in this cell
         //   (output is unflagged, input is flagged)
         Bool accumulate(false);
 
+        // Set outchan
+        if (avgChan_p) {
+          if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
+            // next outchan
+            ++outchan;
+            if (outchan == nAvgChan_p) {
+              break;
+            }
+          }
+        } else {
+          outchan = ichan; // use same channel when not averaging
+        }
+
         IPosition inPos(3, ipol, ichan, ibln);
-        IPosition outPos(3, ipol, ichan, obln);
+        IPosition outPos(3, ipol, outchan, obln);
         if (!cti.flag()(inPos)) { // input UNflagged
           accumulate = true;
 

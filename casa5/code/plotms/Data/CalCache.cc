@@ -180,6 +180,7 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   if (averaging().anyAveraging()) {
     // Use PlotMSCTAverager
     casacore::Vector<int> nIterPerAve; // number of chunks per average
+
     countChunks(*ci_p, pmsAveraging, nIterPerAve, loadAxes, loadData, thread);
     if (!userCanceled_) {
       loadCalChunks(*ci_p, pmsAveraging, nIterPerAve, loadAxes, thread);
@@ -273,7 +274,7 @@ void CalCache::countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       thread->setAllowedOperations(false,false,true);
     }
 
-    bool debug(false);
+    bool debug(true);
 
     Bool combScan(pmsAveraging.scan());
     Bool combField(pmsAveraging.field());

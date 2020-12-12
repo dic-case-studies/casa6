@@ -119,6 +119,11 @@ private:
 
   // Number of antennas, polarizations, channels, and baselines
   casacore::Int nAnt_p, nPoln_p, nChan_p, nBlnMax_p;
+
+  // For channel averaging
+  casacore::Bool avgChan_p;
+  casacore::Int nChanPerBin_p, nAvgChan_p;
+
   // Data is Complex or Float
   casacore::Bool isComplex_p;
 
