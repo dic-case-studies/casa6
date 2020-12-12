@@ -568,16 +568,16 @@ void StatImageCreator::setInterpAlgorithm(Interpolate2D::Method alg) {
     switch (alg) {
     case Interpolate2D::CUBIC:
         _interpName = "CUBIC";
-        return;
+        break;
     case Interpolate2D::LANCZOS:
         _interpName = "LANCZOS";
-        return;
+        break;
     case Interpolate2D::LINEAR:
         _interpName = "LINEAR";
-        return;
+        break;
     case Interpolate2D::NEAREST:
         _interpName = "NEAREST";
-        return;
+        break;
     default:
         ThrowCc("Unhandled interpolation method " + String::toString(alg));
     }
