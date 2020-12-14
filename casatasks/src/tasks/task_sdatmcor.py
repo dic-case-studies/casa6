@@ -304,26 +304,7 @@ def sdatmcor(
                 errmsg = "Specified outfile already exist."
                 raise Exception(errmsg)
 
-        # Inspect arguments.
-        #  - inspect Unit.
-        #  - default value ARE NOT considered here.
-        #  - convert values to string form.
-        #  - if (-1) parameter is specified, '' string is set.
-        #  - Sub-function calc_sdatmcor() accepts args basically by string.
-
-        # dtem_dh = _check_unit_and_form_to_str(dtem_dh, ['K/km'])
-        # h0 = _check_unit_and_form_to_str(h0, ['km'])
-
-        # altitude = _check_unit_and_form_to_str(altitude, ['m'])
-        # temperature = _check_unit_and_form_to_str(temperature, ['K'])
-        # pressure = _check_unit_and_form_to_str(pressure, ['mbar', 'hPa'])
-        # humidity = _check_unit_and_form_to_str(humidity, [''])
-        # PWV = _check_unit_and_form_to_str(PWV, ['mm'])
-        # dp = _check_unit_and_form_to_str(dp, ['mbar', 'hPa'])
-        # dpm = _check_unit_and_form_to_str(dpm, [''])
-
-        # Inspect atmtype ('str or int'). The range is checked and accept atmtype==''
-        #if not _inspect_strint_range(atmtype, 1, 5):
+        # Inspect atmtype
         atmtype_int = int(atmtype)
         if atmtype_int not in (1, 2, 3, 4, 5):
             errmsg = "atmtype (=%s) should be any one of (1, 2, 3, 4, 5)." % atmtype
@@ -334,18 +315,6 @@ def sdatmcor(
         if humidity_float != -1.0 and not (0.0 <= humidity_float and humidity_float <= 100.0):
             errmsg = "humidity (=%s) should be in range 0~100" % humidity
             raise Exception(errmsg)
-
-        # User-Defined-Profile parameters conversion. An empty arg makes [] list.
-        #layerboundaries = _convert_to_list(layerboundaries)
-        #layertemperature = _convert_to_list(layertemperature)
-
-
-        # Length of the two args must be same
-        # len_1 = len(layerboundaries)
-        # len_2 = len(layertemperature)
-        # if len_1 != len_2:
-        #     errmsg = "Data count mismatches in specified User-Defined parameter. len=[%d, %d] \n" % (len_1, len_2)
-        #     raise Exception(errmsg)
 
         # generate gain factor dictionary
         gaindict = parse_gainfactor(gainfactor)
@@ -425,105 +394,22 @@ def _file_exist(path):
     return os.path.exists(path)
 
 
-def _inspect_strint_range(indata, minimum, maximum):
-    if type(indata) is str:
-        if indata == '':
-            return True
-        elif indata.isdigit():
-            return minimum <= int(indata) <= maximum
-        else:
-            return False
-    elif type(indata) is int:
-        return minimum <= indata <= maximum
-    else:
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
-
-
-def _inspect_strfloat_range(str_data, minimum, maximum):
-    if type(str_data) is str:
-        if str_data == '':
-            return True
-        else:
-            return minimum <= float(str_data) <= maximum
-    else:
-        raise Exception("INTERNAL ERROR:: (assert) Unexpected data type.")
-
-
-def _check_unit_and_form_to_str(data, base_unit):
-    try:
-        if type(data) is str:
-            if (data == ''):
-                return ''
-            ext_unit = qa.getunit(data)
-            if (ext_unit in base_unit):
-                return str(qa.getvalue(data)[0])
-            elif (ext_unit == ''):
-                return data
-            else:
-                errmsg = "Unit conversion:: Unexpected Unit '%s' in %s ." % (ext_unit, data)
-                _msg("ERROR::%s" % errmsg, 'ERROR')
-                raise Exception(errmsg)
-        elif (type(data) is int) or (type(data) is float):
-            return '' if data == -1 else str(data)  # CAS-13160 defines (-1)= default in humidity and dpm.
-        else:
-            raise Exception("INTERNAL ERROR:: (assert) Arg type is not expected due to the I/F Design.")
-
-    except Exception as err:
-        casalog.post('%s' % err, 'SEVERE')
-        raise
-
-
 # Argument parameter handling
-# type : int, quantity(float), list
-#
-# (purpose) To simplify passing an argument from Task to Original script.
-# (action) Returns input argument value or default value.
-#  - if 'arg_value' is available, this function returns 'atm_parm_variable',
-#    with being converted to int/quantity(float).
-#  - otherwise, 'def_para' is directly returned as a default parameter.
-#  - _convert_to_list() only checks that 'in_arg' is available or not.
-
-def _set_int_atmparam_from_args(arg_value, atm_parm_variable):
-    if (arg_value != ''):
-        return int(arg_value)
-    else:
-        return atm_parm_variable
-
-
-def _set_float_atmparam_from_args(arg_value, atm_parm_variable, unit):
-    if type(arg_value) is str:
-        if (arg_value != ''):
-            return qa.quantity(float(arg_value), unit), True
-        else:
-            return atm_parm_variable, False
-
-
-def _set_list_atmparam_from_args(set_list):
-    if (len(set_list) != 0):
-        return set_list
-    else:
-        return []
-
-
-def _convert_to_list(in_arg):
-    """ Convert input arg to List
-     in_arg:               List or String (comma-separated string)
-     return:               List of values (type=float)
-     Exception:            internal conversion error.
-                           (mostly, in_arg is not string or list.)
-    """
-    if type(in_arg) is list:
-        return [float(i) for i in in_arg]
-    elif type(in_arg) is str:
-        if in_arg == '':
-            return []
-        else:
-            return [float(i) for i in in_arg.split(',')]
-    else:
-        raise Exception("INTERNAL ERROR::Unexpected argument type.")
-
-
 def parse_atm_params(user_param, user_default, task_default):
+    """Parse ATM parameters.
+
+    Args:
+        user_param (str,int,float): User input.
+        user_default (str,int,float): User default.
+        task_default (str,int,float): Task default.
+
+    Raises:
+        ValueError: user_param is invalid.
+
+    Returns:
+        Tuple: Two-tuple, resulting value as quantity and boolean
+               value indicating if the value is equal to user_default.
+    """
     is_customized = user_param != user_default and user_param is not None
 
     try:
@@ -555,13 +441,26 @@ def parse_atm_params(user_param, user_default, task_default):
                 user_param,
                 default_unit
             ))
-        if default_unit == '':
-            param = param['value']
 
     return param, is_customized
 
 
-def parse_atm_list_params(user_param, user_default='', task_default=[], list_element_default=None):
+def parse_atm_list_params(user_param, user_default='', task_default=[], list_element_default=''):
+    """Parse ATM parameters.
+
+    Args:
+        user_param (str,list): User input.
+        user_default (str): User default.
+        task_default (list): Task default.
+        list_element_default (str)
+
+    Raises:
+        ValueError: user_param is invalid.
+
+    Returns:
+        Tuple: Two-tuple, resulting value as quantity and boolean
+               value indicating if the value is equal to user_default.
+    """
     is_customized = user_param != user_default and user_param is not None
 
     if not is_customized:
@@ -1078,7 +977,7 @@ def calc_sdatmcor(
                     atm_humidity = qa.quantity(hground[idx], '%')             # hground (original) in  [%]
                     atm_pwv = qa.quantity(pwv[idx] * 1000.0, 'mm')            # pwv (original) in [m] converto to [mm]
                     atm_dp = qa.quantity(dp, 'mbar')
-                    atm_dpm = dpm                      # float
+                    atm_dpm = qa.quantity(dpm, '')                      # float
                     atm_maxAltitude = qa.quantity(maxalt, 'km')
 
                     # Edit Flag (True: the parameter was given and will be applied to initAtmProfile)
@@ -1098,63 +997,53 @@ def calc_sdatmcor(
                     atm_layertemperature = []   # initially null-list.   array: layer temperature [K]
 
                     # ATM fundamental parameters activation.
-                    # atm_dtem_dh, atm_dtem_dh_set = _set_float_atmparam_from_args(param_dtem_dh, atm_dtem_dh, 'K/km')
                     atm_dtem_dh, atm_dtem_dh_set = parse_atm_params(
                         user_param=param_dtem_dh,
                         user_default='',
                         task_default=atm_dtem_dh
                     )
-                    #atm_h0, atm_h0_set = _set_float_atmparam_from_args(param_h0, atm_h0, 'km')
                     atm_h0, atm_h0_set = parse_atm_params(
                         user_param=param_h0,
                         user_default='',
                         task_default=atm_h0
                     )
-                    #atm_atmtype = _set_int_atmparam_from_args(param_atmtype, atm_atmtype)
                     atm_atmtype = int(param_atmtype)
-                    if atm_atmtype < 1 or 5 < atm_atmtype:
+                    if atm_atmtype not in (1, 2, 3, 4, 5):
                         raise ValueError('Given atmtype "{}" is invalid. Should be 1~5.'.format(param_atmtype))
 
                     # Sub parameter activation
                     #  when atmdetail is True
                     if atm_atmdetail:
                         _msg("\nSub Parameter from the Arguments will be set, if specified.\n")
-                        #atm_altitude, atm_altitude_set = _set_float_atmparam_from_args(param_altitude, atm_altitude, 'm')
                         atm_altitude, atm_altitude_set = parse_atm_params(
                             user_param=param_altitude,
                             user_default='',
                             task_default=atm_altitude
                         )
-                        #atm_temperature, atm_temperature_set = _set_float_atmparam_from_args(param_temperature, atm_temperature, 'K')
                         atm_temperature, atm_temperature_set = parse_atm_params(
                             user_param=param_temperature,
                             user_default='',
                             task_default=atm_temperature)
-                        #atm_pressure, atm_pressure_set = _set_float_atmparam_from_args(param_pressure, atm_pressure, 'mbar')
                         atm_pressure, atm_pressure_set = parse_atm_params(
                             user_param=param_pressure,
                             user_default='',
                             task_default=atm_pressure
                         )
-                        #atm_humidity, atm_humidity_set = _set_float_atmparam_from_args(param_humidity, atm_humidity, '%')
                         atm_humidity, atm_humidity_set = parse_atm_params(
                             user_param=param_humidity,
                             user_default=-1,
                             task_default=atm_humidity
                         )
-                        #atm_pwv, atm_pwv_set = _set_float_atmparam_from_args(param_PWV, atm_pwv, 'mm')
                         atm_pwv, atm_pwv_set = parse_atm_params(
                             user_param=param_PWV,
                             user_default='',
                             task_default=atm_pwv
                         )
-                        #atm_dp, atm_dp_set = _set_float_atmparam_from_args(param_dp, atm_dp, 'mbar')
                         atm_dp, atm_dp_set = parse_atm_params(
                             user_param=param_dp,
                             user_default='',
                             task_default=atm_dp
                         )
-                        #atm_dpm, atm_dpm_set = _set_float_atmparam_from_args(param_dpm, atm_dpm, '')
                         atm_dpm, atm_dpm_set = parse_atm_params(
                             user_param=param_dpm,
                             user_default=-1,
@@ -1163,8 +1052,6 @@ def calc_sdatmcor(
 
                         # User-Defined Profile.
                         #  when the arg is active, directly pass the arg(=param_layerXXXXX) to atm_XXXXX for initAtmProfile.
-                        #atm_layerboundaries = _set_list_atmparam_from_args(param_layerboundaries)
-                        #atm_layertemperature = _set_list_atmparam_from_args(param_layertemperature)
                         atm_layerboundaries, _ = parse_atm_list_params(
                             user_param=param_layerboundaries,
                             user_default='',
@@ -1199,7 +1086,7 @@ def calc_sdatmcor(
                     _msg(" humidity         |%-18s [%5s]   | %s " % (atm_humidity['value'], atm_humidity['unit'], atm_humidity_set))
                     _msg(" pwv              |%-18s [%5s]   | %s " % (atm_pwv['value'], atm_pwv['unit'], atm_pwv_set))
                     _msg(" dp               |%-18s [%5s]   | %s " % (atm_dp['value'], atm_dp['unit'], atm_dp_set))
-                    _msg(" dpm              |%-18s [%5s]   | %s " % (atm_dpm, '', atm_dpm_set))
+                    _msg(" dpm              |%-18s [%5s]   | %s " % (atm_dpm['value'], atm_dpm['unit'], atm_dpm_set))
                     _msg("*maxAltitude      |%-18s [%5s]   | (FIXED CONST) " % (atm_maxAltitude['value'], atm_maxAltitude['unit']))
                     _msg(" layerboundaries  |%-18s " % atm_layerboundaries)
                     _msg(" layertemperature |%-18s " % atm_layertemperature)
@@ -1217,7 +1104,7 @@ def calc_sdatmcor(
                                             h0=atm_h0,
                                             dTem_dh=atm_dtem_dh,
                                             dP=atm_dp,
-                                            dPm=atm_dpm,
+                                            dPm=atm_dpm['value'],
                                             layerBoundaries=atm_layerboundaries,
                                             layerTemperature=atm_layertemperature)
 
