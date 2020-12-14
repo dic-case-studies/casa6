@@ -475,6 +475,15 @@ class test_sdatmcor(unittest.TestCase):
         )
         self.check_result({19: True, 23: True})
 
+    def test_custom_atm_params_non_conform_list_input(self):
+        """Test customized ATM parameters: non-conform layerboundaries and layertemperature"""
+        with self.assertRaises(Exception):
+            sdatmcor(
+                infile=self.infile, outfile=self.outfile, datacolumn='data',
+                atmdetail=True,
+                layerboundaries='800m,1.5km', layertemperature='250K,200K,190K'
+            )
+
 
 class ATMParamTest(unittest.TestCase):
     def _param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default):
