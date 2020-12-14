@@ -158,6 +158,11 @@ template <class T> void compareCube(const casacore::Char* column,
                                     const casacore::Cube<T> &ref,
                                     casacore::Float tolerance = FLT_EPSILON);
 
+template <class T> void compareVectorCubes(const casacore::Char* column,
+                                           const casacore::Vector<casacore::Cube<T>> &inp,
+                                           const casacore::Vector<casacore::Cube<T>> &ref,
+                                           casacore::Float tolerance = FLT_EPSILON);
+
 void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                                 VisibilityIterator2 &refTVI,
                                 VisBufferComponents2 &columns,
@@ -167,8 +172,12 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
 void copyTestFile(casacore::String &path,casacore::String &filename,casacore::String &outfilename);
 
 const casacore::Cube<casacore::Complex> & getViscube(VisBuffer2 *vb,
-									casacore::MS::PredefinedColumns datacol,
-									std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
+                                                     casacore::MS::PredefinedColumns datacol,
+                                                     std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
+
+const casacore::Vector<casacore::Cube<casacore::Complex>> & getViscubes(VisBuffer2 *vb,
+                                                                        casacore::MS::PredefinedColumns datacol,
+                                                                        std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
 
 void flagEachOtherChannel(VisibilityIterator2 &vi, bool undoChanbin, int chanbin = 1);
 

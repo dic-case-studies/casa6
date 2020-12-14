@@ -62,7 +62,7 @@ int removeFile(const char *fpath, const struct stat *sb, int typeflag,
 //
 // -----------------------------------------------------------------------
 FreqAxisTVITest::FreqAxisTVITest():
-		autoMode_p(true), testResult_p(true)
+    autoMode_p(true), testResult_p(true)
 {
 
 }
@@ -71,7 +71,7 @@ FreqAxisTVITest::FreqAxisTVITest():
 //
 // -----------------------------------------------------------------------
 FreqAxisTVITest::FreqAxisTVITest(Record configuration):
-		autoMode_p(false), testResult_p(true)
+    autoMode_p(false), testResult_p(true)
 {
     configuration.get (configuration.fieldNumber ("inputms"), inpFile_p);
     testFile_p = inpFile_p + String(".test");
@@ -201,51 +201,51 @@ MsFactoryTVITester::~MsFactoryTVITester()
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-template <class T> void compareVector(	const Char* column,
-										const Vector<T> &inp,
-										const Vector<T> &ref,
-										Float tolerance)
+template <class T> void compareVector(const Char* column,
+                                      const Vector<T> &inp,
+                                      const Vector<T> &ref,
+                                      Float tolerance)
 {
-	// Check matching shape
+    // Check matching shape
     ASSERT_EQ(inp.size(), ref.size()) 
         << " test and reference vectors don't have the same size";
 
-	// Compare values
-	for (uInt index=0;index < inp.size(); index++)
-	{
-	    ASSERT_NEAR(std::fabs((Float) inp(index) - (Float) ref(index)), 0, tolerance)
+    // Compare values
+    for (uInt index=0;index < inp.size(); index++)
+    {
+        ASSERT_NEAR(std::fabs((Float) inp(index) - (Float) ref(index)), 0, tolerance)
             << column << " does not match in position ="
             << index
             << " test=" << inp(index)
             << " reference=" << ref(index);
-	}
+    }
 }
 
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-template <class T> void compareMatrix(	const Char* column,
-										const Matrix<T> &inp,
-										const Matrix<T> &ref,
-										Float tolerance)
+template <class T> void compareMatrix(const Char* column,
+                                      const Matrix<T> &inp,
+                                      const Matrix<T> &ref,
+                                      Float tolerance)
 {
-	// Check matching shape
+    // Check matching shape
     ASSERT_EQ(inp.shape(), ref.shape()) 
         << " test and reference matrices don't have the same shape";
 
-	// Compare values
-	const IPosition &shape = inp.shape();
-	for (uInt row=0;row < shape(1); row++)
-	{
-		for (uInt col=0;col < shape(0); col++)
-		{
-		    ASSERT_NEAR(abs(inp(col,row) - ref(col,row)), 0, tolerance)
+    // Compare values
+    const IPosition &shape = inp.shape();
+    for (uInt row=0;row < shape(1); row++)
+    {
+        for (uInt col=0;col < shape(0); col++)
+        {
+            ASSERT_NEAR(abs(inp(col,row) - ref(col,row)), 0, tolerance)
                 << column << " does not match in position (row,col)="
                 << "("<< row << "," << col << ")"
                 << " test=" << inp(col,row)
                 << " reference=" << ref(col,row);
-		}
-	}
+        }
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -269,10 +269,43 @@ template <class T> void compareCube(const Char* column,
             for (uInt corr=0;corr < shape(0); corr++)
             {
                 ASSERT_NEAR(abs(inp(corr,chan,row) - ref(corr,chan,row)), 0, tolerance)
-	                << column << " does not match in position (corr,chan,row)="
-			        << "("<< corr << "," << chan << "," << row << ")"
+                    << column << " does not match in position (corr,chan,row)="
+                    << "("<< corr << "," << chan << "," << row << ")"
                     << " test=" << inp(corr,chan,row)
                     << " reference=" << ref(corr,chan,row);
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+template <class T> void compareVectorCubes(const Char* column,
+                                           const Vector<Cube<T>> &inp,
+                                           const Vector<Cube<T>> &ref,
+                                           Float tolerance)
+{
+    // Check matching shape
+    ASSERT_EQ(inp.shape(), ref.shape()) 
+         << " test and reference cubes don't have the same shape";
+
+    // Compare values
+    for (uInt index=0;index < inp.size(); index++)
+    {
+        const IPosition &shape = inp[index].shape();
+        for (uInt row=0;row < shape(2); row++)
+        {
+            for (uInt chan=0;chan < shape(1); chan++)
+            {
+                for (uInt corr=0;corr < shape(0); corr++)
+                {
+                    ASSERT_NEAR(abs(inp[index](corr,chan,row) - ref[index](corr,chan,row)), 0, tolerance)
+                        << column << " does not match in position (corr,chan,row)="
+                        << "("<< corr << "," << chan << "," << row << ")"
+                        << " test=" << inp[index](corr,chan,row)
+                        << " reference=" << ref[index](corr,chan,row);
+                }
             }
         }
     }
@@ -449,6 +482,14 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                             tolerance);
             }
 
+            if (columns.contains(VisBufferComponent2::VisibilityCubesObserved))
+            {
+                SCOPED_TRACE("Comparing VisibilityCubesObserved component ");
+                columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubeObserved);
+                compareVectorCubes(columnName.c_str(),testVb->visCubes(),getViscubes(refVb,MS::DATA,datacolmap),
+                            tolerance);
+            }
+
             if (columns.contains(VisBufferComponent2::VisibilityCubeCorrected))
             {
                 SCOPED_TRACE("Comparing VisibilityCubeCorrected component ");
@@ -573,9 +614,9 @@ void copyTestFile(String &path,String &filename,String &outfilename)
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-const Cube<Complex> & getViscube(	VisBuffer2 *vb,
-									MS::PredefinedColumns datacol,
-									std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap)
+const Cube<Complex> & getViscube(VisBuffer2 *vb,
+MS::PredefinedColumns datacol,
+std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap)
 {
     MS::PredefinedColumns mappeddatacol;
     if (datacolmap == NULL)
@@ -595,29 +636,79 @@ const Cube<Complex> & getViscube(	VisBuffer2 *vb,
     }
 
 
-	switch (mappeddatacol)
-	{
-		case MS::DATA:
-		{
-			return vb->visCube();
-			break;
-		}
-		case MS::CORRECTED_DATA:
-		{
-			return vb->visCubeCorrected();
-			break;
-		}
-		case MS::MODEL_DATA:
-		{
-			return vb->visCubeModel();
-			break;
-		}
-		default:
-		{
-			return vb->visCube();
-			break;
-		}
-	}
+    switch (mappeddatacol)
+    {
+        case MS::DATA:
+        {
+            return vb->visCube();
+            break;
+        }
+        case MS::CORRECTED_DATA:
+        {
+            return vb->visCubeCorrected();
+            break;
+        }
+        case MS::MODEL_DATA:
+        {
+            return vb->visCubeModel();
+            break;
+        }
+        default:
+        {
+            return vb->visCube();
+            break;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
+const Vector<Cube<Complex>> & getViscubes(VisBuffer2 *vb,
+                                          MS::PredefinedColumns datacol,
+                                          std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap)
+{
+    MS::PredefinedColumns mappeddatacol;
+    if (datacolmap == NULL)
+    {
+        mappeddatacol = datacol;
+    }
+    else
+    {
+        if (datacolmap->find(datacol) != datacolmap->end())
+        {
+            mappeddatacol = datacolmap->at(datacol);
+        }
+        else
+        {
+            mappeddatacol = datacol;
+        }
+    }
+
+
+    switch (mappeddatacol)
+    {
+        case MS::DATA:
+        {
+            return vb->visCubes();
+            break;
+        }
+        case MS::CORRECTED_DATA:
+        {
+            return vb->visCubesCorrected();
+            break;
+        }
+        case MS::MODEL_DATA:
+        {
+            return vb->visCubesModel();
+            break;
+        }
+        default:
+        {
+            return vb->visCubes();
+            break;
+        }
+    }
 }
 
 // -----------------------------------------------------------------------
