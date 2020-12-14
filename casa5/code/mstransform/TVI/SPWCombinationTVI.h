@@ -51,6 +51,11 @@ public:
 
     void next() override;
 
+    // Structural changes
+    casacore::rownr_t nShapes() const override;
+    const casacore::Vector<casacore::rownr_t>& nRowsPerShape() const override;
+    const casacore::Vector<casacore::Int>& nChannelsPerShape() const override;
+
     // Transformation of the flags
     void flag(casacore::Cube<casacore::Bool>& flagCube) const override;
     void flag(casacore::Vector<casacore::Cube<casacore::Bool>>& flagCubes) const override;
@@ -87,13 +92,24 @@ protected:
 
     void initialize();
 
+    void setUpCurrentSubchunkStructure();
+
     double checkEqualWidth() const;
 
     double getChannelNominalFreq(size_t spw, size_t channel) const;
 
     double freqWidthChan_p;
 
-    std::map<int, double> spwOutFirstFreq;
+    std::map<int, double> spwOutFirstFreq_p;
+
+    // Variables that depend on the subchunk we are in
+    casacore::Vector<casacore::rownr_t> nRowsPerShape_p;
+
+    casacore::Vector<casacore::Int> nChannelsPerShape_p;
+
+    casacore::Vector<casacore::Int> currentSubchunkPolIds_p;
+
+    casacore::Vector<casacore::Int> currentSubchunkSpwIds_p;
 
     // vector[1..nPolId] map[key:inpSpwId] vector-> inp chann idx, same as spwInpChanIdxMap, value: outputChannel
     std::vector<std::map<int, std::vector<int>>> spwInpChanOutMap_p;

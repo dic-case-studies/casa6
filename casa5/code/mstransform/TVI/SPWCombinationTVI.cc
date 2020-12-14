@@ -64,30 +64,28 @@ std::cout << " npol " << nPolIds << std::endl;
         int outSpwId = polId;
         std::vector<double> thisOutSpwFreqs;
         std::vector<int> thisOutSpwChann;
+        spwInpChanOutFreqMap_p[outSpwId].clear();
         for(auto inpSpw : spwInpChanIdxMap_p)
         {
-std::cout << " inpSpw " <<inpSpw.first << std::endl;
-            spwInpChanOutFreqMap_p[outSpwId].clear();
             for(auto channel : inpSpw.second)
             {
                 double channFreq = getChannelNominalFreq(inpSpw.first, channel);
                 spwInpChanOutFreqMap_p[outSpwId][inpSpw.first].push_back(channFreq);
                 thisOutSpwFreqs.push_back(channFreq);
-std::cout << " chann freq " <<channFreq << std::endl;
             }
         }
-        spwOutFirstFreq[outSpwId] = *std::min_element(thisOutSpwFreqs.begin(), thisOutSpwFreqs.end());
-std::cout << " first freq " <<spwOutFirstFreq[outSpwId] << std::endl;
+        spwOutFirstFreq_p[outSpwId] = *std::min_element(thisOutSpwFreqs.begin(), thisOutSpwFreqs.end());
         for(auto inpSpw : spwInpChanIdxMap_p)
             for(auto freq : spwInpChanOutFreqMap_p[outSpwId][inpSpw.first])
             {
-                spwInpChanOutMap_p[outSpwId][inpSpw.first].push_back(std::floor((freq - spwOutFirstFreq[outSpwId]) / freqWidthChan_p + 0.1));
-                thisOutSpwChann.push_back(std::floor((freq - spwOutFirstFreq[outSpwId]) / freqWidthChan_p + 0.1));
+                spwInpChanOutMap_p[outSpwId][inpSpw.first].push_back(std::floor((freq - spwOutFirstFreq_p[outSpwId]) / freqWidthChan_p + 0.1));
+                thisOutSpwChann.push_back(std::floor((freq - spwOutFirstFreq_p[outSpwId]) / freqWidthChan_p + 0.1));
             }
         spwOutChanNumMap_p[outSpwId] = *std::max_element(thisOutSpwChann.begin(), thisOutSpwChann.end()) + 1;
 std::cout << " spwOutChanNumMap_p[outSpwId]   " << spwOutChanNumMap_p[outSpwId]<< std::endl;
     }
             
+    
     return;
 }
 
@@ -125,6 +123,9 @@ void SPWCombinationTVI::origin()
     // Drive underlying ViImplementation2
     getVii()->origin();
 
+    // Set structure parameters for this subchunk iteration
+    setUpCurrentSubchunkStructure();
+
     // Synchronize own VisBuffer
     configureNewSubchunk();
 
@@ -136,10 +137,59 @@ void SPWCombinationTVI::next()
     // Drive underlying ViImplementation2
     getVii()->next();
 
+    // Set structure parameters for this subchunk iteration
+    setUpCurrentSubchunkStructure();
+
     // Synchronize own VisBuffer
     configureNewSubchunk();
 
     return;
+}
+
+void SPWCombinationTVI::setUpCurrentSubchunkStructure()
+{
+    auto& innerNRowsPerShape = getVii()->nRowsPerShape();
+    getVii()->polarizationIds(currentSubchunkPolIds_p);
+    std::set<casacore::Int> uniquePolIDs;
+    std::copy(currentSubchunkPolIds_p.begin(),currentSubchunkPolIds_p.end(),
+              std::inserter(uniquePolIDs, uniquePolIDs.end()));
+
+    ssize_t nPolIds = uniquePolIDs.size();
+    // This VisBuffer contains one single timestamp with "all" DDIds.
+    // After SPW combination then number of rows is equal to the number of distinct DDIds,
+    // i.e., the number of polarizations, which is also the number of distinct shapes
+    nRowsPerShape_p.resize(nPolIds);
+    nChannelsPerShape_p.resize(nPolIds);
+
+    getVii()->spectralWindows(currentSubchunkSpwIds_p);
+
+    // Set up the channels for shape
+    size_t iShape=0;
+    for(auto outSpw : spwOutChanNumMap_p)
+    {
+        nChannelsPerShape_p[iShape] = outSpw.second;
+        iShape++;
+    }
+
+    nRowsPerShape_p = nPolIds;
+
+    //TODO: Check all the NRows are the same.
+    //TODO: For several polarizations (nShapes)
+}
+
+casacore::rownr_t SPWCombinationTVI::nShapes() const
+{
+    return nRowsPerShape_p.size();
+}
+
+const casacore::Vector<casacore::rownr_t>& SPWCombinationTVI::nRowsPerShape() const
+{
+    return nRowsPerShape_p;
+}
+
+const casacore::Vector<casacore::Int>& SPWCombinationTVI::nChannelsPerShape() const
+{
+    return nChannelsPerShape_p;
 }
 
 void SPWCombinationTVI::flag(casacore::Cube<casacore::Bool>& flagCube) const
@@ -164,12 +214,48 @@ void SPWCombinationTVI::floatData(casacore::Vector<casacore::Cube<casacore::Floa
 
 void SPWCombinationTVI::visibilityObserved(casacore::Cube<casacore::Complex> & vis) const
 {
-    getVii()->visibilityObserved(vis);
+    auto& visCubes = getVisBuffer()->visCubes();
+    vis = visCubes[0];
 }
 
 void SPWCombinationTVI::visibilityObserved(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
 {
-    getVii()->visibilityObserved(vis);
+    // Get input VisBuffer and visibility observed cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerVisCubes = vb->visCubes();
+
+    // Resize vis vector
+    vis.resize(nShapes());
+
+    size_t iShape = 0;
+    // It is assumed that the VisBuffer contains unique metadata and timestamp except for DDId.
+    // See checkSortingInner().
+    for(auto& visCube : vis)
+    {
+        casacore::IPosition cubeShape(3, nCorrelationsPerShape()[iShape],
+                            nChannelsPerShape_p[iShape], nRowsPerShape_p[iShape]);
+        visCube.resize(cubeShape);
+        ++iShape;
+    }
+    casacore::rownr_t inputRowsProcessed = 0;
+    for(auto& inputCube : innerVisCubes)
+    {
+        // It is assumed that each input cube corresponds to 
+        // an unique DDiD.
+        // The case in which several DDiDs which have the same 
+        // number of channels and polarizations have been merged in a single
+        // cube with equal shape is not supported yet.
+        // By construction of the rest of VB2 (VisibilityIteratorImpl2,
+        // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
+        casacore::Int thisCubePolId = currentSubchunkPolIds_p[inputRowsProcessed];
+        auto thisSpw = currentSubchunkSpwIds_p[inputRowsProcessed];
+
+        auto outputChannel = spwInpChanOutMap_p[thisCubePolId].at(thisSpw)[0];
+        casacore::IPosition blcOutput(3, 0, outputChannel, 0);
+        casacore::IPosition trcOutput(3, inputCube.shape()(0)-1, outputChannel + inputCube.shape()(1)-1, inputCube.shape()(2)-1);
+        vis[thisCubePolId](blcOutput, trcOutput) = inputCube;
+        inputRowsProcessed+=inputCube.shape()(2);
+    }
 }
 
 void SPWCombinationTVI::visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const
