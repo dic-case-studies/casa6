@@ -800,7 +800,8 @@ void SimpleSimVi2::spectralWindows (Vector<Int> & spws) const
   else
   {
     indgen(spws);
-    spws = spws / nBsln_;
+    if(pars_.antennaScope == RowScope)
+      spws = spws / nBsln_;
   }
 }
 
