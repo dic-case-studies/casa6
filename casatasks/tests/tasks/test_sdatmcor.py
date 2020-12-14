@@ -1,3 +1,4 @@
+import itertools
 import os
 import numpy as np
 import shutil
@@ -21,6 +22,7 @@ if is_CASA6:
     from casatools import ctsys
     from casatools import calibrater
     from casatools import ms as mstool
+    from casatools import quanta
     from casatasks import gencal, applycal
 
     ctsys_resolve = ctsys.resolve
@@ -33,6 +35,7 @@ else:
     from __main__ import default
     from taskinit import cbtool as calibrater
     from taskinit import mstool
+    from taskinit import qatool as quanta
     import sdutil
 
     def ctsys_resolve(apath):
@@ -460,9 +463,304 @@ class test_sdatmcor(unittest.TestCase):
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
+    def test_custom_atm_params(self):
+        """Test customized ATM parameters"""
+        sdatmcor(
+            infile=self.infile, outfile=self.outfile, datacolumn='data',
+            dtem_dh='-5.7K/km', h0='2010m',
+            atmdetail=True,
+            altitude='5.1km', temperature='290K', pressure='700hPa',
+            humidity=30, pwv='0.1cm', dp='10hPa', dpm=1.2,
+            layerboundaries='800m,1.5km', layertemperature='250K,200K'
+        )
+        self.check_result({19: True, 23: True})
+
+
+class ATMParamTest(unittest.TestCase):
+    def _param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default):
+        # internal error
+        wrong_task_default = 'NG'
+        with self.assertRaises(RuntimeError):
+            param, is_customized = sdatmcor_impl.parse_atm_params(
+                '',
+                user_default,
+                wrong_task_default
+            )
+
+        # invalid inputs
+        with self.assertRaises(ValueError):
+            param, is_customized = sdatmcor_impl.parse_atm_params(
+                invalid_user_input,
+                user_default,
+                task_default
+            )
+
+        # valid inputs
+        qa = quanta()
+        for user_input, expected in itertools.chain([(user_default, task_default)], valid_test_cases):
+            print('"{}" "{}"'.format(user_input, expected))
+            param, is_customized = sdatmcor_impl.parse_atm_params(
+                user_input,
+                user_default,
+                task_default
+            )
+            self.assertEqual(is_customized, user_input != user_default)
+            if isinstance(param, dict):
+                expected_quanta = qa.quantity(expected)
+                self.assertTrue(qa.compare(param, expected_quanta))
+                self.assertTrue(qa.eq(param, expected_quanta))
+            else:
+                self.assertEqual(param, expected)
+
+    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, list_element_default):
+        # internal error
+        wrong_task_default = 'NG'
+        with self.assertRaises(ValueError):
+            param, is_customized = sdatmcor_impl.parse_atm_list_params(
+                '0,0',
+                user_default,
+                task_default,
+                wrong_task_default
+            )
+
+        # invalid inputs
+        with self.assertRaises(ValueError):
+            param, is_customized = sdatmcor_impl.parse_atm_list_params(
+                invalid_user_input,
+                user_default,
+                task_default,
+                list_element_default
+            )
+
+        # valid inputs
+        qa = quanta()
+        for user_input, expected in itertools.chain([(user_default, task_default)], valid_test_cases):
+            print('"{}" "{}"'.format(user_input, expected))
+            param, is_customized = sdatmcor_impl.parse_atm_list_params(
+                user_input,
+                user_default,
+                task_default,
+                list_element_default
+            )
+            self.assertEqual(is_customized, user_input != user_default)
+            self.assertEqual(len(param), len(expected))
+            for p, e in zip(param, expected):
+                if isinstance(p, dict):
+                    expected_quanta = qa.quantity(e)
+                    self.assertTrue(qa.compare(p, expected_quanta))
+                    self.assertTrue(qa.eq(p, expected_quanta))
+                else:
+                    self.assertEqual(p, e)
+
+    def test_h0(self):
+        qa = quanta()
+        task_default_cases = ['2km', qa.quantity(2, 'km')]
+        user_default = ''
+        test_cases = [
+            (5.0, '5km'),
+            ('5', '5km'),
+            ('5km', '5km'),
+            ('5000m', '5km'),
+            ('500000cm', '5km'),
+            ('5000000mm', '5km'),
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273K',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_dtem_dh(self):
+        qa = quanta()
+        task_default_cases = ['-5.6K/km', qa.quantity(-5.6, 'K/km')]
+        user_default = ''
+        test_cases = [
+            (-5, '-5K/km'),
+            ('-5', '-5K/km'),
+            ('-5K/km', '-5K/km'),
+            ('-0.005K/m', '-5K/km'),
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='2km',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_altitude(self):
+        qa = quanta()
+        task_default_cases = ['5000m', qa.quantity(5000, 'm')]
+        user_default = ''
+        test_cases = [
+            (4800, '4800m'),
+            ('4800', '4800m'),
+            ('4800m', '4800m'),
+            ('4.8km', '4800m')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273K',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_temperature(self):
+        qa = quanta()
+        task_default_cases = ['273K', qa.quantity(273, 'K')]
+        user_default = ''
+        test_cases = [
+            (300, '300K'),
+            ('300', '300K'),
+            ('300K', '300K')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273m',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_pressure(self):
+        qa = quanta()
+        task_default_cases = ['1000mbar', qa.quantity(1000, 'mbar')]
+        user_default = ''
+        test_cases = [
+            (1000, '1000mbar'),
+            ('1000', '1000mbar'),
+            ('1000mbar', '1000mbar'),
+            ('1bar', '1000mbar'),
+            ('1000hPa', '1000mbar')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273m',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_humidity(self):
+        qa = quanta()
+        task_default_cases = ['20%', qa.quantity(20, '%')]
+        user_default = -1
+        test_cases = [
+            (50, '50%'),
+            ('50', '50%'),
+            ('50%', '50%')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273K',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_pwv(self):
+        qa = quanta()
+        task_default_cases = ['1mm', qa.quantity(1, 'mm')]
+        user_default = ''
+        test_cases = [
+            (5, '5mm'),
+            ('5', '5mm'),
+            ('5mm', '5mm'),
+            ('0.5cm', '5mm'),
+            ('5e-3m', '5mm')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273K',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_dp(self):
+        qa = quanta()
+        task_default_cases = ['10mbar', qa.quantity(10, 'mbar')]
+        user_default = ''
+        test_cases = [
+            (10, '10mbar'),
+            ('10', '10mbar'),
+            ('10mbar', '10mbar'),
+            ('0.01bar', '10mbar'),
+            ('10hPa', '10mbar')
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273m',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_dpm(self):
+        qa = quanta()
+        task_default_cases = ['1.5', 1.5, qa.quantity(1.5, '')]
+        user_default = -1
+        test_cases = [
+            (1.2, 1.2),
+            ('1.2', 1.2),
+        ]
+        for task_default in task_default_cases:
+            self._param_test_template(
+                valid_test_cases=test_cases,
+                invalid_user_input='273K',
+                user_default=user_default,
+                task_default=task_default
+            )
+
+    def test_layerboundaries(self):
+        task_default = []
+        user_default = ''
+        test_cases = [
+            ([], []),
+            ('', []),
+            ([1500, 2000], ['1500m', '2000m']),
+            (['1500m', '2000m'], ['1500m', '2000m']),
+            ('1500,2000', ['1500m', '2000m']),
+            ('1500m,2000m', ['1500m', '2000m']),
+            ('1500m, 2000m', ['1500m', '2000m']),
+        ]
+        self._list_param_test_template(
+            valid_test_cases=test_cases,
+            invalid_user_input='273K',
+            user_default=user_default,
+            task_default=task_default,
+            list_element_default='0m'
+        )
+
+    def test_layertemperature(self):
+        task_default = []
+        user_default = ''
+        test_cases = [
+            ([], []),
+            ('', []),
+            ([270, 250], ['270K', '250K']),
+            (['270K', '250K'], ['270K', '250K']),
+            ('270,250', ['270K', '250K']),
+            ('270K,250K', ['270K', '250K']),
+            ('270K, 250K', ['270K', '250K']),
+        ]
+        self._list_param_test_template(
+            valid_test_cases=test_cases,
+            invalid_user_input='273m',
+            user_default=user_default,
+            task_default=task_default,
+            list_element_default='0K'
+        )
+
 
 def suite():
-    return [test_sdatmcor]
+    return [
+        test_sdatmcor,
+        ATMParamTest,
+    ]
 
 
 if is_CASA6:
