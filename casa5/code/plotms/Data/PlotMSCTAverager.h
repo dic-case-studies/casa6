@@ -94,6 +94,9 @@ public:
 
   // Return the result in NewCalTable filled with CTMainRecord vector
   void fillAvgCalTable(NewCalTable& tab);
+  // CTMainRecord does not include chan or freq
+  inline casacore::Int nchan() { return avgChan_p ? nAvgChan_p : nChan_p; };
+  inline casacore::Vector<casacore::Double> avgfreq() { return avgFreq_; };
 
 private:
   // Prohibit null constructor, copy constructor and assignment for now
@@ -170,6 +173,7 @@ private:
   casacore::Cube<casacore::Float> accumSnr_;
   casacore::Cube<casacore::Float> accumWt_;
   casacore::Cube<casacore::Bool> avgFlag_;
+  casacore::Vector<casacore::Double> accumFreq_; // if channel averaging
 
   // Averaged results
   std::vector<CTMainRecord> main_rows_;

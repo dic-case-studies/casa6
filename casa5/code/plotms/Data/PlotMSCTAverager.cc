@@ -76,39 +76,45 @@ void PlotMSCTAverager::finalizeAverage() {
   if ((nBlnOK > 0) && isAccum_p) {
     // Increment obln for every blnOK
     Int obln(0);
+    Int numchan(nchan());
 
-    casacore::Cube<casacore::Complex> cparam(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Complex> cparam(nPoln_p, numchan, nBlnOK);
     cparam.set(Complex(0.0));
-    casacore::Cube<casacore::Float> fparam(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Float> fparam(nPoln_p, numchan, nBlnOK);
     fparam.set(0.0);
-    casacore::Cube<casacore::Float> paramerr(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Float> paramerr(nPoln_p, numchan, nBlnOK);
     paramerr.set(0.0);
-    casacore::Cube<casacore::Bool> flag(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Bool> flag(nPoln_p, numchan, nBlnOK);
     flag.set(true);
-    casacore::Cube<casacore::Float> snr(nPoln_p, nChan_p, nBlnOK);
+    casacore::Cube<casacore::Float> snr(nPoln_p, numchan, nBlnOK);
     snr.set(0.0);
     casacore::Vector<casacore::Int> antenna1(nBlnOK);
     casacore::Vector<casacore::Int> antenna2(nBlnOK);
-
-    int nchan = avgChan_p ? nAvgChan_p : nChan_p;
+    if (avgChan_p) {
+      avgFreq_.resize(nAvgChan_p);
+    }
 
     // Divide each baseline sum by its weight/count
     for (Int ibln = 0; ibln < nBlnMax_p; ++ibln) {
       if (blnOK_p(ibln)) {
         // baseline was in unaveraged data
 
-        for (Int ichan = 0; ichan < nchan; ++ichan) {
+        for (Int ichan = 0; ichan < numchan; ++ichan) {
           for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
             // normalize ibln data at obln:
             Float thisWt(accumWt_(ipol, ichan, ibln));
             if (thisWt > 0.0) {
               if (isComplex_p) {
                 cparam(ipol, ichan, obln) = accumCParam_(ipol, ichan, ibln) / thisWt;
-			  } else {
+              } else {
                 fparam(ipol, ichan, obln) = accumFParam_(ipol, ichan, ibln) / thisWt;
               }
+
               paramerr(ipol, ichan, obln) = accumParamErr_(ipol, ichan, ibln) / thisWt;
               snr(ipol, ichan, obln) = accumSnr_(ipol, ichan, ibln) / thisWt;
+              if (avgChan_p) {
+                avgFreq_(ichan) = accumFreq_(ichan) / nChanPerBin_p;
+              }
             }
 
             flag(ipol, ichan, obln) = avgFlag_(ipol, ichan, ibln);
@@ -211,8 +217,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
 
   // Set number of channels
   nChan_p = cti.nchan();
-
-  // Revise if averaging channels
+  // Set num chan and num chan per bin if averaging channels
   if (averaging_p.channel()) {
     avgChan_p = true;
     nChanPerBin_p = averaging_p.channelValue();
@@ -236,7 +241,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   if (debug_) {
     cout << "Shapes = " 
          << nPoln_p << " "
-         << (avgChan_p ? nAvgChan_p : nChan_p) << " "
+         << nchan() << " "
          << nBlnMax_p << " "
          << ntrue(blnOK_p) << " "
          << endl;
@@ -257,6 +262,13 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
     avgAntenna2_.set(cti.thisAntenna2());
   }
 
+  if (avgChan_p) {
+    accumFreq_.resize(nAvgChan_p);
+    accumFreq_.set(0.0);
+  } else {
+    avgFreq_ = cti.freq();
+  }
+
   // Resize and fill if larger
   avgField_.resize(nBlnMax_p, true);
   avgSpw_.resize(nBlnMax_p, true);
@@ -275,7 +287,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   aveField_p = cti.thisField();
 
   // Resize accumulated data (PARAM column) and flags
-  Int numchan = (avgChan_p ? nAvgChan_p : nChan_p);
+  Int numchan(nchan());
 
   // All cells assumed flagged to start with
   avgFlag_.resize(nPoln_p, numchan, nBlnMax_p, false);
@@ -346,6 +358,10 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
   }
   iterParamErr.reference(cti.paramErr());
   iterSnr.reference(cti.snr());
+
+  Vector<Double> iterFreq;
+  iterFreq.reference(cti.freq());
+
   try {
     iterWt.reference(cti.wt());
   } catch (const AipsError& err) {
@@ -375,6 +391,8 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
           if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
             // next outchan
             ++outchan;
+
+            // Ignore remaining channels, incomplete bin
             if (outchan == nAvgChan_p) {
               break;
             }
@@ -401,6 +419,9 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
             accumParamErr_(outPos) = 0.0;
             accumSnr_(outPos) = 0.0;
             accumWt_(outPos) = 0.0;
+            if (avgChan_p) {
+              accumFreq_(outchan) = 0.0;
+            }
           }
         } else { // input flagged
           // Only accumulate if output is also flagged
@@ -420,6 +441,9 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
           accumParamErr_(outPos) += iterParamErr(inPos);
           accumSnr_(outPos) += iterSnr(inPos);
           accumWt_(outPos) += iterWt(inPos);
+          if (avgChan_p) {
+            accumFreq_(outchan) += iterFreq(ichan);
+          }
 
           iterCount++;        // per-iteration count
         }

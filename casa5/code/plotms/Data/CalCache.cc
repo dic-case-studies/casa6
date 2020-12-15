@@ -577,47 +577,45 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
         }
 
         switch (axis) {
-          case PMS::CHANNEL:
-          case PMS::FREQUENCY:
+          case PMS::CHANNEL: {
+            Int nchan(pmscta.nchan());
+            Vector<Int> chans(nchan);
+            indgen(chans);
+            *chan_[chunk] = chans;
+            break;
+          }
+          case PMS::FREQUENCY: {
+            Vector<Double> freqs = pmscta.avgfreq();
+            freqs /= 1.0e9; // GHz
+            (*freq_[chunk]) = freqs;
+            break;
+          }
           case PMS::ATM:
           case PMS::TSKY:
           case PMS::IMAGESB: {
             // Use original caltable spectral window subtable for these axes
             Int spw = avgTableCti.thisSpw();
+            Int scan = avgTableCti.thisScan();
+            Vector<Double> freqs = pmscta.avgfreq();
+            casacore::Vector<casacore::Double> curve(1, 0.0);
 
-            if (axis == PMS::CHANNEL) {
-              Int nchan(ctcols.spectralWindow().numChan()(spw));
-              Vector<Int> chans(nchan);
-              indgen(chans);
-              *chan_[chunk] = chans;
-            } else {
-              Vector<Double> freqs = ctcols.spectralWindow().chanFreq().get(spw);
-              freqs /= 1.0e9; // GHz
-
-              if (axis == PMS::FREQUENCY) {
-                (*freq_[chunk]) = freqs;
-              } else {
-                Int scan = avgTableCti.thisScan();
-                casacore::Vector<casacore::Double> curve(1, 0.0);
-
-                if (axis == PMS::ATM) {
-                  if (plotmsAtm_) {
-                    plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
-                  }
-                  *atm_[chunk] = curve;
-                } else if (axis == PMS::TSKY) {
-                  if (plotmsAtm_) {
-                    plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
-                  }
-                  *tsky_[chunk] = curve;
-                } else {
-                  if (plotmsAtm_) {
-                    plotmsAtm_->calcImageCurve(curve, spw, scan, freqs);
-                  }
-                  *imageSideband_[chunk] = curve;
-                }
+            if (axis == PMS::ATM) {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
               }
+              *atm_[chunk] = curve;
+            } else if (axis == PMS::TSKY) {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
+              }
+              *tsky_[chunk] = curve;
+            } else {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcImageCurve(curve, spw, scan, freqs);
+              }
+              *imageSideband_[chunk] = curve;
             }
+            
             break;
           }
           default:
@@ -1979,4 +1977,4 @@ void CalCache::checkRatioArray(Array<Float>& array, Int chunk) {
     }
 }
 
-}
+} // namespace casa
