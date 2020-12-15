@@ -1109,6 +1109,8 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
    * vector of end channels.
    */
   std::tuple<TcleanProcessingInfo, Vector<Int>, Vector<Int> > SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
+	LogIO log_l(LogOrigin("SynthesisImagerVi2", "nSubCubeFitInMemory"));
+
 	Double required_mem = fudge_factor * sizeof(Float);
 	int nsubcube=1;
 	CompositeNumber cn(uInt(imshape[0] * 2));
@@ -1196,12 +1198,22 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                   --rem;
                 }
 	}
-	 
+
+        const float toGB = 1024.0 * 1024.0 * 1024.0;
+        std::ostringstream oss;
+        oss << setprecision(4);
+        oss << "Required memory: " << required_mem / nlocal_procs / toGB
+            << " GB. Available memory: " << memory_avail / toGB
+            << " GB (rc: memory fraction " << usr_memfrac
+            << "% rc memory " << usr_mem / 1024.
+            << "). Subcubes: " << nsubcube
+            << ". Processes on node: " << nlocal_procs << ".\n";
+        log_l << oss << LogIO::POST;
+
         //cerr << "nsubcube " << nsubcube << " start " << start << " end " << end << endl;
         TcleanProcessingInfo procInfo;
         procInfo.mpiprocs = nlocal_procs;
         procInfo.chnchnks = nsubcube;
-        const float toGB = 1024.0 * 1024.0 * 1024.0;
         procInfo.memavail = memory_avail / toGB;
         procInfo.memreq = required_mem / toGB;
         return make_tuple(procInfo, start, end);
