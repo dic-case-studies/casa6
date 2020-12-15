@@ -75,9 +75,7 @@ class test_csys_startmodel(unittest.TestCase):
           if( pstr.count("(Fail") > 0 ):
                self.fail("\n"+pstr)
 
-     ## Run this test only in parallel mode as it tests combinations of serial and parallel runs. 
-     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
-     def test_csys_startmodel_restart_mfs(self):
+     def do_test_csys_startmodel_restart_mfs(self):
           """ [startmodel] test_csys_startmodel_restart_cube
 
           Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
@@ -153,10 +151,9 @@ class test_csys_startmodel(unittest.TestCase):
                               impbcor(imagename='savemod.par'+'.image.tt0', pbimage='savemod.par'+'.pb.tt0', outfile='savemod.par'+'.impbcor.tt0',overwrite=True)
                               report=report +self.th.checkall(imgexist=['savemod.par.impbcor.tt0'], imgval=[  ('savemod.par.impbcor.tt0',1.1,[50,50,0,0]) ])
 
-          self.checkfinal(report)
+          return report
 
-     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
-     def test_csys_startmodel_restart_cube(self):
+     def do_test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
           Run a sequence of tclean runs to trigger a complicated situation of restarts, mixing serial/parallel and model writes. 
@@ -226,6 +223,16 @@ class test_csys_startmodel(unittest.TestCase):
                     impbcor(imagename='savemod.par'+'.image', pbimage='savemod.par'+'.pb', outfile='savemod.par'+'.impbcor',overwrite=True)
                     report=report +self.th.checkall(imgexist=['savemod.par.impbcor'], imgval=[  ('savemod.par.impbcor',1.5,[50,50,0,0]) ])
 
+          return report
+
+     ## Run this test only in parallel mode as it tests combinations of serial and parallel runs. 
+     @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
+     def test_regression(self):
+          """do_test_csys_startmodel_restart_mfs and do_test_csys_startmodel_restart_cube, combine the returned reports and check for failure"""
+
+          report1 = self.do_test_csys_startmodel_restart_mfs()
+          report2 = self.do_test_csys_startmodel_restart_cube()
+          report = report1 + report2
 
           self.checkfinal(report)
 
