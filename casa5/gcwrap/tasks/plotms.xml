@@ -1,6 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task async="never" category="visualization, information,editing, manipulation, utility" name="plotms" type="function">
+<task async="never" category="visualization, information,editing, manipulation" name="plotms" type="function">
 <shortdescription>A plotter/interactive flagger for visibility data.</shortdescription>
 
 <returns type="void"/>

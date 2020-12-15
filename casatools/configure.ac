@@ -18,6 +18,7 @@ m4_include([ac/m4/m4_ax_lib_stdcxx.m4])
 m4_include([ac/m4/m4_ax_libsakura.m4])
 m4_include([ac/m4/m4_ax_libxml2.m4])
 m4_include([ac/m4/m4_ax_openmp.m4])
+m4_include([ac/m4/ax_prog_cxx_mpi.m4])
 m4_include([ac/m4/m4_ax_path_to_binary.m4])
 m4_include([ac/m4/m4_ax_pthread.m4])
 m4_include([ac/m4/m4_ax_python_devel.m4])
@@ -97,6 +98,49 @@ AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <ios>]],
                    [AC_MSG_RESULT([yes])],
                    [AC_MSG_RESULT([no])
                     AC_MSG_ERROR([C++ compiler is not new enough]) ] )
+
+
+dnl Add --with-mpi option to configure
+AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
+    [compile with MPI (parallelization) support. Auto: if no MPI compiler/libraries are
+    found, MPI is not used. Default: auto])
+    ],,
+    [with_mpi=auto])
+
+dnl Try to find an MPI compiler wrapper. Far from ideal.
+dnl AC_PROG_CXX_MPI is meant to be used intead of AC_PROG_CXX for MPI applications.
+dnl But we have "m4_ax_cxx11" fiddling with CXX etc variables up here.
+if [test x"$with_mpi" != xno]; then
+   _PRE_MPI_CXX=$CXX
+   _PRE_MPI_CC=$CC
+   _PRE_MPI_PATH=$PATH
+   _CXX_PATH=$(dirname ${CXX})
+   _PATH_CASA_OPENMPI=$PATH${PATH_SEPARATOR}/opt/casa/03/bin/
+   AC_MSG_NOTICE([Looking for MPI compiler wrappers in extended path: ${_PATH_CASA_OPENMPI}])
+   dnl want to find this or alternatives: CXX=/opt/casa/03/bin/mpic++
+   AC_PATH_PROGS(CASA_MPI_CXX, [mpiCC, mpicxx, mpic++],,${_PATH_CASA_OPENMPI})
+   AC_MSG_NOTICE([After looking for an MPI wrapper, the C++ compiler is: ${CASA_MPI_CXX}])
+   CXX=$CASA_MPI_CXX
+   PATH=${_CXX_PATH}${PATH_SEPARATOR}${PATH}
+   dnl want to find this or alternatives: CC=/opt/casa/03/bin/mpicc
+   AC_PATH_PROGS(CASA_MPI_CC, [mpicc],,${_PATH_CASA_OPENMPI})
+   AC_MSG_NOTICE([After looking for an MPI wrapper, the C compiler is: ${CASA_MPI_CC}])
+   CC=$CASA_MPI_CC
+   AX_PROG_CXX_MPI(true,
+     [
+     CASA_HAVE_MPI=1
+     AC_SUBST(CASA_HAVE_MPI)
+     ],[
+     CXX=$_PRE_MPI_CXX
+     CC=$_PRE_MPI_CC
+     PATH=$_PRE_MPI_PATH
+     if test x"$with_mpi" = xyes; then
+       AC_MSG_FAILURE([MPI compiler requested, but couldn't use MPI.])
+     else
+       AC_MSG_WARN([No working MPI compiler could be found, won't use MPI.])
+     fi
+   ])
+fi
 
 dnl# use faster fortran rules for complex operations, removes restoring complex infinities
 dnl# if naive computation results in NAN + NAN * I  Handling complex multiplication and

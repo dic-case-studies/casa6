@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -69,7 +68,7 @@ def fringefit(vis=None,caltable=None,
                 paramactive=[True, True, False]
             else:
                 if len(paramactive)!=3:
-                    print >>sys.stderr, "paramactive", paramactive
+                    casalog.post("paramactive: " + paramactive)
                     raise ValueError( 'Error: paramactive vector must have exactly three entries' )
             # Have to solve for peculiar phase!
             paramactive.insert(0, True)

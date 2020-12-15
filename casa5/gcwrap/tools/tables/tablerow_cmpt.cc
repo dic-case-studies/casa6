@@ -40,7 +40,7 @@ tablerow::set(const ::casac::record& /*tab*/, const std::vector<std::string>& /*
 }
 
 ::casac::record*
-tablerow::get(const int /*rownr*/)
+tablerow::get(const long /*rownr*/)
 {
 
     // TODO : IMPLEMENT ME HERE !
@@ -48,7 +48,7 @@ tablerow::get(const int /*rownr*/)
 }
 
 bool
-tablerow::put(const int /*rownr*/, const ::casac::record& /*value*/, const bool /*matchingfields*/)
+tablerow::put(const long /*rownr*/, const ::casac::record& /*value*/, const bool /*matchingfields*/)
 {
 
     // TODO : IMPLEMENT ME HERE !

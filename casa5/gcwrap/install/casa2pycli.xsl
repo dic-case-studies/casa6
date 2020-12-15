@@ -251,7 +251,8 @@ class </xsl:text><xsl:value-of select="@name"/><xsl:text>_cli_:</xsl:text>
           else:
              #print '**** Error **** ',instance
              tname = </xsl:text>'<xsl:value-of select="$taskname"/>'<xsl:text disable-output-escaping="yes">
-             casalog.post('An error occurred running task '+tname+'.', 'ERROR')
+             casalog.post('Task {} raised an exception of class {} with the following message: {}'.
+                          format(tname, type(instance).__name__, instance), 'ERROR')
              pass
         casalog.origin('')
 </xsl:text>

@@ -133,7 +133,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             locfitspw=_quantityRangesToChannels(vis,field,fitspw,excludechans)
         else:
             locfitspw=fitspw
-        #print "locfitspw=",locfitspw
+        # casalog.post("locfitspw=",locfitspw)
         mytb.open(vis + '/SPECTRAL_WINDOW')
         allspw = '0~' + str(mytb.nrows() - 1)
         mytb.close()
@@ -340,7 +340,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
     prevspwid=None
     newchanlist=[]
     nsels=len(usersels)
-    #print "Usersels=",usersels
+    # casalog.post("Usersels=",usersels)
     if excludechans:
         for isel in range(nsels):
             prevspwid = spwid
@@ -364,7 +364,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
                     else:
                         outhiR=0 # higher end of the user selected range reaches maxchanid
                                  # so no right hand side range
-                    #print "outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR
+                    # casalog.post("outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR)
                 else:
                     # no left hand side range
                     outloL=0
@@ -397,7 +397,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
                 newchanlist.append([spwid,outloL,outhiL,stp])
             if (not(outloR == 0 and outhiR == 0)) and outloR <= outhiR:
                 newchanlist.append([spwid,outloR,outhiR,stp])
-        #print "newchanlist=",newchanlist
+        # casalog.post("newchanlist=",newchanlist)
     else:
         # excludechans=False
         newchanlist=usersels
