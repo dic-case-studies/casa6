@@ -122,12 +122,21 @@ public:
 //                                const casacore::Block<casacore::Int> & sortColumns,
 //                                casacore::Double timeInterval = 0);
 
-	VisibilityIteratorImpl2(
-		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		const SortColumns & sortColumns,
-		casacore::Double timeInterval,
-		casacore::Bool isWritable,
-		casacore::Bool useMSIter2=false);
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & sortColumns,
+        casacore::Double timeInterval,
+        casacore::Bool isWritable,
+        casacore::Bool useMSIter2=false);
+
+    // This constructor is similar to previous one but it allows to explicitely
+    // define the sorting criteria used for chunk iteration and for subchunk
+    // iteration. Also the criteria can be generic functions
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & chunkSortColumns,
+        const SortColumns & subchunkSortColumns,
+        bool isWritable);
 
 	VisibilityIteratorImpl2(const VisibilityIteratorImpl2& vii);
 
@@ -174,12 +183,13 @@ public:
 	virtual void
 	setInterval(casacore::Double timeInterval) override;
 
-	// Set the 'blocking' size for returning data.  With the default (0) only a
-	// single integration is returned at a time, this is what is currently
-	// required for the calibration software. With blocking set, up to nRows can
-	// be returned in one go. The chunk size determines the actual maximum.
-	virtual void
-	setRowBlocking(casacore::Int nRows = 0) override;
+    // Set the 'blocking' size for returning data. If set to 0 (the default),
+    // the chunk will be grouped in subchunks using the subchunk sorting functions
+    // (which default to group by unique timestamp.
+    // With blocking set, up to nRows can be returned in one go.
+    // The chunk size determines the actual maximum.
+    virtual void
+    setRowBlocking(casacore::rownr_t nRows = 0) override;
 
 	virtual casacore::Bool
 	existsColumn(VisBufferComponent2 id) const override;
@@ -503,7 +513,7 @@ public:
 	newSpectralWindow() const;
 
 	// Return the number of rows in the current iteration
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRows() const override;
 
 	// Return the row ids as from the original root table. This is useful
@@ -513,7 +523,7 @@ public:
 	getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	// Return the numbers of rows in the current chunk
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsInChunk() const override;
 
     // number of unique time stamps in chunk
@@ -574,7 +584,7 @@ public:
 	nAntennas() const override;
 
 	//Return number of rows in all selected ms's
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsViWillSweep() const override;
 
 	// Return number of spws, polids, ddids
@@ -878,7 +888,11 @@ protected:
 	virtual void
 	initialize(
 		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		casacore::Bool useMSIter2=false);
+		casacore::Bool useMSIter2);
+
+    // Initialize using only the generic sorting criteria
+    void
+    initialize(const casacore::Block<const casacore::MeasurementSet *> &mss);
 
 	// Returns true if casacore::MS Iterator is currently pointing to a selected
 	// spectral window
@@ -1164,33 +1178,33 @@ protected:
 
 	typedef casacore::Block <casacore::MeasurementSet> MeasurementSets;
 
-	class RowBounds {
-	public:
+    class RowBounds
+    {
+    public:
 
-		RowBounds()
-			: chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
-			  subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1),
-			  timeMin_p(-1)
-			{}
+        RowBounds() :
+            chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
+            subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1), timeMin_p(-1)
+        {}
 
-		// last row in current chunk
-		casacore::Int chunkNRows_p;
-		// first row in current subchunk
-		casacore::Int subchunkBegin_p;
-		// last row in current subchunk
-		casacore::Int subchunkEnd_p;
-		// # rows in subchunk
-		casacore::Int subchunkNRows_p;
-		// subchunk's table row numbers
-		casacore::RefRows subchunkRows_p;
-		// times for each row in the chunk
-		casacore::Vector<casacore::Double> times_p;
-		// max timestamp in the chunk
-		casacore::Double timeMax_p;
-		// min timechunk in the chunk
-		casacore::Double timeMin_p;
+        // last row in current chunk
+        ssize_t chunkNRows_p;
+        // first row in current subchunk
+        ssize_t subchunkBegin_p;
+        // last row in current subchunk
+        ssize_t subchunkEnd_p;
+        // # rows in subchunk
+        ssize_t subchunkNRows_p;
+        // subchunk's table row numbers
+        casacore::RefRows subchunkRows_p;
+        // times for each row in the chunk
+        casacore::Vector<casacore::Double> times_p;
+        // max timestamp in the chunk
+        casacore::Double timeMax_p;
+        // min timechunk in the chunk
+        casacore::Double timeMin_p;
 
-	};
+    };
 
 	casacore::Bool autoTileCacheSizing_p;
 	std::map <VisBufferComponent2, BackWriter *> backWriters_p;
@@ -1250,6 +1264,11 @@ protected:
 	VisBuffer2 * vb_p;
 	casacore::CountedPtr<WeightScaling> weightScaling_p;
 	casacore::Bool writable_p;
+
+    // Variables for the handling of the subchunk  loop
+    std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
+    std::shared_ptr<casacore::MSIter> msIterSubchunk_p;
+    SortColumns subchunkSortColumns_p;
 };
 
 } // end namespace vi

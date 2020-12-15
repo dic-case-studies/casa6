@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import os
 import numpy
@@ -169,7 +168,7 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 cb.solve()
 
     except UserWarning as instance:
-        print('*** Warning *** %s' % instance)
+        casalog.post('*** UserWarning *** %s' % instance, 'WARN')
 
     finally:
         cb.close()
