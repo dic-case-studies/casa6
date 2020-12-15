@@ -240,6 +240,9 @@
 #include <alma/ASDM/PulsarTable.h>
 #include <alma/ASDM/PulsarRow.h>
 
+#include <alma/ASDM/VLAWVRTable.h>
+#include <alma/ASDM/VLAWVRRow.h>
+
 
 
 /*\file <alma/ASDM/Merger.h>
@@ -399,6 +402,8 @@ namespace asdm {
 			bool hasMergedCalAntennaSolutions;	
 
 			bool hasMergedPulsar;	
+
+			bool hasMergedVLAWVR;	
 			
 
 
@@ -606,6 +611,9 @@ namespace asdm {
 			void mergePulsar();
 			void postMergePulsar();			
 
+			void mergeVLAWVR();
+			void postMergeVLAWVR();			
+
 
 
 		void (Merger::*mergeSBSummaryPtr) () ;
@@ -743,6 +751,8 @@ namespace asdm {
 		void (Merger::*mergeCalAntennaSolutionsPtr) () ;
 
 		void (Merger::*mergePulsarPtr) () ;
+
+		void (Merger::*mergeVLAWVRPtr) () ;
 
 	};
 } // End namespace asdm
