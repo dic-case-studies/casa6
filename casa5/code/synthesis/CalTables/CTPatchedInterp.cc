@@ -39,18 +39,8 @@
 #define CUBIC InterpolateArray1D<Double,Float>::cubic
 #define SPLINE InterpolateArray1D<Double,Float>::spline
 
-// MetaData tools
-//#include <ms/msmetadata_cmpt.h>
-//#include <ms/msmetadata_forward.h>
-//#include <ms/msmetadata_private.h>
 #include <ms/MSOper/MSMetaData.h>
 #include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
-//#include <ms/MeasurementSets/MeasurementSet.h>
-
-//#include <casa/BasicSL/Constants.h>
-//#include <casa/OS/File.h>
-//#include <casa/Logging/LogMessage.h>
-//#include <casa/Logging/LogSink.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -1181,10 +1171,6 @@ void CTPatchedInterp::makeInterpolators() {
 	      tI_(tIip)=NULL; 
 	      tR.set(0.0);
 	      tRf.set(true);
-	      //	      cout << tIip << "<-" << ictip << " " << "ctSlices_(ictip) = " << ctSlices_(ictip) << endl;
-          // print msmd summary
-          //open(tabname);
-          //msmetadata::open(tabname);
             
           // Get Obs Id from summary, from third set of keys get scan(s)
           // Get antenna from scan and fields for scan
@@ -1194,9 +1180,6 @@ void CTPatchedInterp::makeInterpolators() {
             
           Record summary = msmc_->msmd().getSummary();
           std::set<uInt> spws = msmc_->msmd().getSpwsForField(iMSFld);
-          //std::set<uInt> scans = msmc_->msmd().getScansForSpw(iMSSpw);
-          //std::set<uInt> antennas = msmc_->msmd().;
-            
             
           if(spws.find(iMSSpw) != spws.end() &&
              summary.isDefined("observationID=" + String::toString(iMSObs)))
