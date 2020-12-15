@@ -200,7 +200,7 @@ def tclean(
         return
 
     if(chanchunks!=-1):
-        casalog.post( "The parameter chanchunks is no longer used by tclean. It will be removed in CASA 6.3", "WARN", "task_tclean" )
+        casalog.post( "The parameter chanchunks is only used for spectral cubes with gridder='awproject'. chanchunks will be removed in a future release and awproject for cube is using pre-refactor code so is not fully commissioned.", "WARN", "task_tclean" )
 
     if((specmode=='cube' or specmode=='cubedata') and parallel==False and mpi_available):
         casalog.post( "Setting parameter parallel=False with specmode='cube' when launching CASA with mpi has no effect except for awproject.", "WARN", "task_tclean" )
