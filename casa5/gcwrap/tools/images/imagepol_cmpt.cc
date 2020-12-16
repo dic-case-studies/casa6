@@ -33,12 +33,8 @@ using namespace casa;
 
 namespace casac {
 
-imagepol::imagepol()
+imagepol::imagepol(): itsLog(new LogIO()), itsImPol(nullptr)
 {
-  itsImPol=0;
-  itsLog=0;
-
-  itsLog= new LogIO();
 }
 
 imagepol::~imagepol()
@@ -50,10 +46,9 @@ bool
 imagepol::open(const variant& image){
 	try {
 		*itsLog << LogOrigin("imagepol", "open");
-		if(itsLog==0) {
-			itsLog=new LogIO();
-		}
+
 		if(itsImPol) delete itsImPol;
+
 		if(image.type()==variant::RECORD){
 			variant localvar(image);
 			std::unique_ptr<Record> tmp(
@@ -91,7 +86,7 @@ bool
 imagepol::imagepoltestimage(const std::string& outfile,
 			    const std::vector<double>& rm,
 			    const double pa0, const double sigma,
-			    const int nx, const int ny, const int nf,
+			    const long nx, const long ny, const long nf,
 			    const double f0, const double bw) {
 
   bool rstat(false);
@@ -101,7 +96,6 @@ imagepol::imagepoltestimage(const std::string& outfile,
     *itsLog << LogOrigin("imagepol", "imagepoltestimage");
     if(itsImPol) delete itsImPol;
     itsImPol = new ImagePol();
-    if(itsLog==0) itsLog=new LogIO();
 
     if (rm.size() == 1 and rm[0]==0.0) {
       rmdefault = true;
@@ -313,7 +307,7 @@ image * imagepol::linpolint(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog, AxesSpecifier(), stretch, true
+            itsLog.get(), AxesSpecifier(), stretch, true
         );
         LinearPolarizationCalculator lpc(subImage, outfile, False);
         lpc.setClip(clip);
@@ -341,7 +335,7 @@ image * imagepol::linpolposang(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog, AxesSpecifier(), stretch, true
+            itsLog.get(), AxesSpecifier(), stretch, true
         );
         LinearPolarizationAngleCalculator lpac(subImage, outfile, False);
         return new image(lpac.compute(False));
@@ -425,7 +419,7 @@ bool imagepol::rotationmeasure(
     const std::string& pa0, const std::string& pa0err,
     const std::string& nturns, const std::string& chisq,
     const double sigma, const double rmfq, const double rmmax,
-    const double maxpaerr, const std::string&, const int, const int
+    const double maxpaerr, const std::string&, const long, const long
 ) {
     try {
         *itsLog << LogOrigin("imagepol", __func__);
@@ -891,7 +885,7 @@ image* imagepol::totpolint(
         auto myreg = _getRegion(region, False);
         auto subImage = SubImageFactory<Float>::createSubImageRO(
             *itsImPol->getImage(), *myreg, mask,
-            itsLog, AxesSpecifier(), stretch, true
+            itsLog.get(), AxesSpecifier(), stretch, true
         );
         ImageTotalPolarization itp(subImage, outfile, False);
         itp.setClip(clip);
