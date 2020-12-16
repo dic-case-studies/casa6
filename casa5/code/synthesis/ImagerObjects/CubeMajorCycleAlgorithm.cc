@@ -133,6 +133,7 @@ void CubeMajorCycleAlgorithm::put() {
 }
 	
 void CubeMajorCycleAlgorithm::task(){
+	LogIO logger(LogOrigin("CubeMajorCycleAlgorithm", "task", WHERE));
 	status_p = True;
         try{
           //Timer tim;
@@ -326,11 +327,15 @@ void CubeMajorCycleAlgorithm::task(){
           status_p = True;
         }
         catch (AipsError x) {
-          cerr << "Exception: " << x.getMesg() << endl;
+          logger << "Exception: " << x.getMesg() << LogIO::SEVERE;
           status_p=false;
         }
+        catch(std::exception& exc) {
+          logger << "Exception (std): " << exc.what() << LogIO::SEVERE;
+          returnRec_p=Record();
+        }
         catch(...){
-          cerr << "Unknown exception "  << endl;
+          logger << "Unknown exception "  << LogIO::SEVERE;
           status_p=False;
         }
 }
