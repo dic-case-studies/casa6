@@ -1476,6 +1476,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
  
   ////////////////////////////////////////////////////////////////////////////////////////////////
   bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, Bool savemodel){
+	LogIO logger(LogOrigin("SynthesisImagerVi2", "runCubeGridding", WHERE));
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
         char **argv=nullptr;
@@ -1660,7 +1661,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                   //cerr << k << " rank " << rank << " successful " << endl;
                   cerr << "" ;
                 else
-                    cerr << k << " rank " << rank << " failed " << endl;
+                    logger << k << " rank " << rank << " failed " << LogIO::SEVERE;
                 assigned = casa::applicator.nextAvailProcess ( cmc, rank );
 
             }
@@ -1701,7 +1702,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
               //cerr << "remainder rank " << rank << " successful " << endl;
               cerr << "";
             else
-                cerr << "remainder rank " << rank << " failed " << endl;
+                logger << "remainder rank " << rank << " failed " << LogIO::SEVERE;
 
             rank = casa::applicator.nextProcessDone ( cmc, allDone );
 			if(casa::applicator.isSerial())
@@ -1709,7 +1710,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         }
         if(anyEQ(retvals, False)){
           //cerr << retvals << endl;
-          throw(AipsError("One or more  of the cube section failed in de/gridding"));  
+          ostringstream oss;
+          oss << "One or more  of the cube section failed in de/gridding. Return values for "
+              "the sections: " << retvals;
+          throw(AipsError(oss));
         }
         if(!dopsf){
           try{
