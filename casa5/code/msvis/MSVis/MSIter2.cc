@@ -197,7 +197,7 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
   This = (MSIter2*)this; 
   nMS_p=bms_p.nelements();
   if (nMS_p==0) throw(AipsError("MSIter::construct -  No input MeasurementSets"));
-  for (Int i=0; i<nMS_p; i++) {
+  for (size_t i=0; i<nMS_p; i++) {
     if (bms_p[i].nrow()==0) {
       throw(AipsError("MSIter::construct - Input MeasurementSet.has zero selected rows"));
     }
@@ -307,7 +307,7 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
   
   // Store the sorted table for future access if possible, 
   // reuse it if already there
-  for (Int i=0; i<nMS_p; i++) {
+  for (size_t i=0; i<nMS_p; i++) {
     Bool useIn=False, store=False, useSorted=False;
     Table sorted;
     // check if we already have a sorted table consistent with the requested
@@ -458,7 +458,7 @@ void MSIter2::discernEnforcedTimeBounds(Vector<Double>& timebounds,
   ScalarColumn<Double> timecol;
   std::map<Int,Double> scanmap;
   Int nscan(0);
-  for (Int iMS=0; iMS<nMS_p; iMS++) {
+  for (size_t iMS=0; iMS<nMS_p; iMS++) {
     TableIterator ti(bms_p[iMS],String("SCAN_NUMBER"));
 
     if (scanBounded) {
@@ -495,7 +495,7 @@ void MSIter2::discernEnforcedTimeBounds(Vector<Double>& timebounds,
   ScalarColumn<Int> fieldcol,scancol;
   std::map<Int,Double> timemap;
   Int nscan(0);
-  for (Int iMS=0; iMS<nMS_p; iMS++) {
+  for (size_t iMS=0; iMS<nMS_p; iMS++) {
     TableIterator ti(bms_p[iMS],cols);
     Int thisScan(-1),thisField(-1),lastScan(-1),lastField(-1);
     while (!ti.pastEnd()) {
@@ -550,7 +550,7 @@ void MSIter2::discernEnforcedTimeBounds(Vector<Double>& timebounds,
   std::map<Int,Double> timemap;
   Int nscan(0);
   cout.precision(12);
-  for (Int iMS=0; iMS<nMS_p; iMS++) {
+  for (size_t iMS=0; iMS<nMS_p; iMS++) {
     TableIterator ti(bms_p[iMS],cols);
     Int thisScan(-1),thisField(-1),lastScan(-1),lastField(-1);
     while (!ti.pastEnd()) {

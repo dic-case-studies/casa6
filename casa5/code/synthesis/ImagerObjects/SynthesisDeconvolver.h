@@ -78,7 +78,14 @@ class SynthesisDeconvolver
   //  void setupDeconvolution(casacore::Record recpars);
 
   casacore::Record initMinorCycle();
+  casacore::Record initMinorCycle(std::shared_ptr<SIImageStore> imstor); 
   casacore::Record executeMinorCycle(casacore::Record& subIterBot);
+  casacore::Record executeCoreMinorCycle(casacore::Record& subIterBot);
+  //minor cycle for cubes
+  //doDeconvAndAutoMask=1 //do automask without deconv
+  //doDeconvAndAutoMask=0 //do deconv no automask
+  //doDeconvAndAutoMask=-1 //do automask then deconv
+  casacore::Record executeCubeMinorCycle(casacore::Record& minorCycleControlRec, const casacore::Int doDeconvAndAutomask=-1);
 
   casacore::Record interactiveGUI(casacore::Record& iterRec);
 
@@ -100,11 +107,27 @@ class SynthesisDeconvolver
   casacore::Bool setupMask();
   void setAutoMask();
   void checkRestoringBeam();
+  ///in case one wants this deconvolver object to start from where another deconvolver left.
+  void setIterDone(const casacore::Int iterdone);
+  ////set the posmask image that is used in automasking...needed for restarting deconvolver
+  void setPosMask(std::shared_ptr<casacore::ImageInterface<casacore::Float> > posmaskim);
   ////return estimate of memory usage in kB
   casacore::Long estimateRAM(const std::vector<int>& imsize);
+  ///automask parameters that can be needed for cubes
+  void setChanFlag(const casacore::Vector<casacore::Bool>& chanflag);
+  casacore::Vector<casacore::Bool> getChanFlag();
+  void setRobustStats(const casacore::Record& rec);
+  casacore::Record getRobustStats();
+  void setMinorCycleControl(const casacore::Record& minorCycleControlRec);
 protected:
 
   std::shared_ptr<SIImageStore> makeImageStore( casacore::String imagename );
+  //Merge the outputRecord from channels into one that looks like the cube one
+  void mergeReturnRecord(const casacore::Record& chanRec, casacore::Record& outRec, const casacore::Int chan);
+  casacore::Record getSubsetRobustStats(const casacore::Int chanBeg, const casacore::Int chanEnd);
+  void setSubsetRobustStats(const casacore::Record& inrec, const casacore::Int chanBeg, const casacore::Int chanEnd, const casacore::Int numchan);
+  //for parallel cube partition in block of channels to reduce lock load on model image
+  casacore::Int numblockchans(casacore::Vector<casacore::Int>& startch, casacore::Vector<casacore::Int>& endch); 
   /*
   void findMinMax(const casacore::Array<casacore::Float>& lattice,
 					const casacore::Array<casacore::Float>& mask,
@@ -181,7 +204,7 @@ protected:
   casacore::Vector<casacore::Bool> itsChanFlag;
   casacore::Record itsRobustStats;
   casacore::Bool initializeChanMaskFlag; 
-  casacore::TempImage<casacore::Float> itsPosMask;
+  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPosMask;
   
   casacore::Bool itsIsMaskLoaded; // Try to get rid of this state variable ! 
   casacore::Bool itsIsInteractive;
@@ -189,6 +212,9 @@ protected:
   casacore::Float itsMaskSum;
 
   casacore::Float itsNsigma;
+  SynthesisParamsDeconv itsDecPars;
+  casacore::Float itsPreviousFutureRes;
+  casacore::Record itsPreviousIterBotRec_p;
 };
 
 

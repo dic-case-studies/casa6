@@ -116,6 +116,7 @@ install (FILES
 	)
 install (FILES
         Utilities/SpectralImageUtil.h
+        Utilities/SpectralImageUtil.tcc
 	DESTINATION include/casacode/imageanalysis/Utilities
          )
 install (FILES

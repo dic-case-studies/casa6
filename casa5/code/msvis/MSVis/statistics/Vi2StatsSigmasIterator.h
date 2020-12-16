@@ -92,8 +92,8 @@ protected:
 	casacore::uInt nCorrelations;
 	casacore::uInt channel;
 	casacore::uInt nChannels;
-	casacore::uInt row;
-	casacore::uInt nRows;
+	casacore::rownr_t row;
+	casacore::rownr_t nRows;
 };
 
 // Weights iterator over row sigmas.
@@ -118,8 +118,8 @@ public:
 	bool atEnd();
 
 protected:
-	casacore::uInt row;
-	casacore::uInt nRows;
+	casacore::rownr_t row;
+	casacore::rownr_t nRows;
 };
 
 } // namespace casa
