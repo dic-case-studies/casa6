@@ -118,13 +118,13 @@ def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
             WEATHER_table_exists = True
 
         except:
-            print('could not open weather table, using seasonal model only and turning off plots')
+            casalog.post('could not open weather table, using seasonal model only and turning off plots')
             mytb.close()
             WEATHER_table_exists = False
             doPlot=False
             seasonal_weight = 1.0
     else:
-        print('could not find a weather table, using seasonal model only and turning off plots')
+        casalog.post('could not find a weather table, using seasonal model only and turning off plots')
         WEATHER_table_exists = False
         doPlot=False
         seasonal_weight = 1.0
@@ -168,13 +168,13 @@ def plotweather(vis='', seasonal_weight=0.5, doPlot=True, plotName = ''):
 
     ##convert time to a string of date/time
     myTimestr = []
-    myTimestr2=[]
     for time in mytime:
         q1=myqa.quantity(time,'s')
         time1=myqa.time(q1,form='ymd')[0]
-        time2=myqa.time(q1,form='local')[0]
+        if '24:00:00' in time1:
+            q1=myqa.quantity(time + 0.5,'s')
+            time1=myqa.time(q1,form='ymd')[0]
         myTimestr.append(time1)
-        myTimestr2.append(time2)
 
     ##convert time to a decimal
     numtime=pl.datestr2num(myTimestr)
