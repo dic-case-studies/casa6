@@ -1025,7 +1025,7 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
     matchChannel(vb);
   
   
-  //cerr << "chanMap " << chanMap << endl;
+    //cerr << "GETchanMap " << chanMap << endl;
   //No point in reading data if its not matching in frequency
   if(max(chanMap)==-1)
     return;
@@ -1284,7 +1284,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
 	}
       }
     }
-
+    LatticeLocker lock1 (*(image), FileLocker::Write);
     if(!isTiled) {
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2, (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
@@ -1292,6 +1292,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
       IPosition trc(blc+image->shape()-stride);
       // Do the copy
       IPosition start(4, 0);
+      
       image->put(griddedData(blc, trc));
     }
   }
@@ -1400,8 +1401,9 @@ Bool GridFT::fromRecord(String& error,
   inRec.get("nopadding", noPadding_p);
 
   machineName_p="GridFT";
-  ///setup some of the parameters
-  init();
+  ///setup some of the parameters if there is an image
+  if(inRec.isDefined("image") || inRec.isDefined("diskimage"))
+    init();
   /*if(!cmplxImage_p.null()){
     //FTMachine::fromRecord would have recovered the image
     // Might be changing the shape of sumWeight
