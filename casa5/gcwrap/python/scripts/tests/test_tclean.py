@@ -2117,14 +2117,14 @@ class test_cube(testref_base):
                        deconvolver='hogbom',\
                        spw=['0','0'], start='1.199989GHz', imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
-          report = self.th.checkspecframe(self.img+'.image', 'LSRK', 1.199989e9)
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
 
           ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
                        specmode='cube',nchan=10,restfreq=['1.25GHz'],\
                        deconvolver='hogbom',\
                        spw=['0','0'], start='1.199989GHz', imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image') )
-          report2 = self.th.checkspecframe(self.img+'reverse.image', 'LSRK', 1.199989e9)
+          report2 = self.th.check_spec_frame(self.img+'reverse.image', 'LSRK', 1.199989e9)
           self.checkfinal(report+report2)
 
      def test_cube_twoMS_startvel(self):
@@ -2139,14 +2139,14 @@ class test_cube(testref_base):
                        deconvolver='hogbom',\
                        spw=['0','0'], start='11994.3km/s', width='-11991.7km/s',imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image'))
-          report = self.th.checkspecframe(self.img+'.image', 'LSRK', 1.199989e9)
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
 
           ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
                        specmode='cube',nchan=10,restfreq=['1.25GHz'],\
                        deconvolver='hogbom',\
                        spw=['0','0'], start='11994.3km/s',width='-11991.7km/s',  imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image'))
-          report2 = self.th.checkspecframe(self.img+'reverse.image', 'LSRK', 1.199989e9)
+          report2 = self.th.check_spec_frame(self.img+'reverse.image', 'LSRK', 1.199989e9)
           self.checkfinal(report+report2)
 
 ##############################################
