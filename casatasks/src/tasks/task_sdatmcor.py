@@ -445,14 +445,14 @@ def parse_atm_params(user_param, user_default, task_default):
     return param, is_customized
 
 
-def parse_atm_list_params(user_param, user_default='', task_default=[], list_element_default=''):
+def parse_atm_list_params(user_param, user_default='', task_default=[], element_unit=''):
     """Parse ATM parameters.
 
     Args:
         user_param (str,list): User input.
         user_default (str): User default.
         task_default (list): Task default.
-        list_element_default (str)
+        element_unit (str): Unit for output values.
 
     Raises:
         ValueError: user_param is invalid.
@@ -468,7 +468,8 @@ def parse_atm_list_params(user_param, user_default='', task_default=[], list_ele
 
     if isinstance(user_param, (list, np.ndarray)):
         try:
-            param = [parse_atm_params(p, user_default, list_element_default)[0] for p in user_param]
+            param = [parse_atm_params(p, user_default, qa.quantity(0, element_unit))[0] for p in user_param]
+            param = [qa.convert(p, element_unit)['value'] for p in param]
         except Exception as e:
             _msg('ERROR during handling list input: {}'.format(e))
             raise ValueError('list input "{}" is invalid.'.format(user_param))
@@ -476,7 +477,7 @@ def parse_atm_list_params(user_param, user_default='', task_default=[], list_ele
     elif isinstance(user_param, str):
         try:
             split_param = user_param.split(',')
-            param, _ = parse_atm_list_params(split_param, user_default, task_default, list_element_default)
+            param, _ = parse_atm_list_params(split_param, user_default, task_default, element_unit)
         except Exception as e:
             _msg('ERROR during handling comma-separated str input: {}'.format(e))
             raise ValueError('str input "{}" is invalid.'.format(user_param))
@@ -1056,13 +1057,13 @@ def calc_sdatmcor(
                             user_param=param_layerboundaries,
                             user_default='',
                             task_default=[],
-                            list_element_default='0m' # nominal, should not be used
+                            element_unit='m'
                         )
                         atm_layertemperature, _ = parse_atm_list_params(
                             user_param=param_layertemperature,
                             user_default='',
                             task_default=[],
-                            list_element_default='0K'  # nominal, should not be used
+                            element_unit='K'
                         )
                         _msg('layerboundaries {} layertemperature: {}'.format(atm_layerboundaries, atm_layertemperature))
                         if len(atm_layerboundaries) != len(atm_layertemperature):

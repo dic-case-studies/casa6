@@ -521,7 +521,7 @@ class ATMParamTest(unittest.TestCase):
             else:
                 self.assertEqual(param, expected)
 
-    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, list_element_default):
+    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, element_unit):
         # internal error
         wrong_task_default = 'NG'
         with self.assertRaises(ValueError):
@@ -538,7 +538,7 @@ class ATMParamTest(unittest.TestCase):
                 invalid_user_input,
                 user_default,
                 task_default,
-                list_element_default
+                element_unit
             )
 
         # valid inputs
@@ -549,17 +549,13 @@ class ATMParamTest(unittest.TestCase):
                 user_input,
                 user_default,
                 task_default,
-                list_element_default
+                element_unit
             )
             self.assertEqual(is_customized, user_input != user_default)
             self.assertEqual(len(param), len(expected))
             for p, e in zip(param, expected):
-                if isinstance(p, dict):
-                    expected_quanta = qa.quantity(e)
-                    self.assertTrue(qa.compare(p, expected_quanta))
-                    self.assertTrue(qa.eq(p, expected_quanta))
-                else:
-                    self.assertEqual(p, e)
+                expected_in_unit = qa.convert(e, element_unit)['value']
+                self.assertEqual(p, expected_in_unit)
 
     def test_h0(self):
         qa = quanta()
@@ -741,7 +737,7 @@ class ATMParamTest(unittest.TestCase):
             invalid_user_input='273K',
             user_default=user_default,
             task_default=task_default,
-            list_element_default='0m'
+            element_unit='m'
         )
 
     def test_layertemperature(self):
@@ -761,7 +757,7 @@ class ATMParamTest(unittest.TestCase):
             invalid_user_input='273m',
             user_default=user_default,
             task_default=task_default,
-            list_element_default='0K'
+            element_unit='K'
         )
 
 
