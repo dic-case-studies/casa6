@@ -516,7 +516,7 @@ def simanalyze(
                         newcsys = ia.coordsys()
                         ia.close()
                         dir_idx = newcsys.findcoordinate("direction")['world']
-                        newcsys.setreferencepixel([imsize[0]/2., imsize[1]/2.],
+                        newcsys.setreferencepixel([imsize[0]//2., imsize[1]//2.],
                                                   type="direction")
                         incr = newcsys.increment(type='direction')['numeric']
                         newincr = [incr[0]*cell_asec[0]/sfcell_asec,
