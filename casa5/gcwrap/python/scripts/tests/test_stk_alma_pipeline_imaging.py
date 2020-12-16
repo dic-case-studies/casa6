@@ -3296,8 +3296,6 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-        print("FINAL test_dict=",test_dict)
-        
         self.assertTrue(th.check_final(pstr = report), \
             #msg = report)
             msg = failed)
