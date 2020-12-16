@@ -1700,7 +1700,7 @@ class Test_standard(test_tclean_base):
             'com_bmin': [False, 0.673672378063],
             'com_pa': [False, 88.5368652344],
             'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1746,7 +1746,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37090838deg, -16.96415647deg], [17.8437arcsec, 17.4772arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1757,8 +1757,8 @@ class Test_standard(test_tclean_base):
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
             'im_rms': [False, 0.569403001285],
-            'npts_0.2': [True, 47329],
-            'npts_0.5': [True, 22365],
+            'npts_0.2': [1e-4, 47329],
+            'npts_0.5': [1e-4, 22365],
             'npts_real': [True, 82944],
             'fit': [False, [1.0286609217550002, 22.907692916947163, \
                        22.90769291676479]],
@@ -1773,7 +1773,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37094084deg, -16.96415506deg], [1.1279arcsec, 0.7875arcsec], 90.00000000deg]')
 
         exp_psf_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [1e-4, 82944.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1800,7 +1800,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1824,7 +1824,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [1e-4, 82944.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1848,7 +1848,7 @@ class Test_standard(test_tclean_base):
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -1957,7 +1957,7 @@ class Test_standard(test_tclean_base):
             'com_bmin': [False, 0.673672378063],
             'com_pa': [False, 88.5368652344],
             'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2003,7 +2003,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37090838deg, -16.96415647deg], [17.8437arcsec, 17.4772arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2014,8 +2014,8 @@ class Test_standard(test_tclean_base):
             'max_val_pos': [True, [144, 144, 0, 0]],
             'min_val': [False, 0.200061768293],
             'im_rms': [False, 0.569403001285],
-            'npts_0.2': [True, 47329],
-            'npts_0.5': [True, 22365],
+            'npts_0.2': [1e-4, 47329],
+            'npts_0.5': [1e-4, 22365],
             'npts_real': [True, 82944],
             'fit': [False, [1.0286609217550002, 22.907692916947163, \
                        22.90769291676479]],
@@ -2030,7 +2030,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37094084deg, -16.96415506deg], [1.1279arcsec, 0.7875arcsec], 90.00000000deg]')
 
         exp_psf_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [1e-4, 82944.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2057,7 +2057,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2081,7 +2081,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [1e-4, 82944.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2105,7 +2105,7 @@ class Test_standard(test_tclean_base):
         sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
         exp_sumwt_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2130,7 +2130,7 @@ class Test_standard(test_tclean_base):
             'com_bmin': [False, 0.673672378063],
             'com_pa': [False, 88.5368652344],
             'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2153,7 +2153,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
         exp_resid1_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 47329.0],
+            'npts_unmasked': [1e-4, 47329.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2177,7 +2177,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model1_stats = {'npts': [True, 82944],
-            'npts_unmasked': [True, 82944.0],
+            'npts_unmasked': [1e-4, 82944.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -2201,7 +2201,7 @@ class Test_standard(test_tclean_base):
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
 
         exp_sumwt1_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762501225.396851],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4008,7 +4008,7 @@ class Test_mosaic(test_tclean_base):
             'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4061,7 +4061,7 @@ class Test_mosaic(test_tclean_base):
         exp_pb_stats = {'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4075,8 +4075,8 @@ class Test_mosaic(test_tclean_base):
             # CAS-9386 update build100 serial
             #'npts_0.2': [True, 113589],
             #'npts_0.5': [True, 64574],
-            'npts_0.2': [True, 114034],
-            'npts_0.5': [True, 64662],
+            'npts_0.2': [1e-4, 114034],
+            'npts_0.5': [1e-4, 64662],
             'npts_real': [True, 201600],
             'fit': [False, [1.0977556311256869, 37.34956230416832, \
                     36.99775156676905]],
@@ -4091,7 +4091,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.36978024deg, -16.96392002deg], [1.1516arcsec, 0.9492arcsec], 90.00000000deg]')
 
         exp_psf_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4122,7 +4122,7 @@ class Test_mosaic(test_tclean_base):
         exp_resid_stats = {'npts': [True, 201600],
             # CAS-9386  update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4148,7 +4148,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4172,7 +4172,7 @@ class Test_mosaic(test_tclean_base):
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4194,7 +4194,7 @@ class Test_mosaic(test_tclean_base):
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4211,8 +4211,8 @@ class Test_mosaic(test_tclean_base):
             # CAS-9386 update build100 serial
             #'npts_0.2': [True, 113589],
             #'npts_0.5': [True, 64574],
-            'npts_0.2': [True, 114034],
-            'npts_0.5': [True, 64662],
+            'npts_0.2': [1e-4, 114034],
+            'npts_0.5': [1e-4, 64662],
             'npts_real': [True, 201600]}
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, '.weight', epsilon=self.epsilon)
@@ -4320,7 +4320,7 @@ class Test_mosaic(test_tclean_base):
             'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4374,7 +4374,7 @@ class Test_mosaic(test_tclean_base):
         exp_pb_stats = {'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4388,8 +4388,8 @@ class Test_mosaic(test_tclean_base):
             # CAS-9386 update build100 serial
             #'npts_0.2': [True, 113589],
             #'npts_0.5': [True, 64574],
-            'npts_0.2': [True, 114034],
-            'npts_0.5': [True, 64662],
+            'npts_0.2': [1e-4, 114034],
+            'npts_0.5': [1e-4, 64662],
             'npts_real': [True, 201600],
             'fit': [False, [1.0977556311256869, 37.34956230416832, \
                     36.99775156676905]],
@@ -4404,7 +4404,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.36978024deg, -16.96392002deg], [1.1516arcsec, 0.9492arcsec], 90.00000000deg]')
 
         exp_psf_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4435,7 +4435,7 @@ class Test_mosaic(test_tclean_base):
         exp_resid_stats = {'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4461,7 +4461,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4485,7 +4485,7 @@ class Test_mosaic(test_tclean_base):
         sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
         exp_sumwt_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4507,7 +4507,7 @@ class Test_mosaic(test_tclean_base):
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         exp_wt_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4524,8 +4524,8 @@ class Test_mosaic(test_tclean_base):
             # CAS-9386 update build100 serial
             #'npts_0.2': [True, 113589],
             #'npts_0.5': [True, 64574],
-            'npts_0.2': [True, 114034],
-            'npts_0.5': [True, 64662],
+            'npts_0.2': [1e-4, 114034],
+            'npts_0.5': [1e-4, 64662],
             'npts_real': [True, 201600]}
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, \
@@ -4549,7 +4549,7 @@ class Test_mosaic(test_tclean_base):
             'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4578,7 +4578,7 @@ class Test_mosaic(test_tclean_base):
         exp_resid1_stats = {'npts': [True, 201600],
             # CAS-9386 update build100 serial
             #'npts_unmasked': [True, 113589.0],
-            'npts_unmasked': [True, 114034.0],
+            'npts_unmasked': [1e-4, 114034.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4604,7 +4604,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model1_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 201600.0],
+            'npts_unmasked': [1e-4, 201600.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4628,7 +4628,7 @@ class Test_mosaic(test_tclean_base):
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
 
         exp_sumwt1_stats = {'npts': [True, 1],
-            'npts_unmasked': [True, 1.0],
+            'npts_unmasked': [1e-4, 1.0],
             'freq_bin': [1e-10, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
