@@ -260,8 +260,8 @@
     </param>
 
     <param name="dtem_dh" type="any">
-        <shortdescription>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default) </shortdescription>
-        <description>temperature gradient. (K/km), e.g. -5.6 ,(&quot;&quot; = Tool default)
+        <shortdescription>temperature gradient [K/km], e.g. -5.6. (&quot;&quot; = Tool default) </shortdescription>
+        <description>temperature gradient [K/km], e.g. -5.6. (&quot;&quot; = Tool default)
 
                        The value is directly passed to initialization method for ATM model.
                        Float and string types are acceptable. Float value is interpreted as
@@ -276,8 +276,8 @@
     </param>
 
     <param name="h0" type="any">
-        <shortdescription>scale height for water. e.g. 2.0 ,(&quot;&quot; = Tool default)</shortdescription>
-        <description>scale height for water. e.g. 2.0 ,(&quot;&quot; = Tool default)
+        <shortdescription>scale height for water [km], e.g. 2.0. (&quot;&quot; = Tool default)</shortdescription>
+        <description>scale height for water [km], e.g. 2.0. (&quot;&quot; = Tool default)
 
                        The value is directly passed to initialization method for ATM model.
                        Float and string types are acceptable. Float value is interpreted as
@@ -330,8 +330,8 @@
 -->
 
     <param name="altitude" type="any" subparam="true" >
-        <shortdescription>Site altitude. (&quot;&quot; = value from MS.)</shortdescription>
-        <description>Site altitude.
+        <shortdescription>Site altitude [m]. (&quot;&quot; = value from MS.)</shortdescription>
+        <description>Site altitude [m].
 
                        The value is directly passed to initialization method for ATM model.
                        Float and string types are acceptable. Float value is interpreted as
@@ -346,8 +346,8 @@
     </param>
 
     <param name="temperature" type="any" subparam="true">
-        <shortdescription>Ambient temperature (K). (&quot;&quot; = value from MS.)</shortdescription>
-        <description>Ambient temperature (K).
+        <shortdescription>Ambient temperature [K]. (&quot;&quot; = value from MS.)</shortdescription>
+        <description>Ambient temperature [K].
 
                        The value is directly passed to initialization method for ATM model.
                        Float and string types are acceptable. Float value is interpreted as
@@ -362,8 +362,8 @@
     </param>
 
     <param name="pressure" type="any" subparam="true">
-        <shortdescription>Ambient pressure (mbar). (&quot;&quot; = value from MS.)</shortdescription>
-        <description>Ambient pressure (mbar).
+        <shortdescription>Ambient pressure [mbar]. (&quot;&quot; = value from MS.)</shortdescription>
+        <description>Ambient pressure [mbar].
 
                        The value is directly passed to initialization method for ATM model.
                        Float and string types are acceptable. Float value is interpreted as
