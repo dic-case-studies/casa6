@@ -1425,148 +1425,216 @@ Int SDGrid::getIndex(const MSPointingColumns& mspc, const Double& time,
 
 Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
 
-  Bool dointerp;
-  Bool nullPointingTable = false;
-  // const MSPointingColumns& act_mspc =
-  // interpolationRefFrame == InterpolationRefFrame::POINTING ?
-  // vb.msColumns().pointing() : convertedPointing_p ;
-  const MSPointingColumns& act_mspc = vb.msColumns().pointing();
-  nullPointingTable = (act_mspc.nrow() < 1);
-  Int pointIndex = -1;
-  if (!nullPointingTable) {
-    ///if(vb.newMS())  vb.newMS does not work well using msid
-    if (vb.msId() != msId_p) {
-      lastIndex_p = 0;
-      if (lastIndexPerAnt_p.nelements() < (size_t)vb.numberAnt()) {
-        lastIndexPerAnt_p.resize(vb.numberAnt());
-      }
-      lastIndexPerAnt_p = 0;
-      msId_p = vb.msId();
-      lastAntID_p = -1;
-    }
-    pointIndex = getIndex(act_mspc, vb.time()(row), -1.0, vb.antenna1()(row));
-    //Try again to locate a pointing within the integration
-    if (pointIndex < 0)
-      pointIndex = getIndex(act_mspc, vb.time()(row), vb.timeInterval()(row), vb.antenna1()(row));
-  }
-  if (!nullPointingTable && ((pointIndex < 0) || (pointIndex >= Int(act_mspc.time().nrow())))) {
-    ostringstream o;
-    o << "Failed to find pointing information for time " <<
-      MVTime(vb.time()(row)/86400.0) << ": Omitting this point";
-    logIO_p << LogIO::DEBUGGING << String(o) << LogIO::POST;
-    //    logIO_p << String(o) << LogIO::POST;
-    return false;
-  }
+    // Check POINTING table.
+    // If the calling code is iterating over millions of rows,
+    // we'll do that check millions of times ...
+    const MSPointingColumns& act_mspc = vb.msColumns().pointing();
+    const auto nPointings = act_mspc.nrow();
+    Bool havePointings = (nPointings >= 1);
 
-  dointerp = false;
-  if (!nullPointingTable && (vb.timeInterval()(row) < act_mspc.interval()(pointIndex))) {
-    dointerp = true;
-    if (!isSplineInterpolationReady) {
-      interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
-      isSplineInterpolationReady = true;
+    // We'll need to call these many times, so let's call them once for good
+    const auto rowTime = vb.time()(row);
+    const auto rowTimeInterval = vb.timeInterval()(row);
+    const auto rowAntenna1 = vb.antenna1()(row);
+
+    // 1. Try to find the index of a pointing recorded:
+    //     - for the antenna of specified row,
+    //     - at a time close enough to the time at which
+    //       data of specified row was taken using that antenna
+    Int pointingIndex = -1;
+    if (havePointings) {
+        // if (vb.newMS())  vb.newMS does not work well using msid
+        // Note about above comment:
+        // - vb.newMS probably works well
+        // - but if the calling code is iterating over the rows of a subchunk
+        //   vb.newMS returns true for all rows belonging to the first subchunk
+        //   of the first chunk of a new MS.
+
+        // ???
+        // What if vb changed since we were last called ?
+        // What if the calling code calls put and get, with different VisBuffers ?
+        if (vb.msId() != msId_p) {
+            lastIndex_p = 0; // no longer used
+            if (lastIndexPerAnt_p.nelements() < (size_t)vb.numberAnt()) {
+                lastIndexPerAnt_p.resize(vb.numberAnt());
+            }
+            lastIndexPerAnt_p = 0;
+            msId_p = vb.msId();
+            lastAntID_p = -1;
+        }
+
+        // Try to locate a pointing verifying for specified row:
+        // | POINTING.TIME - MAIN.TIME | <= 0.5*(MAIN.INTERVAL + tolerance)
+
+        // Try first using a tiny tolerance
+        constexpr Double useTinyTolerance = -1.0;
+        pointingIndex = getIndex(act_mspc, rowTime, useTinyTolerance , rowAntenna1);
+
+        const Bool foundPointing = (pointingIndex >= 0);
+        if (not foundPointing) {
+            // Try again using tolerance = MAIN.INTERVAL
+            pointingIndex = getIndex(act_mspc, rowTime, rowTimeInterval, rowAntenna1);
+        }
+
+        // Making the implicit type conversion explicit. 
+        // Conversion is safe because it occurs only when pointingIndex >= 0.
+        const Bool foundValidPointing = (foundPointing and (static_cast<rownr_t>(pointingIndex) < nPointings));
+
+        if (not foundValidPointing) {
+            ostringstream o;
+            o << "Failed to find pointing information for time "
+              << MVTime(rowTime/86400.0) << " : Omitting this point";
+
+            logIO_p << LogIO::DEBUGGING << String(o) << LogIO::POST;
+
+            return false;
+        }
+    }
+
+    // 2. At this stage we have a valid pointingIndex.
+    //    Decide now if we need to interpolate antenna's pointing direction
+    //    at data-taking time: 
+    //    we'll do so when data is sampled faster than pointings are recorded
+    const auto pointingInterval = act_mspc.interval()(pointingIndex);
+    const auto needInterpolation = (rowTimeInterval < pointingInterval);
+
+    // 3. Create interpolator if needed
+    Bool dointerp = false;
+    if (havePointings && needInterpolation) {
+        dointerp = true;
+        // Known points are the directions of the specified
+        // POINTING table column, 
+        // relative to the reference frame of the POINTING table
+        if (!isSplineInterpolationReady) {
+            interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
+            isSplineInterpolationReady = true;
+        } else {
+            if (not interpolator->inTimeRange(rowTime, rowAntenna1)) {
+                // setup spline interpolator for the current dataset (CAS-11261, 2018/5/22 WK)
+                delete interpolator;
+                interpolator = 0;
+                interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
+                // Missing isSplineInterpolationReady = true; ?
+            }
+        }
+    }
+
+    // 4. If it does not already exists, create the machine to convert pointings directions
+    //    and update the frame holding the measurements for this row
+    const MEpoch rowEpoch(Quantity(rowTime, "s"));
+    if (not pointingToImage) {
+        // Set the frame
+        const MPosition rowAntenna1Position = 
+                vb.msColumns().antenna().positionMeas()(rowAntenna1);
+
+        mFrame_p = MeasFrame(rowEpoch, rowAntenna1Position);
+
+        // Remember antenna id for next call,
+        // which may be done using a different VisBuffer ...
+        lastAntID_p = rowAntenna1;
+
+        // Not clear why we compute directions at this stage
+        if (havePointings) {
+            worldPosMeas = dointerp ? directionMeas(act_mspc, pointingIndex, rowTime)
+                                    : directionMeas(act_mspc, pointingIndex);
+        } else {
+            // Without pointings, this sets the direction to the phase center
+            worldPosMeas = vb.direction1()(row);
+        }
+
+        // Make a machine to convert from the worldPosMeas to the output
+        // Direction Measure type for the relevant frame
+        MDirection::Ref outRef(directionCoord.directionType(), mFrame_p);
+        pointingToImage = new MDirection::Convert(worldPosMeas, outRef);
+        if (not pointingToImage) {
+            logIO_p << "Cannot make direction conversion machine" << LogIO::EXCEPTION;
+        }
     } else {
-      if (!interpolator->inTimeRange(vb.time()(row), vb.antenna1()(row))) {
-	// setup spline interpolator for the current dataset (CAS-11261, 2018/5/22 WK)
-	delete interpolator;
-	interpolator = 0;
-	interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
-      }
-    }
-  }
+        // Reset the frame
+        // Always reset epoch
+        mFrame_p.resetEpoch(rowEpoch);
 
-  MEpoch epoch(Quantity(vb.time()(row), "s"));
-  if (!pointingToImage) {
-    // Set the frame
-    MPosition pos;
-    lastAntID_p = vb.antenna1()(row);
-    pos = vb.msColumns().antenna().positionMeas()(lastAntID_p);
-    mFrame_p = MeasFrame(epoch, pos);
-    if (!nullPointingTable) {
-      if (dointerp) {
-        worldPosMeas = directionMeas(act_mspc, pointIndex, vb.time()(row));
-      } else {
-        worldPosMeas = directionMeas(act_mspc, pointIndex);
-      }
+        // Reset antenna position only if antenna changed since we were last called
+        if (lastAntID_p != rowAntenna1) {
+            // Debug messages
+            if (lastAntID_p == -1) {
+                // antenna ID is unset
+                logIO_p << LogIO::DEBUGGING
+                    << "updating antenna position for conversion: new MS ID " << msId_p
+                    << ", antenna ID " << rowAntenna1 << LogIO::POST;
+            } else {
+                logIO_p << LogIO::DEBUGGING
+                    << "updating antenna position for conversion: MS ID " << msId_p
+                    << ", last antenna ID " << lastAntID_p
+                    << ", new antenna ID " << rowAntenna1 << LogIO::POST;
+            }
+            const MPosition rowAntenna1Position = 
+                      vb.msColumns().antenna().positionMeas()(rowAntenna1);
+
+            mFrame_p.resetPosition(rowAntenna1Position);
+
+            // Remember antenna id for next call,
+            // which may be done using a different VisBuffer ...
+            lastAntID_p = rowAntenna1;
+        }
+    }
+
+    // 5. First: interpolate pointing direction if needed,
+    //    Then: convert the result to image's reference frame
+    if (havePointings) {
+        if (dointerp) {
+            MDirection newdir = directionMeas(act_mspc, pointingIndex, rowTime);
+            worldPosMeas = (*pointingToImage)(newdir);
+
+            // Debug stuff
+            //Vector<Double> newdirv = newdir.getAngle("rad").getValue();
+            //cerr<<"dir0="<<newdirv(0)<<endl;
+
+            //fprintf(pfile,"%.8f %.8f \n", newdirv(0), newdirv(1));
+            //printf("%lf %lf \n", newdirv(0), newdirv(1));
+        } else {
+            worldPosMeas = (*pointingToImage)(directionMeas(act_mspc, pointingIndex));
+        }
     } else {
-      worldPosMeas = vb.direction1()(row);
+            // Without pointings, this converts the direction of the phase center
+            worldPosMeas = (*pointingToImage)(vb.direction1()(row));
     }
 
-    //worldPosMeas=directionMeas(act_mspc, pointIndex);
-    // Make a machine to convert from the worldPosMeas to the output
-    // Direction Measure type for the relevant frame
-    MDirection::Ref outRef(directionCoord.directionType(), mFrame_p);
-    pointingToImage = new MDirection::Convert(worldPosMeas, outRef);
-    if (!pointingToImage) {
-      logIO_p << "Cannot make direction conversion machine" << LogIO::EXCEPTION;
+    // 6. Convert world position coordinates to image pixel coordinates
+    Bool result = directionCoord.toPixel(xyPos, worldPosMeas);
+    if (!result) {
+        logIO_p << "Failed to find a pixel for pointing direction of "
+            << MVTime(worldPosMeas.getValue().getLong("rad")).string(MVTime::TIME) 
+            << ", " << MVAngle(worldPosMeas.getValue().getLat("rad")).string(MVAngle::ANGLE) 
+            << LogIO::WARN << LogIO::POST;
+        return false;
     }
 
-  } else {
-    mFrame_p.resetEpoch(epoch);
-    if (lastAntID_p != vb.antenna1()(row)) {
-      if (lastAntID_p == -1) {
-        // antenna ID is unset
-        logIO_p << LogIO::DEBUGGING
-          << "update antenna position for conversion: new MS ID " << msId_p
-          << ", antenna ID " << vb.antenna1()(row) << LogIO::POST;
-      } else {
-        logIO_p << LogIO::DEBUGGING
-          << "update antenna position for conversion: MS ID " << msId_p
-          << ", last antenna ID " << lastAntID_p
-          << ", new antenna ID " << vb.antenna1()(row) << LogIO::POST;
-      }
-      MPosition pos;
-      lastAntID_p = vb.antenna1()(row);
-      pos = vb.msColumns().antenna().positionMeas()(lastAntID_p);
-      mFrame_p.resetPosition(pos);
+    // 7. Handle moving sources
+    if ((pointingDirCol_p == "SOURCE_OFFSET") || (pointingDirCol_p == "POINTING_OFFSET")) {
+        // It makes no sense to track in offset coordinates...
+        // hopefully the user sets the image coords right
+        fixMovingSource_p = false;
     }
-  }
 
-  if (!nullPointingTable) {
-    if (dointerp) {
-      MDirection newdir = directionMeas(act_mspc, pointIndex, vb.time()(row));
-      worldPosMeas = (*pointingToImage)(newdir);
-      //Vector<Double> newdirv = newdir.getAngle("rad").getValue();
-      //cerr<<"dir0="<<newdirv(0)<<endl;
+    if (fixMovingSource_p) {
+        if (xyPosMovingOrig_p.nelements() < 2) {
+            directionCoord.toPixel(xyPosMovingOrig_p, firstMovingDir_p);
+        }
+        //via HADEC or AZEL for parallax of near sources
+        MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
+        MDirection tmphadec = MDirection::Convert(movingDir_p, outref1)();
+        MDirection actSourceDir = (*pointingToImage)(tmphadec);
+        Vector<Double> actPix;
+        directionCoord.toPixel(actPix, actSourceDir);
 
-    //fprintf(pfile,"%.8f %.8f \n", newdirv(0), newdirv(1));
-    //printf("%lf %lf \n", newdirv(0), newdirv(1));
-    } else {
-      worldPosMeas = (*pointingToImage)(directionMeas(act_mspc, pointIndex));
+        //cout << row << " scan " << vb.scan()(row) << "xyPos " << xyPos 
+        //     << " xyposmovorig " << xyPosMovingOrig_p << " actPix " << actPix << endl;
+
+        xyPos = xyPos + xyPosMovingOrig_p - actPix;
     }
-  } else {
-    worldPosMeas = (*pointingToImage)(vb.direction1()(row));
-  }
 
-  Bool result = directionCoord.toPixel(xyPos, worldPosMeas);
-  if (!result) {
-    logIO_p << "Failed to find a pixel for pointing direction of "
-	    << MVTime(worldPosMeas.getValue().getLong("rad")).string(MVTime::TIME) << ", " << MVAngle(worldPosMeas.getValue().getLat("rad")).string(MVAngle::ANGLE) << LogIO::WARN << LogIO::POST;
-    return false;
-  }
-
-  if ((pointingDirCol_p == "SOURCE_OFFSET") || (pointingDirCol_p == "POINTING_OFFSET")) {
-    //there is no sense to track in offset coordinates...hopefully the
-    //user set the image coords right
-    fixMovingSource_p = false;
-  }
-  if (fixMovingSource_p) {
-    if (xyPosMovingOrig_p.nelements() < 2) {
-      directionCoord.toPixel(xyPosMovingOrig_p, firstMovingDir_p);
-    }
-    //via HADEC or AZEL for parallax of near sources
-    MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
-    MDirection tmphadec=MDirection::Convert(movingDir_p, outref1)();
-    MDirection actSourceDir=(*pointingToImage)(tmphadec);
-    Vector<Double> actPix;
-    directionCoord.toPixel(actPix, actSourceDir);
-
-    //cout << row << " scan " << vb.scan()(row) << "xyPos " << xyPos << " xyposmovorig " << xyPosMovingOrig_p << " actPix " << actPix << endl;
-
-    xyPos=xyPos+xyPosMovingOrig_p-actPix;
-  }
-
-  return result;
-  // Convert to pixel coordinates
+    return result;
 }
 
 MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index){
