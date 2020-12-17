@@ -4,6 +4,7 @@ import os
 import re
 import numpy
 import shutil
+import string
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
