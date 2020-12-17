@@ -99,16 +99,20 @@ grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_
         std::lock_guard<std::mutex> lock(state->set_values);
         state->userChoice_p = req->name( );		// set input
         state->input_received = true;			// set whenever state object is modified
-        if ( state->input_needed )
+        if ( state->input_needed ) {
+            state->input_needed = false;		// prevent setting future twice
             state->output.set_value(true);		// signal controlling thread that wait is over
+        }
 
     // Manage buttons from: Report Plot Window
     } else if ( req->name( ) == "Next" || req->name( ) == "Prev" || req->name( ) == "Quit") {
         std::lock_guard<std::mutex> lock(state->set_values);
         state->userChoice_p = req->name( );		// set input
         state->input_received = true;			// set whenever state object is modified
-        if ( state->input_needed )
+        if ( state->input_needed ) {
+            state->input_needed = false;		// prevent setting future twice
             state->output.set_value(true);		// signal controlling thread that wait is over
+        }
     }
 
     return grpc::Status::OK;
@@ -131,15 +135,19 @@ grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_
         state->userChoice_p = "Continue";
         state->userFixA1_p = (req->state( ) == 0) ? "" : state->antenna1_p;
         state->input_received = true;
-        if ( state->input_needed )
+        if ( state->input_needed ) {
+            state->input_needed = false;		// prevent setting future twice
             state->output.set_value(true);		// signal controlling thread that wait is over
+        }
     } else if ( req->name( ) == "FixAntenna2" ) {
         std::lock_guard<std::mutex> lock(state->set_values);
         state->userChoice_p = "Continue";
         state->userFixA2_p = (req->state( ) == 0 ) ? "" : state->antenna2_p;
         state->input_received = true;
-        if ( state->input_needed )
+        if ( state->input_needed ) {
+            state->input_needed = false;		// prevent setting future twice
             state->output.set_value(true);		// signal controlling thread that wait is over
+        }
     }
     return grpc::Status::OK;
 }
