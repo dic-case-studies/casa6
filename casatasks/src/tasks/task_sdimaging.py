@@ -480,7 +480,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             img_file = self.outfile + img_suffix
             msg_fmt = string.Template("$state {img_type} image {img_file}".format(
                                 img_type=img_type,
-                                img_file=img_file)
+                                img_file=img_file))
             casalog.post(msg_fmt.substitute(state="Generating"), "INFO")
             self.imager.makeimage(type=img_type, image=img_file)
             if not os.path.exists(img_file):
