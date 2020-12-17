@@ -141,7 +141,6 @@ def importgmrt( fitsfile, flagfile, vis ):
         myms = ms( )
         aflocal = agentflagger( )
     else:
-        #    mytb, myms, myfg = gentools(['tb', 'ms', 'fg'])
         mytb, myms = gentools(['tb', 'ms'])
         aflocal = casac.agentflagger()
 
@@ -228,11 +227,8 @@ def importgmrt( fitsfile, flagfile, vis ):
     #
     casalog.post( 'Starting the flagging ...', 'NORMAL' )
                                           
-        # First lets save the flag information as we got it from the
-        # flag file.
-#    myfg.open( vis )
-#    myfg.saveflagversion( 'none', 'No flagging performed yet' )
-#    myfg.done()
+    # First lets save the flag information as we got it from the
+    # flag file.
     aflocal.open( vis )
     aflocal.saveflagversion( 'none', 'No flagging performed yet' )
     aflocal.done()
@@ -369,16 +365,9 @@ def importgmrt( fitsfile, flagfile, vis ):
 #                              +antStr+"', timerange='"+timerange+"' )", 'NORMAL')
                 casalog.post( "flagdata( "+vis+", mode='manual', antenna='"
                               +antStr+"', timerange='"+timerange+"' )", 'NORMAL')
-                #flagdata( vis, mode='manualflag', selectdata=True, \
+                #flagdata( vis, mode='manual', selectdata=True, \
                 #            antenna=antStr, timerange=timerange, \
                 #            flagbackup=False )
-#                myfg.open( vis )
-#                #print "myfg.setdata( time='",timerange,"' )"
-#                myfg.setdata( time=timerange )
-#                #print "myfg.setmanualflags( baseline='",antStr,"', time='",timerange,"' )"
-#                myfg.setmanualflags( baseline=antStr, time=timerange, unflag=False, clipexpr='' )
-#                myfg.run()
-#                myfg.done()
                 aflocal.open(vis)
                 aflocal.selectdata(timerange=timerange)
                 aflocal.parsemanualparameters(antenna=antStr, timerange=timerange)
@@ -395,10 +384,7 @@ def importgmrt( fitsfile, flagfile, vis ):
             
         FLAG_FILE.close()
 
-        # Save a Flag version so we can revert back to it if we wish
-#    myfg.open( vis )
-#    myfg.saveflagversion( 'import', 'Flagged the data from the GMRT flag file' )
-#    myfg.done()
+    # Save a Flag version so we can revert back to it if we wish
     aflocal.open( vis )
     aflocal.saveflagversion( 'import', 'Flagged the data from the GMRT flag file' )
     aflocal.done()

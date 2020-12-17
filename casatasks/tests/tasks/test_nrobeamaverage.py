@@ -1,11 +1,10 @@
-import shutil
+from __future__ import absolute_import
+from __future__ import print_function
+
 import unittest
 import os
-import numpy
 import math
 import sys
-import filecmp
-import glob
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import nrobeamaverage
@@ -60,7 +59,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception as e:
-            print("Error comparing", val, "to", expval)
+            print("Error comparing {} to {}".format(val, expval))
             raise
 
 class test_nrobeamaverage(unittest.TestCase):

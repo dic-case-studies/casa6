@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import glob
+import copy
 import os
 import sys
 import shutil
 import unittest
 import numpy
 import math
-import copy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -19,11 +19,9 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
-    from casatestutils import selection_syntax
-
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #from testhelper import copytree_ignore_subversion, TableCacheValidator
-    from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
+    from casatestutils import selection_syntax
+    from casatestutils.testhelper import TableCacheValidator
 
     # default isn't used in casatasks
     def default(atask):
@@ -52,18 +50,21 @@ else:
     except:
         import tests.selection_syntax as selection_syntax
 
-    #try:
-    #    from . import testutils
-    #except:
-    #    from tests.testutils import copytree_ignore_subversion, TableCacheValidator
-    from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
+    try:
+        from casatestutils.testhelper import TableCacheValidator
+    except:
+        from tests.testutils import TableCacheValidator
 
     from tsdimaging import tsdimaging as sdimaging
     from sdutil import tbmanager, toolmanager, table_selector
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    casaRoot = os.environ.get('CASAPATH').split()[0]
     def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+        subdir_hints = ['data', 'casa-data-req', 'data/casa-data-req']
+        for subdir in subdir_hints:
+            path = os.path.join(casaRoot, subdir, apath)
+            if os.path.exists(path):
+                return path
 
     from task_tsdimaging import image_suffix
 
@@ -136,7 +137,7 @@ def remove_table(filename):
     """
     if filename == '.' or filename[:2] == '..':
         raise Exception("Dangerous! Attempting to remove '" + filename + "'!!")
-    
+
     if os.path.exists(filename):
         if os.path.isdir(filename):
             shutil.rmtree(filename)
@@ -440,6 +441,12 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         self.assertNotEqual(pos,-1,
                             msg='Unexpected exception was thrown: {0}'.format(str(the_exception)))
 
+    def run_parameter_verification_test(self, task_param, expected_msg, expected_type=RuntimeError):
+        if is_CASA6:
+            self.run_exception_case(task_param, expected_msg, expected_type)
+        else:
+            self.assertFalse(sdimaging(**task_param))
+
 
 ###
 # Test on bad parameter settings
@@ -455,9 +462,9 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-        
+
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
 
         default(sdimaging)
         self.task_param = dict(infiles=self.rawfile,mode='channel',
@@ -472,7 +479,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def tearDown(self):
         remove_table(self.rawfile)
         remove_tables_starting_with(self.prefix)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def test000(self):
@@ -480,14 +487,14 @@ class sdimaging_test0(sdimaging_unittest_base):
         # argument verification error
         task_param = {}
         msg = 'list index out of range'
-        self.run_exception_case(task_param, msg, expected_type=IndexError)
+        self.run_parameter_verification_test(task_param, msg, expected_type=IndexError)
 
     def test001(self):
         """Test001: Bad mode"""
         # argument verification error
         task_param = dict(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
         msg = 'unallowed'
-        self.run_exception_case(task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test002(self):
         """Test002: Bad field id"""
@@ -512,14 +519,14 @@ class sdimaging_test0(sdimaging_unittest_base):
         # argument verification error
         self.task_param['stokes'] = 'BAD'
         msg = 'unallowed'
-        self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(self.task_param, msg, expected_type=AssertionError)
 
     def test006(self):
         """Test006: Bad gridfunction"""
         # argument verification error
         task_param = dict(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
         msg = 'unallowed'
-        self.run_exception_case(task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test007(self):
         """Test007: Bad scanlist"""
@@ -531,7 +538,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         """Test008: Existing outfile with overwrite=False"""
         outfile = self.outfile + image_suffix
         f=open(outfile, 'w')
-        print('existing file',file=f)
+        print('existing file', file=f)
         f.close()
         self.task_param['overwrite'] = False
         msg = 'Output file \'{0}\' exists.'.format(outfile)
@@ -570,7 +577,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         # argument verification error
         task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
         msg = 'unallowed'
-        self.run_exception_case(task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test012(self):
         """Test012: Bad imsize"""
@@ -599,7 +606,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         """Test015: negative minweight"""
         task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
         msg = 'min value is 0'
-        self.run_exception_case(task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
 
 ###
@@ -630,7 +637,8 @@ class sdimaging_test1(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
+
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                spw='0',
@@ -957,7 +965,7 @@ class sdimaging_test2(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='',
@@ -1092,7 +1100,7 @@ class sdimaging_test3(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='',
@@ -1223,7 +1231,7 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,outfile=self.outfile,
@@ -1368,7 +1376,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
         for name in self.rawfiles:
             remove_table(name)
-            shutil.copytree(os.path.join(self.datapath,name), name)
+            shutil.copytree(os.path.join(self.datapath, name), name)
         remove_table(self.outfile)
         # Common task parameters of the class
         self.task_param = dict(mode=self.mode_def,intent="",
@@ -1378,12 +1386,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
         default(sdimaging)
         remove_tables_starting_with(self.prefix)
-        
+
     def tearDown(self):
         for name in self.rawfiles:
             remove_table(name)
         remove_tables_starting_with(self.prefix)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, task_param, refstats, shape,
@@ -2181,7 +2189,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
         default(sdimaging)
         with tbmanager(self.rawfile) as tb:
@@ -2249,12 +2257,12 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _set_data_ranges(self, chanmerge=False):
         xn = 2
-        xw = self.imsize[0]//xn
+        xw = self.imsize[0] // xn
         self.x_range = []
         for i in range(xn):
             self.x_range.append([xw*i, xw*(i+1)])
         yn = 3
-        yw = self.imsize[1]//yn
+        yw = self.imsize[1] // yn
         self.y_range = []
         for i in range(yn):
             self.y_range.append([yw*i, yw*(i+1)])
@@ -2291,8 +2299,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refmask(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]//2]:
-                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
+            for i in [0, self.imsize[0] // 2]:
+                for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('PagedArray', 0)[i][j][0][k].real)
@@ -2301,8 +2309,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refweight(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [0, self.imsize[0]//2]:
-                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
+            for i in [0, self.imsize[0] // 2]:
+                for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
                     for k in k_range:
                         res.append(tb.getcell('map', 0)[i][j][0][k].real)
@@ -2311,8 +2319,8 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _get_refvalues(self, file, chanmerge=False):
         res = []
         with tbmanager(file) as tb:
-            for i in [self.imsize[0]//2, 0]:
-                for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
+            for i in [self.imsize[0] // 2, 0]:
+                for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     irow = self.imsize[0]*j+i
                     if chanmerge:
                         if (tb.getcell('FLAG', irow)[0]==True).all():
@@ -2347,6 +2355,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                         diff_value = abs(val[i][j][0][k]-ref_value)
                         self.assertTrue(diff_value < tol)
 
+
 class sdimaging_test_polflag(sdimaging_unittest_base):
     """
     Test imaging of an MS one of polarization (XX) is completely flagged.
@@ -2379,7 +2388,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.infiles)
-        shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
+        shutil.copytree(os.path.join(self.datapath, self.infiles), self.infiles)
         remove_tables_starting_with(self.prefix)
 
         # Common task parameters of the class
@@ -2393,7 +2402,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
     def tearDown(self):
         remove_table(self.infiles)
-        # Since the data is flagged by flagdata, flagversions directory 
+        # Since the data is flagged by flagdata, flagversions directory
         # is automatically created. This must be removed
         flagversions = self.infiles + '.flagversions'
         remove_table(flagversions)
@@ -2477,6 +2486,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         self._checkstats(outfile,refstats,atol=1.e-5,region=box)
 
+
 class sdimaging_test_mslist(sdimaging_unittest_base):
     """
     Test more than one MSes as inputs
@@ -2522,7 +2532,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
         remove_tables_starting_with(self.outfile)
         for name in self.infiles:
             remove_table(name)
-            shutil.copytree(os.path.join(self.datapath,self.org_ms), name)
+            shutil.copytree(os.path.join(self.datapath, self.org_ms), name)
 
         default(sdimaging)
         self.default_param = dict(infiles = self.infiles,
@@ -2541,7 +2551,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             remove_tables_starting_with(self.outfile)
             for name in self.infiles:
                 remove_table(name)
-                    
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, task_param=None,refstats=None):
@@ -2632,7 +2642,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.infiles)
-        shutil.copytree(os.path.join(self.datapath,self.infiles), self.infiles)
+        shutil.copytree(os.path.join(self.datapath, self.infiles), self.infiles)
         default(sdimaging)
         self.param = self.param_base.copy()
 
@@ -2644,7 +2654,9 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
     def run_test(self, restfreq_ref, beam_ref, cell_ref, stats, **kwargs):
         self.param.update(**kwargs)
-        sdimaging(**self.param)
+        status = sdimaging(**self.param)
+        if status is False:
+            return status
         stats.pop('sumsq')
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
@@ -2739,10 +2751,17 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
-        with self.assertRaises(AssertionError):
-            self.run_test(restfreq, beam_ref, cell_ref, stats,
-                          restfreq=restfreq,imsize=[8,8], outframe='lSrK')
-        print('test_unallowed_outframe: failed as expected')
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                self.run_test(restfreq, beam_ref, cell_ref, stats,
+                              restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+            print('test_unallowed_outframe: failed as expected')
+        else:
+            self.assertFalse(
+                self.run_test(restfreq, beam_ref, cell_ref, stats,
+                              restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+            )
+
 
 ###
 #
@@ -2781,11 +2800,10 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                   'gridfunction': 'BOX',
                   'outfile': outfile,
                   'intent': ""}
-    
-    
+
     def __copy_table(self, f):
         remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2800,7 +2818,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         remove_table(self.infiles_azel)
         #remove_table(self.outfile)
         remove_tables_starting_with(self.outfile)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -2828,10 +2846,10 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
             blc_ref[0] -= 360.0
         #self.verify_mapextent(npix_ref, blc_ref, trc_ref)
         # resulting map contain reference position
-        print('npix', npix, 'npix_ref', npix_ref)
-        print('blc', blc, 'blc_ref', blc_ref)
-        print('trc', trc, 'trc_ref', trc_ref)
-        print('extent', extent)
+        print('npix {} npix_ref {}'.format(npix, npix_ref))
+        print('blc {} blc_ref {}'.format(blc, blc_ref))
+        print('trc {} trc_ref {}'.format(trc, trc_ref))
+        print('extent {}'.format(extent))
         # check if map area covers whole pointing data
         # this is done by comparing blc and trc with their references
         # that are usually computed from actual distribution of
@@ -2941,11 +2959,10 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                   'gridfunction': 'BOX',
                   'outfile': outfile,
                   'intent': ""}
-    
-    
+
     def __copy_table(self, f):
         remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2957,7 +2974,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
     def tearDown(self):
         remove_table(self.infiles)
         remove_tables_starting_with(self.outfile)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3098,7 +3115,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('regression/unittest/sdimaging')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -3111,10 +3128,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     infiles = []
     outfiles = [] # have a list of outfiles as multiple task execution may occur in a test
 
-    
     def __copy_table(self, f):
         remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3144,7 +3160,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
         status = sdimaging(infiles=infiles, outfile=outfile, **self.params)
         self.assertIsNone(status, msg = 'sdimaging failed to execute')
-        outfile = outfile + '.image'
+        outfile = outfile.rstrip('/') + '.image'
         self._checkfile(outfile)
         self._check_weight_image(outfile)
 
@@ -3243,7 +3259,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
     does work, while it should be hexagonal if linear interpolation, the old algorithm, is
     applied.
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('regression/unittest/sdimaging')
     params = dict(infiles = ['pointing6.ms'],
                   outfile = "pointing6.out",
                   antenna = "0",
@@ -3256,10 +3272,9 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
                   pointingcolumn = "direction")
     outfile = params['outfile']
 
-    
     def __copy_table(self, f):
         remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3272,7 +3287,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
         for infile in self.params['infiles']:
             remove_table(infile)
         remove_tables_starting_with(self.outfile)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3361,12 +3376,12 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         remove_table(outfile)
         remove_table(self.outfile + '.weight')
-        #remove_table(self.outfile + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
+        #remove_table(self.outfile + '.psf') # CAS-10893 TODO: uncomment once true PSF image is available
         outfile_ref = self.outfile_ref + image_suffix
         remove_table(outfile_ref)
         remove_table(self.outfile_ref + '.weight')
-        #remove_table(self.outfile_ref + '.psf') #CAS-10893 TODO: uncomment once true PSF image is available
-    
+        #remove_table(self.outfile_ref + '.psf') # CAS-10893 TODO: uncomment once true PSF image is available
+
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):
             self._test_clipping([infiles], is_clip_effective)
@@ -3375,7 +3390,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
-            copytree_ignore_subversion(self.datapath, infile)
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
 
         # image with clipping
         outfile = self.outfile
@@ -3436,7 +3451,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                 finally:
                     mymsmd.close()
 
-            print('### gridmeta', gridmeta)
+            print('### gridmeta {}'.format(gridmeta))
             for ira in range(imsize):
                 for idec in range(imsize):
                     meta = gridmeta[ira][idec]
@@ -3454,22 +3469,22 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                     data = numpy.asarray(grid[ira][idec], dtype=numpy.float64)
                     if len(data) < 3:
                         continue
-                    print('### ira', ira, 'idec', idec, 'data', data)
+                    print('### ira {} idec {} data {}'.format(ira, idec, data))
                     for ichan in range(data.shape[1]):
                         slice = data[:,ichan]
                         argmin = numpy.argmin(slice)
                         argmax = numpy.argmax(slice)
-                        print('### ira', ira, 'idec', idec, 'argmin', argmin, 'argmax', argmax)
+                        print('### ira {} idec {} argmin {} argmax {}'.format(ira, idec, argmin, argmax))
                         for imeta in (argmin, argmax):
                             infile, irow = gridmeta[ira][idec][imeta]
                             mytb.open(infile, nomodify=False)
                             try:
-                                print('### clip', infile, 'row', irow, 'chan', ichan, 'data', mytb.getcell('FLOAT_DATA', irow))
+                                print('### clip {} row {} chan {} data {}'.format(infile, irow, ichan, mytb.getcell('FLOAT_DATA', irow)))
                                 #mytb.putcell('FLAG_ROW', irow, True)
                                 flag = mytb.getcell('FLAG', irow)
-                                print('### flag (before)', flag)
+                                print('### flag (before) {}'.format(flag))
                                 flag[0,ichan] = True
-                                print('### flag (after)', flag)
+                                print('### flag (after) {}'.format(flag))
                                 mytb.putcell('FLAG', irow, flag)
                             finally:
                                 mytb.close()
@@ -3495,10 +3510,10 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         reference_mask = myia.getchunk(getmask=True)
         myia.close()
 
-        print('### result', result.flatten())
-        print('### mask', result_mask.flatten())
-        print('### reference', reference.flatten())
-        print('### mask', reference_mask.flatten())
+        print('### result {}'.format(result.flatten()))
+        print('### mask {}'.format(result_mask.flatten()))
+        print('### reference {}'.format(reference.flatten()))
+        print('### mask {}'.format(reference_mask.flatten()))
 
         self.assertTrue(numpy.all(result_mask == reference_mask))
 
@@ -3598,7 +3613,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.cache_validator = TableCacheValidator()
 
         remove_table(self.rawfile)
-        shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
+        shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
         self.task_param = dict(infiles=self.rawfile,mode=self.mode,
                                outfile=self.outfile,intent='OBSERVE_TARGET_ON_SOURCE',
@@ -3638,7 +3653,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
         msg = 'unallowed'
-        self.run_exception_case(self.task_param, msg, expected_type=AssertionError)
+        self.run_parameter_verification_test(self.task_param, msg, expected_type=AssertionError)
         outfile = self.task_param['outfile'].rstrip('/') + '.image'
         self.assertFalse(os.path.exists(outfile))
 
@@ -3759,16 +3774,16 @@ class sdimaging_test_output(sdimaging_unittest_base):
     """
     Tests to check if only appropriate images are output
     """
+    datapath = ctsys_resolve('regression/unittest/sdimaging')
     params = dict(infiles = ['selection_misc.ms'],
                   outfile = "outmisc",
                   imsize = [80,80], # to suppress warning messages
                   intent = '')
     outfile = params['outfile']
 
-    
     def __copy_table(self, f):
         remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3781,7 +3796,7 @@ class sdimaging_test_output(sdimaging_unittest_base):
         for infile in self.params['infiles']:
             remove_table(infile)
         remove_tables_starting_with(self.outfile)
-        
+
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, **kwargs):
@@ -3799,10 +3814,10 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
         # check data that must be output
         for suffix in ['.image', '.weight']:
-            self.assertTrue(os.path.exists(self.outfile+suffix), msg=suffix+' not found.')
+            self.assertTrue(os.path.exists(self.outfile + suffix), msg=suffix+' not found.')
         # check data that must not be output
         for suffix in ['.sumwt', '.psf']:
-            self.assertFalse(os.path.exists(self.outfile+suffix), msg=suffix+' exists though it should not.')
+            self.assertFalse(os.path.exists(self.outfile + suffix), msg=suffix+' exists though it should not.')
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
@@ -3932,8 +3947,10 @@ def calc_mapproperty(statistics):
 
 def suite():
     return [
-            sdimaging_test0,sdimaging_test1,
-            sdimaging_test2,sdimaging_test3,
+            sdimaging_test0,
+            sdimaging_test1,
+            sdimaging_test2,
+            sdimaging_test3,
             sdimaging_test_autocoord,
             sdimaging_test_selection,
             sdimaging_test_flag,
@@ -3948,6 +3965,7 @@ def suite():
             sdimaging_test_output,
             sdimaging_antenna_move
             ]
+
 
 if is_CASA6:
     if __name__ == '__main__':

@@ -17,11 +17,10 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
-    from casatestutils import selection_syntax
-
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #from testhelper import copytree_ignore_subversion, TableCacheValidator
-    from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
+    from casatestutils import selection_syntax
+    from casatestutils.testhelper import TableCacheValidator
+
     # default isn't used in casatasks
     def default(atask):
         pass
@@ -29,8 +28,6 @@ if is_CASA6:
     ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
-    from tasks import *
-    from taskinit import *
     from taskinit import metool as measures
     from taskinit import qatool as quanta
     from taskinit import tbtool as table
@@ -44,19 +41,22 @@ else:
     except:
         import tests.selection_syntax as selection_syntax
 
-    #try:
-    #    from . import testutils
-    #except:
-    #    from tests.testutils import copytree_ignore_subversion, TableCacheValidator
-
-    from casatestutils.testhelper import copytree_ignore_subversion, TableCacheValidator
+    try:
+        from casatestutils.testhelper import TableCacheValidator
+    except:
+        from tests.testutils import TableCacheValidator
 
     from sdimaging import sdimaging
+    from flagdata import flagdata
     from sdutil import tbmanager, toolmanager, table_selector
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    casaRoot = os.environ.get('CASAPATH').split()[0]
     def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+        subdir_hints = ['data', 'casa-data-req', 'data/casa-data-req']
+        for subdir in subdir_hints:
+            path = os.path.join(casaRoot, subdir, apath)
+            if os.path.exists(path):
+                return path
 
 _ia = image()
 _rg = regionmanager()
@@ -64,6 +64,7 @@ me = measures()
 qa = quanta()
 tb = table()
 ms = mstool()
+
 
 #
 # Unit test of sdimaging task.
@@ -572,11 +573,12 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test015(self):
         """Test015: negative minweight"""
-        success = False
+        success = True
         try:
-            sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
-        except: success = True
-        self.assertTrue(success)
+            success = sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        except:
+            success = False
+        self.assertFalse(success)
 
 
 ###
@@ -2725,7 +2727,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2867,7 +2869,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3037,7 +3039,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
-            copytree_ignore_subversion(self.datapath, infile)
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
 
         # image with clipping
         outfile = self.outfile
