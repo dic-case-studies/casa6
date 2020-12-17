@@ -143,6 +143,7 @@ class PyDeconvolver:
 
     def hasConverged(self):
          # Merge peak-res info from all fields to decide iteration parameters
+         time0=time.time()
          self.IBtool.resetminorcycleinfo()
          self.initrecs = []
          for immod in range(0,self.NF):
@@ -183,12 +184,14 @@ class PyDeconvolver:
                               shutil.move(prevmask,self.allimpars[str(immod)]['imagename']+'.mask')
                           casalog.post("[" + str(self.allimpars[str(immod)]['imagename']) + "] : Reverting output mask to one that was last used ", "INFO")
 
+         casalog.post("***Time taken in checking hasConverged "+str(time.time()-time0), "INFO3")
          return (stopflag>0)
 
 #############################################
     def updateMask(self):
         # Setup mask for each field ( input mask, and automask )
         maskchanged = False
+        time0=time.time()
         for immod in range(0,self.NF):
             maskchanged = maskchanged | self.SDtools[immod].setupmask() 
         
@@ -196,6 +199,8 @@ class PyDeconvolver:
         ig2maskchanged, nil, forcestop = self.runInteractiveGUI2()
         maskchanged = maskchanged | ig2maskchanged
 
+        time1=time.time();
+        casalog.post("Time to update mask "+str(time1-time0)+"s", "INFO3")
         ## Return a flag to say that the mask has changed or not.
         return maskchanged, forcestop
 
@@ -213,17 +218,12 @@ class PyDeconvolver:
                     self.stopMinor[akey] = abs( self.stopMinor[akey] )
 
             #Check if force-stop has happened while savemodel != "none".
-            # If so, warn the user that unless the Last major cycle has happened,
-            # the model won't have been written into the MS, and to do a 'predict' run.
             forcestop=True;
             for akey in self.stopMinor:
-                forcestop = forcestop and self.stopMinor[akey]==3
-
-            if self.iterpars['savemodel'] != "none":
                 # Predicting the model requires knowledge about the normalization parameters.
                 # Instead of predicting the model, return the value of forcestop so that the
                 # major cycle has a chance to predict the model.
-                pass
+                forcestop = forcestop and self.stopMinor[akey]==3
 
         #print('Mask changed during interaction  : ', maskchanged)
         return ( maskchanged or forcestop, maskchanged, forcestop )
