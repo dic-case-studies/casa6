@@ -255,17 +255,17 @@ def inspect_flag_cmd(msname):
 
 
 def sdatmcor(
-        infile, datacolumn, outfile, overwrite,
-        field, spw, scan, antenna,
-        correlation, timerange, intent,
-        observation, feed, msselect,
-        outputspw,
-        gainfactor,
-        dtem_dh, h0, atmtype,
-        atmdetail,
-        altitude, temperature, pressure, humidity, PWV,
-        dp, dpm,
-        layerboundaries, layertemperature):
+        infile=None, datacolumn=None, outfile=None, overwrite=None,
+        field=None, spw=None, scan=None, antenna=None,
+        correlation=None, timerange=None, intent=None,
+        observation=None, feed=None, msselect=None,
+        outputspw=None,
+        gainfactor=None,
+        dtem_dh=None, h0=None, atmtype=None,
+        atmdetail=None,
+        altitude=None, temperature=None, pressure=None, humidity=None, pwv=None,
+        dp=None, dpm=None,
+        layerboundaries=None, layertemperature=None):
 
     # task name
     casalog.origin(origin)
@@ -373,7 +373,7 @@ def sdatmcor(
             gaindict,
             dtem_dh, h0, atmtype_int,
             atmdetail,
-            altitude, temperature, pressure, humidity_float, PWV, dp, dpm,
+            altitude, temperature, pressure, humidity_float, pwv, dp, dpm,
             layerboundaries,
             layertemperature)
 
