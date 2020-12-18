@@ -418,7 +418,7 @@ class gencal_test_tec_vla(unittest.TestCase):
             dtecu=abs(13.752-np.mean(_tb.getcol('FPARAM'))/1e16)
             _tb.close()
             
-            print(str(nrows)+' '+str(dtecu))
+            #print(str(nrows)+' '+str(dtecu))
 
             self.assertTrue(nrows==1577)
             self.assertTrue(dtecu<1e-3)
@@ -426,9 +426,7 @@ class gencal_test_tec_vla(unittest.TestCase):
             
         except:
             # should catch case of internet access failure?
-            print("ouch?")
-
-
+            raise
 
 
 
