@@ -746,7 +746,7 @@ class test_regridms_negative_width(test_base):
         nchan = 10
         mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
                     regridms=True, outframe='BARY',
-                    mode='velocity', veltype='radio', restfreq='{0:.0f}Hz'.format(restf),
+                    mode='velocity', veltype='RADIO', restfreq='{0:.0f}Hz'.format(restf),
                     nchan=nchan, start='25km/s', width='-1km/s')
 
         chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
@@ -826,6 +826,17 @@ class test_regridms_interpolation_only(test_base):
         ''' mstransform: regrid, nothing else. interpolation nearest, check output values'''
         self.outvis = 'test_simple_regrid_nearest.ms'
         self.run_mstransform_simply_regrid(self.vis, self.outvis, 'nearest')
+
+        eq_pattern = [[0, 0, .0, .0],
+                      [0, 1, 0.18098925, 0.35214117],
+                      [1, 5, 0.42104605, 0.26617193],
+                      [1, self.out_nchan-1, 0.02630020, 0.19990821]]
+        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
+
+    def test_simple_regrid_nearest_interpolation_uppercase(self):
+        ''' mstransform: regrid, nothing else. interpolation nearest, check output values'''
+        self.outvis = 'test_simple_regrid_nearest.ms'
+        self.run_mstransform_simply_regrid(self.vis, self.outvis, 'NEAREST')
 
         eq_pattern = [[0, 0, .0, .0],
                       [0, 1, 0.18098925, 0.35214117],
@@ -1012,6 +1023,25 @@ class test_Hanning_with_g19(test_base):
         self.outputms = "hann1.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, hanning=True,
                     datacolumn='data')
+
+        self.assertTrue(os.path.exists(self.outputms))
+        ret = th.verifyMS(self.outputms, 24, 128, 0)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 2)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 15)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 18)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 23)
+        self.assertTrue(ret[0],ret[1])
+
+    def test_hanning1_datacolumn_uppercase(self):
+        '''mstransform: Apply Hanning smoothing in MS with 24 spws. Do not combine spws.'''
+
+        self.outputms = "hann1.ms"
+        mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, hanning=True,
+                    datacolumn='DATA')
 
         self.assertTrue(os.path.exists(self.outputms))
         ret = th.verifyMS(self.outputms, 24, 128, 0)

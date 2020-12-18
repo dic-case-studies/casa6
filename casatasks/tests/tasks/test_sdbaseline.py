@@ -674,6 +674,41 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
                      }
 
         self._compareStats(theresult, reference)
+
+    def test001_uppercase_params(self):
+        """Basic Test 001: simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
+        tid = '001'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        datacolumn = 'FLOAT_DATA'
+        maskmode = 'LIST'
+        blfunc = 'POLY'
+        spw = '3'
+        pol = 'LL'
+        overwrite = True
+        result = sdbaseline(infile=infile, datacolumn=datacolumn,
+                             maskmode=maskmode, blfunc=blfunc, 
+                             spw=spw, pol=pol, outfile=outfile,
+                             overwrite=overwrite)
+        # sdbaseline returns None if it runs successfully
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        # uncomment the next line once blparam file can be output
+        #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
+        results = self._getStats(outfile)
+        print(self._getStats(outfile))
+        theresult = None
+        for i in range(len(results)):
+            theresult = results[i]
+
+        reference = {'rms': 0.16677055621054496,
+                     'min': -2.5817961692810059,
+                     'max': 1.3842859268188477,
+                     'median': -0.00086212158203125,
+                     'stddev': 0.16677055621054496,
+                     }
+
+        self._compareStats(theresult, reference)
     
     def test002(self):
         """Basic Test 002: simple successful case: blfunc = 'chebyshev', maskmode = 'list' and masklist=[] (no mask)"""
@@ -2119,6 +2154,40 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
             self._checkValue(rms_s0p0_ms[i], msresult[0]['stddev'], 1.0e-6)
 
             fparam = npiece if blfunc[i] == 'cspline' else order
+            self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
+
+    def test301_uppercase_params(self):
+        """test301: poly/chebyshev/cspline baselining, output bltable"""
+        self.tid='301'
+        infile = self.infile
+        datacolumn='FLOAT_DATA'
+        spw='0:1000~3500;5000~7500,1:500~7500,2:500~2500;3500~7500'
+        mask=[ [[1000,3500],[5000,7500]],
+               [[500,7500]],
+               [[500,2500],[3500,7500]]
+               ]
+        blmode='fit'
+        blformat='TABLE'
+        dosubtract=True
+        blfunc=['POLY','CHEBYSHEV','CSPLINE']
+        order=5
+        npiece=4
+        rms_s0p0_ms = [0.150905484071, 0.150905484071, 0.149185846787]
+
+        for i in range(len(blfunc)):
+            print('testing blfunc='+blfunc[i]+'...')
+            outfile = self.outroot+self.tid+blfunc[i]+'.ms'
+            bloutput= self.outroot+self.tid+blfunc[i]+'.bltable'
+            result = sdbaseline(infile=infile,datacolumn=datacolumn,
+                                 blmode=blmode,blformat=blformat,bloutput=bloutput,
+                                 spw=spw,blfunc=blfunc[i],order=order,npiece=npiece,
+                                 dosubtract=dosubtract,outfile=outfile)
+            self.assertEqual(result,None,
+                             msg="The task returned '"+str(result)+"' instead of None")
+            msresult = self._getStats(filename=outfile, spw='0', pol='0', mask=mask[0])
+            self._checkValue(rms_s0p0_ms[i], msresult[0]['stddev'], 1.0e-6)
+
+            fparam = npiece if blfunc[i] == 'CSPLINE' else order
             self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
 
     def test302(self):

@@ -459,6 +459,20 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
                         center = self.centers[str(irow)+str(ipol)]
                         self._checkResult(spec[ipol], kwidth, center)
 
+    def test000_datacolumn_uppercase(self):
+        # testing kwidth from 1 to 5.
+        datacolumn = "FLOAT_DATA"
+        for kwidth in range(1,6):
+            result = sdsmooth(infile=self.infile, outfile=self.outfile,
+                               datacolumn=datacolumn, overwrite=True,
+                               kernel='boxcar', kwidth = kwidth)
+            with sdutil.tbmanager(self.outfile) as tb:
+                for irow in range(tb.nrows()):
+                    spec = tb.getcell(datacolumn.upper(), irow)
+                    for ipol in range(len(spec)):
+                        center = self.centers[str(irow)+str(ipol)]
+                        self._checkResult(spec[ipol], kwidth, center)
+
 
 class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
     infile = "analytic_type1.sm.ms"
