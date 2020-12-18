@@ -1840,7 +1840,6 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 		return;
 	}
 
-
 	canvas->showAllAxes(false);
 	canvas->clearAxesLabels();
 	canvas->setAxesAutoRescale(true);
@@ -1883,27 +1882,26 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 
 	// Default font size depends on number of plots on the grid but not less than 8
 	int defaultLabelFontSize = std::max((12.0 - numplots + 1.0), 8.0);
-	int defaultTitleFontSize = std::max((16.0 - numplots + 1.0), 8.0);
 	int commonCacheType(getCommonCacheType(dataParams));
 	bool commonPolnRatio = ((commonCacheType==PlotMSCacheBase::CAL) && getCommonPolnRatio(dataParams));
 
-	// x-axis settings: axis, label, range; return x-axis for title
+	// axis settings: axis, label, range
 	PMS::Axis xaxis;
 	PMS::DataColumn xcolumn;
+	std::vector<PMS::Axis> yaxes;
+	std::vector<PMS::DataColumn> ycolumns;
 	try {
 		setXAxisProperties(xaxis, xcolumn, canvas, axesParams, cacheParams,
 			canvasParams, dataParams, displayParams, plots, commonCacheType,
 			commonPolnRatio, iteration, defaultLabelFontSize);
+
+		setYAxesProperties(yaxes, ycolumns, canvas, axesParams, cacheParams,
+			canvasParams, dataParams, displayParams, plots, iteration,
+			defaultLabelFontSize);
 	} catch (AipsError& err) {
 		itsParent_->showError(err.getMesg());
 		return;
 	}
-
-	// y-axis settings: axes, labels, ranges; return y-axes for title
-	std::vector<PMS::Axis> yaxes;
-	std::vector<PMS::DataColumn> ycolumns;
-	setYAxesProperties(yaxes, ycolumns, canvas, axesParams, cacheParams, canvasParams,
-		dataParams, displayParams, plots, iteration, defaultLabelFontSize);
 
 	// title: use last plot's format; ref values not used for title!
 	bool xHasRef(false);
@@ -1912,13 +1910,18 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 	std::vector<double> yRefVals(yaxes.size(), 0.0);
 	casacore::String title = canvasParams[lastPlotIndex]->titleFormat().getLabel(xaxis, yaxes,
 		xHasRef, xRefVal, yHasRefs, yRefVals, xcolumn, ycolumns, commonPolnRatio);
-    if (itsCache_->calType().startsWith("Fringe")) {
-        if (title.startsWith("Gain")) {
-            title.gsub("Gain", "Fringe");
-        } else if (title.startsWith("Delay")) {
-            title = "Fringe " + title;
-        }
-    }
+	if (itsCache_->calType().startsWith("Fringe")) {
+		if (title.startsWith("Gain")) {
+			title.gsub("Gain", "Fringe");
+		} else if (title.startsWith("Delay")) {
+			title = "Fringe " + title;
+		} else if (title.startsWith("Disp")) {
+			title.gsub("Disp", "Fringe Dispersive");
+            title += " vs. refAnt";
+		}
+	}
+
+	int defaultTitleFontSize = std::max((16.0 - numplots + 1.0), 8.0);
 	setTitleProperties(title, canvas, canvasParams, iterParams, plots, defaultTitleFontSize, iteration);
 
 	// square plot settings

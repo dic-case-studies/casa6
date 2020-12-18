@@ -522,7 +522,6 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
                 if (polnRatio_) {
                     Array<Float> delayRatio = fArray(parSlice1, Slice(), Slice())
                         - fArray(parSlice2, Slice(), Slice());
-                    checkRatioArray(delayRatio, chunk);
                     *par_[chunk] = delayRatio;
                 } else {
                     *par_[chunk] = fArray(parSlice1, Slice(), Slice());
@@ -532,19 +531,34 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             }
             break;
         }
-        case PMS::DELAY_RATE:{
+        case PMS::DELAY_RATE: {
             if (calType_.startsWith("Fringe") && !parsAreComplex()) {
                 Cube<Float> fArray = cti.fparam();
                 if (polnRatio_) {
                     Array<Float> delayRatio = fArray(parSlice1, Slice(), Slice())
                         - fArray(parSlice2, Slice(), Slice());
-                    checkRatioArray(delayRatio, chunk);
                     *par_[chunk] = delayRatio / 1.0e-12;
                 } else {
                     *par_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1.0e-12;
                 }
             } else {
                 throw(AipsError("delay rate has no meaning for this table"));
+            }
+            break;
+        }
+        case PMS::DISP_DELAY: {
+            if (calType_.startsWith("Fringe") && !parsAreComplex()) {
+                Cube<Float> fArray = cti.fparam();
+                if (polnRatio_) {
+                    Array<Float> dispDelayRatio = fArray(parSlice1, Slice(), Slice())
+                        - fArray(parSlice2, Slice(), Slice());
+                    // Divisor from PlotCal.cc
+                    *par_[chunk] = dispDelayRatio / 1.334537;
+                } else {
+                    *par_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1.334537;
+                }
+            } else {
+                throw(AipsError("dispersive delay has no meaning for this table"));
             }
             break;
         }
@@ -604,7 +618,11 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
         case PMS::TEC: {
             if ( !parsAreComplex() && calType_[0]=='F') {
                 Cube<Float> fArray = cti.fparam();
-                *par_[chunk] = (fArray(parSlice1, Slice(), Slice()))/1e+16;
+                if (calType_.startsWith("Fringe")) {
+                    *par_[chunk] = fArray(parSlice1, Slice(), Slice());
+                } else {
+                    *par_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1e16;
+                }
             } else {
                 throw(AipsError("TEC has no meaning for this table"));
             }
@@ -1479,6 +1497,7 @@ void CalCache::checkAxes(const vector<PMS::Axis>& loadAxes) {
       case PMS::ROW:
       case PMS::DELAY:
       case PMS::DELAY_RATE:
+      case PMS::DISP_DELAY:
       case PMS::OPAC:
       case PMS::SWP:
       case PMS::TSYS:
@@ -1545,6 +1564,9 @@ String CalCache::toVisCalAxis(PMS::Axis axis) {
         case PMS::DELAY_RATE:
             return "RATE";
             break;
+        case PMS::DISP_DELAY:
+            return "DISP";
+            break;
         default:
             return PMS::axis(axis);
             break;
@@ -1581,6 +1603,8 @@ Slice CalCache::getParSlice(String axis, String polnSel) {
 }
 
 void CalCache::checkRatioArray(Array<Float>& array, Int chunk) {
+    // When array is result of division, check for division by zero (element is infinite)
+    // Reset value to 1.0, flag, and set divZero_ for warning
     Cube<Float> ratioCube;
     ratioCube.reference(array);
     Cube<Bool> flags;

@@ -124,13 +124,15 @@ public:
           PARANG,
           // Calibration 
           GAMP,GPHASE,GREAL,GIMAG,
-          DELAY,DELAY_RATE,SWP,TSYS,OPAC, SNR, TEC, ANTPOS,
+          DELAY,DELAY_RATE,DISP_DELAY,
+          SWP,TSYS,OPAC,SNR,TEC,ANTPOS,
           // Ephemeris
           RADIAL_VELOCITY, RHO,
+          // Axes below here are not displayed in axis selection drop-down
           // Overlays
           ATM, TSKY, IMAGESB,
-		  // POLN only for plot axis labels, titles
-		  POLN, NONE)
+          // POLN only for plot axis labels, titles
+          POLN, NONE)
 
     PMS_ENUM2(Axis, axes, axesStrings, axis,
           // Metadata
@@ -148,12 +150,13 @@ public:
           "Antenna","Ant-Azimuth","Ant-Elevation","Ant-Ra","Ant-Dec","Ant-ParAngle",
           // Calibration 
           "Gain Amp","Gain Phase","Gain Real","Gain Imag",
-          "Delay","Delay Rate", "SwPower","Tsys","Opac", "SNR", "TEC",
+          "Delay","Delay Rate", "Disp Delay",
+          "SwPower","Tsys","Opac", "SNR", "TEC",
           "Antenna Positions",
           // Ephemeris
           "Radial Velocity", "Distance (rho)", 
           "Atm Transmission", "Tsky", "Image Sideband", 
-		  "Poln", "None")
+          "Poln", "None")
     // </group>
               
     // Returns the axes scale for the given axis.  Currently NORMAL unless the
@@ -186,13 +189,13 @@ public:
     // </group>
     static const casacore::String & longitudeName(CoordSystem r);
     static const casacore::String & latitudeName(CoordSystem r);
-	static AngleFormat angleFormat(Axis axis, CoordSystem ref);
-	enum DirectionComponent {
-		LONGITUDE,
-		LATITUDE
-	};
-	static bool isDirectionComponent(Axis axis, DirectionComponent &dc);
-	static AngleFormat angleFormat(CoordSystem ref, DirectionComponent dc);
+    static AngleFormat angleFormat(Axis axis, CoordSystem ref);
+    enum DirectionComponent {
+        LONGITUDE,
+        LATITUDE
+    };
+    static bool isDirectionComponent(Axis axis, DirectionComponent &dc);
+    static AngleFormat angleFormat(CoordSystem ref, DirectionComponent dc);
 
 
     // Enum for the different interpolation methods for data axes.
@@ -240,11 +243,11 @@ public:
     PMS_ENUM1(AxisUnit, axesUnits, axesUnitStrings, axisUnit,
               UNONE, UDATETIME, GHERTZ, METERS_PER_SECOND, KILOMETERS_PER_SECOND,
               KILOMETERS, METERS, HOURS, WAVELENGTHS, DEGREES, NANOSECONDS, KELVIN,
-              NEPERS, SECONDS, PERCENT, PSEC_PER_SECOND);
+              NEPERS, SECONDS, PERCENT, PSEC_PER_SECOND, MTEC);
     PMS_ENUM2(AxisUnit, axesUnits, axesUnitStrings, axisUnit,
               "", "hh:mm:ss", "GHz", "m/s", "km/s", "km", "m", "hours",
               "<html>&lambda;</html>", "degrees", "ns", "K", "neper", "s",
-              "%", "psec/sec");
+              "%", "psec/sec", "mllliTEC");
 
     // </group>
               

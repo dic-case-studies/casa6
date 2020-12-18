@@ -211,7 +211,9 @@
       <value>rate</value>
       <value>DelayRate</value>
       <value>delayrate</value>
-      <value>delay_rate</value>
+	  <value>disp</value>
+      <value>DispDelay</value>
+      <value>dispdelay</value>
       <value>swp</value>
       <value>swpower</value>
       <value>switchedpower</value>
@@ -429,6 +431,9 @@
       <value>DelayRate</value>
       <value>delayrate</value>
       <value>delay_rate</value>
+	  <value>disp</value>
+      <value>DispDelay</value>
+      <value>dispdelay</value>
       <value>swp</value>
       <value>swpower</value>
       <value>switchedpower</value>

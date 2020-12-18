@@ -330,7 +330,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 
 	// Trap ratio plots, only for cal tables
 	if ((selection.corr()=='/') && (cacheType()==PlotMSCacheBase::MS)) {
-		throw(AipsError("Polarization ratio plots not supported for measurement sets."));
+		throw(AipsError("Polarization ratio plots not supported for MeasurementSet."));
 	}
 
 	// Maintain access to this msname, selection, & averager, because we'll
@@ -948,6 +948,7 @@ void PlotMSCacheBase::release(const vector<PMS::Axis>& axes) {
 				break;
 			case PMS::DELAY:
 			case PMS::DELAY_RATE:
+			case PMS::DISP_DELAY:
 			case PMS::SWP:
 			case PMS::TSYS:
 			case PMS::OPAC:
@@ -1757,6 +1758,7 @@ void PlotMSCacheBase::setCache(Int newnChunk,
                 break;
             case PMS::DELAY:
             case PMS::DELAY_RATE:
+            case PMS::DISP_DELAY:
             case PMS::SWP:
             case PMS::TSYS:
             case PMS::OPAC:
@@ -1871,6 +1873,7 @@ void PlotMSCacheBase::setAxesMask(PMS::Axis axis,Vector<Bool>& axismask) {
 	case PMS::GIMAG:
 	case PMS::DELAY:
 	case PMS::DELAY_RATE:
+	case PMS::DISP_DELAY:
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:

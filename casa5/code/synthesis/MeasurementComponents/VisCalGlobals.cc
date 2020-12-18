@@ -700,6 +700,8 @@ Slice calParSliceByType(String caltype, String what, String pol)
         s = 2;
       } else if (what=="DISP") {
         s = 3;
+      } else if (what=="TEC") {
+        s = 0;
       } else { 
         throw(AipsError("Unsupported value type: "+what));
       }
@@ -744,8 +746,13 @@ Slice calParSliceByType(String caltype, String what, String pol)
   else if (pol=="" || pol=="RL" || pol=="XY") {
     n=2;  // both pols
   }
-  else
+  else {
     throw(AipsError("Unsupported pol: "+pol));
+  }
+
+  if (caltype.contains("FRINGE") && (what == "TEC")) {
+    n=1;
+  }
 
   return Slice(s,n,i);
 
