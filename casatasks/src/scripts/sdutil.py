@@ -204,7 +204,7 @@ class sdtask_interface(object):
         for param in select_params:
             if hasattr(self, param):
                 setattr(self, param+'no', getattr(self, param))
-                #print("renaming self.%s -> self.%sno='%s'" % (param, param, getattr(self, param)))
+                #casalog.post("renaming self.%s -> self.%sno='%s'" % (param, param, getattr(self, param)))
                 delattr(self, param)
 
     def __del__(self):
@@ -914,21 +914,21 @@ def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
     if ( telescopeparam == 'FIX' or telescopeparam == 'fix' ):
         if ( fluxunit_local != '' ):
             if ( fluxunit_local == fluxunit_now ):
-                #print "No need to change default fluxunits"
+                #casalog.post("No need to change default fluxunits")
                 casalog.post( "No need to change default fluxunits" )
             else:
                 s.set_fluxunit(fluxunit_local)
-                #print "Reset default fluxunit to "+fluxunit
+                #casalog.post("Reset default fluxunit to "+fluxunit)
                 casalog.post( "Reset default fluxunit to "+fluxunit_local )
                 fluxunit_now = s.get_fluxunit()
         else:
-            #print "Warning - no fluxunit for set_fluxunit"
+            #casalog.post("Warning - no fluxunit for set_fluxunit")
             casalog.post( "no fluxunit for set_fluxunit", priority = 'WARN' )
 
 
     elif ( fluxunit_local=='' or fluxunit_local==fluxunit_now ):
         if ( fluxunit_local==fluxunit_now ):
-            #print "No need to convert fluxunits"
+            #casalog.post("No need to convert fluxunits")
             casalog.post( "No need to convert fluxunits" )
 
     elif ( type(telescopeparam) == list ):
@@ -936,31 +936,31 @@ def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
         if ( len(telescopeparam) > 1 ):
             D = telescopeparam[0]
             eta = telescopeparam[1]
-            #print "Use phys.diam D = %5.1f m" % (D)
-            #print "Use ap.eff. eta = %5.3f " % (eta)
+            #casalog.post("Use phys.diam D = %5.1f m" % (D))
+            #casalog.post("Use ap.eff. eta = %5.3f " % (eta))
             casalog.post( "Use phys.diam D = %5.1f m" % (D) )
             casalog.post( "Use ap.eff. eta = %5.3f " % (eta) )
             ret = s.convert_flux(eta=eta,d=D,insitu=insitu)
         elif ( len(telescopeparam) > 0 ):
             jypk = telescopeparam[0]
-            #print "Use gain = %6.4f Jy/K " % (jypk)
+            #casalog.post("Use gain = %6.4f Jy/K " % (jypk))
             casalog.post( "Use gain = %6.4f Jy/K " % (jypk) )
             ret = s.convert_flux(jyperk=jypk,insitu=insitu)
         else:
-            #print "Empty telescope list"
+            #casalog.post("Empty telescope list")
             casalog.post( "Empty telescope list" )
 
     elif ( telescopeparam=='' ):
         if ( antennaname == 'GBT'):
             # needs eventually to be in ASAP source code
-            #print "Convert fluxunit to "+fluxunit
+            #casalog.post("Convert fluxunit to "+fluxunit)
             casalog.post( "Convert fluxunit to "+fluxunit_local )
             # THIS IS THE CHEESY PART
             # Calculate ap.eff eta at rest freq
             # Use Ruze law
             #   eta=eta_0*exp(-(4pi*eps/lambda)**2)
             # with
-            #print "Using GBT parameters"
+            #casalog.post("Using GBT parameters")
             casalog.post( "Using GBT parameters" )
             eps = 0.390  # mm
             eta_0 = 0.71 # at infinite wavelength
@@ -968,23 +968,23 @@ def set_fluxunit(s, fluxunit, telescopeparam, insitu=True):
             # band, but rest freq is what I have
             rf = s.get_restfreqs()[0][0]*1.0e-9 # GHz
             eta = eta_0*numpy.exp(-0.001757*(eps*rf)**2)
-            #print "Calculated ap.eff. eta = %5.3f " % (eta)
-            #print "At rest frequency %5.3f GHz" % (rf)
+            #casalog.post("Calculated ap.eff. eta = %5.3f " % (eta))
+            #casalog.post("At rest frequency %5.3f GHz" % (rf))
             casalog.post( "Calculated ap.eff. eta = %5.3f " % (eta) )
             casalog.post( "At rest frequency %5.3f GHz" % (rf) )
             D = 104.9 # 100m x 110m
-            #print "Assume phys.diam D = %5.1f m" % (D)
+            #casalog.post("Assume phys.diam D = %5.1f m" % (D))
             casalog.post( "Assume phys.diam D = %5.1f m" % (D) )
             ret = s.convert_flux(eta=eta,d=D,insitu=insitu)
 
-            #print "Successfully converted fluxunit to "+fluxunit
+            #casalog.post("Successfully converted fluxunit to "+fluxunit)
             casalog.post( "Successfully converted fluxunit to "+fluxunit_local )
         elif ( antennaname in ['AT','ATPKSMB', 'ATPKSHOH', 'ATMOPRA', 'DSS-43', 'CEDUNA', 'HOBART']):
             ret = s.convert_flux(insitu=insitu)
 
         else:
             # Unknown telescope type
-            #print "Unknown telescope - cannot convert"
+            #casalog.post("Unknown telescope - cannot convert")
             casalog.post( "Unknown telescope - cannot convert", priority = 'WARN' )
 
     return ret
@@ -1018,11 +1018,11 @@ def dochannelrange(s, channelrange):
     # channel splitting
     if ( channelrange != [] ):
         if ( len(channelrange) == 1 ):
-            #print "Split spectrum in the range [%d, %d]" % (0, channelrange[0])
+            #casalog.post("Split spectrum in the range [%d, %d]" % (0, channelrange[0]))
             casalog.post( "Split spectrum in the range [%d, %d]" % (0, channelrange[0]) )
             s._reshape( 0, int(channelrange[0]) )
         else:
-            #print "Split spectrum in the range [%d, %d]" % (channelrange[0], channelrange[1])
+            #casalog.post("Split spectrum in the range [%d, %d]" % (channelrange[0], channelrange[1]))
             casalog.post( "Split spectrum in the range [%d, %d]" % (channelrange[0], channelrange[1]) )
             s._reshape( int(channelrange[0]), int(channelrange[1]) )
 
@@ -1117,7 +1117,6 @@ def doaverage(s, scanaverage, timeaverage, tweight, polaverage, pweight,
                 sret=stave.average_pol(weight=pweight)
             else:
                 # only single polarization
-                #print "Single polarization data - no need to average"
                 casalog.post( "Single polarization data - no need to average" )
                 sret = stave
         else:
@@ -1142,7 +1141,6 @@ def doaverage(s, scanaverage, timeaverage, tweight, polaverage, pweight,
                 sret=sret.average_pol(weight=pweight)
             else:
                 # only single polarization
-                #print "Single polarization data - no need to average"
                 casalog.post( "Single polarization data - no need to average" )
                 #spave=scal.copy()
                 sret = s

@@ -93,7 +93,10 @@ class specflux_test(unittest.TestCase):
         pass
     
     def tearDown(self):
-        pass
+        for i in range(1, 11):
+            f = 'log' + str(i)
+            if os.path.exists(f):
+                os.remove(f)
     
     def test_default(self):
         """Test default settings"""
@@ -122,8 +125,10 @@ class specflux_test(unittest.TestCase):
         )
         self._compare(logfile)
         logfile = "log6"
-        specflux(im2, box="10,10,19,19", chans="30~35",
-                 mask="'" + im2 + "'" + "<0", logfile=logfile)
+        specflux(
+            im2, box="10,10,19,19", chans="30~35",
+            mask="'" + im2 + "'" + "<0", logfile=logfile
+        )
         self._compare(logfile)
         
     def test_unit(self):

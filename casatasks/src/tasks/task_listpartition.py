@@ -1,8 +1,6 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
-import pprint
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -137,7 +135,7 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
                 # Print to a file
                 if ffout is not None:
-                    print(text,file=ffout)
+                    ffout.write(text + '\n')
                 else:
                     # Print to the logger
                     casalog.post(text)

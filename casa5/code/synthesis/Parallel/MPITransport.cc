@@ -25,15 +25,16 @@
 //#
 //# $Id$
 
-#ifdef HasMPI
+#ifdef HAVE_MPI
 
-//# Includes
-#include <synthesis/Parallel/PTransport.h>
-#include <synthesis/Parallel/MPIError.h>
-#include <synthesis/Parallel/Algorithm.h>
 #include <casa/Containers/Record.h>
 #include <casa/IO/AipsIO.h>
 #include <casa/IO/MemoryIO.h>
+
+#include <synthesis/Parallel/MPITransport.h>
+#include <synthesis/Parallel/MPIError.h>
+#include <synthesis/Parallel/Algorithm.h>
+
 #include <mpi.h>
 
 using namespace casacore;
@@ -50,21 +51,36 @@ MPITransport::MPITransport() : PTransport()
 
 MPITransport::MPITransport(Int argc, Char *argv[]) : PTransport()
 {
+   if (debug_p) {
+       cerr << "constructing MPITransport" << std::endl;
+   }
 // Construct from argc, argv
 //
-   if(MPI_Init(&argc, &argv) == MPI_SUCCESS){
+   int flag=0;
+   MPI_Initialized(&flag);
+   //cerr << "FLAG " << flag << endl;
+   if((flag && isController()) || MPI_Init(&argc, &argv) == MPI_SUCCESS){
+     //if(MPI_Init(&argc, &argv) == MPI_SUCCESS){
       MPI_Comm_rank(MPI_COMM_WORLD, &myCpu);
       MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
       // Set default tag and source/destination
       setAnyTag();
       connectAnySource();
    } else {
-      throw MPIError("MPI Init failed!");
+     throw MPIError("MPI Init failed!");
    }
 }
 
 MPITransport::~MPITransport(){
-   MPI_Finalize();
+  if(!isFinalized())
+    MPI_Finalize();
+}
+
+Bool MPITransport::isFinalized()
+{
+    int flag;
+    MPI_Finalized(&flag);
+    return Bool(flag);
 }
 
 Int MPITransport::anyTag() 
@@ -81,14 +97,29 @@ Int MPITransport::anySource()
    return MPI_ANY_SOURCE;
 };
 
+// produce a contiguous vector of per-dimension sizes from a shape/Iposition
+const std::vector<uInt> makeContiguousSizes(uInt ndim, const IPosition &ipos) {
+    std::vector<uInt> sizes(ndim);
+    for (uInt idx=0; idx<ndim; ++idx) {
+        sizes[idx] = ipos[idx];
+    }
+    return sizes;
+}
+
 Int MPITransport::put(const Array<Float> &af){
-   Int ndim(af.ndim());
+   uInt ndim(af.ndim());
    setDestAndTag(sendTo, myOp);
    IPosition ipos = af.shape();
       // Send the number of dimensions
    MPI_Send((void *)&ndim, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
       // Send the shape vector
-   MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   // Don't feel tempted to send directly (void *)ipos.storage(). That doesn't give you
+   // a contiguous sequence of size integers. You can get for example integers:
+   // dim1, 0, dim2, 0, uninit, ...
+   // etc.
+   // Dangerous: MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   const auto &sizes = makeContiguousSizes(ndim, ipos);
+   MPI_Send((void *)sizes.data(), ndim,  MPI_INT, sendTo, myOp,
             MPI_COMM_WORLD);
       // Send the data
    Bool deleteit;
@@ -98,12 +129,13 @@ Int MPITransport::put(const Array<Float> &af){
 }
 
 Int MPITransport::put(const Array<Double> &af){
-   Int ndim(af.ndim());
-   IPosition ipos = af.shape();
+   uInt ndim(af.ndim());
+   const IPosition ipos = af.shape();
    setDestAndTag(sendTo, myOp);
    MPI_Send((void *)&ndim, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
       // Send the shape vector
-   MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   const auto &sizes = makeContiguousSizes(ndim, ipos);
+   MPI_Send((const void *)sizes.data(), ndim,  MPI_INT, sendTo, myOp,
             MPI_COMM_WORLD);
       // Send the data
    Bool deleteit;
@@ -113,12 +145,13 @@ Int MPITransport::put(const Array<Double> &af){
 }
 
 Int MPITransport::put(const Array<Int> &af){
-   Int ndim(af.ndim());
+   uInt ndim(af.ndim());
    IPosition ipos = af.shape();
    setDestAndTag(sendTo, myOp);
    MPI_Send((void *)&ndim, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
       // Send the shape vector
-   MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   const auto &sizes = makeContiguousSizes(ndim, ipos);
+   MPI_Send((void *)sizes.data(), ndim,  MPI_INT, sendTo, myOp,
             MPI_COMM_WORLD);
       // Send the data
    Bool deleteit;
@@ -128,13 +161,14 @@ Int MPITransport::put(const Array<Int> &af){
 }
 
 Int MPITransport::put(const Array<Complex> &af){
-   Int ndim(af.ndim());
+   uInt ndim(af.ndim());
    setDestAndTag(sendTo, myOp);
    IPosition ipos = af.shape();
       // Send the number of dimensions
    MPI_Send((void *)&ndim, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
       // Send the shape vector
-   MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   const auto &sizes = makeContiguousSizes(ndim, ipos);
+   MPI_Send((const void *)sizes.data(), ndim,  MPI_INT, sendTo, myOp,
             MPI_COMM_WORLD);
       // Send the data
    Bool deleteit;
@@ -144,13 +178,14 @@ Int MPITransport::put(const Array<Complex> &af){
 }
 
 Int MPITransport::put(const Array<DComplex> &af){
-   Int ndim(af.ndim());
+   uInt ndim(af.ndim());
    setDestAndTag(sendTo, myOp);
    IPosition ipos = af.shape();
       // Send the number of dimensions
    MPI_Send((void *)&ndim, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
       // Send the shape vector
-   MPI_Send((void *)ipos.storage(), ndim,  MPI_INT, sendTo, myOp,
+   const auto &sizes = makeContiguousSizes(ndim, ipos);
+   MPI_Send((void *)sizes.data(), ndim,  MPI_INT, sendTo, myOp,
             MPI_COMM_WORLD);
       // Send the data
    Bool deleteit;
@@ -182,13 +217,17 @@ Int MPITransport::put(const Double &d){
 }
 Int MPITransport::put(const Int &i){
    setDestAndTag(sendTo, myOp);
+   // warning: sstat set but not used!
    Int sstat = MPI_Send((void *)&i, 1, MPI_INT, sendTo, myOp, MPI_COMM_WORLD);
+   (void) sstat; // warning: unused sstat
    return(0);
 }
 Int MPITransport::put(const Bool &b){
    setDestAndTag(sendTo, myOp);
    Int i(b);
+   // warning: sstat set but not used!
    Int sstat = MPI_Send((void *)&i, 1, MPI_INT, sendTo, myOp, MPI_COMM_WORLD);
+   (void) sstat; // warning: unused sstat
    return(0);
 }
 
@@ -200,9 +239,11 @@ Int MPITransport::put(const Record &r){
    rBuf << r;
    rBuf.putend();
     uInt bytes2send=rBuf.getpos();
+   // warning: sstat set but not used!
    Int sstat = MPI_Send((void *)&bytes2send, 1, MPI_UNSIGNED, sendTo, myOp, MPI_COMM_WORLD);
    sstat = MPI_Send((void *)buffer.getBuffer(), bytes2send, MPI_UNSIGNED_CHAR, sendTo, myOp,
                     MPI_COMM_WORLD);
+   (void) sstat; // warning: unused sstat
    return(0);
 }
 
@@ -221,17 +262,17 @@ Int MPITransport::get(Array<Float> &af){
       // Get the number of dimensions
    setSourceAndTag(getFrom, myOp);
    MPI_Status status;
-   Int ndim;
+   uInt ndim;
    MPI_Recv(&ndim, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the shape vector
    aTag = myOp = status.MPI_TAG;
    aWorker = getFrom = status.MPI_SOURCE;
-   Int *ashape = new Int[ndim];
-   MPI_Recv(ashape, ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   std::vector<uInt> ashape(ndim);
+   MPI_Recv(ashape.data(), ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the data
    Int nelements(1);
    {
-   for(int i=0;i<ndim;i++){
+   for(uInt i=0;i<ndim;i++){
       nelements *= ashape[i];
    }
    }
@@ -239,10 +280,10 @@ Int MPITransport::get(Array<Float> &af){
    MPI_Recv(data, nelements, MPI_FLOAT, getFrom, myOp, MPI_COMM_WORLD,
             &status);
    IPosition ipos(ndim, ndim);
-   for(Int i=0;i<ndim;i++)
+   for(uInt i=0;i<ndim;i++)
       ipos(i) = ashape[i];
    af.takeStorage(ipos, data, TAKE_OVER);
-   delete ashape;
+
    return(status.MPI_SOURCE);
 }
 
@@ -250,17 +291,17 @@ Int MPITransport::get(Array<Double> &af){
       // Get the number of dimensions
    MPI_Status status;
    setSourceAndTag(getFrom, myOp);
-   Int ndim;
+   uInt ndim;
    MPI_Recv(&ndim, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the shape vector
    aTag = myOp = status.MPI_TAG;
    aWorker = getFrom = status.MPI_SOURCE;
-   Int *ashape = new Int[ndim];
-   MPI_Recv(ashape, ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   std::vector<uInt> ashape(ndim);
+   MPI_Recv(ashape.data(), ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the data
    Int nelements(1);
    {
-   for(int i=0;i<ndim;i++){
+   for(uInt i=0;i<ndim;i++){
       nelements *= ashape[i];
    }
    }
@@ -268,10 +309,10 @@ Int MPITransport::get(Array<Double> &af){
    MPI_Recv(data, nelements, MPI_DOUBLE, getFrom, myOp, MPI_COMM_WORLD,
             &status);
    IPosition ipos(ndim, ndim);
-   for(Int i=0;i<ndim;i++)
+   for(uInt i=0;i<ndim;i++)
       ipos(i) = ashape[i];
    af.takeStorage(ipos, data, TAKE_OVER);
-   delete ashape;
+
    return(status.MPI_SOURCE);
 }
 
@@ -279,17 +320,17 @@ Int MPITransport::get(Array<Complex> &af){
       // Get the number of dimensions
    MPI_Status status;
    setSourceAndTag(getFrom, myOp);
-   Int ndim;
+   uInt ndim;
    MPI_Recv(&ndim, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the shape vector
    aTag = myOp = status.MPI_TAG;
    aWorker = getFrom = status.MPI_SOURCE;
-   Int *ashape = new Int[ndim];
-   MPI_Recv(ashape, ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   std::vector<uInt> ashape(ndim);
+   MPI_Recv(ashape.data(), ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the data
    Int nelements(1);
    {
-   for(int i=0;i<ndim;i++){
+   for(uInt i=0;i<ndim;i++){
       nelements *= ashape[i];
    }
    }
@@ -297,28 +338,28 @@ Int MPITransport::get(Array<Complex> &af){
    MPI_Recv(data, 2*nelements, MPI_FLOAT, getFrom, myOp, MPI_COMM_WORLD,
             &status);
    IPosition ipos(ndim, ndim);
-   for(Int i=0;i<ndim;i++)
+   for(uInt i=0;i<ndim;i++)
       ipos(i) = ashape[i];
    af.takeStorage(ipos, data, TAKE_OVER);
-   delete ashape;
+
    return(status.MPI_SOURCE);
 }
 
 Int MPITransport::get(Array<DComplex> &af){
       // Get the number of dimensions
    MPI_Status status;
-   Int ndim;
+   uInt ndim;
    setSourceAndTag(getFrom, myOp);
    MPI_Recv(&ndim, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the shape vector
    aTag = myOp = status.MPI_TAG;
    aWorker = getFrom = status.MPI_SOURCE;
-   Int *ashape = new Int[ndim];
-   MPI_Recv(ashape, ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   std::vector<uInt> ashape(ndim);
+   MPI_Recv(ashape.data(), ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the data
    Int nelements(1);
    {
-   for(int i=0;i<ndim;i++){
+   for(uInt i=0;i<ndim;i++){
       nelements *= ashape[i];
    }
    }
@@ -326,28 +367,28 @@ Int MPITransport::get(Array<DComplex> &af){
    MPI_Recv(data, 2*nelements, MPI_DOUBLE, getFrom, myOp, MPI_COMM_WORLD,
             &status);
    IPosition ipos(ndim, ndim);
-   for(Int i=0;i<ndim;i++)
+   for(uInt i=0;i<ndim;i++)
       ipos(i) = ashape[i];
    af.takeStorage(ipos, data, TAKE_OVER);
-   delete ashape;
+
    return(status.MPI_SOURCE);
 }
 
 Int MPITransport::get(Array<Int> &af){
       // Get the number of dimensions
    MPI_Status status;
-   Int ndim;
+   uInt ndim;
    setSourceAndTag(getFrom, myOp);
    MPI_Recv(&ndim, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the shape vector
    aTag = myOp = status.MPI_TAG;
    aWorker = getFrom = status.MPI_SOURCE;
-   Int *ashape = new Int[ndim];
-   MPI_Recv(ashape, ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   std::vector<uInt> ashape(ndim);
+   MPI_Recv(ashape.data(), ndim, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
       // Get the data
    Int nelements(1);
    {
-   for(int i=0;i<ndim;i++){
+   for(uInt i=0;i<ndim;i++){
       nelements *= ashape[i];
    }
    }
@@ -355,10 +396,10 @@ Int MPITransport::get(Array<Int> &af){
    MPI_Recv(data, nelements, MPI_INT, getFrom, myOp, MPI_COMM_WORLD,
             &status);
    IPosition ipos(ndim, ndim);
-   for(Int i=0;i<ndim;i++)
+   for(uInt i=0;i<ndim;i++)
       ipos(i) = ashape[i];
    af.takeStorage(ipos, data, TAKE_OVER);
-   delete ashape;
+
    return(status.MPI_SOURCE);
 }
 
@@ -394,7 +435,8 @@ Int MPITransport::get(Int &i){
    Int r_status(1);
    MPI_Status status;
    setSourceAndTag(getFrom, myOp);
-   MPI_Recv(&i, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   r_status = MPI_Recv(&i, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   (void) r_status; // warning: unused r_status
    return(status.MPI_SOURCE);
 }
 
@@ -403,7 +445,8 @@ Int MPITransport::get(Bool &b){
    MPI_Status status;
    setSourceAndTag(getFrom, myOp);
    Int i;
-   MPI_Recv(&i, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   r_status = MPI_Recv(&i, 1, MPI_INT, getFrom, myOp, MPI_COMM_WORLD, &status);
+   (void) r_status; // warning: unused r_status
    if(i == 0)
       b = false;
    else
@@ -413,16 +456,18 @@ Int MPITransport::get(Bool &b){
 
 Int MPITransport::get(Record &r){
    MPI_Status status;
+   (void) status; // warning: unused status
    setSourceAndTag(getFrom, myOp);
-      // Get the size of the record in bytes
+   // Get the size of the record in bytes
    uInt bytesSent;
    MPI_Recv(&bytesSent, 1, MPI_UNSIGNED, getFrom, myOp, MPI_COMM_WORLD, &status);
-      // Now fill the buffer full of bytes from the record
-   uChar *buffer = new uChar[bytesSent];
+   // Now fill the buffer full of bytes from the record
+   uChar buffer[bytesSent];
    MPI_Recv(buffer, bytesSent, MPI_UNSIGNED_CHAR, getFrom, myOp, MPI_COMM_WORLD, &status);
-   MemoryIO nBuf(buffer, bytesSent);
+   MemoryIO nBuf(&buffer, bytesSent);
    AipsIO rBuf(&nBuf);
-   uInt version=rBuf.getstart("MPIRecord");
+   uInt version = rBuf.getstart("MPIRecord");
+   (void)version; // warning: unused version
    rBuf >> r;
    rBuf.getend();
    return(0);
@@ -430,15 +475,16 @@ Int MPITransport::get(Record &r){
 
 Int MPITransport::get(String &s){
    MPI_Status status;
+   (void) status; // warning: unused status
    setSourceAndTag(getFrom, myOp);
       // Get the length of the string
    uInt i;
    MPI_Recv(&i, 1, MPI_UNSIGNED, getFrom, myOp, MPI_COMM_WORLD, &status);
-      // Send the characters
+   // Send the characters
    Char *theChars = new Char[i+1];
    MPI_Recv(theChars, i, MPI_CHAR, getFrom, myOp, MPI_COMM_WORLD, &status);
 
-   *(theChars+i) = NULL;
+   *(theChars+i) = 0;
    s = theChars;
    delete theChars;
    return(status.MPI_SOURCE);
