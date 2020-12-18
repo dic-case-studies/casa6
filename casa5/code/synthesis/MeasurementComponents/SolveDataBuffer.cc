@@ -28,16 +28,17 @@
 #include <synthesis/MeasurementComponents/SolveDataBuffer.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/VisBufferComponents2.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/Arrays/ArrayPartMath.h>
-#include <casa/Arrays/MaskArrMath.h>
-#include <casa/Arrays/ArrayIO.h>
-#include <casa/iomanip.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Containers/Block.h>
-#include <casa/Utilities/Assert.h>
-#include <casa/Quanta/MVTime.h>
-#include <casa/BasicSL/Constants.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Arrays/ArrayPartMath.h>
+#include <casacore/casa/Arrays/MaskArrMath.h>
+#include <casacore/casa/IO/ArrayIO.h>
+#include <casacore/casa/iomanip.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/casa/Quanta/MVTime.h>
+#include <casacore/casa/BasicSL/Constants.h>
+#include <casacore/casa/BasicMath/Math.h>
 
 using namespace casacore;
 using namespace casa::vi;

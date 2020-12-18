@@ -121,7 +121,7 @@ void MSCache::loadIt(vector<PMS::Axis>& loadAxes,
 	}
 
 	// Make volume meter for countChunks to estimate memory requirements
-	vm_ = new MSCacheVolMeter(*inputMS, averaging_, chansel, corrsel);
+	vm_ = new MSCacheVolMeter(*selMS, averaging_, chansel, corrsel);
 
 	// Load Page Header Cache
 	loadPageHeaderCache(*selMS);
@@ -658,7 +658,7 @@ bool MSCache::countChunks(vi::VisibilityIterator2& vi,
 	Int thisobsid(-1),lastobsid(-1);
 	// Averaging stats
 	Int chunk(0), subchunk(0);
-	Int maxAveNRows(0);
+	rownr_t maxAveNRows(0);
 	nIterPerAve.resize(100);
 	nIterPerAve = 0;
 	Int nAveInterval(-1);
@@ -1358,7 +1358,7 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 		Vector<Int> a2(vb->antenna2());
 		baseline_[vbnum]->resize(vb->nRows());
 		Vector<Int> bl(*baseline_[vbnum]);
-		for (Int irow = 0; irow < vb->nRows(); ++irow) {
+		for (rownr_t irow = 0; irow < vb->nRows(); ++irow) {
 			if (a1(irow)<0) a1(irow)=chshapes_(3,0);
 			if (a2(irow)<0) a2(irow)=chshapes_(3,0);
 			bl(irow)=(chshapes_(3,0)+1)*a1(irow) - (a1(irow) * (a1(irow) + 1)) / 2 + a2(irow);
@@ -1390,7 +1390,7 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 		uvdistM /=C::c;
 		uvdistL_[vbnum]->resize(vb->nChannels(), vb->nRows());
 		Vector<Double> uvrow;
-		for (Int irow = 0; irow < vb->nRows(); ++irow) {
+		for (rownr_t irow = 0; irow < vb->nRows(); ++irow) {
 			uvrow.reference(uvdistL_[vbnum]->column(irow));
 			uvrow.set(uvdistM(irow));
 			uvrow *= vb->getFrequencies(irow, freqFrame_);
@@ -1402,7 +1402,7 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 		uM/=C::c;
 		uwave_[vbnum]->resize(vb->nChannels(), vb->nRows());
 		Vector<Double> urow;
-		for (Int irow = 0; irow < vb->nRows(); ++irow) {
+		for (rownr_t irow = 0; irow < vb->nRows(); ++irow) {
 			urow.reference(uwave_[vbnum]->column(irow));
 			urow.set(uM(irow));
 			urow *= vb->getFrequencies(irow, freqFrame_);
@@ -1414,7 +1414,7 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 		vM/=C::c;
 		vwave_[vbnum]->resize(vb->nChannels(), vb->nRows());
 		Vector<Double> vrow;
-		for (Int irow = 0; irow < vb->nRows(); ++irow) {
+		for (rownr_t irow = 0; irow < vb->nRows(); ++irow) {
 			vrow.reference(vwave_[vbnum]->column(irow));
 			vrow.set(vM(irow));
 			vrow *= vb->getFrequencies(irow, freqFrame_);
@@ -1426,7 +1426,7 @@ void MSCache::loadAxis(vi::VisBuffer2* vb, Int vbnum, PMS::Axis axis,
 		wM/=C::c;
 		wwave_[vbnum]->resize(vb->nChannels(), vb->nRows());
 		Vector<Double> wrow;
-		for (Int irow = 0; irow < vb->nRows(); ++irow) {
+		for (rownr_t irow = 0; irow < vb->nRows(); ++irow) {
 			wrow.reference(wwave_[vbnum]->column(irow));
 			wrow.set(wM(irow));
 			wrow *= vb->getFrequencies(irow, freqFrame_);

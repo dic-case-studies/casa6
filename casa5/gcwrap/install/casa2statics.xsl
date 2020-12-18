@@ -44,9 +44,11 @@ namespace casac {
 		<xsl:choose>
 			<xsl:when test="lower-case(@xsi:type)='doublearray'"><xsl:text disable-output-escaping="yes">std::vector&lt;double&gt; </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/><xsl:text disable-output-escaping="yes">= vector&lt;double&gt;(0)</xsl:text>;
 </xsl:when>
-<xsl:when test="lower-case(@xsi:type)='intarray'"><xsl:text disable-output-escaping="yes">std::vector&lt;int&gt; </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/><xsl:text disable-output-escaping="yes">= vector&lt;int&gt;(0)</xsl:text>;
+<xsl:when test="lower-case(@xsi:type)='intarray'"><xsl:text disable-output-escaping="yes">std::vector&lt;long&gt; </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/><xsl:text disable-output-escaping="yes">= vector&lt;long&gt;(0)</xsl:text>;
 </xsl:when>
 <xsl:when test="lower-case(@xsi:type)='boolarray'"><xsl:text disable-output-escaping="yes">std::vector&lt;bool&gt; </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/><xsl:text disable-output-escaping="yes">= vector&lt;bool&gt;(0)</xsl:text>;
+</xsl:when>
+<xsl:when test="lower-case(@xsi:type)='int'"><xsl:text disable-output-escaping="yes">long </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/>=0L;
 </xsl:when>
 <xsl:when test="lower-case(@xsi:type)='any'"><xsl:text disable-output-escaping="yes">variant </xsl:text><xsl:value-of select="../../../@name"/>::<xsl:value-of select="@name"/>_<xsl:value-of select="$mymethod"/>=initialize_variant("");
 </xsl:when>

@@ -189,8 +189,12 @@ class partition_test1(test_base):
         mst_local.done()
 
         # Compare both tables. Ignore the DATA column and compare it in next line
+        # The WEIGHT column is actually not consistent in the input MS, i.e.,
+        # WEIGHT != 1/SIGMA^2 for the whole column.
+        # After partition the WEIGHT column is properly initialized, that's
+        # why we exclude the WEIGHT from the comparison. See CAS-11139
         self.assertTrue(th.compTables('ms_sorted.ms','mms_sorted.ms', 
-                                      ['FLAG_CATEGORY','FLAG','WEIGHT_SPECTRUM','DATA']))
+                                      ['FLAG_CATEGORY','FLAG','WEIGHT','WEIGHT_SPECTRUM','DATA']))
         
         # Compare the DATA column
         self.assertTrue(th.compVarColTables('ms_sorted.ms','mms_sorted.ms','DATA'))
@@ -230,9 +234,13 @@ class partition_test1(test_base):
         mst_local.sort('mms_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
         mst_local.done()
 
+        # The WEIGHT column is actually not consistent in the input MS, i.e.,
+        # WEIGHT != 1/SIGMA^2 for the whole column.
+        # After partition the WEIGHT column is properly initialized, that's
+        # why we exclude the WEIGHT from the comparison. See CAS-11139
         self.assertTrue(th.compTables('ms_sorted.ms', 'mms_sorted.ms', 
                                       ['FLAG','FLAG_CATEGORY','TIME_CENTROID',
-                                       'WEIGHT_SPECTRUM','DATA']))
+                                       'WEIGHT','WEIGHT_SPECTRUM','DATA']))
         
         # Compare the DATA column
         self.assertTrue(th.compVarColTables('ms_sorted.ms','mms_sorted.ms','DATA'))

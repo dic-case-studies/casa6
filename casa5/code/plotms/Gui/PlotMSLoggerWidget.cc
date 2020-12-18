@@ -30,6 +30,7 @@
 #include <graphics/GenericPlotter/PlotLogger.h>
 
 #include <QLabel>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -58,7 +59,7 @@ PlotMSLoggerWidget::PlotMSLoggerWidget(const String& filename, int events,
     }
     
     itsEventsBox_->setDisplayText("Log Events");
-    vector<int> e = PlotLogger::ALL_EVENTS();
+    std::vector<int> e = PlotLogger::ALL_EVENTS();
     l = new QHBoxLayout();
     l->setContentsMargins(0, 0, 0, 0);
     l->setSpacing(3);

@@ -12,6 +12,7 @@
 #include <msvis/MSVis/VLAT.h>
 #include <msvis/MSVis/AsynchronousInterface.h>
 #include <msvis/MSVis/UtilJ.h>
+#include <casacore/casa/Utilities/GenSort.h>
 
 #include <ms/MeasurementSets/MSColumns.h>
 #include <casa/System/AipsrcValue.h>

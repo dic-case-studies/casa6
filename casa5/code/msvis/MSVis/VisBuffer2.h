@@ -37,21 +37,18 @@
 #include <msvis/MSVis/VisBufferComponents2.h>
 //#include <msvis/MSVis/VisibilityIterator2.h>
 #include <casacore/measures/Measures/Stokes.h>
-#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 using casa::vi::VisBufferComponent2;
 using casa::vi::VisBufferComponents2;
 
 namespace casacore{
 
-template <typename T> class Array;
 template <typename T> class CountedPtr;
-template <typename T> class Cube;
-class IPosition;
-template <typename T> class Matrix;
 class MDirection;
 template <typename T, Int N> class SquareMatrix;
-template <typename T> class Vector;
 class MeasurementSet;
 }
 
@@ -210,7 +207,7 @@ public:
                                     casacore::Bool allowShapeChange = false,
                                     casacore::Bool fetchIfNeeded = true) = 0;
 
-    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::Int nRows, casacore::Bool clearCache = false) = 0;
+    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::rownr_t nRows, casacore::Bool clearCache = false) = 0;
     virtual void validateShapes () const = 0;
 
     // For attached VBs this returns the VI the VB is attached to.  For free VBs
@@ -529,7 +526,7 @@ public:
 
     // Returns the number of rows in this VisBuffer
 
-    virtual casacore::Int nRows () const = 0;
+    virtual casacore::rownr_t nRows () const = 0;
 
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.
@@ -573,7 +570,7 @@ protected:
     virtual void configureNewSubchunk (casacore::Int msId, const casacore::String & msName, casacore::Bool isNewMs,
                                        casacore::Bool isNewArrayId, casacore::Bool isNewFieldId,
                                        casacore::Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       casacore::Int nRows, casacore::Int nChannels, casacore::Int nCorrelations,
+                                       casacore::rownr_t nRows, casacore::Int nChannels, casacore::Int nCorrelations,
                                        const casacore::Vector<casacore::Int> & correlations,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsDefined,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsSelected,

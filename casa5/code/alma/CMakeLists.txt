@@ -217,6 +217,8 @@ ASDM/Temperature.cc
 ASDM/TotalPowerRow.cc
 ASDM/TotalPowerTable.cc
 ASDM/UniquenessViolationException.cc
+ASDM/VLAWVRRow.cc
+ASDM/VLAWVRTable.cc
 ASDM/WeatherRow.cc
 ASDM/WeatherTable.cc
 ASDM/WVMCalRow.cc

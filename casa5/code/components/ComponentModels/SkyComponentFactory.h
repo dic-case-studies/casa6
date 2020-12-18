@@ -26,7 +26,7 @@
 #define COMPONENTS_SKYCOMPONENTFACTORY_H
 
 #include <casa/aips.h>
-
+#include <casacore/casa/Arrays/ArrayFwd.h>
 #include <components/ComponentModels/SkyComponent.h>
 
 namespace casacore{
@@ -34,7 +34,7 @@ namespace casacore{
 class GaussianBeam;
 class ImageInfo;
 template <class T> class ImageInterface;
-template <class T> class Vector;
+
 }
 
 namespace casa {
