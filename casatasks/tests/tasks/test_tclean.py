@@ -668,7 +668,7 @@ class test_onefield(testref_base):
         hdr = _ia.summary(list=False)
         _ia.close()
         beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        report1 = self.th.checkval(beam_3ppb[0], 55.77472686767578, exact=False)
+        _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
         
         self.prepData('refim_point.ms')
         
@@ -677,7 +677,7 @@ class test_onefield(testref_base):
         hdr = _ia.summary(list=False)
         _ia.close()
         beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        report2 = self.th.checkval(beam_5ppb[0], 51.443878173828125, exact=False)
+        _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
         
         self.prepData('refim_point.ms')
         
@@ -686,7 +686,7 @@ class test_onefield(testref_base):
         hdr = _ia.summary(list=False)
         _ia.close()
         beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        report3 = self.th.checkval(beam_20ppb[0], 51.55984878540039, exact=False)
+        _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
         
         self.checkfinal(report1+report2+report3)
 
