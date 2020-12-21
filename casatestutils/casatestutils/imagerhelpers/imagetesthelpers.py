@@ -510,37 +510,6 @@ class TestHelpers:
 
         return report
 
-    def check_dict_vals_beam(self, exp_dict, act_dict, suffix, epsilon=0.01):
-        """ Compares expected dictionary with actual dictionary. Useful for comparing the restoring beam.
-
-            Parameters
-            ----------
-            exp_dict: dictionary
-                Expected values, as key:value pairs.
-                Keys must match between exp_dict and act_dict.
-                Values are compared between exp_dict and act_dict. A summary
-                line is returned with the first mismatched value, or the last
-                successfully matched value.
-            act_dict: dictionary
-                Actual values to compare to exp_dict (and just the values).
-            suffix: string
-                For use with summary print statements.
-        """
-        report = ''
-        eps = epsilon
-        passed = True
-        chans = 0
-        for key in exp_dict:
-            result = self.check_val(act_dict[key], exp_dict[key],
-                valname=suffix+' chan'+str(chans), epsilon=eps)[1]
-            chans += 1
-            if 'Fail' in result:
-                passed = False
-                break
-        report += self.check_val(passed, True, valname=suffix+' chan'+str(chans), exact=True)[1]
-
-        return report
-
     def check_ims(self, imlist, truth, testname="check_ims"):
         pstr = ''
         imex = []

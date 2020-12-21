@@ -144,6 +144,37 @@ class test_tclean_base(unittest.TestCase):
         if(pstr.count("(Fail") > 0 ):
              self.fail("\n"+pstr)
 
+    def check_dict_vals_beam(self, exp_dict, act_dict, suffix, epsilon=0.01):
+        """ Compares expected dictionary with actual dictionary. Useful for comparing the restoring beam.
+
+            Parameters
+            ----------
+            exp_dict: dictionary
+                Expected values, as key:value pairs.
+                Keys must match between exp_dict and act_dict.
+                Values are compared between exp_dict and act_dict. A summary
+                line is returned with the first mismatched value, or the last
+                successfully matched value.
+            act_dict: dictionary
+                Actual values to compare to exp_dict (and just the values).
+            suffix: string
+                For use with summary print statements.
+        """
+        report = ''
+        eps = epsilon
+        passed = True
+        chans = 0
+        for key in exp_dict:
+            result = th.check_val(act_dict[key], exp_dict[key],
+                valname=suffix+' chan'+str(chans), epsilon=eps)[1]
+            chans += 1
+            if 'Fail' in result:
+                passed = False
+                break
+        report += th.check_val(passed, True, valname=suffix+' chan'+str(chans), exact=True)[1]
+
+        return report
+
     def copy_products(self, old_pname, new_pname, ignore=None):
         """ function to copy iter0 images to iter1 images
             (taken from pipeline)
