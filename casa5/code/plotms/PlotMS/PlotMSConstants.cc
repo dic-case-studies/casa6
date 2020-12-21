@@ -493,7 +493,7 @@ bool PMS::recEq(const Record& rec1, const Record& rec2) {
 const vector<String>& PMS::COLORS_LIST() {
     static vector<String> colors;
     if(colors.size() == 0) {
-        colors.resize(12);
+        colors.resize(10);
         colors[0] = "#202020";
         colors[1] = "#E00066";
         colors[2] = "#E07600";
@@ -504,8 +504,6 @@ const vector<String>& PMS::COLORS_LIST() {
         colors[7] = "#6600E0";
         colors[8] = "#0066F0";
         colors[9] = "#A868D8";
-        colors[10] = "#808080";
-        colors[11] = "#C71585";
     }
     
     return colors;
