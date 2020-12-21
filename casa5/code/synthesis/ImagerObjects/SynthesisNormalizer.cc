@@ -44,7 +44,7 @@
 #include <casa/OS/Path.h>
 
 #include <casa/OS/HostInfo.h>
-
+#include <lattices/Lattices/LatticeLocker.h>
 #include <images/Images/TempImage.h>
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
@@ -196,7 +196,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
     // Normalize by the weight image.
     //    divideResidualByWeight();
-
+    itsImages->releaseLocks();
+    
   }// end of gatherImages
 
   void SynthesisNormalizer::gatherPB()
@@ -215,6 +216,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	try{
 	    LatticeExpr<Float> thepb( *(itsPartImages[0]->pb()) );
+	    LatticeLocker lock1(*(itsImages->pb()), FileLocker::Write);
 	    itsImages->pb()->copyData(thepb);
 
 	  }
@@ -296,7 +298,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisNormalizer::divideResidualByWeight()
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "divideResidualByWeight",WHERE) );
-    
 
     if( itsNFacets==1) {
       itsImages->divideResidualByWeight( itsPBLimit, itsNormType );
@@ -312,16 +313,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SynthesisNormalizer::dividePSFByWeight()
   {
     LogIO os( LogOrigin("SynthesisNormalizer", "dividePSFByWeight",WHERE) );
+    {
+     
+      LatticeLocker lock1 (*(itsImages->psf()), FileLocker::Write);
     
-    if( itsNFacets==1) {
-      itsImages->dividePSFByWeight(itsPBLimit);
-    }
-    else {
-      // Since PSFs are normed just by their max, this sequence is OK.
-      setPsfFromOneFacet();
-      itsImages->dividePSFByWeight(itsPBLimit);
-    }
-
+      if( itsNFacets==1) {
+        itsImages->dividePSFByWeight(itsPBLimit);
+      }
+      else {
+        // Since PSFs are normed just by their max, this sequence is OK.
+        setPsfFromOneFacet();
+        itsImages->dividePSFByWeight(itsPBLimit);
+      }
+    }// release of lock1 otherwise releaselock below will cause it to core
+    //dump as the psf pointer goes dangling
       // Check PSF quality by fitting beams
     {
       itsImages->calcSensitivity();
@@ -331,6 +336,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       if (itsUseBeam=="common") verbose=True;
       itsImages->printBeamSet(verbose);
     }
+    itsImages->releaseLocks();
 
   }
 
@@ -398,7 +404,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages.reset( imstore );
   }
 
-
+  void SynthesisNormalizer::setImageStore( std::shared_ptr<SIImageStore>& imstore )
+  {
+    LogIO os( LogOrigin("SynthesisNormalizer", "setImageStore", WHERE) );
+    itsImages= imstore ;
+    
+  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////    Internal Functions start here.  These are not visible to the tool layer.
@@ -591,6 +602,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           }
       }
   os << LogIO::DEBUG2 << "Need to Gather ? " << needToGatherImages << LogIO::POST;
+  itsImages->releaseLocks();
   return needToGatherImages;
   }// end of setupImagesOnDisk
 
@@ -601,6 +613,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { return std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, itsNTaylorTerms, true ));   }
     else
       { return std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true ));   }
+    itsImages->releaseLocks();
   }
 
 

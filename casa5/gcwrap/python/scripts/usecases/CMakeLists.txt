@@ -19,7 +19,7 @@
 #
 
 casa_add_python( tools tools_usecases_python lib/python${PYTHONV}/regressions
-  jupiter6cm_usecase.py
+  #jupiter6cm_usecase.py
   ngc5921_usecase.py
   run_polcal_20080224_cband_usecase.py
   run_usecase_orions.py

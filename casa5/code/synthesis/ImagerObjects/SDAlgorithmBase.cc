@@ -116,7 +116,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  {
 	    //	    itsImages = imagestore->getSubImageStoreOld( chanid, onechan, polid, onepol );
 	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
-	    
+
 	    Int startiteration = loopcontrols.getIterDone(); // TODO : CAS-8767 key off subimage index
 	    Float peakresidual=0.0;
 	    Float modelflux=0.0;
@@ -162,6 +162,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   robuststats.get(RecordFieldId("robustrms"), robustrms);
                   robuststats.get(RecordFieldId("median"), medians);
                   statsexists=True;
+		  
                 }
                 else if(robuststats.isDefined("medabsdevmed")) {
                   Array<Double> mads;
@@ -169,8 +170,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   robuststats.get(RecordFieldId("median"), medians);
                   robustrms = mads * 1.4826; // convert to rms
                   statsexists=True;
+		  
                 }
-                statsindex=IPosition(1,chanid); // this only support for npol =1, need to fix this
+                //statsindex=IPosition(1,chanid); // this only support for npol =1, need to fix this
+		if((robustrms.shape().nelements() ==2) && (robustrms.shape()[0] > polid) &&  (robustrms.shape()[1] > chanid) )
+		  statsindex=IPosition(2,polid,chanid);
+		else if((robustrms.shape().nelements() ==1) && (robustrms.shape()[0] > chanid))
+		  statsindex=IPosition(1,chanid);
+		else ///no idea what got passed in the record
+		  statsexists=False;
+		
               }
               if (statsexists) {
                 os<<LogIO::DEBUG1<<"Using the existing robust image statatistics!"<<LogIO::POST;
@@ -211,6 +220,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	    if( validMask && stopCode==0 )
 	      {
+                
 		
 		// Record info about the start of the minor cycle iterations
 		loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
@@ -218,8 +228,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		//		loopcontrols.setPeakResidual( peakresidual );
 
 		// Init the deconvolver
-		initializeDeconvolver();
+                 //where we write in model and residual may be
+                {
 
+                  LatticeLocker lockresid (*(itsImages->residual()), FileLocker::Read);
+                  LatticeLocker lockmodel (*(itsImages->model()), FileLocker::Read);
+                  LatticeLocker lockmask (*(itsImages->mask()), FileLocker::Read);
+                  LatticeLocker lockpsf (*(itsImages->psf()), FileLocker::Read);
+		  
+                  initializeDeconvolver();
+                }
+                
 		while ( stopCode==0 )
 		  {
 
@@ -230,6 +249,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		    Int thisniter = loopcontrols.getCycleNiter() <5000 ? loopcontrols.getCycleNiter() : 2000;
 
 		    loopcontrols.setPeakResidual( peakresidual );
+
+                     //where we write in model and residual may be
+                    {
+                      //no need to lock here as only arrays are used
+
+                      //LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
+                      //LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
 		    takeOneStep( loopcontrols.getLoopGain(), 
 				 //				 loopcontrols.getCycleNiter(),
 				 thisniter,
@@ -238,6 +264,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				 peakresidual, 
 				 modelflux,
 				 iterdone);
+                    }
 
 		    os << LogIO::NORMAL1  << "SDAlgoBase: After one step, dec : " << deconvolverid << "    residual=" << peakresidual << " model=" << modelflux << " iters=" << iterdone << LogIO::POST; 
 
@@ -262,8 +289,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		      }
 		    
 		  }// end of minor cycle iterations for this subimage.
-		
-		finalizeDeconvolver();
+
+                //where we write in model and residual may be
+                {
+
+                  LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
+                  LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
+                  finalizeDeconvolver();
+                }
 
 	      }// if validmask
 	    

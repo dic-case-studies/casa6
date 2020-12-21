@@ -282,7 +282,7 @@ class ss_setjy_helper:
               #infreqs=[inparams[src]['freqlist'][i]]
               infreqs=[inparams[vfid]['freqlist'][i]]
             self._casalog.post("Calling solar_system_fd: %s(%s) for spw%s freqs=%s" % (src, vfid,i,freqlist[i]),'DEBUG1')
-            #print "calling solar system fd..."
+            # casalog.post( "calling solar system fd...")
             (errcodes, subfluxes, fluxerrs, sizes, dirs)=\
                ss_setjy.solar_system_fd(source_name=src, MJDs=mjds, frequencies=infreqs, observatory=observatory, casalog=self._casalog)
             # for old code
@@ -297,7 +297,7 @@ class ss_setjy_helper:
 
           # packed fluxes for all spws 
             fluxes.append(subfluxes)    
-            #print "fluxes=",fluxes
+            #casalog.post( "fluxes=" + fluxes)
           # fluxes has fluxesi[nspw][nf][nt]
 
           # ------------------------------------------------------------------------
@@ -322,7 +322,7 @@ class ss_setjy_helper:
           spwids=inparams[vfid]['spwids']
 
           clrecs=odict( )
-          #print "LOOP over multiple dir..."
+          # casalog.post("LOOP over multiple dir...")
           labels = []
           # loop for over for multiple directions (=multiple  MJDs) for a given src
           for i in range(len(dirs)):  # this is currently only length of 1 since no multiple timestamps were used
@@ -346,7 +346,7 @@ class ss_setjy_helper:
             
             self._casalog.post(dirmsg+str(dirstring))
 
-            #print "componentlist construction"
+            # casalog.post("componentlist construction")
             # setup componentlists
             # need to set per dir
             # if scalebychan=F, len(freqs) corresponds to nspw selected
@@ -374,7 +374,7 @@ class ss_setjy_helper:
             if (os.path.exists(clname)):
               shutil.rmtree(clname)
 
-            #print "Logging/output dict"
+            # casalog.post("Logging/output dict")
             iiflux=[]
             iinfreq=[]
             # for logging/output dict - pack each freq list for each spw
@@ -382,7 +382,7 @@ class ss_setjy_helper:
             for j in range(len(freqlist)): # loop over nspw
               freqlabel = '%.3fGHz' % (reffreqs[int(spwids[j])]/1.e9)
               clabel=src+'_spw'+str(spwids[j])+'_'+freqlabel+'_'+tmlabel
-              #print "addcomponent...for spw=",spwids[j]," i=",i," flux=",fluxes[j][i]
+              # casalog.post("addcomponent...for spw=",spwids[j]," i=",i," flux=",fluxes[j][i])
               if scalebychan:
                 index= 2.0
                 sptype = 'spectral index'
@@ -391,8 +391,8 @@ class ss_setjy_helper:
                 sptype = 'constant'
               # adjust to change in returned flux shape. An extra [] now seems to be gone. 2012-09-27
               iflux=fluxes[j][i][0]
-              #print "addcomponent with flux=%s at frequency=%s" %\
-              #                    (iflux,str(reffreqs[int(spwids[j])]/1.e9)+'GHz')
+              # casalog.post( "addcomponent with flux=%s at frequency=%s" %
+              #                    (iflux,str(reffreqs[int(spwids[j])]/1.e9)+'GHz'))
 
               # i - time stamps = 0 for now, j = a freq range
               infreq=freqlist[j][0][0] if type(freqlist[j][0])==list else freqlist[j][0]
@@ -426,7 +426,7 @@ class ss_setjy_helper:
               #  freqsforlog.append(iinfreq)
               # -----------------------------------------------------------------------------------
               
-              #print "Logging/output dict addcomp"
+              # casalog.post("Logging/output dict addcomp")
               self._casalog.post("addcomponent with flux=%s at frequency=%s" %\
               #                    (fluxes[j][i][0],str(reffreqs[int(spwids[j])]/1.e9)+'GHz'), 'INFO1')
                                   (iflux,str(reffreqs[int(spwids[j])]/1.e9)+'GHz'), 'INFO1')
@@ -460,7 +460,7 @@ class ss_setjy_helper:
           # if it's list of fluxes try to put in tabular form
           #if type(fluxes[j][i]) ==list and len(fluxes[j][i])> 1:
         #  if len(iiflux)> 1:
-                #print "framelist[j]=",framelist[j]
+                # casalog.post("framelist[j]=",framelist[j])
                 #if type(freqlist[j][0])==list and len(freqlist[j][0])>1:
                 #  freqs=[]
                 #  for fr in freqlist[j]:
@@ -482,8 +482,8 @@ class ss_setjy_helper:
             clrecs[clabel0]['allfreqinfo']=freqsforlog
             clrecs[clabel0]['spwids']=spwids
             mycl.rename(clname) #  - A CL per field
-            #print "clrecs=",clrecs
-            #print "clname=",clname
+            # casalog.post("clrecs=" + clrecs)
+            # casalog.post("clname=" + clname)
             mycl.close(False) # False for not to send a warning message
             mycl.done()
 
@@ -549,7 +549,7 @@ class ss_setjy_helper:
 
               #debug: set locally saved 2010-version component list instead
               #cl2010='mod_setjy_spw0_Titan_230.543GHz55674.1d.cl'
-              #print "Using complist=",cl2010
+              # casalog.post("Using complist=" + cl2010)
               #self.im.ft(complist=cl2010)
 
               #if cleanupcomps:          
@@ -571,10 +571,10 @@ class ss_setjy_helper:
           retdict[vfid]=clrecs 
         # ==== end of for loop over fields               
         #output=self._makeRetFluxDict(retdict)
-        #print "makeRetFluxDict2"
+        # casalog.post("makeRetFluxDict2")
         output=self._makeRetFluxDict2(retdict)
         #return retval
-        #print "done setSolarSetJY"
+        # casalog.post("done setSolarSetJY")
         return output
 
     def getclnamelist(self):
@@ -584,7 +584,7 @@ class ss_setjy_helper:
         """
         send model parameters to log
         """
-        #print "clrecs=", clrecs
+        # casalog.post("clrecs=" + clrecs)
         for ky in clrecs.keys():
             # expect only one component for each
             nelm = clrecs[ky]['nelements']
@@ -620,7 +620,7 @@ class ss_setjy_helper:
         """
         nelm = -1
         ncl = len(clrecs.keys())
-        #print "clrecs=",clrecs
+        # casalog.post("clrecs=" + clrecs)
         if ncl == 1:
             clname = list(clrecs.keys())[0]
             comprec = clrecs[clname]

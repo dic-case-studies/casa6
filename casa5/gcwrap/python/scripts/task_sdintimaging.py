@@ -5,7 +5,6 @@
 ################################################
 
 from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import shutil
@@ -70,7 +69,7 @@ def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
     locparams['niter']=0
     locparams['deconvolver']='hogbom'
 
-    #print("local inparams(msname) in setup_imager==",locparams['msname']) 
+    #casalog.post("local inparams(msname) in setup_imager==",locparams['msname'])
     params = ImagerParameters(**locparams)
     #params = ImagerParameters(msname=self.vis, field=self.field,spw=self.spw,
     #                              imagename=imagename,
@@ -107,7 +106,7 @@ def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
         imagertool.makePSF()
         imagertool.makePB()
         if((psfphasecenter != '') and (gridder=='mosaic')):
-            print("doing with different phasecenter psf")
+            casalog.post("doing with different phasecenter psf", "INFO")
             imagertool.unlockimages(0)
             psfParameters=paramList.getAllPars()
             psfParameters['phasecenter']=psfphasecenter
@@ -426,10 +425,10 @@ def sdintimaging(
     ### Move these checks elsewhere ? 
     inpparams=locals().copy()
     ###now deal with parameters which are not the same name 
-    #print("current inpparams=",inpparams)
-    #print("inpparams.keys()=",inpparams.keys())
+    #casalog.post("current inpparams=",inpparams)
+    #casalog.post("inpparams.keys()=",inpparams.keys())
     locvis=inpparams.pop('vis')
-    #print("LOCVIS====",locvis)
+    #casalog.post("LOCVIS====",locvis)
     if type(locvis)==list:
         llocvis = [v.lstrip() for v in locvis]
     else:
@@ -541,7 +540,7 @@ def sdintimaging(
          #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
     ##     concattype='copyvirtual'
     ##else:
-    ##     print('Invalid parallel combination in doClean.')
+    ##     casalog.post('Invalid parallel combination in doClean.')
     ##     return False
 
         
@@ -631,7 +630,7 @@ def sdintimaging(
         #sdintlib.apply_renorm(imname=joint_cube+'.residual', sumwtname=joint_cube+'.sumwt')
         ###############
 
-        #print("feather_int_sd DONE")
+        #casalog.post("feather_int_sd DONE")
  
         if specmode=='mfs':
             ## Calculate Spectral PSFs and Taylor Residuals
@@ -671,7 +670,7 @@ def sdintimaging(
                     shutil.rmtree(int_cube+'.model',ignore_errors=True)
                     shutil.copytree(joint_cube+'.model', int_cube+'.model')
                     hasfile=os.path.exists(joint_cube+'.model')
-                    #print("DEBUG: has joint cube .image===",hasfile)
+                    #casalog.post("DEBUG: has joint cube .image===",hasfile)
 
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
@@ -756,7 +755,6 @@ def sdintimaging(
         deconvolver.deleteTools()
    
         if parallel==True and not (specmode =='mfs' or specmode=='cont'):
-            print("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
             #imager.concatImages(type=concattype)
             deconvolver.concatImages(type=concattype)

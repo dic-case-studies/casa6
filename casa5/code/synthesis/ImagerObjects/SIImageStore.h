@@ -39,6 +39,7 @@
 #include <images/Images/TempImage.h>
 #include <images/Images/SubImage.h>
 #include <images/Regions/ImageRegion.h>
+#include <lattices/Lattices/LatticeLocker.h>
 #include <casa/BasicSL/Constants.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
@@ -79,6 +80,7 @@ class SIImageStore
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &gridwtim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &pbim,
 	       const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &restoredpbcorim,
+               const std::shared_ptr<casacore::ImageInterface<casacore::Float> > &tempworkim,
 	       const casacore::CoordinateSystem &csys,
 	       const casacore::IPosition &imshape,
 	       const casacore::String &imagename,
@@ -119,6 +121,8 @@ class SIImageStore
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > gridwt(casacore::IPosition newshape=casacore::IPosition(0));
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > pb(casacore::uInt term=0);
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > imagepbcor(casacore::uInt term=0);
+  ///This returns a temporary image of same size/coordinates ...it stays alive as long as this object stays up
+  virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > tempworkimage(casacore::uInt term=0);
 
   virtual void setModelImageOne( casacore::String modelname, casacore::Int nterm=-1 );
   virtual void setModelImage( casacore::Vector<casacore::String> modelnames );
@@ -157,6 +161,12 @@ class SIImageStore
   ////////// Restoring Beams
   virtual void makeImageBeamSet(casacore::Float psfcutoff);
   casacore::ImageBeamSet getBeamSet(casacore::Float psfcutoff=0.35);
+  virtual void setBeamSet(const casacore::ImageBeamSet& bs);
+  //get the beamSet of a given channel only
+  virtual casacore::ImageBeamSet getChannelBeamSet(const casacore::Int chan);
+  //get the beamSet for a range of channel begining and end inclusive
+  virtual casacore::ImageBeamSet getChannelSliceBeamSet(const casacore::Int begChan, const casacore::Int endChan);
+    
   virtual void printBeamSet(casacore::Bool verbose=casacore::False);
   casacore::GaussianBeam findGoodBeam();
   void lineFit(casacore::Vector<casacore::Float> &data, casacore::Vector<casacore::Bool> &flag, casacore::Vector<casacore::Float> &fit, casacore::uInt lim1, casacore::uInt lim2);
@@ -194,7 +204,8 @@ class SIImageStore
   casacore::Float getPeakResidualWithinMask();
   casacore::Float getModelFlux(casacore::uInt term=0);
   virtual casacore::Bool isModelEmpty();
-  casacore::Float getPSFSidelobeLevel();
+  virtual casacore::Float getPSFSidelobeLevel();
+  virtual void setPSFSidelobeLevel(const casacore::Float lev);
   void findMinMax(const casacore::Array<casacore::Float>& lattice,
 		  const casacore::Array<casacore::Float>& mask,
 		  casacore::Float& minVal, casacore::Float& maxVal,
@@ -214,6 +225,7 @@ class SIImageStore
 
 
   void setDataPolFrame(StokesImageUtil::PolRep datapolrep) {itsDataPolRep = datapolrep;};
+  StokesImageUtil::PolRep getDataPolFrame(){ return itsDataPolRep;};
   virtual void calcSensitivity();
 
   casacore::CoordinateSystem getCSys(){return itsCoordSys;}
@@ -221,6 +233,10 @@ class SIImageStore
   ///estimate of Memory to be used by the images held in KiloBytes
   
   virtual casacore::Long estimateRAM();
+  ///Make an existing PagedImage complex the same shape as this imagestore
+  ///coordsys and shape...effectively copies intersecting region data 
+  casacore::Bool intersectComplexImage(const casacore::String& inputImage);
+  casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
 protected:
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > makeSubImage(const casacore::Int facet, const casacore::Int nfacets,
 						  const casacore::Int chan, const casacore::Int nchanchunks,
@@ -260,7 +276,7 @@ protected:
   casacore::Double getPbMax(casacore::Int pol, casacore::Int chan);
 
   casacore::Bool createMask(casacore::LatticeExpr<casacore::Bool> &lemask, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
-  casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
+  //casacore::Bool copyMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >inimage, casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >outimage);
 
   void removeMask(casacore::CountedPtr<casacore::ImageInterface<casacore::Float> >im);
   void rescaleResolution(casacore::Int chan, casacore::ImageInterface<casacore::Float>& subResidual, const casacore::GaussianBeam& newbeam, const casacore::GaussianBeam& oldbeam);
@@ -305,13 +321,14 @@ private:
   virtual void initMetaInfo(std::shared_ptr<casacore::ImageInterface<casacore::Float> > &imptr,
                             const casacore::String name);
 
-  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB;
+  std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsPsf, itsModel, itsResidual, itsWeight, itsImage, itsSumWt, itsImagePBcor, itsPB, itsTempWorkIm;
   std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
 
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsParentPsf, itsParentModel, itsParentResidual, itsParentWeight, itsParentImage, itsParentSumWt, itsParentGridWt, itsParentPB, itsParentImagePBcor;
     
 
 
+  std::shared_ptr<casacore::LatticeLocker> itsReadLock;
 
 };
 
