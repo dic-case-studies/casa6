@@ -85,7 +85,7 @@ using namespace casa::refim;
   GridFT::GridFT() : FTMachine(), padding_p(1.0), imageCache(0), cachesize(1000000), tilesize(1000), gridder(0), isTiled(false), convType("SF"),
   maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
   usezero_p(false), noPadding_p(false), usePut2_p(false), 
-		     machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0){
+		     machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0){
 
   }
 GridFT::GridFT(Long icachesize, Int itilesize, String iconvType, Float padding,
@@ -94,7 +94,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType, Float padding,
   gridder(0), isTiled(false), convType(iconvType),
   maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
   usezero_p(usezero), noPadding_p(false), usePut2_p(false), 
-  machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   useDoubleGrid_p=useDoublePrec;  
   //  peek=NULL;
@@ -105,7 +105,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mLocation_p=mLocation;
   tangentSpecified_p=false;
@@ -118,7 +118,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mTangent_p=mTangent;
   tangentSpecified_p=true;
@@ -132,7 +132,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false),machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false),machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mLocation_p=mLocation;
   mTangent_p=mTangent;
