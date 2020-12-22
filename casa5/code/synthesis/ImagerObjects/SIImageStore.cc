@@ -282,7 +282,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else
 	  {
-	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    //throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    std::shared_ptr<ImageInterface<Float> > imptr;
+	    //imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
+	    if( doesImageExist(itsImageName+String(".residual") ) )
+	      { buildImage( imptr, (itsImageName+String(".residual")) ); }
+	      else
+	      { buildImage( imptr, (itsImageName+String(".psf")) ); }
+
+	    itsNFacets=1;
+	    itsFacetId=0;
+	    itsUseWeight=0;
+	    itsPBScaleFactor=1.0;
+	    itsCoordSys = imptr->coordinates();
+	    itsMiscInfo=imptr->miscInfo();
 	  }
 	
       }// if psf or residual exist...
@@ -2007,7 +2020,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     return beam;
   }
 
-  void SIImageStore::makeImageBeamSet()
+  void SIImageStore::makeImageBeamSet(const Bool forcefit)
   {
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
@@ -2018,7 +2031,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     uInt nchan = itsImageShape[3];
     ImageInfo ii = psf()->imageInfo();
     ImageBeamSet iibeamset=ii.getBeamSet();
-    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol){
+    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol && forcefit==False){
       itsPSFBeams=iibeamset;
       itsRestoredBeams=iibeamset;
       return;
@@ -2958,7 +2971,7 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 		abeam[1] = beam.getMinor().get("arcsec").getValue() * C::arcsec;
 		abeam[2] = (beam.getPA().get("deg").getValue() + 90.0)* C::degree;
 
-		//cout << "Beam : " << abeam << endl;
+		cout << "Beam : " << abeam << endl;
 
 		StokesImageUtil::MakeGaussianPSF( psfbeam,  abeam, False);
 
@@ -2980,6 +2993,8 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 
 		if( minval < allmin ) allmin = minval;
 		if( maxval > allmax ) allmax = maxval;
+
+		cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
 		
 	      }//chan
 	  }//pol

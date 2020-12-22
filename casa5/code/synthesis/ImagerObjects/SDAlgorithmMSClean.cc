@@ -215,9 +215,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ////This is going to be wrong if there is no 0 scale;
     ///Matrix<Float> residual(itsCleaner.residual());
-    Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //    cout << "Max tempModel : " << max(abs(tempModel)) << "  Max prevModel  : " << max(abs(prevModel)) << endl;
+    itsMatResidual = itsCleaner.residual(tempModel-prevModel);
+
     // account for mask as well
-    peakresidual = max(abs(residual*itsMatMask));
+    //peakresidual = max(abs(residual*itsMatMask));
+    peakresidual = max(abs(itsMatResidual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
   }	    
 

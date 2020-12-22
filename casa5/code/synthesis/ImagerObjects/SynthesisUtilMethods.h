@@ -133,6 +133,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     static casacore::Int getOptimumSize(const casacore::Int npix);
 
+    static casacore::Bool fitPsfBeam(const casacore::String& imagename="", const casacore::Int nterms=1);
+
     static void getResource(casacore::String label="", casacore::String fname="");
     
     // return comprehensible direction string from given MDirection object

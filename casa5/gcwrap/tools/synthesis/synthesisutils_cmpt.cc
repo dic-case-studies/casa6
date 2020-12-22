@@ -247,7 +247,23 @@ synthesisutils::~synthesisutils()
 
   return rstat;
 }
+  
+  bool  synthesisutils::fitPsfBeam(const string& imagename, const long nterms)
+{
+   int rstat(false);
 
+  try
+    {
+      rstat = SynthesisUtilMethods::fitPsfBeam(imagename, nterms);
+    }
+  catch  (AipsError x)
+    {
+      RETHROW(x);
+    }
+
+  return rstat;
+}
+  
 
 
 bool

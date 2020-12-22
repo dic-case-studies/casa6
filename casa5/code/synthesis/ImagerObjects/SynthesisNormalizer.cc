@@ -321,6 +321,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     {
       itsImages->calcSensitivity();
 
+      cout << "CALLING makebeamset on " << itsImages->getName() << endl;
       itsImages->makeImageBeamSet();
       Bool verbose(False);
       if (itsUseBeam=="common") verbose=True;

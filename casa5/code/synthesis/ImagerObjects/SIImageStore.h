@@ -159,7 +159,7 @@ class SIImageStore
 
 
   ////////// Restoring Beams
-  virtual void makeImageBeamSet();
+  virtual void makeImageBeamSet(const casacore::Bool forcefit=false);
   virtual casacore::ImageBeamSet getBeamSet();
   virtual void setBeamSet(const casacore::ImageBeamSet& bs);
   //get the beamSet of a given channel only
