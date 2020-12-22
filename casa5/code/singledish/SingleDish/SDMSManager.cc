@@ -73,28 +73,28 @@ void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_
   // make sure the shape of cube matches the number of rows to add.
   AlwaysAssert(data_cube.nplane() == nRowsToAdd_p, AipsError);
 
-  if (not bufferMode_p) {
-    // Create RowRef object to fill new rows
-    uInt currentRows = outputMs_p->nrow();
-    RefRows rowRef(currentRows, currentRows + nRowsToAdd_p / nspws_p - 1);
-
-    // Add new rows to output MS
-    outputMs_p->addRow(nRowsToAdd_p, false);
-
-    // Fill new rows
-    if (weight_matrix == nullptr) {
-      weightSpectrumFlatFilled_p = false;
-      weightSpectrumFromSigmaFilled_p = false;
-      fillWeightCols(vb, rowRef);
-    }
-    fillCubeToDataCols(vb, rowRef, data_cube, flag_cube);
-    fillIdCols(vb, rowRef);
-    if (weight_matrix != nullptr) { // for update_weight=True (CAS-13161)
-      outputMsCols_p->weight().putColumnCells(rowRef, *weight_matrix);
-    }
+  if (bufferMode_p) {
+    return;
   }
 
-  return;
+  // Create RowRef object to fill new rows
+  uInt currentRows = outputMs_p->nrow();
+  RefRows rowRef(currentRows, currentRows + nRowsToAdd_p / nspws_p - 1);
+
+  // Add new rows to output MS
+  outputMs_p->addRow(nRowsToAdd_p, false);
+
+  // Fill new rows
+  if (weight_matrix == nullptr) {
+    weightSpectrumFlatFilled_p = false;
+    weightSpectrumFromSigmaFilled_p = false;
+    fillWeightCols(vb, rowRef);
+  }
+  fillCubeToDataCols(vb, rowRef, data_cube, flag_cube);
+  fillIdCols(vb, rowRef);
+  if (weight_matrix != nullptr) { // for update_weight=True (CAS-13161)
+    outputMsCols_p->weight().putColumnCells(rowRef, *weight_matrix);
+  }
 }
 
 void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_cube, 
