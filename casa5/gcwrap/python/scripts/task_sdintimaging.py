@@ -471,7 +471,7 @@ def sdintimaging(
         return;
         
     if(gridder=='awproject'):
-        casalog.post("The awproject gridder is temporarily not supported with cube major cycles. Support will be brought back in a subsequent release."."WARN","task_sdintimaging")
+        casalog.post("The awproject gridder is temporarily not supported with cube major cycles. Support will be brought back in a subsequent release.","WARN","task_sdintimaging")
         return;
 
     if(usedata='sd'):
