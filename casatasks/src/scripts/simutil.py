@@ -2,7 +2,6 @@
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import pylab as pl
@@ -94,14 +93,14 @@ class compositenumber:
                 for i5 in range(n5):
                     composite=( 2.**i2 * 3.**i3 * 5.**i5 )
                     itsnumbers[n] = composite
-                    #print i2,i3,i5,composite
+                    #casalog.post... i2,i3,i5,composite
                     n=n+1
         itsnumbers.sort()
         maxi=0
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print(self.itsnumbers)
+        casalog.post(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -116,10 +115,13 @@ class compositenumber:
 class simutil:
     """
     simutil contains methods to facilitate simulation. 
-    To use these, create a simutil instance e.g.
+    To use these, create a simutil instance e.g., in CASA 6:
      CASA> from casatasks.private import simutil
      CASA> u=simutil.simutil()
      CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     (in CASA5: )
+     CASA> from simutil import simutil
+     CASA> u=simutil.simutil()
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
@@ -243,9 +245,9 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print(clr+"["+origin+"] "+bw+s)
+                casalog.post(clr+"["+origin+"] "+bw+s)
             else:
-                print(s)
+                casalog.post(s)
 
 
         if priority=="ERROR":
@@ -796,7 +798,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -845,7 +848,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
@@ -1638,10 +1642,10 @@ class simutil:
                             aid.append('A%02d'%nant)
                         nant+=1
             except IOError:
-                self.msg(f"Could not read file: '{antab}'", 
+                self.msg("Could not read file: '{}'".format(antab),
                          origin='readantenna', priority='error')
             except ValueError:
-                self.msg(f"Could not read file: '{antab}'", 
+                self.msg("Could not read file: '{}'".format(antab),
                          origin='readantenna', priority='error')
 
         if "coordsys" not in params:
@@ -2283,7 +2287,7 @@ class simutil:
         x0 = pl.sqrt((x-dx)**2 + (y-dy)**2)
         lat=pl.arctan2(y0,x0)
         lon=pl.arctan2(y-dy,x-dx)
-        #print x-dx,y-dy,z-dz,x0,y0
+        #casalog.post... x-dx,y-dy,z-dz,x0,y0
                 
         return lon,lat
 
@@ -2426,7 +2430,7 @@ class simutil:
             rg=r2
         if max(d)>0.01*rg:
             pl.plot(lat,lon,',')            
-            #print max(d),ra
+            #casalog.post(max(d),ra)
             for i in range(n):
                 pl.gca().add_patch(pl.Circle((lat[i],lon[i]),radius=0.5*d[i],fc="#dddd66"))
                 if n<10:

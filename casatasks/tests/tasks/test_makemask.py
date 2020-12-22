@@ -72,20 +72,28 @@ class test_copy(makemaskTestBase):
     inimage4='ngc5921.cube1.image' # actual cube image
     inimage5='ngc5921.cube1.UNKNOWNTEL.mask'# unknown telesocpe
     inimage6='3x3.image'
-    inimage_all = [inimage, inimage2, inimage3, inimage4, inimage5, inimage6]
+    inimage7='ngc5921.chan0.image'
+
+    inimage_all = [inimage, inimage2, inimage3, inimage4, inimage5, inimage6, inimage7]
+
+    intextfile = 'elliptical_annulus_crtf.txt'
 
     outimage1='ngc5921.cube1.copy.mask'
     outimage2='ngc5921.cube1.copyinimage.mask'
     outimage3='ngc5921.cube2.copyinimage.mask'
     outimage4='ngc5921.cube2.copy.mask'
     outimage5='3x3b.image'
-    outimage_all = [outimage1, outimage2, outimage3, outimage4, outimage5]
+    outimage6='ngc5921.chan0.copy.mask'
 
+    outimage_all = [outimage1, outimage2, outimage3, outimage4, outimage5, outimage6]
+
+    # reference images  (Nubmered by corresponding test number)
     refimage4=os.path.join(datapath,'makemask_reference/ngc5921.copytest4.ref.mask')
     refimage6=os.path.join(datapath,'makemask_reference/ngc5921.copytest6.ref.mask')
+    refimage11=os.path.join(datapath,'makemask_reference/ngc5921.copytest11.ref.mask')
 
     def setUp(self):
-        #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]:
+        #for img in [self.inimage,self.outimage1,self.outimage2, self.outimage3]
         #    if os.path.isdir(img):
         #        shutil.rmtree(img)
         for img in self.inimage_all:
@@ -99,7 +107,7 @@ class test_copy(makemaskTestBase):
                 if os.path.isdir(img):
                     shutil.rmtree(img)
         else:
-            print("debugging mode: clean-up did not performed")
+            print("debugging mode: clean-up was not performed")
         
     def test1_copyimagemask(self):
         """ (copy mode) testcopy1: copying an image mask (1/0 mask) to a new image mask"""
@@ -271,6 +279,26 @@ class test_copy(makemaskTestBase):
         self.assertTrue(os.path.exists(self.outimage5))           
         self.assertTrue(self.compareimpix(self.inimage5,self.outimage5))           
 
+    def test11_copyimagemask(self):
+        """ (copy mode) testcopy11(CAS-12980): copying a mutli-line CRTF file  to create a 1/0 mask image"""
+
+        try:
+            shutil.copy(ctsys_resolve(os.path.join(datapath,self.intextfile)),self.intextfile)
+            makemask(mode='copy',inpimage=self.inimage7,
+                     inpmask=self.intextfile, 
+                     output=self.outimage6)
+        except:
+            print("\nError running makemask")
+            raise
+           
+        self.assertTrue(os.path.exists(self.outimage6))
+        if os.path.exists(self.outimage6):
+          _ia.open(self.outimage6)
+          stats=_ia.statistics()
+          self.assertTrue(stats['max'][0]==1. and stats['min'][0]==0.)
+          _ia.close()
+        self.assertTrue(self.compareimpix(self.outimage6,self.refimage11))
+
 
 class test_merge(makemaskTestBase):
     """test merging of multiple masks in copy mode"""
@@ -306,7 +334,7 @@ class test_merge(makemaskTestBase):
                 elif os.path.isfile(img):
                     os.system('rm '+img)
         else:
-            print("debugging mode: clean-up did not performed")
+            print("debugging mode: clean-up was not performed")
 
     def test1_mergemasks(self):
         """ (copy mode) mergetest1: merging image mask (1/0 mask) and T/F mask and  overwrite to an existing image(1/0) mask"""
@@ -447,7 +475,7 @@ class test_expand(makemaskTestBase):
                     shutil.rmtree(img)
                     #pass
         else:
-            print("debugging mode: clean-up did not performed")
+            print("debugging mode: clean-up was not performed")
 
     def test1_expandmask(self):
         """ (expand mode) test1: an image mask from continuum clean to a cube mask"""
@@ -612,7 +640,7 @@ class test_inmask(makemaskTestBase):
                 if os.path.isdir(img):
                     shutil.rmtree(img)
         else:
-            print("debugging mode: clean-up did not performed")
+            print("debugging mode: clean-up was not performed")
 
     def test_deletemask(self):
         """ (delete mode) delete an internal mask from the image"""
