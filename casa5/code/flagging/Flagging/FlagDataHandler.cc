@@ -137,8 +137,9 @@ FlagDataHandler::FlagDataHandler(string tablename, uShort iterationApproach, Dou
 	chunkCounts_p = 0;
 	progressCounts_p = 0;
 	msCounts_p = 0;
-	summaryThreshold_p = 10;
 	printChunkSummary_p = true;
+	summaryThreshold_p = summaryThresholdInc_p;
+	chunkLineThreshold_p = chunkLineThresholdInc_p;;
 
 	// Set all the initialized pointers to NULL
 	measurementSetSelection_p = NULL;

@@ -894,6 +894,19 @@ namespace asdm {
       void fill(const asdm::ASDM& asdm);
     };
 	
+    class ASDM_VLAWVR : public ASDM_TABLE_SINGLETON<ASDM_VLAWVR>, public ASDM_TABLE_BASE {
+      friend class ASDM_TABLE_SINGLETON<ASDM_VLAWVR>;
+
+     private:
+      ASDM_VLAWVR();
+      ~ASDM_VLAWVR();
+      casacore::TableDesc tableDesc_;
+
+     public:
+      const casacore::TableDesc& tableDesc() const;
+      void fill(const asdm::ASDM& asdm);
+    };
+	
     class ASDM_WVMCAL : public ASDM_TABLE_SINGLETON<ASDM_WVMCAL>, public ASDM_TABLE_BASE {
       friend class ASDM_TABLE_SINGLETON<ASDM_WVMCAL>;
 

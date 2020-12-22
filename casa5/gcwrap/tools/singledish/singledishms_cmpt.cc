@@ -131,14 +131,14 @@ singledishms::subtract_baseline(string const& datacolumn,
                                 bool const updateweight,
                                 string const& sigmavalue,
                                 string const& blfunc,
-                                int const order,
+                                long const order,
                                 float const clip_threshold_sigma,
-                                int const num_fitting_max,
+                                long const num_fitting_max,
                                 bool const linefinding,
                                 float const threshold,
-                                int const avg_limit,
-                                int const minwidth,
-                                vector<int> const& edge)
+                                long const avg_limit,
+                                long const minwidth,
+                                vector<long> const& edge)
 {
   bool rstat(false);
   *itsLog << _ORIGIN;
@@ -159,7 +159,7 @@ singledishms::subtract_baseline(string const& datacolumn,
                             threshold,
                             avg_limit,
                             minwidth,
-                            edge);
+                            vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
@@ -177,14 +177,14 @@ singledishms::subtract_baseline_cspline(string const& datacolumn,
                                         ::casac::variant const& spw,
                                         bool const updateweight,
                                         string const& sigmavalue,
-                                        int const npiece,
+                                        long const npiece,
                                         float const clip_threshold_sigma,
-                                        int const num_fitting_max,
+                                        long const num_fitting_max,
                                         bool const linefinding,
                                         float const threshold,
-                                        int const avg_limit,
-                                        int const minwidth,
-                                        vector<int> const& edge)
+                                        long const avg_limit,
+                                        long const minwidth,
+                                        vector<long> const& edge)
 {
   bool rstat(false);
   *itsLog << _ORIGIN;
@@ -204,7 +204,7 @@ singledishms::subtract_baseline_cspline(string const& datacolumn,
                                    threshold,
                                    avg_limit,
                                    minwidth,
-                                   edge);
+                                   vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
@@ -228,12 +228,12 @@ singledishms::subtract_baseline_sinusoid(string const& datacolumn,
                                          string const& fftmethod,
                                          ::casac::variant const& fftthresh,
                                          float const clip_threshold_sigma,
-                                         int const num_fitting_max,
+                                         long const num_fitting_max,
                                          bool const linefinding,
                                          float const threshold,
-                                         int const avg_limit,
-                                         int const minwidth,
-                                         vector<int> const& edge)
+                                         long const avg_limit,
+                                         long const minwidth,
+                                         vector<long> const& edge)
 {
   bool rstat(false);
   *itsLog << _ORIGIN;
@@ -257,7 +257,7 @@ singledishms::subtract_baseline_sinusoid(string const& datacolumn,
                                     threshold,
                                     avg_limit,
                                     minwidth,
-                                    edge);
+                                    vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported1: " << x.getMesg() 
@@ -338,9 +338,9 @@ singledishms::fit_line(string const& datacolumn,
 		       string const& nfit,
 		       bool const linefinding,
 		       float const threshold,
-		       int const avg_limit,
-		       int const minwidth,
-		       vector<int> const& edge,
+		       long const avg_limit,
+		       long const minwidth,
+		       vector<long> const& edge,
 		       string const& tempfile,
 		       string const& tempoutfile)
 {
@@ -363,7 +363,7 @@ singledishms::fit_line(string const& datacolumn,
 
     itsSd->fitLine(datacolumn, toCasaString(spw), toCasaString(pol), 
 		   fitfunc, nfit, linefinding, threshold, avg_limit,
-		   minwidth, edge, tempfile, tempoutfile);
+		   minwidth, vector<int>(edge.begin(),edge.end()), tempfile, tempoutfile);
     rstat = true;
   } catch  (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 

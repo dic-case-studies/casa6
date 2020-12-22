@@ -195,14 +195,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }// end of readable table
             else {
               //
-              Record* myrec = 0;
+              std::unique_ptr<Record> myrec(nullptr);
               try {
-                myrec = RegionManager::readImageFile(maskString,String("temprgrec"));
+                myrec.reset(RegionManager::readImageFile(maskString,String("temprgrec")));
                 if (myrec!=0) {
                   Bool ret(false);
                   Matrix<Quantity> dummyqmat;
                   Matrix<Float> dummyfmat;
-                  ret=SDMaskHandler::regionToImageMask(tempMaskImage, myrec, dummyqmat, dummyfmat);
+                  ret=SDMaskHandler::regionToImageMask(tempMaskImage, myrec.get(), dummyqmat, dummyfmat);
                   if (!ret) cout<<"regionToImageMask failed..."<<endl;
                     os << "Reading region record mask: " << maskString << LogIO::POST;
 
@@ -337,8 +337,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   //Bool SDMaskHandler::regionToImageMask(const String& maskName, Record* regionRec, Matrix<Quantity>& blctrcs,
-  Bool SDMaskHandler::regionToImageMask(ImageInterface<Float>& maskImage, Record* regionRec, Matrix<Quantity>& blctrcs,
-            Matrix<Float>& circles, const Float& value) {
+  Bool SDMaskHandler::regionToImageMask(ImageInterface<Float>& maskImage, const Record* regionRec, const Matrix<Quantity>& blctrcs,
+            const Matrix<Float>& circles, const Float& value) {
 
     LogIO os(LogOrigin("imager", "regionToImageMask", WHERE));
 
@@ -473,7 +473,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     delete elunion;
   }
  
-  void SDMaskHandler::recordRegionToImageRegion(Record* imageRegRec, ImageRegion*& imageRegion ) 
+  void SDMaskHandler::recordRegionToImageRegion(const Record* imageRegRec, ImageRegion*& imageRegion )
   //void SDMaskHandler::recordRegionToImageRegion(Record& imageRegRec, ImageRegion*& imageRegion ) 
   {
     if(imageRegRec !=0){
@@ -983,7 +983,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   void SDMaskHandler::autoMask(std::shared_ptr<SIImageStore> imstore, 
-                               TempImage<Float>& posmask,
+                               ImageInterface<Float>& posmask,
                                const Int iterdone,
                                Vector<Bool>& chanflag,
                                Record& robuststatsrec,
@@ -1206,7 +1206,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     else {
     // Revised version of calcRobustImageStatistics  (previous one- rename to calcRobustImageStatisticsOld)
     //Record thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
-      thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
+      try{
+	thenewstats = calcRobustImageStatistics(*tempres, *tempmask, pbmask, LELmask, region_ptr, robust, chanflag);
+      }
+      catch( AipsError &x )
+      {
+	//now that there are part images that are masked...should just not proceed rather than throw an exception
+	if(x.getMesg().contains("zero element data"))
+	  return;
+	else
+	  throw(x);
+      }
       Array<Double> newmaxs, newmins, newrmss, newmads;
       thenewstats.get(RecordFieldId("max"), newmaxs);
       thenewstats.get(RecordFieldId("rms"), newrmss);
@@ -2183,7 +2193,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // *** auto-multithresh  ***
   // for implemtation of Amanda's algorithm
   void SDMaskHandler::autoMaskByMultiThreshold(ImageInterface<Float>& mask,
-                                          TempImage<Float>& posmask,
+                                          ImageInterface<Float>& posmask,
                                           const ImageInterface<Float>& res, 
                                           const ImageInterface<Float>& psf, 
                                           const Record& stats, 
@@ -2341,15 +2351,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int polAxis = CoordinateUtil::findStokesAxis(whichPols, imcoord);
     Int nchan = -1;
     Int npol = -1;
-    Bool specaxisLast(True);
     if (specAxis != -1) {
       nchan = imshp(specAxis);
     }
     if (polAxis != -1 ) {
       npol = imshp(polAxis);
-      if (specAxis != -1 && specAxis < polAxis) {
-        specaxisLast=False; // pol and spec axes are reversed
-      }
     }  
     //Int specAxis = CoordinateUtil::findSpectralAxis(res.coordinates());
     // here, now chindx really means index to extract per-plane
@@ -4125,7 +4131,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  
   void SDMaskHandler::autoMaskWithinPB(std::shared_ptr<SIImageStore> imstore, 
-                                       TempImage<Float>& posmask,
+                                       ImageInterface<Float>& posmask,
                                        const Int iterdone,
                                        Vector<Bool>& chanflag,
                                        Record& robuststatsrec,
@@ -4413,7 +4419,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int npol = maskthreshold.nrow();
     Int nchan = maskthreshold.ncolumn(); 
     os << LogIO::DEBUG1 << "npol="<<npol<< " nchan="<<nchan<<LogIO::POST;
-    
     IPosition statshp = rmss.shape();
     // Note: stats record collapse the axis with 1
     os<<LogIO::DEBUG1 <<"rmss shape="<< String::toString(statshp) <<LogIO::POST;
@@ -4423,13 +4428,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //Int nchan = maskthreshold.nelements(); 
     for (uInt ich = 0; ich < (uInt) nchan; ich++) {
-        if (npol == 1 ) {
+      if (chanidx.nelements()==1 ) {
           chanidx(0) = ich;
         }
-        else if(npol > 1 and nchan > 1) {
+      else if(chanidx.nelements()==2) {
           // to include stats in all stokes in a single line
           chanidx(1) = ich;
-        }
+	  chanidx(0) =0;
+      }
         Vector<Double> peaks(npol);
         for (uInt ipol = 0; ipol < (uInt) npol; ipol++) {
         //Double peak = abs(maxs(chanidx))> abs( mins(chanidx))? maxs(chanidx): mins(chanidx);

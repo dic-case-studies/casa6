@@ -345,7 +345,6 @@ def mstransform(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -353,7 +352,6 @@ def mstransform(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
                             numspw = len(mslocal.msseltoindex(vis=vis,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -362,7 +360,6 @@ def mstransform(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -374,11 +371,8 @@ def mstransform(
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
                                 sch2 = update_spwchan(vis, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':

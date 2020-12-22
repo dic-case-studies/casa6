@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import numpy
 import os
 import contextlib
@@ -51,10 +50,10 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if not os.path.exists(infile):
             raise Exception("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
-            #print("type=%s, value=%s" % (type(outfile), str(outfile)))
+            #casalog.post("type=%s, value=%s" % (type(outfile), str(outfile)))
             #raise ValueError, "outfile name is empty."
             outfile = infile.rstrip('/') + '_bs'
-            print("outfile is empty or non-string. set to '" + outfile + "'")
+            casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if os.path.exists(outfile) and not overwrite:
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):

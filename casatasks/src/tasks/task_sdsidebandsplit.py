@@ -3,6 +3,7 @@ if is_CASA6:
     from casatasks import casalog
     from casatools import sidebandseparator, quanta
 else:
+    from taskinit import casalog
     from taskinit import qatool as quanta
     from casac import casac
 
@@ -92,7 +93,6 @@ def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
         del sbsep
 
     except Exception, instance:
-        #print '***Error***',instance
         casalog.post( str(instance), priority = 'ERROR' )
         raise Exception, instance
         return
