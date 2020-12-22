@@ -51,15 +51,6 @@ except ImportError:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)    
 
-    # scastro (25nov2020) suggests putting new files in data-req, so we are now splitting files
-    # across two data repos
-    def ctsys_resolve2(apath):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
-        else:
-            datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
-        return os.path.join(datapath, apath)    
-
 image = "imregion.fits"
 text1 = "goodfile1.txt"
 res1 = "res1.rgn"
