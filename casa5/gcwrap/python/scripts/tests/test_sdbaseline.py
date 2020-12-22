@@ -163,7 +163,7 @@ def parseRms(txt):
 
 def remove_a_table(filename):
     """
-    Remove a single directory.
+    Remove a single file or a single directory.
     For filename, '.' and those starting with '..' are not allowed.
     """
     if filename == '.' or filename[:2] == '..':
