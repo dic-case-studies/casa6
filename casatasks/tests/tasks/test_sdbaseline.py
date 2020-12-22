@@ -187,7 +187,7 @@ def remove_tables_starting_with(filename):
         raise Exception("The parameter 'filename' must not be a null string.")
     
     import glob
-    filenames = glob.glob('{}*'.format(filename))
+    filenames = glob.glob('{}*'.format(filename.rstrip('/')))
 
     for filename in filenames:
         remove_a_table(filename)
