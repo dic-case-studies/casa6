@@ -474,7 +474,7 @@ def sdintimaging(
         casalog.post("The awproject gridder is temporarily not supported with cube major cycles. Support will be brought back in a subsequent release.","WARN","task_sdintimaging")
         return;
 
-    if(usedata='sd'):
+    if(usedata=='sd'):
         casalog.post("The Single-Dish-Only mode of sdintimaging is better supported via the deconvolve task which supports spectral cube, mfs and multi-term mfs deconvolution in the image domain alone. The deconvolve task is the more appropriate version to use for stand-alone image-domain deconvolution, and will not have the bookkeeping overheads currently present in the sdintimaging task's sd-only mode. Please note that the 'sd' option of the sdintimaging task will be removed in a subsequent release.  Please refer to the task deconvolve documentation for instructions on how to prepare image and psf cubes for the deconvolve task for all these modes.","WARN","task_sdintimaging");
 
 
