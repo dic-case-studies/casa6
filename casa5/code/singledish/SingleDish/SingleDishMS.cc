@@ -281,7 +281,7 @@ void SingleDishMS::setSelection(Record const &selection, bool const verbose) {
     	}
     }
     if (!any_selection)
-      os << "No valid selection pa<rameter is set." << LogIO::WARN;
+      os << "No valid selection parameter is set." << LogIO::WARN;
   }
 }
 
@@ -1563,7 +1563,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
           if (do_subtract) {
             set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
           }
-	  // update weight
+
           if (update_weight) {
 	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
 	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
@@ -2329,7 +2329,7 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 
           // set back a spectrum to data cube
           set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
-	  // update weight
+
           if (update_weight) {
 	    // convert flag to mask by taking logical NOT of flag
 	    for (size_t ichan = 0; ichan < num_chan; ++ichan) {
@@ -3115,11 +3115,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           if (do_subtract) {
             set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
           }
-	  // update weight
+
           if (update_weight) {
-	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
-	  }
+            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+          }
         } // end of polarization loop
 
         // output results of fitting

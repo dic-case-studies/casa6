@@ -48,14 +48,7 @@
 #define _ORIGIN LogOrigin("SDMSManager", __func__, WHERE)
 
 using namespace casacore;
-/*
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-*/
+
 namespace casa {
 
 SDMSManager::SDMSManager() : doSmoothing_(false) {
