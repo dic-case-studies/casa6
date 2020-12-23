@@ -205,7 +205,7 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
  */
 void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                                 VisibilityIterator2 &refTVI,
-                                std::function<void(void)> visitor);
+                                std::function<void(VisBuffer2* testVb, VisBuffer2* refVb)> visitor);
 
 void copyTestFile(casacore::String &path,casacore::String &filename,casacore::String &outfilename);
 

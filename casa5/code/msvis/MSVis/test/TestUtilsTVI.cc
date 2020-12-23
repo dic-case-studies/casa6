@@ -582,17 +582,17 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
 // -----------------------------------------------------------------------
 void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                                 VisibilityIterator2 &refTVI,
-                                std::function<void(void)> visitor)
+                                std::function<void(VisBuffer2* testVb, VisBuffer2* refVb)> visitor)
 {
     // Declare working variables
     String columnName;
     Int chunk = 0,buffer = 0;
 
     // Get VisBuffers
-    VisBuffer2 *refVb = refTVI.getImpl()->getVisBuffer();
     VisBuffer2 *testVb = testTVI.getImpl()->getVisBuffer();
-    (void)refVb; //Avoid compiler warning
-    (void)testVb;
+    VisBuffer2 *refVb = refTVI.getImpl()->getVisBuffer();
+    (void)testVb; //Avoid compiler warning
+    (void)refVb;
 
     // Compare selected columns
     refTVI.originChunks();
@@ -613,7 +613,7 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                          " Spw " + std::to_string(refVb->spectralWindows()[0]) + 
                          " scan " + std::to_string(refVb->scan()[0]));
 
-            visitor();
+            visitor(testVb, refVb);
 
             refTVI.next();
             testTVI.next();
