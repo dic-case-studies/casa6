@@ -580,6 +580,53 @@ void compareVisibilityIterators(VisibilityIterator2 &testTVI,
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
+void compareVisibilityIterators(VisibilityIterator2 &testTVI,
+                                VisibilityIterator2 &refTVI,
+                                std::function<void(void)> visitor)
+{
+    // Declare working variables
+    String columnName;
+    Int chunk = 0,buffer = 0;
+
+    // Get VisBuffers
+    VisBuffer2 *refVb = refTVI.getImpl()->getVisBuffer();
+    VisBuffer2 *testVb = testTVI.getImpl()->getVisBuffer();
+    (void)refVb; //Avoid compiler warning
+    (void)testVb;
+
+    // Compare selected columns
+    refTVI.originChunks();
+    testTVI.originChunks();
+    while (refTVI.moreChunks() and testTVI.moreChunks())
+    {
+        chunk += 1;
+        buffer = 0;
+
+        refTVI.origin();
+        testTVI.origin();
+
+        while (refTVI.more() and testTVI.more())
+        {
+            buffer += 1;
+            SCOPED_TRACE(string("Comparing chunk ") + std::to_string(chunk) + 
+                         " buffer " + std::to_string(buffer) +
+                         " Spw " + std::to_string(refVb->spectralWindows()[0]) + 
+                         " scan " + std::to_string(refVb->scan()[0]));
+
+            visitor();
+
+            refTVI.next();
+            testTVI.next();
+        }
+
+        refTVI.nextChunk();
+        testTVI.nextChunk();
+    }
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
 void copyTestFile(String &path,String &filename,String &outfilename)
 {
     if (path.size() > 0)
