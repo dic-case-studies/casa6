@@ -67,7 +67,7 @@ SDMSManager::~SDMSManager() {
 // Fill output MS with data from an input VisBuffer
 // -----------------------------------------------------------------------
 void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_cube, 
-				     Cube<Bool> const *flag_cube, Matrix<Float> const *weight_matrix) {
+                                     Cube<Bool> const *flag_cube, Matrix<Float> const *weight_matrix) {
   setupBufferTransformations(vb);
 
   // make sure the shape of cube matches the number of rows to add.
@@ -98,7 +98,7 @@ void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_
 }
 
 void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_cube, 
-				     Cube<Bool> const *flag_cube) {
+                                     Cube<Bool> const *flag_cube) {
   Matrix<Float> const *weight_matrix = nullptr;
   fillCubeToOutputMs(vb, data_cube, flag_cube, weight_matrix);
 }
@@ -113,7 +113,7 @@ void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb, Cube<Float> const &data
 // Fill main (data) columns which have to be combined together to produce bigger SPWs
 // ----------------------------------------------------------------------------------------
 void SDMSManager::fillCubeToDataCols(vi::VisBuffer2 *vb, RefRows &rowRef, 
-				     Cube<Float> const &data_cube, Cube<Bool> const *flag_cube) {
+                                     Cube<Float> const &data_cube, Cube<Bool> const *flag_cube) {
   ArrayColumn<Bool> *outputFlagCol = NULL;
   for (dataColMap::iterator iter = dataColMap_p.begin(); iter != dataColMap_p.end(); iter++) {
     // Get applicable *_SPECTRUM (copy constructor uses reference semantics)
@@ -124,82 +124,82 @@ void SDMSManager::fillCubeToDataCols(vi::VisBuffer2 *vb, RefRows &rowRef,
     switch (iter->first) {
     case MS::DATA:
       {
-	if (mainColumn_p == MS::DATA) {
-	  outputFlagCol = &(outputMsCols_p->flag());
-	  setTileShape(rowRef, outputMsCols_p->flag());
-	} else {
-	  outputFlagCol = NULL;
-	}
-	setTileShape(rowRef, outputMsCols_p->data());
-	Cube<Complex> cdata_cube(data_cube.shape());
-	convertArray(cdata_cube, data_cube);
-	transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->data(), 
-			    outputFlagCol, applicableSpectrum);
-	break;
+        if (mainColumn_p == MS::DATA) {
+          outputFlagCol = &(outputMsCols_p->flag());
+          setTileShape(rowRef, outputMsCols_p->flag());
+        } else {
+          outputFlagCol = NULL;
+        }
+        setTileShape(rowRef, outputMsCols_p->data());
+        Cube<Complex> cdata_cube(data_cube.shape());
+        convertArray(cdata_cube, data_cube);
+        transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->data(), 
+                            outputFlagCol, applicableSpectrum);
+        break;
       }
     case MS::CORRECTED_DATA:
       {
-	if (mainColumn_p == MS::CORRECTED_DATA) {
-	  outputFlagCol = &(outputMsCols_p->flag());
-	  setTileShape(rowRef, outputMsCols_p->flag());
-	} else {
-	  outputFlagCol = NULL;
-	}
-	Cube<Complex> cdata_cube(data_cube.shape());
-	convertArray(cdata_cube, data_cube);
-	if (iter->second == MS::DATA) {
-	  setTileShape(rowRef, outputMsCols_p->data());
-	  transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->data(), 
-			      outputFlagCol, applicableSpectrum);
-	} else {
-	  setTileShape(rowRef, outputMsCols_p->correctedData());
-	  transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->correctedData(), 
-			      outputFlagCol, applicableSpectrum);
-	}
-	break;
+        if (mainColumn_p == MS::CORRECTED_DATA) {
+          outputFlagCol = &(outputMsCols_p->flag());
+          setTileShape(rowRef, outputMsCols_p->flag());
+        } else {
+          outputFlagCol = NULL;
+        }
+        Cube<Complex> cdata_cube(data_cube.shape());
+        convertArray(cdata_cube, data_cube);
+        if (iter->second == MS::DATA) {
+          setTileShape(rowRef, outputMsCols_p->data());
+          transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->data(), 
+                              outputFlagCol, applicableSpectrum);
+        } else {
+          setTileShape(rowRef, outputMsCols_p->correctedData());
+          transformCubeOfData(vb, rowRef, cdata_cube, outputMsCols_p->correctedData(), 
+                              outputFlagCol, applicableSpectrum);
+        }
+        break;
       }
     case MS::MODEL_DATA:
       {
-	if (mainColumn_p == MS::MODEL_DATA) {
-	  outputFlagCol = &(outputMsCols_p->flag());
-	  setTileShape(rowRef, outputMsCols_p->flag());
-	} else {
-	  outputFlagCol = NULL;
-	}
+        if (mainColumn_p == MS::MODEL_DATA) {
+          outputFlagCol = &(outputMsCols_p->flag());
+          setTileShape(rowRef, outputMsCols_p->flag());
+        } else {
+          outputFlagCol = NULL;
+        }
 
-	if (iter->second == MS::DATA) {
-	  setTileShape(rowRef, outputMsCols_p->data());
-	  transformCubeOfData(vb, rowRef, vb->visCubeModel(), outputMsCols_p->data(), 
-			      outputFlagCol, applicableSpectrum);
-	} else {
-	  setTileShape(rowRef, outputMsCols_p->modelData());
-	  transformCubeOfData(vb, rowRef, vb->visCubeModel(), outputMsCols_p->modelData(), 
-			      outputFlagCol, applicableSpectrum);
-	}
-	break;
+        if (iter->second == MS::DATA) {
+          setTileShape(rowRef, outputMsCols_p->data());
+          transformCubeOfData(vb, rowRef, vb->visCubeModel(), outputMsCols_p->data(), 
+                              outputFlagCol, applicableSpectrum);
+        } else {
+          setTileShape(rowRef, outputMsCols_p->modelData());
+          transformCubeOfData(vb, rowRef, vb->visCubeModel(), outputMsCols_p->modelData(), 
+                              outputFlagCol, applicableSpectrum);
+        }
+        break;
       }
     case MS::FLOAT_DATA:
       {
-	if (mainColumn_p == MS::FLOAT_DATA) {
-	  outputFlagCol = &(outputMsCols_p->flag());
-	  setTileShape(rowRef, outputMsCols_p->flag());
-	} else {
-	  outputFlagCol = NULL;
-	}
-	setTileShape(rowRef, outputMsCols_p->floatData());
-	transformCubeOfData(vb, rowRef, data_cube, outputMsCols_p->floatData(), 
-			    outputFlagCol, applicableSpectrum);
-	break;
+        if (mainColumn_p == MS::FLOAT_DATA) {
+          outputFlagCol = &(outputMsCols_p->flag());
+          setTileShape(rowRef, outputMsCols_p->flag());
+        } else {
+          outputFlagCol = NULL;
+        }
+        setTileShape(rowRef, outputMsCols_p->floatData());
+        transformCubeOfData(vb, rowRef, data_cube, outputMsCols_p->floatData(), 
+                            outputFlagCol, applicableSpectrum);
+        break;
       }
     case MS::LAG_DATA:
       {
-	// jagonzal: TODO
-	break;
+        // jagonzal: TODO
+        break;
       }
     default:
       {
-	// jagonzal: TODO
-	break;
+        // jagonzal: TODO
+        break;
       }
     } // end switch
 
@@ -216,10 +216,10 @@ void SDMSManager::fillCubeToDataCols(vi::VisBuffer2 *vb, RefRows &rowRef,
       IPosition transformedCubeShape = getShape(); //[nC,nF,nR]
       IPosition inputFlagCategoryShape = vb->flagCategory().shape(); // [nC,nF,nCategories,nR]
       IPosition flagCategoryShape(4,
-				  inputFlagCategoryShape(1),
-				  transformedCubeShape(2),
-				  inputFlagCategoryShape(2),
-				  transformedCubeShape(2));
+                                  inputFlagCategoryShape(1),
+                                  transformedCubeShape(2),
+                                  inputFlagCategoryShape(2),
+                                  transformedCubeShape(2));
       Array<Bool> flagCategory(flagCategoryShape, false);
 
       outputMsCols_p->flagCategory().putColumnCells(rowRef, flagCategory);
@@ -235,8 +235,8 @@ void SDMSManager::fillCubeToDataCols(vi::VisBuffer2 *vb, RefRows &rowRef,
 // Method to determine sort columns order
 // -----------------------------------------------------------------------
 void SDMSManager::setSortColumns(Block<Int> sortColumns,
-				 bool addDefaultSortCols,
-				 Double timebin) {
+                                 bool addDefaultSortCols,
+                                 Double timebin) {
   size_t const num_in = sortColumns.nelements();
   LogIO os(_ORIGIN);
   os << "Setting user sort columns with " << num_in << " elements" << LogIO::POST;
@@ -254,14 +254,14 @@ void SDMSManager::setSortColumns(Block<Int> sortColumns,
       size_t num_elem(num_in);
       sortColumns.resize(num_in + defaultCols.nelements(), false, true);
       for (size_t i = 0; i < defaultCols.nelements(); ++i) {
-	bool addcol = true;
-	if (getBlockId(sortColumns, defaultCols[i]) > -1) {
-	  addcol = false; // the columns is in sortColumns
-	}
-	if (addcol) {
-	  sortColumns[num_elem] = defaultCols[i];
-	  ++num_elem;
-	}
+        bool addcol = true;
+        if (getBlockId(sortColumns, defaultCols[i]) > -1) {
+          addcol = false; // the columns is in sortColumns
+        }
+        if (addcol) {
+          sortColumns[num_elem] = defaultCols[i];
+          ++num_elem;
+        }
       }
       // shrink block
       sortColumns.resize(num_elem, true, true);
@@ -313,47 +313,47 @@ void SDMSManager::setIterationApproach() {
   logger_p.origin(_ORIGIN);
   if (timespan_p.contains("scan") && (getBlockId(userSortCols_, MS::SCAN_NUMBER) > -1)) {
     logger_p << LogIO::NORMAL << "Combining data through scans for time average. "
-	     << "Removing SCAN_NUMBER from user sort list." << LogIO::POST;    
+             << "Removing SCAN_NUMBER from user sort list." << LogIO::POST;    
     removeCols[nRemoveCols] = MS::SCAN_NUMBER;
     nRemoveCols += 1;
   }
   if (timespan_p.contains("state") && (getBlockId(userSortCols_, MS::STATE_ID) > -1)) {
     logger_p << LogIO::NORMAL << "Combining data through state for time average. "
-	     <<  "Removing STATE_ID form user sort list." << LogIO::POST;
+             <<  "Removing STATE_ID form user sort list." << LogIO::POST;
     removeCols[nRemoveCols] = MS::STATE_ID;
     nRemoveCols += 1;
   }
   if (timespan_p.contains("field") && (getBlockId(userSortCols_, MS::FIELD_ID) > -1)) {
     logger_p << LogIO::NORMAL << "Combining data through state for time average. "
-	     <<  "Removing FIELD_ID form user sort list." << LogIO::POST;
+             <<  "Removing FIELD_ID form user sort list." << LogIO::POST;
     removeCols[nRemoveCols] = MS::FIELD_ID;
     nRemoveCols += 1;
   }
   if (combinespws_p && (getBlockId(userSortCols_, MS::DATA_DESC_ID) > -1) ) {
     logger_p << LogIO::NORMAL << "Combining data from selected spectral windows. "
-	     << "Removing DATA_DESC_ID from user sort list" << LogIO::POST;
+             << "Removing DATA_DESC_ID from user sort list" << LogIO::POST;
     removeCols[nRemoveCols] = MS::DATA_DESC_ID;
     nRemoveCols += 1;
   }
   if (timeAverage_p) {
     if (!timespan_p.contains("scan")
-	&& (getBlockId(userSortCols_, MS::SCAN_NUMBER) < 0)) {
+        && (getBlockId(userSortCols_, MS::SCAN_NUMBER) < 0)) {
       logger_p << LogIO::NORMAL << "Splitting data by scans for time average. "
-	       <<  "Adding SCAN_NUMBER to user sort list." << LogIO::POST;
+               <<  "Adding SCAN_NUMBER to user sort list." << LogIO::POST;
       addCols[nAddCols] = MS::SCAN_NUMBER;
       nAddCols += 1;
     }
     if (!timespan_p.contains("state")
-	&& (getBlockId(userSortCols_, MS::STATE_ID) < 0)) {
+        && (getBlockId(userSortCols_, MS::STATE_ID) < 0)) {
       logger_p << LogIO::NORMAL << "Splitting data by state for time average. "
-	       <<  "Adding STATE_ID to user sort list." << LogIO::POST;
+               <<  "Adding STATE_ID to user sort list." << LogIO::POST;
       addCols[nAddCols] = MS::STATE_ID;
       nAddCols += 1;
     }
     if (!timespan_p.contains("field")
-	&& (getBlockId(userSortCols_, MS::FIELD_ID) < 0)) {
+        && (getBlockId(userSortCols_, MS::FIELD_ID) < 0)) {
       logger_p << LogIO::NORMAL << "Splitting data by field for time average. "
-	       <<  "Adding FIELD_ID to user sort list." << LogIO::POST;
+               <<  "Adding FIELD_ID to user sort list." << LogIO::POST;
       addCols[nAddCols] = MS::FIELD_ID;
       nAddCols += 1;
     }
@@ -366,7 +366,7 @@ void SDMSManager::setIterationApproach() {
     bool addcol = true;
     for (size_t j = 0 ; j < nRemoveCols; ++j) {
       if (getBlockId(userSortCols_, removeCols[i]) > -1) {
-	  addcol = false; // the columns is in removeColumns
+          addcol = false; // the columns is in removeColumns
       }
     }
     if (addcol) {
@@ -384,7 +384,7 @@ void SDMSManager::setIterationApproach() {
     oss << sortColumns_p[i] << ", ";
   }
   logger_p << LogIO::DEBUG1 << "Final Sort order: "
-	   << oss.str() << LogIO::POST;
+           << oss.str() << LogIO::POST;
 
   return;
 }
@@ -483,7 +483,7 @@ Vector<Int> SDMSManager::inspectNumChan() {
   ScalarColumn<Int> col(*selectedInputMs_p, "DATA_DESC_ID");
   Vector<Int> ddIdList = col.getColumn();
   uInt numDDId = GenSort<Int>::sort(ddIdList, Sort::Ascending,
-				    Sort::QuickSort | Sort::NoDuplicates);
+                                    Sort::QuickSort | Sort::NoDuplicates);
   col.attach(selectedInputMs_p->dataDescription(), "SPECTRAL_WINDOW_ID");
   Vector<Int> spwIdList(numDDId);
   for (uInt i = 0; i < numDDId; ++i) {
@@ -505,7 +505,7 @@ Vector<Int> SDMSManager::inspectNumChan() {
   }
 
   uInt numNumChan = GenSort<Int>::sort(numChanList, Sort::Ascending,
-				       Sort::QuickSort | Sort::NoDuplicates);
+                                       Sort::QuickSort | Sort::NoDuplicates);
   return numChanList(Slice(0, numNumChan));
 }
 

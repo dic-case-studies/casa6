@@ -82,78 +82,78 @@ public:
   // Invoke baseline subtraction
   // (polynomial, write results in new casacore::MS)
   void subtractBaseline(string const& in_column_name,
-			string const& out_ms_name,
-			string const& out_bloutput_name,
-			bool const& do_subtract,
-			string const& in_spw,
+                        string const& out_ms_name,
+                        string const& out_bloutput_name,
+                        bool const& do_subtract,
+                        string const& in_spw,
                         bool const& update_weight,
                         string const& sigma_value,
-			string const& blfunc,
-			int const order,
-			float const clip_threshold_sigma,
-			int const num_fitting_max,
-			bool const linefinding,
-			float const threshold,
-			int const avg_limit,
-			int const minwidth,
-			std::vector<int> const& edge);
+                        string const& blfunc,
+                        int const order,
+                        float const clip_threshold_sigma,
+                        int const num_fitting_max,
+                        bool const linefinding,
+                        float const threshold,
+                        int const avg_limit,
+                        int const minwidth,
+                        std::vector<int> const& edge);
 
   //Cubicspline  
   void subtractBaselineCspline(string const& in_column_name,
-			       string const& out_ms_name, 
-			       string const& out_bloutput_name,
-			       bool const& do_subtract,
-			       string const& in_spw,
+                               string const& out_ms_name, 
+                               string const& out_bloutput_name,
+                               bool const& do_subtract,
+                               string const& in_spw,
                                bool const& update_weight,
                                string const& sigma_value,
-			       int const npiece,
-			       float const clip_threshold_sigma,
-			       int const num_fitting_max,
-			       bool const linefinding,
-			       float const threshold,
-			       int const avg_limit,
-			       int const minwidth,
-			       std::vector<int> const& edge);
+                               int const npiece,
+                               float const clip_threshold_sigma,
+                               int const num_fitting_max,
+                               bool const linefinding,
+                               float const threshold,
+                               int const avg_limit,
+                               int const minwidth,
+                               std::vector<int> const& edge);
 
   //Sinusoid  
    void subtractBaselineSinusoid(string const& in_column_name,
-				 string const& out_ms_name,
-				 string const& out_bloutput_name,
-				 bool const& do_subtract,
-				 string const& in_spw,
+                                 string const& out_ms_name,
+                                 string const& out_bloutput_name,
+                                 bool const& do_subtract,
+                                 string const& in_spw,
                                  bool const& update_weight,
                                  string const& sigma_value,
-				 string const& addwn0,
-				 string const& rejwn0,
-				 bool const applyfft,
-				 string const fftmethod,
-				 string const fftthresh,
-				 float const clip_threshold_sigma,
-				 int const num_fitting_max,
-				 bool const linefinding,
-				 float const threshold,
-				 int const avg_limit,
-				 int const minwidth,
-				 std::vector<int> const& edge);
+                                 string const& addwn0,
+                                 string const& rejwn0,
+                                 bool const applyfft,
+                                 string const fftmethod,
+                                 string const fftthresh,
+                                 float const clip_threshold_sigma,
+                                 int const num_fitting_max,
+                                 bool const linefinding,
+                                 float const threshold,
+                                 int const avg_limit,
+                                 int const minwidth,
+                                 std::vector<int> const& edge);
 
   // variable fitting parameters stored in a text file
   void subtractBaselineVariable(string const& in_column_name,
-				string const& out_ms_name,
-				string const& out_bloutput_name,
-				bool const& do_subtract,
-				string const& in_spw,
+                                string const& out_ms_name,
+                                string const& out_bloutput_name,
+                                bool const& do_subtract,
+                                string const& in_spw,
                                 bool const& update_weight,
                                 string const& sigma_value,
-				string const& param_file,
-				bool const& verbose = true);
+                                string const& param_file,
+                                bool const& verbose = true);
 
   // apply baseline table
   void applyBaselineTable(string const& in_column_name,
-			  string const& in_bltable_name,
-			  string const& in_spw,
-			  bool const& update_weight,
-			  string const& sigma_value,
-			  string const& out_ms_name);
+                          string const& in_bltable_name,
+                          string const& in_spw,
+                          bool const& update_weight,
+                          string const& sigma_value,
+                          string const& out_ms_name);
 
   // fit line profile
   void fitLine(string const& in_column_name, string const& in_spw,
@@ -233,7 +233,7 @@ private:
                    of rows in the chunk.
     [out] nchan: a vector of length spw.size(). the number of channels 
                  in the corresponding SPW is set when the loop traverses
-		 the SPW for the first time.
+                 the SPW for the first time.
     [out] mask: a vector of length spw.size().
     [in,out] nchan_set: a boolean vector of length spw.size().
                         the value indicates if nchan, and mask of
@@ -289,48 +289,48 @@ private:
     }
   }
   size_t get_num_coeff_bloutput(size_t const bltype,
-				size_t order,
+                                size_t order,
                                 size_t &num_coeff_max);
   std::vector<int> string_to_list(string const &wn_str, char const delim);
   void get_effective_nwave(std::vector<int> const &addwn,
-			   std::vector<int> const &rejwn,
-			   int const wn_ulimit,
-			   std::vector<int> &effwn);
+                           std::vector<int> const &rejwn,
+                           int const wn_ulimit,
+                           std::vector<int> &effwn);
   void finalise_effective_nwave(std::vector<int> const &blparam_eff_base,
-				std::vector<int> const &blparam_exclude,
-				int const &blparam_upperlimit,
-				size_t const &num_chan,
-				float const *spec, bool const *mask,
-				bool const &applyfft,
-				string const &fftmethod, string const &fftthresh,
-				std::vector<size_t> &blparam_eff);
+                                std::vector<int> const &blparam_exclude,
+                                int const &blparam_upperlimit,
+                                size_t const &num_chan,
+                                float const *spec, bool const *mask,
+                                bool const &applyfft,
+                                string const &fftmethod, string const &fftthresh,
+                                std::vector<size_t> &blparam_eff);
   void parse_fftthresh(string const& fftthresh_str,
-		       string& fftthresh_attr,
-		       float& fftthresh_sigma,
-		       int& fftthresh_top);
+                       string& fftthresh_attr,
+                       float& fftthresh_sigma,
+                       int& fftthresh_top);
   void select_wavenumbers_via_fft(size_t const num_chan,
-				  float const *spec,
-				  bool const *mask,
-				  string const &fftmethod,
-				  string const &fftthresh_attr,
-				  float const fftthresh_sigma,
-				  int const fftthresh_top,
-				  int const blparam_upperlimit,
-				  std::vector<int> &blparam_fft);
+                                  float const *spec,
+                                  bool const *mask,
+                                  string const &fftmethod,
+                                  string const &fftthresh_attr,
+                                  float const fftthresh_sigma,
+                                  int const fftthresh_top,
+                                  int const blparam_upperlimit,
+                                  std::vector<int> &blparam_fft);
   void exec_fft(size_t const num_chan,
-		float const *in_spec,
-		bool const *in_mask,
-		bool const get_real_imag,
-		bool const get_ampl_only,
-		std::vector<float> &fourier_spec);
+                float const *in_spec,
+                bool const *in_mask,
+                bool const get_real_imag,
+                bool const get_ampl_only,
+                std::vector<float> &fourier_spec);
   void interpolate_constant(int const num_chan,
-			    float const *in_spec,
-			    bool const *in_mask,
-			    casacore::Vector<casacore::Float> &spec);
+                            float const *in_spec,
+                            bool const *in_mask,
+                            casacore::Vector<casacore::Float> &spec);
   void merge_wavenumbers(std::vector<int> const &blparam_eff_base,
-			 std::vector<int> const &blparam_fft,
-			 std::vector<int> const &blparam_exclude,
-			 std::vector<size_t> &blparam_eff);
+                         std::vector<int> const &blparam_fft,
+                         std::vector<int> const &blparam_exclude,
+                         std::vector<size_t> &blparam_eff);
   
   list<pair<size_t, size_t>> findLineAndGetRanges(size_t const num_data,
       float const data[/*num_data*/],
@@ -345,32 +345,32 @@ private:
 
   template<typename Func0, typename Func1, typename Func2, typename Func3>
   void doSubtractBaseline(string const& in_column_name,
-			  string const& out_ms_name, 
+                          string const& out_ms_name, 
                           string const& out_bloutput_name,
-			  bool const& do_subtract,
-			  string const& in_spw,
-			  bool const& update_weight,
-			  string const& sigma_value,
-			  LIBSAKURA_SYMBOL(Status)& status,
-			  std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts,
-			  size_t const bltype,
-			  std::vector<int> const& blparam,
-			  std::vector<int> const& blparam_exclude,
-			  bool const& applyfft,
-			  string const& fftmethod,
-			  string const& fftthresh,
-			  float const clip_threshold_sigma,
-			  int const num_fitting_max,
-			  bool const linefinding,
-			  float const threshold,
-			  int const avg_limit,
-			  int const minwidth,
-			  std::vector<int> const& edge,
-			  Func0 func0,
-			  Func1 func1,
-			  Func2 func2,
-			  Func3 func3,
-			  casacore::LogIO os);
+                          bool const& do_subtract,
+                          string const& in_spw,
+                          bool const& update_weight,
+                          string const& sigma_value,
+                          LIBSAKURA_SYMBOL(Status)& status,
+                          std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts,
+                          size_t const bltype,
+                          std::vector<int> const& blparam,
+                          std::vector<int> const& blparam_exclude,
+                          bool const& applyfft,
+                          string const& fftmethod,
+                          string const& fftthresh,
+                          float const clip_threshold_sigma,
+                          int const num_fitting_max,
+                          bool const linefinding,
+                          float const threshold,
+                          int const avg_limit,
+                          int const minwidth,
+                          std::vector<int> const& edge,
+                          Func0 func0,
+                          Func1 func1,
+                          Func2 func2,
+                          Func3 func3,
+                          casacore::LogIO os);
 
   /////////////////////////////
   /// casacore::MS handling functions ///

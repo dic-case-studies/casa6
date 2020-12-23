@@ -106,48 +106,49 @@ inline void GetCubeFromFloat(VisBuffer2 const &vb, Cube<Float> &cube) {
   FloatDataAccessor::GetCube(vb, cube);
 }
 
-  inline void GetCubeDefault(VisBuffer2 const& /*vb*/, Cube<Float>& /*cube*/) {
+inline void GetCubeDefault(VisBuffer2 const& /*vb*/, Cube<Float>& /*cube*/) {
   throw AipsError("Data accessor for VB2 is not properly configured.");
 }
 
-  inline float compute_weight(size_t const num_data,
-			      float const data[/*num_data*/],
-			      bool const mask[/*num_data*/],
-			      string const &sigma_value) {
-    int num_data_effective = 0;
-    float sum = 0.0;
-    float sum_sq = 0.0;
-    for (size_t i = 0; i < num_data; ++i) {
-      if (mask[i]) {
-	num_data_effective++;
-	sum += data[i];
-	sum_sq += data[i] * data[i];
-      }
+inline float compute_weight(size_t const num_data,
+                            float const data[/*num_data*/],
+                            bool const mask[/*num_data*/],
+                            string const &sigma_value) {
+  int num_data_effective = 0;
+  float sum = 0.0;
+  float sum_sq = 0.0;
+  for (size_t i = 0; i < num_data; ++i) {
+    if (mask[i]) {
+      num_data_effective++;
+      sum += data[i];
+      sum_sq += data[i] * data[i];
     }
-
-    float weight = 0.0;
-    if (num_data_effective > 0) {
-      float factor = 1.0 / static_cast<float>(num_data_effective);
-      float mean = sum * factor;
-      float mean_sq = sum_sq * factor;
-
-      float variance;
-      if (sigma_value == "stddev") {
-	variance = mean_sq - mean * mean;
-      } else if (sigma_value == "rms") {
-	variance = mean_sq;
-      }
-
-      if (variance > 0.0) {
-	weight = 1.0 / variance;
-      } else {
-	LogIO os(_ORIGIN);
-	os << "Weight set to 0 for a bad data." << LogIO::WARN;
-      }
-    }
-
-    return weight;
   }
+
+  float weight = 0.0;
+  if (num_data_effective > 0) {
+    float factor = 1.0 / static_cast<float>(num_data_effective);
+    float mean = sum * factor;
+    float mean_sq = sum_sq * factor;
+
+    float variance;
+    if (sigma_value == "stddev") {
+      variance = mean_sq - mean * mean;
+    } else if (sigma_value == "rms") {
+      variance = mean_sq;
+    }
+
+    if (variance > 0.0) {
+      weight = 1.0 / variance;
+    } else {
+      LogIO os(_ORIGIN);
+      os << "Weight set to 0 for a bad data." << LogIO::WARN;
+    }
+  }
+
+  return weight;
+}
+
 } // anonymous namespace
 
 using namespace casacore;
@@ -159,13 +160,11 @@ using namespace casacore;
 using namespace casacore;
 namespace casa {
 
-SingleDishMS::SingleDishMS() :
-    msname_(""), sdh_(0) {
+SingleDishMS::SingleDishMS() : msname_(""), sdh_(0) {
   initialize();
 }
 
-SingleDishMS::SingleDishMS(string const& ms_name) :
-    msname_(ms_name), sdh_(0) {
+SingleDishMS::SingleDishMS(string const& ms_name) : msname_(ms_name), sdh_(0) {
   LogIO os(_ORIGIN);
   initialize();
 }
@@ -213,8 +212,8 @@ void SingleDishMS::setSelection(Record const &selection, bool const verbose) {
   bool any_selection(false);
   if (verbose && !selection_.empty()) {
     String timeExpr(""), antennaExpr(""), fieldExpr(""), spwExpr(""),
-        uvDistExpr(""), taQLExpr(""), polnExpr(""), scanExpr(""), arrayExpr(""),
-        obsExpr(""), intentExpr("");
+           uvDistExpr(""), taQLExpr(""), polnExpr(""), scanExpr(""), arrayExpr(""),
+           obsExpr(""), intentExpr("");
     timeExpr = get_field_as_casa_string(selection_, "timerange");
     antennaExpr = get_field_as_casa_string(selection_, "antenna");
     fieldExpr = get_field_as_casa_string(selection_, "field");
@@ -273,12 +272,12 @@ void SingleDishMS::setSelection(Record const &selection, bool const verbose) {
       os << "- TaQL: " << taQLExpr << LogIO::POST;
     }
     {// reindex
-    	Int ifield;
-    	ifield = selection_.fieldNumber(String("reindex"));
-    	if (ifield > -1) {
-    		Bool reindex = selection_.asBool(ifield);
-    		os << "- Reindex: " << (reindex ? "ON" : "OFF" ) << LogIO::POST;
-    	}
+      Int ifield;
+      ifield = selection_.fieldNumber(String("reindex"));
+      if (ifield > -1) {
+        Bool reindex = selection_.asBool(ifield);
+        os << "- Reindex: " << (reindex ? "ON" : "OFF" ) << LogIO::POST;
+      }
     }
     if (!any_selection)
       os << "No valid selection parameter is set." << LogIO::WARN;
@@ -348,8 +347,8 @@ void SingleDishMS::setPolAverage(Record const &average, bool const verbose) {
   }
 }
 
-String SingleDishMS::get_field_as_casa_string(Record const &in_data,
-    string const &field_name) {
+String SingleDishMS::get_field_as_casa_string(Record const &in_data, 
+                                              string const &field_name) {
   Int ifield;
   ifield = in_data.fieldNumber(String(field_name));
   if (ifield > -1)
@@ -358,14 +357,15 @@ String SingleDishMS::get_field_as_casa_string(Record const &in_data,
 }
 
 bool SingleDishMS::prepare_for_process(string const &in_column_name,
-    string const &out_ms_name) {
+                                       string const &out_ms_name) {
   // Sort by single dish default
   return prepare_for_process(in_column_name, out_ms_name, Block<Int>(), true);
 }
 
 bool SingleDishMS::prepare_for_process(string const &in_column_name,
-    string const &out_ms_name, Block<Int> const &sortColumns,
-    bool const addDefaultSortCols) {
+                                       string const &out_ms_name,
+                                       Block<Int> const &sortColumns,
+                                       bool const addDefaultSortCols) {
   LogIO os(_ORIGIN);
   AlwaysAssert(msname_ != "", AipsError);
   // define a column to read data from
@@ -467,10 +467,10 @@ void SingleDishMS::format_selection(Record &selection) {
   // Select only auto-correlation
   String autoCorrSel("");
   os << "Formatting antenna selection to select only auto-correlation"
-      << LogIO::POST;
+     << LogIO::POST;
   String const antennaSel(get_field_as_casa_string(selection, "antenna"));
   os << LogIO::DEBUG1 << "Input antenna expression = " << antennaSel
-      << LogIO::POST;
+     << LogIO::POST;
   if (antennaSel == "") { //Antenna selection is NOT set
     autoCorrSel = String("*&&&");
   } else { //User defined antenna selection
@@ -481,7 +481,7 @@ void SingleDishMS::format_selection(Record &selection) {
     TableExprNode exprNode = theSelection.toTableExprNode(theMS);
     Vector<Int> ant1Vec = theSelection.getAntenna1List();
     os << LogIO::DEBUG1 << ant1Vec.nelements()
-        << " antenna(s) are selected. ID = ";
+       << " antenna(s) are selected. ID = ";
     for (uInt i = 0; i < ant1Vec.nelements(); ++i) {
       os << ant1Vec[i] << ", ";
       if (autoCorrSel != "")
@@ -491,13 +491,13 @@ void SingleDishMS::format_selection(Record &selection) {
     os << LogIO::POST;
   }
   os << LogIO::DEBUG1 << "Auto-correlation selection string: " << autoCorrSel
-      << LogIO::POST;
-  selection.define("antenna", autoCorrSel);
+     << LogIO::POST;
 
+  selection.define("antenna", autoCorrSel);
 }
 
 void SingleDishMS::get_data_cube_float(vi::VisBuffer2 const &vb, 
-    Cube<Float> &data_cube) {
+                                       Cube<Float> &data_cube) {
 //  if (in_column_ == MS::FLOAT_DATA) {
 //    data_cube = vb.visCubeFloat();
 //  } else { //need to convert Complex cube to Float
@@ -514,7 +514,7 @@ void SingleDishMS::get_data_cube_float(vi::VisBuffer2 const &vb,
 }
 
 void SingleDishMS::convertArrayC2F(Array<Float> &to,
-    Array<Complex> const &from) {
+                                   Array<Complex> const &from) {
   if (to.nelements() == 0 && from.nelements() == 0) {
     return;
   }
@@ -523,8 +523,7 @@ void SingleDishMS::convertArrayC2F(Array<Float> &to,
   }
   Array<Complex>::const_iterator endFrom = from.end();
   Array<Complex>::const_iterator iterFrom = from.begin();
-  for (Array<Float>::iterator iterTo = to.begin(); iterFrom != endFrom;
-      ++iterFrom, ++iterTo) {
+  for (Array<Float>::iterator iterTo = to.begin(); iterFrom != endFrom; ++iterFrom, ++iterTo) {
     *iterTo = iterFrom->real();
   }
 }
@@ -557,9 +556,12 @@ bool SingleDishMS::file_exists(string const &filename) {
   return true;
 }
 
-void SingleDishMS::parse_spw(string const &in_spw, Vector<Int> &rec_spw,
-    Matrix<Int> &rec_chan, Vector<size_t> &nchan, Vector<Vector<Bool> > &mask,
-    Vector<bool> &nchan_set) {
+void SingleDishMS::parse_spw(string const &in_spw,
+                             Vector<Int> &rec_spw,
+                             Matrix<Int> &rec_chan,
+                             Vector<size_t> &nchan,
+                             Vector<Vector<Bool> > &mask,
+                             Vector<bool> &nchan_set) {
   Record selrec = sdh_->getSelRec(in_spw);
   rec_spw = selrec.asArrayInt("spw");
   rec_chan = selrec.asArrayInt("channel");
@@ -572,9 +574,13 @@ void SingleDishMS::parse_spw(string const &in_spw, Vector<Int> &rec_spw,
 }
 
 void SingleDishMS::get_nchan_and_mask(Vector<Int> const &rec_spw,
-    Vector<Int> const &data_spw, Matrix<Int> const &rec_chan,
-    size_t const num_chan, Vector<size_t> &nchan, Vector<Vector<Bool> > &mask,
-    Vector<bool> &nchan_set, bool &new_nchan) {
+                                      Vector<Int> const &data_spw,
+                                      Matrix<Int> const &rec_chan,
+                                      size_t const num_chan,
+                                      Vector<size_t> &nchan,
+                                      Vector<Vector<Bool> > &mask,
+                                      Vector<bool> &nchan_set,
+                                      bool &new_nchan) {
   new_nchan = false;
   for (size_t i = 0; i < rec_spw.nelements(); ++i) {
     //get nchan by spwid and set to nchan[]
@@ -603,8 +609,10 @@ void SingleDishMS::get_nchan_and_mask(Vector<Int> const &rec_spw,
   }
 }
 
-void SingleDishMS::get_mask_from_rec(Int spwid, Matrix<Int> const &rec_chan,
-    Vector<Bool> &mask, bool initialize) {
+void SingleDishMS::get_mask_from_rec(Int spwid,
+                                     Matrix<Int> const &rec_chan,
+                                     Vector<Bool> &mask,
+                                     bool initialize) {
   if (initialize) {
     for (size_t j = 0; j < mask.nelements(); ++j) {
       mask(j) = false;
@@ -630,7 +638,8 @@ void SingleDishMS::get_mask_from_rec(Int spwid, Matrix<Int> const &rec_chan,
 }
 
 void SingleDishMS::get_masklist_from_mask(size_t const num_chan,
-    bool const *mask, Vector<uInt> &masklist) {
+                                          bool const *mask,
+                                          Vector<uInt> &masklist) {
   std::vector<int> mlist;
   mlist.clear();
 
@@ -656,13 +665,12 @@ void SingleDishMS::get_masklist_from_mask(size_t const num_chan,
 }
 
 void SingleDishMS::get_baseline_context(size_t const bltype,
-    uint16_t order,
-    size_t num_chan,
-    Vector<size_t> const &nchan,
-    Vector<bool> const &nchan_set,
-    Vector<size_t> &ctx_indices,
-    std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts)
-{
+                                        uint16_t order,
+                                        size_t num_chan,
+                                        Vector<size_t> const &nchan,
+                                        Vector<bool> const &nchan_set,
+                                        Vector<size_t> &ctx_indices,
+                                        std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts) {
   size_t idx = 0;
   bool found = false;
   for (size_t i = 0; i < nchan.nelements(); ++i) {
@@ -677,7 +685,6 @@ void SingleDishMS::get_baseline_context(size_t const bltype,
       if ((nchan_set[i])&&(nchan[i] == num_chan)) {
         ctx_indices[i] = idx;
       }
-
     }
 
     LIBSAKURA_SYMBOL(LSQFitContextFloat) *context;
@@ -699,13 +706,12 @@ void SingleDishMS::get_baseline_context(size_t const bltype,
 }
 
 void SingleDishMS::get_baseline_context(size_t const bltype,
-    uint16_t order,
-    size_t num_chan,
-    size_t ispw,
-    Vector<size_t> &ctx_indices,
-    std::vector<size_t> & ctx_nchans,
-    std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts)
-{
+                                        uint16_t order,
+                                        size_t num_chan,
+                                        size_t ispw,
+                                        Vector<size_t> &ctx_indices,
+                                        std::vector<size_t> & ctx_nchans,
+                                        std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts) {
   AlwaysAssert(bl_contexts.size() == ctx_nchans.size() || bl_contexts.size() == ctx_nchans.size()-1 , AipsError);
   size_t idx = 0;
   bool found = false;
@@ -729,14 +735,14 @@ void SingleDishMS::get_baseline_context(size_t const bltype,
   LIBSAKURA_SYMBOL(Status) status = LIBSAKURA_SYMBOL(Status_kNG);
   if ((bltype == BaselineType_kPolynomial)||(bltype == BaselineType_kChebyshev)) {
     status = LIBSAKURA_SYMBOL(CreateLSQFitContextPolynomialFloat)(static_cast<LIBSAKURA_SYMBOL(LSQFitType)>(bltype),
-								    static_cast<uint16_t>(order),
-								    num_chan, &context);
+                                                                  static_cast<uint16_t>(order),
+                                                                  num_chan, &context);
   } else if (bltype == BaselineType_kCubicSpline) {
     status = LIBSAKURA_SYMBOL(CreateLSQFitContextCubicSplineFloat)(static_cast<uint16_t>(order),
-								     num_chan, &context);
+                                                                   num_chan, &context);
   } else if (bltype == BaselineType_kSinusoid) {
     status = LIBSAKURA_SYMBOL(CreateLSQFitContextSinusoidFloat)(static_cast<uint16_t>(order),
-                                                                  num_chan, &context);
+                                                                num_chan, &context);
   }
   check_sakura_status("sakura_CreateLSQFitContextFloat", status);
   bl_contexts.push_back(context);
@@ -746,8 +752,7 @@ void SingleDishMS::get_baseline_context(size_t const bltype,
   AlwaysAssert(bl_contexts.size() == ctx_nchans.size(), AipsError);
 }
 
-void SingleDishMS::destroy_baseline_contexts(std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts)
-{
+void SingleDishMS::destroy_baseline_contexts(std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts) {
   LIBSAKURA_SYMBOL(Status) status;
   for (size_t i = 0; i < bl_contexts.size(); ++i) {
     status = LIBSAKURA_SYMBOL(DestroyLSQFitContextFloat)(bl_contexts[i]);
@@ -756,7 +761,7 @@ void SingleDishMS::destroy_baseline_contexts(std::vector<LIBSAKURA_SYMBOL(LSQFit
 }
 
 void SingleDishMS::check_sakura_status(string const &name,
-    LIBSAKURA_SYMBOL(Status) const status) {
+                                       LIBSAKURA_SYMBOL(Status) const status) {
   if (status == LIBSAKURA_SYMBOL(Status_kOK)) return;
 
   ostringstream oss;
@@ -780,60 +785,72 @@ void SingleDishMS::check_baseline_status(LIBSAKURA_SYMBOL(LSQFitStatus) const bl
 }
 
 void SingleDishMS::get_spectrum_from_cube(Cube<Float> &data_cube,
-    size_t const row, size_t const plane, size_t const num_data,
-    float out_data[]) {
+                                          size_t const row,
+                                          size_t const plane,
+                                          size_t const num_data,
+                                          float out_data[]) {
   AlwaysAssert(static_cast<size_t>(data_cube.ncolumn()) == num_data, AipsError);
   for (size_t i = 0; i < num_data; ++i)
     out_data[i] = static_cast<float>(data_cube(plane, i, row));
 }
 
 void SingleDishMS::set_spectrum_to_cube(Cube<Float> &data_cube,
-    size_t const row, size_t const plane, size_t const num_data,
-    float *in_data) {
+                                        size_t const row,
+                                        size_t const plane,
+                                        size_t const num_data,
+                                        float *in_data) {
   AlwaysAssert(static_cast<size_t>(data_cube.ncolumn()) == num_data, AipsError);
   for (size_t i = 0; i < num_data; ++i)
     data_cube(plane, i, row) = static_cast<Float>(in_data[i]);
 }
 
 void SingleDishMS::get_weight_matrix(vi::VisBuffer2 const &vb,
-    Matrix<Float> &weight_matrix) {
+                                     Matrix<Float> &weight_matrix) {
   weight_matrix = vb.weight();
 }
 
-void SingleDishMS::set_weight_to_matrix(Matrix<Float> &weight_matrix, size_t const row,
-    size_t const plane, float in_weight) {
+void SingleDishMS::set_weight_to_matrix(Matrix<Float> &weight_matrix,
+                                        size_t const row,
+                                        size_t const plane,
+                                        float in_weight) {
   weight_matrix(plane, row) = static_cast<Float>(in_weight);
 }
 
 void SingleDishMS::get_flag_cube(vi::VisBuffer2 const &vb,
-    Cube<Bool> &flag_cube) {
+                                 Cube<Bool> &flag_cube) {
   flag_cube = vb.flagCube();
 }
 
-void SingleDishMS::get_flag_from_cube(Cube<Bool> &flag_cube, size_t const row,
-    size_t const plane, size_t const num_flag,
-    bool out_flag[]) {
+void SingleDishMS::get_flag_from_cube(Cube<Bool> &flag_cube,
+                                      size_t const row,
+                                      size_t const plane,
+                                      size_t const num_flag,
+                                      bool out_flag[]) {
   AlwaysAssert(static_cast<size_t>(flag_cube.ncolumn()) == num_flag, AipsError);
   for (size_t i = 0; i < num_flag; ++i)
     out_flag[i] = static_cast<bool>(flag_cube(plane, i, row));
 }
 
-void SingleDishMS::set_flag_to_cube(Cube<Bool> &flag_cube, size_t const row,
-    size_t const plane, size_t const num_flag, bool *in_flag) {
+void SingleDishMS::set_flag_to_cube(Cube<Bool> &flag_cube,
+                                    size_t const row,
+                                    size_t const plane,
+                                    size_t const num_flag,
+                                    bool *in_flag) {
   AlwaysAssert(static_cast<size_t>(flag_cube.ncolumn()) == num_flag, AipsError);
   for (size_t i = 0; i < num_flag; ++i)
     flag_cube(plane, i, row) = static_cast<Bool>(in_flag[i]);
 }
 
 void SingleDishMS::flag_spectrum_in_cube(Cube<Bool> &flag_cube,
-    size_t const row, size_t const plane) {
+                                         size_t const row,
+                                         size_t const plane) {
   uInt const num_flag = flag_cube.ncolumn();
   for (uInt ichan = 0; ichan < num_flag; ++ichan)
     flag_cube(plane, ichan, row) = true;
 }
 
 bool SingleDishMS::allchannels_flagged(size_t const num_flag,
-    bool const* flag) {
+                                       bool const* flag) {
   bool res = true;
   for (size_t i = 0; i < num_flag; ++i) {
     if (!flag[i]) {
@@ -856,7 +873,6 @@ size_t SingleDishMS::NValidMask(size_t const num_mask, bool const* mask) {
 }
 
 void SingleDishMS::split_bloutputname(string str) {
-
   char key = ',';
   vector<size_t> v;
   for (size_t i = 0; i < str.size(); ++i) {
@@ -902,7 +918,6 @@ size_t SingleDishMS::get_num_coeff_bloutput(size_t const bltype,
     num_coeff = order + 1;
     break;
   case BaselineType_kSinusoid:
-    
     break;
   default:
     throw(AipsError("Unsupported baseline type."));
@@ -959,7 +974,7 @@ void SingleDishMS::get_effective_nwave(std::vector<int> const &addwn,
       effwn.push_back(v);
     }
   };
-  
+
   if (up_to_nyquist_limit(addwn)) {
     if (up_to_nyquist_limit(rejwn)) {
       if (addwn[0] < rejwn[0]) {
@@ -1002,8 +1017,10 @@ void SingleDishMS::finalise_effective_nwave(std::vector<int> const &blparam_eff_
                                             std::vector<int> const &blparam_exclude,
                                             int const &blparam_upperlimit,
                                             size_t const &num_chan,
-                                            float const *spec, bool const *mask,
-                                            bool const &applyfft, string const &fftmethod,
+                                            float const *spec,
+                                            bool const *mask,
+                                            bool const &applyfft,
+                                            string const &fftmethod,
                                             string const &fftthresh_str,
                                             std::vector<size_t> &blparam_eff) {
   blparam_eff.resize(blparam_eff_base.size());
@@ -1022,8 +1039,10 @@ void SingleDishMS::finalise_effective_nwave(std::vector<int> const &blparam_eff_
   }
 }
 
-void SingleDishMS::parse_fftthresh(string const& fftthresh_str, string& fftthresh_attr,
-                                   float& fftthresh_sigma, int& fftthresh_top) {
+void SingleDishMS::parse_fftthresh(string const& fftthresh_str,
+                                   string& fftthresh_attr,
+                                   float& fftthresh_sigma,
+                                   int& fftthresh_top) {
   size_t idx_sigma = fftthresh_str.find("sigma");
   size_t idx_top   = fftthresh_str.find("top");
 
@@ -1054,10 +1073,15 @@ void SingleDishMS::parse_fftthresh(string const& fftthresh_str, string& fftthres
   }
 }
 
-void SingleDishMS::select_wavenumbers_via_fft(size_t const num_chan, float const *spec, bool const *mask,
-                                              string const &fftmethod, string const &fftthresh_attr,
-                                              float const fftthresh_sigma, int const fftthresh_top,
-                                              int const blparam_upperlimit, std::vector<int> &blparam_fft) {
+void SingleDishMS::select_wavenumbers_via_fft(size_t const num_chan,
+                                              float const *spec,
+                                              bool const *mask,
+                                              string const &fftmethod,
+                                              string const &fftthresh_attr,
+                                              float const fftthresh_sigma,
+                                              int const fftthresh_top,
+                                              int const blparam_upperlimit,
+                                              std::vector<int> &blparam_fft) {
   blparam_fft.clear();
   std::vector<float> fourier_spec;
   if (fftmethod == "fft") {
@@ -1103,7 +1127,6 @@ void SingleDishMS::select_wavenumbers_via_fft(size_t const num_chan, float const
   } else {
     throw AipsError("fftthresh is wrong.");
   }
-
 }
 
 void SingleDishMS::exec_fft(size_t const num_chan,
@@ -1253,8 +1276,6 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
                                       Func2 func2,
                                       Func3 func3,
                                       LogIO os) {
-
-
   os << LogIO::DEBUG2 << "Calling SingleDishMS::doSubtractBaseline " << LogIO::POST;
 
   // in_ms = out_ms
@@ -1334,8 +1355,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
       final_mask2[1] = 0;
 
       bool new_nchan = false;
-      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask,
-          nchan_set, new_nchan);
+      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask, nchan_set, new_nchan);
       if (new_nchan) {
         int blparam_max = blparam[blparam.size() - 1];
         if (bltype == BaselineType_kSinusoid) {
@@ -1371,7 +1391,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
 
       // get weight matrix (npol*nrow) from VisBuffer
       if (update_weight) {
-	get_weight_matrix(*vb, weight_matrix);
+        get_weight_matrix(*vb, weight_matrix);
       }
 
       // loop over MS rows
@@ -1565,9 +1585,9 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
           }
 
           if (update_weight) {
-	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
-	  }
+            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+          }
 
         } // end of polarization loop
 
@@ -1577,7 +1597,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         Array<Int> fpar_mtx(IPosition(2, num_pol, num_fpar_max),
                             Array<Int>::uninitialized);
         set_matrix_for_bltable<size_t, Int>(num_pol, num_fpar_max,
-                                           fpar_mtx_tmp, fpar_mtx);
+                                            fpar_mtx_tmp, fpar_mtx);
         Array<Float> ffpar_mtx(IPosition(2, num_pol, num_ffpar_max),
                                Array<Float>::uninitialized);
         set_matrix_for_bltable<double, Float>(num_pol, num_ffpar_max,
@@ -1776,9 +1796,9 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
       } // end of chunk row loop
       // write back data cube to VisBuffer
       if (update_weight) {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
       } else {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
       }
     } // end of vi loop
   } // end of chunk loop
@@ -2137,11 +2157,11 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
 
 // Apply baseline table to MS
 void SingleDishMS::applyBaselineTable(string const& in_column_name,
-				      string const& in_bltable_name,
-				      string const& in_spw,
+                                      string const& in_bltable_name,
+                                      string const& in_spw,
                                       bool const& update_weight,
                                       string const& sigma_value,
-				      string const& out_ms_name) {
+                                      string const& out_ms_name) {
   LogIO os(_ORIGIN);
   os << "Apply baseline table " << in_bltable_name << " to MS. " << LogIO::POST;
 
@@ -2215,13 +2235,11 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
       Matrix<Float> weight_matrix(num_pol, num_row, Array<Float>::uninitialized);
 
       bool new_nchan = false;
-      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask,
-          nchan_set, new_nchan);
+      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask, nchan_set, new_nchan);
       if (new_nchan) {
         map<size_t const, uint16_t>::iterator iter = max_orders.begin();
         while (iter != max_orders.end()) {
-          get_baseline_context(
-                               (*iter).first, (*iter).second,
+          get_baseline_context((*iter).first, (*iter).second,
                                num_chan, nchan, nchan_set,
                                ctx_indices, context_reservoir[(*iter).first]);
           ++iter;
@@ -2233,7 +2251,7 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 
       // get weight matrix (npol*nrow) from VisBuffer
       if (update_weight) {
-	get_weight_matrix(*vb, weight_matrix);
+        get_weight_matrix(*vb, weight_matrix);
       }
 
       // loop over MS rows
@@ -2263,8 +2281,7 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
           std::vector<float> bl_coeff;
           std::vector<double> bl_boundary;
           BLParameterSet fit_param;
-          parser.GetFitParameterByIdx(idx_fit_param, ipol, apply, bl_coeff,
-              bl_boundary, fit_param);
+          parser.GetFitParameterByIdx(idx_fit_param, ipol, apply, bl_coeff, bl_boundary, fit_param);
           if (!apply) {
             flag_spectrum_in_cube(flag_chunk, irow, ipol); //flag
             continue;
@@ -2331,21 +2348,21 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
           set_spectrum_to_cube(data_chunk, irow, ipol, num_chan, spec_data);
 
           if (update_weight) {
-	    // convert flag to mask by taking logical NOT of flag
-	    for (size_t ichan = 0; ichan < num_chan; ++ichan) {
-	      mask_data[ichan] = !(mask_data[ichan]);
-	    }
-	    float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-	    set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
-	  }
+            // convert flag to mask by taking logical NOT of flag
+            for (size_t ichan = 0; ichan < num_chan; ++ichan) {
+              mask_data[ichan] = !(mask_data[ichan]);
+            }
+            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
+            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+          }
         } // end of polarization loop
 
       } // end of chunk row loop
       // write back data and flag cube to VisBuffer
       if (update_weight) {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
       } else {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
       }
     } // end of vi loop
   } // end of chunk loop
@@ -2360,11 +2377,18 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 }
 
 // Fit line profile
-void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
-			   string const& /* in_pol */, string const& fitfunc, string const& in_nfit,
-    bool const linefinding, float const threshold, int const avg_limit,
-    int const minwidth, vector<int> const& edge,
-    string const& tempfile_name, string const& temp_out_ms_name) {
+void SingleDishMS::fitLine(string const& in_column_name,
+                           string const& in_spw,
+                           string const& /* in_pol */,
+                           string const& fitfunc,
+                           string const& in_nfit,
+                           bool const linefinding,
+                           float const threshold,
+                           int const avg_limit,
+                           int const minwidth,
+                           vector<int> const& edge,
+                           string const& tempfile_name,
+                           string const& temp_out_ms_name) {
 
   // in_column = [FLOAT_DATA|DATA|CORRECTED_DATA]
   // no iteration is necessary for the processing.
@@ -2477,7 +2501,7 @@ void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
           if (allchannels_flagged(num_chan, mask_data)) {
             continue;
           }
-	  ++num_spec;
+          ++num_spec;
 
           // convert flag to mask by taking logical NOT of flag
           // and then operate logical AND with in_mask
@@ -2489,25 +2513,25 @@ void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
 
           // line finding. get fit mask (invert=false)
           if (linefinding) {
-              list<pair<size_t, size_t>> line_ranges
-                = findLineAndGetRanges(num_chan, spec_data, mask_data,
-                                       threshold, avg_limit, minwidth,
-                                       edge, false);
-              if (line_ranges.size()==0) {
-		++num_noline;
-                continue;
-              }
-              size_t nline = line_ranges.size();
-              fitrange_start.resize(nline);
-              fitrange_end.resize(nline);
-              nfit.resize(nline);
-              auto range=line_ranges.begin();
-              for (size_t iline=0; iline<nline; ++iline){
-                fitrange_start[iline] = (*range).first;
-                fitrange_end[iline] = (*range).second;
-                nfit[iline] = 1;
-                ++range;
-              }
+            list<pair<size_t, size_t>> line_ranges
+              = findLineAndGetRanges(num_chan, spec_data, mask_data,
+                                     threshold, avg_limit, minwidth,
+                                     edge, false);
+            if (line_ranges.size()==0) {
+              ++num_noline;
+              continue;
+            }
+            size_t nline = line_ranges.size();
+            fitrange_start.resize(nline);
+            fitrange_end.resize(nline);
+            nfit.resize(nline);
+            auto range=line_ranges.begin();
+            for (size_t iline=0; iline<nline; ++iline){
+              fitrange_start[iline] = (*range).first;
+              fitrange_end[iline] = (*range).second;
+              nfit[iline] = 1;
+              ++range;
+            }
           }
 
           Vector<Float> x_;
@@ -2533,7 +2557,7 @@ void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
             expr = "lorentz";
           }
 
-	  bool any_converged = false;
+          bool any_converged = false;
           for (size_t ifit = 0; ifit < nfit.size(); ++ifit) {
             if (nfit[ifit] == 0)
               continue;
@@ -2634,9 +2658,9 @@ void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
 
             parameters_.resize();
             parameters_ = fitter.fit(x_, y_, &m_);
-	    any_converged |= fitter.converged();
+            any_converged |= fitter.converged();
             // if (!fitter.converged()) {
-	    //   throw(AipsError("Failed in fitting. Fitter did not converge."));
+            //   throw(AipsError("Failed in fitting. Fitter did not converge."));
             // }
             error_.resize();
             error_ = fitter.errors();
@@ -2661,8 +2685,8 @@ void SingleDishMS::fitLine(string const& in_column_name, string const& in_spw,
             }
           }        //end of nfit loop
           ofs << "\n";
-	  // count up spectra w/o any line fit
-	  if (!any_converged) ++num_noline;
+          // count up spectra w/o any line fit
+          if (!any_converged) ++num_noline;
 
         }        //end of polarization loop
       }        // end of MS row loop
@@ -2691,11 +2715,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
                                             bool const& update_weight,
                                             string const& sigma_value,
                                             string const& param_file,
-					    bool const& verbose) {
+                                            bool const& verbose) {
 
   LogIO os(_ORIGIN);
   os << "Fitting and subtracting baseline using parameters in file "
-      << param_file << LogIO::POST;
+     << param_file << LogIO::POST;
 
   Block<Int> columns(1);
   columns[0] = MS::DATA_DESC_ID;
@@ -2742,7 +2766,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
     map<size_t const, uint16_t>::iterator iter = max_orders.begin();
     while (iter != max_orders.end()) {
       os << LogIO::DEBUG1 << "- type " << (*iter).first << ": "
-          << (*iter).second << LogIO::POST;
+         << (*iter).second << LogIO::POST;
       ++iter;
     }
   }
@@ -2798,8 +2822,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       final_mask2[1] = 0;
 
       bool new_nchan = false;
-      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask,
-          nchan_set, new_nchan);
+      get_nchan_and_mask(recspw, data_spw, recchan, num_chan, nchan, in_mask, nchan_set, new_nchan);
       // check if context should be created once per chunk
       // in the first actual excution of baseline.
       bool check_context = true;
@@ -2810,7 +2833,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
 
       // get weight matrix (npol*nrow) from VisBuffer
       if (update_weight) {
-	get_weight_matrix(*vb, weight_matrix);
+        get_weight_matrix(*vb, weight_matrix);
       }
 
       // loop over MS rows
@@ -2854,7 +2877,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           // skip spectrum if all channels flagged
           if (allchannels_flagged(num_chan, mask_data)) {
             os << LogIO::DEBUG1 << "Row " << orig_rows[irow] << ", Pol " << ipol
-                << ": All channels flagged. Skipping." << LogIO::POST;
+               << ": All channels flagged. Skipping." << LogIO::POST;
             apply_mtx[0][ipol] = false;
             continue;
           }
@@ -2869,14 +2892,14 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           if (!parser.GetFitParameter(orig_rows[irow], ipol, fit_param)) { //no fit requrested
             flag_spectrum_in_cube(flag_chunk, irow, ipol);
             os << LogIO::DEBUG1 << "Row " << orig_rows[irow] << ", Pol " << ipol
-                << ": Fit not requested. Skipping." << LogIO::POST;
+               << ": Fit not requested. Skipping." << LogIO::POST;
             apply_mtx[0][ipol] = false;
             continue;
           }
           if (verbose) {
             os << "Fitting Parameter" << LogIO::POST;
             os << "[ROW " << orig_rows[irow] << " (nchan " << num_chan << ")" << ", POL" << ipol << "]"
-                << LogIO::POST;
+               << LogIO::POST;
             fit_param.PrintSummary();
           }
           // Create contexts when actually subtract baseine for the first time (if not yet exist)
@@ -2885,7 +2908,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             map<size_t const, uint16_t>::iterator iter = max_orders.begin();
             while (iter != max_orders.end()) {
               get_baseline_context((*iter).first, (*iter).second, num_chan, idx,
-	      		   ctx_indices, ctx_nchans, context_reservoir[(*iter).first]);
+                                   ctx_indices, ctx_nchans, context_reservoir[(*iter).first]);
               ++iter;
             }
             check_context = false;
@@ -2897,8 +2920,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             Record selrec = sdh_->getSelRec(local_spw.str());
             Matrix<Int> local_rec_chan = selrec.asArrayInt("channel");
             Vector<Bool> local_mask(num_chan, false);
-            get_mask_from_rec(data_spw[irow], local_rec_chan, local_mask,
-                false);
+            get_mask_from_rec(data_spw[irow], local_rec_chan, local_mask, false);
             for (size_t ichan = 0; ichan < num_chan; ++ichan) {
               mask_data[ichan] = mask_data[ichan] && local_mask[ichan];
             }
@@ -2908,7 +2930,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             flag_spectrum_in_cube(flag_chunk, irow, ipol);
             apply_mtx[0][ipol] = false;
             os << LogIO::DEBUG1 << "Row " << orig_rows[irow] << ", Pol " << ipol
-                << ": No valid channel to fit. Skipping" << LogIO::POST;
+               << ": No valid channel to fit. Skipping" << LogIO::POST;
             continue;
           }
           // get a spectrum from data cube
@@ -2928,8 +2950,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           switch (bltype) {
           case BaselineType_kPolynomial:
           case BaselineType_kChebyshev:
-            status = LIBSAKURA_SYMBOL(GetNumberOfCoefficientsFloat)(context,
-                fit_param.order, &num_coeff);
+            status = LIBSAKURA_SYMBOL(GetNumberOfCoefficientsFloat)(context, fit_param.order, &num_coeff);
             check_sakura_status("sakura_GetNumberOfCoefficientsFloat", status);
             break;
           case BaselineType_kCubicSpline:
@@ -2944,11 +2965,11 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             flag_spectrum_in_cube(flag_chunk, irow, ipol);
             apply_mtx[0][ipol] = false;
             os << LogIO::WARN
-                << "Too few valid channels to fit. Skipping Antenna "
-                << antennas[irow] << ", Beam " << beams[irow] << ", SPW "
-                << data_spw[irow] << ", Pol " << ipol << ", Time "
-                << MVTime(times[irow] / 24. / 3600.).string(MVTime::YMD, 8)
-                << LogIO::POST;
+               << "Too few valid channels to fit. Skipping Antenna "
+               << antennas[irow] << ", Beam " << beams[irow] << ", SPW "
+               << data_spw[irow] << ", Pol " << ipol << ", Time "
+               << MVTime(times[irow] / 24. / 3600.).string(MVTime::YMD, 8)
+               << LogIO::POST;
             continue;
           }
 
@@ -3259,9 +3280,9 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       } // end of chunk row loop
       // write back data and flag cube to VisBuffer
       if (update_weight) {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk, &weight_matrix);
       } else {
-	sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
+        sdh_->fillCubeToOutputMs(vb, data_chunk, &flag_chunk);
       }
     } // end of vi loop
   } // end of chunk loop
@@ -3286,9 +3307,14 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
   }
 } //end subtractBaselineVariable
 
-list<pair<size_t, size_t>> SingleDishMS::findLineAndGetRanges(size_t const num_data, float const* data,
-    bool * mask, float const threshold, int const avg_limit,
-    int const minwidth, vector<int> const& edge, bool const invert) {
+list<pair<size_t, size_t>> SingleDishMS::findLineAndGetRanges(size_t const num_data,
+                                                              float const* data,
+                                                              bool * mask,
+                                                              float const threshold,
+                                                              int const avg_limit,
+                                                              int const minwidth,
+                                                              vector<int> const& edge,
+                                                              bool const invert) {
   // input value check
   AlwaysAssert(minwidth > 0, AipsError);
   AlwaysAssert(avg_limit >= 0, AipsError);
@@ -3301,12 +3327,10 @@ list<pair<size_t, size_t>> SingleDishMS::findLineAndGetRanges(size_t const num_d
     lf_edge = pair<size_t, size_t>(0, 0);
   } else if (edge.size() == 1) {
     AlwaysAssert(edge[0] >= 0, AipsError);
-    lf_edge = pair<size_t, size_t>(static_cast<size_t>(edge[0]),
-        static_cast<size_t>(edge[0]));
+    lf_edge = pair<size_t, size_t>(static_cast<size_t>(edge[0]), static_cast<size_t>(edge[0]));
   } else {
     AlwaysAssert(edge[0] >= 0 && edge[1] >= 0, AipsError);
-    lf_edge = pair<size_t, size_t>(static_cast<size_t>(edge[0]),
-        static_cast<size_t>(edge[1]));
+    lf_edge = pair<size_t, size_t>(static_cast<size_t>(edge[0]), static_cast<size_t>(edge[1]));
   }
   // line detection
   list<pair<size_t, size_t>> line_ranges = linefinder::MADLineFinder(num_data,
@@ -3330,10 +3354,15 @@ list<pair<size_t, size_t>> SingleDishMS::findLineAndGetRanges(size_t const num_d
   return line_ranges;
 }
 
-void SingleDishMS::findLineAndGetMask(size_t const num_data, float const* data,
-    bool const* in_mask, float const threshold, int const avg_limit,
-    int const minwidth, vector<int> const& edge, bool const invert,
-    bool* out_mask) {
+void SingleDishMS::findLineAndGetMask(size_t const num_data,
+                                      float const* data,
+                                      bool const* in_mask,
+                                      float const threshold,
+                                      int const avg_limit,
+                                      int const minwidth,
+                                      vector<int> const& edge,
+                                      bool const invert,
+                                      bool* out_mask) {
   // copy input mask to output mask vector if necessary
   if (in_mask != out_mask) {
     for (size_t i = 0; i < num_data; ++i) {
@@ -3343,13 +3372,15 @@ void SingleDishMS::findLineAndGetMask(size_t const num_data, float const* data,
   // line finding
   list<pair<size_t, size_t>> line_ranges
     = findLineAndGetRanges(num_data, data, out_mask, threshold,
-			     avg_limit, minwidth, edge, invert);
+                           avg_limit, minwidth, edge, invert);
   // line mask creation (do not initialize in case of baseline mask)
   linefinder::getMask(num_data, out_mask, line_ranges, invert, !invert);
 }
 
-void SingleDishMS::smooth(string const &kernelType, float const kernelWidth,
-    string const &columnName, string const &outMSName) {
+void SingleDishMS::smooth(string const &kernelType,
+                          float const kernelWidth,
+                          string const &columnName,
+                          string const &outMSName) {
   LogIO os(_ORIGIN);
   os << "Input parameter summary:" << endl << "   kernelType = " << kernelType
       << endl << "   kernelWidth = " << kernelWidth << endl
@@ -3379,15 +3410,14 @@ void SingleDishMS::smooth(string const &kernelType, float const kernelWidth,
 
   double endTime = gettimeofday_sec();
   os << LogIO::DEBUGGING
-      << "Elapsed time for VI/VB loop: " << endTime - startTime << " sec"
-      << LogIO::POST;
+     << "Elapsed time for VI/VB loop: " << endTime - startTime << " sec"
+     << LogIO::POST;
 
   // Finalization
   finalize_process();
 }
 
-bool SingleDishMS::importAsap(string const &infile, string const &outfile, bool const parallel)
-{
+bool SingleDishMS::importAsap(string const &infile, string const &outfile, bool const parallel) {
   bool status = true;
   try {
     SingleDishMSFiller<Scantable2MSReader> filler(infile, parallel);
@@ -3407,8 +3437,7 @@ bool SingleDishMS::importAsap(string const &infile, string const &outfile, bool 
   return status;
 }
 
-bool SingleDishMS::importNRO(string const &infile, string const &outfile, bool const parallel)
-{
+bool SingleDishMS::importNRO(string const &infile, string const &outfile, bool const parallel) {
   bool status = true;
   try {
     SingleDishMSFiller<NRO2MSReader> filler(infile, parallel);
