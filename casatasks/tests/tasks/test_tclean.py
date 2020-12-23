@@ -15,7 +15,7 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casa :  
+# To run from within casa 5:  
 #
 #  runUnitTest.main(['test_tclean'])                                              # Run all tests
 #  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
