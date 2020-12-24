@@ -104,7 +104,7 @@ void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_
 }
 
 void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb, Cube<Float> const &data_cube) {
-  Cube<Bool> const *flag_cube = NULL;
+  Cube<Bool> const *flag_cube = nullptr;
   Matrix<Float> const *weight_matrix = nullptr;
   fillCubeToOutputMs(vb, data_cube, flag_cube, weight_matrix);
 }
@@ -204,7 +204,7 @@ void SDMSManager::fillCubeToDataCols(vi::VisBuffer2 *vb, RefRows &rowRef,
     } // end switch
 
     //KS: THIS PART ASSUMES INROW==OUTROW
-    if (outputFlagCol != NULL && (flag_cube)) {
+    if ((outputFlagCol != NULL) && (flag_cube != nullptr)) {
       setTileShape(rowRef, outputMsCols_p->flag());
       writeCube(*flag_cube, *outputFlagCol, rowRef);
     }
