@@ -148,7 +148,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             with sdutil.tbmanager(outfile, nomodify=False) as mytb:
                 cols_remove = []
                 for col in ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']:
-                    if col in tb.colnames():
+                    if col in mytb.colnames():
                         cols_remove.append(col)
                 if len(cols_remove) > 0:
                     mytb.removecols(' '.join(cols_remove))
