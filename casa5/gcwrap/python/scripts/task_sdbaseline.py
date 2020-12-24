@@ -24,15 +24,6 @@ else:
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
 
-@contextlib.contextmanager
-def open_table(vis, nomodify=True):
-    tb.open(vis, nomodify=nomodify)
-    try:
-        yield tb
-    finally:
-        tb.close()
-
-
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,
@@ -154,7 +145,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
         # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
         if updateweight:
-            with open_table(outfile, False) as mytb:
+            with sdutil.tbmanager(outfile, nomodify=False) as mytb:
                 cols_remove = []
                 for col in ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']:
                     if col in tb.colnames():
