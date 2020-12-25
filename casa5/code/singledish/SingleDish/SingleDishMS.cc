@@ -115,8 +115,8 @@ inline float compute_weight(size_t const num_data,
                             bool const mask[/*num_data*/],
                             string const &sigma_value) {
   int num_data_effective = 0;
-  float sum = 0.0;
-  float sum_sq = 0.0;
+  double sum = 0.0;
+  double sum_sq = 0.0;
   for (size_t i = 0; i < num_data; ++i) {
     if (mask[i]) {
       num_data_effective++;
@@ -125,13 +125,13 @@ inline float compute_weight(size_t const num_data,
     }
   }
 
-  float weight = 0.0;
+  double weight = 0.0;
   if (num_data_effective > 0) {
-    float factor = 1.0 / static_cast<float>(num_data_effective);
-    float mean = sum * factor;
-    float mean_sq = sum_sq * factor;
+    double factor = 1.0 / static_cast<double>(num_data_effective);
+    double mean = sum * factor;
+    double mean_sq = sum_sq * factor;
 
-    float variance;
+    double variance;
     if (sigma_value == "stddev") {
       variance = mean_sq - mean * mean;
     } else if (sigma_value == "rms") {
@@ -146,7 +146,7 @@ inline float compute_weight(size_t const num_data,
     }
   }
 
-  return weight;
+  return static_cast<float>(weight);
 }
 
 } // anonymous namespace
