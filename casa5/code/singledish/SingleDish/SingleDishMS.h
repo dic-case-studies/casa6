@@ -40,6 +40,11 @@
 #include <singledish/SingleDish/SDMSManager.h>
 
 #define SinusoidWaveNumber_kUpperLimit    -999
+//weight values
+#define WeightIndex_kStddev     0
+#define WeightIndex_kRms        1
+#define WeightIndex_kNum        2
+
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

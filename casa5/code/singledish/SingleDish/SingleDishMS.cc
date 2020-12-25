@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <sys/time.h>
+#include <tuple>
 #include <vector>
 
 #include <casa/Arrays/ArrayMath.h>
@@ -110,10 +111,14 @@ inline void GetCubeDefault(VisBuffer2 const& /*vb*/, Cube<Float>& /*cube*/) {
   throw AipsError("Data accessor for VB2 is not properly configured.");
 }
 
-inline float compute_weight(size_t const num_data,
-                            float const data[/*num_data*/],
-                            bool const mask[/*num_data*/],
-                            string const &sigma_value) {
+inline void compute_weight(size_t const num_data,
+                           float const data[/*num_data*/],
+                           bool const mask[/*num_data*/],
+                           std::vector<float> &weight) {
+  for (size_t i = 0; i < WeightIndex_kNum; ++i) {
+    weight[i] = 0.0;
+  }
+
   int num_data_effective = 0;
   double sum = 0.0;
   double sum_sq = 0.0;
@@ -125,28 +130,27 @@ inline float compute_weight(size_t const num_data,
     }
   }
 
-  double weight = 0.0;
   if (num_data_effective > 0) {
     double factor = 1.0 / static_cast<double>(num_data_effective);
     double mean = sum * factor;
     double mean_sq = sum_sq * factor;
 
-    double variance;
-    if (sigma_value == "stddev") {
-      variance = mean_sq - mean * mean;
-    } else if (sigma_value == "rms") {
-      variance = mean_sq;
-    }
+    std::vector<double> variance(WeightIndex_kNum);
+    variance[WeightIndex_kStddev] = mean_sq - mean * mean;
+    variance[WeightIndex_kRms] = mean_sq;
 
-    if (variance > 0.0) {
-      weight = 1.0 / variance;
-    } else {
-      LogIO os(_ORIGIN);
-      os << "Weight set to 0 for a bad data." << LogIO::WARN;
-    }
+    auto do_compute_weight = [&](size_t idx) {
+      if (variance[idx] > 0.0) {
+        weight[idx] = static_cast<float>(1.0 / variance[idx]);
+      } else {
+        LogIO os(_ORIGIN);
+        os << "Weight set to 0 for a bad data." << LogIO::WARN;
+      }
+    };
+
+    do_compute_weight(WeightIndex_kStddev);
+    do_compute_weight(WeightIndex_kRms);
   }
-
-  return static_cast<float>(weight);
 }
 
 } // anonymous namespace
@@ -1325,6 +1329,9 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
     return ((blparam_exclude.size() == 2) &&
             (blparam_exclude[1] == SinusoidWaveNumber_kUpperLimit)); };
 
+  std::vector<float> weight(WeightIndex_kNum);
+  size_t const var_index = (sigma_value == "stddev") ? WeightIndex_kStddev : WeightIndex_kRms;
+
   for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
     for (vi->origin(); vi->more(); vi->next()) {
       Vector<Int> scans = vb->scan();
@@ -1585,8 +1592,8 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
           }
 
           if (update_weight) {
-            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+            compute_weight(num_chan, spec_data, mask_data, weight);
+            set_weight_to_matrix(weight_matrix, irow, ipol, weight.at(var_index));
           }
 
         } // end of polarization loop
@@ -2215,6 +2222,9 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 
   LIBSAKURA_SYMBOL(Status) status;
 
+  std::vector<float> weight(WeightIndex_kNum);
+  size_t const var_index = (sigma_value == "stddev") ? WeightIndex_kStddev : WeightIndex_kRms;
+
   for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
     for (vi->origin(); vi->more(); vi->next()) {
       Vector<Int> scans = vb->scan();
@@ -2352,8 +2362,8 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
             for (size_t ichan = 0; ichan < num_chan; ++ichan) {
               mask_data[ichan] = !(mask_data[ichan]);
             }
-            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+            compute_weight(num_chan, spec_data, mask_data, weight);
+            set_weight_to_matrix(weight_matrix, irow, ipol, weight.at(var_index));
           }
         } // end of polarization loop
 
@@ -2791,6 +2801,9 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
   LIBSAKURA_SYMBOL(Status) status;
   LIBSAKURA_SYMBOL(LSQFitStatus) bl_status;
 
+  std::vector<float> weight(WeightIndex_kNum);
+  size_t const var_index = (sigma_value == "stddev") ? WeightIndex_kStddev : WeightIndex_kRms;
+
   for (vi->originChunks(); vi->moreChunks(); vi->nextChunk()) {
     for (vi->origin(); vi->more(); vi->next()) {
       Vector<Int> scans = vb->scan();
@@ -3138,8 +3151,8 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
           }
 
           if (update_weight) {
-            float spec_weight = compute_weight(num_chan, spec_data, mask_data, sigma_value);
-            set_weight_to_matrix(weight_matrix, irow, ipol, spec_weight);
+            compute_weight(num_chan, spec_data, mask_data, weight);
+            set_weight_to_matrix(weight_matrix, irow, ipol, weight.at(var_index));
           }
         } // end of polarization loop
 
