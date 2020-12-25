@@ -169,8 +169,8 @@ public:
 
   // smooth data with arbitrary smoothing kernel
   // smoothing kernels currently supported include gaussian and boxcar
-  void smooth(string const &kernelType, float const kernelWidth,
-      string const &columnName, string const&outMsName);
+  void smooth(string const& kernelType, float const kernelWidth,
+      string const& columnName, string const& outMsName);
 
 private:
   /////////////////////////
@@ -184,30 +184,33 @@ private:
    * Formats selection parameters for single dish processing.
    * @param [in] selection A casacore::Record consists of selection key and values
    */
-  void format_selection(casacore::Record &selection);
+  void format_selection(casacore::Record& selection);
 
   // retrieve a field by name from casacore::Record as casa::String.
-  casacore::String get_field_as_casa_string(casacore::Record const &in_data,
-      string const &field_name);
+  casacore::String get_field_as_casa_string(casacore::Record const& in_data,
+                                            string const& field_name);
 
-  bool prepare_for_process(string const &in_column_name,
-      string const&out_ms_name);
+  bool prepare_for_process(string const& in_column_name,
+                           string const& out_ms_name);
 
-  bool prepare_for_process(string const &in_column_name,
-      string const&out_ms_name, casacore::Block<casacore::Int> const &sortColumns,
-      bool const addDefaultSortCols = false);
+  bool prepare_for_process(string const& in_column_name,
+                           string const& out_ms_name,
+                           casacore::Block<casacore::Int> const& sortColumns,
+                           bool const addDefaultSortCols = false);
   void finalize_process();
 
   // check column 'in' is in input casacore::MS and set to 'out' if it exists.
   // if not, out is set to casacore::MS::UNDEFINED_COLUMN
-  bool set_column(casacore::MSMainEnums::PredefinedColumns const &in,
-      casacore::MSMainEnums::PredefinedColumns &out);
+  bool set_column(casacore::MSMainEnums::PredefinedColumns const& in,
+                  casacore::MSMainEnums::PredefinedColumns& out);
   // Convert a casacore::Complex casacore::Array to casacore::Float Array
-  void convertArrayC2F(casacore::Array<casacore::Float> &from, casacore::Array<casacore::Complex> const &to);
+  void convertArrayC2F(casacore::Array<casacore::Float>& from,
+                       casacore::Array<casacore::Complex> const& to);
   // Split a string with given delimiter
-  std::vector<string> split_string(string const &s, char delim);
+  std::vector<string> split_string(string const& s,
+                                   char delim);
   // examine if a file with specified name exists
-  bool file_exists(string const &filename);
+  bool file_exists(string const& filename);
   /* Convert spw selection string to vectors of spwid and channel
      ranges by parsing msseltoindex output. Also creates some
      placeholder vectors to store mask and the muber of channels
@@ -221,9 +224,12 @@ private:
      [out] mask : an uninitialized vector of length spw.size() 
      [out] nchan_set: a vector of length spw.size() initilazed by false
    */
-  void parse_spw(string const &in_spw, casacore::Vector<casacore::Int> &spw, casacore::Matrix<casacore::Int> &chan,
-      casacore::Vector<size_t> &nchan, casacore::Vector<casacore::Vector<casacore::Bool> > &mask,
-      casacore::Vector<bool> &nchan_set);
+  void parse_spw(string const& in_spw,
+                 casacore::Vector<casacore::Int>& spw, 
+                 casacore::Matrix<casacore::Int>& chan,
+                 casacore::Vector<size_t>& nchan,
+                 casacore::Vector<casacore::Vector<casacore::Bool> >& mask,
+                 casacore::Vector<bool>& nchan_set);
   /* Go through chunk and set valudes to nchan and mask selection
      vectors of the SPW if not already done.
     [in] rec_spw: a vector of selected SPW IDs. the number of
@@ -247,21 +253,28 @@ private:
                      SPWs with the same number of channels.
    */
   void get_nchan_and_mask(casacore::Vector<casacore::Int> const &rec_spw,
-      casacore::Vector<casacore::Int> const &data_spw, casacore::Matrix<casacore::Int> const &rec_chan,
-      size_t const num_chan, casacore::Vector<size_t> &nchan, casacore::Vector<casacore::Vector<casacore::Bool> > &mask,
-      casacore::Vector<bool> &nchan_set, bool &new_nchan);
-  void get_mask_from_rec(casacore::Int spwid, casacore::Matrix<casacore::Int> const &rec_chan,
-      casacore::Vector<casacore::Bool> &mask, bool initialize = true);
-  void get_masklist_from_mask(size_t const num_chan, bool const *mask,
-      casacore::Vector<casacore::uInt> &masklist);
+                          casacore::Vector<casacore::Int> const &data_spw,
+                          casacore::Matrix<casacore::Int> const &rec_chan,
+                          size_t const num_chan,
+                          casacore::Vector<size_t>& nchan,
+                          casacore::Vector<casacore::Vector<casacore::Bool> >& mask,
+                          casacore::Vector<bool>& nchan_set,
+                          bool& new_nchan);
+  void get_mask_from_rec(casacore::Int spwid,
+                         casacore::Matrix<casacore::Int> const &rec_chan,
+                         casacore::Vector<casacore::Bool> &mask,
+                         bool initialize = true);
+  void get_masklist_from_mask(size_t const num_chan,
+                              bool const* mask,
+                              casacore::Vector<casacore::uInt>& masklist);
   // Create a set of baseline contexts (if necessary)
   void get_baseline_context(size_t const bltype,
-      uint16_t order,
-      size_t num_chan,
-      casacore::Vector<size_t> const &nchan,
-      casacore::Vector<bool> const &nchan_set,
-      casacore::Vector<size_t> &ctx_indices,
-      std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> &bl_contexts);
+                            uint16_t order,
+                            size_t num_chan,
+                            casacore::Vector<size_t> const& nchan,
+                            casacore::Vector<bool> const& nchan_set,
+                            casacore::Vector<size_t>& ctx_indices,
+      std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *>& bl_contexts);
   void get_baseline_context(size_t const bltype,
       uint16_t order,
       size_t num_chan,
@@ -274,8 +287,10 @@ private:
   void check_sakura_status(string const &name, LIBSAKURA_SYMBOL(Status) const status);
   void check_baseline_status(LIBSAKURA_SYMBOL(LSQFitStatus) const bl_status);
   template<typename T, typename U>
-  void set_matrix_for_bltable(size_t const num_pol, size_t const num_data_max,
-      std::vector<std::vector<T> > const &in_data, casacore::Array<U> &out_data) {
+  void set_matrix_for_bltable(size_t const num_pol,
+                              size_t const num_data_max,
+                              std::vector<std::vector<T> > const& in_data,
+                              casacore::Array<U> &out_data) {
     for (size_t ipol = 0; ipol < num_pol; ++ipol) {
       for (size_t i = 0; i < num_data_max; ++i) {
         out_data[i][ipol] = static_cast<U>(0);
@@ -287,28 +302,32 @@ private:
     }
   }
   template<typename T, typename U>
-  void set_array_for_bltable(size_t const ipol, size_t const num_data,
-      T const *in_data, casacore::Array<U> &out_data) {
+  void set_array_for_bltable(size_t const ipol,
+                             size_t const num_data,
+                             T const *in_data,
+                             casacore::Array<U> &out_data) {
     for (size_t i = 0; i < num_data; ++i) {
       out_data[i][ipol] = static_cast<U>(in_data[i]);
     }
   }
   size_t get_num_coeff_bloutput(size_t const bltype,
                                 size_t order,
-                                size_t &num_coeff_max);
+                                size_t& num_coeff_max);
   std::vector<int> string_to_list(string const &wn_str, char const delim);
-  void get_effective_nwave(std::vector<int> const &addwn,
-                           std::vector<int> const &rejwn,
+  void get_effective_nwave(std::vector<int> const& addwn,
+                           std::vector<int> const& rejwn,
                            int const wn_ulimit,
-                           std::vector<int> &effwn);
-  void finalise_effective_nwave(std::vector<int> const &blparam_eff_base,
-                                std::vector<int> const &blparam_exclude,
-                                int const &blparam_upperlimit,
-                                size_t const &num_chan,
-                                float const *spec, bool const *mask,
-                                bool const &applyfft,
-                                string const &fftmethod, string const &fftthresh,
-                                std::vector<size_t> &blparam_eff);
+                           std::vector<int>& effwn);
+  void finalise_effective_nwave(std::vector<int> const& blparam_eff_base,
+                                std::vector<int> const& blparam_exclude,
+                                int const& blparam_upperlimit,
+                                size_t const& num_chan,
+                                float const* spec,
+                                bool const* mask,
+                                bool const& applyfft,
+                                string const& fftmethod,
+                                string const& fftthresh,
+                                std::vector<size_t>& blparam_eff);
   void parse_fftthresh(string const& fftthresh_str,
                        string& fftthresh_attr,
                        float& fftthresh_sigma,
@@ -332,22 +351,27 @@ private:
                             float const *in_spec,
                             bool const *in_mask,
                             casacore::Vector<casacore::Float> &spec);
-  void merge_wavenumbers(std::vector<int> const &blparam_eff_base,
-                         std::vector<int> const &blparam_fft,
-                         std::vector<int> const &blparam_exclude,
-                         std::vector<size_t> &blparam_eff);
-  
-  list<pair<size_t, size_t>> findLineAndGetRanges(size_t const num_data,
-      float const data[/*num_data*/],
-      bool mask[/*num_data*/], float const threshold,
-      int const avg_limit, int const minwidth, std::vector<int> const& edge,
-      bool const invert);
-
-  void findLineAndGetMask(size_t const num_data, float const data[/*num_data*/],
-      bool const in_mask[/*num_data*/], float const threshold,
-      int const avg_limit, int const minwidth, std::vector<int> const& edge,
-      bool const invert, bool out_mask[/*num_data*/]);
-
+  void merge_wavenumbers(std::vector<int> const& blparam_eff_base,
+                         std::vector<int> const& blparam_fft,
+                         std::vector<int> const& blparam_exclude,
+                         std::vector<size_t>& blparam_eff);
+    list<pair<size_t, size_t>> findLineAndGetRanges(size_t const num_data,
+                                                  float const data[/*num_data*/],
+                                                  bool mask[/*num_data*/],
+                                                  float const threshold,
+                                                  int const avg_limit,
+                                                  int const minwidth,
+                                                  std::vector<int> const& edge,
+                                                  bool const invert);
+  void findLineAndGetMask(size_t const num_data,
+                          float const data[/*num_data*/],
+                          bool const in_mask[/*num_data*/],
+                          float const threshold,
+                          int const avg_limit,
+                          int const minwidth,
+                          std::vector<int> const& edge,
+                          bool const invert,
+                          bool out_mask[/*num_data*/]);
   template<typename Func0, typename Func1, typename Func2, typename Func3>
   void doSubtractBaseline(string const& in_column_name,
                           string const& out_ms_name, 
@@ -381,45 +405,61 @@ private:
   /// casacore::MS handling functions ///
   /////////////////////////////
   // retrieve a spectrum at the row and plane (polarization) from data cube
-  void get_spectrum_from_cube(casacore::Cube<casacore::Float> &data_cube, size_t const row,
-      size_t const plane, size_t const num_data,
-      float out_data[/*num_data*/]);
+  void get_spectrum_from_cube(casacore::Cube<casacore::Float>& data_cube,
+                              size_t const row,
+                              size_t const plane,
+                              size_t const num_data,
+                              float out_data[/*num_data*/]);
   // set a spectrum at the row and plane (polarization) to data cube
-  void set_spectrum_to_cube(casacore::Cube<casacore::Float> &data_cube, size_t const row,
-      size_t const plane, size_t const num_data, float in_data[/*num_data*/]);
+  void set_spectrum_to_cube(casacore::Cube<casacore::Float>& data_cube,
+                            size_t const row,
+                            size_t const plane,
+                            size_t const num_data,
+                            float in_data[/*num_data*/]);
   // get data cube (npol*nchan*nvirow) in in_column_ from visbuffer
   // and convert it to float cube
-  void get_data_cube_float(vi::VisBuffer2 const &vb, casacore::Cube<casacore::Float> &data_cube);
+  void get_data_cube_float(vi::VisBuffer2 const& vb,
+                           casacore::Cube<casacore::Float>& data_cube);
   // get weight matrix (npol*nvirow) from visbuffer
-  void get_weight_matrix(vi::VisBuffer2 const &vb, casacore::Matrix<casacore::Float> &weight_matrix);
+  void get_weight_matrix(vi::VisBuffer2 const& vb,
+                         casacore::Matrix<casacore::Float>& weight_matrix);
   // set a weight at the row and plane (polarization) to weight matrix
-  void set_weight_to_matrix(casacore::Matrix<casacore::Float> &weight_matrix, size_t const row,
-      size_t const plane, float in_weight);
+  void set_weight_to_matrix(casacore::Matrix<casacore::Float>& weight_matrix,
+                            size_t const row,
+                            size_t const plane,
+                            float in_weight);
   // get flag cube (npol*nchan*nvirow) from visbuffer
-  void get_flag_cube(vi::VisBuffer2 const &vb, casacore::Cube<casacore::Bool> &flag_cube);
+  void get_flag_cube(vi::VisBuffer2 const& vb,
+                     casacore::Cube<casacore::Bool>& flag_cube);
   // retrieve a flag at the row and plane (polarization) from flag cube
-  void get_flag_from_cube(casacore::Cube<casacore::Bool> &flag_cube, size_t const row,
-      size_t const plane, size_t const num_flag,
-      bool out_flag[/*num_flag*/]);
+  void get_flag_from_cube(casacore::Cube<casacore::Bool>& flag_cube,
+                          size_t const row,
+                          size_t const plane,
+                          size_t const num_flag,
+                          bool out_flag[/*num_flag*/]);
   // set a flag at the row and plane (polarization) to flag cube
-  void set_flag_to_cube(casacore::Cube<casacore::Bool> &flag_cube, size_t const row,
-      size_t const plane, size_t const num_flag, bool in_flag[/*num_data*/]);
-
+  void set_flag_to_cube(casacore::Cube<casacore::Bool> &flag_cube,
+                        size_t const row,
+                        size_t const plane,
+                        size_t const num_flag,
+                        bool in_flag[/*num_data*/]);
   // flag all channels in a supectrum in cube at the row and plane (polarization)
-  void flag_spectrum_in_cube(casacore::Cube<casacore::Bool> &flag_cube, size_t const row,
-      size_t const plane);
-
+  void flag_spectrum_in_cube(casacore::Cube<casacore::Bool> &flag_cube,
+                             size_t const row,
+                             size_t const plane);
   // return true if all channels are flagged
-  bool allchannels_flagged(size_t const num_flag, bool const* flag);
+  bool allchannels_flagged(size_t const num_flag,
+                           bool const* flag);
   // returns the number of channels with true in input mask
-  size_t NValidMask(size_t const num_mask, bool const* mask);
+  size_t NValidMask(size_t const num_mask,
+                    bool const* mask);
 
   /////////////////////////////////
   /// casacore::Array execution functions ///
   /////////////////////////////////
 
   ////////////////////////
-  /// Member vairables ///
+  /// Member variables ///
   ////////////////////////
   // the name of input MS
   string msname_;

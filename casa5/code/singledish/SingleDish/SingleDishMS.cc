@@ -114,7 +114,7 @@ inline void GetCubeDefault(VisBuffer2 const& /*vb*/, Cube<Float>& /*cube*/) {
 inline void compute_weight(size_t const num_data,
                            float const data[/*num_data*/],
                            bool const mask[/*num_data*/],
-                           std::vector<float> &weight) {
+                           std::vector<float>& weight) {
   for (size_t i = 0; i < WeightIndex_kNum; ++i) {
     weight[i] = 0.0;
   }
@@ -155,12 +155,6 @@ inline void compute_weight(size_t const num_data,
 
 } // anonymous namespace
 
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
-using namespace casacore;
 using namespace casacore;
 namespace casa {
 
