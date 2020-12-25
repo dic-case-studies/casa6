@@ -3,7 +3,6 @@
 #include <map>
 #include <string>
 #include <sys/time.h>
-#include <tuple>
 #include <vector>
 
 #include <casa/Arrays/ArrayMath.h>
