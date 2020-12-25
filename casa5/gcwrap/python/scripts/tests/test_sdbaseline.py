@@ -164,9 +164,10 @@ def parseRms(txt):
 def remove_a_table(filename):
     """
     Remove a single file or a single directory.
-    For filename, '.' and those starting with '..' are not allowed.
+    For filename, '.' and those end with '..' (namely, '..', '../..' etc.)
+    are not allowed.
     """
-    if filename == '.' or filename[:2] == '..':
+    if filename == '.' or filename[-2:] == '..':
         raise Exception("Dangerous! Attempting to remove '" + filename + "'!!")
     
     if os.path.exists(filename):
@@ -179,9 +180,10 @@ def remove_a_table(filename):
 def remove_tables_starting_with(filename):
     """
     Remove files/directories/symlinks 'filename*'.
-    For filename, '', '.' and those starting with '..' are not allowed.
+    For filename, '', '.' and those end with '..' (namely, '..', '../..' etc.)
+    are not allowed.
     """
-    if filename == '.' or filename[:2] == '..':
+    if filename == '.' or filename[-2:] == '..':
         raise Exception("Dangerous! Attempting to remove '" + filename + "*'!!")
     elif filename == '':
         raise Exception("The parameter 'filename' must not be a null string.")
