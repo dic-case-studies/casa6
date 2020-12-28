@@ -5004,6 +5004,20 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                         wgt_ref[ipol][irow] = 1.0 / (ssq - sum ** 2)
                     elif sigmavalue == 'rms':
                         wgt_ref[ipol][irow] = 1.0 / ssq
+                """
+                #for numpy 1.8.0 or after
+                tmpdata = data.copy()
+                for ichan in range(len(data[0])):
+                    if flag[ipol][ichan][irow]:
+                        tmpdata[ichan] = numpy.nan
+                try:
+                    variance = numpy.nanvar(tmpdata)
+                    if sigmavalue == 'rms':
+                        variance += numpy.square(numpy.nanmean(tmpdata))
+                    wgt_ref[ipol][irow] = 1.0 / variance
+                except (ZeroDivisionError, RuntimeWarning):
+                    wgt_ref[ipol][irow] = 0.0
+                """ 
 
         self.assertTrue(numpy.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
 
