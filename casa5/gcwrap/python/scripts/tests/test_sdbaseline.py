@@ -4975,10 +4975,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             wgt_in = tb.getcol('WEIGHT')
         with tbmanager(self.outfile) as tb:
             wgt_out = tb.getcol('WEIGHT')
-        for i in range(len(wgt_in)):
-            for j in range(len(wgt_in[0])):
-                self.assertEqual(wgt_in[i][j], wgt_out[i][j],
-                                 'WEIGHT column is unexpectedly updated!')
+        self.assertTrue(numpy.array_equal(wgt_in, wgt_out),
+                        msg='WEIGHT column is unexpectedly updated!')
 
     def _check_weight_values(self, sigmavalue='stddev'):
         with tbmanager(self.outfile) as tb:
