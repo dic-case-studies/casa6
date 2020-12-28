@@ -39,10 +39,12 @@
 #include <scimath/Mathematics/FFTServer.h>
 #include <singledish/SingleDish/SDMSManager.h>
 
-#define SinusoidWaveNumber_kUpperLimit    -999
-
 namespace {
-  // Weight values
+  // Max number of rows to get in each iteration
+  constexpr casacore::Int kNRowBlocking = 1000;
+  // Sinusoid
+  constexpr int SinusoidWaveNumber_kUpperLimit = -999;
+  // Weight
   constexpr size_t WeightIndex_kStddev = 0;
   constexpr size_t WeightIndex_kRms = 1;
   constexpr size_t WeightIndex_kNum = 2;
@@ -485,9 +487,6 @@ private:
 
   //split the name  
   void split_bloutputname(string str);
-
-  //max number of rows to get in each iteration
-  constexpr static casacore::Int kNRowBlocking = 1000;
 
 public:
   static bool importAsap(string const &infile, string const &outfile, bool const parallel=false);
