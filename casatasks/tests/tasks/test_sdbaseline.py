@@ -4915,12 +4915,8 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
 
     def setUp(self):
         remove_files_dirs(self.infile)
-        #if os.path.exists(self.infile):
-        #    shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
         default(sdbaseline)
-        #if os.path.exists(self.infile+'_blparam.btable'):
-        #    shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
         remove_single_file_dir(self.infile)
