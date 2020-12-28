@@ -283,7 +283,7 @@ class test_singlepointing(testref_base):
         self.cycleniter=50
 
     # Test 1
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
         """ [singlePointing] Test_singlepointing_mfs_sdint """
@@ -325,7 +325,7 @@ class test_singlepointing(testref_base):
         self.checkfinal(pstr=report)
 
     #Test 2
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_intonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='int')
         """ [singlePointing] Test_singlepointing_mfs_intonly """
@@ -364,7 +364,7 @@ class test_singlepointing(testref_base):
 
 
     # Test 3
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sd')
         """ [singlePointing] Test_singlepointing_mfs_sdonly """
@@ -402,7 +402,7 @@ class test_singlepointing(testref_base):
 
 
     #Test4
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdint(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sdint')
         """ [singlePointing] Test_singlepointing_cube_sdint """
@@ -441,7 +441,7 @@ class test_singlepointing(testref_base):
 
 
     #Test5
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_intonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='int')
         """ [singlePointing] Test_singlepointing_cube_intonly """
@@ -480,7 +480,7 @@ class test_singlepointing(testref_base):
 
 
     #Test6
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sd')
         """ [singlePointing] Test_singlepointing_cube_sdonly """
@@ -518,7 +518,7 @@ class test_singlepointing(testref_base):
         self.checkfinal(pstr=report)
 
     # Test 13
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint_flagged(self):
         """ [singlePointing] Test_singlepointing_mfs_sdint_flagged """
         ######################################################################################
@@ -560,7 +560,7 @@ class test_singlepointing(testref_base):
         self.checkfinal(pstr=report)
 
     #Test 14
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdint_flagged(self):
         """ [singlePointing] Test_singlepointing_cube_sdint_flagged """
         ######################################################################################
@@ -602,7 +602,7 @@ class test_singlepointing(testref_base):
         self.checkfinal(pstr=report)
 
     #Test 15 
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint_autopsf(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
         """ [singlePointing] Test_singlepointing_mfs_sdint_autopsf """
@@ -664,7 +664,7 @@ class test_mosaic(testref_base):
         self.cycleniter= 50
 
      #Test7
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_sdint(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='sdint')
         """ [Mosaic] Test_mosaic_mfs_sdint """
@@ -702,7 +702,7 @@ class test_mosaic(testref_base):
 
 
     #Test8
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_intonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='int')
         """ [Mosaic] Test_mosaic_mfs_intonly """
@@ -740,7 +740,7 @@ class test_mosaic(testref_base):
 
 
     #Test9
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='sd')
         """ [Mosaic] Test_mosaic_mfs_sdonly """
@@ -778,7 +778,6 @@ class test_mosaic(testref_base):
 
     #Test10
 #    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_sdint(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sdint')
         """ [Mosaic] Test_mosaic_cube_sdint """
@@ -815,7 +814,7 @@ class test_mosaic(testref_base):
 
 
     #Test11
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_intonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='int')
         """ [Mosaic] Test_mosaic_cube_intonly """
@@ -853,7 +852,7 @@ class test_mosaic(testref_base):
 
 
     #Test12
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+  #  @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sd')
         """ [Mosaic] Test_mosaic_cube_sdonly """

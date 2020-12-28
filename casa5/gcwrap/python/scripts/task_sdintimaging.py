@@ -23,6 +23,8 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     #from casatasks import imregrid
     from .sdint_helper import *
+    from casatools import table
+    from casatools import synthesisimager
 else:
     from taskinit import *
     from tasks import *
@@ -32,6 +34,19 @@ else:
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
     from sdint_helper import *
+    table=casac.table
+    synthesisimager=casac.synthesisimager
+
+try:
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi import MPIInterface
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa import MPIInterface
+    mpi_available = True
+except ImportError:
+    mpi_available = False
 
 sdintlib = SDINT_helper()
 synu = casac.synthesisutils()
@@ -518,6 +533,25 @@ def sdintimaging(
     if len(pointingoffsetsigdev)>0 and pointingoffsetsigdev[0]!=0.0 and usepointing==True and gridder.count('awproj')>1:
         casalog.post("pointingoffsetsigdev will be used for pointing corrections with AWProjection", "WARN") 
 
+    #=========================================================
+    ####set the children to load c++ libraries and applicator
+    ### make workers ready for c++ based mpicommands
+    cppparallel=False
+    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs' and not pcube:
+        mint=MPIInterface.MPIInterface()
+        cl=mint.getCluster()
+        if(is_CASA6):
+            cl._cluster.pgc("from casatools import synthesisimager", False)
+            cl._cluster.pgc("si=synthesisimager()", False)
+        else:
+            cl._cluster.pgc("from casac import casac", False)
+            cl._cluster.pgc("si=casac.synthesisimager()", False) 
+        cl._cluster.pgc("si.initmpi()", False)
+        cppparallel=True
+        ###ignore chanchunk
+        bparm['chanchunks']=1
+
+
     # catch non operational case (parallel cube tclean with interative=T)
     #if parallel==True and specmode!='mfs' and interactive:
     #    casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
@@ -604,11 +638,6 @@ def sdintimaging(
         print("Fitting for cube")
         synu.fitPsfBeam(joint_cube)
 
-
-        imhead(sd_cube+'.psf')
-        imhead(int_cube+'.psf')
-        imhead(joint_cube+'.psf')
-
         ###############
         ##### Placeholder code for PSF renormalization if needed
         #####  Note : If this is enabled, we'll need to restrict the use of 'faceting' as .sumwt shape changes.
@@ -635,9 +664,6 @@ def sdintimaging(
 
             print("Fit for multiterm")
             synu.fitPsfBeam(joint_multiterm,nterms=nterms)
-
-            imhead(joint_cube+'.psf')
-            imhead(joint_multiterm+'.psf.tt0')
 
         if niter>0 :
             isit = deconvolver.hasConverged()
@@ -784,6 +810,10 @@ def sdintimaging(
     finally:
         if imager != None:
             imager.deleteTools() 
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
 
         #clean up tmp files
         deleteTmpFiles()
