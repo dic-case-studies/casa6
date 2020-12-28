@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
 import numpy as np
 from numpy import sqrt, cos, sin
@@ -577,7 +576,7 @@ class TheoreticalBeam:
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
         epsilon = obscuration/diameter
-#        print "Using epsilon = %f" % (epsilon)
+        # casalog.post("Using epsilon = %f" % (epsilon))
         myxaxis = np.arange(-xaxisLimitInUnitsOfFwhm*fwhm,
                             xaxisLimitInUnitsOfFwhm*fwhm+0.5*convolutionPixelSize,
                             convolutionPixelSize)
@@ -630,7 +629,7 @@ class TheoreticalBeam:
                 truncateBefore = r
                 break
         mask[truncateBefore:truncateBeyond] = 1
-#        print "Truncating outside of pixels %d-%d (len=%d)" % (truncateBefore,truncateBeyond-1,len(mask))
+        # casalog.post("Truncating outside of pixels %d-%d (len=%d)" % (truncateBefore,truncateBeyond-1,len(mask)))
         result *= mask
         return result
 
@@ -651,7 +650,7 @@ class TheoreticalBeam:
             parameters = np.asarray([fwhm_guess], dtype=np.float64)
         else:
             parameters = np.asarray([fwhm_guess,truncate], dtype=np.float64)
-        if (verbose): print("Fitting for %d parameters: guesses = %s" % (len(parameters), parameters))
+        if (verbose): casalog.post("Fitting for %d parameters: guesses = %s" % (len(parameters), parameters))
         xx = np.asarray(x, dtype=np.float64)
         yy = np.asarray(y, dtype=np.float64)
         lenx = len(x)
@@ -660,7 +659,8 @@ class TheoreticalBeam:
             xx = x[np.where(np.abs(x) < xwidth*0.5)[0]]
             yy = y[np.where(np.abs(x) < xwidth*0.5)[0]]
             if (verbose):
-                print("Keeping %d/%d points, guess = %f arcsec" % (len(x),lenx,fwhm_guess))
+                casalog.postt("Keeping %d/%d points, guess = %f arcsec" %
+                              (len(x),lenx,fwhm_guess))
         result = optimize.leastsq(self.gaussfit_errfunc, parameters, args=(xx,yy),
                                   full_output=1)
         bestParameters = result[0]
@@ -669,13 +669,14 @@ class TheoreticalBeam:
         mesg = result[3]
         ier = result[4]
         if (verbose):
-            print("optimize.leastsq: ier=%d, #calls=%d, message = %s" % (ier,numberFunctionCalls,mesg))
+            casalog.post("optimize.leastsq: ier=%d, #calls=%d, message = %s" %
+                         (ier,numberFunctionCalls,mesg))
         if (type(bestParameters) == list or type(bestParameters) == np.ndarray):
             fwhm = bestParameters[0]
-            if verbose: print("fitted FWHM = %f" % (fwhm))
+            if verbose: casalog.post("fitted FWHM = %f" % (fwhm))
             if (truncate != False):
                 truncate = bestParameters[1]
-                print("optimized truncation = %f" % (truncate))
+                casalog.post("optimized truncation = %f" % (truncate))
         else:
             fwhm = bestParameters
         return(fwhm,truncate)
@@ -702,7 +703,7 @@ def findFWHM(x,y,level=0.5, s=0):
         return(2*abs(result[0]))
     else:
         ### modified (KS 2015/02/19)
-        #print "More than two crossings (%d), fitting slope to points near that power level." % (len(result))
+        #casalog.post("More than two crossings (%d), fitting slope to points near that power level." % (len(result)))
         #result = 2*findZeroCrossingBySlope(x, y-halfmax)
         #return(result)
         errmsg = "Unsupported FWHM search in CASA. More than two corssings (%d) at level %f (%f %% of peak)." % (len(result), halfmax, level)
@@ -730,7 +731,7 @@ def primaryBeamArcsec(frequency, diameter, obscuration, taper,
     if (taper < 0):
         taper = abs(taper)
     if (obscuration>0.4*diameter):
-        print("This central obscuration is too large for the method of calculation employed here.")
+        casalog.post("This central obscuration is too large for the method of calculation employed here.")
         return
     if (type(frequency) == str):
         my_qa = quanta( )
@@ -758,7 +759,7 @@ def effectiveTaper(fwhmFactor=1.16, diameter=12, obscuration=0.75,
     """
     cOF = centralObstructionFactor(diameter, obscuration)
     if (fwhmFactor < 1.02 or fwhmFactor > 1.22):
-        print("Invalid fwhmFactor (1.02<fwhmFactor<1.22)")
+        casalog.post("Invalid fwhmFactor (1.02<fwhmFactor<1.22)")
         return
     if (baarsTaperFactor(10,use2007formula)*cOF<fwhmFactor):
         increment = 0.01

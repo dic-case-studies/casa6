@@ -177,6 +177,8 @@ namespace asdm {
 
 		Merger::mergePulsarPtr = &Merger::mergePulsar;
 
+		Merger::mergeVLAWVRPtr = &Merger::mergeVLAWVR;
+
 	}
 	
 	Merger::~Merger() {
@@ -324,6 +326,8 @@ namespace asdm {
 
 		hasMergedPulsar = false;
 
+		hasMergedVLAWVR = false;
+
 
 		mergeSBSummary( );
 
@@ -461,6 +465,8 @@ namespace asdm {
 
 		mergePulsar( );
 
+		mergeVLAWVR( );
+
 
 		postMergeSBSummary( );
 
@@ -597,6 +603,8 @@ namespace asdm {
 		postMergeCalAntennaSolutions( );
 
 		postMergePulsar( );
+
+		postMergeVLAWVR( );
 			
 	}
 	
@@ -3150,6 +3158,38 @@ namespace asdm {
 		cout << "Entering Merger::postMergePulsar" << endl;
 	
 		cout << "Exiting Merger::postMergePulsar" << endl;
+	}			
+
+	void Merger::mergeVLAWVR() {
+		cout << "Entering Merger::mergeVLAWVR" << endl;
+		if (hasMergedVLAWVR) return;
+	
+		vector <VLAWVRRow *> rows2 = ds2->getVLAWVR().get();
+		for (unsigned int i = 0; i < rows2.size(); i++) {
+			VLAWVRRow * row = ds1->getVLAWVR().newRow(rows2.at(i));
+		
+			
+				
+				
+			Tag antennaIdTag = getTag(row->getAntennaId(), mergeAntennaPtr);
+			row->setAntennaId(antennaIdTag);
+				
+			
+		
+			VLAWVRRow * retRow = ds1->getVLAWVR().add(row);
+			// this statement is never executed, but it hides the unused return value from the compiler to silence that warning.
+			if (false) cout << (unsigned long long) retRow;
+		
+		}
+	
+		hasMergedVLAWVR = true;
+		cout << "Exiting Merger::mergeVLAWVR" << endl;
+	}
+	
+	void Merger::postMergeVLAWVR() {
+		cout << "Entering Merger::postMergeVLAWVR" << endl;
+	
+		cout << "Exiting Merger::postMergeVLAWVR" << endl;
 	}			
 
 

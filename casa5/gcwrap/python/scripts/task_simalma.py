@@ -567,7 +567,7 @@ def simalma(
                         msg("    Total power imaging when the source is this small is not necessary, and may fail with an error.",priority="warn")
                     del minsize
             else:
-                # print resolution for INT, and warn if model_cell too large
+                # casalog.post resolution for INT, and warn if model_cell too large
                 msg("    approximate synthesized beam FWHM = %f arcsec" % resols[i],priority="info")
                 msg("       (at zenith; the actual beam will depend on declination, hourangle, and uv coverage)",priority="info")
 
@@ -1153,7 +1153,7 @@ def simalma(
                     qhwhm = qa.mul(qptgspc_tp, kernelfac)  # hwhm of GJinc kernel
                     gwidth = qa.tos(qa.mul(qhwhm, convfac))
                     jwidth = qa.tos(qa.mul(jfac/gfac/pl.log(2.),gwidth))
-                    #print("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
+                    #casalog.post("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
                     # Parameters for sdimaging
                     task_param['gridfunction'] = 'gjinc'
                     task_param['gwidth'] = gwidth
