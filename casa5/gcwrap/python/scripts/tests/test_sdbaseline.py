@@ -168,7 +168,7 @@ def remove_a_table(filename):
     are not allowed.
     """
     if filename == '.' or filename[-2:] == '..':
-        raise Exception("Dangerous! Attempting to remove '" + filename + "'!!")
+        raise Exception("Caution! Attempting to remove '" + filename + "'!!")
     
     if os.path.exists(filename):
         if os.path.isdir(filename):
@@ -184,7 +184,7 @@ def remove_tables_starting_with(filename):
     are not allowed.
     """
     if filename == '.' or filename[-2:] == '..':
-        raise Exception("Dangerous! Attempting to remove '" + filename + "*'!!")
+        raise Exception("Caution! Attempting to remove '" + filename + "*'!!")
     elif filename == '':
         raise Exception("The parameter 'filename' must not be a null string.")
     
