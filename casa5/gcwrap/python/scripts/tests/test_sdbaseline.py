@@ -4979,6 +4979,13 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                         msg='WEIGHT column is unexpectedly updated!')
 
     def _check_weight_values(self, sigmavalue='stddev'):
+        """
+        Check if the values in the WEIGHT column are identical 
+        with those calculated as 1/(sigma^2), where sigma is 
+        standard deviation of each spectrum if sigmavalue is
+        'stddev', or root mean square of each spectrum if
+        sigmavalue is 'rms'.
+        """
         with tbmanager(self.outfile) as tb:
             wgt = tb.getcol('WEIGHT')
             data = tb.getcol('FLOAT_DATA')
@@ -5005,7 +5012,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                     elif sigmavalue == 'rms':
                         wgt_ref[ipol][irow] = 1.0 / ssq
                 """
-                #for numpy 1.8.0 or after
+                #for numpy 1.8.0 or later
                 tmpdata = data.copy()
                 for ichan in range(len(data[0])):
                     if flag[ipol][ichan][irow]:
