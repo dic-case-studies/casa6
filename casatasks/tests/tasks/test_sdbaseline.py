@@ -161,7 +161,7 @@ def parseRms(txt):
     return float(t)
 
 
-def remove_a_table(filename):
+def remove_single_file_dir(filename):
     """
     Remove a single file or a single directory.
     For filename, '.' and those end with '..' (namely, '..', '../..' etc.)
@@ -177,7 +177,7 @@ def remove_a_table(filename):
             os.remove(filename)
 
 
-def remove_tables_starting_with(filename):
+def remove_files_dirs(filename):
     """
     Remove files/directories/symlinks 'filename*'.
     For filename, '', '.' and those end with '..' (namely, '..', '../..' etc.)
@@ -192,7 +192,7 @@ def remove_tables_starting_with(filename):
     filenames = glob.glob('{}*'.format(filename.rstrip('/')))
 
     for filename in filenames:
-        remove_a_table(filename)
+        remove_single_file_dir(filename)
 
 
 class sdbaseline_unittest_base(unittest.TestCase):
@@ -272,7 +272,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         Remove a list of files and directories from disk
         """
         for name in names:
-            remove_a_table(name)
+            remove_single_file_dir(name)
 
     def _copy(self, names, from_dir=None, dest_dir=None):
         """
@@ -4914,7 +4914,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
               'updateweight': True}
 
     def setUp(self):
-        remove_tables_starting_with(self.infile)
+        remove_files_dirs(self.infile)
         #if os.path.exists(self.infile):
         #    shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
@@ -4923,8 +4923,8 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
         #    shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        remove_a_table(self.infile)
-        remove_tables_starting_with(self.outroot)
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         with tbmanager(self.infile) as tb:
@@ -5051,13 +5051,13 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     def setUp(self):
         self.init_params()
-        remove_tables_starting_with(self.infile)
+        remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
         default(sdbaseline)
 
     def tearDown(self):
-        remove_a_table(self.infile)
-        remove_tables_starting_with(self.outroot)
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         self.params['updateweight'] = False
@@ -5091,7 +5091,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.params['updateweight'] = False
         sdbaseline(**self.params)
         self._checkfile(bltable)
-        remove_a_table(self.outfile)
+        remove_single_file_dir(self.outfile)
 
         # apply
         self.params['blmode'] = 'apply'
