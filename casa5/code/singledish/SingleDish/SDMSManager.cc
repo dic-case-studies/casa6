@@ -97,18 +97,6 @@ void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_
   }
 }
 
-void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb,Cube<Float> const &data_cube, 
-                                     Cube<Bool> const *flag_cube) {
-  Matrix<Float> const *weight_matrix = nullptr;
-  fillCubeToOutputMs(vb, data_cube, flag_cube, weight_matrix);
-}
-
-void SDMSManager::fillCubeToOutputMs(vi::VisBuffer2 *vb, Cube<Float> const &data_cube) {
-  Cube<Bool> const *flag_cube = nullptr;
-  Matrix<Float> const *weight_matrix = nullptr;
-  fillCubeToOutputMs(vb, data_cube, flag_cube, weight_matrix);
-}
-
 // ----------------------------------------------------------------------------------------
 // Fill main (data) columns which have to be combined together to produce bigger SPWs
 // ----------------------------------------------------------------------------------------
