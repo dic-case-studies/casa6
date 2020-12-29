@@ -310,17 +310,17 @@ class test_singlepointing(testref_base):
         if self.niter==100:
             incycleniter=20 # overwrite the initial setup for niter=100 to make the test pass for 6.1 (need furhter investigation)
 
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=0, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.1820, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.28, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.956, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.179, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.187, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.262, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.954, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.174, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -511,10 +511,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [400,400,0,0]),
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
-                                   (outimg+'.image', 16.22, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 29.3, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 7.65, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 14.62, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 18.65, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 33.15, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 7.93, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 15.33, [300,400,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
     # Test 13
@@ -633,10 +633,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.1911, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.264, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.937, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.07, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.189, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.261, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.939, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.0736, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -807,8 +807,8 @@ class test_mosaic(testref_base):
                            imgval=[(outimg+'.psf', 0.99, [750,750,0,0]),
                                    (outimg+'.psf', 0.99, [750,750,0,1]),
                                    (outimg+'.image', 1.554, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.519, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.015, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.485, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.014, [700,783,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 0.187, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
@@ -844,10 +844,10 @@ class test_mosaic(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 2.021, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.963, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.162, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.047, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.452, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.41, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 0.917, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.50149, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
@@ -881,10 +881,10 @@ class test_mosaic(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 32.33, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 62.377, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 10.8, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 24.01, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 18.17, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 33.16, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 7.932, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 16.319, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 

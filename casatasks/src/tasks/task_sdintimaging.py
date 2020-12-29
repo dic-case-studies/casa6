@@ -477,9 +477,9 @@ def sdintimaging(
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_sdintimaging" )
         return
       
-    #if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
-    #    casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_sdintimaging" )
-    #    return
+    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 ):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 is currently not supported. Please use deconvolver='multiscale' instead for cubes.", "WARN", "task_sdintimaging" )
+        return
 
     if(specmode=='mfs' and deconvolver!='mtmfs'):
         casalog.post("Currently, only the multi-term MFS algorithm is supported for specmode=mfs. To make a single plane MFS image (while retaining the frequency dependence for the cube major cycle stage), please pick nterms=1 along with deconvolver=mtmfs. The scales parameter is still usable for multi-scale multi-term deconvolution","WARN","task_sdintimaging")
@@ -537,7 +537,7 @@ def sdintimaging(
     ####set the children to load c++ libraries and applicator
     ### make workers ready for c++ based mpicommands
     cppparallel=False
-    if mpi_available and MPIEnvironment.is_mpi_enabled and specmode!='mfs' and not pcube:
+    if mpi_available and MPIEnvironment.is_mpi_enabled:
         mint=MPIInterface.MPIInterface()
         cl=mint.getCluster()
         if(is_CASA6):
@@ -551,12 +551,6 @@ def sdintimaging(
         ###ignore chanchunk
         bparm['chanchunks']=1
 
-
-    # catch non operational case (parallel cube tclean with interative=T)
-    #if parallel==True and specmode!='mfs' and interactive:
-    #    casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
-    #    return
-   
     
     retrec={}
 

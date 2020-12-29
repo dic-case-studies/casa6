@@ -2971,7 +2971,7 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 		abeam[1] = beam.getMinor().get("arcsec").getValue() * C::arcsec;
 		abeam[2] = (beam.getPA().get("deg").getValue() + 90.0)* C::degree;
 
-		cout << "Beam : " << abeam << endl;
+		//cout << "Beam : " << abeam << endl;
 
 		StokesImageUtil::MakeGaussianPSF( psfbeam,  abeam, False);
 
@@ -2994,7 +2994,7 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 		if( minval < allmin ) allmin = minval;
 		if( maxval > allmax ) allmax = maxval;
 
-		cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
+		//cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
 		
 	      }//chan
 	  }//pol
