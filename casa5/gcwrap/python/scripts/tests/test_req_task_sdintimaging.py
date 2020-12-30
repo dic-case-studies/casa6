@@ -847,7 +847,7 @@ class test_mosaic(testref_base):
                                    (outimg+'.image', 1.452, [700,783,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 0.41, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.image', 0.917, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.50149, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 0.050149, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
