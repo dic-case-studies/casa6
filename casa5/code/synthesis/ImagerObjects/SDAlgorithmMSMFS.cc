@@ -340,7 +340,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os << LogIO::POST << "Restored images : ";
     for(uInt tix=0; tix<itsNTerms; tix++)
       {
-	os << LogIO::POST << imagestore->image(tix)->name() << "  ";
+	os << LogIO::POST << imagestore->image(tix)->name() << "  (model=" << imagestore->model(tix)->name() << ") " ;
       }
     os << LogIO::POST << endl;
     
