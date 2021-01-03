@@ -130,6 +130,7 @@ namespace casa {
 
         int with_panel = req->with_panel( );
         QtPlotSvrPanel *companion = 0;
+        bool top_level_panel = (with_panel == 0);
 
         if ( with_panel != 0 ) {
             if ( managed_panels.find( with_panel ) == managed_panels.end( ) ) {
@@ -182,6 +183,7 @@ namespace casa {
                 std::this_thread::get_id() << ")" << std::endl;
             fflush(stderr);
         }
+        if ( top_level_panel ) top_panels.push_back(panel);
         reply->set_id(ret);
         return grpc::Status::OK;
     }
@@ -987,25 +989,33 @@ namespace casa {
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
     void grpcPlotServer::emit_closing(QtPlotSvrPanel *panel, bool gone ) {
-        static const auto debug = getenv("GRPC_DEBUG");
-        grpc::ClientContext context;
-        ::rpc::gui::ClosingEvent ce;
-        ::google::protobuf::Empty resp;
-        ce.mutable_panel( )->set_id(get_id(panel));
-        ce.set_gone(gone);
-        if ( debug ) {
-            std::cerr << "plotserver generating closing event " <<
-                " (process " << getpid( ) << ", thread " << 
-                std::this_thread::get_id() << ")" << std::endl;
-            fflush(stderr);
-        }
-        ::grpc::Status st = response_stub->closing(&context,ce,&resp);
-        if ( debug ) {
-            std::cerr << "plotserver completed closing event " <<
-                ( st.ok( ) ? "[SUCCESS]" : "[FAIL]" ) <<
-                " (process " << getpid( ) << ", thread " << 
-                std::this_thread::get_id() << ")" << std::endl;
-            fflush(stderr);
+        if ( std::find(top_panels.begin( ), top_panels.end( ), panel) != top_panels.end( ) ) {
+            static const auto debug = getenv("GRPC_DEBUG");
+            grpc::ClientContext context;
+            ::rpc::gui::ClosingEvent ce;
+            ::google::protobuf::Empty resp;
+            ce.mutable_panel( )->set_id(get_id(panel));
+            ce.set_gone(gone);
+            if ( debug ) {
+                std::cerr << "plotserver generating closing event " <<
+                    " (process " << getpid( ) << ", thread " << 
+                    std::this_thread::get_id() << "): <" << (void*) panel << ">: " << (gone ? "GONE" : "NOT GONE") << std::endl;
+                std::cerr << "[[[ ";
+                for ( auto p : top_panels ) {
+                    std::cerr << (void*) p << " ";
+                }
+                std::cerr << "]]]" << std::endl;
+                fflush(stderr);
+            }
+
+            ::grpc::Status st = response_stub->closing(&context,ce,&resp);
+            if ( debug ) {
+                std::cerr << "plotserver completed closing event " <<
+                    ( st.ok( ) ? "[SUCCESS]" : "[FAIL]" ) <<
+                    " (process " << getpid( ) << ", thread " << 
+                    std::this_thread::get_id() << ")" << std::endl;
+                fflush(stderr);
+            }
         }
     }
 

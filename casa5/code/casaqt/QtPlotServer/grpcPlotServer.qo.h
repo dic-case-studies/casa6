@@ -29,6 +29,7 @@
 #define QTDBUSPLOTSVRADAPTOR_QO_H_
 
 #include <map>
+#include <list>
 #include <QVariantMap>
 #include <QString>
 #include <casaqt/QtPlotServer/QtPlotServer.qo.h>
@@ -209,6 +210,7 @@ namespace casa {
 
     std::unique_ptr<rpc::gui::plotserver_events::Stub> response_stub;
 
+    std::list<QtPlotSvrPanel*> top_panels;
 	panelmap managed_panels;
 	datamap managed_datas;
 	dockmap managed_docks;
