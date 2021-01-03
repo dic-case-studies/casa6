@@ -212,6 +212,14 @@ grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_
             std::this_thread::get_id() << ")" << std::endl;
         fflush(stderr);
     }
+
+    std::lock_guard<std::mutex> lock(state->set_values);
+    state->userChoice_p = "Quit";			// user stopped GUI
+    state->input_received = true;			// set whenever state object is modified
+    if ( state->input_needed ) {
+        state->input_needed = false;		// prevent setting future twice
+        state->output.set_value(true);		// signal controlling thread that wait is over
+    }
     return grpc::Status::OK;
 }
 
@@ -577,7 +585,7 @@ bool FlagAgentDisplay::done( std::shared_ptr<FlagAgentDisplay::plotter_t> plotte
     return true;
 }
 
-int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent ) {
+int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent, bool new_row ) {
     static const auto debug = getenv("GRPC_DEBUG");
 	string zoomloc="";
 	string legendloc="bottom";
@@ -592,7 +600,7 @@ int FlagAgentDisplay::create_panel( std::shared_ptr<plotter_t> plot, int parent 
     panel.set_legend(legendloc);
     panel.set_zoom(zoomloc);
     panel.set_with_panel(parent);
-    panel.set_new_row(false);
+    panel.set_new_row(new_row);
     panel.set_hidden(false);
     if ( debug ) {
         std::cerr << (plot->active( ) ? "FlagAgentDisplay creating panel " : "FlagAgentDisplay create ERROR plot not active ") <<
@@ -1516,37 +1524,37 @@ Bool FlagAgentDisplay::buildDataPlotWindow()
 	string legendloc="bottom";
 
     // First row : Data with no flags
-    panels_p[0] = create_panel(dataplotter_p,0);
+    panels_p[0] = create_panel(dataplotter_p,0,false);
 
 	if(nPolarizations_p>1)
 	{
 		for(Int i=1;i<(int) nPolarizations_p;i++)
 		{
-            panels_p[i] = create_panel(dataplotter_p,panels_p[i-1]);
+            panels_p[i] = create_panel(dataplotter_p,panels_p[i-1],false);
 		}
 	}
 
 
 	// Second row : Data with flags
-	panels_p[nPolarizations_p] = create_panel(dataplotter_p,panels_p[0]);
+	panels_p[nPolarizations_p] = create_panel(dataplotter_p,panels_p[0],true);
 	if(nPolarizations_p>1)
 	{
 		for(int i=static_cast<int>(nPolarizations_p)+1;i<2*static_cast<int>(nPolarizations_p);i++)
 		{
-			panels_p[i] = create_panel(dataplotter_p,panels_p[i-1]);
+			panels_p[i] = create_panel(dataplotter_p,panels_p[i-1],false);
 		}
 	}
 
 	// Third row : Average Bandpass
 	if(showBandpass_p==true)
 	{
-		panels_p[2*nPolarizations_p] = create_panel(dataplotter_p,panels_p[0]);
+		panels_p[2*nPolarizations_p] = create_panel(dataplotter_p,panels_p[0],true);
 
 		if(nPolarizations_p>1)
 		{
 			for(int i=2* static_cast<int>(nPolarizations_p)+1;i<3*static_cast<int>(nPolarizations_p);i++)
 			{
-				panels_p[i] = create_panel(dataplotter_p,panels_p[i-1]);
+				panels_p[i] = create_panel(dataplotter_p,panels_p[i-1],false);
 			}
 		}
 	}// if showbandpass
@@ -1578,7 +1586,7 @@ Bool FlagAgentDisplay::buildReportPlotWindow()
 	report_panels_p.resize(1);
 	string zoomloc="";
 	string legendloc="bottom";
-    report_panels_p[0] = create_panel(reportplotter_p,0);
+    report_panels_p[0] = create_panel(reportplotter_p,0,false);
 
     create_dock( reportplotter_p, report_panels_p[0], report_dock_xml_p );
 	return true;

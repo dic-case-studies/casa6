@@ -117,7 +117,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // shutdown a plotserver process
         bool done( std::shared_ptr<plotter_t> plotter );
         // create panel
-        int create_panel( std::shared_ptr<plotter_t> plot, int parent );
+        int create_panel( std::shared_ptr<plotter_t> plot, int parent, bool new_row );
         // erase
         void erase( std::shared_ptr<plotter_t> plot, int panel );
         // set labels
