@@ -75,7 +75,7 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
 #
 # get start date+time of observation
 #
-    observation =_tb.open(vis_name+'/OBSERVATION')
+    observation = _tb.open(vis_name+'/OBSERVATION')
     time_range = _tb.getcol('TIME_RANGE')
     _tb.close()
     MJD_start_time = time_range[0][0] / 86400
@@ -95,7 +95,7 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
 #
 # get antenna to station mappings
 #
-    observation =_tb.open(vis_name+'/ANTENNA')
+    observation = _tb.open(vis_name+'/ANTENNA')
     ant_names = _tb.getcol('NAME')
     ant_stations = _tb.getcol('STATION')
     _tb.close()
@@ -200,9 +200,8 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
                 print("Offsets for antenna %4s on pad %3s: %8.5f  %8.5f  %8.5f" % \
                       (ant_num_sta[1], ant_num_sta[2], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
             else:
-               casalog.post("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
+                casalog.post("offsets for antenna %4s : %8.5f  %8.5f  %8.5f" % \
                       (ant_num_sta[1], ant_num_sta[3], ant_num_sta[4], ant_num_sta[5]))
- 
             ants.append(ant_num_sta[1])
             parms.append(ant_num_sta[3])
             parms.append(ant_num_sta[4])

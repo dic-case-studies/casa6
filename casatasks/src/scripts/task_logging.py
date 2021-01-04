@@ -32,7 +32,7 @@ def end_log( state, tname, result ):
     except:
         pass
     _clog.origin(tname)
-    _clog.post( 'Result %s: %s' % (tname, repr(result)) )
+    _clog.post( 'Result {}: {}'.format(tname, repr(result)), priority='DEBUG')
     _clog.post( 'Task ' + tname + ' complete. Start time: ' + state[0] + ' End time: ' + end_time )
     _clog.post( '##### End Task: ' + tname + '  ' + spaces + ' #####' )
     _clog.post( '##########################################' )

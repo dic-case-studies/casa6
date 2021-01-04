@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 import copy
@@ -55,7 +54,6 @@ def flagmanager(
                 fversionsdict[k] = singleversion
             
             fversionsdict['MS'] = MS
-            print('See logger for flag versions for this MS')
             return fversionsdict
             
         elif mode == 'save':
