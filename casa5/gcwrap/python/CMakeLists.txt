@@ -180,6 +180,7 @@ scripts/task_predictcomp.py
 scripts/task_rerefant.py
 scripts/task_rmfit.py
 scripts/task_rmtables.py
+scripts/task_sdatmcor.py
 scripts/task_sdbaseline.py
 scripts/task_sdcal.py
 scripts/task_sdfit.py
