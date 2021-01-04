@@ -86,6 +86,12 @@
 #15. Single Pointing Test with SD+INT data, with sdpsf="" and internal auto-calculation.
 #testname: test_singlepointing_mfs_sdint_autopsf
 #
+#16. Single pointing test with INT-only data from refim_point.ms : Compare with tclean cube
+#testname: test_intonly_cube_compare_with_tclean
+#
+#17. Single pointing test with INT-only data from refim_point.ms : Compare with tclean mtmfs
+#testname: test_intonly_mfs_compare_with_tclean
+#
 ###########################################################################
 
 ####    Imports     ####
@@ -124,6 +130,8 @@ if CASA6:
     visdatapath = ctsys.resolve('visibilities/evla')
     imdatapath = ctsys.resolve('image') 
     maskdatapath = ctsys.resolve('text') 
+    refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/casa-data-req'):
         visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
@@ -133,7 +141,9 @@ else:
         visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
         imdatapath = os.environ.get('CASAPATH').split()[0] +'/image/' 
         maskdatapath = os.environ.get('CASAPATH').split()[0] + '/text/'
-    
+
+    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+
     #if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
     #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'
     #else:
@@ -158,20 +168,21 @@ class testref_base(unittest.TestCase):
         #self.cfcache = 'cfcach'
         # To use subdir in the output image names in some tests (CAS-10937)
         #self.img_subdir = 'refimager_tst_subdir'
-        self.parallel = False
-        self.nnode = 0
-        if ParallelTaskHelper.isMPIEnabled():
-            self.parallel = True
-            self.PH = PyParallelImagerHelper()
-            self.nnode = len(self.PH.getNodeList())
+
+#        self.parallel = False
+#        self.nnode = 0
+#        if ParallelTaskHelper.isMPIEnabled():
+#            self.parallel = True
+#            self.PH = PyParallelImagerHelper()
+#            self.nnode = len(self.PH.getNodeList())
         #self.th = TestHelpers()
  
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        self.delData()
+        #self.delData()
         # leave for input and output (e.g. for debugging)
-        #self.delData(delinput=False, deloutput=False)
+        self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -190,6 +201,11 @@ class testref_base(unittest.TestCase):
                 if (os.path.exists(self.msfile)):
                     os.system('rm -rf ' + self.msfile)
                 shutil.copytree(os.path.join(visdatapath,self.msfile), self.msfile)
+            if 'refmsname' in inputdata:
+                self.refmsfile=inputdata['refmsname']
+                if (os.path.exists(self.refmsfile)):
+                    os.system('rm -rf ' + self.refmsfile)
+                shutil.copytree(os.path.join(refdatapath,self.refmsfile), self.refmsfile)
             if 'sdimage' in inputdata:
                 self.sdimage=inputdata['sdimage']
                 if (os.path.exists(self.sdimage)):
@@ -219,13 +235,15 @@ class testref_base(unittest.TestCase):
         #    os.system('rm -rf ' + self.msfile)
         #os.system('rm -rf ' + self.img_subdi)
         if delinput:
-            if self.msfile!='':
+            if hasattr(self,'msfile') and self.msfile!='':
                 os.system('rm -rf ' + self.msfile)
-            if self.sdimage!='':
+            if hasattr(self,'refmsfile') and self.refmsfile!='':
+                os.system('rm -rf ' + self.refmsfile)
+            if hasattr(self,'sdimage') and self.sdimage!='':
                 os.system('rm -rf ' + self.sdimage)
-            if self.sdpsf!='':
+            if hasattr(self,'sdpsf') and self.sdpsf!='':
                 os.system('rm -rf ' + self.sdpsf)
-            if self.mask!='':
+            if hasattr(self,'mask') and self.mask!='':
                 os.system('rm -rf ' + self.mask)
         if deloutput:
             os.system('rm -rf ' + self.img+'*')
@@ -265,7 +283,7 @@ class test_singlepointing(testref_base):
         self.cycleniter=50
 
     # Test 1
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
         """ [singlePointing] Test_singlepointing_mfs_sdint """
@@ -292,23 +310,22 @@ class test_singlepointing(testref_base):
         if self.niter==100:
             incycleniter=20 # overwrite the initial setup for niter=100 to make the test pass for 6.1 (need furhter investigation)
 
-        #ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=0, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.1820, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.28, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.956, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.179, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.187, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.262, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.954, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.174, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
     #Test 2
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_intonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='int')
         """ [singlePointing] Test_singlepointing_mfs_intonly """
@@ -331,7 +348,7 @@ class test_singlepointing(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.sp_mfs_intonly'
-        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
@@ -347,7 +364,7 @@ class test_singlepointing(testref_base):
 
 
     # Test 3
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sd')
         """ [singlePointing] Test_singlepointing_mfs_sdonly """
@@ -370,7 +387,7 @@ class test_singlepointing(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.sp_mfs_sdonly'
-        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
@@ -385,7 +402,7 @@ class test_singlepointing(testref_base):
 
 
     #Test4
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdint(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sdint')
         """ [singlePointing] Test_singlepointing_cube_sdint """
@@ -408,7 +425,7 @@ class test_singlepointing(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.sp_cube_sdint'
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
@@ -424,7 +441,7 @@ class test_singlepointing(testref_base):
 
 
     #Test5
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_intonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='int')
         """ [singlePointing] Test_singlepointing_cube_intonly """
@@ -448,22 +465,22 @@ class test_singlepointing(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.sp_cube_intonly'
-        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [400,400,0,0]),
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
-                                   (outimg+'.image', 2.13, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.59, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.424, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', -0.03, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.48, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.347, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.013, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', -0.036, [300,400,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
     #Test6
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sd')
         """ [singlePointing] Test_singlepointing_cube_sdonly """
@@ -487,21 +504,21 @@ class test_singlepointing(testref_base):
         self.prepData(inputdata=inputdata)
         imname=self.img+'.sp_cube_sdonly'
 
-        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [400,400,0,0]),
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
-                                   (outimg+'.image', 32.43, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 64.11, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 10.76, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 22.64, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 18.65, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 33.15, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 7.93, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 15.33, [300,400,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
     # Test 13
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint_flagged(self):
         """ [singlePointing] Test_singlepointing_mfs_sdint_flagged """
         ######################################################################################
@@ -528,22 +545,22 @@ class test_singlepointing(testref_base):
 
         imname=self.img+'.sp_mfs_sdint'
 
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.138, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.374, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -1.303, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.075, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.144, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.371, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -1.29, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.11, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
     #Test 14
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_cube_sdint_flagged(self):
         """ [singlePointing] Test_singlepointing_cube_sdint_flagged """
         ######################################################################################
@@ -570,7 +587,7 @@ class test_singlepointing(testref_base):
 
 
         imname=self.img+'.sp_cube_sdint'
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
@@ -585,7 +602,7 @@ class test_singlepointing(testref_base):
         self.checkfinal(pstr=report)
 
     #Test 15 
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_singlepointing_mfs_sdint_autopsf(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='mfs', usedata='sdint')
         """ [singlePointing] Test_singlepointing_mfs_sdint_autopsf """
@@ -608,7 +625,7 @@ class test_singlepointing(testref_base):
 
         imname=self.img+'.sp_mfs_sdint'
 
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf="", vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf="", vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0)
 
 
         outimg = imname+'.joint.multiterm'
@@ -616,10 +633,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.186, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.28, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.958, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.121, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.189, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.261, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.939, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.0736, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -647,7 +664,7 @@ class test_mosaic(testref_base):
         self.cycleniter= 50
 
      #Test7
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_sdint(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='sdint')
         """ [Mosaic] Test_mosaic_mfs_sdint """
@@ -670,7 +687,7 @@ class test_mosaic(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_mfs_sdint'
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
 
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
@@ -685,7 +702,7 @@ class test_mosaic(testref_base):
 
 
     #Test8
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_intonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='int')
         """ [Mosaic] Test_mosaic_mfs_intonly """
@@ -709,7 +726,7 @@ class test_mosaic(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_mfs_intonly'
-        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='int', vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
@@ -723,7 +740,7 @@ class test_mosaic(testref_base):
 
 
     #Test9
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_mfs_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='mfs', usedata='sd')
         """ [Mosaic] Test_mosaic_mfs_sdonly """
@@ -746,7 +763,7 @@ class test_mosaic(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_mfs_sdonly'
-        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
@@ -761,7 +778,6 @@ class test_mosaic(testref_base):
 
     #Test10
 #    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_sdint(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sdint')
         """ [Mosaic] Test_mosaic_cube_sdint """
@@ -784,21 +800,21 @@ class test_mosaic(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_cube_sdint'
-        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 0.99, [750,750,0,0]),
                                    (outimg+'.psf', 0.99, [750,750,0,1]),
                                    (outimg+'.image', 1.554, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.519, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.015, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.485, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.014, [700,783,0,1]),    # point source of 1 Jy
                                    (outimg+'.image', 0.187, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
     #Test11
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_intonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='int')
         """ [Mosaic] Test_mosaic_cube_intonly """
@@ -822,21 +838,21 @@ class test_mosaic(testref_base):
         # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_cube_intonly'
-        ret = sdintimaging(usedata='int', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='int', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 2.021, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.963, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.162, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.047, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.452, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.41, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 0.917, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.050149, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
     #Test12
-    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+  #  @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mosaic_cube_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sd')
         """ [Mosaic] Test_mosaic_cube_sdonly """
@@ -859,22 +875,87 @@ class test_mosaic(testref_base):
        # iterations may need to be shorten for the final version of test
         self.prepData(inputdata=inputdata)
         imname=self.img+'.mos_cube_sdonly'
-        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2,parallel=self.parallel)
+        ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
-                                   (outimg+'.image', 32.33, [700,783,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 62.377, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 10.8, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 24.01, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 18.17, [700,783,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 33.16, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 7.932, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 16.319, [650,720,0,1]) ])      # extended emission with alpha=0
+        self.checkfinal(pstr=report)
+
+
+######################################
+##### Compare with tclean
+######################################
+class test_compare_sdint_tclean(testref_base):
+
+    def setUp(self):
+        # common parameters
+        super(test_compare_sdint_tclean, self).setUp()
+
+    #Test16
+    #16. Single pointing test with INT-only data from refim_point.ms : Compare with tclean cube
+    #testname: test_intonly_cube_compare_with_tclean
+    #
+    def test_intonly_cube_compare_with_tclean(self):
+        """ [Compare] Test_intonly_cube_compare_with_tclean """
+        # inputdata: set of the data to be copied from the data repos or else where during setup. 
+        inputdata={'refmsname':'refim_point.ms'}
+        self.prepData(inputdata=inputdata)
+        imname1=self.img+'.sdint'
+        ret1 = sdintimaging(vis=self.refmsfile,imagename=imname1, usedata='int', imsize=200, cell='10.0arcsec', nchan=3, spw='0:0~2', pblimit=0.1, interpolation='nearest',specmode='cube',niter=15, cycleniter=5, gridder='mosaic',mosweight=False, deconvolver='multiscale',scales=[0])
+
+        imname2=self.img+'.tclean'
+        ret2 = tclean(vis=self.refmsfile,imagename=imname2, imsize=200, cell='10.0arcsec', nchan=3, spw='0:0~2', pblimit=0.1, interpolation='nearest',specmode='cube',niter=15, cycleniter=5, gridder='mosaic',mosweight=False, deconvolver='multiscale',scales=[0])
+
+        outimname1 = imname1+'.joint.cube'
+
+        report=th.checkall(imgexist=[outimname1+'.psf', outimname1+'.image',
+                                     imname2+'.psf', imname2+'.image'], 
+                           imgval=[(outimname1+'.psf', 1.0, [100,100,0,0]),
+                                   (imname2+'.psf', 1.0, [100,100,0,0]),
+                                   (outimname1+'.residual', 0.809179, [100,100,0,0]),  ## End of minor cycle : 0.818269. Changes to 0.809179 after major cycle. 
+                                   (imname2+'.residual', 0.809179, [100,100,0,0]),
+                                   (outimname1+'.image', 1.3766, [100,100,0,0]),
+                                   (imname2+'.image', 1.3766, [100,100,0,0]),
+                                   (outimname1+'.image', 1.3561, [100,100,0,1]),
+                                   (imname2+'.image', 1.3561, [100,100,0,1]) ])
+        self.checkfinal(pstr=report)
+
+    #Test17
+    #17. Single pointing test with INT-only data from refim_point.ms : Compare with tclean mtmfs
+    #testname: test_intonly_mfs_compare_with_tclean
+
+    def test_intonly_mfs_compare_with_tclean(self):
+        """ [Compare] Test_intonly_mfs_compare_with_tclean """
+        inputdata={'refmsname':'refim_point.ms'}
+        self.prepData(inputdata=inputdata)
+        imname1=self.img+'.sdint'
+        ret1 = sdintimaging(vis=self.refmsfile,imagename=imname1, usedata='int', imsize=200, cell='10.0arcsec', nchan=5, reffreq='1.5GHz', start='1.0GHz',width='200.0MHz', interpolation='nearest',specmode='mfs',niter=10, cycleniter=5, gridder='standard', deconvolver='mtmfs',scales=[0])
+
+        imname2=self.img+'.tclean'
+        ret2 = tclean(vis=self.refmsfile,imagename=imname2, imsize=200, cell='10.0arcsec', nchan=5, reffreq='1.5GHz', specmode='mfs',niter=10, cycleniter=5, gridder='standard', deconvolver='mtmfs',nterms=2, scales=[0])
+
+        outimname1 = imname1+'.joint.multiterm'
+
+        report=th.checkall(imgexist=[outimname1+'.psf.tt0', outimname1+'.image.tt0',
+                                     imname2+'.psf.tt0', imname2+'.image.tt0'], 
+                           imgval=[(outimname1+'.psf.tt0', 1.0, [100,100,0,0]),
+                                   (imname2+'.psf.tt0', 1.0, [100,100,0,0]),
+                                   (outimname1+'.image.tt0', 1.04, [100,100,0,0]),
+                                   (imname2+'.image.tt0', 1.04, [100,100,0,0]),
+                                   (outimname1+'.alpha', -1.06, [100,100,0,0]),
+                                   (imname2+'.alpha', -1.06, [100,100,0,0]) ])
         self.checkfinal(pstr=report)
 
 
 
 def suite():
-    return[test_singlepointing,test_mosaic]
+    return[test_singlepointing,test_mosaic,test_compare_sdint_tclean]
 
 if __name__ == '__main__':
     unittest.main() 
