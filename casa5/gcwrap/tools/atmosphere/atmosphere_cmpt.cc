@@ -2,13 +2,13 @@
  * Framework independent implementation file for atmosphere...
  *
  * Implement the atmosphere component here.
- * 
+ *
  * // Interface to the ALMA TELCAL C++ API for Juan Padro's FORTRAN
  * // Atmospheric Model library atmlib.
  * // Implemented 12 Oct 2006, Raymond Rusk
  *
  * @author
- * @version 
+ * @version
  ***/
 
 #include <string>
@@ -141,7 +141,7 @@ atmosphere::listAtmosphereTypes()
   }
   return rtn;
 }
-  
+
 std::string
 atmosphere::initAtmProfile(const Quantity& altitude,
 			   const Quantity& temperature,
@@ -161,7 +161,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
     Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
-    Humidity       H(humidity, "%");
+    Humidity       H(humidity, Percent::UnitPercent);
     Length       WVL((casaQuantity(h0)).getValue("km"),"km");
     Pressure   Pstep((casaQuantity(dP)).getValue("mbar"), "mb");
     double PstepFact(dPm);
@@ -241,7 +241,7 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
     Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
-    Humidity       H(humidity, "%");
+    Humidity       H(humidity, Percent::UnitPercent);
     Length       WVL((casaQuantity(h0)).getValue("km"),"km");
     if (pAtmProfile) {
       if (! pAtmProfile->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
@@ -251,14 +251,14 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
       if (pRefractiveIndexProfile) {
 	if (! pRefractiveIndexProfile->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	  *itsLog << LogIO::WARN
-		  << "Refractive index profile update failed!" 
+		  << "Refractive index profile update failed!"
 		  << LogIO::POST;
 	}
       }
       if (pSkyStatus) {
 	if (! pSkyStatus->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	  *itsLog << LogIO::WARN
-		  << "Skystatus update failed!" 
+		  << "Skystatus update failed!"
 		  << LogIO::POST;
 	}
 	// WORK AROUND to set the 1st guess water column as a coefficient
@@ -569,7 +569,7 @@ atmosphere::addSpectralWindow(const Quantity& fCenter,
       if (fRes.value[0] == 0) {
 	*itsLog << LogIO::WARN << "Resolution of band cannot be 0,0 GHz!" << LogIO::POST;
 	return rstat;
-      }	
+      }
       int numChan = (int)ceil((casacore::Quantity(fWidth.value[0],ufW).getValue(ufR) / fRes.value[0]));
       int refChan = (numChan - 1)/2;
       Frequency refFreq = Frequency(fCenter.value[0],fCenter.units);
@@ -1147,7 +1147,7 @@ atmosphere::getAbsH2OLines(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
-  
+
 Quantity
 atmosphere::getAbsH2OCont(long nl, long nf, long spwid)
 {
@@ -1157,7 +1157,7 @@ atmosphere::getAbsH2OCont(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
-  
+
 Quantity
 atmosphere::getAbsO2Lines(long nl, long nf, long spwid)
 {
@@ -1177,7 +1177,7 @@ atmosphere::getAbsDryCont(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
-  
+
 Quantity
 atmosphere::getAbsO3Lines(long nl, long nf, long spwid)
 {
@@ -1187,7 +1187,7 @@ atmosphere::getAbsO3Lines(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
-  
+
 Quantity
 atmosphere::getAbsCOLines(long nl, long nf, long spwid)
 {
@@ -1197,7 +1197,7 @@ atmosphere::getAbsCOLines(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
-  
+
 Quantity
 atmosphere::getAbsN2OLines(long nl, long nf, long spwid)
 {
@@ -1217,7 +1217,7 @@ atmosphere::getAbsTotalDry(long nl, long nf, long spwid)
   };
   return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
 }
- 
+
 Quantity
 atmosphere::getAbsTotalWet(long nl, long nf, long spwid)
 {

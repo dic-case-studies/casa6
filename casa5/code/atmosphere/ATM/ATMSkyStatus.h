@@ -755,7 +755,7 @@ public:
                          double skycoupling,
                          const Temperature &Tspill);
 
-  
+
   /** Accesor to get the integrated zenith Wet Opacity for the current conditions, for a single
    frequency RefractiveIndexProfile object or for the point 0 of spectral window 0 of a
    multi-window RefractiveIndexProfile object.
@@ -893,7 +893,7 @@ public:
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
   Opacity getH2OLinesOpacity(unsigned int nc);
-  Opacity getH2OLinesOpacityUpTo(unsigned int nc, Length refalti);  
+  Opacity getH2OLinesOpacityUpTo(unsigned int nc, Length refalti);
   /** Accesor to get the integrated zenith H2O Lines Opacity for the current conditions,
    for the point nc of spectral window spwid.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
@@ -1446,15 +1446,15 @@ public:
 
   Length WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
 				      const vector<Temperature> &v_tebb,
-				      double airmass, 
+				      double airmass,
 				      const vector<double> &skycoupling,
 				      const vector<Temperature> &tspill);
 
   /* to be implemented in the .cpp
-  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId, 
+  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 				      const Temperature &tebb,
-				      double airmass, 
-				      double skycoupling, 
+				      double airmass,
+				      double skycoupling,
 				      const Temperature &tspill);  */
 
   Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
@@ -1557,12 +1557,12 @@ public:
   Length WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
 				      const vector<Percent> &signalGain,
 				      const vector<Temperature> &v_tebb,
-				      double airmass, 
+				      double airmass,
 				      const vector<double> &skycoupling,
 				      const vector<Temperature> &tspill);
 
   // implemented 17/9/09
-  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,      
+  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
                                       const Percent &signalGain,
                                       const Temperature &tebb,
                                       double airmass,
@@ -1676,7 +1676,7 @@ public:
   }
 
   /*
-    return the rms of the residuals for one channel ichan, as a function of the multiplicative 
+    return the rms of the residuals for one channel ichan, as a function of the multiplicative
     factor par_fit to this channel's coupling efficiency.
    */
   double sigmaSkyCouplingChannelRetrieval_fromWVR(double par_fit,
@@ -1693,7 +1693,7 @@ public:
   {
     return getWVRAverageSigmaTskyFit(RadiometerData, n, n + 1);
   }
-  /* 
+  /*
      return the rms of fit residual for a single channel, in a measurement
   */
   Temperature getWVRSigmaChannelTskyFit(const vector<WVRMeasurement> &RadiometerData,
@@ -1701,7 +1701,7 @@ public:
 					unsigned int n,
 					unsigned int m);
   /*
-    return the rms of water vapor retrieved values in a measurnment (n to m) 
+    return the rms of water vapor retrieved values in a measurnment (n to m)
   */
   double getSigmaTransmissionFit(unsigned int spwId,
                                  const vector<double> &v_transmission,
@@ -1918,7 +1918,7 @@ protected:
               airMass_,
               spwid,
               spwId_filter,
-              Percent(100.0, "%"));
+              Percent(100.0, Percent::UnitPercent));
   }
 
   double RT(double pfit_wh2o,
@@ -2037,7 +2037,7 @@ protected:
               airMass_,
               spwid,
               spwId_filter,
-              Percent(100.0, "%"));
+              Percent(100.0, Percent::UnitPercent));
   }
 
   double RTRJ(double pfit_wh2o,
@@ -2064,7 +2064,7 @@ protected:
             const vector<double> &spwId_filter,
             const Percent &signalgain);
 
-  
+
 private:
 
   // no accessors provided for these

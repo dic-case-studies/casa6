@@ -212,7 +212,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
 SkyStatus::SkyStatus(const SkyStatus & a) : RefractiveIndexProfile(a)
 {
 
-  // 2015-03-02 (DB) : 
+  // 2015-03-02 (DB) :
   // Use constructor of base class RefractiveIndexProfile()
   // and comment the following code because it is executed in RefractiveIndexProfile() constructor
 
@@ -707,7 +707,7 @@ Opacity SkyStatus::getH2OLinesOpacity(unsigned int nc)
 
 Opacity SkyStatus::getH2OLinesOpacityUpTo(unsigned int nc, Length refalti)
 {
-  unsigned int ires; unsigned int numlayerold; Length alti;  
+  unsigned int ires; unsigned int numlayerold; Length alti;
   Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
   double fractionLast; double g1; double g2;
 
@@ -725,7 +725,7 @@ Opacity SkyStatus::getH2OLinesOpacityUpTo(unsigned int nc, Length refalti)
       numLayer_ = ires; g2=getGroundWH2O().get();
       opacityout0=getH2OLinesOpacity(nc)*(g2/g1);
       numLayer_ = ires+1; g2=getGroundWH2O().get();
-      opacityout1=getH2OLinesOpacity(nc)*(g2/g1);      
+      opacityout1=getH2OLinesOpacity(nc)*(g2/g1);
       numLayer_ = numlayerold;
       return opacityout0+(opacityout1-opacityout0)*fractionLast;
   }
@@ -782,11 +782,11 @@ Opacity SkyStatus::getH2OContOpacity(unsigned int nc)
 
 Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
 {
-  unsigned int ires; unsigned int numlayerold; Length alti;  
+  unsigned int ires; unsigned int numlayerold; Length alti;
   Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
   double fractionLast; double g1; double g2;
 
-  
+
   if(refalti.get("km") <= altitude_.get("km")) {
     return zeroOp;
   }else{
@@ -801,7 +801,7 @@ Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
       numLayer_ = ires; g2=getGroundWH2O().get();
       opacityout0=getH2OContOpacity(nc)*(g2/g1);
       numLayer_ = ires+1; g2=getGroundWH2O().get();
-      opacityout1=getH2OContOpacity(nc)*(g2/g1);      
+      opacityout1=getH2OContOpacity(nc)*(g2/g1);
       numLayer_ = numlayerold;
       return opacityout0+(opacityout1-opacityout0)*fractionLast;
   }
@@ -1293,7 +1293,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkWaterVaporRetrieval_fromTEBB(spwId,
-                                          Percent(100.0, "%"),
+                                          Percent(100.0, Percent::UnitPercent),
                                           v_tebb,
                                           getAirMass(),
                                           spwId_filter,
@@ -1311,7 +1311,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1329,7 +1329,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1503,12 +1503,12 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 						 double skycoupling,
 						 const Temperature &tspill)
   {
-    vector<unsigned int> spwIdv;  
+    vector<unsigned int> spwIdv;
     vector<Percent> signalGainv;
     vector<Temperature> tebbv;
     vector<double> skycouplingv;
     vector<Temperature> tspillv;
-    spwIdv.push_back(spwId);  
+    spwIdv.push_back(spwId);
     signalGainv.push_back(signalGain);
     tebbv.push_back(tebb);
     skycouplingv.push_back(skycoupling);
@@ -1552,7 +1552,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkWaterVaporRetrieval_fromTEBB(spwId,
-                                          Percent(100.0, "%"),
+                                          Percent(100.0, Percent::UnitPercent),
                                           v_tebb,
                                           airmass,
                                           spwId_filter,
@@ -1576,7 +1576,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
   }
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1595,7 +1595,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1662,7 +1662,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
                                         skycoupling,
                                         tspill);
 }
-  
+
 Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
                                                const vector<Percent> &signalGain,
                                                const vector<Temperature> &v_tebb,
@@ -1773,7 +1773,7 @@ double SkyStatus::SkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkSkyCouplingRetrieval_fromTEBB(spwId,
-                                           Percent(100, "%"),
+                                           Percent(100, Percent::UnitPercent),
                                            v_tebb,
                                            getAirMass(),
                                            spwId_filter,
@@ -1811,7 +1811,7 @@ double SkyStatus::SkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkSkyCouplingRetrieval_fromTEBB(spwId,
-                                           Percent(100, "%"),
+                                           Percent(100, Percent::UnitPercent),
                                            v_tebb,
                                            airmass,
                                            spwId_filter,
@@ -1960,10 +1960,10 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
           * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
           <= fre2.get("GHz"))) {
-	//                                                         
+	//
         transmission_fit[i] = exp(-( (getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get() )                                              //getDryOpacity(spwId, i).get()
 				     + pfit_wh2o * getWetOpacity(spwId, i).get() ) );
-	//                                                         
+	//
         f1 = transmission_fit[i];
         psave = pfit_wh2o;
         pfit_wh2o = pfit_wh2o + deltaa;
@@ -2111,7 +2111,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 	      airm,
 	      spwId[j],
 	      spwId_filter[j],
-	      signalGain[j]);    // if signalGain[j] < 1.0 then there is an image side 
+	      signalGain[j]);    // if signalGain[j] < 1.0 then there is an image side
                                  // band and it is correctly taken into account in RT
 
       v_tebb_fit[j] = Temperature(f1, "K");
@@ -2589,11 +2589,11 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 		       const vector<double> &spwId_filter,
 		       const Percent &signalgain)
   {
-    
+
     double tebb_channel = 0.0;
     double rtr;
     double norm = 0.0;
-    
+
     for(unsigned int n = 0; n < v_numChan_[spwid]; n++) {
       if(spwId_filter[n] > 0) {
         norm = norm + spwId_filter[n];
@@ -2656,25 +2656,25 @@ double SkyStatus::RT(double pfit_wh2o,
   radiance = 0.0;
 
   for(unsigned int i = 0; i < getNumLayer(); i++) {
-    
+
     tau_layer = ((getAbsTotalWet(spwid, nc, i).get()) * ratioWater+ getAbsTotalDry(spwid, nc, i).get()) * getLayerThickness(i).get();
-    
+
     // cout << i << "  " <<  getAbsTotalWet(spwid, nc, i).get() << "  " << getAbsTotalDry(spwid, nc, i).get() << endl;
-      
+
     radiance = radiance + (1.0 / (exp(h_div_k * singlefreq/ getLayerTemperature(i).get()) - 1.0)) * exp(-kv * airm) * (1.0- exp(-airm * tau_layer));
-    
+
     kv = kv + tau_layer;
-      
+
   }
-    
+
   radiance = skycoupling * (radiance + (1.0 / (exp(h_div_k * singlefreq / tbgr)- 1.0)) * exp(-kv * airm)) + (1.0 / (exp(h_div_k * singlefreq / tspill)- 1.0)) * (1 - skycoupling);
-    
+
   tebb = h_div_k * singlefreq / log(1 + (1 / radiance));
-  // tebb = tebb+  h_div_k * singlefreq * radiance;  
+  // tebb = tebb+  h_div_k * singlefreq * radiance;
   // cout << "singlefreq = " << singlefreq <<  " total opacity = " << kv << " tebb = " << tebb << endl;
 
   return tebb;
-  
+
 }
 
 
@@ -2703,21 +2703,21 @@ double SkyStatus::RTRJ(double pfit_wh2o,
   radiance = 0.0;
 
   for(unsigned int i = 0; i < getNumLayer(); i++) {
-    
+
     tau_layer = ((getAbsTotalWet(spwid, nc, i).get()) * ratioWater+ getAbsTotalDry(spwid, nc, i).get()) * getLayerThickness(i).get();
-    
+
     radiance = radiance + (1.0 / (exp(h_div_k * singlefreq/ getLayerTemperature(i).get()) - 1.0)) * exp(-kv * airm) * (1.0- exp(-airm * tau_layer));
-    
+
     kv = kv + tau_layer;
-      
+
   }
-    
+
   radiance = skycoupling * (radiance + (1.0 / (exp(h_div_k * singlefreq / tbgr)- 1.0)) * exp(-kv * airm)) + (1.0 / (exp(h_div_k * singlefreq / tspill)- 1.0)) * (1 - skycoupling);
-    
-  trj = h_div_k * singlefreq * radiance;  
+
+  trj = h_div_k * singlefreq * radiance;
 
   return trj;
-  
+
 }
 
 
@@ -2730,7 +2730,7 @@ void SkyStatus::iniSkyStatus()
   Temperature temp_default_neg(-999, "K");
 
   if(wh2o_user_.get() <= 0.0 || wh2o_user_.get() > (getGroundWH2O().get())
-      * (200 / (getRelativeHumidity().get("%")))) {
+      * (200 / (getRelativeHumidity().get(Percent::UnitPercent)))) {
     wh2o_user_ = wh2o_default;
   }
 
@@ -3073,7 +3073,7 @@ void SkyStatus::updateSkyCoupling_fromWVR(vector<WVRMeasurement> &RadiometerData
 
   // Find the maximum of skycoupling on the WVR channels
   // This value is used to assure that the found skycoupling does not exceed 1
-  double maxCoupling =0.; 
+  double maxCoupling =0.;
   for (unsigned int i=0; i<waterVaporRadiometer_.getSkyCoupling().size(); i++)
     if (waterVaporRadiometer_.getSkyCoupling()[i]>maxCoupling)
       maxCoupling = waterVaporRadiometer_.getSkyCoupling()[i];
@@ -3116,7 +3116,7 @@ void SkyStatus::updateSkyCoupling_fromWVR(vector<WVRMeasurement> &RadiometerData
     }
     if (pfit_b*maxCoupling>1.5)
       pfit_b = 1;
-    
+
     res = sigmaSkyCouplingRetrieval_fromWVR(pfit_b,
                                             waterVaporRadiometer_,
                                             RadiometerData,
@@ -3220,7 +3220,7 @@ void SkyStatus::updateSkyCouplingChannel_fromWVR(vector<WVRMeasurement> &Radiome
     }
     if (pfit_b*maxCoupling>1)
       pfit_b = 1/maxCoupling;
-    
+
     res = sigmaSkyCouplingChannelRetrieval_fromWVR(pfit_b,
 						   waterVaporRadiometer_,
 						   RadiometerData,

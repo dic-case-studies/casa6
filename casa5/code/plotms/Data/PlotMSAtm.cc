@@ -1,5 +1,5 @@
 //# PlotMSAtm.cc: Implementation of PlotMSAtm.h
-//# Copyright (C) 2017 
+//# Copyright (C) 2017
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This library is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ PlotMSAtm::PlotMSAtm(casacore::String filename, PlotMSSelection& userSel,
     if (!canCalculateWeather_) {
         parent_->logmesg("load_cache",
             "No WEATHER table, using default weather values for Atm/Tsky.");
-    } 
+    }
 
     selms_ = new MeasurementSet(); // selected per chunk
     selct_ = new NewCalTable();    // selected per chunk
@@ -124,7 +124,7 @@ void PlotMSAtm::setUpMS(casacore::String filename, PlotMSSelection& userSel) {
     tableName_ = ms_->tableName();
 
     // apply user-selection to ms_
-    if (!userSel.isEmpty()) { 
+    if (!userSel.isEmpty()) {
         applyMSSelection(userSel, *ms_);
     }
 
@@ -183,7 +183,7 @@ void PlotMSAtm::getUniqueTimes(casacore::Vector<casacore::Double> inputTimes,
     for (uInt i=0; i<nUnique; ++i) {
         uniqueTimes(i) = inputTimes.data()[indexVector(uniqueVector(i))];
     }
-} 
+}
 
 void PlotMSAtm::getTimeRange(casacore::Double& mintime, casacore::Double& maxtime) {
     // return cal table time range if it exists, else selected ms time range
@@ -229,7 +229,7 @@ void PlotMSAtm::getUniqueFields(casacore::Vector<casacore::Int> allfields) {
 void PlotMSAtm::getCalMS() {
     // if caltable has keyword for ms name, sets ms_ and tableName_
     String msname("");
-    if (caltable_->keywordSet().fieldNumber("MSName") > -1) { 
+    if (caltable_->keywordSet().fieldNumber("MSName") > -1) {
         msname = caltable_->keywordSet().asString("MSName");
     }
     if (!msname.empty()) {
@@ -241,8 +241,8 @@ void PlotMSAtm::getCalMS() {
                 ms_ = new MeasurementSet(fullpath);
                 tableName_ = ms_->tableName();
             } catch (AipsError& err) {
-                parent_->logmesg("load_cache", 
-                    "MeasurementSet setup failed.\n" + err.getMesg(), 
+                parent_->logmesg("load_cache",
+                    "MeasurementSet setup failed.\n" + err.getMesg(),
                     PlotLogger::MSG_WARN);
                 parent_->logmesg("load_cache", "Proceeding without ms",
                     PlotLogger::MSG_WARN);
@@ -356,7 +356,7 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
     casacore::Double refFreq = 0.5 * (chanFreqs(midChan-1) + chanFreqs(midChan));
     // reduce number of channels to shorten calculation time
     unsigned int numCalcChan(numChan);
-    if (numChan > MAX_ATM_CALC_CHAN_) { 
+    if (numChan > MAX_ATM_CALC_CHAN_) {
         while (numCalcChan > MAX_ATM_CALC_CHAN_)
             numCalcChan /= 2;
     }
@@ -435,10 +435,10 @@ atm::AtmProfile* PlotMSAtm::getAtmProfile() {
     casacore::Double TLR(-5.6), h0(2.0), dp(10.0), dPm(1.2), maxAlt(48.0);
     unsigned int atmtype(atm::midlatWinter);
     atm::AtmProfile* atmProfile = new atm::AtmProfile(
-        atm::Length(altitude,"m"), 
-        atm::Pressure(weather_.asDouble("pressure"), "mb"), 
-        atm::Temperature(weather_.asDouble("temperature"), "K"), TLR, 
-        atm::Humidity(weather_.asDouble("humidity"),"%"), atm::Length(h0,"km"), 
+        atm::Length(altitude,"m"),
+        atm::Pressure(weather_.asDouble("pressure"), "mb"),
+        atm::Temperature(weather_.asDouble("temperature"), "K"), TLR,
+        atm::Humidity(weather_.asDouble("humidity"),atm::Percent::UnitPercent), atm::Length(h0,"km"),
         atm::Pressure(dp, "mb"), dPm, atm::Length(maxAlt, "km"), atmtype);
     return atmProfile;
 }
@@ -513,9 +513,9 @@ void PlotMSAtm::getMeanWeather() {
             String pressUnits = pressCol.keywordSet().asArrayString("QuantumUnits").tovector()[0];
             // select valid stations and values in range
             casacore::Table selwtable = selectWeatherTable(wtable, tempUnits, pressUnits);
-            
+
             // get columns from *selected* weather table
-            casacore::Vector<casacore::Float> 
+            casacore::Vector<casacore::Float>
                 pressureCol(ScalarColumn<casacore::Float>(selwtable, "PRESSURE").getColumn()),
                 humidityCol(ScalarColumn<casacore::Float>(selwtable, "REL_HUMIDITY").getColumn()),
                 temperatureCol(ScalarColumn<casacore::Float>(selwtable, "TEMPERATURE").getColumn());
@@ -568,7 +568,7 @@ void PlotMSAtm::getMeanWeather() {
         }
     }
 
-    // to use in atm::AtmProfile 
+    // to use in atm::AtmProfile
     weather_.define("humidity", humidity);       // %
     weather_.define("pressure", pressure);       // mb
     weather_.define("temperature", temperature); // K
@@ -586,7 +586,7 @@ Table PlotMSAtm::selectWeatherTable(Table& wtable, String tempUnits, String pres
             Vector<rownr_t> antIds = result.rowNumbers(staTable);
             if (!antIds.empty()) ten = (wtable.col("NS_WX_STATION_ID") != antIds(0));
         } catch (AipsError & err) {
-            // table does not exist 
+            // table does not exist
         }
     }
     // SCIREQ-1241 ranges
@@ -694,7 +694,7 @@ casacore::Double PlotMSAtm::getFieldElevation(casacore::Int fieldId) {
     casacore::MEpoch ts(casacore::Quantity(timestamp/86400.0, "d"));
     casacore::MeasFrame frame(obspos, ts);
     casacore::MDirection::Ref inputRef(casacore::MDirection::J2000);
-    casacore::MDirection inputDir(casacore::Quantity(ra, "rad"), 
+    casacore::MDirection inputDir(casacore::Quantity(ra, "rad"),
     casacore::Quantity(dec, "rad"), inputRef);
     casacore::MDirection::Ref outputRef(casacore::MDirection::AZEL, frame);
     // do conversion
@@ -719,7 +719,7 @@ casacore::Double PlotMSAtm::getMeanScantime() {
 }
 
 template <typename T>
-casacore::Vector<T> PlotMSAtm::getValuesInTimeRange(casacore::Vector<T> inputData, 
+casacore::Vector<T> PlotMSAtm::getValuesInTimeRange(casacore::Vector<T> inputData,
         casacore::Vector<casacore::Double> times, casacore::Double mintime,
         casacore::Double maxtime) {
     // Use values with timestamps in times_ range
@@ -740,7 +740,7 @@ casacore::Vector<T> PlotMSAtm::getValuesInTimeRange(casacore::Vector<T> inputDat
 template <typename T>
 void PlotMSAtm::getClosestValues(casacore::Vector<T>& values,
     casacore::Vector<casacore::Double>& times, casacore::Vector<T>& data,
-    double mintime, double maxtime) { 
+    double mintime, double maxtime) {
     // return value(s) with the closest time outside range mintime~maxtime
     casacore::Double mintimediff(1.0e12);
     for (size_t i = 0; i < times.size(); ++i) {
@@ -786,7 +786,7 @@ bool PlotMSAtm::canGetLOsForSpw() {
             int spw = std::stoi(spwIdNumber);
             maxReceiverSpw = std::max(maxReceiverSpw, spw);
         } catch (std::invalid_argument& error) {
-            // ignore: cannot convert spwIdNumber to int 
+            // ignore: cannot convert spwIdNumber to int
         }
     }
     // spws from SPECTRAL_WINDOW table
@@ -827,7 +827,7 @@ bool PlotMSAtm::calcImageFrequencies(
         imageFreqs.set(doubleNaN());
         return false;
     }
-        
+
     if (numChan % 2 == 0) {
         refFreq -= chanSep*0.5;
     }

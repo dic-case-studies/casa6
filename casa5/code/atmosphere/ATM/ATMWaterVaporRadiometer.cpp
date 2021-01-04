@@ -40,7 +40,7 @@ WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdCh
   spilloverTemperature_ = Temperature(-999.0, "K");
   IdChannels_ = IdChannels;
 
-  Percent sg(50, "%"); // IF DOUBLE SIDE BAND, Default Sideband Gain is 50%
+  Percent sg(50, Percent::UnitPercent); // IF DOUBLE SIDE BAND, Default Sideband Gain is 50%
 
   for(unsigned int i = 0; i < IdChannels.size(); i++) {
 
@@ -156,7 +156,7 @@ WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdCh
   spilloverTemperature_ = spilloverTemperature;
   IdChannels_ = IdChannels;
 
-  Percent sg(50, "%"); // IF DOUBLE SIDE BAND, Default Sideband Gain is 50%
+  Percent sg(50, Percent::UnitPercent); // IF DOUBLE SIDE BAND, Default Sideband Gain is 50%
 
   for(unsigned int i = 0; i < IdChannels.size(); i++) {
 
