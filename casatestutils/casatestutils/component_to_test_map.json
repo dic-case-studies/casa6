@@ -1226,7 +1226,7 @@
             "maintainer":"Pam Ford",
             "maintainerEmail":"pford@nrao.edu",
             "testOptions":[],
-            "testGroup":["plotweather""Visualization"],
+            "testGroup":["plotweather","Visualization"],
             "timeout":0,
             "comment":""
         },
