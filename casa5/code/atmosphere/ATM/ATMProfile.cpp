@@ -181,9 +181,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -218,9 +218,9 @@ AtmProfile::AtmProfile(const vector<Length> &v_layerBoundaries,
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -337,9 +337,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -427,9 +427,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -975,10 +975,10 @@ void AtmProfile::setLayerThickness(unsigned int i, const Length &layerThickness)
 MassDensity AtmProfile::getLayerWaterVaporMassDensity(unsigned int i) const
 {
   /*if(i > v_layerWaterVapor_.size() - 1) {
-    MassDensity m(-999.0, "kgm**-3");
+    MassDensity m(-999.0, MassDensity::UnitKiloGramPerCubicMeter);
     return m;
   } else {
-    MassDensity m(v_layerWaterVapor_[i], "kgm**-3");
+    MassDensity m(v_layerWaterVapor_[i], MassDensity::UnitKiloGramPerCubicMeter);
     return m;
   }*/
   if(i > v_layerWaterVapor_.size() - 1) {
@@ -986,7 +986,7 @@ MassDensity AtmProfile::getLayerWaterVaporMassDensity(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 MassDensity AtmProfile::getLayerBottomWaterVaporMassDensity(unsigned int i) const
 {
@@ -995,7 +995,7 @@ MassDensity AtmProfile::getLayerBottomWaterVaporMassDensity(unsigned int i) cons
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor0_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor0_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 MassDensity AtmProfile::getLayerTopWaterVaporMassDensity(unsigned int i) const
 {
@@ -1004,7 +1004,7 @@ MassDensity AtmProfile::getLayerTopWaterVaporMassDensity(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor1_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor1_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 
 NumberDensity AtmProfile::getLayerWaterVaporNumberDensity(unsigned int i) const
@@ -1046,7 +1046,7 @@ NumberDensity AtmProfile::getLayerTopWaterVaporNumberDensity(unsigned int i) con
 void AtmProfile::setLayerWaterVaporMassDensity(unsigned int i, const MassDensity &layerWaterVapor)
 {
   if(i <= v_layerWaterVapor_.size() - 1) {
-    v_layerWaterVapor_[i] = layerWaterVapor.get("kgm**-3");
+    v_layerWaterVapor_[i] = layerWaterVapor.get(MassDensity::UnitKiloGramPerCubicMeter);
   }
 }
 
@@ -1125,21 +1125,21 @@ MassDensity AtmProfile::rwat(const Temperature &tt, const Humidity &rh, const Pr
   double e, es, rwat0;
 
   if(p <= 0 || t <= 0 || u <= 0) {
-    return MassDensity(0.0, "gm**-3");
+    return MassDensity(0.0, MassDensity::UnitGramPerCubicMeter);
   } else {
     es = 6.105 * exp(25.22 / t * (t - 273.0) - 5.31 * log(t / 273.0));
     e = 1.0 - (1.0 - u / 100.0) * es / p;
     e = es * u / 100.0 / e;
     rwat0 = e * 216.502 / t; //(en g/m*3)
   }
-  return MassDensity(rwat0, "gm**-3");
+  return MassDensity(rwat0, MassDensity::UnitGramPerCubicMeter);
 }
 
 Humidity AtmProfile::rwat_inv(const Temperature &tt, const MassDensity &dd, const Pressure &pp) const
 {
   double p = pp.get("mb");
   double t = tt.get(Temperature::UnitKelvin);
-  double r = dd.get("gm**-3");
+  double r = dd.get(MassDensity::UnitGramPerCubicMeter);
   double es, e, rinv;
 
   if(p <= 0 || t <= 0 || r <= 0) {
@@ -1647,7 +1647,7 @@ unsigned int AtmProfile::mkAtmProfile()
 
   wgr = rwat(Temperature(v_layerTemperature[0], Temperature::UnitKelvin),
              Humidity(rh, Percent::UnitPercent),
-             Pressure(v_layerPressure[0], "mb")).get("gm**-3");
+             Pressure(v_layerPressure[0], "mb")).get(MassDensity::UnitGramPerCubicMeter);
 
   // Absolute Humidity in gr/m**3 at altitude alti
   wgr0 = wgr * exp(alti / h0); // h0 in km ==> wgr0 would be the absolute humidity (gr/m**3) at sea level
@@ -1808,7 +1808,7 @@ unsigned int AtmProfile::mkAtmProfile()
 	}
 
 //       humrel = rwat_inv(Temperature(v_layerTemperature[i], Temperature::UnitKelvin),
-//                         MassDensity(v_layerWaterVapor[i], "gm**-3"),
+//                         MassDensity(v_layerWaterVapor[i], MassDensity::UnitGramPerCubicMeter),
 //                         Pressure(v_layerPressure[i], "mb")).get(Percent::UnitPercent);
 
 
