@@ -235,7 +235,7 @@ if($1){
       PyObject *theUnits = fetch_dict_value($input, "unit");
       PyObject *theVal = fetch_dict_value($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -274,7 +274,7 @@ if($1){
       PyObject *theUnits = fetch_dict_value($input, "unit");
       PyObject *theVal = fetch_dict_value($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -314,7 +314,7 @@ if($1){
       PyObject *theUnits = fetch_dict_value($input, "unit");
       PyObject *theVal = fetch_dict_value($input, "value");
       if( theUnits && theVal){
-         std::vector<int> shape;
+         std::vector<ssize_t> shape;
          std::vector<double> myVals;
          if(casac::pyarray_check(theVal)){
             casac::numpy2vector((PyArrayObject*)theVal, myVals, shape);
@@ -460,7 +460,7 @@ if($1){
 }
 
 %typemap(in) std::vector<double> & (std::unique_ptr<std::vector<double> > deleter){
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
   
    if(!$1){
        deleter.reset (new std::vector<double>(0));
@@ -494,7 +494,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -526,7 +526,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -555,7 +555,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -585,7 +585,7 @@ if($1){
     }
    else
       $1->resize(0);
-   std::vector<int> shape;
+   std::vector<ssize_t> shape;
 
    if(casac::pyarray_check($input)){
       casac::numpy2vector((PyArrayObject*)$input, *$1, shape);
@@ -815,6 +815,25 @@ if($1){
 }
 
 %typemap(argout) int& OUTARGINT{
+   PyObject *o = PyLong_FromLong(*$1);
+   if((!$result) || ($result == Py_None)){
+      $result = o;
+   } else {
+      PyObject *o2 = $result;
+      if (!PyTuple_Check($result)) {
+         $result = PyTuple_New(1);
+         PyTuple_SetItem($result,0,o2);
+      }
+      PyObject *o3 = PyTuple_New(1);
+      PyTuple_SetItem(o3,0,o);
+      o2 = $result;
+      $result = PySequence_Concat(o2,o3);
+      Py_DECREF(o2);
+      Py_DECREF(o3);
+   }
+}
+
+%typemap(argout) long& OUTARGINT{
    PyObject *o = PyLong_FromLong(*$1);
    if((!$result) || ($result == Py_None)){
       $result = o;

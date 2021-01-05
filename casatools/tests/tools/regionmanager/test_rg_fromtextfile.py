@@ -1,5 +1,5 @@
 ##########################################################################
-# imfit_test.py
+# test_rg_fromtextfile.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -25,46 +25,6 @@
 #                        520 Edgemont Road
 #                        Charlottesville, VA 22903-2475 USA
 #
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA method rg.fromtextfile
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_rg_fromtextfile.py:description">rg.fromtextfile</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the rg.fromtextile method
-# </etymology>
-#
-# <synopsis>
-# Test the rg.fromtextfile method
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_rg_fromtextfile[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the rg.fromtextfile method to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
 ###########################################################################
 import os
 import shutil
@@ -76,14 +36,29 @@ try:
     from casatools import image as iatool
     from casatools import quanta
     from casatools import ctsys
+    from casatools import imagemetadata
     ctsys_resolve = ctsys.resolve
+    ctsys_resolve2 = ctsys.resolve
+    _qa = quanta()
+    _imd = imagemetadata()
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    _qa = qatool()
+    _imd = imdtool()
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)    
+
+    # scastro (25nov2020) suggests putting new files in data-req, so we are now splitting files
+    # across two data repos
+    def ctsys_resolve2(apath):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
+        else:
+            datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+        return os.path.join(datapath, apath)    
 
 image = "imregion.fits"
 text1 = "goodfile1.txt"
@@ -94,8 +69,14 @@ cas_3259t = "CAS-3259.txt"
 cas_3259r = "CAS-3259.rgn"
 cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
+icrs_image = "icrs.im"
+cas_12980i = 'Cir_X-1_sci.spw37.mfs.I.manual.fits'
+cas_12980t = 'mynewregion.crtf' 
+cas_12980c = 'cas_12980c.im'
 
 datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
+datapath2 = ctsys_resolve2('image/')
+datapath3 = ctsys_resolve2('text/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
@@ -133,23 +114,29 @@ def deep_equality(a, b):
         return True
     return a == b
 
-
 class rg_fromtextfile_test(unittest.TestCase):
     
     _fixtures = [
         image, text1, res1, cas_3258t, cas_3258r, cas_3259t, cas_3259r,
-        cas_3260t, cas_3260r
-    ]
+        cas_3260t, cas_3260r     ]
+
+    _created = [icrs_image, cas_12980c]
     
     def setUp(self):
         for im in self._fixtures:
             shutil.copy(datapath + im, im)
+        shutil.copy(datapath2 + cas_12980i, cas_12980i)
+        shutil.copy(datapath3 + cas_12980t, cas_12980t)
         self.ia = iatool()
         self.rg = rgtool()
     
     def tearDown(self):
-        for im in self._fixtures:
-            os.remove(im)
+        for im in self._fixtures + self._created + [cas_12980i, cas_12980t]:
+            if os.path.exists(im):
+                if os.path.isdir(im):
+                    shutil.rmtree(im)
+                else:
+                    os.remove(im)
         self.ia.done()
         del self.ia
         self.rg.done()
@@ -245,8 +232,7 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.ia.fromshape("",[200, 200])
         csys = self.ia.coordsys()
         yval = "-3611.1455480499999arcmin"
-        qa = quanta( )
-        xwidth = qa.tos(qa.mul(qa.quantity("104.48212727000009arcmin"),qa.cos(yval)))
+        xwidth = _qa.tos(_qa.mul(_qa.quantity("104.48212727000009arcmin"),_qa.cos(yval)))
         xx = self.rg.fromtext(
             "centerbox[[5781.9970685749995arcmin, " + yval + "],[" + xwidth + ", 131.55903791999981arcmin]] coord=GALACTIC",
             csys=csys.torecord(), shape=self.ia.shape()
@@ -343,6 +329,74 @@ class rg_fromtextfile_test(unittest.TestCase):
             # be the same
             self.assertTrue((stats0[k] != stats4[k]).any())
 
+    def test_ICRS(self):
+        """
+        CAS-13074, verify that coord=ICRS works correctly
+
+        1. Create a 100x100 image using the default coordinate system provided by ia.shape()
+
+        2. Modify the coordinate system of the image from J2000 to GALACTIC ref frame,
+           since the difference between J2000 and ICRS seems to be only about 10 marcsec,
+           so we need to use a coordinate system where the values in the two systems differ
+           more to get a convincing test.
+
+        3. Set all pixels to 0, except the reference pixel 50, 50 which is set to 1.
+
+        4. Create a CRTF region string using coords='ICRS' and a box that is centered at
+           GALACTIC long=0, lat=0 (the ref direction in the image) but using ICRS coords
+           of course. The hardcoded ICRS coords were determined using me.measure() to
+           convert from GALACTIC to ICRS.
+
+        5. Run ia.statistics() using region=the CRTF text string previously created.
+
+        6. Test that the max pixel value found in the region is 1. This indicates that
+           the region was applied correctly.
+
+        """
+        self.ia.fromshape(icrs_image, shape=[100, 100])
+        csys = self.ia.coordsys()
+        csys.setconversiontype("GALACTIC")
+        self.ia.setcoordsys(csys.torecord())
+        csys.done()
+        pix = self.ia.getchunk()
+        pix[:] = 0
+        pix[50, 50] = 1
+        self.ia.putchunk(pix)
+        self.ia.done()
+        # muck with the image's coordinate system more
+        self.assertTrue(
+            _imd.open(icrs_image), 'Unable to open imagemetadata object'
+        )
+        self.assertTrue(
+            _imd.set('equinox', 'GALACTIC'), 'Failed to set equinox'
+        )
+        self.assertTrue(
+            _imd.set('ctype1', 'LONGITUDE'), 'Failed to set ctype1'
+        )
+        self.assertTrue(
+            _imd.set('ctype2', 'LATITUDE'), 'Failed to set ctype2'
+        )
+        _imd.done()
+        icrs = 'box[[-1.63412rad, -0.50561rad], [-1.63296rad, -0.50445rad]] coord=ICRS\n'
+        rg = rgtool()
+        self.assertTrue(self.ia.open(icrs_image), 'Failed to open image')
+        reg = rg.fromtext(icrs, csys=self.ia.coordsys().torecord(), shape=self.ia.shape())
+        rg.done()
+        stats = self.ia.statistics(region=reg)
+        self.ia.done() 
+        self.assertEqual(stats['max'][0], 1, 'Incorrect value for max')
+
+    def test_crtf_has_multiple_diff_and_ends_with_diff_bug_fix(self):
+        """
+        CAS-12980, verify fix that allows supplied CRTF file to work correctly
+        1. copy necessary data
+        2. run ia.subimage() on image using region file
+        3. confirm that the correct number of pixels are not masked
+        """
+        self.ia.open(cas_12980i)
+        xx = self.ia.subimage(region=cas_12980t)
+        self.assertEqual(xx.statistics()['npts'], 6612, 'Wrong number of pixels masked')
+        xx.done()  
 
 def suite():
     return [rg_fromtextfile_test]

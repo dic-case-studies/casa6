@@ -336,7 +336,7 @@ coordsys::convert(const std::vector<double>& coordin,
     unitsOut.resize(n);
     unitsOut = _csys->worldAxisUnits();
   }
-  Vector<Int> shape(in_shape);
+  Vector<long long> shape(in_shape.begin(),in_shape.end());
   if (shape.size()==1 && shape[0]==-1) {
     shape.resize(0);
   }
@@ -407,7 +407,7 @@ coordsys::convertmany(const ::casac::variant& coordin,
   _setup(__func__);
   int n = naxes();
   // form Array<Double> coordIn
-  Vector<Int> coord_shape = coordin.arrayshape();
+  Vector<long long> coord_shape = coordin.arrayshape();
   std::vector<double> coord_vec = coordin.toDoubleVec();
   Array<Double> coordIn;
   coordIn.resize(IPosition(coord_shape));
@@ -441,7 +441,7 @@ coordsys::convertmany(const ::casac::variant& coordin,
     unitsOut = _csys->worldAxisUnits();
   }
 
-  Vector<Int> shape(in_shape);
+  Vector<long long> shape(in_shape);
   if (shape.size()==1 && shape[0]==-1) {
     shape.resize(0);
   }
@@ -470,9 +470,8 @@ coordsys::convertmany(const ::casac::variant& coordin,
   Array<Double> coordOut(coordsOut.copy());
 
   // put Array<Double> coordsOut into ::casac::variant
-  std::vector<int> out_shape;
+  std::vector<ssize_t> out_shape(coordsOut.shape().begin(),coordsOut.shape().end());
   std::vector<double> rtnVec;
-  coordsOut.shape().asVector().tovector(out_shape);
   coordsOut.tovector(rtnVec);
   rstat = new ::casac::variant(rtnVec, out_shape);
 
@@ -802,9 +801,8 @@ coordsys::lineartransform(const std::string& cordtype)
   Int c = _csys->findCoordinate(cType, after);
   ltarray = _csys->coordinate(c).linearTransform();
 
-  std::vector<int> v_shape;
+  std::vector<ssize_t> v_shape(ltarray.shape().begin(),ltarray.shape().end());
   std::vector<double> v_ltarray;
-  ltarray.shape().asVector().tovector(v_shape);
   ltarray.tovector(v_ltarray);
   rstat = new ::casac::variant(v_ltarray, v_shape);
   return rstat;
@@ -1328,7 +1326,7 @@ coordsys::setdirection(const std::string& in_ref,
     xform(1,0) = 0.0; xform(1,1) = 1.0;
   } else {
     if (iv_xform.type() == ::casac::variant::DOUBLEVEC) {
-      Vector<Int> shape = iv_xform.arrayshape();
+      Vector<long long> shape = iv_xform.arrayshape();
       std::vector<double> xformVec = iv_xform.getDoubleVec();
       xform.resize(IPosition(shape));
       int i = 0;
@@ -1599,7 +1597,7 @@ coordsys::setlineartransform(const std::string& coordinateType,
     *_log << "You must specify the coordinate type" << LogIO::EXCEPTION;
   }
 
-  Vector<Int> shape = v_value.arrayshape();
+  Vector<long long> shape = v_value.arrayshape();
   if (shape.size() == 0) {
     *_log << "The value array is empty" << LogIO::EXCEPTION;
   }
@@ -2637,7 +2635,7 @@ coordsys::toabsmany(const ::casac::variant& value, const long isworld)
   Array<Double> valueIn;
 
   if (value.type() == ::casac::variant::DOUBLEVEC) {
-    Vector<Int> value_shape = value.arrayshape();
+    Vector<long long> value_shape = value.arrayshape();
     std::vector<double> value_vec = value.getDoubleVec();
     valueIn.resize(IPosition(value_shape));
     int i = 0;
@@ -2831,7 +2829,7 @@ coordsys::topixelmany(const ::casac::variant& value)
   _setup(__func__);
 
   //
-  Vector<Int> value_shape = value.arrayshape();
+  Vector<long long> value_shape = value.arrayshape();
   std::vector<double> value_vec = value.getDoubleVec();
   Array<Double> world;
   world.resize(IPosition(value_shape));
@@ -2996,7 +2994,7 @@ coordsys::torelmany(const ::casac::variant& value, const long isWorld)
   _setup(__func__);
 
   // form Array<Double> valueIn
-  Vector<Int> value_shape = value.arrayshape();
+  Vector<long long> value_shape = value.arrayshape();
   std::vector<double> value_vec = value.getDoubleVec();
   Array<Double> valueIn;
   valueIn.resize(IPosition(value_shape));
@@ -3089,7 +3087,7 @@ record* coordsys::toworldmany(const variant& value) {
 	try {
 		  _setup(__func__);
 
-		Vector<Int> value_shape = value.arrayshape();
+		Vector<long long> value_shape = value.arrayshape();
 	    if(value.type() != variant::DOUBLEVEC) {
 	        *_log
 	  	      << "You must provide a vector of doubles."

@@ -95,7 +95,7 @@ casac::record* synthesisdeconvolver::interactivegui(const casac::record& iterbot
   return rstat;
 }
   variant* synthesisdeconvolver::estimatememory(const std::vector<long>& imsize){
-    long long mem1=0;
+    long mem1=0;
     variant * mem_ptr=new variant (mem1);
     try 
     {

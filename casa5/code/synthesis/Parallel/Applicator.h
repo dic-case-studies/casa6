@@ -101,8 +101,12 @@ class Applicator {
   void init(casacore::Int argc, casacore::Char *argv[]);
   void initThreads(casacore::Int argc, casacore::Char *argv[]);
   void initThreads();
-
-  // define an Algorithm if we need too;
+  // release workers from loop
+  void destroyThreads();
+  // tells you if initThreads(argc,  argv) version has been called already
+  // MPI does not like more than 1 call to MPI_Init or MPI_InitThread
+  bool initialized();
+  // define an Algorithm if we need too; takes ownership of the alg pointer
   void defineAlgorithm(Algorithm *);
 
   // Status functions to indicate whether this Applicator is
@@ -189,6 +193,10 @@ class Applicator {
   // Utility functions for the current list of processes, and their status
   void setupProcStatus();
   casacore::Int findFreeProc(casacore::Bool &lastOne);
+
+  bool debug_p = false;
+  bool initialized_p;
+  casacore::Int donesig_p; //have to keep in context in serial case
 };
 
 

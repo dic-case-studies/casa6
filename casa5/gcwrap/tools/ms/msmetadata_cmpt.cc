@@ -614,7 +614,7 @@ variant* msmetadata::baselines() {
     _FUNC (
         Matrix<Bool> baselines = _msmd->getUniqueBaselines();
         vector<bool> values = baselines.tovector();
-        vector<int> shape = baselines.shape().asStdVector();
+        vector<ssize_t> shape(baselines.shape().begin( ),baselines.shape().end( ));
         return new variant(values, shape);
     )
     return 0;
@@ -688,7 +688,7 @@ variant* msmetadata::corrprodsforpol(long polid) {
         Array<Int> prods = _msmd->getCorrProducts()[polid];
         return new variant(
             vector<long>(prods.begin(), prods.end()),
-            prods.shape().asStdVector()
+            vector<ssize_t>(prods.shape().begin(),prods.shape().end())
         );
     )
     return NULL;

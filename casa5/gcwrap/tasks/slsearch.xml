@@ -3,7 +3,7 @@
 
 
 
-<task category="analysis" name="slsearch" type="function">
+<task category="information" name="slsearch" type="function">
 
 <shortdescription>Search a spectral line table.</shortdescription>
 

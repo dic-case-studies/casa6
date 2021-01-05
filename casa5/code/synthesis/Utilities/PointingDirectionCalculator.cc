@@ -876,7 +876,7 @@ bool PointingDirectionCalculator::initializeSplinefromPointingColumn(Measurement
           coefficientReady_ [DirColNo] = spTemp-> isCoefficientReady();
 
         // move to Spline obj. //
-          assert(splineObj_[DirColNo] == false); // MUST BE CLEAN (see C++11 for this statement) //
+          assert(splineObj_[DirColNo] == nullptr);
           splineObj_[DirColNo] = std::move(spTemp);
 
         // copy to Master pointer, if this is desired.  //

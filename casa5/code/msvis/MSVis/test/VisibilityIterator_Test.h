@@ -46,12 +46,12 @@ public:
 
     virtual casacore::String name () const = 0;
 
-    virtual std::tuple <casacore::MeasurementSet *, casacore::Int, casacore::Bool> createMs (){
+    virtual std::tuple <casacore::MeasurementSet *, casacore::rownr_t, casacore::Bool> createMs (){
         return std::make_tuple ((casacore::MeasurementSet *) 0, 0, false);
         // Useless placeholder implementation
     }
 
-    virtual std::tuple <casacore::Block<const casacore::MeasurementSet *>, casacore::Int, casacore::Bool> createMss (){
+    virtual std::tuple <casacore::Block<const casacore::MeasurementSet *>, casacore::rownr_t, casacore::Bool> createMss (){
         return std::make_tuple (casacore::Block<const casacore::MeasurementSet *> (), 0, false);
         // Useless placeholder implementation
     }
@@ -59,7 +59,7 @@ public:
     virtual void endOfChunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
     virtual void nextChunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
     virtual void nextSubchunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
-    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, int /*nRows*/)
+    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, casacore::rownr_t /*nRows*/)
     { return false;}
     virtual void startOfData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
     virtual bool usesMultipleMss () const { return false;}
@@ -77,10 +77,10 @@ public:
     ~BasicChannelSelection ();
 
 
-    virtual std::tuple <casacore::MeasurementSet *, casacore::Int, casacore::Bool> createMs ();
+    virtual std::tuple <casacore::MeasurementSet *, casacore::rownr_t, casacore::Bool> createMs ();
     virtual casacore::String name () const { return "BasicChannelSelection";}
     virtual void nextSubchunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
-    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, int nRows);
+    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, casacore::rownr_t nRows);
     virtual void startOfData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
 
 protected:
@@ -103,7 +103,7 @@ private:
     void checkRowScalars (casa::vi::VisBuffer2 * vb);
     void checkSigmaWeight (casacore::Int nCorrelations, const casacore::Matrix<casacore::Float> & values, casacore::Double offset, casacore::Int rowId,
                            casacore::Int row, const char * name, casacore::Int factor);
-    void checkUvw (casa::vi::VisBuffer2 * vb, casacore::Int nRows, casacore::Int rowId, casacore::Int row);
+    void checkUvw (casa::vi::VisBuffer2 * vb, casacore::rownr_t nRows, casacore::Int rowId, casacore::Int row);
     void checkVisCube (casacore::Int rowId, casacore::Int spectralWindow, casacore::Int row, casacore::Int channel, casacore::Int correlation,
                        const casacore::Cube<casacore::Complex> & cube, const casacore::String & tag,
                        casacore::Int channelOffset, casacore::Int channelIncrement, casacore::Int cubeDelta);
@@ -116,7 +116,7 @@ private:
     MsFactory * msf_p;
     const casacore::Int nAntennas_p;
     const casacore::Int nFlagCategories_p;
-    casacore::Int nRowsToProcess_p;
+    casacore::rownr_t nRowsToProcess_p;
     casacore::Int nSweeps_p;
 
 };
@@ -127,13 +127,13 @@ public:
 
     MultipleMss ();
 
-    virtual std::tuple <casacore::Block<const casacore::MeasurementSet *>, casacore::Int, casacore::Bool> createMss ();
+    virtual std::tuple <casacore::Block<const casacore::MeasurementSet *>, casacore::rownr_t, casacore::Bool> createMss ();
 
     virtual casacore::String name () const { return "MultipleMss";}
     virtual void endOfChunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
     virtual void nextChunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/) {}
     virtual void nextSubchunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
-    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, int /*nRows*/)
+    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, casacore::rownr_t /*nRows*/)
     { return false;}
     virtual void startOfData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
     virtual bool usesMultipleMss () const;
@@ -152,7 +152,7 @@ public:
 
     virtual casacore::String name () const { return "FrequencyChannelSelection";}
     virtual void startOfData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
-    casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, int nRowsProcessed);
+    casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, casacore::rownr_t nRowsProcessed);
 };
 
 class Weighting : public TestWidget {
@@ -161,7 +161,7 @@ public:
 
     Weighting (): TestWidget ("Weighting") {}
 
-    virtual std::tuple <casacore::MeasurementSet *, casacore::Int, casacore::Bool> createMs ();
+    virtual std::tuple <casacore::MeasurementSet *, casacore::rownr_t, casacore::Bool> createMs ();
 
     virtual casacore::String name () const { return "Weighting";}
     virtual void nextSubchunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
@@ -179,10 +179,10 @@ public:
     BasicMutation ();
     ~BasicMutation ();
 
-    virtual std::tuple <casacore::MeasurementSet *, casacore::Int, casacore::Bool> createMs ();
+    virtual std::tuple <casacore::MeasurementSet *, casacore::rownr_t, casacore::Bool> createMs ();
     virtual casacore::String name () const { return "BasicMutation";}
     virtual void nextSubchunk (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/);
-    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, int nRows);
+    virtual casacore::Bool noMoreData (casa::vi::VisibilityIterator2 & /*vi*/, casa::vi::VisBuffer2 * /*vb*/, casacore::rownr_t nRows);
 
 private:
 

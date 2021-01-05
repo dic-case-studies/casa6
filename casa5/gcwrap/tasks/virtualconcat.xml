@@ -1,6 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task category="utility, manipulation" name="virtualconcat" type="function">
+<task category="manipulation" name="virtualconcat" type="function">
 <shortdescription>Concatenate several visibility data sets into a multi-MS</shortdescription>
 
 <input>

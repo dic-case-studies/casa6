@@ -181,7 +181,75 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return factors;
   }
 
+  /***make a record of synthesisimager::weight parameters***/
+  Record SynthesisUtilMethods::fillWeightRecord(const String& type, const String& rmode,
+			       const Quantity& noise, const Double robust,
+			       const Quantity& fieldofview,
+				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
+			       const String& filtertype, const Quantity& filterbmaj,
+                                                const Quantity& filterbmin, const Quantity& filterbpa){
 
+    Record outRec;
+    outRec.define("type", type);
+    outRec.define("rmode", rmode);
+    Record quantRec;
+    QuantumHolder(noise).toRecord(quantRec);
+    outRec.defineRecord("noise", quantRec);
+    outRec.define("robust", robust);
+    QuantumHolder(fieldofview).toRecord(quantRec);
+    outRec.defineRecord("fieldofview", quantRec);
+    outRec.define("npixels", npixels);
+    outRec.define("multifield", multiField);
+    outRec.define("usecubebriggs", useCubeBriggs);
+    outRec.define("filtertype", filtertype);
+    QuantumHolder(filterbmaj).toRecord(quantRec);
+    outRec.defineRecord("filterbmaj", quantRec);
+    QuantumHolder(filterbmin).toRecord(quantRec);
+    outRec.defineRecord("filterbmin", quantRec);
+    QuantumHolder(filterbpa).toRecord(quantRec);
+    outRec.defineRecord("filterbpa", quantRec);
+
+
+    return outRec;
+  }
+  void SynthesisUtilMethods::getFromWeightRecord(String& type, String& rmode,
+			       Quantity& noise, Double& robust,
+			       Quantity& fieldofview,
+				Int& npixels, Bool& multiField, Bool& useCubeBriggs,
+			       String& filtertype, Quantity& filterbmaj,
+                                                 Quantity& filterbmin, Quantity& filterbpa, const Record& inRec){
+    QuantumHolder qh;
+    String err;
+    if(!inRec.isDefined("type"))
+      throw(AipsError("Record is not filled with SynthesisUtilMethods::fillWeightRecord"));
+    inRec.get("type", type);
+    inRec.get("rmode", rmode);
+    if(!qh.fromRecord(err, inRec.asRecord("noise")))
+      throw(AipsError("Error in reading noise param"));
+    noise=qh.asQuantity();
+    inRec.get("robust", robust);
+    if(!qh.fromRecord(err, inRec.asRecord("fieldofview")))
+      throw(AipsError("Error in reading fieldofview param"));
+    fieldofview=qh.asQuantity();
+    inRec.get("npixels", npixels);
+    inRec.get("multifield", multiField);
+    inRec.get("usecubebriggs", useCubeBriggs);
+    inRec.get("filtertype", filtertype);
+    if(!qh.fromRecord(err, inRec.asRecord("filterbmaj")))
+      throw(AipsError("Error in reading filterbmaj param"));
+    filterbmaj=qh.asQuantity();
+    if(!qh.fromRecord(err, inRec.asRecord("filterbmin")))
+      throw(AipsError("Error in reading filterbmin param"));
+    filterbmin=qh.asQuantity();
+    if(!qh.fromRecord(err, inRec.asRecord("filterbpa")))
+      throw(AipsError("Error in reading filterbpa param"));
+    filterbpa=qh.asQuantity();
+
+
+
+  }
+  
+  
   /**
    * Get values from lines of a /proc/self/status file. For example:
    * 'VmRSS:     600 kB'
@@ -1243,6 +1311,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     selpar.define("freqbeg",freqbeg);
     selpar.define("freqend",freqend);
     selpar.define("freqframe", MFrequency::showType(freqframe)); // Convert MFrequency::Types to String
+    //looks like fromRecord looks for outframe !
+    selpar.define("outframe", MFrequency::showType(freqframe)); 
     selpar.define("field",field);
     selpar.define("antenna",antenna);
     selpar.define("timestr",timestr);
@@ -1271,6 +1341,69 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
   }
 
+  SynthesisParamsImage& SynthesisParamsImage::operator=(const SynthesisParamsImage& other){
+    if(this != &other){
+      imageName=other.imageName;
+      stokes=other.stokes;
+      startModel.resize(); startModel=other.startModel;
+      imsize.resize(); imsize=other.imsize;
+      cellsize.resize(); cellsize=other.cellsize;
+      projection=other.projection;
+      useNCP=other.useNCP;
+      phaseCenter=other.phaseCenter;
+      phaseCenterFieldId=other.phaseCenterFieldId;
+      obslocation=other.obslocation;
+      pseudoi=other.pseudoi;
+      nchan=other.nchan;
+      nTaylorTerms=other.nTaylorTerms;
+      chanStart=other.chanStart;
+      chanStep=other.chanStep;
+      freqStart=other.freqStart;
+      freqStep=other.freqStep;
+      refFreq=other.refFreq;
+      velStart=other.velStart;
+      velStep=other.velStep;
+      freqFrame=other.freqFrame;
+      mFreqStart=other.mFreqStart;
+      mFreqStep=other.mFreqStep;
+      mVelStart=other.mVelStart;
+      mVelStep=other.mVelStep;
+      restFreq.resize(); restFreq=other.restFreq;
+      start=other.start;
+      step=other.step;
+      frame=other.frame;
+      veltype=other.veltype;
+      mode=other.mode;
+      reffreq=other.reffreq;
+      sysvel=other.sysvel;
+      sysvelframe=other.sysvelframe;
+      sysvelvalue=other.sysvelvalue;
+      qmframe=other.qmframe;
+      mveltype=other.mveltype;
+      tststr=other.tststr;
+      startRecord=other.startRecord;
+      stepRecord=other.stepRecord;
+      reffreqRecord=other.reffreqRecord;
+      sysvelRecord=other.sysvelRecord;
+      restfreqRecord=other.restfreqRecord;
+      csysRecord=other.csysRecord;
+      csys=other.csys;
+      imshape.resize(); imshape=other.imshape;
+      freqFrameValid=other.freqFrameValid;
+      overwrite=other.overwrite;
+      deconvolver=other.deconvolver;
+      distance=other.distance;
+      trackDir=other.trackDir;
+      trackSource=other.trackSource;
+      movingSource=other.movingSource;
+
+
+
+    }
+
+    return *this;
+
+  }
 
   void SynthesisParamsImage::fromRecord(const Record &inrec)
   {
@@ -1760,7 +1893,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  { err += "Invalid Frequency Frame " + freqframestr ; }
 	err += readVal( inrec, String("restart"), overwrite );
 
-	
+	err += readVal(inrec, String("freqframevalid"), freqFrameValid);
 	// startmodel parsing copied in SynthesisParamDeconv. Clean this up !!! 
         if( inrec.isDefined("startmodel") ) 
           {
@@ -1790,6 +1923,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	// Force nchan=1 for anything other than cube modes...
 	if(mode=="mfs") nchan=1;
+        //read obslocation
+        if(inrec.isDefined("obslocation_rec")){
+          String errorobs;
+          const Record obsrec=inrec.asRecord("obslocation_rec");
+          MeasureHolder mh;
+          if(!mh.fromRecord(errorobs, obsrec)){
+            err+=errorobs;
+          }
+          obslocation=mh.asMPosition();
+
+        }
+       
+        
 
 	err += verify();
 	
@@ -1931,8 +2077,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     projection=Projection::SIN;
     useNCP=false;
     startModel=Vector<String>(0);
+    freqFrameValid=True;
     overwrite=false;
-
     // PseudoI
     pseudoi=false;
 
@@ -2060,17 +2206,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     impar.define("sysvelframe", sysvelframe );
 
     impar.define("restart",overwrite );
+    impar.define("freqframevalid", freqFrameValid);
     impar.define("startmodel", startModel );
 
-    if( csysRecord.nfields() != 0 )
+    if( csysRecord.isDefined("coordsys") )
       {
 	//        cout <<" HAS CSYS INFO.... writing to output record"<<endl;
-        impar.defineRecord("csys", csys);
+        impar.defineRecord("csys", csysRecord.subRecord("coordsys"));
         impar.define("imshape", imshape);
       } 
     //    else cout << " NO CSYS INFO to write to output record " << endl;
-
-
+    ///Now save obslocation
+    Record tmprec;
+    String err;
+    MeasureHolder mh(obslocation);
+    if(mh.toRecord(err, tmprec)){
+      impar.defineRecord("obslocation_rec", tmprec);
+    }
+    else{
+      throw(AipsError("failed to save obslocation to record"));
+    }
     return impar;
   }
 
@@ -2563,6 +2718,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //store back csys to impars record
     //cerr<<"save csys to csysRecord..."<<endl;
+    if(csysRecord.isDefined("coordsys"))
+      csysRecord.removeField("coordsys");
     csys.save(csysRecord,"coordsys");
     //cerr<<"BUILDCOORDSYS:: new csysRecord ="<<csysRecord<<endl;
     // imshape
@@ -3459,6 +3616,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     Record gridpar;
 
+	gridpar.define("imagename", imageName);
     // FTMachine params
     gridpar.define("padding", padding);
     gridpar.define("useautocorr",useAutoCorr );
