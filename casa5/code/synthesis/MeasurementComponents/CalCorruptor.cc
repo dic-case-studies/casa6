@@ -543,15 +543,15 @@ void AtmosCorruptor::initAtm() {
   setFocusChan(fChan);
 
   os << "Dry and Wet Opacity from RefractiveIndexProfile = " <<
-    itsRIP->getDryOpacity(0,ATMchanMap(0)[fChan]).get("nepers")
+    itsRIP->getDryOpacity(0,ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper)
      << ", " <<
     itsRIP->getWetOpacity(atm::Length(mean_pwv(),"mm"),0,
-			  ATMchanMap(0)[fChan]).get("nepers") <<
+			  ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper) <<
     " at " << fRefFreq()[0]/1e9 << " GHz (ch" << fChan  <<")" << LogIO::POST;
 
   os << "Dry and Wet Opacity from SkyStatus              = " <<
-    itsSkyStatus->getDryOpacity(0,ATMchanMap(0)[fChan]).get("nepers") << ", " <<
-    itsSkyStatus->getWetOpacity(0,ATMchanMap(0)[fChan]).get("nepers") << LogIO::POST;
+    itsSkyStatus->getDryOpacity(0,ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper) << ", " <<
+    itsSkyStatus->getWetOpacity(0,ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper) << LogIO::POST;
 
 
 

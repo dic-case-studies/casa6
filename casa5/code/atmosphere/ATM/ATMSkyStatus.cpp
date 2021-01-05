@@ -708,7 +708,7 @@ Opacity SkyStatus::getH2OLinesOpacity(unsigned int nc)
 Opacity SkyStatus::getH2OLinesOpacityUpTo(unsigned int nc, Length refalti)
 {
   unsigned int ires; unsigned int numlayerold; Length alti;
-  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
+  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
   double fractionLast; double g1; double g2;
 
   if(refalti.get("km") <= altitude_.get("km")) {
@@ -736,7 +736,7 @@ Opacity SkyStatus::getTotalOpacityUpTo(unsigned int nc, Length refalti)    //15N
   {
     unsigned int ires; unsigned int numlayerold; Length alti;
     Opacity opacityout; Opacity opacityout0;
-    Opacity opacityout1; Opacity zeroOp(0.0,"np");
+    Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
     double fractionLast; double g1; double g2;
 
     if(refalti.get("km") <= altitude_.get("km")) {
@@ -783,7 +783,7 @@ Opacity SkyStatus::getH2OContOpacity(unsigned int nc)
 Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
 {
   unsigned int ires; unsigned int numlayerold; Length alti;
-  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
+  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
   double fractionLast; double g1; double g2;
 
 

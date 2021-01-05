@@ -877,7 +877,7 @@ public:
   }
   Opacity getTotalOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti)
   {
-    Opacity wrongOp(-999.0,"np");
+    Opacity wrongOp(-999.0,Opacity::UnitNeper);
     if(!spwidAndIndexAreValid(spwid, nc)) return wrongOp;
     return getTotalOpacityUpTo(v_transfertId_[spwid] + nc, refalti);
   }

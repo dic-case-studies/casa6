@@ -534,7 +534,7 @@ void RefractiveIndexProfile::mkRefractiveIndexProfile()
 Opacity RefractiveIndexProfile::getDryOpacityUpTo(unsigned int nc, Length refalti)
 {
   unsigned int ires; unsigned int numlayerold; Length alti;  double fractionLast;
-  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
+  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
 
   if(refalti.get("km") <= altitude_.get("km")) {
     return zeroOp;
@@ -572,7 +572,7 @@ Opacity RefractiveIndexProfile::getAverageDryOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getDryOpacity(spwid, nc);
   }
@@ -584,7 +584,7 @@ Opacity RefractiveIndexProfile::getAverageO2LinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getO2LinesOpacity(spwid, nc);
   }
@@ -596,12 +596,12 @@ Opacity RefractiveIndexProfile::getAverageO3LinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     /*      std::cout << " Freq = " << getChanFreq(spwid,nc).get(Frequency::UnitGigaHertz)
-     << " O3 opacity = " << getO3LinesOpacity(spwid,nc).get("np")
+     << " O3 opacity = " << getO3LinesOpacity(spwid,nc).get(Opacity::UnitNeper)
      << " O3 pathlength = " << getO3LinesPathLength(spwid,nc).get("microns")
-     << " O2 opacity = " << getO2LinesOpacity(spwid,nc).get("np")
+     << " O2 opacity = " << getO2LinesOpacity(spwid,nc).get(Opacity::UnitNeper)
      << " O2 pathlength = " << getO2LinesPathLength(spwid,nc).get("microns")
      << std::endl; */
     totalaverage = totalaverage + getO3LinesOpacity(spwid, nc);
@@ -614,7 +614,7 @@ Opacity RefractiveIndexProfile::getAverageN2OLinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getN2OLinesOpacity(spwid, nc);
   }
@@ -626,7 +626,7 @@ Opacity RefractiveIndexProfile::getAverageNO2LinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getNO2LinesOpacity(spwid, nc);
   }
@@ -638,7 +638,7 @@ Opacity RefractiveIndexProfile::getAverageSO2LinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getSO2LinesOpacity(spwid, nc);
   }
@@ -653,7 +653,7 @@ Opacity RefractiveIndexProfile::getAverageCOLinesOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getCOLinesOpacity(spwid, nc);
   }
@@ -665,7 +665,7 @@ Opacity RefractiveIndexProfile::getAverageDryContOpacity(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getDryContOpacity(spwid, nc);
   }
@@ -867,7 +867,7 @@ Opacity RefractiveIndexProfile::getAverageWetOpacity(const Length &integratedwat
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getWetOpacity(integratedwatercolumn, spwid, nc);
   }
@@ -905,7 +905,7 @@ Opacity RefractiveIndexProfile::getAverageH2OLinesOpacity(const Length &integrat
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getH2OLinesOpacity(integratedwatercolumn,spwid, nc);
   }
@@ -947,7 +947,7 @@ Opacity RefractiveIndexProfile::getAverageH2OContOpacity(const Length &integrate
 {
   if(!spwidAndIndexAreValid(spwid, 0)) return Opacity(-999.0);
   Opacity totalaverage;
-  totalaverage = Opacity(0.0, "np");
+  totalaverage = Opacity(0.0, Opacity::UnitNeper);
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
     totalaverage = totalaverage + getH2OContOpacity(integratedwatercolumn,spwid, nc);
   }

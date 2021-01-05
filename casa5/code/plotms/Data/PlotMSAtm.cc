@@ -385,8 +385,8 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
     casacore::Vector<casacore::Double> wetOpacity(numCalcChan);
     casacore::Vector<casacore::Double> atmTransmission, TebbSky;
     for (uInt chan=0; chan<numCalcChan; ++chan) {
-        dryOpacity(chan) = refIdxProfile->getDryOpacity(0,chan).get("neper");
-        wetOpacity(chan) = skyStatus->getWetOpacity(0, chan).get("mm-1");
+        dryOpacity(chan) = refIdxProfile->getDryOpacity(0,chan).get(atm::Opacity::UnitNeper);
+        wetOpacity(chan) = skyStatus->getWetOpacity(0, chan).get(atm::Opacity::UnitNeper);
     }
     airmass_ = computeMeanAirmass();
 
