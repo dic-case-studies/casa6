@@ -28,7 +28,7 @@ typedef atm::Frequency (atm::SpectralGrid::*SpGridSingleIdFuncFreq) (unsigned in
 // returns int
 long DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, long spwid);
 // returns quantity
-casac::Quantity DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, atm::Frequency::Units qunits);
+casac::Quantity DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, std::string const &qunits, atm::Frequency::Units units);
 
 // helper functions to invoke ATM functions in RefractiveIndexProfile and SkyStatus classes
 // for atmosphere functions which take two integer ids as paramters

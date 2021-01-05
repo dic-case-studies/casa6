@@ -657,53 +657,53 @@ long atmosphere::DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, long spwid)
 Quantity
 atmosphere::getRefFreq(long spwid)
 {
-  // std::string qunits("GHz");
+  std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getRefFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, Frequency::UnitGigaHertz);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 
 Quantity
 atmosphere::getChanSep(long spwid)
 {
-  // std::string qunits("MHz");
+  std::string qunits("MHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getChanSep;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, Frequency::UnitMegaHertz);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitMegaHertz);
 }
 
 Quantity
 atmosphere::getBandwidth(long spwid)
 {
-  // std::string qunits("GHz");
+  std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getBandwidth;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, Frequency::UnitGigaHertz);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 Quantity
 atmosphere::getMinFreq(long spwid)
 {
-  // std::string qunits("GHz");
+  std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getMinFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, Frequency::UnitGigaHertz);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 Quantity
 atmosphere::getMaxFreq(long spwid)
 {
-  // std::string qunits("GHz");
+  std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getMaxFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, Frequency::UnitGigaHertz);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 /// a private helper function
-Quantity atmosphere::DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, Frequency::Units qunits)
+Quantity atmosphere::DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, string const &qunits, Frequency::Units units)
 {
   ::casac::Quantity q;
   try {
     if (pSpectralGrid) {
       assert_spwid(spwid);
       std::vector<double> qvalue(1);
-      qvalue[0] = (pSpectralGrid->*func)(static_cast<unsigned int>(spwid)).get(qunits);
+      qvalue[0] = (pSpectralGrid->*func)(static_cast<unsigned int>(spwid)).get(units);
       q.value = qvalue;
       q.units = qunits;
     } else {
