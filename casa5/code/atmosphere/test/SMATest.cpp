@@ -251,7 +251,7 @@ void printDataSummary(std::vector<atm::WVRMeasurement> &d,
    <<d.size()
    <<std::endl
    <<"Elevation of last measurement: "
-   <<d[d.size()-1].getElevation().get("deg")
+   <<d[d.size()-1].getElevation().get(Angle::UnitDegree)
    <<"deg"
    <<std::endl;
 }

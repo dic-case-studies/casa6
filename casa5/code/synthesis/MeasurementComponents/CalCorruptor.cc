@@ -520,9 +520,9 @@ void AtmosCorruptor::initAtm() {
 //     << fRefFreq()[0]/1e9 << " GHz; dryOpacity = "
 //     << itsRIP->getDryOpacity(currSpw(),focusChan()).get()
 //     << ", DispersiveH2ODelay (RefIPfl) = "
-//     << itsRIP->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get("deg") << " deg"
+//     << itsRIP->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg"
 //     << "DispersiveH2ODelay (SkyStat) = "
-//     << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get("deg") << " deg"
+//     << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg"
 //     << LogIO::POST;
 
   itsSkyStatus->setUserWH2O(atm::Length(mean_pwv(),"mm"));  // set WH2O
@@ -531,11 +531,11 @@ void AtmosCorruptor::initAtm() {
 
 //   os << "after setting WH20 to " << itsSkyStatus->getUserWH2O().get("mm")
 //      << ", DispersiveH2ODelay (RefIPfl) = "
-//     //<< itsRIP->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get("deg") << " deg, "
-//      << itsRIP->getDispersiveH2OPhaseDelay(itsRIP->getGroundWH2O(),currSpw(),focusChan()).get("deg") << " deg, "
+//     //<< itsRIP->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg, "
+//      << itsRIP->getDispersiveH2OPhaseDelay(itsRIP->getGroundWH2O(),currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg, "
 //      << "DispersiveH2ODelay (SkyStat) = "
-//      << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get("deg") << "deg = "
-//      << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get("rad") << "rad"
+//      << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << "deg = "
+//      << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitRadian) << "rad"
 //      << LogIO::POST;
 
   // set focuschan back to spw0 value
@@ -971,10 +971,10 @@ Complex AtmosCorruptor::cphase(const Int ix, const Int iy, const Int ichan) {
     // so a fractional pwv fluctuation turns into a fractional wet phase
     // fluctuation
     float deltapwv = (*screen_p)(ix+blown,iy);
-    //    delay = itsRIP->getDispersiveH2OPhaseDelay(currSpw(),ichan).get("rad")
+    //    delay = itsRIP->getDispersiveH2OPhaseDelay(currSpw(),ichan).get(atm::Angle::UnitRadian)
     //      * deltapwv / 57.2958; // convert from deg to rad
     // Skystatus delay scales with userWH0 which was set in initialize to mean_pwv
-    delay = itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),ATMchanMap(currSpw())[ichan]).get("rad") * deltapwv;
+    delay = itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),ATMchanMap(currSpw())[ichan]).get(atm::Angle::UnitRadian) * deltapwv;
     //cout << "delay=" << delay << " " << Complex(cos(delay),sin(delay))<<endl;
 
     return Complex(cos(delay),sin(delay));
@@ -1002,10 +1002,10 @@ Complex AtmosCorruptor::cphase(const Int ichan) {
     // fluctuation
       float deltapwv = (*pwv_p[currAnt()])(curr_slot());
       // CHANINDEX
-      //      delay = itsRIP->getDispersiveH2OPhaseDelay(currSpw(),ichan).get("rad")
+      //      delay = itsRIP->getDispersiveH2OPhaseDelay(currSpw(),ichan).get(atm::Angle::UnitRadian)
       //	* deltapwv / 57.2958; // convert from deg to rad
       // the acessor from RIP doesn't scale with WH20, but skystatus' accessor does
-      delay = itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),ATMchanMap(currSpw())[ichan]).get("rad") * deltapwv;
+      delay = itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),ATMchanMap(currSpw())[ichan]).get(atm::Angle::UnitRadian) * deltapwv;
     } else
       throw(AipsError("AtmCorruptor internal error accessing pwv()"));
     return Complex(cos(delay),sin(delay));

@@ -810,7 +810,7 @@ Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
 Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int nc)
 {
   if(!chanIndexIsValid(nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   double kv = 0;
@@ -818,7 +818,7 @@ Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int nc)
     kv = kv + real(vv_N_H2OLinesPtr_[nc]->at(j)) * v_layerThickness_[j];
   }
   Angle aa(((getUserWH2O().get()) / (getGroundWH2O().get())) * kv * 57.29578,
-           "deg");
+           Angle::UnitDegree);
   return aa;
 }
 
@@ -829,7 +829,7 @@ Length SkyStatus::getDispersiveH2OPathLength(unsigned int nc)
     return ll;
   }
   double wavelength = 299792458.0 / v_chanFreq_[nc]; // in m
-  Length ll((wavelength / 360.0) * getDispersiveH2OPhaseDelay(nc).get("deg"),
+  Length ll((wavelength / 360.0) * getDispersiveH2OPhaseDelay(nc).get(Angle::UnitDegree),
             "m");
   return ll;
 }
@@ -838,14 +838,14 @@ Angle SkyStatus::getNonDispersiveH2OPhaseDelay(unsigned int nc)
 {
   double kv = 0;
   if(!chanIndexIsValid(nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   for(unsigned int j = 0; j < numLayer_; j++) {
     kv = kv + real(vv_N_H2OContPtr_[nc]->at(j)) * v_layerThickness_[j];
   }
   Angle aa(((getUserWH2O().get()) / (getGroundWH2O().get())) * kv * 57.29578,
-           "deg");
+           Angle::UnitDegree);
   return aa;
 }
 
@@ -857,7 +857,7 @@ Length SkyStatus::getNonDispersiveH2OPathLength(unsigned int nc)
   }
   double wavelength = 299792458.0 / v_chanFreq_[nc]; // in m
   Length
-      ll((wavelength / 360.0) * getNonDispersiveH2OPhaseDelay(nc).get("deg"),
+      ll((wavelength / 360.0) * getNonDispersiveH2OPhaseDelay(nc).get(Angle::UnitDegree),
          "m");
   return ll;
 }
@@ -865,15 +865,15 @@ Length SkyStatus::getNonDispersiveH2OPathLength(unsigned int nc)
 Angle SkyStatus::getAverageDispersiveH2OPhaseDelay(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Angle aa(-999.0, "deg");
+    Angle aa(-999.0, Angle::UnitDegree);
     return aa;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
-    av = av + getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get("deg");
+    av = av + getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get(Angle::UnitDegree);
   }
   av = av / getNumChan(spwid);
-  Angle average(av, "deg");
+  Angle average(av, Angle::UnitDegree);
   return average;
 }
 
@@ -895,16 +895,16 @@ Length SkyStatus::getAverageDispersiveH2OPathLength(unsigned int spwid)
 Angle SkyStatus::getAverageNonDispersiveH2OPhaseDelay(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
     av = av
-        + getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get("deg");
+        + getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get(Angle::UnitDegree);
   }
   av = av / getNumChan(spwid);
-  Angle average(av, "deg");
+  Angle average(av, Angle::UnitDegree);
   return average;
 }
 
@@ -1112,7 +1112,7 @@ Temperature SkyStatus::getTrjSky(unsigned int spwid,
 Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int spwid, unsigned int nc)
 {
   if(!spwidAndIndexAreValid(spwid, nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   return getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + nc);
@@ -1132,7 +1132,7 @@ Angle SkyStatus::getNonDispersiveH2OPhaseDelay(unsigned int spwid,
                                                unsigned int nc)
 {
   if(!spwidAndIndexAreValid(spwid, nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   return getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + nc);
@@ -2849,7 +2849,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
   double eps = 0.01;
   vector<double> tebb_fit;
   tebb_fit.reserve(measuredSkyBrightnessVector.size());
-  double airm = 1.0 / sin((3.1415926 * elevation.get("deg")) / 180.0);
+  double airm = 1.0 / sin((3.1415926 * elevation.get(Angle::UnitDegree)) / 180.0);
   unsigned int num;
   double flamda;
   unsigned int niter = 20;
@@ -3033,7 +3033,7 @@ void SkyStatus::WaterVaporRetrieval_fromWVR(WVRMeasurement &RadiometerData)
   // cout << "_fromWVR Sky Coupling = " <<  waterVaporRadiometer_.getSkyCoupling()[0] << endl;
   // cout << "Signal Gain = " << waterVaporRadiometer_.getsignalGain()[0].get(Percent::UnitPercent) << " %" <<  endl;
   // cout << "Spillover Temp. = " << waterVaporRadiometer_.getSpilloverTemperature().get(Temperature::UnitKelvin) << " K" << endl;
-  // cout << "Elevation = " << RadiometerData.getElevation().get("deg") << endl;
+  // cout << "Elevation = " << RadiometerData.getElevation().get(Angle::UnitDegree) << endl;
   // cout << "PWV=" << RadiometerData_withRetrieval.getretrievedWaterVaporColumn().get("mm") << " mm" << endl;
 
   RadiometerData.setretrievedWaterVaporColumn(RadiometerData_withRetrieval.getretrievedWaterVaporColumn());
