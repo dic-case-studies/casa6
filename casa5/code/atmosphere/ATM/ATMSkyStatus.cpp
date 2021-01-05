@@ -3031,7 +3031,7 @@ void SkyStatus::WaterVaporRetrieval_fromWVR(WVRMeasurement &RadiometerData)
                                       RadiometerData.getElevation());
 
   // cout << "_fromWVR Sky Coupling = " <<  waterVaporRadiometer_.getSkyCoupling()[0] << endl;
-  // cout << "Signal Gain = " << waterVaporRadiometer_.getsignalGain()[0].get("%") << " %" <<  endl;
+  // cout << "Signal Gain = " << waterVaporRadiometer_.getsignalGain()[0].get(Percent::UnitPercent) << " %" <<  endl;
   // cout << "Spillover Temp. = " << waterVaporRadiometer_.getSpilloverTemperature().get(Temperature::UnitKelvin) << " K" << endl;
   // cout << "Elevation = " << RadiometerData.getElevation().get("deg") << endl;
   // cout << "PWV=" << RadiometerData_withRetrieval.getretrievedWaterVaporColumn().get("mm") << " mm" << endl;

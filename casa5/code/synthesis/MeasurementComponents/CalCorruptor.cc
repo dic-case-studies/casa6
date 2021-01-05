@@ -397,7 +397,7 @@ void AtmosCorruptor::initAtm() {
 
   os << "Initializing ATM" << LogIO::POST;
   os << "altitude="<<Alt.get("m")<<"m, Pground="<<P.get("mbar")<<"mb, " <<
-    "Tground="<<T.get(atm::Temperature::UnitKelvin)<<"K, humidity= "<<H.get("%")<<"%, " <<
+    "Tground="<<T.get(atm::Temperature::UnitKelvin)<<"K, humidity= "<<H.get(atm::Percent::UnitPercent)<<"%, " <<
     "water scale height="<<WVL.get("m")<<"m"<<LogIO::POST;
 
   itsatm = new atm::AtmProfile(Alt, P, T, TLR,

@@ -612,7 +612,7 @@ bool AtmProfile::updateAtmProfile(const Length &altitude,
     //cout<<"tropo lapse rate has changed"  <<endl;
   }
   // we use WVR...
-  if(fabs(relativeHumidity_.get()-relativeHumidity.get())> relativeHumidityThreshold_.get()) { // Humidity(100.,"%").get()) {
+  if(fabs(relativeHumidity_.get()-relativeHumidity.get())> relativeHumidityThreshold_.get()) { // Humidity(100.,Percent::UnitPercent).get()) {
     mkNewProfile = true;
     //cout<<"relative humidity has changed" <<endl;
   }
@@ -1121,7 +1121,7 @@ MassDensity AtmProfile::rwat(const Temperature &tt, const Humidity &rh, const Pr
 {
   double t = tt.get(Temperature::UnitKelvin);
   double p = pp.get("mb");
-  double u = rh.get("%");
+  double u = rh.get(Percent::UnitPercent);
   double e, es, rwat0;
 
   if(p <= 0 || t <= 0 || u <= 0) {
@@ -1809,7 +1809,7 @@ unsigned int AtmProfile::mkAtmProfile()
 
 //       humrel = rwat_inv(Temperature(v_layerTemperature[i], Temperature::UnitKelvin),
 //                         MassDensity(v_layerWaterVapor[i], "gm**-3"),
-//                         Pressure(v_layerPressure[i], "mb")).get("%");
+//                         Pressure(v_layerPressure[i], "mb")).get(Percent::UnitPercent);
 
 
       /*	cout << "layer " << i

@@ -315,7 +315,7 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
       Length topAtm = pAtmProfile->getTopAtmProfile();
       maxAltitude.value[0] = topAtm.get("km"); maxAltitude.units = "km";
       Humidity H = pAtmProfile->getRelativeHumidity();
-      humidity = H.get("%");
+      humidity = H.get(Percent::UnitPercent);
       double TLR = pAtmProfile->getTropoLapseRate();
       dTem_dh.value[0] = TLR; dTem_dh.units ="K/km";
       Pressure Pstep = pAtmProfile->getPressureStep();
