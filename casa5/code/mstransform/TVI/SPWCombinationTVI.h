@@ -55,12 +55,13 @@ public:
     casacore::rownr_t nShapes() const override;
     const casacore::Vector<casacore::rownr_t>& nRowsPerShape() const override;
     const casacore::Vector<casacore::Int>& nChannelsPerShape() const override;
+    void spectralWindows(casacore::Vector<casacore::Int>& spws) const override;
 
     // Transformation of the flags
     void flag(casacore::Cube<casacore::Bool>& flagCube) const override;
     void flag(casacore::Vector<casacore::Cube<casacore::Bool>>& flagCubes) const override;
 
-    // Transformation of flat data
+    // Transformation of float data
     void floatData(casacore::Cube<casacore::Float> & vis) const override;
     void floatData(casacore::Vector<casacore::Cube<casacore::Float>> & vis) const override;
 
@@ -107,14 +108,20 @@ protected:
 
     casacore::Vector<casacore::Int> nChannelsPerShape_p;
 
-    casacore::Vector<casacore::Int> currentSubchunkPolIds_p;
-
     casacore::Vector<casacore::Int> currentSubchunkSpwIds_p;
+
+    casacore::Vector<casacore::Int> currentSubchunkInnerPolIds_p;
+
+    casacore::Vector<casacore::Int> currentSubchunkInnerSpwIds_p;
 
     // vector[1..nPolId] map[key:inpSpwId] vector-> inp chann idx, same as spwInpChanIdxMap, value: outputChannel
     std::vector<std::map<int, std::vector<int>>> spwInpChanOutMap_p;
     // vector[1..nPolId] map[key:inpSpwId] vector-> inp chann idx, same as spwInpChanIdxMap, value: outputChannel freq
     std::vector<std::map<int, std::vector<double>>> spwInpChanOutFreqMap_p;
+    // Start of te output SPW indexes.
+    // This assumes that there is no reindexing performed by this TVI, i.e., the output
+    // SPW is added to the list of input SPWs. With reindexing this would have been 0.
+    casacore::Int outSpwStartIdx_p;
 };
 
 /*

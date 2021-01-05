@@ -138,11 +138,13 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         //columns += VisBufferComponent2::VisibilityCubeCorrected;
                         //columns += VisBufferComponent2::VisibilityCubeModel;
 
-                        // Compare the channel average 
+                        // Compare the combined spws 
                         SCOPED_TRACE("Comparing transformed data for simulated uniform ms");
                         double tolerance = std::numeric_limits<double>::epsilon();
                         compareVisibilityIterators(testTVI,*simResultVi, columns, tolerance);
-
+                        compareVisibilityIterators(testTVI,*simResultVi, [&](VisBuffer2* testVb, VisBuffer2* refVb) -> void {
+                                 ASSERT_EQ(testVb->spectralWindows().tovector(),
+                                           (refVb->spectralWindows()+nSpw).tovector());});
                     }
                 }
             }

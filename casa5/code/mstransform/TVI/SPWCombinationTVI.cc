@@ -52,8 +52,15 @@ void SPWCombinationTVI::initialize()
     freqWidthChan_p = checkEqualWidth();
 
     spwInpChanOutFreqMap_p.clear();
+    
+    // Where do the output SPWs indexes start. This assumes that
+    // this TVI is not doing any reindexing in the output it produces.
+    outSpwStartIdx_p = inputVii_p->nSpectralWindows();
 
-std::cout << " bef npol " << std::endl;
+    // TODO: If the input has not been "reindexed" there can be 
+    // spwIds, polIds, ddIds which are not referenced in the main table
+    // The proper way to do it is to filter all the input SPWs to those
+    // ones for which there is real data.
     auto nPolIds = inputVii_p->nPolarizationIds();
     spwInpChanOutFreqMap_p.resize(nPolIds);
     spwInpChanOutMap_p.resize(nPolIds);
@@ -61,10 +68,13 @@ std::cout << " bef npol " << std::endl;
 std::cout << " npol " << nPolIds << std::endl;
     for(ssize_t polId = 0; polId < nPolIds; polId++)
     {
+        // TODO: Add outSpwStartIdx_p offset (vectors should be chnaged to maps)
         int outSpwId = polId;
         std::vector<double> thisOutSpwFreqs;
         std::vector<int> thisOutSpwChann;
         spwInpChanOutFreqMap_p[outSpwId].clear();
+        // TODO: Filter SPWs that do not appear together with this polarization
+        // (they are not together in the same DDId)
         for(auto inpSpw : spwInpChanIdxMap_p)
         {
             for(auto channel : inpSpw.second)
@@ -76,13 +86,16 @@ std::cout << " npol " << nPolIds << std::endl;
         }
         spwOutFirstFreq_p[outSpwId] = *std::min_element(thisOutSpwFreqs.begin(), thisOutSpwFreqs.end());
         for(auto inpSpw : spwInpChanIdxMap_p)
+        {
             for(auto freq : spwInpChanOutFreqMap_p[outSpwId][inpSpw.first])
             {
+                //TODO: Check all the frequencies fall more or less in the same bins. With a bin tolerance (0.01% of the bin?)
+                //TODO: Check that no frequencies overlap.
                 spwInpChanOutMap_p[outSpwId][inpSpw.first].push_back(std::floor((freq - spwOutFirstFreq_p[outSpwId]) / freqWidthChan_p + 0.1));
                 thisOutSpwChann.push_back(std::floor((freq - spwOutFirstFreq_p[outSpwId]) / freqWidthChan_p + 0.1));
             }
+        }
         spwOutChanNumMap_p[outSpwId] = *std::max_element(thisOutSpwChann.begin(), thisOutSpwChann.end()) + 1;
-std::cout << " spwOutChanNumMap_p[outSpwId]   " << spwOutChanNumMap_p[outSpwId]<< std::endl;
     }
             
     
@@ -149,19 +162,23 @@ void SPWCombinationTVI::next()
 void SPWCombinationTVI::setUpCurrentSubchunkStructure()
 {
     auto& innerNRowsPerShape = getVii()->nRowsPerShape();
-    getVii()->polarizationIds(currentSubchunkPolIds_p);
+    getVii()->polarizationIds(currentSubchunkInnerPolIds_p);
     std::set<casacore::Int> uniquePolIDs;
-    std::copy(currentSubchunkPolIds_p.begin(),currentSubchunkPolIds_p.end(),
+    std::copy(currentSubchunkInnerPolIds_p.begin(),currentSubchunkInnerPolIds_p.end(),
               std::inserter(uniquePolIDs, uniquePolIDs.end()));
 
-    ssize_t nPolIds = uniquePolIDs.size();
+    ssize_t thisSubchunkNPolIds = uniquePolIDs.size();
     // This VisBuffer contains one single timestamp with "all" DDIds.
     // After SPW combination then number of rows is equal to the number of distinct DDIds,
     // i.e., the number of polarizations, which is also the number of distinct shapes
-    nRowsPerShape_p.resize(nPolIds);
-    nChannelsPerShape_p.resize(nPolIds);
+    nRowsPerShape_p.resize(thisSubchunkNPolIds);
+    nChannelsPerShape_p.resize(thisSubchunkNPolIds);
 
-    getVii()->spectralWindows(currentSubchunkSpwIds_p);
+
+    currentSubchunkSpwIds_p.resize(thisSubchunkNPolIds);
+    std::iota(currentSubchunkSpwIds_p.begin(), currentSubchunkSpwIds_p.end(), outSpwStartIdx_p);
+
+    getVii()->spectralWindows(currentSubchunkInnerSpwIds_p);
 
     // Set up the channels for shape
     size_t iShape=0;
@@ -171,7 +188,7 @@ void SPWCombinationTVI::setUpCurrentSubchunkStructure()
         iShape++;
     }
 
-    nRowsPerShape_p = nPolIds;
+    nRowsPerShape_p = thisSubchunkNPolIds;
 
     //TODO: Check all the NRows are the same.
     //TODO: For several polarizations (nShapes)
@@ -190,6 +207,11 @@ const casacore::Vector<casacore::rownr_t>& SPWCombinationTVI::nRowsPerShape() co
 const casacore::Vector<casacore::Int>& SPWCombinationTVI::nChannelsPerShape() const
 {
     return nChannelsPerShape_p;
+}
+
+void SPWCombinationTVI::spectralWindows(casacore::Vector<casacore::Int>& spws) const
+{
+    spws = currentSubchunkSpwIds_p;
 }
 
 void SPWCombinationTVI::flag(casacore::Cube<casacore::Bool>& flagCube) const
@@ -247,8 +269,8 @@ void SPWCombinationTVI::visibilityObserved(casacore::Vector<casacore::Cube<casac
         // cube with equal shape is not supported yet.
         // By construction of the rest of VB2 (VisibilityIteratorImpl2,
         // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
-        casacore::Int thisCubePolId = currentSubchunkPolIds_p[inputRowsProcessed];
-        auto thisSpw = currentSubchunkSpwIds_p[inputRowsProcessed];
+        casacore::Int thisCubePolId = currentSubchunkInnerPolIds_p[inputRowsProcessed];
+        auto thisSpw = currentSubchunkInnerSpwIds_p[inputRowsProcessed];
 
         auto outputChannel = spwInpChanOutMap_p[thisCubePolId].at(thisSpw)[0];
         casacore::IPosition blcOutput(3, 0, outputChannel, 0);
