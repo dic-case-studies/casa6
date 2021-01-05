@@ -1,22 +1,22 @@
 /* Private parts for atmosphere */
 
-/* 
+/*
    Assert ATM type is in permissive range of enum, typeAtm_t
  */
 void check_atmtype_enum(long atmtype);
 
-/* 
+/*
    Assert int value is positive or zero.
    This function is necessary because tool interface does not
    support parameter in unsigned integer.
  */
 void assert_unsigned_int(long value);
 
-/* 
+/*
    Assert SPW ID is valid number in pSpectralGrid.
  */
 void assert_spwid(long spwid);
-/* 
+/*
    Assert SPW and CHAN IDs are valid number in pSpectralGrid.
  */
 void assert_spwid_and_channel(long spwid, long chan);
@@ -25,10 +25,10 @@ void assert_spwid_and_channel(long spwid, long chan);
 typedef unsigned int (atm::SpectralGrid::*SpGridSingleIdFuncInt) (unsigned int) const;
 typedef atm::Frequency (atm::SpectralGrid::*SpGridSingleIdFuncFreq) (unsigned int) const;
 // helper functions to invoke ATM functions in SpectralGrid class which take one integer id as the parameter
-// returns int 
+// returns int
 long DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, long spwid);
 // returns quantity
-casac::Quantity DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, std::string qunits);
+casac::Quantity DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, atm::Frequency::Units qunits);
 
 // helper functions to invoke ATM functions in RefractiveIndexProfile and SkyStatus classes
 // for atmosphere functions which take two integer ids as paramters

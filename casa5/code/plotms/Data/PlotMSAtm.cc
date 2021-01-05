@@ -373,7 +373,7 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
 
     // set atm parameters
     atm::SpectralGrid* specGrid = new atm::SpectralGrid(numCalcChan, refChan,
-        atm::Frequency(refFreq, "GHz"), atm::Frequency(chanSep, "GHz"));
+        atm::Frequency(refFreq, atm::Frequency::UnitGigaHertz), atm::Frequency(chanSep, atm::Frequency::UnitGigaHertz));
     atm::AtmProfile* atmProfile = getAtmProfile();
     atm::RefractiveIndexProfile* refIdxProfile =
         new atm::RefractiveIndexProfile(*specGrid, *atmProfile);
@@ -834,9 +834,9 @@ bool PlotMSAtm::calcImageFrequencies(
 
     // Set up SpectralGrid and get frequencies
     atm::SpectralGrid* specGrid = new atm::SpectralGrid(numChan, refChan,
-        atm::Frequency(refFreq, "GHz"), atm::Frequency(chanSep, "GHz"));
+        atm::Frequency(refFreq, atm::Frequency::UnitGigaHertz), atm::Frequency(chanSep, atm::Frequency::UnitGigaHertz));
     for (unsigned int chan=0; chan<numChan; ++chan) {
-        imageFreqs[chan] = specGrid->getChanFreq(0, static_cast<unsigned int>(chan)).get("GHz");
+        imageFreqs[chan] = specGrid->getChanFreq(0, static_cast<unsigned int>(chan)).get(atm::Frequency::UnitGigaHertz);
     }
 
     casacore::Vector<casacore::Double> adjustedImageFreqs = lo1Freqs - imageFreqs;

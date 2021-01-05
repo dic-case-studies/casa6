@@ -1256,7 +1256,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             unsigned int refChan,
                             double* chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refChan, chanFreq, freqUnits);
   }
@@ -1264,7 +1264,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             double refFreq,
                             double* chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refFreq, chanFreq, freqUnits);
   }
@@ -1272,7 +1272,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             double refFreq,
                             const vector<double> &chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refFreq, chanFreq, freqUnits);
   }
@@ -1306,8 +1306,8 @@ public:
   Length WaterVaporRetrieval_fromFTS(const vector<double> &v_transmission)
   {
     unsigned int spwId = 0;
-    Frequency f1(-999, "GHz");
-    Frequency f2(-999, "GHz");
+    Frequency f1(-999, Frequency::UnitGigaHertz);
+    Frequency f2(-999, Frequency::UnitGigaHertz);
     return WaterVaporRetrieval_fromFTS(spwId, v_transmission, f1, f2);
   }
   /** Same as above but using for the retrieval only the measurements between frequencies f1 and f2>f1 */
@@ -1326,8 +1326,8 @@ public:
   Length WaterVaporRetrieval_fromFTS(unsigned int spwId,
                                      const vector<double> &v_transmission)
   {
-    Frequency f1(-999, "GHz");
-    Frequency f2(-999, "GHz");
+    Frequency f1(-999, Frequency::UnitGigaHertz);
+    Frequency f2(-999, Frequency::UnitGigaHertz);
     return WaterVaporRetrieval_fromFTS(spwId, v_transmission, f1, f2);
   }
   /** Same as above but using for the retrieval only the measurements between frequencies f1 and f2>f1 */

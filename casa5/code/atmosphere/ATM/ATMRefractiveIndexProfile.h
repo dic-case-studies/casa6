@@ -121,7 +121,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    unsigned int refChan,
                                    double* chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refChan, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -130,7 +130,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    double refFreq,
                                    double* chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refFreq, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -139,7 +139,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    double refFreq,
                                    const vector<double> &chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refFreq, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -184,7 +184,7 @@ public:
   /** Accessor to the single frequency (or the frequency of the first grid point
    *  in case of a spectrum) in specified unit
    */
-  inline double getFrequency(const string &freqUnits) const
+  inline double getFrequency(Frequency::Units freqUnits) const
   {
     return getChanFreq(0).get(freqUnits);
   }

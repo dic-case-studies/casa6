@@ -263,7 +263,7 @@ ATM_NAMESPACE_BEGIN
       dv=dv0;
     }
 
-    //    cout << nu.get("GHz") << "  " << pr << "  " <<  eh2o << "  " << dv << endl;
+    //    cout << nu.get(Frequency::UnitGigaHertz) << "  " << pr << "  " <<  eh2o << "  " << dv << endl;
 
     return dv; // GHz
   }
@@ -293,10 +293,10 @@ ATM_NAMESPACE_BEGIN
     //    *   {[(vl-v)/((v-vl)**2+dv**2)]-[(vl+v)/((v+vl)**2+dv**2)]} REAL (UNITS 1/freq) *
     //    *********************************************************************************
 
-    //    dv  = linebroad.get("GHz");      LINE BROADENING PARAMETER
-    //    itf = interf.get("GHz");         LINE INTERFERENCE
-    //    vl  = linefreq.get("GHz");       FREQUENCY OF RESONANT LINE
-    //    v   = nu.get("GHz");             CURRENT WORKING FREQUENCY
+    //    dv  = linebroad.get(Frequency::UnitGigaHertz);      LINE BROADENING PARAMETER
+    //    itf = interf.get(Frequency::UnitGigaHertz);         LINE INTERFERENCE
+    //    vl  = linefreq.get(Frequency::UnitGigaHertz);       FREQUENCY OF RESONANT LINE
+    //    v   = nu.get(Frequency::UnitGigaHertz);             CURRENT WORKING FREQUENCY
 
     //    double lf=dv*itf;
     //    double dv2=dv*dv;

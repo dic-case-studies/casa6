@@ -598,7 +598,7 @@ Opacity RefractiveIndexProfile::getAverageO3LinesOpacity(unsigned int spwid)
   Opacity totalaverage;
   totalaverage = Opacity(0.0, "np");
   for(unsigned int nc = 0; nc < getNumChan(spwid); nc++) {
-    /*      std::cout << " Freq = " << getChanFreq(spwid,nc).get("GHz")
+    /*      std::cout << " Freq = " << getChanFreq(spwid,nc).get(Frequency::UnitGigaHertz)
      << " O3 opacity = " << getO3LinesOpacity(spwid,nc).get("np")
      << " O3 pathlength = " << getO3LinesPathLength(spwid,nc).get("microns")
      << " O2 opacity = " << getO2LinesOpacity(spwid,nc).get("np")

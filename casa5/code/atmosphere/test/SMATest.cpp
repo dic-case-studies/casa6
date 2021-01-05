@@ -133,8 +133,8 @@ void printSpecWnd(atm::RefractiveIndexProfile &rip,
       ++j)
   {
     o << "Spectral Window " << j
-      << " Central Frequency: "<< rip.getRefFreq(j).get("GHz") << " GHz, "
-      << " Freq. Resolution: " << rip.getChanSep(j).get("MHz") << " MHz, "
+      << " Central Frequency: "<< rip.getRefFreq(j).get(Frequency::UnitGigaHertz) << " GHz, "
+      << " Freq. Resolution: " << rip.getChanSep(j).get(Frequency::UnitMegaHertz) << " MHz, "
       << " Num. of channels: " << rip.getNumChan(j)
       << std::endl;
   }
@@ -218,8 +218,8 @@ void addWVRSpecWnd(double ifreq,
 		   std::vector<unsigned int> &ids)
 {
 
-  atm::Frequency reffreq1(sp.cf + ifreq,"GHz");
-  atm::Frequency chansep1(bw/float(sp.nc),"GHz");
+  atm::Frequency reffreq1(sp.cf + ifreq,Frequency::UnitGigaHertz);
+  atm::Frequency chansep1(bw/float(sp.nc),Frequency::UnitGigaHertz);
 
   ids.push_back(rip.getNumSpectralWindow());
 
@@ -316,8 +316,8 @@ void analyse(const char *fname,
   // to be constructed with one spectral window at least..., would be
   // better off not having that
 
-  atm::Frequency reffreq0(sp.cf+sp.f_cent[0],"GHz");
-  atm::Frequency chansep0(sp.f_bw[0]/double(sp.nc),"GHz");
+  atm::Frequency reffreq0(sp.cf+sp.f_cent[0],Frequency::UnitGigaHertz);
+  atm::Frequency chansep0(sp.f_bw[0]/double(sp.nc),Frequency::UnitGigaHertz);
   atm::SpectralGrid sma_SpectralGrid(sp.nc,
 				     sp.rc,
 				     reffreq0,

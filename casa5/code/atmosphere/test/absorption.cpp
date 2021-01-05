@@ -1,21 +1,21 @@
 // Copyright (2008) Bojan Nikolic <b.nikolic@mrao.cam.ac.uk>
-// 
+//
 // This file is part of AATM
 //
 // AATM is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // AATM is distributed in the hope that it will be useful, but WITHOUT
 // ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
 // License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with AATM.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Comments regarding this example welcome at: 
+// Comments regarding this example welcome at:
 // Bojan Nikolic <b.nikolic@mrao.cam.ac.uk>
 //
 
@@ -33,16 +33,16 @@ void absorption(double freq,
   pAtmProf atmo(simpleAOSAtmo(ghum,vm));
 
   atm::Frequency  afreq(freq,
-			"GHz");
+			atm::Frequency::UnitGigaHertz);
 
   atm::RefractiveIndexProfile rip(afreq,
 				  *atmo);
-  
+
   std::cout<<"Freq"
 	   <<"\t"
 	   <<"Dry Opac"
 	   <<"\t\t"
-	   <<"Wet Opac" 
+	   <<"Wet Opac"
 	   <<std::endl;
 
   std::cout<<freq
@@ -56,7 +56,7 @@ void absorption(double freq,
 void absorption_fgrid(const boost::program_options::variables_map &vm)
 {
   pAtmProf atmo(AOSAtmo_pwv(vm));
-  
+
   const double fmin=vm["fmin"].as<double>();
   const double fmax=vm["fmax"].as<double>();
   const double fstep=vm["fstep"].as<double>();
@@ -66,14 +66,14 @@ void absorption_fgrid(const boost::program_options::variables_map &vm)
   atm::SpectralGrid grid(nc,
 			 0,
 			 atm::Frequency(fmin,
-					"GHz"),
+					atm::Frequency::UnitGigaHertz),
 			 atm::Frequency(fstep,
-					"GHz"));
+					atm::Frequency::UnitGigaHertz));
 
   atm::RefractiveIndexProfile rip(grid,
 				  *atmo);
   atm::SkyStatus ss(rip);
-  
+
   std::cout<<"Freq"
 	   <<"\t"
 	   <<"Dry Opac"
@@ -82,10 +82,10 @@ void absorption_fgrid(const boost::program_options::variables_map &vm)
 	   <<"\t\t"
 	   <<"Sky Brightness"
 	   <<std::endl;
-  
+
   for(size_t i=0; i<nc; ++i)
   {
-    std::cout<<boost::format("%g, \t%g, \t%g, \t%g") 
+    std::cout<<boost::format("%g, \t%g, \t%g, \t%g")
       % grid.getChanFreq(i).get()
       % rip.getDryOpacity(i).get()
       % rip.getWetOpacity(atm::Length(pwv,"mm"),i).get()
@@ -95,17 +95,17 @@ void absorption_fgrid(const boost::program_options::variables_map &vm)
 }
 
 int main(int ac, char* av[])
-{   
+{
   using namespace boost::program_options;
-  
+
   options_description desc("Allowed options");
 
-  addStdOutputOptions(desc);  
+  addStdOutputOptions(desc);
   addAtmoOptions(desc);
 
-  variables_map vm;        
+  variables_map vm;
   store(parse_command_line(ac, av, desc), vm);
-  notify(vm);    
+  notify(vm);
 
   if (vm.count("help"))
   {
@@ -138,6 +138,6 @@ int main(int ac, char* av[])
 		 );
     }
   }
-  
+
   return 0;
-}  
+}

@@ -1836,8 +1836,8 @@ double SkyStatus::getSigmaTransmissionFit(unsigned int spwId,
     unsigned int num = 0;
 
     for(unsigned int i = 0; i < v_transmission.size(); i++) {
-      if((getSpectralWindow(spwId)[i] * 1E-09 >= f1.get("GHz")
-          && getSpectralWindow(spwId)[i] * 1E-09 <= f2.get("GHz"))) {
+      if((getSpectralWindow(spwId)[i] * 1E-09 >= f1.get(Frequency::UnitGigaHertz)
+          && getSpectralWindow(spwId)[i] * 1E-09 <= f2.get(Frequency::UnitGigaHertz))) {
         num++;
         rms = rms + pow((v_transmission[i] - exp(-airm
 						 * ( (getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get()  )  // getDryOpacity(spwId, i).get()
@@ -1935,12 +1935,12 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
 
   unsigned int nl = 0;
 
-  if(fre1.get("GHz") < 0) {
+  if(fre1.get(Frequency::UnitGigaHertz) < 0) {
     nl = getSpectralWindow(spwId).size();
   } else {
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
-      if(getSpectralWindow(spwId)[i] * 1E-09 >= fre1.get("GHz")
-          && getSpectralWindow(spwId)[i] * 1E-09 <= fre2.get("GHz")) {
+      if(getSpectralWindow(spwId)[i] * 1E-09 >= fre1.get(Frequency::UnitGigaHertz)
+          && getSpectralWindow(spwId)[i] * 1E-09 <= fre2.get(Frequency::UnitGigaHertz)) {
         nl = nl + 1;
       }
     }
@@ -1958,8 +1958,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
 
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
 	//
         transmission_fit[i] = exp(-( (getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get() )                                              //getDryOpacity(spwId, i).get()
 				     + pfit_wh2o * getWetOpacity(spwId, i).get() ) );
@@ -1980,8 +1980,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     chisq1 = 0;
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
         res = -transmission_fit[i] + measuredSkyTransmission[i];
         chisq1 = chisq1 + res * res;
       }
@@ -1998,8 +1998,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     chisqr = 0;
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
         transmission_fit[i] = exp(-( ( getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get() )             //      (getDryOpacity(spwId, i).get())
 				     + pfit_wh2o_b * getWetOpacity(spwId, i).get()));
         res = -transmission_fit[i] + measuredSkyTransmission[i];
@@ -2646,8 +2646,8 @@ double SkyStatus::RT(double pfit_wh2o,
   double tbgr = skyBackgroundTemperature_.get(Temperature::UnitKelvin);
   double ratioWater = pfit_wh2o;
 
-  singlefreq = getChanFreq(spwid, nc).get("GHz");
-  // chanwidth = getChanWidth(spwid, nc).get("GHz"); // [-Wunused_but_set_variable]
+  singlefreq = getChanFreq(spwid, nc).get(Frequency::UnitGigaHertz);
+  // chanwidth = getChanWidth(spwid, nc).get(Frequency::UnitGigaHertz); // [-Wunused_but_set_variable]
   // cout << "Chan freq. =" << singlefreq << " GHz" << endl;
   // cout << "Chan width =" << chanwidth << " GHz" << endl;
 
@@ -2696,8 +2696,8 @@ double SkyStatus::RTRJ(double pfit_wh2o,
   double tbgr = skyBackgroundTemperature_.get(Temperature::UnitKelvin);
   double ratioWater = pfit_wh2o;
 
-  singlefreq = getChanFreq(spwid, nc).get("GHz");
-  // chanwidth = getChanWidth(spwid, nc).get("GHz"); // [-Wunused_but_set_variable]
+  singlefreq = getChanFreq(spwid, nc).get(Frequency::UnitGigaHertz);
+  // chanwidth = getChanWidth(spwid, nc).get(Frequency::UnitGigaHertz); // [-Wunused_but_set_variable]
   trj=0.0;
   kv = 0.0;
   radiance = 0.0;

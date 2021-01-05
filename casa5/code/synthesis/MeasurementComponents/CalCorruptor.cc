@@ -454,8 +454,8 @@ void AtmosCorruptor::initAtm() {
   // !!! refChan is 0-based !!!
   itsSpecGrid = new atm::SpectralGrid(ATMnChan()[0],
 				      ATMchanMap(0)[focusChan()],
-				      atm::Frequency(fRefFreq()[0],"Hz"),
-				      atm::Frequency(ATMfRes,"Hz"));
+				      atm::Frequency(fRefFreq()[0],atm::Frequency::UnitHertz),
+				      atm::Frequency(ATMfRes,atm::Frequency::UnitHertz));
 
   // any more spw?  TODO: multiple spw hasn't been well tested.
   for (uInt ispw=1;ispw<nSpw();ispw++) {
@@ -493,8 +493,8 @@ void AtmosCorruptor::initAtm() {
 
     itsSpecGrid->add(ATMnChan()[ispw],
 		     ATMchanMap(ispw)[focusChan()]+1,
-		     atm::Frequency(fRefFreq()[ispw],"Hz"),
-		     atm::Frequency(ATMfRes,"Hz"));
+		     atm::Frequency(fRefFreq()[ispw],atm::Frequency::UnitHertz),
+		     atm::Frequency(ATMfRes,atm::Frequency::UnitHertz));
   }
 
   if (itsRIP != 0) delete itsRIP;
@@ -572,7 +572,7 @@ void AtmosCorruptor::initAtm() {
      << " pwv="<<mean_pwv()
      << LogIO::POST;
   os << " Zenith Tebb["
-     << f0.get("GHz") << "," << fm.get("GHz") << "," << f1.get("GHz") << "]=["
+     << f0.get(atm::Frequency::UnitGigaHertz) << "," << fm.get(atm::Frequency::UnitGigaHertz) << "," << f1.get(atm::Frequency::UnitGigaHertz) << "]=["
      << t0.get(atm::Temperature::UnitKelvin)   << "," << tm.get(atm::Temperature::UnitKelvin)   << "," << t1.get(atm::Temperature::UnitKelvin) << "]" << LogIO::POST;
 
 }
