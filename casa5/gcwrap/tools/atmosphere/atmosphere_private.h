@@ -36,8 +36,6 @@ casac::Quantity DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long sp
 template<typename Func, typename ClassType>
 double doTwoIdATMFuncDouble(Func func, ClassType obj, long nc, long spwid);
 // return a quantity
-template<typename Func, typename ClassType>
-casac::Quantity doTwoIdATMFuncQuantum(Func func, ClassType pobj, long nc, long spwid, std::string const &qunits);
 template<typename Func, typename ClassType, typename UnitType>
 casac::Quantity doTwoIdATMFuncQuantum(Func func, ClassType pobj, long nc, long spwid, std::string const &qunits, UnitType units);
 

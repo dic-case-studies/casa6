@@ -826,37 +826,6 @@ double atmosphere::doTwoIdATMFuncDouble(Func func, ClassType obj, long nc, long 
 
 // a helper function to invoke ATM functions in RefractiveIndexProfile and SkyStatus classes
 // for atmosphere functions which take two integer ids as paramters
-template<typename Func, typename ClassType>
-Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, long nc, long spwid, string const &qunits)
-{
-  ::casac::Quantity rtn;
-  try {
-    assert_spwid(spwid);
-    if (obj) {//TODO: add check for obj class (allow only RIP and SS) or check for pSpectralGrid
-      unsigned int chan;
-      unsigned int spw = static_cast<unsigned int>(spwid);
-      if (nc < 0) {
-	chan = pSpectralGrid->getRefChan(spw);
-	*itsLog << LogIO::DEBUG1 << "Using reference channel " << chan << LogIO::POST;
-      } else {
-	chan = static_cast<unsigned int>(nc);
-      }
-      rtn.value.resize(1);
-      rtn.units = qunits;
-      rtn.value[0] = func(obj,spw,chan).get(rtn.units);
-    } else {
-      *itsLog << LogIO::WARN
-	      << "Please set spectral window(s) with initSpectralWindow first."
-	      << LogIO::POST;
-    }
-  } catch (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
-	    << LogIO::POST;
-    RETHROW(x);
-  }
-  return rtn;
-}
-
 template<typename Func, typename ClassType, typename UnitType>
 Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, long nc, long spwid, string const &qunits, UnitType units)
 {
@@ -1035,7 +1004,7 @@ atmosphere::getDispersivePhaseDelay(long nc, long spwid)
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getDispersiveH2OPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
@@ -1045,7 +1014,7 @@ atmosphere::getDispersiveWetPhaseDelay(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDispersiveH2OPhaseDelay(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
@@ -1055,7 +1024,7 @@ atmosphere::getNonDispersiveWetPhaseDelay(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveH2OPhaseDelay(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
@@ -1065,7 +1034,7 @@ atmosphere::getNonDispersiveDryPhaseDelay(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveDryPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
@@ -1145,7 +1114,7 @@ atmosphere::getNonDispersivePhaseDelay(long nc, long spwid)
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getNonDispersiveH2OPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
