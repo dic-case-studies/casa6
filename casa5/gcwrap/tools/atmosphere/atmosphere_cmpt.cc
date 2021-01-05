@@ -1145,7 +1145,7 @@ atmosphere::getAbsH2OLines(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsH2OLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1155,7 +1155,7 @@ atmosphere::getAbsH2OCont(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsH2OCont(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1165,7 +1165,7 @@ atmosphere::getAbsO2Lines(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsO2Lines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1175,7 +1175,7 @@ atmosphere::getAbsDryCont(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsDryCont(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1185,7 +1185,7 @@ atmosphere::getAbsO3Lines(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsO3Lines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1195,7 +1195,7 @@ atmosphere::getAbsCOLines(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsCOLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1205,7 +1205,7 @@ atmosphere::getAbsN2OLines(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsN2OLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1215,7 +1215,7 @@ atmosphere::getAbsTotalDry(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsTotalDry(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
@@ -1225,23 +1225,23 @@ atmosphere::getAbsTotalWet(long nl, long nf, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsTotalWet(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 // a helper function
 template<typename Func>
-Quantity atmosphere::doRIPThreeIdFuncQuantum(Func func, long nl, long nf, long spwid, string units)
+Quantity atmosphere::doRIPThreeIdFuncQuantum(Func func, long nl, long nf, long spwid, string const &qunits, InverseLength::Units units)
 {
   Quantity rtn(std::vector<double> (1,-1.0), "");
   try {
     assert_unsigned_int(nl);
     assert_spwid_and_channel(spwid, nf);
     if (pRefractiveIndexProfile) {
-      rtn.units = units;
+      rtn.units = qunits;
       (rtn.value)[0] = func(pRefractiveIndexProfile,
 			    static_cast<unsigned int>(spwid),
 			    static_cast<unsigned int>(nf),
-			    static_cast<unsigned int>(nl)).get(rtn.units);
+			    static_cast<unsigned int>(nl)).get(units);
     } else {
       *itsLog << LogIO::WARN
 	      << "Please set spectral window(s) with initSpectralWindow first."

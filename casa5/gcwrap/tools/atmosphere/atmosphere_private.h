@@ -42,7 +42,7 @@ casac::Quantity doTwoIdATMFuncQuantum(Func func, ClassType pobj, long nc, long s
 // helper functions to invoke ATM functions in RefractiveIndexProfile class
 // for atmosphere functions which take two integer ids as paramters and return a quantity
 template<typename Func>
-casac::Quantity doRIPThreeIdFuncQuantum(Func func, long nl, long nf, long spwid, std::string units);
+casac::Quantity doRIPThreeIdFuncQuantum(Func func, long nl, long nf, long spwid, std::string const &qunits, atm::InverseLength::Units units);
 
 // clean-up members allocated by new
 inline void cleanUp() {
