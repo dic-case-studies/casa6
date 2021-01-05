@@ -2163,7 +2163,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
                                      airm,
                                      spwId[j],
                                      spwId_filter[j],
-                                     signalGain[j]), "K");
+                                     signalGain[j]), Temperature::UnitKelvin);
 
       res = -v_tebb_fit[j].get(Temperature::UnitKelvin) + (measuredAverageSkyTEBB[j]).get(Temperature::UnitKelvin);
       chisqr = chisqr + res * res;

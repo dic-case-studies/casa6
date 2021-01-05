@@ -353,7 +353,7 @@ public:
   Temperature getTebbSky(unsigned int spwid, unsigned int nc, double airmass)
   {
     return getTebbSky(spwid, nc, getUserWH2O(), airmass, 1.0, Temperature(100,
-                                                                          "K"));
+                                                                          Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel 0, for Water
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
@@ -634,7 +634,7 @@ public:
   Temperature getTrjSky(unsigned int spwid, unsigned int nc, double airmass)
   {
     return getTrjSky(spwid, nc, getUserWH2O(), airmass, 1.0, Temperature(100,
-                                                                          "K"));
+                                                                         Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel 0, for Water
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
