@@ -37,7 +37,7 @@ ATM_NAMESPACE_BEGIN
 WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdChannels)
 {
 
-  spilloverTemperature_ = Temperature(-999.0, "K");
+  spilloverTemperature_ = Temperature(-999.0, Temperature::UnitKelvin);
   IdChannels_ = IdChannels;
 
   Percent sg(50, Percent::UnitPercent); // IF DOUBLE SIDE BAND, Default Sideband Gain is 50%
@@ -55,7 +55,7 @@ WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdCh
                                            const std::vector<double> &skyCoupling)
 {
 
-  spilloverTemperature_ = Temperature(-999.0, "K");
+  spilloverTemperature_ = Temperature(-999.0, Temperature::UnitKelvin);
   IdChannels_ = IdChannels;
 
   /*    if(IdChannels.size()!=skyCoupling.size()){throw Error();} */
@@ -83,7 +83,7 @@ WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdCh
                                            const std::vector<Percent> &signalGain)
 {
 
-  spilloverTemperature_ = Temperature(-999.0, "K");
+  spilloverTemperature_ = Temperature(-999.0, Temperature::UnitKelvin);
   IdChannels_ = IdChannels;
 
   if(IdChannels.size() < signalGain.size()) {
@@ -110,7 +110,7 @@ WaterVaporRadiometer::WaterVaporRadiometer(const std::vector<unsigned int> &IdCh
                                            const std::vector<Percent> &signalGain)
 {
 
-  spilloverTemperature_ = Temperature(-999.0, "K");
+  spilloverTemperature_ = Temperature(-999.0, Temperature::UnitKelvin);
   IdChannels_ = IdChannels;
 
   if(IdChannels.size() < skyCoupling.size()) {

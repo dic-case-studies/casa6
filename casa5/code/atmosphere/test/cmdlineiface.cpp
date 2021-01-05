@@ -71,7 +71,7 @@ simpleAOSAtmo(double ghum,
   unsigned int   atmType = 1; // Atmospheric type (to reproduce behavior above the tropopause)
 
   Temperature T(vm["gtemp"].as<double>(),
-		"K" );
+		Temperature::UnitKelvin);
 
   Pressure         P(vm["gpress"].as<double>(),
 		     "mb");     // Ground Pressure

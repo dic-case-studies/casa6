@@ -187,10 +187,10 @@ public:
    performing water vapor retrieval */
   void setSkyBackgroundTemperature(const Temperature &skyBackgroundTemperature)
   {
-    if(skyBackgroundTemperature.get("K") == skyBackgroundTemperature_.get("K")) {
+    if(skyBackgroundTemperature.get(Temperature::UnitKelvin) == skyBackgroundTemperature_.get(Temperature::UnitKelvin)) {
     } else {
       skyBackgroundTemperature_
-          = Temperature(skyBackgroundTemperature.get("K"), "K");
+          = Temperature(skyBackgroundTemperature.get(Temperature::UnitKelvin), Temperature::UnitKelvin);
     }
   }
 
@@ -332,7 +332,7 @@ public:
                       getUserWH2O(),
                       getAirMass(),
                       1.0,
-                      Temperature(100, "K"));
+                      Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel 0, for the currnet
    (user) Water Vapor Column, Air Mass airmass, and perfect Sky Coupling to the sky */
@@ -373,7 +373,7 @@ public:
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
   Temperature getTebbSky(unsigned int spwid, unsigned int nc, const Length &wh2o)
   {
-    return getTebbSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, "K"));
+    return getTebbSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel nc, for the current
    (user) Water Vapor Column and Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -412,7 +412,7 @@ public:
                          const Length &wh2o,
                          double airmass)
   {
-    return getTebbSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, "K"));
+    return getTebbSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel nc, for Water
    Vapor Column wh2o, the current Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -613,7 +613,7 @@ public:
                       getUserWH2O(),
                       getAirMass(),
                       1.0,
-                      Temperature(100, "K"));
+                      Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel 0, for the currnet
    (user) Water Vapor Column, Air Mass airmass, and perfect Sky Coupling to the sky */
@@ -654,7 +654,7 @@ public:
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
   Temperature getTrjSky(unsigned int spwid, unsigned int nc, const Length &wh2o)
   {
-    return getTrjSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, "K"));
+    return getTrjSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel nc, for the current
    (user) Water Vapor Column and Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -693,7 +693,7 @@ public:
                          const Length &wh2o,
                          double airmass)
   {
-    return getTrjSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, "K"));
+    return getTrjSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel nc, for Water
    Vapor Column wh2o, the current Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */

@@ -120,7 +120,7 @@ AtmProfile::AtmProfile(const Length &altitude,
       for(unsigned int m = 0; m < nL1; m++) {
 	if( h0 <= v_layerBoundaries[m].get("m") && h1 >= v_layerBoundaries[m].get("m") ){
 	  //	  std::cout << "n=" << n << " h0=" << h0 << " h1=" << h1 << " v_layerBoundaries[" << m << "]=" <<  v_layerBoundaries[m].get("m") << std::endl;
-	  avT = avT + v_layerTemperature[m].get("K");
+	  avT = avT + v_layerTemperature[m].get();
 	  counter = counter + 1.0;
 	}
       }
@@ -175,9 +175,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -212,9 +212,9 @@ AtmProfile::AtmProfile(const vector<Length> &v_layerBoundaries,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerBoundaries[n+1].get("m") - v_layerBoundaries[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -249,9 +249,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -289,9 +289,9 @@ AtmProfile::AtmProfile(const vector<Length> &v_layerBoundaries,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerBoundaries[n+1].get("m") - v_layerBoundaries[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -331,9 +331,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -370,9 +370,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -421,9 +421,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(v_layerNO2[n].get("m**-3"));
       v_layerSO2_.push_back(v_layerSO2[n].get("m**-3"));
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -469,9 +469,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerNO2_.push_back(v_layerNO2[n].get("m**-3"));
       v_layerSO2_.push_back(v_layerSO2[n].get("m**-3"));
       v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
       v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
       v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
       v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
@@ -563,7 +563,7 @@ void AtmProfile::initBasicAtmosphericParameterThresholds()
 {
   altitudeThreshold_ = Length(1.0,"m");
   groundPressureThreshold_ =  Pressure(99.,"Pa");  // DB 2014-03-06 : Choose 99 Pascal instead of 100 Pascal because the threshold must be lower than the value of delta_pressure used in getAverageDispersiveDryPathLength_GroundPressureDerivative()
-  groundTemperatureThreshold_ =  Temperature(0.3,"K");
+  groundTemperatureThreshold_ =  Temperature(0.3,Temperature::UnitKelvin);
   tropoLapseRateThreshold_ = 0.01;
   relativeHumidityThreshold_ = Humidity(100.,Percent::UnitPercent);
   wvScaleHeightThreshold_ = Length(20.,"m");
@@ -599,7 +599,7 @@ bool AtmProfile::updateAtmProfile(const Length &altitude,
     mkNewProfile = true;
     //cout<<"ground pressure has changed"   <<endl;
   }
-  if(fabs(groundTemperature_.get()-groundTemperature.get()) > groundTemperatureThreshold_.get()) { //  Temperature(0.3,"K").get()) {
+  if(fabs(groundTemperature_.get()-groundTemperature.get()) > groundTemperatureThreshold_.get()) { //  Temperature(0.3,Temperature::UnitKelvin).get()) {
     mkNewProfile = true;
     //cout<<"ground temperature has changed"<<endl;
   }
@@ -675,7 +675,7 @@ vector<Temperature> AtmProfile::getTemperatureProfile() const
   vector<Temperature> t;
   t.reserve(v_layerTemperature_.size());
   for(unsigned int i = 0; i < v_layerTemperature_.size(); i++) {
-    Temperature tt(v_layerTemperature_[i], "K");
+    Temperature tt(v_layerTemperature_[i], Temperature::UnitKelvin);
     t.push_back(tt);
   }
   return t;
@@ -684,10 +684,10 @@ vector<Temperature> AtmProfile::getTemperatureProfile() const
 Temperature AtmProfile::getLayerTemperature(unsigned int i) const
 {
   /*if(i > v_layerTemperature_.size() - 1) {
-    Temperature t(-999.0, "K");
+    Temperature t(-999.0, Temperature::UnitKelvin);
     return t;
   } else {
-    Temperature t(v_layerTemperature_[i], "K");
+    Temperature t(v_layerTemperature_[i], Temperature::UnitKelvin);
     return t;
   }*/
   if(i > v_layerTemperature_.size() - 1) {
@@ -695,7 +695,7 @@ Temperature AtmProfile::getLayerTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature_[i], "K");
+  return Temperature(v_layerTemperature_[i], Temperature::UnitKelvin);
 }
 
 Temperature AtmProfile::getLayerBottomTemperature(unsigned int i) const
@@ -705,7 +705,7 @@ Temperature AtmProfile::getLayerBottomTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature0_[i], "K");
+  return Temperature(v_layerTemperature0_[i], Temperature::UnitKelvin);
 }
 
 Temperature AtmProfile::getLayerTopTemperature(unsigned int i) const
@@ -715,7 +715,7 @@ Temperature AtmProfile::getLayerTopTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature1_[i], "K");
+  return Temperature(v_layerTemperature1_[i], Temperature::UnitKelvin);
 }
 
 
@@ -862,11 +862,11 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
   groundPressure_ = v_layerPressure0_[0]*100.0;  // default units for Pressure are Pascals
 
   /*
-  const Temperature Tdif(((true_antenna_altitude.get("km")-altitude.get("km"))*tropoLapseRate),"K");
+  const Temperature Tdif(((true_antenna_altitude.get("km")-altitude.get("km"))*tropoLapseRate),Temperature::UnitKelvin);
   groundTemperature_ = groundTemperature+Tdif;
   groundPressure_ = groundPressure * exp(-0.0341695 * pow((6.371/(6.371+altitude.get("km"))),2.0)
 					 * (true_antenna_altitude.get("m")-altitude.get("m"))
-					 / ((groundTemperature.get("K")+Tdif.get("K"))/2.0) );
+					 / ((groundTemperature.get(Temperature::UnitKelvin)+Tdif.get(Temperature::UnitKelvin))/2.0) );
   */
 
 
@@ -876,7 +876,7 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 void AtmProfile::setLayerTemperature(unsigned int i, const Temperature &layerTemperature)
 {
   if(i < v_layerTemperature_.size()) {
-    v_layerTemperature_[i] = layerTemperature.get("K");
+    v_layerTemperature_[i] = layerTemperature.get(Temperature::UnitKelvin);
   }
 }
 
@@ -1119,7 +1119,7 @@ Length AtmProfile::getGroundWH2O() const
 
 MassDensity AtmProfile::rwat(const Temperature &tt, const Humidity &rh, const Pressure &pp) const
 {
-  double t = tt.get("K");
+  double t = tt.get(Temperature::UnitKelvin);
   double p = pp.get("mb");
   double u = rh.get("%");
   double e, es, rwat0;
@@ -1138,7 +1138,7 @@ MassDensity AtmProfile::rwat(const Temperature &tt, const Humidity &rh, const Pr
 Humidity AtmProfile::rwat_inv(const Temperature &tt, const MassDensity &dd, const Pressure &pp) const
 {
   double p = pp.get("mb");
-  double t = tt.get("K");
+  double t = tt.get(Temperature::UnitKelvin);
   double r = dd.get("gm**-3");
   double es, e, rinv;
 
@@ -1556,7 +1556,7 @@ unsigned int AtmProfile::mkAtmProfile()
 		      227.340, 236.110, 252.746, 268.936, 265.057, 250.174, 233.026, 212.656, 196.466,
                       187.260, 189.204}   };
 
-  double T_ground = groundTemperature_.get("K"); //  std::cout<<"T_ground: " << T_ground <<"K"<<endl;
+  double T_ground = groundTemperature_.get(Temperature::UnitKelvin); //  std::cout<<"T_ground: " << T_ground <<"K"<<endl;
   double P_ground = groundPressure_.get("mb"); //  std::cout<<"P_ground: " << P_ground <<"mb"<<endl;
   double rh = relativeHumidity_.get(Percent::UnitPercent); //  std::cout<<"rh:       " << rh <<"%"<<endl;
   double h0 = wvScaleHeight_.get("km"); //  std::cout<<"h0:       " << h0 <<"km"<<endl;
@@ -1645,7 +1645,7 @@ unsigned int AtmProfile::mkAtmProfile()
   v_layerThickness.push_back(alti * 1000);
   v_layerTemperature.push_back(T_ground);
 
-  wgr = rwat(Temperature(v_layerTemperature[0], "K"),
+  wgr = rwat(Temperature(v_layerTemperature[0], Temperature::UnitKelvin),
              Humidity(rh, Percent::UnitPercent),
              Pressure(v_layerPressure[0], "mb")).get("gm**-3");
 
@@ -1807,7 +1807,7 @@ unsigned int AtmProfile::mkAtmProfile()
       	  // std::cout << "new prLimit =" << prLimit << std::endl;
 	}
 
-//       humrel = rwat_inv(Temperature(v_layerTemperature[i], "K"),
+//       humrel = rwat_inv(Temperature(v_layerTemperature[i], Temperature::UnitKelvin),
 //                         MassDensity(v_layerWaterVapor[i], "gm**-3"),
 //                         Pressure(v_layerPressure[i], "mb")).get("%");
 
@@ -1827,13 +1827,13 @@ unsigned int AtmProfile::mkAtmProfile()
 
   // std::cout << "npp=" << npp << std::endl;
   // std::cout << "tropoLayer=" << tropoLayer_ << std::endl;
-  tropoTemperature_ = Temperature(v_layerTemperature[tropoLayer_], "K");
+  tropoTemperature_ = Temperature(v_layerTemperature[tropoLayer_], Temperature::UnitKelvin);
   tropoAltitude_ = Length(v_layerThickness[tropoLayer_], "m");
   // std::cout << "tropoAltitude=" << tropoAltitude_.get("km") << " km" << std::endl;
-  // std::cout << "tropoTemperature=" << tropoTemperature_.get("K") << " K" << std::endl;
+  // std::cout << "tropoTemperature=" << tropoTemperature_.get(Temperature::UnitKelvin) << " K" << std::endl;
   // std::cout << "ground Altitude=" << altitude_.get("km") << " km" << std::endl;
-  // std::cout << "ground Temperature=" << groundTemperature_.get("K") << " K" << std::endl;
-  // std::cout << "Calculated Lapse Rate=" << (tropoTemperature_.get("K")-groundTemperature_.get("K"))/(tropoAltitude_.get("km")-altitude_.get("km")) << " K/km" << std::endl;
+  // std::cout << "ground Temperature=" << groundTemperature_.get(Temperature::UnitKelvin) << " K" << std::endl;
+  // std::cout << "Calculated Lapse Rate=" << (tropoTemperature_.get(Temperature::UnitKelvin)-groundTemperature_.get(Temperature::UnitKelvin))/(tropoAltitude_.get("km")-altitude_.get("km")) << " K/km" << std::endl;
 
 
   altura = alti;

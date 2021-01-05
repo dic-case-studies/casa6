@@ -159,7 +159,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     check_atmtype_enum(atmtype);
     Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
-    Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
+    Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
     Humidity       H(humidity, Percent::UnitPercent);
     Length       WVL((casaQuantity(h0)).getValue("km"),"km");
@@ -175,7 +175,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     ostringstream oss;
     oss<<"BASIC ATMOSPHERIC PARAMETERS TO GENERATE REFERENCE ATMOSPHERIC PROFILE"<<endl;
     oss<<"  "<<endl;
-    oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
+    oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
     oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
     oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
@@ -206,7 +206,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     	vector<Temperature> layerTemp(num_user_layer);
     	for (size_t i = 0 ; i < num_user_layer ; ++i) {
     		layerAlt[i] = Length(layerBoundaries[i], "m");
-    		layerTemp[i] = Temperature(layerTemperature[i], "K");
+    		layerTemp[i] = Temperature(layerTemperature[i], Temperature::UnitKelvin);
     	}
         pAtmProfile = new AtmProfile( Alt, P, T, TLR, H, WVL, Pstep, PstepFact,
     					  topAtm, atmType, layerAlt, layerTemp );
@@ -239,7 +239,7 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
   try {
     Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
-    Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
+    Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
     Humidity       H(humidity, Percent::UnitPercent);
     Length       WVL((casaQuantity(h0)).getValue("km"),"km");
@@ -273,7 +273,7 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
     ostringstream oss;
     oss<<"UPDATED BASIC ATMOSPHERIC PARAMETERS TO GENERATE REFERENCE ATMOSPHERIC PROFILE"<<endl;
     oss<<"  "<<endl;
-    oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
+    oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
     oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
     oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
@@ -309,7 +309,7 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
       Length Alt = pAtmProfile->getAltitude();
       altitude.value[0] = Alt.get("m"); altitude.units = "m";
       Temperature T = pAtmProfile->getGroundTemperature();
-      temperature.value[0] = T.get("K"); temperature.units = "K";
+      temperature.value[0] = T.get(Temperature::UnitKelvin); temperature.units = "K";
       Pressure P = pAtmProfile->getGroundPressure();
       pressure.value[0] = P.get("mb"); pressure.units = "mbar";
       Length topAtm = pAtmProfile->getTopAtmProfile();

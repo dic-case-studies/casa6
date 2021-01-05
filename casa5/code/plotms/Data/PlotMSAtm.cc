@@ -395,7 +395,7 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
     if (!showatm_) {
         TebbSky.resize(numCalcChan);
         for (uInt chan=0; chan<numCalcChan; ++chan) {
-            TebbSky(chan) = skyStatus->getTebbSky(0, chan).get("K");
+            TebbSky(chan) = skyStatus->getTebbSky(0, chan).get(atm::Temperature::UnitKelvin);
         }
     }
 
@@ -437,7 +437,7 @@ atm::AtmProfile* PlotMSAtm::getAtmProfile() {
     atm::AtmProfile* atmProfile = new atm::AtmProfile(
         atm::Length(altitude,"m"),
         atm::Pressure(weather_.asDouble("pressure"), "mb"),
-        atm::Temperature(weather_.asDouble("temperature"), "K"), TLR,
+        atm::Temperature(weather_.asDouble("temperature"), atm::Temperature::UnitKelvin), TLR,
         atm::Humidity(weather_.asDouble("humidity"),atm::Percent::UnitPercent), atm::Length(h0,"km"),
         atm::Pressure(dp, "mb"), dPm, atm::Length(maxAlt, "km"), atmtype);
     return atmProfile;

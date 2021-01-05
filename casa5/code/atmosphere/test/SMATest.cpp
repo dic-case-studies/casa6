@@ -149,7 +149,7 @@ simpleMKAtmo(void)
   // Atmospheric type (to reproduce behavior above the tropopause)
   unsigned int  atmType=1;
   // Ground temperature
-  atm::Temperature T( 268.15,"K");
+  atm::Temperature T( 268.15,Temperature::UnitKelvin);
   // Ground Pressure
   atm::Pressure P( 623.0,"mb");
   // Ground Relative Humidity (indication)
@@ -273,7 +273,7 @@ void printWVRFit(atm::SkyStatus &ss,
   o<<"The average Sigma of this ensemble of fits is: "
    <<ss.getWVRAverageSigmaTskyFit(data,
 				  f,
-				  f+l).get("K")
+				  f+l).get(Temperature::UnitKelvin)
    <<"K"<<std::endl;
 
   for(size_t i=f;
@@ -285,15 +285,15 @@ void printWVRFit(atm::SkyStatus &ss,
 
     for (size_t j =0; j < 8 ; ++j)
     {
-      o<<data[i].getmeasuredSkyBrightness()[j].get("K")
+      o<<data[i].getmeasuredSkyBrightness()[j].get(Temperature::UnitKelvin)
        <<"("
-       <<data[i].getfittedSkyBrightness()[j].get("K")
+       <<data[i].getfittedSkyBrightness()[j].get(Temperature::UnitKelvin)
        << ") ";
     }
     o<<std::endl;
 
     o<<" Sigma Fit: "
-     <<data[i].getSigmaFit().get("K")
+     <<data[i].getSigmaFit().get(Temperature::UnitKelvin)
      <<" K / Retrieved Water Vapor Column: "
      <<data[i].getretrievedWaterVaporColumn().get("mm") <<" mm "
      <<std::endl;
@@ -346,7 +346,7 @@ void analyse(const char *fname,
 							  c_guess),
 				      std::vector<atm::Percent>(WVR_signalId.size(),
 								atm::Percent(100.0,Percent::UnitPercent)),
-				      atm::Temperature(268.15,"K"));
+				      atm::Temperature(268.15,Temperature::UnitKelvin));
 
 
   std::vector<atm::WVRMeasurement> RadiometerData;

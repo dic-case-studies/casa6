@@ -371,7 +371,7 @@ void AtmosCorruptor::initAtm() {
   os << LogIO::DEBUG1 << " defining observatory ground characteristics.."
      << LogIO::POST;
 
-  atm::Temperature  T( 270.0,"K" );   // Ground temperature
+  atm::Temperature  T( 270.0,atm::Temperature::UnitKelvin );   // Ground temperature
   atm::Pressure     P( 560.0,"mb");   // Ground Pressure
   atm::Humidity     H(  20,atm::Percent::UnitPercent );     // Ground Relative Humidity (ind)
   atm::Length       Alt(  5000,"m" ); // Altitude of the site
@@ -379,7 +379,7 @@ void AtmosCorruptor::initAtm() {
 
   // user defined observatory info
   if (simpar().isDefined("tground"))
-    T=atm::Temperature(simpar().asFloat("tground"),"K");
+    T=atm::Temperature(simpar().asFloat("tground"),atm::Temperature::UnitKelvin);
   if (simpar().isDefined("pground"))
     P=atm::Pressure(simpar().asFloat("pground"),"mb");
   if (simpar().isDefined("relhum"))
@@ -397,7 +397,7 @@ void AtmosCorruptor::initAtm() {
 
   os << "Initializing ATM" << LogIO::POST;
   os << "altitude="<<Alt.get("m")<<"m, Pground="<<P.get("mbar")<<"mb, " <<
-    "Tground="<<T.get("K")<<"K, humidity= "<<H.get("%")<<"%, " <<
+    "Tground="<<T.get(atm::Temperature::UnitKelvin)<<"K, humidity= "<<H.get("%")<<"%, " <<
     "water scale height="<<WVL.get("m")<<"m"<<LogIO::POST;
 
   itsatm = new atm::AtmProfile(Alt, P, T, TLR,
@@ -573,7 +573,7 @@ void AtmosCorruptor::initAtm() {
      << LogIO::POST;
   os << " Zenith Tebb["
      << f0.get("GHz") << "," << fm.get("GHz") << "," << f1.get("GHz") << "]=["
-     << t0.get("K")   << "," << tm.get("K")   << "," << t1.get("K") << "]" << LogIO::POST;
+     << t0.get(atm::Temperature::UnitKelvin)   << "," << tm.get(atm::Temperature::UnitKelvin)   << "," << t1.get(atm::Temperature::UnitKelvin) << "]" << LogIO::POST;
 
 }
 
@@ -733,8 +733,8 @@ Float AtmosCorruptor::tsys(const Float& airmass) {
       // cmb is already in ATM Tebb (but not in manual one below)
       // and Trx don't need the plank correction
       // does Tebb need the plank?  2012/06/27 yes its a real temp
-      R = exp(tau) * ( 1./(exp(hn_k/tatmosatm.get("K"))-1.) + trx()/hn_k );
-      //R = exp(tau) * ( tatmosatm.get("K")/hn_k + trx()/hn_k );
+      R = exp(tau) * ( 1./(exp(hn_k/tatmosatm.get(atm::Temperature::UnitKelvin))-1.) + trx()/hn_k );
+      //R = exp(tau) * ( tatmosatm.get(atm::Temperature::UnitKelvin)/hn_k + trx()/hn_k );
 
     } else {
       tau = tau*tauscale();
