@@ -110,8 +110,8 @@ void dispersive_fgrid(const boost::program_options::variables_map &vm)
   {
     oRow(std::cout,
 	 grid.getChanFreq(i).get(),
-	 rip.getNonDispersiveH2OPathLength(atm::Length(pwv,"mm"),i).get(),
-	 rip.getDispersiveH2OPathLength(atm::Length(pwv,"mm"),i).get(),
+	 rip.getNonDispersiveH2OPathLength(atm::Length(pwv,atm::Length::UnitMilliMeter),i).get(),
+	 rip.getDispersiveH2OPathLength(atm::Length(pwv,atm::Length::UnitMilliMeter),i).get(),
 	 rip.getNonDispersiveDryPathLength(i).get());
   }
 }

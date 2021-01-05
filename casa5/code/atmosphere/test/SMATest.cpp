@@ -155,13 +155,13 @@ simpleMKAtmo(void)
   // Ground Relative Humidity (indication)
   atm::Humidity H(11.30,Percent::UnitPercent);
   // Altitude of the site
-  atm::Length Alt(4100,"m");
+  atm::Length Alt(4100,atm::Length::UnitMeter);
   // Water vapor scale height
-  atm::Length WVL(2.2,"km");
+  atm::Length WVL(2.2,atm::Length::UnitKiloMeter);
   // Tropospheric lapse rate (must be in K/km)
   double TLR=-5.6;
   // Upper atm. boundary for calculations
-  atm::Length topAtm(  48.0,"km");
+  atm::Length topAtm(  48.0,atm::Length::UnitKiloMeter);
   // Primary pressure step (10.0 mb)
   atm::Pressure Pstep(  10.0,"mb");
   // Pressure step ratio between two consecutive layers
@@ -295,7 +295,7 @@ void printWVRFit(atm::SkyStatus &ss,
     o<<" Sigma Fit: "
      <<data[i].getSigmaFit().get(Temperature::UnitKelvin)
      <<" K / Retrieved Water Vapor Column: "
-     <<data[i].getretrievedWaterVaporColumn().get("mm") <<" mm "
+     <<data[i].getretrievedWaterVaporColumn().get(Length::UnitMilliMeter) <<" mm "
      <<std::endl;
   }
 

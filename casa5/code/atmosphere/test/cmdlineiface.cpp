@@ -79,14 +79,14 @@ simpleAOSAtmo(double ghum,
   Humidity         H(  ghum,Percent::UnitPercent );     // Ground Relative Humidity (indication)
 
   Length         Alt(vm["altitude"].as<double>(),
-		     "m");     // Altitude of the site
+		     Length::UnitMeter);     // Altitude of the site
 
   Length WVL(vm["wvl"].as<double>(),
-	     "km");
+	     Length::UnitKiloMeter);
 
   double TLR=vm["tlr"].as<double>();
 
-  Length      topAtm(  48.0,"km");     // Upper atm. boundary for calculations
+  Length      topAtm(  48.0,Length::UnitKilometer);     // Upper atm. boundary for calculations
   Pressure     Pstep(  1.0,"mb");     // Primary pressure step
   double   PstepFact=         1.2;     // Pressure step ratio between two consecutive layers
 
@@ -118,7 +118,7 @@ AOSAtmo_pwv(const boost::program_options::variables_map &vm)
   // people are concerned with lower relative humidity regions
   for(size_t i=0; i<10; ++i)
   {
-    ghum_guess= ghum_guess * pwv/p1->getGroundWH2O().get("mm");
+    ghum_guess= ghum_guess * pwv/p1->getGroundWH2O().get(Length::UnitMilliMeter);
     p1=simpleAOSAtmo(ghum_guess,
 		     vm);
   }

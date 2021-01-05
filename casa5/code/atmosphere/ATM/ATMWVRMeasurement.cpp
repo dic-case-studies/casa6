@@ -41,7 +41,7 @@ WVRMeasurement::WVRMeasurement(const Angle &elevation,
 {
   elevation_ = elevation;
   v_measuredSkyBrightness_ = measuredSkyBrightness;
-  retrievedWaterVaporColumn_ = Length(-999, "mm"); // !< Retrieved zenith water vapor column for each event
+  retrievedWaterVaporColumn_ = Length(-999, Length::UnitMilliMeter); // !< Retrieved zenith water vapor column for each event
   sigma_fittedSkyBrightness_ = Temperature(-999, Temperature::UnitKelvin); // !< Sigma on the fitted sky brightness temperatures (average sigma over the WVR channels for each event).
   for(unsigned int i = 0; i < v_measuredSkyBrightness_.size(); i++) {
     v_fittedSkyBrightness_.push_back(Temperature(-999, Temperature::UnitKelvin));

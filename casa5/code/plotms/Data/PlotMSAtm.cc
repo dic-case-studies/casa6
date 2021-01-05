@@ -378,7 +378,7 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
     atm::RefractiveIndexProfile* refIdxProfile =
         new atm::RefractiveIndexProfile(*specGrid, *atmProfile);
     atm::SkyStatus* skyStatus = new atm::SkyStatus(*refIdxProfile);
-    skyStatus->setUserWH2O(atm::Length(pwv_, "mm"));
+    skyStatus->setUserWH2O(atm::Length(pwv_, atm::Length::UnitMilliMeter));
 
     // calculate opacities and airmass
     casacore::Vector<casacore::Double> dryOpacity(numCalcChan);
@@ -435,11 +435,11 @@ atm::AtmProfile* PlotMSAtm::getAtmProfile() {
     casacore::Double TLR(-5.6), h0(2.0), dp(10.0), dPm(1.2), maxAlt(48.0);
     unsigned int atmtype(atm::midlatWinter);
     atm::AtmProfile* atmProfile = new atm::AtmProfile(
-        atm::Length(altitude,"m"),
+        atm::Length(altitude,atm::Length::UnitMeter),
         atm::Pressure(weather_.asDouble("pressure"), "mb"),
         atm::Temperature(weather_.asDouble("temperature"), atm::Temperature::UnitKelvin), TLR,
-        atm::Humidity(weather_.asDouble("humidity"),atm::Percent::UnitPercent), atm::Length(h0,"km"),
-        atm::Pressure(dp, "mb"), dPm, atm::Length(maxAlt, "km"), atmtype);
+        atm::Humidity(weather_.asDouble("humidity"),atm::Percent::UnitPercent), atm::Length(h0,atm::Length::UnitKiloMeter),
+        atm::Pressure(dp, "mb"), dPm, atm::Length(maxAlt, atm::Length::UnitKiloMeter), atmtype);
     return atmProfile;
 }
 

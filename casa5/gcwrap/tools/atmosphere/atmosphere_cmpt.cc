@@ -157,15 +157,15 @@ atmosphere::initAtmProfile(const Quantity& altitude,
 
   try {
     check_atmtype_enum(atmtype);
-    Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
+    Length       Alt((casaQuantity(altitude)).getValue("m"),Length::UnitMeter);
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
     Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
     Humidity       H(humidity, Percent::UnitPercent);
-    Length       WVL((casaQuantity(h0)).getValue("km"),"km");
+    Length       WVL((casaQuantity(h0)).getValue("km"),Length::UnitKiloMeter);
     Pressure   Pstep((casaQuantity(dP)).getValue("mbar"), "mb");
     double PstepFact(dPm);
-    Length    topAtm((casaQuantity(maxAltitude)).getValue("m"), "m");
+    Length    topAtm((casaQuantity(maxAltitude)).getValue("m"), Length::UnitMeter);
     unsigned int atmType = (unsigned int)atmtype;
 
     ThrowIf(layerBoundaries.size() != layerTemperature.size(),
@@ -178,10 +178,10 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
     oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
-    oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
+    oss<<"Scale height h0:              " << WVL.get(Length::UnitKiloMeter)   << " km"   <<endl;
     oss<<"Pressure step dp:             " << Pstep.get("mb") << " mb"   <<endl;
-    oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
-    oss<<"Attitude top atm profile:     " << topAtm.get("km")<< " km"   <<endl;
+    oss<<"Altitude alti:                " << Alt.get(Length::UnitMeter)    << " m"    <<endl;
+    oss<<"Attitude top atm profile:     " << topAtm.get(Length::UnitKiloMeter)<< " km"   <<endl;
     oss<<"Pressure step factor:         " << PstepFact          << " "    <<endl;
     oss<<"Tropospheric lapse rate:      " << TLR                << " K/km" <<endl;
 
@@ -205,7 +205,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     	vector<Length> layerAlt(num_user_layer);
     	vector<Temperature> layerTemp(num_user_layer);
     	for (size_t i = 0 ; i < num_user_layer ; ++i) {
-    		layerAlt[i] = Length(layerBoundaries[i], "m");
+    		layerAlt[i] = Length(layerBoundaries[i], Length::UnitMeter);
     		layerTemp[i] = Temperature(layerTemperature[i], Temperature::UnitKelvin);
     	}
         pAtmProfile = new AtmProfile( Alt, P, T, TLR, H, WVL, Pstep, PstepFact,
@@ -237,12 +237,12 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
 {
   string rtn;
   try {
-    Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
+    Length       Alt((casaQuantity(altitude)).getValue("m"),Length::UnitMeter);
     Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
     Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
     Humidity       H(humidity, Percent::UnitPercent);
-    Length       WVL((casaQuantity(h0)).getValue("km"),"km");
+    Length       WVL((casaQuantity(h0)).getValue("km"),Length::UnitKiloMeter);
     if (pAtmProfile) {
       if (! pAtmProfile->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	*itsLog << LogIO::WARN
@@ -276,8 +276,8 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
     oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
     oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
-    oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
-    oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
+    oss<<"Scale height h0:              " << WVL.get(Length::UnitKiloMeter)   << " km"   <<endl;
+    oss<<"Altitude alti:                " << Alt.get(Length::UnitMeter)    << " m"    <<endl;
     oss<<"Tropospheric lapse rate:      " << TLR                << " K/km" <<endl;
     oss<<endl;
     rtn = oss.str();
@@ -307,13 +307,13 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
       dP.value.resize(1);
       h0.value.resize(1);
       Length Alt = pAtmProfile->getAltitude();
-      altitude.value[0] = Alt.get("m"); altitude.units = "m";
+      altitude.value[0] = Alt.get(Length::UnitMeter); altitude.units = "m";
       Temperature T = pAtmProfile->getGroundTemperature();
       temperature.value[0] = T.get(Temperature::UnitKelvin); temperature.units = "K";
       Pressure P = pAtmProfile->getGroundPressure();
       pressure.value[0] = P.get("mb"); pressure.units = "mbar";
       Length topAtm = pAtmProfile->getTopAtmProfile();
-      maxAltitude.value[0] = topAtm.get("km"); maxAltitude.units = "km";
+      maxAltitude.value[0] = topAtm.get(Length::UnitKiloMeter); maxAltitude.units = "km";
       Humidity H = pAtmProfile->getRelativeHumidity();
       humidity = H.get(Percent::UnitPercent);
       double TLR = pAtmProfile->getTropoLapseRate();
@@ -323,7 +323,7 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
       Pressure PstepFact = pAtmProfile->getPressureStepFactor();
       dPm = PstepFact.get("Pa");
       Length WVL = pAtmProfile->getWvScaleHeight();
-      h0.value[0] = WVL.get("km"); h0.units = "km";
+      h0.value[0] = WVL.get(Length::UnitKiloMeter); h0.units = "km";
       atmType = pAtmProfile->getAtmosphereType();
 
       ostringstream oss;
@@ -412,7 +412,7 @@ atmosphere::getGroundWH2O()
     if (pAtmProfile) {
       atm::Length gw = pAtmProfile->getGroundWH2O();
       std::vector<double> qvalue(1);
-      qvalue[0] = gw.get("mm");
+      qvalue[0] = gw.get(Length::UnitMilliMeter);
       q.value = qvalue;
       q.units = "mm";
     } else {
@@ -1075,7 +1075,7 @@ atmosphere::getDispersiveWetPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDispersiveH2OPathLength(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1085,7 +1085,7 @@ atmosphere::getNonDispersiveWetPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveH2OPathLength(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1095,7 +1095,7 @@ atmosphere::getNonDispersiveDryPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveDryPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1105,7 +1105,7 @@ atmosphere::getO2LinesPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO2LinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1115,7 +1115,7 @@ atmosphere::getO3LinesPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO3LinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1125,7 +1125,7 @@ atmosphere::getCOLinesPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getCOLinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1135,7 +1135,7 @@ atmosphere::getN2OLinesPathLength(long nc, long spwid)
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getN2OLinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1155,7 +1155,7 @@ atmosphere::getDispersivePathLength(long nc, long spwid)
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getDispersiveH2OPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
@@ -1165,7 +1165,7 @@ atmosphere::getNonDispersivePathLength(long nc, long spwid)
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getNonDispersiveH2OPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Length::UnitMeter);
 }
 
 

@@ -1081,8 +1081,8 @@ public:
   }
   double getAverageH2OPathLengthDerivative(unsigned int spwid)
   {
-    return getAverageH2OPathLength(spwid).get("microns")
-        / getUserWH2O().get("microns");
+    return getAverageH2OPathLength(spwid).get(Length::UnitMicrons)
+        / getUserWH2O().get(Length::UnitMicrons);
   } // in microns/micron_H2O
   double getAverageH2OPathLengthDerivative()
   {

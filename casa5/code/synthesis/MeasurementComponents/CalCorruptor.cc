@@ -374,8 +374,8 @@ void AtmosCorruptor::initAtm() {
   atm::Temperature  T( 270.0,atm::Temperature::UnitKelvin );   // Ground temperature
   atm::Pressure     P( 560.0,"mb");   // Ground Pressure
   atm::Humidity     H(  20,atm::Percent::UnitPercent );     // Ground Relative Humidity (ind)
-  atm::Length       Alt(  5000,"m" ); // Altitude of the site
-  atm::Length       WVL(   2.0,"km"); // Water vapor scale height
+  atm::Length       Alt(  5000,atm::Length::UnitMeter ); // Altitude of the site
+  atm::Length       WVL(   2.0,atm::Length::UnitKiloMeter); // Water vapor scale height
 
   // user defined observatory info
   if (simpar().isDefined("tground"))
@@ -385,20 +385,20 @@ void AtmosCorruptor::initAtm() {
   if (simpar().isDefined("relhum"))
     H=atm::Humidity(simpar().asFloat("relhum"),atm::Percent::UnitPercent);
   if (simpar().isDefined("altitude"))
-    Alt=atm::Length(simpar().asFloat("altitude"),"m");
+    Alt=atm::Length(simpar().asFloat("altitude"),atm::Length::UnitMeter);
   if (simpar().isDefined("waterheight"))
-    WVL=atm::Length(simpar().asFloat("waterheight"),"km");
+    WVL=atm::Length(simpar().asFloat("waterheight"),atm::Length::UnitKiloMeter);
 
   double TLR = -5.6;     // Tropospheric lapse rate (must be in K/km)
-  atm::Length  topAtm(  48.0,"km");   // Upper atm. boundary for calculations
+  atm::Length  topAtm(  48.0,atm::Length::UnitKiloMeter);   // Upper atm. boundary for calculations
   atm::Pressure Pstep(  10.0,"mb");   // Primary pressure step
   double PstepFact = 1.2; // Pressure step ratio between two consecutive layers
   unsigned int atmType = 1;//atm::tropical;
 
   os << "Initializing ATM" << LogIO::POST;
-  os << "altitude="<<Alt.get("m")<<"m, Pground="<<P.get("mbar")<<"mb, " <<
+  os << "altitude="<<Alt.get(atm::Length::UnitMeter)<<"m, Pground="<<P.get("mbar")<<"mb, " <<
     "Tground="<<T.get(atm::Temperature::UnitKelvin)<<"K, humidity= "<<H.get(atm::Percent::UnitPercent)<<"%, " <<
-    "water scale height="<<WVL.get("m")<<"m"<<LogIO::POST;
+    "water scale height="<<WVL.get(atm::Length::UnitMeter)<<"m"<<LogIO::POST;
 
   itsatm = new atm::AtmProfile(Alt, P, T, TLR,
 			       H, WVL, Pstep, PstepFact,
@@ -515,7 +515,7 @@ void AtmosCorruptor::initAtm() {
   //  Angle getDispersiveH2OPhaseDelay()
 
 //  os << "DispersiveWetPathLength = "
-//     << itsRIP->getDispersiveH2OPathLength().get("micron")
+//     << itsRIP->getDispersiveH2OPathLength().get(atm::Length::UnitMicron)
 //     << " microns at "
 //     << fRefFreq()[0]/1e9 << " GHz; dryOpacity = "
 //     << itsRIP->getDryOpacity(currSpw(),focusChan()).get()
@@ -525,11 +525,11 @@ void AtmosCorruptor::initAtm() {
 //     << itsSkyStatus->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg"
 //     << LogIO::POST;
 
-  itsSkyStatus->setUserWH2O(atm::Length(mean_pwv(),"mm"));  // set WH2O
+  itsSkyStatus->setUserWH2O(atm::Length(mean_pwv(),atm::Length::UnitMilliMeter));  // set WH2O
 
-  os << "After setting WH2O to " << itsSkyStatus->getUserWH2O().get("mm") << LogIO::POST;
+  os << "After setting WH2O to " << itsSkyStatus->getUserWH2O().get(atm::Length::UnitMilliMeter) << LogIO::POST;
 
-//   os << "after setting WH20 to " << itsSkyStatus->getUserWH2O().get("mm")
+//   os << "after setting WH20 to " << itsSkyStatus->getUserWH2O().get(atm::Length::UnitMilliMeter)
 //      << ", DispersiveH2ODelay (RefIPfl) = "
 //     //<< itsRIP->getDispersiveH2OPhaseDelay(currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg, "
 //      << itsRIP->getDispersiveH2OPhaseDelay(itsRIP->getGroundWH2O(),currSpw(),focusChan()).get(atm::Angle::UnitDegree) << " deg, "
@@ -545,7 +545,7 @@ void AtmosCorruptor::initAtm() {
   os << "Dry and Wet Opacity from RefractiveIndexProfile = " <<
     itsRIP->getDryOpacity(0,ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper)
      << ", " <<
-    itsRIP->getWetOpacity(atm::Length(mean_pwv(),"mm"),0,
+    itsRIP->getWetOpacity(atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),0,
 			  ATMchanMap(0)[fChan]).get(atm::Opacity::UnitNeper) <<
     " at " << fRefFreq()[0]/1e9 << " GHz (ch" << fChan  <<")" << LogIO::POST;
 
@@ -557,11 +557,11 @@ void AtmosCorruptor::initAtm() {
 
   // go ahead and get Tebb from ends of ATM spw
   atm::Temperature t0 =
-    itsSkyStatus->getTebbSky(0,0,atm::Length(mean_pwv(),"mm"),1.0,spilleff(),tground());
+    itsSkyStatus->getTebbSky(0,0,atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),1.0,spilleff(),tground());
   atm::Temperature t1 =
-    itsSkyStatus->getTebbSky(0,ATMnChan()[0]-1,atm::Length(mean_pwv(),"mm"),1.0,spilleff(),tground());
+    itsSkyStatus->getTebbSky(0,ATMnChan()[0]-1,atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),1.0,spilleff(),tground());
   atm::Temperature tm =
-    itsSkyStatus->getTebbSky(0,ATMchanMap(0)[fChan],atm::Length(mean_pwv(),"mm"),1.0,spilleff(),tground());
+    itsSkyStatus->getTebbSky(0,ATMchanMap(0)[fChan],atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),1.0,spilleff(),tground());
   // CHANINDEX
   atm::Frequency f0=itsSpecGrid->getChanFreq(0,0);
   atm::Frequency f1=itsSpecGrid->getChanFreq(0,ATMnChan()[0]-1);
@@ -726,7 +726,7 @@ Float AtmosCorruptor::tsys(const Float& airmass) {
       // most general accessor:
       atm::Temperature tatmosatm =
 	itsSkyStatus->getTebbSky(currSpw(),ATMchanMap(currSpw())[focusChan()],
-				 atm::Length(mean_pwv(),"mm"),airmass,
+				 atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),airmass,
 				 spilleff(),tground());
       // 1/e(hn/kt)-1 recalculated for us by every setFocusChan
 
@@ -772,7 +772,7 @@ Float AtmosCorruptor::opac(const Int ichan) {
   // CHANINDEX
   Float opac = itsRIP->getDryOpacity(currSpw(),ATMchanMap(currSpw())[ichan]).get() +
     //mean_pwv()*(itsRIP->getWetOpacity(currSpw(),ichan).get())  ;
-    itsRIP->getWetOpacity(atm::Length(mean_pwv(),"mm"),currSpw(),ATMchanMap(currSpw())[ichan]).get();
+    itsRIP->getWetOpacity(atm::Length(mean_pwv(),atm::Length::UnitMilliMeter),currSpw(),ATMchanMap(currSpw())[ichan]).get();
   return opac;
 }
 

@@ -81,8 +81,8 @@ public:
   /** A constructor of an empty profile with n layers, that can be filled up later. */
   AtmProfile(unsigned int n);
 
-  /** A long constructor of the atmospheric profile from the basic set of parameters described above. 
-      Please note that this constructor assumes that the &altitude of the antenna is the SAME of the 
+  /** A long constructor of the atmospheric profile from the basic set of parameters described above.
+      Please note that this constructor assumes that the &altitude of the antenna is the SAME of the
       weather station that provides: &groundPressure, &groundTemperature, and &relativeHumidity */
   AtmProfile(const Length &altitude,
              const Pressure &groundPressure,
@@ -95,8 +95,8 @@ public:
              const Length &topAtmProfile,
              unsigned int atmType); //Atmospheretype atmType);
 
-  
-  /** A long constructor of the atmospheric profile from the basic set of parameters described above which, 
+
+  /** A long constructor of the atmospheric profile from the basic set of parameters described above which,
       in addition, includes user-defined temperature profile  */
   AtmProfile(const Length &altitude,
              const Pressure &groundPressure,
@@ -109,10 +109,10 @@ public:
              const Length &topAtmProfile,
              unsigned int atmType,
 	     const vector<Length> &v_layerBoundaries,
-	     const vector<Temperature> &v_layerTemperature); 
+	     const vector<Temperature> &v_layerTemperature);
 
 
-  
+
   /** A long constructor of the atmospheric profile from the basic set of parameters described above. */
   /*
    AtmProfile(Length altitude, Pressure    groundPressure,
@@ -142,7 +142,7 @@ public:
 	     const vector<Pressure> &v_layerTopPressure,
 	     const vector<Temperature> &v_layerTopTemperature,
 	     const vector<Humidity> &v_layerTopHumidity); */
-  
+
   /** The user provides his own atmospheric profile (basic one: four vectors for layer thickness in m,
    average pressure in each layer in mb, average temperature in each layer in K, and average water
    vapor density in each layer in kg/m**3). QUESTION: SHOULD O3, CO, N2O, NO2, SO2 PROFILES BE FILLED UP
@@ -244,7 +244,7 @@ public:
 
   /** Accessor to the type of atmosphere specified by the number**/
   static string getAtmosphereType(unsigned int typeAtm);
- 
+
   /** Accessor to the current Ground Temperature used in the object */
   Temperature getGroundTemperature() const { return groundTemperature_; }
 
@@ -281,14 +281,14 @@ public:
   /** Alternative accessor to the ground altitude of site (length units) */
   Length getGroundAltitude() const { return altitude_; }
 
-   /** setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary. 
+   /** setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary.
        Ground values of T/P/h would change as well */
   void setAltitude(const Length &groundaltitude);
 
-  /** Alternative setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary. 
+  /** Alternative setter for the ground altitude of site (length units). Careful! It will remove or add layers if necessary.
        Ground values of T/P/h would change as well */
   // void setGroundAltitude(const Length &groundaltitude);
- 
+
   /** Accessor to the altitude of the tropopause (length units) */
   Length getTropopauseAltitude() const { return tropoAltitude_; }
 
@@ -318,7 +318,7 @@ public:
    * @exception AtmException if the layer is not valid.
    **/
   Temperature getLayerTopTemperature(unsigned int i) const;
-  
+
   /** Setter for the average Temperature in layer i (allows to touch one layer each time once a profile has been defined) */
   void setLayerTemperature(unsigned int i, const Temperature &layerTemperature);
 
@@ -348,21 +348,21 @@ public:
    * @exception AtmException if the layer is not valid.
    */
   Length getLayerBottomHeightAboveSeaLevel(unsigned int i) const;
-  
-  
+
+
   /**
    * Method to access the Top Height of layer i above the Ground
    * @exception AtmException if the layer is not valid.
    */
   Length getLayerTopHeightAboveGround(unsigned int i) const;
-  
+
   /**
    * Method to access the Top Height of layer i above the Sea Level
    * @exception AtmException if the layer is not valid.
    */
   Length getLayerTopHeightAboveSeaLevel(unsigned int i) const;
 
-  
+
   /** Function to retrieve Average Water vapor density in a given layer in kg/m**3
    *  (thickness of layers in ThicknessProfile)
    * @exception AtmException if the layer is not valid.
@@ -450,7 +450,7 @@ public:
 					     double tropoLapseRateThreshold,
 					     const Humidity &relativeHumidityThreshold,
 					     const Length &wvScaleHeightThreshold);
-  
+
 
   /** Method to get the zenith column  of water vapor. It is computed by
    *  simply integrating the H2O profile:
@@ -480,7 +480,7 @@ protected:
   Temperature tropoTemperature_; //!< Temperature at the tropopause
   unsigned int tropoLayer_; //!< Layer where tropopause starts
   Length tropoAltitude_; //!< Altitude where tropopause starts
-  Pressure groundPressure_; //!< Ground pressure at the site 
+  Pressure groundPressure_; //!< Ground pressure at the site
   Humidity relativeHumidity_; /** Relative humidity at the site (%)
    used only to make an estimate
    of the water vapor column, first guess) */
@@ -569,7 +569,7 @@ private:
 
 
 
-   static Length  topAtmProfile_default_; //(  48.0,"km");
+   static Length  topAtmProfile_default_; //(  48.0,Length::UnitKiloMeter);
    //static tAPd; // = 48.0;
    */
 
@@ -582,7 +582,7 @@ ATM_NAMESPACE_END
 /*
   Pressure AtmProfile::pressureStep_default_(Pressure(1.2,"mb"));
   double AtmProfile::pressureStepFactor_default_(1.2);
-  Length AtmProfile::topAtmProfile_default_(Length(48,"km"));
+  Length AtmProfile::topAtmProfile_default_(Length(48,Length::UnitKiloMeter));
 */
 
 /** \page AtmProfile_example Example with the AtmProfile class.

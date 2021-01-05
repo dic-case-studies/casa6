@@ -88,8 +88,8 @@ void absorption_fgrid(const boost::program_options::variables_map &vm)
     std::cout<<boost::format("%g, \t%g, \t%g, \t%g")
       % grid.getChanFreq(i).get()
       % rip.getDryOpacity(i).get()
-      % rip.getWetOpacity(atm::Length(pwv,"mm"),i).get()
-      % ss.getTebbSky(i, atm::Length(pwv,"mm")).get()
+      % rip.getWetOpacity(atm::Length(pwv,atm::Length::UnitMilliMeter),i).get()
+      % ss.getTebbSky(i, atm::Length(pwv,atm::Length::UnitMilliMeter)).get()
 	     <<std::endl;
   }
 }
