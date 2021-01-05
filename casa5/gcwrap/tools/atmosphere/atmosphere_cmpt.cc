@@ -177,7 +177,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     oss<<"  "<<endl;
     oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
-    oss<<"Relative humidity rh:         " << H.get("%")      << " %"    <<endl;
+    oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
     oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
     oss<<"Pressure step dp:             " << Pstep.get("mb") << " mb"   <<endl;
     oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
@@ -275,7 +275,7 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
     oss<<"  "<<endl;
     oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
     oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
-    oss<<"Relative humidity rh:         " << H.get("%")      << " %"    <<endl;
+    oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
     oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
     oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
     oss<<"Tropospheric lapse rate:      " << TLR                << " K/km" <<endl;
