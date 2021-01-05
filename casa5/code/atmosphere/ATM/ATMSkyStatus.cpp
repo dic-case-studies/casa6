@@ -2741,7 +2741,7 @@ double SkyStatus::getAverageNonDispersiveDryPathLength_GroundPressureDerivative(
   Pressure ref = getGroundPressure();
   Length a =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
-  setBasicAtmosphericParameters(ref + Pressure(1.0, "mb"));
+  setBasicAtmosphericParameters(ref + Pressure(1.0, Pressure::UnitMilliBar));
   Length b =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref);
@@ -2769,7 +2769,7 @@ double SkyStatus::getAverageDispersiveDryPathLength_GroundPressureDerivative(uns
   Pressure ref = getGroundPressure();
   Length a = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   // scanf("%d",&e);
-  setBasicAtmosphericParameters(ref + Pressure(1.0, "mb"));
+  setBasicAtmosphericParameters(ref + Pressure(1.0, Pressure::UnitMilliBar));
   Length b = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref);
   return b.get(Length::UnitMicrons) - a.get(Length::UnitMicrons);

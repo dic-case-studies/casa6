@@ -401,47 +401,47 @@ public:
 
   /** Setter for the average Pressure in layer i (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerPressure(unsigned int i, const Pressure &layerPressure) { v_layerPressure_[i] = layerPressure.get("mb"); }
+  void setLayerPressure(unsigned int i, const Pressure &layerPressure) { v_layerPressure_[i] = layerPressure.get(Pressure::UnitMilliBar); }
   //void setLayerPressure(const Pressure &layerPressure, unsigned int i) { setLayerPressure(i, layerPressure); }
 
   /** Function to retrieve CO density in a given layer (thickness of layers
    *  in ThicknessProfile)  */
-  NumberDensity getLayerCO(unsigned int i) const { return NumberDensity(v_layerCO_[i], "m**-3"); }
+  NumberDensity getLayerCO(unsigned int i) const { return NumberDensity(v_layerCO_[i], NumberDensity::UnitInverseCubicMeter); }
   /** Setter for the average number density of CO in layer i in molecules/m**3 (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerCO(unsigned int i, const NumberDensity &layerCO) { v_layerCO_[i] = layerCO.get("m**-3"); }
+  void setLayerCO(unsigned int i, const NumberDensity &layerCO) { v_layerCO_[i] = layerCO.get(NumberDensity::UnitInverseCubicMeter); }
   //void setLayerCO(const NumberDensity &layerCO, unsigned int i) { setLayerCO(i, layerCO); }
 
   /** Function to retrieve O3 density in a given layer (thickness of layers
    *  in ThicknessProfile) */
-  NumberDensity getLayerO3(unsigned int i) const { return NumberDensity(v_layerO3_[i], "m**-3"); }
+  NumberDensity getLayerO3(unsigned int i) const { return NumberDensity(v_layerO3_[i], NumberDensity::UnitInverseCubicMeter); }
   /** Setter for the average number density of O3 in layer i in molecules/m**3 (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerO3(unsigned int i, const NumberDensity &layerO3) { v_layerO3_[i] = layerO3.get("m**-3"); }
+  void setLayerO3(unsigned int i, const NumberDensity &layerO3) { v_layerO3_[i] = layerO3.get(NumberDensity::UnitInverseCubicMeter); }
   //void setLayerO3(const NumberDensity &layerO3, unsigned int i) { setLayerO3(i, layerO3); }
 
   /** Function to retrieve N2O density in a given layer (thickness of layers
    *  in ThicknessProfile)   */
-  NumberDensity getLayerN2O(unsigned int i) const { return NumberDensity(v_layerN2O_[i], "m**-3"); }
+  NumberDensity getLayerN2O(unsigned int i) const { return NumberDensity(v_layerN2O_[i], NumberDensity::UnitInverseCubicMeter); }
   /** Setter for the average number density of N2O in layer i in molecules/m**3 (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerN2O(unsigned int i, const NumberDensity &layerN2O) { v_layerN2O_[i] = layerN2O.get("m**-3"); }
+  void setLayerN2O(unsigned int i, const NumberDensity &layerN2O) { v_layerN2O_[i] = layerN2O.get(NumberDensity::UnitInverseCubicMeter); }
   //void setLayerN2O(const NumberDensity &layerN2O, unsigned int i) { setLayerN2O(i, layerN2O); }
 
   /** Function to retrieve NO2 density in a given layer (thickness of layers
    *  in ThicknessProfile)   */
-  NumberDensity getLayerNO2(unsigned int i) const { return NumberDensity(v_layerNO2_[i], "m**-3"); }
+  NumberDensity getLayerNO2(unsigned int i) const { return NumberDensity(v_layerNO2_[i], NumberDensity::UnitInverseCubicMeter); }
   /** Setter for the average number density of NO2 in layer i in molecules/m**3 (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerNO2(unsigned int i, const NumberDensity &layerNO2) { v_layerNO2_[i] = layerNO2.get("m**-3"); }
+  void setLayerNO2(unsigned int i, const NumberDensity &layerNO2) { v_layerNO2_[i] = layerNO2.get(NumberDensity::UnitInverseCubicMeter); }
   //void setLayerNO2(const NumberDensity &layerNO2, unsigned int i) { setLayerNO2(i, layerNO2); }
 
   /** Function to retrieve SO2 density in a given layer (thickness of layers
    *  in ThicknessProfile)   */
-  NumberDensity getLayerSO2(unsigned int i) const { return NumberDensity(v_layerSO2_[i], "m**-3"); }
+  NumberDensity getLayerSO2(unsigned int i) const { return NumberDensity(v_layerSO2_[i], NumberDensity::UnitInverseCubicMeter); }
   /** Setter for the average number density of SO2 in layer i in molecules/m**3 (allows to touch one layer each
    *  time once a profile has been defined) */
-  void setLayerSO2(unsigned int i, const NumberDensity &layerSO2) { v_layerSO2_[i] = layerSO2.get("m**-3"); }
+  void setLayerSO2(unsigned int i, const NumberDensity &layerSO2) { v_layerSO2_[i] = layerSO2.get(NumberDensity::UnitInverseCubicMeter); }
   //void setLayerSO2(const NumberDensity &layerSO2, unsigned int i) { setLayerSO2(i, layerSO2); }
 
   void setBasicAtmosphericParameterThresholds(const Length &altitudeThreshold,
@@ -559,7 +559,7 @@ private:
                double y2,
                double y3) const;
   /*
-   // static Pressure pressureStep_default(  10.0,"mb");
+   // static Pressure pressureStep_default(  10.0,Pressure::UnitMilliBar);
    //  static double pSd; // = 10.0;  // pressureStep_default in mb
    static Pressure pressureStep_default_;
 
@@ -580,7 +580,7 @@ private:
 
 ATM_NAMESPACE_END
 /*
-  Pressure AtmProfile::pressureStep_default_(Pressure(1.2,"mb"));
+  Pressure AtmProfile::pressureStep_default_(Pressure(1.2,Pressure::UnitMilliBar));
   double AtmProfile::pressureStepFactor_default_(1.2);
   Length AtmProfile::topAtmProfile_default_(Length(48,Length::UnitKiloMeter));
 */

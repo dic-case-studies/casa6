@@ -436,10 +436,10 @@ atm::AtmProfile* PlotMSAtm::getAtmProfile() {
     unsigned int atmtype(atm::midlatWinter);
     atm::AtmProfile* atmProfile = new atm::AtmProfile(
         atm::Length(altitude,atm::Length::UnitMeter),
-        atm::Pressure(weather_.asDouble("pressure"), "mb"),
+        atm::Pressure(weather_.asDouble("pressure"), atm::Pressure::UnitMilliBar),
         atm::Temperature(weather_.asDouble("temperature"), atm::Temperature::UnitKelvin), TLR,
         atm::Humidity(weather_.asDouble("humidity"),atm::Percent::UnitPercent), atm::Length(h0,atm::Length::UnitKiloMeter),
-        atm::Pressure(dp, "mb"), dPm, atm::Length(maxAlt, atm::Length::UnitKiloMeter), atmtype);
+        atm::Pressure(dp, atm::Pressure::UnitMilliBar), dPm, atm::Length(maxAlt, atm::Length::UnitKiloMeter), atmtype);
     return atmProfile;
 }
 

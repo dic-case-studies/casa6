@@ -74,7 +74,7 @@ simpleAOSAtmo(double ghum,
 		Temperature::UnitKelvin);
 
   Pressure         P(vm["gpress"].as<double>(),
-		     "mb");     // Ground Pressure
+		     Pressure::MilliBar);     // Ground Pressure
 
   Humidity         H(  ghum,Percent::UnitPercent );     // Ground Relative Humidity (indication)
 
@@ -87,7 +87,7 @@ simpleAOSAtmo(double ghum,
   double TLR=vm["tlr"].as<double>();
 
   Length      topAtm(  48.0,Length::UnitKilometer);     // Upper atm. boundary for calculations
-  Pressure     Pstep(  1.0,"mb");     // Primary pressure step
+  Pressure     Pstep(  1.0,Pressure::MilliBar);     // Primary pressure step
   double   PstepFact=         1.2;     // Pressure step ratio between two consecutive layers
 
   return pAtmProf(new AtmProfile(Alt,

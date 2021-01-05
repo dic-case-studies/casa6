@@ -372,7 +372,7 @@ void AtmosCorruptor::initAtm() {
      << LogIO::POST;
 
   atm::Temperature  T( 270.0,atm::Temperature::UnitKelvin );   // Ground temperature
-  atm::Pressure     P( 560.0,"mb");   // Ground Pressure
+  atm::Pressure     P( 560.0,atm::Pressure::UnitMilliBar);   // Ground Pressure
   atm::Humidity     H(  20,atm::Percent::UnitPercent );     // Ground Relative Humidity (ind)
   atm::Length       Alt(  5000,atm::Length::UnitMeter ); // Altitude of the site
   atm::Length       WVL(   2.0,atm::Length::UnitKiloMeter); // Water vapor scale height
@@ -381,7 +381,7 @@ void AtmosCorruptor::initAtm() {
   if (simpar().isDefined("tground"))
     T=atm::Temperature(simpar().asFloat("tground"),atm::Temperature::UnitKelvin);
   if (simpar().isDefined("pground"))
-    P=atm::Pressure(simpar().asFloat("pground"),"mb");
+    P=atm::Pressure(simpar().asFloat("pground"),atm::Pressure::UnitMilliBar);
   if (simpar().isDefined("relhum"))
     H=atm::Humidity(simpar().asFloat("relhum"),atm::Percent::UnitPercent);
   if (simpar().isDefined("altitude"))
@@ -391,12 +391,12 @@ void AtmosCorruptor::initAtm() {
 
   double TLR = -5.6;     // Tropospheric lapse rate (must be in K/km)
   atm::Length  topAtm(  48.0,atm::Length::UnitKiloMeter);   // Upper atm. boundary for calculations
-  atm::Pressure Pstep(  10.0,"mb");   // Primary pressure step
+  atm::Pressure Pstep(  10.0,atm::Pressure::UnitMilliBar);   // Primary pressure step
   double PstepFact = 1.2; // Pressure step ratio between two consecutive layers
   unsigned int atmType = 1;//atm::tropical;
 
   os << "Initializing ATM" << LogIO::POST;
-  os << "altitude="<<Alt.get(atm::Length::UnitMeter)<<"m, Pground="<<P.get("mbar")<<"mb, " <<
+  os << "altitude="<<Alt.get(atm::Length::UnitMeter)<<"m, Pground="<<P.get(atm::Pressure::UnitMilliBar)<<"mb, " <<
     "Tground="<<T.get(atm::Temperature::UnitKelvin)<<"K, humidity= "<<H.get(atm::Percent::UnitPercent)<<"%, " <<
     "water scale height="<<WVL.get(atm::Length::UnitMeter)<<"m"<<LogIO::POST;
 
