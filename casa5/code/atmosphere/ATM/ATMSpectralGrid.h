@@ -438,7 +438,7 @@ public:
   bool operator ==(const SpectralGrid&) const;
 
 protected:
-  Frequency::Units freqUnits_; //!< The frequency inits (always Hertz)
+  Frequency::Units freqUnits_; //!< The frequency inits (always Frequency::UnitHertz)
   std::vector<double> v_chanFreq_; //!< Channel frequencies of ALL the channels (i.e. all spectral window appended)
 
   std::vector<unsigned int> v_numChan_; //!< number of channels for every spectral window

@@ -100,4 +100,6 @@ double Temperature::get(Temperature::Units units) const
     // Exception: Unknown temperature unit. S.I. used (Kelvin)
     return valueIS_;
   }
-}ATM_NAMESPACE_END
+}
+
+ATM_NAMESPACE_END

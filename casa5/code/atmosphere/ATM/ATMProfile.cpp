@@ -120,7 +120,7 @@ AtmProfile::AtmProfile(const Length &altitude,
       for(unsigned int m = 0; m < nL1; m++) {
 	if( h0 <= v_layerBoundaries[m].get(Length::UnitMeter) && h1 >= v_layerBoundaries[m].get(Length::UnitMeter) ){
 	  //	  std::cout << "n=" << n << " h0=" << h0 << " h1=" << h1 << " v_layerBoundaries[" << m << "]=" <<  v_layerBoundaries[m].get(Length::UnitMeter) << std::endl;
-	  avT = avT + v_layerTemperature[m].get();
+	  avT = avT + v_layerTemperature[m].get(Temperature::UnitKelvin);
 	  counter = counter + 1.0;
 	}
       }

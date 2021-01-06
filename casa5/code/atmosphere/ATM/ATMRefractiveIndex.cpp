@@ -184,7 +184,7 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::linebroadening(double nu, double temp, double pr, double mmol, double dv0_lines, double texp_lines){
 
-    // pr = pp.get(Pressure::MilliBar);
+    // pr = pp.get(Pressure::UnitMilliBar);
     // temp = tt.get(Temperature::UnitKelvin);
     double dv0;
     double dv;
@@ -203,8 +203,8 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::linebroadening_o2(double nu, double temp, double pr, double eh2o, double mmol, double ensanche1, double ensanche2){
 
-    // pr = pp.get(Pressure::MilliBar);
-    // eh2o = ph2o.get(Pressure::MilliBar);
+    // pr = pp.get(Pressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
     // temp = tt.get(Temperature::UnitKelvin);
     // nu in GHz
     double dv0;
@@ -216,7 +216,7 @@ ATM_NAMESPACE_BEGIN
 
     if((dv0/beta_dop)<1.25){
       dv=0.535*dv0+sqrt(0.217*pow(dv0,2)+0.6931*pow(beta_dop,2));   // "Atmospheric Remote Sensing", Janssen, pag. 59
-      //      cout << pp.get(Pressure::MilliBar) << "mb: usando beta_dop" << endl;
+      //      cout << pp.get(Pressure::UnitMilliBar) << "mb: usando beta_dop" << endl;
     }else{
       dv=dv0;
     }
@@ -241,8 +241,8 @@ ATM_NAMESPACE_BEGIN
     static const double mmol=18.0;
 
     // nu GHz
-    // pr = pp.get(Pressure::MilliBar);
-    // eh2o = ph2o.get(Pressure::MilliBar);
+    // pr = pp.get(Pressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
     // temp = tt.get(Temperature::UnitKelvin);
     double dv0;
     double dv;
@@ -258,7 +258,7 @@ ATM_NAMESPACE_BEGIN
 
     if((dv0/beta_dop)<1.25){
       dv=0.535*dv0+sqrt(0.217*pow(dv0,2)+0.6931*pow(beta_dop,2));   // "Atmospheric Remote Sensing", Janssen, pag. 59
-      //      cout << pp.get(Pressure::MilliBar) << "mb: usando beta_dop" << endl;
+      //      cout << pp.get(Pressure::UnitMilliBar) << "mb: usando beta_dop" << endl;
     }else{
       dv=dv0;
     }
@@ -270,8 +270,8 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::linebroadening_hh18o_hh17o(double temp, double pr, double eh2o, double dv0, double dvlm, double temp_exp){
 
-    // pr = pp.gPressure::MilliBar);
-    // eh2o = ph2o.get(Pressure::MilliBar);
+    // pr = pp.gPressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
     // temp = tt.get(Temperature::UnitKelvin);
     double dv;
     double rho=18.0*eh2o*100/(8.315727226*temp);   // Na*Kb=8.315727226

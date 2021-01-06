@@ -151,7 +151,7 @@ simpleMKAtmo(void)
   // Ground temperature
   atm::Temperature T( 268.15,Temperature::UnitKelvin);
   // Ground Pressure
-  atm::Pressure P( 623.0,Pressure::MilliBar);
+  atm::Pressure P( 623.0,Pressure::UnitMilliBar);
   // Ground Relative Humidity (indication)
   atm::Humidity H(11.30,Percent::UnitPercent);
   // Altitude of the site
@@ -163,7 +163,7 @@ simpleMKAtmo(void)
   // Upper atm. boundary for calculations
   atm::Length topAtm(  48.0,atm::Length::UnitKiloMeter);
   // Primary pressure step (10.0 mb)
-  atm::Pressure Pstep(  10.0,Pressure::MilliBar);
+  atm::Pressure Pstep(  10.0,Pressure::UnitMilliBar);
   // Pressure step ratio between two consecutive layers
   double PstepFact=1.2;
 
