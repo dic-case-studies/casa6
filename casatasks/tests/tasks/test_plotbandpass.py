@@ -63,9 +63,18 @@ import unittest
 import shutil
 import numpy as np
 from filecmp import dircmp
-datapath = "/export/home/jarvis_2/awells/JIRA/CAS-9912/data/"
+#datapath = "/export/home/jarvis_2/awells/JIRA/CAS-9912/data/"
 #datapath ="/lustre/cv/users/awells/CAS-9912/data/test_plotbandpass/"
+
+if CASA6:
+    datapath = casatools.ctsys.resolve('unittest/plotbandpass/')
+else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotbandpass/'
+
+
+
 figdir= os.getcwd() + '/'
+delete_artifacts = True
 
 class plotbandpass_1_test(unittest.TestCase):
 
@@ -80,6 +89,11 @@ class plotbandpass_1_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/Band7multi_april22.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     @classmethod
     def tearDownClass(cls):
@@ -233,6 +247,11 @@ class plotbandpass_2_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/X3c1.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
 
     @classmethod
@@ -240,12 +259,14 @@ class plotbandpass_2_test(unittest.TestCase):
         pass
 
     #11
+    @unittest.skip("N/A")
     def test_b_skipspw19high_regression11(self):
         plotbandpass(datapath + 'bandpass_b_skipspw19high.bcal',yaxis='amp',field='0',xaxis='freq',
                   caltable2=datapath + 'bandpass_bpoly_skipspw19high.bcal',showpoints=True,spw='0,1',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(11),debug=False)
 
     # 12
+    @unittest.skip("N/A")
     def test_b_skipspw19high_regression12(self):
         plotbandpass(datapath +'bandpass_b_skipspw19high.bcal',yaxis='phase',field='0',xaxis='freq',
                   caltable2= datapath + 'bandpass_bpoly_skipspw19high.bcal',showpoints=True,spw=0,
@@ -254,6 +275,7 @@ class plotbandpass_2_test(unittest.TestCase):
 
 
     # 13
+    @unittest.skip("N/A")
     def test_b_skipspw19high_regression13(self):
         plotbandpass(datapath + 'bandpass_b_skipspw19high.bcal',yaxis='both',field='0',xaxis='freq',
                   caltable2= datapath + 'bandpass_bpoly_skipspw19high.bcal',showpoints=True,spw=0,
@@ -273,6 +295,11 @@ class plotbandpass_X3c1_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/X3c1.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
 
     @classmethod
@@ -280,37 +307,44 @@ class plotbandpass_X3c1_test(unittest.TestCase):
         pass
 
     #14
+    @unittest.skip("N/A")
     def test_X3c1_tsys_fdm_regression14(self):
         plotbandpass(datapath + 'X3c1.tsys.fdm',overlay='antenna',yaxis='amp',field='1',xaxis='chan',
                   showtsky=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(14)) 
 
     # 15
+    @unittest.skip("N/A")
     def test_X3c1_tsys_fdm_regression15(self):
         plotbandpass(datapath + 'X3c1.tsys.fdm',overlay='antenna',yaxis='amp',field='1',xaxis='chan',
                   poln='y',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(15),debug=False)
 
 
     # 16
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression16(self):
         plotbandpass(datapath + 'X3c1.tsys',overlay='antenna',yaxis='amp',field='0~1,4',xaxis='chan',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(16),debug=False)
 
     # 17
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression17(self):
         plotbandpass(datapath + 'X3c1.tsys',overlay='time',yaxis='amp',field='2',xaxis='chan',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(17),debug=False)
 
     # 18
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression18(self):
         plotbandpass(datapath + 'X3c1.tsys',overlay='',yaxis='amp',field='',xaxis='freq',showfdm=True,interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(18),debug=False)
 
     # 19
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression19(self):
         plotbandpass(datapath + 'X3c1.tsys',overlay='time',yaxis='amp',field='',xaxis='freq',showfdm=True,interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(19),debug=False)
 
     # 20
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression20(self):
         plotbandpass(datapath + 'X3c1.tsys',overlay='',yaxis='amp',field='2',xaxis='freq',chanrange='45~65',
              interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(20),debug=False,
@@ -329,48 +363,61 @@ class plotbandpass_smooth_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/Band7multi_april22.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     @classmethod
     def tearDownClass(cls):
         pass
 
     # 21
+    @unittest.skip("N/A")
     def test_b_skipspw19high_regression21(self):
         plotbandpass(datapath + 'bandpass_bpoly_skipspw19high.bcal',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(21),debug=False,xaxis='freq')
 
 
     # 22
+    @unittest.skip("N/A")
     def test_b_smooth_regression22(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(22),debug=False) 
   
     # 23
+    @unittest.skip("N/A")
     def test_b_smooth_regression23(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',yaxis='ampdb',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(23),debug=False) 
 
     # 24
+    @unittest.skip("N/A")
     def test_b_smooth_regression24(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',yaxis='phase', xaxis='freq',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(24),debug=False)
   
     # 25
+    @unittest.skip("N/A")
     def test_b_smooth_regression25(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',chanrange='1000~3000',
              interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(25),debug=False,
              chanrangeSetXrange=True)
   
     # 26
+    @unittest.skip("N/A")
     def test_b_smooth_regression26(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',showtsky=True,
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(26),debug=False)
   
     # 27
+    @unittest.skip("N/A")
     def test_b_smooth_regression27(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',poln='x',
                   showflagged=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(27),debug=False) 
   
     # 28
+    @unittest.skip("N/A")
     def test_b_smooth_regression28(self):
         plotbandpass(datapath +'bandpass.bcal',caltable2=datapath +'bandpass.bcal_smooth',xaxis='freq',poln='x',
                   showflagged=True, showtsky=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(28),debug=False)
@@ -388,81 +435,101 @@ class plotbandpass_X3c1_2_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/X3c1.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     #29
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression29(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',    yaxis='amp',xaxis='freq',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(29),debug=False) 
 
     # 30
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression30(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',    yaxis='amp',xaxis='freq',
                   showtsky=True, interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(30),debug=False) 
   
     # 31
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression31(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',    caltable2=datapath +'X3c1.tsys.fdm',yaxis='amp',xaxis='freq',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(31),debug=False)
 
     # 32
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression32(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',    caltable2=datapath +'X3c1.tsys.fdm',yaxis='amp',xaxis='freq',
                   showtsky=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(32),debug=False) 
 
-    # 33  
+    # 33
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression33(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',caltable2=datapath +'X3c1.tsys.fdm',    yaxis='both',xaxis='freq',
              chanrange='10~118',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(33),
              debug=False, chanrangeSetXrange=True)
 
     # 34
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression34(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',    yaxis='amp',xaxis='freq',
              chanrange='1000~3000',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(34),
              debug=False, chanrangeSetXrange=True)
   
     # 35
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression35(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',    yaxis='amp',xaxis='freq',
              chanrange='1000~3000',showtsky=True,interactive=False,buildpdf=True,
              figfile=figdir+'regression%02d'%(35),debug=False, chanrangeSetXrange=True) 
 
     # 36
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression36(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',    caltable2=datapath +'X3c1.tsys.fdm',yaxis='both',xaxis='freq',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(36),debug=False) 
 
-  # 37
+    # 37
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression37(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',    caltable2=datapath +'X3c1.tsys.fdm',yaxis='both',xaxis='freq',
                   showtsky=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(37),debug=False)
 
     # 38
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression38(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',    yaxis='both',xaxis='freq',
                   zoom='intersect',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(38),debug=False)
 
     # 39
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression39(self):
         plotbandpass(caltable=datapath +'X3c1.tsys',    caltable2=datapath +'X3c1.tsys.fdm',yaxis='both',xaxis='freq',
                   zoom='intersect',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(39),debug=False)
   
     # 40
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression40(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',yaxis='amp',xaxis='freq',poln='XX',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(40),debug=False) 
 
     # 41
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression41(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',yaxis='amp',field='1',xaxis='freq',
                   poln='YY',zoom='intersect',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(41),debug=False)
 
     # 42
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression42(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',caltable2=datapath +'X3c1.tsys',yaxis='amp',field='1',xaxis='freq',
                   poln='YY',zoom='intersect',showatm=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(42),debug=False)
 
     # 43 
+    @unittest.skip("N/A")
     def test_X3c1_tsys_regression43(self):
         plotbandpass(caltable=datapath +'X3c1.tsys.fdm',yaxis='amp',field='1',xaxis='chan',poln='YY',zoom='intersect',
                   showatm=True,showimage=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(43),debug=False)
@@ -480,22 +547,30 @@ class plotbandpass_multi_field_bandpass_test(unittest.TestCase):
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/Band7multi_april22.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
 
     #tests for multi-field bandpass solution overlay: in SciVer/TWHya
     # 44
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression44(self):
         plotbandpass(datapath + 'band7multi_a6p7_titan.bcal',caltable2=datapath +'band7multi_b.bcal',xaxis='freq',
              yaxis='amp',chanrange='',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(44),
              debug=False)
   
     # 45
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression45(self):
         plotbandpass(datapath +'band7multi_a6p7_titan.bcal',caltable2=datapath +'band7multi_b.bcal',xaxis='freq',
              yaxis='amp',chanrange='',showflagged=True,interactive=False,buildpdf=True,
              figfile=figdir+'regression%02d'%(45),debug=False)
   
     # 46
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression46(self):
         plotbandpass(caltable=datapath +'band7multi_b.bcal',caltable3=datapath +'band7multi_bpoly_a6p7_titan.bcal',
                   caltable2=datapath +'band7multi_bpoly.bcal',xaxis='freq',yaxis='both',interactive=False,
@@ -518,27 +593,37 @@ class plotbandpass_multi_field_Tsys_solution_overlay_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X54d35d_X761.ms')
         os.unlink(os.getcwd() + '/uid___A002_X54d35d_X761.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
 
     # 47
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression47(self):
         #tests for multi-field Tsys solution overlay (new-style cal tables):
 
         plotbandpass('uid___A002_X54d35d_X761.ms.tsys', overlay='time', xaxis='freq', yaxis='amp', subplot=22,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(47),debug=False)
 
     # 48
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression48(self):
         plotbandpass('uid___A002_X54d35d_X761.ms.tsys', overlay='antenna', xaxis='freq', yaxis='amp', subplot=22,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(48),debug=False)
 
     # 49
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression49(self):
         plotbandpass('uid___A002_X54d35d_X761.ms.tsys', overlay='time', timeranges='0,1', interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(49),debug=False)
 
     # 50   # plot did not complete in au, but did in task on Apr02, sever error on Apr05
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression50(self):
         plotbandpass('uid___A002_X54d35d_X761.ms.tsys', overlay='time', scans='3,6', interactive=False, buildpdf=True,figfile=figdir+'regression%02d'%(50),antenna='0,1',debug=False)
 
     # 82
+    @unittest.skip("N/A")
     def test_multi_field_bandpass_regression82(self):
         plotbandpass('uid___A002_X54d35d_X761.ms.tsys', overlay='antenna', scans='3,6', interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(82),antenna='0,1',debug=False)
@@ -599,8 +684,14 @@ class plotbandpass_ALMA_1_pol_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X494155_X23a.ms.tsys')
         os.unlink(os.getcwd() + '/uid___A002_X494155_X23a.ms.split.bandpass')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 56
+    @unittest.skip("N/A")
     def test_ALMA_1_pol_regression56(self):
         plotbandpass('uid___A002_X494155_X23a.ms.split.bandpass',xaxis='freq',interactive=False, buildpdf=True,figfile=figdir+'regression%02d'%(56),debug=False)
 
@@ -631,15 +722,22 @@ class plotbandpass_ALMA_multi_regions_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X50bcb3_X3b.ms.tsys')
         os.unlink(os.getcwd() + '/uid___A002_X50bcb3_X3b.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # ALMA multi-regions per baseband  OUS = uid://A002/X50bb1c/X6  scan numbers=2,7,14,23
 
     # 59
+    @unittest.skip("N/A")
     def test_ALMA_multi_regions_regression59(self):
         plotbandpass('uid___A002_X50bcb3_X3b.ms.tsys',xaxis='freq',showfdm=True,showBasebandNumber=False,
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(59),debug=False)
   
     # 60
+    @unittest.skip("N/A")
     def test_ALMA_multi_regions_regression60(self):
         plotbandpass('uid___A002_X50bcb3_X3b.ms.tsys',xaxis='freq',showfdm=True,showBasebandNumber=True,
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(60),debug=False)
@@ -661,9 +759,15 @@ class plotbandpass_EVLA_dual_pol_test(unittest.TestCase):
         os.unlink(os.getcwd() + '/bandpass_4.1.0.bcal')
         os.unlink(os.getcwd() + '/bandpasspcal.bcal')
         os.unlink(os.getcwd() + '/K_BnA_cont_multi.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # EVLA dual-pol data:
     # 61
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression61(self):
     # new style table from 4.1.0
         plotbandpass('bandpass_4.1.0.bcal',poln='',yaxis='amp',overlay='spw',xaxis='freq',interactive=False,
@@ -671,62 +775,74 @@ class plotbandpass_EVLA_dual_pol_test(unittest.TestCase):
   
 
     # 62
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression62(self):
         plotbandpass('bandpass_4.1.0.bcal',poln='',yaxis='amp',overlay='baseband',xaxis='freq',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(62),debug=False)
 
     # 63
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression63(self):
         plotbandpass('bandpass_4.1.0.bcal',poln='',yaxis='amp',overlay='baseband',xaxis='freq',spw='0,1,14,15',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(63),debug=False)
 
     # 64
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression64(self):
         plotbandpass('bandpass_4.1.0.bcal',poln='',yaxis='amp',overlay='spw',xaxis='freq',basebands=12,
                   showBasebandNumber=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(64),debug=False)
 
     # old style 3.3 tables
     # 65  different antennas have solutions at different times
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression65(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='amp',overlay='spw',xaxis='freq',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(65),debug=False)
 
     # 66
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression66(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='amp',overlay='baseband',xaxis='freq',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(66),debug=False)
 
     # 67 
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression67(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='amp',overlay='time',xaxis='freq',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(67),debug=False)
 
     # 68
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression68(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='both',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(68),debug=False)
   
     # 69
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression69(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='both',showatm=True,interactive=False,buildpdf=True,
                   figfile=figdir+'regression%02d'%(69),debug=False)
 
     # 70
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression70(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='phase',overlay='antenna',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(70),debug=False)
 
     # 71
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression71(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='amp',overlay='antenna',chanrange='0~30',
              xaxis='freq',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(71),
              debug=False, chanrangeSetXrange=True)
   
     # 72
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression72(self):
         plotbandpass('bandpasspcal.bcal',poln='',yaxis='both',showatm=True,interactive=False,buildpdf=True,
                   figfile=figdir+'regression%02d'%(72),debug=False)
   
     # 73
+    @unittest.skip("N/A")
     def test_EVLA_dual_pol_regression73(self):
         plotbandpass('bandpasspcal.bcal',poln='LL',yaxis='both',interactive=False,buildpdf=True,
                   figfile=figdir+'regression%02d'%(73),debug=False)
@@ -747,33 +863,43 @@ class plotbandpass_EVLA_single_pol_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/bandpass.bcal')
         os.unlink(os.getcwd() + '/g19.36_I_3sD_multi.ms')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # EVLA single-pol data:
     # new style table from 4.1.0
     # old style 3.3 tables
     # 74
+    @unittest.skip("N/A")
     def test_EVLA_single_pol_regression74(self):
         plotbandpass('bandpass.bcal',yaxis='amp',xaxis='freq',overlay='spw',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(74),debug=False)
 
 
     # 75
+    @unittest.skip("N/A")
     def test_EVLA_single_pol_regression75(self):
         plotbandpass('bandpass.bcal',yaxis='phase',xaxis='freq',overlay='baseband',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(75),debug=False)
 
 
     # 76
+    @unittest.skip("N/A")
     def test_EVLA_single_pol_regression76(self):
         plotbandpass('bandpass.bcal',caltable2='bandpass_bpoly.bcal',yaxis='both',xaxis='freq',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(76),debug=False)
 
     # 77
+    @unittest.skip("N/A")
     def test_EVLA_single_pol_regression77(self):
         plotbandpass('bandpass.bcal',caltable2='bandpass_bpoly.bcal',yaxis='both',xaxis='freq',
                   showatm=True,interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(77),debug=False)
 
     # 114
+    @unittest.skip("N/A")
     def test_EVLA_single_pol_regression114(self):
         plotbandpass('bandpass.bcal',overlay='baseband',yaxis='both',xaxis='freq',
              interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(114),debug=False)
@@ -794,19 +920,27 @@ class plotbandpass_SMA_ngc6334_SM2_filler_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/sm2_rx0.usb.if2.tsys.ms')
         os.unlink(os.getcwd() + '/sm2_rx0.usb.if2.tsys.ms.bandpass.bcal')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 78
+    @unittest.skip("N/A")
     def test_SMA_ngc6334_SM2_filler_regression78(self):
     # SMA data
         plotbandpass('sm2_rx0.usb.if2.tsys.ms.bandpass.bcal',interactive=False,
                   buildpdf=True,figfile=figdir+'regression%02d'%(78),debug=False)
 
     # 79
+    @unittest.skip("N/A")
     def test_SMA_ngc6334_SM2_filler_regression79(self):
         plotbandpass('sm2_rx0.usb.if2.tsys.ms.bandpass.bcal',overlay='baseband',
                   xaxis='freq',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(79),debug=False)
 
     # 80
+    @unittest.skip("N/A")
     def test_SMA_ngc6334_SM2_filler_regression80(self):
         plotbandpass('sm2_rx0.usb.if2.tsys.ms.bandpass.bcal',overlay='baseband',figfileSequential=True,
                   xaxis='freq',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(80),debug=False)
@@ -827,14 +961,21 @@ class plotbandpass_3_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X61d35c_X4f.ms')
         os.unlink(os.getcwd() + '/uid___A002_X61d35c_X4f.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 83
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression83(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='5~122',showBasebandNumber=True,
                     groupByBaseband=True,xaxis='freq',interactive=False,buildpdf=True,
                     figfile=figdir+'regression%02d'%(83),debug=False, chanrangeSetXrange=True)
 
     # 84
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression84(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',showBasebandNumber=True,
         #      chanrange='5~122',
@@ -843,30 +984,35 @@ class plotbandpass_3_test(unittest.TestCase):
                figfile=figdir+'regression%02d'%(84), antenna=0,debug=False, chanrangeSetXrange=True)
 
     # 85
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression85(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='5~122',showBasebandNumber=True,
                xaxis='freq',interactive=False,buildpdf=True, chanrangeSetXrange=True,
                figfile=figdir+'regression%02d'%(85),basebands='1,3',antenna='0,1',debug=False)
 
     # 86 
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression86(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='',showBasebandNumber=True,
                     xaxis='freq',interactive=False,buildpdf=True,
                     figfile=figdir+'regression%02d'%(86),overlay='spw',antenna='0,1',debug=False)
 
     # 87
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression87(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='',showBasebandNumber=True,
                     xaxis='freq',interactive=False,buildpdf=True,
                     figfile=figdir+'regression%02d'%(87),overlay='baseband',antenna='0,1',debug=False)
 
     # 88 
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression88(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='5~122',showBasebandNumber=True,
                xaxis='freq',interactive=False,buildpdf=True, chanrangeSetXrange=True,
                figfile=figdir+'regression%02d'%(88),overlay='time',showatm=True,showfdm=True,debug=False)
 
     # 89
+    @unittest.skip("N/A")
     def test_uid___A002_X61d35c_X4f_regression89(self):
         plotbandpass('uid___A002_X61d35c_X4f.ms.tsys',chanrange='5~122',showBasebandNumber=True,
                xaxis='freq',interactive=False,buildpdf=True,showfdm=True, chanrangeSetXrange=True,
@@ -893,6 +1039,11 @@ class plotbandpass_CAS_6147_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 90   CAS-6147: cannot handle this table
     def test_CAS_6147_regression90(self):
@@ -909,6 +1060,11 @@ class plotbandpass_CAS_6111_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms')
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 91   CAS-6111: CM01 completely flagged causes no plot produced
     def test_CAS_6111_regression91(self):
@@ -925,6 +1081,11 @@ class plotbandpass_CAS_6356_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 92  CAS-6356: error in the legend colors
     def test_CAS_6356_regression92(self):
@@ -940,6 +1101,11 @@ class plotbandpass_CAS_7368_test(unittest.TestCase):
 
     def tearDown(self):
         os.unlink(os.getcwd() + '/finalBPcal.b')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 107   CAS-7368  VLA pipeline dataset (amp)
     def test_CAS_7368_regression107(self):
@@ -966,6 +1132,11 @@ class plotbandpass_CAS_7965_test(unittest.TestCase):
         os.symlink(datapath+'CAS-7965/uid___A002_X99c183_X25b6.ms.split.bandpass', os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 115 CAS-7965
     def test_CAS_7965_regression115(self):
@@ -988,6 +1159,11 @@ class plotbandpass_CAS_7715_test(unittest.TestCase):
         os.unlink(os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms.tsys')
         os.unlink(os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 116 CAS-7715  64-channel Band 9 Tsys showing offset in image sideband
     def test_CAS_7715_regression116(self):
@@ -1013,6 +1189,11 @@ class plotbandpass_CAS_8261_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 118 CAS-8261
     def test_CAS_8261_regression118(self):
@@ -1031,6 +1212,11 @@ class plotbandpass_CAS_8489_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
         os.unlink(os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 119 CAS-8489, selection by timerange relative to scan
     def test_CAS_8489_regression119(self):
@@ -1062,6 +1248,11 @@ class plotbandpass_CAS_8655_test(unittest.TestCase):
         os.symlink(datapath+'CAS-8655/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 122 CAS-8655
     def test_CAS_8655_regression122(self):
@@ -1080,6 +1271,7 @@ class plotbandpass_CAS_8655_test(unittest.TestCase):
 
 
 class plotbandpass_CAS_9474_test(unittest.TestCase):
+
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
@@ -1088,6 +1280,11 @@ class plotbandpass_CAS_9474_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 123 CAS-9474
     def test_CAS_9474_regression123(self):
@@ -1105,6 +1302,11 @@ class plotbandpass_SCOPS_4877_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 124 SCOPS-4877  first antenna flagged causes LO1 undefined
     def test_SCOPS_4877_regression124(self):
@@ -1121,8 +1323,14 @@ class plotbandpass_tsysFlagged_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xa018c4_X2537.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xa018c4_X2537.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
     # 110   4-polarization dataset, where all Tsys timeranges flagged on one spw for DV21
+    @unittest.skip("N/A")
     def test_tsysFlagged_regression107(self):
         plotbandpass(subplot=22, overlay='time',showfdm=True, showatm=True,
                caltable='uid___A002_Xa018c4_X2537.ms.tsys', figfile=figdir+'regression110', 
@@ -1138,7 +1346,13 @@ class plotbandpass_mislabeling_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xa6a120_X1d3d.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xa6a120_X1d3d.ms.hifa_tsyscal.s6_1.tsyscal.tbl')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
+    @unittest.skip("N/A")
     def test_mislabeling_regression111(self):
     # 111   lots of flags
         plotbandpass(subplot=11, overlay='time,antenna',showfdm=True, showatm=True,
@@ -1156,7 +1370,13 @@ class plotbandpass_badAntennaFilename_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xabe765_X5bd.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xabe765_X5bd.ms.bcal')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
+    @unittest.skip("N/A")
     def test_badAntennaFilename_regression112(self):
         plotbandpass(subplot=11, antenna='3,4', overlay='baseband', caltable='uid___A002_Xabe765_X5bd.ms.bcal', 
                figfile=figdir+'regression112', buildpdf=True,
@@ -1172,7 +1392,13 @@ class plotbandpass_badSpwFilename_test(unittest.TestCase):
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xa2ce2e_X7bd.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xa2ce2e_X7bd.ms.tsys')
+        if delete_artifacts:
+            artifacts = os.listdir(figdir)
+            for artifact in artifacts:
+                if artifact.endswith(".pdf") or artifact.endswith(".png"):
+                    os.remove(artifact)
 
+    @unittest.skip("N/A")
     def test_badSpwFilename_regression113(self):
         plotbandpass(subplot=11, antenna='DA58', overlay='time', caltable='uid___A002_Xa2ce2e_X7bd.ms.tsys', 
                figfile=figdir+'regression113', buildpdf=True,
