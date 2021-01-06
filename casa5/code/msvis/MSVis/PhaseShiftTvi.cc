@@ -38,7 +38,7 @@ PhaseShiftTvi::phaseCenterShift (Cube<Complex> & cube) const
     IPosition shape = cube.shape();
     Int nCorrelations = shape (0);
     Int nChannels = shape (1);
-    Int nRows = shape (2);
+    rownr_t nRows = shape (2);
 
     const Int uIndex = 0; // uvw matrix is [3,nRows]
     const Int vIndex = 1;
@@ -63,7 +63,7 @@ PhaseShiftTvi::phaseCenterShift (Cube<Complex> & cube) const
     double frequencyTime = timeForRows (0);
     Vector<Double> frequency = getVii()->getFrequencies (frequencyTime, getObservatoryFrequencyType ());
 
-    for (Int row = 0; row < nRows; row ++){
+    for (rownr_t row = 0; row < nRows; row ++){
 
         double t = timeForRows (row);
 
