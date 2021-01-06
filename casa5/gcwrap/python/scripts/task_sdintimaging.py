@@ -24,7 +24,7 @@ if is_CASA6:
     #from casatasks import imregrid
     from .sdint_helper import *
     from casatools import table
-    from casatools import synthesisimager
+    from casatools import synthesisimager,synthesisutils
 else:
     from taskinit import *
     from tasks import *
@@ -36,6 +36,7 @@ else:
     from sdint_helper import *
     table=casac.table
     synthesisimager=casac.synthesisimager
+    synthesisutils=casac.synthesisutils
 
 try:
     if is_CASA6:
@@ -49,7 +50,7 @@ except ImportError:
     mpi_available = False
 
 sdintlib = SDINT_helper()
-synu = casac.synthesisutils()
+synu = synthesisutils()
 
 # setup functions
 def setup_imagerObj(paramList=None):
@@ -629,7 +630,7 @@ def sdintimaging(
                                 usedata=usedata,
                                 chanwt = inpparams['chanwt'])
 
-        print("Fitting for cube")
+        #print("Fitting for cube")
         synu.fitPsfBeam(joint_cube)
 
         ###############
@@ -656,7 +657,7 @@ def sdintimaging(
                                         mtname=joint_multiterm+'.residual',
                                         nterms=nterms, reffreq=inpparams['reffreq'], dopsf=False)
 
-            print("Fit for multiterm")
+            #print("Fit for multiterm")
             synu.fitPsfBeam(joint_multiterm,nterms=nterms)
 
         if niter>0 :
