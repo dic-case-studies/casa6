@@ -434,7 +434,7 @@ def tclean(
                 if type(interactive) != bool:
                     retrec=imager.getSummary();
                 
-                if savemodel!='none' and (interactive==True or usemask=='auto-multithresh'):
+                if savemodel!='none' and (interactive==True or usemask=='auto-multithresh' or nsigma>0.0):
                     if savemodel=='modelcolumn':
                          savemodelmsg = 'model column'
                     elif savemodel=='virtual':
