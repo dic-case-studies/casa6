@@ -27,11 +27,12 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include <casa/aips.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Arrays/ArrayUtil.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Arrays/ArrayUtil.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/casa/IO/ArrayIO.h>
 
 #include "../casawvr/mswvrdata.hpp"
 #include "../casawvr/msgaintable.hpp"
@@ -48,6 +49,8 @@
 
 #include "wvrgcalerrors.hpp"
 #include "wvrgcalfeedback.hpp"
+
+#include <vector>
 
 #if defined(CASA6)
 #include <asdmstman/AsdmStMan.h>

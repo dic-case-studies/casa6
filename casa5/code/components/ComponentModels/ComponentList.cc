@@ -913,7 +913,7 @@ void ComponentList::writeTable() {
     } else if (nRows > nelem) {
       Vector<casacore::rownr_t> rows(nRows - nelem);
       indgen(rows, nelem);
-      itsTable.removeRow(rows);
+      itsTable.removeRow(RowNumbers(rows));
     }
   }
   ArrayColumn<DComplex> fluxValCol(itsTable, fluxName);

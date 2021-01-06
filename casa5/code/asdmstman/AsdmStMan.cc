@@ -253,7 +253,7 @@ namespace casa {
     // Fill the specification record (only used for reporting purposes).
     itsSpec.define ("version", itsVersion);
     itsSpec.define ("bigEndian", asBigEndian);
-    itsSpec.define ("BDFs", Vector<String>(itsBDFNames));
+    itsSpec.define ("BDFs", Vector<String>(itsBDFNames.begin(),itsBDFNames.end()));
     // Set to nothing read yet.
     itsStartRow   = -1;
     itsEndRow     = -1;

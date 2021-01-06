@@ -35,8 +35,6 @@ using namespace casacore;
 using namespace casa::vi;
 using namespace casacore;
 
-template class casacore::Array<casacore::CountedPtr<casa::refim::CFBuffer> >;
-
 namespace casa{
   using namespace refim;
   // Instantiate a commonly used extern template

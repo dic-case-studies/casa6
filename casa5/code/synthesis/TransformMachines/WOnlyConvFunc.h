@@ -33,16 +33,17 @@
 #include <synthesis/TransformMachines/CFStore.h>
 #include <synthesis/TransformMachines/WTerm.h>
 #include <synthesis/TransformMachines/PSTerm.h>
-#include <images/Images/ImageInterface.h>
-#include <images/Images/TempImage.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogSink.h>
-#include <casa/Logging/LogOrigin.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
   template<class T> class ImageInterface;
-  template<class T> class Matrix;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

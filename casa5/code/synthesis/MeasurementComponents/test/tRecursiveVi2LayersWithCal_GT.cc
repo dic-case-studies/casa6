@@ -124,7 +124,7 @@ TEST( RecursiveVi2LayersWithCal, BasicCalLayerTest ) {
 
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),vb->nAntennas(),False));
@@ -203,7 +203,7 @@ TEST( RecursiveVi2LayersWithCal , BasicCalSolveLayerTest ) {
       */
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),vb->nAntennas(),False));
@@ -372,7 +372,7 @@ TEST( RecursiveVi2LayersWithCal , FreqAvedCalSolveTest ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));
@@ -474,7 +474,7 @@ TEST( RecursiveVi2LayersWithCal , TimeAvedCalSolveTest ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(nchan,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));
@@ -590,7 +590,7 @@ TEST( RecursiveVi2LayersWithCal , TimeFreqAvedCalSolveTest ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));
@@ -695,7 +695,7 @@ TEST( RecursiveVi2LayersWithCal , FreqTimeAvedCalSolveTest ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));
@@ -803,7 +803,7 @@ TEST( RecursiveVi2LayersWithCal , PartialTimeFreqAvedCalSolveTest ) {
       */
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(pAveFactor,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));

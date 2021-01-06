@@ -46,11 +46,13 @@ string CCorrelatorName::revision () {
 }
 
 unsigned int CCorrelatorName::size() {
-	return 10;
+	return 11;
 	}
 	
 	
 const std::string& CCorrelatorName::sALMA_ACA = "ALMA_ACA";
+	
+const std::string& CCorrelatorName::sALMA_ACASPEC = "ALMA_ACASPEC";
 	
 const std::string& CCorrelatorName::sALMA_BASELINE = "ALMA_BASELINE";
 	
@@ -74,6 +76,8 @@ const std::vector<std::string> CCorrelatorName::names() {
     std::vector<std::string> enumSet;
     
     enumSet.insert(enumSet.end(), CCorrelatorName::sALMA_ACA);
+    
+    enumSet.insert(enumSet.end(), CCorrelatorName::sALMA_ACASPEC);
     
     enumSet.insert(enumSet.end(), CCorrelatorName::sALMA_BASELINE);
     
@@ -101,6 +105,9 @@ std::string CCorrelatorName::name(const CorrelatorNameMod::CorrelatorName& f) {
     
     case CorrelatorNameMod::ALMA_ACA:
       return CCorrelatorName::sALMA_ACA;
+    
+    case CorrelatorNameMod::ALMA_ACASPEC:
+      return CCorrelatorName::sALMA_ACASPEC;
     
     case CorrelatorNameMod::ALMA_BASELINE:
       return CCorrelatorName::sALMA_BASELINE;
@@ -138,6 +145,10 @@ CorrelatorNameMod::CorrelatorName CCorrelatorName::newCorrelatorName(const std::
 		
     if (name == CCorrelatorName::sALMA_ACA) {
         return CorrelatorNameMod::ALMA_ACA;
+    }
+    	
+    if (name == CCorrelatorName::sALMA_ACASPEC) {
+        return CorrelatorNameMod::ALMA_ACASPEC;
     }
     	
     if (name == CCorrelatorName::sALMA_BASELINE) {
@@ -183,6 +194,10 @@ CorrelatorNameMod::CorrelatorName CCorrelatorName::literal(const std::string& na
 		
     if (name == CCorrelatorName::sALMA_ACA) {
         return CorrelatorNameMod::ALMA_ACA;
+    }
+    	
+    if (name == CCorrelatorName::sALMA_ACASPEC) {
+        return CorrelatorNameMod::ALMA_ACASPEC;
     }
     	
     if (name == CCorrelatorName::sALMA_BASELINE) {

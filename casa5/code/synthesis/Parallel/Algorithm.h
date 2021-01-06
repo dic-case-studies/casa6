@@ -42,7 +42,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 //# Forward Declarations
 
-class PTransport;
 extern Applicator applicator;
 
 // <summary>
