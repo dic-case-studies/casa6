@@ -486,7 +486,7 @@ Int MPITransport::get(String &s){
 
    *(theChars+i) = 0;
    s = theChars;
-   delete theChars;
+   delete [] theChars;
    return(status.MPI_SOURCE);
 }
 
