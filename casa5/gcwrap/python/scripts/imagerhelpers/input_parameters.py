@@ -87,7 +87,7 @@ class ImagerParameters():
                  conjbeams = True,
                  computepastep =360.0,
                  rotatepastep =360.0,
-                 pointingoffsetsigdev =[30.0,30.0],
+                 pointingoffsetsigdev = [30.0,30.0],
                  
                  pblimit=0.01,
                  normtype='flatnoise',
@@ -161,8 +161,8 @@ class ImagerParameters():
                  ):
         self.allparameters=dict(locals())
         ############TESTOO for debugging Felipe's crash
-        ##params_str=pprint.pformat(self.allparameters)
-        ##casalog.post('ALLPARAMS : ' + params_str, 'WARN', 'CAS-9386-DEBUG')
+        #params_str=pprint.pformat(self.allparameters)
+        #casalog.post('ALLPARAMS : ' + params_str, 'WARN', 'CAS-9386-DEBUG')
         ################################################
         del self.allparameters['self']
         self.defaultKey="0";
@@ -509,7 +509,8 @@ class ImagerParameters():
 
         # saving model is done separately outside of iter. control for interactive clean and or automasking cases
         if self.iterpars['savemodel']!='none':
-            if self.iterpars['interactive']==True or self.alldecpars['0']['usemask']=='auto-multithresh':
+            if self.iterpars['interactive']==True or self.alldecpars['0']['usemask']=='auto-multithresh' or \
+               self.alldecpars['0']['nsigma']>0.0:
                 self.iterpars['savemodel']='none' 
                 self.allselpars['ms0']['readonly']=True
                 self.allselpars['ms0']['usescratch']=False
