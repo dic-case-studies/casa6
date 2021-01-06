@@ -41,7 +41,7 @@ except ImportError:
 
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
+    table = tb
 import sys
 import os
 import unittest
