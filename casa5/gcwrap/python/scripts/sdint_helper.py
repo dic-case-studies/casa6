@@ -21,7 +21,6 @@ else:
 _ia = image()
 _qa = quanta()
 _rg = regionmanager()
-_im = imtool()
 
 _mytb = table()
 
@@ -852,17 +851,19 @@ class SDINT_helper:
         _ia.close()
         return {'nchan':nchan, 'start':start, 'width':width}
 
-    def fit_psf_beam(self,msname = '', psfname =''):
-        _im.open(msname)  
-        _ia.open(psfname)
-        csys = _ia.coordsys()
-        rbeam_old = _ia.restoringbeam()
-        print(rbeam_old)
-        shp = _ia.shape()
-        _ia.close()
-        cellx = csys.increment()['numeric'][0];
-        celly = csys.increment()['numeric'][1];
-        _im.defineimage(nx=shp[0],ny=shp[1],cellx=str(cellx)+'rad',celly=str(celly)+'rad',nchan=3)  
-        params =_im.fitpsf(psfname)
-        print(params)
-        _im.close() 
+### Using Old Imager. Does not work for cubes ? 
+#    def fit_psf_beam(self,msname = '', psfname =''):
+#        _im.open(msname)  
+#        _ia.open(psfname)
+#        csys = _ia.coordsys()
+#        rbeam_old = _ia.restoringbeam()
+#        print(rbeam_old)
+#        shp = _ia.shape()
+#        _ia.close()
+#        cellx = csys.increment()['numeric'][0];
+#        celly = csys.increment()['numeric'][1];
+#        _im.defineimage(nx=shp[0],ny=shp[1],cellx=str(cellx)+'rad',celly=str(celly)+'rad',nchan=3)  
+#        params =_im.fitpsf(psfname)
+#        print(params)
+#        _im.close() 
+#
