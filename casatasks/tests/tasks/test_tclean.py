@@ -3922,10 +3922,10 @@ class test_mosaic_cube(testref_base):
           self.prepData('refim_alma_mosaic.ms')
           
           tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
-          report1=self.th.checkall(imval=[(self.img+'1.image', 1,[175,140,0,0])])
+          report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
           tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True)
-          report2=self.th.checkall(imval=[(self.img+'2.image', 1,[175,140,0,0])])
+          report2=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
           
           self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
           
