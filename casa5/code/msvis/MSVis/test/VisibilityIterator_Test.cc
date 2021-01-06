@@ -170,9 +170,9 @@ printMs (MeasurementSet * ms)
 
             printf ("\n");
 
-            for (rownr_t i = 0; i < vb.nRow(); i++){
+            for (Int i = 0; i < vb.nRow(); i++){
 
-                printf ("r=%d ", vb.rowIds () [i]);
+                printf ("r=%llu ", vb.rowIds () [i]);
                 printf ("t=%.0f ", vb.time () [i]);
                 printf ("a1=%d ", vb.antenna1() [i]);
                 printf ("a2=%d ", vb.antenna2 () [i]);
@@ -430,14 +430,14 @@ BasicChannelSelection::checkRowScalars (VisBuffer2 * vb)
     // Check out the non-cube data for each row
 
     const Vector<rownr_t> & rowIds = vb->rowIds ();
-    Int nRows = vb->nRows();
+    rownr_t nRows = vb->nRows();
 
     Int expectedAntenna1 = 0;
     Int expectedAntenna2 = 0;
     Double previousTime = -1;
     Bool newTimeExpected = true;
 
-    for (Int row = 0; row < nRows; row ++){
+    for (rownr_t row = 0; row < nRows; row ++){
 
         Int rowId = rowIds (row);
 
@@ -526,14 +526,14 @@ BasicChannelSelection::checkSigmaWeight (Int nCorrelations, const Matrix<Float> 
 
 
 void
-BasicChannelSelection::checkUvw (VisBuffer2 * vb, Int nRows, Int rowId, Int row)
+BasicChannelSelection::checkUvw (VisBuffer2 * vb, rownr_t nRows, Int rowId, Int row)
 {
     // Check UVW
 
     TestErrorIf (vb->uvw().shape().nelements() != 2 ||
                  vb->uvw().shape()(0) != 3 ||
-                 vb->uvw().shape()(1) != nRows,
-                 String::format ("Bad uvw shape: expected [3,%d] got [%d,%d]",
+                 vb->uvw().shape()(1) != (ssize_t)nRows,
+                 String::format ("Bad uvw shape: expected [3,%llu] got [%d,%d]",
                                  nRows, vb->uvw().shape()(0), vb->uvw().shape()(1)));
 
     for (int i = 0; i < 3; i++){
@@ -547,7 +547,7 @@ BasicChannelSelection::checkUvw (VisBuffer2 * vb, Int nRows, Int rowId, Int row)
 }
 
 
-std::tuple <MeasurementSet *, Int, Bool>
+std::tuple <MeasurementSet *, rownr_t, Bool>
 BasicChannelSelection::createMs ()
 {
     system ("rm -r BasicChannelSelection.ms");
@@ -555,7 +555,7 @@ BasicChannelSelection::createMs ()
     msf_p = new MsFactory ("BasicChannelSelection.ms");
     msf_p->setIncludeAutocorrelations(true);
 
-    pair<MeasurementSet *, Int> p = msf_p->createMs ();
+    pair<MeasurementSet *, rownr_t> p = msf_p->createMs ();
     nRowsToProcess_p = p.second;
     return std::make_tuple (p.first, p.second, false);
 }
@@ -578,7 +578,7 @@ BasicChannelSelection::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * 
     // Check out that the subchunk has the appropriate data
 
     Int spectralWindow = vb->spectralWindows()(0);
-    Int nRows = vb->nRows();
+    rownr_t nRows = vb->nRows();
     Int nCorrelations = vb->nCorrelations();
 
     VisBuffer2 * vb2 = VisBuffer2::factory (VbRekeyable);
@@ -657,7 +657,7 @@ BasicChannelSelection::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * 
 
     checkRowScalars (vb);
 
-    for (Int row = 0; row < nRows; row ++){
+    for (rownr_t row = 0; row < nRows; row ++){
 
         const Vector<Int> & channels = vb->getChannelNumbers(row);
 
@@ -965,7 +965,7 @@ BasicChannelSelection::getUnderlyingCorrelation (Int spectralWindow, Int correla
 }
 
 Bool
-BasicChannelSelection::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, int nRowsProcessed)
+BasicChannelSelection::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, rownr_t nRowsProcessed)
 {
     TestErrorIf (nRowsProcessed != nRowsToProcess_p,
                  String::format ("Expected to process %d rows, but did %d instead.",
@@ -1043,11 +1043,11 @@ BasicMutation::~BasicMutation ()
 {
 }
 
-std::tuple <MeasurementSet *, Int, Bool>
+std::tuple <MeasurementSet *, rownr_t, Bool>
 BasicMutation::createMs ()
 {
     MeasurementSet * ms;
-    Int nRows;
+    rownr_t nRows;
     Bool toss;
 
     std::tie (ms, nRows, toss) = BasicChannelSelection::createMs ();
@@ -1123,7 +1123,7 @@ BasicMutation::nextSubchunk (VisibilityIterator2 & vi, VisBuffer2 * vb)
 }
 
 Bool
-BasicMutation::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, int /*nRows*/)
+BasicMutation::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, rownr_t /*nRows*/)
 {
     Bool moreSweeps = firstPass_p;
     firstPass_p = false;
@@ -1148,7 +1148,7 @@ FrequencyChannelSelection::startOfData (VisibilityIterator2 & vi, VisBuffer2 * /
 }
 
 Bool
-FrequencyChannelSelection::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, int /*nRowsProcessed*/)
+FrequencyChannelSelection::noMoreData (VisibilityIterator2 & /*vi*/, VisBuffer2 * /*vb*/, rownr_t /*nRowsProcessed*/)
 {
 //    TestErrorIf (nRowsProcessed != nRowsToProcess_p,
 //                 String::format ("Expected to process %d rows, but did %d instead.",
@@ -1321,11 +1321,11 @@ PerformanceComparator::sweepViNew (VisibilityIterator2 & vi)
 
         for (vi.origin(); vi.more(); vi.next()){
 
-            Int nRows = vb->nRows();
+            auto nRows = vb->nRows();
             Int nChannels = vb->nChannels();
             Int nCorrelations = vb->nCorrelations();
 
-            for (Int row = 0; row < nRows; row ++){
+            for (rownr_t row = 0; row < nRows; row ++){
                 for (Int channel = 0; channel < nChannels; channel ++){
                     for (Int correlation = 0; correlation < nCorrelations; correlation ++){
                         Complex c = vb->visCube ()(correlation, channel, row);
@@ -1350,7 +1350,7 @@ PerformanceComparator::sweepViOld (ROVisibilityIterator & vi)
 
         for (vi.origin(); vi.more(); vi++){
 
-            Int nRows = vb.nRow();
+            auto nRows = vb.nRow();
             Int nChannels = vb.nChannel();
             Int nCorrelations = vb.nCorr();
 
@@ -1485,11 +1485,11 @@ CopyMs::doit (const String & oldMsName)
 
 MultipleMss::MultipleMss () : TestWidget ("MultipleMss"), nMss_p (3) {}
 
-std::tuple <Block<const MeasurementSet *>, Int, Bool>
+std::tuple <Block<const MeasurementSet *>, rownr_t, Bool>
 MultipleMss::createMss (){
 
     Block <const MeasurementSet *> mss (nMss_p, 0);
-    Int nRows = 0;
+    rownr_t nRows = 0;
 
     for (int i = 0; i < nMss_p; i++){
 
@@ -1499,7 +1499,7 @@ MultipleMss::createMss (){
         msf->setIncludeAutocorrelations(true);
         msf->addSpectralWindow("spw", i+5, 0, 100, "LL RR RL LR");
 
-        pair<MeasurementSet *, Int> p = msf->createMs ();
+        pair<MeasurementSet *, rownr_t> p = msf->createMs ();
 
         nRows += p.second;
         mss [i] = p.first;
@@ -1574,7 +1574,7 @@ MultipleMss::usesMultipleMss () const {
     return true;
 }
 
-std::tuple <MeasurementSet *, Int, Bool>
+std::tuple <MeasurementSet *, rownr_t, Bool>
 Weighting::createMs ()
 {
     system ("rm -r Weighting.ms");
@@ -1611,10 +1611,10 @@ Weighting::nextSubchunk (VisibilityIterator2 & vi, VisBuffer2 * vb)
 
     Int nCorrelations = wsShape (0);
     Int nChannels = wsShape (1);
-    Int nRows = wsShape (2);
+    rownr_t nRows = wsShape (2);
     //const Vector<uInt> & rowIds = vb->rowIds();
 
-    for (Int row = 0; row < nRows; row ++){
+    for (rownr_t row = 0; row < nRows; row ++){
         for (Int correlation = 0; correlation < nCorrelations; correlation ++){
 
             Float sum = 0;

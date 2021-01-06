@@ -84,6 +84,7 @@ class SynthesisNormalizer
 
   std::shared_ptr<SIImageStore> getImageStore();
   void setImageStore( SIImageStore* imstore );
+  void setImageStore( std::shared_ptr<SIImageStore>& imstore );
 
   void divideResidualByWeight();
   void dividePSFByWeight();

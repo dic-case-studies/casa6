@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import math
 import shutil
@@ -95,9 +94,9 @@ class PyParallelImagerHelper():
     #     nCF = len(cflist);
     #     nProcs=len(self.nodeList);
         
-    #     print("########################################################")
-    #     print("nCF = ",nCF," nProcs = ",nProcs," NodeList=",self.nodeList)
-    #     print("########################################################")
+    #     casalog.post("########################################################")
+    #     casalog.post("nCF = " + nCF + " nProcs = " + nProcs + " NodeList=" + self.nodeList)
+    #     casalog.post("########################################################")
 
     #     #n0=int(nCF/self.NN);
     #     n0=int(float(nCF)/nProcs+0.5);
@@ -126,7 +125,7 @@ class PyParallelImagerHelper():
         allselpars =  synu.contdatapartition( oneselpars , self.NN )
         synu.done()
 
-        print('Partitioned Selection : ', allselpars)
+        casalog.post('Partitioned Selection : {}'.format(allselpars))
         return allselpars
 
 #############################################
@@ -137,7 +136,7 @@ class PyParallelImagerHelper():
         allselpars =  synu.cubedatapartition( oneselpars , self.NN )
         synu.done()
 
-        print('Partitioned Selection : ', allselpars)
+        casalog.post('Partitioned Selection : {}'.format(allselpars))
         return allselpars
 
 #############################################
@@ -147,7 +146,7 @@ class PyParallelImagerHelper():
         allimpars =  synu.cubeimagepartition( impars , self.NN )
         synu.done()
 
-        print('ImSplit : ', allimpars)
+        casalog.post('ImSplit : {}'.format(allimpars))
         return allimpars
 
 #############################################
@@ -158,7 +157,7 @@ class PyParallelImagerHelper():
         allpars = synu.cubedataimagepartition(oneselpars, incsys, self.NN, nchan)
         synu.done()
 
-        #print("Cube Data/Im partitioned selection :", allpars)
+        # casalog.post("Cube Data/Im partitioned selection : {}".format(allpars))
         return allpars
 
 #############################################
@@ -183,14 +182,14 @@ class PyParallelImagerHelper():
         self.CL.pgc('from numpy import array,int32')
         self.CL.pgc('os.chdir("'+owd+'")')
         os.chdir(owd)
-        print("Setting up ", numproc, " engines.")
+        casalog.post("setupCluster, Setting up {} engines.".format(numproc))
         return numproc
 
 #############################################
     def takedownCluster(self):
         # Check that all nodes have returned, before stopping the cluster
          self.checkJobs()
-         print('Ending use of cluster, but not closing it. Call clustermanager.stop_cluster() to close it if needed.')
+         casalog.post('Ending use of cluster, but not closing it. Call clustermanager.stop_cluster() to close it if needed.')
 #         self.sc.stop_cluster()
          self.CL=None
          self.sc=None
@@ -207,7 +206,7 @@ class PyParallelImagerHelper():
              for k in self.nodeList:
                  joblist[k-1] = self.CL.odo('casalog.post("node '+str(k)+' has completed its job")', k)
 
-        print('Blocking for nodes to finish')
+        casalog.post('checkJobs. Blocking for nodes to finish')
         over=False
         while(not over):
             overone=True
@@ -218,7 +217,7 @@ class PyParallelImagerHelper():
                 except Exception:
                      raise
             over = overone
-        print('...done')
+        casalog.post('...done')
 
 #############################################
     def runcmd(self, cmdstr="", node=-1):
@@ -254,17 +253,17 @@ class PyParallelImagerHelper():
 #############################################
 #    def deletepartimages(self, dirname, imname):
 #        namelist = shutil.fnmatch.filter( os.listdir(dirname), imname+".*" )
-#        #print("Deleting : ", namelist, ' from ', dirname, ' starting with ', imname)
+#        #casalog.post("Deleting : " +  namelist + ' from ' + dirname +  ' starting with ' + imname)
 #        for aname in namelist:
 #            shutil.rmtree( dirname + "/" + aname )
 #############################################
     def deletepartimages(self, imagename, node, deldir=False):
         namelist = shutil.fnmatch.filter( os.listdir(self.getworkdir(imagename, node)), "*" )
-        #print("Deleting : ", namelist, ' from ',self.getworkdir(imagename, node) , ' starting with ', imagename)
+        #casalog.post("Deleting : " + namelist + ' from ' + self.getworkdir(imagename, node)  + ' starting with ' + imagename)
         for aname in namelist:
               shutil.rmtree( os.path.join(self.getworkdir(imagename, node), aname) )
         if deldir==True:
-            #print("Deleting workdirectory : "+self.getworkdir(imagename, node))
+            #casalog.post("Deleting workdirectory : "+self.getworkdir(imagename, node))
             shutil.rmtree( self.getworkdir(imagename, node) )
 
 #############################################
