@@ -1195,14 +1195,6 @@ void CTPatchedInterp::makeInterpolators() {
                << ",ant=" << iMSElem
                << " cannot be calibrated by " << tabname
                << " as mapped, and will be flagged in this process." << LogIO::POST;
-              
-              
-              cout << "MS obs=" << iMSObs
-               << ",fld=" << iMSFld
-               << ",spw=" << iMSSpw
-               << ",ant=" << iMSElem
-               << " cannot be calibrated by " << tabname
-               << " as mapped, and will be flagged in this process." << endl;
           }
 	    }
 	  } // iMSElem
