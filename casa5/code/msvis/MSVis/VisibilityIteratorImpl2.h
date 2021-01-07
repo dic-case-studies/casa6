@@ -889,10 +889,10 @@ protected:
 		const vi::SpectralWindowChannels & spectralWindowChannels) const;
 
 	ChannelInfo
-	getChannelInformation(casacore::Bool now) const;
+	getChannelInformation() const;
 
 	ChannelInfo
-	getChannelInformationUsingFrequency(casacore::Bool now) const;
+	getChannelInformationUsingFrequency() const;
 
 	// Methods to get the data out of a table column according to whatever
 	// selection criteria (e.g., slicing) is in effect.

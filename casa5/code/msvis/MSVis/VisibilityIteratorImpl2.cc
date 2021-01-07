@@ -2116,7 +2116,7 @@ VisibilityIteratorImpl2::allSpectralWindowsSelected(
 
 	// info generation should not use time as input
 	std::tie(selectedWindows, nChannels, firstChannels, channelIncrement) =
-		getChannelInformation(false);
+		getChannelInformation();
 }
 
 void
@@ -4195,7 +4195,7 @@ VisibilityIteratorImpl2::writeModel(
 	Vector<Int> channelIncrement;
 
 	std::tie(selectedWindows, nChannels, firstChannels, channelIncrement) =
-		getChannelInformation(false);
+		getChannelInformation();
 	 Matrix<Int> chansel(selectedWindows.nelements(),4);
 	 chansel.column(0)=selectedWindows;
 	 chansel.column(1)=firstChannels;
@@ -4212,167 +4212,118 @@ VisibilityIteratorImpl2::writeModel(
 }
 
 VisibilityIteratorImpl2::ChannelInfo
-VisibilityIteratorImpl2::getChannelInformationUsingFrequency(Bool now) const
+VisibilityIteratorImpl2::getChannelInformationUsingFrequency() const
 {
-	const FrequencySelectionUsingFrame  *frequencySelection =
-		dynamic_cast<const FrequencySelectionUsingFrame*>(
-			&frequencySelections_p->get(msId()));
-	if (!frequencySelection)
-		throw(AipsError(
-			      "Programmer Error channel info with wrong object called"));
-	set<Int> windows = frequencySelection->getSelectedWindows();
+    const FrequencySelectionUsingFrame  *frequencySelection =
+    dynamic_cast<const FrequencySelectionUsingFrame*>(
+        &frequencySelections_p->get(msId()));
+    if (!frequencySelection)
+        throw(AipsError(
+            "Programmer Error channel info with wrong object called"));
+    set<Int> windows = frequencySelection->getSelectedWindows();
 
-	Vector<Int> spectralWindow(windows.size());
-	Vector<Int> nChannels(windows.size(), -1);
-	Vector<Int> firstChannel(windows.size(), -1);
-	Vector<Int> channelIncrement(windows.size(), -1);
+    Vector<Int> spectralWindow(windows.size());
+    Vector<Int> nChannels(windows.size(), -1);
+    Vector<Int> firstChannel(windows.size(), -1);
+    Vector<Int> channelIncrement(windows.size(), -1);
 
-	if (now) {
 
-		// Select the channels in use at the provided time.
+    Int i = 0;
+    map<int, pair<int, int> > spwRanges=frequencySelection->getChannelRange ( measurementSets_p [msId()]) ;
 
-		Vector<Double> t;
-		time(t); // put the current time vector into t
+    for (set<Int>::iterator j = windows.begin(); j != windows.end(); j++){
 
-		AssertOrWarn(
-			abs(mean(t) - t(0)) <= 1.0,
-			"Time not relatively constant in VisBuffer.");
-		// time needs to be relatively constant over the VisBuffer for this
-		// approach to be valid.
+        //spectralWindow [i] = * j;
+        auto sel = spwRanges.find(*j);
 
-		Int nElements = 0;
+        if(sel != spwRanges.end()){
+            spectralWindow.resize(i+1, True);
+            nChannels.resize(i+1,True);
+            firstChannel.resize(i+1, True);
+            channelIncrement.resize(i+1,True);
+            spectralWindow [i] = * j;
+            nChannels [i] = (sel->second).first;
+            firstChannel [i] =(sel->second).second;
+            channelIncrement[i] = 1;
 
-		for (set<Int>::const_iterator window = windows.begin();
-		     window != windows.end(); window++) {
-
-			// Create a channel selector for this window at the buffer's time.
-
-			std::shared_ptr<ChannelSelector> selector =
-				determineChannelSelection(t(0), * window,
-				                          polarizationId(), msId());
-			const ChannelSlicer channelSlicer = selector->getSlicer();
-
-			for (Int i = 0; i <(int) channelSlicer.nelements(); i++) {
-
-				const ChannelSubslicer subslicer =
-					channelSlicer.getSubslicer(i);
-
-				const Slice & slice =
-					subslicer.getSlice(ChannelSubslicer::Channel);
-
-				spectralWindow(nElements) = * window;
-				nChannels(nElements) = slice.length();
-				firstChannel(nElements) = slice.start();
-				channelIncrement(nElements) = slice.inc();
-
-				nElements++;
-			}
-		}
-	}
-	else{
-
-        Int i = 0;
-		map<int, pair<int, int> > spwRanges=frequencySelection->getChannelRange ( measurementSets_p [msId()]) ;
-	
-		
-        for (set<Int>::iterator j = windows.begin(); j != windows.end(); j++){
-
-            //spectralWindow [i] = * j;
-			auto sel = spwRanges.find(*j);
-			if(sel != spwRanges.end()){
-				spectralWindow.resize(i+1, True);
-				nChannels.resize(i+1,True);
-				firstChannel.resize(i+1, True);
-				channelIncrement.resize(i+1,True);
-				 spectralWindow [i] = * j;
-				nChannels [i] = (sel->second).first;
-				firstChannel [i] =(sel->second).second;
-				channelIncrement[i] = 1;
-			
-				++i;
-			}
-			
-			
-			
+            ++i;
         }
        
     }
 
-	return std::make_tuple(spectralWindow, nChannels, firstChannel,
-	                       channelIncrement);
+    return std::make_tuple(spectralWindow, nChannels, firstChannel,
+                           channelIncrement);
 }
 
 
 VisibilityIteratorImpl2::ChannelInfo
-VisibilityIteratorImpl2::getChannelInformation(Bool now) const
+VisibilityIteratorImpl2::getChannelInformation() const
 {
-	const FrequencySelectionUsingChannels * frequencySelection =
-		dynamic_cast<const FrequencySelectionUsingChannels *>(
-			&frequencySelections_p->get(msId()));
+    const FrequencySelectionUsingChannels * frequencySelection =
+    dynamic_cast<const FrequencySelectionUsingChannels *>(
+        &frequencySelections_p->get(msId()));
 
-	if (frequencySelection == 0) {
+    if (frequencySelection == 0) {
+        return getChannelInformationUsingFrequency();
+    }
 
-		return getChannelInformationUsingFrequency(now);
+    Vector<Int> spectralWindow;
+    Vector<Int> nChannels;
+    Vector<Int> firstChannel;
+    Vector<Int> channelIncrement;
 
-	}
+    if (frequencySelection->empty()) {
 
-	Vector<Int> spectralWindow;
-	Vector<Int> nChannels;
-	Vector<Int> firstChannel;
-	Vector<Int> channelIncrement;
+        // No explicit selection, so everything is selected.
 
-	if (frequencySelection->empty()) {
+        casa::ms::SpectralWindows spectralWindows(& measurementSets_p[msId()]);
 
-		// No explicit selection, so everything is selected.
+        spectralWindow.resize(spectralWindows.size());
+        nChannels.resize(spectralWindows.size());
+        firstChannel.resize(spectralWindows.size());
+        channelIncrement.resize(spectralWindows.size());
 
-		casa::ms::SpectralWindows spectralWindows(& measurementSets_p[msId()]);
+        Int i = 0;
 
-		spectralWindow.resize(spectralWindows.size());
-		nChannels.resize(spectralWindows.size());
-		firstChannel.resize(spectralWindows.size());
-		channelIncrement.resize(spectralWindows.size());
+        for(casa::ms::SpectralWindows::const_iterator s =
+            spectralWindows.begin();
+            s != spectralWindows.end();
+            s++) {
 
-		Int i = 0;
+            spectralWindow(i) = s->id();
+            nChannels(i) = s->nChannels();
+            firstChannel(i) = 0;
+            channelIncrement(i) = 1;
 
-		for (casa::ms::SpectralWindows::const_iterator s =
-			     spectralWindows.begin();
-		     s != spectralWindows.end();
-		     s++) {
+            i++;
+        }
+    }
+    else {
 
-			spectralWindow(i) = s->id();
-			nChannels(i) = s->nChannels();
-			firstChannel(i) = 0;
-			channelIncrement(i) = 1;
+        // Use the explicit channel-based selection to compute the result.
 
-			i++;
-		}
-	}
-	else {
+        spectralWindow.resize(frequencySelection->size());
+        nChannels.resize(frequencySelection->size());
+        firstChannel.resize(frequencySelection->size());
+        channelIncrement.resize(frequencySelection->size());
 
-		// Use the explicit channel-based selection to compute the result.
+        Int i = 0;
+        for (FrequencySelectionUsingChannels::const_iterator j =
+             frequencySelection->begin();
+             j != frequencySelection->end();
+             ++j) {
 
-		spectralWindow.resize(frequencySelection->size());
-		nChannels.resize(frequencySelection->size());
-		firstChannel.resize(frequencySelection->size());
-		channelIncrement.resize(frequencySelection->size());
+            spectralWindow(i) = j->spectralWindow_p;
+            nChannels(i) = j->nChannels_p;
+            firstChannel(i) = j->firstChannel_p;
+            channelIncrement(i) = j->increment_p;
 
-		Int i = 0;
-		for (FrequencySelectionUsingChannels::const_iterator j =
-			     frequencySelection->begin();
-		     j != frequencySelection->end();
-		     ++j) {
+            i++;
+        }
+    }
 
-			spectralWindow(i) = j->spectralWindow_p;
-			nChannels(i) = j->nChannels_p;
-			firstChannel(i) = j->firstChannel_p;
-			channelIncrement(i) = j->increment_p;
-
-			i++;
-		}
-	}
-
-	return std::make_tuple(spectralWindow, nChannels, firstChannel,
-	                       channelIncrement);
+    return std::make_tuple(spectralWindow, nChannels, firstChannel,
+                           channelIncrement);
 }
 
 Vector<casacore::Vector<Int> > VisibilityIteratorImpl2::getAllSelectedSpws() const{
