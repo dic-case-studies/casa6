@@ -96,105 +96,193 @@
 #
 #Cube tests (mimicing tclean)
 #10. Cube: Should produce the same results as the test by the same name for tclean.
-#field:'0', imsize:100, cell:'8.0arcsec', specmode:'cube', nchan:10, restfreq:['1.25GHz'], phasecenter:"J2000 19:59:28.500 +40.44.01.50", deconvolver:'hogbom', spw:0, start:0, width:1, veltype:'radio', outframe:'LSRK', interpolation:'linear', niter=10
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': 0, 'width': 1, 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
 #testname: test_cube_0
 #
-#11. Cube, 'chanchunks' Auto: Should produce the same results as the test by the same name for tclean.
+#11. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': 0, 'width': 1, 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_1
+#
+#12. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': 0, 'width': 2, 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
+#testname: test_cube_2
+#
+#13. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': 5, 'width': 1, 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
+#testname: test_cube_3
+#
+#14. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:5~19', 'start': 0, 'width': 1, 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
+#testname: test_cube_4
+#
+#15. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': '100MHz', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_5
+#
+#16. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '1.1GHz', 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_6
+#
+#17. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:4~19', 'start': '1.1GHz', 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_7
+#
+#18. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '1.5GHz', 'width': '-50MHz', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_8
+#
+#19. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': '23983.4km/s', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_9
+#
+#20. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': '-23983.4km/s', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_10
+#
+#21. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '11991.7km/s', 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_11
+#
+#22. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '11977.6km/s', 'width': '', 'veltype': 'radio', 'outframe': 'BARY', 'interpolation': 'linear'
+#testname: test_cube_12
+#
+#23. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'unit': 'GHz', 'value': 1.2}, 'width': '', 'veltype': 'radio', 'outframe': '', 'interpolation': 'linear'
+#testname: test_cube_14
+#
+#24. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'Hz', 'value': 1199989000.0}, 'refer': 'LSRK', 'type': 'frequency'}, 'width': '', 'veltype': 'radio', 'outframe': '', 'interpolation': 'linear'
+#testname: test_cube_15
+#
+#25. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'unit': 'km/s', 'value': 11991.7}, 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_16
+#
+#26. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'm/s', 'value': 11977600.0}, 'refer': 'BARY', 'type': 'radialvelocity'}, 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_17
+#
+#27. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': {'unit': 'km/s', 'value': 11991.7}, 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_18
+#
+#28. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': {'m0': {'unit': 'm/s', 'value': 11991700.0}, 'refer': 'TOPO', 'type': 'radialvelocity'}, 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_19
+#
+#29. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'm/s', 'value': 11994336.49363042}, 'refer': 'RADIO', 'type': 'doppler'}, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
+#testname: test_cube_20
+#
+#30. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:4~9;12~14', 'start': 4, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'nearest'
+#testname: test_cube_21
+#
+#31. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:0~10^2', 'start': 0, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'nearest'
+#testname: test_cube_22
+#
+#32. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:4~13', 'start': '', 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
+#testname: test_cube_23
+#
+#33. Cube, 'chanchunks' Auto: Should produce the same results as the test by the same name for tclean.
 #specmode:'cube',imsize:100,cell:'10.0arcsec',deconvolver:'hogbom',chanchunks:-1, niter=10, deconvolver='hogbom'
 #testname: test_cube_chanchunks_auto
 #
 #
 #
 #Masking tests (mimicing tclean)
-#12. User Mask: Should produce the same results as the test by the same name for tclean.
+#34. User Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',usemask:'user',mask:self.img+'.mask.txt', niter=10
 #deconvolve runs: mask='tst.mask.txt', mask=mstr
 #testname: test_mask_1
 #
-#13. User Mask: Should produce the same results as the test by the same name for tclean.
+#35. User Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',specmode:'cube',interactive:0,usemask:'user', niter=10
 #two mask runs: mask:'tst.mask.txt', mask:mstr
 #testname: test_mask_2
 #
-#14. Missing Mask File: tst.mask is sometimes required
+#36. Missing Mask File: tst.mask is sometimes required
 #mask='tst.model.txt'
 #rm 'tst.model.txt', mask='tst.model.txt'
 #testname: test_mask_missingfile
 #
-#15. Basic PB Mask: create .mask from .pb with default pbmask value
+#37. Basic PB Mask: create .mask from .pb with default pbmask value
 #rm 'tst.mask', usemask='pb', don't set pbmask
 #verify the mask file exists and all pixels are 1s
 #testname: test_mask_pbmask0
 #
-#16. Threshold PB Mask: create .mask from .pb with a pb threshold for masking
+#38. Threshold PB Mask: create .mask from .pb with a pb threshold for masking
 #rm 'tst.mask', usemask='pb', pbmask=0.995
 #verify the mask file exists and only certain pixels are 1s
 #testname: test_mask_pbmask995
 #
-#17. Auto Mask: Should produce the same results as the test by the same name for tclean.
+#39. Auto Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10
 #testname: test_mask_autobox_multithresh
 #
-#18. Auto Mask with New Noise Calc: Should produce the same results as the test by the same name for tclean.
+#40. Auto Mask with New Noise Calc: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,fastnoise=False
 #testname: test_mask_autobox_multithresh_newnoise
 #
-#19. Auto Mask with Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
+#41. Auto Mask with Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,nsigma=3.0
 #testname: test_mask_autobox_multithresh_with_nsigma
 #
-#20. Auto Mask with New Noise Calc and Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
+#42. Auto Mask with New Noise Calc and Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,fastnoise=False,nsigma=3.0
 #testname: test_mask_autobox_multithresh_with_nsigma_newnoise
 #
-#21. Auto Mask with Pruning: Should produce the same results as the test by the same name for tclean.
+#43. Auto Mask with Pruning: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,minbeamfrac=0.3
 #testname: test_mask_autobox_multithresh_with_prune
 #
-#22. Large Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
+#44. Large Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
 #Mostly the same arguments as from the pipeline test standard_cube_eph. Modified to run in a single major cycle.
 #testname: test_mask_autobox_multithresh_standard_cube_eph
 #
 #
 #
 #Show multiple executions of deconvolve get a probably-correct answer
-#23. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
+#45. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_hogbomhogbom
 #
-#24. Deconvolve Clark + Clark: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#46. Deconvolve Clark + Clark: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'clark',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_clarkclark
 #
-#25. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#47. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'clarkstokes','cyclefactor':0.1,'stokes':'I'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_clarkstokesclarkstokes
 #
-#26. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#48. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'multiscale',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_multiscalemultiscale
 #
-#27. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#49. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_mtmfsmtmfs
 #
-#28. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
+#50. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
 #Note: we only test for task completion, don't know what the value should be at the end. (TODO needs validation)
 #imsize:200, cell:'8.0arcsec', deconvolver:'multiscale', scales:[0,20,40,100],niter=10
 #imsize:200, cell:'8.0arcsec', deconvolver:'hogbom', niter=10
 #testname: test_multirun_multiscalehog
 #
-#29. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
+#51. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=False, niter=10
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=True, niter=0
 #testname: test_multirun_norestore_restore
@@ -202,185 +290,185 @@
 #
 #
 #'img' value input checking using the hogbom deconvolver
-#30. Missing Table: tst.residual is always required
+#52. Missing Table: tst.residual is always required
 #rm 'tst.residual', niter=10
 #testname: test_imgval_missingimgs_residual
 #
-#31. Missing Table: tst.psf is always required
+#53. Missing Table: tst.psf is always required
 #rm 'tst.psf', niter=10
 #testname: test_imgval_missingimgs_psf
 #
-#32. Missing Table: tst.model is used to continue deconvolution, but is not required.
+#54. Missing Table: tst.model is used to continue deconvolution, but is not required.
 #rm 'tst.model', niter=10
 #testname: test_imgval_missingimgs_model
 #
-#33. Missing Table: tst.sumwt is never required
+#55. Missing Table: tst.sumwt is never required
 #rm 'tst.sumwt', niter=10
 #testname: test_imgval_missingimgs_sumwt
 #
-#34. Reorder Image Axes: tst.residual must have the axes as is given in tclean
+#56. Reorder Image Axes: tst.residual must have the axes as is given in tclean
 #imtrans("tst.residual", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_residual
 #
-#35. Reorder Image Axes: tst.psf must have the axes as is given in tclean
+#57. Reorder Image Axes: tst.psf must have the axes as is given in tclean
 #imtrans("tst.psf", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_psf
 #
-#36. Reorder Image Axes: tst.model must have the axes as is given in tclean
+#58. Reorder Image Axes: tst.model must have the axes as is given in tclean
 #imtrans("tst.model", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_model
 #
-#37. Reorder Image Axes: tst.pb must have the axes as is given in tclean
+#59. Reorder Image Axes: tst.pb must have the axes as is given in tclean
 #imtrans("tst.pb", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_axesmismatch_pb
 #
-#38. Rebin To Smaller Image: everything else must have the same shape as tst.residual
+#60. Rebin To Smaller Image: everything else must have the same shape as tst.residual
 #imrebin("tst.residual", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_residual
 #
-#39. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
+#61. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
 #imrebin("tst.psf", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_psf
 #
-#40. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
+#62. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
 #imrebin("tst.model", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_model
 #
-#41. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
+#63. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
 #imrebin("tst.pb", factor=[50,50]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_shapemismatch_pb
 #
-#42. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#64. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_imgval_startmodel_empty
 #
-#43. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#65. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_imgval_startmodel_dne
 #
-#44. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
+#66. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_model_exists
 #
-#45. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
+#67. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_basic_copy
 #
-#46. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#68. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model', imtrans(order="3012")
 #testname:test_imgval_startmodel_axesmismatch
 #
-#47. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
+#69. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
 #set_crval0(51), niter=10
 #testname:test_imgval_startmodel_csysmismatch
 #
-#48. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
+#70. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
 #imrebin(factor=[2,2]), niter=10
 #testname:test_imgval_startmodel_shapemismatch
 #
 #
 #
 #'img' value input checking using the mtmfs deconvolver
-#49. Missing Table: tst.residual.tt1 is always required
+#71. Missing Table: tst.residual.tt1 is always required
 #rm 'tst.residual.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_residual
 #
-#50. Missing Table: tst.psf.tt1 is always required
+#72. Missing Table: tst.psf.tt1 is always required
 #rm 'tst.psf.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_psf
 #
-#51. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
+#73. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
 #rm 'tst.model.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_model
 #
-#52. Missing Table: tst.sumwt.tt1 is never required
+#74. Missing Table: tst.sumwt.tt1 is never required
 #rm 'tst.sumwt.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_sumwt
 #
-#53. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
+#75. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
 #imtrans("tst.residual.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_residual
 #
-#54. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
+#76. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
 #imtrans("tst.psf.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_psf
 #
-#55. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
+#77. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
 #imtrans("tst.model.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_model
 #
-#56. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
+#78. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
 #imtrans("tst.pb.tt1", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_axesmismatch_pb
 #
-#57. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
+#79. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
 #imrebin("tst.residual.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_residual
 #
-#58. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
+#80. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.psf.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_psf
 #
-#59. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
+#81. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.model.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_model
 #
-#60. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
+#82. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.pb.tt1", factor=[2,2]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_shapemismatch_pb
 #
-#61. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#83. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_mtmfsimgval_startmodel_empty
 #
-#62. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#84. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_mtmfsimgval_startmodel_dne
 #
-#63. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
+#85. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_model_exists
 #
-#64. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
+#86. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_basic_copy
 #
-#65. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#87. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model.tt1', imtrans(order="3012")
 #testname:test_mtmfsimgval_startmodel_axesmismatch
 #
-#66. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
+#88. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
 #set_crval0(51), niter=10
 #testname:test_mtmfsimgval_startmodel_csysmismatch
 #
-#67. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
+#89. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
 #imrebin(factor=[2,2]), niter=10
 #testname:test_mtmfsimgval_startmodel_shapemismatch
 #
 #
 #
 #Multiple deconvolves update the .residual
-#68. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
+#90. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':hogbom, 'niter':10
 #testname: test_residual_update_hogbom
 #
-#69. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
+#91. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clark does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10
 #testname: test_residual_update_clark
 #
-#70. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
+#92. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clarkstokes does this correctly.
 #'vis':'refim_point_linRL.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10, 'stokes':'I'
 #testname: test_residual_update_clarkstokes
 #
-#71. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
+#93. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':multiscale, 'niter':10
 #testname: test_residual_update_multiscale
 #
-#72. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
+#94. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':mtmfs, 'niter':10
 #testname: test_residual_update_mtmfs
@@ -389,20 +477,20 @@
 #
 #Control .image image restoration
 #Most deconvolvers do restoration the same with (mtmfs being the exception). These tests show that hogbom deconvolve restores correctly.
-#73. Deconvolve but don't restore: should not create a .image image
+#95. Deconvolve but don't restore: should not create a .image image
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #testname: test_restoration_none
 #
-#74. Deconvolve and restore, and compare results with those from a tclean run
+#96. Deconvolve and restore, and compare results with those from a tclean run
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=True
 #testname: test_restoration_basic(self):
 #
-#75. Deconvolve and don't restore, then restore and compare results with those from a tclean run
+#97. Deconvolve and don't restore, then restore and compare results with those from a tclean run
 #run 1: 'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #run 2: 'niter':0, restoration=True
 #testname: test_restoration_onlyrestore(self):
 #
-#76. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
+#98. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
 #This test is here mainly to verify that "restoringbeam" is picked up by Deconvolve.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoringbeam='100.0arcsec'
 #testname: test_restoration_bigbeam(self):
@@ -410,51 +498,51 @@
 #
 #
 #N Iter Params tests: verify that we perform the same number of iterations as tclean for the same iteration parameters
-#77. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+#99. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
 #'gain':0.2
 #testname: test_niterparms_gain_1
 #
-#78. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+#100. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
 #'gain':0.3
 #testname: test_niterparms_gain_2
 #
-#79. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
+#101. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
 #'threshold':0.22
 #testname: test_niterparms_threshold_1
 #
-#80. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
+#102. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
 #'threshold':0.18
 #testname: test_niterparms_threshold_2
 #
-#81. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
+#103. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
 #'nsigma':0.9, 'maxpsffraction':0
 #testname: test_niterparms_nsigma_1
 #
-#82. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+#104. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
 #'nsigma':1.5, 'maxpsffraction':0
 #testname: test_niterparms_nsigma_2
 #
-#83. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
+#105. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
 #'cyclefactor':0.1
 #testname: test_niterparms_cyclefactor_1
 #
-#84. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
+#106. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
 #'cyclefactor':2.0
 #testname: test_niterparms_cyclefactor_2
 #
-#85. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
+#107. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
 #'minpsffraction':0.5
 #testname: test_niterparms_minpsffraction_1
 #
-#86. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
+#108. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
 #'minpsffraction':0.2
 #testname: test_niterparms_minpsffraction_2
 #
-#87. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
+#109. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
 #'maxpsffraction':0.01
 #testname: test_niterparms_maxpsffraction_1
 #
-#88. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
+#110. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
 #'maxpsffraction':0.05
 #testname: test_niterparms_maxpsffraction_2
 #
@@ -532,13 +620,14 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        self.delData()
+        # self.delData()
         # Debugging: leave input and output data
-        # self.delData(delinput=False, deloutput=False)
+        self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
-        cls.staticDelData(cls.msfile, cls.img)
+        # cls.staticDelData(cls.msfile, cls.img)
+        cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
         if cls.cachedir != "":
             os.system('rm -rf '+cls.cachedir)
 
@@ -976,7 +1065,7 @@ class test_cube(testref_base):
 
     # Test 10
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
-    @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
     def test_cube_0(self):
         """ [cube] test_cube_0 """
         ######################################################################################
@@ -985,16 +1074,536 @@ class test_cube(testref_base):
         testid=0
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
         self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
         report = th.checkall(imgexist=[self.img+'.image'],
                              imgval=[(self.img+'.image',1.50002,[50,50,0,0])])
-        report2 = th.checkspecframe(self.img+'.image','LSRK',999988750)
-        self.checkfinal(report)#+report2)
+        report2 = th.check_spec_frame(self.img+'.image','LSRK',999988750)
+        self.checkfinal(report+report2)
 
     # Test 11
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_1(self):
+        """ [cube] test_cube_1 """
+        ######################################################################################
+        # test_cube_1. Should produce the same results as tclean.
+        ######################################################################################
+        testid=1
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50002,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO', 9.9999999e8)
+
+        self.checkfinal(report+report2)
+
+    # Test 12
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_2(self):
+        """ [cube] test_cube_2 """
+        ######################################################################################
+        # test_cube_2. Should produce the same results as tclean.
+        ######################################################################################
+        testid=2
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.4643,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.02498846e9)
+        self.checkfinal(report+report2)
+
+    # Test 13
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_3(self):
+        """ [cube] test_cube_3 """
+        ######################################################################################
+        # test_cube_3. Should produce the same results as tclean.
+        ######################################################################################
+        # start = 5 (1.25GHZ IN TOPO)
+        testid=3
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.2000,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.249985937e9)
+        self.checkfinal(report+report2)
+
+    # Test 14
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_4(self):
+        """ [cube] test_cube_4 """
+        ######################################################################################
+        # test_cube_4. Should produce the same results as tclean.
+        ######################################################################################
+        testid=4
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.5000,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.23998593e9)
+
+    # Test 15
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_5(self):
+        """ [cube] test_cube_5 """
+        ######################################################################################
+        # test_cube_5. Should produce the same results as tclean.
+        ######################################################################################
+        # width by freq (2x chanw) result should be the same as #2
+        testid=5
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.4643,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.025e9)
+        self.checkfinal(report+report2)
+
+    # Test 16
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_6(self):
+        """ [cube] test_cube_6 """
+        ######################################################################################
+        # test_cube_6. Should produce the same results as tclean.
+        ######################################################################################
+        # start in freq=1.1GHz (=chan5)
+        testid=6
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.36365354,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.1e9)
+        self.checkfinal(report+report2)
+
+    # Test 17
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_7(self):
+        """ [cube] test_cube_7 """
+        ######################################################################################
+        # test_cube_7. Should produce the same results as tclean.
+        ######################################################################################
+        # start 1.1GHz(TOPO)=chan2 spw=4~19
+        # Currently different behaviors between serial and parallel on non-overlapping data and image
+        # parameter selections.
+        # serial: result in chan 0&1 psf blanked  
+        # parallel: spw channel selection will be ignored and tuneselectdata will 
+        # select overlapping data and image selections (this seems to me more correct? behavior)
+        # as of 2019.01.08, this is no longer true, psf blanked for chan 0 and 1 for parallel
+        testid=7
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',0.0,[50,50,0,0]),
+                                     (self.img+'.image',1.2000,[50,50,0,3])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.1e9)
+        self.checkfinal(report+report2)
+
+    # Test 18
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_8(self):
+        """ [cube] test_cube_8 """
+        ######################################################################################
+        # test_cube_8. Should produce the same results as tclean.
+        ######################################################################################
+        # start =1.5GHz(chan10)  width=-50MHz TOPO (descending freq)
+        testid=8
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.42858946,[50,50,0,9])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.5e9)
+        self.checkfinal(report+report2)
+
+    # Test 19
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_9(self):
+        """ [cube] test_cube_9 """
+        ######################################################################################
+        # test_cube_9. Should produce the same results as tclean.
+        ######################################################################################
+        # width in vel (=23983.4km/s=2xChanW) def start (=cube will be ascending order in vel)
+        testid=9
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.46184647,[50,50,0,9])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.925e9)
+        self.checkfinal(report+report2)
+
+    # Test 20
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_10(self):
+        """ [cube] test_cube_10 """
+        ######################################################################################
+        # test_cube_10. Should produce the same results as tclean.
+        ######################################################################################
+        # width in vel = -23983.4m/s def start (cube will be in descending order in vel)
+        testid=10
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.46184647,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.025e9)
+        self.checkfinal(report+report2)
+
+    # Test 21
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_11(self):
+        """ [cube] test_cube_11 """
+        ######################################################################################
+        # test_cube_11. Should produce the same results as tclean.
+        ######################################################################################
+        # start 11991.7km/s (chan4)
+        testid=11
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001776,[50,50,0,4])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.2e9)
+        self.checkfinal(report+report2)
+
+    # Test 22
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_12(self):
+        """ [cube] test_cube_12 """
+        ######################################################################################
+        # test_cube_12. Should produce the same results as tclean.
+        ######################################################################################
+        # start 11977.6km/s (BARY) = chan4
+        testid=12
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001931,[50,50,0,4])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','BARY',1.200058783e9)
+        self.checkfinal(report+report2)
+
+    # Test 23
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_13(self):
+        """ [cube] test_cube_13 """
+        ######################################################################################
+        # test_cube_13. Should produce the same results as tclean.
+        ######################################################################################
+        # 
+        testid=13
+        print(" : " , self.testList[testid]['desc'])
+        # use own tclean command as nchan need to modify
+        t = {"vis":"refim_point.ms", "field":'0', "imsize":100, "cell":'8.0arcsec', "niter":0, "specmode":'cube', "nchan":8, "restfreq":['1.25GHz'], 
+             "phasecenter":"J2000 19:59:28.500 +40.44.01.50", "deconvolver":'hogbom', "spw":self.testList[testid]['spw'], 
+             "imagename":self.img+self.testList[testid]['imagename'], "start":self.testList[testid]['start'], 
+             "width":self.testList[testid]['width'], "veltype":self.testList[testid]['veltype'], 
+             "outframe":self.testList[testid]['outframe'], "parallel":self.parallel}
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img+self.testList[testid]['imagename'], niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+self.testList[testid]['imagename']+'.psf') and os.path.exists(self.img+self.testList[testid]['imagename']+'.residual') )
+        #report=self.th.checkall(imgexist=[self.img+self.testList[testid]['imagename']+'.image'],
+        #imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001931,
+        #[50,50,0,4])])
+        # report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.2000e9)
+
+    # Test 24
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_14(self):
+        """ [cube] test_cube_14 """
+        ######################################################################################
+        # test_cube_14. Should produce the same results as tclean.
+        ######################################################################################
+        # start = quantity ('1.2GHz') frame default(LSRK)
+        testid=14
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.25000215,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.2e9)
+        self.checkfinal(report+report2)
+
+    # Test 25
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_15(self):
+        """ [cube] test_cube_15 """
+        ######################################################################################
+        # test_cube_15. Should produce the same results as tclean.
+        ######################################################################################
+        # measure freq in LSRK ch4
+        testid=15
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.25001216,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199989e9)
+        self.checkfinal(report+report2)
+
+    # Test 26
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_16(self):
+        """ [cube] test_cube_16 """
+        ######################################################################################
+        # test_cube_16. Should produce the same results as tclean.
+        ######################################################################################
+        # start quantity vel=11991.7km/s outframe=topo (ascending vel order)
+        testid=16
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001776,[50,50,0,4])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.2000e9)
+        self.checkfinal(report+report2)
+
+    # Test 27
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_17(self):
+        """ [cube] test_cube_17 """
+        ######################################################################################
+        # test_cube_17. Should produce the same results as tclean.
+        ######################################################################################
+        # start measure vel=11977.6km/s BARY, outframe=TOPO will be overridedden (ascending vel order)
+        testid=17
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001931,[50,50,0,4])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','BARY',1.200058783e9)
+        self.checkfinal(report+report2)
+
+    # Test 28
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_18(self):
+        """ [cube] test_cube_18 """
+        ######################################################################################
+        # test_cube_18. Should produce the same results as tclean.
+        ######################################################################################
+        # defaut start, width in vel (quantity) +11991.7km/s (TOPO, radio)=datachan width, will be
+        # ascending order in vel so highet DATA channel will be chan 0 in the image (image chan0=1.45GHz)
+        testid=18
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001764,[50,50,0,9])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.45e9)
+        self.checkfinal(report+report2)
+
+    # Test 29
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_19(self):
+        """ [cube] test_cube_19 """
+        ######################################################################################
+        # test_cube_19. Should produce the same results as tclean.
+        ######################################################################################
+        # default start, width in vel (measure) +11991.7km/s (TOPO, radio)
+        testid=19
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.50001764,[50,50,0,9])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.45e9)
+        self.checkfinal(report+report2)
+
+    # Test 30
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_20(self):
+        """ [cube] test_cube_20 """
+        ######################################################################################
+        # test_cube_20. Should produce the same results as tclean.
+        ######################################################################################
+        # doppler (with ch4 LSRK freq, rest freq=1.25GHz)
+        testid=20
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.5000546,[50,50,0,4])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199989152e9)
+        self.checkfinal(report+report2)
+
+    # Test 31
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_21(self):
+        """ [cube] test_cube_21 """
+        ######################################################################################
+        # test_cube_21. Should produce the same results as tclean.
+        ######################################################################################
+        # data sel with channel gap (10,11 excluded) 4~9, 12~14
+        testid=21
+        self.testList[testid]['interpolation']='nearest'
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.250001562,[50,50,0,0]),
+                                     (self.img+'.image',0.0,[50,50,0,6]),
+                                     (self.img+'.image',0.0,[50,50,0,7])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199986500e9)
+        self.checkfinal(report+report2)
+
+    # Test 32
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_22(self):
+        """ [cube] test_cube_22 """
+        ######################################################################################
+        # test_cube_22. Should produce the same results as tclean.
+        ######################################################################################
+        # stride (step=2) use nearest interpolation (other interpotion methods
+        # may not work well...)
+        testid=22
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.5000546,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',0.999988750387e9)
+        self.checkfinal(report+report2)
+
+    # Test 33
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skipIf(not hasattr(th, 'checkspecframe'), "Skip this test if checkspecframe hasn't been carried over to the new testing scripts yet")
+    def test_cube_23(self):
+        """ [cube] test_cube_23 """
+        ######################################################################################
+        # test_cube_23. Should produce the same results as tclean.
+        ######################################################################################
+        testid=23
+        print(" : " , self.testList[testid]['desc'])
+        t = self.get_cubetclean_args(testid)
+        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
+        self.prepData('refim_point.ms', tclean_args=t)
+        deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
+
+        self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
+        report = th.checkall(imgexist=[self.img+'.image'],
+                             imgval=[(self.img+'.image',1.2500156,[50,50,0,0])])
+        report2 = th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.20e9)
+        self.checkfinal(report+report2)
+
+    # Test 34
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_cube_chanchunks_auto(self):
         """ [cube] test_cube_chanchunks_auto """
@@ -1013,7 +1622,7 @@ class test_cube(testref_base):
 ##Task level tests : masks and clean boxes.
 class test_mask(testref_base):
 
-    # Test 12
+    # Test 35
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_1(self):
         """ [mask] test_mask_1 """
@@ -1035,7 +1644,7 @@ class test_mask(testref_base):
 
         self.checkfinal(report1+report2)
 
-    # Test 13
+    # Test 36
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_2(self):
         """ [mask] test_mask_2 """
@@ -1057,7 +1666,7 @@ class test_mask(testref_base):
 
         self.checkfinal(report1+report2)
 
-    # Test 14
+    # Test 37
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_missingfile(self):
         """ [mask] test_mask_missingfile """
@@ -1086,7 +1695,7 @@ class test_mask(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(**deconvolve_args)
 
-    # Test 15
+    # Test 38
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_pbmask0(self):
         """ [mask] test_mask_pbmask0 """
@@ -1112,7 +1721,7 @@ class test_mask(testref_base):
             _ia.close()
         self.assertEqual(10000, stats['sum'][0], "Mask image does not contain the right number of masked pixels (should be 10000 but is {})!".format(stats['sum'][0]))
 
-    # Test 16
+    # Test 39
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_pbmask995(self):
         """ [mask] test_mask_pbmask995 """
@@ -1139,7 +1748,7 @@ class test_mask(testref_base):
         self.assertEqual(989, stats['sum'][0], "Mask image does not contain the right number of masked pixels (should be 989 but is {})!".format(stats['sum'][0]))
 
     # AUTOMASK TESTS
-    # Test 17
+    # Test 40
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh(self):
         """ [mask] test_mask_autobox_multithresh """
@@ -1151,7 +1760,7 @@ class test_mask(testref_base):
         report=th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
         self.checkfinal(report)
 
-    # Test 18
+    # Test 41
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_newnoise(self):
         """ [mask] test_mask_autobox_multithresh_newnoise """
@@ -1163,7 +1772,7 @@ class test_mask(testref_base):
         report=th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
         self.checkfinal(report)
 
-    # Test 19
+    # Test 42
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_nsigma(self):
         """ [mask] test_mask_autobox_multithresh_with_nsigma """
@@ -1175,7 +1784,7 @@ class test_mask(testref_base):
         report=th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
         self.checkfinal(report)
 
-    # Test 20
+    # Test 43
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_nsigma_newnoise(self):
         """ [mask] test_mask_autobox_multithresh_with_nsigma_newnoise """
@@ -1187,7 +1796,7 @@ class test_mask(testref_base):
         report=th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
         self.checkfinal(report)
 
-    # Test 21
+    # Test 44
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_with_prune(self):
         """ [mask] test_mask_autobox_multithresh_with_prune """
@@ -1199,7 +1808,7 @@ class test_mask(testref_base):
         report=th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[500,500,0,0]),(self.img+'.mask',0.0,[500,510,0,0])])
         self.checkfinal(report)
 
-    # Test 22
+    # Test 45
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mask_autobox_multithresh_standard_cube_eph(self):
         """ [mask] test_mask_autobox_multithresh_standard_cube_eph """
@@ -1351,7 +1960,7 @@ class test_mask(testref_base):
 ##Task level tests : run deconvolve multiple times in a row
 class test_multirun(testref_base):
 
-    # Test 23
+    # Test 46
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_hogbomhogbom(self):
         """ [multirun] test_multirun_hogbomhogbom """
@@ -1376,7 +1985,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 24
+    # Test 47
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_clarkclark(self):
         """ [multirun] test_multirun_clarkclark """
@@ -1399,7 +2008,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 25
+    # Test 48
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_clarkstokesclarkstokes(self):
         """ [multirun] test_multirun_clarkstokesclarkstokes """
@@ -1422,7 +2031,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 26
+    # Test 49
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_multiscalemultiscale(self):
         """" [multirun] test_multirun_multiscalemultiscale """
@@ -1445,7 +2054,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2 + report3)
 
-    # Test 27
+    # Test 50
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_mtmfsmtmfs(self):
         """" [multirun] test_multirun_mtmfsmtmfs """
@@ -1471,7 +2080,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report11 + report12 + report21 + report22 + report31 + report32)
 
-    # Test 28
+    # Test 51
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_multiscalehog(self):
         """ [multirun] test_multirun_multiscalehog """
@@ -1488,7 +2097,7 @@ class test_multirun(testref_base):
 
         self.checkfinal(report1 + report2)
 
-    # Test 29
+    # Test 52
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_multirun_norestore_restore(self):
         """ [multirun] test_multirun_norestore_restore """
@@ -1601,7 +2210,7 @@ class test_imgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, **deconvolve_args)
 
-    # Test 30
+    # Test 53
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_missingimgs_residual(self):
         """ [imgval] test_imgval_missingimgs_residual """
@@ -1610,7 +2219,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_missingimgs(".residual")
 
-    # Test 31
+    # Test 54
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_missingimgs_psf(self):
         """ [imgval] test_imgval_missingimgs_psf """
@@ -1620,7 +2229,7 @@ class test_imgval(testref_base):
         # Note: cpp code doesn't throw an exception when psf is missing, just prints a warning
         self.helper_imgval_missingimgs(".psf")
 
-    # Test 32
+    # Test 55
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_missingimgs_model(self):
         """ [imgval] test_imgval_missingimgs_model """
@@ -1632,7 +2241,7 @@ class test_imgval(testref_base):
             os.system("rm -rf "+self.img+".model")
         deconvolve(imagename=self.img, niter=10)
 
-    # Test 33
+    # Test 56
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_missingimgs_sumwt(self):
         """ [imgval] test_imgval_missingimgs_sumwt """
@@ -1646,7 +2255,7 @@ class test_imgval(testref_base):
         # Should be fine. Sumwt should not be required for task deconvolve.
         deconvolve(imagename=self.img, niter=10)
 
-    # Test 34
+    # Test 57
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_axesmismatch_residual(self):
         """ [imgval] test_imgval_axesmismatch_residual """
@@ -1655,7 +2264,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_axesmismatch(".residual")
 
-    # Test 35
+    # Test 58
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_axesmismatch_psf(self):
         """ [imgval] test_imgval_axesmismatch_psf """
@@ -1664,7 +2273,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_axesmismatch(".psf")
 
-    # Test 36
+    # Test 59
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_axesmismatch_model(self):
         """ [imgval] test_imgval_axesmismatch_model """
@@ -1673,7 +2282,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_axesmismatch(".model")
 
-    # Test 37
+    # Test 60
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_axesmismatch_pb(self):
         """ [imgval] test_imgval_axesmismatch_pb """
@@ -1682,7 +2291,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_axesmismatch(".pb", deconvolve_args={'usemask':'pb', 'pbmask':0.2})
 
-    # Test 38
+    # Test 61
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_shapemismatch_residual(self):
         """ [imgval] test_imgval_shapemismatch_residual """
@@ -1691,7 +2300,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_shapemismatch(".residual")
 
-    # Test 39
+    # Test 62
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_shapemismatch_psf(self):
         """ [imgval] test_imgval_shapemismatch_psf """
@@ -1700,7 +2309,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_shapemismatch(".psf")
 
-    # Test 40
+    # Test 63
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_shapemismatch_model(self):
         """ [imgval] test_imgval_shapemismatch_model """
@@ -1709,7 +2318,7 @@ class test_imgval(testref_base):
         ######################################################################################
         self.helper_imgval_shapemismatch(".model")
 
-    # Test 41
+    # Test 64
     # @unittest.skip("The cpp code does not mind that the .pb image has a weird shape; no exception is thrown.")
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_shapemismatch_pb(self):
@@ -1720,7 +2329,7 @@ class test_imgval(testref_base):
         self.helper_imgval_shapemismatch(".pb", deconvolve_args={'usemask':'pb', 'pbmask':0.2})
     
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 42
+    # Test 65
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     @unittest.skip("if test_imgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_imgval_startmodel_empty(self):
@@ -1743,7 +2352,7 @@ class test_imgval(testref_base):
         os.system("mv {0} {1}".format(self.mname, self.mname2))
         deconvolve(imagename=self.img, niter=10, startmodel=['', '', self.mname2, '', ''])
 
-    # Test 43
+    # Test 66
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_startmodel_dne(self):
         """ [imgval] test_imgval_startmodel_dne """
@@ -1755,7 +2364,7 @@ class test_imgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
 
-    # Test 44
+    # Test 67
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_startmodel_model_exists(self):
         """ [imgval] test_imgval_startmodel_model_exists """
@@ -1771,7 +2380,7 @@ class test_imgval(testref_base):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 45
+    # Test 68
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     @unittest.skip("if test_imgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_imgval_startmodel_basic_copy(self):
@@ -1788,7 +2397,7 @@ class test_imgval(testref_base):
         deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
         self.assertTrue(os.path.exists(self.mname), "File {0} did not get copied!".format(self.mname))
 
-    # Test 46
+    # Test 69
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_startmodel_axesmismatch(self):
         """ [imgval] test_imgval_startmodel_axesmismatch """
@@ -1805,7 +2414,7 @@ class test_imgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
-    # Test 47
+    # Test 70
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_startmodel_csysmismatch(self):
         """ [imgval] test_imgval_startmodel_csysmismatch """
@@ -1832,7 +2441,7 @@ class test_imgval(testref_base):
         csys3, regridpnt = self.get_csys_crval0(self.mname)
         self.assertAlmostEqual(regridpnt, oldpnt, "Image {0} did not get its csys.direction0.crval[0] value regridded properly from {1} to {2}! (actual value is {3})".format(self.mname2, newpnt, oldpnt, regridpnt))
 
-    # Test 48
+    # Test 71
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_imgval_startmodel_shapemismatch(self):
         """ [imgval] test_imgval_startmodel_shapemismatch """
@@ -1956,7 +2565,7 @@ class test_mtmfsimgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
-    # Test 49
+    # Test 72
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_missingimgs_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_residual """
@@ -1965,7 +2574,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_missingimgs(".residual")
 
-    # Test 50
+    # Test 73
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_missingimgs_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_psf """
@@ -1975,7 +2584,7 @@ class test_mtmfsimgval(testref_base):
         # Note: cpp code doesn't throw an exception when psf is missing, just prints a warning
         self.helper_mtmfsimgval_missingimgs(".psf")
 
-    # Test 51
+    # Test 74
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_missingimgs_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_model """
@@ -1989,7 +2598,7 @@ class test_mtmfsimgval(testref_base):
         # Should be fine. Model should not be required for the first run of task deconvolve.
         deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
 
-    # Test 52
+    # Test 75
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_missingimgs_sumwt(self):
         """ [mtmfsimgval] test_mtmfsimgval_missingimgs_sumwt """
@@ -2003,7 +2612,7 @@ class test_mtmfsimgval(testref_base):
         # Should be fine. Sumwt should not be required for task deconvolve.
         deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
 
-    # Test 53
+    # Test 76
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_axesmismatch_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_residual """
@@ -2012,7 +2621,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_axesmismatch(".residual")
 
-    # Test 54
+    # Test 77
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_axesmismatch_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_psf """
@@ -2021,7 +2630,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_axesmismatch(".psf")
 
-    # Test 55
+    # Test 78
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_axesmismatch_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_model """
@@ -2030,7 +2639,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_axesmismatch(".model")
 
-    # Test 56
+    # Test 79
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_axesmismatch_pb(self):
         """ [mtmfsimgval] test_mtmfsimgval_axesmismatch_pb """
@@ -2039,7 +2648,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_axesmismatch(".pb", ttn=".tt0", deconvolve_args={'usemask':'pb', 'pbmask':0.2})
 
-    # Test 57
+    # Test 80
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_shapemismatch_residual(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_residual """
@@ -2048,7 +2657,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_shapemismatch(".residual")
 
-    # Test 58
+    # Test 81
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_shapemismatch_psf(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_psf """
@@ -2057,7 +2666,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_shapemismatch(".psf")
 
-    # Test 59
+    # Test 82
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_shapemismatch_model(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_model """
@@ -2066,7 +2675,7 @@ class test_mtmfsimgval(testref_base):
         ######################################################################################
         self.helper_mtmfsimgval_shapemismatch(".model")
 
-    # Test 60
+    # Test 83
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_shapemismatch_pb(self):
         """ [mtmfsimgval] test_mtmfsimgval_shapemismatch_pb """
@@ -2076,7 +2685,7 @@ class test_mtmfsimgval(testref_base):
         self.helper_mtmfsimgval_shapemismatch(".pb", ttn=".tt0", deconvolve_args={'usemask':'pb', 'pbmask':0.2})
     
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 61
+    # Test 84
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_empty(self):
@@ -2099,7 +2708,7 @@ class test_mtmfsimgval(testref_base):
         os.system("mv {0} {1}".format(self.mname, self.mname2))
         deconvolve(imagename=self.img, niter=10, startmodel=['', '', self.mname2, '', ''], deconvolver='mtmfs')
 
-    # Test 62
+    # Test 85
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_startmodel_dne(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_dne """
@@ -2111,7 +2720,7 @@ class test_mtmfsimgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model', deconvolver='mtmfs')
 
-    # Test 63
+    # Test 86
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_startmodel_model_exists(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_model_exists """
@@ -2127,7 +2736,7 @@ class test_mtmfsimgval(testref_base):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
 
     # TODO figure out why running the startmodel_axesmismatch test immediately before this test causes an exception to be thrown
-    # Test 64
+    # Test 87
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     @unittest.skip("if test_mtmfsimgval_startmodel_axesmismatch executes immediately before this test then this test fails")
     def test_mtmfsimgval_startmodel_basic_copy(self):
@@ -2144,7 +2753,7 @@ class test_mtmfsimgval(testref_base):
         deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
         self.assertTrue(os.path.exists(self.mname), "File {0} did not get copied!".format(self.mname))
 
-    # Test 65
+    # Test 88
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_startmodel_axesmismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_axesmismatch """
@@ -2161,7 +2770,7 @@ class test_mtmfsimgval(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
 
-    # Test 66
+    # Test 89
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_startmodel_csysmismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_csysmismatch """
@@ -2188,7 +2797,7 @@ class test_mtmfsimgval(testref_base):
         csys3, regridpnt = self.get_csys_crval0(self.mname)
         self.assertAlmostEqual(regridpnt, oldpnt, "Image {0} did not get its csys.direction0.crval[0] value regridded properly from {1} to {2}! (actual value is {3})".format(self.mname2, newpnt, oldpnt, regridpnt))
 
-    # Test 67
+    # Test 90
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_mtmfsimgval_startmodel_shapemismatch(self):
         """ [mtmfsimgval] test_mtmfsimgval_startmodel_shapemismatch """
@@ -2292,7 +2901,7 @@ class test_residual_update(testref_base):
                 self.assertNotAlmostEqual(ds2['min'],  ds1['min'],  delta=delta, msg=msg)
             self.assertNotAlmostEqual(ds2['mean'], ds1['mean'], delta=delta, msg=msg)
 
-    # Test 68
+    # Test 91
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_residual_update_hogbom(self):
         """ [residual_update] test_residual_update_hogbom """
@@ -2302,7 +2911,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.helper_residual_update('hogbom')
 
-    # Test 69
+    # Test 92
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_residual_update_clark(self):
         """ [residual_update] test_residual_update_clark """
@@ -2312,7 +2921,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.helper_residual_update('clark')
 
-    # Test 70
+    # Test 93
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_residual_update_clarkstokes(self):
         """ [residual_update] test_residual_update_clarkstokes """
@@ -2322,7 +2931,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.helper_residual_update('clarkstokes', tclean_args={'vis':'refim_point_linRL.ms','stokes':'I'})
 
-    # Test 71
+    # Test 94
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_residual_update_multiscale(self):
         """ [residual_update] test_residual_update_multiscale """
@@ -2332,7 +2941,7 @@ class test_residual_update(testref_base):
         ######################################################################################
         self.helper_residual_update('multiscale')
 
-    # Test 72
+    # Test 95
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_residual_update_mtmfs(self):
         """ [residual_update] test_residual_update_mtmfs """
@@ -2361,7 +2970,7 @@ class test_restoration(testref_base):
         type(self).staticCopyFromCache()
         os.system("rm -rf {}.image".format(self.img))
 
-    # Test 73
+    # Test 96
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_restoration_none(self):
         """ [restoration] test_restoration_none """
@@ -2375,7 +2984,7 @@ class test_restoration(testref_base):
                              imgexistnot=[self.img+'.image'])
         self.checkfinal(pstr=report)
 
-    # Test 74
+    # Test 97
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_restoration_basic(self):
         """ [restoration] test_restoration_basic """
@@ -2389,7 +2998,7 @@ class test_restoration(testref_base):
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
 
-    # Test 75
+    # Test 98
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_restoration_onlyrestore(self):
         """ [restoration] test_restoration_onlyrestore """
@@ -2406,7 +3015,7 @@ class test_restoration(testref_base):
                              imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.mask',self.img+'.model', self.img+'.image'])
         self.checkfinal(pstr=report)
 
-    # Test 76
+    # Test 99
     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
     def test_restoration_bigbeam(self):
         """ [restoration] test_restoration_bigbeam """
@@ -2449,7 +3058,7 @@ class test_niterparms(testref_base):
         report = th.checkall(ret=results2['retrec'], iterdone=expected_iter)
         return report
 
-    # Test 77
+    # Test 100
     def test_niterparms_gain_1(self):
         """ [restoration] test_niterparms_gain_1 """
         ######################################################################################
@@ -2458,7 +3067,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('gain', param_val=0.2, expected_iter=10)
         self.checkfinal(report)
 
-    # Test 78
+    # Test 101
     def test_niterparms_gain_2(self):
         """ [restoration] test_niterparms_gain_2 """
         ######################################################################################
@@ -2467,7 +3076,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('gain', param_val=0.3, expected_iter=7)
         self.checkfinal(report)
 
-    # Test 79
+    # Test 102
     def test_niterparms_threshold_1(self):
         """ [restoration] test_niterparms_threshold_1 """
         ######################################################################################
@@ -2476,7 +3085,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.22, expected_iter=16)
         self.checkfinal(report)
 
-    # Test 80
+    # Test 103
     def test_niterparms_threshold_2(self):
         """ [restoration] test_niterparms_threshold_2 """
         ######################################################################################
@@ -2485,7 +3094,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.18, expected_iter=19)
         self.checkfinal(report)
 
-    # Test 81
+    # Test 104
     def test_niterparms_nsigma_1(self):
         """ [restoration] test_niterparms_nsigma_1 """
         ######################################################################################
@@ -2494,7 +3103,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('nsigma', param_val=0.9, expected_iter=72, extra_params={'maxpsffraction':0})
         self.checkfinal(report)
 
-    # Test 82
+    # Test 105
     def test_niterparms_nsigma_2(self):
         """ [restoration] test_niterparms_nsigma_2 """
         ######################################################################################
@@ -2503,7 +3112,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('nsigma', param_val=1.5, expected_iter=60, extra_params={'maxpsffraction':0})
         self.checkfinal(report)
 
-    # Test 83
+    # Test 106
     def test_niterparms_cyclefactor_1(self):
         """ [restoration] test_niterparms_cyclefactor_1 """
         ######################################################################################
@@ -2512,7 +3121,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=0.1, expected_iter=40)
         self.checkfinal(report)
 
-    # Test 84
+    # Test 107
     def test_niterparms_cyclefactor_2(self):
         """ [restoration] test_niterparms_cyclefactor_2 """
         ######################################################################################
@@ -2521,7 +3130,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=2.0, expected_iter=13)
         self.checkfinal(report)
 
-    # Test 85
+    # Test 108
     def test_niterparms_minpsffraction_1(self):
         """ [restoration] test_niterparms_minpsffraction_1 """
         ######################################################################################
@@ -2530,7 +3139,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.5, expected_iter=7)
         self.checkfinal(report)
 
-    # Test 86
+    # Test 109
     def test_niterparms_minpsffraction_2(self):
         """ [restoration] test_niterparms_minpsffraction_2 """
         ######################################################################################
@@ -2539,7 +3148,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.2, expected_iter=16)
         self.checkfinal(report)
 
-    # Test 87
+    # Test 110
     def test_niterparms_maxpsffraction_1(self):
         """ [restoration] test_niterparms_maxpsffraction_1 """
         ######################################################################################
@@ -2548,7 +3157,7 @@ class test_niterparms(testref_base):
         report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.01, expected_iter=78)
         self.checkfinal(report)
 
-    # Test 88
+    # Test 111
     def test_niterparms_maxpsffraction_2(self):
         """ [restoration] test_niterparms_maxpsffraction_2 """
         ######################################################################################
