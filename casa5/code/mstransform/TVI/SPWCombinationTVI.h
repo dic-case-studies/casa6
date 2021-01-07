@@ -92,6 +92,11 @@ public:
     void sigmaSpectrum(casacore::Cube<casacore::Float> &sigmaSp) const override;
     void sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &sigmaSp) const override;
 
+    // Transformation of several scalar quantities
+    void time(casacore::Vector<double> & t) const override;
+    void timeCentroid(casacore::Vector<double> & t) const override;
+    void timeInterval(casacore::Vector<double> & t) const override;
+
 protected:
 
     void initialize();

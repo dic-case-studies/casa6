@@ -128,11 +128,14 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         columns += VisBufferComponent2::NRows;
                         columns += VisBufferComponent2::NChannels;
                         columns += VisBufferComponent2::NCorrelations;
+                        columns += VisBufferComponent2::NAntennas;
+                        columns += VisBufferComponent2::Time;
+                        columns += VisBufferComponent2::TimeCentroid;
+                        columns += VisBufferComponent2::TimeInterval;
                         columns += VisBufferComponent2::Frequencies;
                         columns += VisBufferComponent2::Scan;
                         //columns += VisBufferComponent2::Correlations;
                         //columns += VisBufferComponent2::Exposure;
-                        //columns += VisBufferComponent2::SpectralWindows;
                         columns += VisBufferComponent2::VisibilityCubeObserved;
                         columns += VisBufferComponent2::VisibilityCubesObserved;
                         //columns += VisBufferComponent2::VisibilityCubeCorrected;

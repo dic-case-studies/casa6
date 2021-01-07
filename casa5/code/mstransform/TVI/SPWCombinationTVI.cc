@@ -132,7 +132,7 @@ casacore::Vector<double> SPWCombinationTVI::getFrequencies(double time, int fram
                                                            int spectralWindowId, int msId) const
 {
     if(spectralWindowId < outSpwStartIdx_p ||
-        spectralWindowId > (outSpwStartIdx_p + spwInpChanOutFreqMap_p.size()))
+        spectralWindowId > int(outSpwStartIdx_p + spwInpChanOutFreqMap_p.size()))
         throw casacore::AipsError("SPWId out of valid range");
 
     auto inputSpwForThisOutputSpw = spwInpChanOutMap_p.at(spectralWindowId);
@@ -227,6 +227,33 @@ const casacore::Vector<casacore::Int>& SPWCombinationTVI::nChannelsPerShape() co
 void SPWCombinationTVI::spectralWindows(casacore::Vector<casacore::Int>& spws) const
 {
     spws = currentSubchunkSpwIds_p;
+}
+
+void SPWCombinationTVI::time(casacore::Vector<double> & t) const
+{
+    // Resize vector
+    t.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    t = getVii()->getVisBuffer()->time()(0);
+}
+
+void SPWCombinationTVI::timeCentroid(casacore::Vector<double> & t) const
+{
+    // Resize vector
+    t.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    t = getVii()->getVisBuffer()->timeCentroid()(0);
+}
+
+void SPWCombinationTVI::timeInterval(casacore::Vector<double> & t) const
+{
+    // Resize vector
+    t.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    t = getVii()->getVisBuffer()->timeInterval()(0);
 }
 
 void SPWCombinationTVI::flag(casacore::Cube<casacore::Bool>& flagCube) const
