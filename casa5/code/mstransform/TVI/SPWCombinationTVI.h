@@ -115,9 +115,9 @@ protected:
     casacore::Vector<casacore::Int> currentSubchunkInnerSpwIds_p;
 
     // vector[1..nPolId] map[key:inpSpwId] vector-> inp chann idx, same as spwInpChanIdxMap, value: outputChannel
-    std::vector<std::map<int, std::vector<int>>> spwInpChanOutMap_p;
+    std::map<int, std::map<int, std::vector<int>>> spwInpChanOutMap_p;
     // vector[1..nPolId] map[key:inpSpwId] vector-> inp chann idx, same as spwInpChanIdxMap, value: outputChannel freq
-    std::vector<std::map<int, std::vector<double>>> spwInpChanOutFreqMap_p;
+    std::map<int, std::map<int, std::vector<double>>> spwInpChanOutFreqMap_p;
     // Start of te output SPW indexes.
     // This assumes that there is no reindexing performed by this TVI, i.e., the output
     // SPW is added to the list of input SPWs. With reindexing this would have been 0.

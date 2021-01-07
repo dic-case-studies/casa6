@@ -62,14 +62,11 @@ void SPWCombinationTVI::initialize()
     // The proper way to do it is to filter all the input SPWs to those
     // ones for which there is real data.
     auto nPolIds = inputVii_p->nPolarizationIds();
-    spwInpChanOutFreqMap_p.resize(nPolIds);
-    spwInpChanOutMap_p.resize(nPolIds);
     //There are as many output SPWs as polarizations.
 std::cout << " npol " << nPolIds << std::endl;
     for(ssize_t polId = 0; polId < nPolIds; polId++)
     {
-        // TODO: Add outSpwStartIdx_p offset (vectors should be chnaged to maps)
-        int outSpwId = polId;
+        int outSpwId = polId + outSpwStartIdx_p;
         std::vector<double> thisOutSpwFreqs;
         std::vector<int> thisOutSpwChann;
         spwInpChanOutFreqMap_p[outSpwId].clear();
@@ -271,8 +268,9 @@ void SPWCombinationTVI::visibilityObserved(casacore::Vector<casacore::Cube<casac
         // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
         casacore::Int thisCubePolId = currentSubchunkInnerPolIds_p[inputRowsProcessed];
         auto thisSpw = currentSubchunkInnerSpwIds_p[inputRowsProcessed];
+        auto thisOutputSpw = thisCubePolId + outSpwStartIdx_p;
 
-        auto outputChannel = spwInpChanOutMap_p[thisCubePolId].at(thisSpw)[0];
+        auto outputChannel = spwInpChanOutMap_p.at(thisOutputSpw).at(thisSpw)[0];
         casacore::IPosition blcOutput(3, 0, outputChannel, 0);
         casacore::IPosition trcOutput(3, inputCube.shape()(0)-1, outputChannel + inputCube.shape()(1)-1, inputCube.shape()(2)-1);
         vis[thisCubePolId](blcOutput, trcOutput) = inputCube;

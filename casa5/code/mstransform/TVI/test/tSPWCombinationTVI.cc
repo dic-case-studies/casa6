@@ -145,6 +145,9 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         compareVisibilityIterators(testTVI,*simResultVi, [&](VisBuffer2* testVb, VisBuffer2* refVb) -> void {
                                  ASSERT_EQ(testVb->spectralWindows().tovector(),
                                            (refVb->spectralWindows()+nSpw).tovector());});
+                        compareVisibilityIterators(testTVI,*simResultVi, [&](VisBuffer2* testVb, VisBuffer2* refVb) -> void {
+                                 ASSERT_EQ(testVb->getChannelNumbers(0).tovector(),
+                                           refVb->getChannelNumbers(0).tovector());});
                     }
                 }
             }
