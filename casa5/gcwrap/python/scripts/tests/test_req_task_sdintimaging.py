@@ -107,7 +107,7 @@ import inspect
 CASA6 = False
 try: 
     from casatools import ctsys
-    from casatasks import casalog, sdintimaging, flagdata
+    from casatasks import casalog, sdintimaging, flagdata, tclean
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
     sys.path.append(os.path.abspath(os.path.basename(__file__)))
