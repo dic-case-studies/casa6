@@ -112,8 +112,12 @@ def uvcontsub3(vis, fitspw, combine, fitorder, field, spw,
 
     # Write history to output MS, not the input ms.
     try:
-        param_names = uvcontsub3.func_code.co_varnames[:uvcontsub3.func_code.co_argcount]
-        param_vals = [eval(p) for p in param_names]   
+        param_names = uvcontsub3.__code__.co_varnames[:uvcontsub3.__code__.co_argcount]
+        if is_python3:
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+        else:
+            param_vals = [eval(p) for p in param_names]
         retval &= write_history(myms, outputvis, 'uvcontsub3', param_names, param_vals,
                                 casalog)
     except Exception as instance:
