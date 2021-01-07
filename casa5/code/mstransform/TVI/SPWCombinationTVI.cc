@@ -128,6 +128,24 @@ double SPWCombinationTVI::checkEqualWidth() const
     return channelWidth;
 }
 
+casacore::Vector<double> SPWCombinationTVI::getFrequencies(double time, int frameOfReference,
+                                                           int spectralWindowId, int msId) const
+{
+    if(spectralWindowId < outSpwStartIdx_p ||
+        spectralWindowId > (outSpwStartIdx_p + spwInpChanOutFreqMap_p.size()))
+        throw casacore::AipsError("SPWId out of valid range");
+
+    auto inputSpwForThisOutputSpw = spwInpChanOutMap_p.at(spectralWindowId);
+    std::vector<double> freqs(spwOutChanNumMap_p.at(spectralWindowId));
+    for(auto inputSpw : inputSpwForThisOutputSpw)
+    {
+        auto innerFreqs = getVii()->getFrequencies(time, frameOfReference, inputSpw.first, msId);
+        auto outChanThisInputSpw = spwInpChanOutMap_p.at(spectralWindowId).at(inputSpw.first)[0];
+        std::copy(innerFreqs.begin(), innerFreqs.end(), freqs.begin() + outChanThisInputSpw);
+    }
+    return freqs;
+}
+
 void SPWCombinationTVI::origin()
 {
     // Drive underlying ViImplementation2

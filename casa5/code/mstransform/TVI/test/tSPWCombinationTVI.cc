@@ -100,7 +100,7 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         //expected result (which is also uniform)
                         int nCombinedChannels = accumulate(channelsPerSPW.begin(), channelsPerSPW.end(), 0);
                         Vector<Double> refFreqCombined(1);
-                        refFreqs[0] = 100.0e9;
+                        refFreqCombined[0] = 100.0e9;
                         SimpleSimVi2Parameters simResultParam(nField, nScan, 
                                                               1, nAnt, nCorr, 
                                                               Vector<Int>(nField, nTimePerField),
@@ -128,8 +128,8 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         columns += VisBufferComponent2::NRows;
                         columns += VisBufferComponent2::NChannels;
                         columns += VisBufferComponent2::NCorrelations;
-                        //columns += VisBufferComponent2::Frequencies;
-                        //columns += VisBufferComponent2::Scan;
+                        columns += VisBufferComponent2::Frequencies;
+                        columns += VisBufferComponent2::Scan;
                         //columns += VisBufferComponent2::Correlations;
                         //columns += VisBufferComponent2::Exposure;
                         //columns += VisBufferComponent2::SpectralWindows;

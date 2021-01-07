@@ -163,6 +163,7 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
   polBasis_(polBasis),
   doAC_(doAC),
   c0_(c0),
+  autoPol_(false),
   doParang_(doParang),
   spwScope_(spwScope),
   antennaScope_(antennaScope)
@@ -199,6 +200,7 @@ SimpleSimVi2Parameters& SimpleSimVi2Parameters::operator=(const SimpleSimVi2Para
     polBasis_=other.polBasis_;
     doAC_=other.doAC_;
     c0_=other.c0_;
+    autoPol_=other.autoPol_;
     doParang_=other.doParang_;
     spwScope_=other.spwScope_;
     antennaScope_=other.antennaScope_;
