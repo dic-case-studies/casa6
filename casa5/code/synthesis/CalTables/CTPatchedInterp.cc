@@ -41,6 +41,8 @@
 
 #include <ms/MSOper/MSMetaData.h>
 #include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
+#include <casa/Logging/LogMessage.h>
+#include <casa/Logging/LogIO.h>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -1184,6 +1186,17 @@ void CTPatchedInterp::makeInterpolators() {
           if(spws.find(iMSSpw) != spws.end() &&
              summary.isDefined("observationID=" + String::toString(iMSObs)))
           {
+              
+              // casa log post
+              logSink() << LogIO::WARN
+               << "MS obs=" << iMSObs
+               << ",fld=" << iMSFld
+               << ",spw=" << iMSSpw
+               << ",ant=" << iMSElem
+               << " cannot be calibrated by " << tabname
+               << " as mapped, and will be flagged in this process." << LogIO::POST;
+              
+              
               cout << "MS obs=" << iMSObs
                << ",fld=" << iMSFld
                << ",spw=" << iMSSpw
