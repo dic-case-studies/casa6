@@ -41,7 +41,6 @@ except ImportError:
 
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    table = tb
 import sys
 import os
 import unittest
@@ -68,6 +67,9 @@ class calstat_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(calstat)
+            self.tb = tb
+        else:
+            self.tb = table()
 
         self.epsilon = 0.0001
         self.caltables = ['ggtau.1mm.amp.gcal',
@@ -80,7 +82,6 @@ class calstat_test(unittest.TestCase):
                           'ggtau.3mm.ph.gcal0',
                           'ggtau.co.bpoly',
                           'ggtau.hco.bpoly']
-        self.tb = table()
      
     def tearDown(self):
         if os.path.exists('testlog.log'):
