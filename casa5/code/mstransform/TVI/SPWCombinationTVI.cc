@@ -292,6 +292,33 @@ void SPWCombinationTVI::fieldIds (casacore::Vector<casacore::Int>& fieldId) cons
     fieldId = getVii()->getVisBuffer()->fieldId()(0);
 }
 
+void SPWCombinationTVI::observationId (casacore::Vector<casacore::Int> & obsids) const
+{
+    // Resize vector
+    obsids.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    obsids = getVii()->getVisBuffer()->observationId()(0);
+}
+
+void SPWCombinationTVI::processorId (casacore::Vector<casacore::Int> & procids) const
+{
+    // Resize vector
+    procids.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    procids = getVii()->getVisBuffer()->processorId()(0);
+}
+
+void SPWCombinationTVI::stateId (casacore::Vector<casacore::Int> & stateids) const
+{
+    // Resize vector
+    stateids.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    stateids = getVii()->getVisBuffer()->stateId()(0);
+}
+
 void SPWCombinationTVI::time(casacore::Vector<double> & t) const
 {
     // Resize vector

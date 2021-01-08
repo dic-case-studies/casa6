@@ -769,13 +769,19 @@ String SimpleSimVi2::fieldName () const {return "Field"+String(thisField_); }
 
 void SimpleSimVi2::flag (Cube<Bool> & flags) const {
   // unflagged
-  flags.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  flags.set(false);
+  Vector<Cube<Bool>> flagsVec;
+  this->flag(flagsVec);
+  flags = flagsVec[0];
 }
 
 void SimpleSimVi2::flag (Vector<Cube<Bool>> & flags) const {
-  flags.resize(1);
-  this->flag(flags[0]);
+  // unflagged
+  flags.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    flags[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    flags[ishape].set(false);
+  }
 }
 
 void SimpleSimVi2::flagRow (Vector<Bool> & rowflags) const { rowflags.resize(nRows()); rowflags.set(false); }

@@ -100,6 +100,9 @@ public:
     void feed1 (casacore::Vector<casacore::Int> & fd1) const override;
     void feed2 (casacore::Vector<casacore::Int> & fd2) const override;
     void fieldIds (casacore::Vector<casacore::Int>& fieldId) const override;
+    void observationId (casacore::Vector<casacore::Int> & obsids) const override;
+    void processorId (casacore::Vector<casacore::Int> & procids) const override;
+    void stateId (casacore::Vector<casacore::Int> & stateids) const override;
     void time(casacore::Vector<double> & t) const override;
     void timeCentroid(casacore::Vector<double> & t) const override;
     void timeInterval(casacore::Vector<double> & t) const override;
@@ -139,16 +142,16 @@ protected:
     casacore::Int outSpwStartIdx_p;
 
     template <class T>
-    void transformCubesVector(const casacore::Vector<casacore::Cube<T>> & inVectorCube,
-                              casacore::Vector<casacore::Cube<T>> & outVectorCube) const
+    void transformCubesVector(const casacore::Vector<casacore::Cube<T>> & inCubesVector,
+                              casacore::Vector<casacore::Cube<T>> & outCubesVector) const
     {
         // Resize cube vector
-        outVectorCube.resize(nShapes());
+        outCubesVector.resize(nShapes());
 
         size_t iShape = 0;
         // It is assumed that the VisBuffer contains unique metadata and timestamp except for DDId.
         // See checkSortingInner().
-        for(auto& outCube : outVectorCube)
+        for(auto& outCube : outCubesVector)
         {
             casacore::IPosition cubeShape(3, nCorrelationsPerShape()[iShape],
                                 nChannelsPerShape_p[iShape], nRowsPerShape_p[iShape]);
@@ -156,7 +159,7 @@ protected:
             ++iShape;
         }
         casacore::rownr_t inputRowsProcessed = 0;
-        for(auto& inputCube : inVectorCube)
+        for(auto& inputCube : inCubesVector)
         {
             // It is assumed that each input cube corresponds to
             // an unique DDiD.
