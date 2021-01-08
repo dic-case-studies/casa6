@@ -198,11 +198,15 @@ QwtText QPScaleDraw::label(double value) const {
 		int tprecision = getTickPrecision();
 		if (tprecision >=0) {
 			stringstream ss;
-			if (tprecision > 5) tprecision=5;
-			ss.precision(tprecision);
-			ss << fixed << value;
+			if (tprecision > 6) {
+				ss.precision(5);
+				ss << scientific << value;
+			} else {
+				ss.precision(tprecision);
+				ss << fixed << value;
+			}
 			return QString(ss.str().c_str());
-		} else {  // with shared axis, ticks are not set
+		} else {  // with shared axis, no ticks to determine step
 			return QwtScaleDraw::label(value);
 		}
 	}
@@ -216,10 +220,9 @@ int QPScaleDraw::getTickPrecision() const {
 	} else {
 		double step = abs(ticks[1] - ticks[0]);
 		int tickPrecision = floor(log10(step));
-		if (tickPrecision > 0) // int
-			tickPrecision = 0;
-		else
+		if (tickPrecision < 0) {
 			tickPrecision = abs(tickPrecision);
+		}
 		return tickPrecision;
 	}
 }
