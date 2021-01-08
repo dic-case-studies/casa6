@@ -2858,14 +2858,14 @@ class Test_standard(test_tclean_base):
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
-        test_dict['test_standard_mfs_eph']['self.parallel'] = self.parallel
-        test_dict['test_standard_mfs_eph']['report'] = report
-        test_dict['test_standard_mfs_eph']['images'] = []
+        test_dict['test_standard_cal_eph']['self.parallel'] = self.parallel
+        test_dict['test_standard_cal_eph']['report'] = report
+        test_dict['test_standard_cal_eph']['images'] = []
 
         img = shutil._basename(img)
         self.mom8_creator(img+'.image', range_list=[-1.05, 1.05])
         self.mom8_creator(img+'.residual', range_list=[-1.05, 1.05])
-        test_dict['test_standard_mfs_eph']['images'].extend( \
+        test_dict['test_standard_cal_eph']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
