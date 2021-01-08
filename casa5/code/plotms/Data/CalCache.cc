@@ -255,6 +255,7 @@ void CalCache::loadCalChunks(ROCTIter& ci,
         dataLoaded_ = false;
         return;
       }
+
       // If a thread is given, update it.
       if(thread != nullptr && (nChunk_ <= (int)THREAD_SEGMENT ||
          chunk % THREAD_SEGMENT == 0)) {
@@ -264,9 +265,36 @@ void CalCache::loadCalChunks(ROCTIter& ci,
       
       // Discern npar/nchan shape
       IPosition pshape(ci.flag().shape());
-      size_t nPol;
+
+      // Determine data axis for determining param slice for npol
       String pol = selection_.corr();
       String paramAxis = toVisCalAxis(PMS::AMP);
+
+      // Handle Fringe Jones TEC axis
+      if (calType_ == "Fringe Jones") {
+          bool hasData(false), hasTec(false); 
+          for (auto loadAxis : loadAxes) {
+              if (loadAxis == PMS::TEC) {
+                  if (!pol.empty() && (pol != "RL")) {
+                      throw(AipsError("Cannot select pol with TEC axis"));
+                  }
+
+                  paramAxis = "TEC";
+                  pol = "R";
+                  hasTec = true;
+              } else if (PMS::axisIsData(loadAxis)) {
+                  hasData = true;
+              }
+          }
+
+          // Cannot plot data and tec in same plot, different chshapes
+          // If TEC axis, only first pol (i.e. "R") selected.
+          if (hasData && hasTec) {
+              throw(AipsError("Cannot plot TEC with other data axes, different shapes."));
+          }
+      }
+
+      size_t nPol;
       if (polnRatio_) {  // length is for 1 poln, pick first one
           nPol = getParSlice(paramAxis, "R").length();
       } else {
@@ -304,18 +332,21 @@ void CalCache::loadCalChunks(ROCTIter& ci,
             }
         }
       }
-        chunk++;
-        ci.next();
-      
-        // If a thread is given, update it.
-        if(thread != nullptr && (nChunk_ <= (int)THREAD_SEGMENT ||
-            chunk % THREAD_SEGMENT == 0)) {
-            progress = ((double)chunk+1) / nChunk_;
-            thread->setProgress((unsigned int)((progress * 100) + 0.5));
-        }
+
+      chunk++;
+      ci.next();
+
+      // If a thread is given, update it.
+      if (thread != nullptr && (nChunk_ <= (int)THREAD_SEGMENT ||
+          chunk % THREAD_SEGMENT == 0)) {
+          progress = ((double)chunk+1) / nChunk_;
+          thread->setProgress((unsigned int)((progress * 100) + 0.5));
+      }
   }
-  if (divZero_)
+
+  if (divZero_) {
     logWarn("CalCache::loadIt", "Caught divide-by-zero exception in ratio plots; result(s) set to 1.0 and flagged");
+  }
 }
 
 void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol) {
@@ -618,11 +649,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
         case PMS::TEC: {
             if ( !parsAreComplex() && calType_[0]=='F') {
                 Cube<Float> fArray = cti.fparam();
-                if (calType_.startsWith("Fringe")) {
-                    *par_[chunk] = fArray(parSlice1, Slice(), Slice());
-                } else {
-                    *par_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1e16;
-                }
+                *tec_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1e16;
             } else {
                 throw(AipsError("TEC has no meaning for this table"));
             }
@@ -1259,8 +1286,9 @@ void CalCache::loadCalChunks(ROGJonesSplineMCol& mcol, ROCalDescColumns& dcol,
   Slice parslice, parslice2;
   setUpLoad(thread, parslice);
   Int nPol = parslice.length();  // for chunk shapes
-  if (polnRatio_) 
+  if (polnRatio_) {
     parslice2 = getParSlice(toVisCalAxis(PMS::AMP), "L");
+  }
 
   // load main table metadata once; use vector/value for every timestamp
   // field

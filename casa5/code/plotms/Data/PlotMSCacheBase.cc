@@ -951,8 +951,9 @@ void PlotMSCacheBase::release(const vector<PMS::Axis>& axes) {
 			case PMS::DISP_DELAY:
 			case PMS::SWP:
 			case PMS::TSYS:
-			case PMS::OPAC:
-			case PMS::TEC: PMSC_DELETE(par_)
+			case PMS::OPAC: PMSC_DELETE(par_)
+				break;
+			case PMS::TEC: PMSC_DELETE(tec_)
 				break;
 			case PMS::SNR: PMSC_DELETE(snr_)
 				break;
@@ -1762,8 +1763,10 @@ void PlotMSCacheBase::setCache(Int newnChunk,
             case PMS::SWP:
             case PMS::TSYS:
             case PMS::OPAC:
-            case PMS::TEC:
                 addArrays(par_, increaseCache);
+                break;
+            case PMS::TEC:
+                addArrays(tec_, increaseCache);
                 break;
             case PMS::SNR:
                 addArrays(snr_, increaseCache);

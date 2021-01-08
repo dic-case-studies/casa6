@@ -1284,8 +1284,10 @@ void PlotMSIndexer::setMethod(CacheMemPtr& getmethod,PMS::Axis axis,
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:
-	case PMS::TEC:
 		getmethod = &PlotMSCacheBase::getPar;
+		break;
+	case PMS::TEC:
+		getmethod = &PlotMSCacheBase::getTec;
 		break;
 	case PMS::SNR:
 		getmethod = &PlotMSCacheBase::getSnr;

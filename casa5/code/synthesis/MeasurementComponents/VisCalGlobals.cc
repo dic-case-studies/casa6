@@ -750,10 +750,6 @@ Slice calParSliceByType(String caltype, String what, String pol)
     throw(AipsError("Unsupported pol: "+pol));
   }
 
-  if (caltype.contains("FRINGE") && (what == "TEC")) {
-    n=1;
-  }
-
   return Slice(s,n,i);
 
 }
