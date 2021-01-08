@@ -148,141 +148,145 @@
 #testname: test_cube_12
 #
 #23. Cube: Should produce the same results as the test by the same name for tclean.
+#'field': '0', 'imsize': 100, 'cell': '8.0arcsec', specmode': 'cube', 'nchan': 8, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '-41347.8km/s', 'width': '20000km/s', 'veltype': 'optical', 'outframe': 'LSRK'
+#testname: test_cube_13
+#
+#24. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'unit': 'GHz', 'value': 1.2}, 'width': '', 'veltype': 'radio', 'outframe': '', 'interpolation': 'linear'
 #testname: test_cube_14
 #
-#24. Cube: Should produce the same results as the test by the same name for tclean.
+#25. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'Hz', 'value': 1199989000.0}, 'refer': 'LSRK', 'type': 'frequency'}, 'width': '', 'veltype': 'radio', 'outframe': '', 'interpolation': 'linear'
 #testname: test_cube_15
 #
-#25. Cube: Should produce the same results as the test by the same name for tclean.
+#26. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'unit': 'km/s', 'value': 11991.7}, 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
 #testname: test_cube_16
 #
-#26. Cube: Should produce the same results as the test by the same name for tclean.
+#27. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'm/s', 'value': 11977600.0}, 'refer': 'BARY', 'type': 'radialvelocity'}, 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
 #testname: test_cube_17
 #
-#27. Cube: Should produce the same results as the test by the same name for tclean.
+#28. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': {'unit': 'km/s', 'value': 11991.7}, 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
 #testname: test_cube_18
 #
-#28. Cube: Should produce the same results as the test by the same name for tclean.
+#29. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': '', 'width': {'m0': {'unit': 'm/s', 'value': 11991700.0}, 'refer': 'TOPO', 'type': 'radialvelocity'}, 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
 #testname: test_cube_19
 #
-#29. Cube: Should produce the same results as the test by the same name for tclean.
+#30. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0', 'start': {'m0': {'unit': 'm/s', 'value': 11994336.49363042}, 'refer': 'RADIO', 'type': 'doppler'}, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'linear'
 #testname: test_cube_20
 #
-#30. Cube: Should produce the same results as the test by the same name for tclean.
+#31. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:4~9;12~14', 'start': 4, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'nearest'
 #testname: test_cube_21
 #
-#31. Cube: Should produce the same results as the test by the same name for tclean.
+#32. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:0~10^2', 'start': 0, 'width': '', 'veltype': 'radio', 'outframe': 'LSRK', 'interpolation': 'nearest'
 #testname: test_cube_22
 #
-#32. Cube: Should produce the same results as the test by the same name for tclean.
+#33. Cube: Should produce the same results as the test by the same name for tclean.
 #'field': '0', 'imsize': 100, 'cell': '8.0arcsec', 'specmode': 'cube', 'nchan': 10, 'restfreq': ['1.25GHz'], 'phasecenter': 'J2000 19:59:28.500 +40.44.01.50', 'deconvolver': 'hogbom', 'spw': '0:4~13', 'start': '', 'width': '', 'veltype': 'radio', 'outframe': 'TOPO', 'interpolation': 'linear'
 #testname: test_cube_23
 #
-#33. Cube, 'chanchunks' Auto: Should produce the same results as the test by the same name for tclean.
+#34. Cube, 'chanchunks' Auto: Should produce the same results as the test by the same name for tclean.
 #specmode:'cube',imsize:100,cell:'10.0arcsec',deconvolver:'hogbom',chanchunks:-1, niter=10, deconvolver='hogbom'
 #testname: test_cube_chanchunks_auto
 #
 #
 #
 #Masking tests (mimicing tclean)
-#34. User Mask: Should produce the same results as the test by the same name for tclean.
+#35. User Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',usemask:'user',mask:self.img+'.mask.txt', niter=10
 #deconvolve runs: mask='tst.mask.txt', mask=mstr
 #testname: test_mask_1
 #
-#35. User Mask: Should produce the same results as the test by the same name for tclean.
+#36. User Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',specmode:'cube',interactive:0,usemask:'user', niter=10
 #two mask runs: mask:'tst.mask.txt', mask:mstr
 #testname: test_mask_2
 #
-#36. Missing Mask File: tst.mask is sometimes required
+#37. Missing Mask File: tst.mask is sometimes required
 #mask='tst.model.txt'
 #rm 'tst.model.txt', mask='tst.model.txt'
 #testname: test_mask_missingfile
 #
-#37. Basic PB Mask: create .mask from .pb with default pbmask value
+#38. Basic PB Mask: create .mask from .pb with default pbmask value
 #rm 'tst.mask', usemask='pb', don't set pbmask
 #verify the mask file exists and all pixels are 1s
 #testname: test_mask_pbmask0
 #
-#38. Threshold PB Mask: create .mask from .pb with a pb threshold for masking
+#39. Threshold PB Mask: create .mask from .pb with a pb threshold for masking
 #rm 'tst.mask', usemask='pb', pbmask=0.995
 #verify the mask file exists and only certain pixels are 1s
 #testname: test_mask_pbmask995
 #
-#39. Auto Mask: Should produce the same results as the test by the same name for tclean.
+#40. Auto Mask: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10
 #testname: test_mask_autobox_multithresh
 #
-#40. Auto Mask with New Noise Calc: Should produce the same results as the test by the same name for tclean.
+#41. Auto Mask with New Noise Calc: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,fastnoise=False
 #testname: test_mask_autobox_multithresh_newnoise
 #
-#41. Auto Mask with Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
+#42. Auto Mask with Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,nsigma=3.0
 #testname: test_mask_autobox_multithresh_with_nsigma
 #
-#42. Auto Mask with New Noise Calc and Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
+#43. Auto Mask with New Noise Calc and Nsigma 3.0: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,fastnoise=False,nsigma=3.0
 #testname: test_mask_autobox_multithresh_with_nsigma_newnoise
 #
-#43. Auto Mask with Pruning: Should produce the same results as the test by the same name for tclean.
+#44. Auto Mask with Pruning: Should produce the same results as the test by the same name for tclean.
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',interactive:0,usemask:'auto-multithresh',niter=10,minbeamfrac=0.3
 #testname: test_mask_autobox_multithresh_with_prune
 #
-#44. Large Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
+#45. Large Auto Mask from Alma Pipeline: Should produce the same results as tclean for a large number of iterations (1800 iters).
 #Mostly the same arguments as from the pipeline test standard_cube_eph. Modified to run in a single major cycle.
 #testname: test_mask_autobox_multithresh_standard_cube_eph
 #
 #
 #
 #Show multiple executions of deconvolve get a probably-correct answer
-#45. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
+#46. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
 #imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_hogbomhogbom
 #
-#46. Deconvolve Clark + Clark: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#47. Deconvolve Clark + Clark: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'clark',threshold:'1mJy'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_clarkclark
 #
-#47. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#48. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'clarkstokes','cyclefactor':0.1,'stokes':'I'
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_clarkstokesclarkstokes
 #
-#48. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#49. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'multiscale',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_multiscalemultiscale
 #
-#49. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
+#50. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
 #imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',threshold:'1mJy',scales:[0,20,40,100]
 #first run to get expected value: niter=20
 #second/third runs to get actual value: niter=10, niter=10
 #testname: test_multirun_mtmfsmtmfs
 #
-#50. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
+#51. Deconvolve Multiscale + Hogbom: Tests the example use case of using hogbom to speed up cleaning after the benefits of multiscale have worn off.
 #Note: we only test for task completion, don't know what the value should be at the end. (TODO needs validation)
 #imsize:200, cell:'8.0arcsec', deconvolver:'multiscale', scales:[0,20,40,100],niter=10
 #imsize:200, cell:'8.0arcsec', deconvolver:'hogbom', niter=10
 #testname: test_multirun_multiscalehog
 #
-#51. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
+#52. Run then Restore: Tests the example use case of using task_deconvolve for just the restoration step.
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=False, niter=10
 #imsize:100, cell:['10.0arcsec','30.0arcsec'], restoration=True, niter=0
 #testname: test_multirun_norestore_restore
@@ -290,185 +294,185 @@
 #
 #
 #'img' value input checking using the hogbom deconvolver
-#52. Missing Table: tst.residual is always required
+#53. Missing Table: tst.residual is always required
 #rm 'tst.residual', niter=10
 #testname: test_imgval_missingimgs_residual
 #
-#53. Missing Table: tst.psf is always required
+#54. Missing Table: tst.psf is always required
 #rm 'tst.psf', niter=10
 #testname: test_imgval_missingimgs_psf
 #
-#54. Missing Table: tst.model is used to continue deconvolution, but is not required.
+#55. Missing Table: tst.model is used to continue deconvolution, but is not required.
 #rm 'tst.model', niter=10
 #testname: test_imgval_missingimgs_model
 #
-#55. Missing Table: tst.sumwt is never required
+#56. Missing Table: tst.sumwt is never required
 #rm 'tst.sumwt', niter=10
 #testname: test_imgval_missingimgs_sumwt
 #
-#56. Reorder Image Axes: tst.residual must have the axes as is given in tclean
+#57. Reorder Image Axes: tst.residual must have the axes as is given in tclean
 #imtrans("tst.residual", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_residual
 #
-#57. Reorder Image Axes: tst.psf must have the axes as is given in tclean
+#58. Reorder Image Axes: tst.psf must have the axes as is given in tclean
 #imtrans("tst.psf", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_psf
 #
-#58. Reorder Image Axes: tst.model must have the axes as is given in tclean
+#59. Reorder Image Axes: tst.model must have the axes as is given in tclean
 #imtrans("tst.model", order="3012"), niter=10
 #testname: test_imgval_axesmismatch_model
 #
-#59. Reorder Image Axes: tst.pb must have the axes as is given in tclean
+#60. Reorder Image Axes: tst.pb must have the axes as is given in tclean
 #imtrans("tst.pb", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_axesmismatch_pb
 #
-#60. Rebin To Smaller Image: everything else must have the same shape as tst.residual
+#61. Rebin To Smaller Image: everything else must have the same shape as tst.residual
 #imrebin("tst.residual", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_residual
 #
-#61. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
+#62. Rebin To Smaller Image: tst.psf must have the same shape as tst.residual
 #imrebin("tst.psf", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_psf
 #
-#62. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
+#63. Rebin To Smaller Image: tst.model must have the same shape as tst.residual
 #imrebin("tst.model", factor=[50,50]), niter=10
 #testname: test_imgval_shapemismatch_model
 #
-#63. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
+#64. Rebin To Smaller Image: tst.pb must have the same shape as tst.residual
 #imrebin("tst.pb", factor=[50,50]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_imgval_shapemismatch_pb
 #
-#64. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#65. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_imgval_startmodel_empty
 #
-#65. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#66. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_imgval_startmodel_dne
 #
-#66. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
+#67. Both 'startmodel' And tst.model Exist: Throws an error if startmodel is set and tst.model exists (must be one or the other, not both)
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_model_exists
 #
-#67. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
+#68. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model before starting deconvolution
 #startmodel='tst_2.model'
 #testname: test_imgval_startmodel_basic_copy
 #
-#68. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#69. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model', imtrans(order="3012")
 #testname:test_imgval_startmodel_axesmismatch
 #
-#69. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
+#70. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual
 #set_crval0(51), niter=10
 #testname:test_imgval_startmodel_csysmismatch
 #
-#70. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
+#71. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual
 #imrebin(factor=[2,2]), niter=10
 #testname:test_imgval_startmodel_shapemismatch
 #
 #
 #
 #'img' value input checking using the mtmfs deconvolver
-#71. Missing Table: tst.residual.tt1 is always required
+#72. Missing Table: tst.residual.tt1 is always required
 #rm 'tst.residual.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_residual
 #
-#72. Missing Table: tst.psf.tt1 is always required
+#73. Missing Table: tst.psf.tt1 is always required
 #rm 'tst.psf.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_psf
 #
-#73. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
+#74. Missing Table: tst.model.tt1 is used to continue deconvolution, but is not required.
 #rm 'tst.model.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_model
 #
-#74. Missing Table: tst.sumwt.tt1 is never required
+#75. Missing Table: tst.sumwt.tt1 is never required
 #rm 'tst.sumwt.tt1', niter=10
 #testname: test_mtmfsimgval_missingimgs_sumwt
 #
-#75. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
+#76. Reorder Image Axes: tst.residual.tt1 must have the axes as is given in tclean
 #imtrans("tst.residual.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_residual
 #
-#76. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
+#77. Reorder Image Axes: tst.psf.tt1 must have the axes as is given in tclean
 #imtrans("tst.psf.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_psf
 #
-#77. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
+#78. Reorder Image Axes: tst.model.tt1 must have the axes as is given in tclean
 #imtrans("tst.model.tt1", order="3012"), niter=10
 #testname: test_mtmfsimgval_axesmismatch_model
 #
-#78. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
+#79. Reorder Image Axes: tst.pb.tt1 must have the axes as is given in tclean
 #imtrans("tst.pb.tt1", order="3012"), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_axesmismatch_pb
 #
-#79. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
+#80. Rebin To Smaller Image: everything else must have the same shape as tst.residual.tt1
 #imrebin("tst.residual.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_residual
 #
-#80. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
+#81. Rebin To Smaller Image: tst.psf.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.psf.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_psf
 #
-#81. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
+#82. Rebin To Smaller Image: tst.model.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.model.tt1", factor=[2,2]), niter=10
 #testname: test_mtmfsimgval_shapemismatch_model
 #
-#82. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
+#83. Rebin To Smaller Image: tst.pb.tt1 must have the same shape as tst.residual.tt1
 #imrebin("tst.pb.tt1", factor=[2,2]), niter=10, usemask='pb', pbmask=0.2
 #testname: test_mtmfsimgval_shapemismatch_pb
 #
-#83. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
+#84. Empty 'startmodel' Parameter String: Deconvolve should ignore all empty strings entered for the startmodel
 #startmodel='', startmodel=['', '', ''], startmodel=['', '', self.mname2, '', '']
 #testname: test_mtmfsimgval_startmodel_empty
 #
-#84. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
+#85. Parameter 'startmodel' Does Not Exist: Throws an error if startmodel is set but does not exist
 #startmodel='doesnotexists.model'
 #testname: test_mtmfsimgval_startmodel_dne
 #
-#85. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
+#86. Both 'startmodel' And tst.model.tt1 Exist: Throws an error if startmodel is set and tst.model.tt1 exists (must be one or the other, not both)
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_model_exists
 #
-#86. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
+#87. Parameter 'startmodel' Set: Tests ability of deconvolve to copy startmodel to tst.model.tt1 before starting deconvolution
 #startmodel='tst_2.model.tt1'
 #testname: test_mtmfsimgval_startmodel_basic_copy
 #
-#87. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
+#88. Reordered Startmodel Axes: Try to deconvolve with mismatched axes between startmodel and psf (should fail).
 #startmodel='tst_2.model.tt1', imtrans(order="3012")
 #testname:test_mtmfsimgval_startmodel_axesmismatch
 #
-#88. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
+#89. Coordinate System Change: Task deconvolve should regrid the csys of the startmodel to that of tst.residual.tt1
 #set_crval0(51), niter=10
 #testname:test_mtmfsimgval_startmodel_csysmismatch
 #
-#89. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
+#90. Image Shape Change: Task deconvolve should regrid the shape of the startmodel to that of tst.residual.tt1
 #imrebin(factor=[2,2]), niter=10
 #testname:test_mtmfsimgval_startmodel_shapemismatch
 #
 #
 #
 #Multiple deconvolves update the .residual
-#90. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
+#91. Hogbom Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':hogbom, 'niter':10
 #testname: test_residual_update_hogbom
 #
-#91. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
+#92. Clark Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clark does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10
 #testname: test_residual_update_clark
 #
-#92. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
+#93. Clarkstokes Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that clarkstokes does this correctly.
 #'vis':'refim_point_linRL.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':clark, 'niter':10, 'stokes':'I'
 #testname: test_residual_update_clarkstokes
 #
-#93. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
+#94. Multiscale Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':multiscale, 'niter':10
 #testname: test_residual_update_multiscale
 #
-#94. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
+#95. MTMFS Updates Residual: Task deconvolve should update the .residual with every execution.
 #This behavior is left up to each deconvolver. Test that hogbom does this correctly.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'deconvolver':mtmfs, 'niter':10
 #testname: test_residual_update_mtmfs
@@ -477,20 +481,20 @@
 #
 #Control .image image restoration
 #Most deconvolvers do restoration the same with (mtmfs being the exception). These tests show that hogbom deconvolve restores correctly.
-#95. Deconvolve but don't restore: should not create a .image image
+#96. Deconvolve but don't restore: should not create a .image image
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #testname: test_restoration_none
 #
-#96. Deconvolve and restore, and compare results with those from a tclean run
+#97. Deconvolve and restore, and compare results with those from a tclean run
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=True
 #testname: test_restoration_basic(self):
 #
-#97. Deconvolve and don't restore, then restore and compare results with those from a tclean run
+#98. Deconvolve and don't restore, then restore and compare results with those from a tclean run
 #run 1: 'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoration=False
 #run 2: 'niter':0, restoration=True
 #testname: test_restoration_onlyrestore(self):
 #
-#98. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
+#99. Deconvolve and restore with a gigantic beam, then restore and compare results with those from a tclean run with a gigantic beam
 #This test is here mainly to verify that "restoringbeam" is picked up by Deconvolve.
 #'vis':'refim_eptwochan.ms', 'imsize':10, 'cell':'8.0arcsec', 'niter':10, restoringbeam='100.0arcsec'
 #testname: test_restoration_bigbeam(self):
@@ -498,51 +502,51 @@
 #
 #
 #N Iter Params tests: verify that we perform the same number of iterations as tclean for the same iteration parameters
-#99. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+#100. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
 #'gain':0.2
 #testname: test_niterparms_gain_1
 #
-#100. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+#101. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
 #'gain':0.3
 #testname: test_niterparms_gain_2
 #
-#101. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
+#102. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
 #'threshold':0.22
 #testname: test_niterparms_threshold_1
 #
-#102. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
+#103. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
 #'threshold':0.18
 #testname: test_niterparms_threshold_2
 #
-#103. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
+#104. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
 #'nsigma':0.9, 'maxpsffraction':0
 #testname: test_niterparms_nsigma_1
 #
-#104. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+#105. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
 #'nsigma':1.5, 'maxpsffraction':0
 #testname: test_niterparms_nsigma_2
 #
-#105. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
+#106. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
 #'cyclefactor':0.1
 #testname: test_niterparms_cyclefactor_1
 #
-#106. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
+#107. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
 #'cyclefactor':2.0
 #testname: test_niterparms_cyclefactor_2
 #
-#107. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
+#108. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
 #'minpsffraction':0.5
 #testname: test_niterparms_minpsffraction_1
 #
-#108. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
+#109. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
 #'minpsffraction':0.2
 #testname: test_niterparms_minpsffraction_2
 #
-#109. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
+#110. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
 #'maxpsffraction':0.01
 #testname: test_niterparms_maxpsffraction_1
 #
-#110. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
+#111. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
 #'maxpsffraction':0.05
 #testname: test_niterparms_maxpsffraction_2
 #
@@ -620,14 +624,13 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        # self.delData()
-        # Debugging: leave input and output data
-        self.delData(delinput=False, deloutput=False)
+        self.delData()
+        # self.delData(delinput=False, deloutput=False) # Debugging: leave input and output data
 
     @classmethod
     def tearDownClass(cls):
-        # cls.staticDelData(cls.msfile, cls.img)
-        cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
+        cls.staticDelData(cls.msfile, cls.img)
+        # cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
         if cls.cachedir != "":
             os.system('rm -rf '+cls.cachedir)
 
@@ -1074,7 +1077,6 @@ class test_cube(testref_base):
         testid=0
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1095,7 +1097,6 @@ class test_cube(testref_base):
         testid=1
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1117,7 +1118,6 @@ class test_cube(testref_base):
         testid=2
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1139,7 +1139,6 @@ class test_cube(testref_base):
         testid=3
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1160,7 +1159,6 @@ class test_cube(testref_base):
         testid=4
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1181,7 +1179,6 @@ class test_cube(testref_base):
         testid=5
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1203,7 +1200,6 @@ class test_cube(testref_base):
         testid=6
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1231,7 +1227,6 @@ class test_cube(testref_base):
         testid=7
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1254,7 +1249,6 @@ class test_cube(testref_base):
         testid=8
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1276,7 +1270,6 @@ class test_cube(testref_base):
         testid=9
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1298,7 +1291,6 @@ class test_cube(testref_base):
         testid=10
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1320,7 +1312,6 @@ class test_cube(testref_base):
         testid=11
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1342,7 +1333,6 @@ class test_cube(testref_base):
         testid=12
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1369,7 +1359,6 @@ class test_cube(testref_base):
              "imagename":self.img+self.testList[testid]['imagename'], "start":self.testList[testid]['start'], 
              "width":self.testList[testid]['width'], "veltype":self.testList[testid]['veltype'], 
              "outframe":self.testList[testid]['outframe'], "parallel":self.parallel}
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img+self.testList[testid]['imagename'], niter=10, deconvolver=t['deconvolver'])
 
@@ -1391,7 +1380,6 @@ class test_cube(testref_base):
         testid=14
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1413,7 +1401,6 @@ class test_cube(testref_base):
         testid=15
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1435,7 +1422,6 @@ class test_cube(testref_base):
         testid=16
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1457,7 +1443,6 @@ class test_cube(testref_base):
         testid=17
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1480,7 +1465,6 @@ class test_cube(testref_base):
         testid=18
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1502,7 +1486,6 @@ class test_cube(testref_base):
         testid=19
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1524,7 +1507,6 @@ class test_cube(testref_base):
         testid=20
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1547,7 +1529,6 @@ class test_cube(testref_base):
         self.testList[testid]['interpolation']='nearest'
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1572,7 +1553,6 @@ class test_cube(testref_base):
         testid=22
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
@@ -1593,7 +1573,6 @@ class test_cube(testref_base):
         testid=23
         print(" : " , self.testList[testid]['desc'])
         t = self.get_cubetclean_args(testid)
-        casalog.post("test_cube_{} parameters: {}".format(testid, t), "SEVERE")
         self.prepData('refim_point.ms', tclean_args=t)
         deconvolve(imagename=self.img, niter=10, deconvolver=t['deconvolver'])
 
