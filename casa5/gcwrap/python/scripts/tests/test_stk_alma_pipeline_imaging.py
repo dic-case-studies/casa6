@@ -2669,7 +2669,7 @@ class Test_standard(test_tclean_base):
             niter=7000000, threshold='0.0316Jy', nsigma=0.0, interactive=0, \
             usemask='auto-multithresh', sidelobethreshold=2.0, \
             noisethreshold=4.25, lownoisethreshold=1.5, \
-            negativethreshold=0.0:q!, minbeamfrac=0.3, growiterations=75, \
+            negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, calcres=False, calcpsf=False, \
             savemodel='none', parallel=False, verbose=True)
