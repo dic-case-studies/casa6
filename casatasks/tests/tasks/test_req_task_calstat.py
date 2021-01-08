@@ -153,7 +153,10 @@ class calstat_test(unittest.TestCase):
 
     # Test cases from test_calstat
     def data(self):
-        return map( lambda x: ctsys.resolve("regression/calstat/" + x), self.caltables )
+        if CASA6:
+            return map( lambda x: ctsys.resolve("regression/calstat/" + x), self.caltables )
+        else:
+            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "regression/calstat/" + x, self.caltables )
 
     def test_cs(self):
         expected = {'ggtau.3mm.ph.gcal0':
