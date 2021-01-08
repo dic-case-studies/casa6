@@ -158,7 +158,7 @@ template <class T> void compareCube(const casacore::Char* column,
                                     const casacore::Cube<T> &ref,
                                     casacore::Float tolerance = FLT_EPSILON);
 
-template <class T> void compareVectorCubes(const casacore::Char* column,
+template <class T> void compareCubesVector(const casacore::Char* column,
                                            const casacore::Vector<casacore::Cube<T>> &inp,
                                            const casacore::Vector<casacore::Cube<T>> &ref,
                                            casacore::Float tolerance = FLT_EPSILON);

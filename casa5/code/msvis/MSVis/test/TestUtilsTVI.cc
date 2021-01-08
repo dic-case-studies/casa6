@@ -281,7 +281,7 @@ template <class T> void compareCube(const Char* column,
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
-template <class T> void compareVectorCubes(const Char* column,
+template <class T> void compareCubesVector(const Char* column,
                                            const Vector<Cube<T>> &inp,
                                            const Vector<Cube<T>> &ref,
                                            Float tolerance)
@@ -477,6 +477,14 @@ void compareVisBuffers(VisBuffer2 &testVb,
                     tolerance);
     }
 
+    if (columns.contains(VisBufferComponent2::FlagCubes))
+    {
+        SCOPED_TRACE("Comparing FlagCubes component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::FlagCubes);
+        compareCubesVector(columnName.c_str(),testVb.flagCubes(),refVb.flagCubes(),
+                    tolerance);
+    }
+
     if (columns.contains(VisBufferComponent2::VisibilityCubeObserved))
     {
         SCOPED_TRACE("Comparing VisibilityCubeObserved component ");
@@ -489,7 +497,7 @@ void compareVisBuffers(VisBuffer2 &testVb,
     {
         SCOPED_TRACE("Comparing VisibilityCubesObserved component ");
         columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubeObserved);
-        compareVectorCubes(columnName.c_str(),testVb.visCubes(),getViscubes(refVb,MS::DATA,datacolmap),
+        compareCubesVector(columnName.c_str(),testVb.visCubes(),getViscubes(refVb,MS::DATA,datacolmap),
                     tolerance);
     }
 
