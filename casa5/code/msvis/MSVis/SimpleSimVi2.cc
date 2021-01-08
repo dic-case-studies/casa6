@@ -739,7 +739,6 @@ void SimpleSimVi2::antenna2 (Vector<Int> & ant2) const {
   ant2.resize(nRows());
   if(pars_.antennaScope_ == RowScope)
   {
-    ant2.resize(nBsln_);
     Int k=0;
     for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
       for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
