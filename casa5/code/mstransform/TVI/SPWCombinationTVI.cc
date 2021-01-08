@@ -428,12 +428,16 @@ void SPWCombinationTVI::weightSpectrum(casacore::Vector<casacore::Cube<casacore:
 
 void SPWCombinationTVI::sigma(casacore::Matrix<casacore::Float> &sigma) const
 {
-    getVii()->sigma(sigma);
+    auto& sigmaCubes = getVisBuffer()->sigmas();
+    sigma = sigmaCubes[0];
 }
 
 void SPWCombinationTVI::sigma(casacore::Vector<casacore::Matrix<casacore::Float>> &sigma) const
 {
-    getVii()->sigma(sigma);
+    // Get input VisBuffer and visibility observed cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerSigmaMat = vb->sigmas();
+    transformMatricesVector(innerSigmaMat, sigma);
 }
 
 void SPWCombinationTVI::sigmaSpectrum(casacore::Cube<casacore::Float> &sigmaSp) const

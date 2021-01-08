@@ -281,6 +281,36 @@ template <class T> void compareCube(const Char* column,
 // -----------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------
+template <class T> void compareMatricesVector(const Char* column,
+                                              const Vector<Matrix<T>> &inp,
+                                              const Vector<Matrix<T>> &ref,
+                                              Float tolerance)
+{
+    // Check matching shape
+    ASSERT_EQ(inp.shape(), ref.shape())
+         << " test and reference cubes don't have the same shape";
+
+    // Compare values
+    for (uInt index=0;index < inp.size(); index++)
+    {
+        const IPosition &shape = inp[index].shape();
+        for (uInt row=0;row < shape(1); row++)
+        {
+            for (uInt col=0;col < shape(0); col++)
+            {
+                ASSERT_NEAR(abs(inp(col,row) - ref(col,row)), 0, tolerance)
+                    << column << " does not match in position (row,col)="
+                    << "("<< row << "," << col << ")"
+                    << " test=" << inp(col,row)
+                    << " reference=" << ref(col,row);
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------
 template <class T> void compareCubesVector(const Char* column,
                                            const Vector<Cube<T>> &inp,
                                            const Vector<Cube<T>> &ref,

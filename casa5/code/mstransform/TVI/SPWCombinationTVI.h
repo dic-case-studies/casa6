@@ -175,8 +175,45 @@ protected:
             auto outputChannel = spwInpChanOutMap_p.at(thisOutputSpw).at(thisSpw)[0];
             casacore::IPosition blcOutput(3, 0, outputChannel, 0);
             casacore::IPosition trcOutput(3, inputCube.shape()(0)-1, outputChannel + inputCube.shape()(1)-1, inputCube.shape()(2)-1);
-            outVectorCube[thisCubePolId](blcOutput, trcOutput) = inputCube;
+            outCubesVector[thisCubePolId](blcOutput, trcOutput) = inputCube;
             inputRowsProcessed+=inputCube.shape()(2);
+        }
+    }
+
+    template <class T>
+    void transformMatricesVector(const casacore::Vector<casacore::Matrix<T>> & inMatricesVector,
+                                 casacore::Vector<casacore::Matrix<T>> & outMatricesVector) const
+    {
+        // Resize cube vector
+        outMatricesVector.resize(nShapes());
+
+        size_t iShape = 0;
+        // It is assumed that the VisBuffer contains unique metadata and timestamp except for DDId.
+        // See checkSortingInner().
+        for(auto& outMat : outMatricesVector)
+        {
+            casacore::IPosition matShape(2, nCorrelationsPerShape()[iShape],
+                                nRowsPerShape_p[iShape]);
+            outMat.resize(matShape);
+            outMat = 0;
+            ++iShape;
+        }
+        casacore::rownr_t inputRowsProcessed = 0;
+        for(auto& inputMat : inMatricesVector)
+        {
+            // It is assumed that each input cube corresponds to
+            // an unique DDiD.
+            // The case in which several DDiDs which have the same
+            // number of channels and polarizations have been merged in a single
+            // cube with equal shape is not supported yet.
+            // By construction of the rest of VB2 (VisibilityIteratorImpl2,
+            // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
+            casacore::Int thisMatrixPolId = currentSubchunkInnerPolIds_p[inputRowsProcessed];
+
+            casacore::IPosition blcOutput(2, 0, 0);
+            casacore::IPosition trcOutput(2, inputMat.shape()(0)-1, inputMat.shape()(1)-1);
+            outMatricesVector[thisMatrixPolId](blcOutput, trcOutput) = inputMat;
+            inputRowsProcessed+=inputMat.shape()(1);
         }
     }
 

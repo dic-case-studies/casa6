@@ -916,29 +916,46 @@ void SimpleSimVi2::sigma (Matrix<Float> & sigmat) const {
 }
 
 void SimpleSimVi2::sigma (Vector<Matrix<Float>> & sigmat) const {
-  sigmat.resize(1);
-  this->sigma(sigmat[0]);
-}
-
-void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
-  wtmat.resize(pars_.nCorr_,nRows());
-  wtmat.set(wt0_(thisSpw_)); // spw-specific
-  // non-ACs have twice this weight
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      if (i!=j) {
-    Array<Float> thiswtmat(wtmat(Slice(),Slice(k)));
-    thiswtmat*=Float(2.0);
-      }
-      ++k;
-    }
+  Vector<Matrix<Float>> wtMatVec;
+  this->weight(wtMatVec);
+  sigmat.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    sigmat[ishape].resize(pars_.nCorr_, nRowsPerShape_[ishape]);
+    sigmat[ishape] = (1.f/sqrt(wtMatVec[ishape]));
   }
 }
 
-void SimpleSimVi2::weight (Vector<Matrix<Float>> & wtmat) const {
-  wtmat.resize(1);
-  this->weight(wtmat[0]);
+void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
+  Vector<Matrix<Float>> wtVec;
+  this->weight(wtVec);
+  wtmat = wtVec[0];
+}
+
+void SimpleSimVi2::weight (Vector<Matrix<Float>> & wtMatVec) const {
+  wtMatVec.resize(nShapes());
+
+  Vector<Int> spws;
+  Vector<Int> a1;
+  Vector<Int> a2;
+  this->spectralWindows(spws);
+  this->antenna1(a1);
+  this->antenna2(a2);
+
+  rownr_t vbRowIdx = 0;
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    wtMatVec[ishape].resize(pars_.nCorr_, nRowsPerShape_[ishape]);
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
+      wtMatVec[ishape](Slice(),Slice(irow)) = wt0_(spws(vbRowIdx)); // spw-specific
+      // non-ACs have twice this weight
+      if(a1[vbRowIdx] != a2[vbRowIdx])
+      {
+        Array<Float> thiswtmat(wtMatVec[ishape](Slice(),Slice(irow)));
+        thiswtmat*=Float(2.0);
+      }
+    }
+  }
 }
 
 Bool SimpleSimVi2::weightSpectrumExists () const { return true; }
