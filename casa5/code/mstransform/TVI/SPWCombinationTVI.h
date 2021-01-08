@@ -93,6 +93,13 @@ public:
     void sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &sigmaSp) const override;
 
     // Transformation of several scalar quantities
+    void antenna1(casacore::Vector<casacore::Int> & ant1) const override;
+    void antenna2(casacore::Vector<casacore::Int> & ant2) const override;
+    void arrayIds (casacore::Vector<casacore::Int>& arrayIds) const override;
+    void exposure(casacore::Vector<double> & exp) const override;
+    void feed1 (casacore::Vector<casacore::Int> & fd1) const override;
+    void feed2 (casacore::Vector<casacore::Int> & fd2) const override;
+    void fieldIds (casacore::Vector<casacore::Int>& fieldId) const override;
     void time(casacore::Vector<double> & t) const override;
     void timeCentroid(casacore::Vector<double> & t) const override;
     void timeInterval(casacore::Vector<double> & t) const override;
@@ -130,6 +137,46 @@ protected:
     // This assumes that there is no reindexing performed by this TVI, i.e., the output
     // SPW is added to the list of input SPWs. With reindexing this would have been 0.
     casacore::Int outSpwStartIdx_p;
+
+    template <class T>
+    void transformCubesVector(const casacore::Vector<casacore::Cube<T>> & inVectorCube,
+                              casacore::Vector<casacore::Cube<T>> & outVectorCube) const
+    {
+        // Resize cube vector
+        outVectorCube.resize(nShapes());
+
+        size_t iShape = 0;
+        // It is assumed that the VisBuffer contains unique metadata and timestamp except for DDId.
+        // See checkSortingInner().
+        for(auto& outCube : outVectorCube)
+        {
+            casacore::IPosition cubeShape(3, nCorrelationsPerShape()[iShape],
+                                nChannelsPerShape_p[iShape], nRowsPerShape_p[iShape]);
+            outCube.resize(cubeShape);
+            ++iShape;
+        }
+        casacore::rownr_t inputRowsProcessed = 0;
+        for(auto& inputCube : inVectorCube)
+        {
+            // It is assumed that each input cube corresponds to
+            // an unique DDiD.
+            // The case in which several DDiDs which have the same
+            // number of channels and polarizations have been merged in a single
+            // cube with equal shape is not supported yet.
+            // By construction of the rest of VB2 (VisibilityIteratorImpl2,
+            // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
+            casacore::Int thisCubePolId = currentSubchunkInnerPolIds_p[inputRowsProcessed];
+            auto thisSpw = currentSubchunkInnerSpwIds_p[inputRowsProcessed];
+            auto thisOutputSpw = thisCubePolId + outSpwStartIdx_p;
+
+            auto outputChannel = spwInpChanOutMap_p.at(thisOutputSpw).at(thisSpw)[0];
+            casacore::IPosition blcOutput(3, 0, outputChannel, 0);
+            casacore::IPosition trcOutput(3, inputCube.shape()(0)-1, outputChannel + inputCube.shape()(1)-1, inputCube.shape()(2)-1);
+            outVectorCube[thisCubePolId](blcOutput, trcOutput) = inputCube;
+            inputRowsProcessed+=inputCube.shape()(2);
+        }
+    }
+
 };
 
 /*

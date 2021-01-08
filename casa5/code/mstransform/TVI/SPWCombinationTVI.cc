@@ -229,6 +229,69 @@ void SPWCombinationTVI::spectralWindows(casacore::Vector<casacore::Int>& spws) c
     spws = currentSubchunkSpwIds_p;
 }
 
+void SPWCombinationTVI::antenna1(casacore::Vector<casacore::Int> & ant1) const
+{
+    // Resize vector
+    ant1.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    ant1 = getVii()->getVisBuffer()->antenna1()(0);
+}
+
+void SPWCombinationTVI::antenna2(casacore::Vector<casacore::Int> & ant2) const
+{
+    // Resize vector
+    ant2.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    ant2 = getVii()->getVisBuffer()->antenna2()(0);
+}
+
+void SPWCombinationTVI::arrayIds (casacore::Vector<casacore::Int>&arrayIds) const
+{
+    // Resize vector
+    arrayIds.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    arrayIds = getVii()->getVisBuffer()->arrayId()(0);
+}
+
+void SPWCombinationTVI::exposure(casacore::Vector<double> & expo) const
+{
+    // Resize vector
+    expo.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    expo = getVii()->getVisBuffer()->exposure()(0);
+}
+
+void SPWCombinationTVI::feed1(casacore::Vector<casacore::Int> & fd1) const
+{
+    // Resize vector
+    fd1.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    fd1 = getVii()->getVisBuffer()->feed1()(0);
+}
+
+void SPWCombinationTVI::feed2(casacore::Vector<casacore::Int> & fd2) const
+{
+    // Resize vector
+    fd2.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    fd2 = getVii()->getVisBuffer()->feed2()(0);
+}
+
+void SPWCombinationTVI::fieldIds (casacore::Vector<casacore::Int>& fieldId) const
+{
+    // Resize vector
+    fieldId.resize(nShapes());
+
+    // It is assumed the values are constant in this VisBuffer
+    fieldId = getVii()->getVisBuffer()->fieldId()(0);
+}
+
 void SPWCombinationTVI::time(casacore::Vector<double> & t) const
 {
     // Resize vector
@@ -256,14 +319,19 @@ void SPWCombinationTVI::timeInterval(casacore::Vector<double> & t) const
     t = getVii()->getVisBuffer()->timeInterval()(0);
 }
 
-void SPWCombinationTVI::flag(casacore::Cube<casacore::Bool>& flagCube) const
+void SPWCombinationTVI::flag(casacore::Cube<casacore::Bool>& flag) const
 {
-    getVii()->flag(flagCube);
+    auto& flagCubes = getVisBuffer()->flagCubes();
+    flag = flagCubes[0];
 }
 
 void SPWCombinationTVI::flag(casacore::Vector<casacore::Cube<casacore::Bool>>& flagCubes) const
 {
-    getVii()->flag(flagCubes);
+    // Get input VisBuffer and flag cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerFlagCubes = vb->flagCubes();
+
+    transformCubesVector(innerFlagCubes, flagCubes);
 }
 
 void SPWCombinationTVI::floatData(casacore::Cube<casacore::Float> & vis) const
@@ -288,39 +356,7 @@ void SPWCombinationTVI::visibilityObserved(casacore::Vector<casacore::Cube<casac
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerVisCubes = vb->visCubes();
 
-    // Resize vis vector
-    vis.resize(nShapes());
-
-    size_t iShape = 0;
-    // It is assumed that the VisBuffer contains unique metadata and timestamp except for DDId.
-    // See checkSortingInner().
-    for(auto& visCube : vis)
-    {
-        casacore::IPosition cubeShape(3, nCorrelationsPerShape()[iShape],
-                            nChannelsPerShape_p[iShape], nRowsPerShape_p[iShape]);
-        visCube.resize(cubeShape);
-        ++iShape;
-    }
-    casacore::rownr_t inputRowsProcessed = 0;
-    for(auto& inputCube : innerVisCubes)
-    {
-        // It is assumed that each input cube corresponds to 
-        // an unique DDiD.
-        // The case in which several DDiDs which have the same 
-        // number of channels and polarizations have been merged in a single
-        // cube with equal shape is not supported yet.
-        // By construction of the rest of VB2 (VisibilityIteratorImpl2,
-        // SimpleSimVI2, rest of TVIs) this doesn't happen yet anyway.
-        casacore::Int thisCubePolId = currentSubchunkInnerPolIds_p[inputRowsProcessed];
-        auto thisSpw = currentSubchunkInnerSpwIds_p[inputRowsProcessed];
-        auto thisOutputSpw = thisCubePolId + outSpwStartIdx_p;
-
-        auto outputChannel = spwInpChanOutMap_p.at(thisOutputSpw).at(thisSpw)[0];
-        casacore::IPosition blcOutput(3, 0, outputChannel, 0);
-        casacore::IPosition trcOutput(3, inputCube.shape()(0)-1, outputChannel + inputCube.shape()(1)-1, inputCube.shape()(2)-1);
-        vis[thisCubePolId](blcOutput, trcOutput) = inputCube;
-        inputRowsProcessed+=inputCube.shape()(2);
-    }
+    transformCubesVector(innerVisCubes, vis);
 }
 
 void SPWCombinationTVI::visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const
