@@ -721,9 +721,9 @@ VisBuffer2 * SimpleSimVi2::getVisBuffer () const { return vb_.get(); }
   
   // Return info
 void SimpleSimVi2::antenna1 (Vector<Int> & ant1) const {
+  ant1.resize(nRows());
   if(pars_.antennaScope_ == RowScope)
   {
-    ant1.resize(nBsln_);
     Int k=0;
     for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
       for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
@@ -733,12 +733,10 @@ void SimpleSimVi2::antenna1 (Vector<Int> & ant1) const {
     }
   }
   else
-  {
-    ant1.resize(1);
-    ant1(0) = thisAntenna1_;
-  }
+    ant1 = thisAntenna1_;
 }
 void SimpleSimVi2::antenna2 (Vector<Int> & ant2) const {
+  ant2.resize(nRows());
   if(pars_.antennaScope_ == RowScope)
   {
     ant2.resize(nBsln_);
@@ -751,10 +749,7 @@ void SimpleSimVi2::antenna2 (Vector<Int> & ant2) const {
     }
   }
   else
-  {
-    ant2.resize(1);
-    ant2(0) = thisAntenna2_;
-  }
+    ant2 = thisAntenna2_;
 }
 
 void SimpleSimVi2::corrType (Vector<Int> & corrs) const { 
@@ -877,12 +872,12 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
       }
     }
 
-    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow,++vbRowIdx) {
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
       for (int icorr=0;icorr<pars_.nCorr_;++icorr) {
-      specvis.reference(vis[ishape](Slice(icorr),Slice(),Slice(irow)));
+        specvis.reference(vis[ishape](Slice(icorr),Slice(),Slice(irow)));
         specvis*=sqrt( G(icorr/2,a1(vbRowIdx)) * G(icorr%2,a2(vbRowIdx)) );
         if (pars_.doNorm_)
-      specvis/=sqrt( Tsys(icorr/2,a1(vbRowIdx)) * Tsys(icorr%2,a2(vbRowIdx)) );
+          specvis/=sqrt( Tsys(icorr/2,a1(vbRowIdx)) * Tsys(icorr%2,a2(vbRowIdx)) );
       }
     }
 
