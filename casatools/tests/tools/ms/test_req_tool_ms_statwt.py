@@ -10,15 +10,16 @@ import numbers
 
 #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 #import testhelper as th
-from casatestutils import testhelper as th
+#from casatestutils import testhelper as th
 
 subdir = 'visibilities/vla/'
-if th.is_casa6():
+try:
     from casatools import ctsys, table, ms
     datadir = ctsys.resolve(subdir)
     myms = ms()
     mytb = table()
-else:
+
+except ImportError:
     from taskinit import *
     myms = mstool()
     mytb = tbtool()
