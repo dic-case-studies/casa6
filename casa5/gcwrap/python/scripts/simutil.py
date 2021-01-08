@@ -35,7 +35,6 @@ else:
     # all I really need is casalog, but how to get it:?
     from taskinit import *
     from tclean import tclean
-    from clean import clean
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
@@ -1319,7 +1318,7 @@ class simutil:
             cellsize=qa.quantity(6.e3/250./qa.convert(model_start,"GHz")["value"],"arcsec")  # need better cell determination - 250m?!
             cellsize=[cellsize,cellsize]
             # very light clean - its an empty image!
-            self.imclean(tmpname+".ms",tmpname,
+            self.imtclean(tmpname+".ms",tmpname,
                        "csclean",cellsize,[128,128],
                        "J2000 00:00:00.00 "+qa.angle(dec)[0],
                        False,100,"0.01mJy","natural",[],True,"I")
@@ -3001,201 +3000,7 @@ class simutil:
         Creates a template '[imagename].clean.last' file in addition to 
         outputs of task 'clean'
         """
-
-        # determine channelization from (first) ms:
-        if is_array_type(mstoimage):
-            ms0=mstoimage[0]
-            if len(mstoimage)==1:
-                mstoimage=mstoimage[0]
-        else:
-            ms0=mstoimage
-        
-        if os.path.exists(ms0):
-            tb.open(ms0+"/SPECTRAL_WINDOW")
-            if tb.nrows() > 1:
-                self.msg("determining output cube parameters from FIRST of several SPW in MS "+ms0)
-            freq=tb.getvarcol("CHAN_FREQ")['r1']
-            nchan=freq.size
-            tb.done()
-        elif dryrun:
-            nchan=1 # May be wrong
-
-        if nchan==1:
-            chanmode="mfs"
-        else:
-            chanmode="channel"
-        
-        psfmode="clark"
-        ftmachine="ft"
-        imagermode="clark" # set default to prevent UnboundLocalError
-
-        if cleanmode=="csclean":
-            imagermode='csclean'
-        #if cleanmode=="clark":
-        #    imagermode=""
-        if cleanmode=="mosaic":
-            imagermode="mosaic"
-            ftmachine="mosaic" 
-
-        # in 3.4 clean doesn't accept just any imsize
-        optsize=[0,0]
-        optsize[0]=_su.getOptimumSize(imsize[0])
-        nksize=len(imsize)
-        if nksize==1: # imsize can be a single element or array
-            optsize[1]=optsize[0]
-        else:
-            optsize[1]=_su.getOptimumSize(imsize[1])
-        if((optsize[0] != imsize[0]) or (nksize!=1 and optsize[1] != imsize[1])):
-            self.msg(str(imsize)+' is not an acceptable imagesize, will use '+str(optsize)+" instead",priority="warn")
-            imsize=optsize
-                
-        if not interactive:
-            interactive=False
-        # print clean inputs no matter what, so user can use them.
-        # and write a clean.last file
-        cleanlast=open(imagename+".clean.last",'w')
-        cleanlast.write('taskname            = "clean"\n')
-
-        #self.msg("clean inputs:")        
-        if self.verbose: self.msg(" ")
-        if type(mstoimage)==type([]):
-            cleanstr="clean(vis="+str(mstoimage)+",imagename='"+imagename+"'"
-            cleanlast.write('vis                 = '+str(mstoimage)+'\n')
-        else:
-            cleanstr="clean(vis='"+str(mstoimage)+"',imagename='"+imagename+"'"
-            cleanlast.write('vis                 = "'+str(mstoimage)+'"\n')
-        cleanlast.write('imagename           = "'+imagename+'"\n')
-        cleanlast.write('outlierfile         = ""\n')
-        cleanlast.write('field               = "'+sourcefieldlist+'"\n')
-        cleanlast.write('spw                 = ""\n')
-        cleanlast.write('selectdata          = False\n')
-        cleanlast.write('timerange           = ""\n')
-        cleanlast.write('uvrange             = ""\n')
-        cleanlast.write('antenna             = ""\n')
-        cleanlast.write('scan                = ""\n')
-        if nchan>1:
-            cleanstr=cleanstr+",mode='"+chanmode+"',nchan="+str(nchan)
-            cleanlast.write('mode                = "'+chanmode+'"\n')
-            cleanlast.write('nchan               = '+str(nchan)+'\n')
-        else:
-            cleanlast.write('mode                = "mfs"\n')
-            cleanlast.write('nchan               = -1\n')
-        cleanlast.write('gridmode                = ""\n')
-        cleanlast.write('wprojplanes             = 1\n')
-        cleanlast.write('facets                  = 1\n')
-        cleanlast.write('cfcache                 = "cfcache.dir"\n')
-        cleanlast.write('painc                   = 360.0\n')
-        cleanlast.write('epjtable                = ""\n')
-        #cleanstr=cleanstr+",interpolation='nearest'"  # default change 20100518
-        cleanlast.write('interpolation           = "linear"\n')
-        cleanstr=cleanstr+",niter="+str(niter)
-        cleanlast.write('niter                   = '+str(niter)+'\n')
-        cleanlast.write('gain                    = 0.1\n')
-        cleanstr=cleanstr+",threshold='"+str(threshold)+"'"
-        cleanlast.write('threshold               = "'+str(threshold)+'"\n')
-        cleanstr=cleanstr+",psfmode='"+psfmode+"'"
-        cleanlast.write('psfmode                 = "'+psfmode+'"\n')
-        if imagermode != "":
-            cleanstr=cleanstr+",imagermode='"+imagermode+"'"
-        cleanlast.write('imagermode              = "'+imagermode+'"\n')
-        cleanstr=cleanstr+",ftmachine='"+ftmachine+"'"
-        cleanlast.write('ftmachine               = "'+ftmachine+'"\n')
-        cleanlast.write('mosweight               = False\n')
-        cleanlast.write('scaletype               = "SAULT"\n')
-        cleanlast.write('multiscale              = []\n')
-        cleanlast.write('negcomponent            = -1\n')
-        cleanlast.write('smallscalebias          = 0.0\n')
-        cleanlast.write('interactive             = '+str(interactive)+'\n')
-        if interactive:
-            cleanstr=cleanstr+",interactive=True"
-        if type(mask)==type(" "):
-            cleanlast.write('mask                    = "'+mask+'"\n')
-            cleanstr=cleanstr+",mask='"+mask+"'"
-        else:
-            cleanlast.write('mask                    = '+str(mask)+'\n')
-            cleanstr=cleanstr+",mask="+str(mask)
-        cleanlast.write('start                   = 0\n')
-        cleanlast.write('width                   = 1\n')
-        cleanlast.write('outframe                = ""\n')
-        cleanlast.write('veltype                 = "radio"\n')
-        cellstr="['"+str(cell[0]['value'])+str(cell[0]['unit'])+"','"+str(cell[1]['value'])+str(cell[1]['unit'])+"']"
-        cleanstr=cleanstr+",imsize="+str(imsize)+",cell="+cellstr+",phasecenter='"+str(imcenter)+"'"
-        cleanlast.write('imsize                  = '+str(imsize)+'\n');
-        cleanlast.write('cell                    = '+cellstr+'\n');
-        cleanlast.write('phasecenter             = "'+str(imcenter)+'"\n');
-        cleanlast.write('restfreq                = ""\n');
-        if stokes != "I":
-            cleanstr=cleanstr+",stokes='"+stokes+"'"
-        cleanlast.write('stokes                  = "'+stokes+'"\n');
-        cleanlast.write('weighting               = "'+weighting+'"\n');
-        cleanstr=cleanstr+",weighting='"+weighting+"'"
-        if weighting == "briggs":
-            cleanstr=cleanstr+",robust=0.5"
-            cleanlast.write('robust                  = 0.5\n');
-            robust=0.5
-        else:
-            cleanlast.write('robust                  = 0.0\n');
-            robust=0.
-            
-        taper=False
-        if len(outertaper) >0:            
-            taper=True
-            if type(outertaper) == type([]):
-                if len(outertaper[0])==0:
-                    taper=False
-        if taper:
-            uvtaper=True
-            cleanlast.write('uvtaper                 = True\n');
-            cleanlast.write('outertaper              = "'+str(outertaper)+'"\n');
-            cleanstr=cleanstr+",uvtaper=True,outertaper="+str(outertaper)+",innertaper=[]"
-        else:
-            uvtaper=False            
-            cleanlast.write('uvtaper                 = False\n');
-            cleanlast.write('outertaper              = []\n');
-            cleanstr=cleanstr+",uvtaper=False"
-        cleanlast.write('innertaper              = []\n');
-        if os.path.exists(modelimage):
-            cleanstr=cleanstr+",modelimage='"+str(modelimage)+"'"
-            cleanlast.write('modelimage              = "'+str(modelimage)+'"\n');
-        else:
-            cleanlast.write('modelimage              = ""\n');
-        cleanlast.write("restoringbeam           = ['']\n");
-        cleanstr=cleanstr+",pbcor="+str(pbcor)
-        cleanlast.write("pbcor                   = "+str(pbcor)+"\n");
-        cleanlast.write("minpb                   = 0.2\n");
-        cleanlast.write("calready                = True\n");
-        cleanlast.write('noise                   = ""\n');
-        cleanlast.write('npixels                 = 0\n');
-        cleanlast.write('npercycle               = 100\n');
-        cleanlast.write('cyclefactor             = 1.5\n');
-        cleanlast.write('cyclespeedup            = -1\n');
-        cleanlast.write('nterms                  = 1\n');
-        cleanlast.write('reffreq                 = ""\n');
-        cleanlast.write('chaniter                = False\n');
-        cleanstr=cleanstr+")"        
-        if self.verbose:
-            self.msg(cleanstr,priority="warn",origin="simutil")
-        else:
-            self.msg(cleanstr,priority="info",origin="simutil")
-        cleanlast.write("#"+cleanstr+"\n")
-        cleanlast.close()
-        
-        if not dryrun:
-            casalog.filter("ERROR")
-            clean(vis=mstoimage, imagename=imagename, mode=chanmode, 
-              niter=niter, threshold=threshold, selectdata=False, nchan=nchan,
-              psfmode=psfmode, imagermode=imagermode, ftmachine=ftmachine, 
-              imsize=imsize, cell=[str(cell[0]['value'])+str(cell[0]['unit']),str(cell[1]['value'])+str(cell[1]['unit'])], phasecenter=imcenter,
-              stokes=stokes, weighting=weighting, robust=robust,
-              interactive=interactive,
-              uvtaper=uvtaper,outertaper=outertaper, pbcor=True, mask=mask,
-              modelimage=modelimage)
-            casalog.filter()
-
-            del freq,nchan # something is holding onto the ms in table cache
-
-
-
+        raise RuntimeError("clean task is no longer available, switch to imtclean in simutil module")
 
 
     ##################################################################
