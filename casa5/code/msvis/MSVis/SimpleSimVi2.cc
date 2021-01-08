@@ -861,10 +861,12 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
   Matrix<Float> G(pars_.gain_);
   Matrix<Float> Tsys(pars_.tsys_);
 
+  rownr_t vbRowIdx = 0;
   for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
   {
+    rownr_t thisShapeVbRowIdx = vbRowIdx;
     if (pars_.doParang_ && pars_.nCorr_==4)
-      corruptByParang(vis[ishape]);
+      corruptByParang(vis[ishape], thisShapeVbRowIdx);
 
     if (abs(pars_.c0_)>0.0) {  // Global offset for systematic solve testing
       Cube<Complex> v(vis[ishape](Slice(0,1,1),Slice(),Slice()));
@@ -875,18 +877,18 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
       }
     }
 
-    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow) {
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow,++vbRowIdx) {
       for (int icorr=0;icorr<pars_.nCorr_;++icorr) {
       specvis.reference(vis[ishape](Slice(icorr),Slice(),Slice(irow)));
-        specvis*=sqrt( G(icorr/2,a1(irow)) * G(icorr%2,a2(irow)) );
+        specvis*=sqrt( G(icorr/2,a1(vbRowIdx)) * G(icorr%2,a2(vbRowIdx)) );
         if (pars_.doNorm_)
-      specvis/=sqrt( Tsys(icorr/2,a1(irow)) * Tsys(icorr%2,a2(irow)) );
+      specvis/=sqrt( Tsys(icorr/2,a1(vbRowIdx)) * Tsys(icorr%2,a2(vbRowIdx)) );
       }
     }
 
     // Now add noise
     if (pars_.doNoise_)
-      this->addNoise(vis[ishape]);
+      this->addNoise(vis[ishape], thisShapeVbRowIdx);
   }
 }
 
@@ -1100,7 +1102,7 @@ void SimpleSimVi2::configureNewSubchunk() {
 }
 
   // Generate noise on data
-void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
+void SimpleSimVi2::addNoise(Cube<Complex>& vis, rownr_t vbRowOffset) const {
 
   IPosition sh3(vis.shape());
 
@@ -1116,12 +1118,12 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
   Matrix<Float> Tsys(pars_.tsys_);
   for (Int i=0;i<sh3[2];++i) {
     Float c(1.0);
-    if (a1(i)!=a2(i))
+    if (a1(i+vbRowOffset)!=a2(i+vbRowOffset))
       c=1./sqrt(2.0);
     for (Int k=0;k<sh3[0];++k) {
       Float d(c);
       if (!pars_.doNorm_)
-	d*=sqrt(Tsys(k/2,a1(i))*Tsys(k%2,a2(i)));
+	d*=sqrt(Tsys(k/2,a1(i+vbRowOffset))*Tsys(k%2,a2(i+vbRowOffset)));
       for (Int j=0;j<sh3[1];++j) {
 	vis(k,j,i)+=Complex(d)*Complex(rn(),rn());
       }
@@ -1130,7 +1132,7 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
 
 }
 
-void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
+void SimpleSimVi2::corruptByParang(Cube<Complex>& vis, rownr_t vbRowOffset) const {
 
 
   // Assumes constant time in this subchunk
@@ -1149,8 +1151,8 @@ void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
       P(1,iant)=Complex(cos(a),sin(a));
       P(0,iant)=conj(P(1,iant));
     }
-    for (Int irow=0;irow<nBsln_;++irow) {
-      Int& i(a1(irow)), j(a2(irow));
+    for (Int irow=0;irow<vis.shape()(2);++irow) {
+      Int& i(a1(irow+vbRowOffset)), j(a2(irow+vbRowOffset));
       for (Int icor=0;icor<pars_.nCorr_;++icor) {
 	v.reference(vis(Slice(icor,1,1),Slice(),Slice(irow,1,1)));
 	v*=(P(icor/2,i)*conj(P(icor%2,j)));   // cf PJones
@@ -1165,8 +1167,8 @@ void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
       P(1,iant)=sin(a);
     }
     Vector<Complex> v0(pars_.nCorr_),v1;
-    for (Int irow=0;irow<nBsln_;++irow) {
-      Int& i(a1(irow)), j(a2(irow));
+    for (Int irow=0;irow<vis.shape()(2);++irow) {
+      Int& i(a1(irow+vbRowOffset)), j(a2(irow+vbRowOffset));
       Float& C(P(0,i)),S(P(1,i)),c(P(0,j)),s(P(1,j));
       for (Int ich=0;ich<pars_.nChan_(thisSpw_);++ich) {
 	v1.reference(vis.xyPlane(irow).column(ich));

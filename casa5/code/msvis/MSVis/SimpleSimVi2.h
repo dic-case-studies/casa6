@@ -462,10 +462,10 @@ private:
   void configureNewSubchunk();
 
   // Generate noise on data
-  void addNoise(casacore::Cube<casacore::Complex>& vis) const;
+  void addNoise(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Corrupt by (ad hoc) parang factors
-  void corruptByParang(casacore::Cube<casacore::Complex>& vis) const;
+  void corruptByParang(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Generate the antenna, spw and DD subtables
   void generateSubtables();
