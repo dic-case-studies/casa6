@@ -4944,28 +4944,34 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     test000 --- updateweight=False - WEIGHT column must not be updated
     test010 --- updateweight=True, sigmavalue=default('stddev')
-    test011 --- updateweight=True, sigmavalue=default('stddev'), with mask added(4500~6500)
+    test011 --- updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged in input data
+    test012 --- updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
     test020 --- updateweight=True, sigmavalue='stddev'
-    test021 --- updateweight=True, sigmavalue='stddev', with mask added(4500~6500)
+    test021 --- updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
+    test022 --- updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499
     test030 --- updateweight=True, sigmavalue='rms'
-    test031 --- updateweight=True, sigmavalue='rms', with mask added(4500~6500)
+    test031 --- updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data
+    test032 --- updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499
     test040 --- blfunc='variable'
-    test041 --- blfunc='variable', with mask added(4500~6500)
+    test041 --- blfunc='variable', channels 4500~6500 flagged in input data
+    test042 --- blfunc='variable', spw to flag channels 4500-6499
     test050 --- blmode='apply'
-    test051 --- blmode='apply', with mask added(4500~6500)
+    test051 --- blmode='apply', channels 4500~6500 flagged in input data
+    test052 --- blmode='apply', spw to flag channels 4500-6499
     """
 
     datapath = ctsys_resolve('regression/unittest/tsdbaseline')
     infile = 'analytic_order3_withoffset.ms'
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'
+    spw = '*:0~4499;6500~8191'
     params = {'infile': infile, 'outfile': outfile, 
               'intent': 'OBSERVE_TARGET#ON_SOURCE', 
               'datacolumn': 'float_data'}
 
     def init_params(self):
         self.params['updateweight'] = True
-        for key in ['sigmavalue', 
+        for key in ['sigmavalue', 'spw',
                     'blmode', 'blformat', 'bloutput',
                     'bltable', 'blfunc', 'blparam']:
             if key in self.params:
@@ -4991,6 +4997,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             wgt = tb.getcol('WEIGHT')
             data = tb.getcol('FLOAT_DATA')
             flag = tb.getcol('FLAG')
+            if 'spw' in self.params.keys():
+                flag[:, 4500:6500, :] = True
 
         wgt_ref = wgt.copy()
         for ipol in range(len(data)):
@@ -5051,7 +5059,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                     f.write(params[irow][ipol])
 
     def add_mask(self):
-        # flag channels between 4500 to 6499 for each spectrum
+        # flag channels from 4500 to 6499 for each spectrum
         with tbmanager(self.infile, nomodify=False) as tb:
             flag = tb.getcol('FLAG')
             for ipol in range(len(flag)):
@@ -5081,6 +5089,10 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.add_mask()
         self.run_test()
 
+    def test012(self):
+        self.params['spw'] = self.spw
+        self.run_test()
+
     def test020(self):
         self.params['sigmavalue'] = 'stddev'
         self.run_test()
@@ -5090,12 +5102,22 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.params['sigmavalue'] = 'stddev'
         self.run_test()
 
+    def test022(self):
+        self.params['spw'] = self.spw
+        self.params['sigmavalue'] = 'stddev'
+        self.run_test()
+
     def test030(self):
         self.params['sigmavalue'] = 'rms'
         self.run_test()
 
     def test031(self):
         self.add_mask()
+        self.params['sigmavalue'] = 'rms'
+        self.run_test()
+
+    def test032(self):
+        self.params['spw'] = self.spw
         self.params['sigmavalue'] = 'rms'
         self.run_test()
 
@@ -5112,7 +5134,14 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.write_param_file(self.params['blparam'])
         self.run_test()
 
-    def test050(self):
+    def test042(self):
+        self.params['spw'] = self.spw
+        self.params['blfunc'] = 'variable'
+        self.params['blparam'] = self.outroot + '_param.txt'
+        self.write_param_file(self.params['blparam'])
+        self.run_test()
+
+    def run_apply_test(self):
         self.params['blformat'] = 'table'
         bltable = self.infile + '.bltable'
         self.params['bloutput'] = bltable
@@ -5129,25 +5158,17 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.params['blmode'] = 'apply'
         self.params['updateweight'] = True
         self.run_test()
+
+    def test050(self):
+        self.run_apply_test()
 
     def test051(self):
         self.add_mask()
-        self.params['blformat'] = 'table'
-        bltable = self.infile + '.bltable'
-        self.params['bloutput'] = bltable
-        self.params['bltable'] = bltable
+        self.run_apply_test()
 
-        # make a baseline table
-        self.params['blmode'] = 'fit'
-        self.params['updateweight'] = False
-        sdbaseline(**self.params)
-        self._checkfile(bltable)
-        remove_single_file_dir(self.outfile)
-
-        # apply
-        self.params['blmode'] = 'apply'
-        self.params['updateweight'] = True
-        self.run_test()
+    def test052(self):
+        self.params['spw'] = self.spw
+        self.run_apply_test()
 
 
 def suite():

@@ -2352,8 +2352,9 @@ void SingleDishMS::applyBaselineTable(string const& in_column_name,
 
           if (update_weight) {
             // convert flag to mask by taking logical NOT of flag
+            // and then operate logical AND with in_mask
             for (size_t ichan = 0; ichan < num_chan; ++ichan) {
-              mask_data[ichan] = !(mask_data[ichan]);
+              mask_data[ichan] = in_mask[idx][ichan] && (!(mask_data[ichan]));
             }
             compute_weight(num_chan, spec_data, mask_data, weight);
             set_weight_to_matrix(weight_matrix, irow, ipol, weight.at(var_index));
