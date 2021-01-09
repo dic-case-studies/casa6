@@ -418,12 +418,16 @@ void SPWCombinationTVI::weight(casacore::Vector<casacore::Matrix<casacore::Float
 
 void SPWCombinationTVI::weightSpectrum(casacore::Cube<casacore::Float> &weightSp) const
 {
-    getVii()->weightSpectrum(weightSp);
+    auto& weightSpCubes = getVisBuffer()->weightSpectra();
+    weightSp = weightSpCubes[0];
 }
 
 void SPWCombinationTVI::weightSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &weightSp) const
 {
-    getVii()->weightSpectrum(weightSp);
+    // Get input VisBuffer and sigma cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerWeightSp = vb->weightSpectra();
+    transformCubesVector(innerWeightSp, weightSp);
 }
 
 void SPWCombinationTVI::sigma(casacore::Matrix<casacore::Float> &sigma) const
@@ -434,7 +438,7 @@ void SPWCombinationTVI::sigma(casacore::Matrix<casacore::Float> &sigma) const
 
 void SPWCombinationTVI::sigma(casacore::Vector<casacore::Matrix<casacore::Float>> &sigma) const
 {
-    // Get input VisBuffer and visibility observed cubes
+    // Get input VisBuffer and sigma cubes
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerSigmaMat = vb->sigmas();
     transformMatricesVector(innerSigmaMat, sigma);
@@ -442,12 +446,16 @@ void SPWCombinationTVI::sigma(casacore::Vector<casacore::Matrix<casacore::Float>
 
 void SPWCombinationTVI::sigmaSpectrum(casacore::Cube<casacore::Float> &sigmaSp) const
 {
-    getVii()->sigmaSpectrum(sigmaSp);
+    auto& sigmaSpCubes = getVisBuffer()->sigmaSpectra();
+    sigmaSp = sigmaSpCubes[0];
 }
 
 void SPWCombinationTVI::sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &sigmaSp) const
 {
-    getVii()->sigmaSpectrum(sigmaSp);
+    // Get input VisBuffer and sigma cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerSigmaSp = vb->sigmaSpectra();
+    transformCubesVector(innerSigmaSp, sigmaSp);
 }
 
 SPWCombinationTVIFactory::SPWCombinationTVIFactory (ViImplementation2 *inputVii)

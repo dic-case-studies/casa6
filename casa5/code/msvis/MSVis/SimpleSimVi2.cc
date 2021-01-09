@@ -909,10 +909,9 @@ void SimpleSimVi2::floatData (Vector<Cube<Float>> & fcubes) const {
 IPosition SimpleSimVi2::visibilityShape () const { return IPosition(3,pars_.nCorr_,pars_.nChan_(thisSpw_),nRows()); }
 
 void SimpleSimVi2::sigma (Matrix<Float> & sigmat) const {
-  sigmat.resize(pars_.nCorr_,nRows());
-  Matrix<Float> wtmat;
-  this->weight(wtmat);
-  sigmat=(1.f/sqrt(wtmat));
+  Vector<Matrix<Float>> sigVec;
+  this->sigma(sigVec);
+  sigmat = sigVec[0];
 }
 
 void SimpleSimVi2::sigma (Vector<Matrix<Float>> & sigmat) const {
@@ -962,53 +961,62 @@ Bool SimpleSimVi2::weightSpectrumExists () const { return true; }
 Bool SimpleSimVi2::sigmaSpectrumExists () const { return true; } 
 
 void SimpleSimVi2::weightSpectrum (Cube<Float> & wtsp) const {
-  wtsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  wtsp.set(wt0_(thisSpw_));
+  Vector<Cube<Float>> wtspVec;
+  this->weightSpectrum(wtspVec);
+  wtsp = wtspVec[0];
+}
 
-  if (!pars_.doNoise_) return;
+void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
+  wtsp.resize(nShapes());
 
+  Vector<Int> spws;
   Vector<Int> a1;
   Vector<Int> a2;
+  this->spectralWindows(spws);
   this->antenna1(a1);
   this->antenna2(a2);
+
   Matrix<Float> Tsys(pars_.tsys_);
 
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      // non-ACs have twice wt0_
-      if (i!=j) {
-        Array<Float> thiswtsp(wtsp(Slice(),Slice(),Slice(k)));
+  rownr_t vbRowIdx = 0;
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    wtsp[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
+      wtsp[ishape](Slice(),Slice(),Slice(irow)) = wt0_(spws(vbRowIdx)); // spw-specific
+      // non-ACs have twice this weight
+      if(a1[vbRowIdx] != a2[vbRowIdx])
+      {
+        Array<Float> thiswtsp(wtsp[ishape](Slice(),Slice(),Slice(irow)));
         thiswtsp*=Float(2.0);
       }
-
       if (!pars_.doNorm_) {
         for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
-          Array<Float> thiswt(wtsp(Slice(icorr),Slice(),Slice(k)));
-          Float c= Tsys(icorr/2,a1(k))*Tsys(icorr%2,a2(k));
+          Array<Float> thiswt(wtsp[ishape](Slice(icorr),Slice(),Slice(irow)));
+          Float c= Tsys(icorr/2,a1(vbRowIdx))*Tsys(icorr%2,a2(vbRowIdx));
           thiswt/=c;
         }
       }
-      ++k;
     }
   }
 }
 
-void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
-  wtsp.resize(1);
-  this->weightSpectrum(wtsp[0]);
-}
-
 void SimpleSimVi2::sigmaSpectrum (Cube<Float> & sigsp) const {
-  sigsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  Cube<Float> wtsp;
-  this->weightSpectrum(wtsp);
-  sigsp=(1.f/sqrt(wtsp));
+  Vector<Cube<Float>> sigspVec;
+  this->sigmaSpectrum(sigspVec);
+  sigsp = sigspVec[0];
 }
 
 void SimpleSimVi2::sigmaSpectrum (Vector<Cube<Float>> & sigsp) const {
-  sigsp.resize(1);
-  this->sigmaSpectrum(sigsp[0]);
+  Vector<Cube<Float>> wtVec;
+  this->weightSpectrum(wtVec);
+  sigsp.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    sigsp[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    sigsp[ishape] = (1.f/sqrt(wtVec[ishape]));
+  }
 }
 
 const casacore::Vector<casacore::Float>& SimpleSimVi2::feed_pa (casacore::Double t) const

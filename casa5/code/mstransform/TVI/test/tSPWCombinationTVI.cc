@@ -52,6 +52,8 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                     {
                         Vector<Int> channelsPerSPW(nSpw);
                         iota(channelsPerSPW.begin(), channelsPerSPW.end(), 0);
+                        transform(channelsPerSPW.begin(), channelsPerSPW.end(), channelsPerSPW.begin(),
+                                 [&](Int idx){return Int(nChannSpw0 * pow(2., idx*nChannExponent));});
                          
                         int nScan = 1;
                         int nCorr = 4;
@@ -144,6 +146,9 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         columns += VisBufferComponent2::ProcessorId;
                         columns += VisBufferComponent2::Scan;
                         columns += VisBufferComponent2::Sigma;
+                        columns += VisBufferComponent2::Sigmas;
+                        columns += VisBufferComponent2::SigmaSpectrum;
+                        columns += VisBufferComponent2::SigmaSpectra;
                         columns += VisBufferComponent2::StateId;
                         columns += VisBufferComponent2::Time;
                         columns += VisBufferComponent2::TimeCentroid;
@@ -154,6 +159,8 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         columns += VisBufferComponent2::VisibilityCubesObserved;
                         //columns += VisBufferComponent2::VisibilityCubeCorrected;
                         //columns += VisBufferComponent2::VisibilityCubeModel;
+                        columns += VisBufferComponent2::WeightSpectrum;
+                        columns += VisBufferComponent2::WeightSpectra;
 
                         // Compare the combined spws 
                         SCOPED_TRACE("Comparing transformed data for simulated uniform ms");

@@ -298,11 +298,11 @@ template <class T> void compareMatricesVector(const Char* column,
         {
             for (uInt col=0;col < shape(0); col++)
             {
-                ASSERT_NEAR(abs(inp(col,row) - ref(col,row)), 0, tolerance)
+                ASSERT_NEAR(abs(inp[index](col,row) - ref[index](col,row)), 0, tolerance)
                     << column << " does not match in position (row,col)="
                     << "("<< row << "," << col << ")"
-                    << " test=" << inp(col,row)
-                    << " reference=" << ref(col,row);
+                    << " test=" << inp[index](col,row)
+                    << " reference=" << ref[index](col,row);
             }
         }
     }
@@ -586,12 +586,28 @@ void compareVisBuffers(VisBuffer2 &testVb,
                     tolerance);
     }
 
+    if (columns.contains(VisBufferComponent2::WeightSpectra))
+    {
+        SCOPED_TRACE("Comparing WeightSpectra component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::WeightSpectra);
+        compareCubesVector(columnName.c_str(),testVb.weightSpectra(),refVb.weightSpectra(),
+                           tolerance);
+    }
+
     if (columns.contains(VisBufferComponent2::SigmaSpectrum))
     {
         SCOPED_TRACE("Comparing SigmaSpectrum component ");
         columnName = VisBufferComponents2::name(VisBufferComponent2::SigmaSpectrum);
         compareCube(columnName.c_str(),testVb.sigmaSpectrum(),refVb.sigmaSpectrum(),
                     tolerance);
+    }
+
+    if (columns.contains(VisBufferComponent2::SigmaSpectra))
+    {
+        SCOPED_TRACE("Comparing SigmaSpectra component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::SigmaSpectra);
+        compareCubesVector(columnName.c_str(),testVb.sigmaSpectra(),refVb.sigmaSpectra(),
+                           tolerance);
     }
 
     if (columns.contains(VisBufferComponent2::Weight))
@@ -608,6 +624,14 @@ void compareVisBuffers(VisBuffer2 &testVb,
         columnName = VisBufferComponents2::name(VisBufferComponent2::Sigma);
         compareMatrix(columnName.c_str(),testVb.sigma(),refVb.sigma(),
                       tolerance);
+    }
+
+    if (columns.contains(VisBufferComponent2::Sigmas))
+    {
+        SCOPED_TRACE("Comparing Sigmas component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::Sigmas);
+        compareMatricesVector(columnName.c_str(),testVb.sigmas(),refVb.sigmas(),
+                              tolerance);
     }
 
     if (columns.contains(VisBufferComponent2::Frequencies))
