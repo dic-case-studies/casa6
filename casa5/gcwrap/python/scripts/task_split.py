@@ -205,7 +205,6 @@ def split(vis,
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -213,7 +212,6 @@ def split(vis,
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
                             numspw = len(mslocal.msseltoindex(vis=vis,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -222,7 +220,6 @@ def split(vis,
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -234,17 +231,13 @@ def split(vis,
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
                                 sch2 = update_spwchan(vis, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
                                         repl = "spw='" + sch2 + "'"
                                     cmd = cmds[rownum].replace(spwmatch.group(), repl)
-                            #except: # cmd[rownum] no longer applies.
                             except Exception as e:
                                 casalog.post(
                                     "Error %s updating row %d of FLAG_CMD" % (e,rownum), 'WARN')

@@ -38,6 +38,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_cvelfreqs.py
   test_exportasdm.py
   test_exportfits.py
+  test_exportuvfits.py
   test_fixplanets.py
   test_fixvis.py
   test_flagcmd.py
@@ -90,6 +91,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_putregion.py
   test_ia_pv.py
   test_ia_rebin.py
+  test_ia_regrid.py
   test_ia_replacemaskedpixels.py
   test_ia_restoringbeam.py
   test_ia_rotate.py
@@ -160,6 +162,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_rg_selectedchannels.py
   test_rg_frombcs.py
   test_rg_fromtextfile.py
+  test_sdatmcor.py
   test_sdbaseline.py
   test_sdcal.py
   test_sdfit.py
@@ -229,6 +232,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+  test_req_task_imdev.py
   test_req_task_rerefant.py
   test_req_task_polcal.py
 
