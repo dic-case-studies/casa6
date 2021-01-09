@@ -893,17 +893,22 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
 }
 
 void SimpleSimVi2::floatData (Cube<Float> & fcube) const {
-  fcube.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  // set according to stokes
-  // TBD
-  fcube.set(0.0);
-  // add noise
-  // TBD
+  Vector<Cube<Float>> fCubeVec;
+  this->floatData(fCubeVec);
+  fcube = fCubeVec[0];
 }
 
 void SimpleSimVi2::floatData (Vector<Cube<Float>> & fcubes) const {
-  fcubes.resize(1);
-  this->floatData(fcubes[0]);
+  fcubes.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    fcubes[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    // set according to stokes
+    // TBD
+    fcubes[ishape] = 0.0;
+    // add noise
+    // TBD
+  }
 }
 
 IPosition SimpleSimVi2::visibilityShape () const { return IPosition(3,pars_.nCorr_,pars_.nChan_(thisSpw_),nRows()); }

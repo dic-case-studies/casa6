@@ -357,18 +357,21 @@ void SPWCombinationTVI::flag(casacore::Vector<casacore::Cube<casacore::Bool>>& f
     // Get input VisBuffer and flag cubes
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerFlagCubes = vb->flagCubes();
-
     transformCubesVector(innerFlagCubes, flagCubes);
 }
 
 void SPWCombinationTVI::floatData(casacore::Cube<casacore::Float> & vis) const
 {
-    getVii()->floatData(vis);
+    auto& visCubes = getVisBuffer()->visCubesFloat();
+    vis = visCubes[0];
 }
 
 void SPWCombinationTVI::floatData(casacore::Vector<casacore::Cube<casacore::Float>> & vis) const
 {
-    getVii()->floatData(vis);
+    // Get input VisBuffer and visibility float cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerVisCubes = vb->visCubesFloat();
+    transformCubesVector(innerVisCubes, vis);
 }
 
 void SPWCombinationTVI::visibilityObserved(casacore::Cube<casacore::Complex> & vis) const
@@ -382,38 +385,49 @@ void SPWCombinationTVI::visibilityObserved(casacore::Vector<casacore::Cube<casac
     // Get input VisBuffer and visibility observed cubes
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerVisCubes = vb->visCubes();
-
     transformCubesVector(innerVisCubes, vis);
 }
 
 void SPWCombinationTVI::visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const
 {
-    getVii()->visibilityCorrected(vis);
+    auto& visCubes = getVisBuffer()->visCubesCorrected();
+    vis = visCubes[0];
 }
 
 void SPWCombinationTVI::visibilityCorrected(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
 {
-    getVii()->visibilityCorrected(vis);
+    // Get input VisBuffer and visibility corrected cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerVisCubes = vb->visCubesCorrected();
+    transformCubesVector(innerVisCubes, vis);
 }
 
 void SPWCombinationTVI::visibilityModel(casacore::Cube<casacore::Complex> & vis) const
 {
-    getVii()->visibilityModel(vis);
+    auto& visCubes = getVisBuffer()->visCubesModel();
+    vis = visCubes[0];
 }
 
 void SPWCombinationTVI::visibilityModel(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
 {
-    getVii()->visibilityModel(vis);
+    // Get input VisBuffer and visibility model cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerVisCubes = vb->visCubesModel();
+    transformCubesVector(innerVisCubes, vis);
 }
 
 void SPWCombinationTVI::weight(casacore::Matrix<casacore::Float> &weight) const
 {
-    getVii()->weight(weight);
+    auto& weightCubes = getVisBuffer()->weights();
+    weight = weightCubes[0];
 }
 
 void SPWCombinationTVI::weight(casacore::Vector<casacore::Matrix<casacore::Float>> &weight) const
 {
-    getVii()->weight(weight);
+    // Get input VisBuffer and weight cubes
+    VisBuffer2 *vb = getVii()->getVisBuffer();
+    auto& innerWeight = vb->weights();
+    transformMatricesVector(innerWeight, weight);
 }
 
 void SPWCombinationTVI::weightSpectrum(casacore::Cube<casacore::Float> &weightSp) const
@@ -424,7 +438,7 @@ void SPWCombinationTVI::weightSpectrum(casacore::Cube<casacore::Float> &weightSp
 
 void SPWCombinationTVI::weightSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &weightSp) const
 {
-    // Get input VisBuffer and sigma cubes
+    // Get input VisBuffer and weight Sp cubes
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerWeightSp = vb->weightSpectra();
     transformCubesVector(innerWeightSp, weightSp);

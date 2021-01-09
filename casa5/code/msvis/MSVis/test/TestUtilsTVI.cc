@@ -551,7 +551,7 @@ void compareVisBuffers(VisBuffer2 &testVb,
         SCOPED_TRACE("Comparing VisibilityCubesObserved component ");
         columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubeObserved);
         compareCubesVector(columnName.c_str(),testVb.visCubes(),getViscubes(refVb,MS::DATA,datacolmap),
-                    tolerance);
+                           tolerance);
     }
 
     if (columns.contains(VisBufferComponent2::VisibilityCubeCorrected))
@@ -562,12 +562,28 @@ void compareVisBuffers(VisBuffer2 &testVb,
                     tolerance);
     }
 
+    if (columns.contains(VisBufferComponent2::VisibilityCubesCorrected))
+    {
+        SCOPED_TRACE("Comparing VisibilityCubesCorrected component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubesCorrected);
+        compareCubesVector(columnName.c_str(),testVb.visCubesCorrected(),getViscubes(refVb,MS::CORRECTED_DATA,datacolmap),
+                           tolerance);
+    }
+
     if (columns.contains(VisBufferComponent2::VisibilityCubeModel))
     {
         SCOPED_TRACE("Comparing VisibilityCubeModel component ");
         columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubeModel);
         compareCube(columnName.c_str(),testVb.visCubeModel(),getViscube(refVb,MS::MODEL_DATA,datacolmap),
                     tolerance);
+    }
+
+    if (columns.contains(VisBufferComponent2::VisibilityCubesModel))
+    {
+        SCOPED_TRACE("Comparing VisibilityCubesModel component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::VisibilityCubesModel);
+        compareCubesVector(columnName.c_str(),testVb.visCubesModel(),getViscubes(refVb,MS::MODEL_DATA,datacolmap),
+                           tolerance);
     }
 
     if (columns.contains(VisBufferComponent2::VisibilityCubeFloat))
@@ -616,6 +632,14 @@ void compareVisBuffers(VisBuffer2 &testVb,
         columnName = VisBufferComponents2::name(VisBufferComponent2::Weight);
         compareMatrix(columnName.c_str(),testVb.weight(),refVb.weight(),
                       tolerance);
+    }
+
+    if (columns.contains(VisBufferComponent2::Weights))
+    {
+        SCOPED_TRACE("Comparing Weights component ");
+        columnName = VisBufferComponents2::name(VisBufferComponent2::Weights);
+        compareMatricesVector(columnName.c_str(),testVb.weights(),refVb.weights(),
+                              tolerance);
     }
 
     if (columns.contains(VisBufferComponent2::Sigma))

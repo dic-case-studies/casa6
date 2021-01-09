@@ -153,12 +153,15 @@ TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
                         columns += VisBufferComponent2::Time;
                         columns += VisBufferComponent2::TimeCentroid;
                         columns += VisBufferComponent2::TimeInterval;
-                        columns += VisBufferComponent2::Scan;
-                        //columns += VisBufferComponent2::Correlations;
                         columns += VisBufferComponent2::VisibilityCubeObserved;
                         columns += VisBufferComponent2::VisibilityCubesObserved;
-                        //columns += VisBufferComponent2::VisibilityCubeCorrected;
-                        //columns += VisBufferComponent2::VisibilityCubeModel;
+                        columns += VisBufferComponent2::VisibilityCubeCorrected;
+                        columns += VisBufferComponent2::VisibilityCubesCorrected;
+                        columns += VisBufferComponent2::VisibilityCubeModel;
+                        columns += VisBufferComponent2::VisibilityCubesModel;
+                        columns += VisBufferComponent2::VisibilityCubeFloat;
+                        columns += VisBufferComponent2::Weight;
+                        columns += VisBufferComponent2::Weights;
                         columns += VisBufferComponent2::WeightSpectrum;
                         columns += VisBufferComponent2::WeightSpectra;
 
