@@ -990,17 +990,20 @@ void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
 
     for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
       wtsp[ishape](Slice(),Slice(),Slice(irow)) = wt0_(spws(vbRowIdx)); // spw-specific
-      // non-ACs have twice this weight
-      if(a1[vbRowIdx] != a2[vbRowIdx])
+      if (pars_.doNoise_)
       {
-        Array<Float> thiswtsp(wtsp[ishape](Slice(),Slice(),Slice(irow)));
-        thiswtsp*=Float(2.0);
-      }
-      if (!pars_.doNorm_) {
-        for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
-          Array<Float> thiswt(wtsp[ishape](Slice(icorr),Slice(),Slice(irow)));
-          Float c= Tsys(icorr/2,a1(vbRowIdx))*Tsys(icorr%2,a2(vbRowIdx));
-          thiswt/=c;
+        // non-ACs have twice this weight
+        if(a1[vbRowIdx] != a2[vbRowIdx])
+        {
+          Array<Float> thiswtsp(wtsp[ishape](Slice(),Slice(),Slice(irow)));
+          thiswtsp*=Float(2.0);
+        }
+        if (!pars_.doNorm_) {
+          for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
+            Array<Float> thiswt(wtsp[ishape](Slice(icorr),Slice(),Slice(irow)));
+            Float c= Tsys(icorr/2,a1(vbRowIdx))*Tsys(icorr%2,a2(vbRowIdx));
+            thiswt/=c;
+          }
         }
       }
     }

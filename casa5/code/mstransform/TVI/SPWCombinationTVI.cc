@@ -466,7 +466,7 @@ void SPWCombinationTVI::sigmaSpectrum(casacore::Cube<casacore::Float> &sigmaSp) 
 
 void SPWCombinationTVI::sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> &sigmaSp) const
 {
-    // Get input VisBuffer and sigma cubes
+    // Get input VisBuffer and sigma Sp cubes
     VisBuffer2 *vb = getVii()->getVisBuffer();
     auto& innerSigmaSp = vb->sigmaSpectra();
     transformCubesVector(innerSigmaSp, sigmaSp);
