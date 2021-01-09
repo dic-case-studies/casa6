@@ -748,7 +748,7 @@ class imsmooth_test(unittest.TestCase):
 #               #     original test seemed to intend
 #               #     more thought should be given here to what test is appropriate
                 if ( not (value>(0.125-allowedError) and value<(0.125+allowedError)) and
-                     not (value>-3.37407147e-09 and value<3.37407147e-09) ):
+                     not (value>-3.65746967e-09 and value<3.65746967e-09) ):
                     retValue['success']=False
                     retValue['error_msgs']=retValue['error_msgs']\
                         +"\nError: Values in the smoothed box are not all 0.125"\

@@ -162,6 +162,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_rg_selectedchannels.py
   test_rg_frombcs.py
   test_rg_fromtextfile.py
+  test_sdatmcor.py
   test_sdbaseline.py
   test_sdcal.py
   test_sdfit.py
