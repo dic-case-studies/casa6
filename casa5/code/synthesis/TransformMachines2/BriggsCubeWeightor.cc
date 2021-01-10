@@ -275,6 +275,23 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     Double fracBW, nCellsBW, uvDistanceFactor;
     IPosition pos(4,0);
     
+    cout << "BriggsCubeWeightor::weightUniform uscale_p, vscale_p" << uscale_p << "," << vscale_p << endl;
+    cout << "***************** row = 0 *****************" << endl;
+    cout << " BriggsCubeWeightor::weightUniform nvischan " << nvischan << endl;
+    fracBW = calcFractionalBandwidth(vb.getFrequencies(0), nvischan, flag(Slice(),0));
+    cout << " BriggsCubeWeightor::weightUniform fracBW for row 0 " << fracBW << endl;
+    cout << " BriggsCubeWeightor::weightUniform frequencies shape row 0 " << vb.getFrequencies(0).shape() << endl;
+    cout << " BriggsCubeWeightor::weightUniform flag shape row 0 " << flag(Slice(),0).shape() << endl;
+    cout << " BriggsCubeWeightor::weightUniform frequencies row 0 " << vb.getFrequencies(0) << endl;
+    cout << "***************** row = nRow-1 *****************" << endl;
+    cout << " BriggsCubeWeightor::weightUniform nvischan " << nvischan << endl;
+    fracBW = calcFractionalBandwidth(vb.getFrequencies(nRow-1), nvischan, flag(Slice(),nRow-1));
+    cout << " BriggsCubeWeightor::weightUniform fracBW for row nRow-1 " << fracBW << endl;
+    cout << " BriggsCubeWeightor::weightUniform frequencies shape row nRow-1 " << vb.getFrequencies(nRow-1).shape() << endl;
+    cout << " BriggsCubeWeightor::weightUniform flag shape row nRow-1 " << flag(Slice(),nRow-1).shape() << endl;
+    cout << " BriggsCubeWeightor::weightUniform frequencies row nRow-1 " << vb.getFrequencies(nRow-1) << endl;
+    cout << "************************************************" << endl;
+
     for (Int row=0; row<nRow; row++) {
     
     if(rmode_p=="bwtaper") fracBW = calcFractionalBandwidth(vb.getFrequencies(row), nvischan, flag(Slice(),row));
