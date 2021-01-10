@@ -572,7 +572,7 @@ class TestHelpers:
 
         :param imname: image name (output image from tclean)
         :returns: the usual (test_imager_helper) string with success/error messages.
-        Errors are marked with '(Fail' as per self.verdict().
+        Errors are marked with the tag '(Fail' as per self.verdict().
         """
         ia_open = False
         try:
