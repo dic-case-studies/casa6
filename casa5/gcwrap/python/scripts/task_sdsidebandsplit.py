@@ -1,6 +1,15 @@
-# sd task for imaging
-from casac import casac
-from taskinit import *
+from casatasks.private.casa_transition import is_CASA6
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import sidebandseparator, quanta
+else:
+    from taskinit import casalog
+    from taskinit import qatool as quanta
+    from casac import casac
+
+    def sidebandseparator():
+        return casac.sidebandseparator()
+
 
 # def sdsidebandsplit(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
 #                     imageshift, getbothside, lo1, loframe, reftime, refdir, threshold,
@@ -11,8 +20,8 @@ from taskinit import *
 def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
                     getbothside, refchan, refval, useother, threshold):
     casalog.origin('sdsidebandsplit')
-    
-    separator = casac.sidebandseparator()
+
+    separator = sidebandseparator()
     try:
         separator.open(imagename)
         separator.setshift(signalshift, True)
@@ -24,15 +33,15 @@ def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
             if refval == '':
                 qrefval = -1.0
             else:
-                myqa = qatool()
+                myqa = quanta()
                 qrefval = myqa.quantity(refval)
             separator.set_imageband_frequency(refchan, qrefval)
         separator.setsolveother(useother)
         separator.separate(outfile, overwrite)
     finally:
         separator.close()
-    
-    
+
+
     """
     min_casarev = 23268
     try:
@@ -50,7 +59,7 @@ def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
 
 
         sbsep = sd.sbseparator(infiles)
-        
+
         # Set frequency information to select data
         if not (qa.compare(freqtol, "Hz") or qa.quantity(freqtol)['unit'] == ''):
             del sbsep
@@ -75,16 +84,15 @@ def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
                 mereftime = myme.epoch('TAI', reftime)
                 reftime = mereftime['m0']['value']
             sbsep.set_lo1(lo1, loframe, reftime, refdir)
-        
+
         sbsep.set_solve_other(False)
-        
+
         # Invoke separation supression
         sbsep.separate(outfile, overwrite = overwrite)
 
         del sbsep
 
     except Exception, instance:
-        #print '***Error***',instance
         casalog.post( str(instance), priority = 'ERROR' )
         raise Exception, instance
         return

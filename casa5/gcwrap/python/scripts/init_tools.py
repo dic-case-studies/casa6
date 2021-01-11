@@ -10,7 +10,7 @@ def gentools(tools=None):
 	"""
 	Generate a fresh set of tools; only the ones who have
 	states..so globally sharing the same one can be unpredicatable
-	im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms,lm,at=gentools()
+	im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms,lm,at, si=gentools()
 	or if you want specific set of tools
 	im, ia, cb=gentools(['im', 'ia', 'cb'])
 
@@ -22,12 +22,12 @@ def gentools(tools=None):
 		 'sl':'sltool()', 'dc':'dctool()', 'vp':'vptool()',
 		 'msmd':'msmdtool()','fi':'fitool()','fn':'fntool()',
 		 'imd':'imdtool()','sdms':'sdmstool()', 'lm':'lmtool()',
-         'at':'attool()'}
+                 'at':'attool()', 'si':'sitool()'}
 	reqtools=[]
         if (not tools) or not hasattr(tools, '__iter__'):
 		reqtools=['im', 'cb', 'ms','tb', 'me', 'ia', 'po',
                           'sm', 'cl', 'cs', 'rg','sl', 'dc', 'vp',
-			  'msmd', 'fi', 'fn', 'imd', 'sdms', 'lm', 'at']
+			  'msmd', 'fi', 'fn', 'imd', 'sdms', 'lm', 'at','si']
 	else:
 		reqtools=tools
 	return tuple([eval(tooldic[reqtool]) for reqtool in reqtools])
@@ -69,6 +69,7 @@ msmdtool = casac.msmetadata
 fitool = casac.fitter
 fntool = casac.functional
 imdtool = casac.imagemetadata
+sitool=casac.synthesisimager
 
 utilstool = casac.utils
 cutool = utilstool
@@ -101,4 +102,4 @@ except:
     print "Unable to start viewer, maybe no dbus available?"
 
 
-im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms,lm,at=gentools()
+im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms,lm,at,si=gentools()

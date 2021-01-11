@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+
+# This script has to be run within the Git repository. It will inspect the
+# state of the current tree/branch in the workspace.
+
+# Version type is used to select the appropriate grep pattern.
+# The idea is to look for either the latest master/release type tag "\d+.\d+.\d+.\d+"
+# or CAS-<number>-x tags. Both are required to construct a meaningful number for
+# the casatools/tasks wheels
+
+my $gitbranch=`git rev-parse --abbrev-ref HEAD`;
+chomp($gitbranch);
+my $last_branch_tag="";
+my $last_release_tag="";
+if ($gitbranch eq "master" || $gitbranch =~ "release/"){
+    $last_release_tag=get_last_release_tag ($gitbranch);
+    $last_branch_tag=$last_release_tag;
+} else {
+    $last_release_tag=get_last_release_tag ($gitbranch);
+    $last_branch_tag=get_last_branch_tag ($gitbranch);
+}
+
+print ("$last_branch_tag $last_release_tag");
+my $headcommit=`git rev-parse HEAD`;
+
+# No tag at all for branch
+if ($last_branch_tag eq "") {
+    print (" dirty");
+# Check if the latest tag is the latest commit
+} else {
+    my $tagcommit=`git rev-list -n 1 $last_branch_tag`;
+    if ($headcommit ne $tagcommit) {
+        print (" dirty");
+    }
+}
+
+print ("\n");
+
+sub get_last_branch_tag () {
+    my $gitbranch = shift;
+    my $branchpattern = qr/^$gitbranch-\d+/;
+    my $delim="-";
+    return get_last_tag($gitbranch,$branchpattern,$delim)
+}
+
+sub get_last_release_tag () {
+    my $gitbranch = shift;
+    my $branchpattern = qr/^\d+\.\d+\.\d+\.\d+$/;
+    my $delim="\\.";
+    return get_last_tag($gitbranch,$branchpattern,$delim)
+}
+
+sub get_last_tag () {
+    my $gitbranch = shift;
+    my $branchpattern = shift;
+    my $delim = shift;
+    my @versions;
+    my @tags;
+    open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    chomp( @hashes = <$githashes> );
+    close( $githashes );
+    foreach ( @hashes ) {
+        #print "$_\n";
+        # This distinction was added in case there are multiple release tags. I am not certain that
+        # this is going to happen in practice.
+        if ($gitbranch =~ "release/"){
+            $releaseid=(split('/',$gitbranch))[-1];
+            $grep_cmd = "git tag -l | grep \"" . "^" .$releaseid . "\" | ";
+            open( $gitver, "git show-ref --tags -d | grep ^" . $_ . " | sed -e 's,.* refs/tags/,,' | grep " .$releaseid ." |sed -e 's/\\^{}//' 2> /dev/null |" );
+            chomp( @tags = <$gitver> );
+            close( $gitver );
+        }
+        else{
+            open( $gitver, "git show-ref --tags -d | grep ^" . $_ . " | sed -e 's,.* refs/tags/,,' | sed -e 's/\\^{}//' 2> /dev/null |" );
+            chomp( @tags = <$gitver> );
+            close( $gitver );
+        }
+
+        #print(@tags);
+        foreach my $tag (@tags) {
+            #print("$branchpattern\n");
+            if(grep(/$branchpattern/, $tag)) {
+                #print(grep($branchpattern, $tag). "\n");
+                #print("Pushing $tag\n");
+                push @versions, $tag;
+            }
+        }
+        # Found one or more matching master/release tags
+        last if (scalar @versions >= 1);
+    }
+    my @sorted =
+        map { $_->[0] }
+        sort { $a->[1] cmp $b->[1] }
+        map { [$_, join '', map { sprintf "%8d", $_ } split $delim, $_] }
+        @versions;
+
+    return($sorted[$#sorted]);
+}
