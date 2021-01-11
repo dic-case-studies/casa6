@@ -598,18 +598,29 @@ void SimpleSimVi2::next () {
 
   if(iSubChunk_ < nSubchunk_)
   {
-    // Change SPW once all times have been served
+    // Change SPW once all times and baselines have been served
     if(pars_.spwScope_ == SubchunkScope)
-      thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+    {
+      if(pars_.antennaScope_ == SubchunkScope)
+        thisSpw_ = iSubChunk_ / (nBsln_ / pars_.nTimePerField_(thisField_));
+      else 
+        thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+    }
 
     if(pars_.antennaScope_ == SubchunkScope)
     {
       thisAntenna2_++;
       if(thisAntenna2_ == pars_.nAnt_)
       {
-          thisAntenna1_++;
-          thisAntenna2_ = (pars_.doAC_ ? thisAntenna1_ : thisAntenna1_ + 1);
-          thisTime_+=pars_.dt_;
+        thisAntenna1_++;
+        thisAntenna2_ = (pars_.doAC_ ? thisAntenna1_ : thisAntenna1_ + 1);
+      }
+      // All baselines have been served, start again
+      if(! (iSubChunk_ % nBsln_) )
+      {
+        thisAntenna1_ = 0;
+        thisAntenna2_ = (pars_.doAC_ ? 0 : 1);
+        thisTime_+=pars_.dt_;
       }
     }
     else

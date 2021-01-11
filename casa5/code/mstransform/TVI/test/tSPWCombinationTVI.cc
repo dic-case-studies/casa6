@@ -36,17 +36,13 @@ using namespace casa::vi;
 
 TEST(SPWCombinationTVIExecuteSimulatedTest, UniformMS)
 {
-    //for(int nAnt = 4; nAnt <= 8; nAnt*=2)
     for(int nAnt = 4; nAnt <= 4; nAnt*=2)
     {
-        //for(int nTimePerField = 1; nTimePerField <= 10; nTimePerField*=10)
-        for(int nTimePerField = 1; nTimePerField <= 1; nTimePerField*=10)
+        for(int nTimePerField = 1; nTimePerField <= 10; nTimePerField*=10)
         {
-            //for(int nChannSpw0 = 64; nChannSpw0 <= 512; nChannSpw0*=2)
-            for(int nChannSpw0 = 64; nChannSpw0 <= 64; nChannSpw0*=2)
+            for(int nChannSpw0 = 64; nChannSpw0 <= 128; nChannSpw0*=2)
             {
-                //for(int nSpw = 1; nSpw <= 4; nSpw++)
-                for(int nSpw = 1; nSpw <= 2; nSpw++)
+                for(int nSpw = 1; nSpw <= 4; nSpw++)
                 {
                     for(int nChannExponent = -2; nChannExponent <= 2; nChannExponent++)
                     {

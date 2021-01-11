@@ -685,6 +685,8 @@ TEST(SimpleSimVi2ScopeTest , AntennaScope) {
               if(ant2==NANT)
               {
                   ant1++;
+                  if(ant1==NANT-1) // no AC
+                      ant1 = 0;
                   ant2 = ant1 + 1; // no AC
               }
           }
