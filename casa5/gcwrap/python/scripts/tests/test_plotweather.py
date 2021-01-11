@@ -59,8 +59,8 @@ class plotweather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 plotweather()
         else:
-            opac = plotweather()
-            self.assertIsNone(opac)
+            with self.assertRaises(RuntimeError):
+                opac = plotweather()
 
     def test1(self):
         '''Test 1: Bad input file'''
@@ -69,8 +69,8 @@ class plotweather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 plotweather(vis=badmsfile)
         else:
-            opac = plotweather(vis=badmsfile)
-            self.assertIsNone(opac)
+            with self.assertRaises(RuntimeError):
+                opac = plotweather(vis=badmsfile)
 
 #    @unittest.skipIf(is_CASA6,"failure, 0.005426051322080905 != 0.0054234724819465846 within 7 places")
     def test2(self):
