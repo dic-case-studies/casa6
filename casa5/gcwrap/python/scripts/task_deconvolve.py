@@ -45,11 +45,10 @@ def check_requiredimgs_exist(imagename, deconvolver, nterms):
     reqims = []
     if deconvolver == 'mtmfs':
         end = nterms*2-1
-        for ttn in range(0, end):
-            ttext = ".tt" + str(ttn)
-            if ttn != end-1:
-                reqims.append(imagename + ".residual" + ttext)
-            reqims.append(imagename + ".psf" + ttext)
+        for ttn in range(0, nterms*2-1):
+            reqims.append(imagename + ".psf" + ".tt" + str(ttn))
+        for ttn in range(0, nterms):
+            reqims.append(imagename + ".residual" + ".tt" + str(ttn))
     else:
         reqims.append(imagename + ".residual")
         reqims.append(imagename + ".psf")
