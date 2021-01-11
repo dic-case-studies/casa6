@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import numpy as np
@@ -43,7 +42,7 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
     """
 
     #Python script
-    retval = True
+
     try:
         casalog.origin('importfitsidi')
         casalog.post("")
@@ -57,7 +56,7 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
 
         refframes = {'REST': 0, 'LSRK': 1, 'LSRD': 2, 'BARY': 3, 'GEO': 4, 'TOPO': 5} 
         if myspecframe not in refframes:
-            raise Exception('Value '+myspecframe+' of parameter specframe invalid. Possible values are REST, LSRK, LSRD, BARY, GEO, TOPO')
+            raise ValueError('Value '+myspecframe+' of parameter specframe invalid. Possible values are REST, LSRK, LSRD, BARY, GEO, TOPO')
 
         if(type(fitsidifile)==str):
             casalog.post('### Reading file '+fitsidifile, 'INFO')
@@ -80,7 +79,7 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
                 myms.close()
                 shutil.rmtree(tname, ignore_errors=True)
         else:
-            raise Exception('Parameter fitsidifile should be of type str or list')          
+            raise ValueError('Parameter fitsidifile should be of type str or list')
 
         if (constobsid):
             mytb.open(vis+'/OBSERVATION', nomodify=False)
@@ -172,12 +171,10 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
                 param_vals = [vars[p] for p in param_names]
             else:
                 param_vals = [eval(p) for p in param_names]   
-            retval &= write_history(myms, vis, 'importfitsidi', param_names, param_vals, casalog)
+            write_history(myms, vis, 'importfitsidi', param_names, param_vals, casalog)
 
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % instance, 'WARN')
 
-    except Exception as instance: 
-        print('*** Error *** %s' % instance)
+    finally:
         shutil.rmtree(vis+'_importfitsidi_tmp_', ignore_errors=True)
-        raise

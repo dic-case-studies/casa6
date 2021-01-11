@@ -37,9 +37,9 @@ class caltabconvert_test(unittest.TestCase):
 # Test cases    
     def test1(self):
         '''Test 1: Testing default'''
-        self.rval = caltabconvert()
         print "Expected error ..."
-        self.assertFalse(self.rval)
+        with self.assertRaises(IOError):
+            caltabconvert()
 
     def test2(self):
         '''Test 2: Testing with a WVR caltable'''

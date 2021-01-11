@@ -297,10 +297,17 @@ void WPConvFunc::findConvFunction(const ImageInterface<Complex>& image,
      Double cpWscale=wScale;
      Int wstart=planesPerChunk*chunkId;
      Int wend=wstart+chunksize(chunkId)-1;
+     
 #ifdef _OPENMP
      omp_set_nested(0);
+     Int nthreads=omp_get_max_threads();
+     nthreads=min(nthreads, chunksize(chunkId));
+     omp_set_num_threads(nthreads);
+     
 #endif
-#pragma omp parallel for default(none) firstprivate(/*cpWConvSize,*/ cpConvSize, convFuncPtr, s0, s1, wsaveptr, lsav, cor, inner, cpWscale,  wstart, wend) 
+#pragma omp parallel for default(none) firstprivate(/*cpWConvSize,*/ cpConvSize, convFuncPtr, s0, s1, wsaveptr, lsav, cor, inner, cpWscale,  wstart, wend) schedule(dynamic, 1)
+     
+
      for (Int iw=wstart; iw < (wend+1)  ; ++iw) {
        Matrix<Complex> screen1(cpConvSize, cpConvSize);
        makeGWplane(screen1, iw, s0, s1, wsaveptr, lsav, inner, cor, cpWscale);
@@ -313,6 +320,7 @@ void WPConvFunc::findConvFunction(const ImageInterface<Complex>& image,
        }
 
      }//iw
+
      convFuncSect.putStorage(convFuncPtr, convFuncStor);
      for (uInt iw=0; iw< uInt(chunksize(chunkId)); ++iw){
        convFuncSect.xyPlane(iw)=convFuncSect.xyPlane(iw)/(maxconv);

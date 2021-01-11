@@ -31,6 +31,8 @@
 #include <components/SpectralComponents/LorentzianSpectralElement.h>
 #include <components/SpectralComponents/PolynomialSpectralElement.h>
 #include <components/SpectralComponents/PowerLogPolynomialSpectralElement.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/BasicMath/Math.h>
 
 #include <casa/iostream.h>
 

@@ -54,8 +54,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 contsub_subMS_list.append(subMS + ".contsub")
                 
         if len(cont_subMS_list) <= 0:
-            casalog.post("No continuum-subtracted sub-MSs for concatenation","SEVERE")
-            return False
+            raise ValueError("No continuum-subtracted sub-MSs for concatenation","SEVERE")
 
         # We have to sort the list because otherwise it  
         # depends on the time the engines dispatches their sub-MSs
@@ -72,22 +71,22 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             if(pnrows>0): 
                 shutil.copytree(os.path.realpath(vis+'/POINTING'), auxfile)
         except Exception as instance:
-            casalog.post("Error handling POINTING table %s: %s" %
-                         (vis+'/POINTING',str(instance)),'SEVERE')
+            raise RuntimeError("Error handling POINTING table %s: %s" %
+                               (vis+'/POINTING',str(instance)))
 
         if want_cont:
             try:
                 virtualconcat(concatvis=helper._arg['vis'] + ".cont",vis=cont_subMS_list,
                               copypointing=False)
             except Exception as instance:
-                casalog.post("Error concatenating continuum sub-MSs %s: %s" % 
-                             (str(cont_subMS_list),str(instance)),'SEVERE')     
+                raise RuntimeError("Error concatenating continuum sub-MSs %s: %s" %
+                                   (str(cont_subMS_list),str(instance)))
         try:
             virtualconcat(concatvis=helper._arg['vis'] + ".contsub",vis=contsub_subMS_list,
                           copypointing=False)
         except Exception as instance:
-            casalog.post("Error concatenating continuum-subtracted sub-MSs %s: %s" %
-                         (str(contsub_subMS_list),str(instance)),'SEVERE')
+            raise RuntimeError("Error concatenating continuum-subtracted sub-MSs %s: %s" %
+                               (str(contsub_subMS_list),str(instance)))
 
         # Remove continuum subtraction-SubMSs
         if want_cont:
@@ -109,13 +108,13 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 os.system('rm -rf '+theptab)
                 os.system('mv '+auxfile+' '+theptab)
             except Exception as instance:
-                casalog.post("Error restoring pointing table from %s: %s" % 
-                             (auxfile,str(instance)),'SEVERE')
+                raise RuntimeError("Error restoring pointing table from %s: %s" %
+                                   (auxfile,str(instance)))
         
         # Restore origin (otherwise gcwrap shows virtualconcat)
         casalog.origin('uvcontsub')
-        
-        return True
+
+        return
     
     # Run normal code
     try:
@@ -124,7 +123,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         # Get these checks done and out of the way.
         # This one is redundant - it is already checked at the XML level.
         if not os.path.isdir(vis):
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
         
         #
         if excludechans:
@@ -134,7 +133,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             locfitspw=_quantityRangesToChannels(vis,field,fitspw,excludechans)
         else:
             locfitspw=fitspw
-        #print "locfitspw=",locfitspw
+        # casalog.post("locfitspw=",locfitspw)
         mytb.open(vis + '/SPECTRAL_WINDOW')
         allspw = '0~' + str(mytb.nrows() - 1)
         mytb.close()
@@ -146,14 +145,14 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 badfitspw=''
                 for ispw in range(len(fitspwerr)):
                     badfitspw+=str(fitspwerr.pop())
-                raise Exception("fitspw contains non-existent spw(s): "+badfitspw)
+                raise ValueError("fitspw contains non-existent spw(s): "+badfitspw)
         if len(spw)>0:
             spwerr=subtract_spws(spw,allspw)
             if spwerr:
                 badspw=''
                 for ispw in range(len(spwerr)):
                     badspw+=str(spwerr.pop())
-                raise Exception("spw contains non-existent spw(s): "+badspw)
+                raise ValueError("spw contains non-existent spw(s): "+badspw)
 
         if 'spw' not in combine:
             #spwmfitspw = subtract_spws(spw, fitspw)
@@ -162,7 +161,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
                 #spwmfitspw = subtract_spws(allspw, fitspw)
                 spwmfitspw = subtract_spws(allspw, locfitspw)
             if spwmfitspw:
-                raise Exception("combine must include 'spw' when the fit is being applied to spws outside fitspw.")
+                raise ValueError("combine must include 'spw' when the fit is being applied to spws outside fitspw.")
         
         # cb will put the continuum-subtracted data in CORRECTED_DATA, so
         # protect vis by splitting out its relevant parts to a working copy.
@@ -224,9 +223,9 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             myms.close()
             # jagonzal (CAS-4113): Take care of the trivial parallelization
             if not split_result:
-                casalog.post("MSSelectionNullSelection: %s does not have data for spw=%s, field=%s, bailing out!" % (vis,tempspw,field),'SEVERE')
+                msg = "MSSelectionNullSelection: %s does not have data for spw=%s, field=%s, bailing out!" % (vis,tempspw,field)
                 shutil.rmtree(csvis)
-                return False
+                raise RuntimeError(msg)
         else:
             # This takes almost 30s/GB.  (lustre, 8/2011)
             casalog.post('Copying ' + vis + ' to ' + csvis + ' with cp.')
@@ -249,7 +248,7 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
             mycb.setvi(old=True,quiet=False);   # old VI, for now
             mycb.open(csvis)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise RuntimeError('Visibility data set not found - please verify the name')
 
         # select the data for continuum subtraction
         mycb.reset()
@@ -307,14 +306,8 @@ def uvcontsub(vis, field, fitspw, excludechans, combine, solint, fitorder, spw, 
         #casalog.post("rming \"%s\"" % csvis, 'WARN')
         shutil.rmtree(csvis)
         
-        # jagonzal (CAS-4113): We have to return a boolean so that we can identify 
-        # the sub-MS that produce a continuum sub-MS to concatenate at the MMS level
-        return True
-
-    except Exception as instance:
-        casalog.post('Error in uvcontsub: ' + str(instance), 'SEVERE')
+    finally:
         mycb.close()                        # Harmless if cb is closed.
-        raise Exception('Error in uvcontsub: ' + str(instance))
 
 
 def _quantityRangesToChannels(vis,field,infitspw,excludechans):
@@ -347,7 +340,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
     prevspwid=None
     newchanlist=[]
     nsels=len(usersels)
-    #print "Usersels=",usersels
+    # casalog.post("Usersels=",usersels)
     if excludechans:
         for isel in range(nsels):
             prevspwid = spwid
@@ -371,7 +364,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
                     else:
                         outhiR=0 # higher end of the user selected range reaches maxchanid
                                  # so no right hand side range
-                    #print "outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR
+                    # casalog.post("outloL,outhiL,outloR,outhiR==", outloL,outhiL,outloR,outhiR)
                 else:
                     # no left hand side range
                     outloL=0
@@ -404,7 +397,7 @@ def _quantityRangesToChannels(vis,field,infitspw,excludechans):
                 newchanlist.append([spwid,outloL,outhiL,stp])
             if (not(outloR == 0 and outhiR == 0)) and outloR <= outhiR:
                 newchanlist.append([spwid,outloR,outhiR,stp])
-        #print "newchanlist=",newchanlist
+        # casalog.post("newchanlist=",newchanlist)
     else:
         # excludechans=False
         newchanlist=usersels

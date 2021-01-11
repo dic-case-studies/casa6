@@ -210,9 +210,6 @@ def importfits(fitsimage,imagename,whichrep,whichhdu,zeroblanks,overwrite,defaul
             write_image_history(_myia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % instance, 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post('*** Error *** %s' % instance, 'SEVERE')
-        raise
+
     finally:
         _myia.done()

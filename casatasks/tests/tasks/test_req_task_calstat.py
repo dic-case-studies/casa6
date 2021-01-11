@@ -37,6 +37,10 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
 import sys
 import os
 import unittest
@@ -44,12 +48,14 @@ import shutil
 
 if CASA6:
     datapath = casatools.ctsys.resolve('caltables/ggtau.1mm.amp.gcal')
+    datapath_visibilities = casatools.ctsys.resolve('visibilities/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ggtau.1mm.amp.gcal'
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ggtau.1mm.amp.gcal'
+    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/data/visibilities/'
     #filepath = os.environ.get('CASAPATH').split()[0] + '/bin/nosedir/testlog.log'
         
 logpath = casalog.logfile()
@@ -86,9 +92,9 @@ class calstat_test(unittest.TestCase):
         self.assertTrue(calstat(datapath), msg='calstat fails to take a caltable')
         ### Needs work. try and produce some fake cal tables to test with
         # No type checking for CASA 6, but some for CASA 5
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError, msg='Fails to recognize non-caltable'):
-                calstat(casatools.ctsys.resolve('visibilities/'))
+                calstat(datapath_visibilities)
         else:
             self.assertFalse(calstat(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/'), msg='Fails to recognize non-caltable')
             self.assertFalse(calstat(1), msg='Fails to refuse int type')
@@ -102,8 +108,9 @@ class calstat_test(unittest.TestCase):
         
     def test_axisvals(self):
         '''axis val test: Test that the inputs listed in the documentatin function properly'''
-        # Some type checking for CASA 5
-        if not CASA6:
+        # Some type checking for CASA 5 - this doesn't make much sense to me, it should also
+        # check that exceptions are raised in CASA6 (or if casa_stack_rethrow)
+        if not CASA6 and not casa_stack_rethrow:
             self.assertFalse(calstat(datapath, axis='abc'), msg='Fails to recognize non-existing axis')
             self.assertFalse(calstat(datapath, axis=1), msg='Takes int as input when it should not')
             self.assertFalse(calstat(datapath, axis=[]), msg='Takes list as input when it should not')
@@ -114,7 +121,7 @@ class calstat_test(unittest.TestCase):
     def test_dataColumn(self):
         '''datacolumn test: Check that the datacolumn param makes unique selections'''
         # Some type checking for CASA 5
-        if not CASA6:
+        if not CASA6 and not casa_stack_rethrow:
             self.assertFalse(calstat(datapath, axis='amp', datacolumn='abc'), msg='Fails to recognize non-existing datacolumn')
             self.assertFalse(calstat(datapath, axis='amp', datacolumn=1), msg='Takes an int as input when it should not')
             self.assertFalse(calstat(datapath, axis='amp', datacolumn=[]), msg='Takes list as input when it should not')

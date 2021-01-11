@@ -22,7 +22,7 @@ def clean(vis, imagename,outlierfile, field, spw, selectdata, timerange,
     casalog.origin('clean')
 
     ## CAS-12368
-    depstr = "**** The 'clean' task will be deprecated in the near future. Please use tclean instead. All major functionality from clean is present in tclean via a modified interface along with additional algorithmic options. ****"
+    depstr = "**** Task clean is deprecated in CASA 5.8 and is not present in CASA 6.2. Please use tclean instead. All major functionality from clean is present in tclean via a modified interface along with additional algorithmic options and parallelization options. ****"
     casalog.post(depstr, 'WARN')
     print depstr
 

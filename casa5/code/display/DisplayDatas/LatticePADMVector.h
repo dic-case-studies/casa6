@@ -34,13 +34,6 @@
 //# display library includes:
 #include <display/DisplayDatas/LatticePADM.h>
 
-namespace casacore{
-
-	class IPosition;
-	template <class T> class Vector;
-	template <class T> class Matrix;
-}
-
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 //# forwards:

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import re
 import shutil
@@ -39,21 +38,6 @@ if is_python3:
 else:
     def lociteritems(adict):
         return adict.iteritems()
-
-# Decorator function to print the arguments of a function
-def dump_args(func):
-    "This decorator dumps out the arguments passed to a function before calling it"
-    argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
-    if is_python3:
-        fname = func.func_name
-    else:
-        fname = func.__name__
-   
-    def echo_func(*args,**kwargs):
-        print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
-        return func(*args, **kwargs)
-   
-    return echo_func
 
 """
 ParallelDataHelper is a class to process Multi-MS. It can process the MMS
@@ -168,7 +152,6 @@ class ParallelDataHelper(ParallelTaskHelper):
     def setTaskName(self, thistask=''):        
         self.__taskname = thistask       
         
-#    @dump_args
     def setupIO(self):
         """ Validate input and output parameters """
         
@@ -186,11 +169,11 @@ class ParallelDataHelper(ParallelTaskHelper):
             
         flagversions = self.__args['outputvis']+".flagversions"
         if os.path.exists(flagversions):
-            raise IOError("The flagversions %s for the output MS already exist. Please delete it."%flagversions)
+            raise RuntimeError('The flagversions {} for the output MS already exists. Please'
+                               ' delete it.'.format(flagversions))
         
         return True 
         
-#    @dump_args
     def validateInputParams(self):
         """ This method should run before setting up the cluster to work all the
            heuristics associated with the input MMS and the several
@@ -318,7 +301,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         return retval
 
-#    @dump_args
     def __getSpwIds(self, msfile, spwsel):
         """Get the spw IDs of the spw selection
         Keyword arguments
@@ -344,7 +326,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         del msTool
         return spwlist
                     
-#    @dump_args
     def __isSpwContained(self, spwlist, subms_spws):
         """ Return True if the subMS contains the spw selection or False otherwise. 
         Keyword arguments:
@@ -500,7 +481,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         """
         self.__args[arg] = value
         
-#    @dump_args
     def setupCluster(self, thistask=''):
         """ Get a cluster
         
@@ -515,7 +495,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         # It needs to use the updated list of parameters!!!
         ParallelTaskHelper.__init__(self, task_name=thistask, args=self.__args)         
         
-#    @dump_args
     def setupParameters(self, **pars):
         """ Create a dictionary with non-empty parameters 
         
@@ -532,7 +511,6 @@ class ParallelDataHelper(ParallelTaskHelper):
        
         return seldict
     
-#    @dump_args
     def validateModelCol(self):
         """ Add the realmodelcol parameter to the configuration
            only for some values of datacolumn. Specific for mstransform.
@@ -547,7 +525,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         return ret
     
-#    @dump_args
     def initialize(self):
         """Initializes some parts of the cluster setup.
             Add the full path for the input and output MS.
@@ -586,8 +563,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         os.mkdir(self.dataDir)
                             
-         
-#    @dump_args
     def generateJobs(self):
         """ This is the method which generates all of the actual jobs to be done.
             This method overrides the one in ParallelTaskHelper baseclass.
@@ -615,7 +590,6 @@ class ParallelDataHelper(ParallelTaskHelper):
                 
         return True
 
-#    @dump_args
     def __createNoSeparationCommand(self):
         """ Add commands to be executed by the engines when input is an MMS. 
             This method overrides the following parameter:
@@ -669,8 +643,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             else:
                 self._executionList.append([self._taskName + '()',localArgs])
 
-    
-#    @dump_args
     def __createPrimarySplitCommand(self):     
         """ This method overwrites the following parameter:
             self._arg['separationaxis'] when running the monolithic case
@@ -690,7 +662,6 @@ class ParallelDataHelper(ParallelTaskHelper):
                 # Use a default
                 self.__createDefaultSeparationCommands()
             
-#    @dump_args
     def __createScanSeparationCommands(self):
         """ This method is to generate a list of commands to partition
              the data based on scan.
@@ -724,7 +695,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             else:
                 self._executionList.append([self._taskName + '()',mmsCmd])
 
-#    @dump_args
     def __createSPWSeparationCommands(self):
         """ This method is to generate a list of commands to partition
              the data based on spw.
@@ -787,7 +757,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             else:
                 self._executionList.append([self._taskName + '()',mmsCmd])
             
-#    @dump_args
 #    TO BE DEPRECATED
     def __createDefaultSeparationCommands(self):
         """ This method is to generate a list of commands to partition
@@ -901,7 +870,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             
             sindex += 1 # index of subMS name
             
-#    @dump_args
     def __createBalancedSeparationCommands(self):
         """ Generate a list of partition commands based on table language 
             queries that distribute the scan/spw pairs among subMSs to
@@ -937,7 +905,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             else:
                 self._executionList.append([self._taskName + '()',mmsCmd])
 
-#    @dump_args
     def __createBaselineSeparationCommands(self):
         """ This method is to generate a list of commands to partition
              the data based on baseline.
@@ -1018,7 +985,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         return isSelected
             
-#    @dump_args
     def __calculateDDIstart(self, partedscans, partedspws):
         """ Calculate the list of DDI values for each partition (each engine).
         
@@ -1104,7 +1070,6 @@ class ParallelDataHelper(ParallelTaskHelper):
                                                 
         return ddistartList
  
-#    @dump_args
     def __selectMS(self):
         """ This method will open the MS and ensure whatever selection criteria
             have been requested are honored. If scanList is not None then it 
@@ -1123,7 +1088,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         if self.__selectionFilter is not None:
             self._msTool.msselect(self.__selectionFilter)
 
-#    @dump_args
     def __getScanList(self):
         """ This method returns the scan list from the current ms.  Be careful
             about having selection already done when you call this.
@@ -1141,7 +1105,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         scanList.sort()
         return scanList
 
-#    @dump_args
     def __getSPWUniqueList(self):
         """ This method returns a unique list of spectral windows from the current
             MS.  Be careful about having selection already done when you call this.
@@ -1160,7 +1123,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 #        sorted.sort()
         return sorted
 
-#    @dump_args
     def __getBaselineList(self):
         """ This method returns the baseline list from the current MS.  Be careful
             about having selection already done when you call this.
@@ -1193,7 +1155,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         return baselinelist.tolist()
 
-#    @dump_args
     def __getSelectionFilter(self):
         """ This method takes the list of specified selection criteria and
             puts them into a dictionary.  There is a bit of name mangling necessary.
@@ -1212,7 +1173,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         selectionPairs.append(('observation','observation'))
         return self.__generateFilter(selectionPairs)
 
-#    @dump_args
     def __generateFilter(self, selectionPairs):
         """It creates a dictionary of the non-empty selection parameters.
             
@@ -1231,7 +1191,6 @@ class ParallelDataHelper(ParallelTaskHelper):
                 
         return filter
 
-#    @dump_args
     def __partition(self, lst, n):
         """ This method will split the list lst into "n" almost equal parts
             if lst is none, then we assume an empty list.
@@ -1245,7 +1204,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         return [ lst[int(round(division * i)):
                      int(round(division * (i+1)))] for i in range(int(n))]
     
-#    @dump_args
     def __partition1(self, lst, n):
         """ This method will split the list lst into "n" almost equal parts.
             if lst is None, then we assume an empty list.
@@ -1271,7 +1229,6 @@ class ParallelDataHelper(ParallelTaskHelper):
     
         return rdict
 
-#    @dump_args
     def __chanSelection(self, spwsel):
         """ Create a dictionary of channel selections.
         
@@ -1319,7 +1276,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         return seldict
 
-#    @dump_args 
     def __createSPWExpression(self, partdict):
         """ Creates the final spw expression that will be sent to the engines.
             This adds back the channel selections to their spw counterparts.
@@ -1349,11 +1305,10 @@ class ParallelDataHelper(ParallelTaskHelper):
 #                    if v[i] == vals['spw'] and vals['channels'] != '':
                     # matches, now edit pardict
                     if v[i] == vals['spw']:
-#                        print(v[i], seldict[keys]['spw'], seldict[keys]['channels'])
                         if vals['channels'] != '':
                             spwexpr = vals['spw'] + ':' + vals['channels']
                         else:
-#                        spwexpr = seldict[keys]['spw'] + ':' + seldict[keys]['channels']
+                            # spwexpr = seldict[keys]['spw'] + ':' + seldict[keys]['channels']
                             spwexpr = vals['spw']
                         newdict[k][i] = spwexpr
         
@@ -1393,7 +1348,6 @@ class ParallelDataHelper(ParallelTaskHelper):
             
         return None
 
-#    @dump_args 
     def validateChanBin(self):
         """ Check if channel average bin parameter has the same
            size of the spw selection.
@@ -1434,7 +1388,6 @@ class ParallelDataHelper(ParallelTaskHelper):
 
         return retval
     
-#    @dump_args
     def defaultRegridParams(self):
         """ Reset the default values of the regridms transformation parameters based on the mode.
             Specific for mstransform task.
@@ -1489,7 +1442,6 @@ class ParallelDataHelper(ParallelTaskHelper):
         
         return start, width
 
-#    @dump_args
     def postExecution(self):
         """ This method overrides the postExecution method of ParallelTaskHelper,
             in which case we probably need to generate the output reference MS.
@@ -1505,7 +1457,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         # {'path/outputvis.data/SUBMSS/outputvis.0000.ms':True,
         #  'path/outuputvis.data/SUBMSS/outputvis.0001.ms':False}
         outputList = {}
-      
+
 #        if (ParallelTaskHelper.getBypassParallelProcessing()==1):
         if (self._cluster == None):
             # This is the list of output SubMSs
@@ -1516,42 +1468,45 @@ class ParallelDataHelper(ParallelTaskHelper):
             # Format list in the form of vis dict
             for command_response in command_response_list:
                 outvis = command_response['parameters']['outputvis']
-                outputList[outvis] = command_response['ret']
-                     
+                outputList[outvis] = command_response['successful']
+
+        casalog.post('postExecution dict of commands and success values: {}'.format(
+            outputList), 'DEBUG')
+
         # List of failed MSs. TBD
         nFailures = []
-        
+
         subMSList = []
 
         nFailures = [v for v in outputList.values() if v == False]
-    
+
         for subMS in outputList:
-            # Only use the successful output MSs
+            # Only use the successful (as per command response fields) output MSs
             if outputList[subMS]:
                 subMSList.append(subMS)
-                           
+
         subMSList.sort()
 
         if len(subMSList) == 0:
             casalog.post("Error: no subMSs were successfully created.", 'WARN')
             return False
-                
+
         # When separationaxis='scan' there is no need to give ddistart. 
         # The tool looks at the whole spw selection and
         # creates the indices from it. After the indices are worked out, 
         # it applies MS selection. We do not need to consolidate either.
-                                       
+
         # If axis is spw, give a list of the subMSs
         # that need to be consolidated. This list is pre-organized
         # inside the separation functions above.
-        
+
         # Only when input is MS or MS-like and createmms=True
         # Only partition and mstransform have the createmms parameter
         if 'createmms' in self._arg and self._arg['createmms'] == True and self._arg['separationaxis'] == 'spw':
 #            if (self._arg['separationaxis'] == 'spw' or 
 #                self._arg['separationaxis'] == 'auto'):   
 #            if (self._arg['separationaxis'] == 'spw'):   
-                
+
                 casalog.post('Consolidate the sub-tables')
              
                 toUpdateList = list(self.__ddidict.values())
