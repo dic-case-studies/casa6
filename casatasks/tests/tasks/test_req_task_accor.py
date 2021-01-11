@@ -53,10 +53,12 @@ else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
         libpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/testcallib.txt'
         vladata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
+        VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
         libpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/testcallib.txt'
         vladata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
+        VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
 
 
 caltab = 'cal.A'
