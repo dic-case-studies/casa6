@@ -3480,8 +3480,11 @@ VisibilityIteratorImpl2::visibilityModel(Cube<Complex> & vis) const
 void
 VisibilityIteratorImpl2::visibilityModel(Vector<Cube<Complex>> & vis) const
 {
-    (void)vis;
-    throw AipsError("VisibilityIteratorImpl2::visibilityModel(Vector<Cube<Complex>> & vis) not yet implemented");
+    if (!fillFromVirtualModel(vis[0])) {
+        getColumnRows(columns_p.modelVis_p, vis);
+    }
+    else
+        throw AipsError("VisibilityIteratorImpl2::visibilityModel(Vector<Cube<Complex>> & vis) from model not yet implemented");
 }
 
 void
