@@ -18,6 +18,7 @@ if is_CASA6:
     from casatasks import casalog as default_casalog
     from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
     from casatools import ms as mstool
+    from casatools import ctsys
 
     ms = mstool( )
     tb = table( )
