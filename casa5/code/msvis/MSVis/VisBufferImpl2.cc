@@ -2891,7 +2891,6 @@ void
 VisBufferImpl2::fillSigma (Matrix<Float>& value) const
 {
   CheckVisIter ();
-
   getViiP()->sigma (value);
 }
 
@@ -3056,9 +3055,37 @@ VisBufferImpl2::fillWeightSpectra (Vector<Cube<Float>>& value) const
         getViiP()->weightSpectrum (value);
     }
     else{
+        value.resize(this->nShapes());
+        
+        auto nRowsPerShape = this->nRowsPerShape();
+        auto nCorrelationsPerShape = this->nCorrelationsPerShape();
+        auto nChannelsPerShape = this->nChannelsPerShape();
 
-        throw AipsError ("Not implemented", __FILE__, __LINE__);
+        // Weight spectrum doesn't exist so create on using the weight column.
+        auto theWeights = weights();
 
+        for (rownr_t ishape = 0; ishape < nShapes(); ishape ++){
+
+            auto nRows = nRowsPerShape[ishape];
+            auto nCorrelations = nCorrelationsPerShape[ishape];
+            auto nChannels = nChannelsPerShape[ishape];
+
+            value[ishape].resize (IPosition (3, nCorrelations, nChannels, nRows));
+
+            for (rownr_t row = 0; row < nRows; row ++){
+
+                for (Int correlation = 0; correlation < nCorrelations; correlation ++){
+
+                    float theWeight = theWeights[ishape] (correlation, row);
+
+                    for (Int channel = 0; channel < nChannels; channel ++){
+                    
+                        value[ishape] (correlation, channel, row) = theWeight;
+                    }
+            
+                }
+            }
+        }
     }
 }
 
@@ -3115,8 +3142,37 @@ VisBufferImpl2::fillSigmaSpectra (Vector<Cube<Float>>& value) const
         getViiP()->sigmaSpectrum (value);
     }
     else{
+        value.resize(this->nShapes());
+        
+        auto nRowsPerShape = this->nRowsPerShape();
+        auto nCorrelationsPerShape = this->nCorrelationsPerShape();
+        auto nChannelsPerShape = this->nChannelsPerShape();
 
-        throw AipsError ("Not implemented", __FILE__, __LINE__);
+        // Sigma spectrum doesn't exist so create on using the sigma column.
+        auto theSigmas = sigmas();
+
+        for (rownr_t ishape = 0; ishape < nShapes(); ishape ++){
+
+            auto nRows = nRowsPerShape[ishape];
+            auto nCorrelations = nCorrelationsPerShape[ishape];
+            auto nChannels = nChannelsPerShape[ishape];
+
+            value[ishape].resize (IPosition (3, nCorrelations, nChannels, nRows));
+
+            for (rownr_t row = 0; row < nRows; row ++){
+
+                for (Int correlation = 0; correlation < nCorrelations; correlation ++){
+
+                    float theSigma = theSigmas[ishape] (correlation, row);
+
+                    for (Int channel = 0; channel < nChannels; channel ++){
+                    
+                        value[ishape] (correlation, channel, row) = theSigma;
+                    }
+            
+                }
+            }
+        }
     }
 }
 
