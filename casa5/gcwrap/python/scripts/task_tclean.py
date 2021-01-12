@@ -448,12 +448,6 @@ def tclean(
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
         ######### niter >=0  end if
 
-        try:
-            params = get_func_params(tclean, locals())
-            write_tclean_history(imagename, 'tclean', params, casalog)
-        except Exception as exc:
-            casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
-
     except Exception as e:
     #    #print 'Exception : ' + str(e)
     #    if(cppparallel):
@@ -478,6 +472,13 @@ def tclean(
         #if niter>0 and savemodel != "none":
         #    casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
 
+    # Write history at the end, when hopefully all .workdirectory, .work.temp, etc. are gone
+    # from disk, so they won't be picked up. They need time to disappear on NFS or slow hw.
+    try:
+        params = get_func_params(tclean, locals())
+        write_tclean_history(imagename, 'tclean', params, casalog)
+    except Exception as exc:
+        casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
 
     return retrec
 
