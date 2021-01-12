@@ -681,7 +681,6 @@ void DelayRateFFT::removeAntennasCorrelation(Int icor, std::set< Int > s) {
 
 
 // Start of GSL compliant solver
-// This function is supposed to evaluate the vector for xi-squared vector
 
 class AuxParamBundle {
 public:
