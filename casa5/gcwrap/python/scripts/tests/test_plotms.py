@@ -1,14 +1,16 @@
+import csv
+import fnmatch
+import matplotlib.pyplot as plt
+import numpy as np
 import os
-import sys
+import sha
 import shutil
+import sys
+import unittest
+
 from __main__ import default
 from tasks import *
 from taskinit import *
-import unittest
-import fnmatch
-import sha
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Paths for data
 datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
@@ -30,7 +32,9 @@ class plotms_test_base(unittest.TestCase):
     testms2 = "ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testcaltable = 'ngc5921.ref1a.gcal'
+    testct1 = 'ngc5921.ref1a.gcal'
+    testct2 = 'ngc5921.ref2a.gcal'
+    testct3 = 'a_mueller.uvcont.tbl'
     outputDir="/tmp/" + str(os.getpid()) + "/"
     plotfile_jpg = "/tmp/myplot.jpg"
     display = os.environ.get("DISPLAY")
@@ -38,7 +42,9 @@ class plotms_test_base(unittest.TestCase):
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    caltable = os.path.join(outputDir, testcaltable)
+    ct = os.path.join(outputDir, testct1)
+    ct2 = os.path.join(outputDir, testct2)
+    ct3 = os.path.join(outputDir, testct3)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -66,10 +72,15 @@ class plotms_test_base(unittest.TestCase):
         if not os.path.exists(self.ms2):
             shutil.copytree(os.path.join(calpath,self.testms2), 
                     self.ms2, symlinks=True)
-        testcaltable = os.path.join(self.outputDir, self.caltable)
-        if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(calpath, self.testcaltable),
-                    self.caltable, symlinks=True)
+        if not os.path.exists(self.ct):
+            shutil.copytree(os.path.join(calpath, self.testct1),
+                    self.ct, symlinks=True)
+        if not os.path.exists(self.ct2):
+            shutil.copytree(os.path.join(calpath, self.testct2),
+                    self.ct2, symlinks=True)
+        if not os.path.exists(self.ct3):
+            shutil.copytree(os.path.join(datapath, self.testct3),
+                    self.ct3, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
@@ -88,9 +99,44 @@ class plotms_test_base(unittest.TestCase):
         self.assertGreater(plotSize, minSize)
         if maxSize:
             self.assertLess(plotSize, maxSize)
-    
-    # plotms can return True if it catches an error, but makes no plot file
+    def checkTextfileAnts(self, plotfile_txt, exp_ant1, exp_ant2, exp_nrow, baseline=False):
+        # Read in exported text file and check antenna values
+        self.assertTrue(os.path.isfile(plotfile_txt), "Plot was not created")
+        with open(plotfile_txt) as textfile:
+            reader = csv.reader(textfile, delimiter=' ')
+
+            if (exp_nrow == 0): # selection yields zero rows
+                nrow = 0
+                for row in reader:
+                    nrow += 1
+                assertEqual(nrow, 2) # vis, antenna sel headers only
+            else: 
+                # skip 5 header lines:
+                # vis, antenna sel, plotindex, col names, col units
+                [next(reader, None) for line in range(5)]
+
+                # read rows and check ant1, ant2
+                nrow = 0
+                for row in reader:
+                    if baseline:
+                        if (exp_ant2 == "*"):
+                            # cross correlations of ANT1: *&ANT1 or ANT1&*
+                            self.assertTrue(row[5] == exp_ant1 or row[6] == exp_ant1)
+                            self.assertTrue(row[5] != row[6])
+                        else:
+                            # cross correlations of ANT1 & ANT2: ANT1&ANT2 or ANT2&ANT1
+                            self.assertTrue((row[5] == exp_ant1 and row[6] == exp_ant2) or (row[5] == exp_ant2 and row[6] == exp_ant1))
+                    else:
+                        # ANT1 & ANT2 baselines
+                        self.assertTrue(row[5] == exp_ant1 and row[6] == exp_ant2)
+                    nrow += 1
+
+                # check nrow (number of points)
+                self.assertEqual(nrow, exp_nrow)
+
     def checkNoPlotfile(self, plotfileName):
+        # plotms can return True if it catches an error,
+        # but makes no plot file
         self.assertFalse(os.path.isfile(plotfileName), "Plot was created")
 
     def getFilecount(self, dirName, namePattern):
@@ -691,7 +737,7 @@ class test_calibration(plotms_test_base):
 
 # ------------------------------------------------------------------------------
  
-class test_calplots(plotms_test_base):
+class test_calplot(plotms_test_base):
     ''' Test plotting cal tables '''
 
     def setUp(self):
@@ -706,7 +752,7 @@ class test_calplots(plotms_test_base):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot01.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -717,14 +763,14 @@ class test_calplots(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot02.jpg")
         self.removePlotfile()
         # gamp vs scan
-        res = plotms(vis=self.caltable, xaxis='scan',
+        res = plotms(vis=self.ct, xaxis='scan',
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.caltable, yaxis='phase',
+        res = plotms(vis=self.ct, yaxis='phase',
             xaxis='baseline', overwrite=True,
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
@@ -736,7 +782,7 @@ class test_calplots(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot03.jpg")
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, iteraxis='corr', exprange='all',
             overwrite=True)
         self.assertTrue(res)
@@ -749,7 +795,7 @@ class test_calplots(plotms_test_base):
         '''test_calplot_selection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='R', overwrite=True)   
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -759,11 +805,43 @@ class test_calplots(plotms_test_base):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='/', overwrite=True)   
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
         self.removePlotfile()
+
+    def test_calplot_antsel(self):
+        '''test_calplot_antsel: CAS-13297 caltable antenna selection'''
+        # cal tables are small enough to export to text
+        plotfile_txt = os.path.join(self.outputDir, "testCalPlot06.txt")
+        ant1 = '1'
+        cross_ant = "1&0"
+        anttests = [(self.ct, '-1', 14, False, '-1', 14), # pure ant-based
+            (self.ct2, '1', 24, False, '0', 0),           # refant-based, ref=1
+            (self.ct3, '*', 41408, True, '0', 3104)]      # baseline-based
+
+        for (testct, ant2, nrow, bslnbased, crossant2, crossnrow) in anttests:
+            # ANT1 test - select ant1
+            self.removePlotfile(plotfile_txt)
+            res = plotms(vis=testct, plotfile=plotfile_txt,
+                showgui=False, highres=True, antenna=ant1)
+            self.assertTrue(res)
+            self.checkTextfileAnts(plotfile_txt, ant1, ant2, nrow, bslnbased)
+
+            # ANT1 & ANT2 test - select cross_ant
+            self.removePlotfile(plotfile_txt)
+            res = plotms(vis=testct, plotfile=plotfile_txt,
+                showgui=False, highres=True, antenna=cross_ant)
+            if (crossnrow > 0):
+                self.assertTrue(res)
+                self.checkTextfileAnts(
+                    plotfile_txt, ant1, crossant2, crossnrow, bslnbased)
+            else:
+                self.assertFalse(res)
+                self.checkNoPlotfile(plotfile_txt)
+
+        self.removePlotfile(plotfile_txt)
 
 # ------------------------------------------------------------------------------
 
@@ -1631,7 +1709,7 @@ def suite():
             test_averaging,
             test_axis,
             test_calibration,
-            test_calplots,
+            test_calplot,
             test_display,
             test_grid,
             test_iteration,
