@@ -10,14 +10,16 @@ import numbers
 
 #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 #import testhelper as th
-from casatestutils import testhelper as th
+#from casatestutils import testhelper as th
 
 subdir = 'visibilities/vla/'
+is_casa6 = False
 try:
     from casatools import ctsys, table, ms
     datadir = ctsys.resolve(subdir)
     myms = ms()
     mytb = table()
+    is_casa6 = True
 
 except ImportError:
     from taskinit import *
@@ -280,7 +282,7 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
-                if th.is_casa6():
+                if is_casa6:
                     self.assertTrue(
                         shutil.copytree(src, dst),
                         "Unable to copy " + src + " to " + dst
@@ -937,3 +939,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+

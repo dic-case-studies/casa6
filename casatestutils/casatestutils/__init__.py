@@ -31,8 +31,11 @@ try:
     logging.debug("Importing CASAtools")
     import casatools
     logging.debug("Importing CASAtasks")
-    import casatasks
-    from casatasks import casalog
+    try:
+        import casatasks
+        from casatasks import casalog
+    except (ImportError, ModuleNotFoundError):
+        pass
 
     _casa6 = True
 

@@ -5,18 +5,17 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 ### for testhelper import
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
-from casatestutils import testhelper as th
-
+#from casatestutils import testhelper as th
+is_casa6 = False
 subdir = 'visibilities/vla/'
-if th.is_casa6():
+try:
     from casatools import ctsys, table, ms
     from casatasks import statwt
     datadir = ctsys.resolve(subdir)
     mytb = table()
     myms = ms()
-else:
+    is_casa6 = True
+except (ImportError, ModuleNotFoundError):
     from tasks import *
     from taskinit import *
     from casa_stack_manip import stack_frame_find
@@ -260,7 +259,7 @@ class statwt_test(unittest.TestCase):
               
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
-        mytb1 = table() if th.is_casa6() else tbtool()
+        mytb1 = table() if is_casa6 else tbtool()
         ref = os.path.join(datadir, ref)
         self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
         self.compareTables(mytb, mytb1)
@@ -513,7 +512,7 @@ class statwt_test(unittest.TestCase):
                 statwt(vis=dst, statalg=statalg, center="median",
                        lside=False)
             elif statalg == "bogus":
-                if th.is_casa6() or casa_stack_rethrow:
+                if is_casa6 or casa_stack_rethrow:
                     self.assertRaises(
                         RuntimeError, statwt, vis=dst, statalg=statalg
                     )
@@ -1032,7 +1031,7 @@ class statwt_test(unittest.TestCase):
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
-                if th.is_casa6() or casa_stack_rethrow:
+                if is_casa6 or casa_stack_rethrow:
                     self.assertRaises(
                         RuntimeError, statwt, vis=dst, combine='scan,field,state',
                         chanbin=1, timebin='1yr', datacolumn='residual_data',
@@ -1067,3 +1066,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+
