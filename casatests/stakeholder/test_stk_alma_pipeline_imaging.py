@@ -57,6 +57,7 @@ import shutil
 import inspect
 import scipy
 import matplotlib.pyplot as pyplot
+import json
 
 from casatestutils.imagerhelpers import TestHelpers
 th = TestHelpers()
@@ -210,6 +211,7 @@ class test_tclean_base(unittest.TestCase):
             dictionary
         """
         self._myia.open(image)
+        imagename=os.path.basename(image)
         stats_dict = {}
 
         statistics = self._myia.statistics()
@@ -243,11 +245,11 @@ class test_tclean_base(unittest.TestCase):
 
         # stats returned if a region file is given
         if fit_region != None:
-            if '_cube' in image:
-                if '.pb' in image:
+            if '_cube' in imagename:
+                if '.pb' in imagename:
                     fit_region = fit_region + ', range=[%schan,%schan]'\
                         % (int(im_size[3]/2), int(im_size[3]/2))
-                if '.psf' in image:
+                if '.psf' in imagename:
                     # using chan 1 as first because ia.fitcomponents fits
                     # every channel if chan=0
                     fit_regions = [(fit_region + ', range=[%schan,%schan]' \
@@ -276,20 +278,20 @@ class test_tclean_base(unittest.TestCase):
                             stats_dict['fit_loc_freq_'+str(i)] = 1.0
                             stats_dict['fit_pix_'+str(i)] = [1.0, 1.0]
                         i += 1
-                if '.model' in image:
+                if '.model' in imagename:
                     fit_region = fit_region
-                if '.model' not in image and '.pb' not in image and '.psf' not in image:
+                if '.model' not in imagename and '.pb' not in imagename and '.psf' not in imagename:
                     # WARN: If max value channel is 0, tool fits all channels
                     fit_region = fit_region + ', range=[%schan,%schan]' \
                         % (stats_dict['max_val_pos'][3], \
                         stats_dict['max_val_pos'][3])
-            if '.psf' in image and '_cube' in image:
+            if '.psf' in imagename and '_cube' in imagename:
                 stats_dict['regn_sum'] = self._myia.statistics( \
                     region=fit_regions[1])['sum'][0]
             else:
                 stats_dict['regn_sum'] = self._myia.statistics( \
                     region=fit_region)['sum'][0]
-            if ('image' in image and 'mosaic_cube_eph' not in image) or 'pb' in image or ('psf' in image and 'cube' not in image):
+            if ('image' in imagename and 'mosaic_cube_eph' not in imagename) or 'pb' in imagename or ('psf' in imagename and 'cube' not in imagename):
                 try:
                     fit_dict = self._myia.fitcomponents( \
                         region=fit_region)['results']['component0']
@@ -306,17 +308,17 @@ class test_tclean_base(unittest.TestCase):
                     stats_dict['fit_pix'] = [1.0, 1.0]
 
         # stats returned for .image(.tt0)
-        if 'image' in image:
+        if 'image' in imagename:
             commonbeam = self._myia.commonbeam()
             stats_dict['com_bmin'] = commonbeam['minor']['value']
             stats_dict['com_bmaj'] = commonbeam['major']['value']
             stats_dict['com_pa'] = commonbeam['pa']['value']
-            if 'cube' in image:
+            if 'cube' in imagename:
                 stats_dict['rms_per_chan'] = \
                     self._myia.statistics(axes=[0,1])['rms'].tolist()
                 stats_dict['profile'] = self.cube_profile_fit( \
                     image, max_loc, stats_dict['nchan'])
-            if 'mosaic' in image:
+            if 'mosaic' in imagename:
                 stats_dict['rms_per_field'] = []
                 for region in field_regions:
                     stats_dict['rms_per_field'].append( \
@@ -331,7 +333,7 @@ class test_tclean_base(unittest.TestCase):
             stats_dict['mask_regns'] = scipy.ndimage.label(chunk)[1]
             stats_dict['mask'] = ~numpy.array(chunk, dtype=bool)
 
-        if 'pb' in image:
+        if 'pb' in imagename:
             pb_mask_02 = chunk>0.2
             pb_mask_05 = chunk>0.5
             if 'cube' in image:
@@ -347,15 +349,15 @@ class test_tclean_base(unittest.TestCase):
             else:
                 stats_dict['npts_0.2'] = numpy.count_nonzero(pb_mask_02)
                 stats_dict['npts_0.5'] = numpy.count_nonzero(pb_mask_05)
-            if 'mosaic' in image:
+            if 'mosaic' in imagename:
                 stats_dict['pb_mask_0.2'] = pb_mask_02
                 stats_dict['pb_mask_0.5'] = pb_mask_05
 
-        if 'model' in image or image.endswith('.alpha'):
+        if 'model' in imagename or image.endswith('.alpha'):
             stats_dict['mask_non0'] = numpy.count_nonzero(chunk*masks)
 
-        if 'weight' in image:
-            if 'cube' in image:
+        if 'weight' in imagename:
+            if 'cube' in imagename:
                 wt_02_list = []
                 wt_05_list = []
                 i = 0
@@ -476,6 +478,33 @@ class test_tclean_base(unittest.TestCase):
         pyplot.clf()
 
         return profile
+
+    def filter_report(self, report, showonlyfail=True):
+        """ function to filter the test report, the input report is expected to be a string with the newline code """
+        ret = ''
+        if showonlyfail:
+            filter='Fail'
+        else:
+            filter='Pass' 
+        
+        if report!='':
+            testItems = report.split('\n')
+            retitems=[]
+            for testitem in testItems:
+                if '[ check_ims ]' in testitem or '[ check_pixmask ]' in testitem or '[ check_val ]' in testitem:
+                    if '( '+filter in testitem:
+                        retitems.append(testitem)
+            nfail = len(retitems)
+            msg = str(nfail)+' individual test failure(s) '
+            ret = '\n' + '\n'.join(retitems)
+            ret += '\n' + msg
+        return ret
+
+     
+    def save_dict_to_disk(self, indict, outfilename):
+        """ function that will save input Python dictionary to file (json) """
+        with open(outfilename+'.json', 'w') as outf:
+            json.dump(indict, outf)
 
 
 ##############################################
@@ -794,6 +823,7 @@ class Test_standard(test_tclean_base):
             report += self.stats_compare(exp_bmaj_dict, bmaj_dict, '.image bmaj', beam=True)
             report += self.stats_compare(exp_pa_dict, pa_dict, '.image pa', beam=True)
 
+        failed=self.filter_report(report)
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
@@ -810,9 +840,9 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1056,6 +1086,7 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed=self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -1072,9 +1103,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1416,6 +1447,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
 
@@ -1430,9 +1463,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mtmfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1463,7 +1496,7 @@ class Test_standard(test_tclean_base):
             lownoisethreshold=2.0, negativethreshold=0.0, \
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, savemodel='none', \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -1489,7 +1522,7 @@ class Test_standard(test_tclean_base):
             minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
             minpercentchange=1.0, fastnoise=False, restart=True, \
             calcres=False, calcpsf=False, savemodel='none', \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
 
@@ -1687,6 +1720,7 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             ["2017.1.00750.T_tclean_exe1.ms", \
@@ -1705,9 +1739,9 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube_eph']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of est_standard_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1947,6 +1981,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -1961,9 +1997,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2300,6 +2336,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -2314,9 +2352,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mtmfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2556,6 +2594,8 @@ class Test_standard(test_tclean_base):
             report6 + report7 + report8
 
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
@@ -2570,8 +2610,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
+# End of test_standard_cal
 
 ###############################################
 ###############################################
@@ -2792,7 +2833,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.168374374509],
             'min_val_pos': [True, [63, 54, 0, 12]],
             'im_rms': [False, 0.0604965318073],
-            'im_sum': [False, 66.9960417559],
+            # CAS-9386 update with Build 100 serial run
+            #'im_sum': [False, 66.9960417559],
+            'im_sum': [False, 63.68329861515883],
             'npts_real': [True, 5925312],
             'fit_0': [False, [1.1012023947984113, 7.881990108924573, \
                       5.249591565272608]],
@@ -2885,7 +2928,8 @@ class Test_mosaic(test_tclean_base):
         # .weight report
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
-
+        
+        #test_mosaic_cube
         exp_wt_stats = {'npts': [True, 5925312],
             'npts_unmasked': [True, 5925312.0],
             'freq_bin': [False, 244174.1],
@@ -2896,7 +2940,9 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 508],
             'max_val': [False, 0.393758654594],
             'max_val_pos': [True, [54, 54, 0, 0]],
-            'min_val': [False, 7.45326979086e-05],
+            # CAS-9386 update based on build 100 serial
+            #'min_val': [False, 7.45326979086e-05],
+            'min_val': [False, 7.177492079790682e-05],
             'im_rms': [False, 0.140904168376],
             'im_sum': [False, 506828.976527],
             'npts_0.2': [False, [6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571, 6571]],
@@ -2920,6 +2966,8 @@ class Test_mosaic(test_tclean_base):
             report += self.stats_compare(exp_bmaj_dict, bmaj_dict, '.image bmaj', beam=True)
             report += self.stats_compare(exp_pa_dict, pa_dict, '.image pa', beam=True)
 
+        failed = self.filter_report(report)
+
         img = shutil._basename(img)
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
@@ -2936,9 +2984,9 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_mosaic_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3000,8 +3048,9 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
+        #self.save_dict_to_disk(report0, 'myreport0')
 
-        # .image report
+        # .image report (test_mosaic_mfs)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[209.02978056deg, 5.25471484deg], [18.8386arcsec, 9.9356arcsec], 90.00000000deg]', field_regions = \
             ['circle[[13:56:07.210000, +05.15.17.20000], 45.9arcsec]',
@@ -3016,7 +3065,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 10.060172081],
             'com_pa': [False, 86.6785964966],
             'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3047,7 +3098,7 @@ class Test_mosaic(test_tclean_base):
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
-        # .mask report
+        # .mask report (test_mosaic_mfs)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 15876],
@@ -3063,12 +3114,14 @@ class Test_mosaic(test_tclean_base):
 
         report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
-        # .pb report
+        # .pb report (test_mosaic_mfs)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
             'ellipse[[209.03003701deg, 5.25471148deg], [110.7528arcsec, 107.4584arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3079,8 +3132,11 @@ class Test_mosaic(test_tclean_base):
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 0.200080364943],
             'im_rms': [False, 0.604913988836],
-            'npts_0.2': [True, 8454],
-            'npts_0.5': [True, 4497],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 8454],
+            #'npts_0.5': [True, 4497],
+            'npts_0.2': [True, 8471],
+            'npts_0.5': [True, 4500],
             'npts_real': [True, 15876],
             'fit': [False, [1.0693559655652305, 141.80580479462876, \
                        141.74549135472637]],
@@ -3090,7 +3146,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
-        # .psf report
+        # .psf report (test_mosaic_mfs)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[209.02988854deg, 5.25478653deg], [16.3870arcsec, 10.7097arcsec], 90.00000000deg]')
 
@@ -3107,7 +3163,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.169576942921],
             'min_val_pos': [True, [61, 57, 0, 0]],
             'im_rms': [False, 0.0501544145677],
-            'im_sum': [False, 0.00266324029255],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.00266324029255],
+            'im_sum': [False, 0.00074156666480],
             'npts_real': [True, 15876],
             'fit': [False, [1.088207720785799, 15.893701850875548, \
                         8.795192549423799]],
@@ -3118,12 +3176,14 @@ class Test_mosaic(test_tclean_base):
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, \
             '.psf')
 
-        # .residual report
+        # .residual report (test_mosaic_mfs)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse[[209.02978056deg, 5.25471484deg], [18.8386arcsec, 9.9356arcsec], 90.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3135,14 +3195,16 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.00197902671061],
             'min_val_pos': [True, [72, 58, 0, 0]],
             'im_rms': [False, 0.000868739833233],
-            'im_sum': [False, 0.134135401952],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.134135401952],
+            'im_sum': [False, 0.131760904704],
             'regn_sum': [False, 0.291504465893],
             'npts_real': [True, 15876]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
             '.residual')
 
-        # .model report
+        # .model report (test_mosaic_mfs)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
             'ellipse[[209.02978056deg, 5.25471484deg], [18.8386arcsec, 9.9356arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -3167,7 +3229,7 @@ class Test_mosaic(test_tclean_base):
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
             '.model')
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_mfs)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 1],
@@ -3188,7 +3250,7 @@ class Test_mosaic(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt')
 
-        # .weight report
+        # .weight report (test_mosaic_mfs)
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
@@ -3202,19 +3264,24 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 4.20771575591e-05],
+            # CAS-9386 update build100 serial
+            #'min_val': [False, 4.20771575591e-05],
+            'min_val': [False, 4.26501137554e-05],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
-            'npts_0.2': [True, 8454],
-            'npts_0.5': [True, 4497],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 8454],
+            #'npts_0.5': [True, 4497],
+            'npts_0.2': [True, 8471],
+            'npts_0.5': [True, 4500],
             'npts_real': [True, 15876]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
 
-        # report combination
+        # report combination (test_mosaic_mfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
-
+        failed = self.filter_report(report)
 
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -3229,10 +3296,13 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
+        print("FINAL test_dict=",test_dict)
+        
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            #msg = report)
+            msg = failed)
 
-
+# End of  test_mosaic_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3294,7 +3364,7 @@ class Test_mosaic(test_tclean_base):
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
 
-        # .image report
+        # .image report (test_mosaic_mtmfs)
         im_stats_dict = self.image_stats(img+'.image.tt0', fit_region = \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', \
             field_regions = \
@@ -3310,7 +3380,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 10.060172081],
             'com_pa': [False, 86.6785964966],
             'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3341,7 +3413,7 @@ class Test_mosaic(test_tclean_base):
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
-        # .mask report
+        # .mask report (test_mosaic_mtmfs)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 15876],
@@ -3357,12 +3429,14 @@ class Test_mosaic(test_tclean_base):
 
         report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
-        # .pb report
+        # .pb report (test_mosaic_mtmfs)
         pb_stats_dict = self.image_stats(img+'.pb.tt0', fit_region = \
             'ellipse[[209.03003701deg, 5.25478205deg], [109.2364arcsec, 107.1964arcsec], 0.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3373,8 +3447,11 @@ class Test_mosaic(test_tclean_base):
             'max_val_pos': [True, [63, 63, 0, 0]],
             'min_val': [False, 0.200080364943],
             'im_rms': [False, 0.604913988836],
-            'npts_0.2': [True, 8454],
-            'npts_0.5': [True, 4497],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 8454],
+            #'npts_0.5': [True, 4497],
+            'npts_0.2': [True, 8471],
+            'npts_0.5': [True, 4500],
             'npts_real': [True, 15876],
             'fit': [False, [1.0693559655651996, 141.80580479464936, \
                        141.74549135470988]],
@@ -3384,7 +3461,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
-        # .psf report
+        # .psf report test_mosaic_mtmfs)
         psf_stats_dict = self.image_stats(img+'.psf.tt0', fit_region = \
             'ellipse[[209.02997853deg, 5.25475069deg], [16.3225arcsec, 9.9355arcsec], 90.00000000deg]')
 
@@ -3401,7 +3478,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.169576942921],
             'min_val_pos': [True, [61, 57, 0, 0]],
             'im_rms': [False, 0.0501544145677],
-            'im_sum': [False, 0.00266324029255],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.00266324029255],
+            'im_sum': [False, 0.00074156666480],
             'npts_real': [True, 15876],
             'fit': [False, [1.0781857293103545, 15.898196388608632, \
                         8.995969894587292]],
@@ -3411,12 +3490,14 @@ class Test_mosaic(test_tclean_base):
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
-        # .residual report
+        # .residual report test_mosaic_mtmfs)
         resid_stats_dict = self.image_stats(img+'.residual.tt0', \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3428,14 +3509,16 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.00197783415206],
             'min_val_pos': [True, [72, 58, 0, 0]],
             'im_rms': [False, 0.000865575345209],
-            'im_sum': [False, 0.130538249029],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.130538249029],
+            'im_sum': [False, 0.128005618624],
             'regn_sum': [False, 0.283332834988],
             'npts_real': [True, 15876]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
             '.residual.tt0')
 
-        # .model report
+        # .model report test_mosaic_mtmfs)
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -3460,7 +3543,7 @@ class Test_mosaic(test_tclean_base):
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
             '.model.tt0')
 
-        # .sumwt report
+        # .sumwt report test_mosaic_mtmfs)
         sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
         exp_sumwt_stats = {'npts': [True, 1],
@@ -3481,7 +3564,7 @@ class Test_mosaic(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt.tt0')
 
-        # .weight report
+        # .weight report test_mosaic_mtmfs)
         wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
@@ -3495,17 +3578,22 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 0.426215469837],
             'max_val_pos': [True, [63, 63, 0, 0]],
-            'min_val': [False, 4.20771575591e-05],
+            # CAS-9386 update build100 serial
+            #'min_val': [False, 4.20771575591e-05],
+            'min_val': [False, 4.26501137554e-05],
             'im_rms': [False, 0.144357241275],
             'im_sum': [False, 1347.6264633],
-            'npts_0.2': [True, 8454],
-            'npts_0.5': [True, 4497],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 8454],
+            #'npts_0.5': [True, 4497],
+            'npts_0.2': [True, 8471],
+            'npts_0.5': [True, 4500],
             'npts_real': [True, 15876]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0')
 
-        # .image.tt1 report
+        # .image.tt1 report test_mosaic_mtmfs)
         im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', \
             field_regions = \
@@ -3521,7 +3609,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 10.060172081],
             'com_pa': [False, 86.6785964966],
             'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3533,19 +3623,24 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.0436826199293],
             'min_val_pos': [True, [70, 97, 0, 0]],
             'im_rms': [False, 0.0119215006547],
-            'im_sum': [False, -0.99675725757],
-            'regn_sum': [False, 0.144841228408],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, -0.99675725757],
+            #'regn_sum': [False, 0.144841228408],
+            'im_sum': [False, -1.05556125437],
+            'regn_sum': [False, 0.124542561069],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0118926721315, 0.0131530097001, 0.0123432407276, 0.0117928565232, 0.0110465636431, 0.0122420920176, 0.012233014507]]}
 
         report10 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
 
-        # .residual.tt1 report
+        # .residual.tt1 report test_mosaic_mtmfs)
         resid1_stats_dict = self.image_stats(img+'.residual.tt1', \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]')
 
         exp_resid1_stats = {'npts': [True, 15876],
-            'npts_unmasked': [True, 8454.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 8454.0],
+            'npts_unmasked': [True, 8471.0],
             'freq_bin': [False, 15849925874.83342],
             'start': [True, 1.0784e+11],
             'end': [True, 1.0784e+11],
@@ -3557,14 +3652,16 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.000183079260751],
             'min_val_pos': [True, [61, 63, 0, 0]],
             'im_rms': [False, 4.57978644843e-05],
-            'im_sum': [False, -0.00662636467916],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, -0.00662636467916],
+            'im_sum': [False, -0.00669605520018],
             'regn_sum': [False, -0.0077922191209],
             'npts_real': [True, 15876]}
 
         report11 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
             '.residual.tt1')
 
-        # .model.tt1 report
+        # .model.tt1 report test_mosaic_mtmfs)
         model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -3578,18 +3675,24 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 0.0],
             'max_val_pos': [True, [0, 0, 0, 0]],
-            'min_val': [False, -0.00433648051694],
+            # CAS-9386 update build100 serial
+            #'min_val': [False, -0.00433648051694],
+            'min_val': [False, -0.00455870199949],
             'min_val_pos': [True, [63, 63, 0, 0]],
-            'im_rms': [False, 3.44165120392e-05],
-            'im_sum': [False, -0.00433648051694],
-            'regn_sum': [False, -0.00433648051694],
+            # CAS-9386 update build100 serial
+            #'im_rms': [False, 3.44165120392e-05],
+            #'im_sum': [False, -0.00433648051694],
+            #'regn_sum': [False, -0.00433648051694],
+            'im_rms': [False, 3.61801745991e-05],
+            'im_sum': [False, -0.00455870199949],
+            'regn_sum': [False, -0.00455870199949],
             'mask_non0': [True, 0],
             'npts_real': [True, 15876]}
 
         report12 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
             '.model.tt0')
 
-        # .sumwt.tt1 report
+        # .sumwt.tt1 report test_mosaic_mtmfs)
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
 
         exp_sumwt1_stats = {'npts': [True, 1],
@@ -3610,10 +3713,11 @@ class Test_mosaic(test_tclean_base):
         report13 = self.stats_compare(exp_sumwt1_stats, sumwt1_stats_dict, \
             '.sumwt.tt1')
 
-        # report combination
+        # report combination test_mosaic_mtmfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -3629,7 +3733,9 @@ class Test_mosaic(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
+
+# End of test_mosaic_mtmfs
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
@@ -3659,7 +3765,7 @@ class Test_mosaic(test_tclean_base):
             '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
             lownoisethreshold=1.5, negativethreshold=15.0, minbeamfrac=0.3, \
             growiterations=50, dogrowprune=True, minpercentchange=1.0, \
-            fastnoise=False, savemodel='none', parallel=False, verbose=True)
+            fastnoise=False, savemodel='none', parallel=self.parallel, verbose=True)
 
         # move files to iter1
         print('Copying iter0 files to iter1')
@@ -3685,10 +3791,11 @@ class Test_mosaic(test_tclean_base):
             negativethreshold=15.0, minbeamfrac=0.3, growiterations=50, \
             dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
             restart=True, savemodel='none', calcres=False, calcpsf=False, \
-            parallel=False, verbose=True)
+            parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
-
+  
+        # test_mosaic_cube_eph
         # .image report
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]', \
@@ -3701,6 +3808,7 @@ class Test_mosaic(test_tclean_base):
              'circle[[15:57:28.581274, -16.57.40.39634], 11.5arcsec]',
              'circle[[15:57:29.520326, -16.57.40.70171], 11.5arcsec]'])
 
+        # test_mosaic_cube_eph
         exp_im_stats = {'com_bmaj': [False, 0.9347811147697555],
             'com_bmin': [False, 0.7185930247591006],
             'com_pa': [False, -88.16793752979638],
@@ -3718,7 +3826,9 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [222, 212, 0, 674]],
             'im_rms': [False, 0.012281882598118963],
             'rms_per_chan': [False, [0.01566755765592744, 0.012499771976912814, 0.011123979147164407, 0.011561886220609966, 0.012292568630946268, 0.013503738082575103, 0.013895709096621548, 0.015371602081183504, 0.012571966053954607, 0.012110657886905454, 0.010681959860783033, 0.011448528933751815, 0.013363157615506101, 0.01177851095735433, 0.011819999220451467, 0.011063128145379053, 0.011211424009495315, 0.012675826502373685, 0.00964365231187898, 0.01230416428699256, 0.011816948425841614, 0.012524610132431753, 0.012091583554529339, 0.01415517292636185, 0.013038519870781123, 0.010927180475068366, 0.011348376416636784, 0.011452376144559037, 0.013880464215687604, 0.01271421858369905, 0.012365348078626935, 0.011134439502267753, 0.01173999969262898, 0.010275262798856601, 0.012024637616711497, 0.011827779313317115, 0.012005719677964755, 0.01126998085149768, 0.01263100142352357, 0.010919404120788623, 0.01230292923375664, 0.013824000423944424, 0.012030441249337255, 0.01471235121764837, 0.012690250219699167, 0.012264732434797237, 0.010338113974845756, 0.010588074612506274, 0.010658916275604544, 0.01192531675206317, 0.011963523090655131, 0.011739554348224612, 0.010864559965038227, 0.01135082917289156, 0.011495290472285927, 0.011805507617290682, 0.010933831622378246, 0.014576785073645402, 0.01297711633387727, 0.010222489107261269, 0.0110984415724654, 0.011692109085082973, 0.011605118458967478, 0.011686408270450569, 0.010719138244995948, 0.011490010832745277, 0.012016309876685964, 0.012905508417480243, 0.010424679511378012, 0.010476580776329382, 0.013555509132609708, 0.01168612606268359, 0.01089950574737809, 0.009744535896916217, 0.011655046195014002, 0.012674198608575759, 0.014310946665162668, 0.014293294641270153, 0.012638247297143402, 0.011225312863067707, 0.010533579687603354, 0.010619978615716235, 0.01130230533155928, 0.012504854882493843, 0.011302020261357171, 0.012161798863089938, 0.010608102908705218, 0.011122188031292404, 0.010132879137328434, 0.011293949972102117, 0.012010374392817949, 0.013191568018758376, 0.01233135069689494, 0.010769746462901904, 0.01153549017814873, 0.011979399621333483, 0.011111746944971652, 0.011843988636800718, 0.011876601129763641, 0.00985833760297452, 0.012805113173417818, 0.012001866506178401, 0.012972732329926176, 0.012947046238817135, 0.01169227386437645, 0.013660834492575508, 0.015240297428641192, 0.012045506099515298, 0.014349189506965473, 0.011753680556779432, 0.011011732485486841, 0.011048193549742145, 0.012814236743542255, 0.011674542313321304, 0.010770073501250303, 0.012405362003451131, 0.011262904273749614, 0.010016645329827439, 0.012059229625014212, 0.01128781720269892, 0.011844913248897927, 0.012245345012809291, 0.009952101453716862, 0.012237226805610778, 0.010830186561964461, 0.012038505819334888, 0.010469212178041205, 0.012712147168754424, 0.009858813880899741, 0.009618511420097878, 0.011251630406509621, 0.01094736018021904, 0.009938750246980809, 0.011806500650862979, 0.013746618610294636, 0.011890591602572501, 0.011285353902870112, 0.010746148131018936, 0.010780721254182541, 0.010400367901096838, 0.010548644745226116, 0.011701519719661485, 0.011515444299289019, 0.01137979009080972, 0.009897580126157974, 0.012679387512909252, 0.012393749358995263, 0.010126541811740334, 0.012078757530494299, 0.010422834662425521, 0.011491611179879445, 0.011350002754119041, 0.010786499538647526, 0.01241069099315559, 0.01287288681929542, 0.012544796642462093, 0.012486480230120337, 0.012027122098965512, 0.011436187647136224, 0.014507824634016918, 0.012781326055012877, 0.010971035372093395, 0.011222652982616295, 0.010381402164033299, 0.011789211848634065, 0.010467460759016958, 0.010519913231344411, 0.009804241543959213, 0.009826802489597598, 0.011168128286266319, 0.009898755834256175, 0.010638546697493598, 0.01075904603518445, 0.01186190395476391, 0.012698873200736769, 0.012275066865331018, 0.010120998522019762, 0.011856430473088262, 0.01187640156331042, 0.012858360146453808, 0.010458450314412523, 0.011686631685348224, 0.012324510594898344, 0.013706507117441952, 0.010507073125858515, 0.009727999262257602, 0.010749737212657888, 0.010496316622257333, 0.012266025310015635, 0.009968887987260507, 0.010656267754294232, 0.01137826346655607, 0.013691020253483116, 0.009712315969605423, 0.0116765832200688, 0.01204200794054857, 0.011085824144059132, 0.012319945895455337, 0.010766015294335025, 0.012434827540397717, 0.012730633406142734, 0.014922472720576237, 0.013340994079356561, 0.012184668987628627, 0.011860251479407752, 0.010611453465531486, 0.010927075341466757, 0.010737943994644793, 0.011284903658799174, 0.012101560213749602, 0.01253847688484235, 0.011820390980633899, 0.01141402994073023, 0.01060976878040442, 0.010983370981323954, 0.013427371951491312, 0.012374725410784092, 0.011400378106504076, 0.011527234422091191, 0.01340962759016125, 0.013570332253931302, 0.011804029668992844, 0.012197974733541946, 0.013983623168953468, 0.012725763762714332, 0.011354745750571254, 0.012145679916283425, 0.01126874546535086, 0.012261492463656863, 0.011178855897759667, 0.010264367951585555, 0.013345043592089396, 0.012409363114615287, 0.011495934975609993, 0.009277679225470462, 0.011720945646776957, 0.012561715975156802, 0.012325900140530158, 0.011173759164206036, 0.01444252189374611, 0.013235686426999993, 0.009545194033680014, 0.00989282465604266, 0.011317913505981915, 0.011172814496764794, 0.011097429969483154, 0.011431240017029451, 0.010546755637817182, 0.011214435474509551, 0.011763583664075946, 0.014689109193649632, 0.011251056734311256, 0.009776300805049154, 0.012860933158710076, 0.012509654758086465, 0.013307995464813777, 0.012069070120183812, 0.011422201031864795, 0.011512246169509426, 0.011243380202117025, 0.011621384685604818, 0.011008804779668683, 0.013029468912847373, 0.011484166233438071, 0.01154715840745958, 0.012030983875891486, 0.012644418892294014, 0.010840072063581964, 0.01217667528470696, 0.012348270662399291, 0.011295167588599378, 0.011131983820484052, 0.011525183914729311, 0.01245079346986009, 0.010668667918574357, 0.011110716151104136, 0.012536736404100099, 0.013297691638473148, 0.013088181650764244, 0.011822130327201136, 0.010774771031200035, 0.010775807119122434, 0.01105586988033813, 0.009420738313971375, 0.012013742695805617, 0.011326747652322514, 0.012096904239732881, 0.01150806457510923, 0.011675274227450103, 0.0135991855834598, 0.01044590308467654, 0.01066146998192241, 0.010712518291299183, 0.01193296299641928, 0.012947758061995076, 0.010130158406514036, 0.011855179848796187, 0.011440889779476115, 0.012458460329640899, 0.011076297729893039, 0.012814778866789587, 0.011811606075871006, 0.012867705357363268, 0.01621962105427537, 0.016465436698466954, 0.016201295070531984, 0.01058752407190847, 0.011716930684685505, 0.011008111220908223, 0.01309686038666478, 0.011249739924392245, 0.011298808361717275, 0.01286619495044334, 0.012457597012475598, 0.011357408247558936, 0.011635136666110633, 0.01147265786957545, 0.01411270947674405, 0.012138457217748517, 0.012013161207475307, 0.012399897890804487, 0.017261754698869394, 0.011751036356983229, 0.01220773352984818, 0.01169628539620397, 0.013572907681349047, 0.014279084224693019, 0.013350071117589353, 0.01119955478052971, 0.011678178134442125, 0.01143788295713284, 0.01338236323998995, 0.013148991760974126, 0.012261293827211488, 0.012230033568364952, 0.011982727185002299, 0.014628741472584738, 0.013936276355000195, 0.011606244163871274, 0.013217927391198507, 0.011877296698841999, 0.013751323956061321, 0.010502431019977986, 0.011623558011397342, 0.013225657353801752, 0.013687394057886515, 0.012047896602847821, 0.01247678361440421, 0.010956367674752512, 0.011928249343126845, 0.012456739592702704, 0.014412803794511948, 0.013091054766212506, 0.012391320075065916, 0.012041284843754036, 0.011175660150719864, 0.012796161329318703, 0.012376600001200107, 0.013213434092613835, 0.011391999754128477, 0.011735911173241135, 0.011338817659054366, 0.013685494524633305, 0.01405734652024605, 0.011873232352346962, 0.011492726398798213, 0.011357899840429751, 0.011924626623408293, 0.01292314975466112, 0.011568890237960018, 0.012450768675985815, 0.01615561678574021, 0.014389883701947508, 0.012020341777831386, 0.011691722848726802, 0.012565949873863497, 0.011694804496294954, 0.011846565903593035, 0.011247492738346963, 0.010809808599760048, 0.011330103597179153, 0.012046098499893751, 0.012792309821515609, 0.012055452071571462, 0.012529809308170823, 0.01166776384371269, 0.01271547225436619, 0.014155919212706156, 0.011590774944224877, 0.013272175555436434, 0.01230731481769422, 0.01134847189287814, 0.011467954772903752, 0.01184115575454566, 0.011988620387346051, 0.010501901957914332, 0.011616509715974813, 0.011471135705227897, 0.012451191281457752, 0.015319504006822212, 0.012649022813805498, 0.011475752166486771, 0.012390712505079823, 0.013092398166506612, 0.0108425779557803, 0.010850393792933026, 0.011858723037825333, 0.014367570168849372, 0.016151613939500507, 0.010857278233794036, 0.012348584717685072, 0.013369893472750983, 0.013520298224929771, 0.012490511233733568, 0.011838067139252433, 0.01379337132839034, 0.013615981503194808, 0.01213329972068078, 0.011926986383721444, 0.011989638160863852, 0.011459946102237622, 0.00998617556766575, 0.011909475646001892, 0.01144107317570622, 0.012796872801637271, 0.011812967842105799, 0.01226189488300729, 0.013800981007306753, 0.011403886599520798, 0.011873516666846865, 0.012409987676322875, 0.012188938970018453, 0.011353880208547378, 0.013058666569184637, 0.011338981854502068, 0.01409796019586988, 0.012231139093670572, 0.015107895235161905, 0.012326810087808738, 0.012946694516644243, 0.012447550801307723, 0.014909071523596254, 0.01397117897114995, 0.013954030858987044, 0.012642975889461814, 0.012387518693283873, 0.011610200546359207, 0.011526268526938685, 0.011758827798373622, 0.011908680699262349, 0.015003488394504251, 0.014659137370125483, 0.01303276571543743, 0.013752408592063675, 0.013708881194186243, 0.01147231577101178, 0.011546435459926428, 0.011541811993355754, 0.013315481649931753, 0.012924077797838931, 0.013861771686590075, 0.012908741618203564, 0.012185556034842455, 0.0123901699294395, 0.011089612618787055, 0.012565991045585109, 0.011172521028748187, 0.011930136297848918, 0.012217995900935783, 0.012567934765036304, 0.013402949630010139, 0.012677891119972322, 0.012831082643587562, 0.012077587392213665, 0.01192202179044923, 0.012437303467243326, 0.012739158128205348, 0.013229922671982922, 0.011707021012177004, 0.013242901791918983, 0.012429029653969133, 0.011897651409429517, 0.012333981656159804, 0.01652056933731621, 0.012803033285199423, 0.013291710033149702, 0.013915563269442936, 0.013293192094911472, 0.012809923485290182, 0.012329480430228985, 0.012327561250559955, 0.011635712112230329, 0.013309364248632287, 0.01298532449779078, 0.011141245068791102, 0.0123662111290416, 0.012952937497979091, 0.012652571307871136, 0.015633401429410065, 0.014029079448528728, 0.013085527098929505, 0.013671367699869673, 0.011449641495798529, 0.013870108540867539, 0.013267219241966837, 0.013009671745599366, 0.012061924878367703, 0.013344180204315093, 0.012472386713589599, 0.012819448624406097, 0.013468487050066785, 0.015061287987425221, 0.013101479251036413, 0.011695612693457496, 0.014215627129265261, 0.014030414081014604, 0.013144534677081394, 0.013769631498326561, 0.013665079857862566, 0.01278869825702419, 0.011758045653360501, 0.013379677594574436, 0.013176320438872265, 0.013726863311133137, 0.014093922857692474, 0.011978594418837533, 0.012688741742419463, 0.014213190054434053, 0.012778188415525355, 0.012893566603547115, 0.011031522915526809, 0.012099967208788644, 0.01197488835353761, 0.011886891227553936, 0.012806477665845199, 0.013276830507854871, 0.013241164133079063, 0.012154967597401761, 0.011697698448488806, 0.0138159512574303, 0.012144528154314117, 0.011982896302520097, 0.012088015079846063, 0.01258443418498413, 0.012417041503252886, 0.013316302302718812, 0.013253698599679495, 0.014875163789523499, 0.013611399587966033, 0.01270670566020336, 0.012428452848201328, 0.013258866017540937, 0.012735738693151316, 0.014906643094604965, 0.014207002883168778, 0.01351154568809692, 0.012428703834641097, 0.012531695617773475, 0.014339355016753071, 0.011835752014891681, 0.015198065031029119, 0.01430821328282015, 0.013257734215508951, 0.012994339259791049, 0.013865856665286771, 0.012158304848082375, 0.014198843802734912, 0.01419354016501019, 0.013678418586819103, 0.012056908737372238, 0.012088134020138442, 0.012708550023920906, 0.012056042831971507, 0.012944165533598666, 0.012998439619323971, 0.011738401817877483, 0.013534728428647752, 0.012933197018222002, 0.011888680423975263, 0.012833718856536632, 0.013026329306504825, 0.01389771764379911, 0.013170374270730664, 0.01394810209074441, 0.013726597650998646, 0.012620621703300312, 0.012195206631413907, 0.013644885542175174, 0.01339675796598244, 0.015953133266745596, 0.015572165751410377, 0.013918610648959726, 0.012539523963263447, 0.014863648164363799, 0.013557760935362215, 0.013767615205969776, 0.012387780847253898, 0.013111551187613596, 0.012178574316034968, 0.012804589291833082, 0.013764797217935443, 0.014682794411092211, 0.011923563140996867, 0.012457566642369073, 0.012577155733152602, 0.012268408936443286, 0.013433767866486363, 0.011254144886535153, 0.012239416835082412, 0.012719204139179307, 0.014153628502136058, 0.013714206504685713, 0.01555664321990409, 0.012482696827891392, 0.012798094219294787, 0.013725222959993684, 0.011297342405230785, 0.013866245776811888, 0.013948944319164524, 0.014752096346863636, 0.012392843752160694, 0.014416608533154353, 0.013416960727895713, 0.013014075062578258, 0.012457948814251782, 0.01214561019554649, 0.014573596703768801, 0.013355931500995009, 0.010935442745219525, 0.013474856369494768, 0.014093982151433494, 0.011282427815945854, 0.013022998498462857, 0.011932228038133832, 0.011193973084211214, 0.013372017260001274, 0.013994297538831645, 0.011742113041326014, 0.012987909251690535, 0.012569010525416004, 0.011966315747010852, 0.013958876937310783, 0.013110867016705616, 0.015176327530987377, 0.013271913419261386, 0.014815021510858065, 0.013019719016438232, 0.012593706022601611, 0.013636464785719227, 0.013024015052417843, 0.011867287358548854, 0.014432494354300884, 0.011513467360750092, 0.013751315885178503, 0.011944914326008424, 0.011579770223979212, 0.013104138863451702, 0.012572035675858769, 0.013719589991898679, 0.011799423913740791, 0.014222826331815612, 0.013130190236718657, 0.015687333785054065, 0.013977869745415655, 0.013856666637965972, 0.0119206019645679, 0.01340210329202167, 0.01236780694175228, 0.013548894032861069, 0.012186169719114176, 0.01048406598287907, 0.010655269577945959, 0.011891505227937497, 0.012232046724993523, 0.016338504257622802, 0.011951257476223706, 0.012787444872754723, 0.011710212821400005, 0.011695865895061741, 0.015838707904307876, 0.012939755683705046, 0.012477587036156625, 0.013330358565129482, 0.01082528855224014, 0.013773287643131382, 0.012570171555245143, 0.013162359160576995, 0.011218965550597317, 0.01342890868237659, 0.01202182099406552, 0.010697138162887927, 0.015232948941257044, 0.012711001004850505, 0.011506289930999608, 0.012369850055536856, 0.01233361532935207, 0.012360627932656498, 0.013326575850585057, 0.012934710498929827, 0.013248039695274097, 0.012226203594835677, 0.012818113815664448, 0.01341051851094283, 0.013541762993268074, 0.013056711886632514, 0.012115662158377625, 0.013357590759015063, 0.012032645498305006, 0.016207947768265084, 0.01389311652405909, 0.013847679128406589, 0.013886386730554553, 0.012067502182802831, 0.011753272427404053, 0.013279048057631762, 0.011214754296383541, 0.011683816996863522, 0.010609551860508486, 0.012357120345452005, 0.013050369382881564, 0.01174704009897493, 0.011743154945937362, 0.012531199758011487, 0.011798725028591634, 0.012419735337445137, 0.013975728513221264, 0.011781109647231187, 0.014598054146810256, 0.011754504071338916, 0.011305854302102692, 0.013318945027316854, 0.013042196249451354, 0.011052738741563284, 0.010558225013410463, 0.011020779774382213, 0.011340319330782552, 0.012033592610864789, 0.012455257536242884, 0.01110139391512171, 0.01046562816674095, 0.015266557792594495, 0.011918313536064278, 0.011360562910751727, 0.010365874108060247, 0.011737890229192168, 0.012793643279848948, 0.013256120317317155, 0.012383560012815365, 0.013301087661143126, 0.01531080427533124, 0.010224017979386747, 0.011257686276499953, 0.009965303526327884, 0.011481057685759922, 0.01274428412077991, 0.01237779048897638, 0.011054791139194602, 0.012765273103949742, 0.012472945953336118, 0.012608159036016397, 0.011204550231481033, 0.013905107233033231, 0.010773937005630393, 0.013310027013851727, 0.017420680889573912, 0.011673620547153839, 0.010614208861963346, 0.012253262631090077, 0.012560836225969919, 0.012560372974566972, 0.013315953743992456, 0.01250495576610427, 0.010300621736575054, 0.0126743669068127, 0.012497189500451297, 0.01058986672748917, 0.0140554647719132, 0.011586323266949704, 0.01051084444510618, 0.010723172131198219, 0.013670881790176151, 0.01294181100319149, 0.01329464895892603, 0.011257304758166548, 0.011406076857722271, 0.01192400994821658, 0.01090031653434306, 0.011516503202529208, 0.01164722421363161, 0.011278034900260045, 0.013101497734367626, 0.010571820551740189, 0.01258494483689583, 0.010690018512359867, 0.012288203401799393, 0.011394189183191222, 0.010661795126849621, 0.014600444436046287, 0.012545075612095091, 0.011433423838627848, 0.0108797962059277, 0.01179905039017321, 0.011201593386431653, 0.012398023234344002, 0.011585602038687984, 0.012105760854189395, 0.01012363568557298, 0.010608758997456596, 0.013055946950589595, 0.01115366731042303, 0.011356175896159434, 0.010664413285359914, 0.011095187626260742, 0.01055909008819056, 0.01199264964050027, 0.01198885985504728, 0.011856295143569895, 0.011865458906234921, 0.012803395900220201, 0.011576869098809376, 0.010189936253659717, 0.010195412935336356, 0.012280457502570626, 0.011418747542118402, 0.011054267711398783, 0.010663172535730193, 0.010788394178560413, 0.012825843175935922, 0.014830488452138243, 0.012284354036472657, 0.012694714212578187, 0.013724353996911465, 0.012851827129972288, 0.010592820880735418, 0.012302591864876384, 0.012065809850599015, 0.011956358889472574, 0.010872197413464683, 0.012323221424305216, 0.012123107304017921, 0.010815605182278264, 0.012638711922615793, 0.011655868729735695, 0.013318117884136317, 0.011374335257623935, 0.011336547412403876, 0.013538061509343441, 0.010884298085465788, 0.00983147858074236, 0.010395424381769653, 0.010546991873577608, 0.012797725536117008, 0.011287668516950705, 0.010972896319568352, 0.011817914808157692, 0.010995529479193617, 0.01009639486723553, 0.01141833937111661, 0.011690435639595306, 0.010061766319288705, 0.011971105561760871, 0.012700043131615801, 0.011318883390568383, 0.010909315349852766, 0.00955009744793359, 0.010498572864691814, 0.013751363636934978, 0.012414462975548525, 0.013914888435336918, 0.014227696895603312, 0.012244996318125041, 0.01179968071369893, 0.01269311294414022, 0.011707870106088975, 0.010958813990455807, 0.011651043993684336, 0.01030137511322718, 0.011034955595029074, 0.011010590344592711, 0.012071622334637981, 0.012156945636578436, 0.01207776327788143, 0.012467860244637925, 0.011202073492240526, 0.013522425017327757, 0.013101403096011953, 0.011576541797128533, 0.010161447675978133, 0.010808172743640786, 0.01053092595610692, 0.011264161352788734, 0.01233589290036475, 0.010814458779802489, 0.012333845855799757, 0.009642890958343297, 0.012173492497045947, 0.013243881943014759, 0.011496651178443193, 0.01015960484422759, 0.01181458373889043, 0.009783393881506904, 0.00995620066577112, 0.011522308540852155, 0.010744486398458035, 0.010880760248384722, 0.0103126533049451, 0.010249354156011579, 0.011065664705266258, 0.01142653024289266, 0.01119440735004512, 0.01097503503562323, 0.014023046074535458, 0.010432042532047749, 0.010194842729529698, 0.010817754756984273, 0.011134926202450978, 0.011429007186568798, 0.010583381706566801, 0.015263726359132578, 0.011921804488613408, 0.009753228291247933, 0.012196147705148373, 0.009316733907216289, 0.01146380450784002, 0.010523188985348219, 0.012950242966562036, 0.010905274766360632, 0.009936978616187102, 0.011966920815569286, 0.010385478642918732, 0.010089607608523066, 0.01317787233691099, 0.01482152961916169, 0.011166319039339316, 0.01158412070404005, 0.010686371837829486, 0.011619838402650143, 0.010062419209719961, 0.010294116467679117, 0.01054194871478958, 0.011768968106377857, 0.012003013751281379, 0.011635692550686211, 0.012427950542111656, 0.012436753739762036, 0.010597044719259695, 0.01047844931079727, 0.01300316381280212]],
-            'im_sum': [False, 4241.3850895847481],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 4241.3850895847481],
+            'im_sum': [False, 4107.755953973777],
             'regn_sum': [False, 34.376076006740732],
             'npts_real': [True, 191116800],
             'rms_per_field': [False, [0.013727427598497976, 0.01265603739684268, 0.012647516154896329, 0.013363016802334838, 0.012374606023989609, 0.013129803882930785, 0.01267018256172788]],
@@ -3727,13 +3837,15 @@ class Test_mosaic(test_tclean_base):
         report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [240, 393, 0, 0]), \
-                      (img+'.image', False, [240, 394, 0, 0]), \
+                      # CAS-9386 update build100 serial
+                      #(img+'.image', False, [240, 394, 0, 0]), \
+                      (img+'.image', True, [240, 394, 0, 0]), \
                       (img+'.image', True, [49, 209, 0, 0]), \
                       (img+'.image', False, [48, 209, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
-        # .mask report
+        # .mask report (test_mosaic_cube_eph)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 191116800],
@@ -3743,7 +3855,9 @@ class Test_mosaic(test_tclean_base):
             'start_delta': [False, 2.617644e+11],
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
-            'mask_pix': [False, 8519],
+            # CAS-9386 update build100 serial
+            #'mask_pix': [False, 8519],
+            'mask_pix': [False, 8194],
             'mask_regns': [True, 31],
             'npts_real': [True, 191116800]}
 
@@ -3776,7 +3890,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
-        # .psf report
+        # .psf report (test_mosaic_cube_eph)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[239.36977532deg, -16.96391179deg], [1.0415arcsec, 0.9313arcsec], 90.00000000deg]')
 
@@ -3793,7 +3907,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.044496592134237289],
             'min_val_pos': [True, [250, 204, 0, 13]],
             'im_rms': [False, 0.012118826675730165],
-            'im_sum': [False, 203.0061296436524],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 203.0061296436524],
+            'im_sum': [False, 193.48533807980857],
             'npts_real': [True, 191116800],
             'fit_0': [False, [0.8853663419051631, 1.0831964982105018, \
                       0.8486568935446293]],
@@ -3813,7 +3929,7 @@ class Test_mosaic(test_tclean_base):
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
-        # .residual report
+        # .residual report (test_mosaic_cube_eph)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]')
 
@@ -3830,14 +3946,16 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.07086267322301865],
             'min_val_pos': [True, [222, 212, 0, 674]],
             'im_rms': [False, 0.012274356404197695],
-            'im_sum': [False, 3864.4951676249366],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 3864.4951676249366],
+            'im_sum': [False, 3744.7025652566444],
             'regn_sum': [False, 37.53474615866071],
             'npts_real': [True, 191116800]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
             '.residual')
 
-        # .model report
+        # .model report (test_mosaic_cube_eph)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -3853,9 +3971,13 @@ class Test_mosaic(test_tclean_base):
             'max_val_pos': [True, [315, 229, 0, 511]],
             'min_val': [False, 0.0],
             'min_val_pos': [True, [0, 0, 0, 0]],
-            'im_rms': [False, 2.4667777528231367e-05],
-            'im_sum': [False, 9.705396932782605],
-            'regn_sum': [False, 0.8115214343415573],
+            #CAS-9386 update build100 serial
+            #'im_rms': [False, 2.4667777528231367e-05],
+            #'im_sum': [False, 9.705396932782605],
+            #'regn_sum': [False, 0.8115214343415573],
+            'im_rms': [False, 2.413243705039696e-05],
+            'im_sum': [False, 9.349006329197437], 
+            'regn_sum': [False, 0.7349461655830964],
             'mask_non0': [True, 0],
             'npts_real': [True, 191116800]}
 
@@ -3883,7 +4005,7 @@ class Test_mosaic(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt')
 
-        # .weight report
+        # .weight report (test_mosaic_cube_eph)
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
@@ -3896,8 +4018,11 @@ class Test_mosaic(test_tclean_base):
             'end_delta': [False, 2.619956e+11],
             'nchan': [True, 948],
             'max_val': [False, 0.3178490698337555],
-            'max_val_pos': [True, [240, 210, 0, 9]],
-            'min_val': [False, 6.582064816029742e-05],
+            # CAS-9386 update build100 serial
+            #'max_val_pos': [True, [240, 210, 0, 9]],
+            #'min_val': [False, 6.582064816029742e-05],
+            'max_val_pos': [True, [240, 209, 0, 944]],
+            'min_val': [False, 7.376736175501719e-05],
             'im_rms': [False, 0.119822765111],
             'im_sum': [False, 13818688.5072],
             'npts_0.2': [False, [110768, 110768, 110768, 110767, 110766, 110766, 110765, 110765, 110765, 110765, 110766, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110768, 110768, 110768, 110768, 110766, 110766, 110768, 110767, 110768, 110768, 110767, 110767, 110768, 110769, 110769, 110769, 110769, 110769, 110769, 110768, 110766, 110770, 110770, 110768, 110768, 110770, 110771, 110771, 110771, 110770, 110770, 110770, 110768, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110768, 110768, 110768, 110768, 110768, 110768, 110768, 110768, 110769, 110769, 110769, 110768, 110768, 110768, 110769, 110771, 110771, 110771, 110770, 110770, 110770, 110770, 110770, 110770, 110769, 110767, 110769, 110768, 110769, 110770, 110772, 110772, 110772, 110772, 110772, 110772, 110773, 110773, 110773, 110774, 110774, 110773, 110771, 110772, 110771, 110770, 110770, 110770, 110769, 110771, 110771, 110769, 110770, 110769, 110768, 110769, 110769, 110769, 110769, 110769, 110769, 110769, 110770, 110770, 110770, 110770, 110770, 110770, 110771, 110771, 110771, 110771, 110770, 110771, 110771, 110771, 110771, 110772, 110772, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110772, 110772, 110771, 110771, 110769, 110769, 110769, 110769, 110770, 110770, 110769, 110769, 110769, 110769, 110770, 110770, 110770, 110770, 110770, 110771, 110771, 110770, 110770, 110770, 110769, 110769, 110768, 110768, 110768, 110769, 110768, 110767, 110767, 110768, 110767, 110768, 110767, 110767, 110767, 110768, 110769, 110769, 110768, 110768, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110767, 110766, 110766, 110766, 110767, 110769, 110769, 110770, 110771, 110770, 110769, 110770, 110770, 110769, 110768, 110768, 110769, 110769, 110769, 110770, 110770, 110770, 110771, 110771, 110770, 110770, 110771, 110771, 110770, 110771, 110771, 110771, 110771, 110770, 110770, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110771, 110772, 110771, 110771, 110771, 110773, 110774, 110773, 110774, 110776, 110775, 110775, 110773, 110773, 110774, 110774, 110774, 110775, 110774, 110774, 110776, 110776, 110776, 110777, 110776, 110776, 110776, 110776, 110776, 110776, 110775, 110773, 110773, 110773, 110774, 110774, 110774, 110774, 110774, 110774, 110774, 110774, 110775, 110774, 110774, 110775, 110775, 110775, 110776, 110777, 110777, 110777, 110777, 110778, 110778, 110779, 110778, 110780, 110781, 110781, 110781, 110779, 110780, 110780, 110781, 110779, 110779, 110779, 110779, 110779, 110782, 110782, 110781, 110781, 110782, 110782, 110782, 110782, 110782, 110782, 110781, 110783, 110782, 110782, 110782, 110783, 110782, 110782, 110783, 110780, 110781, 110782, 110781, 110782, 110782, 110782, 110781, 110782, 110782, 110782, 110782, 110781, 110781, 110781, 110781, 110781, 110781, 110781, 110782, 110781, 110781, 110784, 110782, 110782, 110784, 110782, 110782, 110782, 110782, 110781, 110782, 110781, 110782, 110782, 110782, 110781, 110782, 110782, 110783, 110783, 110782, 110783, 110783, 110784, 110784, 110784, 110786, 110786, 110785, 110786, 110786, 110786, 110786, 110785, 110785, 110784, 110785, 110785, 110785, 110785, 110785, 110785, 110786, 110787, 110787, 110787, 110787, 110786, 110786, 110786, 110786, 110786, 110787, 110787, 110787, 110787, 110787, 110786, 110787, 110787, 110786, 110786, 110785, 110785, 110786, 110786, 110786, 110786, 110786, 110784, 110786, 110786, 110786, 110786, 110785, 110786, 110786, 110785, 110785, 110782, 110783, 110785, 110785, 110786, 110785, 110785, 110784, 110784, 110784, 110784, 110784, 110784, 110784, 110784, 110784, 110783, 110784, 110783, 110783, 110783, 110784, 110784, 110784, 110747, 110747, 110747, 110747, 110747, 110747, 110746, 110746, 110746, 110746, 110745, 110746, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110748, 110748, 110748, 110748, 110747, 110747, 110747, 110747, 110747, 110747, 110746, 110747, 110747, 110748, 110748, 110748, 110748, 110748, 110748, 110748, 110748, 110748, 110747, 110745, 110745, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110747, 110746, 110747, 110745, 110745, 110744, 110745, 110744, 110744, 110744, 110745, 110745, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110744, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110745, 110743, 110743, 110743, 110743, 110744, 110741, 110743, 110743, 110743, 110740, 110741, 110740, 110741, 110743, 110743, 110743, 110741, 110741, 110741, 110741, 110741, 110740, 110741, 110740, 110740, 110741, 110741, 110740, 110741, 110741, 110742, 110742, 110742, 110742, 110741, 110742, 110742, 110741, 110741, 110741, 110741, 110741, 110741, 110741, 110741, 110742, 110742, 110742, 110742, 110742, 110742, 110742, 110742, 110741, 110741, 110741, 110742, 110742, 110741, 110742, 110743, 110742, 110743, 110743, 110743, 110743, 110742, 110742, 110742, 110742, 110743, 110742, 110743, 110743, 110743, 110743, 110743, 110743, 110743, 110742, 110743, 110743, 110744, 110743, 110743, 110743, 110743, 110743, 110743, 110743, 110744, 110743, 110743, 110743, 110743, 110743, 110744, 110744, 110744, 110742, 110741, 110741, 110742, 110742, 110740, 110740, 110741, 110741, 110741, 110740, 110740, 110740, 110739, 110740, 110739, 110738, 110739, 110739, 110740, 110739, 110739, 110739, 110740, 110740, 110740, 110740, 110740, 110739, 110740, 110740, 110739, 110739, 110739, 110739, 110739, 110740, 110740, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110739, 110739, 110739, 110740, 110740, 110740, 110740, 110740, 110740, 110740, 110740, 110740, 110740, 110740, 110739, 110739, 110739, 110739, 110739, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110736, 110738, 110736, 110738, 110737, 110738, 110738, 110738, 110738, 110739, 110739, 110736, 110736, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110738, 110739, 110739, 110739, 110739, 110739, 110739, 110739, 110740, 110739, 110739, 110739, 110739, 110740, 110740, 110740, 110740, 110740, 110740, 110738, 110737, 110737, 110739, 110739, 110740, 110740, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110739, 110739, 110740, 110739, 110739, 110739, 110739, 110739, 110740, 110738, 110737, 110737, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110738, 110739, 110739, 110739, 110738, 110739, 110739, 110739, 110738, 110738, 110738, 110738, 110738, 110739, 110739, 110738, 110739, 110739, 110739, 110740, 110740, 110740, 110740, 110739, 110739, 110738, 110738, 110738, 110736, 110736, 110734, 110734, 110734, 110734, 110734, 110733, 110734, 110733, 110734, 110733, 110734, 110733, 110735, 110735, 110735, 110735, 110736, 110737, 110736, 110736, 110736, 110736, 110735, 110736, 110736, 110733, 110734, 110734, 110734, 110734, 110734, 110733, 110734, 110733, 110733, 110734, 110734, 110734, 110733, 110733, 110734, 110734, 110734, 110732, 110734, 110733, 110733, 110731, 110732, 110731, 110732, 110733, 110733, 110733, 110731, 110731, 110732, 110730, 110731, 110733, 110732, 110732]],
@@ -3910,6 +4035,7 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             ["2017.1.00750.T_tclean_exe1.ms", \
@@ -3928,9 +4054,9 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube_eph']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of est_mosaic_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3993,7 +4119,7 @@ class Test_mosaic(test_tclean_base):
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
-        # .image report
+        # .image report (test_mosaic_mfs_eph)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', \
             field_regions = \
@@ -4009,7 +4135,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 0.708504319190979],
             'com_pa': [False, -89.3270263671875],
             'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4022,20 +4150,24 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [319, 159, 0, 0]],
             'im_rms': [False, 0.676557465791],
             'im_sum': [False, 5498.32523989],
-            'regn_sum': [False, 1404.0369635481302],
+            # CAS-9386 update build100 serial
+            #'regn_sum': [False, 1404.0369635481302],
+            'regn_sum': [False, 1381.8595210092262],
             'npts_real': [True, 201600],
             'rms_per_field': [False, [0.956495428743, 0.812393759263, 0.850127531746, 0.857228981072, 0.826569686485, 0.855403274215, 0.791376139627]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image', True, [239, 396, 0, 0]), \
-                      (img+'.image', False, [239, 397, 0, 0]), \
+                      # CAS-9386 update build100 serial
+                      #(img+'.image', False, [239, 397, 0, 0]), \
+                      (img+'.image', True, [239, 397, 0, 0]), \
                       (img+'.image', True, [47, 210, 0, 0]), \
                       (img+'.image', False, [46, 210, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
 
-        # .mask report
+        # .mask report (test_mosaic_mfs_eph)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 201600],
@@ -4051,12 +4183,14 @@ class Test_mosaic(test_tclean_base):
 
         report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
-        # .pb report
+        # .pb report (test_mosaic_mfs_eph)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
             'ellipse[[239.37095571deg, -16.96411290deg], [28.1142arcsec, 27.7734arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4067,8 +4201,11 @@ class Test_mosaic(test_tclean_base):
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.20000052452087402],
             'im_rms': [False, 0.6312907916397755],
-            'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64574],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 113589],
+            #'npts_0.5': [True, 64574],
+            'npts_0.2': [True, 114034],
+            'npts_0.5': [True, 64662],
             'npts_real': [True, 201600],
             'fit': [False, [1.0977556311256869, 37.34956230416832, \
                     36.99775156676905]],
@@ -4078,7 +4215,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
 
-        # .psf report
+        # .psf report (test_mosaic_mfs_eph)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[239.36978024deg, -16.96392002deg], [1.1516arcsec, 0.9492arcsec], 90.00000000deg]')
 
@@ -4095,7 +4232,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.05114944279193878],
             'min_val_pos': [True, [250, 204, 0, 0]],
             'im_rms': [False, 0.011101956781551448],
-            'im_sum': [False, 0.17176903218875061],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.17176903218875061],
+            'im_sum': [False, 0.16332336102429368],
             'npts_real': [True, 201600],
             'fit': [False, [0.8980171961947707, 1.0457922779210116, \
                     0.8221985921765811]],
@@ -4105,12 +4244,14 @@ class Test_mosaic(test_tclean_base):
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
 
-        # .residual report
+        # .residual report (test_mosaic_mfs_eph)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386  update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4123,13 +4264,15 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [319, 159, 0, 0]],
             'im_rms': [False, 0.6765198782434925],
             'im_sum': [False, 5498.612235217561],
-            'regn_sum': [False, 1404.0369635481302],
+            # CAS-9386 update build100 serial
+            #'regn_sum': [False, 1404.0369635481302],
+            'regn_sum': [False, 1381.8595210092262],
             'npts_real': [True, 201600]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
             '.residual')
 
-        # .model report
+        # .model report (test_mosaic_mfs_eph)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -4154,7 +4297,7 @@ class Test_mosaic(test_tclean_base):
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
             '.model')
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_mfs_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 1],
@@ -4175,7 +4318,7 @@ class Test_mosaic(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt')
 
-        # .weight report
+        # .weight report (test_mosaic_mfs_eph)
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
@@ -4189,11 +4332,16 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 0.3335382044315338],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, 9.392295760335401e-05],
+            # CAS-9386 update build100 serial
+            #'min_val': [False, 9.392295760335401e-05],
+            'min_val': [False, 9.849096386460587e-05],
             'im_rms': [False, 0.12506836881],
             'im_sum': [False, 15366.9703442],
-            'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64574],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 113589],
+            #'npts_0.5': [True, 64574],
+            'npts_0.2': [True, 114034],
+            'npts_0.5': [True, 64662],
             'npts_real': [True, 201600]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, '.weight')
@@ -4202,6 +4350,7 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
@@ -4217,9 +4366,9 @@ class Test_mosaic(test_tclean_base):
                 (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_mosaic_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4283,7 +4432,7 @@ class Test_mosaic(test_tclean_base):
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mos_mtmfs'))
 
-        # .image report
+        # .image report (test_mosaic_mtmfs_eph)
         im_stats_dict = self.image_stats(img+'.image.tt0', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', \
             field_regions = \
@@ -4299,7 +4448,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 0.708592534065],
             'com_pa': [False, -89.3612976074],
             'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4311,21 +4462,26 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -2.195145845413208],
             'min_val_pos': [True, [319, 159, 0, 0]],
             'im_rms': [False, 0.6725999217209672],
-            'im_sum': [False, 5402.754884014255],
-            'regn_sum': [False, 1406.6249240019824],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 5402.754884014255],
+            #'regn_sum': [False, 1406.6249240019824],
+            'im_sum': [False, 5458.724023531031],
+            'regn_sum': [False, 1383.755136466585],
             'npts_real': [True, 201600],
             'rms_per_field': [False, [0.948501720585, 0.806080633033, 0.843574363826, 0.852078553708, 0.821227271327, 0.850437711204, 0.784834956688]]}
 
         report1 = th.checkall( \
             # checks for image and pb mask movement
             imgmask = [(img+'.image.tt0', True, [239, 396, 0, 0]), \
-                      (img+'.image.tt0', False, [239, 397, 0, 0]), \
+                      # CAS-9386 update build100 serial
+                      #(img+'.image.tt0', False, [239, 397, 0, 0]), \
+                      (img+'.image.tt0', True, [239, 397, 0, 0]), \
                       (img+'.image.tt0', True, [47, 210, 0, 0]), \
                       (img+'.image.tt0', False, [46, 210, 0, 0])])
 
         report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image.tt0')
 
-        # .mask report
+        # .mask report (test_mosaic_mtmfs_eph)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 201600],
@@ -4341,12 +4497,14 @@ class Test_mosaic(test_tclean_base):
 
         report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
 
-        # .pb report
+        # .pb report (test_mosaic_mtmfs_eph)
         pb_stats_dict = self.image_stats(img+'.pb.tt0', fit_region = \
             'ellipse[[239.37095571deg, -16.96411290deg], [28.1142arcsec, 27.7734arcsec], 90.00000000deg]')
 
         exp_pb_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4357,8 +4515,11 @@ class Test_mosaic(test_tclean_base):
             'max_val_pos': [True, [240, 210, 0, 0]],
             'min_val': [False, 0.20000052452087402],
             'im_rms': [False, 0.6312907916397755],
-            'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64574],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 113589],
+            #'npts_0.5': [True, 64574],
+            'npts_0.2': [True, 114034],
+            'npts_0.5': [True, 64662],
             'npts_real': [True, 201600],
             'fit': [False, [1.0977556311256869, 37.34956230416832, \
                     36.99775156676905]],
@@ -4368,7 +4529,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb.tt0')
 
-        # .psf report
+        # .psf report (test_mosaic_mtmfs_eph)
         psf_stats_dict = self.image_stats(img+'.psf.tt0', fit_region = \
             'ellipse[[239.36978024deg, -16.96392002deg], [1.1516arcsec, 0.9492arcsec], 90.00000000deg]')
 
@@ -4385,7 +4546,9 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.05114944279193878],
             'min_val_pos': [True, [250, 204, 0, 0]],
             'im_rms': [False, 0.011101956781551448],
-            'im_sum': [False, 0.17176903218875061],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 0.17176903218875061],
+            'im_sum': [False, 0.16332336102429368],
             'npts_real': [True, 201600],
             'fit': [False, [0.8980212570855989, 1.0458854777504984, \
                         0.8222593788495552]],
@@ -4395,12 +4558,14 @@ class Test_mosaic(test_tclean_base):
 
         report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf.tt0')
 
-        # .residual report
+        # .residual report (test_mosaic_mtmfs_eph)
         resid_stats_dict = self.image_stats(img+'.residual.tt0', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
         exp_resid_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4413,13 +4578,15 @@ class Test_mosaic(test_tclean_base):
             'min_val_pos': [True, [319, 159, 0, 0]],
             'im_rms': [False, 0.6765198782434925],
             'im_sum': [False, 5498.612235217561],
-            'regn_sum': [False, 1404.0369635481302],
+            # CAS-9386 update build100 serial
+            #'regn_sum': [False, 1404.0369635481302],
+            'regn_sum': [False, 1381.8595210092262],
             'npts_real': [True, 201600]}
 
         report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
             '.residual.tt0')
 
-        # .model report
+        # .model report (test_mosaic_mtmfs_eph)
         model_stats_dict = self.image_stats(img+'.model.tt0', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -4444,7 +4611,7 @@ class Test_mosaic(test_tclean_base):
         report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
             '.model.tt0')
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_mtmfs_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt.tt0')
 
         exp_sumwt_stats = {'npts': [True, 1],
@@ -4465,7 +4632,7 @@ class Test_mosaic(test_tclean_base):
         report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt.tt0')
 
-        # .weight report
+        # .weight report (test_mosaic_mtmfs_eph)
         wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
@@ -4479,17 +4646,22 @@ class Test_mosaic(test_tclean_base):
             'nchan': [True, 1],
             'max_val': [False, 0.3335382044315338],
             'max_val_pos': [True, [240, 210, 0, 0]],
-            'min_val': [False, 9.392295760335401e-05],
+            # CAS-9386 update build100 serial
+            #'min_val': [False, 9.392295760335401e-05],
+            'min_val': [False, 9.849096386460587e-05],
             'im_rms': [False, 0.12506831619046738],
             'im_sum': [False, 15366.970359400737],
-            'npts_0.2': [True, 113589],
-            'npts_0.5': [True, 64574],
+            # CAS-9386 update build100 serial
+            #'npts_0.2': [True, 113589],
+            #'npts_0.5': [True, 64574],
+            'npts_0.2': [True, 114034],
+            'npts_0.5': [True, 64662],
             'npts_real': [True, 201600]}
 
         report9 = self.stats_compare(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0')
 
-        # .image.tt1 report
+        # .image.tt1 report (test_mosaic_mtmfs_eph)
         im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', \
             field_regions = \
@@ -4505,7 +4677,9 @@ class Test_mosaic(test_tclean_base):
             'com_bmin': [False, 0.708504319190979],
             'com_pa': [False, -89.3270263671875],
             'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4517,19 +4691,24 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -15.082664489746094],
             'min_val_pos': [True, [225, 203, 0, 0]],
             'im_rms': [False, 3.6352690257406723],
-            'im_sum': [False, 14670.480392508209],
-            'regn_sum': [False, -437.08825725317],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 14670.480392508209],
+            #'regn_sum': [False, -437.08825725317],
+            'im_sum': [False, 13760.151578558609],
+            'regn_sum': [False, -320.53889639303],
             'npts_real': [True, 201600],
             'rms_per_field': [False, [4.8419718773, 3.97862920107, 3.92391811, 4.1641374813, 3.58102697509, 3.96398521308, 3.53341315536]]}
 
         report10 = self.stats_compare(exp_im1_stats, im1_stats_dict, '.image.tt1')
 
-        # .residual.tt1 report
+        # .residual.tt1 report (test_mosaic_mtmfs_eph)
         resid1_stats_dict = self.image_stats(img+'.residual.tt1', \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]')
 
         exp_resid1_stats = {'npts': [True, 201600],
-            'npts_unmasked': [True, 113589.0],
+            # CAS-9386 update build100 serial
+            #'npts_unmasked': [True, 113589.0],
+            'npts_unmasked': [True, 114034.0],
             'freq_bin': [False, 16762504556.453674],
             'start': [True, 2.53574e+11],
             'end': [True, 2.53574e+11],
@@ -4541,14 +4720,16 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.023053178563714027],
             'min_val_pos': [True, [225, 203, 0, 0]],
             'im_rms': [False, 0.006006708967196801],
-            'im_sum': [False, 47.65366425671894],
+            # CAS-9386 update build100 serial
+            #'im_sum': [False, 47.65366425671894],
+            'im_sum': [False, 46.97670805919702],
             'regn_sum': [False, 7.861296703074515],
             'npts_real': [True, 201600]}
 
         report11 = self.stats_compare(exp_resid1_stats, resid1_stats_dict, \
             '.residual.tt1')
 
-        # .model.tt1 report
+        # .model.tt1 report (test_mosaic_mtmfs_eph)
         model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
             'ellipse[[239.37089670deg, -16.96420698deg], [13.2095arcsec, 13.1423arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -4573,7 +4754,7 @@ class Test_mosaic(test_tclean_base):
         report12 = self.stats_compare(exp_model1_stats, model1_stats_dict, \
             '.model.tt0')
 
-        # .sumwt.tt1 report
+        # .sumwt.tt1 report (test_mosaic_mtmfs_eph)
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
 
         exp_sumwt1_stats = {'npts': [True, 1],
@@ -4598,6 +4779,8 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output=test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -4612,7 +4795,9 @@ class Test_mosaic(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
+
+# End of test_mosaic_mtmfs_eph
 
 
 def suite():

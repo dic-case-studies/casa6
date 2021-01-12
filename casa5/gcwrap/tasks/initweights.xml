@@ -76,8 +76,10 @@
 
       This task provides for initialization of the weight information
       in the MS.  For ALMA interferometry and EVLA data, it should not
-      generally be necessary to use this task, as the weight information 
-      should have been initialized properly at fill time (v4.2.2 and later).
+      generally be necessary to use this task, as the per-spectral window 
+      weight information should have been initialized properly at 
+      fill time (v4.2.2 and later). To set per-channel weights, use 
+      initweights(vis=finalvis,wtmode='weight',dowtsp=True)
 
       Several initialization modes are supported via the wtmode parameter.
 
@@ -124,7 +126,7 @@
       Tsys calibration table is applied with calwt=True after that, the
       weight would be contaminated by being devided by square of Tsys
       twice.
-      !!! USERS ARE ADVICED TO USE THESE EXPERIMENTAL MODES WITH CARE !!!
+      !!! USERS ARE ADVISED TO USE THESE EXPERIMENTAL MODES WITH CARE !!!
 
       For the above wtmodes, if dowtsp=T (or if the WEIGHT_SPECTRUM
       column already exists), the WEIGHT_SPECTRUM column will be

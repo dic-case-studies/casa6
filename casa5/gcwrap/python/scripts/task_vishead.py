@@ -15,7 +15,6 @@
 # however expert users can always use the table tool directly.
 
 from __future__ import absolute_import
-from __future__ import print_function
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -117,7 +116,7 @@ def vishead(vis, mode=None, listitems=None, hdkey=None, hdindex=None, hdvalue=No
         _ms.open(vis)
         _ms.summary()
         _ms.close()
-        print("Summary information is listed in logger")
+        casalog.post("Summary information is listed in logger")
 
     # In GET/PUT mode, focus on 1 particular bit of MS data
     elif (mode=='get' or mode=='put'):

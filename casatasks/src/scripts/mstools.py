@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -51,7 +50,7 @@ def write_history(myms, vis, tname, param_names, param_vals, myclog=None, debug=
         """
         if not hasattr(myms, 'writehistory'):
             if debug:
-                print("write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname))
+                myclog.post("write_history(myms, %s, %s): myms is not an ms tool" % (vis, tname), 'WARN')
             return False
         retval = True
         isopen = False

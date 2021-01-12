@@ -316,7 +316,7 @@ MsFactory::attachColumns ()
 
 }
 
-pair<MeasurementSet *, Int>
+pair<MeasurementSet *, rownr_t>
 MsFactory::createMs ()
 {
     addColumns ();
@@ -325,7 +325,7 @@ MsFactory::createMs ()
 
     ms_p->flush();
 
-    pair<MeasurementSet *, Int> result = make_pair (ms_p, nRows_p);
+    pair<MeasurementSet *, rownr_t> result = make_pair (ms_p, nRows_p);
 
     ms_p = 0; // give up all ownership and access
 

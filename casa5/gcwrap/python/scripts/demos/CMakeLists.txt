@@ -20,8 +20,8 @@
 
 casa_add_python( tools tools_demos_python lib/python${PYTHONV}/regressions
   backend_demo.py
-  jupiter6cm_caldemo.py
-  jupiter6cm_demo.py
+  #jupiter6cm_caldemo.py
+  #jupiter6cm_demo.py
   jupiter6cm_flagdemo.py
   jupiter6cm_imagingdemo.py
   jupiter6cm_poldemo.py
