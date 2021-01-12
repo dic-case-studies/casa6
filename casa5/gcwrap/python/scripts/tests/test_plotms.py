@@ -1,14 +1,15 @@
+import fnmatch
+import matplotlib.pyplot as plt
+import numpy as np
 import os
-import sys
+import sha
 import shutil
+import sys
+import unittest
+
 from __main__ import default
 from tasks import *
 from taskinit import *
-import unittest
-import fnmatch
-import sha
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Paths for data
 datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
@@ -652,6 +653,32 @@ class test_axis(plotms_test_base):
             self.checkPlotfile(plot_path, plot_min_size)
             if not debug:
                 self.removePlotfile(plot_path)
+
+    def test_axis_plotrange(self):
+        '''test_axis_plotrange: test asymmetrical and reverse plotrange'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testAxis15.jpg")
+        self.removePlotfile()
+        # autorange x and y; plotms makes ranges symmetrical about 0
+        plotrange1 = [0, 0, 0, 0]
+        res = plotms(vis=self.ms, plotfile=self.plotfile_jpg, highres=True,
+            xaxis='u', yaxis='v', showgui=False, plotrange=plotrange1)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 180000, 220000)
+        self.removePlotfile()
+        # autorange x, limit y - larger plot
+        plotrange2 = [0, 0, -500, 500]
+        res = plotms(vis=self.ms, plotfile=self.plotfile_jpg, highres=True,
+            xaxis='u', yaxis='v', showgui=False, plotrange=plotrange2)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.removePlotfile()
+        # autorange x, reverse limit y - larger plot
+        plotrange3 = [0, 0, 500, -500]
+        res = plotms(vis=self.ms, plotfile=self.plotfile_jpg, highres=True,
+            xaxis='u', yaxis='v', showgui=False, plotrange=plotrange3)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
