@@ -43,7 +43,6 @@ else:
     import string
     from odict import odict
     from taskinit import *
-
     ###some helper tools
     from  casac import *
     ms = casac.ms()
@@ -3576,25 +3575,27 @@ def write_tclean_history(imagename, tname, params, clog):
         img_exts = glob.glob(imagename + '.*')
         clog.post("Writing history into these images: {}".format(img_exts))
 
+        history = ['taskname={0}'.format(tname)]
+        history.append(_casa_version_string())
+        # Add all task arguments.
+        for name, val in params:#range(len(param_names)):
+            msg = "%-11s = " % name
+            if type(val) == str:
+                msg += '"'
+            msg += str(val)
+            if type(val) == str:
+                msg += '"'
+            history.append(msg)
+
         for img in img_exts:
             iat_open = False
             try:
-                history = ['taskname={0}'.format(tname)]
-                history.append(_casa_version_string())
-                # Add all task arguments.
-                for name, val in params:#range(len(param_names)):
-                    msg = "%-11s = " % name
-                    if type(val) == str:
-                        msg += '"'
-                    msg += str(val)
-                    if type(val) == str:
-                        msg += '"'
-                    history.append(msg)
-
                 iat.open(img)
                 iat_open = True
                 iat.sethistory(origin=tname, history=history)
-
+            except RuntimeError:
+                clog.post('Could not open this directory as an image to write history: {}'.
+                          format(img), 'DEBUG')
             finally:
                 if iat_open:
                     iat.close()
