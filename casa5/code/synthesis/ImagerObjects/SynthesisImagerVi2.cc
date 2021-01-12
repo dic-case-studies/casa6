@@ -920,47 +920,76 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 		    if(rmode=="abs" && robust==0.0 && noise.getValue()==0.0)
 		      throw(AipsError("Absolute Briggs formula does not allow for robust 0 and estimated noise per visibility 0"));
               
+            Float fracBW = 0.0;
             
             if(rmode=="bwtaper")
             {
-                Float fracBW = 0.0;
-                for (Int k=0; k < itsMappers.nMappers(); ++k){
+                Double minFreq = 0.0;
+                Double maxFreq = 0.0;
+                
+                CoordinateSystem cs=itsMappers.imageStore(0)->getCSys();
+                IPosition imshape=itsMappers.imageStore(0)->getShape();
+                
+                if(imshape(3) < 1) {
+                  cout << "SynthesisImagerVi2::weight Only one channel in image " << endl;
+                }
+                else{
+                    minFreq=abs(SpectralImageUtil::worldFreq(cs, 0.0));
+                    maxFreq=abs(SpectralImageUtil::worldFreq(cs,imshape(3)-1));
+                   
+                    if(maxFreq < minFreq){
+                      Double tmp=minFreq;
+                      minFreq=maxFreq;
+                      maxFreq=tmp;
+                    }
+                }
+                
+                for (Int k=1; k < itsMappers.nMappers(); ++k){
                     CoordinateSystem cs=itsMappers.imageStore(k)->getCSys();
                     IPosition imshape=itsMappers.imageStore(k)->getShape();
      
                     if(imshape(3) < 1) {
                       cout << "SynthesisImagerVi2::weight Only one channel in image " << endl;
-                      fracBW = 1.0;
                     }
                     else{
-                        Double minFreq=abs(SpectralImageUtil::worldFreq(cs, 0.0));
-                        Double maxFreq=abs(SpectralImageUtil::worldFreq(cs,imshape(3)-1));
-                       
-                        if(maxFreq < minFreq){
-                          Double tmp=minFreq;
-                          minFreq=maxFreq;
-                          maxFreq=tmp;
+                        Double minFreq_k=abs(SpectralImageUtil::worldFreq(cs, 0.0));
+                        Double maxFreq_k=abs(SpectralImageUtil::worldFreq(cs,imshape(3)-1));
+                        
+                        if(maxFreq_k < minFreq_k){
+                          Double tmp=minFreq_k;
+                          minFreq_k=maxFreq_k;
+                          maxFreq_k=tmp;
                         }
-                        cout << "****************" << endl;
-                        cout << "SynthesisImagerVi2::weight itsMapper indx, minFreq, maxFreq " << k <<",*,"<< minFreq << ",*," << maxFreq << endl;
-                        fracBW = 2*(maxFreq - minFreq)/(maxFreq + minFreq);
-                        cout << "SynthesisImagerVi2::weight fracBW " << fracBW << endl;
-                        cout << "****************" << endl;
+                        
+            
+                        if(minFreq > minFreq_k)
+                        {
+                            minFreq = minFreq_k;
+                        }
+                        
+                        
+                        if(maxFreq < maxFreq_k)
+                        {
+                            maxFreq = maxFreq_k;
+                        }
+     
                     }
-                
-                 CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust, fracBW, npixels, multiField);
-                  itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
-
                 }
+                
+                
+                if((maxFreq != 0.0) || (minFreq != 0.0)) fracBW = 2*(maxFreq - minFreq)/(maxFreq + minFreq);
+                
+                cout << "****************" << endl;
+                cout << "SynthesisImagerVi2::weight itsMapper minFreq, maxFreq " << minFreq << ",*," << maxFreq << endl;
+                cout << "SynthesisImagerVi2::weight fracBW " << fracBW << endl;
+                cout << "****************" << endl;
             }
-            else{
-                Float fracBW = 0.0;
-                CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust, npixels, multiField);
-                for (Int k=0; k < itsMappers.nMappers(); ++k){
+              
+                
+            CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust,fracBW, npixels, multiField);
+            for (Int k=0; k < itsMappers.nMappers(); ++k){
                       itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
-
                     }
-            }
               
               
 		  }

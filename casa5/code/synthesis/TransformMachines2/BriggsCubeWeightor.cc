@@ -55,7 +55,7 @@ using namespace casa::vi;
     
   }
   
-  BriggsCubeWeightor::BriggsCubeWeightor( const String& rmode, const Quantity& noise, const Double robust,  const Float& fracBW, const Int superUniformBox, const Bool multiField)  : grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), initialized_p(False), refFreq_p(-1.0),freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour) {
+  BriggsCubeWeightor::BriggsCubeWeightor( const String& rmode, const Quantity& noise, const Double robust,  const Double& fracBW, const Int superUniformBox, const Bool multiField)  : grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), initialized_p(False), refFreq_p(-1.0),freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour) {
 
     rmode_p=rmode;
     noise_p=noise;
@@ -70,7 +70,7 @@ using namespace casa::vi;
   BriggsCubeWeightor::BriggsCubeWeightor(vi::VisibilityIterator2& vi,
                        const String& rmode, const Quantity& noise,
                        const Double robust,
-                                         const ImageInterface<Complex>& templateimage, const RecordInterface& inrec, const Float& fracBW,
+                                         const ImageInterface<Complex>& templateimage, const RecordInterface& inrec, const Double& fracBW,
                      const Int superUniformBox, const Bool multiField){
     rmode_p=rmode;
     noise_p=noise;
@@ -277,31 +277,14 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     Double fracBW, nCellsBW, uvDistanceFactor;
     IPosition pos(4,0);
     
-//    cout << "BriggsCubeWeightor::weightUniform uscale_p, vscale_p" << uscale_p << "," << vscale_p << endl;
-//    cout << "***************** row = 0 *****************" << endl;
-//    cout << " BriggsCubeWeightor::weightUniform nvischan " << nvischan << endl;
-//    fracBW = calcFractionalBandwidth(vb.getFrequencies(0), nvischan, flag(Slice(),0));
-//    cout << " BriggsCubeWeightor::weightUniform fracBW for row 0 " << fracBW << endl;
-//    cout << " BriggsCubeWeightor::weightUniform frequencies shape row 0 " << vb.getFrequencies(0).shape() << endl;
-//    cout << " BriggsCubeWeightor::weightUniform flag shape row 0 " << flag(Slice(),0).shape() << endl;
-//    cout << " BriggsCubeWeightor::weightUniform frequencies row 0 " << vb.getFrequencies(0) << endl;
-//    cout << "***************** row = nRow-1 *****************" << endl;
-//    cout << " BriggsCubeWeightor::weightUniform nvischan " << nvischan << endl;
-//    fracBW = calcFractionalBandwidth(vb.getFrequencies(nRow-1), nvischan, flag(Slice(),nRow-1));
-//    cout << " BriggsCubeWeightor::weightUniform fracBW for row nRow-1 " << fracBW << endl;
-//    cout << " BriggsCubeWeightor::weightUniform frequencies shape row nRow-1 " << vb.getFrequencies(nRow-1).shape() << endl;
-//    cout << " BriggsCubeWeightor::weightUniform flag shape row nRow-1 " << flag(Slice(),nRow-1).shape() << endl;
-//    cout << " BriggsCubeWeightor::weightUniform frequencies row nRow-1 " << vb.getFrequencies(nRow-1) << endl;
-//    cout << "************************************************" << endl;
-    
+
+    fracBW = fracBW_p;
     if(rmode_p=="bwtaper")
     {
-        if(fracBW_p == 0.0)
+        if(fracBW == 0.0)
         {
             throw(AipsError("BriggsCubeWeightor fractional bandwith is not a valid value, 0.0."));
         }
-        fracBW = fracBW_p;
-        cout << " The fractional bandwith is " << fracBW << endl;
     }
     
         

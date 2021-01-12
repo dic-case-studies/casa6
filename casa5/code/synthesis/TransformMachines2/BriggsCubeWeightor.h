@@ -50,13 +50,13 @@ class BriggsCubeWeightor{
    BriggsCubeWeightor(vi::VisibilityIterator2& vi, const casacore::String& rmode,
 		       const casacore::Quantity& noise, const casacore::Double robust,
 		       const casacore::ImageInterface<casacore::Complex>& templateimage,
-                      const casacore::RecordInterface& inrec, const casacore::Float& fracBW,
+                      const casacore::RecordInterface& inrec, const casacore::Double& fracBW,
 		       const casacore::Int superUniformBox=0,
 		      const casacore::Bool multiField=false);
    //This constructor will require that init be called at a later stage
    BriggsCubeWeightor(const casacore::String& rmode,
 		       const casacore::Quantity& noise,
-		      const casacore::Double robust, const casacore::Float& fracBW, const
+		      const casacore::Double robust, const casacore::Double& fracBW, const
 		      casacore::Int superUniformBox=0,
 		      const casacore::Bool multiField=false);
     
@@ -87,7 +87,7 @@ class BriggsCubeWeightor{
     casacore::InterpolateArray1D<casacore::Double,casacore::Complex>::InterpolationMethod freqInterpMethod_p;
     casacore::Bool freqFrameValid_p;
     VisImagingWeight visWgt_p;
-    casacore::Float fracBW_p;
+    casacore::Double fracBW_p;
  };
    }//# end namespace refim
 } // end namespace casa
