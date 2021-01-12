@@ -433,9 +433,9 @@ class test_singlepointing(testref_base):
                            imgval=[(outimg+'.psf', 0.99, [400,400,0,0]),
                                    (outimg+'.psf', 0.99, [400,400,0,1]),
                                    (outimg+'.image', 1.66, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.459, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.07, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.168, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 0.461, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.091, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.216, [300,400,0,1]) ])      # extended emission with alpha=0
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
         self.checkfinal(pstr=report)
 
@@ -474,8 +474,8 @@ class test_singlepointing(testref_base):
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
                                    (outimg+'.image', 1.48, [350,433,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 0.347, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.013, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', -0.036, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 0.9607, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.0025, [300,400,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
@@ -513,8 +513,8 @@ class test_singlepointing(testref_base):
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
                                    (outimg+'.image', 18.65, [350,433,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 33.15, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 7.93, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 15.33, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 8.234, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 16.149, [300,400,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
     # Test 13
@@ -808,8 +808,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.psf', 0.99, [750,750,0,1]),
                                    (outimg+'.image', 1.554, [700,783,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 0.485, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.014, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.187, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.043, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.227, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
@@ -846,8 +846,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
                                    (outimg+'.image', 1.452, [700,783,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 0.41, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 0.917, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.050149, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 0.966, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.114, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 
@@ -883,8 +883,8 @@ class test_mosaic(testref_base):
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
                                    (outimg+'.image', 18.17, [700,783,0,0]),    # point source of 1 Jy
                                    (outimg+'.image', 33.16, [650,720,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 7.932, [700,783,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 16.319, [650,720,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 8.244, [700,783,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 17.129, [650,720,0,1]) ])      # extended emission with alpha=0
         self.checkfinal(pstr=report)
 
 

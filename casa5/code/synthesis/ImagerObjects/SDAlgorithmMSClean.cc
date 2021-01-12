@@ -74,8 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsScaleSizes(scalesizes),
     itsSmallScaleBias(smallscalebias),
     //    itsStopLargeNegatives(stoplargenegatives),
-    itsStopPointMode(stoppointmode),
-    itsMCsetup(false)
+    itsStopPointMode(stoppointmode)
  {
    itsAlgorithmName=String("multiscale");
    if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
@@ -129,7 +128,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
     //// Initialize the MatrixCleaner.
     ///  ----------- do once ----------
-    if( itsMCsetup == false)
       {
 	itsCleaner.defineScales( itsScaleSizes );
 	
@@ -156,7 +154,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsCleaner.setPsf(  tempMat );
 	itsCleaner.makePsfScales();
 
-	itsMCsetup=true;
       }
     /// -----------------------------------------
 
