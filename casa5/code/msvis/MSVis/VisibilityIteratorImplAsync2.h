@@ -227,7 +227,7 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
-    virtual void setRowBlocking (casacore::Int nRows = 0);
+    virtual void setRowBlocking (casacore::rownr_t nRows = 0);
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const;
 
@@ -413,7 +413,7 @@ public:
     virtual casacore::Int nPolarizations () const;
 
     // Return the number of rows in the current iteration
-    virtual casacore::Int nRows () const;
+    virtual casacore::rownr_t nRows () const;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
@@ -422,7 +422,7 @@ public:
 
     // Return the numbers of rows in the current chunk
 
-    virtual casacore::Int nRowsInChunk () const;
+    virtual casacore::rownr_t nRowsInChunk () const;
 
     // Return the number of sub-intervals in the current chunk
 

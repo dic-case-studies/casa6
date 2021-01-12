@@ -235,7 +235,7 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_Trivial ) {
   vi->origin();
   
   EXPECT_EQ(4,vb->nAntennas());
-  Int nBln(4*3/2);  // no ACs
+  rownr_t nBln(4*3/2);  // no ACs
   EXPECT_EQ(nBln,vb->nRows());
 
   Vector<Int> vba1(vb->antenna1());
@@ -285,11 +285,11 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_NonTrivial1 ) {
   vi->origin();
 
   EXPECT_EQ(NANT,vb->nAntennas());
-  Int nBln(NANT*(NANT-1)/2);  // no ACs
+  rownr_t nBln(NANT*(NANT-1)/2);  // no ACs
   Vector<Int> vba1(vb->antenna1());
   Vector<Int> vba2(vb->antenna2());
   EXPECT_EQ(nBln,vb->nRows());
-  Int k=0;
+  rownr_t k=0;
   for (Int a1=0;a1<(NANT-1);++a1) {
     for (Int a2=a1+1;a2<NANT;++a2) {
       EXPECT_EQ(a1,vba1(k));

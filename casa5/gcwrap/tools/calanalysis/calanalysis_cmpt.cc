@@ -176,7 +176,7 @@ std::string calanalysis::polbasis( void ) {
 
 // --- //
 
-int calanalysis::numfield( void ) {
+long calanalysis::numfield( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -238,7 +238,7 @@ std::vector<std::string> calanalysis::field( const bool name ) {
 
 // --- //
 
-int calanalysis::numantenna( void ) {
+long calanalysis::numantenna( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -302,7 +302,7 @@ std::vector<std::string> calanalysis::antenna( const bool name ) {
 
 // --- //
 
-int calanalysis::numantenna1( void ) {
+long calanalysis::numantenna1( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -354,7 +354,7 @@ std::vector<std::string> calanalysis::antenna1( const bool name ) {
 
 // --- //
 
-int calanalysis::numantenna2( void ) {
+long calanalysis::numantenna2( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -414,7 +414,7 @@ std::vector<std::string> calanalysis::antenna2( const bool name ) {
 
 // --- //
 
-int calanalysis::numfeed( void ) {
+long calanalysis::numfeed( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -458,7 +458,7 @@ std::vector<std::string> calanalysis::feed( void ) {
 
 // --- //
 
-int calanalysis::numtime( void ) {
+long calanalysis::numtime( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -502,7 +502,7 @@ std::vector<double> calanalysis::time( void ) {
 
 // --- //
 
-int calanalysis::numspw( void ) {
+long calanalysis::numspw( void ) {
 
   // Is the CalAnalysis instance valid?
 
@@ -564,14 +564,14 @@ std::vector<std::string> calanalysis::spw( const bool name ) {
 
 // --- //
 
-std::vector<int> calanalysis::numchannel( void ) {
+std::vector<long> calanalysis::numchannel( void ) {
 
   // Is the CalAnalysis instance valid?
 
   if ( poCA == NULL ) {
     LogIO log( LogOrigin( "CalAnalysis", "numchannel()", WHERE ) );
     log << LogIO::WARN << "Open caltable first" << LogIO::POST;
-    return( std::vector<int>() );
+    return( std::vector<long>() );
   }
 
 
@@ -580,8 +580,8 @@ std::vector<int> calanalysis::numchannel( void ) {
   Vector<uInt> oNumChannel( poCA->numChannel() );
   uInt uiNumSPW = oNumChannel.nelements();
 
-  std::vector<int> numchannel( uiNumSPW );
-  for ( uInt s=0; s<uiNumSPW; s++ ) numchannel[s] = (int) oNumChannel[s];
+  std::vector<long> numchannel( uiNumSPW );
+  for ( uInt s=0; s<uiNumSPW; s++ ) numchannel[s] = (long) oNumChannel[s];
 
   return( numchannel );
 
