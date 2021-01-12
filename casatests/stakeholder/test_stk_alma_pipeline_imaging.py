@@ -57,6 +57,7 @@ import shutil
 import inspect
 import scipy
 import matplotlib.pyplot as pyplot
+import json
 
 from casatestutils.imagerhelpers import TestHelpers
 th = TestHelpers()
@@ -210,6 +211,7 @@ class test_tclean_base(unittest.TestCase):
             dictionary
         """
         self._myia.open(image)
+        imagename=os.path.basename(image)
         stats_dict = {}
 
         statistics = self._myia.statistics()
@@ -243,11 +245,11 @@ class test_tclean_base(unittest.TestCase):
 
         # stats returned if a region file is given
         if fit_region != None:
-            if '_cube' in image:
-                if '.pb' in image:
+            if '_cube' in imagename:
+                if '.pb' in imagename:
                     fit_region = fit_region + ', range=[%schan,%schan]'\
                         % (int(im_size[3]/2), int(im_size[3]/2))
-                if '.psf' in image:
+                if '.psf' in imagename:
                     # using chan 1 as first because ia.fitcomponents fits
                     # every channel if chan=0
                     fit_regions = [(fit_region + ', range=[%schan,%schan]' \
@@ -276,20 +278,20 @@ class test_tclean_base(unittest.TestCase):
                             stats_dict['fit_loc_freq_'+str(i)] = 1.0
                             stats_dict['fit_pix_'+str(i)] = [1.0, 1.0]
                         i += 1
-                if '.model' in image:
+                if '.model' in imagename:
                     fit_region = fit_region
-                if '.model' not in image and '.pb' not in image and '.psf' not in image:
+                if '.model' not in imagename and '.pb' not in imagename and '.psf' not in imagename:
                     # WARN: If max value channel is 0, tool fits all channels
                     fit_region = fit_region + ', range=[%schan,%schan]' \
                         % (stats_dict['max_val_pos'][3], \
                         stats_dict['max_val_pos'][3])
-            if '.psf' in image and '_cube' in image:
+            if '.psf' in imagename and '_cube' in imagename:
                 stats_dict['regn_sum'] = self._myia.statistics( \
                     region=fit_regions[1])['sum'][0]
             else:
                 stats_dict['regn_sum'] = self._myia.statistics( \
                     region=fit_region)['sum'][0]
-            if ('image' in image and 'mosaic_cube_eph' not in image) or 'pb' in image or ('psf' in image and 'cube' not in image):
+            if ('image' in imagename and 'mosaic_cube_eph' not in imagename) or 'pb' in imagename or ('psf' in imagename and 'cube' not in imagename):
                 try:
                     fit_dict = self._myia.fitcomponents( \
                         region=fit_region)['results']['component0']
@@ -306,17 +308,17 @@ class test_tclean_base(unittest.TestCase):
                     stats_dict['fit_pix'] = [1.0, 1.0]
 
         # stats returned for .image(.tt0)
-        if 'image' in image:
+        if 'image' in imagename:
             commonbeam = self._myia.commonbeam()
             stats_dict['com_bmin'] = commonbeam['minor']['value']
             stats_dict['com_bmaj'] = commonbeam['major']['value']
             stats_dict['com_pa'] = commonbeam['pa']['value']
-            if 'cube' in image:
+            if 'cube' in imagename:
                 stats_dict['rms_per_chan'] = \
                     self._myia.statistics(axes=[0,1])['rms'].tolist()
                 stats_dict['profile'] = self.cube_profile_fit( \
                     image, max_loc, stats_dict['nchan'])
-            if 'mosaic' in image:
+            if 'mosaic' in imagename:
                 stats_dict['rms_per_field'] = []
                 for region in field_regions:
                     stats_dict['rms_per_field'].append( \
@@ -331,7 +333,7 @@ class test_tclean_base(unittest.TestCase):
             stats_dict['mask_regns'] = scipy.ndimage.label(chunk)[1]
             stats_dict['mask'] = ~numpy.array(chunk, dtype=bool)
 
-        if 'pb' in image:
+        if 'pb' in imagename:
             pb_mask_02 = chunk>0.2
             pb_mask_05 = chunk>0.5
             if 'cube' in image:
@@ -347,15 +349,15 @@ class test_tclean_base(unittest.TestCase):
             else:
                 stats_dict['npts_0.2'] = numpy.count_nonzero(pb_mask_02)
                 stats_dict['npts_0.5'] = numpy.count_nonzero(pb_mask_05)
-            if 'mosaic' in image:
+            if 'mosaic' in imagename:
                 stats_dict['pb_mask_0.2'] = pb_mask_02
                 stats_dict['pb_mask_0.5'] = pb_mask_05
 
-        if 'model' in image or image.endswith('.alpha'):
+        if 'model' in imagename or image.endswith('.alpha'):
             stats_dict['mask_non0'] = numpy.count_nonzero(chunk*masks)
 
-        if 'weight' in image:
-            if 'cube' in image:
+        if 'weight' in imagename:
+            if 'cube' in imagename:
                 wt_02_list = []
                 wt_05_list = []
                 i = 0
@@ -476,6 +478,33 @@ class test_tclean_base(unittest.TestCase):
         pyplot.clf()
 
         return profile
+
+    def filter_report(self, report, showonlyfail=True):
+        """ function to filter the test report, the input report is expected to be a string with the newline code """
+        ret = ''
+        if showonlyfail:
+            filter='Fail'
+        else:
+            filter='Pass' 
+        
+        if report!='':
+            testItems = report.split('\n')
+            retitems=[]
+            for testitem in testItems:
+                if '[ check_ims ]' in testitem or '[ check_pixmask ]' in testitem or '[ check_val ]' in testitem:
+                    if '( '+filter in testitem:
+                        retitems.append(testitem)
+            nfail = len(retitems)
+            msg = str(nfail)+' individual test failure(s) '
+            ret = '\n' + '\n'.join(retitems)
+            ret += '\n' + msg
+        return ret
+
+     
+    def save_dict_to_disk(self, indict, outfilename):
+        """ function that will save input Python dictionary to file (json) """
+        with open(outfilename+'.json', 'w') as outf:
+            json.dump(indict, outf)
 
 
 ##############################################
@@ -794,6 +823,7 @@ class Test_standard(test_tclean_base):
             report += self.stats_compare(exp_bmaj_dict, bmaj_dict, '.image bmaj', beam=True)
             report += self.stats_compare(exp_pa_dict, pa_dict, '.image pa', beam=True)
 
+        failed=self.filter_report(report)
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
@@ -810,9 +840,9 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1056,6 +1086,7 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed=self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -1072,9 +1103,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1416,6 +1447,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
 
@@ -1430,9 +1463,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mtmfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1687,6 +1720,7 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             ["2017.1.00750.T_tclean_exe1.ms", \
@@ -1705,9 +1739,9 @@ class Test_standard(test_tclean_base):
         test_dict['test_standard_cube_eph']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of est_standard_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -1947,6 +1981,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -1961,9 +1997,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2300,6 +2336,8 @@ class Test_standard(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -2314,9 +2352,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_standard_mtmfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -2556,6 +2594,8 @@ class Test_standard(test_tclean_base):
             report6 + report7 + report8
 
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
@@ -2570,8 +2610,9 @@ class Test_standard(test_tclean_base):
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
+# End of test_standard_cal
 
 ###############################################
 ###############################################
@@ -2925,6 +2966,8 @@ class Test_mosaic(test_tclean_base):
             report += self.stats_compare(exp_bmaj_dict, bmaj_dict, '.image bmaj', beam=True)
             report += self.stats_compare(exp_pa_dict, pa_dict, '.image pa', beam=True)
 
+        failed = self.filter_report(report)
+
         img = shutil._basename(img)
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
@@ -2941,9 +2984,9 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_mosaic_cube
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3005,6 +3048,7 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
+        #self.save_dict_to_disk(report0, 'myreport0')
 
         # .image report (test_mosaic_mfs)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
@@ -3237,7 +3281,7 @@ class Test_mosaic(test_tclean_base):
         # report combination (test_mosaic_mfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
-
+        failed = self.filter_report(report)
 
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -3252,10 +3296,13 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
+        print("FINAL test_dict=",test_dict)
+        
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            #msg = report)
+            msg = failed)
 
-
+# End of  test_mosaic_mfs
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -3670,6 +3717,7 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00020.S_tclean.ms")
@@ -3685,7 +3733,9 @@ class Test_mosaic(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
+
+# End of test_mosaic_mtmfs
 
 #-------------------------------------------------#
     @stats_dict(test_dict)
@@ -3985,6 +4035,7 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             ["2017.1.00750.T_tclean_exe1.ms", \
@@ -4003,9 +4054,9 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_cube_eph']['images'].append(img+'.image.profile.png')
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of est_mosaic_cube_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4299,6 +4350,7 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
+        failed = self.filter_report(report)
 
         add_to_dict(self, output = test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
@@ -4314,9 +4366,9 @@ class Test_mosaic(test_tclean_base):
                 (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
 
-
+# End of test_mosaic_mfs_eph
 #-------------------------------------------------#
     @stats_dict(test_dict)
     # @unittest.skip("")
@@ -4727,6 +4779,8 @@ class Test_mosaic(test_tclean_base):
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12 + report13
 
+        failed = self.filter_report(report)
+
         add_to_dict(self, output=test_dict, dataset = \
             "2018.1.00879.S_tclean.ms")
 
@@ -4741,7 +4795,9 @@ class Test_mosaic(test_tclean_base):
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
 
         self.assertTrue(th.check_final(pstr = report), \
-            msg = report)
+            msg = failed)
+
+# End of test_mosaic_mtmfs_eph
 
 
 def suite():
