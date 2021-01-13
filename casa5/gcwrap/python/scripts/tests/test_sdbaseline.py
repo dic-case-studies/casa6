@@ -4988,10 +4988,16 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     def _check_weight_values(self, sigmavalue='stddev'):
         """
         Check if the values in the WEIGHT column are identical 
-        with those calculated as 1/(sigma^2), where sigma is 
-        standard deviation of each spectrum if sigmavalue is
-        'stddev', or root mean square of each spectrum if
-        sigmavalue is 'rms'.
+        to those calculated per polarisation and per row 
+        as 1/(sigma(pol, row)^2), where sigma is 
+        - the standard deviation if sigmavalue is 'stddev', 
+          in which case sigma^2 is the variance, or
+        - the root mean square if sigmavalue is 'rms',
+          in which case sigma^2 is the mean square
+        calculated over all *valid* spectra
+        along the frequency channels axis of (pol, row).
+        Note that the values in the WEIGHT column should be
+        zero in case all channels are flagged.
         """
         with tbmanager(self.outfile) as tb:
             wgt = tb.getcol('WEIGHT')
