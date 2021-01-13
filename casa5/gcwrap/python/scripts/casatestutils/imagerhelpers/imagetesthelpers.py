@@ -33,6 +33,7 @@ if is_CASA6:
     _tb = casatools.table()
     _tbt = casatools.table()
     _ia  = casatools.image()
+    _cb = casatools.calibrater()
     from casatasks import casalog
 
     def tclean_param_names():
@@ -356,6 +357,41 @@ class TestHelpers:
             if summ.has_key('iterdone'):
                 iters = summ['iterdone']
         return iters
+
+    def delmodkeywords(self,msname=""):
+        """get rid of extra model keywords that sometimes persist"""
+
+        _tb.open( msname+'/SOURCE', nomodify=False )
+        keys = _tb.getkeywords()
+        for key in keys:
+            _tb.removekeyword( key )
+        _tb.close()
+
+    def resetmodelcol(self,msname="",val=0.0):
+        """ set model column to val"""
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if not hasmodcol:
+            _cb.open(msname)
+            _cb.close()
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')
+            dat.fill( complex(val,0.0) )
+            _tb.putcol('MODEL_DATA', dat)
+        _tb.close();
+
+    def delmodels(self,msname="",modcol='nochange'):
+        """Get rid of OTF model and model column"""
+         
+        self.delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
+
+        if modcol=='delete':
+            self.delmodelcol(msname) ## Delete model column
+        if modcol=='reset0':
+            self.resetmodelcol(msname,0.0)  ## Set model column to zero
+        if modcol=='reset1':
+            self.resetmodelcol(msname,1.0)  ## Set model column to one
 
     def verdict(self, boolval):
         """Return the string 'Pass' if boolean is True, Else return string 'Fail'"""
