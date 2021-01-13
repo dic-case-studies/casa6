@@ -2483,6 +2483,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         // to account for the the number of rows in this subchunk
         else
         {
+            channelSelectorsNrows_p.clear();
             channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
             rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
         }
