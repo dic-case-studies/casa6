@@ -98,12 +98,13 @@ def plotants( vis=None, figfile=None,
                 if len(msname) > 55:
                         title += '\n'
                 title += msname
-        pl.title(title, {'fontsize':12})
 
         if logpos:
                 plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations)
         else:
                 plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showgui)
+        pl.title(title, {'fontsize':12})
+        
         if figfile:
                 pl.savefig(figfile)
 
@@ -164,7 +165,6 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
         stationNames = [stationNames[i] for i in antIdsUsed]
 
         nAnts = len(antIdsUsed)
-        print("Number of points being plotted:", nAnts)
         casalog.post("Number of points being plotted: " + str(nAnts))
         if nAnts == 0: # excluded all antennas
                 return telescope, antNames, [], [], []

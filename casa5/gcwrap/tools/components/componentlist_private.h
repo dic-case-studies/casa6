@@ -4,11 +4,11 @@ casacore::LogIO         *itsLog;
 casa::ComponentList *itsList;
 casa::ComponentList *itsBin;
 
-casacore::Vector<casacore::Int> checkIndices(int which,
+vector<int> checkIndices(int which,
                                      const casacore::String& function,
                                      const casacore::String& message) const;
 
-casacore::Vector<casacore::Int> checkIndices(const vector<int>& which,
+vector<int> checkIndices(const vector<int>& which,
                                      const casacore::String& function,
                                      const casacore::String& message) const;
 

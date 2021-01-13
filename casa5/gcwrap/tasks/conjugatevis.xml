@@ -5,7 +5,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="conjugatevis" category="utility, manipulation">
+<task type="function" name="conjugatevis" category="manipulation">
 <shortdescription>Change the sign of the phases in all visibility columns.</shortdescription>
 <description>
        Change the sign of the phases in all visibility columns.

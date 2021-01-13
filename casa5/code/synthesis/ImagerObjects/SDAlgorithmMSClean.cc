@@ -39,6 +39,7 @@
 #include <lattices/Lattices/TiledLineStepper.h>
 #include <lattices/Lattices/LatticeStepper.h>
 #include <lattices/Lattices/LatticeIterator.h>
+#include <lattices/Lattices/LatticeLocker.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <coordinates/Coordinates/StokesCoordinate.h>
 #include <casa/Exceptions/Error.h>
@@ -115,12 +116,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmMSClean","initializeDeconvolver",WHERE) );
 
     AlwaysAssert( (bool) itsImages, AipsError );
-
-    (itsImages->residual())->get( itsMatResidual , true );
-    (itsImages->model())->get( itsMatModel , true );
-    (itsImages->psf())->get( itsMatPsf , true );
-    itsImages->mask()->get( itsMatMask, true );
-
+    {
+      LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Read);
+      LatticeLocker lock2 (*(itsImages->model()), FileLocker::Read);
+      LatticeLocker lock3 (*(itsImages->psf()), FileLocker::Read);
+      LatticeLocker lock4 (*(itsImages->mask()), FileLocker::Read);
+      (itsImages->residual())->get( itsMatResidual , true );
+      (itsImages->model())->get( itsMatModel , true );
+      (itsImages->psf())->get( itsMatPsf , true );
+      itsImages->mask()->get( itsMatMask, true );
+      
+    }
     //// Initialize the MatrixCleaner.
     ///  ----------- do once ----------
     if( itsMCsetup == false)
@@ -218,7 +224,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void SDAlgorithmMSClean::finalizeDeconvolver()
   {
     ///MatrixCleaner does not modify the original residual image matrix
-    ///so the first line is a dummy. 
+    ///so the first line is a dummy.
+    LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
+    LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
     (itsImages->residual())->put( itsMatResidual );
     (itsImages->model())->put( itsMatModel );
   }

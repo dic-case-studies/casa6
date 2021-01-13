@@ -327,8 +327,8 @@ class solar_system_setjy:
     #
     # should we print this to the log?
     #
-    #           print 'MJD, geo & topo velocities (km/s), and shift (MHz) = %7.1f  %5.1f  %5.1f  %6.3f' % \
-    #                 (MJD, RadVel, me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6)
+    #           casalog.post( 'MJD, geo & topo velocities (km/s), and shift (MHz) = %7.1f  %5.1f  %5.1f  %6.3f' % \
+    #                 (MJD, RadVel, me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6))
                 msg='MJD, geo & topo velocities (km/s), and shift (MHz) = %7.1f  %5.1f  %5.1f  %6.3f' % \
                      (MJD, RadVel, _me.measure(rv,'topo')['m0']['value']/1000, average_delta_frequency/1.0e6)
                 casalog.post(msg, 'INFO2')

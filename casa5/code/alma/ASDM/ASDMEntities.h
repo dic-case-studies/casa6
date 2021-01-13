@@ -161,6 +161,8 @@
 
 #include <alma/ASDM/TotalPowerRow.h>
 
+#include <alma/ASDM/VLAWVRRow.h>
+
 #include <alma/ASDM/WVMCalRow.h>
 
 #include <alma/ASDM/WeatherRow.h>
@@ -298,6 +300,8 @@
 #include <alma/ASDM/SysPowerTable.h>
 
 #include <alma/ASDM/TotalPowerTable.h>
+
+#include <alma/ASDM/VLAWVRTable.h>
 
 #include <alma/ASDM/WVMCalTable.h>
 
