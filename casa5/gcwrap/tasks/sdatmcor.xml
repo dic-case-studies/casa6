@@ -7,8 +7,8 @@
 
     The task sdatmcor provides the capability of offline correction of
     residual atmospheric features in the calibrated single-dish spectra
-    which results from the subtle difference of elevation angle between
-    ON_SOURCE and OFF_SOURCE measurements.
+    which result from the difference of elevation angle between ON_SOURCE
+    and OFF_SOURCE measurements.
 
     The correction factor is derived from the atmosphere model based on
     the atmospheric properties (temperature, pressure, etc.) measured
