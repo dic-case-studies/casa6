@@ -95,7 +95,11 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=[ 'scipy', 'numpy' ]
+    install_requires=[ 
+        'scipy','numpy','os','sys','time',
+        'functools','fnmatch','logging','filecmp',
+        'unittest','pickle','numbers','operator',
+        'subprocess','six']
 
 )
 
