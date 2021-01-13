@@ -245,7 +245,7 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
                                          _qa.quantity(thepos[2],theposunits[2]))
                            )
                 thedirmemod = _me.measure(v=thedirme, rf='J2000')
-                #print thedirmemod
+                # casalog.post(thedirmemod)
                 thenewra_rad = thedirmemod['m0']['value']
                 thenewdec_rad = thedirmemod['m1']['value']
                 _me.done()
@@ -430,10 +430,10 @@ def fixplanets(vis, field, fixuvw=False, direction='', refant=0, reftime='first'
 
             for i in range(0,tbt.nrows()):
                 if(sname[i]==planetname):
-                    #print 'i old dir ', i, " ", sdir[0][i], sdir[1][i]
+                    # casalog.post('i old dir ' + i + " " + sdir[0][i] + sdir[1][i])
                     newsdir[0][i] = newsra_rad
                     newsdir[1][i] = newsdec_rad
-                    #print '  new dir ', newsdir[0][i], newsdir[1][i]
+                    # casalog.post('  new dir ' + newsdir[0][i] + newsdir[1][i])
             tbt.putcol('DIRECTION', newsdir)
             tbt.close()
             casalog.post("SOURCE table DIRECTION column changed.", 'NORMAL')

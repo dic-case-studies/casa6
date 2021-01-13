@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import time
 import os
 import sys
@@ -50,24 +49,11 @@ else:
 
 debug = False
 
-# Decorator function to print the arguments of a function
-def dump_args(func):
-    "This decorator dumps out the arguments passed to a function before calling it"
-    argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
-    fname = func.__name__
-   
-    def echo_func(*args,**kwargs):
-        print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
-        return func(*args, **kwargs)
-   
-    return echo_func
-
 # Helper class
 class FlagHelper(ParallelTaskHelper):
     def __init__(self, args={}):
         self.__args = args
     
-#    @dump_args
     def setupInputFile(self, parname):
         '''Create a temporary input file with
            absolute pathnames for other input files
@@ -85,7 +71,6 @@ class FlagHelper(ParallelTaskHelper):
         
         return newpar    
         
-#    @dump_args
     def setupCluster(self, thistask=''):
         '''Get a cluster to execute this task'''
         if thistask == '':
@@ -93,7 +78,6 @@ class FlagHelper(ParallelTaskHelper):
             
         ParallelTaskHelper.__init__(self, task_name=thistask, args=self.__args)
         
-#    @dump_args 
     def setupRflag(self, devpar):
         '''cast rflag's list parameters from numpy types to Python types
         devpar --> list of numeric parameters or list of list
