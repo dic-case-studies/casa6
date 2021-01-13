@@ -2112,8 +2112,8 @@ class test_cube(testref_base):
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
                        deconvolver='hogbom', gridder='mosaic')
-          report=self.th.checkall(imexist=[self.img+'.model'], imval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
-                                  imvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
      def test_cube_flagged_mosaic_clark(self):
@@ -2123,8 +2123,8 @@ class test_cube(testref_base):
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
                        deconvolver='clark', gridder='mosaic')
-          report=self.th.checkall(imexist=[self.img+'.model'], imval=[(self.img+'.model', 0.01252, [10,10,0,1])], \
-                                  imvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01252, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
      def test_cube_flagged_mosaic_multiscale(self):
@@ -2133,8 +2133,8 @@ class test_cube(testref_base):
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
                        deconvolver='multiscale', gridder='mosaic')
-          report=self.th.checkall(imexist=[self.img+'.model'], imval=[(self.img+'.model', 0.01086, [10,10,0,1])], \
-                                  imvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01086, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
      def test_cube_flagged_mosaic_mtmfs(self):
@@ -2142,10 +2142,10 @@ class test_cube(testref_base):
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
           self.prepData('refim_twochan.ms')
           flagdata(self.msfile, spw='*:0')
-          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+          ret = tclean(self.msfile, imagename=self.img, imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
                        deconvolver='mtmfs', nterms=1, gridder='mosaic')
-          report=self.th.checkall(imexist=[self.img+'.model.tt0'], imval=[(self.img+'.model.tt0', 0.00530, [10,10,0,1])], \
-                                  imvalexact=[(self.img+'.model.tt0', 0, [1,1,0,0]), (self.img+'.model.tt0', 0, [10,10,0,0])])#, epsilon=0.2)
+          report=self.th.checkall(imgexist=[self.img+'.model.tt0'], imgval=[(self.img+'.model.tt0', 0.00530, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model.tt0', 0, [1,1,0,0]), (self.img+'.model.tt0', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
 ##############################################
