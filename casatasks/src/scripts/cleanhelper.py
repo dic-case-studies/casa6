@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import glob
 import os
 import math
-#import pdb
 import numpy
+import re
 import shutil
 import pwd
 from numpy import unique
@@ -3571,8 +3571,37 @@ def write_tclean_history(imagename, tname, params, clog):
         :param params: list of task parameters as a tuple (name, value)
         :param clog: casa log object
         """
+
+        def filter_img_names(img_exts):
+            """
+            Applies name (extension) exclusions to not try to open tclean outputs files
+            and/or leftovers that are not images (even if they share the same name as the
+            proper images).
+
+            Some of the files excluded here can cause spurious messages (image tool will
+            print a SEVERE error to the log when open fails) if for example while running
+            several test cases one of them fails or misbehaves leaving temporary files
+            behind.
+
+            :param img_exts: list of image names (different extensions)
+            :returns: list of image names after filtering out undesired ones
+            """
+            accept = []
+            regex = re.compile(imagename + '[0-9]*_?[0-9]*\..+')
+            for img in img_exts:
+                if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
+                    continue
+
+                # ensure only 'imgname' + optional integer + .*
+                res = re.match(regex, img)
+                if res:
+                    accept.append(img)
+            return accept
+
         iat = iatool()
-        img_exts = glob.glob(imagename + '.*')
+
+        img_exts = glob.glob(imagename + '*.*')
+        img_exts = filter_img_names(img_exts)
         clog.post("Writing history into these images: {}".format(img_exts))
 
         history = ['taskname={0}'.format(tname)]
@@ -3599,3 +3628,4 @@ def write_tclean_history(imagename, tname, params, clog):
             finally:
                 if iat_open:
                     iat.close()
+        iat.done()
