@@ -1245,13 +1245,10 @@ namespace casa {
         bool autorange = req->automatic();                                                                     \
         prange_t  minmax = prange_t(0.0, 0.0);   /* this signals auto-ranging */                               \
         /* Override default with specific numbers only if manual ranging requested, */                         \
-        /* and given max is greater than the min. */                                                           \
         if ( !autorange )   {                                                                                  \
             double min = req->min( );                                                                          \
             double max = req->max( );                                                                          \
-            if (max > min) {                                                                                   \
-                minmax = prange_t(min, max);                                                                   \
-            }                                                                                                  \
+            minmax = prange_t(min, max);                                                                   \
         }                                                                                                      \
         ppaxes(index)->set ## TYPE ## Range( !autorange , minmax );                                             \
                                                                                                                \
