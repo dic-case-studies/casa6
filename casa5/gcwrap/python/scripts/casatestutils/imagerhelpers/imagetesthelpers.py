@@ -596,7 +596,8 @@ class TestHelpers:
         if nversions < 1:
             pstr += ('No CASA version was found in history. ({})\n'.
                      format(TestHelpers().verdict(False)))
-        if ncalls != nversions:
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
             pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
                      'not match. ({})\n'.format(ncalls, nversions,
                                                 TestHelpers().verdict(False)))
