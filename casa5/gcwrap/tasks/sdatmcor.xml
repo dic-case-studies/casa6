@@ -24,6 +24,9 @@
     corrected because data for spw 23 is not written to outfile so
     that the correction is not meaningful.
 
+    Note that outfile will have the data column DATA regardless of
+    what data column exists in infile.
+
 </description>
 
 <input>
