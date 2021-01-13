@@ -2476,8 +2476,13 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                 beginRefRowIdx += nrows;
             }
         }
+        // The remaining case is that scope of frequency selections is chunk.
+        // In this case the channelSelector is constant for a chunk 
+        // and has already been computed in configureNewChunk. 
+        // The number of rows still needds to be updated 
+        // to account for the the number of rows in this subchunk
         else
-        {// Scope is chunk but the number of rows should refer to the subchunk
+        {
             channelSelectorsNrows_p.push_back(rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1);
             rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
         }
@@ -2495,9 +2500,18 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
     String msName = ms().tableName();
 
-    nRowsPerShape_p = Vector<rownr_t>(1, rowBounds_p.subchunkNRows_p);
-    nChannPerShape_p = Vector<Int>(1, channelSelectors_p[0]->getNFrequencies());
-    nCorrsPerShape_p = Vector<Int>(1, nCorrelations_p);
+    auto nShapes = channelSelectors_p.size();
+    nRowsPerShape_p = channelSelectorsNrows_p;
+    nChannPerShape_p.resize(nShapes);
+    nCorrsPerShape_p.resize(nShapes);
+
+    rownr_t ishape = 0;
+    for (auto channelSelector : channelSelectors_p)
+    {
+        nChannPerShape_p[ishape] = channelSelector->getNFrequencies();
+        nCorrsPerShape_p[ishape] = channelSelector->getCorrelations().nelements();
+        ++ishape;
+    }
 
     vb_p->configureNewSubchunk(
             msId(), msName, isNewMs(), isNewArrayId(), isNewFieldId(),
