@@ -435,11 +435,8 @@ def tclean(
                     retrec=imager.getSummary();
                 
                 if savemodel!='none' and (interactive==True or usemask=='auto-multithresh' or nsigma>0.0):
-                    if savemodel=='modelcolumn':
-                         savemodelmsg = 'model column'
-                    elif savemodel=='virtual':
-                          savemodelmsg = 'virtual model'
-                    casalog.post("Saving "+savemodelmsg)
+                    paramList.resetParameters()
+                    imager.initializeImagers()
                     imager.predictModel()
 
             ## Restore images.

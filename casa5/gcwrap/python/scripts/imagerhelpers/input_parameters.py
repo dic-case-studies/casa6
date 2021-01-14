@@ -242,6 +242,8 @@ class ImagerParameters():
         ######### CFCache params. 
         self.cfcachepars = {'cflist': cflist}
 
+        ######### parameters that may be internally modified for savemodel behavior
+        self.inpars = {'savemodel':savemodel, 'interactive':interactive, 'nsigma':nsigma, 'usemask':usemask}
 
         #self.reusename=reuse
 
@@ -261,6 +263,20 @@ class ImagerParameters():
             casalog.post('Found errors in input parameters. Please check.', 'WARN')
 
         self.printParameters()
+
+    def resetParameters(self):
+        """ reset parameters to the original settting for interactive, nsigma, auto-multithresh when savemodel!='none' """
+        if self.inpars['savemodel']!='none' and (self.inpars['interactive']==True or self.inpars['usemask']=='auto-multithresh' or \
+             self.inpars['nsigma']>0.0 ):
+           #in checkAndFixIterationPars(), when saving model is on, the internal params, readonly and usescrath are set to True and False, 
+           #respectively. So this needs to be undone before calling predictModel.
+           self.iterpars['savemodel']=self.inpars['savemodel'] 
+           if self.inpars['savemodel']=='modelcolumn':
+              self.allselpars['ms0']['readonly']=False
+              self.allselpars['ms0']['usescratch']=True
+           elif self.inpars['savemodel']=='virtual':
+              self.allselpars['ms0']['readonly']=True
+              self.allselpars['ms0']['usescratch']=False
 
     def getAllPars(self):
         """Return the state of all parameters"""
