@@ -285,7 +285,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
         {
             throw(AipsError("BriggsCubeWeightor fractional bandwith is not a valid value, 0.0."));
         }
-        cout << "BriggsCubeWeightor::weightUniform fracBW " << fracBW << endl;
+        //cout << "BriggsCubeWeightor::weightUniform fracBW " << fracBW << endl;
     }
     
         
