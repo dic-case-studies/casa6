@@ -1183,18 +1183,21 @@ void CTPatchedInterp::makeInterpolators() {
           Record summary = msmc_->msmd().getSummary();
           std::set<uInt> spws = msmc_->msmd().getSpwsForField(iMSFld);
             
+          LogIO log;
+          ostringstream msg;
+            
           if(spws.find(iMSSpw) != spws.end() &&
              summary.isDefined("observationID=" + String::toString(iMSObs)))
           {
               
               // casa log post
-              logSink() << LogIO::WARN
-               << "MS obs=" << iMSObs
+              msg  << "MS obs=" << iMSObs
                << ",fld=" << iMSFld
                << ",spw=" << iMSSpw
                << ",ant=" << iMSElem
                << " cannot be calibrated by " << tabname
-               << " as mapped, and will be flagged in this process." << LogIO::POST;
+               << " as mapped, and will be flagged in this process.";
+              log << msg.str() << LogIO::WARN;
           }
 	    }
 	  } // iMSElem
