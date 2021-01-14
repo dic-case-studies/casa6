@@ -164,6 +164,8 @@
 
 #include <alma/ASDM/TotalPowerTable.h>
 
+#include <alma/ASDM/VLAWVRTable.h>
+
 #include <alma/ASDM/WVMCalTable.h>
 
 #include <alma/ASDM/WeatherTable.h>
@@ -302,6 +304,8 @@ using asdm::SysCalTable;
 using asdm::SysPowerTable;
 
 using asdm::TotalPowerTable;
+
+using asdm::VLAWVRTable;
 
 using asdm::WVMCalTable;
 
@@ -607,6 +611,10 @@ namespace asdm {
 		totalPower = new TotalPowerTable (*this);
 		table.push_back(totalPower);
 		tableEntity["TotalPower"] = emptyEntity;
+
+		vLAWVR = new VLAWVRTable (*this);
+		table.push_back(vLAWVR);
+		tableEntity["VLAWVR"] = emptyEntity;
 
 		wVMCal = new WVMCalTable (*this);
 		table.push_back(wVMCal);
@@ -1185,6 +1193,14 @@ namespace asdm {
 	}
 
 	/**
+	 * Get the table VLAWVR.
+	 * @return The table VLAWVR as a VLAWVRTable.
+	 */
+	VLAWVRTable & ASDM::getVLAWVR () const {
+		return *vLAWVR;
+	}
+
+	/**
 	 * Get the table WVMCal.
 	 * @return The table WVMCal as a WVMCalTable.
 	 */
@@ -1453,6 +1469,8 @@ namespace asdm {
 		
 		result->totalPower = *(this->totalPower->toIDL());
 		
+		result->vLAWVR = *(this->vLAWVR->toIDL());
+		
 		result->wVMCal = *(this->wVMCal->toIDL());
 		
 		result->weather = *(this->weather->toIDL());
@@ -1593,6 +1611,8 @@ namespace asdm {
 		this->sysPower->fromIDL(x->sysPower);
 		
 		this->totalPower->fromIDL(x->totalPower);
+		
+		this->vLAWVR->fromIDL(x->vLAWVR);
 		
 		this->wVMCal->fromIDL(x->wVMCal);
 		
@@ -4120,6 +4140,43 @@ namespace asdm {
 			dataset->getTotalPower().fromXML(tableDoc);						
 		}
 
+		entity = dataset->tableEntity["VLAWVR"];
+		if (entity.getEntityId().getId().length()  != 0) {
+			// Which file must we read ?
+			string tablename = xmlDirectory + "/VLAWVR.xml";
+
+			// Determine the file size
+			ifstream::pos_type size;	
+			ifstream tablein (tablename.c_str() , ios::in|ios::binary|ios::ate);
+  			if (tablein.is_open()) { 
+  				size = tablein.tellg(); 
+  			}
+			else {
+				throw ConversionException("Could not open file " + tablename, "VLAWVR");
+			}
+			
+			// Read the file in a string
+			string tableDoc;
+
+			tableDoc.reserve(size);
+			tablein.seekg (0);	
+			int nread = BLOCKSIZE;	
+			while (nread == BLOCKSIZE) {
+				tablein.read(c, BLOCKSIZE);
+				if (tablein.rdstate() == istream::failbit || tablein.rdstate() == istream::badbit) {
+					throw ConversionException("Error reading file " + tablename,"ASDM");
+				}
+				nread = tablein.gcount();
+				tableDoc.append(c, nread);
+			}
+			tablein.close();
+			if (tablein.rdstate() == istream::failbit)
+				throw ConversionException("Could not close file " + tablename,"ASDM");
+			
+			// And finally parse the XML document to populate the table.	
+			dataset->getVLAWVR().fromXML(tableDoc);						
+		}
+
 		entity = dataset->tableEntity["WVMCal"];
 		if (entity.getEntityId().getId().length()  != 0) {
 			// Which file must we read ?
@@ -4503,6 +4560,10 @@ namespace asdm {
 	
 		if (getTotalPower().size() > 0) {
 			getTotalPower().toFile(directory);
+		}
+	
+		if (getVLAWVR().size() > 0) {
+			getVLAWVR().toFile(directory);
 		}
 	
 		if (getWVMCal().size() > 0) {
@@ -4955,6 +5016,11 @@ namespace asdm {
 				getTotalPower().setFromFile(directory_);
 			}
 	
+			entity = tableEntity["VLAWVR"];
+			if (entity.getEntityId().getId().length()  != 0) {
+				getVLAWVR().setFromFile(directory_);
+			}
+	
 			entity = tableEntity["WVMCal"];
 			if (entity.getEntityId().getId().length()  != 0) {
 				getWVMCal().setFromFile(directory_);
@@ -5099,6 +5165,8 @@ namespace asdm {
 			getSysPower().presentInMemory = tableEntity["SysPower"].getEntityId().getId().length() == 0;	
 	
 			getTotalPower().presentInMemory = tableEntity["TotalPower"].getEntityId().getId().length() == 0;	
+	
+			getVLAWVR().presentInMemory = tableEntity["VLAWVR"].getEntityId().getId().length() == 0;	
 	
 			getWVMCal().presentInMemory = tableEntity["WVMCal"].getEntityId().getId().length() == 0;	
 	
@@ -5614,6 +5682,13 @@ namespace asdm {
 			container->getTotalPower().setEntity(entity);
 			xml = getXMLEntity(entity.getEntityId());
 			container->getTotalPower().fromXML(xml);
+		}
+			
+		entity = container->tableEntity["VLAWVR"];
+		if (entity.getEntityId().getId().size() != 0) {
+			container->getVLAWVR().setEntity(entity);
+			xml = getXMLEntity(entity.getEntityId());
+			container->getVLAWVR().fromXML(xml);
 		}
 			
 		entity = container->tableEntity["WVMCal"];
