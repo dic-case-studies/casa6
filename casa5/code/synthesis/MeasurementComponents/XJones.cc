@@ -1179,8 +1179,9 @@ void XparangJones::selfSolveOne(VisBuffGroupAcc& vbga) {
 void XparangJones::selfSolveOne(SDBList& sdbs) {
 
   // Expecting multiple SDBs (esp. in time)
-  if (sdbs.nSDB()==1)
-    throw(AipsError("XparangJones needs multiple SDBs"));
+  // (2020Oct01: insufficient data caught later in solveOne(sdbs))
+  //  if (sdbs.nSDB()==1)
+  //    throw(AipsError("XparangJones needs multiple SDBs"));
 
   // Call single-VB specialized solver with the one vb
   this->solveOne(sdbs);
@@ -1441,11 +1442,20 @@ void XparangJones::solveOne(SDBList& sdbs) {
 
   // This uniformizes the baseline-dep flags over all times (sdbs)
   //  (~ensures minimally undistorted solution below, which uses average over baseline)
-  sdbs.extendBaselineFlags();
+  String extBLmessage;
+  Int nGoodSDB(0);
+  nGoodSDB=sdbs.extendCrossHandBaselineFlags(extBLmessage);
 
   if (sdbs.polBasis()==String("LIN")) {
 
   logSink() << "Solving for Cross-hand Phase and calibrator linear polarization in the LINEAR basis in spw=" << thisSpw<< LogIO::POST;
+
+  // Report surviving data from extendCrossHandBaselineFlags
+  logSink() << " " << extBLmessage << LogIO::POST;
+
+  // Trap insufficient data case (linear; Q,U + real offset in real part)
+  if (nGoodSDB<3) 
+    throw(AipsError("For a viable solution, the Xfparang+QU solve requires at least THREE distinct unflagged data segments in time/parallactic angle in the LINEAR basis.  Cannot proceed."));
 
   Matrix<Double> x(nSDB,nChan,0.0),y(nSDB,nChan,0.0),wt(nSDB,nChan,0.0),sig(nSDB,nChan,0.0);
   Matrix<Bool> mask(nSDB,nChan,false);
@@ -1730,6 +1740,13 @@ void XparangJones::solveOne(SDBList& sdbs) {
   else if (sdbs.polBasis()==String("CIRC")) {
 
   logSink() << "Solving for Cross-hand Phase and calibrator linear polarization in the CIRCULAR basis in spw="<<thisSpw << LogIO::POST;
+
+  // Report surviving data from extendCrossHandBaselineFlags
+  logSink() << " " << extBLmessage << LogIO::POST;
+
+  // Trap insufficient data case (circular; |P| and a complex offset from complex data, cf law of cosines for isoceles triangle)
+  if (nGoodSDB<2) 
+    throw(AipsError("For a viable solution, the Xfparang+QU solve requires at least TWO distinct unflagged data segments in time/parallactic angle in the CIRCULAR basis.  Cannot proceed."));
 
   Matrix<Complex> V(nSDB,nChan,0.0),M(nSDB,nChan,0.0);
   Matrix<Float> Wt(nSDB,nChan,0.0); // ,sig(nSDB,nChan,0.0);
