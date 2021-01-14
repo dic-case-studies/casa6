@@ -148,7 +148,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"), const casacore::Double& fracBW=0.0);
     static void getFromWeightRecord( casacore::String& type,casacore::String& rmode,
                                 casacore::Quantity& noise,casacore::Double& robust,
                                 casacore::Quantity& fieldofview, casacore::Int& npixels,
@@ -156,7 +156,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                  casacore::String& filtertype,
                                  casacore::Quantity& filterbmaj,
                                  casacore::Quantity& filterbmin,
-                                 casacore::Quantity& filterbpa, const casacore::Record& inrec);
+                                 casacore::Quantity& filterbpa, casacore::Double& fracBW, const casacore::Record& inrec);
     
   protected:
     static casacore::String mergeSpwSel(const casacore::Vector<casacore::Int>& fspw, const casacore::Vector<casacore::Int>& fstart, const casacore::Vector<casacore::Int>& fnchan, const casacore::Matrix<casacore::Int>& spwsel);

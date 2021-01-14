@@ -1055,7 +1055,7 @@ bool SynthesisImager::unlockImages()
 			       const Int npixels, const Bool multiField,
 			       const Bool /*useCubeBriggs*/,
 			       const String& filtertype, const Quantity& filterbmaj,
-			       const Quantity& filterbmin, const Quantity& filterbpa   )
+			       const Quantity& filterbmin, const Quantity& filterbpa, Double /*fracBW*/   )
   {
     LogIO os(LogOrigin("SynthesisImager", "weight()", WHERE));
 
