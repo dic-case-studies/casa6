@@ -99,10 +99,9 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor,impbcor
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -1200,6 +1199,12 @@ class test_stokes(testref_base):
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',deconvolver='mtmfs',nterms=2,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0'],imgexistnot=[self.img+'.image.alpha'], imgval=[(self.img+'.image.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',2.0,[50,50,1,0]), (self.img+'.image.tt0',3.0,[50,50,2,0]),(self.img+'.image.tt0',4.0,[50,50,3,0]) ])
+          _ia.open(self.img+'.image.tt0')
+          if _ia.brightnessunit() == "Jy/beam":
+               report = report + "(Pass : Units are Jy/beam in the restored image)\n"
+          else:
+               report = report + "(Fail : Units are not Jy/beam in the restored image)\n"
+          _ia.close()
           self.checkfinal(report)
 
 

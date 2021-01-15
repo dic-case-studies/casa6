@@ -33,6 +33,7 @@ if is_CASA6:
     _tb = casatools.table()
     _tbt = casatools.table()
     _ia  = casatools.image()
+    _cb = casatools.calibrater()
     from casatasks import casalog
     casa6 = True
 
@@ -346,6 +347,41 @@ class TestHelpers:
                 iters = summ['iterdone']
         return iters
 
+    def delmodkeywords(self,msname=""):
+        """get rid of extra model keywords that sometimes persist"""
+
+        _tb.open( msname+'/SOURCE', nomodify=False )
+        keys = _tb.getkeywords()
+        for key in keys:
+            _tb.removekeyword( key )
+        _tb.close()
+
+    def resetmodelcol(self,msname="",val=0.0):
+        """ set model column to val"""
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if not hasmodcol:
+            _cb.open(msname)
+            _cb.close()
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')
+            dat.fill( complex(val,0.0) )
+            _tb.putcol('MODEL_DATA', dat)
+        _tb.close();
+
+    def delmodels(self,msname="",modcol='nochange'):
+        """Get rid of OTF model and model column"""
+         
+        self.delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
+
+        if modcol=='delete':
+            self.delmodelcol(msname) ## Delete model column
+        if modcol=='reset0':
+            self.resetmodelcol(msname,0.0)  ## Set model column to zero
+        if modcol=='reset1':
+            self.resetmodelcol(msname,1.0)  ## Set model column to one
+
     def verdict(self, boolval):
         """Return the string 'Pass' if boolean is True, Else return string 'Fail'"""
         return "Pass" if boolval else "Fail"
@@ -421,6 +457,94 @@ class TestHelpers:
         pstr = "[ {} ] {} is {} ( {} : should be greater than {} )\n".format(testname, valname, str(val), TestHelpers().verdict(out), str(bound))
         logging.info(pstr)
         return out, pstr
+
+    def check_list_vals(self, list1, list2, test, epsilon=None):
+        """ compares 2 lists and returns if they are equivalent (within error) 
+        """
+        report = ''
+        if len(list1) == len(list2):
+            exact = (epsilon is None)
+            i = 0
+            while i < len(list1):
+                result, pstr = self.check_val(list1[i], list2[i], \
+                    valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
+                if result == False:
+                    report = pstr
+                    break
+                i += 1
+        else:
+            result = False
+
+        return result, report
+
+    def check_dict_vals(self, exp_dict, act_dict, suffix, epsilon=0.01):
+        """ Compares expected dictionary with actual dictionary.
+
+            Parameters
+            ----------
+            exp_dict: dictionary
+                Expected values, as key:value pairs.
+                Values must be lists, where
+                val[0] is "True" for an exact match, or a float for a non-exact
+                epsilon for check_val(). Default is input epsilon.
+                val[1] is either a value to check_val() against or a list to
+                check_list_vals() against.
+            act_dict: dictionary
+                Actual values to compare to exp_dict (and just the values).
+                Keys must match between exp_dict and act_dict.
+            suffix: string
+                For use with summary print statements.
+
+            Notes
+            -----
+            Each exp_dict key:value pair does not need to match in
+            exactness or listedness. One value could be exact, and
+            the next relative to epsilon. One value could be a list,
+            and the next an integer.
+
+            Notes
+            -----
+            Example exp_dict
+            {
+                'end': [True, 2203765e5],
+                'start': [False, 220257e5], # uses default epsilon value
+                'start_delta': [0.01, 2202527e5],
+            }
+        """
+        report = ''
+        passed = True
+        chans = 0
+        for key in exp_dict:
+
+            # convert the expected value in exp_dict[key] to its own dictionary
+            exp_val = exp_dict[key]
+            v = {
+                'val': exp_val[1],
+                'exact': False,
+                'epsilon': epsilon,
+            }
+            if type(exp_val[0]) == bool:
+                v['exact'] = exp_val[0]
+            else:
+                v['epsilon'] = exp_val[0]
+            if v['val'] == 0.0: # special case for "0"
+                v['exact'] = True
+            if v['exact'] == True:
+                v['epsilon'] = None
+
+            # evaluate the expected value against the actual value
+            if type(v['val']) == list:
+                result, pstr = self.check_list_vals(act_dict[key], 
+                    v['val'], test=suffix+' '+key, epsilon=v['epsilon'])
+                report += self.check_val(result, True, \
+                    valname=suffix+' '+key, exact=True)[1]
+                report += pstr
+            else:
+                report += self.check_val(act_dict[key], \
+                    v['val'], exact=v['exact'], epsilon=v['epsilon'],
+                    valname=suffix+' '+key)[1]
+
+        return report
 
     def check_ims(self, imlist, truth, testname="check_ims"):
         pstr = ''
@@ -514,6 +638,7 @@ class TestHelpers:
         mandatory_coords = ['telescope']
         pstr += TestHelpers().check_expected_entries(mandatory_coords, coords, keys)
         return pstr
+
     def check_expected_entries(self, entries, record, keys):
         pstr = ''
         for entry in entries:
