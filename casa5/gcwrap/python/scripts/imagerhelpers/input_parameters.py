@@ -275,7 +275,7 @@ class ImagerParameters():
               self.allselpars['ms0']['readonly']=False
               self.allselpars['ms0']['usescratch']=True
            elif self.inpars['savemodel']=='virtual':
-              self.allselpars['ms0']['readonly']=True
+              self.allselpars['ms0']['readonly']=False
               self.allselpars['ms0']['usescratch']=False
 
     def getAllPars(self):
