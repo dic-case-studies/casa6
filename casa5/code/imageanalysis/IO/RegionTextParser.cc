@@ -66,6 +66,7 @@ RegionTextParser::RegionTextParser(
 ) : _csys(csys), _log(new LogIO()), _currentGlobals(),
     _lines(), _globalKeysToApply(), _fileVersion(-1), _imShape(imShape),
     _regions(0), _verbose(verbose) {
+    cout << __FILE__ << " " << __LINE__ << endl;
     RegularFile file(filename);
     if (! file.exists()) {
         throw AipsError(
@@ -94,6 +95,7 @@ RegionTextParser::RegionTextParser(
     if (! prependRegion.empty()) {
         contents = prependRegion + "\n";
     }
+    cout << __FILE__ << " " << __LINE__ << endl;
     while ((nRead = fileIO.read(bufSize, buffer, false)) == bufSize) {
         String chunk(buffer, bufSize);
         if (_fileVersion < 0) {
@@ -118,6 +120,7 @@ RegionTextParser::RegionTextParser(
 ) : _csys(csys), _log(new LogIO()), _currentGlobals(), _lines(),
     _globalKeysToApply(), _fileVersion(-1), _imShape(imShape), _regions(0),
     _verbose(verbose) {
+    cout << __FILE__ << " " << __LINE__ << endl;
     if (! _csys.hasDirectionCoordinate()) {
         throw AipsError(
             _ORIGIN + "Coordinate system has no direction coordinate"
@@ -125,6 +128,7 @@ RegionTextParser::RegionTextParser(
     }
     _setInitialGlobals();
     _setOverridingChannelRange(globalOverrideChans);
+    cout << __FILE__ << " " << __LINE__ << endl;
     _setOverridingCorrelations(globalOverrrideStokes);
     _parse(prependRegion.empty() ? text : prependRegion + "\n" + text, "", requireImageRegion);
 }
@@ -206,6 +210,7 @@ void RegionTextParser::_determineVersion(
 }
 
 void RegionTextParser::_parse(const String& contents, const String& fileDesc, bool requireImageRegion) {
+    cout << __FILE__ << " " << __LINE__ << endl;
     _log->origin(LogOrigin("AsciiRegionFileParser", __func__));
     static const Regex startAnn("^ann[[:space:]]+");
     static const Regex startDiff("^-[[:space:]]*");
@@ -213,6 +218,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
     AnnotationBase::unitInit();
     /*Vector<String>*/ auto lines = stringToVector(contents, '\n');
     uInt lineCount = 0;
+    cout << __FILE__ << " " << __LINE__ << endl;
     /*std::pair<Quantity, Quantity>*/ auto qFreqs = _overridingFreqRange
         ? std::pair<Quantity, Quantity>(
             Quantity(_overridingFreqRange->first.getValue().getValue(), "Hz"),
@@ -238,7 +244,9 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
         // consumeMe.downcase();
         Bool spectralParmsUpdated;
         ParamSet newParams;
+    cout << __FILE__ << " " << __LINE__ << endl;
         if (consumeMe.contains(startDiff)) {
+    cout << __FILE__ << " " << __LINE__ << endl;
             difference = true;
             // consume the difference character to allow further processing of string
             consumeMe.del(0, 1);
@@ -246,6 +254,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
             *_log << LogIO::NORMAL << preamble << "difference found" << LogIO::POST;
         }
         else if(consumeMe.contains(startAnn)) {
+    cout << __FILE__ << " " << __LINE__ << endl;
             annOnly = true;
             // consume the annotation chars
             consumeMe.del(0, 3);
@@ -253,6 +262,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
             *_log << LogIO::NORMAL << preamble << "annotation only found" << LogIO::POST;
         }
         else if(consumeMe.contains(startGlobal)) {
+    cout << __FILE__ << " " << __LINE__ << endl;
             consumeMe.del(0, 6);
             _currentGlobals = _getCurrentParamSet(
                 spectralParmsUpdated, newParams,
@@ -274,6 +284,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
             *_log << LogIO::NORMAL << preamble << "global found" << LogIO::POST;
             continue;
         }
+    cout << __FILE__ << " " << __LINE__ << endl;
         // now look for per-line shapes and annotations
         Vector<Quantity> qDirs;
         vector<Quantity> quantities;
@@ -284,6 +295,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
         ParamSet currentParamSet = _getCurrentParamSet(
             spectralParmsUpdated, newParams, consumeMe, preamble
         );
+    cout << __FILE__ << " " << __LINE__ << endl;
         if (
             newParams.find(AnnotationBase::LABEL) == newParams.end()
             || newParams[AnnotationBase::LABEL].stringVal.empty()
@@ -325,6 +337,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
             }
         }
         /*ParamSet*/ auto globalsLessLocal = _currentGlobals;
+    cout << __FILE__ << " " << __LINE__ << endl;
         for (
             /*ParamSet::const_iterator*/ auto iter=newParams.cbegin();
             iter != newParams.cend(); ++iter
@@ -349,6 +362,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
             requireImageRegion
         );
     }
+    cout << __FILE__ << " " << __LINE__ << endl;
     if (_verbose) {
         *_log << LogIO::NORMAL << "Combined " << _regions
             << " image regions (which excludes any annotation regions)" << LogIO::POST;
@@ -447,16 +461,20 @@ AnnotationBase::Type RegionTextParser::_getAnnotationType(
         }
         break;
     case AnnotationBase::CIRCLE:
+    cout << __FILE__ << " " << __LINE__ << endl;
         ThrowIf(
             ! consumeMe.contains(startOnePairOneSingle),
             preamble + "Illegal circle specification " + consumeMe
         );
+    cout << __FILE__ << " " << __LINE__ << endl;
         qDirs.resize(2);
         quantities.resize(1);
+    cout << __FILE__ << " " << __LINE__ << endl;
         {
             Vector<Quantity> qs = _extractQuantityPairAndSingleQuantity(
                 consumeMe, preamble
             );
+    cout << __FILE__ << " " << __LINE__ << endl;
             qDirs[0] = qs[0];
             qDirs[1] = qs[1];
             quantities[0] = qs[2];
