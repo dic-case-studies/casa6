@@ -441,7 +441,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // GSL with der, G55 , with new norm this is not needed.
     if (itsNormMethod == 1) // only Nomr Method 1 needs hogbom for speedup
     {
-      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // GSL with der, Points ,with new norm this is not needed.
+      //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // GSL with der, Points ,with new norm this is not needed.
+      //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.138) //GSL M100 channel 22
+      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23
       {
   	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
   	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -450,15 +452,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
   	    switchedToHogbom();
       }
-      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // GSL with der, Points ,with new norm this is not needed.
+      /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // GSL with der, Points ,with new norm this is not needed.
       {
         cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
-        //itsStrenThres = itsStrenThres/3.0; //box3
-        //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
-        //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
-
         switchedToHogbom();
-      }
+      }*/
     }
 
     if (!itsSwitchedToHogbom)
