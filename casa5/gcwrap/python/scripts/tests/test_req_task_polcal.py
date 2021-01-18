@@ -433,7 +433,6 @@ class polcal_test(unittest.TestCase):
 
     ### Circular Test cases ###
     # only use outcal prefix?
-    @unittest.skip("Fix in another ticket")
     def test_unpolarizedDfCirc(self):
         ''' Test unpolarized calibration Q=U=0 for Df mode'''
         polcal(vis=datacopyCirc, caltable=outcal, field='0', spw='1,2,3', preavg=101.0,
@@ -448,7 +447,6 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
-    @unittest.skip("Fix in another ticket")
     def test_unpolarizedDfQUCirc(self):
         ''' Test unpolarized calibraion Q=U=0 for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='0', spw='1,2,3', preavg=101.0,
@@ -463,7 +461,6 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
-    @unittest.skip("Fix in another ticket")
     def test_unknownPolDfQUCirc(self):
         ''' Test polarized calibration with unknown polarization for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', preavg=101.0,
