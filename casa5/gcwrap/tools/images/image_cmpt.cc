@@ -3459,6 +3459,7 @@ image* image::deviation(
 ) {
     _log << _ORIGIN;
     try {
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (_detached()) {
             return nullptr;
         }
@@ -3470,6 +3471,7 @@ image* image::deviation(
             grid.size() != 2,
             "grid must have exactly two positive integer values"
         );
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         auto useRef = False;
         switch (anchor.type()) {
         case variant::INTVEC:
@@ -3494,15 +3496,19 @@ image* image::deviation(
         default:
             ThrowCc("Unsupported type for anchor");
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowIf(
             grid[0] <= 0 || grid[1] <= 0,
             "Both grid value(s) must be positive"
         );
         String mystatalg = statalg;
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         auto myreg = _getRegion(region, False);
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         auto  myxlen = xlength.type() == variant::INT
             ? casacore::String::toString(xlength.toInt()) + "pix"
             : xlength.toString();
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         auto ytype = ylength.type();
         auto myylen = ytype == variant::BOOLVEC
             ? "" : ytype == variant::INT
@@ -3515,6 +3521,7 @@ image* image::deviation(
             ! qh.fromString(err, myxlen),
             "xlength is not a valid quantity: " + err
         );
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         qxl = qh.asQuantity();
         if (myylen.empty()) {
             // circle, so we need the radius, not the diameter
@@ -3528,9 +3535,11 @@ image* image::deviation(
             );
             qyl = qh.asQuantity();
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         String myinterp = interp;
         myinterp.downcase();
         Interpolate2D::Method interpAlg;
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (myinterp.startsWith("c")) {
             interpAlg = Interpolate2D::CUBIC;
         }
@@ -3543,8 +3552,10 @@ image* image::deviation(
         else {
             ThrowCc("Interpolation algorithm " + interp + " is not supported.");
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         StatImageCreator sic(_imageF, myreg.get(), mask, outfile, overwrite);
         mystatalg.downcase();
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (mystatalg.startsWith("cl")) {
             sic.configureClassical(ImageStatsData::AUTO);
         }
@@ -3554,6 +3565,7 @@ image* image::deviation(
         else {
             ThrowCc("Unsupported stats algorithm " + statalg);
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (useRef) {
             sic.useReferencePixelAsAnchor();
         }
@@ -3561,30 +3573,36 @@ image* image::deviation(
             auto myan = anchor.toIntVec();
             sic.setAnchorPosition(myan[0], myan[1]);
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         sic.setGridSpacing(grid[0], grid[1]);
         sic.setStretch(stretch);
         sic.setStatType(stattype);
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (myylen.empty()) {
             sic.setRadius(qxl);
         }
         else {
             sic.setRectangle(qxl, qyl);
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         sic.setInterpAlgorithm(interpAlg);
         vector<String> names {
             "outfile", "region", "mask", "overwrite", "stretch",
             "grid", "anchor", "xlength", "ylength", "interp",
             "stattype", "statalg", "zscore", "maxiter"
         };
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         vector<variant> values {
             outfile, region, mask, overwrite, stretch,
             grid, anchor, xlength, ylength, interp,
             stattype, statalg, zscore, maxiter
         };
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (_doHistory) {
             auto msgs = _newHistory(__func__,names, values);
             sic.addHistory(_ORIGIN, msgs);
         }
+        _log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         return new image(sic.compute());
     }
     catch (const AipsError& x) {
