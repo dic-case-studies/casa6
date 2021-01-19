@@ -298,10 +298,14 @@ Record CasacRegionManager::fromBCS(
             regionRecord, diagnostics, regionName,
             imShape, imageName, "", chans, stokes, verbose
         );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (verbose) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             *_getLog() << origin;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             *_getLog() << LogIO::NORMAL << diagnostics << LogIO::POST;
         }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         stokes = _stokesFromRecord(regionRecord, stokesControl, imShape);
     }
     else {
@@ -388,50 +392,71 @@ void CasacRegionManager::_setRegion(
     const String& globalStokesOverride,
     Bool verbose
 ) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (regionName.empty() && imageName.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         regionRecord = Record();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         diagnostics = "No region string";
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         return;
     }
     // region name provided
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const static Regex image("(.+):(.+)");
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const static Regex regionText(
         "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
     );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     File myFile(regionName);
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const CoordinateSystem csys = getcoordsys();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (myFile.exists()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowIf(
             ! myFile.isReadable(),
             "File " + regionName + " exists but is not readable."
         );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         std::unique_ptr<Record> rec;
         try {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             rec.reset(readImageFile(regionName, ""));
         }
         catch(const AipsError& x) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         }
         if (rec) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             ThrowIf(
                 ! globalOverrideChans.empty() || ! globalStokesOverride.empty()
                 || ! prependBox.empty(),
                 "a binary region file and any of box, chans and/or stokes cannot "
                 "be specified simultaneously"
             );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             regionRecord = *rec;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             diagnostics = "Region read from binary region file " + regionName;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             return;
         }
         try {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             // CRTF file attempt
             RegionTextList annList(
                 regionName, csys, imShape, prependBox,
                 globalOverrideChans, globalStokesOverride
             );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             regionRecord = annList.regionAsRecord();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             diagnostics = "Region read from CRTF file " + regionName;
         }
         catch (const AipsError& x) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             ThrowCc(
                 regionName + " is neither a valid binary region file, "
                 "nor a valid region text file."
@@ -439,57 +464,80 @@ void CasacRegionManager::_setRegion(
         }
     }
     else if (regionName.contains(regionText)) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         // region spec is raw CASA region plaintext
         try {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             RegionTextList annList(
                 csys, regionName, imShape, prependBox, globalOverrideChans,
                 globalStokesOverride, verbose
             );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             regionRecord = annList.regionAsRecord();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             diagnostics = "Region read from text string " + regionName;
         }
         catch (const AipsError& x) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             ThrowCc(x.getMesg());
         }
     }
     else if (regionName.matches(image) || ! imageName.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ImageRegion imRegion;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         String imagename, region;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (regionName.matches(image)) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             String res[2];
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             casacore::split(regionName, res, 2, ":");
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             imagename = res[0];
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             region = res[1];
         }
         else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             // imageName is not empty if we get here
             imagename = imageName;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             region = regionName;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         }
         try {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             Record *myRec = tableToRecord(imagename, region);
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             ThrowIf(
                 ! globalOverrideChans.empty() || ! globalStokesOverride.empty()
                 || ! prependBox.empty(),
                 "a region-in-image and any of box, chans and/or stokes cannot "
                 "be specified simultaneously"
             );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             if (Table::isReadable(imagename)) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
                 ThrowIf(
                     myRec == 0,
                     "Region " + region + " not found in image "
                     + imagename
                 );
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
                 regionRecord = *myRec;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
                 diagnostics = "Used region " + region + " from image "
                     + imagename + " table description";
             }
             else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
                 *_getLog() << "Cannot read image " << imagename
                         << " to get region " << region << LogIO::EXCEPTION;
             }
         }
         catch (const AipsError&) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             ThrowCc(
                 "Unable to open region file or region table description "
                 + region + " in image " + imagename
@@ -497,10 +545,12 @@ void CasacRegionManager::_setRegion(
         }
     }
     else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ostringstream oss;
         oss << "Unable to open region file or region table description "
             << regionName << "." << endl
             << "If it is supposed to be a text string its format is incorrect";
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowCc(oss.str());
     }
 }
