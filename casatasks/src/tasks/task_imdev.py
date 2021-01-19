@@ -23,25 +23,19 @@ def imdev(
     grid, anchor, xlength, ylength, interp, stattype, statalg,
     zscore, maxiter
 ):
-    print("*** za")
     _myia = image()
-    print("*** zb")
     _myrg = regionmanager()
-    print("*** zc")
     _mycs = coordsys()
     try:
         casalog.origin('imdev')
-        print("*** zd")
         _myia.open(imagename)
         _mycs = _myia.coordsys()
         csrec = _mycs.torecord()
         shape =  _myia.shape()
-        print("*** ze")
         reg = _myrg.frombcs(
             csrec, shape,
             box, chans, stokes, "a", region
         )
-        print("*** zf")
         outia = _myia.deviation(
             outfile=outfile, region=reg, mask=mask,
             overwrite=overwrite, stretch=stretch, grid=grid,
@@ -49,27 +43,21 @@ def imdev(
             interp=interp, stattype=stattype, statalg=statalg,
             zscore=zscore, maxiter=maxiter
         )
-        print("*** zf")
         try:
             param_names = imdev.__code__.co_varnames[:imdev.__code__.co_argcount]
             if is_python3:
-                print("*** zg")
                 vars = locals()
                 param_vals = [vars[p] for p in param_names]
             else:
-                print("*** zh")
                 param_vals = [eval(p) for p in param_names]   
-            print("*** zi")
             write_image_history(
                 outia, sys._getframe().f_code.co_name,
                 param_names, param_vals, casalog
             )
-            print("*** zj")
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
     finally:
-        print("*** zk")
         _myia.done()
         _myrg.done()
         _mycs.done()
