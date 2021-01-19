@@ -223,8 +223,10 @@ Record CasacRegionManager::fromBCS(
     Bool verbose
 ) {
     LogOrigin origin("CasacRegionManager", __func__);
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     Record regionRecord;
     if (! box.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowIf(
             regionPtr != nullptr,
             "box and regionPtr cannot be simultaneously specified"
@@ -234,6 +236,7 @@ Record CasacRegionManager::fromBCS(
              "box not specified correctly"
         );
         if (regionName.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             regionRecord = fromBCS(
                 diagnostics, nSelectedChannels, stokes,
                 chans, stokesControl, box, imShape
@@ -245,6 +248,7 @@ Record CasacRegionManager::fromBCS(
             }
         }
         else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             auto corners = stringToVector(box, ',');
             auto iter = corners.begin();
             auto end = corners.end();
@@ -279,6 +283,7 @@ Record CasacRegionManager::fromBCS(
         }
     }
     else if (regionPtr) {
+    *_getLog () << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowIf(
             ! (regionName.empty() && chans.empty() && stokes.empty()),
             "regionPtr and regionName, chans, and/or stokes cannot "
@@ -288,6 +293,7 @@ Record CasacRegionManager::fromBCS(
         stokes = _stokesFromRecord(regionRecord, stokesControl, imShape);
     }
     else if (! regionName.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         _setRegion(
             regionRecord, diagnostics, regionName,
             imShape, imageName, "", chans, stokes, verbose
@@ -299,18 +305,21 @@ Record CasacRegionManager::fromBCS(
         stokes = _stokesFromRecord(regionRecord, stokesControl, imShape);
     }
     else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         vector<uInt> chanEndPts, polEndPts;
         regionRecord = fromBCS(
             diagnostics, nSelectedChannels, stokes,
             chans, stokesControl, box, imShape
         ).toRecord("");
         if (verbose) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             *_getLog() << origin;
             *_getLog() << LogIO::NORMAL << "No directional region specified. Using full positional plane."
                 << LogIO::POST;
         }
         const CoordinateSystem& csys = getcoordsys();
         if (csys.hasSpectralAxis()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             if (verbose) {
                 if (chans.empty()) {
                     *_getLog() << LogIO::NORMAL << "Using all spectral channels."
@@ -323,6 +332,7 @@ Record CasacRegionManager::fromBCS(
             }
         }
         if (csys.hasPolarizationCoordinate() && verbose) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             if (stokes.empty()) {
                 switch (stokesControl) {
                 case USE_ALL_STOKES:
@@ -341,6 +351,7 @@ Record CasacRegionManager::fromBCS(
             }
         }
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     return regionRecord;
 }
 
@@ -500,24 +511,30 @@ ImageRegion CasacRegionManager::fromBCS(
     const StokesControl stokesControl, const String& box,
     const IPosition& imShape
 ) const {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const CoordinateSystem& csys = getcoordsys();
     vector<uInt> chanEndPts = setSpectralRanges(
         chans, nSelectedChannels, imShape
     );
     Int polAxisNumber = csys.polarizationAxisNumber();
     uInt nTotalPolarizations = polAxisNumber >= 0 ? imShape[polAxisNumber] : 0;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     String firstStokes = polAxisNumber >= 0 ? csys.stokesAtPixel(0) : "";
     vector<uInt> polEndPts = _setPolarizationRanges(
         stokes, firstStokes,
         nTotalPolarizations, stokesControl
     );
     vector<Double> boxCorners;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (box.empty()) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         if (_supports2DBox(false)) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
             if (
                 csys.hasDirectionCoordinate()
                 || csys.hasLinearCoordinate()
             ) {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
                 Vector<Int> dirAxesNumbers;
                 if (csys.hasDirectionCoordinate()) {
                     dirAxesNumbers = csys.directionAxesNumbers();
@@ -537,8 +554,10 @@ ImageRegion CasacRegionManager::fromBCS(
         }
     }
     else {
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         boxCorners = _setBoxCorners(box);
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     return _fromBCS(
         diagnostics, boxCorners,
         chanEndPts, polEndPts, imShape
@@ -551,16 +570,20 @@ ImageRegion CasacRegionManager::_fromBCS(
         const IPosition imShape
 ) const {
     LogOrigin origin("CasacRegionManager", __func__);
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     *_getLog() << origin;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     Vector<Double> blc(imShape.nelements(), 0);
     Vector<Double> trc(imShape.nelements(), 0);
     const CoordinateSystem csys = getcoordsys();
     Vector<Int> directionAxisNumbers = csys.directionAxesNumbers();
     vector<Int> linearAxisNumbers = csys.linearAxesNumbers().tovector();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     // Stupidly, sometimes the values returned by linearAxesNumbers can be less than 0
     // This needs to be fixed in the implementation of that method
     vector<Int>::iterator iter = linearAxisNumbers.begin();
     vector<Int>::iterator end = linearAxisNumbers.end();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     while(iter != end) {
         if (*iter < 0) {
             iter = linearAxisNumbers.erase(iter);
@@ -569,9 +592,11 @@ ImageRegion CasacRegionManager::_fromBCS(
     }
     Int spectralAxisNumber = csys.spectralAxisNumber();
     Int polarizationAxisNumber = csys.polarizationAxisNumber();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
 
     Vector<Double> xCorners(boxCorners.size()/2);
     Vector<Double> yCorners(xCorners.size());
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     for (uInt i=0; i<xCorners.size(); i++) {
         Double x = boxCorners[2*i];
         Double y = boxCorners[2*i + 1];
@@ -603,13 +628,17 @@ ImageRegion CasacRegionManager::_fromBCS(
         xCorners[i] = x;
         yCorners[i] = y;
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     Vector<Double> polEndPtsDouble(polEndPts.size());
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     for (uInt i=0; i<polEndPts.size(); ++i) {
         polEndPtsDouble[i] = (Double)polEndPts[i];
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
 
     Bool csysSupports2DBox = _supports2DBox(false);
     uInt nRegions = 1;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (csysSupports2DBox) {
         if (csys.hasDirectionCoordinate())  {
             nRegions *= boxCorners.size()/4;
@@ -621,16 +650,19 @@ ImageRegion CasacRegionManager::_fromBCS(
     if (csys.hasPolarizationCoordinate()) {
         nRegions *= polEndPts.size()/2;
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (csys.hasSpectralAxis()) {
         nRegions *= chanEndPts.size()/2;
     }
     Vector<Double> extXCorners(2*nRegions, 0);
     Vector<Double> extYCorners(2*nRegions, 0);
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     Vector<Double> extPolEndPts(2*nRegions, 0);
     Vector<Double> extChanEndPts(2*nRegions, 0);
 
     uInt count = 0;
 
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (csysSupports2DBox) {
         for (uInt i=0; i<max(uInt(1), xCorners.size()/2); i++) {
             for (uInt j=0; j<max((uInt)1, polEndPts.size()/2); j++) {
@@ -676,6 +708,7 @@ ImageRegion CasacRegionManager::_fromBCS(
         }
     }
     map<uInt, Vector<Double> > axisCornerMap;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     for (uInt i=0; i<nRegions; i++) {
         for (uInt axisNumber=0; axisNumber<csys.nPixelAxes(); axisNumber++) {
             if (
@@ -718,6 +751,7 @@ ImageRegion CasacRegionManager::_fromBCS(
         }
     }
     ImageRegion imRegion;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     for (uInt i=0; i<nRegions; i++) {
         for (uInt axisNumber=0; axisNumber<csys.nPixelAxes(); axisNumber++) {
             blc(axisNumber) = axisCornerMap[axisNumber][2*i];
@@ -732,6 +766,7 @@ ImageRegion CasacRegionManager::_fromBCS(
     }
     ostringstream os;
     os << "Used image region from " << endl;
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (csys.hasDirectionCoordinate()) {
         os << "    position box corners: ";
         for (uInt i=0; i<boxCorners.size()/4; i++) {
@@ -745,10 +780,13 @@ ImageRegion CasacRegionManager::_fromBCS(
     if (getcoordsys().hasSpectralAxis()) {
         os << "    spectral channel ranges: " << _pairsToString(chanEndPts);
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     if (getcoordsys().hasPolarizationCoordinate()) {
         os << "    polarization pixel ranges: " << _pairsToString(polEndPts);
     }
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     diagnostics = os.str();
+    *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     return imRegion;
 }
 

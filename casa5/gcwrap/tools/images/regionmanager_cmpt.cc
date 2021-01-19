@@ -869,9 +869,11 @@ record* regionmanager::frombcs(
 ) {
 	setup();
     *_log << LogOrigin("regionmanager", __func__);
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
 
     try {
     	String regionString;
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	PtrHolder<Record> regionPtr;
     	if(region.type() == variant::STRING) {
     		regionString = region.toString();
@@ -889,9 +891,11 @@ record* regionmanager::frombcs(
     			+ " for region, must be either string or region dictionary"
     		);
     	}
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	String myControl = stokescontrol;
     	CasacRegionManager::StokesControl sControl;
     	myControl.upcase();
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	if (myControl.startsWith("A")) {
     		sControl = CasacRegionManager::USE_ALL_STOKES;
     	}
@@ -901,6 +905,7 @@ record* regionmanager::frombcs(
     	else {
     		ThrowCc("Unsupported value for stokescontrol: " + stokescontrol);
     	}
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	if (! csys.empty()) {
     		PtrHolder<Record> csysRec(toRecord(csys));
     		ThrowIf(
@@ -918,13 +923,16 @@ record* regionmanager::frombcs(
     		);
     		_regMan->setcoordsys(*coordsys);
     	}
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
 
     	String diagnostics;
     	uInt nSelectedChannels;
     	IPosition imShape(vector<int>(shape.begin(),shape.end()));
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	String myStokes(stokes);
     	String myChans(chans);
     	String myBox(box);
+    *_log << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     	return fromRecord(
     		_regMan->fromBCS(
     			diagnostics, nSelectedChannels, myStokes,

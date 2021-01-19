@@ -41,7 +41,7 @@ def imdev(
             csrec, shape,
             box, chans, stokes, "a", region
         )
-        print("*** ze")
+        print("*** zf")
         outia = _myia.deviation(
             outfile=outfile, region=reg, mask=mask,
             overwrite=overwrite, stretch=stretch, grid=grid,
