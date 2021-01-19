@@ -153,7 +153,7 @@ Example 2
 To determine what is the frequency range in a given frame is covered by a given spwselection of the ms
 
 ##############
->>> syut.advisechansel(msname=’test3.ms’, freqframe=&quot;LSRK&quot;, getfreqrange=True, spwselection=’0:20~210’)
+>>> syut.advisechansel(msname=&quot;test3.ms&quot;, freqframe=&quot;LSRK&quot;, getfreqrange=True, spwselection=&quot;0:20~210&quot;)
 
 {&quot;freqend&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362746224619.3091}, &quot;freqstart&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362512788988.5036}}
 
@@ -257,7 +257,7 @@ Example 2
 To determine what is the frequency range in a given frame is covered by a given spwselection of the ms
 
 ##############
->>> syut.advisechansel(msname=’test3.ms’, freqframe=&quot;LSRK&quot;, getfreqrange=True, spwselection=’0:20~210’)
+>>> syut.advisechansel(msname=&quot;test3.ms&quot;, freqframe=&quot;LSRK&quot;, getfreqrange=True, spwselection=&quot;0:20~210&quot;)
 
 {&quot;freqend&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362746224619.3091}, &quot;freqstart&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362512788988.5036}}
 
