@@ -618,13 +618,13 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        # self.delData()
-        self.delData(delinput=False, deloutput=False) # Debugging: leave input and output data
+        self.delData()
+        # self.delData(delinput=False, deloutput=False) # Debugging: leave input and output data
 
     @classmethod
     def tearDownClass(cls):
-        # cls.staticDelData(cls.msfile, cls.img)
-        cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
+        cls.staticDelData(cls.msfile, cls.img)
+        # cls.staticDelData(cls.msfile, cls.img, delinput=False, deloutput=False) # Debugging: leave input and output data
         if cls.cachedir != "":
             os.system('rm -rf '+cls.cachedir)
 
