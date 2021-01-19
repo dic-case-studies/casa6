@@ -113,6 +113,8 @@ void CubeMinorCycleAlgorithm::put() {
 }
 	
 void CubeMinorCycleAlgorithm::task(){
+	LogIO logger(LogOrigin("CubeMinorCycleAlgorithm", "task", WHERE));
+
 	status_p = False;
 	try{
 	 
@@ -126,8 +128,9 @@ void CubeMinorCycleAlgorithm::task(){
           subimstor->setPSFSidelobeLevel(psfSidelobeLevel_p);
           LatticeLocker lock1 (*(subimstor->model()), FileLocker::Write, 30);
           Record prevresrec=subDeconv.initMinorCycle(subimstor);
-	   
-	  Float prevPeakRes=prevresrec.asFloat("peakresidual");
+
+          // unused
+	  // Float prevPeakRes=prevresrec.asFloat("peakresidual");
 	  Bool doDeconv=True;
           if(autoMaskOn_p){
 	    subDeconv.setChanFlag(chanFlag_p);
@@ -209,11 +212,15 @@ void CubeMinorCycleAlgorithm::task(){
           }
         }
         catch (AipsError x) {
-          cerr << "Exception: " << x.getMesg() << endl;
+          logger << "Exception: " << x.getMesg() << LogIO::SEVERE;
+          returnRec_p=Record();
+        }
+        catch(std::exception& exc) {
+          logger << "Exception (std): " << exc.what() << LogIO::SEVERE;
           returnRec_p=Record();
         }
         catch(...){
-          cerr << "Unknown exception" << endl;
+          logger << "Unknown exception" << LogIO::SEVERE;
           returnRec_p=Record();
         }
         
