@@ -2660,7 +2660,7 @@ class Test_standard(test_tclean_base):
                 (img+'.image', True, [22, 145, 0, 0]), \
                 (img+'.image', False, [21, 145, 0, 0])])
 
-        report2 = self.stats_compare(exp_im_stats, im_stats_dict, '.image')
+        report2 = self.check_dict_vals(exp_im_stats, im_stats_dict, '.image', self.epsilon)
 
         # .mask report (test_standard_cal_eph)
         mask_stats_dict = self.image_stats(img+'.mask')
@@ -2676,7 +2676,7 @@ class Test_standard(test_tclean_base):
             'mask_regns': [True, 0],
             'npts_real': [True, 82944]}
 
-        report3 = self.stats_compare(exp_mask_stats, mask_stats_dict, '.mask')
+        report3 = self.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', self.epsilon)
 
         # .pb report (test_standard_cal_eph)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
@@ -2703,7 +2703,7 @@ class Test_standard(test_tclean_base):
             'fit_loc_freq': [False, 253.57442221593894],
             'fit_pix': [False, [144.0, 144.0]]}
 
-        report4 = self.stats_compare(exp_pb_stats, pb_stats_dict, '.pb')
+        report4 = self.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', self.epsilon)
 
         # .psf report (test_standard_cal_eph)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
@@ -2730,7 +2730,7 @@ class Test_standard(test_tclean_base):
             'fit_loc_freq': [False, 253.57442221593894],
             'fit_pix': [False, [144.00051463175717, 144.00004766689185]]}
 
-        report5 = self.stats_compare(exp_psf_stats, psf_stats_dict, '.psf')
+        report5 = self.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', self.epsilon)
 
         # .residual report (test_standard_cal_eph)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
@@ -2753,8 +2753,8 @@ class Test_standard(test_tclean_base):
             'regn_sum': [False, 3362.95355159],
             'npts_real': [True, 82944]}
 
-        report6 = self.stats_compare(exp_resid_stats, resid_stats_dict, \
-            '.residual')
+        report6 = self.check_dict_vals(exp_resid_stats, resid_stats_dict, \
+            '.residual', self.epsilon)
 
         # .model report (test_standard_cal_eph)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
@@ -2778,8 +2778,8 @@ class Test_standard(test_tclean_base):
             'mask_non0': [True, 0],
             'npts_real': [True, 82944]}
 
-        report7 = self.stats_compare(exp_model_stats, model_stats_dict, \
-            '.model')
+        report7 = self.check_dict_vals(exp_model_stats, model_stats_dict, \
+            '.model', self.epsilon)
 
         # .sumwt report (test_standard_cal_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
@@ -2799,8 +2799,8 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 23234453.7637],
             'npts_real': [True, 1]}
 
-        report8 = self.stats_compare(exp_sumwt_stats, sumwt_stats_dict, \
-            '.sumwt')
+        report8 = self.check_dict_vals(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt', self.epsilon)
 
         # report combination (test_standard_cal_eph)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
@@ -3507,8 +3507,6 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-        print("FINAL test_dict=",test_dict)
-        
         self.assertTrue(th.check_final(pstr = report), \
             #msg = report)
             msg = failed)
