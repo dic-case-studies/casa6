@@ -405,14 +405,19 @@ void CasacRegionManager::_setRegion(
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const static Regex image("(.+):(.+)");
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
+//    const static Regex regionText(
+//        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
+//    );
     const static Regex regionText(
-        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
+        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\["
     );
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     File myFile(regionName);
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
     const CoordinateSystem csys = getcoordsys();
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
+    *_getLog() << LogIO::WARN << "regionName " << regionName << LogIO::POST;
+    
     if (myFile.exists()) {
     *_getLog() << LogIO::WARN << __FILE__ << " " << __LINE__ << LogIO::POST;
         ThrowIf(
