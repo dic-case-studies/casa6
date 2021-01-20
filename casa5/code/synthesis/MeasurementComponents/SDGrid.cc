@@ -1505,7 +1505,7 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
         // Known points are the directions of the specified
         // POINTING table column, 
         // relative to the reference frame of the POINTING table
-        if (!isSplineInterpolationReady) {
+        if (not isSplineInterpolationReady) {
             interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
             isSplineInterpolationReady = true;
         } else {
@@ -1514,17 +1514,16 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
                 delete interpolator;
                 interpolator = 0;
                 interpolator = new SDPosInterpolator(vb, pointingDirCol_p);
-                // Missing isSplineInterpolationReady = true; ?
             }
         }
     }
 
-    // 4. If it does not already exists, create the machine to convert pointings directions
+    // 4. If it does not already exist, create the machine to convert pointings directions
     //    and update the frame holding the measurements for this row
     const MEpoch rowEpoch(Quantity(rowTime, "s"));
     if (not pointingToImage) {
         // Set the frame
-        const MPosition rowAntenna1Position = 
+        const auto & rowAntenna1Position = 
                 vb.msColumns().antenna().positionMeas()(rowAntenna1);
 
         mFrame_p = MeasFrame(rowEpoch, rowAntenna1Position);
@@ -1568,7 +1567,7 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
                     << ", last antenna ID " << lastAntID_p
                     << ", new antenna ID " << rowAntenna1 << LogIO::POST;
             }
-            const MPosition rowAntenna1Position = 
+            const auto & rowAntenna1Position =
                       vb.msColumns().antenna().positionMeas()(rowAntenna1);
 
             mFrame_p.resetPosition(rowAntenna1Position);
@@ -1601,8 +1600,8 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
     }
 
     // 6. Convert world position coordinates to image pixel coordinates
-    Bool result = directionCoord.toPixel(xyPos, worldPosMeas);
-    if (!result) {
+    Bool havePixel = directionCoord.toPixel(xyPos, worldPosMeas);
+    if (not havePixel) {
         logIO_p << "Failed to find a pixel for pointing direction of "
             << MVTime(worldPosMeas.getValue().getLong("rad")).string(MVTime::TIME) 
             << ", " << MVAngle(worldPosMeas.getValue().getLat("rad")).string(MVAngle::ANGLE) 
@@ -1634,7 +1633,7 @@ Bool SDGrid::getXYPos(const VisBuffer& vb, Int row) {
         xyPos = xyPos + xyPosMovingOrig_p - actPix;
     }
 
-    return result;
+    return havePixel;
 }
 
 MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index){
