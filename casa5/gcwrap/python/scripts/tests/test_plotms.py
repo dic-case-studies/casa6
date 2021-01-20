@@ -13,8 +13,6 @@ from taskinit import *
 
 # Paths for data
 datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
-calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
 overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
 
 # Pick up alternative data directory to run tests on MMSs
@@ -28,10 +26,11 @@ print('plotms tests will use data from '+ datapath)
 class plotms_test_base(unittest.TestCase):
 
     testms  = "pm_ngc5921.ms"
-    testms2 = "ngc5921.ms"
+    testms2 = "sj_ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testcaltable = 'ngc5921.ref1a.gcal'
+    testct = 'g_jones.cal'
+    testct2 = 'b_jones.cal'
     outputDir="/tmp/" + str(os.getpid()) + "/"
     plotfile_jpg = "/tmp/myplot.jpg"
     display = os.environ.get("DISPLAY")
@@ -39,7 +38,8 @@ class plotms_test_base(unittest.TestCase):
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    caltable = os.path.join(outputDir, testcaltable)
+    ct = os.path.join(outputDir, testct)
+    ct2 = os.path.join(outputDir, testct2)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -49,8 +49,8 @@ class plotms_test_base(unittest.TestCase):
         res = None
         default(plotms)
         if not os.path.exists(self.ms):
-            shutil.copytree(os.path.join(datapath,self.testms), 
-                    self.ms, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms),
+                self.ms, symlinks=True)
 
     def tearDownData(self):
         self.cleanUp()
@@ -58,29 +58,31 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(altdatapath,self.testms2),
-                    self.ms2, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(calpath,self.testms2), 
-                    self.ms2, symlinks=True)
-        testcaltable = os.path.join(self.outputDir, self.caltable)
-        if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(calpath, self.testcaltable),
-                    self.caltable, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
+        if not os.path.exists(self.ct):
+            shutil.copytree(os.path.join(datapath, self.testct),
+                self.ct, symlinks=True)
+        if not os.path.exists(self.ct2):
+            shutil.copytree(os.path.join(datapath, self.testct2),
+                self.ct2, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
-            shutil.copytree(os.path.join(datapath,self.testms3),
-                    self.ms3, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms3),
+                self.ms3, symlinks=True)
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
-                    self.ms4, symlinks=True)
+            shutil.copytree(os.path.join(overlaypath, self.testms4),
+                self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
         self.assertTrue(os.path.isfile(plotfileName), "Plot was not created")
@@ -694,17 +696,14 @@ class test_calibration(plotms_test_base):
 
     def test_calibration_callib(self):
         '''test_calibration_callib: callib string parameter for OTF calibration'''
-        if os.path.exists(calpath):
-            self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
-            self.removePlotfile()
-            callibStr = "caltable='" + self.caltable + "' calwt=True tinterp='nearest'"
-            res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
-                ydatacolumn="corrected", xaxis="frequency",
-                showgui=False, callib=callibStr, highres=True)
-            self.assertTrue(res)
-            self.checkPlotfile(self.plotfile_jpg, 240000)
-        else:
-            print("Skipping test, no path to calibration tables")
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
+        self.removePlotfile()
+        callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
+        res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
+            ydatacolumn="corrected", xaxis="frequency",
+            showgui=False, callib=callibStr, highres=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 170000)
 
     def test_calibration_badcallib(self):
         '''test_calibration_badcallib: callib file does not exist'''
@@ -718,12 +717,12 @@ class test_calibration(plotms_test_base):
 
 # ------------------------------------------------------------------------------
  
-class test_calplots(plotms_test_base):
+class test_calplot(plotms_test_base):
     ''' Test plotting cal tables '''
 
     def setUp(self):
         self.checkDisplay()
-        # cal table for plotting
+        # cal tables for plotting
         self.setUpCalData()
         
     def tearDown(self):
@@ -733,28 +732,24 @@ class test_calplots(plotms_test_base):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot01.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
-        self.removePlotfile()
  
     def test_calplot_axes(self):
         '''test_calplot_axes: Basic plot of caltable with non-default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot02.jpg")
         self.removePlotfile()
         # gamp vs scan
-        res = plotms(vis=self.caltable, xaxis='scan',
-            plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, xaxis='scan', plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.caltable, yaxis='phase',
-            xaxis='baseline', overwrite=True,
-            plotfile=self.plotfile_jpg,
-            showgui=False, highres=True)
+        res = plotms(vis=self.ct, yaxis='phase', plotfile=self.plotfile_jpg,
+            xaxis='baseline', overwrite=True, showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 60000)
 
@@ -763,9 +758,8 @@ class test_calplots(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot03.jpg")
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, iteraxis='corr', exprange='all',
-            overwrite=True)
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, iteraxis='corr', exprange='all')
         self.assertTrue(res)
         fileCount = self.getFilecount(self.outputDir, "testCalPlot03_")
         self.assertEqual(fileCount, 2)
@@ -776,21 +770,35 @@ class test_calplots(plotms_test_base):
         '''test_calplot_selection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='R', overwrite=True)   
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
-        self.removePlotfile()
 
     def test_calplot_ratioplot(self):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='/', overwrite=True)   
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, correlation='/')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 50000)
+
+    def test_calplot_averaging(self):
+        '''test_calplot_averaging: caltable with time and channel averaging'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
+        self.removePlotfile()
+        # Time averaging for G Jones table
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='6000', avgscan=True)   
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
         self.removePlotfile()
+        # Channel averaging for B Jones table
+        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgchannel='6000', avgscan=True)   
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
 
 # ------------------------------------------------------------------------------
 
@@ -1658,7 +1666,7 @@ def suite():
             test_averaging,
             test_axis,
             test_calibration,
-            test_calplots,
+            test_calplot,
             test_display,
             test_grid,
             test_iteration,
