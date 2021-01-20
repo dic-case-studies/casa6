@@ -84,6 +84,11 @@ public:
     debug_ = debug;
   };
 
+  // Cal table is baseline-based; assumes antenna-based unless this is set
+  inline void setBaselineBased() {
+    isAntennaBased_p = false;
+  };
+
   // Accumulate a chunk
   inline void accumulate (ROCTIter& cti) {
     averaging_p.antenna() ? antennaAccumulate(cti) : simpleAccumulate(cti);
@@ -111,11 +116,12 @@ private:
   void simpleAccumulate(ROCTIter& cti);     // ordinary averaging
   void antennaAccumulate (ROCTIter& cti);   // antenna-based averaging
 
+  // Hash function to return a row index for a baseline-based cal table;
+  // Returns 0 if baseline averaging, ant1 for antenna-based table
+  casacore::Int baseline_index(const casacore::Int& ant1, const casacore::Int& ant2);
+
   // Convert r/i to a/p
   void convertToAP(casacore::Cube<casacore::Complex>& d);
-
-  // fill vector that is resized larger
-  void fillIds(casacore::Int nrows);
 
   // Input averaging options
   PlotMSAveraging averaging_p;
@@ -129,6 +135,8 @@ private:
 
   // Data is Complex or Float
   casacore::Bool isComplex_p;
+  // Only ANTENNA1 varies
+  casacore::Bool isAntennaBased_p;
 
   // Validation by baseline (if false, no attempt to accumulate this baseline)
   casacore::Vector<casacore::Bool> blnOK_p;
@@ -138,12 +146,8 @@ private:
   casacore::Double timeRef_p; // first time in averaged chunk
   casacore::Double minTimeOffset_p;
   casacore::Double maxTimeOffset_p;
-  // Scan value for averaged chunk
-  casacore::Int aveScan_p;
-  // Field value for averaged chunk
-  casacore::Int aveField_p;
-  // for antenna averaging
-  casacore::Vector<casacore::Double> blnWtSum_p;
+  // Values for averaged chunk
+  casacore::Int avgScan_p, avgField_p, avgSpw_p;
 
   // Keep track of initialization state
   casacore::Bool initialized_p;
@@ -151,17 +155,18 @@ private:
   // Keep track of accumulation state; cannot finalize if no accumulation
   casacore::Bool isAccum_p;
 
-  // Diagnostic print level
+  // Diagnostic print
   casacore::Bool debug_;
 
   // Mutable arrays, set in CTMainRecords when finalized
+  // avg* vectors may be set to -1 if values are combined
   casacore::Vector<casacore::Int> avgScan_;
   casacore::Vector<casacore::Int> avgField_;
   casacore::Vector<casacore::Double> avgTime_;
   casacore::Vector<casacore::Int> avgSpw_;
   casacore::Vector<casacore::Int> avgChan_;
   casacore::Vector<casacore::Double> avgFreq_;
-  casacore::Vector<casacore::Int> avgObsid_;
+  casacore::Vector<casacore::Int> obsid_;
   casacore::Vector<casacore::Int> avgAntenna1_;
   casacore::Vector<casacore::Int> avgAntenna2_;
   casacore::Vector<casacore::Int> avgBaseline_;

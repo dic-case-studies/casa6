@@ -106,6 +106,9 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   if (calType_[0]=='M' || (calType_[0]=='X' && calType_.contains("Mueller"))) {
     throw AipsError("Cal table type " + calType_ + " is unsupported in plotms. Please continue to use plotcal.");
   }
+  if (((calType_=="BPOLY") || (calType_=="GSPLINE")) && averaging().anyAveraging()) {
+    throw AipsError("Averaging not supported for cal table type " + calType_);
+  }
 
   logLoad("Plotting a " + calType_ + " calibration table.");
 
@@ -159,10 +162,10 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   ROCTColumns ctCol(*ct);
   antnames_ = ctCol.antenna().name().getColumn();
   stanames_ = ctCol.antenna().station().getColumn();
-  antstanames_ = antnames_ + String("@") + stanames_;
-  fldnames_ = ctCol.field().name().getColumn();
   positions_ = ctCol.antenna().position().getColumn();    
   nAnt_ = ctCol.antenna().nrow();
+  fldnames_ = ctCol.field().name().getColumn();
+  antstanames_ = antnames_ + String("@") + stanames_;
 
   // Apply selection to get selected cal table
   NewCalTable* selct = new NewCalTable();
@@ -177,7 +180,7 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   parshape_ = ci_p->flag().shape();
 
   // Size cache arrays based on number of chunks
-  if (averaging().anyAveraging()) {
+  if (pmsAveraging.anyAveraging()) {
     // Use PlotMSCTAverager
     casacore::Vector<int> nIterPerAve; // number of chunks per average
 
@@ -274,7 +277,7 @@ void CalCache::countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       thread->setAllowedOperations(false,false,true);
     }
 
-    bool debug(true);
+    bool debug(false);
 
     Bool combScan(pmsAveraging.scan());
     Bool combField(pmsAveraging.field());
@@ -292,7 +295,6 @@ void CalCache::countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     Int thisfield(-1), lastfield(-1);
     Int thisspw(-1),lastspw(-1);
     Int thisobsid(-1),lastobsid(-1);
-    Int thisrefant(-1),lastrefant(-1);
 
     // Averaging stats
     Int chunk(0);
@@ -321,30 +323,27 @@ void CalCache::countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       thisfield = ci.thisField();
       thisspw = ci.thisSpw();
       thisobsid = ci.thisObs();
-      thisrefant = ci.thisAntenna2();
 
-      if ( ((thistime - avetime0) > interval) ||       // past avgtime interval
-           ((thistime - avetime0) < 0.0) ||            // negative timestep
-           (!combScan && (thisscan != lastscan)) ||    // new scan
-           (!combField && (thisfield != lastfield)) || // new field
-           (!combSpw && (thisspw != lastspw)) ||       // new spw
-           (thisobsid != lastobsid) ||                 // new obs id
-           (thisrefant != lastrefant) ||               // new antenna2
-           (nAveInterval == -1)) {                     // first interval
+      if ( ((thistime - avetime0) > interval) ||           // past avgtime interval
+           ((thistime - avetime0) < 0.0) ||                // negative timestep
+           (!combScan && (thisscan != lastscan)) ||        // new scan
+           (!combField && (thisfield != lastfield)) ||     // new field
+           (!combSpw && (thisspw != lastspw)) ||           // new spw
+           (thisobsid != lastobsid) ||                     // new obs id
+           (nAveInterval == -1)) {                         // first interval
         // New averaging interval
 
         if (debug) {
           stringstream ss;
           ss << "--------------------------------\n";
           ss << "New averaging interval\n";
-          ss << "thistime=" << thistime << " avetime0=" << avetime0 << " diff= "<< (thistime - avetime0) << "\n";
-          ss << ((thistime - avetime0) > interval) << " "
-             << ((thistime - avetime0) < 0.0) << " "
-             << (!combScan && (thisscan != lastscan)) << " "
-             << (!combSpw && (thisspw != lastspw)) << " "
-             << (!combField && (thisfield != lastfield)) << " "
-             << (thisobsid!=lastobsid) << " "
-             << (nAveInterval == -1) << "\n";
+          ss << "time elapsed=" << ((thistime - avetime0) > interval) << " "
+             << " neg step=" << ((thistime - avetime0) < 0.0) << " "
+             << " scan=" << (!combScan && (thisscan != lastscan)) << " "
+             << " spw=" << (!combSpw && (thisspw != lastspw)) << " "
+             << " field=" << (!combField && (thisfield != lastfield)) << " "
+             << " obsid=" << (thisobsid!=lastobsid) << " "
+             << " first=" << (nAveInterval == -1) << "\n";
           logInfo("count_chunks", ss.str());
         }
 
@@ -530,8 +529,10 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     }
 
     // Set up CT Averager for each averaged chunk
-    Int nAntenna1 = ci.antenna1().size();
-    PlotMSCTAverager pmscta(pmsAveraging, nAntenna1, parshape_(0));
+    PlotMSCTAverager pmscta(pmsAveraging, nAnt_, parshape_(0));
+    if (calType_.contains("Mueller")) {
+      pmscta.setBaselineBased();
+    }
 
     // Accumulate iterations into chunk
     Int iter(0);
@@ -548,9 +549,8 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     // Finalize average
     pmscta.finalizeAverage();
 
-    // Get result as a memory NewCalTable
+    // Get result as a memory NewCalTable with averaged main rows
     NewCalTable avgTable("avgcaltable.cal", caltabdesc, Table::Scratch, Table::Memory);
-    // Add averaged main rows
     pmscta.fillAvgCalTable(avgTable);
 
     if (avgTable.nrow() > 0) {
@@ -563,7 +563,7 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       chshapes_(0, chunk) = avgShape(0);
       chshapes_(1, chunk) = avgShape(1);
       chshapes_(2, chunk) = avgShape(2);
-      chshapes_(3, chunk) = nAntenna1;
+      chshapes_(3, chunk) = nAnt_;
       goodChunk_(chunk) = true;
 
       // Load axes
@@ -728,15 +728,24 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             *antenna2_[chunk] = cti.antenna2(); 
             break;
         case PMS::BASELINE: {
-            Vector<Int> a1(cti.antenna1());
-            Vector<Int> a2(cti.antenna2());
             baseline_[chunk]->resize(cti.nrow());
             Vector<Int> bl(*baseline_[chunk]);
-            for (Int irow=0;irow<cti.nrow();++irow) {
-                if (a1(irow)<0) a1(irow)=chshapes_(3,0);
-                if (a2(irow)<0) a2(irow)=chshapes_(3,0);
-                bl(irow) = (chshapes_(3,0)+1)*a1(irow) -
-                    (a1(irow)*(a1(irow) + 1))/2 + a2(irow);
+            if (averaging().baseline()) {
+                bl.set(0);
+            } else {
+                Vector<Int> a1(cti.antenna1());
+                Vector<Int> a2(cti.antenna2());
+                if (allEQ(a2, -1)) {
+                    bl = a1;
+                } else {
+                    for (Int irow = 0; irow < cti.nrow(); ++irow) {
+                        // Same hash as in MSCache:
+                        if (a1(irow) < 0) a1(irow) = chshapes_(3, 0);
+                        if (a2(irow) < 0) a2(irow) = chshapes_(3, 0);
+                        bl(irow) = (chshapes_(3,0)+1)*a1(irow) -
+                            (a1(irow)*(a1(irow) + 1))/2 + a2(irow);
+                    }
+                }
             }
             break;
         }

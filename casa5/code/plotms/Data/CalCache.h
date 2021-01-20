@@ -175,7 +175,7 @@ private:
   casacore::Bool parsAreComplex_;
   casacore::IPosition parshape_;
 
-  // CalTable (cannot plot BPOLY or GSPLINE without MS)
+  // For CalTable (cannot plot BPOLY or GSPLINE without MS)
   casacore::String msname_;
 };
 typedef casacore::CountedPtr<CalCache> CalCachePtr;
