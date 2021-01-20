@@ -133,6 +133,7 @@ void CubeMajorCycleAlgorithm::put() {
 }
 	
 void CubeMajorCycleAlgorithm::task(){
+	LogIO logger(LogOrigin("CubeMajorCycleAlgorithm", "task", WHERE));
 	status_p = True;
         try{
           //Timer tim;
@@ -326,10 +327,16 @@ void CubeMajorCycleAlgorithm::task(){
           status_p = True;
         }
         catch (AipsError x) {
+
            LogIO os( LogOrigin("SynthesisImagerVi2","CubeMajorCycle",WHERE) );
            os << LogIO::WARN << "Exception for chan range "  << chanRange_p  << " ---   "<< x.getMesg()   << LogIO::POST;
           cerr << "##################################\n#############################\nException: " << x.getMesg() << endl;
+
           status_p=false;
+        }
+        catch(std::exception& exc) {
+          logger << "Exception (std): " << exc.what() << LogIO::SEVERE;
+          returnRec_p=Record();
         }
         catch(...){
           cerr << "###################################\n#######################3##\nUnknown exception "  << endl;
@@ -342,6 +349,8 @@ void CubeMajorCycleAlgorithm::task(){
 	    LogIO os( LogOrigin("SynthesisImagerVi2","CubeMajorCycle",WHERE) );
 	    os  << LogIO::WARN << "Unknown Exception for chan range "  << chanRange_p  << " ---   "<<  a.what()   << LogIO::POST;
 	  }
+
+          logger << "Unknown exception "  << LogIO::SEVERE;
           status_p=False;
         }
 }
