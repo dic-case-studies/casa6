@@ -501,7 +501,7 @@ def simobserve(
                 modelshape = csmodel.shape()
                 cell0_rad=qa.convert(model_cell[0],'rad')['value']
                 cell1_rad=qa.convert(model_cell[1],'rad')['value']
-                modelcsys.setdirection(refpix=[modimsize//2,modimsize//2],
+                modelcsys.setdirection(refpix=[modimsize/2,modimsize/2],
                                        refval=[qa.tos(newlat),qa.tos(newlon)],
                                        refcode=newepoch)
                 modelcsys.setincrement([-cell0_rad,cell1_rad],'direction')
