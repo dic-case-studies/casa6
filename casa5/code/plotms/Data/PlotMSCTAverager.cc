@@ -214,7 +214,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   // Set number of baselines
   if (averaging_p.baseline()) {
     nBlnMax_p = 1;
-  } else if (isAntennaBased_p) {
+  } else if ((isAntennaBased_p) || averaging_p.antenna()) {
     nBlnMax_p = nAnt_p;
   } else {
     nBlnMax_p = nAnt_p * (nAnt_p + 1)/2;
