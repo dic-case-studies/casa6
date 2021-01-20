@@ -444,16 +444,37 @@ void CalCache::loadCalChunks(ROCTIter& ci,
         " / " + String::toString(nChunk_) + ".");
     }
 
-    // Cache the data shapes
+    // Determine shape of polarization axis
     IPosition pshape(ci.flag().shape());
-    chshapes_(0,chunk) = pshape(0);
+    size_t nPol;
+    String polsel = selection_.corr();
+    if ((polsel == "") || (polsel == "RL") || (polsel == "XY")) {
+      // EVLASWP one pol is swp, one is tsys
+      if (calType_.contains("EVLASWP")) {
+          nPol = pshape(0) / 2;
+      } else {
+         nPol = pshape(0);
+      }
+      polsel = "";
+    } else {
+      // pol selection using calParSlice
+      String paramAxis = toVisCalAxis(PMS::AMP);
+      if (polnRatio_) { // use single selection
+        nPol = getParSlice(paramAxis, "R").length();
+      } else {
+        nPol = getParSlice(paramAxis, polsel).length();
+      }
+    }
+
+    // Cache the data shapes
+    chshapes_(0,chunk) = nPol;
     chshapes_(1,chunk) = pshape(1);
     chshapes_(2,chunk) = ci.nrow();
     chshapes_(3,chunk) = nAnt_;
     goodChunk_(chunk) = True;
 
     for (unsigned int i = 0; i < loadAxes.size(); i++) {
-      loadCalAxis(ci, chunk, loadAxes[i], selection_.corr());
+      loadCalAxis(ci, chunk, loadAxes[i], polsel);
 
       // print atm stats once per scan
       if (loadAxes[i]==PMS::ATM || loadAxes[i]==PMS::TSKY) {
