@@ -69,7 +69,8 @@ public:
  
   enum PolRep {
     CIRCULAR=0,
-    LINEAR
+    LINEAR,
+    UNKNOWN=-1
   };
   // Make a Gaussian PSF
   //<group>

@@ -1912,12 +1912,24 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 	setTitleProperties(title, canvas, canvasParams, iterParams, plots, defaultTitleFontSize, iteration);
 
 	// square plot settings
-	bool makeSquare(PMS::axisIsUV(cacheParams[0]->xAxis()) &&
-					PMS::axisIsUV(cacheParams[0]->yAxis()));
-	bool wavePlot(PMS::axisIsUVWave(cacheParams[0]->xAxis()) &&
-				  PMS::axisIsUVWave(cacheParams[0]->yAxis()));
-	if (makeSquare) { // set x and y ranges equally
-		setSquareAxesRange(canvas);
+	bool makeSquare(false);
+	bool uvPlot(PMS::axisIsUV(cacheParams[0]->xAxis()) && PMS::axisIsUV(cacheParams[0]->yAxis()));
+	bool wavePlot(PMS::axisIsUVWave(cacheParams[0]->xAxis()) && PMS::axisIsUVWave(cacheParams[0]->yAxis()));
+	if (uvPlot) {
+		// Set equal x and y ranges only if both have autorange
+		bool x_autorange(false), y_autorange(false);
+		for (size_t i = 0; i < plots.size(); ++i) {
+			if (!axesParams[i]->xRangeSet()) {
+				x_autorange = true;
+			}
+			if (!axesParams[i]->yRangeSet()) {
+				y_autorange = true;
+			}
+		}
+		makeSquare = x_autorange && y_autorange;
+		if (makeSquare) {
+			setSquareAxesRange(canvas);
+		}
 	}
 	itsParent_->getPlotter()->makeSquarePlot(makeSquare, wavePlot);
 
@@ -2150,7 +2162,8 @@ void PlotMSPlot::setXAxisRange(
 	SortDirection sortDir(SortDirection::ASCENDING);
 
 	// x range min/max for all plots
-	double xming(DBL_MAX), xmaxg(-DBL_MAX);  // global xmin/xmax
+	double xming(DBL_MAX), xmaxg(-DBL_MAX); // global xmin/xmax
+	bool user_range(false);                 // user set plotrange
 	for (size_t plotindex=0; plotindex<plots.size(); ++plotindex) {
 		for (unsigned int xindex=0; xindex < axesParams[plotindex]->numXAxes(); ++xindex) {
 			// Set axis scale, direction for Ra/Dec
@@ -2168,11 +2181,17 @@ void PlotMSPlot::setXAxisRange(
 
 			// get min/max from each plot to manually scale
 			double xmin(DBL_MAX), xmax(-DBL_MAX);
-			if (axesParams[plotindex]->xRangeSet(xindex)) { // use user setting
+			if (axesParams[plotindex]->xRangeSet(xindex)) {
+				// user plotrange setting
+				user_range = true;
 				xmin = axesParams[plotindex]->xRange(xindex).first;
 				xmax = axesParams[plotindex]->xRange(xindex).second;
+				if (xmax < xmin) {
+					sortDir = SortDirection::DESCENDING;
+					std::swap(xmin, xmax);
+				}
 			} else if ((xAxis == PMS::TIME) || (xAxis == PMS::RA) || (PMS::axisIsUV(xAxis))) {
-				// set range manually: get min/max for each plot from cache indexer
+				// override autoscale and set range manually: get min/max for each plot from cache indexer
 				PlotMSIndexer indexer;
 				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(xindex, iteration);
@@ -2198,12 +2217,13 @@ void PlotMSPlot::setXAxisRange(
 	}
 
 	// no global range means autoscale, or no points displayed for this axis
-	if ((xming != DBL_MAX) && (xmaxg != -DBL_MAX)) {
-		if (xAxis == PMS::TIME) {
+	bool autoscale = (xming == DBL_MAX) && (xmaxg == -DBL_MAX);
+	if (!autoscale) {
+		if (!user_range && (xAxis == PMS::TIME)) {
 			getAxisBoundsForTime(xming, xmaxg);
 			pair<double, double> xbounds = make_pair(xming, xmaxg);
 			canvas->setAxisRange(xPlotAxis, xbounds);
-		} else if (PMS::axisIsUV(xAxis)) {
+		} else if (!user_range && PMS::axisIsUV(xAxis)) {
 			getAxisBoundsForUV(xming, xmaxg);
 			pair<double, double> xbounds = make_pair(xming, xmaxg);
 			canvas->setAxisRange(xPlotAxis, xbounds);
@@ -2213,7 +2233,7 @@ void PlotMSPlot::setXAxisRange(
 		}
 	}
 
-	// descending axis direction for RA
+	// ascending/descending axis direction
 	canvas->setAxisScaleSortDirection(xPlotAxis, sortDir);
 }
 
@@ -2397,6 +2417,7 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	// determine which axes need range set
 	double ymingLeft(DBL_MAX), ymaxgLeft(-DBL_MAX);   // global ymin/ymax for left axis
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
+	bool userRangeRight(false), userRangeLeft(false); // user set plotrange
 	bool hasOverlay(false), hasAtmCurve(false);
 
 	for (size_t plotindex=0; plotindex < plots.size(); ++plotindex) {
@@ -2446,12 +2467,16 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 
 			// min/max for range
 			double ymin(DBL_MAX), ymax(-DBL_MAX); // for each plot
-			if (axesParams[plotindex]->yRangeSet(yindex)) {
+			if (axesParams[plotindex]->yRangeSet(yindex)) { // user plotrange
 				ymin = axesParams[plotindex]->yRange(yindex).first;
 				ymax = axesParams[plotindex]->yRange(yindex).second;
+				if (ymax < ymin) {
+					std::swap(ymin, ymax);
+					canvas->setAxisScaleSortDirection(yPlotAxis, SortDirection::DESCENDING);
+				}
 			} else if ((yaxis == PMS::TIME) || (yaxis == PMS::RA) ||
-					   (PMS::axisIsUV(yaxis)) || PMS::axisIsOverlay(yaxis)) {
-				// explicitly set range for these axes; do not autorange
+						(PMS::axisIsUV(yaxis)) || PMS::axisIsOverlay(yaxis)) {
+				// override autorange: explicitly set range for these axes
 				PlotMSIndexer indexer;
 				if (plots[plotindex]->cache().cacheReady()) {
 					indexer = plots[plotindex]->cache().indexer(yindex, iteration);
@@ -2479,6 +2504,8 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 					hasAtmCurve |= (yaxis == PMS::ATM);
 				}
 			}
+
+			// Set global left/right plot ranges
 			if ((ymin != DBL_MAX) && (ymax != -DBL_MAX)) {
 				if (yPlotAxis == Y_LEFT) {
 					ymingLeft = min(ymingLeft, ymin);
@@ -2498,11 +2525,13 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	canvas->setAxisScaleAngleFormat(Y_RIGHT, angleFormatRight);
 
 	// no range set means autoscale or no points displayed for this axis
-	if ((ymingLeft != DBL_MAX) && (ymaxgLeft != -DBL_MAX)) {
+	bool autoscale_left = (ymingLeft == DBL_MAX) && (ymaxgLeft == -DBL_MAX);
+	if (!autoscale_left) {
 		pair<double, double> ybounds = make_pair(ymingLeft, ymaxgLeft);
 		canvas->setAxisRange(Y_LEFT, ybounds);
 	}
-	if ((ymingRight != DBL_MAX) && (ymaxgRight != -DBL_MAX)) {
+	bool autoscale_right = (ymingRight == DBL_MAX) && (ymaxgRight == -DBL_MAX);
+	if (!autoscale_right) {
 		if (hasOverlay) {
 			getAxisBoundsForOverlay(ymingRight, ymaxgRight);
 			if (hasAtmCurve) { // limit max percent to 100

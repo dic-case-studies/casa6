@@ -89,10 +89,10 @@ def imcollapse(
     outia = None
     try :
         if len(outfile) == 0:
-            raise Exception("outfile must be specified")
+            raise RuntimeError("outfile must be specified")
         myia.dohistory(False)
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using " + imagename)
+            raise RuntimeError("Cannot create image analysis tool using " + imagename)
         outia = myia.collapse(
             function, axes, outfile, region, box, chans,
             stokes, mask, overwrite, stretch
@@ -111,9 +111,7 @@ def imcollapse(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post('*** Error *** ' + str(instance), 'SEVERE')
+        # returns None as per requirement
     finally:
         if myia:
             myia.done()

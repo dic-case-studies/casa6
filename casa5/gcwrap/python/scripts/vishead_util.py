@@ -4,7 +4,6 @@
 #"""
 
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -89,7 +88,7 @@ def getput_keyw(mode, vis, key, hdindex, hdvalue='', hdref=None):
         _tb.close()
         raise Exception("Assertion error")
 
-    #print("Will return", value)
+    # casalog.post("Will return: " + value)
 
     _tb.close()
     return value, colinfo
@@ -139,7 +138,7 @@ def getrefunits(d, defunits=None):
         if 'MEASINFO' in d:
             rsys = d['MEASINFO'].get('Ref', 'UNKNOWN')
     except:
-        print("d =", d)
+        casalog.post("d =" + d)
     return rsys, d.get('QuantumUnits', defunits)
 
 def valref2direction_strs(valreftuple):

@@ -281,7 +281,7 @@ void DJones::setUpForPolSolve(vi::VisBuffer2& vb) {
     Vector<Float> ampCorr(nCorr);
     Vector<Int> n(nCorr,0);
     Complex sI(0.0);
-    for (Int irow=0;irow<vb.nRows();++irow) {
+    for (rownr_t irow=0;irow<vb.nRows();++irow) {
       if (!vb.flagRow()(irow)) {
 	ampCorr=0.0f;
 	n=0;
@@ -324,9 +324,20 @@ void DJones::setUpForPolSolve(vi::VisBuffer2& vb) {
 
 }
 
-void DJones::guessPar(SDBList& sdbs) {
+void DJones::guessPar(SDBList& sdbs,const casacore::Bool& corrDepFlags) {
 
-  if (prtlev()>4) cout << "   D::guessPar(sdbs)" << endl;
+  if (prtlev()>4) cout << "   D::guessPar(sdbs,corrDepFlags)" << endl;
+
+  if (corrDepFlags)
+    throw(AipsError("Hmmm, corrDepFlags=True in DJones::guessPar(sdbs,corrDepFlags"));
+
+  // Call (old) corrDepFlags-agnostic version
+  DJones::guessPar(sdbs);
+
+}
+
+
+void DJones::guessPar(SDBList& sdbs) {
 
   // TBD: Should we use a common wt for the X-hands??
 
@@ -427,6 +438,7 @@ void DJones::guessPar(SDBList& sdbs) {
   } // solvePol()?
 
 }
+
 
 void DJones::updatePar(const Vector<Complex> dCalPar,
 		       const Vector<Complex> dSrcPar) {

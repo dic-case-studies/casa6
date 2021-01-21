@@ -892,26 +892,43 @@ void SDBList::reportData()
 }
 
 
-void SDBList::extendBaselineFlags() 
+Int SDBList::extendCrossHandBaselineFlags(String& message) 
 {
+
 
   // This enforces uniform nAnt in all SDBs
   Int nAnt(this->nAntennas());
+  Int nBln=nAnt*(nAnt-1)/2;
 
   // channelized flags per baseline, cross-corr pair
   Cube<Bool> aggFlag(nChannels(),nAnt,nAnt,true);
 
-  // Initialize aggregate flags to those in first SDB
+
+  // Initialize aggregate flags 
   //  If an antenna pair is not avail here, it won't be used (default flagged)
   //  Subsequent SDBs might flag more baselines
-  {
-    Cube<Bool>& flc(SDB_[0]->flagCube());
-    const Vector<Int>& a1(SDB_[0]->antenna1());
-    const Vector<Int>& a2(SDB_[0]->antenna2());
 
-    Int nRows(SDB_[0]->nRows());
-    Int nChan(SDB_[0]->nChannels());
+  Int isdb0(0);
+  {
+
+    // Step forward to first SDB that has some unflagged data
+    //  TBD: ...for now; in future, may wish to use least-flagged one, if we can also apply a 
+    //       non-zero threshold in accumulation below...
+    while (isdb0<nSDB_ && nfalse(SDB_[isdb0]->flagCube())<1)
+      ++isdb0;
+
+    // Trap all bad data case
+    if (isdb0==nSDB_)
+      throw(AipsError("Accumulated data entirely flagged."));
+    
+    Cube<Bool>& flc(SDB_[isdb0]->flagCube());
+
+    const Vector<Int>& a1(SDB_[isdb0]->antenna1());
+    const Vector<Int>& a2(SDB_[isdb0]->antenna2());
       
+    Int nRows(SDB_[isdb0]->nRows());
+    Int nChan(SDB_[isdb0]->nChannels());
+
     for (Int irow=0;irow<nRows;++irow) {
       for (Int ichan=0;ichan<nChan;++ichan) {
 	aggFlag(ichan,a1(irow),a2(irow))=(flc(1,ichan,irow)||flc(2,ichan,irow));  // Either cross-hand flagged
@@ -919,15 +936,28 @@ void SDBList::extendBaselineFlags()
     }
   }
 
+
   // Accumulate from other SDBs
-  for (Int isdb=1;isdb<nSDB_;++isdb) {
+  Int nBadSDB(0);
+  for (Int isdb=0;isdb<nSDB_;++isdb) {
+
+    // Skip the one we initialized with
+    if (isdb==isdb0)
+      continue;
+
     Cube<Bool>& flc(SDB_[isdb]->flagCube());
     const Vector<Int>& a1(SDB_[isdb]->antenna1());
     const Vector<Int>& a2(SDB_[isdb]->antenna2());
 
+    Int ngood=nfalse(flc);
+    if (ngood==0) {
+      nBadSDB+=1;
+      continue;
+    }
+
     Int nRows(SDB_[isdb]->nRows());
     Int nChan(SDB_[isdb]->nChannels());
-      
+
     for (Int irow=0;irow<nRows;++irow) {
       for (Int ichan=0;ichan<nChan;++ichan) {
 	aggFlag(ichan,a1(irow),a2(irow))|=(flc(1,ichan,irow)||flc(2,ichan,irow));  // Either cross-hand flagged
@@ -937,9 +967,18 @@ void SDBList::extendBaselineFlags()
 
   //  cout << "aggFlag: " << ntrue(aggFlag) << "/" << nfalse(aggFlag) << " sh=" << aggFlag.shape() << endl;
 
+  // Count good baselines, by channel
+  Vector<size_t> goodBL(partialNFalse(aggFlag,IPosition(2,1,2)));
+
+  // Median number of good baselines, over channel
+  size_t medGoodBL=median(goodBL);
+
+  // Count good channels (those with at least median number of good baselines)
+  Int goodChan=ntrue(goodBL>=medGoodBL);
 
   // Apply aggregate flags to each SDB
   //cout << "Flag sum = ";
+  Int nGoodSDB(0);
   for (Int isdb=0;isdb<nSDB_;++isdb) {
     Cube<Bool>& flc(SDB_[isdb]->flagCube());
     const Vector<Int>& a1(SDB_[isdb]->antenna1());
@@ -955,9 +994,24 @@ void SDBList::extendBaselineFlags()
 	}
       }      
     }
+    if (nfalse(flc)>0) ++nGoodSDB;
+
     //cout << ntrue(flc) << " ";
   }
   //cout << endl;
+
+  // Assemble message
+  ostringstream ostr;
+  ostr << "There is usable (unflagged) data in " << nGoodSDB << " (of " << nSDB_ << " total) data segments, with " 
+       << goodChan << " good (of " << nChannels() << " total) channels (" << floor(10000.0*Double(goodChan)/Double(nChannels()))/100.0 << "%) having at least " 
+       << medGoodBL << " good (of " << nBln << " total) baselines (" << floor(10000.0*Double(medGoodBL)/Double(nBln))/100.0 <<"%).";
+  //  cout << ostr << endl;
+  message=ostr;
+
+
+  // Return number of surviving SDBs...
+  return nGoodSDB;
+
 }
 
 } //# NAMESPACE CASA - END
