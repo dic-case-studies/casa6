@@ -2660,7 +2660,7 @@ class Test_standard(test_tclean_base):
                 (img+'.image', True, [22, 145, 0, 0]), \
                 (img+'.image', False, [21, 145, 0, 0])])
 
-        report2 = self.check_dict_vals(exp_im_stats, im_stats_dict, '.image', self.epsilon)
+        report2 = th.check_dict_vals(exp_im_stats, im_stats_dict, '.image', self.epsilon)
 
         # .mask report (test_standard_cal_eph)
         mask_stats_dict = self.image_stats(img+'.mask')
@@ -2676,7 +2676,7 @@ class Test_standard(test_tclean_base):
             'mask_regns': [True, 0],
             'npts_real': [True, 82944]}
 
-        report3 = self.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', self.epsilon)
+        report3 = th.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', self.epsilon)
 
         # .pb report (test_standard_cal_eph)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
@@ -2703,7 +2703,7 @@ class Test_standard(test_tclean_base):
             'fit_loc_freq': [False, 253.57442221593894],
             'fit_pix': [False, [144.0, 144.0]]}
 
-        report4 = self.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', self.epsilon)
+        report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', self.epsilon)
 
         # .psf report (test_standard_cal_eph)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
@@ -2730,7 +2730,7 @@ class Test_standard(test_tclean_base):
             'fit_loc_freq': [False, 253.57442221593894],
             'fit_pix': [False, [144.00051463175717, 144.00004766689185]]}
 
-        report5 = self.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', self.epsilon)
+        report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', self.epsilon)
 
         # .residual report (test_standard_cal_eph)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
@@ -2753,7 +2753,7 @@ class Test_standard(test_tclean_base):
             'regn_sum': [False, 3362.95355159],
             'npts_real': [True, 82944]}
 
-        report6 = self.check_dict_vals(exp_resid_stats, resid_stats_dict, \
+        report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', self.epsilon)
 
         # .model report (test_standard_cal_eph)
@@ -2778,7 +2778,7 @@ class Test_standard(test_tclean_base):
             'mask_non0': [True, 0],
             'npts_real': [True, 82944]}
 
-        report7 = self.check_dict_vals(exp_model_stats, model_stats_dict, \
+        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, \
             '.model', self.epsilon)
 
         # .sumwt report (test_standard_cal_eph)
@@ -2799,7 +2799,7 @@ class Test_standard(test_tclean_base):
             'im_rms': [False, 23234453.7637],
             'npts_real': [True, 1]}
 
-        report8 = self.check_dict_vals(exp_sumwt_stats, sumwt_stats_dict, \
+        report8 = th.check_dict_vals(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt', self.epsilon)
 
         # report combination (test_standard_cal_eph)
@@ -2936,7 +2936,7 @@ class Test_mosaic(test_tclean_base):
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
-        # .image report
+        # .image report (test_mosaic_cube)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[11.48661818deg, -73.26292371deg], [8.2211arcsec, 7.4698arcsec], 90.00000000deg]', field_regions = \
             ['circle[[00:45:54.383559, -73.15.29.41306], 22.45arcsec]',
@@ -2984,7 +2984,7 @@ class Test_mosaic(test_tclean_base):
 
         report2 = th.check_dict_vals(exp_im_stats, im_stats_dict, '.image', epsilon=self.epsilon)
 
-        # .mask report
+        # .mask report (test_mosaic_cube)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 5925312],
@@ -3000,7 +3000,7 @@ class Test_mosaic(test_tclean_base):
 
         report3 = th.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', epsilon=self.epsilon)
 
-        # .pb report
+        # .pb report (test_mosaic_cube)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
             'ellipse[[11.47666677deg, -73.25825652deg], [52.6715arcsec, 52.2589arcsec], 0.00000000deg]')
 
@@ -3027,7 +3027,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
-        # .psf report
+        # .psf report (test_mosaic_cube)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[11.47632032deg, -73.25823681deg], [8.7257arcsec, 8.0720arcsec], 90.00000000deg]')
 
@@ -3066,7 +3066,7 @@ class Test_mosaic(test_tclean_base):
 
         report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', epsilon=self.epsilon)
 
-        # .residual report
+        # .residual report (test_mosaic_cube)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse [[11.48661818deg, -73.26292371deg], [8.2211arcsec, 7.4698arcsec], 90.00000000deg]')
 
@@ -3090,7 +3090,7 @@ class Test_mosaic(test_tclean_base):
         report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', epsilon=self.epsilon)
 
-        # .model report
+        # .model report (test_mosaic_cube)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
             'ellipse[[11.48109199deg, -73.25974151deg], [18.9246arcsec, 17.1916arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -3115,7 +3115,7 @@ class Test_mosaic(test_tclean_base):
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, \
             '.model', epsilon=self.epsilon)
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_cube)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 508],
@@ -3162,7 +3162,7 @@ class Test_mosaic(test_tclean_base):
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, '.weight', epsilon=self.epsilon)
 
-        # report combination
+        # report combination (test_mosaic_mfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
@@ -4193,7 +4193,7 @@ class Test_mosaic(test_tclean_base):
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
             '.model', epsilon=self.epsilon)
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_cube_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 948],
