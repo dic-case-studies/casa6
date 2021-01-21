@@ -418,7 +418,7 @@
             
             <value>True</value>
         </param>        
-                        
+
     <constraints>
           <when param="createmms">
             <equals value="False" type="bool">
@@ -501,50 +501,10 @@
                   <default param="fitorder"><value type="int">0</value></default>
                   <default param="want_cont"><value type="bool">False</value></default>
                   <default param="denoising_lib"><value type="bool">True</value></default>   
-                  <default param="nthreads"><value type="int">1</value></default>                     
+                  <default param="nthreads"><value type="int">1</value></default>
                   <default param="niter"><value type="int">1</value></default>          
             </equals>
-        </when>      
-
-    <when param="mode">
-      <equals value="channel">
-        <default param="nchan"><value type="int">-1</value></default>
-        <default param="start"><value type="int">0</value>
-        <description>First input channel to use</description>
-        </default>
-        <default param="width"><value type="int">1</value></default>
-        <default param="interpolation"><value type="string">linear</value></default>
-      </equals>
-      <equals value="channel_b">
-        <default param="nchan"><value type="int">-1</value></default>
-        <default param="start"><value type="int">0</value>
-        <description>First input channel to use</description>
-        </default>
-        <default param="width"><value type="int">1</value></default>
-        <default param="interpolation"><value type="string">linear</value></default>
-      </equals>
-      <equals value="velocity">
-        <default param="nchan"><value type="int">-1</value></default>
-        <default param="start"><value type="string"/>
-        <description>Velocity of first channel: e.g \'0.0km/s\'</description>
-        </default>
-        <default param="width"><value type="string"/>
-        <description>Channel width of the output visibilities, in velocity units, e.g \'-1.0km/s\'</description>
-        </default>
-        <default param="interpolation"><value type="string">linear</value></default>
-      </equals>
-      <equals value="frequency">
-        <default param="nchan"><value type="int">-1</value></default>
-        <default param="start"><value type="string"/>
-        <description>Frequency of first channel: e.q. \'1.4GHz\'</description>
-        </default>
-        <default param="width"><value type="string"/>
-        <description>Channel width of the output visibilities, in frequency units, e.g \'1.0kHz\'</description>
-        </default>
-        <default param="interpolation"><value type="string">linear</value></default>
-      </equals>
-    </when>
-
+        </when>
     </constraints>
 
 </input>
