@@ -137,8 +137,6 @@ else:
 ## List to be run
 def suite():
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
-
-#     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
@@ -2629,7 +2627,7 @@ class test_wproject(testref_base):
 
           tclean(vis=msname, imagename=self.img+'.wyes',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='wproject', wprojplanes=16, pblimit=-0.1,parallel=self.parallel)
 
-          report=self.th.checkall(imexist=[self.img+'.wyes.image'],imval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests parallel are skipped temporarily until a fix is found. ")
@@ -2642,7 +2640,7 @@ class test_wproject(testref_base):
           tclean(vis=msname, imagename=self.img+'.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=1,facets=4, pblimit=-0.1,parallel=self.parallel)
           
           ## Current value with facets=4 is 0.988. 
-          report=self.th.checkall(imexist=[self.img+'.facet.image'],imval=[(self.img+'.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.facet.image',1.0,[1158,1384,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.facet.image'],imgval=[(self.img+'.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.facet.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
 
@@ -2656,7 +2654,7 @@ class test_wproject(testref_base):
           tclean(vis=msname, imagename=self.img+'.wp.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=4,facets=4, pblimit=-0.1,parallel=self.parallel)
           
           ## Current value with facets=4 is 0.988. 
-          report=self.th.checkall(imexist=[self.img+'.wp.facet.image'],imval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.wp.facet.image'],imgval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
   
@@ -2670,7 +2668,7 @@ class test_wproject(testref_base):
           ### Peak value with gridder='awproject' comes out as 0.85479 instead of the 1.0 (0.998) that is made by gridder='wproject'. 
           tclean(vis=msname, imagename=self.img+'.awp',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='awproject', wprojplanes=16, pblimit=-0.1, psterm=True, aterm=False, wbawp=False,cfcache=self.img+'_use_awp.cf',parallel=self.parallel)
 
-          report=self.th.checkall(imexist=[self.img+'.awp.image'],imval=[(self.img+'.awp.psf',1.0,[1024,1024,0,0]),(self.img+'.awp.image',1.0,[1158,1384,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.awp.image'],imgval=[(self.img+'.awp.psf',1.0,[1024,1024,0,0]),(self.img+'.awp.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
           
