@@ -99,9 +99,10 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, flagdata
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+     from casatasks import impbcor
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -135,7 +136,7 @@ else:
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_errors_failures]
 #     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
  
 ## Base Test class with Utility functions
@@ -1199,6 +1200,12 @@ class test_stokes(testref_base):
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',deconvolver='mtmfs',nterms=2,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0'],imgexistnot=[self.img+'.image.alpha'], imgval=[(self.img+'.image.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',2.0,[50,50,1,0]), (self.img+'.image.tt0',3.0,[50,50,2,0]),(self.img+'.image.tt0',4.0,[50,50,3,0]) ])
+          _ia.open(self.img+'.image.tt0')
+          if _ia.brightnessunit() == "Jy/beam":
+               report = report + "(Pass : Units are Jy/beam in the restored image)\n"
+          else:
+               report = report + "(Fail : Units are not Jy/beam in the restored image)\n"
+          _ia.close()
           self.checkfinal(report)
 
 
@@ -4601,6 +4608,86 @@ class test_ephemeris(testref_base):
 
           report = report1 + report2 + report3
           self.checkfinal(pstr=report)
+
+
+class test_errors_failures(testref_base):
+
+     def test_wrong_spw_select_data(self):
+          """
+          test_wrong_spw: should produce exception in selectData.
+
+          Should throw something like
+           RuntimeError: Error in selectData() : Spw Expression: No match found for 33,
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong_spw', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='33:5~19', start=0, width=1,
+                            veltype='radio', outframe='TOPO',
+                            parallel=self.parallel)
+
+     def test_wrong_field_select_data(self):
+          """
+          test_wrong_field: should produce exception in selectData.
+
+          Exception like:
+            RuntimeError: Error in selectData() : Field Expression: Partial or no match for Field ID list [33]
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='33', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='0', start=0, width=1,
+                            veltype='radio', outframe='TOPO',
+                            parallel=self.parallel)
+
+     def test_bad_freqframe_define_image(self):
+          """
+          test_bad_freqframe: produce exception in initializeImagers/defineImage
+
+          File ".../__casac__/synthesisimager.py", line 180, in defineimage
+            return _synthesisimager.synthesisimager_defineimage(self, *args, **kwargs)
+          RuntimeError: Invalid Image Parameter set : Invalid Frequency Frame fail_!
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 02:59:28.500 -40.44.01.50",
+                            spw='0', start=22, width=1,
+                            veltype='radio', outframe='fail_!',
+                            parallel=self.parallel)
+
+     def test_error_gridding(self):
+          """ test_error_gridding: produces exception in gridding
+
+          One way to make gridding fail is to give imsize=3,4, etc. This fails like:
+           RuntimeError: Error in making PSF : One or more  of the cube section failed in de/gridding. Return values for the sections: [0]
+          With a preceding SEVERE error messages:
+
+          SEVERE  task_tclean::FTMachine::initMaps  number of pixels 6 on x axis is smaller that the gridding support 6 Please use a larger value
+          SEVERE  task_tclean::CubeMajorCycleAlgorithm::task (file .../code/synthesis/ImagerObjects/CubeMajorCycleAlgorithm.cc, line 136) Exception: Error in making PSF :
+          SEVERE  task_tclean::FTMachine::initMapsnumber of pixels 6 on x axis is smaller that the gridding support 6 Please use a larger value
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=4,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='0', start=22, width=1,
+                            veltype='radio', outframe='LSRK',
+                            parallel=self.parallel)
 
 
 if is_CASA6:

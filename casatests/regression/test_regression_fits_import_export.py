@@ -31,13 +31,13 @@ import sys
 CASA6 = False
 try:
     from casatools import ctsys, image, regionmanager
+    from casatasks import importfits, imstat, exportfits, imreframe
     _rg = regionmanager
     CASA6 = True
-    print("In CASA6")
 except ImportError:
     from __main__ import default
     from tasks import *
-    from taskinit import *
+    from taskinit import iatool, rgtool
     image = iatool
     _rg = rgtool
 
@@ -497,7 +497,9 @@ class regression_fits_import_export_test(unittest.TestCase):
             os.system('rm -rf freq.im')
             importfits(imagename='freq.im', fitsimage=datapath+'spec-test-freq.fits', overwrite=True)
             os.system('rm -rf freqx.im')
-            imreframe(imagename='freq.im', output='freqx.im', outframe='BARY')
+            # Revert below change to BARY when CAS-12985 is fixed
+#            imreframe(imagename='freq.im', output='freqx.im', outframe='BARY')
+            imreframe(imagename='freq.im', output='freqx.im', outframe='bary')
             cond0 = ia.open('freqx.im')
             mycs1 = ia.coordsys()
             ia.close()
@@ -526,8 +528,9 @@ class regression_fits_import_export_test(unittest.TestCase):
             
             passed = passed1 and passed2
 
-        except:
+        except Exception as instance:
             print(myname, ' Error ', sys.exc_info()[0])
+            print('RuntimeError error: %s'%instance)
             passed = False
                 
         if passed:

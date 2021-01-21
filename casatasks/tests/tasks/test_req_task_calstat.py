@@ -55,7 +55,7 @@ else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ggtau.1mm.amp.gcal'
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/data/visibilities/'
+    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/'
     #filepath = os.environ.get('CASAPATH').split()[0] + '/bin/nosedir/testlog.log'
         
 logpath = casalog.logfile()
@@ -156,7 +156,7 @@ class calstat_test(unittest.TestCase):
         if CASA6:
             return map( lambda x: ctsys.resolve("regression/calstat/" + x), self.caltables )
         else:
-            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "regression/calstat/" + x, self.caltables )
+            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "/data/regression/calstat/" + x, self.caltables )
 
     def test_cs(self):
         expected = {'ggtau.3mm.ph.gcal0':
