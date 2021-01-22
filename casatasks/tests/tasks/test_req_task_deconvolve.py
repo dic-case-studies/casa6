@@ -549,7 +549,6 @@
 ##########################################################################
 
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
@@ -580,7 +579,6 @@ else:
     from taskinit import *
     from parallel.parallel_task_helper import ParallelTaskHelper
     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    # from imagerhelpers.testhelper_imager import TestHelpers
 
     _ia = iatool( )
     _vp = vptool( )
