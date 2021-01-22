@@ -196,7 +196,7 @@ class test_basic(plotms_test_base):
         res = plotms(vis=self.ms, plotfile=plotfile_png,
             showgui=False, highres=False)
         self.assertTrue(res)
-        self.checkPlotfile(plotfile_png, 24000)
+        self.checkPlotfile(plotfile_png, 20000)
 
     def test_basic_overplotSkipPlotindex(self):
         '''test skipped plotindex in overplot should still plot'''
@@ -667,14 +667,14 @@ class test_axis(plotms_test_base):
         res = plotms(vis=self.ms, plotfile=self.plotfile_jpg, highres=True,
             xaxis='u', yaxis='v', showgui=False, plotrange=plotrange2)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.checkPlotfile(self.plotfile_jpg, 180000)
         self.removePlotfile()
         # autorange x, reverse limit y - larger plot
         plotrange3 = [0, 0, 500, -500]
         res = plotms(vis=self.ms, plotfile=self.plotfile_jpg, highres=True,
             xaxis='u', yaxis='v', showgui=False, plotrange=plotrange3)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 190000)
+        self.checkPlotfile(self.plotfile_jpg, 180000)
         self.removePlotfile()
 
 # ------------------------------------------------------------------------------

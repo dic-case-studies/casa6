@@ -143,7 +143,7 @@ class uvfits_test(unittest.TestCase):
     def test_diameters(self):
         """CAS-5818: Verify bogus dish diameters in AN table are not used but normal algorithm is used instead"""
         myms = mstool()
-        fitsname = ctsys.resolve(datapath + "CTR_CHI_TR2.RWYCP.2")
+        fitsname = ctsys.resolve(datapath + "CTR_CHI_TR2.RWYCP-10rows-ANT-DIAMTER-0")
         msname = "CAS-5818.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()
