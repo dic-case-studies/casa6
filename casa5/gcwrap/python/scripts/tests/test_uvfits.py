@@ -158,7 +158,7 @@ class uvfits_test(unittest.TestCase):
     def test_filename_extensions(self):
         """CAS-7696: Verify we turn off fits filename extension support when necessary"""
         myms = mstool()
-        fitsname = datapath + "name+000"
+        fitsname = datapath + "name10rows+000"
         msname = "CAS-7696.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()
