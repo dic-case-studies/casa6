@@ -282,7 +282,7 @@
         <description>Spectral interpolation method.</description>
             
             <value>linear</value>
-            <allowed kind="enum" ignorecase="True">
+            <allowed kind="enum">
                <value>nearest</value>
                <value>linear</value>
                <value>cubic</value>

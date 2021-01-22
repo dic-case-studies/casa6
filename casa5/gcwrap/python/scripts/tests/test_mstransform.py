@@ -833,17 +833,6 @@ class test_regridms_interpolation_only(test_base):
                       [1, self.out_nchan-1, 0.02630020, 0.19990821]]
         self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
 
-    def test_simple_regrid_nearest_interpolation_uppercase(self):
-        ''' mstransform: regrid, nothing else. interpolation nearest, check output values'''
-        self.outvis = 'test_simple_regrid_nearest.ms'
-        self.run_mstransform_simply_regrid(self.vis, self.outvis, 'NEAREST')
-
-        eq_pattern = [[0, 0, .0, .0],
-                      [0, 1, 0.18098925, 0.35214117],
-                      [1, 5, 0.42104605, 0.26617193],
-                      [1, self.out_nchan-1, 0.02630020, 0.19990821]]
-        self.check_output_values(self.outvis, eq_pattern, self.out_nchan)
-
     def test_simple_regrid_linear(self):
         ''' mstransform: regrid, nothing else. interpolation linear, check output values'''
         self.outvis = 'test_simple_regrid_linear.ms'
