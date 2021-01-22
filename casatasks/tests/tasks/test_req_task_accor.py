@@ -288,7 +288,10 @@ class accor_test(unittest.TestCase):
         accor(vlacopy, caltable='cal.A', gaintable=['cal.B'])
         accor(vlacopy, caltable='cal.C', gaintable=['cal.B'],  interp='nearest')
         
-        self.assertFalse(numpy.isclose(getmean('cal.A'), getmean('cal.B')))
+        print(getmean('cal.A'))
+        print(getmean('cal.C'))
+        
+        self.assertFalse(numpy.isclose(getmean('cal.A')-getmean('cal.C'), 0))
         
         rmtables('cal.C')
         
