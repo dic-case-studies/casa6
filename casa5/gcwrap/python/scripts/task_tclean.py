@@ -210,6 +210,9 @@ def tclean(
         #return
       
 
+    if(facets>1 and parallel==True):
+        casalog.post("Facetted imaging currently works only in serial. Please choose pure W-projection instead.","WARN","task_tclean")
+
     #####################################################
     #### Construct ImagerParameters object
     #####################################################
