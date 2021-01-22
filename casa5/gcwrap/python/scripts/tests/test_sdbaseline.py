@@ -2033,7 +2033,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 self.assertEqual(not is_skipped, tb.getcell('APPLY', irow)[ipol][0]);
                 if is_skipped: continue
             
-                self.assertEqual(self.ftype[blparam['btype'][i]], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
+                self.assertEqual(self.ftype[blparam['btype'][i].lower()], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
                 fparam_key = 'order' if (blparam['btype'][i] != 'cspline') else 'npiec'
                 self.assertEqual(blparam[fparam_key][i], tb.getcell('FUNC_PARAM', irow)[ipol][0])
             
@@ -2064,7 +2064,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         tb.open(bltable)
         for irow in range(tb.nrows()):
             for ipol in range(len(tb.getcell('RMS', irow))):
-                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc])
+                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc.lower()])
                 self.assertEqual(tb.getcell('FUNC_PARAM', irow)[ipol], order)
                 ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
                 # tolerance value in the next line is temporarily set a bit large 

@@ -270,8 +270,9 @@ def normalise_bloutput(infile, blformat, bloutput, overwrite):
 
 def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
     fname = ''
-    if (name in blformat):
-        fname = bloutput[blformat.index(name)]
+    blformat_lower = [s.lower() for s in blformat]
+    if (name in blformat_lower):
+        fname = bloutput[blformat_lower.index(name)]
         if (fname == ''):
             fname = infile + '_blparam.' + ext
     if os.path.exists(fname):
@@ -329,7 +330,7 @@ def prepare_for_baselining(**keywords):
     params = {}
     funcname = 'subtract_baseline'
 
-    blfunc = keywords['blfunc']
+    blfunc = keywords['blfunc'].lower()
     keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw']
     if blfunc in ['poly', 'chebyshev']:
         keys += ['blfunc', 'order']

@@ -1780,7 +1780,14 @@ void SingleDishMS::subtractBaseline(string const& in_column_name,
   std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> bl_contexts;
   bl_contexts.clear();
   size_t bltype = BaselineType_kPolynomial;
-  if (blfunc == "chebyshev") {
+  string blfunc_lower = blfunc;
+  std::transform(
+    blfunc_lower.begin(),
+    blfunc_lower.end(),
+    blfunc_lower.begin(),
+    [](unsigned char c) {return std::tolower(c);}
+  );
+  if (blfunc_lower == "chebyshev") {
     bltype = BaselineType_kChebyshev;
   }
 
