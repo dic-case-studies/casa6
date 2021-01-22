@@ -3411,10 +3411,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	mType="default";
 	if(gridder=="ft" || gridder=="gridft" || gridder=="standard" )
 	  { ftmachine="gridft"; }
-	if( gridder=="widefield" && (wprojplanes>1 || wprojplanes==-1))
+	if( (gridder=="widefield" || gridder=="wproject" || gridder=="wprojectft" ) && (wprojplanes>1 || wprojplanes==-1))
 	  { ftmachine="wprojectft";}
-	if( gridder=="wproject" || gridder=="wprojectft")
-	  {ftmachine="wprojectft"; }
 
 	if(gridder=="ftmosaic" || gridder=="mosaicft" || gridder=="mosaic" )
 	  { ftmachine="mosaicft"; }

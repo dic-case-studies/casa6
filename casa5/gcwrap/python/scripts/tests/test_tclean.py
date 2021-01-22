@@ -136,8 +136,7 @@ else:
      
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_errors_failures]
-#     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
  
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
@@ -2615,19 +2614,74 @@ class test_mask(testref_base):
 ##############################################
 ##############################################
 
-##Task level tests : awproject and mosaics
-class test_widefield(testref_base):
-     
-     def test_widefield_wproj_mfs(self):
-          """ [widefield] Test_Widefield_wproj : W-Projection """ 
-          ### Need better test dataset for this.....
-          self.prepData("refim_twopoints_twochan.ms")
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',phasecenter="J2000 19:59:00.2 +40.50.15.50",niter=30,
-                       gridder='widefield',wprojplanes=4,deconvolver='hogbom',parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.psf',1.0,[100,100,0,0]),(self.img+'.image',5.56,[127,143,0,0]) ] )
+class test_wproject(testref_base):
+
+     def test_wterm_wproject(self):
+          """ [wproject] Test_Widefield_wproj : W-Projection """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          ## Without w-term corrections, the source peak will be 0.768
+          #tclean(vis=msname, imagename=self.img+'wno', imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='standard', pblimit=-0.1)
+
+          tclean(vis=msname, imagename=self.img+'.wyes',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='wproject', wprojplanes=16, pblimit=-0.1,parallel=self.parallel)
+
+          report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests parallel are skipped temporarily until a fix is found. ")
+     def test_wterm_facets(self):
+          """ [wproject] Test_Widefield_wproj : Facets """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          tclean(vis=msname, imagename=self.img+'.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=1,facets=4, pblimit=-0.1,parallel=self.parallel)
+          
+          ## Current value with facets=4 is 0.988. 
+          report=self.th.checkall(imgexist=[self.img+'.facet.image'],imgval=[(self.img+'.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.facet.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests in parallel are skipped temporarily until a fix is found. ")
+     def test_wterm_wproject_facets(self):
+          """ [wproject] Test_Widefield_wproj : Facets with wprojection per facet""" 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          tclean(vis=msname, imagename=self.img+'.wp.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=4,facets=4, pblimit=-0.1,parallel=self.parallel)
+          
+          ## Current value with facets=4 is 0.988. 
+          report=self.th.checkall(imgexist=[self.img+'.wp.facet.image'],imgval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+  
+     @unittest.skip('Skip test for wterm imaging with awproject until the numerical error has been addressed in CAS-13191')
+     def test_wterm_awproject(self):
+          """ [wproject] Test_Widefield_wproj : W-Projection using the AWProject gridder """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          ### Peak value with gridder='awproject' comes out as 0.85479 instead of the 1.0 (0.998) that is made by gridder='wproject'. 
+          tclean(vis=msname, imagename=self.img+'.awp',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='awproject', wprojplanes=16, pblimit=-0.1, psterm=True, aterm=False, wbawp=False,cfcache=self.img+'_use_awp.cf',parallel=self.parallel)
+
+          report=self.th.checkall(imgexist=[self.img+'.awp.image'],imgval=[(self.img+'.awp.psf',1.0,[1024,1024,0,0]),(self.img+'.awp.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+          
+  
+
+
+
+##############################################
+##############################################
+
+##Task level tests : awproject and mosaics
+class test_widefield(testref_base):
+     
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
