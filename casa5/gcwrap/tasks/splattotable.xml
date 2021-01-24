@@ -10,7 +10,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 <!-- This is the task interface for sl.splattocasa        -->
 <!--                                                          -->
 
-<task type="function" name="splattotable" category="analysis">
+<task type="function" name="splattotable" category="import/export">
 <shortdescription>Convert a downloaded Splatalogue spectral line list to a casa table.</shortdescription>
 <description>
 This task reads a spectral line list(s) downloaded from Splatalogue

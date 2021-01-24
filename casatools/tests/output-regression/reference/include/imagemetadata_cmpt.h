@@ -25,7 +25,7 @@ namespace casac {
       bool done();
       variant* get(const string& _key=string(""));
       record* list(bool _verbose=bool(true));
-      bool open(const string& _infile=string(""""));
+      bool open(const string& _infile=string(""));
       bool remove(const string& _key=string(""), const variant& _value=variant( ));
       bool set(const string& _key=string(""), const variant& _value=variant( ));
 

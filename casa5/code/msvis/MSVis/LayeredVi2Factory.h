@@ -181,11 +181,16 @@ class VisIterImpl2LayerFactory : public ViiLayerFactory {
 
  public:
   
-  VisIterImpl2LayerFactory(casacore::MeasurementSet* ms,
-                           const IteratingParameters& pars,
-                           bool writable,
-			                     bool useMSIter2=false);
-  
+    VisIterImpl2LayerFactory(casacore::MeasurementSet* ms,
+                             const IteratingParameters& pars,
+                             bool writable,
+                             bool useMSIter2=false);
+
+    VisIterImpl2LayerFactory(casacore::MeasurementSet * ms,
+                             const SortColumns & chunkSortColumns,
+                             const SortColumns & subchunkSortColumns,
+                             bool writable);
+
   void setFrequencySelections(std::shared_ptr<FrequencySelections> selections);
 
   virtual ~VisIterImpl2LayerFactory () {}
@@ -200,18 +205,28 @@ class VisIterImpl2LayerFactory : public ViiLayerFactory {
 
   // Pointer to _external_ ms  (support only one, for now)
   casacore::MeasurementSet* ms_;
-  
+
   // Store a copy of the parameters
   const vi::IteratingParameters pars_;
-  
+
   // Should VisibilityIteratorImpl2 be generated w/ write-permission
   bool writable_;
 
   // Control use of ~experimental MSIter2, which has smarter time iteration
   bool useMSIter2_;
-  
+
+  // Whether full sorting specification has been configured
+  bool fullSortingSpecification_p;
+
   //Frequency selections to be applied to the generated visibility iterator 
   std::shared_ptr<FrequencySelections> frequencySelections_p;
+
+  // Sorting specification for chunks
+  SortColumns chunkSortColumns_p;
+
+  // Sorting specification for subchunks
+  SortColumns subchunkSortColumns_p;
+
 };
 
 

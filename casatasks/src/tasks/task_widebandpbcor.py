@@ -207,11 +207,11 @@ def _calcPBAlpha(pbtay=[], pbthreshold=0.1,pbalphaname='pbalpha.im'):
 
 #################################################
 def _makePBList(msname='',pbprefix='',field='',spwlist=[],chanlist=[], imsize=[], cellx='10.0arcsec', celly='10.0arcsec',phasecenter=''):
-   #print 'Making PB List from the following spw,chan pairs';
+   #casalog.post('Making PB List from the following spw,chan pairs')
    pblist = []
    try:
      for aspw in range(0,len(spwlist)):
-         #print 'spw=', spwlist[aspw], ' chan=',chanlist[aspw]
+         #casalog.post('spw=', spwlist[aspw], ' chan=',chanlist[aspw])
          im.open(msname);
          sspw = str(spwlist[aspw])+':'+str(chanlist[aspw])
          ret = im.selectvis(field=field, spw=sspw);
@@ -267,7 +267,7 @@ def _calcTaylorFromCube(imtemplate="",reffreq='1.42GHz',cubename="sim.pb",newtay
    freqs = (np.array(freqlist,'f')-reffreqGHz)/reffreqGHz;
 
    casalog.post("Using PBs at " + str(freqlist) + " GHz, to compute Taylor coefficients about " + str(reffreqGHz) + " GHz", 'NORMAL')
-   #print freqs;
+   #casalog.post(freqs)
 
    nfreqs = len(freqlist)
    if len(weightlist)==0:
@@ -347,7 +347,7 @@ def _calcTaylorFromCube(imtemplate="",reffreq='1.42GHz',cubename="sim.pb",newtay
 
  ####################################################
 def _linfit(ptays, freqs, pcube, wts, pbthresh):
-  #print 'Calculating PB Taylor Coefficients by applying Inv Hessian to Taylor-weighted sums'
+  #casalog.post 'Calculating PB Taylor Coefficients by applying Inv Hessian to Taylor-weighted sums')
   nterms=len(ptays);
   hess = np.zeros( (nterms,nterms) );
   rhs = np.zeros( (nterms,1) );
@@ -482,7 +482,7 @@ def  _compute_alpha_beta(imagename, nterms, taylorlist, residuallist, threshold,
    #if(os.path.exists(nameintensity)):
    #      rmcmd = 'rm -rf ' + nameintensity;
    #      os.system(rmcmd);
-   #print 'Creating new image : ', nameintensity   
+   #casalog.post( 'Creating new image : ', nameintensity)
    #cpcmd = 'cp -r ' + imtemplate + ' ' + nameintensity;
    #os.system(cpcmd);
 
