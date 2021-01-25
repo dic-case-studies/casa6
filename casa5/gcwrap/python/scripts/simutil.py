@@ -2,15 +2,22 @@
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import pylab as pl
+import glob
+import re
+from scipy.stats import scoreatpercentile
+import scipy.special as spspec
+import scipy.signal as spsig
+import scipy.interpolate as spintrp
+from collections import OrderedDict
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator
-    from casatasks import casalog
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator, synthesisutils
+    from casatasks import casalog, tclean
+    from casatasks.private.cleanhelper import cleanhelper
     tb = table( )
     ia = image( )
     po = imagepol( )
@@ -21,16 +28,20 @@ if is_CASA6:
     cs = coordsys( )
     cl = componentlist( )
     sm = simulator( )
+    _su = synthesisutils( )
 
 else:
     #import casac
     # all I really need is casalog, but how to get it:?
     from taskinit import *
+    from tclean import tclean
+    from clean import clean
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
     #qa = qatool.create()
     im,cb,ms,tb,me,ia,po,sm,cl,cs,rg,sl,dc,vp,msmd,fi,fn,imd,sdms=gentools(['im','cb','ms','tb','me','ia','po','sm','cl','cs','rg','sl','dc','vp','msmd','fi','fn','imd','sdms'])
+    _su = casac.synthesisutils( )
 
     # 4.2.2:
     #im, cb, ms, tb, fl, me, ia, po, sm, cl, cs, rg, sl, dc, vp, msmd, fi, fn, imd = gentools()
@@ -82,14 +93,14 @@ class compositenumber:
                 for i5 in range(n5):
                     composite=( 2.**i2 * 3.**i3 * 5.**i5 )
                     itsnumbers[n] = composite
-                    #print i2,i3,i5,composite
+                    #casalog.post... i2,i3,i5,composite
                     n=n+1
         itsnumbers.sort()
         maxi=0
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print(self.itsnumbers)
+        casalog.post(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -104,10 +115,13 @@ class compositenumber:
 class simutil:
     """
     simutil contains methods to facilitate simulation. 
-    To use these, create a simutil instance e.g.
+    To use these, create a simutil instance e.g., in CASA 6:
+     CASA> from casatasks.private import simutil
+     CASA> u=simutil.simutil()
+     CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     (in CASA5: )
      CASA> from simutil import simutil
-     CASA> u=simutil()
-     CASA> x,y,z,d,padnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     CASA> u=simutil.simutil()
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
@@ -231,9 +245,9 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print(clr+"["+origin+"] "+bw+s)
+                casalog.post(clr+"["+origin+"] "+bw+s)
             else:
-                print(s)
+                casalog.post(s)
 
 
         if priority=="ERROR":
@@ -784,7 +798,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -833,7 +848,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
@@ -868,7 +884,6 @@ class simutil:
         if absent, or '%s ' % epoch if present.  x and y will be angle qa's in
         degrees.
         """
-        import re
         if direction == None:
             direction=self.direction
         if type(direction) == type([]):
@@ -1085,7 +1100,9 @@ class simutil:
                         t0=[67,  116, 134, 500]
                         flim=[180.,720]
                     else:
-                        self.msg("I don't know about the "+telescope+" receivers, using 200K",priority="warn",origin="noisetemp")
+                        self.msg("I don't know about the "+
+                                 telescope+" receivers, using 200K",
+                                 priority="warn",origin="noisetemp")
                         f0=[10,900]
                         t0=[200,200]
                         flim=[0,5000]
@@ -1096,8 +1113,10 @@ class simutil:
         
         if obsfreq<flim[0]:
             t_rx=t0[0]
-            self.msg("observing freqency is lower than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is lower than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         else:
             z=0
             while(f0[z]<obsfreq and z<len(t0)):
@@ -1105,8 +1124,10 @@ class simutil:
             t_rx=t0[z-1]
 
         if obsfreq>flim[1]:
-            self.msg("observing freqency is higher than expected for "+telescope,priority="warn",origin="noise")
-            self.msg("proceeding with extrapolated receiver temp="+str(t_rx),priority="warn",origin="noise")
+            self.msg("observing freqency is higher than expected for "+
+                     telescope,priority="warn",origin="noise")
+            self.msg("proceeding with extrapolated receiver temp="+
+                     str(t_rx),priority="warn",origin="noise")
         if obsfreq<=flim[1] and obsfreq>=flim[0]:
             self.msg("interpolated receiver temp="+str(t_rx),origin="noise")
 
@@ -1129,7 +1150,6 @@ class simutil:
             self.msg("Elevation < ALMA limit of 3 deg",priority="error")
             return False
 
-        import glob
         tmpname="tmp"+str(os.getpid())
         i=0
         while i<10 and len(glob.glob(tmpname+"*"))>0:
@@ -1196,7 +1216,7 @@ class simutil:
                      os.path.exists(repodir+antennalist):
                 antennalist = repodir + antennalist
             if os.path.exists(antennalist):
-                stnx, stny, stnz, stnd, padnames, telescope, posobs = self.readantenna(antennalist)
+                stnx, stny, stnz, stnd, padnames, antnames, telescope, posobs = self.readantenna(antennalist)
             else:
                 self.msg("antennalist "+antennalist+" not found",priority="error")
                 return False
@@ -1204,7 +1224,6 @@ class simutil:
             nant=len(stnx)
             # diam is only used as a test below, not quantitatively
             diam = pl.average(stnd)
-            antnames=padnames
             
  
         if (telescope==None or diam==None):
@@ -1358,6 +1377,7 @@ class simutil:
         z         - array of Z positions, i.e. stnz from readantenna
         diam      - numpy.array of antenna diameters, i.e. from readantenna
         padnames  - list of pad names
+        antnames  - list of antenna names
         posobs    - The observatory position as a measure.
 
         Optional:
@@ -1542,71 +1562,96 @@ class simutil:
     def readantenna(self, antab=None):
         """
         Helper function to read antenna configuration file; example:
-             # observatory=FOO
+             # observatory=ALMA
              # COFA=-67.75,-23.02
              # coordsys=LOC (local tangent plane)
-             # x     y    z      diam  name 
-              20.  -20.   28.8   12.0  A12S
-              20.   20.   28.8   12.0  A12N
-             -20.  -20.   28.8    7.0  A07S
-             -20.   20.   28.8    7.0  A07N
+             # uid___A002_Xdb6217_X55ec_target.ms
+             # x             y               z             diam  station  ant
+             -5.850273514   -125.9985379    -1.590364043   12.   A058     DA41
+             -19.90369337    52.82680653    -1.892119601   12.   A023     DA42
+             13.45860758    -5.790196849    -2.087805181   12.   A035     DA43
+             5.606192499     7.646657746    -2.087775605   12.   A001     DA44
+             24.10057423    -25.95933768    -2.08466565    12.   A036     DA45
         lines beginning with "#" will be interpreted as header key=value 
            pairs if they contain "=", and as comments otherwise        
         for the observatory name, one can check the known observatories list
            me.obslist
-        if an unknown observatory is specified, then one either must
+        if an unknown observatory is specified, then one must either
            use absolute positions (coordsys XYZ,UTM), or 
            specify COFA= lon,lat 
         coordsys can be XYZ=earth-centered, 
-           UTM=easting,northing,alt, or LOC=xoffset,yoffset,height
+           UTM=easting,northing,altitude, or LOC=xoffset,yoffset,height
            
-        returns: earth-centered x,y,z, diameter, name, observatory_name, observatory_measure_dictionary
+        returns: earth-centered x,y,z, diameter, pad_name, antenna_name, observatory_name, observatory_measure_dictionary
 
         """
-        f=open(antab)
-        self.msg("Reading antenna positions from '%s'" % antab,origin="readantenna")
-        line= '  '
+        # all coord systems should have x,y,z,diam,pid, where xyz varies
+        params={} # to store key=value "header" parameters
         inx=[]
-        iny=[]
+        iny=[] # to store antenna positions
         inz=[]
-        ind=[]
-        id=[] # pad id
-        nant=0
-        line='    '
-        params={}
-        while (len(line)>0):
-            try: 
-                line=f.readline()
-                if line.startswith('#'):
-                    line=line[1:]
-                    paramlist=line.split('=')
-                ### if the line is a parameter line like coordsys=utms, then it stores that
-                    if (paramlist.__len__() == 2):
-                        if params==None:
-                            params={paramlist[0].strip():paramlist[1].strip()}
+        ind=[] # antenna diameter
+        pid=[] # pad id
+        aid=[] # antenna names
+        nant=0 # counter for input lines that meet format requirements
+
+        self.msg("Reading antenna positions from '%s'" % antab, 
+                 origin="readantenna")
+        with open(antab) as f:
+            try: # to read the file
+                for line in f:
+                    cols = line.split()
+                    if len(cols) == 0:
+                        pass # ignore empty rows
+                    if line.startswith('#'): # line is header
+                        paramlist = line[1:].split('=')
+                        if len(paramlist)==2: # key=value pair found
+                            # remove extra octothorpes then clean up and assign
+                            key = paramlist[0].replace('#','').strip()
+                            val = paramlist[1].replace('#','').strip()
+                            try:
+                                params[key]=val
+                            except TypeError:
+                                # params = None somehow? Legacy...
+                                params={key:val}
+                        else: 
+                            # no key=value pair found, so ignore
+                            pass
+                    else: # otherwise octothorpe starts comments
+                        # take only what's in front of the first one
+                        line = line.partition('#')[0]
+                        cols = line.split()
+                        # now check for data
+                        if len(cols)>3:
+                            # assign first four columns, assuming order
+                            inx.append(float(cols[0]))
+                            iny.append(float(cols[1]))
+                            inz.append(float(cols[2]))
+                            ind.append(float(cols[3]))
+                        if len(cols) > 5:
+                            # Found unique pad and antenna names
+                            pid.append(cols[4])
+                            aid.append(cols[5])
+                        elif len(cols) > 4:
+                            # Found pad names, but not antenna names, so dupl.
+                            pid.append(cols[4])
+                            aid.append(cols[4])
                         else:
-                            params[paramlist[0].strip()]=paramlist[1].strip()
-                else:
-                ### ignoring line that has less than 4 elements
-                ### all coord systems should have x,y,z,diam,id, where xyz varies
-                    #print line.split()
-                    if(len(line.split()) >3):
-                        splitline=line.split()
-                        inx.append(float(splitline[0]))
-                        iny.append(float(splitline[1]))
-                        inz.append(float(splitline[2]))
-                        ind.append(float(splitline[3]))
-                        if len(splitline)>4:
-                            id.append(splitline[4])
-                        else:
-                            id.append('A%02d'%nant)                            
-                        nant+=1                 
-            except:
-                break
-        f.close()
+                            # No antenna or pad names found in antab so default
+                            pid.append('A%02d'%nant)
+                            aid.append('A%02d'%nant)
+                        nant+=1
+            except IOError:
+                self.msg("Could not read file: '{}'".format(antab),
+                         origin='readantenna', priority='error')
+            except ValueError:
+                self.msg("Could not read file: '{}'".format(antab),
+                         origin='readantenna', priority='error')
 
         if "coordsys" not in params:
-            self.msg("Must specify coordinate system #coorsys=XYZ|UTM|LOCin antenna file",origin="readantenna",priority="error")
+            self.msg("Must specify XYZ, UTM or LOC coordinate system"\
+                     " in antenna file header",
+                     origin="readantenna",priority="error")
             return -1
         else:
             self.coordsys=params["coordsys"]
@@ -1616,7 +1661,8 @@ class simutil:
         else:
             self.telescopename="SIMULATED"
         if self.verbose:
-            self.msg("Using observatory= %s" % self.telescopename,origin="readantenna")
+            self.msg("Using observatory= %s" % self.telescopename,
+                     origin="readantenna")
 
         # me.observatory has partial matching implemented
         found=False
@@ -1655,17 +1701,21 @@ class simutil:
             stny=[]
             stnz=[]
             if (params["coordsys"].upper()=="UTM"):
-        ### expect easting, northing, elevation in m
-                self.msg("Antenna locations in UTM; will read from file easting, northing, elevation in m",origin="readantenna") 
+        ### expect easting, northing, altitude in m
+                self.msg("Antenna locations in UTM; will read "\
+                         "from file easting, northing, elevation in m",
+                         origin="readantenna") 
                 if "zone" in params:
                     zone=params["zone"]
                 else:
-                    self.msg("You must specify zone=NN in your antenna file",origin="readantenna",priority="error")
+                    self.msg("You must specify zone=NN in your antenna file",
+                             origin="readantenna",priority="error")
                     return -1
                 if "datum" in params:
                     datum=params["datum"]
                 else:
-                    self.msg("You must specify datum in your antenna file",origin="readantenna",priority="error")
+                    self.msg("You must specify datum in your antenna file",
+                             origin="readantenna",priority="error")
                     return -1
                 if "hemisphere" in params:
                     nors=params["hemisphere"]
@@ -1689,9 +1739,13 @@ class simutil:
                     obslon=qa.convert(posobs['m0'],'deg')['value']
                     obsalt=qa.convert(posobs['m2'],'m')['value']
                     if self.verbose:
-                        self.msg("converting local tangent plane coordinates to ITRF using observatory position = %f %f " % (obslat,obslon),origin="readantenna")
+                        self.msg("converting local tangent plane coordinates"\
+                                 "to ITRF using observatory position"\
+                                 "= %f %f " % (obslat,obslon),
+                                 origin="readantenna")
                     for i in range(len(inx)):
-                        x,y,z = self.locxyz2itrf(obslat,obslon,obsalt,inx[i],iny[i],inz[i])
+                        x,y,z = self.locxyz2itrf(obslat,obslon,obsalt,
+                                                 inx[i],iny[i],inz[i])
                         stnx.append(x)
                         stny.append(y)
                         stnz.append(z)                
@@ -1701,11 +1755,13 @@ class simutil:
             cofa_x=pl.average(x)
             cofa_y=pl.average(y)
             cofa_z=pl.average(z)
-            cofa_lat,cofa_lon,cofa_alt=self.xyz2long(cofa_x,cofa_y,cofa_z,'WGS84')
-            posobs=me.position("WGS84",qa.quantity(cofa_lon,"rad"),qa.quantity(cofa_lat,"rad"),qa.quantity(cofa_alt,"m"))
-
+            cofa_lat,cofa_lon,cofa_alt=self.xyz2long(cofa_x,cofa_y,cofa_z,
+                                                     'WGS84')
+            posobs=me.position("WGS84",qa.quantity(cofa_lon,"rad"),
+                               qa.quantity(cofa_lat,"rad"),
+                               qa.quantity(cofa_alt,"m"))
                     
-        return (stnx, stny, stnz, pl.array(ind), id, self.telescopename, posobs)
+        return (stnx, stny, stnz, pl.array(ind), pid, aid, self.telescopename, posobs)
 
 
 
@@ -2231,7 +2287,7 @@ class simutil:
         x0 = pl.sqrt((x-dx)**2 + (y-dy)**2)
         lat=pl.arctan2(y0,x0)
         lon=pl.arctan2(y-dy,x-dx)
-        #print x-dx,y-dy,z-dz,x0,y0
+        #casalog.post... x-dx,y-dy,z-dz,x0,y0
                 
         return lon,lat
 
@@ -2374,7 +2430,7 @@ class simutil:
             rg=r2
         if max(d)>0.01*rg:
             pl.plot(lat,lon,',')            
-            #print max(d),ra
+            #casalog.post(max(d),ra)
             for i in range(n):
                 pl.gca().add_patch(pl.Circle((lat[i],lon[i]),radius=0.5*d[i],fc="#dddd66"))
                 if n<10:
@@ -2928,11 +2984,23 @@ class simutil:
     # image/clean subtask
 
     def imclean(self,mstoimage,imagename,
-                cleanmode,cell,imsize,imcenter,interactive,niter,threshold,weighting,
-                outertaper,pbcor,stokes,sourcefieldlist="",modelimage="",mask=[],dryrun=False):
-        from clean import clean
+                cleanmode,psfmode,cell,imsize,imcenter,
+                interactive,niter,threshold,weighting,
+                outertaper,pbcor,stokes,sourcefieldlist="",
+                modelimage="",mask=[],dryrun=False):
+        """
+        Wrapper function to call CASA imaging task 'clean' on a MeasurementSet
+        mstoimage parameter expects the path to a MeasurementSet
+        imsize parameter expects a length-2 list of integers
+        cell parameter expects a length-2 list containing qa.quantity objects
+        interactive and dryrun parameters expect boolean type input
+        Other parameters expect input in format compatible with 'clean'
 
-        from simutil import is_array_type
+        No return
+
+        Creates a template '[imagename].clean.last' file in addition to 
+        outputs of task 'clean'
+        """
 
         # determine channelization from (first) ms:
         if is_array_type(mstoimage):
@@ -2959,6 +3027,7 @@ class simutil:
         
         psfmode="clark"
         ftmachine="ft"
+        imagermode="clark" # set default to prevent UnboundLocalError
 
         if cleanmode=="csclean":
             imagermode='csclean'
@@ -2969,14 +3038,13 @@ class simutil:
             ftmachine="mosaic" 
 
         # in 3.4 clean doesn't accept just any imsize
-        from cleanhelper import cleanhelper
         optsize=[0,0]
-        optsize[0]=cleanhelper.getOptimumSize(imsize[0])
+        optsize[0]=_su.getOptimumSize(imsize[0])
         nksize=len(imsize)
         if nksize==1: # imsize can be a single element or array
             optsize[1]=optsize[0]
         else:
-            optsize[1]=cleanhelper.getOptimumSize(imsize[1])
+            optsize[1]=_su.getOptimumSize(imsize[1])
         if((optsize[0] != imsize[0]) or (nksize!=1 and optsize[1] != imsize[1])):
             self.msg(str(imsize)+' is not an acceptable imagesize, will use '+str(optsize)+" instead",priority="warn")
             imsize=optsize
@@ -3127,6 +3195,223 @@ class simutil:
             del freq,nchan # something is holding onto the ms in table cache
 
 
+
+
+
+    ##################################################################
+    # image/tclean subtask
+
+    def imtclean(self, mstoimage, imagename,
+                 gridder, deconvolver,
+                 cell, imsize, imdirection,
+                 interactive, niter, threshold, weighting,
+                 outertaper, pbcor, stokes,
+                 modelimage="", mask=[], dryrun=False):
+        """
+        Wrapper function for Radio Interferometric Image Reconstruction from
+        input MeasurementSet using standard CASA imaging task ('tclean'). 
+
+        Duplicates the method "imclean" but with non-deprecated task call.
+        Selecting individual fields for imaging is not supported
+
+        mstoimage parameter expects the path to a MeasurementSet, 
+        or list of MeasurementSets
+        
+        imagename parameter expects string for output image file
+
+        imsize parameter expects a length-1 or length-2 list of integers
+
+        cell parameter expects a length-2 list containing qa.quantity objects
+
+        Just like imclean, does not yield return
+        Creates a template '[imagename].tclean.last' file in addition to 
+        normal tclean task outputs
+        """
+
+        invocation_parameters = OrderedDict( )
+
+        # use the first provided MS to determine channelization for output
+        if is_array_type(mstoimage):
+            ms0 = mstoimage[0]
+            if len(mstoimage) == 1:
+                mstoimage = mstoimage[0]
+        else:
+            ms0 = mstoimage
+
+        if os.path.exists(ms0):
+            tb.open(ms0 + "/SPECTRAL_WINDOW")
+            if tb.nrows() > 1:
+                self.msg("Detected more than one SPW in " + ms0,
+                         priority="info", origin="simutil")
+                self.msg("Determining output cube parameters using " +
+                         "first SPW present in " + ms0,
+                         priority="info", origin="simutil")
+            freq=tb.getvarcol("CHAN_FREQ")['r1']
+            nchan=freq.size
+            tb.done()
+        elif dryrun:
+            nchan=1 # duplicate imclean method
+            self.msg("nchan > 1 is not supported for dryrun = True",
+                         priority="info", origin="simutil")
+
+        if nchan == 1:
+            chanmode = 'mfs'
+        else:
+            chanmode = 'cube'
+
+        # next, define tclean call defaults
+
+        # legacy comparison of image size input against heuristic
+        optsize = [0,0]
+        optsize[0] = _su.getOptimumSize(imsize[0])
+        if len(imsize) == 1: # user expects square output images
+            optsize[1]=optsize[0]
+        else:
+            optsize[1]=_su.getOptimumSize(imsize[1])
+        if((optsize[0] != imsize[0]) or 
+           (len(imsize) != 1 and optsize[1] != imsize[1])):
+            imsize = optsize
+            self.msg(str(imsize)+" is not an acceptable imagesize, " +
+                     " using imsize=" + str(optsize) + " instead",
+                     priority="warn", origin="simutil")
+
+        # the cell parameter expects a list of qa.quantity objects,
+        formatted_correctly = [qa.isquantity(cell[i]) for i in range(len(cell))]
+        assert False not in formatted_correctly, "simutil function imtclean expects cell parameter input to be comprised of quantity objects"
+
+        # convert the first two elements for storage in the tclean.last file
+        cellparam = [str(cell[0]['value']) + str(cell[0]['unit']),
+                     str(cell[1]['value']) + str(cell[1]['unit'])]
+
+        if os.path.exists(modelimage):
+            pass
+        elif len(modelimage) > 0:
+            modelimage = ""
+            self.msg("Could not find modelimage, proceeding without one",
+                     priority="warn", origin="simutil")
+
+        # set tclean top-level parameters (no parent nodes)
+        invocation_parameters['vis'] = mstoimage
+        invocation_parameters['selectdata'] = False
+        invocation_parameters['imagename'] = imagename
+        invocation_parameters['imsize'] = imsize
+        invocation_parameters['cell'] = cellparam
+        invocation_parameters['phasecenter'] = imdirection
+        invocation_parameters['stokes'] = stokes
+        invocation_parameters['startmodel'] = modelimage
+        invocation_parameters['specmode'] = chanmode
+        invocation_parameters['gridder'] = gridder
+        invocation_parameters['deconvolver'] = deconvolver
+        invocation_parameters['restoration'] = True
+        invocation_parameters['outlierfile'] = ''
+        invocation_parameters['weighting'] = weighting
+        invocation_parameters['niter'] = niter
+        invocation_parameters['usemask'] = 'user'
+        invocation_parameters['fastnoise'] = True
+        invocation_parameters['restart'] = True
+        invocation_parameters['savemodel'] = 'none'
+        invocation_parameters['calcres'] = True
+        invocation_parameters['calcpsf'] = True
+        invocation_parameters['parallel'] = False
+
+        # subparameters
+        invocation_parameters['restoringbeam'] = 'common'
+        invocation_parameters['pbcor'] = pbcor
+        invocation_parameters['uvtaper'] = outertaper 
+        if niter > 0:
+            invocation_parameters['threshold'] = threshold
+            invocation_parameters['interactive'] = interactive
+        else:
+            invocation_parameters['threshold'] = ''
+            invocation_parameters['interactive'] = False
+        invocation_parameters['mask'] = mask
+        invocation_parameters['pbmask'] = 0.0
+
+        # write the tclean.last file (template in case of dryrun=True)
+        # 
+        # it would be preferable to have a helper function do _this_,
+        # then just call tclean right from simanalyze, but precedent.
+
+        filename = os.path.join(os.getcwd(),imagename+'.tclean.last')
+        if os.path.isfile(filename):
+            self.msg("Overwriting existing 'tclean.last' file",
+                     priority="info",origin="simutil")
+            os.remove(filename)
+        else:
+            with open(filename, 'w'): pass
+
+        # fill in the tclean.last file
+        # 
+        # the sections of code that handle this for tasks are 
+        # autogenerated during the CASAshell build process. See:
+        # [unpacked_build]/lib/py/lib/python3.6/site-packages/casashell/private
+
+        with open(filename,'w') as f:
+            # fill in the used parameters first
+            for i in invocation_parameters:
+                # catch None type objects returned by repr function
+                if i.startswith('<') and s.endswith('>'):
+                    f.write("{:<20}={!s}\n".format(i, None))
+                else:
+                    f.write("{:<20}={!r}\n".format(i, 
+                                                     invocation_parameters[i]))
+            # next, open and fill the task call
+            f.write("#tclean( ")
+            count = 0
+            for i in invocation_parameters:
+                if i.startswith('<') and s.endswith('>'):
+                    f.write("{!s}={!s}".format(i, None))
+                else:
+                    f.write("{!s}={!r}".format(i, 
+                                                 invocation_parameters[i]))
+                count += 1
+                if count < len(invocation_parameters): f.write(",")
+            # finally close the task call
+            f.write(" )\n")
+
+        # gather tclean task call by attempting to parse the file just created
+        with open(filename, 'r') as _f:
+            for line in _f:
+                if line.startswith('#tclean( '):
+                    task_call = line[1:-1]
+        if self.verbose:
+            self.msg(task_call, priority="warn", origin="simutil")
+        else:
+            self.msg(task_call, priority="info", origin="simutil")
+
+        # now that the tclean call is specified, it may be executed
+        if not dryrun:
+            casalog.filter("ERROR")
+            tclean( vis = invocation_parameters['vis'],
+                    selectdata = invocation_parameters['selectdata'],
+                    imagename=invocation_parameters['imagename'],
+                    imsize=invocation_parameters['imsize'],
+                    cell=invocation_parameters['cell'],
+                    phasecenter=invocation_parameters['phasecenter'],
+                    stokes=invocation_parameters['stokes'],
+                    startmodel=invocation_parameters['startmodel'],
+                    specmode=invocation_parameters['specmode'],
+                    gridder=invocation_parameters['gridder'],
+                    deconvolver=invocation_parameters['deconvolver'],
+                    restoration=invocation_parameters['restoration'],
+                    outlierfile=invocation_parameters['outlierfile'],
+                    weighting=invocation_parameters['weighting'],
+                    niter=invocation_parameters['niter'],
+                    usemask=invocation_parameters['usemask'],
+                    fastnoise=invocation_parameters['fastnoise'],
+                    restart=invocation_parameters['restart'],
+                    savemodel=invocation_parameters['savemodel'],
+                    calcres=invocation_parameters['calcres'],
+                    calcpsf=invocation_parameters['calcpsf'],
+                    parallel=invocation_parameters['parallel'],
+                    restoringbeam=invocation_parameters['restoringbeam'],
+                    pbcor=invocation_parameters['pbcor'],
+                    uvtaper=invocation_parameters['uvtaper'],
+                    threshold=invocation_parameters['threshold'],
+                    interactive=invocation_parameters['interactive'],
+                    mask=invocation_parameters['mask'],
+                    pbmask=invocation_parameters['pbmask'] )
+            casalog.filter()
 
 
 
@@ -3517,7 +3802,7 @@ class simutil:
 ######################################
     # adapted from aU.getBaselineStats
     def baselineLengths(self, configfile):
-        stnx, stny, stnz, stnd, padnames, telescopename, posobs = self.readantenna(configfile)
+        stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = self.readantenna(configfile)
 
         # use mean position, not official COFA=posobs
         cx=pl.mean(stnx)
@@ -3551,7 +3836,6 @@ class simutil:
         # freq must be in GHz
         mylengths=self.baselineLengths(configfile)
         rmslength = pl.sqrt(pl.mean(mylengths.flatten()**2))
-        from scipy.stats import scoreatpercentile
         ninety = scoreatpercentile(mylengths, 90)
 
         return 0.2997924/freq/ninety*3600.*180/pl.pi # lambda/b converted to arcsec
@@ -3575,10 +3859,7 @@ class simutil:
         Returns:
            Estimated PSF of image (quantity).
         """
-        import scipy.special as spspec
-        import scipy.signal as spsig
-        import scipy.interpolate as spintrp
-        
+
         if not qa.compare(beam, "rad"):
             raise ValueError("beam should be a quantity of antenna primary beam size (angle)")
         if not qa.compare(cell, "rad"):

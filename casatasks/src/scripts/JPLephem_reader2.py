@@ -14,7 +14,6 @@ mean_radius*, and construct_tablepath defined in here as well.
 """
 
 from __future__ import absolute_import
-from __future__ import print_function
 from glob import glob
 import os
 import re
@@ -178,7 +177,7 @@ def readJPLephem(fmfile,version=''):
     # Try opening fmfile now, because otherwise there's no point continuing.
     try:
         ephem = open(fmfile, 'rb')
-        print("opened the file=%s" % fmfile)
+        casalog.post("opened the file=%s" % fmfile)
         lines=ephem.readlines()
         # skip this, handle by rstrip later
         #crCount=0
@@ -191,7 +190,7 @@ def readJPLephem(fmfile,version=''):
         #    crCount+=n
         #    newlines += newln
         #if crCount > 0:
-        #  print "The input file appears to contains the carriage return code, \'^M\', will replace it with \'\\n\'..."
+        #  casalog.post("The input file appears to contains the carriage return code, \'^M\', will replace it with \'\\n\'...")
         #  raw_input('pause0')
         #  ephem.close()
         #  ephem = open('temp_ephem_data.txt','w+')
@@ -267,21 +266,19 @@ def readJPLephem(fmfile,version=''):
                 break
             matchobj = re.search(datapat, line)
             if matchobj:
-                #print "matchobj!"
+                #casalog.post("matchobj!")
                 gdict = matchobj.groupdict()
-                #print "gdict=",gdict
+                #casalog.post("gdict=",gdict)
                 for col in gdict:
                     if gdict[col]=='n.a.':
                         gdict[col]=invalid
-                #    print "cols.key=",cols.keys()
+                    # casalog.post("cols.key=",cols.keys())
  
                     if not cols[col].get('unwanted'):
                         retdict['data'][col]['data'].append(gdict[col])
                 if len(gdict) < num_cols:
-                    print("Partially mismatching line:")
-                    print(line)
-                    print("Found:")
-                    print(gdict)
+                    casalog.post("Partially mismatching line: {}".format(line))
+                    casalog.post("Found: {}".format(gdict))
                     print_datapat = True
                     raw_input("pause0")
             else:
@@ -302,7 +299,7 @@ def readJPLephem(fmfile,version=''):
             coordref=m.group(4).split('(')[-1]
             cols['RA']['comment']+='('+coordref+')'
             cols['DEC']['comment']+='('+coordref+')'
-            #print "cols['RA']['comment']=",  cols['RA']['comment']
+            # casalog.post( "cols['RA']['comment']=" + cols['RA']['comment'])
             # Chomp trailing whitespace.
             myline = re.sub(r'\s*$', '', line)
             titleline = myline
@@ -311,11 +308,11 @@ def readJPLephem(fmfile,version=''):
             # This loop will terminate one way or another.
             while myline and remaining_cols and found_col:
                 found_col = False
-                #print "myline = '%s'" % myline
-                #print "remaining_cols =", ', '.join(remaining_cols)
+                #casalog.post("myline = '%s'" % myline)
+                #casalog.post("remaining_cols =" + ', '.join(remaining_cols)
                 for col in remaining_cols:
                     if re.match(r'^[>\s]*' + cols[col]['header'], myline):
-                        #print "Found", col
+                        # casalog.post("Found" + col)
                         havecols.append(col)
                         remaining_cols.remove(col)
                         myline = re.sub(r'^[>\s]*' + cols[col]['header'],
@@ -337,10 +334,10 @@ def readJPLephem(fmfile,version=''):
             casalog.post("Starting to read data.", priority='INFO2')
             in_data = True
         else:
-            #print "line =", line
-            #print "looking for", 
+            #casalog.post("line =" + line)
+            #casalog.post("looking for")
             for hk in headers:
-                 #print "hk=",hk
+                 #casalog.post("hk=" + hk)
 
                  if not hk in retdict:
                     matchobj = re.search(headers[hk]['pat'], line)
@@ -362,32 +359,32 @@ def readJPLephem(fmfile,version=''):
 
     # If there were errors, provide debugging info.
     if comp_mismatches:
-        print("Completely mismatching lines:")
-        #print "\n".join(comp_mismatches)
+        casalog.post("Completely mismatching lines:")
+        #casalog.post("\n".join(comp_mismatches))
     if print_datapat:
-        print("The apparent title line is:")
-        print(titleline)
-        print("datapat = r'%s'" % sdatapat)
+        casalog.post("The apparent title line is:")
+        casalog.post(titleline)
+        casalog.post("datapat = r'%s'" % sdatapat)
 
     # Convert numerical strings into actual numbers.
     try:
         retdict['earliest'] = datestr_to_epoch(retdict['data']['MJD']['data'][0])
         retdict['latest'] = datestr_to_epoch(retdict['data']['MJD']['data'][-1])
     except Exception:
-        print("Error!")
+        casalog.post("Error!", 'ERROR')
         if 'data' in retdict:
             if 'MJD' in retdict['data']:
                 if 'data' in retdict['data']['MJD']:
-                    #print "retdict['data']['MJD']['data'] =", retdict['data']['MJD']['data']
-                    print("retdict['data'] = %s" % retdict['data'])
+                    #casalog.post( "retdict['data']['MJD']['data'] =" + retdict['data']['MJD']['data'])
+                    casalog.post("retdict['data'] = %s" % retdict['data'])
                 else:
-                    print("retdict['data']['MJD'] has no 'data' key.")
-                    print("retdict['data']['MJD'].keys() = %s" % retdict['data']['MJD'].keys())
+                    casalog.post("retdict['data']['MJD'] has no 'data' key.")
+                    casalog.post("retdict['data']['MJD'].keys() = %s" % retdict['data']['MJD'].keys())
             else:
-                print("retdict['data'] has no 'MJD' key.")
-                print("retdict['data'].keys() = %s" % retdict['data'].keys())
+                casalog.post("retdict['data'] has no 'MJD' key.")
+                casalog.post("retdict['data'].keys() = %s" % retdict['data'].keys())
         else:
-            print("retdict has no 'data' key.")
+            casalog.post("retdict has no 'data' key.")
         raise
 
     for hk in headers:
@@ -413,8 +410,8 @@ def readJPLephem(fmfile,version=''):
                             retdict[hk] = {'unit': headers[hk]['unit'],
                                            'value': float(retdict[hk])}
                     except Exception:
-                        print("Error converting header %s to a Quantity." % hk)
-                        print("retdict[hk] = %s" % retdict[hk])
+                        casalog.post("Error converting header %s to a Quantity." % hk)
+                        casalog.post("retdict[hk] = %s" % retdict[hk])
                         raise
             elif hk == 'GeoLong':
                 long_lat_alt = retdict[hk].split(',')
@@ -462,8 +459,7 @@ def readJPLephem(fmfile,version=''):
                         retdict['rot_per'] = {'unit': match.group(2),
                                               'value': float(match.group(1))}
                 except:
-                    print("Error parsing the rotation period from")
-                    print(rpstr)
+                    casalog.post("Error parsing the rotation period from: {}".format(rpstr))
     
     if 'ang_sep' in retdict['data']:
         retdict['data']['obs_code'] = {'comment': 'Obscuration code'}
@@ -520,7 +516,7 @@ def readJPLephem(fmfile,version=''):
         #casalog.post("retdict.keys=%s" % retdict.keys())
         retdict['MJD0'] = retdict['data']['MJD']['value'][0] - retdict['dMJD']
     else:
-        print("The table will not be usable with me.framecomet because it lacks MJD.")
+        casalog.post("The table will not be usable with me.framecomet because it lacks MJD.")
 
     # adding posrefsys keyword
     if cols['RA']['comment'].count('J2000'):
@@ -555,7 +551,7 @@ def convert_radec(radec_col):
         try:
             firstang = _qa.toangle(angstrlist[0])
         except Exception:
-            print("Error: Could not convert %s to an angle." % angstrlist[0])
+            casalog.post("Error: Could not convert %s to an angle." % angstrlist[0], 'ERROR')
             raise
         angq['unit'] = firstang['unit']
         angq['value'] = [firstang['value']]
@@ -592,7 +588,7 @@ def get_num_from_str(fstr, wanted="float"):
     if match:
         value = float(match.group(1))
     else:
-        print("Could not convert \"%s\" to a %s." % (fstr, wanted))
+        casalog.post("Could not convert \"%s\" to a %s." % (fstr, wanted))
         value = False
     return value
 
@@ -775,7 +771,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
             cols.append(dkeys.pop(dkeys.index(c)))
             if nrows == 0:
                 nrows = len(get_bare_col(indict[c]))
-                print("Got nrows = %s from %s" % (nrows,c))
+                casalog.post("Got nrows = %s from %s" % (nrows,c))
 
     # Go through what's left of dkeys and assign them to either keywords or
     # cols.
@@ -805,11 +801,11 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
                'valueType': 'double'} # Use double (not float!) for columns
                                       # that will be read by MeasIERS.
     for c in cols:
-        #print "Setting coldesc for", c
+        # casalog.post("Setting coldesc for" + c)
         data = indict[c]  # Place to find the valueType.
 
         if isinstance(data,dict):
-            #print "comment =", data.get('comment', '')
+            # casalog.post("comment =" + data.get('comment', ''))
             coldesc['comment'] = data.get('comment', '')
             
         data = get_bare_col(data)
@@ -843,7 +839,7 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
 
             svndir = tempfile.mkdtemp(dir=workingdir)
             shutil.move(tablepath + '/.svn', svndir)
-        print("Removing %s directory %s" % tablepath)
+        casalog.post("Removing %s directory %s" % tablepath)
         shutil.rmtree(tablepath)
 
     # Create and fill the table.
@@ -895,12 +891,12 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
         mytb.addrows(nrows)     # Must be done before putting the columns.
 
     except Exception as e:
-        print("Error %s trying to create %s" % (e,tablepath))
+        casalog.post("Error %s trying to create %s" % (e,tablepath), 'ERROR')
         retval = False
 
     for c in cols:
         try:
-            #print "tabdesc[%s] =" % c, tabdesc[c]
+            #casalog.post("tabdesc[%s] =" % c + tabdesc[c])
             data = indict[c]  # Note the trickle-down nature below.
             if isinstance(indict[c],dict) and 'comment' in indict[c]:
                 data = data['data']
@@ -915,16 +911,16 @@ def dict_to_table(indict, tablepath, kwkeys=[], colkeys=[], info=None, keepcolor
                 data = data['value']
             mytb.putcol(c, data)
         except Exception as e:
-            print("Error %s trying to put column %s in %s" % (e,c,tablepath))
-            print("data[0] = %s" % data[0])
-            print("tabdesc[c] = %s" % tabdesc[c])
+            casalog.post("Error %s trying to put column %s in %s" % (e,c,tablepath), 'ERROR')
+            casalog.post("data[0] = %s" % data[0])
+            casalog.post("tabdesc[c] = %s" % tabdesc[c])
             retval = False
 
     for k in keywords:
         try:
             mytb.putkeyword(k, indict[k])
         except Exception as e:
-            print("Error %s trying to put keyword %s in %s" % (e,k,tablepath))
+            casalog.post("Error %s trying to put keyword %s in %s" % (e,k,tablepath), 'ERROR')
             retval = False
     mytb.close()
 
@@ -947,7 +943,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
     """
     if not tablepath:
         tablepath = construct_tablepath(fmdict, prefix)
-        print("Writing to %s" % tablepath)
+        casalog.post("Writing to %s" % tablepath)
 
     # safe gaurd from zapping current directory by dict_to_table()
     if tablepath=='.' or tablepath=='./' or tablepath.isspace():
@@ -1007,7 +1003,7 @@ def ephem_dict_to_table(fmdict, tablepath='', prefix=''):
 
         retval = dict_to_table(outdict, tablepath, kws, collist, info, keepcolorder)
     except Exception as e:
-        print('Error %s trying to export an ephemeris dict to %s' % (e,tablepath))
+        casalog.post('Error %s trying to export an ephemeris dict to %s' % (e,tablepath))
         retval = False
 
     return retval
@@ -1038,16 +1034,16 @@ def jplfiles_to_repository(objs, jpldir='.', jplext='.ephem',
     neph = 0
     casapath = os.getenv('CASAPATH')
     if not casapath:
-        print("CASAPATH is not set.")
+        casalog.post("CASAPATH is not set.", 'ERROR')
         return 0
     datadir = casapath.split()[0] + '/data/ephemerides/JPL-Horizons'
     if not os.path.isdir(datadir):
         try:
             os.mkdir(datadir)
-            print("Created %s" % datadir)
-            print("You should probably svn add it.")
+            casalog.post("Created %s" % datadir)
+            casalog.post("You should probably svn add it.")
         except Exception as e:
-            print("Error %s creating %s" % (e,datadir))
+            casalog.post("Error %s creating %s" % (e,datadir), 'ERROR')
             return 0
     datadir += '/'
 

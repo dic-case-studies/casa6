@@ -689,7 +689,7 @@ VisibilityIteratorReadImpl::setState ()
                 channels_p.nGroups_p[spw] == 0) {
             // no selection set yet, set default = all
             // for a reference MS this will normally be set appropriately in VisSet
-            selectChannel (1, msIter_p.startChan (), nChan_p);
+            selectChannel (1, 0, nChan_p);
         }
         channelGroupSize_p = channels_p.width_p[spw];
         curNGroups_p = channels_p.nGroups_p[spw];
@@ -720,7 +720,6 @@ VisibilityIteratorReadImpl::updateSlicer ()
     //Fixed what i think was a confusion between chanWidth and chanInc
     // 2007/11/12
     Int start = channels_p.start_p[spw] + curChanGroup_p * channels_p.width_p[spw];
-    start -= msIter_p.startChan ();
     AlwaysAssert (start >= 0 && start + channelGroupSize_p <= nChan_p, AipsError);
     //  slicer_p=Slicer (Slice (),Slice (start,channelGroupSize_p));
     // above is slow, use IPositions instead.
@@ -1151,7 +1150,7 @@ VisibilityIteratorReadImpl::getReceptor0Angle ()
     return receptor0Angle;
 }
 
-Vector<uInt>
+Vector<rownr_t>
 VisibilityIteratorReadImpl::getRowIds () const
 {
     update_rowIds ();
@@ -1160,8 +1159,8 @@ VisibilityIteratorReadImpl::getRowIds () const
 }
 
 
-Vector<uInt> &
-VisibilityIteratorReadImpl::rowIds (Vector<uInt> & rowids) const
+Vector<rownr_t> &
+VisibilityIteratorReadImpl::rowIds (Vector<rownr_t> & rowids) const
 {
     /* Calculate the row numbers in the original MS only when needed,
      i.e. when this function is called */
@@ -1356,7 +1355,7 @@ VisibilityIteratorReadImpl::frequency (Vector<Double> & freq) const
             Int spw = msIter_p.spectralWindowId ();
             cache_p.frequency_p.resize (channelGroupSize_p);
             const Vector<Double> & chanFreq = msIter_p.frequency ();
-            Int start = channels_p.start_p[spw] - msIter_p.startChan ();
+            Int start = channels_p.start_p[spw];
             Int inc = channels_p.inc_p[spw] <= 0 ? 1 : channels_p.inc_p[spw];
             for (Int i = 0; i < channelGroupSize_p; i++) {
                 cache_p.frequency_p (i) = chanFreq (start + curChanGroup_p * channels_p.width_p[spw] + i * inc);

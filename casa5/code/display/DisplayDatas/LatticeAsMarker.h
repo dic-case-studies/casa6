@@ -29,21 +29,16 @@
 #define TRIALDISPLAY_LATTICEASMARKER_H
 
 //# aips includes:
-#include <casa/aips.h>
-#include <casa/Quanta/Unit.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Quanta/Unit.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 //# trial includes:
 #include <images/Images/ImageInterface.h>
 
 //# display library includes:
 #include <display/DisplayDatas/LatticePADD.h>
-
-namespace casacore{
-
-	template <class T> class Array;
-	class IPosition;
-	class Record;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

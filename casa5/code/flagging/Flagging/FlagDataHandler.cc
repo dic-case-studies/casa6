@@ -127,9 +127,9 @@ FlagDataHandler::FlagDataHandler(string tablename, uShort iterationApproach, Dou
 	buffersInitialized_p = false;
 	iteratorGenerated_p = false;
 	stopIteration_p = false;
-	processedRows = 0;
-	chunkNo = 0;
-	bufferNo = 0;
+	processedRows_p = 0;
+	chunkNo_p = 0;
+	bufferNo_p = 0;
 
 	// Initialize stats
 	stats_p = false;
@@ -137,8 +137,9 @@ FlagDataHandler::FlagDataHandler(string tablename, uShort iterationApproach, Dou
 	chunkCounts_p = 0;
 	progressCounts_p = 0;
 	msCounts_p = 0;
-	summaryThreshold_p = 10;
 	printChunkSummary_p = true;
+	summaryThreshold_p = summaryThresholdInc_p;
+	chunkLineThreshold_p = chunkLineThresholdInc_p;;
 
 	// Set all the initialized pointers to NULL
 	measurementSetSelection_p = NULL;
@@ -524,7 +525,10 @@ FlagDataHandler::generatePolarizationsMap()
 
 	uShort pos = 0;
 	Vector<Int> corrTypes = visibilityBuffer_p->correlationTypes();
-	*logger_p << LogIO::DEBUG2 << " Correlation type: " <<  corrTypes << LogIO::POST;
+
+        const auto logprio = logger_p->priority();
+        if (logprio <= LogMessage::DEBUG2)
+            *logger_p << LogIO::DEBUG2 << " Correlation type: " <<  corrTypes << LogIO::POST;
 
 	for (Vector<Int>::iterator iter = corrTypes.begin(); iter != corrTypes.end();iter++)
 	{
@@ -532,131 +536,147 @@ FlagDataHandler::generatePolarizationsMap()
 		{
 			case Stokes::I:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is I" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::I] = pos;
-				(*polarizationIndexMap_p)[pos] = "I";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is I" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::I] = pos;
+                            (*polarizationIndexMap_p)[pos] = "I";
+                            break;
 			}
 			case Stokes::Q:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is Q" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::Q] = pos;
-				(*polarizationIndexMap_p)[pos] = "Q";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is Q" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::Q] = pos;
+                            (*polarizationIndexMap_p)[pos] = "Q";
+                            break;
 			}
 			case Stokes::U:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is U" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::U] = pos;
-				(*polarizationIndexMap_p)[pos] = "U";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is U" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::U] = pos;
+                            (*polarizationIndexMap_p)[pos] = "U";
+                            break;
 			}
 			case Stokes::V:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is V" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::V] = pos;
-				(*polarizationIndexMap_p)[pos] = "V";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is V" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::V] = pos;
+                            (*polarizationIndexMap_p)[pos] = "V";
+                            break;
 			}
 			case Stokes::XX:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XX" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::XX] = pos;
-				(*polarizationIndexMap_p)[pos] = "XX";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XX" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::XX] = pos;
+                            (*polarizationIndexMap_p)[pos] = "XX";
+                            break;
 			}
 			case Stokes::YY:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YY" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::YY] = pos;
-				(*polarizationIndexMap_p)[pos] = "YY";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YY" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::YY] = pos;
+                            (*polarizationIndexMap_p)[pos] = "YY";
+                            break;
 			}
 			case Stokes::XY:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XY" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::XY] = pos;
-				(*polarizationIndexMap_p)[pos] = "XY";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is XY" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::XY] = pos;
+                            (*polarizationIndexMap_p)[pos] = "XY";
+                            break;
 			}
 			case Stokes::YX:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YX" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::YX] = pos;
-				(*polarizationIndexMap_p)[pos] = "YX";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is YX" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::YX] = pos;
+                            (*polarizationIndexMap_p)[pos] = "YX";
+                            break;
 			}
 			case Stokes::RR:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RR" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::RR] = pos;
-				(*polarizationIndexMap_p)[pos] = "RR";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RR" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::RR] = pos;
+                            (*polarizationIndexMap_p)[pos] = "RR";
+                            break;
 			}
 			case Stokes::LL:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LL" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::LL] = pos;
-				(*polarizationIndexMap_p)[pos] = "LL";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LL" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::LL] = pos;
+                            (*polarizationIndexMap_p)[pos] = "LL";
+                            break;
 			}
 			case Stokes::RL:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RL" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::RL] = pos;
-				(*polarizationIndexMap_p)[pos] = "RL";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is RL" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::RL] = pos;
+                            (*polarizationIndexMap_p)[pos] = "RL";
+                            break;
 			}
 			case Stokes::LR:
 			{
-				*logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LR" << LogIO::POST;
-				(*polarizationMap_p)[Stokes::LR] = pos;
-				(*polarizationIndexMap_p)[pos] = "LR";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " The " << pos << " th correlation is LR" << LogIO::POST;
+                            (*polarizationMap_p)[Stokes::LR] = pos;
+                            (*polarizationIndexMap_p)[pos] = "LR";
+                            break;
 			}
 			case VisMapper::CALSOL1:
 			{
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 1 found at " << pos << LogIO::POST;
-				(*polarizationMap_p)[VisMapper::CALSOL1] = pos;
-				(*polarizationIndexMap_p)[pos] = "Sol1";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 1 found at " << pos << LogIO::POST;
+                            (*polarizationMap_p)[VisMapper::CALSOL1] = pos;
+                            (*polarizationIndexMap_p)[pos] = "Sol1";
+                            break;
 			}
 			case VisMapper::CALSOL2:
 			{
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 2 found at " << pos << LogIO::POST;
-				(*polarizationMap_p)[VisMapper::CALSOL2] = pos;
-				(*polarizationIndexMap_p)[pos] = "Sol2";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 2 found at " << pos << LogIO::POST;
+                            (*polarizationMap_p)[VisMapper::CALSOL2] = pos;
+                            (*polarizationIndexMap_p)[pos] = "Sol2";
+                            break;
 			}
 			case VisMapper::CALSOL3:
 			{
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 3 found at " << pos << LogIO::POST;
-				(*polarizationMap_p)[VisMapper::CALSOL3] = pos;
-				(*polarizationIndexMap_p)[pos] = "Sol3";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 3 found at " << pos << LogIO::POST;
+                            (*polarizationMap_p)[VisMapper::CALSOL3] = pos;
+                            (*polarizationIndexMap_p)[pos] = "Sol3";
+                            break;
 			}
 			case VisMapper::CALSOL4:
 			{
-				*logger_p << LogIO::DEBUG2 << " Calibration solution 4 found at " << pos << LogIO::POST;
-				(*polarizationMap_p)[VisMapper::CALSOL4] = pos;
-				(*polarizationIndexMap_p)[pos] = "Sol4";
-				break;
+                            if (logprio <= LogMessage::DEBUG2)
+                                *logger_p << LogIO::DEBUG2 << " Calibration solution 4 found at " << pos << LogIO::POST;
+                            (*polarizationMap_p)[VisMapper::CALSOL4] = pos;
+                            (*polarizationIndexMap_p)[pos] = "Sol4";
+                            break;
 			}
 			default:
 			{
-				*logger_p << LogIO::WARN << " The " << pos << " th correlation is unknown: " << *iter << LogIO::POST;
-				break;
+                            *logger_p << LogIO::WARN << " The " << pos << " th correlation is unknown: " << *iter << LogIO::POST;
+                            break;
 			}
 		}
 		pos++;
 	}
 
-	for (polarizationMap::iterator iter =polarizationMap_p->begin();iter != polarizationMap_p->end();iter++)
-	{
+        if (logprio <= LogMessage::DEBUG2) {
+            for (polarizationMap::iterator iter =polarizationMap_p->begin();iter != polarizationMap_p->end();iter++)
+            {
 		*logger_p << LogIO::DEBUG2 << " Polarization map key: " << iter->first << " value: " << iter->second << LogIO::POST;
-	}
-
-	return;
+            }
+        }
 }
 
 void
@@ -2539,9 +2559,9 @@ Bool
 FlagMapper::getModifiedFlags(uInt channel, uInt row)
 {
 	Bool combinedFlag = false;
-	for (vector<uInt>::iterator iter=selectedCorrelations_p[0].begin();iter!=selectedCorrelations_p[0].end();iter++)
+	for (auto &elem : selectedCorrelations_p[0])
 	{
-		combinedFlag = combinedFlag | commonFlagsView_p->operator ()(*iter,channel,row);
+		combinedFlag = combinedFlag | commonFlagsView_p->operator ()(elem, channel, row);
 	}
 
 	return combinedFlag;
@@ -2578,9 +2598,9 @@ Bool
 FlagMapper::getModifiedFlags(uInt pol, uInt channel, uInt row)
 {
 	Bool combinedFlag = false;
-	for (vector<uInt>::iterator iter=selectedCorrelations_p[pol].begin();iter!=selectedCorrelations_p[pol].end();iter++)
+	for (auto &elem : selectedCorrelations_p[pol])
 	{
-		combinedFlag = combinedFlag | commonFlagsView_p->operator ()(*iter,channel,row);
+		combinedFlag = combinedFlag | commonFlagsView_p->operator ()(elem, channel, row);
 	}
 
 	return combinedFlag;

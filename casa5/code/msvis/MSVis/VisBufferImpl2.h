@@ -187,7 +187,7 @@ public:
 
     virtual casacore::Bool isAttached () const;
     virtual casacore::Bool isFillable () const;
-    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::Int nRows, casacore::Bool clearTheCache = true);
+    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::rownr_t nRows, casacore::Bool clearTheCache = true);
     virtual void validateShapes () const;
 
     virtual void writeChangesBack ();
@@ -313,7 +313,7 @@ public:
     virtual casacore::Int nAntennas () const;
     virtual casacore::Int nChannels () const;
     virtual casacore::Int nCorrelations () const;
-    virtual casacore::Int nRows () const;
+    virtual casacore::rownr_t nRows () const;
     virtual const casacore::Vector<casacore::Int> & observationId () const;
     virtual void setObservationId (const casacore::Vector<casacore::Int> & value);
     virtual const casacore::MDirection& phaseCenter () const;
@@ -321,7 +321,7 @@ public:
     virtual casacore::Int polarizationId () const;
     virtual const casacore::Vector<casacore::Int> & processorId () const;
     virtual void setProcessorId (const casacore::Vector<casacore::Int> & value);
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const;
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const;
     virtual const casacore::Vector<casacore::Int> & scan () const;
     virtual void setScan (const casacore::Vector<casacore::Int> & value);
     virtual const casacore::Matrix<casacore::Float> & sigma () const;
@@ -370,10 +370,10 @@ protected:
 
     void adjustWeightFactorsAndFlags (casacore::Matrix <casacore::Float> & rowWeightFactors,
                                       casacore::Bool useWeightSpectrum,
-                                      casacore::Int nRows,
+                                      casacore::rownr_t nRows,
                                       casacore::Int nCorrelations,
                                       casacore::Int nChannelsOut);
-    void adjustWeightAndSigmaMatrices (casacore::Int nChannelsAveraged, casacore::Int nChannelsOut, casacore::Int nRows,
+    void adjustWeightAndSigmaMatrices (casacore::Int nChannelsAveraged, casacore::Int nChannelsOut, casacore::rownr_t nRows,
                                        casacore::Int nCorrelations, casacore::Int nChannelsSelected,
                                        const casacore::Matrix <casacore::Float> & rowWeightFactors);
 
@@ -397,14 +397,13 @@ protected:
     virtual void configureNewSubchunk (casacore::Int msId, const casacore::String & msName, casacore::Bool isNewMs,
                                        casacore::Bool isNewArrayId, casacore::Bool isNewFieldId,
                                        casacore::Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       casacore::Int nRows, casacore::Int nChannels, casacore::Int nCorrelations,
+                                       casacore::rownr_t nRows, casacore::Int nChannels, casacore::Int nCorrelations,
                                        const casacore::Vector<casacore::Int> & correlations,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsDefined,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsSelected,
                                        casacore::CountedPtr<WeightScaling> weightScaling);
 
     virtual void copyRow (casacore::Int sourceRow, casacore::Int destinationRow);
-    virtual void deleteRows (const casacore::Vector<casacore::Int> & rowsToDelete);
     virtual void dirtyComponentsAdd (const VisBufferComponents2 & additionalDirtyComponents);
     virtual void dirtyComponentsAdd (VisBufferComponent2 component);
     virtual void dirtyComponentsClear ();
@@ -419,7 +418,6 @@ protected:
     virtual void sortCorrelationsAux (casacore::Bool makeSorted);
     virtual ViImplementation2 * getViiP () const; // protected, non-const access to VI
     void registerCacheItem (VbCacheItemBase *);
-    virtual void resizeRows (casacore::Int newNRows);
     virtual void stateCopy (const VisBufferImpl2 & other); // copy relevant noncached members
     virtual void setFillable (casacore::Bool isFillable);
     virtual void setRekeyable (casacore::Bool isRekeyable);
@@ -513,7 +511,7 @@ private:
     virtual void fillPolFrame (casacore::Int& value) const;
     virtual void fillPolarizationId (casacore::Int& value) const;
     virtual void fillProcessorId (casacore::Vector<casacore::Int>& value) const;
-    virtual void fillRowIds (casacore::Vector<casacore::uInt>& value) const;
+    virtual void fillRowIds (casacore::Vector<casacore::rownr_t>& value) const;
     virtual void fillScan (casacore::Vector<casacore::Int>& value) const;
     virtual void fillSigma (casacore::Matrix<casacore::Float>& value) const;
     //virtual void fillSigmaMat (casacore::Matrix<casacore::Float>& value) const;

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import *
@@ -48,7 +47,7 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
                 _tb.open(vis+'/DATA_DESCRIPTION')
                 for k in spwlist:
                     if (k<-1 or k>maxspw):
-                        raise Exception("Error: max valid spw id is "+str(maxspw))
+                        raise RuntimeError("Error: max valid spw id is "+str(maxspw))
                     else:
                         for j in range(0,_tb.nrows()):
                             if(_tb.getcell("SPECTRAL_WINDOW_ID",j)==k and not (j in myddlist)):
@@ -56,16 +55,16 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
                 #end for k
                 _tb.close()
                 casalog.post('DATA_DESC_IDs to process: '+str(myddlist), 'INFO')
-            except:
-                raise Exception('Error reading DATA_DESCRIPTION table')
+            except Exception as exc:
+                raise RuntimeError('Error reading DATA_DESCRIPTION table: {}'.format(exc))
         #endif
         outname = 'conjugated_'+vis
         if not (outputvis==""):
             if((type(outputvis)!=str) or (len(outputvis.split()) < 1)):
-                raise Exception('parameter outputvis is invalid')
+                raise ValueError('parameter outputvis is invalid')
             outname = outputvis
         if not overwrite and os.path.exists(outname):
-            raise Exception('outputvis '+outname+' exists and you did not permit overwrite')
+            raise RuntimeError('outputvis '+outname+' exists and you did not permit overwrite')
         os.system('rm -rf '+outname)
         os.system('cp -R '+vis+' '+outname)
         _tb.open(outname, nomodify=False)
@@ -109,7 +108,5 @@ def conjugatevis(vis,spwlist=[],outputvis="",overwrite=False):
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
 
-    except Exception as instance:
+    finally:
         _tb.close()
-        print('*** Error *** %s' % instance)
-        raise

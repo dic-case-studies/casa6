@@ -526,7 +526,7 @@ FlagMSHandler::generateIterator()
   chunksInitialized_p = false;
   buffersInitialized_p = false;
   stopIteration_p = false;
-  processedRows = 0;
+  processedRows_p = 0;
 
   return true;
 }
@@ -590,20 +590,19 @@ FlagMSHandler::nextChunk()
 			visibilityIterator_p->originChunks();
 			chunksInitialized_p = true;
 			buffersInitialized_p = false;
-			chunkNo++;
-			bufferNo = 0;
+			chunkNo_p++;
+			bufferNo_p = 0;
 			moreChunks = true;
 }
 		else
 		{
 			visibilityIterator_p->nextChunk();
-
 			if (visibilityIterator_p->moreChunks())
 			{
 				buffersInitialized_p = false;
 				moreChunks = true;
-				chunkNo++;
-				bufferNo = 0;
+				chunkNo_p++;
+				bufferNo_p = 0;
 			}
 		}
 	}
@@ -623,107 +622,105 @@ FlagMSHandler::nextChunk()
 bool
 FlagMSHandler::nextBuffer()
 {
-	bool moreBuffers = false;
-	if (stopIteration_p)
-	{
-		moreBuffers = false;
-	}
-	else
-	{
-		if (!buffersInitialized_p)
-		{
-			visibilityIterator_p->origin();
-			buffersInitialized_p = true;
-			if (!asyncio_enabled_p) preFetchColumns();
-			if (mapAntennaPairs_p) generateAntennaPairMap();
-			if (mapSubIntegrations_p) generateSubIntegrationMap();
-			if (mapPolarizations_p) generatePolarizationsMap();
-			if (mapAntennaPointing_p) generateAntennaPointingMap();
+    bool moreBuffers = false;
+    if (stopIteration_p) {
+        return moreBuffers;
+    }
 
-			moreBuffers = true;
-			flushFlags_p = false;
-			flushFlagRow_p = false;
-			bufferNo++;
-		}
-		else
-		{
-			// WARNING: ++ operator is defined for VisibilityIterator class ("advance" function)
-			// but if you define a VisibilityIterator pointer, then  ++ operator does not call
-			// the advance function but increments the pointers.
-			visibilityIterator_p->next();
+    if (!buffersInitialized_p)
+    {
+        visibilityIterator_p->origin();
+        buffersInitialized_p = true;
+        if (!asyncio_enabled_p) preFetchColumns();
+        if (mapAntennaPairs_p) generateAntennaPairMap();
+        if (mapSubIntegrations_p) generateSubIntegrationMap();
+        if (mapPolarizations_p) generatePolarizationsMap();
+        if (mapAntennaPointing_p) generateAntennaPointingMap();
 
-			// WARNING: We iterate and afterwards check if the iterator is valid
-			if (visibilityIterator_p->more())
-			{
-				if (!asyncio_enabled_p) preFetchColumns();
-				if (mapAntennaPairs_p) generateAntennaPairMap();
-				if (mapSubIntegrations_p) generateSubIntegrationMap();
-				if (mapPolarizations_p) generatePolarizationsMap();
-				if (mapAntennaPointing_p) generateAntennaPointingMap();
-				moreBuffers = true;
-				flushFlags_p = false;
-				flushFlagRow_p = false;
-				bufferNo++;
-			}
-		}
-	}
+        moreBuffers = true;
+        flushFlags_p = false;
+        flushFlagRow_p = false;
+        bufferNo_p++;
+    }
+    else
+    {
+        // WARNING: ++ operator is defined for VisibilityIterator class ("advance" function)
+        // but if you define a VisibilityIterator pointer, then  ++ operator does not call
+        // the advance function but increments the pointers.
+        visibilityIterator_p->next();
 
-	// Set new common flag cube
-	if (moreBuffers)
-	{
-		// Get flag  (WARNING: We have to modify the shape of the cube before re-assigning it)
-		Cube<Bool> curentFlagCube= visibilityBuffer_p->flagCube();
-		modifiedFlagCube_p.resize(curentFlagCube.shape());
-		modifiedFlagCube_p = curentFlagCube;
-		originalFlagCube_p.resize(curentFlagCube.shape());
-		originalFlagCube_p = curentFlagCube;
+        // WARNING: We iterate and afterwards check if the iterator is valid
+        if (visibilityIterator_p->more())
+        {
+            if (!asyncio_enabled_p) preFetchColumns();
+            if (mapAntennaPairs_p) generateAntennaPairMap();
+            if (mapSubIntegrations_p) generateSubIntegrationMap();
+            if (mapPolarizations_p) generatePolarizationsMap();
+            if (mapAntennaPointing_p) generateAntennaPointingMap();
+            moreBuffers = true;
+            flushFlags_p = false;
+            flushFlagRow_p = false;
+            bufferNo_p++;
+        }
+    }
 
-		// Get flag row (WARNING: We have to modify the shape of the cube before re-assigning it)
-		Vector<Bool> curentflagRow= visibilityBuffer_p->flagRow();
-		modifiedFlagRow_p.resize(curentflagRow.shape());
-		modifiedFlagRow_p = curentflagRow;
-		originalFlagRow_p.resize(curentflagRow.shape());
-		originalFlagRow_p = curentflagRow;
 
-		// Compute total number of flags per buffer to be used for generating the agents stats
-		Int64 currentBufferCounts = curentFlagCube.shape().product();
-		chunkCounts_p += currentBufferCounts;
-		progressCounts_p += currentBufferCounts;
-		msCounts_p += currentBufferCounts;
+    // Set new common flag cube
+    if (moreBuffers)
+    {
+        // Get flag  (WARNING: We have to modify the shape of the cube before re-assigning it)
+        Cube<Bool> curentFlagCube= visibilityBuffer_p->flagCube();
+        modifiedFlagCube_p.resize(curentFlagCube.shape());
+        modifiedFlagCube_p = curentFlagCube;
+        originalFlagCube_p.resize(curentFlagCube.shape());
+        originalFlagCube_p = curentFlagCube;
 
-		// Print chunk characteristics
-		if (bufferNo == 1)
-		{
-			processedRows += visibilityIterator_p->nRowsInChunk();
-			if (printChunkSummary_p)
-			{
-				logger_p->origin(LogOrigin("FlagMSHandler",""));
-				String corrs = "[ ";
-				for (uInt corr_i=0;corr_i<(uInt) visibilityBuffer_p->nCorrelations();corr_i++)
-				{
-					corrs += (*polarizationIndexMap_p)[corr_i] + " ";
-				}
-				corrs += "]";
+        // Get flag row (WARNING: We have to modify the shape of the cube before re-assigning it)
+        Vector<Bool> curentflagRow= visibilityBuffer_p->flagRow();
+        modifiedFlagRow_p.resize(curentflagRow.shape());
+        modifiedFlagRow_p = curentflagRow;
+        originalFlagRow_p.resize(curentflagRow.shape());
+        originalFlagRow_p = curentflagRow;
 
-				Double progress  = 100.0* ((Double) processedRows / (Double) selectedMeasurementSet_p->nrow());
+        // Compute total number of flags per buffer to be used for generating the agents stats
+        Int64 currentBufferCounts = curentFlagCube.shape().product();
+        chunkCounts_p += currentBufferCounts;
+        progressCounts_p += currentBufferCounts;
+        msCounts_p += currentBufferCounts;
 
-				*logger_p << LogIO::NORMAL <<
-				  "------------------------------------------------------------------------------------ " << LogIO::POST;
-				*logger_p << LogIO::NORMAL <<
-						"Chunk = " << chunkNo << " [progress: " << (Int)progress << "%]"
-						", Observation = " << visibilityBuffer_p->observationId()[0] <<
-						", Array = " << visibilityBuffer_p->arrayId()[0] <<
-						", Scan = " << visibilityBuffer_p->scan()[0] <<
-						", Field = " << visibilityBuffer_p->fieldId()(0) << " (" << fieldNames_p->operator()(visibilityBuffer_p->fieldId()) << ")"
-						", Spw = " << visibilityBuffer_p->spectralWindows()(0) <<
-						", Channels = " << visibilityBuffer_p->nChannels() <<
-						", Corrs = " << corrs <<
-						", Total Rows = " << visibilityIterator_p->nRowsInChunk() << LogIO::POST;
-			}
-		}
-	}
+        // Print chunk characteristics
+        if (bufferNo_p == 1)
+        {
+            processedRows_p += visibilityIterator_p->nRowsInChunk();
+            double progress  = 100.0* ((double) processedRows_p / (double) selectedMeasurementSet_p->nrow());
+            // Send only a limited number of lines to INFO level, 'other' lines to debug
+            if (checkDoChunkLine(progress)) {
+                *logger_p << LogIO::NORMAL;
+            } else {
+                *logger_p << LogIO::DEBUG1;
+            }
+            logger_p->origin(LogOrigin("FlagMSHandler",""));
 
-	return moreBuffers;
+            String corrs = "[ ";
+            for (uInt corr_i=0;corr_i<(uInt) visibilityBuffer_p->nCorrelations();corr_i++)
+            {
+                corrs += (*polarizationIndexMap_p)[corr_i] + " ";
+            }
+            corrs += "]";
+
+            *logger_p << "Chunk = " << chunkNo_p << " [progress: " << (Int)progress << "%]"
+                ", Observation = " << visibilityBuffer_p->observationId()[0] <<
+                ", Array = " << visibilityBuffer_p->arrayId()[0] <<
+                ", Scan = " << visibilityBuffer_p->scan()[0] <<
+                ", Field = " << visibilityBuffer_p->fieldId()(0) << " (" << fieldNames_p->operator()(visibilityBuffer_p->fieldId()) << ")"
+                ", Spw = " << visibilityBuffer_p->spectralWindows()(0) <<
+                ", Channels = " << visibilityBuffer_p->nChannels() <<
+                ", Corrs = " << corrs <<
+                ", Total Rows = " << visibilityIterator_p->nRowsInChunk() << LogIO::POST;
+        }
+    }
+
+    return moreBuffers;
 }
 
 // -----------------------------------------------------------------------
@@ -881,23 +878,38 @@ FlagMSHandler::checkIfColumnExists(String column)
 }
 
 // -----------------------------------------------------------------------
-// Signal true when a progress summary has to be printed
+// Whether the per-chunk progress log line should be produced
 // -----------------------------------------------------------------------
+bool
+FlagMSHandler::checkDoChunkLine(double progress)
+{
+    bool result = false;
+    // per-chunk progress report lines - every 'chunkLineThresholdInc_p' % and in
+    // any case always the beginning (~0%) end (100% rows)
+    if ((progress >= chunkLineThreshold_p) or (progress >= 100.0)) {
+        chunkLineThreshold_p += chunkLineThresholdInc_p;
+        result = true;
+    }
+    result |= (1 == chunkNo_p) or (processedRows_p == selectedMeasurementSet_p->nrow());
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
+// Signal true when a per-agent partial (ongoing run) summary has to be printed
+// ----------------------------------------------------------------------------
 bool
 FlagMSHandler::summarySignal()
 {
-	Double progress = 100.0* ((Double) processedRows / (Double) selectedMeasurementSet_p->nrow());
-	if ((progress >= summaryThreshold_p) || (logger_p->priority() >= LogMessage::DEBUG1))
-	{
-		summaryThreshold_p += 10;
-		printChunkSummary_p = true;
-		return true;
-	}
-	else
-	{
-		printChunkSummary_p = false;
-		return false;
-	}
+        Double progress = 100.0* ((Double) processedRows_p / (Double) selectedMeasurementSet_p->nrow());
+
+        // The summaries will be printed with INFO level. Do not bother building per-agent
+        // (for potentially many agents) summaries if logger priority not enough
+        auto signal = ((progress >= summaryThreshold_p) and (logger_p->priority() <= LogMessage::NORMAL));
+        if (signal) {
+            summaryThreshold_p += summaryThresholdInc_p;
+        }
+        return signal;
 }
 
 // -----------------------------------------------------------------------

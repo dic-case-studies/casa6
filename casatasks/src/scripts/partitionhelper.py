@@ -103,14 +103,14 @@ class convertToMMS():
         mslist = self.getMSlist(files)
                         
         casalog.post('List of MSs in input directory')
-        pp.pprint(mslist)        
+        casalog.post(pp.pformat(mslist))
         
         # Get non-MS directories and other files
         nonmslist = []
         nonmslist = self.getFileslist(files)
 
         casalog.post('List of other files in input directory')
-        pp.pprint(nonmslist)
+        casalog.post(pp.pformat(nonmslist))
                     
     
         # Create an MMS for each MS in list
@@ -323,26 +323,26 @@ class convertToMMS():
         return True
         
     def usage(self):
-        print('=========================================================================')
-        print('          convertToMMS will create a directory with multi-MSs.')
-        print('Usage:\n')
-        print('  import partitionhelper as ph')
-        print('  ph.convertToMMS(inpdir=\'dir\') \n')
-        print('Options:')
-        print('   inpdir <dir>        directory with input MS.')
-        print('   mmsdir <dir>        directory to save output MMS. If not given, it will save ')
-        print('                       the MMS in a directory called mmsdir in the current directory.')
-        print("   axis='auto'         separationaxis parameter of partition (spw,scan,auto).")
-        print("   numsubms=4         number of subMSs to create in output MMS")
-        print('   cleanup=False       if True it will remove the output directory before starting.\n')
+        casalog.post('=========================================================================')
+        casalog.post('          convertToMMS will create a directory with multi-MSs.')
+        casalog.post('Usage:\n')
+        casalog.post('  import partitionhelper as ph')
+        casalog.post('  ph.convertToMMS(inpdir=\'dir\') \n')
+        casalog.post('Options:')
+        casalog.post('   inpdir <dir>        directory with input MS.')
+        casalog.post('   mmsdir <dir>        directory to save output MMS. If not given, it will save ')
+        casalog.post('                       the MMS in a directory called mmsdir in the current directory.')
+        casalog.post("   axis='auto'         separationaxis parameter of partition (spw,scan,auto).")
+        casalog.post("   numsubms=4         number of subMSs to create in output MMS")
+        casalog.post('   cleanup=False       if True it will remove the output directory before starting.\n')
         
-        print(' NOTE: this script will run using the default values of partition. It will try to ')
-        print(' create an MMS for every MS in the input directory. It will skip non-MS directories ')
-        print(' such as cal tables. If partition succeeds, the script will create a link to every ')
-        print(' other directory or file in the output directory. ')
-        print(' The script will not walk through sub-directories of inpdir. It will also skip ')
-        print(' files or directories that start with a .')
-        print('==========================================================================')
+        casalog.post(' NOTE: this script will run using the default values of partition. It will try to ')
+        casalog.post(' create an MMS for every MS in the input directory. It will skip non-MS directories ')
+        casalog.post(' such as cal tables. If partition succeeds, the script will create a link to every ')
+        casalog.post(' other directory or file in the output directory. ')
+        casalog.post(' The script will not walk through sub-directories of inpdir. It will also skip ')
+        casalog.post(' files or directories that start with a .')
+        casalog.post('==========================================================================')
         return
         
 #
@@ -367,7 +367,7 @@ class convertToMMS():
 #     try:
 #         md.open(msfile)
 #     except:
-#         print('Cannot open the msfile')
+#         casalog.post('Cannot open the msfile')
 #         return 0
 #     
 #     if item == 'row':
@@ -402,7 +402,7 @@ def getMMSScans(mmsdict):
        Return a list of the scans in this MMS. '''
     
     if not isinstance(mmsdict, dict):
-        print('ERROR: Input is not a dictionary')
+        casalog.post('ERROR: Input is not a dictionary', 'ERROR')
         return []
     
     tkeys = mmsdict.keys()
@@ -477,7 +477,7 @@ def getMMSScanNrows(thisdict, myscan):
        Return the number of rows in the given scan. '''
     
     if not isinstance(thisdict, dict):
-        print('ERROR: Input is not a dictionary')
+        casalog.post('ERROR: Input is not a dictionary', 'ERROR')
         return -1
     
     tkeys = thisdict.keys()
@@ -642,7 +642,7 @@ def getScanSpwSummary(mslist=[]):
                 
             
         outdict[ims] = tempdict
-    #pprint.pprint(outdict)
+    #casalog.post(pp.format(outdict))
 
     return outdict
 
@@ -655,7 +655,7 @@ def getMMSSpwIds(thisdict):
     import numpy as np
     
     if not isinstance(thisdict, dict):
-        print('ERROR: Input is not a dictionary')
+        casalog.post('ERROR: Input is not a dictionary', 'ERROR')
         return []
     
     tkeys = thisdict.keys()
@@ -897,7 +897,7 @@ def setAxisType(mmsname, axis=''):
 
     # Check if AxisType already exist and remove it
     if axisType(mmsname) != '':
-        print('WARN: Will overwrite the existing AxisType value')
+        casalog.post('WARN: Will overwrite the existing AxisType value', 'WARN')
         readlist = readme.splitlines()
         newlist = copy.deepcopy(readlist)
         for val in newlist:

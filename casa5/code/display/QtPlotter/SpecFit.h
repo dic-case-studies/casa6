@@ -25,7 +25,8 @@
 #ifndef SPECFIT_H_
 #define SPECFIT_H_
 
-#include <casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 #include <QString>
 
 namespace casa {

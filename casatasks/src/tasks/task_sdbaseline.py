@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import numpy
 import os
 from collections import Counter
@@ -38,16 +37,19 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if not os.path.exists(infile):
             raise Exception("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
-            #print("type=%s, value=%s" % (type(outfile), str(outfile)))
+            #casalog.post("type=%s, value=%s" % (type(outfile), str(outfile)))
             #raise ValueError, "outfile name is empty."
             outfile = infile.rstrip('/') + '_bs'
-            print("outfile is empty or non-string. set to '" + outfile + "'")
+            casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if os.path.exists(outfile) and not overwrite:
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (blfunc == 'variable' and not os.path.exists(blparam)):
             raise ValueError("input file '%s' does not exists" % blparam)
+        blparam_file = infile + '_blparam.txt'
+        if os.path.exists(blparam_file):
+            remove_data(blparam_file)  # CAS-11781
         
         if (spw == ''): spw = '*'
 
@@ -151,6 +153,16 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 blformat_item = ['csv', 'text', 'table']
 blformat_ext  = ['csv', 'txt',  'bltable']
 
+
+def remove_data(filename):
+    if os.path.exists(filename):
+        if os.path.isdir(filename):
+            shutil.rmtree(filename)
+        elif os.path.isfile(filename):
+            os.remove(filename)
+        else:
+            # could be a symlink
+            os.remove(filename)
 
 def check_fftthresh(fftthresh):
     has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)

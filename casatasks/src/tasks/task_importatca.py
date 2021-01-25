@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 # get is_CASA6 and is_python3
@@ -90,9 +89,8 @@ def importatca (
             fields,edge)
             myaf.fill()
         except Exception as e:
-          print(e)
-          casalog.post("Failed to import atca rpfits file(s) %s" % files)
-          raise
+            raise RuntimeError("Failed to import atca rpfits file(s) %s" % files)
+
         # Write the args to HISTORY.
         try:
             param_names = importatca.__code__.co_varnames[:importatca.__code__.co_argcount]
@@ -107,8 +105,7 @@ def importatca (
             )
         except Exception:
             casalog.post("Failed to updated HISTORY", 'WARN')
-    except:
-        pass
+
     finally:
         if (myaf):
             del myaf 

@@ -27,9 +27,9 @@ def imsubimage(
     tmp_csys = None
     try:
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using " + imagename)
+            raise RuntimeError("Cannot create image analysis tool using " + imagename)
         if (len(outfile) == 0):
-            raise Exception("outfile must be specified.")
+            raise ValueError("outfile must be specified.")
         xregion = region
         if (type(region) != type({})):
             tmp_csys = myia.coordsys()
@@ -55,10 +55,7 @@ def imsubimage(
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         myia.done()
         _rg.done()

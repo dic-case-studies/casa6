@@ -747,6 +747,12 @@ Default is True. </description>
      <value></value>
      </param>
 
+     <param type="boolArray" direction="in" name="paramactive">
+       <description>An array of three booleans to control whether to
+       sove for delay, fringe-rate and dispersive delay</description>
+       <value></value>
+     </param>
+
      <param type="string" direction="in" name="solmode">
      <description>Solving mode: '', 'L1'; add 'R' for iterative outlier excision.</description>
      <value></value>
@@ -2795,6 +2801,34 @@ cb.done();
 </input>
 
 <returns type="record">
+   <description>
+   </description>
+</returns>
+
+<description>
+
+TBD
+
+</description>
+
+<example>
+
+TBD
+
+</example>
+</method>
+
+
+<method type="function" name="setcorrdepflags">
+   <shortdescription>Control use of correlation-dependent flags</shortdescription>
+   
+<input>
+     <param type="bool" direction="in" name="corrdepflags">
+     <description>Turn correlation dependent flags on/off (true/false)</description>
+     </param>
+</input>
+
+<returns type="bool">
    <description>
    </description>
 </returns>

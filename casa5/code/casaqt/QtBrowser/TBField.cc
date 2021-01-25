@@ -26,6 +26,7 @@
 //# $Id: $
 #include <casaqt/QtBrowser/TBField.h>
 #include <casaqt/QtBrowser/TBKeyword.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -49,7 +50,7 @@ String TBField::getName() { return name; }
 
 String TBField::getType() { return type; }
 
-vector<TBKeyword*>* TBField::getKeywords() { return &keywords; }
+std::vector<TBKeyword*>* TBField::getKeywords() { return &keywords; }
 
 TBKeyword* TBField::keyword(int i) {
     if(i >= 0 && i < (int)keywords.size()) return keywords.at(i);

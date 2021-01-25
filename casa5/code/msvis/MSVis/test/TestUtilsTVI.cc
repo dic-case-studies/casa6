@@ -30,6 +30,7 @@
 #include <msvis/MSVis/test/TestUtilsTVI.h>
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/TransformingVi2.h>
+#include <cstdlib>
 
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -212,7 +213,7 @@ template <class T> void compareVector(	const Char* column,
 	// Compare values
 	for (uInt index=0;index < inp.size(); index++)
 	{
-	    ASSERT_NEAR(abs(inp(index) - ref(index)), 0, tolerance)
+	    ASSERT_NEAR(std::fabs((Float) inp(index) - (Float) ref(index)), 0, tolerance)
             << column << " does not match in position ="
             << index
             << " test=" << inp(index)

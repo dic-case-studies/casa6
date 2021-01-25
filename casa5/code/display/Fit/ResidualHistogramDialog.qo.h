@@ -26,7 +26,7 @@
 //#                        Charlottesville, VA 22903-2475 USA
 //#
 #include <QDialog>
-#include <display/Fit/ResidualHistogramDialog.ui.h>
+#include <ui/ui_ResidualHistogramDialog.h>
 #include <casa/aips.h>
 #include <casa/BasicSL/String.h>
 #include <casa/Utilities/CountedPtr.h>

@@ -138,11 +138,54 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // return comprehensible direction string from given MDirection object
     static casacore::String asComprehensibleDirectionString(casacore::MDirection const &direction);
 
+    // Advise the chanselection needed for the frequency range or
+    // give the frequency range for a give spwselection
+    // You need to specify the field_id for which this calculation is 
+    // being done. 
+    // getFreqRange=true then the freqrange in the frame and spwselection  you choose is 
+    // returned in freqStart and freqEnd.
+    casacore::Bool adviseChanSel(casacore::Double& freqStart,
+				 casacore::Double& freqEnd, 
+				 const casacore::Double& freqStep,
+				 const casacore::MFrequency::Types& freqframe,
+				 casacore::Vector<casacore::Int>& spw,
+				 casacore::Vector<casacore::Int>& start,
+				 casacore::Vector<casacore::Int>& nchan,
+				 const casacore::String& msname="",
+				 const casacore::String& ephemtab="",
+				 const casacore::Int fieldid=0,
+				 const casacore::Bool getFreqRange=false, 
+				 const casacore::String spwselection="");
+
+
+
+    static casacore::Record fillWeightRecord(const casacore::String& type="natural", 
+	      const casacore::String& rmode="norm",
+	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 
+	      const casacore::Double robust=0.0,
+	      const casacore::Quantity& fieldofview=casacore::Quantity(0.0, "arcsec"),
+	      const casacore::Int npixels=0, 
+	      const casacore::Bool multiField=false,
+	      const casacore::Bool useCubeBriggs=false,
+	      const casacore::String& filtertype=casacore::String("Gaussian"),
+	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
+	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+    static void getFromWeightRecord( casacore::String& type,casacore::String& rmode,
+                                casacore::Quantity& noise,casacore::Double& robust,
+                                casacore::Quantity& fieldofview, casacore::Int& npixels,
+                                casacore::Bool& multiField,casacore::Bool& useCubeBriggs,
+                                 casacore::String& filtertype,
+                                 casacore::Quantity& filterbmaj,
+                                 casacore::Quantity& filterbmin,
+                                 casacore::Quantity& filterbpa, const casacore::Record& inrec);
+    
+
   protected:
     static casacore::String mergeSpwSel(const casacore::Vector<casacore::Int>& fspw, const casacore::Vector<casacore::Int>& fstart, const casacore::Vector<casacore::Int>& fnchan, const casacore::Matrix<casacore::Int>& spwsel);
 
     static casacore::Vector<casacore::uInt> primeFactors(casacore::uInt n, casacore::Bool douniq=true);
-
+    
   private:
     static casacore::String makeResourceFilename(int pid);
 
@@ -150,7 +193,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     static casacore::String g_startTimestamp;
     static const casacore::String g_enableOptMemProfile;
 
-    static casacore::Int parseProcStatusLine(const std::string &str);
+    static casacore::Int parseProcStatusLine(const std::string &str);    
+    
   };
 
 class SynthesisParams
@@ -218,9 +262,14 @@ public:
 
   void fromRecord(const casacore::Record &inrec);
   void setDefaults();
+
+  //need to explicitly declare an = operator if private variables contains arrays
+  SynthesisParamsImage& operator=(const SynthesisParamsImage& other);
+  
   casacore::String verify() const;
   casacore::Record toRecord()const ;
 
+  
   // Generate casacore::Coordinate System 
   casacore::CoordinateSystem buildCoordinateSystem(ROVisibilityIterator* rvi);
 
@@ -345,6 +394,8 @@ public:
   // For single-dish imaging
   casacore::String pointingDirCol;
   casacore::Float skyPosThreshold;
+  casacore::Vector<casacore::Float> pointingOffsetSigDev;
+  /* std::vector<float> pointingOffsetSigDev; */
   casacore::Int convSupport;
   casacore::Quantity truncateSize;
   casacore::Quantity gwidth;

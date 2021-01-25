@@ -481,6 +481,7 @@ FlagAgentBase::runCore()
 			{
 				preProcessBuffer(*(flagDataHandler_p->visibilityBuffer_p));
 				iterateRows();
+				postProcessBuffer();
 				break;
 			}
 			// Iterate through (time,freq) maps per antenna pair
@@ -1960,15 +1961,12 @@ FlagAgentBase::chunkSummary()
 	if (chunkFlags_p > 0)
 	{
 		tableFlags_p +=  chunkFlags_p;
-		if (flag_p)
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data flagged so far " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
+		std::string flagStr = "unflagged";
+		if (flag_p) {
+		   flagStr = "flagged";
 		}
-		else
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data unflagged so far: " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
-		}
-
+		*logger_p << LogIO::NORMAL << "=> "  << "Data " << flagStr << " so far " <<
+		   100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
 	}
 
 	// Only the clipping agent is capable of detecting this, and besides in general
@@ -2110,7 +2108,11 @@ FlagAgentBase::checkIfProcessBuffer()
 void
 FlagAgentBase::preProcessBuffer(const vi::VisBuffer2 &/*visBuffer*/)
 {
-	return;
+}
+
+void
+FlagAgentBase::postProcessBuffer()
+{
 }
 
 void
@@ -2135,30 +2137,32 @@ FlagAgentBase::iterateRows()
 	if (checkFlags_p) flagsMap.activateCheckMode();
 
 	// Some log info
-	if (multiThreading_p)
-	{
+        const auto logprio = logger_p->priority();
+        if (logprio <= LogMessage::DEBUG2) {
+            if (multiThreading_p)
+            {
 		*logger_p << LogIO::DEBUG2 << agentName_p.c_str() << "::" << __FUNCTION__
-				<<  " Thread Id " << threadId_p << ":" << nThreads_p
-				<< " Will process every " << nThreads_p << " rows starting with row " << threadId_p << " from a total of " <<
-				rowsIndex_p.size() << " rows (" << rowsIndex_p[0] << "-" << rowsIndex_p[rowsIndex_p.size()-1] << ") " <<
-				channelIndex_p.size() << " channels (" << channelIndex_p[0] << "-" << channelIndex_p[channelIndex_p.size()-1] << ") " <<
-				polarizationIndex_p.size() << " polarizations (" << polarizationIndex_p[0] << "-" << polarizationIndex_p[polarizationIndex_p.size()-1] << ")" << LogIO::POST;
-
-	}
-	else
-	{
+                          <<  " Thread Id " << threadId_p << ":" << nThreads_p
+                          << " Will process every " << nThreads_p << " rows starting with row " << threadId_p << " from a total of " <<
+                    rowsIndex_p.size() << " rows (" << rowsIndex_p[0] << "-" << rowsIndex_p[rowsIndex_p.size()-1] << ") " <<
+                    channelIndex_p.size() << " channels (" << channelIndex_p[0] << "-" << channelIndex_p[channelIndex_p.size()-1] << ") " <<
+                    polarizationIndex_p.size() << " polarizations (" << polarizationIndex_p[0] << "-" << polarizationIndex_p[polarizationIndex_p.size()-1] << ")" << LogIO::POST;
+            }
+            else
+            {
 		// Some logging info
 		*logger_p 	<< LogIO::DEBUG2 << " Going to process a buffer with: " <<
-				rowsIndex_p.size() << " rows (" << rowsIndex_p[0] << "-" << rowsIndex_p[rowsIndex_p.size()-1] << ") " <<
-				channelIndex_p.size() << " channels (" << channelIndex_p[0] << "-" << channelIndex_p[channelIndex_p.size()-1] << ") " <<
-				polarizationIndex_p.size() << " polarizations (" << polarizationIndex_p[0] << "-" << polarizationIndex_p[polarizationIndex_p.size()-1] << ")" << LogIO::POST;
-	}
+                    rowsIndex_p.size() << " rows (" << rowsIndex_p[0] << "-" << rowsIndex_p[rowsIndex_p.size()-1] << ") " <<
+                    channelIndex_p.size() << " channels (" << channelIndex_p[0] << "-" << channelIndex_p[channelIndex_p.size()-1] << ") " <<
+                    polarizationIndex_p.size() << " polarizations (" << polarizationIndex_p[0] << "-" << polarizationIndex_p[polarizationIndex_p.size()-1] << ")" << LogIO::POST;
+            }
+        }
 
 	// Loop through selected rows
 	Int rowIdx = 0;
 	bool flagRow = false;
 	vector<uInt>::iterator rowIter;
-	for (rowIter = rowsIndex_p.begin();rowIter != rowsIndex_p.end();rowIter++)
+	for (rowIter = rowsIndex_p.begin(); rowIter != rowsIndex_p.end(); ++rowIter)
 	{
 		if (multiThreading_p and (rowIdx % nThreads_p != threadId_p))
 		{

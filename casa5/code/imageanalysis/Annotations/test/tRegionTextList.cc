@@ -27,13 +27,13 @@
 #include <imageanalysis/Annotations/RegionTextList.h>
 #include <imageanalysis/Annotations/AnnCircle.h>
 #include <imageanalysis/Annotations/AnnEllipse.h>
-#include <casa/OS/EnvVar.h>
+#include <casacore/casa/OS/EnvVar.h>
+#include <casacore/casa/BasicMath/Math.h>
+#include <casacore/coordinates/Coordinates/CoordinateUtil.h>
 
-#include <coordinates/Coordinates/CoordinateUtil.h>
+#include <casacore/images/Images/ImageUtilities.h>
 
-#include <images/Images/ImageUtilities.h>
-
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 #include <iomanip>
 

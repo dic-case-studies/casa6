@@ -155,7 +155,7 @@ printMs (MeasurementSet * ms)
 
             for (int i = 0; i < vb.nRow(); i++){
 
-                printf ("r=%d ", vb.rowIds () [i]);
+                printf ("r=%llu ", vb.rowIds () [i]);
                 printf ("t=%.0f ", vb.time () [i]);
                 printf ("a1=%d ", vb.antenna1() [i]);
                 printf ("a2=%d ", vb.antenna2 () [i]);
@@ -413,7 +413,7 @@ BasicChannelSelection::checkRowScalars (VisBuffer2 * vb)
 {
     // Check out the non-cube data for each row
 
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
     Int nRows = vb->nRows();
 
     Int expectedAntenna1 = 0;
@@ -577,7 +577,7 @@ BasicChannelSelection::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * 
     const Cube<Complex> & visibilityCorrected = vb->visCubeCorrected();
     const Cube<Complex> & visibilityModel = vb->visCubeModel();
 
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
 
     Int channelOffset = info [spectralWindow][0];
     Int nChannels = info [spectralWindow][1];
@@ -1446,7 +1446,7 @@ MultipleMss::nextSubchunk (VisibilityIterator2 & /*vi*/, VisBuffer2 * vb)
     Int msId = vb->msId();
 
     const Cube<Complex> & visibility = vb->visCube();
-    const Vector<uInt> & rowIds = vb->rowIds ();
+    const Vector<rownr_t> & rowIds = vb->rowIds ();
 
 
     TestErrorIf (visibility.shape()[0] != 4,

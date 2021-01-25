@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import *
@@ -39,43 +38,39 @@ def clearcal(
     cblocal = calibrater()
     mslocal = ms()
 
-    try:
+    # we will initialize scr cols only if we don't create them
+    doinit = False
 
-        # we will initialize scr cols only if we don't create them
-        doinit = False
+    if (type(vis) == str) & os.path.exists(vis):
+        tblocal.open(vis)
+        doinit = tblocal.colnames().count('CORRECTED_DATA') > 0
+        tblocal.close()
 
-        if (type(vis) == str) & os.path.exists(vis):
-            tblocal.open(vis)
-            doinit = tblocal.colnames().count('CORRECTED_DATA') > 0
-            tblocal.close()
+        # We ignore selection if creating the scratch columns
+        if not doinit:
+            casalog.post('Need to create scratch columns; ignoring selection.')
 
-            # We ignore selection if creating the scratch columns
-            if not doinit:
-                casalog.post('Need to create scratch columns; ignoring selection.')
+        cblocal.setvi(old=True,quiet=False);  # Old VI for now
+        cblocal.open(vis, addmodel=addmodel)
+    else:
+        raise Exception('Visibility data set not found - please verify the name')
 
-            cblocal.setvi(old=True,quiet=False);  # Old VI for now
-            cblocal.open(vis, addmodel=addmodel)
-        else:
-            raise Exception('Visibility data set not found - please verify the name')
+    # If necessary (scr col not just created), initialize scr cols
+    if doinit:
+        cblocal.selectvis(field=field, spw=spw, intent=intent)
+        cblocal.initcalset(1)
+    cblocal.close()
 
-        # If necessary (scr col not just created), initialize scr cols
-        if doinit:
-            cblocal.selectvis(field=field, spw=spw, intent=intent)
-            cblocal.initcalset(1)
-        cblocal.close()
+    # Write history to the MS
+    if is_python3:
+        vars = locals( )
+        param_names = clearcal.__code__.co_varnames[:clearcal.__code__.co_argcount]
+        param_vals = [vars[p] for p in param_names]
+    else:
+        param_names = clearcal.__code__.co_varnames[:clearcal.__code__.co_argcount]
+        param_vals = [eval(p) for p in param_names]
 
-        # Write history to the MS
-        if is_python3:
-            vars = locals( )
-            param_names = clearcal.__code__.co_varnames[:clearcal.__code__.co_argcount]
-            param_vals = [vars[p] for p in param_names]
-        else:
-            param_names = clearcal.__code__.co_varnames[:clearcal.__code__.co_argcount]
-            param_vals = [eval(p) for p in param_names]
+    casalog.post('Updating the history in the output', 'DEBUG1')
+    write_history(mslocal, vis, 'clearcal', param_names,
+                  param_vals, casalog)
 
-        casalog.post('Updating the history in the output', 'DEBUG1')
-        write_history(mslocal, vis, 'clearcal', param_names,
-                      param_vals, casalog)
-        
-    except Exception as instance:
-        print('*** Error *** %s' % instance)

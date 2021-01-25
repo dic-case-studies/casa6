@@ -112,11 +112,7 @@ def mstransform(
         pdh.bypassParallelProcessing(0)
     
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Process the input Multi-MS
     if ParallelDataHelper.isMMSAndNotServer(vis) == True and monolithic_processing == False:
@@ -165,15 +161,10 @@ def mstransform(
         if pval == 0:
             raise Exception('Cannot create MMS using separationaxis=%s with some of the requested transformations.' % separationaxis)
                              
-        try:
-            pdh.setupCluster('mstransform')
-            pdh.go()
-            monolithic_processing = False
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
-            return False
-        
-        return True
+        pdh.setupCluster('mstransform')
+        pdh.go()
+        monolithic_processing = False
+        return
                     
         
     # Create a local copy of the MSTransform tool
@@ -235,7 +226,7 @@ def mstransform(
             
         # Only parse chanaverage if chanbin is valid
         if chanaverage and isinstance(chanbin, int) and chanbin <= 1:
-            raise Exception('Parameter chanbin must be > 1 to do channel averaging')
+            raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
             
         # Validate the case of int or list chanbin
         if chanaverage and pdh.validateChanBin():
@@ -279,7 +270,7 @@ def mstransform(
         if timeaverage:
             tb = qalocal.convert(qalocal.quantity(timebin), 's')['value']
             if not tb > 0:
-                raise Exception("Parameter timebin must be > '0s' to do time averaging")
+                raise ValueError("Parameter timebin must be > '0s' to do time averaging")
                        
         if timeaverage:
             casalog.post('Parse time averaging parameters')
@@ -318,17 +309,13 @@ def mstransform(
         # Run the tool
         casalog.post('Apply the transformations')
         mtlocal.run()        
-            
+
+    finally:
         mtlocal.done()
-                    
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
+
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
-    # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
-    
+    # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
     if ((spw != '') and (spw != '*')) or chanaverage == True:
         isopen = False
 
@@ -358,7 +345,6 @@ def mstransform(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -366,7 +352,6 @@ def mstransform(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print 'using ms.msseltoindex + a scalar width'
                             numspw = len(mslocal.msseltoindex(vis=vis,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -375,7 +360,6 @@ def mstransform(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-    #                print 'widths =', widths 
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -387,11 +371,8 @@ def mstransform(
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
                                 sch2 = update_spwchan(vis, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
@@ -412,18 +393,13 @@ def mstransform(
                 else:
                     casalog.post('FLAG_CMD table contains spw selection by name. Will not update it!','DEBUG')
                 
-            mytb.close()
-            
-        except Exception as instance:
+
+        finally:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
 
-    mytb = None
 
     # Write history to output MS, not the input ms.
     try:
@@ -436,11 +412,8 @@ def mstransform(
         write_history(mslocal, outputvis, 'mstransform', param_names, param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),'WARN')
-        return False
 
     mslocal = None
-    
-    return True
     
  
     

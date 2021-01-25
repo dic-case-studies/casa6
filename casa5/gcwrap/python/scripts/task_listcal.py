@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -19,13 +18,13 @@ def listcal(vis=None,caltable=None,field=None,antenna=None,spw=None,
        #Python script
 
        try:
-              mycb=calibrater( )
+              mycb = calibrater()
               if ((type(vis)==str) & (os.path.exists(vis))):
                      mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
               else:
                      raise Exception('Visibility data set not found - please verify the name')
               mycb.listcal(caltable=caltable,field=field,antenna=antenna,spw=spw,
                          listfile=listfile,pagerows=pagerows)
+
+       finally:
               mycb.close()
-       except Exception as instance:
-              print('*** Error *** %s' % instance)

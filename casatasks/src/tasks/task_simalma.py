@@ -115,7 +115,7 @@ def simalma(
                 casalog.post("Removing old project directory '%s'" % fileroot)
                 shutil.rmtree(fileroot)
             else:
-                raise Exception(infomsg)
+                raise RuntimeError(infomsg)
 
         if not os.path.exists(fileroot):
             os.mkdir(fileroot)
@@ -403,7 +403,7 @@ def simalma(
                    # Now make sure the configfile exists
                     if not os.path.exists(configfile):
                         msg("Couldn't find configfile: %s" % configfile, priority="error")
-                    stnx, stny, stnz, stnd, padnames, telescopename, posobs = myutil.readantenna(configfile)
+                    stnx, stny, stnz, stnd, padnames, antnames, telescopename, posobs = myutil.readantenna(configfile)
                     if telescopename=="ALMASD":
                         resols.append(qa.convert(PB12,'arcsec')['value'])
                     else:
@@ -453,9 +453,13 @@ def simalma(
             if qa.compare(tptime,'s'):
                 tptime_min=qa.convert(tptime,'min')['value']
             else:
-                msg("Can't interpret tptime='"+tptime+"' as a time quantity e.g. '3h'",priority="error")
+                msg("Can't interpret tptime='"
+                    +tptime+"' as a time quantity e.g. '3h'",
+                    priority="error")
         else:
-            msg("Can't interpret tptime='"+tptime+"' as a time quantity e.g. '3h'",priority="error")
+            msg("Can't interpret tptime='"
+                +tptime+"' as a time quantity e.g. '3h'",
+                priority="error")
 
 
         #-----------------------------
@@ -496,7 +500,7 @@ def simalma(
                     # tp
                     totaltime_min[j]=totaltime_min0*default_timeratio[3]
                 else:
-                    raise Exception("configuration types = "+str(configtypes))
+                    raise ValueError("configuration types = "+str(configtypes))
         else:
             for time in totaltime:
                 if not myutil.isquantity(time,halt=False):
@@ -508,7 +512,7 @@ def simalma(
                 totaltime_min.append(time_min)
                 
         if len(totaltime_min)!=len(antennalist):
-            raise Exception("totaltime must either be the same length vector as antennalist or a scalar")
+            raise ValueError("totaltime must either be the same length vector as antennalist or a scalar")
 
 
 
@@ -563,7 +567,7 @@ def simalma(
                         msg("    Total power imaging when the source is this small is not necessary, and may fail with an error.",priority="warn")
                     del minsize
             else:
-                # print resolution for INT, and warn if model_cell too large
+                # casalog.post resolution for INT, and warn if model_cell too large
                 msg("    approximate synthesized beam FWHM = %f arcsec" % resols[i],priority="info")
                 msg("       (at zenith; the actual beam will depend on declination, hourangle, and uv coverage)",priority="info")
 
@@ -768,14 +772,14 @@ def simalma(
                         simobserve(**task_param)
                         del task_param
                     except:
-                        raise Exception(simobserr)
+                        raise RuntimeError(simobserr)
                     finally:
                         casalog.origin('simalma')
             
                 qimgsize_tp = None
 
         if tpnant>0 and tptime_min<=0:
-            raise Exception("You requested total power (tpnant=%d) but did not specify a valid nonzero tptime" % tpnant)
+            raise ValueError("You requested total power (tpnant=%d) but did not specify a valid nonzero tptime" % tpnant)
 
 
         mslist_tp = []
@@ -961,7 +965,7 @@ def simalma(
                     try:
                         simobserve(**task_param)
                     except:
-                        raise Exception(simobserr)
+                        raise RuntimeError(simobserr)
                     finally:
                         casalog.origin('simalma')
                 if tpnant == 1:
@@ -1149,7 +1153,7 @@ def simalma(
                     qhwhm = qa.mul(qptgspc_tp, kernelfac)  # hwhm of GJinc kernel
                     gwidth = qa.tos(qa.mul(qhwhm, convfac))
                     jwidth = qa.tos(qa.mul(jfac/gfac/pl.log(2.),gwidth))
-                    #print("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
+                    #casalog.post("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
                     # Parameters for sdimaging
                     task_param['gridfunction'] = 'gjinc'
                     task_param['gwidth'] = gwidth
@@ -1238,7 +1242,7 @@ def simalma(
                     del task_param
                     myutil.openreport()
                 except:
-                    raise Exception(simanaerr)
+                    raise RuntimeError(simanaerr)
                 finally:
                     casalog.origin('simalma')
 
@@ -1345,7 +1349,7 @@ def simalma(
                     del task_param
                     myutil.openreport()
                 except:
-                    raise Exception(simanaerr)
+                    raise RuntimeError(simanaerr)
                 finally:
                     casalog.origin('simalma')
 
@@ -1379,7 +1383,7 @@ def simalma(
                     try:
                         concat(vis=mslist,concatvis=concatname+".ms",visweightscale=weights)
                     except:
-                        raise Exception(simanaerr)
+                        raise RuntimeError(simanaerr)
                     finally:
                         casalog.origin('simalma')
 
@@ -1446,7 +1450,7 @@ def simalma(
                     del task_param
                     myutil.openreport()
                 except:
-                    raise Exception(simanaerr)
+                    raise RuntimeError(simanaerr)
                 finally:
                     casalog.origin('simalma')
 
@@ -1591,7 +1595,8 @@ def simalma(
                     else:
                         casalog.post("saveinputs not available in casatasks, skipping saving feather inputs", priority='WARN')
 
-                    if not dryrun: feather(**task_param)
+                    if not dryrun:
+                        feather(**task_param)
                     del task_param
 
                     # This seems not necessary anymore.
@@ -1600,8 +1605,9 @@ def simalma(
                     #ia.maskhandler('copy',[highimage+":mask0",'mask0'])
                     #ia.maskhandler('set','mask0')
                     #ia.done()
-                except:
-                    raise Exception("simalma caught an exception in task feather")
+                except Exception as exc:
+                    raise Exception("simalma caught an exception in task feather: {}".
+                                    format(exc))
                 finally:
                     if not dryrun: shutil.rmtree(regridimg)
                     #shutil.rmtree(scaledimg)
@@ -1649,16 +1655,16 @@ def simalma(
                     else:
                         flatsky = pref_bl + ".compskymodel.flat"
                     if not os.path.exists(fileroot+"/"+flatsky):
-                        raise Exception("Coud not find a skymodel image '%s'" % flatsky)
+                        raise RuntimeError("Coud not find a skymodel image '%s'" % flatsky)
 
                     if not os.path.exists(fileroot+"/"+combimage):
-                        raise Exception("Coud not find the combined image '%s'" % combimage)
+                        raise RuntimeError("Coud not find the combined image '%s'" % combimage)
 
                     if not os.path.exists(fileroot+"/"+imagename_int):
-                        raise Exception("Coud not find the synthesized image '%s'" % imagename_int)
+                        raise RuntimeError("Coud not find the synthesized image '%s'" % imagename_int)
 
                     if not os.path.exists(fileroot+"/"+imagename_tp):
-                        raise Exception("Coud not find the total power image '%s'" % (imagename_tp))
+                        raise RuntimeError("Coud not find the total power image '%s'" % (imagename_tp))
                     # Now the actual plotting
                     disprange = None
                     myutil.newfig(multi=[2,2,1],show=grscreen)
@@ -1670,7 +1676,7 @@ def simalma(
                     flatint = fileroot + "/" + imagename_int + ".flat"
                     myutil.flatimage(fileroot+"/"+imagename_int,verbose=verbose)
                     if not os.path.exists(flatint):
-                        raise Exception("Failed to generate '%s'" % (flatint))
+                        raise RuntimeError("Failed to generate '%s'" % (flatint))
 
                     # generate convolved sky model image
                     myutil.convimage(fileroot+"/"+flatsky, flatint)
@@ -1684,7 +1690,7 @@ def simalma(
                     #flattp = scaledimg + ".flat"
                     #myutil.flatimage(scaledimg,verbose=verbose)
                     if not os.path.exists(flattp):
-                        raise Exception("Failed to generate '%s'" % (flattp))
+                        raise RuntimeError("Failed to generate '%s'" % (flattp))
                     myutil.nextfig()
                     discard = myutil.statim(flattp,disprange=disprange)
                     shutil.rmtree(flattp)
@@ -1699,7 +1705,7 @@ def simalma(
                     flatcomb = fileroot + "/" + combimage + ".flat"
                     myutil.flatimage(fileroot+"/"+combimage,verbose=verbose)
                     if not os.path.exists(flatcomb):
-                        raise Exception("Failed to generate '%s'" % (flatcomb))
+                        raise RuntimeError("Failed to generate '%s'" % (flatcomb))
                     myutil.nextfig()
                     discard = myutil.statim(flatcomb,disprange=disprange)
                     myutil.endfig(show=grscreen,filename=file)
@@ -1709,33 +1715,10 @@ def simalma(
             myutil.closereport()
         finalize_tools()
 
-
-
-    except TypeError as e:
+    finally:
         finalize_tools()
         if myutil.isreport():
             myutil.closereport()
-        casalog.post("simalma -- TypeError: %s" % str(e), priority="ERROR")
-        raise
-        return False
-    except ValueError as e:
-        finalize_tools()
-        if myutil.isreport():
-            myutil.closereport()
-        casalog.post("simalma -- OptionError: %s" % str(e), priority="ERROR")
-        raise
-        return False
-    except Exception as instance:
-        finalize_tools()
-        if myutil.isreport():
-            myutil.closereport()
-        casalog.post("simalma -- Exception: %s" % str(instance),
-                     priority="ERROR")
-        raise
-        return False
-    return True
-
-
 
 
 def finalize_tools():

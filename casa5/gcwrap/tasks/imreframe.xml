@@ -1,30 +1,24 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is to relabel the image frame in which teh data is reported             -->
 
-<task type="function" name="imreframe" category="analysis, information">
+
+<task category="analysis" name="imreframe" type="function">
 <shortdescription>Change the frame in which the image reports its spectral values</shortdescription>
 
 <input>
-    <param type="string" name="imagename" kind="image" mustexist="true" >
-        <description>Name of the input image</description>
-        <value></value>
+    <param mustexist="true" kind="image" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        
+        <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
-    <param type="string" name="output" >
-        <description>Name of the output image</description>
-        <value></value>
+    <param name="output" type="string"><shortdescription>Name of the output image</shortdescription><description>Name of the output image</description>
+        
+        <value/>
         <example>output='newframed.image'; output='' will modify input image</example>
     </param>
-    <param type="string" name="outframe"  ignorecase="true">
-        <description>Spectral frame in which the frequency or velocity values will be reported by default</description>
+    <param ignorecase="true" name="outframe" type="string"><shortdescription>Spectral frame in which the frequency or velocity values will be reported by default</shortdescription><description>Spectral frame in which the frequency or velocity values will be reported by default</description>
+        
         <value>lsrk</value>
     <allowed kind="enum">
       <value>lsrk</value>
@@ -35,35 +29,35 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       <value>galacto</value>
       <value>lgroup</value>
       <value>cmb</value>
-      <value></value>
+      <value/>
     </allowed>
     </param>
-    <param type="string" name="epoch" subparam="true">
-        <description>Epoch to be associated with this image</description>
-        <value></value>
+    <param subparam="true" name="epoch" type="string"><shortdescription>Epoch to be associated with this image</shortdescription><description>Epoch to be associated with this image</description>
+        
+        <value/>
         <example>For example: '2000/12/25/18:30:00.10'</example>
     </param>
 
 
-    <param type="string" name="restfreq">
-        <description>restfrequency to use for velocity values (e.g "1.420GHz" for the HI line)</description>
-        <value></value>
+    <param name="restfreq" type="string"><shortdescription>restfrequency to use for velocity values (e.g &quot;1.420GHz&quot; for the HI line)</shortdescription><description>restfrequency to use for velocity values (e.g &quot;1.420GHz&quot; for the HI line)</description>
+        
+        <value/>
     </param>
 
     <constraints>
         <when param="outframe">
-      <equals type="string" value="lsrk"/>
-            <equals type="string" value="topo" >
-                <default param="epoch"><value type="string"></value></default>
+      <equals value="lsrk" type="string"/>
+            <equals value="topo" type="string">
+                <default param="epoch"><value type="string"/></default>
             </equals>
-        <equals type="string" value="TOPO" >
-                <default param="epoch"><value type="string"></value></default>
+        <equals value="TOPO" type="string">
+                <default param="epoch"><value type="string"/></default>
             </equals>
-        <equals type="string" value="geo" >
-                <default param="epoch"><value type="string"></value></default>
+        <equals value="geo" type="string">
+                <default param="epoch"><value type="string"/></default>
             </equals>
-        <equals type="string" value="GEO" >
-                <default param="epoch"><value type="string"></value></default>
+        <equals value="GEO" type="string">
+                <default param="epoch"><value type="string"/></default>
             </equals>
         </when>
     </constraints>

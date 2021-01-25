@@ -1,4 +1,4 @@
-# CASA - Common Astronomy Software Applications 
+# CASA - Common Astronomy Software Applications
 # Copyright (C) 2010 by ESO (in the framework of the ALMA collaboration)
 # Copyright (C) 2010-2013 Associated Universities, Inc. Washington DC, USA.
 #
@@ -33,6 +33,7 @@ if (UseCcache)
     endif(CCACHE_FOUND)
 endif()
 
+add_definitions(-DIMPLICIT_CTDS_32BIT)
 add_definitions ("-DUseCasacoreNamespace")
 add_definitions ("-DWITHOUT_BOOST")
 add_definitions(-DUSE_THREADS)                 # new casacore requirement:
@@ -72,7 +73,7 @@ include( target )
 include( CASA )
 
 set( CASA_VERSION_MAJOR   5   )
-set( CASA_VERSION_MINOR   7   )
+set( CASA_VERSION_MINOR   8   )
 set( CASA_VERSION_PATCH   0   )
 set( CASA_VERSION_FEATURE 0 CACHE STRING "feature version" )
 set( CASA_VERSION_DESC    "" )
@@ -412,6 +413,8 @@ if( APPLE )
                     set ( casa_packages /opt/casa/01 )
                 elseif( EXISTS /opt/casa/02)
                     set ( casa_packages /opt/casa/02 )
+                elseif( EXISTS /opt/casa/03)
+                    set ( casa_packages /opt/casa/03 )
                 else()
                     set ( casa_packages /opt/casa/01 )
                 endif()
@@ -1108,11 +1111,13 @@ if( CMAKE_SYSTEM_NAME STREQUAL Linux )
     )
 endif()
 
-option(USE_MPI "Use MPI compiler" NO)
+option(USE_MPI "Use MPI compiler" YES)
 set( CASAMPI "" )
 if (USE_MPI)
-  find_package(MPI)
+  message("Looking for MPI...")
+  find_package(MPI REQUIRED)
   if( MPI_CXX_FOUND )
+    message("Found MPI.")
     set( CASACORE_DEFINITIONS ${CASACORE_DEFINITIONS}
       -DHAVE_MPI
       )
