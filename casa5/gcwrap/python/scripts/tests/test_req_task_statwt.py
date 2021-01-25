@@ -8,6 +8,13 @@ import numpy.ma as ma
 #from casatestutils import testhelper as th
 is_casa6 = False
 subdir = 'visibilities/vla/'
+
+# https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
+try:
+    ModuleNotFoundError
+except NameError:
+    ModuleNotFoundError = ImportError
+
 try:
     from casatools import ctsys, table, ms
     from casatasks import statwt
