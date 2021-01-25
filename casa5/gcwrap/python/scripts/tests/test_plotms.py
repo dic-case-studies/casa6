@@ -815,8 +815,7 @@ class test_calplot(plotms_test_base):
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
         res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, iteraxis='corr', exprange='all',
-            overwrite=True)
+            showgui=False, highres=True, iteraxis='corr', exprange='all')
         self.assertTrue(res)
         fileCount = self.getFilecount(self.outputDir, "testCalPlot03_")
         self.assertEqual(fileCount, 2)
@@ -828,7 +827,7 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
         res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='R', overwrite=True)   
+            showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
         self.removePlotfile()
@@ -838,7 +837,7 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
         res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='/', overwrite=True)   
+            showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
 
