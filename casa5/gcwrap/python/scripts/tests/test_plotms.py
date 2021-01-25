@@ -755,7 +755,7 @@ class test_calibration(plotms_test_base):
             ydatacolumn="corrected", xaxis="frequency",
             showgui=False, callib=callibStr, highres=True)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 240000)
+        self.checkPlotfile(self.plotfile_jpg, 170000)
 
     def test_calibration_badcallib(self):
         '''test_calibration_badcallib: callib file does not exist'''
