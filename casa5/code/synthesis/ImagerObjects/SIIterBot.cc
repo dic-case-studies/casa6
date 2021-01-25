@@ -25,6 +25,7 @@
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/utilities/Conversion.h>
 #endif
+#include <casacore/casa/BasicMath/Math.h>
 
 /* Include file for the lock guard */
 #include <mutex>
@@ -311,9 +312,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		Float cycleThreshold     = itsCycleThreshold;
                 //os<<"SIIterBot getMinorCycleControls cycleThreshold init ="<<cycleThreshold<<LogIO::POST;
 		maxCycleIterations = min(maxCycleIterations, itsNiter - itsIterDone);
+		Bool thresholdReached = (cycleThreshold <= itsThreshold)? True : False;
+	
 		cycleThreshold = max(cycleThreshold, itsThreshold);
                 //os<<"SIIterBot getMinorCycleControls cycleThreshold="<<cycleThreshold<<LogIO::POST;
-                Bool thresholdReached = (cycleThreshold==itsThreshold)? True : False;
+                //Bool thresholdReached = (cycleThreshold==itsThreshold)? True : False;
 		/*
 		if (itsInteractiveMode) {
 			maxCycleIterations = min(maxCycleIterations, itsInteractiveNiter);
@@ -325,11 +328,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		returnRecord.define( RecordFieldId("loopgain"), itsLoopGain);
                 returnRecord.define( RecordFieldId("thresholdreached"), thresholdReached);
 		returnRecord.define( RecordFieldId("nsigma"), itsNsigma);
+		////CAS-9386 for cubes with auto masking we may need
+		//to recalculate the cyclethreshold after the mask is updated
+		//...so pass on the
+		//necessary info that may be needed
+		Float psffraction = itsMaxPsfSidelobe * itsCycleFactor;
+    
+		psffraction = max(psffraction, itsMinPsfFraction);
+		psffraction = min(psffraction, itsMaxPsfFraction);
+		returnRecord.define( "psffraction", psffraction);
+		returnRecord.define("threshold", itsThreshold);
 
 		return returnRecord;
 	}
 
-	void SIIterBot_state::mergeCycleInitializationRecord(Record& initRecord){
+	void SIIterBot_state::mergeCycleInitializationRecord(const Record& initRecord){
 		//FOR DEBUG - TT 2018/04/16
                 LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);  
@@ -374,7 +387,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	}
 
 
-	void SIIterBot_state::mergeCycleExecutionRecord( Record& execRecord ){
+	void SIIterBot_state::mergeCycleExecutionRecord(const Record& execRecord ){
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);  
 
 		LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
@@ -558,8 +571,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		psffraction = max(psffraction, itsMinPsfFraction);
 		psffraction = min(psffraction, itsMaxPsfFraction);
     
-                //cerr<<"updateCycleThresh: itsMaxPsfSidelobe="<<itsCycleFactor<<" itsMinPsfFraction="<<itsMinPsfFraction<<" itsMaxPsfFraction="<<itsMaxPsfFraction<<endl;
-                //cerr<<"updateCycleThresh: itsCycleFactor="<<itsCycleFactor<<" psffraction="<<psffraction<<endl;
+		//cerr<<"updateCycleThresh: itsMinPsfFraction="<<itsMinPsfFraction<<" itsMaxPsfFraction="<<itsMaxPsfFraction<<endl;
+		// cerr<<"updateCycleThresh: itsCycleFactor="<<itsCycleFactor<<" psffraction="<<psffraction<<endl;
                 //cerr<<"updateCycleThresh: itsPeakRes ="<<itsPeakResidual<<endl;
 		itsCycleThreshold = itsPeakResidual * psffraction;
                 //cerr<<"updateCycleThresh: itsCycleThreshold ="<<itsCycleThreshold<<endl;
@@ -727,7 +740,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		itsNsigma = nsigma;
 	}
 
-	void SIIterBot_state::setControlsFromRecord( Record &recordIn ) {
+	void SIIterBot_state::setControlsFromRecord(const Record &recordIn ) {
 		LogIO os( LogOrigin("SIIterBot_state",__FUNCTION__,WHERE) );
 		std::lock_guard<std::recursive_mutex> guard(recordMutex);
 

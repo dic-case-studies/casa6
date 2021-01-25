@@ -55,13 +55,6 @@ sudo port select --set pip pip36
 sudo port select --set pip3 pip36
 sudo port select --set python python36
 ```
-
-You can then build casatools using the same steps as described in the Linux section. Note that the casatools build path will differ on Macos. f.e.:
-
-```
-PYTHON_VERSION=3.6 PYTHONPATH=`pwd`/../casatools/build/lib.macosx-10.14-x86_64-3.6/:$PYTHON_PATH python setup.py build
-```
-
 #### Checkout
 
 Checkout the casa6 source code:
@@ -88,7 +81,7 @@ Linux:
 Macos
 ```
 cd casa6/casatools
-scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && autoconf && ./configure && ./setup.py build
+scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && ./setup.py build
 ```
 
 The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
@@ -139,9 +132,9 @@ True
 >>>
 -bash-4.2$
 ```
-CASAtools can be configured using *~/.casa/toolrc.py*. For example, extra data search paths can be added like:
+CASAtools can be configured using *~/.casa/config.py*. For example, extra data search paths can be added like:
 ```
--bash-4.2$ cat ~/.casa/toolrc.py
+-bash-4.2$ cat ~/.casa/config.py
 datapath=[ "~/develop/casa/data/unittests" ]
 -bash-4.2$
 ```
@@ -156,7 +149,7 @@ A number of tests have been brought into CASAtools from CASA. Like the rest of C
 ```
 After the checkout is complete, you must update your CASAtools RC file to indicate where the unit test data can be found. In my case it looks like:
 ```
--bash-4.2$ cat ~/.casa/toolrc.py
+-bash-4.2$ cat ~/.casa/config.py
 datapath=[ "~/develop/casa/data/unittests" ]
 -bash-4.2$
 ```
@@ -181,9 +174,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.38.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.56.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.38.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.56.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
@@ -215,12 +208,14 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | regionmanager        | Create and manipulate regions of interest                       |
 | sakura               | New single dish tool interface using sakura                     |
 | sdm                  | Manipulate or examine SDM datasets                              |
+| sidebandseparator    | Tool for sideband separation                                    |
 | simulator            | Tool for simulation                                             |
 | singledishms         | New single dish tool interface to process an MS                 |
 | spectralline         | spectral line tool                                              |
 | synthesisdeconvolver | tool for synthesis imaging                                      |
 | synthesisimager      | tool for synthesis imaging                                      |
 | synthesisimstore     | tool for synthesis imaging                                      |
+| synthesismaskhandler | tool for mask handling in sysnthesis imaging                    |
 | synthesisnormalizer  | tool for synthesis imaging                                      |
 | synthesisutils       | tool for synthesis imaging                                      |
 | table                | Access tables from casapy                                       |
@@ -230,7 +225,7 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 
 ## Tool Initialization
 
-The user initalization and customization file for the CASAtools module is `~/.casa/toolrc.py`. If this file does not exist, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`). If the `casatoolrc` module does not exist in `PYTHONPATH`, then the default values for all initialization state is used.
+The user initalization and customization file for the CASAtools module is `~/.casa/config.py`. If this file does not exist, then an attempt is mad to import the RC values from casaconfig (i.e. `from casatoolrc import *`). If the `casatoolrc` module does not exist in `PYTHONPATH`, then the default values for all initialization state is used.
 
 ## Changes from Standard CASA
 
@@ -247,7 +242,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
 
 3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
-3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/toolrc.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
+3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/config.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
 
 ### Xml Changes
 

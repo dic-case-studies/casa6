@@ -142,8 +142,8 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::unique_ptr<grpcRegistrar> reg;
         ~grpcState( ) {
             if (getenv("GRPC_DEBUG")) {
-                fprintf(stdout, "stopping registry\n");
-                fflush(stdout);
+                fprintf(stderr, "stopping registry\n");
+                fflush(stderr);
             }
             if ( server ) server->Shutdown( );
         }
@@ -177,7 +177,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             // if an available port can be found, selected_port is set to a value greater than zero
             snprintf(address_buf,sizeof(address_buf),address_template,selected_port);
             uri_ = address_buf;
-            if (getenv("GRPC_DEBUG")) std::cout << "registry available at " << uri_ << std::endl;
+            if (getenv("GRPC_DEBUG")) std::cerr << "registry available at " << uri_ << std::endl;
             grpc_state = (void*) state;
         } else delete state;
 
@@ -192,10 +192,10 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
                 if ( *ti == "shutdown" ) {
                     auto uri = si->uri( );
                     if (getenv("GRPC_DEBUG")) {
-                        std::cout << "    ...sending shutdown notification to " <<
+                        std::cerr << "    ...sending shutdown notification to " <<
                             si->id( ) <<
                             " (" << uri << ")" << std::endl;
-                        fflush(stdout);
+                        fflush(stderr);
                     }
                     grpc::ClientContext context;
                     std::unique_ptr<casatools::rpc::Shutdown::Stub> proxy =

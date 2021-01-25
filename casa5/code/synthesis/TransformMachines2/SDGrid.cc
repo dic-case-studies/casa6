@@ -97,7 +97,7 @@ SDGrid::SDGrid(SkyJones& sj, Int icachesize, Int itilesize,
 
 SDGrid::SDGrid(MPosition& mLocation, SkyJones& sj, Int icachesize, Int itilesize,
 	       String iconvType, Int userSupport, Float minweight, Bool clipminmax, Bool useImagingWeight)
-  : FTMachine(),  sj_p(&sj), imageCache(0), wImageCache(0),
+  : FTMachine(), sj_p(&sj), imageCache(0), wImageCache(0),
   cachesize(icachesize), tilesize(itilesize),
   isTiled(false), wImage(0), arrayLattice(0),  wArrayLattice(0), lattice(0), wLattice(0), convType(iconvType),
     pointingToImage(0), userSetSupport_p(userSupport),
@@ -153,7 +153,7 @@ SDGrid::SDGrid(MPosition &mLocation, Int icachesize, Int itilesize,
 }
 
 
-//---------------------------------------------------------------------- 
+//----------------------------------------------------------------------
 SDGrid& SDGrid::operator=(const SDGrid& other)
 {
   if(this!=&other) {
@@ -177,7 +177,7 @@ SDGrid& SDGrid::operator=(const SDGrid& other)
       wImage=0;
     pointingDirCol_p=other.pointingDirCol_p;
     pointingToImage=0;
-    xyPos.resize();    
+    xyPos.resize();
     xyPos=other.xyPos;
     xyPosMovingOrig_p=other.xyPosMovingOrig_p;
     convFunc.resize();
@@ -219,7 +219,7 @@ SDGrid::SDGrid(const SDGrid& other):FTMachine()
 #define grdjinc1 grdjinc1_
 #endif
 
-extern "C" { 
+extern "C" {
    void grdsf(Double*, Double*);
    void grdgauss(Double*, Double*, Double*);
    void grdjinc1(Double*, Double*, Int*, Double*);
@@ -289,7 +289,7 @@ void SDGrid::init() {
   else if(convType=="gauss") {
     // default is b=1.0 (Mangum et al. 2007)
     Double hwhm=(gwidth_p > 0.0) ? Double(gwidth_p) : sqrt(log(2.0));
-    Float truncate=(truncate_p >= 0.0) ? truncate_p : 3.0*hwhm; 
+    Float truncate=(truncate_p >= 0.0) ? truncate_p : 3.0*hwhm;
     convSampling=100;
     Int itruncate=(Int)(truncate*Double(convSampling)+0.5);
     logIO() << LogIO::DEBUG1 << "hwhm=" << hwhm << LogIO::POST;
@@ -310,7 +310,7 @@ void SDGrid::init() {
 //     String outfile = convType + ".dat";
 //     ofstream ofs(outfile.c_str());
 //     for (Int i = 0 ; i < convSize ; i++) {
-//       ofs << i << " " << convFunc[i] << endl; 
+//       ofs << i << " " << convFunc[i] << endl;
 //     }
 //     ofs.close();
   }
@@ -327,7 +327,7 @@ void SDGrid::init() {
     //convSupport=(truncate_p >= 0.0) ? (Int)(truncate_p+0.5) : (Int)(2*c+0.5);
     Float convSupportF = (truncate_p >= 0.0) ? truncate_p : (2*c);
     convSupport = (Int)convSupportF;
-    convSupport += (((convSupportF-(Float)convSupport) > 0.0) ? 1 : 0); 
+    convSupport += (((convSupportF-(Float)convSupport) > 0.0) ? 1 : 0);
     convSize=convSampling*(2*convSupport+2);
     convFunc.resize(convSize);
     convFunc=0.0;
@@ -343,7 +343,7 @@ void SDGrid::init() {
         convFunc(i) = val1 * val2;
       }
     }
-    else { 
+    else {
       // default is to truncate at first null
       for (Int i=0;i<convSize;i++) {
         x = Double(i) / Double(convSampling);
@@ -386,11 +386,11 @@ void SDGrid::init() {
     tileOverlapVec=0.0;
     tileOverlapVec(0)=tileOverlap;
     tileOverlapVec(1)=tileOverlap;
-    imageCache=new LatticeCache <Complex> (*image, cachesize, tileShape, 
+    imageCache=new LatticeCache <Complex> (*image, cachesize, tileShape,
 					   tileOverlapVec,
 					   (tileOverlap>0.0));
 
-    wImageCache=new LatticeCache <Float> (*wImage, cachesize, tileShape, 
+    wImageCache=new LatticeCache <Float> (*wImage, cachesize, tileShape,
 					   tileOverlapVec,
 					   (tileOverlap>0.0));
 
@@ -412,7 +412,7 @@ SDGrid::~SDGrid() {
 void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
 				  const vi::VisBuffer2& vb) {
 
-  // Get the coordinate system and increase the sampling by 
+  // Get the coordinate system and increase the sampling by
   // a factor of ~ 100.
   CoordinateSystem coords(image.coordinates());
 
@@ -422,9 +422,9 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
 
   convSampling=100;
   convSize=convSampling*convSupport;
-  
+
   // Make a one dimensional image to calculate the
-  // primary beam. We oversample this by a factor of 
+  // primary beam. We oversample this by a factor of
   // convSampling.
   Int directionIndex=coords.findCoordinate(Coordinate::DIRECTION);
   AlwaysAssert(directionIndex>=0, AipsError);
@@ -438,6 +438,10 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
   // system used in the POINTING table.
   {
     uInt row = 0;
+
+    // reset lastAntID_p to use correct antenna position
+    lastAntID_p = -1;
+
     const MSPointingColumns& act_mspc = vb.subtableColumns().pointing();
     Bool nullPointingTable = (act_mspc.nrow() < 1);
     Int pointIndex = -1;
@@ -486,6 +490,10 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
     } else {
       mFrame_p.resetEpoch(epoch);
       if (lastAntID_p != vb.antenna1()(row)) {
+        logIO_p << LogIO::DEBUGGING
+          << "updating antenna position. MS ID " << msId_p
+          << ", last antenna ID " << lastAntID_p
+          << " new antenna ID " << vb.antenna1()(row) << LogIO::POST;
 	lastAntID_p = vb.antenna1()(row);
 	MPosition pos = vb.subtableColumns().antenna().positionMeas()(lastAntID_p);
 	mFrame_p.resetPosition(pos);
@@ -500,7 +508,7 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
     delete pointingToImage;
     pointingToImage = 0;
   }
-  
+
   directionCoord = coords.directionCoordinate(directionIndex);
   //make sure we use the same units
   worldPosMeas.set(dc.worldAxisUnits()(0));
@@ -529,7 +537,7 @@ void SDGrid::findPBAsConvFunction(const ImageInterface<Complex>& image,
 
   AlwaysAssert(sj_p, AipsError);
   sj_p->apply(onedPB, onedPB, vb, 0);
- 
+
   IPosition pbSlice(4, convSize, 1, 1, 1);
   Vector<Float> tempConvFunc=real(onedPB.getSlice(start, pbSlice, true));
   // Find number of significant points
@@ -571,6 +579,11 @@ void SDGrid::initializeToVis(ImageInterface<Complex>& iimage,
     findPBAsConvFunction(*image, vb);
   }
 
+  // reset msId_p and lastAntID_p to -1
+  // this is to ensure correct antenna position in getXYPos
+  msId_p = -1;
+  lastAntID_p = -1;
+
   // Initialize the maps for polarization and channel. These maps
   // translate visibility indices into image indices
   initMaps(vb);
@@ -599,7 +612,7 @@ void SDGrid::initializeToVis(ImageInterface<Complex>& iimage,
     lattice=image;
     wLattice=wImage;
   }
-  else*/ 
+  else*/
 {
     // Make the grid the correct shape and turn it into an array lattice
     IPosition gridShape(4, nx, ny, npol, nchan);
@@ -622,7 +635,7 @@ void SDGrid::initializeToVis(ImageInterface<Complex>& iimage,
     IPosition stride(4, 1);
     IPosition trc(blc+image->shape()-stride);
     LCBox gridBox(blc, trc, gridShape);
-    SubLattice<Complex> gridSub(*arrayLattice, gridBox, true); 
+    SubLattice<Complex> gridSub(*arrayLattice, gridBox, true);
 
     // Do the copy
     gridSub.copyData(*image);
@@ -651,7 +664,7 @@ void SDGrid::finalizeToVis()
 
 
 // Initialize the FFT to the Sky. Here we have to setup and initialize the
-// grid. 
+// grid.
 void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
 			     Matrix<Float>& weight, const vi::VisBuffer2& vb)
 {
@@ -665,6 +678,12 @@ void SDGrid::initializeToSky(ImageInterface<Complex>& iimage,
   if(convType=="pb") {
     findPBAsConvFunction(*image, vb);
   }
+
+  // reset msId_p and lastAntID_p to -1
+  // this is to ensure correct antenna position in getXYPos
+  msId_p = -1;
+  lastAntID_p = -1;
+
   // Initialize the maps for polarization and channel. These maps
   // translate visibility indices into image indices
   initMaps(vb);
@@ -783,7 +802,7 @@ Array<Float>* SDGrid::getWDataPointer(const IPosition& centerLoc2D,
 #define ggridsdclip ggridsdclip_
 #endif
 
-extern "C" { 
+extern "C" {
    void ggridsd(Double*,
 		const Complex*,
                 Int*,
@@ -857,13 +876,13 @@ void SDGrid::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
 		 FTMachine::Type type)
 {
   LogIO os(LogOrigin("SDGrid", "put"));
-  
+
   gridOk(convSupport);
 
   // There is no channel mapping cache in VI/VB2 version of FTMachine
   // Perform matchChannel everytime
   matchChannel(vb);
-  
+
   //No point in reading data if its not matching in frequency
   if(max(chanMap)==-1)
     return;
@@ -876,7 +895,7 @@ void SDGrid::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
     dopsf=true;
   if(dopsf) type=FTMachine::PSF;
   Cube<Complex> data;
-  //Fortran gridder need the flag as ints 
+  //Fortran gridder need the flag as ints
   Cube<Int> flags;
   Matrix<Float> elWeight;
   interpolateFrequencyTogrid(vb, imagingweight,data, flags, elWeight, type);
@@ -907,16 +926,16 @@ void SDGrid::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
   for (Int rownr=startRow; rownr<=endRow; rownr++) {
     if(vb.flagRow()(rownr)) rowFlags(rownr)=1;
   }
-  
+
   // Take care of translation of Bools to Integer
   Int idopsf=0;
   if(dopsf) idopsf=1;
 
   /*if(isTiled) {
     for (Int rownr=startRow; rownr<=endRow; rownr++) {
-      
+
       if(getXYPos(vb, rownr)) {
-	
+
 	IPosition centerLoc2D(2, Int(xyPos(0)), Int(xyPos(1)));
 	Array<Complex>* dataPtr=getDataPointer(centerLoc2D, false);
 	Array<Float>*  wDataPtr=getWDataPointer(centerLoc2D, false);
@@ -926,8 +945,8 @@ void SDGrid::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
 	for (Int i=0;i<2;i++) {
 	  actualPos(i)=xyPos(i)-Double(offsetLoc(i));
 	}
-	// Now use FORTRAN to do the gridding. Remember to 
-	// ensure that the shape and offsets of the tile are 
+	// Now use FORTRAN to do the gridding. Remember to
+	// ensure that the shape and offsets of the tile are
 	// accounted for.
 	{
 	  Bool del;
@@ -1019,7 +1038,7 @@ void SDGrid::put(const vi::VisBuffer2& vb, Int row, Bool dopsf,
         Float *wmaxStor = wmax_.getStorage(wmaxCopy);
         Bool npCopy;
         Int *npStor = npoints_.getStorage(npCopy);
-        
+
         ggridsdclip(xyPositions.getStorage(del),
           datStorage,
           &s[0],
@@ -1116,19 +1135,19 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
 
 
   /*if(isTiled) {
-    
+
     for (Int rownr=startRow; rownr<=endRow; rownr++) {
-      
+
       if(getXYPos(vb, rownr)) {
-	  
+
 	  // Get the tile
 	IPosition centerLoc2D(2, Int(xyPos(0)), Int(xyPos(1)));
 	Array<Complex>* dataPtr=getDataPointer(centerLoc2D, true);
 	Int aNx=dataPtr->shape()(0);
 	Int aNy=dataPtr->shape()(1);
-	
-	// Now use FORTRAN to do the gridding. Remember to 
-	// ensure that the shape and offsets of the tile are 
+
+	// Now use FORTRAN to do the gridding. Remember to
+	// ensure that the shape and offsets of the tile are
 	// accounted for.
 	Bool del;
 	Vector<Double> actualPos(2);
@@ -1160,7 +1179,7 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
       }
     }
   }
-  else*/ 
+  else*/
   {
     Matrix<Double> xyPositions(2, endRow-startRow+1);
     xyPositions=-1e9;
@@ -1205,20 +1224,20 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
   // a complex image, without conversion to Stokes. The representation
   // is that required for the visibilities.
   //----------------------------------------------------------------------
-  void SDGrid::makeImage(FTMachine::Type type, 
+  void SDGrid::makeImage(FTMachine::Type type,
 			    vi::VisibilityIterator2& vi,
 			    ImageInterface<Complex>& theImage,
 			    Matrix<Float>& weight) {
-    
-    
+
+
     logIO() << LogOrigin("FTMachine", "makeImage0") << LogIO::NORMAL;
-    
+
     // Loop over all visibilities and pixels
     vi::VisBuffer2 *vb = vi.getVisBuffer();
-    
+
     // Initialize put (i.e. transform to Sky) for this model
     vi.origin();
-    
+
     if(vb->polarizationFrame()==MSIter::Linear) {
       StokesImageUtil::changeCStokesRep(theImage, StokesImageUtil::LINEAR);
     }
@@ -1250,19 +1269,19 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
       nchanInMem=Nchan;
     }
     else
-      logIO()  << "Not enough memory to image in one go \n will process the image in   " 
-	       << nloop 
-	      << " sections  " 	
+      logIO()  << "Not enough memory to image in one go \n will process the image in   "
+	       << nloop
+	      << " sections  "
 	      << LogIO::POST;
 
     weight.resize(Npol, Nchan);
     Matrix<Float> wgtcopy(Npol, Nchan);
-    
+
     Bool isWgtZero=true;
     for (Int k=0; k < nloop; ++k){
       Int bchan=k*nchanInMem;
       Int echan=(k+1)*nchanInMem < Nchan ?  (k+1)*nchanInMem-1 : Nchan-1;
-      
+
       if(nloop > 1) {
 	 blc[3]=bchan;
 	 trc[3]=echan;
@@ -1273,7 +1292,7 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
       vi.originChunks();
       vi.origin();
       initializeToSky(*imCopy,wgtcopy,*vb);
-   
+
 
       // for minmax clipping
       logIO() << LogOrigin("SDGrid", "makeImage", WHERE) << LogIO::DEBUGGING
@@ -1286,7 +1305,7 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
       // Loop over the visibilities, putting VisBuffers
 	  for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	    for (vi.origin(); vi.more(); vi.next()) {
-	
+
 	  switch(type) {
 	  case FTMachine::RESIDUAL:
 	    vb->setVisCube(vb->visCubeCorrected() - vb->visCubeModel());
@@ -1318,27 +1337,27 @@ void SDGrid::get(vi::VisBuffer2& vb, Int row)
       getImage(wgtcopy, normalize);
       if(max(wgtcopy)==0.0){
 	if(nloop > 1)
-	  logIO() << LogIO::WARN 
-		  << "No useful data in SDGrid: weights all zero for image slice  " << k	
+	  logIO() << LogIO::WARN
+		  << "No useful data in SDGrid: weights all zero for image slice  " << k
 		  << LogIO::POST;
       }
       else
 	isWgtZero=false;
-        
+
       weight(Slice(0, Npol), Slice(bchan, echan-bchan+1))=wgtcopy;
       if(nloop >1) delete imCopy;
     }//loop k
     if(isWgtZero)
-      logIO() << LogIO::SEVERE 
-	      << "No useful data in SDGrid: weights all zero"	
+      logIO() << LogIO::SEVERE
+	      << "No useful data in SDGrid: weights all zero"
 	      << LogIO::POST;
   }
-  
+
 
 
 // Finalize : optionally normalize by weight image
 ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
-					  Bool normalize) 
+					  Bool normalize)
 {
   AlwaysAssert(lattice, AipsError);
   AlwaysAssert(image, AipsError);
@@ -1376,11 +1395,11 @@ ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
     //tim.mark();
     //lattice->copyData((LatticeExpr<Complex>)(iif((*wLattice<=minWeight_p), 0.0,
     //						 (*lattice)/(*wLattice))));
-    //As we are not using disk based lattices anymore the above uses too much memory for 
-    // ArrayLattice...it does not do a real  inplace math but rather mutiple copies 
-    // seem to be involved  thus the less elegant but faster and less memory hog loop 
+    //As we are not using disk based lattices anymore the above uses too much memory for
+    // ArrayLattice...it does not do a real  inplace math but rather mutiple copies
+    // seem to be involved  thus the less elegant but faster and less memory hog loop
     // below.
-    
+
     IPosition pos(4);
     for (Int chan=0; chan < nchan; ++chan){
       pos[3]=chan;
@@ -1401,8 +1420,8 @@ ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
       }
     //tim.show("After normalizing");
   }
-  
-  //if(!isTiled) 
+
+  //if(!isTiled)
   {
     // Now find the SubLattice corresponding to the image
     IPosition gridShape(4, nx, ny, npol, nchan);
@@ -1411,8 +1430,8 @@ ImageInterface<Complex>& SDGrid::getImage(Matrix<Float>& weights,
     IPosition stride(4, 1);
     IPosition trc(blc+image->shape()-stride);
     LCBox gridBox(blc, trc, gridShape);
-    SubLattice<Complex> gridSub(*arrayLattice, gridBox); 
-    
+    SubLattice<Complex> gridSub(*arrayLattice, gridBox);
+
     // Do the copy
     image->copyData(gridSub);
   }
@@ -1445,7 +1464,7 @@ void SDGrid::ok() {
   AlwaysAssert(image, AipsError);
 }
 
-// Get the index into the pointing table for this time. Note that the 
+// Get the index into the pointing table for this time. Note that the
 // in the pointing table, TIME specifies the beginning of the spanned
 // time range, whereas for the main table, TIME is the centroid.
 // Note that the behavior for multiple matches is not specified! i.e.
@@ -1469,7 +1488,7 @@ Int SDGrid::getIndex(const MSPointingColumns& mspc, const Double& time,
 
     Double midpoint = mspc.time()(i); // time in POINTING table is midpoint
     // If the interval in the pointing table is negative, use the last
-    // entry. Note that this may be invalid (-1) but in that case 
+    // entry. Note that this may be invalid (-1) but in that case
     // the calling routine will generate an error
     Double mspc_interval = mspc.interval()(i);
 
@@ -1521,7 +1540,7 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
   Bool nullPointingTable = (act_mspc.nrow() < 1);
   Int pointIndex = -1;
   if (!nullPointingTable) {
-    ///if(vb.newMS())  vb.newMS does not work well using msid 
+    ///if(vb.newMS())  vb.newMS does not work well using msid
     if (vb.msId() != msId_p) {
       lastIndex_p = 0;
       if (lastIndexPerAnt_p.nelements() < (size_t)vb.nAntennas()) {
@@ -1529,9 +1548,10 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
       }
       lastIndexPerAnt_p = 0;
       msId_p = vb.msId();
+      lastAntID_p = -1;
     }
     pointIndex = getIndex(act_mspc, vb.time()(row), -1.0, vb.antenna1()(row));
-    //Try again to locate a pointing within the integration 
+    //Try again to locate a pointing within the integration
     if (pointIndex < 0)
       pointIndex = getIndex(act_mspc, vb.time()(row), vb.timeInterval()(row), vb.antenna1()(row));
   }
@@ -1588,6 +1608,17 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
   } else {
     mFrame_p.resetEpoch(epoch);
     if (lastAntID_p != vb.antenna1()(row)) {
+      if (lastAntID_p == -1) {
+        // antenna ID is unset
+        logIO_p << LogIO::DEBUGGING
+          << "update antenna position for conversion: new MS ID " << msId_p
+          << ", antenna ID " << vb.antenna1()(row) << LogIO::POST;
+      } else {
+        logIO_p << LogIO::DEBUGGING
+          << "update antenna position for conversion: MS ID " << msId_p
+          << ", last antenna ID " << lastAntID_p
+          << ", new antenna ID " << vb.antenna1()(row) << LogIO::POST;
+      }
       MPosition pos;
       lastAntID_p = vb.antenna1()(row);
       pos = vb.subtableColumns().antenna().positionMeas()(lastAntID_p);
@@ -1601,7 +1632,7 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
       //Vector<Double> newdirv = newdir.getAngle("rad").getValue();
       worldPosMeas = (*pointingToImage)(newdir);
       //cerr<<"dir0="<<newdirv(0)<<endl;
-   
+
     //fprintf(pfile,"%.8f %.8f \n", newdirv(0), newdirv(1));
     //printf("%lf %lf \n", newdirv(0), newdirv(1));
     } else {
@@ -1613,14 +1644,14 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
 
   Bool result = directionCoord.toPixel(xyPos, worldPosMeas);
   if (!result) {
-    logIO_p << "Failed to find a pixel for pointing direction of " 
+    logIO_p << "Failed to find a pixel for pointing direction of "
 	    << MVTime(worldPosMeas.getValue().getLong("rad")).string(MVTime::TIME) << ", " << MVAngle(worldPosMeas.getValue().getLat("rad")).string(MVAngle::ANGLE) << LogIO::WARN << LogIO::POST;
     return false;
   }
 
   if ((pointingDirCol_p == "SOURCE_OFFSET") || (pointingDirCol_p == "POINTING_OFFSET")) {
-    //there is no sense to track in offset coordinates...hopefully the 
-    //user set the image coords right  
+    //there is no sense to track in offset coordinates...hopefully the
+    //user set the image coords right
     fixMovingSource_p = false;
   }
   if (fixMovingSource_p) {
@@ -1643,7 +1674,7 @@ Bool SDGrid::getXYPos(const vi::VisBuffer2& vb, Int row) {
     Vector<Double> actPix;
     directionCoord.toPixel(actPix, actSourceDir);
 
-    //cout << row << " scan " << vb.scan()(row) << "xyPos " << xyPos << " xyposmovorig " << xyPosMovingOrig_p << " actPix " << actPix << endl; 
+    //cout << row << " scan " << vb.scan()(row) << "xyPos " << xyPos << " xyposmovorig " << xyPosMovingOrig_p << " actPix " << actPix << endl;
 
     xyPos = xyPos + xyPosMovingOrig_p - actPix;
   }
@@ -1659,25 +1690,25 @@ MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index
     if (!mspc.pointingOffsetMeasCol().isNull()) {
       return mspc.pointingOffsetMeas(index);
     }
-    cerr << "No PONTING_OFFSET column in POINTING table" << endl; 
+    cerr << "No PONTING_OFFSET column in POINTING table" << endl;
   } else if (pointingDirCol_p == "SOURCE_OFFSET") {
     if (!mspc.sourceOffsetMeasCol().isNull()) {
       return mspc.sourceOffsetMeas(index);
     }
-    cerr << "No SOURCE_OFFSET column in POINTING table" << endl; 
+    cerr << "No SOURCE_OFFSET column in POINTING table" << endl;
   } else if (pointingDirCol_p == "ENCODER") {
     if (!mspc.encoderMeas().isNull()) {
       return mspc.encoderMeas()(index);
     }
-    cerr << "No ENCODER column in POINTING table" << endl; 
+    cerr << "No ENCODER column in POINTING table" << endl;
   }
 
   //default  return this
   return mspc.directionMeas(index);
   }
 
-// for the cases, interpolation of the pointing direction requires 
-// when data sampling rate higher than the pointing data recording 
+// for the cases, interpolation of the pointing direction requires
+// when data sampling rate higher than the pointing data recording
 // (e.g. fast OTF)
 MDirection SDGrid::directionMeas(const MSPointingColumns& mspc, const Int& index,
                                  const Double& time){
@@ -1716,7 +1747,7 @@ MDirection SDGrid::interpolateDirectionMeas(const MSPointingColumns& mspc,
                                             const Int& index,
                                             const Int& indx1,
                                             const Int& indx2){
-  Vector<Double> dir1,dir2; 
+  Vector<Double> dir1,dir2;
   Vector<Double> newdir(2),scanRate(2);
   Double dLon, dLat;
   Double ftime,ftime2,ftime1,dtime;
@@ -1737,7 +1768,7 @@ MDirection SDGrid::interpolateDirectionMeas(const MSPointingColumns& mspc,
     if (!mspc.pointingOffsetMeasCol().isNull()) {
       dir1 = mspc.pointingOffsetMeas(indx1).getAngle("rad").getValue();
       dir2 = mspc.pointingOffsetMeas(indx2).getAngle("rad").getValue();
-    } else { 
+    } else {
       cerr << "No PONTING_OFFSET column in POINTING table" << endl;
     }
   } else if (pointingDirCol_p == "SOURCE_OFFSET") {
@@ -1758,7 +1789,7 @@ MDirection SDGrid::interpolateDirectionMeas(const MSPointingColumns& mspc,
     dir1 = mspc.directionMeas(indx1).getAngle("rad").getValue();
     dir2 = mspc.directionMeas(indx2).getAngle("rad").getValue();
   }
-  
+
   dLon = dir2(0) - dir1(0);
   dLat = dir2(1) - dir1(1);
   ftime = floor(mspc.time()(indx1));
@@ -1789,7 +1820,7 @@ MDirection SDGrid::interpolateDirectionMeas(const MSPointingColumns& mspc,
   //return mspc.directionMeas(index);
   return newDirMeas;
 }
-  
+
 void SDGrid::pickWeights(const vi::VisBuffer2& vb, Matrix<Float>& weight){
   //break reference
   weight.resize();
@@ -1799,22 +1830,22 @@ void SDGrid::pickWeights(const vi::VisBuffer2& vb, Matrix<Float>& weight){
   } else {
     const Cube<Float> weightspec(vb.weightSpectrum());
     weight.resize(vb.nChannels(), vb.nRows());
-      
+
     if (weightspec.nelements() == 0) {
-      for (Int k = 0; k < vb.nRows(); ++k) {
+      for (rownr_t k = 0; k < vb.nRows(); ++k) {
         //cerr << "nrow " << vb.nRow() << " " << weight.shape() << "  "  << weight.column(k).shape() << endl;
         weight.column(k).set(mean(vb.weight().column(k)));
       }
     } else {
       Int npol = weightspec.shape()(0);
       if (npol == 1) {
-        for (Int k = 0; k < vb.nRows(); ++k) {
+        for (rownr_t k = 0; k < vb.nRows(); ++k) {
           for (int chan = 0; chan < vb.nChannels(); ++chan) {
             weight(chan, k)=weightspec(0, chan, k);
           }
         }
       } else {
-        for (Int k = 0; k < vb.nRows(); ++k) {
+        for (rownr_t k = 0; k < vb.nRows(); ++k) {
           for (int chan = 0; chan < vb.nChannels(); ++chan) {
             weight(chan, k) = (weightspec(0, chan, k) + weightspec((npol-1), chan, k))/2.0f;
           }

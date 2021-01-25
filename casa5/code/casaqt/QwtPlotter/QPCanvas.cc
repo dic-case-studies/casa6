@@ -37,9 +37,9 @@
 #include <casaqt/QwtPlotter/QPShape.h>
 #include <casaqt/QwtPlotter/AxisListener.h>
 
-#include <qwt_scale_widget.h>
-#include <qwt_scale_engine.h>
-#include <qwt_picker_machine.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_picker_machine.h>
 
 using namespace std;
 

@@ -4,7 +4,6 @@
 # Copyright 2007, Associated Universities Inc., Washington DC
 #
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 # get is_python3 and is_CASA6
@@ -44,16 +43,15 @@ def uvsub(vis=None,reverse=False):
 
     #Python script
     #
+
     try:
-        ms = mstool()
         casalog.origin('uvsub')
         if ((type(vis)==str) & (os.path.exists(vis))):
             _ms.open(thems=vis,nomodify=False)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
             return
         _ms.uvsub(reverse)
-        _ms.close()
 
         # Write history to MS
         try:
@@ -69,7 +67,5 @@ def uvsub(vis=None,reverse=False):
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                          'WARN')            
 
-        return
-    except Exception as instance:
-        print('*** Error ***',instance)
-        return
+    finally:
+        _ms.close()

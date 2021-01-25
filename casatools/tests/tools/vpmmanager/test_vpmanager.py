@@ -1,11 +1,56 @@
+##########################################################################
+# test_vpmanager.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+#
+##########################################################################
+'''
+Unit tests for the vpmanager tool. Tested methods:
+        reset()
+        summarizevps()
+        getvp()
+        numvps()
+        setpbairy()
+        setpbantresptable()
+        createantresp()
+        getrespimagename()
+        setuserdefault()
+        getuserdefault()
+        saveastable()
+        loadfromtable()
+'''
+
+
 import os
 import sys
 import shutil
 import unittest
 
-from casatools import table
-from casatools import vpmanager as vptool
-
+try:
+    from casatools import table, ctsys
+    from casatools import vpmanager as vptool
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+    
 _vp = vptool( )
 
 '''
@@ -31,6 +76,8 @@ class vpmanager_test(unittest.TestCase):
 
     def setUp(self):
         self.res = None
+        self.antresp_alma = ctsys_resolve('alma/responses/AntennaResponses-ALMA')
+        self.antresp_alma_rt = ctsys_resolve('alma/responses/AntennaResponses-ALMA-RT')
     
     def tearDown(self):
         os.system('rm -rf ' + self.inputdir)
@@ -60,7 +107,7 @@ class vpmanager_test(unittest.TestCase):
         '''Test 3: getvp and getvps for ALMA'''
         _vp.reset()
         _vp.setpbantresptable(telescope='ALMA',
-                             antresppath='alma/responses/AntennaResponses-ALMA',
+                             antresppath=self.antresp_alma,
                              dopb=True)
         myrec = _vp.getvp(telescope='ALMA',
                          obstime = '2009/07/24/10:00:00',
@@ -119,7 +166,7 @@ class vpmanager_test(unittest.TestCase):
         '''Test 5: numvps for ALMA'''
         _vp.reset()
         _vp.setpbantresptable(telescope='ALMA',
-                             antresppath='alma/responses/AntennaResponses-ALMA',
+                             antresppath=self.antresp_alma,
                              dopb=True)
         myrval = _vp.numvps(telescope='ALMA',
                            obstime = '2009/07/24/10:00:00',
@@ -132,7 +179,7 @@ class vpmanager_test(unittest.TestCase):
         '''Test 6: numvps for ALMA with too high freq'''
         _vp.reset()
         _vp.setpbantresptable(telescope='ALMA',
-                             antresppath='alma/responses/AntennaResponses-ALMA',
+                             antresppath=self.antresp_alma,
                              dopb=True)
         myrval = _vp.numvps(telescope='ALMA',
                            obstime = '2009/07/24/10:00:00',
@@ -181,7 +228,7 @@ class vpmanager_test(unittest.TestCase):
         _vp.reset()
         os.system('rm -rf BeamCalcTmpImage_*')
         _vp.setpbantresptable(telescope='ALMA',
-                             antresppath='alma/responses/AntennaResponses-ALMA-RT',
+                             antresppath=self.antresp_alma_rt,
                              dopb=True)
         myrec1 = _vp.getvp(telescope='ALMA',
                          obstime = '2009/07/24/10:00:00',

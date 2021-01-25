@@ -39,12 +39,12 @@
 #include <casa/BasicSL/Complex.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/Matrix.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/Cube.h>
 #include <casa/Arrays/MaskedArray.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/Arrays/ArrayLogical.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Containers/Record.h>
 #include <casa/Utilities/Assert.h>
 #include <casa/Utilities/GenSort.h>
@@ -701,6 +701,17 @@ void PlotCal::getAxisTaQL(const String& axis,
 	  throw(AipsError("Fringe delay rate not available in the specified CalTable."));
 	}
       }
+      else if (axis.contains("DISP")) {
+	if (calType_p.contains("FRINGE")) {
+            // TEC conversion parameter from Mevius LOFAR school notes
+            // we need to divide by 2pi and 1e6, so original number
+            // 8.4479745e9 
+	  taql = "(FPARAM[4,"+chansel+"]-FPARAM[8,"+chansel+"])/1.334537";
+	  label = "Fringe Dispersive Delay POLN Difference (milliTEC)";
+	} else {
+	  throw(AipsError("Fringe delay rate not available in the specified CalTable."));
+	}
+      }
       else if (axis.contains("SNR") ) {
 	if (calType_p=="M" || calType_p=="A" || 
 	    calType_p=="MF" || 
@@ -712,7 +723,7 @@ void PlotCal::getAxisTaQL(const String& axis,
 	label = "Solution SNR POLN Ratio";
       }
       else 
-	throw(AipsError("The plot value you requested is not supported."));
+	throw(AipsError("The plot value ("+axis+") you requested is not supported."));
       
       // Expand TaQL to "handle" flag info properly
       taql = 
@@ -802,6 +813,18 @@ void PlotCal::getAxisTaQL(const String& axis,
 	taql = "((FPARAM["+polsel+","+chansel+"])/1.0E-12)";
 	label = "Fringe Delay Rate (psec/sec)";
       }
+      else if (axis.contains("DISP")) {
+	if (calType_p.contains("FRINGE")) {
+	  if (polType_p=="R") polsel="4";
+	  else if (polType_p=="L") polsel="8";
+	  else polsel="4:8:4";
+	}
+	else {
+	  throw(AipsError("Fringe dispersive delay not available in the specified CalTable."));
+	}
+	taql = "((FPARAM["+polsel+","+chansel+"])/1.334537)";
+	label = "Fringe dispersive delay vs. refAnt (milliTEC)";
+      }
       else if (axis.contains("TEC")) {
 	polsel="1";
 	taql = "(FPARAM["+polsel+","+chansel+"])/1.e16";
@@ -814,7 +837,7 @@ void PlotCal::getAxisTaQL(const String& axis,
 	label = "Solution SNR";
       }
       else 
-	throw(AipsError("The plot value you requested is not supported."));
+	throw(AipsError("The plot value ("+axis+") you requested is not supported."));
     }
   }
   
@@ -1440,6 +1463,7 @@ Int PlotCal::multiTables(const Table& tablein,
     td.addColumn (ArrayColumnDesc<Float>("AMP"));
     td.addColumn (ArrayColumnDesc<Float>("DELAY"));
     td.addColumn (ArrayColumnDesc<Float>("DELAYRATE"));
+    td.addColumn (ArrayColumnDesc<Float>("DISPDELAY"));
     td.addColumn (ScalarColumnDesc<Int>(CDIcol()));
     td.addColumn (ArrayColumnDesc<Bool> ("FLAG"));
     td.addColumn (ScalarColumnDesc<Double> ("TIME"));
@@ -1492,7 +1516,9 @@ Int PlotCal::multiTables(const Table& tablein,
     newDelay.set(0);
     Cube<Float> newDelayRate(1,1,nrows);
     newDelayRate.set(0);
-
+    Cube<Float> newDispDelay(1,1,nrows);
+    newDispDelay.set(0);
+    
     for (Int k=0; k < nrows ; ++k){
       ant1[k]=ant1hash[baselines[k]];
       ant2[k]=ant2hash[baselines[k]];
@@ -1527,6 +1553,7 @@ Int PlotCal::multiTables(const Table& tablein,
       }
       
       newDelayRate(0,0,k)=real(ydata(4,0,k));
+      newDispDelay(0,0,k)=real(ydata(5,0,k));
       flag(0,0,k)=!soln(0,0,k);
       
     }
@@ -1552,6 +1579,8 @@ Int PlotCal::multiTables(const Table& tablein,
     del.putColumn(newDelay);
     ArrayColumn<Float> delrat(tabB, "DELAYRATE");
     delrat.putColumn(newDelayRate);
+    ArrayColumn<Float> dispdel(tabB, "DISPDELAY");
+    dispdel.putColumn(newDispDelay);
     ScalarColumn<Int> newBas(tabB, "BASELINE");
     newBas.putColumn(baselines);
 

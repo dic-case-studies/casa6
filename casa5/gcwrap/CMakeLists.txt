@@ -45,6 +45,7 @@ configure_file( ${CMAKE_SOURCE_DIR}/python/scripts/init_telemetry.py.in ${CMAKE_
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/install )
 
+add_definitions(-DIMPLICIT_CTDS_32BIT)
 add_definitions ("-DUseCasacoreNamespace")
 add_definitions ("-DWITHOUT_BOOST")
 add_definitions(-DUSE_THREADS)                 # new casacore requirement:
@@ -79,7 +80,7 @@ include( target )
 include( CASA )
 
 set( CASA_MAJOR_VERSION 5 )
-set( CASA_MINOR_VERSION 7 )
+set( CASA_MINOR_VERSION 8 )
 set( CASA_PATCH_VERSION 0 )
 set( CASA_API_VERSION "${CASA_MAJOR_VERSION}.${CASA_MINOR_VERSION}.${CASA_PATCH_VERSION}" )
 
@@ -930,10 +931,10 @@ casa_find( CASACODE
 	   DEPENDS CASACORE LAPACK CFITSIO WCSLIB FFTW3 DL LIBSAKURA
 	   NO_LINK )
 
-option(USE_MPI "Use MPI compiler" NO)
+option(USE_MPI "Use MPI compiler" YES)
 set( CASAMPI_LIBRARIES "" )
 if (USE_MPI)
-  find_package(MPI)
+  find_package(MPI REQUIRED)
   if( MPI_CXX_FOUND )
     set( CASAMPI_LIBRARIES ${MPI_CXX_LIBRARIES} )
   endif()

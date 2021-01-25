@@ -36,6 +36,9 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
 #import sys
 import os
 import unittest
@@ -58,7 +61,7 @@ from filecmp import dircmp
 if CASA6:
     datapath = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
     datacopy = casatools.ctsys.resolve('uid___X02_X3d737_X1_01_small.ms/')
-    calpath = casatools.ctsys.resolve(os.path.join(os.path.dirname(os.path.abspath(casatools.__file__)),'__data__/nrao/VLA/CalModels/3C138_K.im'))
+    calpath = casatools.ctsys.resolve('nrao/VLA/CalModels/3C138_K.im')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
@@ -110,8 +113,13 @@ class delmod_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         delmod(datacopy)
         self.assertFalse('SEVERE' in open('testlog.log').read(), msg='delmod raises a severe error when run on a valid MS')
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='No error is raised when using a fake MS'):
+        if CASA6 or casa_stack_rethrow:
+            if CASA6:
+                exc_type = AssertionError
+            else:
+                exc_type = RuntimeError
+
+            with self.assertRaises(exc_type, msg='No error is raised when using a fake MS'):
                 delmod('notareal.ms')
         else:
             delmod('notareal.ms')

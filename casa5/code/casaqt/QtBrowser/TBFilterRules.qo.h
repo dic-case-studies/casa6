@@ -27,7 +27,7 @@
 #ifndef TBFILTERRULES_H_
 #define TBFILTERRULES_H_
 
-#include <casaqt/QtBrowser/TBFilterRules.ui.h>
+#include "ui/ui_TBFilterRules.h"
 #include <casaqt/QtBrowser/TBConstants.h>
 
 #include <QtGui>

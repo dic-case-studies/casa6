@@ -31,7 +31,7 @@
 #include <casa/aips.h>
 #include <casa/Utilities/Regex.h>
 #include <casa/IO/AipsIO.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/System/Aipsrc.h>
 #include <casa/Exceptions/Error.h>
 #include <tables/Tables/Table.h>

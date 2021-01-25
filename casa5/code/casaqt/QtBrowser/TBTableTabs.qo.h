@@ -27,7 +27,7 @@
 #ifndef TBTABLETABS_H_
 #define TBTABLETABS_H_
 
-#include <casaqt/QtBrowser/TBTableTabs.ui.h>
+#include "ui/ui_TBTableTabs.h"
 
 #include <casaqt/QtBrowser/TBConstants.h>
 #include <casaqt/QtBrowser/TBTable.h>

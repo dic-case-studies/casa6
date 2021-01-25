@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import math
 import shutil
@@ -146,7 +145,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
             for node in nodes:
                 ## For each image-field, define imaging parameters
                 nimpars = copy.deepcopy(self.allimpars)
-                #print("nimpars = ",nimpars)
+                # casalog.post("nimpars = "+str(nimpars))
                 ngridpars = copy.deepcopy(self.allgridpars)
                 for fld in range(0,self.NF):
                     if self.NN>1:
@@ -182,9 +181,9 @@ class PyParallelContSynthesisImager(PySynthesisImager):
                 if (nCFs == 0):
                     casalog.post(cfCacheName + " exists, but is empty.  Attempt is being made to fill it now.","WARN")
                     cfcExists = False;
-        # print("##########################################")
-        # print("CFCACHE = ",cfCacheName,cfcExists)
-        # print("##########################################")
+        # casalog.post("##########################################")
+        # casalog.post("CFCACHE = "+cfCacheName,cfcExists)
+        # casalog.post("##########################################")
 
        
         # Start one imager on MAIN node
@@ -238,7 +237,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 #         for node in self.listOfNodes:
 #             ## For each image-field, define imaging parameters
 #             nimpars = copy.deepcopy(self.allimpars)
-#             #print("nimpars = ",nimpars)
+#             #casalog.post("nimpars = "+str(nimpars))
 #             ngridpars = copy.deepcopy(self.allgridpars)
 #             for fld in range(0,self.NF):
 #                 if self.NN>1:
@@ -367,8 +366,8 @@ class PyParallelContSynthesisImager(PySynthesisImager):
 
             ## If only one field, do the get/gather/set of the weight density.
             if self.NF == 1 and self.allimpars['0']['stokes']=="I":   ## Remove after gridded wts appear for all fields correctly (i.e. new FTM).
-   
-                if self.weightpars['type'] == 'briggs' :  ## For natural, this array isn't created at all.
+                
+                if not ( (self.weightpars['type'] ==  'natural') or (self.weightpars['type'] == 'radial'))   :  ## For natural and radial, this array isn't created at all.
                                                                        ## Remove when we switch to new FTM
 
                     casalog.post("Gathering/Merging/Scattering Weight Density for PSF generation","INFO")
@@ -379,9 +378,9 @@ class PyParallelContSynthesisImager(PySynthesisImager):
                     self.PH.checkJobs( joblist )
 
                     ## gather weightdensity and sum and scatter
-                    print("******************************************************")
-                    print(" gather and scatter now ")
-                    print("******************************************************")
+                    casalog.post("******************************************************")
+                    casalog.post(" gather and scatter now ")
+                    casalog.post("******************************************************")
                     for immod in range(0,self.NF):
                         self.PStools[immod].gatherweightdensity()
                         self.PStools[immod].scatterweightdensity()
@@ -397,8 +396,20 @@ class PyParallelContSynthesisImager(PySynthesisImager):
     def deleteImagers(self):
          self.PH.runcmd("toolsi.done()")
 
+    def deleteWorkDir(self):
+        ## Delete the contents of the .workdirectory 
+        for immod in range(0,self.NF):
+            normpars = copy.deepcopy( self.allnormpars[str(immod)] )
+            if(self.NN>1):
+                for node in self.listOfNodes:
+                    self.PH.deletepartimages( self.allimpars[str(immod)]['imagename'],  node ,deldir=True ) 
+
+#        ## Delete the workdirectory
+#        casalog.post("Deleting workdirectory : "+self.PH.getworkdir(imagename, node))
+#        shutil.rmtree( self.PH.getworkdir(imagename, node) )
+
     def deleteCluster(self):
-         self.PH.takedownCluster()
+        self.PH.takedownCluster()
     
 # #############################################
     def dryGridding(self):
@@ -419,12 +430,12 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         joblist=[];
         for node in self.listOfNodes:
             cmd = "toolsi.reloadcfcache()";
-            print("CMD = ",node," ",cmd)
+            casalog.post("reloadCFCache, CMD = {} {}".format(node, cmd))
             joblist.append(self.PH.runcmd(cmd,node));
         self.PH.checkJobs(joblist);
 #############################################
     def fillCFCache(self):
-        #print("-----------------------fillCFCache------------------------------------")
+        #casalog.post("-----------------------fillCFCache------------------------------------")
         # cflist=[f for f in os.listdir(self.allgridpars['cfcache']) if re.match(r'CFS*', f)];
         # partCFList = 
         allcflist = self.PH.partitionCFCacheList(self.allgridpars['0']);
@@ -434,17 +445,17 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         aTermOn = str(self.allgridpars['0']['aterm']);
         conjBeams = str(self.allgridpars['0']['conjbeams']);
         #aTermOn = str(True);
-        # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        # print("AllCFList = ",allcflist)
+        # casalog.post("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        # casalog.post("AllCFList = ",allcflist)
         m = len(allcflist);
-        # print("No. of nodes used: ", m,cfcPath,ftmname)
-        # print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        # casalog.post("No. of nodes used: " + m,cfcPath,ftmname)
+        # casalog.post("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
         joblist=[];
         for node in self.listOfNodes[:m]:
-            #print("#!$#!%#!$#@$#@$ ",allcflist)
+            # casalog.post("#!$#!%#!$#@$#@$ " + allcflist)
             cmd = "toolsi.fillcfcache("+str(allcflist[node])+","+str(ftmname)+","+str(cfcPath)+","+psTermOn+","+aTermOn+","+conjBeams+")";
-            # print("CMD = ",node," ",cmd)
+            # casalog.post("CMD = " + str(node) +" " + cmd)
             joblist.append(self.PH.runcmd(cmd,node));
         self.PH.checkJobs(joblist);
 

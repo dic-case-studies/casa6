@@ -204,14 +204,14 @@ namespace casa {
 	}
 
 	void CanvasCurve::setYValues( const Vector<float>& yValues ) {
-		int maxPoints = max( static_cast<int>(curveData.size() / 2), static_cast<int>(yValues.size()) );
+		int maxPoints = std::max( static_cast<int>(curveData.size() / 2), static_cast<int>(yValues.size()) );
 		for ( int i = 0; i < maxPoints; i++ ) {
 			curveData[2*i+1] = yValues[i];
 		}
 	}
 
 	void CanvasCurve::setErrorValues( const Vector<float>& errorValues ) {
-		int maxPoints = max( static_cast<int>(errorData.size()), static_cast<int>(errorValues.size()) );
+		int maxPoints = std::max( static_cast<int>(errorData.size()), static_cast<int>(errorValues.size()) );
 		for ( int i = 0; i < maxPoints; i++ ) {
 			errorData[i] = errorValues[i];
 		}

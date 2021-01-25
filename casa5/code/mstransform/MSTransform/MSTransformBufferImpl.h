@@ -214,7 +214,7 @@ public:
     const casacore::Array<casacore::Bool> & flagCategory () const; // [nC,nF,nCategories,nR]
 
 	casacore::IPosition getShape () const;
-	casacore::Int nRows () const;
+	casacore::rownr_t nRows () const;
 	casacore::Int nChannels () const;
 	casacore::Int nCorrelations () const;
 	casacore::Int nAntennas () const;
@@ -239,7 +239,7 @@ public:
     const casacore::Vector<casacore::Int> & getChannelNumbers (casacore::Int rowInBuffer) const;
     casacore::Vector<casacore::Int> getChannelNumbersSelected (casacore::Int outputChannelIndex) const;
 
-    const casacore::Vector<casacore::uInt> & rowIds () const;
+    const casacore::Vector<casacore::rownr_t> & rowIds () const;
 
     // Rotate visibility phase for given vector (dim = nrow of vb) of phases (metres)
     void phaseCenterShift(const casacore::Vector<casacore::Double>& phase);
@@ -327,7 +327,7 @@ private:
 	mutable casacore::Vector<casacore::Double> frequencies_p;
 	mutable casacore::Vector<casacore::Int> channelNumbers_p;
 	mutable map< casacore::Int,casacore::Vector<casacore::Int> > outputInputChannelMap_p;
-	mutable casacore::Vector<casacore::uInt> rowIds_p;
+	mutable casacore::Vector<casacore::rownr_t> rowIds_p;
 	mutable casacore::IPosition shape_p;
 	mutable casacore::uInt nRows_p;
 	mutable casacore::uInt nChannels_p;

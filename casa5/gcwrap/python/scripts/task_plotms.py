@@ -380,6 +380,7 @@ def plotms(vis=None,
             return False
        
         # start plotms with the procmgr, use casa logfile
+        startProcess = False
         if usingprocmgr:
             if not procIsRunning("plotms"):
                 # set plotmsApp
@@ -395,6 +396,7 @@ def plotms(vis=None,
                 except KeyError:
                     logfile = ""
                 # start process with procmgr
+                startProcess = True
                 procmgr.create("plotms", [plotmsApp, "--nogui", "--nopopups",
                     "--casapy", "--logfilename="+logfile])
             if procIsRunning("plotms"):
@@ -407,6 +409,18 @@ def plotms(vis=None,
             else:
                 casalog.post("plotms failed to start", "SEVERE")
                 return False
+
+        # check clearplots and valid plotindex
+        if startProcess and not clearplots:
+            clearplots = True
+        if startProcess and plotindex > 0:
+            casalog.post("Invalid initial plot index, setting to 0", "WARN")
+            plotindex = 0
+        else:
+            numplots = pm.getNumPlots()
+            if plotindex > numplots:
+                casalog.post("Invalid plot index, setting to " + str(numplots), "WARN")
+                plotindex = numplots
 
         # Determine whether this is going to be a scripting client or 
         # a full GUI supporting user interaction.  This must be done 

@@ -131,9 +131,9 @@ calibrater::selectvis(const ::casac::variant& time,
 		      const ::casac::variant& baseline,
 		      const ::casac::variant& uvrange,
 		      const std::string& chanmode,
-		      const int nchan,
-		      const int start,
-		      const int step,
+		      const long nchan,
+		      const long start,
+		      const long step,
 		      const casac::Quantity& mstart,
 		      const casac::Quantity& mstep,
 		      const std::string& msselect) {
@@ -258,7 +258,7 @@ calibrater::setapply(const std::string& type,
 		     const std::string& interp,
 		     const std::string& /*select*/,
 		     const bool calwt, 
-		     const std::vector<int>& spwmap,
+		     const std::vector<long>& spwmap,
 		     const std::vector<double>& opacity) {
 
   if (! itsMS) {
@@ -350,24 +350,25 @@ calibrater::setsolve(const std::string& type,
 		     const std::string& apmode,
 		     const ::casac::variant& refant,
 		     const std::string& refantmode,
-		     const int minblperant,
+		     const long minblperant,
 		     const bool solnorm,
 		     const std::string& normtype,
 		     const float minsnr,
 		     const std::string& combine,
-		     const int fillgaps,
+		     const long fillgaps,
 		     const std::string& cfcache,
 		     const float painc,
-                     const int fitorder,
+                     const long fitorder,
                      const float fraction,
-                     const int numedge,
+                     const long numedge,
                      const std::string& radius,
                      const bool smooth,
                      const bool zerorates,
                      const bool globalsolve,
-                     const int niter,
+                     const long niter,
                      const vector<double>& delaywindow,
                      const vector<double>& ratewindow,
+                     const vector<bool>& paramactive,
 		     const std::string& solmode,
 		     const vector<double>& rmsthresh
     )
@@ -398,7 +399,7 @@ calibrater::setsolve(const std::string& type,
 			    toCasaString(refant),refantmode,
 			    solnorm,normtype, minsnr,combine,fillgaps,
 			    cfcache, painc, fitorder, fraction, numedge, radius, smooth,
-                            zerorates, globalsolve, niter, delaywindow, ratewindow, solmode, rmsthresh);
+                            zerorates, globalsolve, niter, delaywindow, ratewindow, paramactive, solmode, rmsthresh);
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
@@ -414,7 +415,7 @@ calibrater::setsolvegainspline(const std::string& table,
 			       const std::string& mode,
 			       const double splinetime,
 			       const double preavg,
-			       const int npointaver,
+			       const long npointaver,
 			       const double phasewrap,
 			       const ::casac::variant& refant)
 {
@@ -448,11 +449,11 @@ bool calibrater::setsolvebandpoly(const std::string& table,
 				  const bool append, 
 				  const ::casac::variant& t,
 				  const std::string& combine,
-				  const int degamp, 
-				  const int degphase, 
+				  const long degamp, 
+				  const long degphase, 
 				  const bool visnorm, 
 				  const bool solnorm, 
-				  const int maskcenter, 
+				  const long maskcenter, 
 				  const double maskedge, 
 				  const ::casac::variant& refant)
 {
@@ -538,7 +539,7 @@ calibrater::reset(const bool apply, const bool solve)
 }
 
 bool
-calibrater::initcalset(const int calset)
+calibrater::initcalset(const long calset)
 {
   if (! itsMS) {
     *itsLog << LogIO::SEVERE << "Must first open a MeasurementSet."
@@ -744,9 +745,9 @@ uniqueStrV(std::vector<string> &ulist, const std::vector<string> &list) {
 }
 
 void
-uniqueIntV(std::vector<int> &ulist, const Vector<Int> &list) {
+uniqueIntV(std::vector<long> &ulist, const Vector<Long> &list) {
   // for translating Glish's list:=unique(list);
-  ulist = std::vector<int>(); // make sure ulist is empty
+  ulist = std::vector<long>(); // make sure ulist is empty
   int m = list.size();
   vector<int> slist(m);
   for (int i = 0; i < m; ++i) slist.push_back(list[i]);
@@ -759,7 +760,7 @@ uniqueIntV(std::vector<int> &ulist, const Vector<Int> &list) {
 bool
 calibrater::initweights(const std::string& wtmode, const bool dowtsp,
 		const std::string &tsystable, const std::string &gainfield,
-		const std::string &interp, const std::vector<int> &spwmap)
+		const std::string &interp, const std::vector<long> &spwmap)
 {
   if (! itsMS) {
     *itsLog << LogIO::SEVERE << "Must first open a MeasurementSet."
@@ -803,13 +804,13 @@ casac::record* calibrater::fluxscale(
 		      const ::casac::variant& transfer,
 		      const std::string& listfile,
 		      const bool append, 
-		      const std::vector<int>& refspwmap,
+		      const std::vector<long>& refspwmap,
                       const float gainthreshold,
                       const std::string& antenna,
                       const std::string& timerange,
                       const std::string& scan,
                       const bool incremental,
-                      const int fitorder,
+                      const long fitorder,
                       const bool display)
 {
 
@@ -965,7 +966,7 @@ calibrater::accumulate(const std::string& tablein,
 		       const ::casac::variant& calfield,
 		       const std::string& interp, 
 		       const double t,
-		       const std::vector<int>& spwmap)
+		       const std::vector<long>& spwmap)
 {
 
   // TBD: rationalize with Calibrater::accumulate (i.e., move most
@@ -1137,7 +1138,7 @@ calibrater::listcal(const std::string& tablein,
 		    const ::casac::variant& antenna,
 		    const ::casac::variant& spw,
 		    const std::string& listfile, 
-		    const int pagerows)
+		    const long pagerows)
 {
 
   Bool rstat(false);
@@ -1224,15 +1225,15 @@ calibrater::linpolcor(const std::string& /*tablein*/,
 }
 
 bool 
-calibrater::plotcal(const std::vector<int>& /*antennas*/,
-                    const std::vector<int>& /*fields*/,
-                    const std::vector<int>& /*spwids*/,
+calibrater::plotcal(const std::vector<long>& /*antennas*/,
+                    const std::vector<long>& /*fields*/,
+                    const std::vector<long>& /*spwids*/,
                     const std::string& /*plottype*/,
                     const std::string& /*tablename*/,
-                    const int /*polarization*/,
+                    const long /*polarization*/,
                     const bool /*multiplot*/, 
-		    const int /*nx*/, 
-		    const int /*ny*/, 
+		    const long /*nx*/, 
+		    const long /*ny*/, 
 		    const std::string& /*psfile*/)
 {
 
@@ -1254,7 +1255,7 @@ calibrater::plotcal(const std::vector<int>& /*antennas*/,
 
 std::vector<double>
 calibrater::modelfit(const std::vector<bool>& vary, 
-		     const int niter, 
+		     const long niter, 
 		     const std::string& modeltype, 
 		     const std::vector<double>& par, 
 		     const std::string& file)
@@ -1396,6 +1397,25 @@ casac::record* calibrater::parsecallibfile(const std::string& filein )
   return( oRec );
  
 }
+
+//----------------------------------------------------------------------------
+
+bool
+calibrater::setcorrdepflags(const bool corrdepflags)
+{
+
+ bool rstat(false);
+ try {
+
+   rstat=itsCalibrater->setCorrDepFlags(corrdepflags);
+
+ } catch  (AipsError x) {
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+    RETHROW(x);
+ }
+ return rstat;
+};
+
 
 //----------------------------------------------------------------------------
 

@@ -267,6 +267,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       {
 	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
 
+	    //cout << "Units for chan " << chanid << " and pol " << polid << " are " << itsImages->image()->units().getName() << endl;
+
     ///  ----------- do once if trying to 'only restore' without model ----------
     if( itsMTCsetup == false)
       {
@@ -333,6 +335,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       } // for polid loop
       }// for chanid loop
 
+    // This log message is important. This call of imagestore->image(...) is the first call if there is
+    // a multi-channel or multi-pol image. This is what will set the units correctly. Ref. CAS-13153
+    os << LogIO::POST << "Restored images : ";
+    for(uInt tix=0; tix<itsNTerms; tix++)
+      {
+	os << LogIO::POST << imagestore->image(tix)->name() << "  (model=" << imagestore->model(tix)->name() << ") " ;
+      }
+    os << LogIO::POST << endl;
+    
+    //cout << "Units for  " << imagestore->image()->name() << "  aaaaaare " << imagestore->image()->units().getName() << endl;
   }// ::restore
 
 

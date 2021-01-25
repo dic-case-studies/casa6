@@ -1,3 +1,26 @@
+##########################################################################
+# test_ia_deviation.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+#
+##########################################################################
+'''
+Unit tests for task ia.deviation().
+'''
+
 import os
 import sys
 import shutil
@@ -6,20 +29,24 @@ import math
 import numpy
 import numbers
 
-from casatools import image as iatool
-from casatools import regionmanager as rgtool
-from casatools import table
+try:
+    from casatools import image as iatool
+    from casatools import regionmanager as rgtool
+    from casatools import table, ctsys
+    ctsys_resolve = ctsys.resolve
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        return os.path.join(dataPath,apath)
+
 
 _rg = rgtool( )
 
-#run using
-# `which casa` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py --mem test_ia_deviation
-#
-'''
-Unit tests for task ia.deviation().
-'''
 
-datapath = 'regression/unittest/ia_deviation/'
+datapath = ctsys_resolve('regression/unittest/ia_deviation/')
 
 input0 = datapath + "100x100x2.im"
 ref0 = datapath + "ref0.im"
@@ -83,13 +110,13 @@ class ia_deviation_test(unittest.TestCase):
         self._myia.open(input0)
         zz = self._myia.deviation(
             "", grid=[1,1], xlength="4pix", ylength="4pix", stattype="npts",
-            interp="cub",anchor=[0,0], statalg="cl"
+            interp="lin",anchor=[0,0], statalg="cl"
         )
         self._myia.open(ref0)
         self._compare(self._myia.getchunk(), zz.getchunk(), "test001 compare")
         zz = self._myia.deviation(
             "", grid=[1,1], xlength="4pix", ylength="4pix", stattype="sigma",
-            interp="cub",anchor=[0,0], statalg="cl"
+            interp="lin",anchor=[0,0], statalg="cl"
         )
         self._myia.open(ref1)
         self._myia.done()
@@ -121,13 +148,13 @@ class ia_deviation_test(unittest.TestCase):
             self._myia.open(input0)
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="npts",
-                interp="cub",anchor=anchor, statalg="cl"
+                interp="lin",anchor=anchor, statalg="cl"
             )
             self._myia.open(ref2)
             self._compare(self._myia.getchunk(), zz.getchunk(), "test001 compare")
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="sigma",
-                interp="cub",anchor=anchor, statalg="cl"
+                interp="lin",anchor=anchor, statalg="cl"
             )
             self._myia.open(ref3)
         self._myia.done()
@@ -141,13 +168,13 @@ class ia_deviation_test(unittest.TestCase):
         for anchor in [[2,2], [17,11]]:
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="npts",
-                interp="cub", anchor=anchor, statalg="cl"
+                interp="lin", anchor=anchor, statalg="cl"
             )
             self._myia.open(ref4)
             self._compare(self._myia.getchunk(), zz.getchunk(), "test005 compare")
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="sigma",
-                interp="cub", anchor=anchor, statalg="cl"
+                interp="lin", anchor=anchor, statalg="cl"
             )
             self._myia.open(ref5)
         self._myia.done()
@@ -163,11 +190,11 @@ class ia_deviation_test(unittest.TestCase):
         length = "10.001pix"
         zz = self._myia.deviation(
             grid=grid, xlength=length, ylength=length, stattype="sigma",
-            interp="cub", anchor=anchor, statalg="cl"
+            interp="lin", anchor=anchor, statalg="cl"
         )
         yy = self._myia.deviation(
             grid=grid, xlength=length, ylength=length, stattype="sigma",
-            interp="cub", anchor=anchor, statalg="cl", region=reg
+            interp="lin", anchor=anchor, statalg="cl", region=reg
         )
         self._myia.done()
         sub0 = zz.subimage(region=myrg.box([27,27,0],[66,66,0]))

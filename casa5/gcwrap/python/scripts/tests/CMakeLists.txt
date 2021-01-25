@@ -24,22 +24,21 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_agentflagger.py
   test_asdmsummary.py
   test_bandpass.py
-  test_caltabconvert.py
+#  test_caltabconvert.py
   test_calanalysis.py
   test_clean.py
   test_cleanhelper.py
   test_clearstat.py
   test_componentlist.py
-  test_componentlistimage.py
   test_concat.py
   test_conjugatevis.py
   test_coordsys.py
-  test_createmultims.py
   test_cvel.py
   test_cvel2.py
   test_cvelfreqs.py
   test_exportasdm.py
   test_exportfits.py
+  test_exportuvfits.py
   test_fixplanets.py
   test_fixvis.py
   test_flagcmd.py
@@ -51,11 +50,11 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_getchunk.py
   test_gencal.py
   test_hanningsmooth.py
-  test_hanningsmooth2.py
   test_ia_adddegaxes.py
   test_ia_addnoise.py
   test_ia_boxcar.py
   test_ia_calcmask.py
+  test_ia_collapse.py
   test_ia_continuumsub.py
   test_ia_constructors.py
   test_ia_commonbeam.py
@@ -92,7 +91,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_ia_putregion.py
   test_ia_pv.py
   test_ia_rebin.py
-  test_ia_rename.py
+  test_ia_regrid.py
   test_ia_replacemaskedpixels.py
   test_ia_restoringbeam.py
   test_ia_rotate.py
@@ -108,10 +107,8 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_imcollapse.py
   test_imcontsub.py
   test_imfit.py
-  test_imhead.py
   test_immath.py
   test_immoments.py
-  test_impbcor.py
   test_importasap.py
   test_importasdm.py
   test_importasdm_mms.py
@@ -123,12 +120,9 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_importvla.py
   test_imregrid.py
   test_imsmooth.py
-  test_imstat.py
-  test_imtrans.py
   test_imval.py
   test_initweights.py
   test_listfits.py
-  test_listobs.py
   test_listpartition.py
   test_listvis.py
   test_makemask.py
@@ -137,16 +131,10 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_msmd.py
   test_mstransform.py
   test_mstransform_mms.py
-  test_mstransform_subset.py
-  test_mst_cvel.py
-  test_mst_cvelB.py
-  test_mst_split.py
   test_nrobeamaverage.py
-  test_oldhanningsmooth.py
   test_oldsplit.py
   test_mstool.py
   test_partition.py
-  test_partitionHelper.py
   test_plotants.py
   test_plotcal.py
   test_plotms.py
@@ -170,11 +158,11 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_po_sigmalinpolposang.py
   test_po_totpolint.py
   test_predictcomp.py
-  test_rerefant.py
   test_report.py
   test_rg_selectedchannels.py
   test_rg_frombcs.py
   test_rg_fromtextfile.py
+  test_sdatmcor.py
   test_sdbaseline.py
   test_sdcal.py
   test_sdfit.py
@@ -184,6 +172,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_tsdimaging.py
   test_sdpolaverage.py
   test_sdsidebandsplit.py
+  test_sdtimeaverage.py
   test_sdsmooth.py
   test_tclean.py
 
@@ -203,6 +192,14 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
 
   ###
 
+  test_req_tool_componentlistimage.py
+  test_req_tool_ia_pbcor.py
+  test_req_tool_ia_rename.py
+  test_req_tool_ia_transpose.py
+  test_req_tool_ia_statistics.py
+
+  ###
+
   test_req_task_imhistory.py
   test_req_task_listcal.py
   test_req_task_accor.py
@@ -216,21 +213,32 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_fluxscale.py
   test_req_task_gaincal.py
   test_req_task_imhead.py
+  test_req_task_impbcor.py
   test_req_task_importuvfits.py
   test_req_task_impv.py
   test_req_task_imrebin.py
   test_req_task_imreframe.py
+  test_req_task_imstat.py
+  test_req_task_imtrans.py
   test_req_task_listhistory.py
   test_req_task_listobs.py
   test_req_task_listsdm.py
   test_req_task_rmfit.py
   test_req_task_rmtables.py
+  test_req_task_sdintimaging.py
+  test_req_task_simanalyze.py
+  test_req_task_statwt.py
+  test_req_tool_ms_statwt.py
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+  test_req_task_imdev.py
+  test_req_task_rerefant.py
+  test_req_task_polcal.py
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py
+  test_stk_vlass_pipeline_imaging.py
 
   ###
   test_setjy.py
@@ -242,8 +250,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_splattotable.py
   test_split.py
   test_spxfit.py
-  test_oldstatwt.py
-  test_statwt.py
   test_testconcat.py
   test_uvcontsub.py
   test_uvcontsub3.py
@@ -251,7 +257,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_viewer.py
   test_virtualconcat.py
   test_vishead.py
-  test_visstat.py
   test_vpmanager.py
   test_wvrgcal.py
   test_imview.py

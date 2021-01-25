@@ -29,6 +29,7 @@
 #include <casaqt/QtBrowser/TBTable.h>
 #include <casaqt/QtBrowser/TBArray.h>
 #include <casaqt/QtBrowser/TBData.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -317,7 +318,7 @@ TBFilterRule* TBFilterRuleSequence::at(unsigned int i) {
     else return NULL;
 }
 
-vector<TBFilterRule*>* TBFilterRuleSequence::getRules() { return &rules; }
+std::vector<TBFilterRule*>* TBFilterRuleSequence::getRules() { return &rules; }
 
 // Public Methods //
 
@@ -358,7 +359,7 @@ TBFilterRules::TBFilterRules(TBTable* t, QWidget* parent): QDialog(parent),
         rules = new TBFilterRuleSequence();
         
         // add fields
-        vector<TBField*>* fields = table->getFields();
+        std::vector<TBField*>* fields = table->getFields();
         for(unsigned int i = 0; i < fields->size(); i++)
             fieldChooser->addItem(fields->at(i)->getName().c_str());
         fieldChooser->addItem("[ any field ]");

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -36,14 +35,12 @@ def feather(imagename=None,highres=None,lowres=None, sdfactor=None, effdishdiam=
         """
         casalog.origin('feather')
 
+        imFea=imager( )
         try:
-                imFea=imager( )
                 imFea.setvp(dovp=True)
                 imFea.setsdoptions(scale=sdfactor)
-                imFea.feather(image=imagename,highres=highres,lowres=lowres, effdishdiam=effdishdiam,  lowpassfiltersd=lowpassfiltersd)
+                imFea.feather(image=imagename,highres=highres,lowres=lowres,
+                              effdishdiam=effdishdiam,  lowpassfiltersd=lowpassfiltersd)
+        finally:
                 imFea.done( )
                 del imFea
-        except Exception as instance:
-                print('*** Error *** %s' % instance)
-                raise
-

@@ -30,18 +30,14 @@
 #define SYNTHESIS_MATRIXCLEANER_H
 
 //# Includes
-#include <casa/aips.h>
-#include <casa/Quanta/Quantum.h>
-#include <lattices/Lattices/TempLattice.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Containers/Block.h>
-#include <lattices/LatticeMath/LatticeCleaner.h>
-
-namespace casacore{
-
-template <class T> class Matrix;
-}
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/lattices/Lattices/TempLattice.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/lattices/LatticeMath/LatticeCleaner.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

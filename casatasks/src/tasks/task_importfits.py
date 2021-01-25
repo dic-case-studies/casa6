@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+import sys
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -209,9 +210,6 @@ def importfits(fitsimage,imagename,whichrep,whichhdu,zeroblanks,overwrite,defaul
             write_image_history(_myia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % instance, 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post('*** Error *** %s' % instance, 'SEVERE')
-        raise
+
     finally:
         _myia.done()

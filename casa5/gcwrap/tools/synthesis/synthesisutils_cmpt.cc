@@ -39,7 +39,84 @@ synthesisutils::~synthesisutils()
   done();
 }
 
-  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const int npart)
+  ::casac::record* synthesisutils::advisechansel(const ::casac::variant& freqstart, const ::casac::variant& freqend, const ::casac::variant& freqstep, const std::string& freqframe, const std::string& ephemtab, const std::string& msname, const long fieldid, const bool getfreqrange, const std::string& spwselection){
+
+  casac::record* retval=0;
+  LogIO theLog;
+      try {
+
+	if( msname.length() > 0){
+
+	  Vector<Int>  spw;
+	  Vector<Int>  start;
+	  Vector<Int>  nchan;
+	  MFrequency::Types tp;
+	  String specframe(upcase(String(freqframe)));
+	  
+	  if(freqframe=="SOURCE"){
+	    tp=MFrequency::REST;
+	  }
+	  else if(!MFrequency::getType(tp, freqframe))
+	    throw(AipsError("Invalid frequency frame"));
+	  Double fstart, fend, fstep;
+	  /***if(freqstart.type()==::casac::variant::INT || freqend.type()==::casac::variant::INT || freqstep.type()==::casac::variant::INT)
+	    throw(AipsError("Due to a known bug (CAS-13149) in casa parameter passing \nDo not pass a python integer as parameter here... use a period '.' at the end of the number to make sure it is interpreted as double")); 
+          ***/
+	  if(freqstart.type() > ::casac::variant::BOOL && freqstart.type() < ::casac::variant::COMPLEX){
+	    fstart=freqstart.toDouble();
+	  }
+	  else
+	    fstart=casaQuantity(freqstart).get("Hz").getValue();
+	
+	  //cerr << "FSTART " << fstart << "  quant " << casaQuantity(freqstart).get("Hz") << endl;
+	  if(freqend.type() > ::casac::variant::BOOL && freqend.type() <  ::casac::variant::COMPLEX){
+	    fend=freqend.toDouble();
+	  }
+	  else
+	    fend=casaQuantity(freqend).get("Hz").getValue();
+	  if(freqstep.type()> ::casac::variant::BOOL && freqstep.type() < ::casac::variant::COMPLEX){
+	    fstep=freqstep.toDouble();
+	  }
+	  else
+	    fstep=casaQuantity(freqstep).get("Hz").getValue();
+	  if(itsUtils->adviseChanSel(fstart, fend, fstep, tp, spw, start, nchan, msname, ephemtab, fieldid, getfreqrange, spwselection)){
+	    Record outRec;
+	    if(!getfreqrange){
+		
+		outRec.define("spw", spw);
+		outRec.define("start", start);
+		outRec.define("nchan", nchan);
+	      
+	    }
+	    else{
+	      //outRec.define("freqstart", fstart);
+	      //outRec.define("freqend", fend);
+	      casacore::QuantumHolder qh(casacore::Quantity(fstart, "Hz"));
+	      outRec.defineRecord("freqstart", qh.toRecord());
+	      qh=casacore::QuantumHolder(casacore::Quantity(fend, "Hz"));
+	      outRec.defineRecord("freqend", qh.toRecord());
+	      
+	    }
+	    retval=fromRecord(outRec);
+	  }
+	} else {
+	  theLog << LogIO::SEVERE << "No MeasurementSet has been assigned, please give a valid ms in msname" << LogIO::POST;
+	}
+
+	
+      } catch  (AipsError x) {
+          //*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+	  RETHROW(x);
+      }
+
+
+      return retval;
+
+
+
+  }
+  
+  casac::record* synthesisutils::contdatapartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -56,7 +133,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const int npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
+  casac::record* synthesisutils::cubedatapartition(const casac::record& selpars, const long npart, const ::casac::variant& fstart, const ::casac::variant&  fend, const string& frame)
 {
   casac::record* rstat(0);
 
@@ -82,7 +159,7 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
 
-  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const int npart)
+  casac::record* synthesisutils::cubeimagepartition(const casac::record& selpars, const long npart)
 {
   casac::record* rstat(0);
 
@@ -100,7 +177,7 @@ synthesisutils::~synthesisutils()
 }
 
   casac::record* synthesisutils::cubedataimagepartition(const casac::record& selpars, const casac::record& incsysrec,
-                                                      const int npart, const int nchannel)
+                                                      const long npart, const long nchannel)
 {
    casac::record* rstat(0);
 
@@ -232,7 +309,7 @@ synthesisutils::~synthesisutils()
 ***/
 
 
-  int  synthesisutils::getOptimumSize(const int size)
+  long  synthesisutils::getOptimumSize(const long size)
 {
    int rstat(size);
 

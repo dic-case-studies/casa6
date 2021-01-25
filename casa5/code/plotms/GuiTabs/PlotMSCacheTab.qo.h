@@ -27,7 +27,7 @@
 #ifndef PLOTMSCACHETAB_QO_H_
 #define PLOTMSCACHETAB_QO_H_
 
-#include <plotms/GuiTabs/PlotMSCacheTab.ui.h>
+#include <ui/ui_PlotMSCacheTab.h>
 
 #include <plotms/GuiTabs/PlotMSPlotTab.qo.h>
 

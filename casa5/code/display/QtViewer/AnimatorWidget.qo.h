@@ -26,7 +26,7 @@
 #define ANIMATORWIDGETT_QO_H
 
 #include <QWidget>
-#include <display/QtViewer/AnimatorWidget.ui.h>
+#include <ui/ui_AnimatorWidget.h>
 
 namespace casa {
 

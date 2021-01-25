@@ -32,11 +32,7 @@
 #include <casa/aips.h>
 #include <components/SpectralComponents/SpectralElement.h>
 #include <components/SpectralComponents/SpectralList.h>
-
-namespace casacore{
-
-template <class T> class Vector;
-}
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

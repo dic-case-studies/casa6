@@ -26,7 +26,7 @@
 #define ABOUTDIALOG_QO_H
 
 #include <QDialog>
-#include <guitools/Feather/AboutDialog.ui.h>
+#include "ui/ui_AboutDialog.h"
 
 namespace casa {
 

@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the param set for sdcal -->
 
-<task type="function" name="sdcal" category="single dish">
+
+<task category="single dish" name="sdcal" type="function">
 
   <shortdescription> MS SD calibration task</shortdescription>
 
@@ -65,13 +60,13 @@ spectrum is
 
   <input>
 
-    <param type="string" name="infile"  mustexist="true">
-      <description>name of input SD dataset (must be MS)</description>
-      <value></value>
+    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset (must be MS)</shortdescription><description>name of input SD dataset (must be MS)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="calmode">
-      <shortdescription>SD calibration mode ["ps","otfraster","otf","tsys","apply", and allowed combinations]</shortdescription>
+    <param name="calmode" type="string">
+      <shortdescription>SD calibration mode [&quot;ps&quot;,&quot;otfraster&quot;,&quot;otf&quot;,&quot;tsys&quot;,&quot;apply&quot;, and allowed combinations]</shortdescription>
       <description>SD calibration mode</description>
       <value>ps</value>
       <allowed kind="enum">
@@ -90,144 +85,144 @@ spectrum is
       </allowed>
     </param>
 
-    <param type="any" name="fraction" subparam="true">
-      <description>fraction of the OFF data to mark</description>
-      <any type="variant" limittype="string double"/>
+    <param subparam="true" name="fraction" type="any"><shortdescription>fraction of the OFF data to mark</shortdescription><description>fraction of the OFF data to mark</description>
+      
+      <any limittype="string double" type="variant"/>
       <value type="string">10%</value>
     </param>
 
-    <param type="int" name="noff" subparam="true">
-      <description>number of the OFF data to mark</description>
+    <param subparam="true" name="noff" type="int"><shortdescription>number of the OFF data to mark</shortdescription><description>number of the OFF data to mark</description>
+      
       <value>-1</value>
     </param>
 
-    <param type="double" name="width" subparam="true">
-      <description>width of the pixel for edge detection</description>
+    <param subparam="true" name="width" type="double"><shortdescription>width of the pixel for edge detection</shortdescription><description>width of the pixel for edge detection</description>
+      
       <value>0.5</value>
     </param>
 
-    <param type="bool" name="elongated" subparam="true">
-      <description>whether observed area is elongated in one direction or not</description>
+    <param subparam="true" name="elongated" type="bool"><shortdescription>whether observed area is elongated in one direction or not</shortdescription><description>whether observed area is elongated in one direction or not</description>
+      
       <value>False</value>
     </param>
 
-    <param type="any" name="applytable" subparam="true">
-      <description>(List of) sky and/or tsys tables</description>
-      <any type="variant" limittype="string stringArray"/>
-      <value type="string"></value>
+    <param subparam="true" name="applytable" type="any"><shortdescription>(List of) sky and/or tsys tables</shortdescription><description>(List of) sky and/or tsys tables</description>
+      
+      <any limittype="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="string" name="interp" subparam="true">
-      <description>Interpolation type in time[,freq]. Valid options for time are "nearest", "linear", and "cubic", while valid options for frequency include "nearest", "linear", "cspline", or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., "linear,cspline").</description>
-      <value></value>
+    <param subparam="true" name="interp" type="string"><shortdescription>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</shortdescription><description>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</description>
+      
+      <value/>
     </param>
 
-    <param type="any" name="spwmap" subparam="true">
-      <description>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</description>
+    <param subparam="true" name="spwmap" type="any"><shortdescription>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</shortdescription><description>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</description>
+      
       <any type="variant"/>
       <value type="record"/>
     </param>
 
-    <param type="string" name="outfile" subparam="true">
-      <description>name of output file (See a WARNING in help)</description>
-      <value></value>
+    <param subparam="true" name="outfile" type="string"><shortdescription>name of output file (See a WARNING in help)</shortdescription><description>name of output file (See a WARNING in help)</description>
+      
+      <value/>
     </param>
 
-    <param type="bool" name="overwrite" subparam="true">
+    <param subparam="true" name="overwrite" type="bool">
       <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
       <description>overwrite the output file if already exists</description>
       <value>False</value>
     </param>
 
-    <param type="string" name="field">
-      <description>select data by field IDs and names, e.g. "3C2*" ("" = all)</description>
-      <value></value>
+    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="spw">
-      <description>select data by spw IDs (spectral windows), e.g., "3,5,7" ("" = all)</description>
-      <value></value>
+    <param name="spw" type="string"><shortdescription>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</shortdescription><description>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</description>
+      
+      <value/>
     </param>
 
-    <param type="string" name="scan">
-      <description>select data by scan numbers, e.g. "21~23" (""=all)</description>
-      <value></value>
+    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+      
+      <value/>
     </param>
     
-    <param type="string" name="intent" subparam="true">
-      <description>select data by observation intent, e.g. "OBSERVE_TARGET#ON_SOURCE" (""=all)</description>
-      <value></value>
+    <param subparam="true" name="intent" type="string"><shortdescription>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</shortdescription><description>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</description>
+      
+      <value/>
     </param>
 
     <constraints>
       <when param="calmode">
         <equals value="ps">
-          <default param="outfile"><value type="string"></value></default>
+          <default param="outfile"><value type="string"/></default>
           <default param="overwrite"><value type="bool">False</value></default>
         </equals>
         <equals value="otfraster">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="noff"><value type="int">-1</value></default>
-          <default param="outfile"><value type="string"></value></default>
+          <default param="outfile"><value type="string"/></default>
           <default param="overwrite"><value type="bool">False</value></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="otf">
           <default param="fraction"><value type="string">10%</value></default>
-          <default param="outfile"><value type="string"></value></default>
+          <default param="outfile"><value type="string"/></default>
           <default param="overwrite"><value type="bool">False</value></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="tsys">
-          <default param="outfile"><value type="string"></value></default>
+          <default param="outfile"><value type="string"/></default>
           <default param="overwrite"><value type="bool">False</value></default>
         </equals>
         <equals value="apply">
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="ps,apply">
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="tsys,apply">
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="ps,tsys,apply">
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="otfraster,apply">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="noff"><value type="int">-1</value></default>
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="otfraster,tsys,apply">
           <default param="fraction"><value type="string">10%</value></default>
           <default param="noff"><value type="int">-1</value></default>
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
         <equals value="otf,apply">
           <default param="fraction"><value type="string">10%</value></default>
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
           <default param="intent"><value type="string">OBSERVE_TARGET#ON_SOURCE</value></default>
         </equals>
         <equals value="otf,tsys,apply">
           <default param="fraction"><value type="string">10%</value></default>
-          <default param="applytable"><value type="string"></value></default>
-          <default param="interp"><value type="string"></value></default>
+          <default param="applytable"><value type="string"/></default>
+          <default param="interp"><value type="string"/></default>
           <default param="spwmap"><value type="record"/></default>
         </equals>
       </when>
@@ -282,20 +277,7 @@ calmode -- Calibration mode. If you want to generate calibration table
                 will be marked at most.
                 default: -1 (use fraction)
                 options: any positive integer
-<!--
-        tsysavg \-\- Whether Tsys is averaged in spectral axis or not.
-                default: False
-                options: (bool) True, False
-        tsysspw \-\- list of spectral window IDs and their channel
-                   ranges of averaging for Tsys calibration.
-                   It does no effect if you don't want to do Tsys 
-                   calibration. the user is able to specify channel
-                   range for averaging (effective if tsysavg is True). 
-                default: '' (auto-detect tsys spws)
-                example: tsysspw='3,5,7' (spw IDs 3,5,7; all channels)
-                         tsysspw='&lt;2' (spw IDs less than 2; all channels)
-                         tsysspw='1:0~100' (spw ID1; between channels 0 and 100)
--->
+
         applytable -- List of sky/Tsys calibration tables you want to 
                       apply.
                 default: ''

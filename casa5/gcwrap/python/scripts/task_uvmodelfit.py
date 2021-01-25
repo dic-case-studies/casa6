@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -24,7 +23,7 @@ def uvmodelfit(vis=None,
                         mycb.setvi(old=True,quiet=False);  # old VI for now
                         mycb.open(vis)
                 else:
-                        raise Exception('Visibility data set not found - please verify the name')
+                        raise ValueError('Visibility data set not found - please verify the name')
 
                 # Do data selection according to selectdata
                 if (selectdata):
@@ -40,8 +39,6 @@ def uvmodelfit(vis=None,
                                        msselect='');
 
                 mycb.modelfit(niter=niter,compshape=comptype,par=sourcepar,vary=varypar,file=outfile)
+
+        finally:
                 mycb.close()
-        except Exception as instance:
-                print('*** Error *** %s' % instance)
-                mycb.close()
-                raise

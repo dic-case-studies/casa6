@@ -32,7 +32,7 @@
 #include <casa/Quanta/Quantum.h>
 #include <coordinates/Coordinates/SpectralCoordinate.h>
 #include <display/QtPlotter/ProfileTaskFacilitator.h>
-#include <display/QtPlotter/MomentSettingsWidgetRadio.ui.h>
+#include <ui/ui_MomentSettingsWidgetRadio.h>
 #include <imageanalysis/ImageAnalysis/ImageMomentsProgressMonitor.h>
 
 namespace casacore{
