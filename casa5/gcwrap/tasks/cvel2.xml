@@ -418,7 +418,7 @@ Multi-MS.
                      Options: linear, nearest, cubic, spline, fftshift
 </description>
             <value>linear</value>
-            <allowed kind="enum" ignorecase="True">
+            <allowed kind="enum">
                <value>nearest</value>
                <value>linear</value>
                <value>cubic</value>

@@ -1367,47 +1367,6 @@ class cvel2_test(test_base):
         ret = verify_ms(outfile, 1, 150, 0, b)
         self.assertTrue(ret[0],ret[1])
 
-    def test50_interpolation_uppercase(self):
-        '''cvel2 50: test fftshift regridding: channel mode, width positive'''
-        self.setUp_vis_d()
-        myvis = vis_d
-        os.system('ln -sf ' + myvis + ' myinput.ms')
-
-        # get reference values by running cvel2 with linear interpol
-        cvel2(
-            vis = 'myinput.ms',
-            outputvis = outfile,
-            spw = '0,1',
-            nchan = 150,
-            start = 10,
-            width = 1,
-            interpolation = 'LINEAR',
-            outframe = 'CMB'
-            )
-        
-        mytb.open(outfile+'/SPECTRAL_WINDOW')
-        a = mytb.getcell('CHAN_FREQ')
-        b = numpy.array(a)
-        mytb.close()
-
-        shutil.rmtree(outfile, ignore_errors=True)
-
-        rval = cvel2(
-            vis = 'myinput.ms',
-            outputvis = outfile,
-            spw = '0,1',
-            nchan = 150,
-            start = 10,
-            width = 1,
-#            interpolation = 'linear',
-            interpolation = 'FFTSHIFT',
-            outframe = 'CMB'
-            )
-
-        self.assertNotEqual(rval,False)
-        ret = verify_ms(outfile, 1, 150, 0, b)
-        self.assertTrue(ret[0],ret[1])
-
     def test51(self):
         '''cvel2 51: test fftshift regridding: frequency mode, width positive'''
         self.setUp_vis_d()
