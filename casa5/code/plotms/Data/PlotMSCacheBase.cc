@@ -380,6 +380,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 	bool canPlotImageSideband(true);
 	bool changedImageSbAxis(true);
 	bool changedImageSbXAxis(true);
+
 	// Remember the axes that we will load for plotting:
 	for (size_t i = 0; i < dataCount; i++) {
 		// set up atmospheric overlays
@@ -391,7 +392,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 			if (plotmsAtm_ == nullptr) {
 				plotmsAtm_ = new PlotMSAtm(filename_, selection_, showatm, isMS, xIsChan, this);
 			} else {
-			    changedImageSbAxis = (showatm != plotmsAtm_->showatm()); // changed atm/tsky
+				changedImageSbAxis = (showatm != plotmsAtm_->showatm()); // changed atm/tsky
 				changedImageSbXAxis = (xIsChan != plotmsAtm_->xAxisIsChan()); // changed chan/freq
 				plotmsAtm_->setShowAtm(showatm);
 				plotmsAtm_->setXAxisIsChan(xIsChan);
@@ -421,6 +422,8 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 					canPlotImageSideband = false;
 				}
 			}
+		} else if ((axes[yIndex] == PMS::TEC) && (calType_ == "Fringe Jones")) {
+			loadedAxes_[PMS::FLAG] = false; // reload for different corr selection size
 		}
 
 		// separate x and y axes
