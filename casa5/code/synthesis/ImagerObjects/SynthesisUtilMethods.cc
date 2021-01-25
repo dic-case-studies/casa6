@@ -3975,8 +3975,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             if(inrec.dataType("nsigma")==TpFloat || inrec.dataType("nsigma")==TpDouble ) {
                err+= readVal(inrec, String("nsigma"), nsigma );
               }
+	    else if(inrec.dataType("nsigma")==TpInt)
+	      {
+		int tnsigma;
+		err+= readVal(inrec, String("nsigma"), tnsigma );
+		nsigma = float(tnsigma);
+	      }
             else {
-               err+= "nsigma be a float or double";
+               err+= "nsigma must be an int, float or double";
             }
           }
         if( inrec.isDefined("restoringbeam") )     
