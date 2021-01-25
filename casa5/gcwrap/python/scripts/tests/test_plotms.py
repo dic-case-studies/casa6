@@ -25,15 +25,16 @@ print('plotms tests will use data from '+ datapath)
 
 class plotms_test_base(unittest.TestCase):
 
+    outputDir="/tmp/" + str(os.getpid()) + "/"
+    plotfile_jpg = "/tmp/myplot.jpg"
+    display = os.environ.get("DISPLAY")
+
     testms  = "pm_ngc5921.ms"
     testms2 = "sj_ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
     testct = 'g_jones.cal'
     testct2 = 'b_jones.cal'
-    outputDir="/tmp/" + str(os.getpid()) + "/"
-    plotfile_jpg = "/tmp/myplot.jpg"
-    display = os.environ.get("DISPLAY")
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
@@ -722,7 +723,6 @@ class test_calplot(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        # cal tables for plotting
         self.setUpCalData()
         
     def tearDown(self):
@@ -748,9 +748,10 @@ class test_calplot(plotms_test_base):
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.ct, yaxis='phase', plotfile=self.plotfile_jpg,
-            xaxis='baseline', overwrite=True, showgui=False, highres=True)
-        self.assertTrue(res)
+        res = plotms(vis=self.ct, yaxis='phase', xaxis='baseline',
+            plotfile=self.plotfile_jpg, overwrite=True,
+            showgui=False, highres=True)
+		self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 60000)
 
     def test_calplot_iteration(self):
@@ -1447,8 +1448,7 @@ class test_overlays(plotms_test_base):
         res = plotms(vis=self.ms, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, showatm=True)   
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 190000)
-        self.removePlotfile()
+        self.checkPlotfile(self.plotfile_jpg, 180000)
 
     def test_image_overlay(self):
         '''test_image_overlay: atm and image overplots'''
