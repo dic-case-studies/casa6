@@ -422,8 +422,6 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 					canPlotImageSideband = false;
 				}
 			}
-		} else if ((axes[yIndex] == PMS::TEC) && (calType_ == "Fringe Jones")) {
-			loadedAxes_[PMS::FLAG] = false; // reload for different corr selection size
 		}
 
 		// separate x and y axes

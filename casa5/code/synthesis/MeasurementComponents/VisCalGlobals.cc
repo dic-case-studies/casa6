@@ -1,4 +1,4 @@
-//# VisCalGlobals.h: Implementation of VisCalGlobals
+//# VisCalGlobals.cc: Implementation of VisCalGlobals
 //# Copyright (C) 1996,1997,2000,2001,2002,2003
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -700,8 +700,6 @@ Slice calParSliceByType(String caltype, String what, String pol)
         s = 2;
       } else if (what=="DISP") {
         s = 3;
-      } else if (what=="TEC") {
-        s = 0;
       } else { 
         throw(AipsError("Unsupported value type: "+what));
       }

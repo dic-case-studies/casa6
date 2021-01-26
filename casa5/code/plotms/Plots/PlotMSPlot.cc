@@ -1907,13 +1907,12 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 	casacore::String title = canvasParams[lastPlotIndex]->titleFormat().getLabel(xaxis, yaxes,
 		xHasRef, xRefVal, yHasRefs, yRefVals, xcolumn, ycolumns, commonPolnRatio);
 	if (itsCache_->calType().startsWith("Fringe")) {
-		if (title.startsWith("Gain")) {
+		if (title.contains("Gain Phase")) {
 			title.gsub("Gain", "Fringe");
-		} else if (title.startsWith("Delay")) {
-			title = "Fringe " + title;
-		} else if (title.startsWith("Disp")) {
-			title.gsub("Disp", "Fringe Dispersive");
-            title += " vs. refAnt";
+		} else if (title.contains("Disp")) {
+            title.gsub("Disp Delay", "Fringe Dispersive Delay");
+		} else if (title.contains("Delay")) {
+			title.gsub("Delay", "Fringe Delay");
 		}
 	}
 
@@ -2033,13 +2032,15 @@ void PlotMSPlot::addAxisDescription(casacore::String& label, PMS::Axis axis,
 	if (commonCacheType == PlotMSCacheBase::CAL) {
 		label.gsub("Corr", "Poln");
 
-        if (itsCache_->calType().startsWith("Fringe")) {
-            if (label.startsWith("Delay")) {
-                label = "Fringe " + label;
-            } else if (label.startsWith("Gain Phase")) {
-		        label.gsub("Gain", "Fringe");
-            }
-        }
+		if (itsCache_->calType().startsWith("Fringe")) {
+			if (label.startsWith("Delay")) {
+				label = "Fringe " + label;
+			} else if (label.startsWith("Gain Phase")) {
+				label.gsub("Gain", "Fringe");
+			} else if (label.startsWith("Disp")) {
+				label.gsub("Disp Delay", "Fringe Dispersive Delay vs. refAnt");
+			}
+		}
 	}
 }
 

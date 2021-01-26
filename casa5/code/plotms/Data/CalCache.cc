@@ -270,30 +270,6 @@ void CalCache::loadCalChunks(ROCTIter& ci,
       String pol = selection_.corr();
       String paramAxis = toVisCalAxis(PMS::AMP);
 
-      // Handle Fringe Jones TEC axis
-      if (calType_ == "Fringe Jones") {
-          bool hasData(false), hasTec(false); 
-          for (auto loadAxis : loadAxes) {
-              if (loadAxis == PMS::TEC) {
-                  if (!pol.empty() && (pol != "RL")) {
-                      throw(AipsError("Cannot select pol with TEC axis"));
-                  }
-
-                  paramAxis = "TEC";
-                  pol = "R";
-                  hasTec = true;
-              } else if (PMS::axisIsData(loadAxis)) {
-                  hasData = true;
-              }
-          }
-
-          // Cannot plot data and tec in same plot, different chshapes
-          // If TEC axis, only first pol (i.e. "R") selected.
-          if (hasData && hasTec) {
-              throw(AipsError("Cannot plot TEC with other data axes, different shapes."));
-          }
-      }
-
       size_t nPol;
       if (polnRatio_) {  // length is for 1 poln, pick first one
           nPol = getParSlice(paramAxis, "R").length();
@@ -647,7 +623,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, Int chunk, PMS::Axis axis, String pol)
             break;
         }
         case PMS::TEC: {
-            if ( !parsAreComplex() && calType_[0]=='F') {
+            if (!parsAreComplex() && (calType_[0] == 'F') && (calType_ != "Fringe Jones")) {
                 Cube<Float> fArray = cti.fparam();
                 *tec_[chunk] = fArray(parSlice1, Slice(), Slice()) / 1e16;
             } else {
