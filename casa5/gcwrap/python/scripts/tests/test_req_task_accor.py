@@ -305,6 +305,7 @@ class accor_test(unittest.TestCase):
 
     # CAS-13184
     #@unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
+    @unittest.skip("Re-enable this in CAS-13184")
     def test_corrdepflags(self):
         ''' Test that adding corrdepflags=True finds more solutions '''
 
