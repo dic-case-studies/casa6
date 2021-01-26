@@ -1676,7 +1676,7 @@ Bool Calibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 
 				Int spw = vb->spectralWindows()(0);
 
-				Int nrow = vb->nRows();
+				auto nrow = vb->nRows();
 				Int nchan = vb->nChannels();
 				Int ncor = vb->nCorrelations();
 
@@ -1993,7 +1993,7 @@ Bool Calibrater::initWeights(String wtmode, Bool dowtsp) {
 
 	Int spw = vb->spectralWindows()(0);
 
-	Int nrow=vb->nRows();
+	auto nrow=vb->nRows();
 	Int nchan=vb->nChannels();
 	Int ncor=vb->nCorrelations();
 
@@ -2214,7 +2214,7 @@ Bool Calibrater::initWeights(Bool doBT, Bool dowtsp) {
 
 	Int spw = vb->spectralWindows()(0);
 
-	Int nrow=vb->nRows();
+	auto nrow=vb->nRows();
 	Int nchan=vb->nChannels();
 	Int ncor=vb->nCorrelations();
 
@@ -4497,7 +4497,7 @@ Bool OldCalibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 
 				Int spw = vb->spectralWindows()(0);
 
-				Int nrow = vb->nRows();
+				auto nrow = vb->nRows();
 				Int nchan = vb->nChannels();
 				Int ncor = vb->nCorrelations();
 

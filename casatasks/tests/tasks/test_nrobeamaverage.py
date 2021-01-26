@@ -1,11 +1,10 @@
-import shutil
+from __future__ import absolute_import
+from __future__ import print_function
+
 import unittest
 import os
-import numpy
 import math
 import sys
-import filecmp
-import glob
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import nrobeamaverage
@@ -17,8 +16,8 @@ if is_CASA6:
         pass
 
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
     datapath=ctsys.resolve('regression/unittest/nrobeamaverage')
@@ -29,11 +28,13 @@ else:
     from taskinit import tbtool as table
 
     from __main__ import default
-    import testhelper as th
+    #import testhelper as th
     from sdutil import tbmanager
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/nrobeamaverage/"
+
+from casatestutils import testhelper as th
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -58,7 +59,7 @@ def check_eq(val, expval, tol=None):
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception as e:
-            print("Error comparing", val, "to", expval)
+            print("Error comparing {} to {}".format(val, expval))
             raise
 
 class test_nrobeamaverage(unittest.TestCase):

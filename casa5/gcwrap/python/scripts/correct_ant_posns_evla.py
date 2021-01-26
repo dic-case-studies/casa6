@@ -109,7 +109,7 @@ def correct_ant_posns_evla (vis_name, print_offsets=False):
 # first, see if the internet connection is possible
     try:
         response = urlopen(URL_BASE + '2010')
-    except URLError, err:
+    except URLError as err:
         if print_offsets:
             print('No internet connection to antenna position correction URL ', err.reason)
         return [2, '', []]

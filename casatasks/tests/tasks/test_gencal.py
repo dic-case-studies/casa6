@@ -3,34 +3,38 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-import numpy
+import numpy as np
 import numpy.ma as ma
 import unittest
-import testhelper as th
 
 from casatasks.private.casa_transition import is_CASA6
+from casatestutils import testhelper as th
+
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
-    import casatools
-    from casatools import ctsys
+    from casatools import ctsys, table
     from casatasks import gencal, rmtables
+
+    from casatasks.private import tec_maps
     
+    _tb= table()
+
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
-    import testhelper as th
     from tasks import gencal
     from taskinit import *
+    from recipes import tec_maps
+    
+    _tb=tbtool()
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
 
 ### DATA ###
 
 if is_CASA6:
-    evndata = casatools.ctsys.resolve('visibilities/other/n08c1.ms/')
-    vlbadata = casatools.ctsys.resolve('visibilities/vlba/ba123a.ms/')
-    vlbacal = casatools.ctsys.resolve('caltables/ba123a.gc/')
+    evndata = ctsys.resolve('visibilities/other/n08c1.ms/')
+    vlbadata = ctsys.resolve('visibilities/vlba/ba123a.ms/')
+    vlbacal = ctsys.resolve('caltables/ba123a.gc/')
 
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
@@ -179,6 +183,8 @@ class gencal_antpostest(unittest.TestCase):
         except URLError as err:
           print("Cannot access %s , skip this test" % evlabslncorrURL)
           self.res=True
+
+
 
 class test_gencal_antpos_alma(unittest.TestCase):
     """
@@ -390,6 +396,57 @@ class test_gencal_antpos_alma(unittest.TestCase):
                                       self.IGNORE_COLS))
         self.remove_caltable(out_caltable)
 
+class gencal_test_tec_vla(unittest.TestCase):
+
+    # Input and output names
+    msfile = 'tdem0003gencal.ms'
+    igsfile= 'igsg1160.10i'
+    tecfile= msfile+'.IGS_TEC.im'
+    rmstecfile= msfile+'.IGS_RMS_TEC.im'
+    caltable= msfile+'_tec.cal'
+
+    # NEAL: Please check that these setUp and tearDown functions are ok
+
+    def setUp(self):
+        self.tearDown()
+        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
+
+    def tearDown(self):
+        if os.path.exists(self.msfile):
+            shutil.rmtree(self.msfile)
+
+        if os.path.exists(self.igsfile):
+                os.remove(self.igsfile)
+
+        shutil.rmtree(self.tecfile,ignore_errors=True)
+        shutil.rmtree(self.rmstecfile,ignore_errors=True)
+        shutil.rmtree(self.caltable,ignore_errors=True)
+
+    def test_tec_maps(self):
+        """
+        gencal: very basic test of tec_maps and gencal(caltype='tecim')
+        """
+
+        try:
+            tec_maps.create0(self.msfile)
+            gencal(vis=self.msfile, caltable=self.caltable, caltype='tecim',infile=self.msfile+'.IGS_TEC.im')
+
+            self.assertTrue(os.path.exists(self.caltable))
+
+            _tb.open(self.caltable)
+            nrows=_tb.nrows()
+            dtecu=abs(13.752-np.mean(_tb.getcol('FPARAM'))/1e16)
+            _tb.close()
+            
+            #print(str(nrows)+' '+str(dtecu))
+
+            self.assertTrue(nrows==1577)
+            self.assertTrue(dtecu<1e-3)
+            
+            
+        except:
+            # should catch case of internet access failure?
+            raise
 
 class gencal_test(unittest.TestCase):
 
@@ -432,6 +489,7 @@ class gencal_test(unittest.TestCase):
 def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma,
+            gencal_test_tec_vla,
             gencal_test]
 
 if is_CASA6:

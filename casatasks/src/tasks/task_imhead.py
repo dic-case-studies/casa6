@@ -127,7 +127,7 @@ def imhead(
         myimd = imagemetadata()
         try:
             myimd.open(imagename)
-            res = None
+            res = False
             if mode.startswith('a'):
                 res = myimd.add(hdkey, hdvalue)
             elif mode.startswith('d'):
@@ -138,7 +138,8 @@ def imhead(
                 return myimd.list(True)
             elif mode.startswith('p'):
                 res = myimd.set(hdkey, hdvalue)
-
+            else:
+                raise RuntimeError('Unknown imhead mode ' + str(mode))
             if res:
                 try:
                     param_names = imhead.__code__.co_varnames[:imhead.__code__.co_argcount]
@@ -153,9 +154,7 @@ def imhead(
                     )
                 except Exception as instance:
                     casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-            return res
-
+            return
         finally:
             myimd.done()
 
-        raise ValueError('Unknown imhead mode ' + str(mode))
