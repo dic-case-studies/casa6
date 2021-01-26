@@ -174,9 +174,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.54.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.56.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.54.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.56.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
@@ -208,12 +208,14 @@ before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_for
 | regionmanager        | Create and manipulate regions of interest                       |
 | sakura               | New single dish tool interface using sakura                     |
 | sdm                  | Manipulate or examine SDM datasets                              |
+| sidebandseparator    | Tool for sideband separation                                    |
 | simulator            | Tool for simulation                                             |
 | singledishms         | New single dish tool interface to process an MS                 |
 | spectralline         | spectral line tool                                              |
 | synthesisdeconvolver | tool for synthesis imaging                                      |
 | synthesisimager      | tool for synthesis imaging                                      |
 | synthesisimstore     | tool for synthesis imaging                                      |
+| synthesismaskhandler | tool for mask handling in sysnthesis imaging                    |
 | synthesisnormalizer  | tool for synthesis imaging                                      |
 | synthesisutils       | tool for synthesis imaging                                      |
 | table                | Access tables from casapy                                       |

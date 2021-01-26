@@ -13,8 +13,8 @@ if is_CASA6:
     from casatools import ctsys, ms
     from casatasks import exportasdm, importasdm
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
 
     _ms = ms( )
 
@@ -24,13 +24,15 @@ else:
     from tasks import *
     from taskinit import mstool
     import unittest
-    import testhelper as th
+    #import testhelper as th
 
     _ms = mstool( )
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)
+
+from casatestutils import testhelper as th
 
 class exportasdm_test(unittest.TestCase):
     
@@ -213,15 +215,14 @@ class exportasdm_test(unittest.TestCase):
         myvis = self.vis_e
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        self.rval = exportasdm(
-            vis = 'myinput.ms',
-            asdm = self.out,
-            archiveid="S1",
-            apcorrected=False,
-            useversion = 'v3'
+        with self.assertRaises(RuntimeError):
+            exportasdm(
+                vis = 'myinput.ms',
+                asdm = self.out,
+                archiveid="S1",
+                apcorrected=False,
+                useversion = 'v3'
             )
-
-        self.assertFalse(self.rval)
 
     def test6(self):
         '''Test 6: simulated input MS with pointing table, default output, v3'''

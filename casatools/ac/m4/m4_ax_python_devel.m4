@@ -383,7 +383,7 @@ EOD`
 	LDFLAGS="$ac_save_LDFLAGS"
 
 	if test ! "x$pythonexists" = "xyes"; then
-	   AC_MSG_FAILURE([
+	   AC_MSG_WARN([
   Could not link test program to Python. Maybe the main Python library has been
   installed in some non-standard library path. If so, pass it to configure,
   via the LIBS environment variable.

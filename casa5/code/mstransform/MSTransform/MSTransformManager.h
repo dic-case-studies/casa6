@@ -1432,6 +1432,7 @@ protected:
 	// Output casacore::MS structure related members
 	casacore::Bool inputFlagCategoryAvailable_p;
 	casacore::Bool correctedToData_p;
+	casacore::Bool bothDataColumnsAreOutput_p;
 	casacore::Bool doingData_p;
 	casacore::Bool doingCorrected_p;
 	casacore::Bool doingModel_p;

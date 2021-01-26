@@ -49,6 +49,8 @@ else:
     import casac
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     componentlist = cltool
     image = iatool
@@ -203,13 +205,15 @@ class imsmooth_test(unittest.TestCase):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Badfile, 'g192', was not reported as missing."
-            
-        self.assertTrue(imsmooth( tiny, outfile='input_test1', beam=beam))
-        self.assertTrue(os.path.exists( 'input_test1' ))
+
+        outfile = 'input_test1'
+        imsmooth( tiny, outfile=outfile, beam=beam)
+        self.assertTrue(os.path.exists(outfile))
     
         # same thing, just using major, minor, and pa
-        self.assertTrue(imsmooth( tiny, outfile='input_test1b', major=major, minor=minor, pa=pa))
-        self.assertTrue(os.path.exists( 'input_test1b' ))
+        outfile = 'input_test1b'
+        imsmooth( tiny, outfile=outfile, major=major, minor=minor, pa=pa)
+        self.assertTrue(outfile)
     
         #######################################################################
         # Testing the outfile parameter.
@@ -351,24 +355,23 @@ class imsmooth_test(unittest.TestCase):
                      +"\nError: Bad major value, '-5', was not reported."
     
         result = None
-        results = imsmooth(tiny, major=2, minor=1, pa=0, outfile='input_test11')
-        self.assertTrue(results)
-        self.assertTrue(os.path.exists( 'input_test11' ))
+        outfile = 'input_test11'
+        imsmooth(tiny, major=2, minor=1, pa=0, outfile=outfile)
+        self.assertTrue(os.path.exists(outfile))
             
         result = None
-        results = imsmooth( tiny, major='2pix', minor='1pix', pa="deg", outfile='input_test12')
-        self.assertTrue(results)
-        self.assertTrue(os.path.exists( 'input_test12' ))
+        outfile = 'input_test12'
+        results = imsmooth( tiny, major='2pix', minor='1pix', pa="deg", outfile=outfile)
+        self.assertTrue(os.path.exists(outfile))
         
         result = None
-        results = imsmooth( tiny, major='1.5arcsec', minor='1arcsec', pa="0deg", outfile='input_test13')
-        self.assertTrue(results)
-        self.assertTrue(os.path.exists( 'input_test13' ))
+        outfile = 'input_test13'
+        imsmooth( tiny, major='1.5arcsec', minor='1arcsec', pa="0deg", outfile=outfile)
+        self.assertTrue(os.path.exists(outfile))
 
     
-        result = None
         try:
-            results = imsmooth( tiny, major='0.5arcsec', minor='2arcsec', pa="0deg", outfile='input_test14')
+            imsmooth( tiny, major='0.5arcsec', minor='2arcsec', pa="0deg", outfile='input_test14')
         except:
             pass
         else:
@@ -433,9 +436,9 @@ class imsmooth_test(unittest.TestCase):
     
         
         results = None
-        results=imsmooth( 'g192_a2.image', region='g192_a2.image-2.rgn', outfile='input_test15', beam=beam )
-        self.assertTrue(results)
-        self.assertTrue(os.path.exists('input_test15'))
+        outfile = 'input_test15'
+        imsmooth( 'g192_a2.image', region='g192_a2.image-2.rgn', outfile=outfile, beam=beam )
+        self.assertTrue(os.path.exists(outfile))
     
         #######################################################################
         # Testing BOX parameter
@@ -450,7 +453,7 @@ class imsmooth_test(unittest.TestCase):
         casalog.post( "The BOX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
         # CASA6 task throw exceptions, CASA5 tasks return False
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
         else:
             self.assertFalse(imsmooth(tiny, box='-3,0,511,511', beam=beam))
@@ -461,7 +464,7 @@ class imsmooth_test(unittest.TestCase):
         y2=random.randint(y1,127)
         boxstr=str(x1)+','+str(y1)+','+str(x2)+','+str(y2)
         
-        self.assertTrue(imsmooth( tiny, box=boxstr, outfile='input_test16', beam=beam ))
+        imsmooth( tiny, box=boxstr, outfile='input_test16', beam=beam )
         self.assertTrue(os.path.exists( 'input_test16' ))
     
         #######################################################################
@@ -473,74 +476,69 @@ class imsmooth_test(unittest.TestCase):
         #######################################################################
         casalog.post( "The CHANS parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
         
-        results = None
         try:
-            results = imsmooth( 'g192_a2.image', chans='-5', beam=beam )
+            imsmooth( 'g192_a2.image', chans='-5', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):    
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                       +"\nError: Bad channel value, '-5', was not reported."
     
-        results = None
         try:
-            results = imsmooth( 'g192_a2.image', chans='-2', beam=beam )
+            imsmooth( 'g192_a2.image', chans='-2', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):    
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                   +"\nError: Bad channel value, '-2', was not reported."
     
-        results = None
         try:
-            results = imsmooth( 'g192_a2.image', chans='-18', beam=beam )
+            imsmooth( 'g192_a2.image', chans='-18', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Bad channel value of -18 was not reported."
-    
-        results = None
+
         try:
-            results = imsmooth( 'g192_a2.image', chans='45', beam=beam )
+            imsmooth( 'g192_a2.image', chans='45', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Bad channel value of 45 was not reported."
     
-        results = None
         try:
-            results = imsmooth( 'g192_a2.image', chans='40', beam=beam )
+            imsmooth( 'g192_a2.image', chans='40', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Bad channel value of 40 was not reported."
     
         
-        self.assertTrue(imsmooth( 'g192_a2.image', chans='22~35', outfile='input_test17', beam=beam ))
+        imsmooth( 'g192_a2.image', chans='22~35', outfile='input_test17', beam=beam )
         self.assertTrue(os.path.exists('input_test17'))
         
-        self.assertTrue(imsmooth( tiny, chans='0', outfile='input_test17b', beam=beam ))
+        imsmooth( tiny, chans='0', outfile='input_test17b', beam=beam )
         self.assertTrue(os.path.exists( 'input_test17b' ))
     
-        self.assertTrue(imsmooth( 'g192_a2.image', chans='39', outfile='input_test18', beam=beam ))
+        imsmooth( 'g192_a2.image', chans='39', outfile='input_test18', beam=beam )
         self.assertTrue(os.path.exists("input_test18"))
             
         #######################################################################
@@ -549,32 +547,29 @@ class imsmooth_test(unittest.TestCase):
         #######################################################################
         casalog.post( "The STOKES parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
         
-        results=None
         try:
-            results = imsmooth( 'g192_a2.image', stokes='Q', beam=beam )
+            imsmooth( 'g192_a2.image', stokes='Q', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Bad stokes value, 'Q', was not reported."
                 
-        results=None    
         try:
             results = imsmooth( 'g192_a2.image', stokes='yellow', beam=beam )
         except:
             pass
         else:
             if ( results != None and \
-                 ( not isinstance(results, bool) or results==True ) ):
+                 ( not isinstance(results, bool) ) ):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Bad stokes value, 'yellow', was not reported."
     
-        
-        self.assertTrue(imsmooth( tiny, stokes='I', outfile='input_test19', beam=beam ))
+        imsmooth( tiny, stokes='I', outfile='input_test19', beam=beam )
         self.assertTrue(os.path.exists('input_test19'))
         
         self.assertTrue(retValue['success'],retValue['error_msgs'])
@@ -647,17 +642,16 @@ class imsmooth_test(unittest.TestCase):
         #         1st sd:    from
         #         2nd sd:    from
     
-        results = None
         try:
-            results=imsmooth( 'smooth.pointsrc.image', kernel='gauss', \
-                              major=50, minor=25, pa=0, outfile='smooth_test1' )
+            imsmooth( 'smooth.pointsrc.image', kernel='gauss', \
+                      major=50, minor=25, pa=0, outfile='smooth_test1' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: boxcar smooth failed on point source file."
     
             
-        if ( not os.path.exists( 'smooth_test1' ) or results==None ): 
+        if ( not os.path.exists( 'smooth_test1' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Gaussian smoothfailed on point source file."
@@ -690,16 +684,15 @@ class imsmooth_test(unittest.TestCase):
     
         # Do a box car smooth and verify expected results as follows:
         #
-        results = None
         try:
-            results=imsmooth( 'smooth.pointsrc.image', kernel='boxcar', \
+            imsmooth( 'smooth.pointsrc.image', kernel='boxcar', \
                               major=20, minor=10, pa=0, outfile='smooth_test2' )
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: boxcar smooth failed on point source file."
             
-        if ( not os.path.exists( 'smooth_test2' ) or results==None ): 
+        if ( not os.path.exists( 'smooth_test2' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: output file 'smooth_test2' was NOT created."
@@ -755,7 +748,7 @@ class imsmooth_test(unittest.TestCase):
 #               #     original test seemed to intend
 #               #     more thought should be given here to what test is appropriate
                 if ( not (value>(0.125-allowedError) and value<(0.125+allowedError)) and
-                     not (value>-3.37407147e-09 and value<3.37407147e-09) ):
+                     not (value>-3.65746967e-09 and value<3.65746967e-09) ):
                     retValue['success']=False
                     retValue['error_msgs']=retValue['error_msgs']\
                         +"\nError: Values in the smoothed box are not all 0.125"\
@@ -834,18 +827,17 @@ class imsmooth_test(unittest.TestCase):
         # Note: that when we check the resulting smoothed images
         #       the should be empty.
     
-        results = None
         try:
-            results=imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
-                              major=50, minor=25, pa=0, outfile='rgn_test1', \
-                              box='350,350,375,390')
+            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+                      major=50, minor=25, pa=0, outfile='rgn_test1', \
+                      box='350,350,375,390')
         except Exception as err:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Smoothng failed on region 250,250,275,290." + str(err)
     
             
-        if ( not os.path.exists( 'rgn_test1' ) or results==None ): 
+        if ( not os.path.exists( 'rgn_test1' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Smoothing failed on region 250,250,275,290. second block"
@@ -863,18 +855,17 @@ class imsmooth_test(unittest.TestCase):
             _ia.done()
     
     
-        results = None
         try:
-            results=imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
-                              major=50, minor=25, pa=0, outfile='rgn_test2', \
-                              chans='22')
+            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+                      major=50, minor=25, pa=0, outfile='rgn_test2', \
+                      chans='22')
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Smoothng failed on channel 22."
     
             
-        if ( not os.path.exists( 'rgn_test2' ) or results==None ): 
+        if ( not os.path.exists( 'rgn_test2' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Smoothing failed on channel 22."
@@ -900,18 +891,17 @@ class imsmooth_test(unittest.TestCase):
         #   3. region file.
         #        g192_1.image.rgn      (blc=0,0,0,0 trc=511,511,0,14)
         #
-        results = None
         try:
-            results=imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
-                              major=10, minor=5, pa=0, outfile='rgn_test3', \
-                              chans='14', box='0,0,200,200')
+            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+                      major=10, minor=5, pa=0, outfile='rgn_test3', \
+                      chans='14', box='0,0,200,200')
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Smoothng failed on channel 14, box 0,0,200,200."
     
             
-        if ( not os.path.exists( 'rgn_test3' ) or results==None ): 
+        if ( not os.path.exists( 'rgn_test3' ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Smoothing failed on channel 14, box 0,0,200,200."
@@ -942,19 +932,18 @@ class imsmooth_test(unittest.TestCase):
                     +" expected it to be at 49,71,0,0."            
     
     
-        results = None
         # This test was all screwed up when it fell in my lap. Fixing as best as I can - dmehring
         output = 'rgn_test5'
         try:
-            results=imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
-                              major=2, minor=1, pa=0, outfile = output, \
-                              region='g192_a2.image:testregion')
+            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+                      major=2, minor=1, pa=0, outfile = output, \
+                      region='g192_a2.image:testregion')
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Smoothing failed with internal image region 'testregion'."
     
-        if ( not os.path.exists(output) or results==None ): 
+        if ( not os.path.exists(output) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Smoothing failed internal image region 'testregion'."
@@ -999,17 +988,16 @@ class imsmooth_test(unittest.TestCase):
         yy.fromshape(imagename, shape)
         yy.addnoise()
         yy.done()
-        zz = imsmooth(
-            imagename=imagename, major="2arcsec", minor="2arcsec",
-            pa="0deg", mask=mymask + ">0", stretch=False
-        )
-        self.assertFalse(zz)
+        with self.assertRaises(RuntimeError):
+            zz = imsmooth(
+                imagename=imagename, major="2arcsec", minor="2arcsec",
+                pa="0deg", mask=mymask + ">0", stretch=False
+            )
 
-        zz = imsmooth(
+        imsmooth(
             imagename=imagename, major="2arcsec", minor="2arcsec",
             pa="0deg", mask=mymask + ">0", stretch=True
         )
-        self.assertTrue(zz and type(zz) == type(True))
     
     def test_multibeam(self):
         """Test per plane beams"""
@@ -1020,12 +1008,11 @@ class imsmooth_test(unittest.TestCase):
         minor = "8arcmin"
         pa = "80deg"
         gotname = 'convolve2d_multibeam.im'
-        self.assertTrue(
-            imsmooth(
-                imagename=imname, major=major, minor=minor, pa=pa,
-                outfile=gotname
-            ), 'imsmooth failed'
+        imsmooth(
+            imagename=imname, major=major, minor=minor, pa=pa,
+            outfile=gotname
         )
+        self.assertTrue(os.path.exists(gotname))
         myia.open(imname)
         shape = myia.shape()
         myia.done()
@@ -1184,13 +1171,12 @@ class imsmooth_test(unittest.TestCase):
         )
         myia.done()
         outfile = "tres6"
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             run_imsmooth(
                 imagename=imagename, kernel="gaussian",
                 major="5.99arcsec", minor="2.99arcsec", pa="0deg",
                 targetres=True, outfile=outfile
             )
-        )        
 
     def test_overwrite(self):
         """ test overwrite parameter """
@@ -1200,20 +1186,19 @@ class imsmooth_test(unittest.TestCase):
         imagename = "input_overwrite"
         myia.fromshape(imagename, [200, 200])
         myia.done()
-        self.assertTrue(
-            run_imsmooth(
-                imagename=imagename, kernel="gauss", major="5arcmin",
-                minor="4arcmin", pa="0deg", targetres=False,
-                overwrite=True, outfile=outfile
-            )
+        run_imsmooth(
+            imagename=imagename, kernel="gauss", major="5arcmin",
+            minor="4arcmin", pa="0deg", targetres=False,
+            overwrite=True, outfile=outfile
         )
-        self.assertFalse(
+        self.assertTrue(os.path.exists(outfile))
+
+        with self.assertRaises(RuntimeError):
             run_imsmooth(
                 imagename=imagename,
                 kernel="gauss", major="5arcmin", minor="4arcmin",
                 pa="0deg", targetres=False, overwrite=False, outfile=outfile
             )
-        )  
         
     def test_beam(self):
         """Test the beam parameter"""
@@ -1316,12 +1301,11 @@ class imsmooth_test(unittest.TestCase):
         self.assertTrue(abs(_qa.getvalue(beam['positionangle'])) < 1e-5)
         """
         outfile = "cbout2.im"
-        self.assertTrue(
-            imsmooth(
-                imagename=imagename, kernel='commonbeam', outfile=outfile,
-                targetres=True
-            )           
-        )
+        imsmooth(
+            imagename=imagename, kernel='commonbeam', outfile=outfile,
+            targetres=True
+        )           
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         beam = myia.restoringbeam()
         myia.done()
@@ -1358,12 +1342,11 @@ class imsmooth_test(unittest.TestCase):
         myia.done()
         """
         outfile = "cbout4.im"
-        self.assertTrue(
-            imsmooth(
-                imagename=imagename, kernel='commonbeam', outfile=outfile,
-                targetres=True
-            )           
-        )
+        imsmooth(
+            imagename=imagename, kernel='commonbeam', outfile=outfile,
+            targetres=True
+        )           
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         for i in range(5):
             beam = myia.restoringbeam(channel=i)
@@ -1377,12 +1360,11 @@ class imsmooth_test(unittest.TestCase):
         imagename = ctsys_resolve(os.path.join(self.datapath,"point.im"))
         kimage = ctsys_resolve(os.path.join(self.datapath,"bessel.im"))
         outfile = "point_c_bessel.im"
-        self.assertTrue(
-            imsmooth(
-                imagename=imagename, kernel="i",
-                kimage=kimage, outfile=outfile
-            )
+        imsmooth(
+            imagename=imagename, kernel="i",
+            kimage=kimage, outfile=outfile
         )
+        self.assertTrue(os.path.exists(outfile))
         myia = self.ia
         myia.open(kimage)
         bessel = myia.getchunk()
@@ -1392,13 +1374,12 @@ class imsmooth_test(unittest.TestCase):
         ratio = conv/bessel
         print("max",abs(ratio - ratio[50,50]).max())
         self.assertTrue((abs(ratio - ratio[50,50]) < 2e-4).all())
-        self.assertTrue(
-            imsmooth(
-                imagename=imagename, kernel="i",
-                kimage=kimage, outfile=outfile,
-                overwrite=True, scale=1
-            )
+        imsmooth(
+            imagename=imagename, kernel="i",
+            kimage=kimage, outfile=outfile,
+            overwrite=True, scale=1
         )
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         conv = myia.getchunk()
         myia.done()
@@ -1415,12 +1396,11 @@ class imsmooth_test(unittest.TestCase):
         pa = "0deg"
         myia.done()
         outfile = "zz_out.im"
-        self.assertTrue(
-            imsmooth(
-                imagename=imagename, outfile=outfile,
-                major=major, minor=minor, pa=pa
-            )
+        imsmooth(
+            imagename=imagename, outfile=outfile,
+            major=major, minor=minor, pa=pa
         )
+        self.assertTrue(os.path.exists(outfile))
         myia.open(outfile)
         msgs = myia.history()
         myia.done()

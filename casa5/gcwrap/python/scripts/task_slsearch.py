@@ -97,11 +97,9 @@ def slsearch(
             )
             
         if (not newsl):
-            raise Exception("Exception when running sl.search()")
+            raise RuntimeError("Error when running sl.search()")
         return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if mysl:
             mysl.done()

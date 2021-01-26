@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 import ast
@@ -90,17 +89,6 @@ if is_CASA6:
             raise Exception("cannot find '%s' among the function arguments" % arg)
         return spec.defaults[spec.args.index(arg)-1]
 
-# Decorator function to print the arguments of a function
-def dump_args(func):
-    "This decorator dumps out the arguments passed to a function before calling it"
-    argnames = func.__code__.co_varnames[:func.__code__.co_argcount]
-    fname = func.__name__
-   
-    def echo_func(*args,**kwargs):
-        print(fname, ":", ', '.join('%s=%r' % entry for entry in zip(argnames,args) + kwargs.items()))
-        return func(*args, **kwargs)
-   
-    return echo_func
 
 class Parser():
     ''' Parser for input files.
@@ -117,12 +105,10 @@ class Parser():
         part of the string itself. Last thing, it returns an ordered
         dictionary using the imported class OrderedDict.
     '''
-#    @dump_args
     def __init__(self,primarydivider,secondarydivider):
         self.prime = primarydivider
         self.second = secondarydivider
 
-#    @dump_args
     def parse2Dictionary(self,string):
         res = self.initialsplit(string)
         new = []
@@ -197,7 +183,6 @@ def isCalTable(msname):
     
     return retval
 
-#@dump_args
 def addAbsolutePath(input_file):
     '''Read in the lines from an input file
     input_file -->  file in disk with a list of strinZeeuwgs per line
@@ -657,7 +642,6 @@ def applyTimeBufferList(alist, tbuff=None):
                 
     return
 
-#@dump_args
 def parseDictionary(cmdlist, reason='any', shadow=True):
     '''Create a dictionary after parsing a list of flag commands.
        If reason is different than 'any', only the selected
@@ -686,8 +670,7 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
     elif type(reason) == list:
         myreaslist = reason
     else:
-        casalog.post('Cannot read reason; it contains unknown variable types',
-                     'ERROR')
+        casalog.post('Cannot read reason; it contains unknown variable types', 'ERROR')
         return
  
     # Separate per ' ', then per '='
@@ -821,7 +804,6 @@ def parseSelectionPars(cmddict):
                         
     return selectionPars
     
-#@dump_args
 def parseUnion(vis, flagdict):
     '''Get a dictionary of a union of all selection parameters from a dictionary
         of flag commands.
@@ -1206,7 +1188,6 @@ def evalParams(params):
 #     if 'spectralmax' in params:
 #         params['spectralmax'] = float(params['spectralmax']);
 
-#@dump_args
 def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=True):
     '''
     Writes the flag commands to an ASCII file or to the FLAG_CMD table
@@ -1223,9 +1204,8 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
     
     try:
         import pylab as pl
-    except ImportError as e:
-        print('Failed to load pylab:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('Failed to load pylab, required in writeFlagCommands: ', exc)
             
     reason2add = False
     # Replace blanks from reason and cmdreason with underscores
@@ -1273,7 +1253,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
                         cmdline = cmdline + k + '=' + str(v) + ' '
                
                 # Save to output file
-                print('%s' %cmdline.rstrip(), file=ffout)
+                ffout.write('%s\n' %cmdline.rstrip())
                                         
                     
             ffout.close()                                                                
@@ -1442,7 +1422,6 @@ def save_rflag_consolidated_files(mode, action, cons_dict, opts_dict, inpfile):
         parseRFlagOutputFromSummary(mode, cons_dict, cmd_list)
 
 # Not used at the moment!!!!!!!!!!!
-@dump_args
 def readFlagCmdTable(msfile, rows=[], applied=True, reason='any'):
     '''Read flag commands from rows of the FLAG_CMD table of msfile
     If useapplied=False then include only rows with APPLIED=False
@@ -1571,21 +1550,11 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
     # Updated STM v4.2 2012-02-16 trim flag times to data times
     # Updated STM v4.2 2012-04-10 bug fix in trim flag times to data times
     # Updated STM v4.2 2012-04-10 messages to logger
-    try:
-        import casac
-    except ImportError as e:
-        print('failed to load casa:\n', e)
-        exit(1)
-        
-    # After the swig converstion, it seems that the following
-    # line is not needed anymore
-#    qa = casac.qa = qatool = casac.quanta()
 
     try:
         import pylab as pl
-    except ImportError as e:
-        print('failed to load pylab:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('Failed to load pylab, required in plotFlagCommands: ', exc)
 
     # list of supported colors (in order)
     colorlist = [
@@ -1861,7 +1830,7 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
         ax1.set_xlim(x0, x1)
         myXrange = x1 - x0
     else:
-        # print '  Rescaled x axis'
+        # casalog.post('  Rescaled x axis')
         x0 = myXlim[0]
         x1 = myXlim[1]
 
@@ -1878,7 +1847,7 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
 
     ax1.set_yticks(range(1, len(myants) + 1))
     ax1.set_yticklabels(myants)
-    # print '  Relabled y axis'
+    # casalog.post('  Relabled y axis')
 
     nxticks = 3
     ax1.set_xticks(pl.linspace(myXlim[0], myXlim[1], nxticks))
@@ -1898,7 +1867,7 @@ def plotFlagCommands(myflags,plotname,t1sdata,t2sdata,):
         myTimestr.append(time1s)
 
     ax1.set_xticklabels(myTimestr)
-    # print myTimestr
+    # casalog.post(myTimestr)
     if plotname == '':
         pl.draw()
     else:
@@ -2096,7 +2065,7 @@ def evaluateFlagParameters(pardict, pars):
         count += 1
         for key,val in lociteritems(mydict):
             if key not in refkeys:
-                raise IOError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
+                raise ValueError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
 
             # reference[key] is always a list
             refval = reference[key]
@@ -2108,7 +2077,7 @@ def evaluateFlagParameters(pardict, pars):
                     # type matches
                     match = True
             if not match:
-                raise(IOError,'Parameter %s=%s in row=%s has wrong type.\nSupported types are: %s.'%(key,val,idx,vtypes.rstrip(',')))
+                raise(ValueError,'Parameter %s=%s in row=%s has wrong type.\nSupported types are: %s.'%(key,val,idx,vtypes.rstrip(',')))
 
     casalog.post('Evaluated %s rows of dictionary'%count,'DEBUG1')
     return True
@@ -2189,14 +2158,12 @@ def parseXML(sdmfile, mytbuff):
 #
     try:
         from xml.dom import minidom
-    except ImportError as e:
-        print('failed to load xml.dom.minidom:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('Failed to load xml.dom.minidom, required in parseXML: ', exc)
 
     if type(mytbuff) != float:
-        casalog.post('Found incorrect type for tbuff','SEVERE')
-        exit(1)
-#        mytbuff = 1.0
+        raise RuntimeError('Found incorrect type for tbuff. type(mytbuff): {}'.
+                           format(type(mytbuff)))
 
     # make sure Flag.xml and Antenna.xml are available (SpectralWindow.xml depends)
     flagexist = os.access(sdmfile + '/Flag.xml', os.F_OK)
@@ -2532,7 +2499,6 @@ def addAbsPath(input_file):
     # Return the temporary file
     return output_file
 
-#@dump_args
 def makeDict(cmdlist, myreason='any'):
     '''Make a dictionary compatible with a FLAG_CMD table structure
        and select by reason if any is given
@@ -2573,8 +2539,7 @@ def makeDict(cmdlist, myreason='any'):
         return
      
     if debug:
-        print("reason in selection")
-        print(myreaslist)
+        casalog.post("reason in selection: {}".format(myreaslist))
  
     # List of reasons in input file
     nrows = cmdlist.__len__()
@@ -2590,8 +2555,7 @@ def makeDict(cmdlist, myreason='any'):
             reaslist.append('NoReasonToMatch')
          
     if debug:
-        print("reason in input")
-        print(reaslist)
+        casalog.post("reason in input: {}".format(reaslist))
              
      
     # Defaults for columns
@@ -2658,7 +2622,7 @@ def makeDict(cmdlist, myreason='any'):
                     try:
                         (xkey, val) = keyv.split('=',1)
                     except:
-                        print('Error: not key=value pair for ' + keyv)
+                        casalog.post('Error: not key=value pair for ' + keyv, 'ERROR')
                         break
                     xval = val
                     if xval.count("'") > 0:
@@ -2704,7 +2668,6 @@ def makeDict(cmdlist, myreason='any'):
     return myflagd
 
 
-#@dump_args
 def readXML(sdmfile, mytbuff):
     '''
 #   readflagxml: reads Antenna.xml and Flag.xml SDM tables and parses
@@ -2750,14 +2713,12 @@ def readXML(sdmfile, mytbuff):
 #
     try:
         from xml.dom import minidom
-    except ImportError as e:
-        print('failed to load xml.dom.minidom:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('failed to load xml.dom.minidom, required in readXML: ', exc)
 
     if type(mytbuff) != float:
-        casalog.post('Found incorrect type for tbuff','SEVERE')
-        exit(1)
-#        mytbuff = 1.0
+        raise RuntimeError('Found incorrect type for tbuff. type(mytbuff): {}'.
+                           format(type(mytbuff)))
 
     # make sure Flag.xml and Antenna.xml are available (SpectralWindow.xml depends)
     flagexist = os.access(sdmfile + '/Flag.xml', os.F_OK)
@@ -3010,7 +2971,6 @@ def readXML(sdmfile, mytbuff):
     return flags
 
 
-#@dump_args
 def getUnion(vis, cmddict):
     '''Get a dictionary of a union of all selection parameters from a list of lines:
        vis --> MS
@@ -3282,7 +3242,6 @@ def getNumPar(cmddict):
     return npars
 
 
-#@dump_args
 def compressSelectionList(vis='',dicpars={}):
     """
     - Find a loose union of data-selection parameters, to reduce the MSSelection parsing load.
@@ -3318,7 +3277,6 @@ def compressSelectionList(vis='',dicpars={}):
 
 
 
-#@dump_args
 # ONLY for flagcmd task
 def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
     '''
@@ -3338,9 +3296,9 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
     nadd = 0
     try:
         import pylab as pl
-    except ImportError as e:
-        print('failed to load pylab:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('Failed to load pylab, required in writeFlagCmd: {}'.
+                          format(exc))
         
     
     # append to a file   
@@ -3404,7 +3362,7 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
                         cmdline = cmdline + k + '=' + str(v) + ' '
                                            
                 # Save to output file
-                print('%s' %cmdline.rstrip(),file=ffout)
+                ffout.write('%s\n' %cmdline.rstrip())
           
                                 
 #        except:
@@ -3552,7 +3510,6 @@ def getReason(cmdline):
     return reason
 
 
-#@dump_args
 def getLinePars(cmdline, mlist=[]):
     '''Get a dictionary of all selection parameters from a line:
        cmdline --> a string with parameters
@@ -3633,7 +3590,6 @@ def getLinePars(cmdline, mlist=[]):
             
     return dicpars
 
-#@dump_args
 def getSelectionPars(cmdline):
     '''Get a dictionary of all selection parameters from a line:
        cmdline --> a string with parameters
@@ -3701,7 +3657,6 @@ def getSelectionPars(cmdline):
     return dicpars
 
 
-#@dump_args
 def readNtime(params):
     '''Check the value and units of ntime
        params --> dictionary of agent's parameters '''
@@ -3742,7 +3697,6 @@ def readNtime(params):
     params['ntime'] = float(newtime)
 
 
-#@dump_args
 def fixType(params):
     '''Give correct types to non-string parameters
        The types are defined in the XML file of the task flagdata
@@ -3849,7 +3803,6 @@ def fixType(params):
     if 'spectralmax' in params:
         params['spectralmax'] = float(params['spectralmax']);
 
-#@dump_args
 def purgeEmptyPars(cmdline):
     '''Remove empty parameters from a string:
        cmdline --> a string with parameters
@@ -3886,7 +3839,6 @@ def purgeEmptyPars(cmdline):
     return newstr
 
 
-#@dump_args
 def purgeParameter(cmdline, par):
     '''Remove parameter from a string:
        cmdline --> a string with a parameter to be removed
@@ -3924,7 +3876,6 @@ def purgeParameter(cmdline, par):
          
     return newstr
 
-#@dump_args
 def setupAgent(aflocal, myflagcmd, myrows, apply, writeflags, display=''):
     ''' Setup the parameters of each agent and call the agentflagger tool
     
@@ -3970,9 +3921,9 @@ def setupAgent(aflocal, myflagcmd, myrows, apply, writeflags, display=''):
         coltime = myflagcmd[key]['time']
         coltype = myflagcmd[key]['type']
         if debug:
-            print('cmdline for key%s'%key)
-            print('%s'%cmdline)
-            print('applied is %s'%applied)
+            casalog.post('cmdline for key%s'%key)
+            casalog.post('%s'%cmdline)
+            casalog.post('applied is %s'%applied)
         
         if cmdline.startswith('#'):
             continue
@@ -4102,8 +4053,8 @@ def setupAgent(aflocal, myflagcmd, myrows, apply, writeflags, display=''):
         casalog.post('Parsing parameters of mode %s in row %s'%(mode,key), 'DEBUG')
         casalog.post('%s'%modepars, 'DEBUG')
         if debug:
-            print('Parsing parameters of mode %s in row %s'%(mode,key))
-            print(modepars)
+            casalog.post('Parsing parameters of mode %s in row %s'%(mode,key))
+            casalog.post(modepars)
 
         # Parse the dictionary of parameters to the tool
         if (not aflocal.parseagentparameters(modepars)):
@@ -4246,12 +4197,12 @@ def extractAntennaInfo(msname='', antnamelist=[], outfile=''):
     """
     ## Check that the MS exists
     if(not os.path.exists(msname)):
-          print("Cannot find MS : ", msname)
+          casalog.post("Cannot find MS : {}".format(msname))
           return False;
     
     ## If outfile exists, delete it
     if(os.path.exists(outfile)):
-          print("Replacing existing file : ", outfile)
+          casalog.post("Replacing existing file : {}".format(outfile))
           rmcmd = "rm -rf "+outfile;
           os.system(rmcmd);
     
@@ -4278,7 +4229,7 @@ def extractAntennaInfo(msname='', antnamelist=[], outfile=''):
     
     ## Open a new file and write this info into it, if requested
     if(outfile != ''):
-          print("Making new file : ", outfile)
+          casalog.post("Making new file : {}".format(outfile))
           writeAntennaList(outfile, antlist);
     ## always return the dictionary anyway.
     return antlist;
@@ -4333,15 +4284,15 @@ def readAntennaList(infile=''):
           if(len(aline)>5 and aline[0] != '#'):
                cleanlist.append(aline.rstrip());
     
-    #print 'Found ' + str(len(cleanlist)) + ' valid lines out of ' + str(len(thelist));
+    #casalog.post('Found ' + str(len(cleanlist)) + ' valid lines out of ' + str(len(thelist));)
     
     if( len(cleanlist) > 0 and len(cleanlist) % 3 != 0 ):
-          print("\nThe file needs to have 3 entries per antenna, on separate lines. For example :")
-          print("name=ea05")
-          print("diameter=25.0")
-          print("position=[-1601144.96146691, -5041998.01971858,  3554864.76811967]")
-          print("\n")
-          print("The diameter and position are in units of meters, with positions in ITRF")
+          casalog.post("\nThe file needs to have 3 entries per antenna, on separate lines. For example :")
+          casalog.post("name=ea05")
+          casalog.post("diameter=25.0")
+          casalog.post("position=[-1601144.96146691, -5041998.01971858,  3554864.76811967]")
+          casalog.post("\n")
+          casalog.post("The diameter and position are in units of meters, with positions in ITRF")
           return False;
     
     antlist={};
@@ -4350,9 +4301,9 @@ def readAntennaList(infile=''):
           antdict = {};
           for row in range(0,3):
                pars = cleanlist[aline+row].split("=",1);
-               #print aline, row, pars
+               #casalog.post(aline, row, pars)
                if(len(pars) != 2):
-                    print('Error in parsing : ', cleanlist[aline+row])
+                    casalog.post('Error in parsing : ' + cleanlist[aline+row], 'ERROR')
                     return {};
                else:
                     if(pars[0].count('name') > 0 ):
@@ -4362,7 +4313,8 @@ def readAntennaList(infile=''):
                     if(pars[0].count('position') > 0 ):
                            plist = pars[1][1:-2].replace('[','').split(',');
                            if(len(plist) != 3):
-                                 print('Error in parsing : ', cleanlist[aline+row])
+                                 casalog.post('Error in parsing : ' + cleanlist[aline+row],
+                                              'ERROR')
                                  return {};
                            else:
                                  qlist=[];
@@ -4428,7 +4380,7 @@ def readRFlagThresholdFile(infile='',inkey=''):
         return [];
 
     if ( not os.path.exists(infile) ):
-        print('Cannot find file : ', infile)
+        casalog.post('Cannot find file : ' + infile)
         return [];
 
     ifile = open(infile,'r');
@@ -4490,7 +4442,7 @@ def extractRFlagOutputFromSummary(mode,summary_stats_list, flagcmd):
             if summary_stats_list[repname]['type'] == "rflag":
                 # Pull out the rflag threshold dictionary. This has a 'name' in it.
                 rflag_thresholds = summary_stats_list[repname]
-                ##print rflag_thresholds
+                ##casalog.post(rflag_thresholds)
                 # Get the rflag id, to later construct a 'name' from to match the above.
                 rflagid = 0
                 if mode=='list':
@@ -4508,19 +4460,19 @@ def extractRFlagOutputFromSummary(mode,summary_stats_list, flagcmd):
                                 cmdline = cmdline + " freqdev=[] ";
                             # Pull out timedev, freqdev strings from flagcmd
                             rflagpars = getLinePars(cmdline , ['timedev','freqdev','writeflags']);
-                            ##print "cmdline : ", cmdline
+                            ##casalog.post("cmdline : "+cmdline)
                             # Write RFlag thresholds to these file names. 
                             newtimedev,newfreqdev = writeRFlagThresholdFile(rflag_thresholds, rflagpars['timedev'], rflagpars['freqdev'], rflagid)
                             ## Modify the flagcmd string, so that savepars sees the contents of the file
                             if( rflagpars['timedev'].__contains__('[') ):
                                 oldstring = 'timedev='+str(rflagpars['timedev'])
                                 newstring = 'timedev='+str(newtimedev).replace(' ','')
-                                ##print "time : replacing " , oldstring , newstring
+                                ##casalog.post( "time : replacing " + oldstring + newstring)
                                 cmdline = cmdline.replace( oldstring, newstring );
                             if( rflagpars['freqdev'].__contains__('[') ):
                                 oldstring = 'freqdev='+str(rflagpars['freqdev'])
                                 newstring = 'freqdev='+str(newfreqdev).replace(' ','')
-                                ##print "freq : replacing " , oldstring , newstring
+                                ##casalog.post("freq : replacing " + oldstring + newstring)
                                 cmdline = cmdline.replace( oldstring, newstring );
                             # Remove writeflags from the cmd to prevent it from going into savepars
                             oldstring = 'writeflags='+str(rflagpars['writeflags'])

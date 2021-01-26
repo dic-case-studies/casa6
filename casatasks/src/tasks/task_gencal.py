@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import os
 import warnings
@@ -30,13 +29,13 @@ def gencal(vis=None,caltable=None,caltype=None,infile=None,
                      # don't need scr col for this
                      _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
               else:
-                     raise Exception('Visibility data set not found - please verify the name')
+                     raise ValueError('Visibility data set not found - please verify the name')
 
               if (caltable==''):
-                     raise Exception('A caltable name must be specified')
+                     raise ValueError('A caltable name must be specified')
 
               if caltype=='tecim' and not (type(infile)==str and os.path.exists(infile)):
-                     raise Exception('An existing tec map must be specified in infile')
+                     raise ValueError('An existing tec map must be specified in infile')
 
               # call a Python function to retreive ant position offsets automatically (currently EVLA only)
               if (caltype=='antpos' and antenna==''):
@@ -60,11 +59,7 @@ def gencal(vis=None,caltable=None,caltype=None,infile=None,
               #_cb.close()
        
        except UserWarning as instance:
-              print('*** Warning *** %s' % instance)
-
-       except Exception as instance:
-              print('*** Error *** %s' % instance)
-              raise
+              casalog.post('*** UserWarning *** %s' % instance, 'WARN')
 
        finally:
               _cb.close()

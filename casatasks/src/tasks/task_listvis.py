@@ -1,7 +1,6 @@
 # Task listvis
 
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -31,8 +30,6 @@ def listvis(vis, options, datacolumn, field,spw, selectdata, antenna, timerange,
         myms.lister(options, datacolumn, field, spw, antenna, timerange,
                     correlation, scan, feed, array, str(observation), uvrange,
                     average, showflags, "", pagerows, listfile)
+
+    finally:
         myms.close()
-    except Exception as instance:
-        print('*** Error in listvis *** %s' % instance)
-        return False
-    return True

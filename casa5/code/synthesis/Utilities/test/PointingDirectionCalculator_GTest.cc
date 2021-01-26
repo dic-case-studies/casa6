@@ -56,7 +56,7 @@
 
 #include <casa/aipstype.h>
 #include <casa/Exceptions/Error.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/BasicSL/String.h>
 #include <casa/Quanta/Quantum.h>

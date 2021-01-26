@@ -50,9 +50,8 @@ def imfit(
                 )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
+
         return result_dict
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         myia.done()

@@ -319,7 +319,7 @@ public:
     VbCacheItem <MDirection> phaseCenter_p;
     VbCacheItem <Int> polFrame_p;
     VbCacheItem <Vector<Int> > processorId_p;
-    VbCacheItem <Vector<uInt> > rowIds_p;
+    VbCacheItem <Vector<rownr_t> > rowIds_p;
     VbCacheItem <Vector<Int> > scan_p;
     VbCacheItem <Vector<Float> > sigma_p;
     VbCacheItem <Matrix<Float> > sigmaMat_p;

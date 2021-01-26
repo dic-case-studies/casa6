@@ -15,8 +15,8 @@ else:
         from taskinit import casalog
         from casa_system import casa
 
-def plotants( vis=None, figfile=None, 
-              antindex=None, logpos=None, 
+def plotants( vis=None, figfile=None,
+              antindex=None, logpos=None,
               exclude=None, checkbaselines=None,
               title=None, showgui=None ):
         """Plot the antenna distribution in the local reference frame:
@@ -41,7 +41,7 @@ def plotants( vis=None, figfile=None,
                                 default: []. example: exclude=[2,3,4], exclude='DV15'
 
                 checkbaselines -- Only plot antennas in the MAIN table.
-                                This can be useful after a split.  WARNING:  Setting 
+                                This can be useful after a split.  WARNING:  Setting
                                 checkbaselines to True will add to runtime in
                                 proportion to the number of rows in the dataset.
                                 default: False. example: checkbaselines=True
@@ -55,7 +55,7 @@ def plotants( vis=None, figfile=None,
                 remove zoom.
 
                 A hard-copy of this plot can be obtained by pressing the
-                button on the right at the bottom of the display. A file 
+                button on the right at the bottom of the display. A file
                 dialog will allow you to choose the directory, filename,
                 and format of the export.
         """
@@ -75,43 +75,38 @@ def plotants( vis=None, figfile=None,
                 pl.ion()
         pl.clf()
 
+        # remove trailing / for title basename
+        if vis[-1]=='/':
+                vis = vis[:-1]
+        myms = ms( )
         try:
-                # remove trailing / for title basename
-                if vis[-1]=='/':
-                        vis = vis[:-1]
-                myms = ms( )
-                try:
-                        exclude = myms.msseltoindex(vis, baseline=exclude)['antenna1'].tolist()
-                except RuntimeError as rterr:  # MSSelection failed
-                        errmsg = str(rterr)
-                        errmsg = errmsg.replace('specificion', 'specification')
-                        errmsg = errmsg.replace('Antenna Expression: ', '')
-                        casalog.post("Exclude selection error: " + errmsg, "ERROR")
-                        return
+                exclude = myms.msseltoindex(vis, baseline=exclude)['antenna1'].tolist()
+        except RuntimeError as rterr:  # MSSelection failed
+                errmsg = str(rterr)
+                errmsg = errmsg.replace('specificion', 'specification')
+                errmsg = errmsg.replace('Antenna Expression: ', '')
+                raise RuntimeError("Exclude selection error: " + errmsg)
 
-                telescope, names, ids, xpos, ypos, stations = getPlotantsAntennaInfo(vis,
-                        logpos, exclude, checkbaselines)
-                if not names:
-                        casalog.post("No antennas selected.  Exiting plotants.", "ERROR")
-                        return
+        telescope, names, ids, xpos, ypos, stations = getPlotantsAntennaInfo(vis,
+                logpos, exclude, checkbaselines)
+        if not names:
+                raise ValueError("No antennas selected.  Exiting plotants.")
 
-                if not title:
-                        msname = os.path.basename(vis)
-                        title = "Antenna Positions for "
-                        if len(msname) > 55:
-                                title += '\n'
-                        title += msname
-                pl.title(title, {'fontsize':12})
+        if not title:
+                msname = os.path.basename(vis)
+                title = "Antenna Positions for "
+                if len(msname) > 55:
+                        title += '\n'
+                title += msname
 
-                if logpos:
-                        plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations)
-                else:
-                        plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showgui)
-                if figfile:
-                        pl.savefig(figfile)
-
-        except Exception as instance:
-                casalog.post("Error: " + str(instance), "ERROR")
+        if logpos:
+                plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations)
+        else:
+                plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showgui)
+        pl.title(title, {'fontsize':12})
+        
+        if figfile:
+                pl.savefig(figfile)
 
 def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
 
@@ -121,7 +116,7 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
 
         telescope, arrayPos = getPlotantsObservatoryInfo(msname)
         arrayWgs84 = me.measure(arrayPos, 'WGS84')
-        arrayLon, arrayLat, arrayAlt = [arrayWgs84[i]['value'] 
+        arrayLon, arrayLat, arrayAlt = [arrayWgs84[i]['value']
                 for i in ['m0','m1','m2']]
 
         # Open the ANTENNA subtable to get the names of the antennas in this MS and
@@ -170,7 +165,6 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
         stationNames = [stationNames[i] for i in antIdsUsed]
 
         nAnts = len(antIdsUsed)
-        print("Number of points being plotted:", nAnts)
         casalog.post("Number of points being plotted: " + str(nAnts))
         if nAnts == 0: # excluded all antennas
                 return telescope, antNames, [], [], []
@@ -239,7 +233,7 @@ def plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations):
         # Do not show grid.
         ax.grid(False)
 
-        # code from pipeline summary.py 
+        # code from pipeline summary.py
         # PlotAntsChart draw_polarlog_ant_map_in_subplot
         if 'VLA' in telescope:
                 # For (E)VLA, set a fixed local center position that has been
@@ -300,12 +294,12 @@ def plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations):
                                         ax.text(circle_label_angle + np.pi, np.log(cr),
                                                            '%d km' % (cr / 1000), size=8, va=va)
                         else:
-                                ax.text(circle_label_angle, np.log(cr), '%dm' % (cr), 
+                                ax.text(circle_label_angle, np.log(cr), '%dm' % (cr),
                                         size=8, va=va)
-                                ax.text(circle_label_angle + np.pi, np.log(cr), 
+                                ax.text(circle_label_angle + np.pi, np.log(cr),
                                                 '%dm' % (cr), size=8, va=va)
 
-                # Find out if most recently drawn circle was outside all antennas, 
+                # Find out if most recently drawn circle was outside all antennas,
                 # if so, no more circles will be drawn.
                 if np.log(cr) > rmax:
                         show_circle = False

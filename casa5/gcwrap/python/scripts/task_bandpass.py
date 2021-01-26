@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import numpy as np
@@ -42,7 +41,7 @@ def bandpass(vis=None,caltable=None,
                 if ((type(vis)==str) & (os.path.exists(vis))):    
                         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                 else:
-                        raise Exception('Visibility data set not found - please verify the name')
+                        raise ValueError('Visibility data set not found - please verify the name')
                 mycb.reset()
 
                 # Do data selection according to selectdata
@@ -142,11 +141,7 @@ def bandpass(vis=None,caltable=None,
                                             solnorm=solnorm,maskcenter=maskcenter,maskedge=maskedge)
 
                 mycb.solve()
-                mycb.close()
 
-        except Exception as instance:
-                print('*** Error ***', instance)
+        finally:
                 mycb.close()
-                casalog.post("Error in bandpass: %s" % str(instance), "SEVERE")
-                raise Exception("Error in bandpass: "+str(instance))
 

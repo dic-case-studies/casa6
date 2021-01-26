@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -35,7 +34,7 @@ def fringefit(vis=None,caltable=None,
         if ((type(vis)==str) & (os.path.exists(vis))):
             mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
 
         # Do data selection according to selectdata
         if (selectdata):
@@ -69,8 +68,8 @@ def fringefit(vis=None,caltable=None,
                 paramactive=[True, True, False]
             else:
                 if len(paramactive)!=3:
-                    print >>sys.stderr, "paramactive", paramactive
-                    raise Exception( 'Error: paramactive vector must have exactly three entries' )
+                    casalog.post("paramactive: " + paramactive)
+                    raise ValueError( 'Error: paramactive vector must have exactly three entries' )
             # Have to solve for peculiar phase!
             paramactive.insert(0, True)
 
@@ -140,13 +139,8 @@ def fringefit(vis=None,caltable=None,
 
         reportsolvestats(mycb.activityrec());
 
+    finally:
         mycb.close()
-
-    except Exception as instance:
-        print('*** Error *** %s' % str(instance))
-        mycb.close()
-        casalog.post("Error in fringefit: %s" % str(instance), "SEVERE")
-        raise Exception ("Error in fringefit: %s" % str(instance))
 
 def reportsolvestats(rec):
     if (list(rec.keys()).count('origin')==1 and

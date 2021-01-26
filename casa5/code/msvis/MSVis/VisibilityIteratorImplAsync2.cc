@@ -425,13 +425,13 @@ VisibilityIteratorImplAsync2::allBeamOffsetsZero () const
     return getMsIterInfo().allBeamOffsetsZero ();
 }
 
-Int
+rownr_t
 VisibilityIteratorImplAsync2::nRows () const
 {
     return rowBounds_p.subchunkNRows_p;
 }
 
-Int VisibilityIteratorImplAsync2::nRowsInChunk () const
+rownr_t VisibilityIteratorImplAsync2::nRowsInChunk () const
 {
     return getMsIterInfo().table ().nrow ();
 }
@@ -500,7 +500,7 @@ VisibilityIteratorImplAsync2::setInterval (Double timeInterval)
 }
 
 void
-VisibilityIteratorImplAsync2::setRowBlocking (Int nRow)
+VisibilityIteratorImplAsync2::setRowBlocking (rownr_t nRow)
 {
     pendingChanges_p.setNRowBlocking (nRow);
 }
@@ -2093,12 +2093,12 @@ VisibilityIteratorImplAsync2::writeFlag (const Matrix<Bool> & flag)
 
     Int nFrequencies = channelSelector_p->getNFrequencies();
     Int nPolarizations = nPolarizations_p;
-    Int nRows = this->nRows();
+    auto nRows = this->nRows();
 
     // The flag matrix is expected to have dimensions [nF, nR].
 
-    ThrowIf ((int) flag.nrow() != nFrequencies || (int) flag.ncolumn() != nRows,
-             String::format ("Shape mismatch: got [%d,%d]; expected [%d,%d]",
+    ThrowIf ((int) flag.nrow() != nFrequencies || flag.ncolumn() != nRows,
+             String::format ("Shape mismatch: got [%d,%d]; expected [%d,%llu]",
                              flag.nrow(), flag.ncolumn(), nFrequencies, nRows));
 
     // Convert the flag matrix into the flag cube defined in the MS.  The flag
@@ -2108,7 +2108,7 @@ VisibilityIteratorImplAsync2::writeFlag (const Matrix<Bool> & flag)
 
     flagCube.resize (nPolarizations, nFrequencies, nRows);
 
-    for (Int row = 0; row < nRows; row++) {
+    for (rownr_t row = 0; row < nRows; row++) {
 
         for (Int frequency = 0; frequency < nFrequencies; frequency ++) {
 
@@ -2192,7 +2192,7 @@ VisibilityIteratorImplAsync2::convertVisFromStokes (const Matrix<CStokesVector> 
                                                     Cube<Complex> & visibilityCube)
 {
 #warning "Check this"
-    Int nRows = rowBounds_p.subchunkNRows_p;
+    rownr_t nRows = rowBounds_p.subchunkNRows_p;
     Int nFrequencies = channelSelector_p->getNFrequencies();
     Int nPolarizations = this->nPolarizations();
 
@@ -2203,7 +2203,7 @@ VisibilityIteratorImplAsync2::convertVisFromStokes (const Matrix<CStokesVector> 
     // proves to be too slow, then it can be reimplemented using pointer
     // operations.
 
-    for (Int row = 0; row < nRows; row ++) {
+    for (rownr_t row = 0; row < nRows; row ++) {
 
         for (Int frequency = 0; frequency < nFrequencies; frequency ++) {
 
@@ -2267,10 +2267,10 @@ VisibilityIteratorImplAsync2::writeWeight (const Vector<Float> & weight)
 {
 #warning "Check this"
     Int nPolarizations = this->nPolarizations();
-    Int nRows = this->nRows();
+    auto nRows = this->nRows();
 
     ThrowIf ((int) weight.nelements() != nRows,
-             String::format ("Dimension mismatch: got %d rows but expected %d rows",
+             String::format ("Dimension mismatch: got %d rows but expected %llu rows",
                              weight.nelements(), nRows));
 
     Matrix<Float> weightMatrix;
@@ -2308,10 +2308,10 @@ VisibilityIteratorImplAsync2::writeSigma (const Vector<Float> & sigma)
 {
 #warning "Check this"
     Int nPolarizations = this->nPolarizations();
-    Int nRows = this->nRows();
+    rownr_t nRows = this->nRows();
 
     ThrowIf ((int) sigma.nelements() != nRows,
-             String::format ("Dimension mismatch: got %d rows but expected %d rows",
+             String::format ("Dimension mismatch: got %d rows but expected %llu rows",
                              sigma.nelements(), nRows));
 
     Matrix<Float> sigmaMatrix;

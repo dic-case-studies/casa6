@@ -213,33 +213,47 @@ class cvel2_test(test_base):
     
     def test1(self):
         '''cvel2 1: Testing default - expected error'''
-        self.setUp_vis_b()
-        myvis = vis_b
-        os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel2()
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print('Expected error!')
-        self.assertTrue(passes)
+#         self.setUp_vis_b()
+#         myvis = vis_b
+#         os.system('ln -sf ' + myvis + ' myinput.ms')
+#         passes = False
+#         try:
+#             rval = cvel2()
+#             # CASA5 returns False for this expected error
+#             passes = not rval
+#         except AssertionError:
+#             passes = True
+#             print('Expected error!')
+#         self.assertTrue(passes)
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel2()
+        else:
+            with self.assertRaises(RuntimeError):
+                cvel2()
+        print('Expected error!')
 
     def test2(self):
         '''cvel2 2: Only input vis set - expected error'''
         self.setUp_vis_b()
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel2(vis = 'myinput.ms')
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print('Expected error!')
-        self.assertTrue(passes)
+#         passes = False
+#         try:
+#             rval = cvel2(vis = 'myinput.ms')
+#             # CASA5 returns False for this expected error
+#             passes = not rval
+#         except AssertionError:
+#             passes = True
+#             print('Expected error!')
+#         self.assertTrue(passes)
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel2(vis = 'myinput.ms')
+        else:
+            with self.assertRaises(IOError):
+                cvel2(vis = 'myinput.ms')
+        print('Expected error!')
 
     def test3(self):
         '''cvel2 3: Input and output vis set'''
@@ -1090,16 +1104,18 @@ class cvel2_test(test_base):
         self.setUp_vis_d()
         myvis = vis_d
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel2(
-            vis = 'myinput.ms',
-            outputvis = outfile,
-            mode='channel',
-            spw='1',
-            start = 98,
-            width = 3,
-            phasecenter = "J2000 18h25m56.09 -12d04m28.20"
-        )
-        self.assertTrue(rval)
+        try:
+            cvel2(
+                vis = 'myinput.ms',
+                outputvis = outfile,
+                mode='channel',
+                spw='1',
+                start = 98,
+                width = 3,
+                phasecenter = "J2000 18h25m56.09 -12d04m28.20"
+            )
+        except Exception as exc:
+            self.assertFail('Unexpected exception: {}'.format(exc))
         ret = verify_ms(outfile, 1, 10, 0)
 
     def test43(self):
@@ -1359,12 +1375,18 @@ class cvel2_test(test_base):
         self.setUp_vis_g()
         myvis = vis_g
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel2(
-                vis = 'myinput.ms',
-                outputvis = outfile,
-                outframe = 'SOURCE'
-                )
-        self.assertTrue(rval)
+        cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            outframe = 'SOURCE'
+        )
+
+        mytb.open(outfile+'/SPECTRAL_WINDOW')
+        chan_freq = mytb.getcell('CHAN_FREQ')
+        exp_chan_freq = numpy.array(chan_freq)
+        mytb.close()
+        ret = verify_ms(outfile, 1, 2, 0, exp_chan_freq)
+        self.assertTrue(ret[0],ret[1])
         
     def test_mms_heuristics1(self):
         '''cvel2 : MMS heuristic tests'''

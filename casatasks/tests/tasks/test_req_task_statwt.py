@@ -5,19 +5,29 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 ### for testhelper import
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
-
+#from casatestutils import testhelper as th
+is_casa6 = False
 subdir = 'visibilities/vla/'
-if th.is_casa6():
+
+# https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
+try:
+    ModuleNotFoundError
+except NameError:
+    ModuleNotFoundError = ImportError
+
+try:
     from casatools import ctsys, table, ms
     from casatasks import statwt
     datadir = ctsys.resolve(subdir)
     mytb = table()
     myms = ms()
-else:
+    is_casa6 = True
+except (ImportError, ModuleNotFoundError):
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     datadir = (
         os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
     )
@@ -256,7 +266,7 @@ class statwt_test(unittest.TestCase):
               
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
-        mytb1 = table() if th.is_casa6() else tbtool()
+        mytb1 = table() if is_casa6 else tbtool()
         ref = os.path.join(datadir, ref)
         self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
         self.compareTables(mytb, mytb1)
@@ -502,20 +512,16 @@ class statwt_test(unittest.TestCase):
             if statalg == "cl":
                 statwt(vis=dst, statalg=statalg)
             elif statalg == "ch":
-                self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
-                )
+                statwt(vis=dst, statalg=statalg, zscore=5, maxiter=3)
             elif statalg == "h":
-                self.assertTrue(statwt(vis=dst, statalg=statalg, fence=0.2))
+                statwt(vis=dst, statalg=statalg, fence=0.2)
             elif statalg == "f":
-                self.assertTrue(
-                    statwt(vis=dst, statalg=statalg, center="median",
-                    lside=False)
-                )
+                statwt(vis=dst, statalg=statalg, center="median",
+                       lside=False)
             elif statalg == "bogus":
-                if th.is_casa6():
+                if is_casa6 or casa_stack_rethrow:
                     self.assertRaises(
-                        Exception, statwt, vis=dst, statalg=statalg
+                        RuntimeError, statwt, vis=dst, statalg=statalg
                     )
                 else:
                     self.assertFalse(statwt(vis=dst, statalg=statalg))
@@ -1021,18 +1027,20 @@ class statwt_test(unittest.TestCase):
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
             if spw == '':
-                res = statwt(
-                    vis=dst, combine='scan,field,state', chanbin=1,
-                    timebin='1yr', datacolumn='residual_data',
-                    selectdata=True, spw=spw
-                )
-                self.assertTrue(res)
+                try:
+                    statwt(
+                        vis=dst, combine='scan,field,state', chanbin=1,
+                        timebin='1yr', datacolumn='residual_data',
+                        selectdata=True, spw=spw
+                    )
+                except Exception:
+                    self.fail()
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
-                if th.is_casa6():
+                if is_casa6 or casa_stack_rethrow:
                     self.assertRaises(
-                        Exception, statwt, vis=dst, combine='scan,field,state',
+                        RuntimeError, statwt, vis=dst, combine='scan,field,state',
                         chanbin=1, timebin='1yr', datacolumn='residual_data',
                         selectdata=True, spw=spw
                     )
@@ -1065,3 +1073,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+

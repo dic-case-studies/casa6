@@ -41,8 +41,8 @@ if is_CASA6:
     from casatasks.private import flaghelper as fh
     from casatasks.private import convertephem as ce
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
 
     # make local copies of the tools
     tblocal = table( )
@@ -57,7 +57,7 @@ else:
     from __main__ import default
     from tasks import importasdm, flagdata, exportasdm, flagcmd
     from taskinit import mstool, tbtool, cbtool, aftool, casalog
-    import testhelper as th
+    #import testhelper as th
     import flaghelper as fh
     import recipes.ephemerides.convertephem as ce
 
@@ -74,6 +74,7 @@ else:
         dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
         return os.path.join(dataPath,apath)
 
+from casatestutils import testhelper as th
 myname = 'test_importasdm'
 
 # default ASDM dataset name
@@ -431,15 +432,17 @@ class asdm_import1(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -615,15 +618,17 @@ class asdm_import2(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -1595,7 +1600,9 @@ class asdm_import4(test_base):
         
         # Run again and verify that the online flags are not overwritten
         os.system('rm -rf x54.ms*')
-        importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True, outfile=outfile, overwrite=False)
+        with self.assertRaises(RuntimeError):
+            importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True,
+                       outfile=outfile, overwrite=False)
         print('Expected Error!')
         with open(outfile,'r') as ff:
             cmds = ff.readlines()

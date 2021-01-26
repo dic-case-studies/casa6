@@ -11,8 +11,8 @@ import glob
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
     from casatools import ctsys, ms, table, msmetadata, agentflagger
     from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
     #from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
@@ -32,7 +32,7 @@ else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default
-    import testhelper as th
+    #import testhelper as th
     from sdutil import tbmanager, toolmanager, table_selector
 
     # Define the root for the data files
@@ -51,6 +51,7 @@ else:
     msmd_local = msmdtool()
     tb_local = tbtool()
 
+from casatestutils import testhelper as th
 
 def weighToSigma(weight):
     if weight > sys.float_info.min:
@@ -487,8 +488,8 @@ class test_combinespws_diff_channels(test_base):
         '''mstransform: combinespws does not currently work when the spw's have
         different numbers of channels. An error should be produced.'''
         self.outputms = "combinespws_fail_all_spws_test.ms"
-        res = mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True)
-        self.assertFalse(res)
+        with self.assertRaises(RuntimeError):
+            mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True)
         self.assertFalse(os.path.exists(self.outputms))
 
     def test_combinespws_not_supported_n23(self):
@@ -496,17 +497,17 @@ class test_combinespws_diff_channels(test_base):
         different numbers of channels. An error should be produced. spw 2 has 128
         channels but the other spw's have 3840 channels.'''
         self.outputms = "combinespws_fail_bad_spws_test.ms"
-        res = mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True, spw='2,3')
-        self.assertFalse(res)
+        with self.assertRaises(RuntimeError):
+            mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True, spw='2,3')
         self.assertFalse(os.path.exists(self.outputms))
 
     def test_combinespws_not_supported_n321(self):
         '''mstransform: combinespws does not currently work when the spw's have
         different numbers of channels. An error should be produced.'''
         self.outputms = "combinespws_fail_bad_spws_test.ms"
-        res = mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True,
-                          spw='3,2,1')
-        self.assertFalse(res)
+        with self.assertRaises(RuntimeError):
+            mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True,
+                        spw='3,2,1')
         self.assertFalse(os.path.exists(self.outputms))
 
     def test_combinespws_not_supported_n0123(self):
@@ -514,9 +515,9 @@ class test_combinespws_diff_channels(test_base):
         different numbers of channels. An error should be produced. All spw's are 
         selected here.'''
         self.outputms = "combinespws_fail_bad_spws_test.ms"
-        res = mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True,
-                          spw='0,1,2,3')
-        self.assertFalse(res)
+        with self.assertRaises(RuntimeError):
+            mstransform(vis=self.vis, outputvis=self.outputms, combinespws=True,
+                        spw='0,1,2,3')
         self.assertFalse(os.path.exists(self.outputms))
 
     def test_combinespws_ok(self):
@@ -526,7 +527,6 @@ class test_combinespws_diff_channels(test_base):
         self.outputms = "combinespws_fail_spws_ok_test.ms"
         res = mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data',
                           combinespws=True, spw='1,0')
-        self.assertTrue(res)
         self.assertTrue(os.path.exists(self.outputms))
 
 
@@ -554,7 +554,7 @@ class test_regridms_four_ants(test_base):
             self.assertTrue(ret[0],ret[1])
 
         listobs(self.outputvis)
-        listobs(self.outputvis, listfile='list.obs')
+        listobs(self.outputvis, listfile='list.obs', overwrite=True)
         self.assertTrue(os.path.exists('list.obs'), 'Probable error in sub-table re-indexing')
         
         # Check the shape of WEIGHT and SIGMA
@@ -1215,10 +1215,10 @@ class test_FreqAvg(test_base):
     def test_freqavg5(self):
         '''mstranform: Different number of spws and chanbin. Expected error'''
         self.outputms = "favg5.ms"
-        ret = mstransform(vis=self.vis, outputvis=self.outputms, spw='2,10', chanaverage=True,
-                    chanbin=[10,20,4])
-
-        self.assertFalse(ret)
+        with self.assertRaises(ValueError):
+            mstransform(vis=self.vis, outputvis=self.outputms, spw='2,10', chanaverage=True,
+                        chanbin=[10,20,4])
+        self.assertFalse(os.path.exists(self.outputms))
 
     def test_freqavg11(self):
         '''mstransform: Automatically convert numpy type to Python type'''
@@ -2685,9 +2685,10 @@ class test_radial_velocity_correction(test_base_compare):
 
     def test_too_low_width(self):
         # test for no crash
-        r = mstransform(vis=self.vis,outputvis=self.outvis,regridms=True,datacolumn='DATA',outframe='SOURCE',
-                        mode = 'velocity', width = '0.001km/s',restfreq = '354.50547GHz')
-        self.assertFalse(r)
+        with self.assertRaises(RuntimeError):
+            mstransform(vis=self.vis,outputvis=self.outvis, regridms=True,
+                        datacolumn='DATA',outframe='SOURCE', mode='velocity',
+                        width='0.001km/s', restfreq = '354.50547GHz')
 
 class test_radial_velocity_correction_largetimerange(test_base_compare):
     # CAS-7382, test large timerange spawns that require an additional
@@ -5810,8 +5811,6 @@ class test_no_reindexing_ephemeris_copy(test_base):
         else:
             os.system('cp -RL {0} {1}'.format(os.path.join(importasdm_datapath_2, self.asdm),
                                               self.asdm))
-            importasdm(self.asdm, vis=self.outvis, convert_ephem2geo=True, process_pointing=False, flagbackup=False)
-
 
     def tearDown(self):
         os.system('rm -rf '+ self.asdm)

@@ -8,7 +8,8 @@ from __main__ import default
 from tasks import *
 from taskinit import *
 import unittest
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 
 class wvrgcal_test(unittest.TestCase):
 
@@ -96,11 +97,10 @@ class wvrgcal_test(unittest.TestCase):
 # Test cases    
     def test1(self):
         '''Test 1: Testing default'''
-        self.rval = wvrgcal()
-        print self.rval
         print "Expected error ..."
-        self.assertFalse(self.rval)
-
+        with self.assertRaises(RuntimeError):
+            self.rval = wvrgcal()
+ 
     def test2(self):
         '''Test 2: Testing with a multi-source dataset'''
         myvis = self.vis_f

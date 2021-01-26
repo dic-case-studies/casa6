@@ -921,11 +921,11 @@ protected:
     casacore::Int                     chunkNumber_p;
     Columns                 columns_p;
     casacore::Int                     curChanGroup_p;
-    casacore::Int                     curEndRow_p;
+    casacore::rownr_t                 curEndRow_p;
     casacore::Int                     curNGroups_p;
     casacore::rownr_t                 curNumRow_p;
     casacore::rownr_t                 curStartRow_p;
-    casacore::Int                     curTableNumRow_p;
+    casacore::rownr_t                 curTableNumRow_p;
     casacore::Bool                    floatDataFound_p;
     VisImagingWeight        imwgt_p;    // object to calculate imaging weight
     casacore::Bool                    initialized_p;

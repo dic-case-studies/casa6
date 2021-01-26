@@ -153,7 +153,6 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
 	stationNames = [stationNames[i] for i in antIdsUsed]
 
 	nAnts = len(antIdsUsed)
-	print "Number of points being plotted:", nAnts
 	casalog.post("Number of points being plotted: " + str(nAnts))
 	if nAnts == 0: # excluded all antennas
 		return telescope, antNames, [], [], []

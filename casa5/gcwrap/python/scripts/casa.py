@@ -163,14 +163,12 @@ sdmstool = _casac.singledishms
 catool = _casac.calanalysis
 attool = _casac.atmosphere
 
-from accum import accum
 from applycal import applycal
 from asdmsummary import asdmsummary
 from bandpass import bandpass
 from blcal import  blcal
 from browsetable import  browsetable
 from calstat import  calstat
-from caltabconvert import  caltabconvert
 from clean import  clean
 from clearcal import  clearcal
 from clearstat import  clearstat
@@ -234,7 +232,6 @@ from listvis import  listvis
 from makemask import  makemask
 from mstransform import  mstransform
 from msuvbin import  msuvbin
-from oldsplit import  oldsplit
 from plotants import  plotants
 from plotbandpass import  plotbandpass
 from plotcal import  plotcal
@@ -271,7 +268,6 @@ from spxfit import  spxfit
 from oldstatwt import  oldstatwt
 from statwt import  statwt
 from tclean import  tclean
-from tclean2 import  tclean2
 from testconcat import  testconcat
 from uvcontsub import  uvcontsub
 from uvcontsub3 import  uvcontsub3

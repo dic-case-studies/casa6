@@ -48,9 +48,11 @@ def exportfits( imagename, fitsimage, velocity, optical, bitpix,
         #Python script
         casalog.origin('exportfits')
         _myia = image( )
-        _myia.open(imagename)
-        _myia.tofits( outfile=fitsimage, velocity=velocity, optical=optical,
-                      bitpix=bitpix, minpix=minpix, maxpix=maxpix,
-                      overwrite=overwrite, dropstokes=dropstokes, stokeslast=stokeslast,
-                      history=history, dropdeg=dropdeg )
-        _myia.close( )
+        try:
+            _myia.open(imagename)
+            _myia.tofits( outfile=fitsimage, velocity=velocity, optical=optical,
+                          bitpix=bitpix, minpix=minpix, maxpix=maxpix,
+                          overwrite=overwrite, dropstokes=dropstokes, stokeslast=stokeslast,
+                          history=history, dropdeg=dropdeg )
+        finally:
+            _myia.close( )
