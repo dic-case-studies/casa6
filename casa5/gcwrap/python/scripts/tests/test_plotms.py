@@ -749,8 +749,7 @@ class test_calplot(plotms_test_base):
         self.removePlotfile()
         # gphase vs baseline
         res = plotms(vis=self.ct, yaxis='phase', xaxis='baseline',
-            plotfile=self.plotfile_jpg, overwrite=True,
-            showgui=False, highres=True)
+            plotfile=self.plotfile_jpg, showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 60000)
 
