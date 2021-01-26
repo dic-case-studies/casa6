@@ -13,8 +13,6 @@ from taskinit import *
 
 # Paths for data
 datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
-calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
 overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
 
 # Pick up alternative data directory to run tests on MMSs
@@ -27,19 +25,22 @@ print('plotms tests will use data from '+ datapath)
 
 class plotms_test_base(unittest.TestCase):
 
-    testms  = "pm_ngc5921.ms"
-    testms2 = "ngc5921.ms"
-    testms3 = "sun.subset.pentagon.ms"
-    testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testcaltable = 'ngc5921.ref1a.gcal'
     outputDir="/tmp/" + str(os.getpid()) + "/"
     plotfile_jpg = "/tmp/myplot.jpg"
     display = os.environ.get("DISPLAY")
+
+    testms  = "pm_ngc5921.ms"
+    testms2 = "sj_ngc5921.ms"
+    testms3 = "sun.subset.pentagon.ms"
+    testms4 = "split_ddid_mixedpol_CAS-12283.ms"
+    testct = 'g_jones.cal'
+    testct2 = 'b_jones.cal'
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    caltable = os.path.join(outputDir, testcaltable)
+    ct = os.path.join(outputDir, testct)
+    ct2 = os.path.join(outputDir, testct2)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -49,8 +50,8 @@ class plotms_test_base(unittest.TestCase):
         res = None
         default(plotms)
         if not os.path.exists(self.ms):
-            shutil.copytree(os.path.join(datapath,self.testms), 
-                    self.ms, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms),
+                self.ms, symlinks=True)
 
     def tearDownData(self):
         self.cleanUp()
@@ -58,29 +59,31 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(altdatapath,self.testms2),
-                    self.ms2, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(calpath,self.testms2), 
-                    self.ms2, symlinks=True)
-        testcaltable = os.path.join(self.outputDir, self.caltable)
-        if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(calpath, self.testcaltable),
-                    self.caltable, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
+        if not os.path.exists(self.ct):
+            shutil.copytree(os.path.join(datapath, self.testct),
+                self.ct, symlinks=True)
+        if not os.path.exists(self.ct2):
+            shutil.copytree(os.path.join(datapath, self.testct2),
+                self.ct2, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
-            shutil.copytree(os.path.join(datapath,self.testms3),
-                    self.ms3, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms3),
+                self.ms3, symlinks=True)
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
-                    self.ms4, symlinks=True)
+            shutil.copytree(os.path.join(overlaypath, self.testms4),
+                self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
         self.assertTrue(os.path.isfile(plotfileName), "Plot was not created")
@@ -226,6 +229,16 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
 
+    def test_basic_pngExport(self):
+        '''test_basic_pngExport: Export plot in png format'''
+        plotfile_png = os.path.join(self.outputDir, "testBasic07.png")
+        self.removePlotfile(plotfile_png)
+        res = plotms(vis=self.ms, plotfile=plotfile_png,
+               showgui=False, highres=False)
+        self.assertTrue(res)
+        self.checkPlotfile(plotfile_png, 20000)
+        self.removePlotfile(plotfile_png)
+
     def xtest_basic_pdfExport(self):
         '''test_basic_pdfExport: Export plot in pdf format'''
         plotfile_pdf = os.path.join(self.outputDir, "testBasic08.pdf")
@@ -234,6 +247,34 @@ class test_basic(plotms_test_base):
             showgui=False, highres=False)
         self.assertTrue(res)
         self.checkPlotfile(plotfile_pdf, 30000)
+
+    def xtest_basic_psExport(self):
+        '''test_basic_psExport: Export plot in ps format'''
+        plotfile_ps = os.path.join(self.outputDir, "testBasic9.ps")
+        self.removePlotfile(plotfile_ps)
+        plotms(vis=self.ms, plotfile=plotfile_ps, expformat='ps',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_ps, 1500000)
+        self.removePlotfile(plotfile_ps)
+
+    def xtest_basic_txtExport(self):
+        '''test_basic_txtExport: Export plot in txt format'''
+        plotfile_txt = os.path.join(self.outputDir, "testBasic10.txt")
+        self.removePlotfile(plotfile_txt)
+        # Verbose text export (default) - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=True,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 4000)
+        self.removePlotfile(plotfile_txt)
+        # Exclude metadata in text export - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=False,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 700)
+        self.removePlotfile(plotfile_txt)
 
 # ------------------------------------------------------------------------------
 
@@ -718,7 +759,7 @@ class test_calibration(plotms_test_base):
 
 # ------------------------------------------------------------------------------
  
-class test_calplots(plotms_test_base):
+class test_calplot(plotms_test_base):
     ''' Test plotting cal tables '''
 
     def setUp(self):
@@ -772,25 +813,39 @@ class test_calplots(plotms_test_base):
         self.checkPlotfile(plotfile1, 30000)
         self.removeFiles(self.outputDir, "testCalPlot03_")
 
-    def test_calplot_selection(self):
-        '''test_calplot_selection: caltable with polarization selection'''
+    def test_calplot_polselection(self):
+        '''test_calplot_polselection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
         res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='R', overwrite=True)   
+            showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
-        self.removePlotfile()
 
     def test_calplot_ratioplot(self):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
         res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='/', overwrite=True)   
+            showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
+
+    def test_calplot_chanselection(self):
+        '''test_calplot_chanselection: caltable with spw/chan selections'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
         self.removePlotfile()
+        # No selection (only one spw)
+        res = plotms(vis=self.caltable2, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 100000)
+        self.removePlotfile()
+        # Smaller plot with chan selection
+        res = plotms(vis=self.caltable2, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0:0~10')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
 
 # ------------------------------------------------------------------------------
 
@@ -1658,7 +1713,7 @@ def suite():
             test_averaging,
             test_axis,
             test_calibration,
-            test_calplots,
+            test_calplot,
             test_display,
             test_grid,
             test_iteration,
