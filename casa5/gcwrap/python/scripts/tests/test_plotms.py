@@ -284,7 +284,6 @@ class test_overplot(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        # alternate data needed for plotting two different MSes
         self.setUpAltData()
 
     def tearDown(self):
@@ -445,7 +444,7 @@ class test_axis(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        self.setUpAltData() # for other datacolumns
+        self.setUpAltData()
         self.setUpPointingData()
         
     def tearDown(self):
@@ -719,7 +718,6 @@ class test_axis(plotms_test_base):
             xaxis='u', yaxis='v', showgui=False, plotrange=plotrange3)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 180000)
-        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
@@ -735,17 +733,14 @@ class test_calibration(plotms_test_base):
 
     def test_calibration_callib(self):
         '''test_calibration_callib: callib string parameter for OTF calibration'''
-        if os.path.exists(calpath):
-            self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
-            self.removePlotfile()
-            callibStr = "caltable='" + self.caltable + "' calwt=True tinterp='nearest'"
-            res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
-                ydatacolumn="corrected", xaxis="frequency",
-                showgui=False, callib=callibStr, highres=True)
-            self.assertTrue(res)
-            self.checkPlotfile(self.plotfile_jpg, 240000)
-        else:
-            print("Skipping test, no path to calibration tables")
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
+        self.removePlotfile()
+        callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
+        res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
+            ydatacolumn="corrected", xaxis="frequency",
+            showgui=False, callib=callibStr, highres=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 160000)
 
     def test_calibration_badcallib(self):
         '''test_calibration_badcallib: callib file does not exist'''
@@ -774,7 +769,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot01.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -785,14 +780,14 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot02.jpg")
         self.removePlotfile()
         # gamp vs scan
-        res = plotms(vis=self.caltable, xaxis='scan',
+        res = plotms(vis=self.ct, xaxis='scan',
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.caltable, yaxis='phase',
+        res = plotms(vis=self.ct, yaxis='phase',
             xaxis='baseline', overwrite=True,
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
@@ -804,7 +799,7 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot03.jpg")
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, iteraxis='corr', exprange='all',
             overwrite=True)
         self.assertTrue(res)
@@ -817,7 +812,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_polselection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -826,7 +821,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
@@ -836,13 +831,13 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
         self.removePlotfile()
         # No selection (only one spw)
-        res = plotms(vis=self.caltable2, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, spw='0')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 100000)
         self.removePlotfile()
         # Smaller plot with chan selection
-        res = plotms(vis=self.caltable2, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, spw='0:0~10')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
