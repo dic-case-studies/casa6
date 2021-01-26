@@ -4364,9 +4364,10 @@ class test_list_modes_forbidden_with_avg(test_base):
                    "mode='clip' spw='9' timeavg=True timebin='2s' clipminmax=[0.0, 0.8]"]
 
         # CAS-12294: should raise exception when trying to use timeavg and forbidden modes
-        # although task_flagdata will catch the exception and simply return {}
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # Nothing should have been flagged or unflagged
         res = flagdata(vis=self.vis, mode='summary', spw='7,9')
         self.assertEqual(res['total'], 549888)
         self.assertEqual(res['flagged'], 0)
@@ -4383,8 +4384,9 @@ class test_list_modes_forbidden_with_avg(test_base):
                    "mode='clip' spw='8' clipzeros=True"]
 
         # CAS-12294: as above, should not be accepted
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
         res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
         self.assertEqual(res['total'], 824832)
         self.assertEqual(res['flagged'], 0)
@@ -4401,8 +4403,9 @@ class test_list_modes_forbidden_with_avg(test_base):
                    "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.8]"]
 
         # CAS-12294: as above, should not be accepted
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
         res = flagdata(vis=self.vis, mode='summary', spw='7,8,9')
         self.assertEqual(res['total'], 824832)
         self.assertEqual(res['flagged'], 0)
@@ -4415,28 +4418,28 @@ class test_list_modes_forbidden_with_avg(test_base):
         # methods in a row, and check at the end, to avoid running too many summaries
         inplist = ["mode='unflag'",
                    "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
 
         inplist = ["mode='shadow'",
                    "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
 
         inplist = ["mode='elevation' lowerlimit=89.0 upperlimit=89.5",
                    "mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]"]
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
 
         inplist = ["mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]",
                    "mode='quack' quackmode='tail' quackinterval=1.0"]
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
 
         inplist = ["mode='clip' spw='9' channelavg=True chanbin=2 clipminmax=[0.0, 0.1]",
                    "mode='quack' quackmode='end' quackinterval=1.0"]
-        res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
-        self.assertEqual(res, {})
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
 
         # Nothing should have been flagged
         res = flagdata(vis=self.vis, mode='summary')
