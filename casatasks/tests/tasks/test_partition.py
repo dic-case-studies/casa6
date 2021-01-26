@@ -9,8 +9,8 @@ if is_CASA6:
     from casatools import ctsys, msmetadata, ms, agentflagger, table
     ### for testhelper import
     import sys
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
     from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 
     msmdt_local = msmetadata()
@@ -28,7 +28,7 @@ else:
     from taskinit import msmdtool, mstool, aftool, tbtool
 
     from parallel.parallel_task_helper import ParallelTaskHelper
-    import testhelper as th
+    #import testhelper as th
     import partitionhelper as ph
 
     msmdt_local = msmdtool()
@@ -47,7 +47,7 @@ else:
                          '/data/regression/unittest/partition/'
 
 
-
+from casatestutils import testhelper as th
 ''' Unit Tests for task partition'''
 
 # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 

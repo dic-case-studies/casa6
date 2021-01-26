@@ -8,10 +8,11 @@ import numpy.ma as ma
 import unittest
 
 from casatasks.private.casa_transition import is_CASA6
+from casatestutils import testhelper as th
+
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+
     from casatools import ctsys, table
     from casatasks import gencal
 
@@ -21,7 +22,6 @@ if is_CASA6:
 
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
-    import testhelper as th
     from tasks import gencal
     from taskinit import *
     from recipes import tec_maps

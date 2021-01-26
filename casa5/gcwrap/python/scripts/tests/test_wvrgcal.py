@@ -8,7 +8,8 @@ from __main__ import default
 from tasks import *
 from taskinit import *
 import unittest
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 
 class wvrgcal_test(unittest.TestCase):
 
