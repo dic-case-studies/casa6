@@ -1,7 +1,6 @@
 # unit test for the exportasdm task
 
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 
@@ -12,9 +11,6 @@ if is_CASA6:
     import sys
     from casatools import ctsys, ms
     from casatasks import exportasdm, importasdm
-    ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
 
     _ms = ms( )
 
@@ -23,8 +19,7 @@ else:
     from __main__ import default
     from tasks import *
     from taskinit import mstool
-    import unittest
-    import testhelper as th
+    import unittest    #import testhelper as th
 
     _ms = mstool( )
 
@@ -32,8 +27,9 @@ else:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+datapath = ctsys_resolve('unittest/exportasdm/')=======
+from casatestutils import testhelper as th
 
-datapath = ctsys_resolve('unittest/exportasdm/')
 class exportasdm_test(unittest.TestCase):
     
     #vis_a = 'ngc4826.ms'

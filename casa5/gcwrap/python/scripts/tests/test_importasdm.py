@@ -27,21 +27,18 @@
 #                                                                           #
 #############################################################################
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
 import numpy
 import unittest
 
-from casatestutils import testhelper as th
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, ms, table, measures, calibrater, agentflagger
     from casatasks import importasdm, flagdata, flagcmd, exportasdm
     from casatasks.private import flaghelper as fh
     from casatasks.private import convertephem as ce
- 
     # make local copies of the tools
     tblocal = table( )
     mslocal = ms( )
@@ -71,6 +68,7 @@ else:
         dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+from casatestutils import testhelper as th
 myname = 'test_importasdm'
 
 rootpath = ctsys_resolve('unittest/importasdm/')
@@ -1074,7 +1072,7 @@ class asdm_import3(test_base):
                 print('%s : assertion error while testing flags after filling: %s' % (myname, str(error)))
                 retValue['success'] = False
                 retValue['error_msgs']=retValue['error_msgs']+str(error)
-            except Excecption as instance:
+            except Exception as instance:
                 print("%s : post fill flagging and checking failed." % myname)
                 retValue['success'] = False
                 retValue['error_msgs']=retValue['error_msgs']+'Unexpected post-fill flagging result'
@@ -2418,7 +2416,7 @@ class asdm_import7(test_base):
             # difference here is < 0".00005 of the above, non-interpolated value
             self.assertAlmostEqual(mssum['field_0']['direction']['m1']['value'],-0.2154815442529733,15)
         except:
-            print("%s: Error ms summary has an unexpect source or direction value" % myname)
+            print("%s: Error ms summary has an unexpected source or direction value" % myname)
             retValue['success']=False
             retValue['error_msgs']=retValue['err_msg']+'Unexpected source or direction value in ms summary '+thismsname + '\n'
 

@@ -9,7 +9,6 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
     from casatools import ctsys, msmetadata, ms, agentflagger, table
-
     from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 
     msmdt_local = msmetadata()
@@ -35,7 +34,7 @@ else:
     datapath = os.environ.get('CASAPATH').split()[0] + \
                        "/casatestdata/unittest/partition/"
 
-
+from casatestutils import testhelper as th
 ''' Unit Tests for task partition'''
 
 # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 

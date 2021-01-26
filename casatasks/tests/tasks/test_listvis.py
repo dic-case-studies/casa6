@@ -20,12 +20,7 @@ else:
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
-if is_python3:
-    ### for listing import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import listing as lt
-else:
-    import listing as lt
+from casatestutils import listing as lt
 
 datapath = ctsys_resolve('unittest/listvis')
 refpath = ctsys_resolve('unittest/listvis/listvis_reference/')

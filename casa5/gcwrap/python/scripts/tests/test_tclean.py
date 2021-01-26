@@ -99,7 +99,7 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor,impbcor
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
      from casatasks import impbcor
@@ -2110,6 +2110,49 @@ class test_cube(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report) 
+
+     def test_cube_flagged_mosaic_hogbom(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='hogbom', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     def test_cube_flagged_mosaic_clark(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in clark.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='clark', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01252, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     def test_cube_flagged_mosaic_multiscale(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='multiscale', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01086, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     def test_cube_flagged_mosaic_mtmfs(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='mtmfs', nterms=1, gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model.tt0'], imgval=[(self.img+'.model.tt0', 0.00530, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model.tt0', 0, [1,1,0,0]), (self.img+'.model.tt0', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
 
 ##############################################
 ##############################################

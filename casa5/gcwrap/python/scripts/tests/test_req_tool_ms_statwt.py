@@ -8,16 +8,20 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#import testhelper as th
+#from casatestutils import testhelper as th
 
 subdir = 'unittest/statwt/'
-if th.is_casa6():
+is_casa6 = False
+try:
     from casatools import ctsys, table, ms
     datadir = ctsys.resolve(subdir)
     myms = ms()
     mytb = table()
-else:
+    is_casa6 = True
+
+except ImportError:
     from taskinit import *
     myms = mstool()
     mytb = tbtool()
@@ -275,7 +279,7 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
-                if th.is_casa6():
+                if is_casa6:
                     self.assertTrue(
                         shutil.copytree(src, dst),
                         "Unable to copy " + src + " to " + dst
@@ -931,3 +935,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+

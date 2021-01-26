@@ -29,7 +29,8 @@ import shutil
 from __main__ import default
 from tasks import importasdm, flagdata, exportasdm, listpartition
 from taskinit import mstool, tbtool, msmdtool
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 import unittest
 import partitionhelper as ph
 from parallel.parallel_data_helper import ParallelDataHelper

@@ -7,8 +7,6 @@ import shutil
 import numpy
 import unittest
 from numpy import array
-#
-#import listing
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -17,8 +15,7 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
+    from casatestutils import selection_syntax
 
     tb = table( )
 
@@ -36,7 +33,7 @@ else:
     # the global tb tool is used here as is
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 

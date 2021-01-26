@@ -29,13 +29,14 @@ else:
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
-        
-if is_python3:
-    ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
-else:
-    import testhelper as th
+
+from casatestutils import testhelper as th
+#if is_python3:
+##    ### for testhelper import
+#    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+#    import testhelper as th
+#else:
+#    import testhelper as th
 
 datapath = ctsys_resolve('unittest/fringefit/')
 

@@ -31,9 +31,9 @@ import unittest
 from casatasks.private.casa_transition import *
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    sys.path.append(os.path.abspath(os.path.dirname(__file__))) # May be needed for recipes.listshapes
     from recipes.listshapes import listshapes
-    import testhelper as th
+    #import testhelper as th
     from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
     from casatools import ctsys, ms, msmetadata, table
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
@@ -46,7 +46,7 @@ if is_CASA6:
 else:
     from __main__ import default
     from recipes.listshapes import listshapes
-    import testhelper as th
+    #import testhelper as th
     from tasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
     from taskinit import mstool as ms
     from taskinit import msmdtool as msmetadata
@@ -57,6 +57,8 @@ else:
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
+
+from casatestutils import testhelper as th
 
 # common function to get a dictionary item iterator
 if is_python3:

@@ -676,14 +676,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
         # (spw 3 tested above)
 
-
-
-
-
-
-
-
-
 def suite():
     return[gaincal_test]
 

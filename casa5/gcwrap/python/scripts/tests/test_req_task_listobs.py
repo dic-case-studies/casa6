@@ -46,7 +46,6 @@
 #
 ###########################################################################
 from __future__ import absolute_import
-from __future__ import print_function
 
 CASA6 = False
 import string
@@ -57,21 +56,30 @@ import hashlib
 import subprocess
 import shutil
 
+from casatasks.private.casa_transition import *
+
 try:
     import casatools
     from casatasks import partition, split, listobs, casalog
     from casatools.platform import bytes2str
+
     ms = casatools.ms()
-    datapath = casatools.ctsys.resolve('unittest/listobs/')
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listobs/'
 
-from casatestutils import listing
-lt = listing
+# If the test is being run in CASA6 use the new method to get the CASA path
+
+from casatestutils import listing as lt
+
+    # Generate the test data
+
+if CASA6:
+    datapath = casatools.ctsys.resolve('unittest/listobs/')
+else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listobs/'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -83,8 +91,13 @@ else:
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     validator_exc_type = RuntimeError
 
-# Generate the test data
-mesSet = os.path.join(datapath, 'uid___X02_X3d737_X1_01_small.ms')
+# Input data
+mesSet = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+# Data for old test
+msfile1Orig = os.path.join(datapath,'ngc5921_ut.ms')
+msfile2Orig = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+nep = os.path.join(datapath,'nep2-shrunk.ms')
+
 
 outvis = 'genmms.mms'
 if not os.path.exists(outvis):
@@ -105,7 +118,7 @@ logpath = casalog.logfile()
 # Old test input and output names
 msfile1 = 'ngc5921_ut.ms'
 msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
-nep = 'nep2-shrunk.ms'
+# nep = 'nep2-shrunk.ms'
 # Old reffiles
 reffile = os.path.join(datapath, 'listobs_reference/reflistobs')
 
@@ -519,11 +532,9 @@ class test_listobs(listobs_test_base):
         else:
             self.ms = ms
         if (not os.path.exists(msfile1)):
-            shutil.copytree(datapath+msfile1, msfile1, symlinks=True)
+            shutil.copytree(msfile1Orig, msfile1, symlinks=True)
         if (not os.path.exists(msfile2)):
-            shutil.copytree(datapath+msfile2, msfile2, symlinks=True)
-        if (not os.path.exists(nep)):
-            shutil.copytree(datapath+nep, nep, symlinks=True)
+            shutil.copytree(msfile2Orig, msfile2, symlinks=True)
 
     def tearDown(self):
         # remove files and temp logs
@@ -536,11 +547,7 @@ class test_listobs(listobs_test_base):
 
     @classmethod
     def tearDownClass(cls):
-        # remove all the generated and input data
-        shutil.rmtree(nep)
-        shutil.rmtree(msfile1)
-        shutil.rmtree(msfile2)
-        os.system('rm -rf reflistobs*')
+        # remove all the generated data
         os.system('rm -rf genmms.mms')
         os.system('rm -rf gentimeavgms.ms')
         os.system('rm -rf gentimeavgmms.mms')
@@ -897,8 +904,14 @@ class test_listobs(listobs_test_base):
     # Test the inf loop bug CAS-6733
 
     def test_CAS_6733(self):
-        """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""            
-        vis = os.path.join(datapath,'CAS-6733.ms')
+        """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
+        if CASA6:
+            vis = casatools.ctsys.resolve('visibilities/evla/CAS-6733.ms')
+
+        elif os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            vis = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/CAS-6733.ms'
+        else:
+            vis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/CAS-6733.ms'
 
         try:
             listobs(vis=vis)
@@ -1051,7 +1064,7 @@ class test_listobs(listobs_test_base):
         out = "newobs9.txt"
         diff = "difflistobs9"
         reference = reffile + '_ephem'
-        self.res = listobs(vis=nep, listfile=output, verbose=True, listunfl=False)
+        self.res = listobs(vis=os.path.join(datapath, nep), listfile=output, verbose=True, listunfl=False)
         #        # Remove the name of the MS from output before comparison
         os.system("sed '1,3d' " + output + ' > ' + out)
         os.system("diff " + reference + " " + out + " > " + diff)

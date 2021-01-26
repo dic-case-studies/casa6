@@ -6,17 +6,18 @@ import shutil
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     ### for testhelper import
-    import sys
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #import sys
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
     from casatools import ctsys
     from casatasks import bandpass
 else:
-    import testhelper as th
+    #import testhelper as th
     from __main__ import default
     from tasks import bandpass
     from taskinit import *
 
+from casatestutils import testhelper as th
 import unittest
 
 
