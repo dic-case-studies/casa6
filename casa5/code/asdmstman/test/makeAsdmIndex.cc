@@ -11,7 +11,7 @@
 #include <tables/Tables/ArrColDesc.h>
 #include <tables/DataMan/DataManAccessor.h>
 #include <casa/Arrays/Array.h>
-#include <casa/Arrays/ArrayIO.h>
+#include <casacore/casa/IO/ArrayIO.h>
 #include <casa/Arrays/ArrayUtil.h>
 #include <casa/Arrays/ArrayLogical.h>
 #include <casa/IO/AipsIO.h>

@@ -2355,6 +2355,24 @@ using namespace DirectionReferenceCodeMod;
 			
 		
 	 
+#include <alma/ASDM/VLAWVRTable.h>
+#include <alma/ASDM/VLAWVRRow.h>
+		
+			
+		
+			
+		
+			
+		
+			
+		
+			
+		
+			
+		
+			
+		
+	 
 #include <alma/ASDM/WVMCalTable.h>
 #include <alma/ASDM/WVMCalRow.h>
 		
@@ -12795,6 +12813,105 @@ namespace asdm {
 	
 	    if (rows.at(i)->isSubintegrationNumberExists())
 		    subintegrationNumber.put(rowIndex, rows.at(i)->getSubintegrationNumber());
+	
+
+		    rowIndex++;		
+	    }
+	    table_p_->flush();
+    }
+	 
+    ASDM_VLAWVR::ASDM_VLAWVR() {
+      name_ = "ASDM_VLAWVR";
+      tableDesc_.comment() = "The verbatim copy of the ASDM's dataset VLAWVR table";
+      		
+      tableDesc_.addColumn(ScalarColumnDesc<String>("antennaId", "blabla"));
+  		
+      tableDesc_.addColumn(ArrayColumnDesc<double>("timeInterval", "blabla"));
+  		
+  		
+      tableDesc_.addColumn(ScalarColumnDesc<int>("numChan", "blabla"));
+  		
+      tableDesc_.addColumn(ArrayColumnDesc<float>("hiValues", "blabla"));
+  		
+      tableDesc_.addColumn(ArrayColumnDesc<float>("loValues", "blabla"));
+  		
+  		
+      tableDesc_.addColumn(ArrayColumnDesc<double>("chanFreqCenter", "blabla"));
+  		
+      tableDesc_.addColumn(ArrayColumnDesc<double>("chanWidth", "blabla"));
+  		
+      tableDesc_.addColumn(ScalarColumnDesc<String>("wvrId", "blabla"));
+  		  		
+    }
+
+    ASDM_VLAWVR::~ASDM_VLAWVR() {
+    }
+
+    const TableDesc& ASDM_VLAWVR::tableDesc() const {
+      return tableDesc_;
+    }
+	
+    void ASDM_VLAWVR::fill(const ASDM& asdm) {
+	    std::vector<VLAWVRRow*> rows = asdm.getVLAWVR().get();
+	    unsigned int rowIndex = table_p_->nrow();
+	    table_p_->addRow(rows.size());
+  		
+        ScalarColumn<String> antennaId(*table_p_, "antennaId");             
+  		
+        ArrayColumn<double> timeInterval(*table_p_, "timeInterval");             
+  		
+  		
+        ScalarColumn<int> numChan(*table_p_, "numChan");             
+  		
+        ArrayColumn<float> hiValues(*table_p_, "hiValues");             
+  		
+        ArrayColumn<float> loValues(*table_p_, "loValues");             
+  		
+  		
+        ArrayColumn<double> chanFreqCenter(*table_p_, "chanFreqCenter");             
+  		
+        ArrayColumn<double> chanWidth(*table_p_, "chanWidth");             
+  		
+        ScalarColumn<String> wvrId(*table_p_, "wvrId");             
+  		  	
+
+	    for (unsigned int i = 0; i < rows.size(); i++) {
+		    
+	
+	    antennaId.put(rowIndex, rows.at(i)->getAntennaId().toString());
+	
+
+	
+	    timeInterval.put(rowIndex, ati2CASA1D<double>(rows.at(i)->getTimeInterval()));
+	
+
+		    
+	
+	    numChan.put(rowIndex, rows.at(i)->getNumChan());
+	
+
+	
+	    hiValues.put(rowIndex, basic2CASA1D<float,float>(rows.at(i)->getHiValues()));
+	
+
+	
+	    loValues.put(rowIndex, basic2CASA1D<float,float>(rows.at(i)->getLoValues()));
+	
+
+		    
+	
+	    if (rows.at(i)->isChanFreqCenterExists())
+		    chanFreqCenter.put(rowIndex, ext2CASA1D<Frequency,double>(rows.at(i)->getChanFreqCenter()));
+	
+
+	
+	    if (rows.at(i)->isChanWidthExists())
+		    chanWidth.put(rowIndex, ext2CASA1D<Frequency,double>(rows.at(i)->getChanWidth()));
+	
+
+	
+	    if (rows.at(i)->isWvrIdExists())
+		    wvrId.put(rowIndex, rows.at(i)->getWvrId());
 	
 
 		    rowIndex++;		

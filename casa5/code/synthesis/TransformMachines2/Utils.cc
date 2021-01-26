@@ -288,7 +288,7 @@ namespace casa{
   using namespace vi;
   Bool IChangeDetector::changed(const VisBuffer2 &vb) const
   {
-     for (Int i=0;i<vb.nRows();++i)
+     for (rownr_t i=0;i<vb.nRows();++i)
           if (changed(vb,i)) return true;
      return false;
   }
@@ -787,6 +787,8 @@ namespace casa{
     Bool SynthesisUtils::getenv(const char *name, const Bool defaultVal);
   template 
     Float SynthesisUtils::getenv(const char *name, const Float defaultVal);
+  template 
+    double SynthesisUtils::getenv(const char *name, const double defaultVal);
 
   Float SynthesisUtils::libreSpheroidal(Float nu) 
   {

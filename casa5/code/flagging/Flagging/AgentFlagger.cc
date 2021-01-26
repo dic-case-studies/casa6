@@ -1349,11 +1349,16 @@ AgentFlagger::parseClipParameters(String field, String spw, String array, String
 
 	if (chanbin.type() == casac::variant::INT)
 	{
-		agent_record.define("chanbin", chanbin.toInt());
+		/*** need range check ***/
+		agent_record.define("chanbin", (int) chanbin.toInt());
 	}
 	else if (chanbin.type() == casac::variant::INTVEC)
 	{
-		agent_record.define("chanbin", Array<Int>(chanbin.toIntVec()));
+		/*** need range check ***/
+		auto cb = chanbin.toIntVec( );
+        std::vector<int> vec;
+        std::for_each( cb.begin( ), cb.end( ), [&](long x){vec.push_back((int)x);} );
+		agent_record.define("chanbin", Array<Int>(vec));
 	}
 
     agent_record.define("timeavg", timeavg);
@@ -1515,11 +1520,16 @@ AgentFlagger::parseTfcropParameters(String field, String spw, String array, Stri
 
 	if (chanbin.type() == casac::variant::INT)
 	{
-		agent_record.define("chanbin", chanbin.toInt());
+		/*** need range check ***/
+		agent_record.define("chanbin", (int) chanbin.toInt());
 	}
 	else if (chanbin.type() == casac::variant::INTVEC)
 	{
-		agent_record.define("chanbin", Array<Int>(chanbin.toIntVec()));
+		/*** need range check ***/
+		auto cb = chanbin.toIntVec( );
+        std::vector<int> vec;
+        std::for_each( cb.begin( ), cb.end( ), [&](long x){vec.push_back((int)x);} );
+		agent_record.define("chanbin", Array<Int>(vec));
 	}
 
 	agent_record.define("channelavg", channelavg);

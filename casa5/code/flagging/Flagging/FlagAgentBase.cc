@@ -1968,18 +1968,15 @@ FlagAgentBase::chunkSummary()
     if (chunkFlags_p > 0)
     {
         tableFlags_p +=  chunkFlags_p;
-        std::string flagOrUnflag;
+        std::string flagStr = "unflagged";
         if (flag_p) {
-            flagOrUnflag = "flagged";
-        } else {
-            flagOrUnflag = "unflagged";
+            flagStr = "flagged";
         }
-
-        *logger_p << LogIO::NORMAL << "=> "  << "Data " << flagOrUnflag << " so far " <<
-            100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" <<
-            " (" << chunkFlags_p << "/" << flagDataHandler_p->progressCounts_p <<
-            ")" << LogIO::POST;
-    }
+        *logger_p << LogIO::NORMAL << "=> "  << "Data " << flagStr << " so far "
+                  << 100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%"
+                  << " (" << chunkFlags_p << "/" << flagDataHandler_p->progressCounts_p
+                  << ")" << LogIO::POST;
+	}
 
     // Only the clipping agent is capable of detecting this, and besides in general
     // we should not have NaNs, so it is better not to print this log if possible

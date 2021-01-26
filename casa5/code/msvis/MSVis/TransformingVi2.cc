@@ -135,7 +135,7 @@ void
 TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isNewMs,
                                        Bool isNewArrayId, Bool isNewFieldId,
                                        Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       Int nRows, Int nChannels, Int nCorrelations,
+                                       rownr_t nRows, Int nChannels, Int nCorrelations,
                                        const Vector<Int> & correlations,
                                        const Vector<Stokes::StokesTypes> & correlationsDefined,
                                        const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -350,7 +350,7 @@ TransformingVi2::getReportingFrameOfReference ()  const
 }
 
 void
-TransformingVi2::getRowIds (Vector<uInt> & rowids)  const
+TransformingVi2::getRowIds (Vector<rownr_t> & rowids)  const
 {
      getVii()->getRowIds (rowids);
 }
@@ -470,19 +470,19 @@ TransformingVi2::nPolarizationIds ()  const
     return getVii()->nPolarizationIds ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRows ()  const
 {
     return getVii()->nRows ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRowsInChunk ()  const
 {
     return getVii()->nRowsInChunk ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRowsViWillSweep ()  const
 {
     return getVii()->nRowsViWillSweep ();
@@ -492,6 +492,10 @@ Int
 TransformingVi2::nSpectralWindows ()  const
 {
     return getVii()->nSpectralWindows ();
+}
+
+Int TransformingVi2::nTimes() const {
+    return getVii()->nTimes();
 }
 
 void
@@ -585,12 +589,12 @@ TransformingVi2::setReportingFrameOfReference (Int frame)
 }
 
 void
-TransformingVi2::setRowBlocking (Int nRows)
+TransformingVi2::setRowBlocking (rownr_t nRows)
 {
      getVii()->setRowBlocking (nRows);
 }
 
-Int
+rownr_t
 TransformingVi2::getRowBlocking () const
 {
      return getVii()->getRowBlocking ();

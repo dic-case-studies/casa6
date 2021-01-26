@@ -26,7 +26,7 @@
 //# $Id: $
 
 #include <casaqt/QtPlotServer/QtPlotFrame.qo.h>
-#include <qwt_legend.h>
+#include <qwt/qwt_legend.h>
 #include <casaqt/QwtConfig.h>
 
 namespace casa {

@@ -112,7 +112,7 @@ msplot::open(const std::string& msname, const bool dovel,
 
 /////////////////////////////////////////////////////////////////////////////////
 bool
-msplot::clearplot( const int subplot )
+msplot::clearplot( const long subplot )
 {
     String Fn = "clearplot( subplot )";
     debugFnEntry( Fn );
@@ -288,7 +288,7 @@ msplot::close()
 //////////////////////////////////////////////////////////////////////////////
 //
 bool
-msplot::plotoptions(const int subplot, 
+msplot::plotoptions(const long subplot, 
 	const std::string& plotsymbol, 
 	const std::string& plotcolor, 
 	const std::string& multicolor, 
@@ -299,8 +299,8 @@ msplot::plotoptions(const int subplot,
 	const bool overplot, 
 	const bool replacetopplot,
 	const bool removeoldpanels, 
-        const int skipnrows,
-        const int averagenrows,
+        const long skipnrows,
+        const long averagenrows,
         const std::string& extendflag,
 	const std::string& connect,
 	const bool showflags, 
@@ -387,7 +387,7 @@ msplot::plotoptions(const int subplot,
     // An option to all users to select skipping of point plotting.
     // Allows the user to plot every nth point.
     if ( skipnrows > 0 )
-	theOptions.define( RecordFieldId( "skipnrows" ), skipnrows );
+	theOptions.define( RecordFieldId( "skipnrows" ), (int) skipnrows );
 
 
     //////////////////////////////////////////////////////////////////////
@@ -395,7 +395,7 @@ msplot::plotoptions(const int subplot,
     // other than spectral or correlation averaging.
     // Allows the user to average across baselines and/or time.
     if ( averagenrows > 0 )
-	theOptions.define( RecordFieldId( "averagenrows" ), averagenrows );
+	theOptions.define( RecordFieldId( "averagenrows" ), (int) averagenrows );
 
     //////////////////////////////////////////////////////////////////////
     // An option to all users to select flagging extensions.
@@ -880,7 +880,7 @@ msplot::iterplotstop( const bool rmplotter )
 //////////////////////////////////////////////////////////////////////////////////
 bool
 msplot::savefig( const std::string& filename,
-                const int dpi,
+                const long dpi,
 		const std::string& orientation,
 		const std::string& papertype,
 		const std::string& facecolor,
@@ -911,7 +911,7 @@ msplot::savefig( const std::string& filename,
     
 /////////////////////////////////////////////////////////////////////////////////
 bool
-msplot::markregion( const int subplot, 
+msplot::markregion( const long subplot, 
 		   const std::vector<double>& region )
 {
     String Fn = "markregion( nrows, ncols, panel, region )";

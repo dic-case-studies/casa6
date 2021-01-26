@@ -27,7 +27,7 @@
 #include <guitools/Histogram/Histogram.h>
 #include <QDebug>
 #include <QtCore/qmath.h>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 #include <limits>
 
 namespace casa {

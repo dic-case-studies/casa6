@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="setjy" category="modeling, calibration">
+<task category="imaging, calibration" name="setjy" type="function">
 <shortdescription>Fills the model column with the visibilities of a calibrator</shortdescription>
 <description>
 This task places the model visibility amp and phase associated with a
@@ -16,7 +11,11 @@ entered explicitly.
 setjy need only be run on the calibrator sources with a known flux
 density and/or model.
 
-Models are available for 3C48, 3C138, and 3C286 between 1.4 and 43 GHz.  3C147 is available above 13 GHz.  These models are scaled to the precise frequency of the data.  Only I models are presently available.
+Models are available in CASA for 3C48, 3C138, 3C286, and 3C147 between 230 MHz 
+and 43 GHz.  In addition, P-band models for the frequency range between 230 - 
+470 MHz are available in CASA for 3C123, 3C196, 3C295, and 3C380.
+These models are scaled to the precise frequency of the data.  Only I models are
+presently available.
 
 For Solar System Objects, model determination was updated and it is
 available via the 'Butler-JPL-Horizons 2012' standard. Currently they
@@ -30,19 +29,18 @@ models are in the directory::/usr/lib/casapy/data/nrao/VLA/CalModels/
 3C286_L.im (egs).
 </description>
   <input>
-          <!-- No longer have mustexist="true", because vis is not used when
-               listmodimages is true.  -->
-    <param type="string" name="vis" >
+          
+    <param name="vis" type="string">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="string" name="field">
+    <param name="field" type="string">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields, but run setjy one field
@@ -62,10 +60,10 @@ models are in the directory::/usr/lib/casapy/data/nrao/VLA/CalModels/
                         starting with 4C
 </description>
       <description>Field name(s)</description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="string" name="spw">
+    <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows)
@@ -75,10 +73,10 @@ models are in the directory::/usr/lib/casapy/data/nrao/VLA/CalModels/
                      could be achieved using (and possibly
                      constructing) a cube for modimage.
 </description>
-      <value></value>
+      <value/>
     </param>
 
-                <param type="bool" name="selectdata">
+                <param name="selectdata" type="bool">
 <shortdescription>Other data selection parameters</shortdescription>
 <description>Other parameters for selecting part(s) of the MS to
 operate on.
@@ -92,7 +90,7 @@ operate on.
                   <value>False</value>
                 </param>
     
-                <param type="any" name="timerange" subparam="true">
+                <param subparam="true" name="timerange" type="any">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -109,13 +107,13 @@ operate on.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-                  <any type="variant" limittypes="string stringArray"/>
-                  <value type="string"></value>
+                  <any limittypes="string stringArray" type="variant"/>
+                  <value type="string"/>
                 </param>
 
-                <param type="any" name="scan" subparam="true">
+                <param subparam="true" name="scan" type="any">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
@@ -130,17 +128,17 @@ operate on.
                      Check 'go listobs' to insure the scan numbers are
                      in order.
 </description>
-                  <any type="variant" limittypes="string stringArray"/>
-                  <value type="string"></value>
+                  <any limittypes="string stringArray" type="variant"/>
+                  <value type="string"/>
                 </param>
 
-                <param type="string" name="intent" subparam="true">
+                <param subparam="true" name="intent" type="string">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      Default: '' (all
 
                         Example: using wildcard characters,
-                        intent="*CALIBRATE_AMPLI*" will match field(s)
+                        intent=&quot;*CALIBRATE_AMPLI*&quot; will match field(s)
                         contains CALIBRATE_AMPLI in a list of intents
 
                      WARNING: If a source with a specific field id has
@@ -150,10 +148,10 @@ operate on.
                      the source may be cleared and overwritten even if
                      the part of the scans not selected by intent.
 </description>
-                  <value type="string"></value>
+                  <value type="string"/>
                 </param>
     
-                <param type="any" name="observation" subparam="true">
+                <param subparam="true" name="observation" type="any">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -161,11 +159,11 @@ operate on.
 
                          Example: observation='0~2,4'
 </description>
-                  <any type="variant" limittypes="string int"/>
-                  <value type="string"></value>
+                  <any limittypes="string int" type="variant"/>
+                  <value type="string"/>
                 </param>
 
-    <param type="bool" name="scalebychan">
+    <param name="scalebychan" type="bool">
 <shortdescription>Scale the flux density on a per channel basis or else on a per spw basis</shortdescription>
 <description>Scale the flux density on a per channel basis?
                      Default: True
@@ -176,12 +174,12 @@ operate on.
                      basis. If False then it only one fluxdensity
                      value is calculated per spw.  (Either way, all
                      channels in spw are modified.)  It is effectively
-                     True if fluxdensity[0] >  0.0. 
+                     True if fluxdensity[0] &gt;  0.0. 
 </description>
       <value>True</value>
     </param>
 
-    <param type="string" name="standard">
+    <param name="standard" type="string">
 <shortdescription>Flux density standard</shortdescription>
 <description>Flux density standard, used if fluxdensity[0] less than 0.0
                      Default: 'Perley-Butler 2017'
@@ -226,15 +224,15 @@ operate on.
                         <value>Stevens-Reynolds 2016</value>
       <value>manual</value>
       <value>fluxscale</value>
-      <!--<value>image</value>-->
+      
       </allowed>
     </param>
 
-    <param type="string" name="model" subparam="true">
+    <param subparam="true" name="model" type="string">
 <shortdescription>File location for field model</shortdescription>
 <description>Model image (I only) for setting the model visibilities.
-                     Subparameter of standard="Perley-Butler 2010",
-                     "Perley-Butler 2013", and "Perley-Butler 2017"
+                     Subparameter of standard=&quot;Perley-Butler 2010&quot;,
+                     &quot;Perley-Butler 2013&quot;, and &quot;Perley-Butler 2017&quot;
                      Default: '' (do not use a model image)
 
                      The model can be a cube, and its channels do not
@@ -262,23 +260,23 @@ operate on.
                      of clean components instead of an image that has
                      been convolved with a clean beam.
 </description>
-      <value></value>
+      <value/>
     </param>
-                <!-- Deprecated parameter, only 'hidden' for now for backward compatibility (2013.07.02)-->
-    <param type="string" name="modimage" subparam="true" visibility="hidden">
+                
+    <param visibility="hidden" subparam="true" name="modimage" type="string">
 <shortdescription>File location for field model (deprecated)</shortdescription>
 <description>File location for field model
                      Deprecated
 </description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="bool" name="listmodels" subparam="true">
+    <param subparam="true" name="listmodels" type="bool">
 <shortdescription>List the available models for VLA calibrators or Tb models for Solar System objects</shortdescription>
 <description>List the available models for VLA calibrators or Tb
 models for Solar System objects
-                     Subparameter of standard="Perley-Butler 2010",
-                     "Perley-Butler 2013", and "Perley-Butler 2017" 
+                     Subparameter of standard=&quot;Perley-Butler 2010&quot;,
+                     &quot;Perley-Butler 2013&quot;, and &quot;Perley-Butler 2017&quot; 
                      Default: False
                      Options: False|True
 
@@ -286,7 +284,7 @@ models for Solar System objects
                      (for extragalactic calibrators) that are present
                      on the system. It looks for *.im* *.mod* in
                      . including its sub-directories but skipping any
-                     directory name start with ".", CalModels, and
+                     directory name start with &quot;.&quot;, CalModels, and
                      CalModels directories in the casa['dirs']['data']
                      tree. It does not check whether they are
                      appropriate for the MS! If
@@ -300,11 +298,11 @@ models for Solar System objects
       <value>False</value>
     </param>
 
-    <param type="any" name="fluxdensity" subparam="true">
-      <any type="variant" limittypes="int intArray doubleArray"/>
+    <param subparam="true" name="fluxdensity" type="any">
+      <any limittypes="int intArray doubleArray" type="variant"/>
 <shortdescription>Specified flux density in Jy [I,Q,U,V]; (-1 will lookup values)</shortdescription>
 <description>Specified flux density in Jy [I,Q,U,V]
-                     Subparameter of standard="manual"
+                     Subparameter of standard=&quot;manual&quot;
                      Default: -1 (uses [1,0,0,0] flux density for
                      unrecognized sources, and standard flux densities
                      for ones recognized by the default standard
@@ -333,13 +331,13 @@ models for Solar System objects
 </description>
       <value type="int">-1</value>
     </param>
-                <param type="any" name="spix" subparam="true">
-                <!--<param type="double" name="spix" subparam="true">-->
-                        <any type="variant" limittypes="double doubleArray"/>
+                <param subparam="true" name="spix" type="any">
+                
+                        <any limittypes="double doubleArray" type="variant"/>
 <shortdescription>Spectral index (including higher terms) of I fluxdensity</shortdescription>
 <description>Spectral index for I flux density
-                     Subparameter of standard="manual"
-                     Default: [] =>0.0 (no effect)
+                     Subparameter of standard=&quot;manual&quot;
+                     Default: [] =&gt;0.0 (no effect)
                      Options: a float or a list of float values
 
                      S = fluxdensity *
@@ -357,10 +355,10 @@ models for Solar System objects
 </description>
       <value type="double">0.0</value>
     </param>
-    <param type="string" name="reffreq" subparam="true">
+    <param subparam="true" name="reffreq" type="string">
 <shortdescription>Reference frequency for spix</shortdescription>
 <description>Reference frequency for spix
-                     Subparameter of standard="manual"
+                     Subparameter of standard=&quot;manual&quot;
                      Default: '1GHz' (this is only here to prevent
                      division by 0!)
 
@@ -384,12 +382,12 @@ models for Solar System objects
 </description>
       <value>1GHz</value>
     </param>
-                <!-- for polarization fraction handling -->
-    <param type="doubleArray" name="polindex" subparam="true">
+                
+    <param subparam="true" name="polindex" type="doubleArray">
 <shortdescription>Coefficients of an expansion of frequency-dependent linear polarization fraction expression</shortdescription>
 <description>Coefficients of the frequency-dependent linear
 polarization index (polarization fraction) 
-                     Subparameter of standard="manual"
+                     Subparameter of standard=&quot;manual&quot;
                      Default: []
 
                      Expressed as pol. index = sqrt(Q^2+U^2)/I = c0 +
@@ -404,13 +402,13 @@ polarization index (polarization fraction)
 
                         Example: [0.2, -0.01] (= [c0,c1]) 
 </description>
-      <value></value>
+      <value/>
     </param>
-    <param type="doubleArray" name="polangle" subparam="true">
+    <param subparam="true" name="polangle" type="doubleArray">
 <shortdescription>Coefficients of an expansion of frequency-dependent polarization angle expression (in radians)</shortdescription>
 <description>Coefficients of the frequency-dependent linear
 polarization angle (in radians)
-                     Subparameter of standard="manual"
+                     Subparameter of standard=&quot;manual&quot;
                      Default: []
 
                      Expressed as pol. angle = 0.5*arctan(U/Q) = d0 +
@@ -427,12 +425,12 @@ polarization angle (in radians)
 
                         Example: [0.57, 0.2] (=[d0,d1])
 </description>
-      <value></value>
+      <value/>
     </param>
-    <param type="double" name="rotmeas" subparam="true">
+    <param subparam="true" name="rotmeas" type="double">
 <shortdescription>Rotation measure (in rad/m^2)</shortdescription>
 <description>Rotation measure (in rad/m^2)
-                     Subparameter of standard="manual"
+                     Subparameter of standard=&quot;manual&quot;
                      Default: 0.0
 
                      Note on the use of polindex, polangle and rotmeas
@@ -448,10 +446,10 @@ polarization angle (in radians)
       <value>0.0</value>
     </param>
 
-                <param type="record" name="fluxdict" subparam="true">
+                <param subparam="true" name="fluxdict" type="record">
 <shortdescription>Output dictionary from fluxscale</shortdescription>
 <description>Output dictionary from fluxscale
-                     Subparameter of standard="fluxscale"
+                     Subparameter of standard=&quot;fluxscale&quot;
 
                      Using the flexibly results, the flux density,
                      spectral index, and reference frequency are
@@ -459,31 +457,31 @@ polarization angle (in radians)
                      reffreq parameters, respectively. The field and
                      spw selections can be used to specify subset of
                      the fluxdict to be used to set the model. If they
-                     are left as default (field="", spw="") all fields
+                     are left as default (field=&quot;&quot;, spw=&quot;&quot;) all fields
                      and/or spws in the fluxdict (but those spws with
                      fluxd=-1 will be skipped) are used. 
  </description>
-                       <value type="record"></value>
+                       <value type="record"/>
                 </param>
 
-                <param type="bool" name="useephemdir" subparam="true">
+                <param subparam="true" name="useephemdir" type="bool">
 <shortdescription>Use directions in the ephemeris table</shortdescription>
 <description>Use directions in the ephemeris table for the solar
 system object?
-                     Subparameter of standard="Butler-JPL-Horizons
-                     2012",
+                     Subparameter of standard=&quot;Butler-JPL-Horizons
+                     2012&quot;,
                      Default: False
                      Options: False|True
 </description>
                         <value>False</value>
                 </param> 
 
-                <param type="string" name="interpolation" subparam="true">
+                <param subparam="true" name="interpolation" type="string">
 <shortdescription>Method to be used to interpolate in time</shortdescription>
 <description>Method to be used to interpolate in time for the time
 variable sources (3C48,3C138,3C147).
-                     Subparameter of standard="Perley-Butler 2013",
-                     and "Perley-Butler 2017" 
+                     Subparameter of standard=&quot;Perley-Butler 2013&quot;,
+                     and &quot;Perley-Butler 2017&quot; 
                      Default: 'nearest'
                      Options: 'nearest|linear|cubic|spline'
 
@@ -496,11 +494,11 @@ variable sources (3C48,3C138,3C147).
                      <value>linear</value>
                      <value>cubic</value>
                      <value>spline</value>
-                     <value></value>
+                     <value/>
                    </allowed>
                 </param>  
 
-    <param type="bool" name="usescratch">
+    <param name="usescratch" type="bool">
 <shortdescription>Will create if necessary and use the MODEL_DATA </shortdescription>
 <description>Will create if necessary and use the MODEL_DATA
                      Default: False
@@ -540,97 +538,86 @@ variable sources (3C48,3C138,3C147).
       <value>False</value>
       </param>
 
-    <param type="bool" name="ismms" subparam="true" visibility="hidden">
-      <description>to be used internally for MMS</description>
+    <param visibility="hidden" subparam="true" name="ismms" type="bool"><shortdescription>to be used internally for MMS</shortdescription><description>to be used internally for MMS</description>
+      
       <value>False</value>
     </param>
 
                 <constraints>
                   <when param="selectdata">
-        <equals type="bool" value="False"/>
-        <equals type="bool" value="True">
-          <default param="timerange"><value type="string"></value>
+        <equals value="False" type="bool"/>
+        <equals value="True" type="bool">
+          <default param="timerange"><value type="string"/>
           </default>
-          <default param="scan"><value type="string"></value>
+          <default param="scan"><value type="string"/>
           </default>
-          <default param="intent"><value type="string"></value>
+          <default param="intent"><value type="string"/>
           </default>
-          <default param="observation"><value type="string"></value>
+          <default param="observation"><value type="string"/>
           </default>
               </equals>
                   </when>
-                  <!--
-                  <when param="fluxdensity">
-                    <notequals type="int" value="-1">
-                      <default param="spix"><value type="int">0</value></default>
-                      <default param="reffreq"><value type="string">1GHz</value>
-                      </default>
-                    </notequals>
-                  </when>-->
+                  
                   <when param="standard">
-                  <equals type="string" value="Perley-Butler 2017">
-                   <default param="model"><value type="string"></value>
+                  <equals value="Perley-Butler 2017" type="string">
+                   <default param="model"><value type="string"/>
                    </default>
                    <default param="listmodels"><value type="bool">False</value>
                    </default>
                    <default param="interpolation"><value type="string">nearest</value>
                    </default>
                   </equals>
-                  <equals type="string" value="Perley-Butler 2013">
-                   <default param="model"><value type="string"></value>
+                  <equals value="Perley-Butler 2013" type="string">
+                   <default param="model"><value type="string"/>
                    </default>
-                   <!--1<default param="modimage"><value type="string"></value>
-                   </default>-->
+                   
                    <default param="listmodels"><value type="bool">False</value>
                    </default>
                    <default param="interpolation"><value type="string">nearest</value>
                    </default>
                   </equals>
-                  <equals type="string" value="Perley-Butler 2010">
-                   <default param="model"><value type="string"></value>
+                  <equals value="Perley-Butler 2010" type="string">
+                   <default param="model"><value type="string"/>
                    </default>
-                   <!--<default param="modimage"><value type="string"></value>
-                   </default>-->
+                   
                    <default param="listmodels"><value type="bool">False</value>
                    </default>
                   </equals>
-      <equals type="string" value="Perley-Taylor 99"/>
-            <equals type="string" value="Baars"/>
-            <equals type="string" value="Perley 90"/>
-      <equals type="string" value="Perley-Taylor 95"/>
-      <equals type="string" value="Scaife-Heald 2012"/>
-      <equals type="string" value="Stevens-Reynolds 2016"/>
-                  <equals type="string" value="Butler-JPL-Horizons 2012">
+      <equals value="Perley-Taylor 99" type="string"/>
+            <equals value="Baars" type="string"/>
+            <equals value="Perley 90" type="string"/>
+      <equals value="Perley-Taylor 95" type="string"/>
+      <equals value="Scaife-Heald 2012" type="string"/>
+      <equals value="Stevens-Reynolds 2016" type="string"/>
+                  <equals value="Butler-JPL-Horizons 2012" type="string">
                    <default param="listmodels"><value type="bool">False</value>
                    </default>
                     <default param="useephemdir"><value type="bool">False</value>
                     </default>
                   </equals>
-                  <equals type="string" value="Butler-JPL-Horizons 2010"/>
-                  <equals type="string" value="manual">
+                  <equals value="Butler-JPL-Horizons 2010" type="string"/>
+                  <equals value="manual" type="string">
                       <default param="fluxdensity"><value type="intArray">
                            <value>1</value><value>0</value><value>0</value><value>0</value>
                            </value></default>
-                      <default param="spix"><value type="doubleArray"></value></default>
-                      <!--<default param="spix"><value type="double">0.0</value></default>-->
+                      <default param="spix"><value type="doubleArray"/></default>
+                      
                       <default param="reffreq"><value type="string">1GHz</value></default> 
-                      <default param="polindex"><value type="doubleArray"></value></default>
-                      <default param="polangle"><value type="doubleArray"></value></default>
+                      <default param="polindex"><value type="doubleArray"/></default>
+                      <default param="polangle"><value type="doubleArray"/></default>
                       <default param="rotmeas"><value type="double">0.0</value></default>
                   </equals>
-                  <equals type="string" value="fluxscale">
-                    <default param="fluxdict"><value type="record"></value></default>
+                  <equals value="fluxscale" type="string">
+                    <default param="fluxdict"><value type="record"/></default>
                   </equals>
-                  <!--<equals type="string" value="image">
-                    <default param="model"><value type="string"></value></default>
-                  </equals>-->
+                  
  
                   </when>
                 </constraints>
   </input>
         <output>
-        <param type="any" name="fluxd">
-                <description>Dictionary containing flux densities and their errors.</description>
+        <param name="fluxd" type="any"><shortdescription>Dictionary containing flux densities and their errors.</shortdescription><description>Dictionary containing flux densities and their errors.</description>
+                
                 <any type="variant"/>
                 <value>{}</value>
         </param>

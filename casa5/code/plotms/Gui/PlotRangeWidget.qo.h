@@ -27,7 +27,7 @@
 #ifndef PLOTRANGEWIDGET_QO_H
 #define PLOTRANGEWIDGET_QO_H
 
-#include <plotms/Gui/PlotRangeWidget.ui.h>
+#include <ui/ui_PlotRangeWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <graphics/GenericPlotter/PlotOptions.h>

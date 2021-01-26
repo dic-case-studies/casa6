@@ -5,7 +5,7 @@
       xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
       file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="delmod" category="calibration">
+<task type="function" name="delmod" category="imaging, calibration">
         <shortdescription>Deletes model representations in the MS</shortdescription>
 <description>
 This utility task is to be used to delete the model visibility data

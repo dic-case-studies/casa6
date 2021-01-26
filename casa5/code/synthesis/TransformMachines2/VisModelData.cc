@@ -192,13 +192,22 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
   if(!newTab.isWritable())
     return;
-  Vector<String> theParts(newTab.getPartNames(true));
+  auto part_block = newTab.getPartNames(true);
+  Vector<String> theParts(part_block.begin( ),part_block.end( ));
   if(theParts.nelements() > 1){
     for (uInt k=0; k < theParts.nelements(); ++k){
       MeasurementSet subms(theParts[k], newTab.lockOptions(), Table::Update);
       clearModel(subms);
     }
     return;
+  }
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    if(!newTab.source().isWritable())
+      return;
+    newTab.source().lock(True);   
   }
   LogIO logio;
   logio << "Clearing all model records in MS header."
@@ -241,6 +250,11 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	   newTab.rwKeywordSet().removeField("definedmodel_field_"+String::toString(fields[k]));
       }
   }
+  if(!alreadyLocked)
+    newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   ////Cleaning out orphaned image disk models
   String srctable=thems.source().isNull() ? "" : thems.source().tableName();
   Vector<String> possibleFT(2); 
@@ -257,7 +271,10 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 }
   void VisModelData::clearModel(const MeasurementSet& thems, const String field, const String specwindows){
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
-  Vector<String> theParts(newTab.getPartNames(true));
+    if(!newTab.isWritable())
+      return;
+  auto part_block = newTab.getPartNames(true);
+  Vector<String> theParts(part_block.begin( ),part_block.end( ));
   if(theParts.nelements() > 1){
     for (uInt k =0; k < theParts.nelements(); ++k){
       MeasurementSet subms(theParts[k], newTab.lockOptions(), Table::Update);
@@ -267,6 +284,14 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   }
   if(!newTab.isWritable())
     return;
+  Bool alreadyLocked=newTab.hasLock(True);
+  if(!alreadyLocked)
+    newTab.lock(True);
+  if(Table::isReadable(newTab.sourceTableName())){
+    if(!Table::isWritable(newTab.sourceTableName()))
+      return;
+    newTab.source().lock(True);   
+  }
 
   MSColumns msc(thems);
   Vector<String> fldnames=msc.field().name().getColumn();
@@ -363,13 +388,17 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 	      
 	
 	    
-    }
+	}
       else
 	logio << " " << fldnames[fields[k]] << " (id = " << fields[k] << ") not found." << LogIO::POST;
     }
     
   }
-  
+  if(!alreadyLocked)
+    newTab.unlock();
+  if(Table::isReadable(newTab.sourceTableName())){
+    newTab.source().unlock();   
+  }
   
 
   }
@@ -734,7 +763,8 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
   }
 
   Bool VisModelData::putModelRecord(const Vector<Int>& fieldIds, TableRecord& theRec, MeasurementSet& theMS){
-    Vector<String> theParts(theMS.getPartNames(true));
+    auto part_block = theMS.getPartNames(true);
+    Vector<String> theParts(part_block.begin( ),part_block.end( ));
     if(theParts.nelements() > 1){
       Bool retval=true;
       for (uInt k =0; k < theParts.nelements(); ++k){
@@ -759,7 +789,7 @@ Bool VisModelData::isModelDefined(const Int fieldId, const MeasurementSet& thems
       MSSource& mss=theMS.source();
      
       Int sid=fCol.sourceId().get(fieldIds[0]);
-      Vector<uInt> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      auto rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       else{
@@ -815,6 +845,10 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
     TableRecord outRec; 
     Bool addtorec=false;
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
+    newTab.lock(True);
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().lock(True);   
+    }
     if(isModelDefined(elkey, newTab)){ 
       getModelRecord(elkey, outRec, thems);
       //if incremental no need to check & remove what is in the record
@@ -892,10 +926,14 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
     //  }
     //  MSSourceColumns srcCol(mss);
     //  srcCol.sourceModel().put(0, outRec);
+    newTab.unlock();
+    if(Table::isReadable(newTab.sourceTableName())){
+      newTab.source().unlock();   
+    }
   }
   catch(...){
     logio << "Could not save virtual model data column due to an artificial virtual model size limit. \nYou may need to use the scratch column if you need model visibilities" << LogIO::WARN << LogIO::POST ;
-    
+   const_cast<MeasurementSet& >(thems).unlock(); 
   }
 
 }
@@ -927,6 +965,10 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       TableRecord outRec; 
       Bool addtorec=false;
       MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
+      newTab.lock(True);
+      if(Table::isReadable(newTab.sourceTableName())){
+        newTab.source().lock(True);   
+      }
       //cerr << elkey << " incr " << incremental << endl;
       if(isModelDefined(elkey, newTab)){ 
 	getModelRecord(elkey, outRec, thems);
@@ -976,11 +1018,14 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       if(!incremental) 
 	deleteDiskImage(newTab, elkey);
       putModelRecord(validfieldids, outRec, newTab);  
-    
+      newTab.unlock();
+      if(Table::isReadable(newTab.sourceTableName())){
+        newTab.source().unlock();   
+    }
     }
     catch(...){
       logio << "Could not save virtual model data for some reason \nYou may need clear the model and redo or  use the scratch column if you need model visibilities" << LogIO::WARN << LogIO::POST ;
-      
+      const_cast<MeasurementSet& >(thems).unlock(); 
     }
     
   }
@@ -1498,7 +1543,7 @@ void VisModelData::putModel(const MeasurementSet& thems, const RecordInterface& 
       const MSSource& mss=theMS.source();
       
       Int sid=fCol.sourceId().get(field);
-      Vector<uInt> rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
+      auto rows=MSSourceIndex(mss).getRowNumbersOfSourceID(sid);
       if(rows.nelements() > 0) 
 	row=rows[0];
       const TableRecord& keywords=mss.keywordSet();

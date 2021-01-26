@@ -34,6 +34,9 @@
 #include <measures/Measures/MFrequency.h>
 #include <measures/Measures/Stokes.h>
 #include <measures/Measures/Stokes.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
+#include <casacore/scimath/Mathematics/RigidVector.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 #include <map>
 #include <vector>
@@ -41,21 +44,17 @@
 //Forward declarations
 namespace casacore{
 
-template <typename T> class Array;
-template <typename T> class Block;
-template <typename T> class Cube;
-template <typename T> class Matrix;
 class MDirection;
 class MeasurementSet;
 class MEpoch;
 class MPosition;
 class MSDerivedValues;
 class RecordInterface;
-template <typename T, Int n> class RigidVector;
+
 class Slice;
 class String;
 template <typename T, Int n> class SquareMatrix;
-template <typename T> class Vector;
+
 class MSAntennaColumns;
 class MSDataDescColumns;
 class MSFeedColumns;
@@ -210,8 +209,8 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
-    virtual casacore::Int getRowBlocking() const = 0;
-    virtual void setRowBlocking (casacore::Int nRows = 0) = 0;
+    virtual casacore::rownr_t getRowBlocking() const = 0;
+    virtual void setRowBlocking (casacore::rownr_t nRows = 0) = 0;
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const = 0;
 
@@ -224,13 +223,13 @@ public:
 
     // Return the number of rows in the current iteration
 
-    virtual casacore::Int nRows () const = 0;
+    virtual casacore::rownr_t nRows () const = 0;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
     // original ms row
 
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const = 0;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const = 0;
 
     virtual VisBuffer2 * getVisBuffer () const = 0;
 
@@ -553,9 +552,11 @@ public:
     virtual casacore::Int nAntennas () const = 0;
     virtual casacore::Int nDataDescriptionIds () const = 0;
     virtual casacore::Int nPolarizationIds () const = 0;
-    virtual casacore::Int nRowsInChunk () const = 0; // number rows in current chunk
-    virtual casacore::Int nRowsViWillSweep () const = 0; // number of rows in all selected ms's
+    virtual casacore::rownr_t nRowsInChunk () const = 0; // number rows in current chunk
+    virtual casacore::rownr_t nRowsViWillSweep () const = 0; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const = 0;
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const = 0;
 
     //   +-------------------+
     //   |                   |

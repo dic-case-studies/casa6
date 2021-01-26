@@ -43,7 +43,7 @@ namespace casa {
 		for( int i = 0; i < static_cast<int>(xVals.size()); i++ ) {
 			yValues[i] = 0;
 			for ( int j = 0; j < polyOrder; j++ ) {
-				yValues[i] = yValues[i] + coefficients[j] * casacore::pow( xVals[i], j);
+				yValues[i] = yValues[i] + coefficients[j] * std::pow( xVals[i], j);
 			}
 		}
 	}

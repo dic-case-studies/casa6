@@ -28,7 +28,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
         if ((type(vis)==str) & (os.path.exists(vis))):
             mymd.open(vis)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
 
         nant=mymd.nantennas()
         nfld=mymd.nfields()
@@ -40,7 +40,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
             if type(caltable)==str and len(caltable)>0:
 
                 if os.path.exists(caltable):
-                    raise Exception('Output caltable='+caltable+' exists.  Choose another name or delete it.')
+                    raise ValueError('Output caltable='+caltable+' exists.  Choose another name or delete it.')
 
                 casalog.post("New caltable, "+caltable+", corrected for linear polarization, will be generated.")
                 mytb.open(tablein)
@@ -52,7 +52,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                 casalog.post("No new caltable will be generated")
                 caltable=tablein
         else:
-            raise Exception('input calibration table not found - please verify the name')
+            raise ValueError('input calibration table not found - please verify the name')
             
 
         if paoffset!=0.0:
@@ -157,7 +157,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                     
                         antok[iant]=True;
 
-                        #print 'Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant='+str(iant), '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(r[iant]),'q='+str(q[iant]),'u='+str(u[iant]),'p='+str(p),'x='+str(x)
+                        # casalog.post('Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant='+str(iant), '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(r[iant]),'q='+str(q[iant]),'u='+str(u[iant]),'p='+str(p),'x='+str(x))
                         casalog.post('Fld='+fldnames[ifld]+' Spw='+str(ispw)+' Ant='+str(iant)+' (PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)'+' q='+str(q[iant])+' u='+str(u[iant])+' p='+str(p)+' x='+str(x)+' Gx/Gy='+str(sqrt(r[iant])))
 
                         if rempol:
@@ -168,7 +168,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                                 st.putcol('CPARAM',gains)
                             else:
                                 st.close()
-                                raise Exception('Spurious fractional polarization!')
+                                raise RuntimeError('Spurious fractional polarization!')
 
                     st.close()
 
@@ -182,7 +182,7 @@ def polfromgain(vis,tablein,caltable,paoffset):
                     P=sqrt(Q[ispw,ifld]**2+U[ispw,ifld]**2)
                     X=0.5*atan2(U[ispw,ifld],Q[ispw,ifld])*180/pi
 
-                #print 'Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant=*', '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(R[ispw,ifld]),'Q='+str(Q[ispw,ifld]),'U='+str(U[ispw,ifld]),'P='+str(P),'X='+str(X)
+                #casalog.post... 'Fld='+fldnames[ifld],'Spw='+str(ispw),'Ant=*', '(PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)','Gx/Gy='+str(R[ispw,ifld]),'Q='+str(Q[ispw,ifld]),'U='+str(U[ispw,ifld]),'P='+str(P),'X='+str(X)
 
                     casalog.post('Fld='+fldnames[ifld]+' Spw='+str(ispw)+' Ant=*'+' (PA offset='+str(rang[iant,ispw]*180/pi+paoffset)+'deg)'+' Q='+str(Q[ispw,ifld])+' U='+str(U[ispw,ifld])+' P='+str(P)+' X='+str(X))
 
@@ -208,9 +208,6 @@ def polfromgain(vis,tablein,caltable,paoffset):
         casalog.post("NB: Returning dictionary containing fractional Stokes results.")
         return IQUV
 
-    except Exception as instance:
-        print('*** Error ***',instance)
+    finally:
         mytb.close()
         mymd.close()
-        raise
-

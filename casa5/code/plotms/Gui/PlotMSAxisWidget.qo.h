@@ -27,7 +27,7 @@
 #ifndef PLOTMSAXISWIDGET_QO_H_
 #define PLOTMSAXISWIDGET_QO_H_
 
-#include <plotms/Gui/PlotMSAxisWidget.ui.h>
+#include <ui/ui_PlotMSAxisWidget.h>
 
 #include <casaqt/QtUtilities/QtEditingWidget.qo.h>
 #include <plotms/PlotMS/PlotMSConstants.h>

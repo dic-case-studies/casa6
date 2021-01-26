@@ -84,7 +84,7 @@ public:
     virtual casacore::Bool weightSpectrumExists () const;
     virtual casacore::Bool sigmaSpectrumExists () const;
     virtual void exposure (casacore::Vector<double> & expo) const;
-    virtual void getRowIds (casacore::Vector<casacore::uInt> & rowids) const;
+    virtual void getRowIds (casacore::Vector<casacore::rownr_t> & rowids) const;
     virtual void time (casacore::Vector<double> & t) const;
     virtual void timeInterval (casacore::Vector<double> & ti) const;
     virtual void timeCentroid (casacore::Vector<double> & t) const;

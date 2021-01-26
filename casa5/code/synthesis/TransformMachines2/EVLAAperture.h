@@ -30,18 +30,14 @@
 #define SYNTHESIS_TRANSFORM2_EVLAAPERTURE_H
 
 #include <synthesis/TransformMachines2/Utils.h>
-#include <images/Images/ImageInterface.h>
+#include <casacore/images/Images/ImageInterface.h>
 //#include <synthesis/MeasurementComponents/ATerm.h>
 #include <synthesis/TransformMachines2/AzElAperture.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 //
 //---------------------------------------------------------------------
 //
-namespace casacore{
-
-  template<class T> class ImageInterface;
-  template<class T> class Matrix;
-}
 
 namespace casa { //# NAMESPACE CASA - BEGIN
   

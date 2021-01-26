@@ -88,6 +88,7 @@ casa_qt4_wrap_ui( outfiles_ui
 casa_qt4_add_resources( outfiles_qrc Gui/PlotMSPlotter.qrc OPTIONS -name Gui )
 casa_qt4_add_resources( outfiles_qrc GuiTabs/GuiTabs.qrc OPTIONS -name GuiTabs )
 
+include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../casaqt ) # for generated code
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/Gui ) 
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/GuiTabs ) 
 # because the generated code contain relative paths to the source tree

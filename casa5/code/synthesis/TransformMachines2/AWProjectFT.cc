@@ -55,7 +55,6 @@
 
 #include <synthesis/TransformMachines2/ATerm.h>
 #include <synthesis/TransformMachines2/NoOpATerm.h>
-#include <synthesis/TransformMachines2/PhaseGrad.h>
 #include <synthesis/TransformMachines2/AWConvFunc.h>
 #include <synthesis/TransformMachines2/EVLAAperture.h>
 
@@ -158,6 +157,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //if ((ftmName=="mawprojectft") || (mTermOn))
 
     awConvFunc = new AWConvFunc(apertureFunction,psTerm,wTerm,wbAWP, conjBeams);
+
     return awConvFunc;
   }
   //
@@ -175,7 +175,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Second("s"),Radian("rad"),Day("d"), pbNormalized_p(false), paNdxProcessed_p(),
       visResampler_p(), sensitivityPatternQualifier_p(-1),sensitivityPatternQualifierStr_p(""),
     rotatedConvFunc_p(),
-    runTime1_p(0.0),phaseGrad_p(), previousSPWID_p(-1), self_p(), vb2CFBMap_p()
+    runTime1_p(0.0), previousSPWID_p(-1), self_p(), vb2CFBMap_p(), po_p()
   {
     //    convSize=0;
     tangentSpecified_p=false;
@@ -207,6 +207,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //    rotatedConvFunc_p.data=new Array<Complex>();    
     //    self_p.reset(this);
     vb2CFBMap_p = new VB2CFBMap();
+    po_p = new PointingOffsets();
+    po_p->setOverSampling(convSampling);
   }
   //
   //---------------------------------------------------------------
@@ -216,6 +218,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			   CountedPtr<ConvolutionFunction>& cf,
 			   CountedPtr<VisibilityResamplerBase>& visResampler,
 			   Bool applyPointingOffset,
+			   vector<float> pointingOffsetSigDev,
 			   Bool doPBCorr,
 			   Int itilesize, 
 			   Float pbLimit,
@@ -235,7 +238,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       rotateOTFPAIncr_p(0.1),
       Second("s"),Radian("rad"),Day("d"), pbNormalized_p(false),
       visResampler_p(visResampler), sensitivityPatternQualifier_p(-1),sensitivityPatternQualifierStr_p(""),
-    rotatedConvFunc_p(), runTime1_p(0.0),  previousSPWID_p(-1),self_p(), vb2CFBMap_p()
+    rotatedConvFunc_p(), runTime1_p(0.0),  previousSPWID_p(-1),self_p(), vb2CFBMap_p(), po_p()
   {
     //convSize=0;
     tangentSpecified_p=false;
@@ -272,12 +275,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     muellerType_p = muellerType;
     //    self_p.reset(this);
     vb2CFBMap_p = new VB2CFBMap();
+    po_p = new PointingOffsets();
+    po_p->setOverSampling(convSampling);
+    vb2CFBMap_p->setPOSigmaDev(pointingOffsetSigDev);
   }
   //
   //---------------------------------------------------------------
   //
   AWProjectFT::AWProjectFT(const RecordInterface& stateRec)
-    : FTMachine(),Second("s"),Radian("rad"),Day("d"),visResampler_p(), self_p(), vb2CFBMap_p()
+    : FTMachine(),Second("s"),Radian("rad"),Day("d"),visResampler_p(), self_p(), vb2CFBMap_p(), po_p()
   {
     //
     // Construct from the input state record
@@ -301,6 +307,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     pop_p->init();
     //    self_p.reset(this);
     vb2CFBMap_p = new VB2CFBMap();
+    po_p = new PointingOffsets();
+    po_p->setOverSampling(convSampling);
   }
   //
   //----------------------------------------------------------------------
@@ -416,6 +424,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	muellerType_p = other.muellerType_p;
 	previousSPWID_p = other.previousSPWID_p;
 	vb2CFBMap_p = other.vb2CFBMap_p;
+	po_p = other.po_p;
 	//	self_p = other.self_p;
       };
     return *this;
@@ -1168,7 +1177,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     lastPAUsedForWtImg = currentCFPA = pa;
 
-    Vector<Vector<Double> > pointingOffset(convFuncCtor_p->findPointingOffset(image,vb, doPointing));
+    //Vector<Vector<Double> > pointingOffset(convFuncCtor_p->findPointingOffset(image,vb, doPointing));
+
+    // PO::setOverSampling needs to be called here since
+    // convFuncCtor_p gets that value from a combination of (1)
+    // ATerm_OVERSAMPLING env. variable, (2) ATERM.OVERSAMPLING in
+    // ~/.casa and (3) from existing CFCache.  This setting in the AWP
+    // constructor will only get the default value from ATerm.h
+    po_p->setOverSampling(convFuncCtor_p->getOversampling());
+    // PO::fetchPointingOffset() only updates the internal cache in PO
+    // class.  PO::pullPointingOffset() is required to extract in the
+    // calling class.
+    po_p->fetchPointingOffset(image,vb, doPointing);
+
     Float dPA = paChangeDetector.getParAngleTolerance().getValue("rad");
     Quantity dPAQuant = Quantity(paChangeDetector.getParAngleTolerance());
     // cfSource = visResampler_p->makeVBRow2CFBMap(*cfs2_p,
@@ -1180,7 +1201,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cfSource = vb2CFBMap_p->makeVBRow2CFBMap(*cfs2_p,
 						vb,
 						dPAQuant,
-						chanMap,polMap,pointingOffset);
+						chanMap,polMap,po_p);
 
     if (cfSource == CFDefs::NOTCACHED)
       {
@@ -2037,6 +2058,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    //
 	    // Check the section from the image BEFORE converting to a lattice 
 	    //
+            LatticeLocker lock1 (*(image), FileLocker::Write);
 	    IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2,
 			  (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
 	    IPosition stride(4, 1);
@@ -2464,14 +2486,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     //timer_p.mark();
 
-    Vector<Vector<Double> >pointingOffset(convFuncCtor_p->findPointingOffset(*image, vb, doPointing));
+    po_p->fetchPointingOffset(*image, vb, doPointing);
     if (makingPSF){
       cfwts2_p->invokeGC(vbs.spwID_p);
       vb2CFBMap_p->setDoPointing(doPointing);
       vb2CFBMap_p->makeVBRow2CFBMap(*cfwts2_p,
 				      vb,
 				      paChangeDetector.getParAngleTolerance(),
-				      chanMap,polMap,pointingOffset);
+				      chanMap,polMap,po_p);
       // visResampler_p->makeVBRow2CFBMap(*cfwts2_p,*convFuncCtor_p, vb,
       // 				      paChangeDetector.getParAngleTolerance(),
       // 				      chanMap,polMap,pointingOffset);
@@ -2498,7 +2520,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	vb2CFBMap_p->setDoPointing(doPointing);
 	vb2CFBMap_p->makeVBRow2CFBMap(*cfs2_p, vb,
 				       paChangeDetector.getParAngleTolerance(),
-				       chanMap,polMap,pointingOffset);
+				       chanMap,polMap,po_p);
 
       // visResampler_p->makeVBRow2CFBMap(*cfs2_p,*convFuncCtor_p, vb,
       // 				      paChangeDetector.getParAngleTolerance(),

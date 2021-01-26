@@ -76,7 +76,10 @@ public:
 	// (typically for checking existence of CORRECTED_DATA
 	bool checkIfColumnExists(casacore::String column);
 
-	// Signal true when a progress summary has to be printed
+	// Whether the per-chunk progress log line should be produced
+	bool checkDoChunkLine(double progress);
+
+	// Signal true when a per-agent partial (ongoing run) summary has to be printed
 	bool summarySignal();
 
 	// Get the casacore::MS PROCESSOR sub-table

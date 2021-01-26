@@ -33,6 +33,7 @@
 #include <msvis/MSVis/MSUtil.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/OS/Path.h>
+#include <casacore/casa/Utilities/GenSort.h>
 #include <iomanip>
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -128,6 +129,199 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
  
   }
+
+    void MSUtil::getSpwInSourceFreqRange(Vector<Int>& spw, Vector<Int>& start,
+					 Vector<Int>& nchan,
+					 const MeasurementSet& ms, 
+					 const Double freqStart,
+					 const Double freqEnd,
+					 const Double freqStep,
+					 const String& ephemtab,
+					 const Int fieldId)
+  {
+    spw.resize();
+    start.resize();
+    nchan.resize();
+    Vector<Double> t;
+    ScalarColumn<Double> (ms,MS::columnName(MS::TIME)).getColumn(t);
+    //Vector<Int> ddId;
+    //Vector<Int> fldId;
+    
+    MSFieldColumns fieldCol(ms.field());
+    MSDataDescColumns ddCol(ms.dataDescription());
+    MSSpWindowColumns spwCol(ms.spectralWindow());
+    ROScalarMeasColumn<MEpoch> timeCol(ms, MS::columnName(MS::TIME));
+    Vector<uInt>  uniqIndx;
+    uInt nTimes=GenSortIndirect<Double>::sort (uniqIndx, t, Sort::Ascending, Sort::QuickSort|Sort::NoDuplicates);
+
+    t.resize(0);
+    //ScalarColumn<Int> (ms,MS::columnName(MS::DATA_DESC_ID)).getColumn(ddId);
+    //ScalarColumn<Int> (ms,MS::columnName(MS::FIELD_ID)).getColumn(fldId);
+    ScalarColumn<Int> ddId(ms,MS::columnName(MS::DATA_DESC_ID));
+    ScalarColumn<Int> fldId(ms,MS::columnName(MS::FIELD_ID));
+    //now need to do the conversion to data frame from requested frame
+    //Get the epoch mesasures of the first row
+    MEpoch ep;
+    timeCol.get(0, ep);
+    String observatory;
+    MPosition obsPos;
+    /////observatory position
+    MSColumns msc(ms);
+    if (ms.observation().nrow() > 0) {
+      observatory = msc.observation().telescopeName()(msc.observationId()(0));
+    }
+    if (observatory.length() == 0 || 
+	!MeasTable::Observatory(obsPos,observatory)) {
+      // unknown observatory, use first antenna
+      obsPos=msc.antenna().positionMeas()(0);
+    }
+    //////
+    Int oldDD=ddId(0);
+    Int newDD=oldDD;
+    //For now we will assume that the field is not moving very far from polynome 0
+    MDirection dir =fieldCol.phaseDirMeas(fieldId);
+    MFrequency::Types obsMFreqType= (MFrequency::Types) (spwCol.measFreqRef()(ddCol.spectralWindowId()(ddId(0))));
+    if( obsMFreqType != MFrequency::TOPO)
+      throw(AipsError("No dealing with non topo data for moving source yet"));
+    //cout << "nTimes " << nTimes << endl;
+    //cout << " obsframe " << obsMFreqType << " reqFrame " << freqframe << endl; 
+    MeasFrame frame(ep, obsPos, dir);
+    // MFrequency::Convert toObs(freqframe,MFrequency::Ref(obsMFreqType, frame);
+    MDoppler toObs;
+    MDoppler toSource;
+    setupSourceObsVelSystem(ephemtab, ms, fieldId, toSource, toObs,frame);
+    Double  freqEndMax=0.0;
+    Double freqStartMin=C::dbl_max;
+    
+    for (uInt j=0; j< nTimes; ++j){
+      if(fldId(uniqIndx[j]) ==fieldId){
+	timeCol.get(uniqIndx[j], ep);
+	newDD=ddId(uniqIndx[j]);
+	/*if(oldDD != newDD){
+	  oldDD=newDD;
+	  if(spwCol.measFreqRef()(ddCol.spectralWindowId()(newDD)) != obsMFreqType){
+	    obsMFreqType= (MFrequency::Types) (spwCol.measFreqRef()(ddCol.spectralWindowId()(newDD)));
+	    toObs.setOut(MFrequency::Ref(obsMFreqType, frame));
+	  }
+	  }
+	*/
+	//if(obsMFreqType != freqframe){
+	  frame.resetEpoch(ep);
+	  Vector<Double> freqTmp(2);
+	  freqTmp[0]=freqStart;
+	  freqTmp[1]=freqEnd;
+	  Vector<Double> newFreqs=toObs.shiftFrequency(freqTmp);
+	  //Double freqTmp=toObs(Quantity(freqStart, "Hz")).get("Hz").getValue();
+	  freqStartMin=(freqStartMin > newFreqs[0]) ? newFreqs[0] : freqStartMin;
+	  //freqTmp=toObs(Quantity(freqEnd, "Hz")).get("Hz").getValue();
+	  freqEndMax=(freqEndMax < newFreqs[1]) ? newFreqs[1] : freqEndMax; 
+	  //}
+      }
+    }
+
+    //cout << "freqStartMin " << freqStartMin << " freqEndMax " << freqEndMax << endl;
+    MSSpwIndex spwIn(ms.spectralWindow());
+    spwIn.matchFrequencyRange(freqStartMin-0.5*freqStep, freqEndMax+0.5*freqStep, spw, start, nchan);
+
+
+ 
+  }
+  void MSUtil:: setupSourceObsVelSystem(const String& ephemTable, const MeasurementSet& ms,   const Int& fieldid, MDoppler& toSource, MDoppler& toObs, MeasFrame& mFrame){
+    String ephemtab("");
+    const MSColumns mscol(ms);
+    if(Table::isReadable(ephemTable)){
+      ephemtab=ephemTable;
+    }
+    else if(ephemTable=="TRACKFIELD"){
+      ephemtab=(mscol.field()).ephemPath(fieldid);
+      
+    }
+    MRadialVelocity::Types refvel=MRadialVelocity::GEO;
+    MEpoch ep(mFrame.epoch());
+    if(ephemtab != ""){
+
+      MeasComet mcomet(Path(ephemtab).absoluteName());
+      if(mFrame.comet())
+	mFrame.resetComet(mcomet);
+      else
+	mFrame.set(mcomet);
+      if(mcomet.getTopo().getLength("km").getValue() > 1.0e-3){
+	refvel=MRadialVelocity::TOPO;
+      }
+      ////Will use UT for now for ephem tables as it is not clear that they are being
+      ///filled with TDB as intended in MeasComet.h
+      MEpoch::Convert toUT(ep, MEpoch::UT);
+      MVRadialVelocity cometvel;
+      mcomet.getRadVel(cometvel, toUT(ep).get("d").getValue());
+      MRadialVelocity::Convert obsvelconv(MRadialVelocity(MVRadialVelocity(0.0),
+							  MRadialVelocity::Ref(MRadialVelocity::TOPO, mFrame)),  MRadialVelocity::Ref(refvel));
+      toSource=MDoppler(Quantity(-cometvel.get("km/s").getValue("km/s")+obsvelconv().get("km/s").getValue("km/s") , "km/s"), MDoppler::RELATIVISTIC);
+      toObs=MDoppler(Quantity(cometvel.get("km/s").getValue("km/s")-obsvelconv().get("km/s").getValue("km/s") , "km/s"), MDoppler::RELATIVISTIC);
+      
+					  
+    }
+    else{//Must be a DE-200 canned source that measures know
+      ephemtab=upcase(ephemTable);
+      MeasTable::Types mtype=MeasTable::BARYEARTH;
+      MDirection::Types planettype;
+      if(!MDirection::getType(planettype, ephemtab))
+	throw(AipsError("Did not understand sourcename as a known solar system object"));
+      switch(planettype){
+      case MDirection::MERCURY :
+	mtype=MeasTable::MERCURY;
+	break;
+      case MDirection::VENUS :
+	mtype=MeasTable::VENUS;
+	break;	
+      case MDirection::MARS :
+	mtype=MeasTable::MARS;
+	break;
+      case MDirection::JUPITER :
+	mtype=MeasTable::JUPITER;
+	break;
+      case MDirection::SATURN :
+	mtype=MeasTable::SATURN;
+	break;
+      case MDirection::URANUS :
+	mtype=MeasTable::URANUS;
+	break;
+      case MDirection::NEPTUNE :
+	mtype=MeasTable::NEPTUNE;
+	break;
+      case MDirection::PLUTO :
+	mtype=MeasTable::PLUTO;
+	break;
+      case MDirection::MOON :
+	mtype=MeasTable::MOON;
+	break;
+      case MDirection::SUN :
+	mtype=MeasTable::SUN;
+	break;
+      default:
+	throw(AipsError("Cannot translate to known major solar system object"));
+      }
+
+      Vector<Double> planetparam;
+       Vector<Double> earthparam;
+       MEpoch::Convert toTDB(ep, MEpoch::TDB);
+       earthparam=MeasTable::Planetary(MeasTable::EARTH, toTDB(ep).get("d").getValue());
+       planetparam=MeasTable::Planetary(mtype, toTDB(ep).get("d").getValue());
+       //GEOcentric param
+       planetparam=planetparam-earthparam;
+       Vector<Double> unitdirvec(3);
+       Double dist=sqrt(planetparam(0)*planetparam(0)+planetparam(1)*planetparam(1)+planetparam(2)*planetparam(2));
+       unitdirvec(0)=planetparam(0)/dist;
+       unitdirvec(1)=planetparam(1)/dist;
+       unitdirvec(2)=planetparam(2)/dist;
+       MRadialVelocity::Convert obsvelconv(MRadialVelocity(MVRadialVelocity(0.0),
+							  MRadialVelocity::Ref(MRadialVelocity::TOPO, mFrame)),  MRadialVelocity::Ref(refvel));
+       Quantity planetradvel(planetparam(3)*unitdirvec(0)+planetparam(4)*unitdirvec(1)+planetparam(5)*unitdirvec(2), "AU/d");
+	toSource=MDoppler(Quantity(-planetradvel.getValue("km/s")+obsvelconv().get("km/s").getValue("km/s") , "km/s"), MDoppler::RELATIVISTIC);
+	toObs=MDoppler(Quantity(planetradvel.getValue("km/s")-obsvelconv().get("km/s").getValue("km/s") , "km/s"), MDoppler::RELATIVISTIC);
+    }
+  }
+
+  
   void MSUtil::getSpwInFreqRangeAllFields(Vector<Int>& outspw, Vector<Int>& outstart,
   			  Vector<Int>& outnchan,
   			  const MeasurementSet& ms,
