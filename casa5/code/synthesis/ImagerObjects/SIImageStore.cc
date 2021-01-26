@@ -2883,7 +2883,7 @@ Float SIImageStore::getPeakResidual()
     
     return maxresidual;
   }
-
+  
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
