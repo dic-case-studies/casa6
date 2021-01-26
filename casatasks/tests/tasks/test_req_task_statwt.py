@@ -37,6 +37,9 @@ except (ImportError, ModuleNotFoundError):
 src = os.path.join(datadir, 'ngc5921_small.statwt.ms')
 vlass = os.path.join(datadir, 'test_vlass_subset.ms')
 
+# Reference data location
+refdir = datadir + 'statwt_reference/'
+
 # rows and target_row are the row numbers from the subtable formed
 # by the baseline query
 # In the chan_flags, a value of False means the channel is good (not flagged)
@@ -263,7 +266,7 @@ class statwt_test(unittest.TestCase):
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
         mytb1 = table() if is_casa6 else tbtool()
-        ref = os.path.join(datadir, ref)
+        ref = os.path.join(refdir, ref)
         self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
         self.compareTables(mytb, mytb1)
         mytb.done()
@@ -368,9 +371,9 @@ class statwt_test(unittest.TestCase):
                         mytb.done()
                         statwt(dst, chanbin=chanbin, combine=combine)
                     if combine == '':
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
+                        ref = refdir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
                     else:
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
+                        ref = refdir + 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
@@ -481,7 +484,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan boundaries"""
         dst = "ngc5921.no_scan_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
+        ref = os.path.join(refdir, 'ngc5921_statwt_ref_test_no_scan_bounds.ms')
         combine = "corr, scan"
         shutil.copytree(src, dst)
         statwt(dst, timebin=timebin, combine=combine)
@@ -492,7 +495,7 @@ class statwt_test(unittest.TestCase):
         """Test no scan nor field boundaries"""
         dst = "ngc5921.no_scan_nor_field_bounds.ms"
         timebin = "6000s"
-        ref = os.path.join(datadir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
+        ref = os.path.join(refdir, 'ngc5921_statwt_ref_test_no_scan_nor_field_bounds.ms')
         for combine in ["corr,scan,field", "corr,field,scan"]:
             shutil.copytree(src, dst)
             statwt(dst, timebin=timebin, combine=combine)
@@ -525,7 +528,7 @@ class statwt_test(unittest.TestCase):
                 
     def test_wtrange(self):
         """Test weight range"""
-        dst = "ngc5921.split.timebin.ms"
+        dst = "ngc5921.wtrange.split.timebin.ms"
         ref = "ngc5921_statwt_ref_test_wtrange_300s.ms"
         combine = "corr"
         timebin = "300s"
@@ -1018,7 +1021,7 @@ class statwt_test(unittest.TestCase):
         Test specifying chanbin when multi spw with no sigma nor weight
         spectrum columns works
         """
-        ref = datadir + 'ref_vlass_wtsp_creation.ms'
+        ref = refdir + 'ref_vlass_wtsp_creation.ms'
         for spw in ["", "0"]:
             dst = "statwt_test_vlass_spw_select_" + str(spw) + ".ms"
             shutil.copytree(vlass, dst)
