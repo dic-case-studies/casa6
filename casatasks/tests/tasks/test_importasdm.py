@@ -41,8 +41,8 @@ if is_CASA6:
     from casatasks.private import flaghelper as fh
     from casatasks.private import convertephem as ce
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
 
     # make local copies of the tools
     tblocal = table( )
@@ -57,7 +57,7 @@ else:
     from __main__ import default
     from tasks import importasdm, flagdata, exportasdm, flagcmd
     from taskinit import mstool, tbtool, cbtool, aftool, casalog
-    import testhelper as th
+    #import testhelper as th
     import flaghelper as fh
     import recipes.ephemerides.convertephem as ce
 
@@ -74,6 +74,7 @@ else:
         dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
         return os.path.join(dataPath,apath)
 
+from casatestutils import testhelper as th
 myname = 'test_importasdm'
 
 # default ASDM dataset name

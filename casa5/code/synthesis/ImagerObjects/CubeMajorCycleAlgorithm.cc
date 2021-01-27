@@ -133,6 +133,7 @@ void CubeMajorCycleAlgorithm::put() {
 }
 	
 void CubeMajorCycleAlgorithm::task(){
+	LogIO logger(LogOrigin("CubeMajorCycleAlgorithm", "task", WHERE));
 	status_p = True;
         try{
           //Timer tim;
@@ -326,11 +327,30 @@ void CubeMajorCycleAlgorithm::task(){
           status_p = True;
         }
         catch (AipsError x) {
-          cerr << "Exception: " << x.getMesg() << endl;
+
+           LogIO os( LogOrigin("SynthesisImagerVi2","CubeMajorCycle",WHERE) );
+           os << LogIO::WARN << "Exception for chan range "  << chanRange_p  << " ---   "<< x.getMesg()   << LogIO::POST;
+          cerr << "##################################\n#############################\nException: " << x.getMesg() << endl;
+
           status_p=false;
         }
+        catch(std::exception& exc) {
+          logger << "Exception (std): " << exc.what() << LogIO::SEVERE;
+          returnRec_p=Record();
+        }
         catch(...){
-          cerr << "Unknown exception "  << endl;
+          cerr << "###################################\n#######################3##\nUnknown exception "  << endl;
+	  std::exception_ptr eptr=std::current_exception();
+	  try{
+	    if(eptr)
+	      std::rethrow_exception(eptr);
+	  }
+	  catch(const std::exception& a){
+	    LogIO os( LogOrigin("SynthesisImagerVi2","CubeMajorCycle",WHERE) );
+	    os  << LogIO::WARN << "Unknown Exception for chan range "  << chanRange_p  << " ---   "<<  a.what()   << LogIO::POST;
+	  }
+
+          logger << "Unknown exception "  << LogIO::SEVERE;
           status_p=False;
         }
 }
@@ -569,32 +589,87 @@ void CubeMajorCycleAlgorithm::reset(){
 }
 	
   void CubeMajorCycleAlgorithm::getSubImage(std::shared_ptr<ImageInterface<Float> >& subimptr, const Int chanBeg, const Int chanEnd, const String imagename, const Bool copy){
-    PagedImage<Float> im(imagename, TableLock::UserNoReadLocking);
-    //PagedImage<Float> im(imagename, TableLock::AutoNoReadLocking);
-    im.lock(FileLocker::Read, 1000);
+    LogIO os( LogOrigin("CubeMajorCycle","getSubImage",WHERE) );
+    CountedPtr<PagedImage<Float> > im=nullptr;
+    {///work around
+      uInt exceptCounter=0;
+      while(true){
+	try{
+	  im = new PagedImage<Float> (imagename, TableLock::UserNoReadLocking);
+	  //PagedImage<Float> im(imagename, TableLock::AutoNoReadLocking);
+	  break;
+	}
+	catch(AipsError &x){
+	      
+	  String mes=x.getMesg();
+	  if(mes.contains("FilebufIO::readBlock") ){
+	    sleep(0.05);
+	    os << LogIO::WARN << "#####CATCHING a sleep because "<< mes<< LogIO::POST;
+	  }
+	  else
+	    throw(AipsError("Error in selectdata: "+mes));
+	  
+	  if(exceptCounter > 100){
+	    throw(AipsError("Error in selectdata got 100 of this exeception: "+mes));
+	    
+	  }
+	  
+	}
+	++exceptCounter;
+      }
+    }	  
+    im->lock(FileLocker::Read, 1000);
     SubImage<Float> *tmpptr=nullptr;
-    tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, false);
+    tmpptr=SpectralImageUtil::getChannel(*im, chanBeg, chanEnd, false);
     subimptr.reset(new TempImage<Float>(TiledShape(tmpptr->shape(), tmpptr->niceCursorShape()), tmpptr->coordinates()));
     
     if(copy)
       subimptr->copyData(*tmpptr);
     //subimptr->flush();
-    im.unlock();
+    im->unlock();
     delete tmpptr;
   }
 
   void CubeMajorCycleAlgorithm::writeBackToFullImage(const String imagename, const Int chanBeg, const Int chanEnd, std::shared_ptr<ImageInterface<Float> > subimptr){
-    PagedImage<Float> im(imagename, TableLock::UserLocking);
+    LogIO os( LogOrigin("CubeMajorCycle","writebacktofullimage",WHERE) );
+    CountedPtr<PagedImage<Float> > im=nullptr;
+    {///work around
+      uInt exceptCounter=0;
+      while(true){
+	try{
+	  im=new PagedImage<Float> (imagename, TableLock::UserLocking);
+	  break;
+	}
+	catch(AipsError &x){
+	      
+	  String mes=x.getMesg();
+	  if(mes.contains("FilebufIO::readBlock") ){
+	    sleep(0.05);
+	    os << LogIO::WARN << "#####CATCHING a sleep because "<< mes<< LogIO::POST;
+	  }
+	  else
+	    throw(AipsError("Error in selectdata: "+mes));
+	      
+	  if(exceptCounter > 100){
+	    throw(AipsError("Error in selectdata got 100 of this exeception: "+mes));
+	    
+	  }
+	  
+	    }
+	++exceptCounter;
+      }
+    }//End of work around for table disappearing bug
+	 
     //PagedImage<Float> im(imagename, TableLock::AutoLocking);
     SubImage<Float> *tmpptr=nullptr;
     {
-      tmpptr=SpectralImageUtil::getChannel(im, chanBeg, chanEnd, true);
+      tmpptr=SpectralImageUtil::getChannel(*im, chanBeg, chanEnd, true);
       LatticeLocker lock1 (*(tmpptr), FileLocker::Write);
       tmpptr->set(0.0);
       tmpptr->copyData(*(subimptr));
     }
-    im.flush();
-    im.unlock();
+    im->flush();
+    im->unlock();
     delete tmpptr;
                  
   }

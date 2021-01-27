@@ -4,9 +4,11 @@ import shutil
 import numpy
 from casatools import ctsys, sdm, ms, table, quanta, measures, calibrater
 ### for testhelper import
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
-from xmlhelper import readXML
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#import testhelper as th
+#from xmlhelper import readXML
+from casatestutils import testhelper as th
+from casatestutils.xmlhelper import readXML
 import unittest
 
 myname = 'test_sdm_toms'
