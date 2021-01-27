@@ -27,7 +27,7 @@ else:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
-datapath = ctsys_resolve('unittest/exportasdm/')=======
+datapath = ctsys_resolve('unittest/exportasdm/')
 from casatestutils import testhelper as th
 
 class exportasdm_test(unittest.TestCase):
