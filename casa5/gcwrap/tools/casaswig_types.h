@@ -75,8 +75,8 @@ struct DoubleAry
 struct IntAry
 {
   IntAry( ) { }
-  IntAry(std::vector<int> arg0, std::vector<int> arg1) : value(arg0), shape(arg1) { }
-  std::vector<int> value;
+  IntAry(std::vector<long> arg0, std::vector<int> arg1) : value(arg0), shape(arg1) { }
+  std::vector<long> value;
   std::vector<int> shape;
 
 };
@@ -84,8 +84,8 @@ struct IntAry
 struct uIntAry
 {
   uIntAry( ) { }
-  uIntAry(std::vector<unsigned int> arg0, std::vector<int> arg1) : value(arg0), shape(arg1) { }
-  std::vector<unsigned int> value;
+  uIntAry(std::vector<unsigned long> arg0, std::vector<int> arg1) : value(arg0), shape(arg1) { }
+  std::vector<unsigned long> value;
   std::vector<int> shape;
 
 };
@@ -109,7 +109,7 @@ typedef ComplexAry ComplexVec;
 /*
 typedef  std::vector<std::string> StringVec;
 typedef  std::vector<double> DoubleVec;
-typedef  std::vector<int> IntVec;
+typedef  std::vector<long> IntVec;
 typedef  std::vector<bool> BoolVec;
 typedef  std::vector<std::complex<double> > ComplexVec;
 */

@@ -85,7 +85,7 @@ using namespace casa::refim;
   GridFT::GridFT() : FTMachine(), padding_p(1.0), imageCache(0), cachesize(1000000), tilesize(1000), gridder(0), isTiled(false), convType("SF"),
   maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
   usezero_p(false), noPadding_p(false), usePut2_p(false), 
-		     machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0){
+		     machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0){
 
   }
 GridFT::GridFT(Long icachesize, Int itilesize, String iconvType, Float padding,
@@ -94,7 +94,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType, Float padding,
   gridder(0), isTiled(false), convType(iconvType),
   maxAbsData(0.0), centerLoc(IPosition(4,0)), offsetLoc(IPosition(4,0)),
   usezero_p(usezero), noPadding_p(false), usePut2_p(false), 
-  machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   useDoubleGrid_p=useDoublePrec;  
   //  peek=NULL;
@@ -105,7 +105,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mLocation_p=mLocation;
   tangentSpecified_p=false;
@@ -118,7 +118,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false), machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mTangent_p=mTangent;
   tangentSpecified_p=true;
@@ -132,7 +132,7 @@ GridFT::GridFT(Long icachesize, Int itilesize, String iconvType,
 : FTMachine(), padding_p(padding), imageCache(0), cachesize(icachesize),
   tilesize(itilesize), gridder(0), isTiled(false), convType(iconvType), maxAbsData(0.0), centerLoc(IPosition(4,0)),
   offsetLoc(IPosition(4,0)), usezero_p(usezero), noPadding_p(false), 
-  usePut2_p(false),machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0),  convFunc_p(0), convSampling_p(1), convSupport_p(0) 
+  usePut2_p(false),machineName_p("GridFT"), timemass_p(0.0), timegrid_p(0.0), timedegrid_p(0.0), convFunc_p(0), convSampling_p(1), convSupport_p(0)
 {
   mLocation_p=mLocation;
   mTangent_p=mTangent;
@@ -1025,7 +1025,7 @@ void GridFT::get(vi::VisBuffer2& vb, Int row)
     matchChannel(vb);
   
   
-  //cerr << "chanMap " << chanMap << endl;
+    //cerr << "GETchanMap " << chanMap << endl;
   //No point in reading data if its not matching in frequency
   if(max(chanMap)==-1)
     return;
@@ -1284,7 +1284,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
 	}
       }
     }
-
+    LatticeLocker lock1 (*(image), FileLocker::Write);
     if(!isTiled) {
       // Check the section from the image BEFORE converting to a lattice 
       IPosition blc(4, (nx-image->shape()(0)+(nx%2==0))/2, (ny-image->shape()(1)+(ny%2==0))/2, 0, 0);
@@ -1292,6 +1292,7 @@ ImageInterface<Complex>& GridFT::getImage(Matrix<Float>& weights, Bool normalize
       IPosition trc(blc+image->shape()-stride);
       // Do the copy
       IPosition start(4, 0);
+      
       image->put(griddedData(blc, trc));
     }
   }
@@ -1400,8 +1401,9 @@ Bool GridFT::fromRecord(String& error,
   inRec.get("nopadding", noPadding_p);
 
   machineName_p="GridFT";
-  ///setup some of the parameters
-  init();
+  ///setup some of the parameters if there is an image
+  if(inRec.isDefined("image") || inRec.isDefined("diskimage"))
+    init();
   /*if(!cmplxImage_p.null()){
     //FTMachine::fromRecord would have recovered the image
     // Might be changing the shape of sumWeight

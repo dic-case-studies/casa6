@@ -11,8 +11,8 @@ import glob
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
     from casatools import ctsys, ms, table, msmetadata, agentflagger
     from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
     #from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
@@ -32,7 +32,7 @@ else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default
-    import testhelper as th
+    #import testhelper as th
     from sdutil import tbmanager, toolmanager, table_selector
 
     # Define the root for the data files
@@ -51,6 +51,7 @@ else:
     msmd_local = msmdtool()
     tb_local = tbtool()
 
+from casatestutils import testhelper as th
 
 def weighToSigma(weight):
     if weight > sys.float_info.min:

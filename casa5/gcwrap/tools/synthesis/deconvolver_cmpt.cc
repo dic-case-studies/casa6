@@ -130,7 +130,7 @@ deconvolver::summary()
 }
 
 bool
-deconvolver::boxmask(const std::string& mask, const std::vector<int>& blc, const std::vector<int>& trc, const ::casac::variant& fillvalue, const ::casac::variant& outsidevalue)
+deconvolver::boxmask(const std::string& mask, const std::vector<long>& blc, const std::vector<long>& trc, const ::casac::variant& fillvalue, const ::casac::variant& outsidevalue)
 {
   try {
     casacore::Quantity fill(1.0, "Jy");
@@ -173,7 +173,7 @@ deconvolver::regionmask(const std::string& mask, const ::casac::record& region,
       if(boxes.type() == ::casac::variant::DOUBLEVEC)
 	boxVector=Vector<Double>(boxes.toDoubleVec());
       else{
-	std::vector<int> intvector=boxes.toIntVec();
+	auto intvector=boxes.toIntVec();
 	boxVector.resize(intvector.size());
 	convertArray(boxVector, Vector<Int>(intvector));
 	
@@ -251,7 +251,7 @@ deconvolver::clipimage(const std::string& clippedimage, const std::string& input
   return false;
 }
 
- casac::record*  deconvolver::fullclarkclean(const int niter, const double gain, const ::casac::variant& threshold, const std::string& model, const std::string& mask, const double cyclefactor){
+ casac::record*  deconvolver::fullclarkclean(const long niter, const double gain, const ::casac::variant& threshold, const std::string& model, const std::string& mask, const double cyclefactor){
    casac::record* rstat(0);
     try {
       casacore::Quantity thresh(0.0, "Jy");
@@ -279,7 +279,7 @@ deconvolver::clipimage(const std::string& clippedimage, const std::string& input
 
 
 bool
-deconvolver::clarkclean(const int niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask, const int histbins, const std::vector<int>& psfpatchsize, const double maxextpsf, const double speedup, const int maxnumpix, const int maxnummajcycles, const int maxnummineriter)
+deconvolver::clarkclean(const long niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask, const long histbins, const std::vector<long>& psfpatchsize, const double maxextpsf, const double speedup, const long maxnumpix, const long maxnummajcycles, const long maxnummineriter)
 {
   try {
     casacore::Quantity thresh(0.0, "Jy");
@@ -411,7 +411,7 @@ deconvolver::updatestate(const std::string& /*f*/, const std::string& /*method*/
 
 
 casac::record* 
-deconvolver::clean(const std::string& algorithm, const int niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask)
+deconvolver::clean(const std::string& algorithm, const long niter, const double gain, const ::casac::variant& threshold, const bool displayprogress, const std::string& model, const std::string& mask)
 {
   casac::record* rstat(0);
   try {
@@ -439,7 +439,7 @@ deconvolver::clean(const std::string& algorithm, const int niter, const double g
 
 
 casac::record* 
-deconvolver::naclean(const int niter, const double gain, const ::casac::variant& threshold, const std::string& model, const std::string& mask, const int masksupp, const std::string& memory, const double numsigma)
+deconvolver::naclean(const long niter, const double gain, const ::casac::variant& threshold, const std::string& model, const std::string& mask, const long masksupp, const std::string& memory, const double numsigma)
 {
   casac::record* rstat(0);
   try {
@@ -474,7 +474,7 @@ deconvolver::naclean(const int niter, const double gain, const ::casac::variant&
 
 
 bool
-deconvolver::setscales(const std::string& scalemethod, const int nscales, const std::vector<double>& uservector)
+deconvolver::setscales(const std::string& scalemethod, const long nscales, const std::vector<double>& uservector)
 {
   try {
     Vector<Float> vec(uservector.size());
@@ -575,7 +575,7 @@ deconvolver::smooth(const std::string& model, const std::string& image, const ::
 }
 
 bool
-deconvolver::mem(const std::string& entropy, const int niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::string& model, const std::string& prior, const std::string& mask, const bool imageplane)
+deconvolver::mem(const std::string& entropy, const long niter, const ::casac::variant& sigma, const ::casac::variant& targetflux, const bool constrainflux, const bool displayprogress, const std::string& model, const std::string& prior, const std::string& mask, const bool imageplane)
 {
   try {
     casacore::Quantity targflux(1.0, "Jy");
@@ -599,7 +599,7 @@ deconvolver::mem(const std::string& entropy, const int niter, const ::casac::var
 }
 
 bool
-deconvolver::makeprior(const std::string& prior, const std::string& templateimage, const ::casac::variant& lowclipfrom, const ::casac::variant& lowclipto, const ::casac::variant& highclipfrom, const ::casac::variant& highclipto, const std::vector<int>& blc, const std::vector<int>& trc)
+deconvolver::makeprior(const std::string& prior, const std::string& templateimage, const ::casac::variant& lowclipfrom, const ::casac::variant& lowclipto, const ::casac::variant& highclipfrom, const ::casac::variant& highclipto, const std::vector<long>& blc, const std::vector<long>& trc)
 {
 
   try {
@@ -630,7 +630,7 @@ deconvolver::makeprior(const std::string& prior, const std::string& templateimag
 }
 
 
-bool deconvolver::mtopen(const int ntaylor,
+bool deconvolver::mtopen(const long ntaylor,
 			 const std::vector<double>& scalevector,
 			 const std::vector<std::string>& psfs)
 {
@@ -663,7 +663,7 @@ bool deconvolver::mtopen(const int ntaylor,
 casac::record* 
 deconvolver::mtclean(const std::vector<std::string>& residuals,
 			  const std::vector<std::string>& models,
-			  const int niter,
+			  const long niter,
 			  const double gain, 
 			  const ::casac::variant& threshold, 
 			  const bool displayprogress,

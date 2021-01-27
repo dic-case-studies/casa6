@@ -535,7 +535,21 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 		////Darn not implemented  
 		//static_cast<VisibilityIteratorImpl2 *>(viloc->getImpl())->writeModel(rec, //iscomp, true);
-		      const_cast<VisibilityIterator2*>(vb.getVi())->writeModel(rec, iscomp, true);
+
+                if(!iscomp && Table::isReadable(modImage)){
+                  //make sure complex image is of compliant size/shape
+                  (itsMappers[k]->imageStore())->intersectComplexImage(modImage);
+
+                }
+                VisibilityIterator2* vi=const_cast<VisibilityIterator2*>(vb.getVi());
+                const_cast<MeasurementSet& >(vi->ms()).lock();
+                /////TESTOO
+                //Int CPUID;
+                //MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+                //cerr << CPUID << " writing " << modImage << endl;
+                /////////////////
+                vi->writeModel(rec, iscomp, true);
+                const_cast<MeasurementSet& >(vi->ms()).unlock();
 				  //				  VisModelData::listModel(vb.getVisibilityIterator()->ms());
 			  }
 
@@ -663,6 +677,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
     for (Int model=0;model<(nmodels-1); ++model) 
       {
 	// Connect to one image for aux info.
+        LatticeLocker lockmodel (*(((itsMappers[model])->imageStore())->model()), FileLocker::Write);
 	SubImage<Float> modelimage( *(((itsMappers[model])->imageStore())->model()), true );
 
 	uInt nTaylor0 = ((itsMappers[model])->imageStore())->getNTaylorTerms();
@@ -676,6 +691,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 	for (Int nextmodel=model+1; nextmodel < nmodels; ++nextmodel)
 	  {
+            LatticeLocker nextlockmodel (*(((itsMappers[nextmodel])->imageStore())->model()), FileLocker::Write);
 	    SubImage<Float> nextmodelimage( *(((itsMappers[nextmodel])->imageStore())->model()) , true);
 
 	    uInt nTaylor1 = ((itsMappers[nextmodel])->imageStore())->getNTaylorTerms();
@@ -691,12 +707,16 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 	      if( action.matches("blank") )
 		{
+
+                  //cerr << "blank MODEL image shape " << modelimage.shape() << "  " << nextmodelimage.shape() << endl;
+                  
 		  LatticeRegion latReg=imagreg.toLatticeRegion(modelimage.coordinates(), modelimage.shape());
 
 		  for(uInt taylor=0;taylor<min(nTaylor0,nTaylor1);taylor++)
 		    { // loop for taylor term
 		      SubImage<Float> modelim( *(((itsMappers[model])->imageStore())->model(taylor)), true );
 		      SubImage<Float> partToMask(modelim, imagreg, true);
+                      LatticeLocker lock1 (partToMask, FileLocker::Write);
 		      ArrayLattice<Bool> pixmask(latReg.get());
 		      LatticeExpr<Float> myexpr(iif(pixmask, 0.0, partToMask) );
 		      partToMask.copyData(myexpr);
@@ -706,6 +726,7 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 		}
 	      else // "restore"
 		{
+                  //cerr << "rsetore MODEL image shape " << modelimage.shape() << "  " << nextmodelimage.shape() << endl;
 		LatticeRegion latReg0=imagreg0.toLatticeRegion(nextmodelimage.coordinates(), nextmodelimage.shape());
 		LatticeRegion latReg=imagreg.toLatticeRegion(modelimage.coordinates(), modelimage.shape());
 		ArrayLattice<Bool> pixmask(latReg.get());
@@ -718,6 +739,8 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
 
 		    SubImage<Float> partToMerge(nextmodelim, imagreg0, true);
 		    SubImage<Float> partToUnmask(modelim, imagreg, true);
+                    LatticeLocker lock1 (partToUnmask, FileLocker::Write);
+                    LatticeLocker lock2 (partToMerge, FileLocker::Write);
 		    LatticeExpr<Float> myexpr0(iif(pixmask,partToMerge,partToUnmask));
 		    partToUnmask.copyData(myexpr0);
 		  }
@@ -774,7 +797,6 @@ void SIMapperCollection::initializeGrid(vi::VisibilityIterator2& vi, Bool dopsf,
       { 
 	validmodel |= (! ( ((itsMappers[model])->imageStore())->isModelEmpty() ));
       }
-    //cout << "anyNonZeroModel : " << validmodel << endl;
     return validmodel;
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////

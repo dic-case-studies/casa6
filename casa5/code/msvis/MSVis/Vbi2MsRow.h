@@ -139,15 +139,15 @@ public:
     // Constructor for read-only access.
     // Attempt to write will throw exception.
 
-    Vbi2MsRow (casacore::Int row, const vi::VisBufferImpl2 * vb);
+    Vbi2MsRow (casacore::rownr_t row, const vi::VisBufferImpl2 * vb);
 
     // Constructor for read/write access
 
-    Vbi2MsRow (casacore::Int row, vi::VisBufferImpl2 * vb);
+    Vbi2MsRow (casacore::rownr_t row, vi::VisBufferImpl2 * vb);
 
     virtual ~Vbi2MsRow () {}
 
-    void changeRow (casacore::Int row);
+    void changeRow (casacore::rownr_t row);
     void copy (Vbi2MsRow * other,
                const VisBufferComponents2 & componentsToCopy);
 

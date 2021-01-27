@@ -3,7 +3,7 @@
 
 
 
-<task category="analysis, information" name="imreframe" type="function">
+<task category="analysis" name="imreframe" type="function">
 <shortdescription>Change the frame in which the image reports its spectral values</shortdescription>
 
 <input>

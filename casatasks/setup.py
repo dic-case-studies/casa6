@@ -152,7 +152,7 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt' ]
+public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt', 'src/scripts/__main__.py' ]
 
 private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/casa_transition.py',
@@ -205,7 +205,6 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_delmod.py',
                     'src/tasks/task_imsubimage.py',
                     'src/tasks/task_accor.py',
-                    'src/tasks/task_accum.py',
                     'src/tasks/task_asdmsummary.py',
                     'src/tasks/task_clearcal.py',
                     'src/tasks/task_conjugatevis.py',
@@ -258,6 +257,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_rmfit.py',
                     'src/tasks/task_rmtables.py',
                     'src/scripts/sdutil.py',
+                    'src/tasks/task_sdatmcor.py',
                     'src/tasks/task_sdbaseline.py',
                     'src/tasks/task_sdcal.py',
                     'src/tasks/task_sdfit.py',
@@ -294,6 +294,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/scripts/task_logging.py',
                     'src/tasks/task_sdintimaging.py',
                     'src/scripts/sdint_helper.py',
+                    'src/scripts/tec_maps.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -336,7 +337,6 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/delmod.xml': 'xml/delmod.xml',
               'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
               'casa-source/gcwrap/tasks/accor.xml': 'xml/accor.xml',
-              'casa-source/gcwrap/tasks/accum.xml': 'xml/accum.xml',
               'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
               'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
               'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
@@ -381,6 +381,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/rerefant.xml': 'xml/rerefant.xml',
               'casa-source/gcwrap/tasks/rmfit.xml': 'xml/rmfit.xml',
               'casa-source/gcwrap/tasks/rmtables.xml': 'xml/rmtables.xml',
+              'casa-source/gcwrap/tasks/sdatmcor.xml': 'xml/sdatmcor.xml',
               'casa-source/gcwrap/tasks/sdbaseline.xml': 'xml/sdbaseline.xml',
               'casa-source/gcwrap/tasks/sdcal.xml': 'xml/sdcal.xml',
               'casa-source/gcwrap/tasks/sdfit.xml': 'xml/sdfit.xml',
@@ -450,7 +451,6 @@ xml_files = [ 'xml/imhead.xml',
               'xml/delmod.xml',
               'xml/imsubimage.xml',
               'xml/accor.xml',
-              'xml/accum.xml',
               'xml/asdmsummary.xml',
               'xml/clearcal.xml',
               'xml/conjugatevis.xml',
@@ -495,6 +495,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/rerefant.xml',
               'xml/rmfit.xml',
               'xml/rmtables.xml',
+              'xml/sdatmcor.xml',
               'xml/sdbaseline.xml',
               'xml/sdcal.xml',
               'xml/sdfit.xml',
@@ -635,20 +636,6 @@ def generate_pyinit(moduledir,tasks):
         fd.write('    mpi_env_found=True\n')
         fd.write('except:\n')
         fd.write('    mpi_env_found=False\n')
-        # Only the mpi "client" should write the version information (otherwise the logsink will crash)
-        fd.write('if mpi_env_found and MPIEnvironment.is_mpi_enabled:\n')
-        fd.write('    if MPIEnvironment.is_mpi_client:\n')
-        fd.write('        try:\n')
-        fd.write('            casalog.post("CASA Version %s")\n' % casatasks_version)
-        fd.write('            casalog.post("MPI Enabled")\n')
-        fd.write('        except:\n')
-        fd.write('            print("Error: the logfile is not writable")\n')
-        fd.write('else:\n')
-        fd.write('    try:\n')
-        fd.write('        casalog.post("CASA Version %s")\n' % casatasks_version)
-        fd.write('    except:\n')
-        fd.write('        print("Error: the logfile is not writable")\n')  
-        fd.write("\n")
         mpi_import_str = '\n'.join((
             "# When in MPI mode, this will put servers into their serve() loop.",
             "# From this point on user scripts can use tclean parallelization, Tier0 parallelization,",
@@ -662,6 +649,32 @@ def generate_pyinit(moduledir,tasks):
             "except ImportError:",
             "    pass\n"))
         fd.write(mpi_import_str)
+        fd.write("package_variant='modular'\n")
+        fd.write("try:\n")
+        fd.write("  if _clith_spec is not None:\n")
+        fd.write("    package_variant='casalith'\n")
+        fd.write("except:\n")
+        fd.write("  pass\n")
+        fd.write("try:\n")
+        fd.write("  _pipe_spec = importlib.util.find_spec('pipeline')\n")
+        fd.write("  if _pipe_spec is not None:\n")
+        fd.write("    package_variant='pipeline'\n")
+        fd.write("except:\n")
+        fd.write("  pass\n")
+        # Only the mpi "client" should write the version information (otherwise the logsink will crash)
+        fd.write('if mpi_env_found and MPIEnvironment.is_mpi_enabled:\n')
+        fd.write('    if MPIEnvironment.is_mpi_client:\n')
+        fd.write('        try:\n')
+        fd.write('            casalog.post("CASA Version " + package_variant.upper() + " %s")\n' %  casatasks_version)
+        fd.write('            casalog.post("MPI Enabled")\n')
+        fd.write('        except:\n')
+        fd.write('            print("Error: the logfile is not writable")\n')
+        fd.write('else:\n')
+        fd.write('    try:\n')
+        fd.write('        casalog.post("CASA Version " + package_variant.upper() + " %s")\n' % casatasks_version)
+        fd.write('    except:\n')
+        fd.write('        print("Error: the logfile is not writable")\n')  
+        fd.write("\n")
         fd.write("from datetime import datetime as _time\n")
         fd.write("telemetry_starttime = str(_time.now())\n")
         fd.write("import platform\n")
@@ -686,18 +699,6 @@ def generate_pyinit(moduledir,tasks):
         fd.write("    telemetrylogger = casatelemetry.casatelemetry.telemetry(telemetrylogdirectory)\n")
         fd.write("  except:\n")       
         fd.write("    telemetrylogger = casatelemetry.casatelemetry.telemetry()\n")
-        fd.write("  package_variant='wheel'\n")
-        fd.write("  try:\n")
-        fd.write("    if _clith_spec is not None:\n")
-        fd.write("      package_variant='casalith'\n")
-        fd.write("  except:\n")
-        fd.write("    pass\n")
-        fd.write("  try:\n")
-        fd.write("    _pipe_spec = importlib.util.find_spec('pipeline')\n")
-        fd.write("    if _pipe_spec is not None:\n")
-        fd.write("      package_variant='pipeline'\n")
-        fd.write("  except:\n")
-        fd.write("    pass\n")
         fd.write("  def logstop():\n")
         # Telemetry may be stopped during runtime so check if it is still enabled
         fd.write('    if telemetrylogger.telemetry_enabled:\n')
