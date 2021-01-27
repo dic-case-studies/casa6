@@ -19,9 +19,9 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
-    from testhelper import TableCacheValidator
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils import selection_syntax
+    from casatestutils.testhelper import TableCacheValidator
 
     # default isn't used in casatasks
     def default(atask):
@@ -46,12 +46,12 @@ else:
     from taskinit import msmdtool as msmetadata
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 
     try:
-        from .testutils import TableCacheValidator
+        from casatestutils.testhelper import TableCacheValidator
     except:
         from tests.testutils import TableCacheValidator
 
