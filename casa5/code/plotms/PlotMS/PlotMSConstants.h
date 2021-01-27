@@ -247,7 +247,7 @@ public:
     PMS_ENUM2(AxisUnit, axesUnits, axesUnitStrings, axisUnit,
               "", "hh:mm:ss", "GHz", "m/s", "km/s", "km", "m", "hours",
               "<html>&lambda;</html>", "degrees", "ns", "K", "neper", "s",
-              "%", "psec/sec", "mllliTEC");
+              "%", "psec/sec", "milliTEC");
 
     // </group>
               
