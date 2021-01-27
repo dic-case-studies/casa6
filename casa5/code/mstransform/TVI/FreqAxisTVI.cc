@@ -118,13 +118,15 @@ void FreqAxisTVI::formChanMap()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::origin()
 {
-	// Drive underlying ViImplementation2
-	getVii()->origin();
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
 }
 
 // -----------------------------------------------------------------------
@@ -132,13 +134,23 @@ void FreqAxisTVI::origin()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::next()
 {
-	// Drive underlying ViImplementation2
-	getVii()->next();
+    // Drive underlying ViImplementation2
+    getVii()->next();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
+}
+
+void FreqAxisTVI::configureShapes()
+{
+    Vector<Int> spws;
+    spectralWindows(spws);
+    Vector<Int> channels = getChannels (0, 0, spws (0) , msId());
+    nChannPerShape_ = casacore::Vector<casacore::Int> (1, channels.nelements());
 }
 
 // -----------------------------------------------------------------------
@@ -184,6 +196,13 @@ Vector<Int> FreqAxisTVI::getChannels (Double,Int,Int spectralWindowId,Int) const
 
 	return ret;
 }
+
+const casacore::Vector<casacore::Int>&
+FreqAxisTVI::nChannelsPerShape () const
+{
+    return nChannPerShape_;
+}
+
 
 // -----------------------------------------------------------------------
 //
