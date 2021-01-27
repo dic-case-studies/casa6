@@ -17,8 +17,8 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils import selection_syntax
 
     tb = table()
 
@@ -36,7 +36,7 @@ else:
     from sdutil import tbmanager
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 

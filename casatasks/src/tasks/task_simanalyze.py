@@ -985,7 +985,7 @@ def simanalyze(
                     flipped_array = beam_array.transpose()
                     ttrans_array = flipped_array.tolist()
                     ttrans_array.reverse()
-                    pl.imshow(ttrans_array,interpolation='bilinear',cmap=pl.cm.jet,extent=xextent+yextent,origin="bottom")
+                    pl.imshow(ttrans_array,interpolation='bilinear',cmap=pl.cm.jet,extent=xextent+yextent,origin="lower")
                     psfim.replace(project+"/","")
                     pl.title(psfim,fontsize="x-small")
                     try:
