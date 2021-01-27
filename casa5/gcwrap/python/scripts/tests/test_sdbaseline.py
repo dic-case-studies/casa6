@@ -5006,40 +5006,15 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             if 'spw' in self.params.keys():
                 flag[:, 4500:6500, :] = True
 
-        wgt_ref = wgt.copy()
-        for ipol in range(len(data)):
-            for irow in range(len(data[0][0])):
-                nch = 0
-                sum = 0.0
-                ssq = 0.0
-                for ichan in range(len(data[0])):
-                    if not flag[ipol][ichan][irow]:
-                        nch += 1
-                        sum += data[ipol][ichan][irow]
-                        ssq += data[ipol][ichan][irow] ** 2
-                if nch == 0:
-                    wgt_ref[ipol][irow] = 0.0
-                else:
-                    sum /= float(nch)
-                    ssq /= float(nch)
-                    if sigmavalue == 'stddev':
-                        wgt_ref[ipol][irow] = 1.0 / (ssq - sum ** 2)
-                    elif sigmavalue == 'rms':
-                        wgt_ref[ipol][irow] = 1.0 / ssq
-                """
-                #for numpy 1.8.0 or later
-                tmpdata = data.copy()
-                for ichan in range(len(data[0])):
-                    if flag[ipol][ichan][irow]:
-                        tmpdata[ichan] = numpy.nan
-                try:
-                    variance = numpy.nanvar(tmpdata)
-                    if sigmavalue == 'rms':
-                        variance += numpy.square(numpy.nanmean(tmpdata))
-                    wgt_ref[ipol][irow] = 1.0 / variance
-                except (ZeroDivisionError, RuntimeWarning):
-                    wgt_ref[ipol][irow] = 0.0
-                """ 
+        mdata = numpy.ma.masked_array(data, mask=flag)
+        if sigmavalue == 'stddev':
+            mwgt_ref = 1.0 / numpy.var(mdata, axis=1)
+        elif sigmavalue == 'rms':
+            mwgt_ref = 1.0 / numpy.mean(numpy.square(mdata), axis=1)
+        else:
+            raise ValueError("Illegal argument: sigmavalue={}: must be \
+                             'stddev' or 'rms'".format(sigmavalue))
+        wgt_ref = numpy.ma.filled(mwgt_ref, fill_value=0.0)
 
         self.assertTrue(numpy.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
 
