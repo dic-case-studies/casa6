@@ -22,7 +22,7 @@ if is_CASA6:
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
     from __main__ import default
-    from tasks import gencal
+    from tasks import gencal, rmtables
     from taskinit import *
     from recipes import tec_maps
     
