@@ -6,7 +6,6 @@
 ################################################
 
 from __future__ import absolute_import
-from __future__ import print_function
 
 import os
 import shutil
@@ -211,6 +210,9 @@ def tclean(
         #return
       
 
+    if(facets>1 and parallel==True):
+        casalog.post("Facetted imaging currently works only in serial. Please choose pure W-projection instead.","WARN","task_tclean")
+
     #####################################################
     #### Construct ImagerParameters object
     #####################################################
@@ -280,7 +282,7 @@ def tclean(
     if pcube and interactive:
         casalog.post( "Interactive mode is not currently supported with parallel apwproject cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
         return False
-    #print('parameters {}'.format(bparm))    
+    #casalog.post('parameters {}'.format(bparm))    
     paramList=ImagerParameters(**bparm)
     ## Setup Imager objects, for different parallelization schemes.
     imagerInst=PySynthesisImager
@@ -297,7 +299,7 @@ def tclean(
          #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
          concattype='copyvirtual'
     else:
-         print('Invalid parallel combination in doClean.')
+         casalog.post('Invalid parallel combination in doClean.', 'ERROR')
          return
     
     retrec={}
@@ -349,9 +351,9 @@ def tclean(
                 mytb.open(psfname)
                 miscinf=mytb.getkeyword('miscinfo')
                 iminf=mytb.getkeyword('imageinfo')
-                #print ('miscinfo {} {}'.format(miscinf, iminf))
+                #casalog.post ('miscinfo {} {}'.format(miscinf, iminf))
                 mytb.done()
-                print("doing with different phasecenter psf")
+                casalog.post("doing with different phasecenter psf")
                 imager.unlockimages(0)
                 psfParameters=paramList.getAllPars()
                 psfParameters['phasecenter']=psfphasecenter
@@ -446,13 +448,7 @@ def tclean(
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 ######### niter >=0  end if 
-    except Exception as e:
-    #    #print 'Exception : ' + str(e)
-    #    if(cppparallel):
-    #        ###release workers back to python mpi control
-    #        si=synthesisimager()
-    #        si.releasempi()
-        casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
+
     finally:
         ##close tools
         # needs to deletools before concat or lock waits for ever
@@ -463,7 +459,7 @@ def tclean(
             si=synthesisimager()
             si.releasempi()
         if (pcube):
-            print("running concatImages ...")
+            casalog.post("running concatImages ...")
             casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
             imager.concatImages(type=concattype)
         # CAS-10721 

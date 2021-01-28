@@ -205,6 +205,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   if(!alreadyLocked)
     newTab.lock(True);
   if(Table::isReadable(newTab.sourceTableName())){
+    if(!newTab.source().isWritable())
+      return;
     newTab.source().lock(True);   
   }
   LogIO logio;
@@ -269,6 +271,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
 }
   void VisModelData::clearModel(const MeasurementSet& thems, const String field, const String specwindows){
     MeasurementSet& newTab=const_cast<MeasurementSet& >(thems);
+    if(!newTab.isWritable())
+      return;
   auto part_block = newTab.getPartNames(true);
   Vector<String> theParts(part_block.begin( ),part_block.end( ));
   if(theParts.nelements() > 1){
@@ -284,6 +288,8 @@ void VisModelData::clearModel(const MeasurementSet& thems){
   if(!alreadyLocked)
     newTab.lock(True);
   if(Table::isReadable(newTab.sourceTableName())){
+    if(!Table::isWritable(newTab.sourceTableName()))
+      return;
     newTab.source().lock(True);   
   }
 

@@ -38,6 +38,7 @@ try:
     from casatools import ctsys
     from casatools import imagemetadata
     ctsys_resolve = ctsys.resolve
+    ctsys_resolve2 = ctsys.resolve
     _qa = quanta()
     _imd = imagemetadata()
 except ImportError:
@@ -50,6 +51,15 @@ except ImportError:
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
         return os.path.join(dataPath,apath)    
 
+    # scastro (25nov2020) suggests putting new files in data-req, so we are now splitting files
+    # across two data repos
+    def ctsys_resolve2(apath):
+        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+            datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
+        else:
+            datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+        return os.path.join(datapath, apath)    
+
 image = "imregion.fits"
 text1 = "goodfile1.txt"
 res1 = "res1.rgn"
@@ -60,8 +70,13 @@ cas_3259r = "CAS-3259.rgn"
 cas_3260t = "CAS-3260.txt"
 cas_3260r = "CAS-3260.rgn"
 icrs_image = "icrs.im"
+cas_12980i = 'Cir_X-1_sci.spw37.mfs.I.manual.fits'
+cas_12980t = 'mynewregion.crtf' 
+cas_12980c = 'cas_12980c.im'
 
 datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
+datapath2 = ctsys_resolve2('image/')
+datapath3 = ctsys_resolve2('text/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
@@ -103,19 +118,20 @@ class rg_fromtextfile_test(unittest.TestCase):
     
     _fixtures = [
         image, text1, res1, cas_3258t, cas_3258r, cas_3259t, cas_3259r,
-        cas_3260t, cas_3260r
-    ]
+        cas_3260t, cas_3260r     ]
 
-    _created = [icrs_image]
+    _created = [icrs_image, cas_12980c]
     
     def setUp(self):
         for im in self._fixtures:
             shutil.copy(datapath + im, im)
+        shutil.copy(datapath2 + cas_12980i, cas_12980i)
+        shutil.copy(datapath3 + cas_12980t, cas_12980t)
         self.ia = iatool()
         self.rg = rgtool()
     
     def tearDown(self):
-        for im in self._fixtures + self._created:
+        for im in self._fixtures + self._created + [cas_12980i, cas_12980t]:
             if os.path.exists(im):
                 if os.path.isdir(im):
                     shutil.rmtree(im)
@@ -369,6 +385,18 @@ class rg_fromtextfile_test(unittest.TestCase):
         stats = self.ia.statistics(region=reg)
         self.ia.done() 
         self.assertEqual(stats['max'][0], 1, 'Incorrect value for max')
+
+    def test_crtf_has_multiple_diff_and_ends_with_diff_bug_fix(self):
+        """
+        CAS-12980, verify fix that allows supplied CRTF file to work correctly
+        1. copy necessary data
+        2. run ia.subimage() on image using region file
+        3. confirm that the correct number of pixels are not masked
+        """
+        self.ia.open(cas_12980i)
+        xx = self.ia.subimage(region=cas_12980t)
+        self.assertEqual(xx.statistics()['npts'], 6612, 'Wrong number of pixels masked')
+        xx.done()  
 
 def suite():
     return [rg_fromtextfile_test]

@@ -142,9 +142,41 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     try
       {
 
-    //Respect the readonly flag...necessary for multi-process access
-    MeasurementSet thisms(selpars.msname, TableLock(TableLock::UserNoReadLocking),
-                          selpars.readonly ? Table::Old : Table::Update);
+
+	MeasurementSet thisms;
+	{ ///Table system seems to have a bug when running in multi-process as the source table disappears
+	  /// temporarily when other processes are updating it 
+	  uInt exceptCounter=0;
+	  
+	  while(true){
+	    try{
+	      //Respect the readonly flag...necessary for multi-process access
+	      thisms=MeasurementSet(selpars.msname, TableLock(TableLock::UserNoReadLocking),
+				    selpars.readonly ? Table::Old : Table::Update);
+	      break;
+	    }
+	    catch(AipsError &x){
+	      
+	      String mes=x.getMesg();
+	      if(mes.contains("FilebufIO::readBlock") || mes.contains("SOURCE")){
+		sleep(0.05);
+		os << LogIO::WARN << "#####CATCHING a sleep because "<< mes<< LogIO::POST;
+	      }
+	      else
+		throw(AipsError("Error in selectdata: "+mes));
+	      
+	      if(exceptCounter > 100){
+		throw(AipsError("Error in selectdata got 100 of this exeception: "+mes));
+		
+	      }
+	      
+	    }
+	    ++exceptCounter;
+	  }
+	}//End of work around for table disappearing bug
+	
+
+    
     useScratch_p=selpars.usescratch;
     readOnly_p = selpars.readonly;
     lockMS(thisms);	
@@ -1475,7 +1507,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 //////////////////////////////
  
   ////////////////////////////////////////////////////////////////////////////////////////////////
+
   bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, const Record inpcontrol){
+
+	LogIO logger(LogOrigin("SynthesisImagerVi2", "runCubeGridding", WHERE));
+
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
         char **argv=nullptr;
@@ -1666,7 +1702,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                   //cerr << k << " rank " << rank << " successful " << endl;
                   cerr << "" ;
                 else
-                    cerr << k << " rank " << rank << " failed " << endl;
+                    logger << k << " rank " << rank << " failed " << LogIO::SEVERE;
                 assigned = casa::applicator.nextAvailProcess ( cmc, rank );
 
             }
@@ -1711,7 +1747,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
               //cerr << "remainder rank " << rank << " successful " << endl;
               cerr << "";
             else
-                cerr << "remainder rank " << rank << " failed " << endl;
+                logger << "remainder rank " << rank << " failed " << LogIO::SEVERE;
 
             rank = casa::applicator.nextProcessDone ( cmc, allDone );
 			if(casa::applicator.isSerial())
@@ -1719,7 +1755,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         }
         if(anyEQ(retvals, False)){
           //cerr << retvals << endl;
-          throw(AipsError("One or more  of the cube section failed in de/gridding"));  
+          ostringstream oss;
+          oss << "One or more  of the cube section failed in de/gridding. Return values for "
+              "the sections: " << retvals;
+          throw(AipsError(oss));
         }
         if(!dopsf){
           try{

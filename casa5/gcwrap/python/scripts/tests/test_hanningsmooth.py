@@ -8,8 +8,8 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     ### for testhelper import
     import sys
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
     from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 
     from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
@@ -25,11 +25,13 @@ else:
     from __main__ import default
     from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
     from taskinit import mstool as ms
-    import testhelper as th
+    #import testhelper as th
     from parallel.parallel_data_helper import ParallelDataHelper
 
     # Path for data
     datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/hanningsmooth/'
+
+from casatestutils import testhelper as th
 
 '''
 functional tests for task hanningsmooth
