@@ -61,7 +61,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters() :
   c0_(Complex(0.0)),
   autoPol_(false),
   doParang_(false),
-  spwScope_(ChunkScope)
+  spwScope_(ChunkScope),
+  antennaScope_(RowScope)
 {
   
   Vector<Int> nTimePerField(nTimePerField_);
@@ -105,7 +106,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
   c0_(c0),
   autoPol_(autoPol),
   doParang_(doParang),
-  spwScope_(ChunkScope)
+  spwScope_(ChunkScope),
+  antennaScope_(RowScope)
 {
 
   Vector<Double> refFreq(nSpw_,100.0e9);
@@ -140,7 +142,8 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
         Bool doNorm,
         String polBasis, Bool doAC,
         Complex c0, Bool doParang,
-        MetadataScope spwScope) :
+        MetadataScope spwScope,
+        MetadataScope antennaScope) :
   nField_(nField),
   nScan_(nScan),
   nSpw_(nSpw),
@@ -160,8 +163,10 @@ SimpleSimVi2Parameters::SimpleSimVi2Parameters(Int nField,Int nScan,Int nSpw,Int
   polBasis_(polBasis),
   doAC_(doAC),
   c0_(c0),
+  autoPol_(false),
   doParang_(doParang),
-  spwScope_(spwScope)
+  spwScope_(spwScope),
+  antennaScope_(antennaScope)
 {
 
   // Generic initialization
@@ -195,8 +200,10 @@ SimpleSimVi2Parameters& SimpleSimVi2Parameters::operator=(const SimpleSimVi2Para
     polBasis_=other.polBasis_;
     doAC_=other.doAC_;
     c0_=other.c0_;
+    autoPol_=other.autoPol_;
     doParang_=other.doParang_;
     spwScope_=other.spwScope_;
+    antennaScope_=other.antennaScope_;
   }
   return *this;
 
@@ -308,6 +315,8 @@ void SimpleSimVi2Parameters::initialize(const Vector<Int>& nTimePerField,const V
   else
     tsys_=tsys;  // will throw if shapes mismatch
 
+  if(antennaScope_ == ChunkScope)
+    SSVi2NotYetImplemented();
 }
 
 
@@ -540,10 +549,13 @@ void SimpleSimVi2::nextChunk ()
 
 void SimpleSimVi2::origin ()
 {
+  rownr_t spwSubchunkFactor = 1, antennaSubchunkFactor = 1;
   if(pars_.spwScope_ == SubchunkScope)
-    nSubchunk_ = pars_.nSpw_ * pars_.nTimePerField_(thisField_);
-  else
-    nSubchunk_ = pars_.nTimePerField_(thisField_);
+    spwSubchunkFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == SubchunkScope)
+    antennaSubchunkFactor = nBsln_;
+
+  nSubchunk_ = spwSubchunkFactor * antennaSubchunkFactor * pars_.nTimePerField_(thisField_);
 
   // First subchunk this chunk
   iSubChunk_=0;
@@ -551,19 +563,27 @@ void SimpleSimVi2::origin ()
   // time is first time of the chunk
   thisTime_=iChunkTime0_;
 
+  rownr_t spwRowFactor = 1, antennaRowFactor = 1;
   // row counter
-  if(pars_.spwScope_ == ChunkScope || pars_.spwScope_ == SubchunkScope)
-   iRow0_+=nBsln_;
-  else
-   iRow0_+=pars_.nSpw_ * nBsln_;
+  if(pars_.spwScope_ == RowScope)
+    spwRowFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == RowScope)
+    antennaRowFactor = nBsln_;
+
+  iRow0_ += spwRowFactor * antennaRowFactor;
 
   // Start with SPW=0 if scope is Subchunk. 
   if(pars_.spwScope_ == SubchunkScope || pars_.spwScope_ == RowScope)
     thisSpw_ = 0;
 
+  if(pars_.antennaScope_ == SubchunkScope)
+  {
+      thisAntenna1_ = 0;
+      thisAntenna2_ = (pars_.doAC_ ? 0 : 1);
+  }
+
   // Keep VB sync'd
   this->configureNewSubchunk();
-
 }
 
 Bool SimpleSimVi2::more () const
@@ -575,13 +595,36 @@ Bool SimpleSimVi2::more () const
 void SimpleSimVi2::next () {
   // Advance counter and time
   ++iSubChunk_;
-  thisTime_+=pars_.dt_;
 
   if(iSubChunk_ < nSubchunk_)
   {
-    // Change SPW once all times have been served
+    // Change SPW once all times and baselines have been served
     if(pars_.spwScope_ == SubchunkScope)
-      thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+    {
+      if(pars_.antennaScope_ == SubchunkScope)
+        thisSpw_ = iSubChunk_ / (nBsln_ / pars_.nTimePerField_(thisField_));
+      else 
+        thisSpw_ = iSubChunk_ / pars_.nTimePerField_(thisField_);
+    }
+
+    if(pars_.antennaScope_ == SubchunkScope)
+    {
+      thisAntenna2_++;
+      if(thisAntenna2_ == pars_.nAnt_)
+      {
+        thisAntenna1_++;
+        thisAntenna2_ = (pars_.doAC_ ? thisAntenna1_ : thisAntenna1_ + 1);
+      }
+      // All baselines have been served, start again
+      if(! (iSubChunk_ % nBsln_) )
+      {
+        thisAntenna1_ = 0;
+        thisAntenna2_ = (pars_.doAC_ ? 0 : 1);
+        thisTime_+=pars_.dt_;
+      }
+    }
+    else
+        thisTime_+=pars_.dt_;
 
     // Keep VB sync'd
     this->configureNewSubchunk();
@@ -689,24 +732,34 @@ VisBuffer2 * SimpleSimVi2::getVisBuffer () const { return vb_.get(); }
   
   // Return info
 void SimpleSimVi2::antenna1 (Vector<Int> & ant1) const {
-  ant1.resize(nBsln_);
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      ant1[k]=i;
-      ++k;
+  ant1.resize(nRows());
+  if(pars_.antennaScope_ == RowScope)
+  {
+    Int k=0;
+    for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
+      for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
+          ant1[k]=i;
+          ++k;
+      }
     }
   }
+  else
+    ant1 = thisAntenna1_;
 }
 void SimpleSimVi2::antenna2 (Vector<Int> & ant2) const {
-  ant2.resize(nBsln_);
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      ant2[k]=j;
-      ++k;
+  ant2.resize(nRows());
+  if(pars_.antennaScope_ == RowScope)
+  {
+    Int k=0;
+    for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
+      for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
+        ant2[k]=j;
+        ++k;
+      }
     }
   }
+  else
+    ant2 = thisAntenna2_;
 }
 
 void SimpleSimVi2::corrType (Vector<Int> & corrs) const { 
@@ -727,13 +780,19 @@ String SimpleSimVi2::fieldName () const {return "Field"+String(thisField_); }
 
 void SimpleSimVi2::flag (Cube<Bool> & flags) const {
   // unflagged
-  flags.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  flags.set(false);
+  Vector<Cube<Bool>> flagsVec;
+  this->flag(flagsVec);
+  flags = flagsVec[0];
 }
 
 void SimpleSimVi2::flag (Vector<Cube<Bool>> & flags) const {
-  flags.resize(1);
-  this->flag(flags[0]);
+  // unflagged
+  flags.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    flags[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    flags[ishape].set(false);
+  }
 }
 
 void SimpleSimVi2::flagRow (Vector<Bool> & rowflags) const { rowflags.resize(nRows()); rowflags.set(false); }
@@ -754,7 +813,8 @@ void SimpleSimVi2::spectralWindows (Vector<Int> & spws) const
   else
   {
     indgen(spws);
-    spws = spws / nBsln_;
+    if(pars_.antennaScope_ == RowScope)
+      spws = spws / nBsln_;
   }
 }
 
@@ -807,15 +867,17 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
   Vector<Int> a2;
   this->antenna1(a1);
   this->antenna2(a2);
-  
+
   Array<Complex> specvis;
   Matrix<Float> G(pars_.gain_);
   Matrix<Float> Tsys(pars_.tsys_);
 
+  rownr_t vbRowIdx = 0;
   for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
   {
+    rownr_t thisShapeVbRowIdx = vbRowIdx;
     if (pars_.doParang_ && pars_.nCorr_==4)
-      corruptByParang(vis[ishape]);
+      corruptByParang(vis[ishape], thisShapeVbRowIdx);
 
     if (abs(pars_.c0_)>0.0) {  // Global offset for systematic solve testing
       Cube<Complex> v(vis[ishape](Slice(0,1,1),Slice(),Slice()));
@@ -826,121 +888,154 @@ void SimpleSimVi2::visibilityObserved (Vector<Cube<Complex>> & vis) const {
       }
     }
 
-    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow) {
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
       for (int icorr=0;icorr<pars_.nCorr_;++icorr) {
-      specvis.reference(vis[ishape](Slice(icorr),Slice(),Slice(irow)));
-        specvis*=sqrt( G(icorr/2,a1(irow)) * G(icorr%2,a2(irow)) );
+        specvis.reference(vis[ishape](Slice(icorr),Slice(),Slice(irow)));
+        specvis*=sqrt( G(icorr/2,a1(vbRowIdx)) * G(icorr%2,a2(vbRowIdx)) );
         if (pars_.doNorm_)
-      specvis/=sqrt( Tsys(icorr/2,a1(irow)) * Tsys(icorr%2,a2(irow)) );
+          specvis/=sqrt( Tsys(icorr/2,a1(vbRowIdx)) * Tsys(icorr%2,a2(vbRowIdx)) );
       }
     }
 
     // Now add noise
     if (pars_.doNoise_)
-      this->addNoise(vis[ishape]);
+      this->addNoise(vis[ishape], thisShapeVbRowIdx);
   }
 }
 
 void SimpleSimVi2::floatData (Cube<Float> & fcube) const {
-  fcube.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  // set according to stokes
-  // TBD
-  fcube.set(0.0);
-  // add noise
-  // TBD
+  Vector<Cube<Float>> fCubeVec;
+  this->floatData(fCubeVec);
+  fcube = fCubeVec[0];
 }
 
 void SimpleSimVi2::floatData (Vector<Cube<Float>> & fcubes) const {
-  fcubes.resize(1);
-  this->floatData(fcubes[0]);
+  fcubes.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    fcubes[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    // set according to stokes
+    // TBD
+    fcubes[ishape] = 0.0;
+    // add noise
+    // TBD
+  }
 }
 
 IPosition SimpleSimVi2::visibilityShape () const { return IPosition(3,pars_.nCorr_,pars_.nChan_(thisSpw_),nRows()); }
 
 void SimpleSimVi2::sigma (Matrix<Float> & sigmat) const {
-  sigmat.resize(pars_.nCorr_,nRows());
-  Matrix<Float> wtmat;
-  this->weight(wtmat);
-  sigmat=(1.f/sqrt(wtmat));
+  Vector<Matrix<Float>> sigVec;
+  this->sigma(sigVec);
+  sigmat = sigVec[0];
 }
 
 void SimpleSimVi2::sigma (Vector<Matrix<Float>> & sigmat) const {
-  sigmat.resize(1);
-  this->sigma(sigmat[0]);
-}
-
-void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
-  wtmat.resize(pars_.nCorr_,nRows());
-  wtmat.set(wt0_(thisSpw_)); // spw-specific
-  // non-ACs have twice this weight
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      if (i!=j) {
-    Array<Float> thiswtmat(wtmat(Slice(),Slice(k)));
-    thiswtmat*=Float(2.0);
-      }
-      ++k;
-    }
+  Vector<Matrix<Float>> wtMatVec;
+  this->weight(wtMatVec);
+  sigmat.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    sigmat[ishape].resize(pars_.nCorr_, nRowsPerShape_[ishape]);
+    sigmat[ishape] = (1.f/sqrt(wtMatVec[ishape]));
   }
 }
 
-void SimpleSimVi2::weight (Vector<Matrix<Float>> & wtmat) const {
-  wtmat.resize(1);
-  this->weight(wtmat[0]);
+void SimpleSimVi2::weight (Matrix<Float> & wtmat) const {
+  Vector<Matrix<Float>> wtVec;
+  this->weight(wtVec);
+  wtmat = wtVec[0];
+}
+
+void SimpleSimVi2::weight (Vector<Matrix<Float>> & wtMatVec) const {
+  wtMatVec.resize(nShapes());
+
+  Vector<Int> spws;
+  Vector<Int> a1;
+  Vector<Int> a2;
+  this->spectralWindows(spws);
+  this->antenna1(a1);
+  this->antenna2(a2);
+
+  rownr_t vbRowIdx = 0;
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    wtMatVec[ishape].resize(pars_.nCorr_, nRowsPerShape_[ishape]);
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
+      wtMatVec[ishape](Slice(),Slice(irow)) = wt0_(spws(vbRowIdx)); // spw-specific
+      // non-ACs have twice this weight
+      if(a1[vbRowIdx] != a2[vbRowIdx])
+      {
+        Array<Float> thiswtmat(wtMatVec[ishape](Slice(),Slice(irow)));
+        thiswtmat*=Float(2.0);
+      }
+    }
+  }
 }
 
 Bool SimpleSimVi2::weightSpectrumExists () const { return true; }
 Bool SimpleSimVi2::sigmaSpectrumExists () const { return true; } 
 
 void SimpleSimVi2::weightSpectrum (Cube<Float> & wtsp) const {
-  wtsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  wtsp.set(wt0_(thisSpw_));
+  Vector<Cube<Float>> wtspVec;
+  this->weightSpectrum(wtspVec);
+  wtsp = wtspVec[0];
+}
 
-  if (!pars_.doNoise_) return;
+void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
+  wtsp.resize(nShapes());
 
+  Vector<Int> spws;
   Vector<Int> a1;
   Vector<Int> a2;
+  this->spectralWindows(spws);
   this->antenna1(a1);
   this->antenna2(a2);
+
   Matrix<Float> Tsys(pars_.tsys_);
 
-  Int k=0;
-  for (Int i=0;i<(pars_.doAC_ ? pars_.nAnt_ : pars_.nAnt_-1);++i) {
-    for (Int j=(pars_.doAC_ ? i : i+1);j<pars_.nAnt_;++j) {
-      // non-ACs have twice wt0_
-      if (i!=j) {
-        Array<Float> thiswtsp(wtsp(Slice(),Slice(),Slice(k)));
-        thiswtsp*=Float(2.0);
-      }
+  rownr_t vbRowIdx = 0;
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    wtsp[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
 
-      if (!pars_.doNorm_) {
-        for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
-          Array<Float> thiswt(wtsp(Slice(icorr),Slice(),Slice(k)));
-          Float c= Tsys(icorr/2,a1(k))*Tsys(icorr%2,a2(k));
-          thiswt/=c;
+    for (rownr_t irow=0;irow<nRowsPerShape_[ishape];++irow, ++vbRowIdx) {
+      wtsp[ishape](Slice(),Slice(),Slice(irow)) = wt0_(spws(vbRowIdx)); // spw-specific
+      if (pars_.doNoise_)
+      {
+        // non-ACs have twice this weight
+        if(a1[vbRowIdx] != a2[vbRowIdx])
+        {
+          Array<Float> thiswtsp(wtsp[ishape](Slice(),Slice(),Slice(irow)));
+          thiswtsp*=Float(2.0);
+        }
+        if (!pars_.doNorm_) {
+          for (Int icorr=0;icorr<pars_.nCorr_;++icorr) {
+            Array<Float> thiswt(wtsp[ishape](Slice(icorr),Slice(),Slice(irow)));
+            Float c= Tsys(icorr/2,a1(vbRowIdx))*Tsys(icorr%2,a2(vbRowIdx));
+            thiswt/=c;
+          }
         }
       }
-      ++k;
     }
   }
 }
 
-void SimpleSimVi2::weightSpectrum (Vector<Cube<Float>> & wtsp) const {
-  wtsp.resize(1);
-  this->weightSpectrum(wtsp[0]);
-}
-
 void SimpleSimVi2::sigmaSpectrum (Cube<Float> & sigsp) const {
-  sigsp.resize(pars_.nCorr_,pars_.nChan_(thisSpw_),nRows());
-  Cube<Float> wtsp;
-  this->weightSpectrum(wtsp);
-  sigsp=(1.f/sqrt(wtsp));
+  Vector<Cube<Float>> sigspVec;
+  this->sigmaSpectrum(sigspVec);
+  sigsp = sigspVec[0];
 }
 
 void SimpleSimVi2::sigmaSpectrum (Vector<Cube<Float>> & sigsp) const {
-  sigsp.resize(1);
-  this->sigmaSpectrum(sigsp[0]);
+  Vector<Cube<Float>> wtVec;
+  this->weightSpectrum(wtVec);
+  sigsp.resize(nShapes());
+  for (rownr_t ishape = 0 ; ishape < nShapes(); ++ishape)
+  {
+    sigsp[ishape].resize(pars_.nCorr_,nChannPerShape_[ishape], nRowsPerShape_[ishape]);
+    sigsp[ishape] = (1.f/sqrt(wtVec[ishape]));
+  }
 }
 
 const casacore::Vector<casacore::Float>& SimpleSimVi2::feed_pa (casacore::Double t) const
@@ -1012,21 +1107,21 @@ Int SimpleSimVi2::nTimes() const {
 
 
 void SimpleSimVi2::configureNewSubchunk() {
-  nRows_ = 0;
-  nShapes_ = 0;
-  if(pars_.spwScope_ == ChunkScope || pars_.spwScope_ == SubchunkScope)
-  {
-    nRows_ = nBsln_;
-    nShapes_ = 1;
-  }
-  else if(pars_.spwScope_ == RowScope)
-  {
-    nRows_ = nBsln_*pars_.nSpw_;
+  nShapes_ = 1;
+  rownr_t spwRowFactor = 1, antennaRowFactor = 1;
+
+  if(pars_.spwScope_ == RowScope)
+    spwRowFactor = pars_.nSpw_;
+  if(pars_.antennaScope_ == RowScope)
+    antennaRowFactor = nBsln_;
+
+  if(pars_.spwScope_ == RowScope)
     nShapes_ = pars_.nSpw_;
-  }
+
+  nRows_ = spwRowFactor * antennaRowFactor;
 
   nRowsPerShape_.resize(nShapes_);
-  nRowsPerShape_ = nBsln_;
+  nRowsPerShape_ = nRows_ / nShapes_;
 
   Vector<Int> spws;
   spectralWindows(spws);
@@ -1051,7 +1146,7 @@ void SimpleSimVi2::configureNewSubchunk() {
 }
 
   // Generate noise on data
-void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
+void SimpleSimVi2::addNoise(Cube<Complex>& vis, rownr_t vbRowOffset) const {
 
   IPosition sh3(vis.shape());
 
@@ -1067,12 +1162,12 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
   Matrix<Float> Tsys(pars_.tsys_);
   for (Int i=0;i<sh3[2];++i) {
     Float c(1.0);
-    if (a1(i)!=a2(i))
+    if (a1(i+vbRowOffset)!=a2(i+vbRowOffset))
       c=1./sqrt(2.0);
     for (Int k=0;k<sh3[0];++k) {
       Float d(c);
       if (!pars_.doNorm_)
-	d*=sqrt(Tsys(k/2,a1(i))*Tsys(k%2,a2(i)));
+	d*=sqrt(Tsys(k/2,a1(i+vbRowOffset))*Tsys(k%2,a2(i+vbRowOffset)));
       for (Int j=0;j<sh3[1];++j) {
 	vis(k,j,i)+=Complex(d)*Complex(rn(),rn());
       }
@@ -1081,7 +1176,7 @@ void SimpleSimVi2::addNoise(Cube<Complex>& vis) const {
 
 }
 
-void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
+void SimpleSimVi2::corruptByParang(Cube<Complex>& vis, rownr_t vbRowOffset) const {
 
 
   // Assumes constant time in this subchunk
@@ -1100,8 +1195,8 @@ void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
       P(1,iant)=Complex(cos(a),sin(a));
       P(0,iant)=conj(P(1,iant));
     }
-    for (Int irow=0;irow<nBsln_;++irow) {
-      Int& i(a1(irow)), j(a2(irow));
+    for (Int irow=0;irow<vis.shape()(2);++irow) {
+      Int& i(a1(irow+vbRowOffset)), j(a2(irow+vbRowOffset));
       for (Int icor=0;icor<pars_.nCorr_;++icor) {
 	v.reference(vis(Slice(icor,1,1),Slice(),Slice(irow,1,1)));
 	v*=(P(icor/2,i)*conj(P(icor%2,j)));   // cf PJones
@@ -1116,8 +1211,8 @@ void SimpleSimVi2::corruptByParang(Cube<Complex>& vis) const {
       P(1,iant)=sin(a);
     }
     Vector<Complex> v0(pars_.nCorr_),v1;
-    for (Int irow=0;irow<nBsln_;++irow) {
-      Int& i(a1(irow)), j(a2(irow));
+    for (Int irow=0;irow<vis.shape()(2);++irow) {
+      Int& i(a1(irow+vbRowOffset)), j(a2(irow+vbRowOffset));
       Float& C(P(0,i)),S(P(1,i)),c(P(0,j)),s(P(1,j));
       for (Int ich=0;ich<pars_.nChan_(thisSpw_);++ich) {
 	v1.reference(vis.xyPlane(irow).column(ich));
