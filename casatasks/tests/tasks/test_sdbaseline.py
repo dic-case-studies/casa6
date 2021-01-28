@@ -1025,6 +1025,10 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     test023 --- sinusoid-related parameters with default values
     test024 --- addwn has too large value but rejwn removes it
     
+    test021_uppercase_params --- specify fftthresh by 'SIGMA' + checking residual rms
+    test022_uppercase_params --- specify fftthresh by 'TOP' + checking residual rms
+    test025_uppercase_params --- specify fftmethod by 'FFT'    
+
     test100 --- no effective wave number set (addwn empty list, applyfft=False)
     test101 --- no effective wave number set (addwn empty list, applyfft=True)
     test102 --- no effective wave number set (addwn empty tuple, applyfft=False)
@@ -1362,6 +1366,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         stat = self._getStats(filename=outfile, pol='0')
         self.assertTrue(stat[0]['rms'] < torr)
 
+    def test021_uppercase_params(self):
+        """Sinusoid Test 021: specify fftthresh by 'SIGMA' + checking residual rms"""
+        tid = '021'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test022(self):
         """Sinusoid Test 022: specify fftthresh by 'top' + checking residual rms"""
         tid = '022'
@@ -1370,6 +1390,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
         addwn = '0'
         fftthresh = 'top4'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test022_uppercase_params(self):
+        """Sinusoid Test 022: specify fftthresh by 'TOP' + checking residual rms"""
+        tid = '022'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = 'TOP4'
         torr = 1.0e-6
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
@@ -1402,8 +1438,24 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
                              blfunc='sinusoid',applyfft=applyfft,addwn=addwn,rejwn=rejwn)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
-        
-        
+
+    def test025_uppercase_params(self):
+        """Sinusoid Test 025: specify fftmethod by 'FFT' + checking residual rms"""
+        tid = '025'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftmethod = 'FFT'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftmethod=fftmethod,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test100(self):
         """Sinusoid Test 100: no effective wave number set (addwn empty list, applyfft=False)"""
         tid = '100'
@@ -2166,7 +2218,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                [[500,7500]],
                [[500,2500],[3500,7500]]
                ]
-        blmode='fit'
+        blmode='FIT'
         blformat='TABLE'
         dosubtract=True
         blfunc=['POLY','CHEBYSHEV','CSPLINE']
@@ -2403,6 +2455,17 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         outfile = self.outroot+self.tid+'.ms'
         result = sdbaseline(infile=self.infile,datacolumn='float_data',
                              blmode=self.blmode,bltable=self.bltable,
+                             outfile=outfile)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        self._checkResult(outfile, '')
+
+    def test400_uppercase_params(self):
+        """test400: apply baseline table with blmode='APPLY'. all bltable entries applied to all MS data."""
+        self.tid = '400'
+        outfile = self.outroot+self.tid+'.ms'
+        result = sdbaseline(infile=self.infile,datacolumn='float_data',
+                             blmode=self.blmode.upper(),bltable=self.bltable,
                              outfile=outfile)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")

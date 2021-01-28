@@ -35,6 +35,14 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
     casalog.origin('sdbaseline')
     try:
+        # CAS-12985 requests the following params be given case insensitively,
+        # so they need to be converted to lowercase here (2021/1/28 WK)
+        blfunc = blfunc.lower()
+        blmode = blmode.lower()
+        fftmethod = fftmethod.lower()
+        if isinstance(fftthresh, str):
+            fftthresh = fftthresh.lower()
+
         if not os.path.exists(infile):
             raise Exception("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
@@ -330,7 +338,7 @@ def prepare_for_baselining(**keywords):
     params = {}
     funcname = 'subtract_baseline'
 
-    blfunc = keywords['blfunc'].lower()
+    blfunc = keywords['blfunc']
     keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw']
     if blfunc in ['poly', 'chebyshev']:
         keys += ['blfunc', 'order']
