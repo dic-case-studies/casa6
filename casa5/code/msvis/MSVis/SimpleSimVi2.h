@@ -107,7 +107,8 @@ public:
                          casacore::String polBasis="circ", casacore::Bool doAC=false,
                          casacore::Complex c0 = casacore::Complex(0.0f),
                          casacore::Bool doParang=false,
-                         MetadataScope spwScope = ChunkScope);
+                         MetadataScope spwScope = ChunkScope,
+                         MetadataScope antennaScope = RowScope);
   
   SimpleSimVi2Parameters(const SimpleSimVi2Parameters& other);
   SimpleSimVi2Parameters& operator=(const SimpleSimVi2Parameters& other);
@@ -131,6 +132,7 @@ public:
   casacore::Bool autoPol_;   // set non-trivial linear polarization 
   casacore::Bool doParang_;  // Simple linear-in-time, for now
   MetadataScope spwScope_; // is SPW constant on each chunk, subchunk or row?
+  MetadataScope antennaScope_; // are ANTENNA1, ANTENNA2 constant on each subchunk or row? (chunk scope not supported for the time being)
 
   // Return frequencies for specified spw
   casacore::Vector<casacore::Double> freqs(casacore::Int spw) const;
@@ -460,10 +462,10 @@ private:
   void configureNewSubchunk();
 
   // Generate noise on data
-  void addNoise(casacore::Cube<casacore::Complex>& vis) const;
+  void addNoise(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Corrupt by (ad hoc) parang factors
-  void corruptByParang(casacore::Cube<casacore::Complex>& vis) const;
+  void corruptByParang(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Generate the antenna, spw and DD subtables
   void generateSubtables();
@@ -498,7 +500,7 @@ private:
   casacore::Double iChunkTime0_;
 
   // Meta-info for current iteration
-  casacore::Int thisScan_, thisField_, thisSpw_;
+  casacore::Int thisScan_, thisField_, thisSpw_, thisAntenna1_, thisAntenna2_;
   casacore::Int lastScan_, lastField_, lastSpw_;
   casacore::Double thisTime_;
   casacore::rownr_t nRows_;
