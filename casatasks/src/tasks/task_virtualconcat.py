@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import stat
@@ -161,7 +160,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
                     mses.sort()
                     mastername = os.path.basename(os.path.dirname(os.path.realpath(elvis+'/ANTENNA')))
                     for mname in mses:
-                        #print 'subms: ', mname
+                        # casalog.post('subms: ', mname)
                         vis.append(mname)                    
                         if doweightscale:
                             visweightscale.append(oldvisweightscale[i])
@@ -359,7 +358,7 @@ def virtualconcat(vislist,concatvis,freqtol,dirtol,respectname,
 
     finally:
         if keepcopy and tempdir!='':
-            print("Restoring original MSs ...")
+            casalog.post("Restoring original MSs ...")
             for elvis in originalvis:
                 if os.path.exists(tempdir+'/'+elvis):
                     shutil.rmtree(elvis)
