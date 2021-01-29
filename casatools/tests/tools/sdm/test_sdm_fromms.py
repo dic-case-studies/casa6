@@ -17,8 +17,9 @@ except ImportError:
         return os.path.join(dataPath,apath)    
 
 ### for testhelper import
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#import testhelper as th
+from casatestutils import testhelper as th
 
 datapath = ctsys_resolve('regression/')
 

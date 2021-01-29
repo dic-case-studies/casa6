@@ -7,7 +7,7 @@ import re
 import numpy
 import contextlib
 import unittest
-import listing
+from casatestutils import listing
 
 class Casa5InitError(Exception):
     pass
