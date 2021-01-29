@@ -463,7 +463,8 @@ void FiltrationTVI<Filter>::filter() {
   num_filtrates_p = filter_p->isFiltratePerRow(vb, is_filtrate_p);
 
   // Synchronize own VisBuffer
-  configureNewSubchunk();
+  if(vii->more())
+    configureNewSubchunk();
 }
 
 template<class Filter>

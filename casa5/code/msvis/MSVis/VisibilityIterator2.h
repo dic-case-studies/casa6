@@ -245,13 +245,17 @@ public:
 
     // Add a sorting column to the existing definitions.
     // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
     void addSortingColumn(casacore::MS::PredefinedColumns colId,
-        casacore::CountedPtr<casacore::BaseCompare> sortingFunction);
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
 
     // Add a sorting column to the existing definitions.
     // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
     void addSortingColumn(casacore::String colName,
-        casacore::CountedPtr<casacore::BaseCompare> sortingFunction);
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
 
     bool usingDefaultSortingFunctions () const;
 
