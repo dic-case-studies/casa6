@@ -28,9 +28,9 @@
 
 
 ATM_NAMESPACE_BEGIN
-  
+
   // Constructors
-  
+
   Percent::Percent() : valueIS_(0.001){}      // Default humidity 0.1 %
 
   //  Percent::Percent(double percent) : valueIS_(percent){}
@@ -55,13 +55,32 @@ ATM_NAMESPACE_BEGIN
 
   }
 
+  Percent::Percent(double percent, Percent::Units units) {
+    if (units == Percent::UnitPercent) {
+      valueIS_ = percent / 100.0;
+    } else {
+      // Exception: Unknown percent unit
+      valueIS_ = percent;
+    }
+
+    if(valueIS_ <= 0.0){valueIS_=0.001;}    // default humidity 0.1 %
+  }
+
   // Destructor
   Percent::~Percent(){}
-  
+
   // Accessors
   double Percent::get()const{return valueIS_;}
   double Percent::get(const std::string &units)const{
     if(units == "%" || units == "percent" || units == "PERCENT"){
+      return valueIS_ * 100.0;
+    } else {
+      // Exception: Unknown percent unit
+      return valueIS_;
+    }
+  }
+  double Percent::get(Percent::Units units)const{
+    if(units == Percent::UnitPercent){
       return valueIS_ * 100.0;
     } else {
       // Exception: Unknown percent unit

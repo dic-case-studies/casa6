@@ -43,12 +43,22 @@ ATM_NAMESPACE_BEGIN
 class InverseLength
 {
 public:
+  enum Units {
+    UnitInverseMeter,
+    UnitInverseKiloMeter,
+    UnitInverseMilliMeter,
+    UnitInverseMicron,
+    UnitInverseNanoMeter,
+    NumInverseLengthUnits
+  };
+
   /** Default constructor: Length value set to 0 m^-1 */
   InverseLength();
   /** A full constructor: value in default units (m^-1) */
   InverseLength(double inverseLength);
   /** A full constructor: value + units. Valid units are:  km-1 [KM-1], m-1 [M-1], mm-1 [MM-1], micron-1 [MICRON-1], nm-1 [NM-1]. */
   InverseLength(double inverseLength, const std::string &units);
+  InverseLength(double inverseLength, Units units);
   /** Copy constructor */
   InverseLength (const InverseLength &inverseLength);
 
@@ -60,6 +70,7 @@ public:
   /** Accessor to the inverse length value in specified units. Implemented units are km-1 [KM-1], m-1 [M-1], mm-1 [MM-1], micron-1 [MICRON-1], nm-1 [NM-1].
    *  If none of these implemented units is given, the SI value will be returned. */
   inline double get(const std::string &units) const { return sget(valueIS_, units); }
+  inline double get(Units units) const { return sget(valueIS_, units); }
 
   /** Operator "equal to a InverseLength" */
   inline InverseLength& operator=(const InverseLength &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
@@ -101,6 +112,8 @@ public:
 private:
   static double sget(double value, const std::string &units);
   static double sput(double value, const std::string &units);
+  static double sget(double value, Units units);
+  static double sput(double value, Units units);
 
 private:
   double valueIS_;
