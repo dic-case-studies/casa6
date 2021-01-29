@@ -1987,8 +1987,16 @@ using namespace casa::vi;
     briggsWeightor_p=nullptr;
     for(uInt k=0; k < tempFileNames_p.nelements(); ++k){
       if(Table::isReadable(tempFileNames_p[k])){
-	if(mess.size()==0)
-	  Table::deleteTable(tempFileNames_p[k]);
+	if(mess.size()==0){
+	  try{
+	    Table::deleteTable(tempFileNames_p[k]);
+	  }
+	  catch(AipsError &x){
+	    logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
+	    logIO() <<  LogIO::WARN<< "YOU may have to delete the temporary file " << tempFileNames_p[k] << " because " << x.getMesg()  << LogIO::POST;
+
+	  }
+	}
 	else{
 	  logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
 	  logIO() << "YOU have to delete the temporary file " << tempFileNames_p[k] << " because " << mess << LogIO::DEBUG1 << LogIO::POST;
