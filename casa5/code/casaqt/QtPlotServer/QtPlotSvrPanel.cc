@@ -661,12 +661,11 @@ namespace casa {
 	casacore::String root = Aipsrc::aipsRoot();
 #if defined CASATOOLS
 	casacore::String defaultpath = root+"/data/gui/colormaps/default.tbl";
-	auto appdir = QCoreApplication::applicationDirPath( ).toUtf8().constData();
-	char path[strlen(appdir) + 50];
-	sprintf( path, "%s/../data/gui/colormaps/default.tbl", appdir );
+	static std::string appdir_colormap = std::string(QCoreApplication::applicationDirPath( ).toUtf8().constData()) +
+                                         "/../data/gui/colormaps/default.tbl";
 	struct stat statbuf;
-	if ( stat( path, &statbuf ) == 0 ) {
-		defaultpath = path;
+	if ( stat( appdir_colormap.c_str( ), &statbuf ) == 0 ) {
+		defaultpath = appdir_colormap.c_str( );
 	}
 #else
 	casacore::String defaultpath = root+"/data/gui/colormaps/default.tbl";

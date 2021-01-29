@@ -189,7 +189,7 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-    ::grpc::Status grpcPlotServer::colors( ::grpc::ClientContext* context,
+    ::grpc::Status grpcPlotServer::colors( ::grpc::ServerContext* context,
                                            const ::google::protobuf::Empty* request,
                                            ::rpc::gui::Colors* response ) {
         QStringList qcolors = QtPlotSvrPanel::colors( );
@@ -199,7 +199,7 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-    ::grpc::Status grpcPlotServer::colormaps( ::grpc::ClientContext* context,
+    ::grpc::Status grpcPlotServer::colormaps( ::grpc::ServerContext* context,
                                               const ::google::protobuf::Empty* request,
                                               ::rpc::gui::ColorMaps* response ) {
         QStringList maps = QtPlotSvrPanel::colormaps( );
@@ -209,7 +209,7 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-    ::grpc::Status grpcPlotServer::symbols( ::grpc::ClientContext* context,
+    ::grpc::Status grpcPlotServer::symbols( ::grpc::ServerContext* context,
                                             const ::google::protobuf::Empty* request,
                                             ::rpc::gui::Symbols* response ) {
         QStringList syms = QtPlotSvrPanel::symbols( );
@@ -219,7 +219,7 @@ namespace casa {
     }
 
     // -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----  -----
-    ::grpc::Status grpcPlotServer::line( ::grpc::ClientContext* context,
+    ::grpc::Status grpcPlotServer::line( ::grpc::ServerContext* context,
                                          const ::rpc::gui::NewLine* req,
                                          ::rpc::gui::Id* reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
@@ -602,6 +602,7 @@ namespace casa {
                 sprintf( buf, "data (or panel) '%d' not found", data );
                 return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, buf);
             } else {
+
                 // fish through the data assigned to this panel and erase these plots...
                 std::list<int> &datas = paneliter->second->data( );
                 for ( std::list<int>::iterator iter = datas.begin( );
@@ -613,6 +614,7 @@ namespace casa {
                         managed_datas.erase(data);
                     }
                 }
+
                 std::promise<bool> prom;
                 qtGO( [&]( ) {
                         paneliter->second->panel( )->replot( );
