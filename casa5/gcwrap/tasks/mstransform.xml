@@ -85,46 +85,29 @@
         
         <value/>
     </param>
-        <param name="createmms" type="bool"><shortdescription>Create a multi-MS output from an input MS.</shortdescription><description>Create a multi-MS output from an input MS.</description>
-            
-            <value>False</value>
-        </param>
-        <param subparam="true" ignorecase="true" name="separationaxis" type="string"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
-            
-            <value>auto</value>
-            <allowed ignorecase="true" kind="enum">
-                <value>auto</value>
-                <value>spw</value>
-                <value>scan</value>
-                <value>baseline</value>
-            </allowed>
-        </param>
-        <param subparam="true" name="numsubms" type="any"><shortdescription>The number of Sub-MSs to create (auto or any number)</shortdescription><description>The number of Sub-MSs to create (auto or any number)</description>
-            
-        <any limittypes="string int" type="variant"/>
-         <value type="string">auto</value>
-        </param>
 
-        <param visibility="hidden" subparam="true" name="disableparallel" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
-            <value>False</value>
-        </param>
-        <param visibility="hidden" subparam="true" name="ddistart" type="int"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
-        <value>-1</value>
 
-            <value>-1</value>
-        </param>
-        <param visibility="hidden" subparam="true" name="taql" type="string"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
+    <param name="createmms" type="bool"><shortdescription>Create a multi-MS output from an input MS.</shortdescription><description>Create a multi-MS output from an input MS.</description>
 
-            <value type="string"/>
-        </param>
-        <param visibility="hidden" subparam="true" name="monolithic_processing" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+    <value>False</value>
+    </param>
 
-            <value>False</value>
-        </param>
-        <param visibility="hidden" subparam="true" name="reindex" type="bool"><shortdescription>Hidden parameter for use in the pipeline context only</shortdescription><description>Hidden parameter for use in the pipeline context only</description>
+    <param subparam="true" ignorecase="true" name="separationaxis" type="string"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
 
-            <value>True</value>
-        </param>
+    <value>auto</value>
+    <allowed ignorecase="true" kind="enum">
+      <value>auto</value>
+      <value>spw</value>
+      <value>scan</value>
+      <value>baseline</value>
+    </allowed>
+    </param>
+
+    <param subparam="true" name="numsubms" type="any"><shortdescription>The number of Sub-MSs to create (auto or any number)</shortdescription><description>The number of Sub-MSs to create (auto or any number)</description>
+
+    <any limittypes="string int" type="variant"/>
+    <value type="string">auto</value>
+    </param>
 
     <param name="tileshape" type="intArray"><shortdescription>List with 1 or 3 elements giving the tile shape of the disk data columns.</shortdescription><description>List with 1 or 3 elements giving the tile shape of the disk data columns.</description>
         
@@ -380,9 +363,9 @@
             
             <value type="string"/>
         </param>       
-        
-        
-        
+
+
+
         <param name="douvcontsub" type="bool"><shortdescription>Enable continuum subtraction as in task uvcontsub</shortdescription><description>Enable continuum subtraction as in task uvcontsub</description>
             
             <value>False</value>
@@ -418,6 +401,27 @@
             <value>1</value>
         </param>
 
+
+        <param visibility="hidden" subparam="true" name="disableparallel" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+            <value>False</value>
+        </param>
+        <param visibility="hidden" subparam="true" name="ddistart" type="int"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+        <value>-1</value>
+
+            <value>-1</value>
+        </param>
+        <param visibility="hidden" subparam="true" name="taql" type="string"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
+
+            <value type="string"/>
+        </param>
+        <param visibility="hidden" subparam="true" name="monolithic_processing" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+
+            <value>False</value>
+        </param>
+        <param visibility="hidden" subparam="true" name="reindex" type="bool"><shortdescription>Hidden parameter for use in the pipeline context only</shortdescription><description>Hidden parameter for use in the pipeline context only</description>
+
+            <value>True</value>
+        </param>
     <constraints>
           <when param="createmms">
             <equals value="False" type="bool" />
