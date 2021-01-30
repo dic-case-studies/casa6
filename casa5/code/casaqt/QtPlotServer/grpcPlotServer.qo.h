@@ -98,19 +98,19 @@ namespace casa {
                               const ::rpc::gui::NewPanel *req,
                               ::rpc::gui::Id *reply );
 
-        ::grpc::Status colors( ::grpc::ClientContext* context,
+        ::grpc::Status colors( ::grpc::ServerContext* context,
                                const ::google::protobuf::Empty* request,
                                ::rpc::gui::Colors* response );
 
-         ::grpc::Status colormaps( ::grpc::ClientContext* context,
+         ::grpc::Status colormaps( ::grpc::ServerContext* context,
                                    const ::google::protobuf::Empty* request,
                                    ::rpc::gui::ColorMaps* response );
 
-         ::grpc::Status symbols( ::grpc::ClientContext* context,
+         ::grpc::Status symbols( ::grpc::ServerContext* context,
                                  const ::google::protobuf::Empty* request,
                                  ::rpc::gui::Symbols* response);
 
-         ::grpc::Status line( ::grpc::ClientContext* context, 
+         ::grpc::Status line( ::grpc::ServerContext* context, 
                               const ::rpc::gui::NewLine* request, 
                               ::rpc::gui::Id* response );
 
@@ -184,7 +184,7 @@ namespace casa {
 	    const QwtPlotItem *data( ) const { return data_; }
 	    QtPlotSvrPanel *&panel( ) { return panel_; }
 	    const QtPlotSvrPanel *panel( ) const { return panel_; }
-	    ~data_desc( ) { delete data_; }
+	    ~data_desc( ) { }
 
 	private:
 	    int id_;
