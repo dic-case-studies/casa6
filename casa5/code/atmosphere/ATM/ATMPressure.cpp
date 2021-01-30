@@ -57,6 +57,24 @@ Pressure::Pressure(double pressure, const std::string &units)
 
 }
 
+Pressure::Pressure(double pressure, Pressure::Units units)
+{
+  if(units == Pressure::UnitPascal) {
+    valueIS_ = pressure;
+  } else if(units == Pressure::UnitHectoPascal) {
+    valueIS_ = pressure * 100.0;
+  } else if(units == Pressure::UnitBar) {
+    valueIS_ = 1.0E+5 * pressure;
+  } else if(units == Pressure::UnitMilliBar) {
+    valueIS_ = 1.0E+2 * pressure;
+  } else if(units == Pressure::UnitAtmosphere) {
+    valueIS_ = pressure * 101325.;
+  } else {
+    valueIS_ = pressure;
+  }
+
+}
+
 Pressure::~Pressure()
 {
 }
@@ -74,6 +92,24 @@ double Pressure::get(std::string const &units) const
   } else if(units == "mbar" || units == "MBAR") {
     return 1.0E-2 * valueIS_;
   } else if(units == "atm" || units == "ATM") {
+    return valueIS_ / 101325.;
+  } else {
+    return valueIS_;
+  }
+
+}
+
+double Pressure::get(Pressure::Units units) const
+{
+  if(units == Pressure::UnitPascal) {
+    return valueIS_;
+  } else if(units == Pressure::UnitHectoPascal) {
+    return 1.0E-2 * valueIS_;
+  } else if(units == Pressure::UnitBar) {
+    return 1.0E-5 * valueIS_;
+  } else if(units == Pressure::UnitMilliBar) {
+    return 1.0E-2 * valueIS_;
+  } else if(units == Pressure::UnitAtmosphere) {
     return valueIS_ / 101325.;
   } else {
     return valueIS_;
