@@ -603,20 +603,21 @@ namespace casa {
                 return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, buf);
             } else {
 
-                // fish through the data assigned to this panel and erase these plots...
-                std::list<int> &datas = paneliter->second->data( );
-                for ( std::list<int>::iterator iter = datas.begin( );
-                      iter != datas.end( ); ++iter ) {
-                    datamap::iterator data = managed_datas.find(*iter);
-                    if ( data != managed_datas.end( ) ) {
-                        data->second->data( )->detach( );
-                        delete data->second;
-                        managed_datas.erase(data);
-                    }
-                }
 
                 std::promise<bool> prom;
                 qtGO( [&]( ) {
+                        // fish through the data assigned to this panel and erase these plots...
+                        std::list<int> &datas = paneliter->second->data( );
+                        for ( std::list<int>::iterator iter = datas.begin( );
+                              iter != datas.end( ); ++iter ) {
+                            datamap::iterator data = managed_datas.find(*iter);
+                            if ( data != managed_datas.end( ) ) {
+                                data->second->data( )->detach( );
+                                delete data->second;
+                                managed_datas.erase(data);
+                            }
+                        }
+
                         paneliter->second->panel( )->replot( );
                         prom.set_value(true);
                     } );
@@ -980,6 +981,24 @@ namespace casa {
     grpcPlotServer::grpcPlotServer( std::string response_uri, QtPlotServer *s ) : server(s),
             response_stub(rpc::gui::plotserver_events::NewStub( grpc::CreateChannel( response_uri,
                                                                                      grpc::InsecureChannelCredentials( ) ) )) {
+        //****************************************************************************************************
+        //*** without registering the legend type we get an error from within Qwt internals and the legend ***
+        //*** entries accumulate with each erase and replot...                                             ***
+        //****************************************************************************************************
+        // #0  myMessageOutput(QtMsgType, char const*) (type=QtWarningMsg, msg=0x7f0b7000d0a8 "QObject::connect: Cannot queue arguments of type 'QList<QwtLegendData>'\n(Make sure 'QList<QwtLegendData>' is registered using qRegisterMetaType().)") at casa-source/casa5/code/casaqt/apps/casaplotserver/casaplotserver.cc:19
+        // #1  qt_message_output(QtMsgType, char const*)
+        // #2  qt_message(QtMsgType, char const*, __va_list_tag*)
+        // #3  qWarning(char const*, ...)
+        // #4  queuedConnectionTypes(QList<QByteArray> const&)
+        // #5  QMetaObject::activate(QObject*, QMetaObject const*, int, void**)
+        // #6  QwtPlot::legendDataChanged(QVariant const&, QList<QwtLegendData> const&)
+        // #7  QwtPlot::attachItem(QwtPlotItem*, bool)
+        // #8  QwtPlotItem::attach(QwtPlot*) ()
+        // #9  casa::grpcPlotServer::erase(grpc::ServerContext*, rpc::gui::Id const*, google::protobuf::Empty*)
+        //            at 'data->second->data( )->detach( );'
+        //****************************************************************************************************
+        //****************************************************************************************************
+        qRegisterMetaType<QList<QwtLegendData> >("QList<QwtLegendData>");
         static const auto debug = getenv("GRPC_DEBUG");
         if ( debug ) {
             std::cerr << "grpcPlotServer::grpcPlotServer( )" <<
