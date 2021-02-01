@@ -1224,7 +1224,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   }
   
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
-				      const Bool savemodel) {
+				      const Record inpcontrol) {
 	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
 	if(dopsf){
 	  runCubeGridding(True);
@@ -1235,7 +1235,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  }
 	}
 	else
-		runCubeGridding(False, savemodel);
+		runCubeGridding(False, inpcontrol);
 	
 			  
 			  
@@ -1507,8 +1507,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 //////////////////////////////
  
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, Bool savemodel){
+
+  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, const Record inpcontrol){
+
 	LogIO logger(LogOrigin("SynthesisImagerVi2", "runCubeGridding", WHERE));
+
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
         char **argv=nullptr;
@@ -1543,7 +1546,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		
 		/////END TESTOO
 		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
-		Record controlRecord;
+		Record controlRecord=inpcontrol;
 		//For now just field 0 but should loop over all
 		///This is to pass in explicit model, residual names etc
 		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
@@ -1551,8 +1554,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         // checking that psf,  residual and sumwt is allDone
         //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
 		if(!dopsf){
-			controlRecord.define("lastcycle",  savemodel);
-			controlRecord.define("nmajorcycles", nMajorCycles);
+		        
+		  //controlRecord.define("lastcycle",  savemodel);
+		  controlRecord.define("nmajorcycles", nMajorCycles);
 			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
 			for(uInt k=0; k < imparsVec_p.nelements(); ++k){
 				Int imageStoreId=k;
@@ -1688,6 +1692,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 retvals(indexofretval)=status;
 		if(dopsf)
 		  updateImageBeamSet(returnRec);
+		if(returnRec.isDefined("tempfilenames")){
+		  std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+		  tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+		}
+		  
                 ++indexofretval;
                 if ( status )
                   //cerr << k << " rank " << rank << " successful " << endl;
@@ -1728,6 +1737,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             casa::applicator.get ( status );
 	    if(dopsf)
 	      updateImageBeamSet(returnRec);
+	    if(returnRec.isDefined("tempfilenames")){
+	      std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+	      tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+	    }
             retvals(indexofretval)=status;
             ++indexofretval;
             if ( status )

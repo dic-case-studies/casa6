@@ -35,6 +35,7 @@ Test list
 - SF ephemeris MFS - 2018.1.00879.S
 - SF ephemeris mtmfs - 2018.1.00879.S
 - SF Calibrator - E2E6.1.00034.S
+- SF ephemeris Calibrator - 2018.1.00879.S  
 - Mosaic cube - E2E6.1.00034.S
 - Mosaic MFS - E2E6.1.00020.S
 - Mosaic mtmfs - E2E6.1.00020.S
@@ -2566,7 +2567,264 @@ class Test_standard(test_tclean_base):
             msg = failed)
 
 # End of test_standard_cal
+#-------------------------------------------------#
+    @stats_dict(test_dict)
+    # @unittest.skip("")
+    def test_standard_cal_eph(self):
+        ''' Standard (single field) ephemeris calibrator imaging - central field of Venus (field 2), spw 25 & 45 '''
 
+        file_name = 'standard_cal_eph.iter'
+        img = os.getcwd()+'/'+file_name+'1'
+        self.prepData(data_path+'2018.1.00879.S_tclean.ms')
+
+        print("\nSTARTING: iter0 routine")
+
+        # iter0 routine
+        tclean(vis=self.msfile, field='0', spw=['0:245.220516619'
+            '~245.273983416GHz,1:261.752937691~261.774177925GHz;261.783699409'
+            '~261.837898628GHz;261.958504097~261.984871284GHz'], \
+            antenna=['0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
+            '21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,'
+            '41,42,43,44,45,46'], scan=['7,11'], \
+            intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
+            imagename=file_name+'0', imsize=[288, 288], cell=['0.14arcsec'], \
+            phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
+            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            mosweight=False, usepointing=False, pblimit=0.2, \
+            deconvolver='hogbom', restoration=False, restoringbeam='common', \
+            pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
+            threshold='0.0mJy', nsigma=0.0, interactive=0, usemask='auto'
+            '-multithresh', sidelobethreshold=2.0, noisethreshold=4.25, \
+            lownoisethreshold=1.5, negativethreshold=0.0, minbeamfrac=0.3, \
+            growiterations=75, dogrowprune=True, minpercentchange=1.0, \
+            fastnoise=False, savemodel='none', parallel=False, verbose=True)
+
+        # move files to iter1
+        print('Copying iter0 files to iter1')
+        self.copy_products(file_name+'0', file_name+'1')
+
+        print("STARTING: iter1 routine")
+
+        # iter1 (restart)
+        tclean(vis=self.msfile, field='0', spw=['0:245.220516619'
+            '~245.273983416GHz,1:261.752937691~261.774177925GHz;261.783699409'
+            '~261.837898628GHz;261.958504097~261.984871284GHz'], \
+            antenna=['0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
+            '21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,'
+            '41,42,43,44,45,46'], scan=['7,11'], \
+            intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
+            imagename=file_name+'1', imsize=[288, 288], cell=['0.14arcsec'], \
+            phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
+            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            mosweight=False, usepointing=False, pblimit=0.2, \
+            deconvolver='hogbom', restoration=True, restoringbeam='common', \
+            pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
+            niter=7000000, threshold='0.0316Jy', nsigma=0.0, interactive=0, \
+            usemask='auto-multithresh', sidelobethreshold=2.0, \
+            noisethreshold=4.25, lownoisethreshold=1.5, \
+            negativethreshold=0.0, minbeamfrac=0.3, growiterations=75, \
+            dogrowprune=True, minpercentchange=1.0, fastnoise=False, \
+            restart=True, calcres=False, calcpsf=False, \
+            savemodel='none', parallel=False, verbose=True)
+
+        report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
+
+        # .image report (test_standard_cal_eph)
+        im_stats_dict = self.image_stats(img+'.image', fit_region = \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+
+        exp_im_stats = {'com_bmaj': [False, 0.875946879387],
+            'com_bmin': [False, 0.673672378063],
+            'com_pa': [False, 88.5368652344],
+            'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.03113353252],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01794064045],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.359352011299],
+            'im_sum': [False, -1491.198136],
+            'regn_sum': [False, 3362.95355159],
+            'npts_real': [True, 82944]}
+
+        report1 = th.checkall( \
+            # checks for image and pb mask movement
+            imgmask = [(img+'.image', True, [144, 266, 0, 0]), \
+                (img+'.image', False, [144, 267, 0, 0]), \
+                (img+'.image', True, [22, 145, 0, 0]), \
+                (img+'.image', False, [21, 145, 0, 0])])
+
+        report2 = th.check_dict_vals(exp_im_stats, im_stats_dict, '.image', self.epsilon)
+
+        # .mask report (test_standard_cal_eph)
+        mask_stats_dict = self.image_stats(img+'.mask')
+
+        exp_mask_stats = {'npts': [True, 82944],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'mask_pix': [True, 0],
+            'mask_regns': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report3 = th.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', self.epsilon)
+
+        # .pb report (test_standard_cal_eph)
+        pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
+            'ellipse[[239.37090838deg, -16.96415647deg], [17.8437arcsec, 17.4772arcsec], 90.00000000deg]')
+
+        exp_pb_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, 0.200061768293],
+            'im_rms': [False, 0.569403001285],
+            'npts_0.2': [True, 47329],
+            'npts_0.5': [True, 22365],
+            'npts_real': [True, 82944],
+            'fit': [False, [1.0286609217550002, 22.907692916947163, \
+                       22.90769291676479]],
+            'fit_loc_chan': [True, 0],
+            'fit_loc_freq': [False, 253.57442221593894],
+            'fit_pix': [False, [144.0, 144.0]]}
+
+        report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', self.epsilon)
+
+        # .psf report (test_standard_cal_eph)
+        psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
+            'ellipse[[239.37094084deg, -16.96415506deg], [1.1279arcsec, 0.7875arcsec], 90.00000000deg]')
+
+        exp_psf_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.0],
+            'max_val_pos': [True, [144, 144, 0, 0]],
+            'min_val': [False, -0.0609973631799],
+            'min_val_pos': [True, [140, 137, 0, 0]],
+            'im_rms': [False, 0.019837926364],
+            'im_sum': [False, 16.3427572285],
+            'npts_real': [True, 82944],
+            'fit': [False, [0.9200466881631709, 0.9746655722260728, \
+                        0.7626550313652652]],
+            'fit_loc_chan': [True, 0],
+            'fit_loc_freq': [False, 253.57442221593894],
+            'fit_pix': [False, [144.00051463175717, 144.00004766689185]]}
+
+        report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', self.epsilon)
+
+        # .residual report (test_standard_cal_eph)
+        resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
+
+        exp_resid_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 47329.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 1.03113353252],
+            'max_val_pos': [True, [224, 153, 0, 0]],
+            'min_val': [False, -1.01794064045],
+            'min_val_pos': [True, [222, 93, 0, 0]],
+            'im_rms': [False, 0.359352011299],
+            'im_sum': [False, -1491.198136],
+            'regn_sum': [False, 3362.95355159],
+            'npts_real': [True, 82944]}
+
+        report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
+            '.residual', self.epsilon)
+
+        # .model report (test_standard_cal_eph)
+        model_stats_dict = self.image_stats(img+'.model', fit_region = \
+            'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
+
+        exp_model_stats = {'npts': [True, 82944],
+            'npts_unmasked': [True, 82944.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 0.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 0.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 0.0],
+            'im_sum': [False, 0.0],
+            'regn_sum': [False, 0.0],
+            'mask_non0': [True, 0],
+            'npts_real': [True, 82944]}
+
+        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, \
+            '.model', self.epsilon)
+
+        # .sumwt report (test_standard_cal_eph)
+        sumwt_stats_dict = self.image_stats(img+'.sumwt')
+
+        exp_sumwt_stats = {'npts': [True, 1],
+            'npts_unmasked': [True, 1.0],
+            'freq_bin': [False, 16762501225.396851],
+            'start': [True, 2.53574e+11],
+            'end': [True, 2.53574e+11],
+            'start_delta': [False, 2.53574e+11],
+            'end_delta': [False, 2.53574e+11],
+            'nchan': [True, 1],
+            'max_val': [False, 23234454.0],
+            'max_val_pos': [True, [0, 0, 0, 0]],
+            'min_val': [False, 23234454.0],
+            'min_val_pos': [True, [0, 0, 0, 0]],
+            'im_rms': [False, 23234453.7637],
+            'npts_real': [True, 1]}
+
+        report8 = th.check_dict_vals(exp_sumwt_stats, sumwt_stats_dict, \
+            '.sumwt', self.epsilon)
+
+        # report combination (test_standard_cal_eph)
+        report = report0 + report1 + report2 + report3 + report4 + report5 + \
+            report6 + report7 + report8
+
+        failed = self.filter_report(report)
+
+        add_to_dict(self, output = test_dict, dataset = \
+            "2018.1.00879.S_tclean.ms")
+
+        test_dict['test_standard_cal_eph']['self.parallel'] = self.parallel
+        test_dict['test_standard_cal_eph']['report'] = report
+        test_dict['test_standard_cal_eph']['images'] = []
+
+        img = shutil._basename(img)
+        self.mom8_creator(img+'.image', range_list=[-1.05, 1.05])
+        self.mom8_creator(img+'.residual', range_list=[-1.05, 1.05])
+        test_dict['test_standard_cal_eph']['images'].extend( \
+            (img+'.image.moment8.png',img+'.residual.moment8.png'))
+
+        self.assertTrue(th.check_final(pstr = report), \
+            msg = failed)
+
+# End of test_standard_cal_eph
 ###############################################
 ###############################################
 
@@ -2678,7 +2936,7 @@ class Test_mosaic(test_tclean_base):
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
-        # .image report
+        # .image report (test_mosaic_cube)
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[11.48661818deg, -73.26292371deg], [8.2211arcsec, 7.4698arcsec], 90.00000000deg]', field_regions = \
             ['circle[[00:45:54.383559, -73.15.29.41306], 22.45arcsec]',
@@ -2726,7 +2984,7 @@ class Test_mosaic(test_tclean_base):
 
         report2 = th.check_dict_vals(exp_im_stats, im_stats_dict, '.image', epsilon=self.epsilon)
 
-        # .mask report
+        # .mask report (test_mosaic_cube)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         exp_mask_stats = {'npts': [True, 5925312],
@@ -2742,7 +3000,7 @@ class Test_mosaic(test_tclean_base):
 
         report3 = th.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', epsilon=self.epsilon)
 
-        # .pb report
+        # .pb report (test_mosaic_cube)
         pb_stats_dict = self.image_stats(img+'.pb', fit_region = \
             'ellipse[[11.47666677deg, -73.25825652deg], [52.6715arcsec, 52.2589arcsec], 0.00000000deg]')
 
@@ -2769,7 +3027,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
-        # .psf report
+        # .psf report (test_mosaic_cube)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[11.47632032deg, -73.25823681deg], [8.7257arcsec, 8.0720arcsec], 90.00000000deg]')
 
@@ -2808,7 +3066,7 @@ class Test_mosaic(test_tclean_base):
 
         report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', epsilon=self.epsilon)
 
-        # .residual report
+        # .residual report (test_mosaic_cube)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse [[11.48661818deg, -73.26292371deg], [8.2211arcsec, 7.4698arcsec], 90.00000000deg]')
 
@@ -2832,7 +3090,7 @@ class Test_mosaic(test_tclean_base):
         report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', epsilon=self.epsilon)
 
-        # .model report
+        # .model report (test_mosaic_cube)
         model_stats_dict = self.image_stats(img+'.model', fit_region = \
             'ellipse[[11.48109199deg, -73.25974151deg], [18.9246arcsec, 17.1916arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
@@ -2857,7 +3115,7 @@ class Test_mosaic(test_tclean_base):
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, \
             '.model', epsilon=self.epsilon)
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_cube)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 508],
@@ -2904,7 +3162,7 @@ class Test_mosaic(test_tclean_base):
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, '.weight', epsilon=self.epsilon)
 
-        # report combination
+        # report combination (test_mosaic_mfs)
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9
 
@@ -3249,8 +3507,6 @@ class Test_mosaic(test_tclean_base):
         test_dict['test_mosaic_mfs']['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
-        print("FINAL test_dict=",test_dict)
-        
         self.assertTrue(th.check_final(pstr = report), \
             #msg = report)
             msg = failed)
@@ -3937,7 +4193,7 @@ class Test_mosaic(test_tclean_base):
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
             '.model', epsilon=self.epsilon)
 
-        # .sumwt report
+        # .sumwt report (test_mosaic_cube_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         exp_sumwt_stats = {'npts': [True, 948],

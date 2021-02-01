@@ -100,7 +100,7 @@ using namespace casa::vi;
 			   pointingDirCol_p("DIRECTION"),
 			   cfStokes_p(), cfCache_p(), cfs_p(), cfwts_p(), cfs2_p(), cfwts2_p(), 
 			   canComputeResiduals_p(false), toVis_p(true), 
-                           numthreads_p(-1), pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr)
+                           numthreads_p(-1), pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr), tempFileNames_p(0)
   {
     spectralCoord_p=SpectralCoordinate();
     isPseudoI_p=false;
@@ -122,7 +122,7 @@ using namespace casa::vi;
     pointingDirCol_p("DIRECTION"),
     cfStokes_p(), cfCache_p(cfcache), cfs_p(), cfwts_p(), cfs2_p(), cfwts2_p(),
     convFuncCtor_p(cf),canComputeResiduals_p(false), toVis_p(true), numthreads_p(-1), 
-    pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr)
+    pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr), tempFileNames_p(0)
   {
     spectralCoord_p=SpectralCoordinate();
     isPseudoI_p=false;
@@ -578,8 +578,10 @@ using namespace casa::vi;
       AlwaysAssert(image, AipsError);
       if(!toRecord(error, rec))
         throw (AipsError("Could not initialize BriggsWeightor")); 
-      briggsWeightor_p->init(vi, *image, rec);
-
+      String wgtcolname=briggsWeightor_p->initImgWeightCol(vi, *image, rec);
+      tempFileNames_p.resize(tempFileNames_p.nelements()+1, True);
+      tempFileNames_p[tempFileNames_p.nelements()-1]=wgtcolname;
+      
     }
   }
 
@@ -1758,10 +1760,9 @@ using namespace casa::vi;
     if(briggsWeightor_p.null()){
       imwgt=vb.imagingWeight();
     }
-    else
-      briggsWeightor_p->weightUniform(imwgt, vb);
-
-
+    else{
+      briggsWeightor_p->weightUniform(imwgt, vb);  
+    }
 
   }
   // Make a plain straightforward honest-to-FSM image. This returns
@@ -1985,8 +1986,28 @@ using namespace casa::vi;
     }
 
 
+  Vector<String> FTMachine::cleanupTempFiles(const String& mess){
+    briggsWeightor_p=nullptr;
+    for(uInt k=0; k < tempFileNames_p.nelements(); ++k){
+      if(Table::isReadable(tempFileNames_p[k])){
+	if(mess.size()==0){
+	  try{
+	    Table::deleteTable(tempFileNames_p[k]);
+	  }
+	  catch(AipsError &x){
+	    logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
+	    logIO() <<  LogIO::WARN<< "YOU may have to delete the temporary file " << tempFileNames_p[k] << " because " << x.getMesg()  << LogIO::POST;
 
-
+	  }
+	}
+	else{
+	  logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
+	  logIO() << "YOU have to delete the temporary file " << tempFileNames_p[k] << " because " << mess << LogIO::DEBUG1 << LogIO::POST;
+	}
+      }
+    }
+    return tempFileNames_p;
+  }
   void FTMachine::gridOk(Int convSupport){
     
     if (nx <= 2*convSupport) {
