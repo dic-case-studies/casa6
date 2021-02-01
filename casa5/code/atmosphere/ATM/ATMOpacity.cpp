@@ -46,6 +46,11 @@ Opacity::Opacity(double opacity, const std::string &units)
   valueIS_ = sput(opacity, units);
 }
 
+Opacity::Opacity(double opacity, Opacity::Units units)
+{
+  valueIS_ = sput(opacity, units);
+}
+
 Opacity::Opacity(const Opacity &opacity) :
   valueIS_(opacity.valueIS_)
 {
@@ -72,6 +77,30 @@ double Opacity::sput(double value, const std::string &units)
   if(units == "db" || units == "DB") {
     return value / 4.34294482;
   } else if(units == "np" || units == "NP" || units == "neper" || units == "NEPER") {
+    return value;
+  } else {
+    // Exception: Unknown unit, neper (np) used by default)
+    return value;
+  }
+}
+
+double Opacity::sget(double value, Opacity::Units units)
+{
+  if(units == Opacity::UnitDeciBel) {
+    return value * 4.34294482;
+  } else if(units == Opacity::UnitNeper){
+    return value;
+  } else {
+    // Exception: Unknown unit, neper (np) used by default)
+    return value;
+  }
+}
+
+double Opacity::sput(double value, Opacity::Units units)
+{
+  if(units == Opacity::UnitDeciBel) {
+    return value / 4.34294482;
+  } else if(units == Opacity::UnitNeper) {
     return value;
   } else {
     // Exception: Unknown unit, neper (np) used by default)
