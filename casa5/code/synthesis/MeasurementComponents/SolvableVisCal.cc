@@ -6759,7 +6759,7 @@ void SolvableVisJones::fluxscale(const String& outfile,
           oMsg+="median(field="+String::toString(iFld)+",spw="+String::toString(iSpw)+")="+\
              String::toString(medianGains(iFld,iSpw));
           logSink() << LogIO::NORMAL3<< oMsg << LogIO::POST;
-        } catch (AipsError x) {
+        } catch (...) {
          if (anyEQ(tranField,iFld)) validSels[iSpw]=false;
         }
       }
