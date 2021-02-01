@@ -11,8 +11,7 @@ else:
 
 def calstat(caltable=None,
             axis=None,
-            datacolumn=None,
-            useflags=None):
+            datacolumn=None):
 
     casalog.origin('calstat')
 
@@ -31,8 +30,7 @@ def calstat(caltable=None,
     if col == 'model':
         col = 'MODEL_DATA'
     s = _tb.statistics(column=col.upper(),
-                      complex_value=complex_type,
-                      useflags=useflags)
+                      complex_value=complex_type)
         
     _tb.close()
 

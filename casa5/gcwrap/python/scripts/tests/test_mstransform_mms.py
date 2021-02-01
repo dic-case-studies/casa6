@@ -6,7 +6,8 @@ import exceptions
 from tasks import mstransform, partition, flagdata, cvel, listobs, listpartition
 from taskinit import mstool, tbtool, msmdtool, aftool
 from __main__ import default
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 import partitionhelper as ph
 from recipes.listshapes import listshapes
 from parallel.parallel_task_helper import ParallelTaskHelper

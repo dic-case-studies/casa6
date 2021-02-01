@@ -187,10 +187,10 @@ public:
    performing water vapor retrieval */
   void setSkyBackgroundTemperature(const Temperature &skyBackgroundTemperature)
   {
-    if(skyBackgroundTemperature.get("K") == skyBackgroundTemperature_.get("K")) {
+    if(skyBackgroundTemperature.get(Temperature::UnitKelvin) == skyBackgroundTemperature_.get(Temperature::UnitKelvin)) {
     } else {
       skyBackgroundTemperature_
-          = Temperature(skyBackgroundTemperature.get("K"), "K");
+          = Temperature(skyBackgroundTemperature.get(Temperature::UnitKelvin), Temperature::UnitKelvin);
     }
   }
 
@@ -332,7 +332,7 @@ public:
                       getUserWH2O(),
                       getAirMass(),
                       1.0,
-                      Temperature(100, "K"));
+                      Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel 0, for the currnet
    (user) Water Vapor Column, Air Mass airmass, and perfect Sky Coupling to the sky */
@@ -353,7 +353,7 @@ public:
   Temperature getTebbSky(unsigned int spwid, unsigned int nc, double airmass)
   {
     return getTebbSky(spwid, nc, getUserWH2O(), airmass, 1.0, Temperature(100,
-                                                                          "K"));
+                                                                          Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel 0, for Water
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
@@ -373,7 +373,7 @@ public:
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
   Temperature getTebbSky(unsigned int spwid, unsigned int nc, const Length &wh2o)
   {
-    return getTebbSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, "K"));
+    return getTebbSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel nc, for the current
    (user) Water Vapor Column and Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -412,7 +412,7 @@ public:
                          const Length &wh2o,
                          double airmass)
   {
-    return getTebbSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, "K"));
+    return getTebbSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Equivalent Blackbody Temperature in spectral window 0 and channel nc, for Water
    Vapor Column wh2o, the current Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -613,7 +613,7 @@ public:
                       getUserWH2O(),
                       getAirMass(),
                       1.0,
-                      Temperature(100, "K"));
+                      Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel 0, for the currnet
    (user) Water Vapor Column, Air Mass airmass, and perfect Sky Coupling to the sky */
@@ -634,7 +634,7 @@ public:
   Temperature getTrjSky(unsigned int spwid, unsigned int nc, double airmass)
   {
     return getTrjSky(spwid, nc, getUserWH2O(), airmass, 1.0, Temperature(100,
-                                                                          "K"));
+                                                                         Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel 0, for Water
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
@@ -654,7 +654,7 @@ public:
    Vapor Column wh2o, the current Air Mass, and perfect Sky Coupling to the sky */
   Temperature getTrjSky(unsigned int spwid, unsigned int nc, const Length &wh2o)
   {
-    return getTrjSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, "K"));
+    return getTrjSky(spwid, nc, wh2o, getAirMass(), 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel nc, for the current
    (user) Water Vapor Column and Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -693,7 +693,7 @@ public:
                          const Length &wh2o,
                          double airmass)
   {
-    return getTrjSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, "K"));
+    return getTrjSky(spwid, nc, wh2o, airmass, 1.0, Temperature(100, Temperature::UnitKelvin));
   }
   /** Accesor to the Rayleigh-Jeans Temperature in spectral window 0 and channel nc, for Water
    Vapor Column wh2o, the current Air Mass, Sky Coupling skycoupling, and Spill Over Temperature Tspill */
@@ -755,7 +755,7 @@ public:
                          double skycoupling,
                          const Temperature &Tspill);
 
-  
+
   /** Accesor to get the integrated zenith Wet Opacity for the current conditions, for a single
    frequency RefractiveIndexProfile object or for the point 0 of spectral window 0 of a
    multi-window RefractiveIndexProfile object.
@@ -877,7 +877,7 @@ public:
   }
   Opacity getTotalOpacityUpTo(unsigned int spwid, unsigned int nc, Length refalti)
   {
-    Opacity wrongOp(-999.0,"np");
+    Opacity wrongOp(-999.0,Opacity::UnitNeper);
     if(!spwidAndIndexAreValid(spwid, nc)) return wrongOp;
     return getTotalOpacityUpTo(v_transfertId_[spwid] + nc, refalti);
   }
@@ -893,7 +893,7 @@ public:
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
    case the returned value corresponds to the zenith water vapor column of the AtmProfile object.*/
   Opacity getH2OLinesOpacity(unsigned int nc);
-  Opacity getH2OLinesOpacityUpTo(unsigned int nc, Length refalti);  
+  Opacity getH2OLinesOpacityUpTo(unsigned int nc, Length refalti);
   /** Accesor to get the integrated zenith H2O Lines Opacity for the current conditions,
    for the point nc of spectral window spwid.
    There is overloading. The same accessor exists in RefractiveIndexProfile but in that
@@ -1081,8 +1081,8 @@ public:
   }
   double getAverageH2OPathLengthDerivative(unsigned int spwid)
   {
-    return getAverageH2OPathLength(spwid).get("microns")
-        / getUserWH2O().get("microns");
+    return getAverageH2OPathLength(spwid).get(Length::UnitMicrons)
+        / getUserWH2O().get(Length::UnitMicrons);
   } // in microns/micron_H2O
   double getAverageH2OPathLengthDerivative()
   {
@@ -1256,7 +1256,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             unsigned int refChan,
                             double* chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refChan, chanFreq, freqUnits);
   }
@@ -1264,7 +1264,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             double refFreq,
                             double* chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refFreq, chanFreq, freqUnits);
   }
@@ -1272,7 +1272,7 @@ public:
   void addNewSpectralWindow(unsigned int numChan,
                             double refFreq,
                             const vector<double> &chanFreq,
-                            const string &freqUnits)
+                            Frequency::Units freqUnits)
   {
     RefractiveIndexProfile::add(numChan, refFreq, chanFreq, freqUnits);
   }
@@ -1306,8 +1306,8 @@ public:
   Length WaterVaporRetrieval_fromFTS(const vector<double> &v_transmission)
   {
     unsigned int spwId = 0;
-    Frequency f1(-999, "GHz");
-    Frequency f2(-999, "GHz");
+    Frequency f1(-999, Frequency::UnitGigaHertz);
+    Frequency f2(-999, Frequency::UnitGigaHertz);
     return WaterVaporRetrieval_fromFTS(spwId, v_transmission, f1, f2);
   }
   /** Same as above but using for the retrieval only the measurements between frequencies f1 and f2>f1 */
@@ -1326,8 +1326,8 @@ public:
   Length WaterVaporRetrieval_fromFTS(unsigned int spwId,
                                      const vector<double> &v_transmission)
   {
-    Frequency f1(-999, "GHz");
-    Frequency f2(-999, "GHz");
+    Frequency f1(-999, Frequency::UnitGigaHertz);
+    Frequency f2(-999, Frequency::UnitGigaHertz);
     return WaterVaporRetrieval_fromFTS(spwId, v_transmission, f1, f2);
   }
   /** Same as above but using for the retrieval only the measurements between frequencies f1 and f2>f1 */
@@ -1446,15 +1446,15 @@ public:
 
   Length WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
 				      const vector<Temperature> &v_tebb,
-				      double airmass, 
+				      double airmass,
 				      const vector<double> &skycoupling,
 				      const vector<Temperature> &tspill);
 
   /* to be implemented in the .cpp
-  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId, 
+  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 				      const Temperature &tebb,
-				      double airmass, 
-				      double skycoupling, 
+				      double airmass,
+				      double skycoupling,
 				      const Temperature &tspill);  */
 
   Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
@@ -1557,12 +1557,12 @@ public:
   Length WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
 				      const vector<Percent> &signalGain,
 				      const vector<Temperature> &v_tebb,
-				      double airmass, 
+				      double airmass,
 				      const vector<double> &skycoupling,
 				      const vector<Temperature> &tspill);
 
   // implemented 17/9/09
-  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,      
+  Length WaterVaporRetrieval_fromTEBB(unsigned int spwId,
                                       const Percent &signalGain,
                                       const Temperature &tebb,
                                       double airmass,
@@ -1676,7 +1676,7 @@ public:
   }
 
   /*
-    return the rms of the residuals for one channel ichan, as a function of the multiplicative 
+    return the rms of the residuals for one channel ichan, as a function of the multiplicative
     factor par_fit to this channel's coupling efficiency.
    */
   double sigmaSkyCouplingChannelRetrieval_fromWVR(double par_fit,
@@ -1693,7 +1693,7 @@ public:
   {
     return getWVRAverageSigmaTskyFit(RadiometerData, n, n + 1);
   }
-  /* 
+  /*
      return the rms of fit residual for a single channel, in a measurement
   */
   Temperature getWVRSigmaChannelTskyFit(const vector<WVRMeasurement> &RadiometerData,
@@ -1701,7 +1701,7 @@ public:
 					unsigned int n,
 					unsigned int m);
   /*
-    return the rms of water vapor retrieved values in a measurnment (n to m) 
+    return the rms of water vapor retrieved values in a measurnment (n to m)
   */
   double getSigmaTransmissionFit(unsigned int spwId,
                                  const vector<double> &v_transmission,
@@ -1918,7 +1918,7 @@ protected:
               airMass_,
               spwid,
               spwId_filter,
-              Percent(100.0, "%"));
+              Percent(100.0, Percent::UnitPercent));
   }
 
   double RT(double pfit_wh2o,
@@ -2037,7 +2037,7 @@ protected:
               airMass_,
               spwid,
               spwId_filter,
-              Percent(100.0, "%"));
+              Percent(100.0, Percent::UnitPercent));
   }
 
   double RTRJ(double pfit_wh2o,
@@ -2064,7 +2064,7 @@ protected:
             const vector<double> &spwId_filter,
             const Percent &signalgain);
 
-  
+
 private:
 
   // no accessors provided for these
