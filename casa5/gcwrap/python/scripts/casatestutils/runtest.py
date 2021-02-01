@@ -240,6 +240,46 @@ def list_tests():
         for t in readfile(LISTofTESTS):
             print(t)
 
+def git_fetch_casa_tests(path):
+
+    cwd = os.getcwd()
+    if os.path.exists(path):
+        try:
+            os.rmdir(path)
+        except:
+            shutil.rmtree(path)
+    os.makedirs(path)
+
+    os.chdir(path)
+    subprocess.call(["git","init", "--quiet"])
+    FNULL = open(os.devnull, 'w')
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+
+    print("casatasks/tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    
+    print("casatools/tests/tools/agentflagger", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/calanalysis", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/componentlist", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/coordsys", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/image", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/imagepol", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/measures", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/ms", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/msmetadata", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/regionmanager", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/sdm", file=open(".git/info/sparse-checkout", "a"))
+    print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
+
+    print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
+
+    subprocess.call(["git","pull","--quiet","origin","master"])
+    os.chdir(cwd)
+
 def git_fetch_casa_tests_branch(path, branch):
 
     cwd = os.getcwd()
