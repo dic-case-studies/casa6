@@ -101,10 +101,12 @@ double my_f (const gsl_vector *x, void *params)
 	  if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
 	    std::cout << "nan? " << amp << " neg scale? " << scale << std::endl;
-	    scale = (scale = fabs(scale)) < 0.4 ? 0.4 : scale;
+	    //scale = (scale = fabs(scale)) < 0.4 ? 0.4 : scale;
+	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
 	    std::cout << "reset neg scale to " << scale << std::endl;
 	    //fx = -999.0;
-	    //return fx;
+	    if (scale <= 0)
+	      return fx;
 	  }
 
 	  // generate a gaussian for each Asp in the Aspen set

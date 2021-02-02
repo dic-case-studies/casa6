@@ -443,7 +443,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     {
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // GSL with der, Points ,with new norm this is not needed.
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.138) //GSL M100 channel 22
-      if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23
+      //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23 & others
+      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
       {
   	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
   	    //itsStrenThres = itsStrenThres/3.0; //box3
@@ -1482,8 +1483,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   if (!itsSwitchedToHogbom &&
   	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
   {
-  	cout << "disabled - Switched to hogbom because of frequent small components." << endl;
-    //switchedToHogbom();
+  	cout << "Switched to hogbom because of frequent small components." << endl;
+    switchedToHogbom();
   }
 
   if (itsSwitchedToHogbom)
@@ -1895,7 +1896,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     {
       double amp = gsl_vector_get(optx, i);
       double scale = gsl_vector_get(optx, i+1);
-      scale = (scale = abs(scale)) < 0.4 ? 0.4 : scale;
+      //scale = (scale = abs(scale)) < 0.4 ? 0.4 : scale;
+      scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
 
       itsAspAmplitude.push_back(amp);
       itsAspScaleSizes.push_back(scale); //permanent list that doesn't get clear
