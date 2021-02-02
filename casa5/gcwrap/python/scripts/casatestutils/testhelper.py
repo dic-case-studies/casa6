@@ -51,7 +51,7 @@ def phasediffabsdeg(c1, c2):
     b = math.atan2(c2.imag, c2.real)
     diff = abs(a-b)
     if diff>np.pi:
-        diff = 2*np.py - diff
+        diff = 2*np.pi - diff
     return diff/np.pi*180. # (degrees)
 
 def compTables(referencetab, testtab, excludecols, tolerance=0.001, mode="percentage", startrow = 0, nrow = -1, rowincr = 1):
@@ -705,7 +705,10 @@ def compMS(ms0,ms1,keys=['mean','min','max','rms'],ap="amp",tol=1e-4,verbose=Fal
             return False
         ms_local.open(mss[1])
         stats = ms_local.statistics("DATA",ap)
-        s.append(stats[stats.keys()[0]])
+        if sys.version_info >= (3, 0):
+            s.append(stats[list(stats)[0]])
+        else:
+            s.append(stats[stats.keys()[0]])
         ms_local.done()
     status=True
     for ik in range(len(keys)):
@@ -723,6 +726,18 @@ def get_table_cache():
     # print('cache = {}'.format(cache))
     return cache
 
+def is_casa6():
+    try:
+        # CASA 6
+        from casatools import table
+        return True
+    except ImportError:
+        try:
+            # CASA 5
+            from taskinit import tbtool
+            return False
+        except ImportError:
+            raise Exception('Neither CASA5 nor CASA6')
 
 class TableCacheValidator(object):
     def __init__(self):

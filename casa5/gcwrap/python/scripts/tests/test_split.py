@@ -33,7 +33,7 @@ if is_CASA6:
     ### for testhelper import
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     from recipes.listshapes import listshapes
-    import testhelper as th
+    from casatestutils import testhelper as th
     from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
     from casatools import ctsys, ms, msmetadata, table
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
@@ -46,7 +46,7 @@ if is_CASA6:
 else:
     from __main__ import default
     from recipes.listshapes import listshapes
-    import testhelper as th
+    from casatestutils import testhelper as th
     from tasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
     from taskinit import mstool as ms
     from taskinit import msmdtool as msmetadata

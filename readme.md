@@ -37,7 +37,7 @@ The recommended way to do this is using a virtual environment:
            #              >>> import casatasks as ct
            #              >>> help(ct)
            #              >>> exit()
-           #              -bash-4.2$ 
+           #              -bash-4.2$
 -bash-4.2$ deactivate
 ```
 However, users are free to install CASA's wheels as they like.

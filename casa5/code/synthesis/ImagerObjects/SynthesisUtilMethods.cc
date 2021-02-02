@@ -296,6 +296,110 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		  "." + g_hostname + "." + g_startTimestamp + ".txt");
   }
 
+    Bool SynthesisUtilMethods::adviseChanSel(Double& freqStart, Double& freqEnd, 
+		       const Double& freqStep,  const MFrequency::Types& freqframe,
+		       Vector<Int>& spw, Vector<Int>& start,
+					     Vector<Int>& nchan, const String& ms, const String& ephemtab, const Int field_id, const Bool getFreqRange, const String spwselection){
+
+  LogIO os(LogOrigin("SynthesisUtilMethods", "adviseChanSel"));
+  if(ms==String("")){
+    throw(AipsError("Need a valid MS"));
+  }
+  spw.resize();
+  start.resize();
+  nchan.resize();
+  try {
+    if(!getFreqRange){
+      Vector<Int> bnchan;
+      Vector<Int>  bstart;
+      Vector<Int>  bspw;
+      Double fS, fE;
+      fS=freqStart;
+      fE=freqEnd;
+      if(freqEnd < freqStart){
+	fS=freqEnd;
+	fE=freqStart;
+      }
+    
+      
+      {
+	
+	MeasurementSet elms(String(ms), TableLock(TableLock::AutoNoReadLocking), Table::Old);
+	if(ephemtab != "" && freqframe == MFrequency::REST ){
+	   MSUtil::getSpwInSourceFreqRange(bspw, bstart, bnchan, elms, fS, fE, fabs(freqStep), ephemtab, field_id);
+	}
+	else
+	  MSUtil::getSpwInFreqRange(bspw, bstart, bnchan, elms, fS, fE, fabs(freqStep), freqframe, field_id);
+	elms.relinquishAutoLocks(true);
+
+      }
+      spw=Vector<Int> (bspw);
+      start=Vector<Int> (bstart);
+      nchan=Vector<Int> (bnchan);
+    }
+    else{
+    
+      {
+	MeasurementSet elms(ms, TableLock(TableLock::AutoNoReadLocking), Table::Old);
+	MSSelection thisSelection;
+	String spsel=spwselection;
+	if(spsel=="")spsel="*";
+	thisSelection.setSpwExpr(spsel);
+	TableExprNode exprNode=thisSelection.toTableExprNode(&elms);
+	Matrix<Int> chanlist=thisSelection.getChanList();
+	if(chanlist.ncolumn() <3){
+	  freqStart=-1.0;
+	  freqEnd=-1.0;
+	  return false;
+	}
+	Vector<Int> elspw=chanlist.column(0);
+	Vector<Int> elstart=chanlist.column(1);
+	Vector<Int> elnchan=Vector<Int> (chanlist.column(2)-elstart)+1;
+	if(ephemtab != "" ){
+	  const MSColumns mscol(ms);
+	  MEpoch ep=mscol.timeMeas()(0);
+	  Quantity sysvel;
+	  String ephemTable("");
+	  MDirection::Types mtype=MDirection::APP;
+	  MDirection mdir(mtype);
+	  if(Table::isReadable(ephemtab)){
+	    ephemTable=ephemtab;
+	  }
+	  else if(ephemtab=="TRACKFIELD"){
+	   ephemTable=(mscol.field()).ephemPath(field_id); 
+	  }
+	  else if(MDirection::getType(mtype, ephemtab)){
+	    mdir=MDirection(mtype);
+	  }
+	  
+	  MSUtil::getFreqRangeAndRefFreqShift(freqStart, freqEnd, sysvel, ep, elspw, elstart, elnchan, elms, ephemTable , mdir, True);
+
+	}
+	else
+	  MSUtil::getFreqRangeInSpw(freqStart, freqEnd, elspw, elstart, elnchan, elms, freqframe, field_id);
+      }
+
+    }
+
+
+
+        
+  } catch (AipsError x) {
+    os << LogIO::SEVERE << "Caught exception: " << x.getMesg()
+       << LogIO::POST;
+    return false;
+  } 
+  catch (...){
+    os << LogIO::SEVERE << "Unknown  exception handled" 
+       << LogIO::POST;
+    return false;
+    
+  }
+  
+  return true;
+  
+  }
+
   void SynthesisUtilMethods::getResource(String label, String fname)
   {
      // TODO: not tested on anything else than LINUX (MACOS for the future)
@@ -3356,10 +3460,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	mType="default";
 	if(gridder=="ft" || gridder=="gridft" || gridder=="standard" )
 	  { ftmachine="gridft"; }
-	if( gridder=="widefield" && (wprojplanes>1 || wprojplanes==-1))
+	if( (gridder=="widefield" || gridder=="wproject" || gridder=="wprojectft" ) && (wprojplanes>1 || wprojplanes==-1))
 	  { ftmachine="wprojectft";}
-	if( gridder=="wproject" || gridder=="wprojectft")
-	  {ftmachine="wprojectft"; }
 
 	if(gridder=="ftmosaic" || gridder=="mosaicft" || gridder=="mosaic" )
 	  { ftmachine="mosaicft"; }
@@ -3922,8 +4024,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             if(inrec.dataType("nsigma")==TpFloat || inrec.dataType("nsigma")==TpDouble ) {
                err+= readVal(inrec, String("nsigma"), nsigma );
               }
+	    else if(inrec.dataType("nsigma")==TpInt)
+	      {
+		int tnsigma;
+		err+= readVal(inrec, String("nsigma"), tnsigma );
+		nsigma = float(tnsigma);
+	      }
             else {
-               err+= "nsigma be a float or double";
+               err+= "nsigma must be an int, float or double";
             }
           }
         if( inrec.isDefined("restoringbeam") )     

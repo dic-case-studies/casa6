@@ -213,13 +213,13 @@ public:
       const casacore::Bool pseudoI=false);
  
 // Do the major cycle
-  virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  virtual void runMajorCycle(const casacore::Bool dopsf=false,  const casacore::Bool savemodel=false);
   //Version for cubes
-  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Record controlrec=casacore::Record());
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   
-  virtual bool runCubeGridding(casacore::Bool dopsf=false, casacore::Bool savemodel=false);
+  virtual bool runCubeGridding(casacore::Bool dopsf=false, const casacore::Record controlrec=casacore::Record());
   
  
  void createMosFTMachine(casacore::CountedPtr<casa::refim::FTMachine>& theFT,

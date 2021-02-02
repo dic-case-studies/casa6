@@ -104,9 +104,9 @@ public:
   SpectralGrid(unsigned int numChan,
                double refFreq,
                double* chanFreq,
-               const std::string &freqUnits);
-  SpectralGrid(double refFreq, const std::vector<double> &chanFreq, const std::string &freqUnits);
-  SpectralGrid(const std::vector<double> &chanFreq, const std::string &freqUnits);
+               Frequency::Units freqUnits);
+  SpectralGrid(double refFreq, const std::vector<double> &chanFreq, Frequency::Units freqUnits);
+  SpectralGrid(const std::vector<double> &chanFreq, Frequency::Units freqUnits);
   SpectralGrid(const std::vector<Frequency> &chanFreq);
 
   /** A full constructor to be used in cases of two sibands (separated or not)
@@ -152,7 +152,7 @@ public:
   SpectralGrid(unsigned int numChan,
                unsigned int refChan,
                double* chanFreq,
-               const std::string &freqUnits);
+               Frequency::Units freqUnits);
 
   SpectralGrid();
 
@@ -188,7 +188,7 @@ public:
   unsigned int add(unsigned int numChan,
                    unsigned int refChan,
                    double* chanFreq,
-                   const std::string &freqUnits);
+                   Frequency::Units freqUnits);
 
   /** Add a new spectral window, this spectral window having no sideband.
    * @pre   at least one spectral window has already been defined
@@ -203,19 +203,19 @@ public:
   unsigned int add(unsigned int numChan,
                    double refFreq,
                    double* chanFreq,
-                   const std::string &freqUnits);
+                   Frequency::Units freqUnits);
   unsigned int add(unsigned int numChan,
                    double refFreq,
                    const std::vector<double> &chanFreq,
-                   const std::string &freqUnits);
+                   Frequency::Units freqUnits);
   unsigned int add(const std::vector<Frequency> &chanFreq)
   {
     unsigned int spwid;
     std::vector<double> v;
     for(unsigned int i = 0; i < chanFreq.size(); i++) {
-      v.push_back(chanFreq[i].get("GHz"));
+      v.push_back(chanFreq[i].get(Frequency::UnitGigaHertz));
     }
-    spwid = add(chanFreq.size(), chanFreq[0].get("GHz"), v, "GHz");
+    spwid = add(chanFreq.size(), chanFreq[0].get(Frequency::UnitGigaHertz), v, Frequency::UnitGigaHertz);
     return spwid;
   }
   /** Add two new spectral windows, one spectral window per sideband.
@@ -438,7 +438,7 @@ public:
   bool operator ==(const SpectralGrid&) const;
 
 protected:
-  std::string freqUnits_; //!< The frequency inits (always Hz)
+  Frequency::Units freqUnits_; //!< The frequency inits (always Frequency::UnitHertz)
   std::vector<double> v_chanFreq_; //!< Channel frequencies of ALL the channels (i.e. all spectral window appended)
 
   std::vector<unsigned int> v_numChan_; //!< number of channels for every spectral window

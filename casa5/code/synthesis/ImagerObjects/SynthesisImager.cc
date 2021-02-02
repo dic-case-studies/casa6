@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisImager","destructor",WHERE) );
     os << LogIO::DEBUG1 << "SynthesisImager destroyed" << LogIO::POST;
-
+    cleanupTempFiles();
     if(rvi_p) delete rvi_p;
     rvi_p=NULL;
     //    cerr << "IN DESTR"<< endl;
@@ -962,15 +962,17 @@ bool SynthesisImager::unlockImages()
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  void SynthesisImager::executeMajorCycle(const Record& controlRecord)
+  Record SynthesisImager::executeMajorCycle(const Record& controlRecord)
   {
     LogIO os( LogOrigin("SynthesisImager","executeMajorCycle",WHERE) );
 
     nMajorCycles++;
     if(controlRecord.isDefined("nmajorcycles"))
       controlRecord.get("nmajorcycles", nMajorCycles);
-
+    Record outRec=controlRecord;
     Bool lastcycle=false;
+
+    
     if( controlRecord.isDefined("lastcycle") )
       {
 	controlRecord.get( "lastcycle" , lastcycle );
@@ -985,7 +987,7 @@ bool SynthesisImager::unlockImages()
     try
       {
 	if( (itsMaxShape[3] > 1 || impars_p.mode.contains("cube"))&& doingCubeGridding_p ){/// and valid ftmachines
-		runMajorCycleCube(false, lastcycle);
+		runMajorCycleCube(false, controlRecord);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )
@@ -994,6 +996,15 @@ bool SynthesisImager::unlockImages()
 		{	runMajorCycle2(false, lastcycle);}
 	
 	}
+	if(lastcycle){
+	  String mess="";
+	  if(controlRecord.isDefined("usemask")  && controlRecord.asString("usemask").contains("auto")){
+	    mess="\nFor Automasking most  major cycles may appear wrongly as  the last one ";
+	  }
+
+	  std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
+	  outRec.define("tempfilenames", Vector<String>(tmpfiles));
+	}
 	itsMappers.releaseImageLocks();
 
       }
@@ -1001,11 +1012,21 @@ bool SynthesisImager::unlockImages()
       {
 	throw( AipsError("Error in running Major Cycle : "+x.getMesg()) );
       }    
-
+    return outRec;
   }// end of executeMajorCycle
   //////////////////////////////////////////////
   /////////////////////////////////////////////
+  void SynthesisImager::cleanupTempFiles(){
+    for (auto it = tempFileNames_p.begin(); it != tempFileNames_p.end(); ++it) {
+      //cerr <<"Trying to cleanup " << (*it) << endl;
+      if(Table::isReadable(*it)){
+	Table::deleteTable(*it);
 
+      }
+    }
+
+
+  }
   void SynthesisImager::makePSF()
     {
       LogIO os( LogOrigin("SynthesisImager","makePSF",WHERE) );
@@ -1015,7 +1036,7 @@ bool SynthesisImager::unlockImages()
       try
       {
 	if(  (itsMaxShape[3] >1 || impars_p.mode.contains("cube")) && doingCubeGridding_p){///and valid ftmachines
-		runMajorCycleCube(true, false);
+		runMajorCycleCube(true);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )
