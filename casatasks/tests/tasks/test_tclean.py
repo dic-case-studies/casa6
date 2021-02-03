@@ -2111,6 +2111,51 @@ class test_cube(testref_base):
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report) 
 
+     def test_cube_twoMS_startfreq(self):
+          """ [cube] Test cube with list of two MSs with start in frequency specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          # start f is at chan4 (1.2GHz in TOPO) 
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image') )
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
+
+     def test_cube_twoMS_startvel(self):
+          """ [cube] Test cube with list of two MSs with start in velocity specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s', width='-11991.7km/s',imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image'))
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s',width='-11991.7km/s',  imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image'))
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
+
      def test_cube_flagged_mosaic_hogbom(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
