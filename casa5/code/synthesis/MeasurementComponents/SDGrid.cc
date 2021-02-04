@@ -1200,6 +1200,48 @@ void getParamsForFTMachineType(const ROVisibilityIterator& vi, FTMachine::Type i
     }
 }
 
+void abortOnPolFrameChange(const StokesImageUtil::PolRep refPolRep, const String & refMsName, ROVisibilityIterator &vi) {
+    auto vb = vi.getVisBuffer();
+    const auto polRep = (vb->polFrame() == MSIter::Linear) ?
+            StokesImageUtil::LINEAR : StokesImageUtil::CIRCULAR;
+    const auto polFrameChanged = (polRep != refPolRep);
+    if (polFrameChanged) {
+        // Time of polarization change
+        constexpr auto timeColEnum = MS::PredefinedColumns::TIME;
+        const auto & timeColName = MS::columnName(timeColEnum);
+        const auto timeVbFirstRow = vb->time()[0];
+
+        ScalarMeasColumn<MEpoch> timeMeasCol(vi.ms(),timeColName);
+        const auto & timeMeasRef = timeMeasCol.getMeasRef();
+
+        const auto & timeUnit = MS::columnUnit(timeColEnum);
+
+        MEpoch polFrameChangeEpoch(Quantity(timeVbFirstRow,timeUnit),
+                                   timeMeasRef);
+        MVTime polFrameChangeTime(polFrameChangeEpoch.getValue());
+
+        // Error message
+        MVTime::Format fmt(MVTime::YMD | MVTime::USE_SPACE,10);
+        constexpr auto nl = '\n';
+        stringstream msg;
+        msg  << "Polarization Frame changed ! " << nl
+                << setw(9) << right << "from: " << setw(8) << left << StokesImageUtil::toString(refPolRep)
+                << " in: " << refMsName << nl
+                << setw(9) << right << "to: "   << setw(8) << left << StokesImageUtil::toString(polRep)
+                << " at: " << MVTime::Format(fmt) << polFrameChangeTime
+                << " (" << fixed << setprecision(6) << polFrameChangeTime.second() << " s)"
+                << " in: " << vb->msName();
+
+        LogOrigin logOrigin("","abortOnPolFrameChange()");
+        LogIO logger(logOrigin);
+        logger << msg.str() << LogIO::SEVERE << LogIO::POST;
+
+        // Abort
+        logger.sourceLocation(WHERE);
+        logger << "Polarization Frame must not change" << LogIO::EXCEPTION;
+    };
+}
+
 } // SDGrid::makeImage helper functions namespace
 
 // Make a plain straightforward honest-to-FSM image. This returns
@@ -1220,17 +1262,18 @@ void SDGrid::makeImage(FTMachine::Type inType,
     // of image's Stokes Coordinate Axis
     // based on first data in first MS
     vi.origin();
-    auto cStokesRep = (vb.polFrame() == MSIter::Linear) ?
+    const auto imgPolRep = (vb.polFrame() == MSIter::Linear) ?
             StokesImageUtil::LINEAR : StokesImageUtil::CIRCULAR;
-    StokesImageUtil::changeCStokesRep(theImage, cStokesRep);
+    StokesImageUtil::changeCStokesRep(theImage, imgPolRep);
+    const auto firstMsName = vb.msName();
 
     initializeToSky(theImage,weight,vb);
     // Loop over the visibilities, putting VisBuffers
     for (vi.originChunks(); vi.moreChunks(); vi.nextChunk()) {
+        abortOnPolFrameChange(imgPolRep,firstMsName,vi);
         FTMachine::Type actualType;
         Bool doPSF;
-        if (vi.newMS()) {
-            // Note: the first MS is a new MS
+        if (vi.newMS()) { // Note: the first MS is a new MS
             getParamsForFTMachineType(vi, inType, doPSF, actualType);
         }
         for (vi.origin(); vi.more(); vi++) {
