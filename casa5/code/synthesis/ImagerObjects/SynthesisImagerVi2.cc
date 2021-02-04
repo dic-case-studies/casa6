@@ -1231,18 +1231,24 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 }
 	}
 
+        // print mem related info to log
         const float toGB = 1024.0 * 1024.0 * 1024.0;
+        std::ostringstream usr_mem_msg;
+        if (usr_mem > 0.) {
+            usr_mem_msg << usr_mem / 1024.;
+        } else {
+            usr_mem_msg << "-";
+        }
         std::ostringstream oss;
         oss << setprecision(4);
         oss << "Required memory: " << required_mem / toGB
-            << " GB. Available memory: " << memory_avail / toGB
-            << " GB (rc: memory fraction " << usr_memfrac
-            << "% rc memory " << usr_mem / 1024.
-            << "). Subcubes: " << nsubcube
+            << " GB. Available mem.: " << memory_avail / toGB
+            << " GB (rc, mem. fraction: " << usr_memfrac
+            << "%, memory: " << usr_mem_msg.str()
+            << ") => Subcubes: " << nsubcube
             << ". Processes on node: " << nlocal_procs << ".\n";
         log_l << oss << LogIO::POST;
 
-        //cerr << "nsubcube " << nsubcube << " start " << start << " end " << end << endl;
         TcleanProcessingInfo procInfo;
         procInfo.mpiprocs = nlocal_procs;
         procInfo.chnchnks = nsubcube;
