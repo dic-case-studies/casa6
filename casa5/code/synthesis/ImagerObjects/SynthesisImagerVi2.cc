@@ -1234,7 +1234,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         const float toGB = 1024.0 * 1024.0 * 1024.0;
         std::ostringstream oss;
         oss << setprecision(4);
-        oss << "Required memory: " << required_mem / nlocal_procs / toGB
+        oss << "Required memory: " << required_mem / toGB
             << " GB. Available memory: " << memory_avail / toGB
             << " GB (rc: memory fraction " << usr_memfrac
             << "% rc memory " << usr_mem / 1024.
