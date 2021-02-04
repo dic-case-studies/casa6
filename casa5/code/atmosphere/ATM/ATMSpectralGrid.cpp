@@ -40,7 +40,7 @@ ATM_NAMESPACE_BEGIN
 SpectralGrid::SpectralGrid(const Frequency &oneFreq)
 {
   v_chanFreq_.reserve(1);
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   unsigned int numChan = 1;
   unsigned int refChan = 0;
@@ -59,7 +59,7 @@ SpectralGrid::SpectralGrid(unsigned int numChan,
 {
   //  cout << " SpectralGrid constructor" << endl;
   v_chanFreq_.reserve(numChan);
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   add(numChan, refChan, refFreq, chanSep);
   std::vector<unsigned int> v_dummyInt;
@@ -76,7 +76,7 @@ SpectralGrid::SpectralGrid(unsigned int numChan,
                            const SidebandSide &sbSide,
                            const SidebandType &sbType)
 {
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   v_chanFreq_.reserve(numChan);
   /* cout << " la" << endl; */
@@ -86,10 +86,10 @@ SpectralGrid::SpectralGrid(unsigned int numChan,
 SpectralGrid::SpectralGrid(unsigned int numChan,
                            unsigned int refChan,
                            double* chanFreq,
-                           const std::string &freqUnits)
+                           Frequency::Units freqUnits)
 {
   v_chanFreq_.reserve(numChan);
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   add(numChan, refChan, chanFreq, freqUnits);
 }
@@ -173,7 +173,7 @@ unsigned int SpectralGrid::add(unsigned int numChan,
                                const Frequency &refFreq,
                                const Frequency &chanSep)
 {
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
 
   unsigned int spwId = v_transfertId_.size();
   v_loFreq_.push_back(refFreq.get());
@@ -251,12 +251,12 @@ void SpectralGrid::appendChanFreq(unsigned int numChan, const std::vector<double
 unsigned int SpectralGrid::add(unsigned int numChan,
                                unsigned int refChan,
                                double* chanFreq,
-                               const std::string &freqUnits)
+                               Frequency::Units freqUnits)
 {
   double fact = 1.0;
-  if(freqUnits == "GHz") fact = 1.0E9;
-  if(freqUnits == "MHz") fact = 1.0E6;
-  if(freqUnits == "kHz") fact = 1.0E3;
+  if(freqUnits == Frequency::UnitGigaHertz) fact = 1.0E9;
+  if(freqUnits == Frequency::UnitMegaHertz) fact = 1.0E6;
+  if(freqUnits == Frequency::UnitKiloHertz) fact = 1.0E3;
 
   unsigned int spwId = v_transfertId_.size();
   if(spwId == 0) {
@@ -299,10 +299,10 @@ unsigned int SpectralGrid::add(unsigned int numChan,
 SpectralGrid::SpectralGrid(unsigned int numChan,
                            double refFreq,
                            double* chanFreq,
-                           const std::string &freqUnits)
+                           Frequency::Units freqUnits)
 {
   v_chanFreq_.reserve(numChan);
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   add(numChan, refFreq, chanFreq, freqUnits);
   std::vector<unsigned int> v_dummyInt;
@@ -313,10 +313,10 @@ SpectralGrid::SpectralGrid(unsigned int numChan,
 
 SpectralGrid::SpectralGrid(double refFreq,
                            const std::vector<double> &chanFreq,
-                           const std::string &freqUnits)
+                           Frequency::Units freqUnits)
 {
   v_chanFreq_.reserve(chanFreq.size());
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
   add(chanFreq.size(), refFreq, chanFreq, freqUnits);
   std::vector<unsigned int> v_dummyInt;
@@ -325,12 +325,12 @@ SpectralGrid::SpectralGrid(double refFreq,
   vv_assocNature_.push_back(v_dummyString); // put an empty std::vector
 }
 
-SpectralGrid::SpectralGrid(const std::vector<double> &chanFreq, const std::string &freqUnits)
+SpectralGrid::SpectralGrid(const std::vector<double> &chanFreq, Frequency::Units freqUnits)
 {
   v_chanFreq_.reserve(chanFreq.size());
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
-  double refFreq = (Frequency(chanFreq[0], freqUnits)).get("Hz"); // We take the frequency of the first channel as
+  double refFreq = (Frequency(chanFreq[0], freqUnits)).get(Frequency::UnitHertz); // We take the frequency of the first channel as
   // reference frequency because it has not been specified
   add(chanFreq.size(), refFreq, chanFreq, freqUnits);
   std::vector<unsigned int> v_dummyInt;
@@ -342,16 +342,16 @@ SpectralGrid::SpectralGrid(const std::vector<double> &chanFreq, const std::strin
 SpectralGrid::SpectralGrid(const std::vector<Frequency> &chanFreq)
 {
   v_chanFreq_.reserve(chanFreq.size());
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
   v_transfertId_.resize(0); // not sure this is necessary!
-  double refFreq = chanFreq[0].get("Hz"); // We take the frequency of the first channel as
+  double refFreq = chanFreq[0].get(Frequency::UnitHertz); // We take the frequency of the first channel as
   // reference frequency because it has not been specified
   std::vector<double> chanFreq_double;
   for(unsigned int i = 0; i < chanFreq.size(); i++) {
-    chanFreq_double.push_back(chanFreq[i].get("GHz"));
+    chanFreq_double.push_back(chanFreq[i].get(Frequency::UnitGigaHertz));
   }
 
-  add(chanFreq.size(), refFreq, chanFreq_double, "GHz");
+  add(chanFreq.size(), refFreq, chanFreq_double, Frequency::UnitGigaHertz);
   std::vector<unsigned int> v_dummyInt;
   vv_assocSpwId_.push_back(v_dummyInt); // put an empty std::vector
   std::vector<std::string> v_dummyString;
@@ -361,16 +361,16 @@ SpectralGrid::SpectralGrid(const std::vector<Frequency> &chanFreq)
 unsigned int SpectralGrid::add(unsigned int numChan,
                                double refFreq,
                                double* chanFreq,
-                               const std::string &freqUnits)
+                               Frequency::Units freqUnits)
 {
 
   bool regular = true;
   double fact = 1.0;
-  if(freqUnits == "GHz") fact = 1.0E9;
-  if(freqUnits == "MHz") fact = 1.0E6;
-  if(freqUnits == "kHz") fact = 1.0E3;
+  if(freqUnits == Frequency::UnitGigaHertz) fact = 1.0E9;
+  if(freqUnits == Frequency::UnitMegaHertz) fact = 1.0E6;
+  if(freqUnits == Frequency::UnitKiloHertz) fact = 1.0E3;
 
-  freqUnits_ = "Hz";
+  freqUnits_ = Frequency::UnitHertz;
 
   unsigned int spwId = v_transfertId_.size();
   if(spwId == 0) {
@@ -420,16 +420,16 @@ unsigned int SpectralGrid::add(unsigned int numChan,
   unsigned int SpectralGrid::add(unsigned int numChan,
                                  double refFreq,
                                  const std::vector<double> &chanFreq,
-                                 const std::string &freqUnits)
+                                 Frequency::Units freqUnits)
 {
 
   bool regular = true;
   double fact = 1.0;
-  if(freqUnits == "GHz") fact = 1.0E9;
-  if(freqUnits == "MHz") fact = 1.0E6;
-  if(freqUnits == "kHz") fact = 1.0E3;
+  if(freqUnits == Frequency::UnitGigaHertz) fact = 1.0E9;
+  if(freqUnits == Frequency::UnitMegaHertz) fact = 1.0E6;
+  if(freqUnits == Frequency::UnitKiloHertz) fact = 1.0E3;
 
-  freqUnits_ = "Hz";
+  freqUnits_ =Frequency::UnitHertz;
 
   unsigned int spwId = v_transfertId_.size();
   if(spwId == 0) {
@@ -547,27 +547,27 @@ unsigned int SpectralGrid::getRefChan(unsigned int spwId) const
 
 Frequency SpectralGrid::getRefFreq() const
 {
-  return Frequency(v_refFreq_[0], "Hz");
+  return Frequency(v_refFreq_[0], Frequency::UnitHertz);
 }
 Frequency SpectralGrid::getRefFreq(unsigned int spwId) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_refFreq_[spwId], "Hz");
+  return Frequency(v_refFreq_[spwId], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getChanSep() const
 {
-  return Frequency(v_chanSep_[0], "Hz");
+  return Frequency(v_chanSep_[0], Frequency::UnitHertz);
 }
 Frequency SpectralGrid::getChanSep(unsigned int spwId) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_chanSep_[spwId], "Hz");
+  return Frequency(v_chanSep_[spwId], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getChanFreq(unsigned int i) const
 {
-  return Frequency(v_chanFreq_[i], "Hz");
+  return Frequency(v_chanFreq_[i], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getChanWidth(unsigned int i) const
@@ -582,7 +582,7 @@ Frequency SpectralGrid::getChanWidth(unsigned int i) const
 Frequency SpectralGrid::getChanFreq(unsigned int spwId, unsigned int chanIdx) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_chanFreq_[v_transfertId_[spwId] + chanIdx], "Hz");
+  return Frequency(v_chanFreq_[v_transfertId_[spwId] + chanIdx], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getChanWidth(unsigned int spwId, unsigned int chanIdx) const
@@ -598,8 +598,8 @@ Frequency SpectralGrid::getChanWidth(unsigned int spwId, unsigned int chanIdx) c
   if(chanIdx == 0){
     return getChanFreq(spwId,canalmasuno)-getChanFreq(spwId,canal);
   }else{
-    //  cout << "ChanFreq(" << banda << "," << canal << ")=" << getChanFreq(banda,canal).get("GHz") << endl;
-    //  cout << "ChanFreq(" << banda << "," << canalmenosuno << ")=" << getChanFreq(banda,canalmenosuno).get("GHz") << endl;
+    //  cout << "ChanFreq(" << banda << "," << canal << ")=" << getChanFreq(banda,canal).get(Frequency::UnitGigaHertz) << endl;
+    //  cout << "ChanFreq(" << banda << "," << canalmenosuno << ")=" << getChanFreq(banda,canalmenosuno).get(Frequency::UnitGigaHertz) << endl;
     return getChanFreq(banda,canal)-getChanFreq(banda,canalmenosuno);
   }
 }
@@ -632,22 +632,22 @@ std::vector<double> SpectralGrid::getSpectralWindow(unsigned int spwId) const
 
 Frequency SpectralGrid::getMinFreq() const
 {
-  return Frequency(v_minFreq_[0], "Hz");
+  return Frequency(v_minFreq_[0], Frequency::UnitHertz);
 }
 Frequency SpectralGrid::getMinFreq(unsigned int spwId) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_minFreq_[spwId], "Hz");
+  return Frequency(v_minFreq_[spwId], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getMaxFreq() const
 {
-  return Frequency(v_maxFreq_[0], "Hz");
+  return Frequency(v_maxFreq_[0], Frequency::UnitHertz);
 }
 Frequency SpectralGrid::getMaxFreq(unsigned int spwId) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_maxFreq_[spwId], "Hz");
+  return Frequency(v_maxFreq_[spwId], Frequency::UnitHertz);
 }
 
 double SpectralGrid::getChanNum(double freq) const
@@ -688,13 +688,13 @@ double SpectralGrid::getChanNum(unsigned int spwId, double freq) const
 
 Frequency SpectralGrid::getBandwidth() const
 {
-  return Frequency(v_maxFreq_[0] - v_minFreq_[0], "Hz");
+  return Frequency(v_maxFreq_[0] - v_minFreq_[0], Frequency::UnitHertz);
 }
 
 Frequency SpectralGrid::getBandwidth(unsigned int spwId) const
 {
   if(wrongSpwId(spwId)) return 32767.;
-  return Frequency(v_maxFreq_[spwId] - v_minFreq_[spwId], "Hz");
+  return Frequency(v_maxFreq_[spwId] - v_minFreq_[spwId], Frequency::UnitHertz);
 }
 
 bool SpectralGrid::isRegular() const

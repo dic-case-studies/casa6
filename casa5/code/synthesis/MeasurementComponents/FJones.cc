@@ -313,17 +313,27 @@ void FJones::specify(const Record&) {
   if (refv[2]>0.0)
     day0=0.0;
 
-  Vector<Double> wc(3,0.0), wc0(3,0.0);
+  Vector<Double> wc(3,0.0);
   Double &lng(wc(0)), &lat(wc(1));
+
+  // wc0 evolves in iant loop below to place relevant factors in focus for calculations
+  Vector<Double> wc0(3,0.0);
   wc0=teccs.toWorld(lastcorner);
+  // Scalar referenes into wc0 for calculation below
+  //  Memory of wc0 can't be changed!
   Double &lng0(wc0(0)), &lat0(wc0(1)), &time0(wc0(2));
+
+  // Fractional location in intervals
   Double dlng(0.0),dlat(0.0),dtime(0.0);
 
   Vector<Double> inc(teccs.increment());
   Double& dlng0(inc(0)), dlat0(inc(1)), dtime0(inc(2));
 
+  // tecube evolves in iant loop below to place relevant factor in focus for calculations
   Cube<Float> tecube(2,2,2,0.0);  // lng, lat, time
   tecube=tecim.getSlice(lastcorner,lastcorner+2,false);
+  // Scalar referenes into tecube for calculation below
+  //  Memory of tecube can't be changed!
   Float &a0(tecube(0,0,0)), &a1(tecube(1,0,0)), &a2(tecube(1,1,0)), &a3(tecube(0,1,0));
   Float &b0(tecube(0,0,1)), &b1(tecube(1,0,1)), &b2(tecube(1,1,1)), &b3(tecube(0,1,1));
 
@@ -338,7 +348,7 @@ void FJones::specify(const Record&) {
     for (vi2.origin(); vi2.more(); vi2.next()) {
 
       refTime()=vb->time()(0);
-      if (day0<0.0)
+      if (day0<0.0) 
 	day0=86400.0*floor(refTime()/86400.0);
 
       wc(2)=refTime()-day0;
@@ -361,10 +371,10 @@ void FJones::specify(const Record&) {
 	for (Int iant=0;iant<nAnt();++iant,++a) 
 	  (*a)=C::pi_2 - antazel(iant).getAngle().getValue()(1);
 
-
 	// This vb's direction measure...
 	md=vb->phaseCenter();
 
+	// Update current time in frame
 	when.set(Quantity(refTime(),"s"));
 	mframe.set(when);
 
@@ -383,8 +393,27 @@ void FJones::specify(const Record&) {
 	  convertArray(c,cf);     // integer pixel coord
 	  corner=IPosition(c);   // as IPosition
 	  if (corner!=lastcorner) { // If new
-	    wc0=teccs.toWorld(corner);
-	    tecube=tecim.getSlice(corner,twos,false);
+
+	    // (2020/12/17 gmoellen)
+	    // This fails:   (changes storage address in wc0!)
+	    //wc0=teccs.toWorld(corner);
+
+	    // (2020/12/17, gmoellen) 
+	    // This works:  (wc0's storage stays the same, values copied into it)
+	    // Scalar references used below still work!
+	    Vector<Double> toW(teccs.toWorld(corner));
+	    wc0=toW;
+
+	    // (2020/12/17 gmoellen)
+	    // This fails:  (changes storage address of tecube)
+	    // tecube=tecim.getSlice(corner,twos,false);
+
+	    // (2020/12/17 gmoellen)
+	    // This works:  (tecube's storage stays the same, values copied into it)
+	    // Scalar references used below still work!
+	    Cube<Float> newtecube(tecim.getSlice(corner,twos,false));
+	    tecube=newtecube;
+
 	    lastcorner=corner;
 
 	    /*

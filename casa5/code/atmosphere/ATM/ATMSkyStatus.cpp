@@ -34,7 +34,7 @@ ATM_NAMESPACE_BEGIN
 
 SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile) :
   RefractiveIndexProfile(refractiveIndexProfile), airMass_(1.0),
-      skyBackgroundTemperature_(2.73, "K")
+      skyBackgroundTemperature_(2.73, Temperature::UnitKelvin)
 {
 
   iniSkyStatus();
@@ -44,7 +44,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile) :
 SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
                      double airMass) :
   RefractiveIndexProfile(refractiveIndexProfile), airMass_(airMass),
-      skyBackgroundTemperature_(2.73, "K")
+      skyBackgroundTemperature_(2.73, Temperature::UnitKelvin)
 {
 
   iniSkyStatus();
@@ -64,7 +64,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
 SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
                      const Length &wh2o) :
   RefractiveIndexProfile(refractiveIndexProfile), airMass_(1.0),
-      skyBackgroundTemperature_(2.73, "K"), wh2o_user_(wh2o)
+      skyBackgroundTemperature_(2.73, Temperature::UnitKelvin), wh2o_user_(wh2o)
 {
 
   iniSkyStatus();
@@ -97,7 +97,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
                      const Length &wh2o,
                      double airMass) :
   RefractiveIndexProfile(refractiveIndexProfile), airMass_(airMass),
-      skyBackgroundTemperature_(2.73, "K"), wh2o_user_(wh2o)
+      skyBackgroundTemperature_(2.73, Temperature::UnitKelvin), wh2o_user_(wh2o)
 {
 
   iniSkyStatus();
@@ -108,7 +108,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
                      double airMass,
                      const Length &wh2o) :
   RefractiveIndexProfile(refractiveIndexProfile), airMass_(airMass),
-      skyBackgroundTemperature_(2.73, "K"), wh2o_user_(wh2o)
+      skyBackgroundTemperature_(2.73, Temperature::UnitKelvin), wh2o_user_(wh2o)
 {
 
   iniSkyStatus();
@@ -212,7 +212,7 @@ SkyStatus::SkyStatus(const RefractiveIndexProfile &refractiveIndexProfile,
 SkyStatus::SkyStatus(const SkyStatus & a) : RefractiveIndexProfile(a)
 {
 
-  // 2015-03-02 (DB) : 
+  // 2015-03-02 (DB) :
   // Use constructor of base class RefractiveIndexProfile()
   // and comment the following code because it is executed in RefractiveIndexProfile() constructor
 
@@ -707,25 +707,25 @@ Opacity SkyStatus::getH2OLinesOpacity(unsigned int nc)
 
 Opacity SkyStatus::getH2OLinesOpacityUpTo(unsigned int nc, Length refalti)
 {
-  unsigned int ires; unsigned int numlayerold; Length alti;  
-  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
+  unsigned int ires; unsigned int numlayerold; Length alti;
+  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
   double fractionLast; double g1; double g2;
 
-  if(refalti.get("km") <= altitude_.get("km")) {
+  if(refalti.get(Length::UnitKiloMeter) <= altitude_.get(Length::UnitKiloMeter)) {
     return zeroOp;
   }else{
       fractionLast = 1.0; numlayerold = numLayer_;
       g1=getGroundWH2O().get();
       opacityout0=getH2OLinesOpacity(nc); ires=numlayerold-1; alti=altitude_;
       for(unsigned int i=0; i<numLayer_; i++){
-	if(alti.get("km") < refalti.get("km") &&  (alti.get("km")+v_layerThickness_[i]/1000.0) >= refalti.get("km"))
-	  { ires=i; fractionLast = (refalti.get("m")-alti.get("m"))/v_layerThickness_[i]; }
-	alti = alti + Length(v_layerThickness_[i],"m");
+	if(alti.get(Length::UnitKiloMeter) < refalti.get(Length::UnitKiloMeter) &&  (alti.get(Length::UnitKiloMeter)+v_layerThickness_[i]/1000.0) >= refalti.get(Length::UnitKiloMeter))
+	  { ires=i; fractionLast = (refalti.get(Length::UnitMeter)-alti.get(Length::UnitMeter))/v_layerThickness_[i]; }
+	alti = alti + Length(v_layerThickness_[i],Length::UnitMeter);
       }
       numLayer_ = ires; g2=getGroundWH2O().get();
       opacityout0=getH2OLinesOpacity(nc)*(g2/g1);
       numLayer_ = ires+1; g2=getGroundWH2O().get();
-      opacityout1=getH2OLinesOpacity(nc)*(g2/g1);      
+      opacityout1=getH2OLinesOpacity(nc)*(g2/g1);
       numLayer_ = numlayerold;
       return opacityout0+(opacityout1-opacityout0)*fractionLast;
   }
@@ -736,18 +736,18 @@ Opacity SkyStatus::getTotalOpacityUpTo(unsigned int nc, Length refalti)    //15N
   {
     unsigned int ires; unsigned int numlayerold; Length alti;
     Opacity opacityout; Opacity opacityout0;
-    Opacity opacityout1; Opacity zeroOp(0.0,"np");
+    Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
     double fractionLast; double g1; double g2;
 
-    if(refalti.get("km") <= altitude_.get("km")) {
+    if(refalti.get(Length::UnitKiloMeter) <= altitude_.get(Length::UnitKiloMeter)) {
       return zeroOp;
     }else{
       fractionLast = 1.0; numlayerold = numLayer_;
       g1=getGroundWH2O().get(); ires = numlayerold-1; alti=altitude_;
       for(unsigned int i=0; i<numLayer_; i++){
-	if(alti.get("km") < refalti.get("km") &&  (alti.get("km")+v_layerThickness_[i]/1000.0) >= refalti.get("km"))
-	  { ires=i; fractionLast = (refalti.get("m")-alti.get("m"))/v_layerThickness_[i]; }
-	alti = alti + Length(v_layerThickness_[i],"m");
+	if(alti.get(Length::UnitKiloMeter) < refalti.get(Length::UnitKiloMeter) &&  (alti.get(Length::UnitKiloMeter)+v_layerThickness_[i]/1000.0) >= refalti.get(Length::UnitKiloMeter))
+	  { ires=i; fractionLast = (refalti.get(Length::UnitMeter)-alti.get(Length::UnitMeter))/v_layerThickness_[i]; }
+	alti = alti + Length(v_layerThickness_[i],Length::UnitMeter);
       }
       numLayer_ = ires+1; g2=getGroundWH2O().get();
       // std::cout << "En getTotalOpacityUpTo numlayerold numLayer_ fractionLast " << numlayerold << " " << numLayer_ << " " << fractionLast << std::endl;
@@ -782,26 +782,26 @@ Opacity SkyStatus::getH2OContOpacity(unsigned int nc)
 
 Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
 {
-  unsigned int ires; unsigned int numlayerold; Length alti;  
-  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,"np");
+  unsigned int ires; unsigned int numlayerold; Length alti;
+  Opacity opacityout0; Opacity opacityout1; Opacity zeroOp(0.0,Opacity::UnitNeper);
   double fractionLast; double g1; double g2;
 
-  
-  if(refalti.get("km") <= altitude_.get("km")) {
+
+  if(refalti.get(Length::UnitKiloMeter) <= altitude_.get(Length::UnitKiloMeter)) {
     return zeroOp;
   }else{
       fractionLast = 1.0; numlayerold = numLayer_;
       g1=getGroundWH2O().get();
       opacityout0=getH2OContOpacity(nc); ires=numlayerold-1; alti=altitude_;
       for(unsigned int i=0; i<numLayer_; i++){
-	if(alti.get("km") < refalti.get("km") &&  (alti.get("km")+v_layerThickness_[i]/1000.0) >= refalti.get("km"))
-	  { ires=i; fractionLast = (refalti.get("m")-alti.get("m"))/v_layerThickness_[i]; }
-	alti = alti + Length(v_layerThickness_[i],"m");
+	if(alti.get(Length::UnitKiloMeter) < refalti.get(Length::UnitKiloMeter) &&  (alti.get(Length::UnitKiloMeter)+v_layerThickness_[i]/1000.0) >= refalti.get(Length::UnitKiloMeter))
+	  { ires=i; fractionLast = (refalti.get(Length::UnitMeter)-alti.get(Length::UnitMeter))/v_layerThickness_[i]; }
+	alti = alti + Length(v_layerThickness_[i],Length::UnitMeter);
       }
       numLayer_ = ires; g2=getGroundWH2O().get();
       opacityout0=getH2OContOpacity(nc)*(g2/g1);
       numLayer_ = ires+1; g2=getGroundWH2O().get();
-      opacityout1=getH2OContOpacity(nc)*(g2/g1);      
+      opacityout1=getH2OContOpacity(nc)*(g2/g1);
       numLayer_ = numlayerold;
       return opacityout0+(opacityout1-opacityout0)*fractionLast;
   }
@@ -810,7 +810,7 @@ Opacity SkyStatus::getH2OContOpacityUpTo(unsigned int nc, Length refalti)
 Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int nc)
 {
   if(!chanIndexIsValid(nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   double kv = 0;
@@ -818,19 +818,19 @@ Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int nc)
     kv = kv + real(vv_N_H2OLinesPtr_[nc]->at(j)) * v_layerThickness_[j];
   }
   Angle aa(((getUserWH2O().get()) / (getGroundWH2O().get())) * kv * 57.29578,
-           "deg");
+           Angle::UnitDegree);
   return aa;
 }
 
 Length SkyStatus::getDispersiveH2OPathLength(unsigned int nc)
 {
   if(!chanIndexIsValid(nc)) {
-    Length ll(0.0, "mm");
+    Length ll(0.0, Length::UnitMilliMeter);
     return ll;
   }
   double wavelength = 299792458.0 / v_chanFreq_[nc]; // in m
-  Length ll((wavelength / 360.0) * getDispersiveH2OPhaseDelay(nc).get("deg"),
-            "m");
+  Length ll((wavelength / 360.0) * getDispersiveH2OPhaseDelay(nc).get(Angle::UnitDegree),
+            Length::UnitMeter);
   return ll;
 }
 
@@ -838,89 +838,89 @@ Angle SkyStatus::getNonDispersiveH2OPhaseDelay(unsigned int nc)
 {
   double kv = 0;
   if(!chanIndexIsValid(nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   for(unsigned int j = 0; j < numLayer_; j++) {
     kv = kv + real(vv_N_H2OContPtr_[nc]->at(j)) * v_layerThickness_[j];
   }
   Angle aa(((getUserWH2O().get()) / (getGroundWH2O().get())) * kv * 57.29578,
-           "deg");
+           Angle::UnitDegree);
   return aa;
 }
 
 Length SkyStatus::getNonDispersiveH2OPathLength(unsigned int nc)
 {
   if(!chanIndexIsValid(nc)) {
-    Length ll(0.0, "mm");
+    Length ll(0.0, Length::UnitMilliMeter);
     return ll;
   }
   double wavelength = 299792458.0 / v_chanFreq_[nc]; // in m
   Length
-      ll((wavelength / 360.0) * getNonDispersiveH2OPhaseDelay(nc).get("deg"),
-         "m");
+      ll((wavelength / 360.0) * getNonDispersiveH2OPhaseDelay(nc).get(Angle::UnitDegree),
+         Length::UnitMeter);
   return ll;
 }
 
 Angle SkyStatus::getAverageDispersiveH2OPhaseDelay(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Angle aa(-999.0, "deg");
+    Angle aa(-999.0, Angle::UnitDegree);
     return aa;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
-    av = av + getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get("deg");
+    av = av + getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get(Angle::UnitDegree);
   }
   av = av / getNumChan(spwid);
-  Angle average(av, "deg");
+  Angle average(av, Angle::UnitDegree);
   return average;
 }
 
 Length SkyStatus::getAverageDispersiveH2OPathLength(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Length ll(0.0, "mm");
+    Length ll(0.0, Length::UnitMilliMeter);
     return ll;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
-    av = av + getDispersiveH2OPathLength(v_transfertId_[spwid] + i).get("mm");
+    av = av + getDispersiveH2OPathLength(v_transfertId_[spwid] + i).get(Length::UnitMilliMeter);
   }
   av = av / getNumChan(spwid);
-  Length average(av, "mm");
+  Length average(av, Length::UnitMilliMeter);
   return average;
 }
 
 Angle SkyStatus::getAverageNonDispersiveH2OPhaseDelay(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
     av = av
-        + getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get("deg");
+        + getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + i).get(Angle::UnitDegree);
   }
   av = av / getNumChan(spwid);
-  Angle average(av, "deg");
+  Angle average(av, Angle::UnitDegree);
   return average;
 }
 
 Length SkyStatus::getAverageNonDispersiveH2OPathLength(unsigned int spwid)
 {
   if(!spwidAndIndexAreValid(spwid, 0)) {
-    Length ll(0.0, "mm");
+    Length ll(0.0, Length::UnitMilliMeter);
     return ll;
   }
   double av = 0.0;
   for(unsigned int i = 0; i < getNumChan(spwid); i++) {
     av = av
-        + getNonDispersiveH2OPathLength(v_transfertId_[spwid] + i).get("mm");
+        + getNonDispersiveH2OPathLength(v_transfertId_[spwid] + i).get(Length::UnitMilliMeter);
   }
   av = av / getNumChan(spwid);
-  Length average(av, "mm");
+  Length average(av, Length::UnitMilliMeter);
   return average;
 }
 
@@ -930,7 +930,7 @@ Temperature SkyStatus::getAverageTebbSky(unsigned int spwid,
                                          double skycoupling,
                                          const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, 0)) {
     return tt;
   }
@@ -941,12 +941,12 @@ Temperature SkyStatus::getAverageTebbSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return RT(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid);
 }
@@ -958,7 +958,7 @@ Temperature SkyStatus::getAverageTebbSky(unsigned int spwid,
                                          double signalgain,     // adition
                                          const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, 0)) {
     return tt;
   }
@@ -969,17 +969,17 @@ Temperature SkyStatus::getAverageTebbSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return signalgain*RT(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid)+
     +(1-signalgain)*RT(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             getAssocSpwId(spwid)[0]);
 }
@@ -991,7 +991,7 @@ Temperature SkyStatus::getTebbSky(unsigned int spwid,
                                   double skycoupling,
                                   const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, nc)) {
     return tt;
   }
@@ -1004,12 +1004,12 @@ Temperature SkyStatus::getTebbSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return RT(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid,
             nc);
@@ -1022,7 +1022,7 @@ Temperature SkyStatus::getAverageTrjSky(unsigned int spwid,
                                          double skycoupling,
                                          const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, 0)) {
     return tt;
   }
@@ -1033,12 +1033,12 @@ Temperature SkyStatus::getAverageTrjSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return RTRJ(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid);
 }
@@ -1050,7 +1050,7 @@ Temperature SkyStatus::getAverageTrjSky(unsigned int spwid,
                                          double signalgain,     // adition
                                          const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, 0)) {
     return tt;
   }
@@ -1061,17 +1061,17 @@ Temperature SkyStatus::getAverageTrjSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return signalgain*RTRJ(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid)+
     +(1-signalgain)*RTRJ(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             getAssocSpwId(spwid)[0]);
 }
@@ -1083,7 +1083,7 @@ Temperature SkyStatus::getTrjSky(unsigned int spwid,
                                   double skycoupling,
                                   const Temperature &Tspill)
 {
-  Temperature tt(-999, "K");
+  Temperature tt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwid, nc)) {
     return tt;
   }
@@ -1096,12 +1096,12 @@ Temperature SkyStatus::getTrjSky(unsigned int spwid,
   if(airmass < 1.0) {
     return tt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return tt;
   }
   return RTRJ(((wh2o.get()) / (getGroundWH2O().get())),
             skycoupling,
-            Tspill.get("K"),
+            Tspill.get(Temperature::UnitKelvin),
             airmass,
             spwid,
             nc);
@@ -1112,7 +1112,7 @@ Temperature SkyStatus::getTrjSky(unsigned int spwid,
 Angle SkyStatus::getDispersiveH2OPhaseDelay(unsigned int spwid, unsigned int nc)
 {
   if(!spwidAndIndexAreValid(spwid, nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   return getDispersiveH2OPhaseDelay(v_transfertId_[spwid] + nc);
@@ -1122,7 +1122,7 @@ Length SkyStatus::getDispersiveH2OPathLength(unsigned int spwid,
                                              unsigned int nc)
 {
   if(!spwidAndIndexAreValid(spwid, nc)) {
-    Length ll(0.0, "mm");
+    Length ll(0.0, Length::UnitMilliMeter);
     return ll;
   }
   return getDispersiveH2OPathLength(v_transfertId_[spwid] + nc);
@@ -1132,7 +1132,7 @@ Angle SkyStatus::getNonDispersiveH2OPhaseDelay(unsigned int spwid,
                                                unsigned int nc)
 {
   if(!spwidAndIndexAreValid(spwid, nc)) {
-    Angle aa(0.0, "deg");
+    Angle aa(0.0, Angle::UnitDegree);
     return aa;
   }
   return getNonDispersiveH2OPhaseDelay(v_transfertId_[spwid] + nc);
@@ -1151,7 +1151,7 @@ Length SkyStatus::WaterVaporRetrieval_fromFTS(unsigned int spwId,
                                               const Frequency &f2)
 {
   if(f1.get() > f2.get()) {
-    return Length(-999, "mm");
+    return Length(-999, Length::UnitMilliMeter);
   }
   if(v_transmission.size() == getSpectralWindow(spwId).size()) {
     return mkWaterVaporRetrieval_fromFTS(spwId,
@@ -1160,7 +1160,7 @@ Length SkyStatus::WaterVaporRetrieval_fromFTS(unsigned int spwId,
                                          f1,
                                          f2);
   } else {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 }
 
@@ -1293,14 +1293,14 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkWaterVaporRetrieval_fromTEBB(spwId,
-                                          Percent(100.0, "%"),
+                                          Percent(100.0, Percent::UnitPercent),
                                           v_tebb,
                                           getAirMass(),
                                           spwId_filter,
                                           skycoupling,
                                           tspill);
   } else {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 }
 Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
@@ -1311,7 +1311,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1329,7 +1329,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1356,7 +1356,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
                                           skycoupling,
                                           tspill);
   } else {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 }
 Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
@@ -1503,12 +1503,12 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 						 double skycoupling,
 						 const Temperature &tspill)
   {
-    vector<unsigned int> spwIdv;  
+    vector<unsigned int> spwIdv;
     vector<Percent> signalGainv;
     vector<Temperature> tebbv;
     vector<double> skycouplingv;
     vector<Temperature> tspillv;
-    spwIdv.push_back(spwId);  
+    spwIdv.push_back(spwId);
     signalGainv.push_back(signalGain);
     tebbv.push_back(tebb);
     skycouplingv.push_back(skycoupling);
@@ -1552,14 +1552,14 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkWaterVaporRetrieval_fromTEBB(spwId,
-                                          Percent(100.0, "%"),
+                                          Percent(100.0, Percent::UnitPercent),
                                           v_tebb,
                                           airmass,
                                           spwId_filter,
                                           skycoupling,
                                           tspill);
   } else {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 }
 Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
@@ -1571,12 +1571,12 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   for(unsigned int j = 0; j < spwId.size(); j++) {
     if(vv_tebb[j].size() != getSpectralWindow(spwId[j]).size()) {
-      return Length(-999.0, "mm");
+      return Length(-999.0, Length::UnitMilliMeter);
     }
   }
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1595,7 +1595,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
   vector<Percent> signalGain;
   for(unsigned int i = 0; i < spwId.size(); i++) {
-    signalGain.push_back(Percent(100.0, "%"));
+    signalGain.push_back(Percent(100.0, Percent::UnitPercent));
   }
   return mkWaterVaporRetrieval_fromTEBB(spwId,
                                         signalGain,
@@ -1623,7 +1623,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(unsigned int spwId,
                                           skycoupling,
                                           tspill);
   } else {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 }
 
@@ -1637,21 +1637,21 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
 {
 
   if(spwId.size() != signalGain.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   for(unsigned int j = 0; j < spwId.size(); j++) {
     if(vv_tebb[j].size() != getSpectralWindow(spwId[j]).size()) {
-      return Length(-999.0, "mm");
+      return Length(-999.0, Length::UnitMilliMeter);
     }
   }
   if(spwId.size() != spwId_filter.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != skycoupling.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != tspill.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 
   return mkWaterVaporRetrieval_fromTEBB(spwId,
@@ -1662,7 +1662,7 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
                                         skycoupling,
                                         tspill);
 }
-  
+
 Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId,
                                                const vector<Percent> &signalGain,
                                                const vector<Temperature> &v_tebb,
@@ -1672,19 +1672,19 @@ Length SkyStatus::WaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spwId
                                                const vector<Temperature> &tspill)
 {
   if(spwId.size() != signalGain.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != v_tebb.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != spwId_filter.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != skycoupling.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
   if(spwId.size() != tspill.size()) {
-    return Length(-999.0, "mm");
+    return Length(-999.0, Length::UnitMilliMeter);
   }
 
   return mkWaterVaporRetrieval_fromTEBB(spwId,
@@ -1773,7 +1773,7 @@ double SkyStatus::SkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkSkyCouplingRetrieval_fromTEBB(spwId,
-                                           Percent(100, "%"),
+                                           Percent(100, Percent::UnitPercent),
                                            v_tebb,
                                            getAirMass(),
                                            spwId_filter,
@@ -1811,7 +1811,7 @@ double SkyStatus::SkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 {
   if(v_tebb.size() == getSpectralWindow(spwId).size()) {
     return mkSkyCouplingRetrieval_fromTEBB(spwId,
-                                           Percent(100, "%"),
+                                           Percent(100, Percent::UnitPercent),
                                            v_tebb,
                                            airmass,
                                            spwId_filter,
@@ -1836,8 +1836,8 @@ double SkyStatus::getSigmaTransmissionFit(unsigned int spwId,
     unsigned int num = 0;
 
     for(unsigned int i = 0; i < v_transmission.size(); i++) {
-      if((getSpectralWindow(spwId)[i] * 1E-09 >= f1.get("GHz")
-          && getSpectralWindow(spwId)[i] * 1E-09 <= f2.get("GHz"))) {
+      if((getSpectralWindow(spwId)[i] * 1E-09 >= f1.get(Frequency::UnitGigaHertz)
+          && getSpectralWindow(spwId)[i] * 1E-09 <= f2.get(Frequency::UnitGigaHertz))) {
         num++;
         rms = rms + pow((v_transmission[i] - exp(-airm
 						 * ( (getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get()  )  // getDryOpacity(spwId, i).get()
@@ -1859,14 +1859,14 @@ Temperature SkyStatus::getSigmaFit(unsigned int spwId,
                                    double skyCoupling,
                                    const Temperature &Tspill)
 {
-  Temperature ttt(-999, "K");
+  Temperature ttt(-999, Temperature::UnitKelvin);
   if(!spwidAndIndexAreValid(spwId, 0)) {
     return ttt;
   }
   if(v_tebbspec.size() != getSpectralWindow(spwId).size()) {
     return ttt;
   }
-  if(wh2o.get("mm") < 0.0) {
+  if(wh2o.get(Length::UnitMilliMeter) < 0.0) {
     return ttt;
   }
   if(skyCoupling < 0.0 || skyCoupling > 1.0) {
@@ -1875,7 +1875,7 @@ Temperature SkyStatus::getSigmaFit(unsigned int spwId,
   if(airmass < 1.0) {
     return ttt;
   }
-  if(Tspill.get("K") < 0.0 || Tspill.get("K") > 350.0) {
+  if(Tspill.get(Temperature::UnitKelvin) < 0.0 || Tspill.get(Temperature::UnitKelvin) > 350.0) {
     return ttt;
   }
   double rms = 0.0;
@@ -1883,17 +1883,17 @@ Temperature SkyStatus::getSigmaFit(unsigned int spwId,
   for(unsigned int i = 0; i < v_tebbspec.size(); i++) {
     if(v_tebbspec[i].get() > 0.0) {
       num++;
-      rms = rms + pow((v_tebbspec[i].get("K") - getTebbSky(spwId,
+      rms = rms + pow((v_tebbspec[i].get(Temperature::UnitKelvin) - getTebbSky(spwId,
                                                            i,
                                                            wh2o,
                                                            airmass,
                                                            skyCoupling,
-                                                           Tspill).get("K")),
+                                                           Tspill).get(Temperature::UnitKelvin)),
                       2);
     }
   }
   rms = sqrt(rms / num);
-  return Temperature(rms, "K");
+  return Temperature(rms, Temperature::UnitKelvin);
 }
 
 Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
@@ -1923,24 +1923,24 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
   double chisqr;
   double pfit_wh2o_b;
   double res;
-  Length wh2o_retrieved(-999.0, "mm");
-  Length werr(-888, "mm");
+  Length wh2o_retrieved(-999.0, Length::UnitMilliMeter);
+  Length werr(-888, Length::UnitMilliMeter);
   double sigma_fit_transm0;
   Length sigma_wh2o;
 
   num = 0;
 
   flamda = 0.001;
-  pfit_wh2o = 1.0; // (getUserWH2O().get("mm"))/(getGroundWH2O().get("mm"));
+  pfit_wh2o = 1.0; // (getUserWH2O().get(Length::UnitMilliMeter))/(getGroundWH2O().get(Length::UnitMilliMeter));
 
   unsigned int nl = 0;
 
-  if(fre1.get("GHz") < 0) {
+  if(fre1.get(Frequency::UnitGigaHertz) < 0) {
     nl = getSpectralWindow(spwId).size();
   } else {
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
-      if(getSpectralWindow(spwId)[i] * 1E-09 >= fre1.get("GHz")
-          && getSpectralWindow(spwId)[i] * 1E-09 <= fre2.get("GHz")) {
+      if(getSpectralWindow(spwId)[i] * 1E-09 >= fre1.get(Frequency::UnitGigaHertz)
+          && getSpectralWindow(spwId)[i] * 1E-09 <= fre2.get(Frequency::UnitGigaHertz)) {
         nl = nl + 1;
       }
     }
@@ -1958,12 +1958,12 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
 
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
-	//                                                         
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
+	//
         transmission_fit[i] = exp(-( (getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get() )                                              //getDryOpacity(spwId, i).get()
 				     + pfit_wh2o * getWetOpacity(spwId, i).get() ) );
-	//                                                         
+	//
         f1 = transmission_fit[i];
         psave = pfit_wh2o;
         pfit_wh2o = pfit_wh2o + deltaa;
@@ -1980,8 +1980,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     chisq1 = 0;
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
         res = -transmission_fit[i] + measuredSkyTransmission[i];
         chisq1 = chisq1 + res * res;
       }
@@ -1998,8 +1998,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     chisqr = 0;
     for(unsigned int i = 0; i < getSpectralWindow(spwId).size(); i++) {
       if(nl == getSpectralWindow(spwId).size() || (getSpectralWindow(spwId)[i]
-          * 1E-09 >= fre1.get("GHz") && getSpectralWindow(spwId)[i] * 1E-09
-          <= fre2.get("GHz"))) {
+          * 1E-09 >= fre1.get(Frequency::UnitGigaHertz) && getSpectralWindow(spwId)[i] * 1E-09
+          <= fre2.get(Frequency::UnitGigaHertz))) {
         transmission_fit[i] = exp(-( ( getDryContOpacity(spwId, i).get()+getO2LinesOpacity(spwId, i).get()+0.65*getO3LinesOpacity(spwId, i).get() )             //      (getDryOpacity(spwId, i).get())
 				     + pfit_wh2o_b * getWetOpacity(spwId, i).get()));
         res = -transmission_fit[i] + measuredSkyTransmission[i];
@@ -2022,7 +2022,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
     sig_fit = sqrt(chisqr);
     pfit_wh2o = pfit_wh2o_b;
     sigma_wh2o = Length(sqrt(array / alpha) * sig_fit * pfit_wh2o
-        * (getUserWH2O().get()), "mm");
+        * (getUserWH2O().get()), Length::UnitMilliMeter);
 
     if(fabs(sqrt(chisq1) - sqrt(chisqr)) < eps) {
 
@@ -2032,7 +2032,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromFTS(unsigned int spwId,
 
       sigma_fit_transm0 = sig_fit;
 
-      wh2o_retrieved = Length(pfit_wh2o * getUserWH2O().get("mm"), "mm");
+      wh2o_retrieved = Length(pfit_wh2o * getUserWH2O().get(Length::UnitMilliMeter), Length::UnitMilliMeter);
 
       goto salir;
 
@@ -2084,8 +2084,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
   double chisqr;
   double pfit_wh2o_b;
   double res;
-  Length wh2o_retrieved(-999.0, "mm");
-  Length werr(-888, "mm");
+  Length wh2o_retrieved(-999.0, Length::UnitMilliMeter);
+  Length werr(-888, Length::UnitMilliMeter);
   double sigma_fit_transm0;
   Length sigma_wh2o;
   v_tebb_fit.reserve(measuredAverageSkyTEBB.size());
@@ -2093,7 +2093,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
   num = 0;
   flamda = 0.001;
 
-  pfit_wh2o = (getUserWH2O().get("mm")) / (getGroundWH2O().get("mm"));
+  pfit_wh2o = (getUserWH2O().get(Length::UnitMilliMeter)) / (getGroundWH2O().get(Length::UnitMilliMeter));
 
   for(unsigned int kite = 0; kite < niter; kite++) {
 
@@ -2107,21 +2107,21 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
       f1 = RT(pfit_wh2o,
 	      skycoupling[j],
-	      tspill[j].get("K"),
+	      tspill[j].get(Temperature::UnitKelvin),
 	      airm,
 	      spwId[j],
 	      spwId_filter[j],
-	      signalGain[j]);    // if signalGain[j] < 1.0 then there is an image side 
+	      signalGain[j]);    // if signalGain[j] < 1.0 then there is an image side
                                  // band and it is correctly taken into account in RT
 
-      v_tebb_fit[j] = Temperature(f1, "K");
+      v_tebb_fit[j] = Temperature(f1, Temperature::UnitKelvin);
 
       psave = pfit_wh2o;
       pfit_wh2o = pfit_wh2o + deltaa;
 
       f2 = RT(pfit_wh2o,
               skycoupling[j],
-              tspill[j].get("K"),
+              tspill[j].get(Temperature::UnitKelvin),
               airm,
               spwId[j],
               spwId_filter[j],
@@ -2130,7 +2130,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
       deriv = (f2 - f1) / deltaa;
 
       pfit_wh2o = psave;
-      beta = beta + ((measuredAverageSkyTEBB[j]).get("K") - f1) * deriv;
+      beta = beta + ((measuredAverageSkyTEBB[j]).get(Temperature::UnitKelvin) - f1) * deriv;
       alpha = alpha + deriv * deriv;
 
     }
@@ -2139,7 +2139,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
     for(unsigned int j = 0; j < measuredAverageSkyTEBB.size(); j++) {
 
-      res = -v_tebb_fit[j].get("K") + (measuredAverageSkyTEBB[j]).get("K");
+      res = -v_tebb_fit[j].get(Temperature::UnitKelvin) + (measuredAverageSkyTEBB[j]).get(Temperature::UnitKelvin);
       chisq1 = chisq1 + res * res;
 
     }
@@ -2159,13 +2159,13 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
       v_tebb_fit[j] = Temperature(RT(pfit_wh2o_b,
                                      skycoupling[j],
-                                     tspill[j].get("K"),
+                                     tspill[j].get(Temperature::UnitKelvin),
                                      airm,
                                      spwId[j],
                                      spwId_filter[j],
-                                     signalGain[j]), "K");
+                                     signalGain[j]), Temperature::UnitKelvin);
 
-      res = -v_tebb_fit[j].get("K") + (measuredAverageSkyTEBB[j]).get("K");
+      res = -v_tebb_fit[j].get(Temperature::UnitKelvin) + (measuredAverageSkyTEBB[j]).get(Temperature::UnitKelvin);
       chisqr = chisqr + res * res;
 
     }
@@ -2185,13 +2185,13 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
     sig_fit = sqrt(chisqr);
     pfit_wh2o = pfit_wh2o_b;
     sigma_wh2o = Length(sqrt(array / alpha) * sig_fit * pfit_wh2o
-        * (getGroundWH2O().get("mm")), "mm");
+        * (getGroundWH2O().get(Length::UnitMilliMeter)), Length::UnitMilliMeter);
 
     if(fabs(sqrt(chisq1) - sqrt(chisqr)) < eps) {
 
       sigma_fit_transm0 = sig_fit;
 
-      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get("mm"), "mm");
+      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get(Length::UnitMilliMeter), Length::UnitMilliMeter);
 
       goto salir;
 
@@ -2205,7 +2205,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
   salir:
 
-  sigma_TEBBfit_ = Temperature(sigma_fit_transm0, "K");
+  sigma_TEBBfit_ = Temperature(sigma_fit_transm0, Temperature::UnitKelvin);
   if(wh2o_retrieved.get() > 0.0) {
     wh2o_user_ = wh2o_retrieved;
   }
@@ -2243,8 +2243,8 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
   double chisqr;
   double pfit_wh2o_b;
   double res;
-  Length wh2o_retrieved(-999.0, "mm");
-  Length werr(-888, "mm");
+  Length wh2o_retrieved(-999.0, Length::UnitMilliMeter);
+  Length werr(-888, Length::UnitMilliMeter);
   double sigma_fit_transm0;
   Length sigma_wh2o;
   vector<double> spwIdNorm;
@@ -2266,7 +2266,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
   num = 0;
   flamda = 0.001;
-  pfit_wh2o = (getUserWH2O().get("mm")) / (getGroundWH2O().get("mm"));
+  pfit_wh2o = (getUserWH2O().get(Length::UnitMilliMeter)) / (getGroundWH2O().get(Length::UnitMilliMeter));
 
   for(unsigned int kite = 0; kite < niter; kite++) {
 
@@ -2286,12 +2286,12 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           if(signalGain[j].get() < 1.0) {
             f1 = RT(pfit_wh2o,
                     skycoupling[j],
-                    tspill[j].get("K"),
+                    tspill[j].get(Temperature::UnitKelvin),
                     airm,
                     spwId[j],
                     i) * signalGain[j].get() + RT(pfit_wh2o,
                                                   skycoupling[j],
-                                                  tspill[j].get("K"),
+                                                  tspill[j].get(Temperature::UnitKelvin),
                                                   airm,
                                                   getAssocSpwId(spwId[j])[0],
                                                   i)
@@ -2299,7 +2299,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           } else {
             f1 = RT(pfit_wh2o,
                     skycoupling[j],
-                    tspill[j].get("K"),
+                    tspill[j].get(Temperature::UnitKelvin),
                     airm,
                     spwId[j],
                     i);
@@ -2308,17 +2308,17 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           psave = pfit_wh2o;
           pfit_wh2o = pfit_wh2o + deltaa;
 
-          v_tebb_fit.push_back(Temperature(f1, "K"));
+          v_tebb_fit.push_back(Temperature(f1, Temperature::UnitKelvin));
 
           if(signalGain[j].get() < 1.0) {
             f2 = (RT(pfit_wh2o,
                      skycoupling[j],
-                     tspill[j].get("K"),
+                     tspill[j].get(Temperature::UnitKelvin),
                      airm,
                      spwId[j],
                      i) * signalGain[j].get() + RT(pfit_wh2o,
                                                    skycoupling[j],
-                                                   tspill[j].get("K"),
+                                                   tspill[j].get(Temperature::UnitKelvin),
                                                    airm,
                                                    getAssocSpwId(spwId[j])[0],
                                                    i) * (1
@@ -2326,7 +2326,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           } else {
             f2 = (RT(pfit_wh2o,
                      skycoupling[j],
-                     tspill[j].get("K"),
+                     tspill[j].get(Temperature::UnitKelvin),
                      airm,
                      spwId[j],
                      i) * signalGain[j].get());
@@ -2337,12 +2337,12 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           deriv = (f2 - f1) / deltaa;
 
           pfit_wh2o = psave;
-          beta = beta + ((measuredSkyTEBB[j][i]).get("K") - f1) * deriv; //*spwId_filter[j][i]/spwIdNorm[j];
+          beta = beta + ((measuredSkyTEBB[j][i]).get(Temperature::UnitKelvin) - f1) * deriv; //*spwId_filter[j][i]/spwIdNorm[j];
           alpha = alpha + deriv * deriv;
 
         } else {
 
-          v_tebb_fit.push_back(Temperature(-999, "K"));
+          v_tebb_fit.push_back(Temperature(-999, Temperature::UnitKelvin));
 
         }
 
@@ -2359,7 +2359,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
       for(unsigned int i = 0; i < getSpectralWindow(spwId[j]).size(); i++) {
         if(spwId_filter[j][i] > 0) {
           res
-              = (-vv_tebb_fit[j][i].get("K") + (measuredSkyTEBB[j][i]).get("K"))
+              = (-vv_tebb_fit[j][i].get(Temperature::UnitKelvin) + (measuredSkyTEBB[j][i]).get(Temperature::UnitKelvin))
                   * spwId_filter[j][i] * validchannels[j] / spwIdNorm[j];
           chisq1 = chisq1 + res * res;
         }
@@ -2387,27 +2387,27 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
           if(signalGain[j].get() < 1.0) {
             vv_tebb_fit[j][i] = Temperature(RT(pfit_wh2o_b,
                                                skycoupling[j],
-                                               tspill[j].get("K"),
+                                               tspill[j].get(Temperature::UnitKelvin),
                                                airm,
                                                spwId[j],
                                                i) * signalGain[j].get()
                 + RT(pfit_wh2o_b,
                      skycoupling[j],
-                     tspill[j].get("K"),
+                     tspill[j].get(Temperature::UnitKelvin),
                      airm,
                      getAssocSpwId(spwId[j])[0],
-                     i) * (1 - signalGain[j].get()), "K");
+                     i) * (1 - signalGain[j].get()), Temperature::UnitKelvin);
           } else {
             vv_tebb_fit[j][i] = Temperature(RT(pfit_wh2o_b,
                                                skycoupling[j],
-                                               tspill[j].get("K"),
+                                               tspill[j].get(Temperature::UnitKelvin),
                                                airm,
                                                spwId[j],
-                                               i) * signalGain[j].get(), "K");
+                                               i) * signalGain[j].get(), Temperature::UnitKelvin);
           }
 
           res
-              = (-vv_tebb_fit[j][i].get("K") + (measuredSkyTEBB[j][i]).get("K"))
+              = (-vv_tebb_fit[j][i].get(Temperature::UnitKelvin) + (measuredSkyTEBB[j][i]).get(Temperature::UnitKelvin))
                   * spwId_filter[j][i] * validchannels[j] / spwIdNorm[j];
 
           chisqr = chisqr + res * res;
@@ -2431,13 +2431,13 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
     sig_fit = sqrt(chisqr);
     pfit_wh2o = pfit_wh2o_b;
     sigma_wh2o = Length(sqrt(array / alpha) * sig_fit * pfit_wh2o
-        * (getGroundWH2O().get("mm")), "mm");
+        * (getGroundWH2O().get(Length::UnitMilliMeter)), Length::UnitMilliMeter);
 
     if(fabs(sqrt(chisq1) - sqrt(chisqr)) < eps) {
 
       sigma_fit_transm0 = sig_fit;
 
-      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get("mm"), "mm");
+      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get(Length::UnitMilliMeter), Length::UnitMilliMeter);
 
       goto salir;
 
@@ -2451,7 +2451,7 @@ Length SkyStatus::mkWaterVaporRetrieval_fromTEBB(const vector<unsigned int> &spw
 
   salir:
 
-  sigma_TEBBfit_ = Temperature(sigma_fit_transm0, "K");
+  sigma_TEBBfit_ = Temperature(sigma_fit_transm0, Temperature::UnitKelvin);
   if(wh2o_retrieved.get() > 0.0) {
     wh2o_user_ = wh2o_retrieved;
   }
@@ -2490,15 +2490,15 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
   double chisq1;
   double chisqr;
   double res;
-  Length wh2o_retrieved(-999.0, "mm");
-  Length werr(-888, "mm");
+  Length wh2o_retrieved(-999.0, Length::UnitMilliMeter);
+  Length werr(-888, Length::UnitMilliMeter);
   // double sigma_fit_transm0; // [-Wunused_but_set_variable]
   Length sigma_wh2o;
 
   num = 0;
 
   flamda = 0.001;
-  // pfit_wh2o = (getUserWH2O().get("mm")) / (getGroundWH2O().get("mm")); // [-Wunused_but_set_variable]
+  // pfit_wh2o = (getUserWH2O().get(Length::UnitMilliMeter)) / (getGroundWH2O().get(Length::UnitMilliMeter)); // [-Wunused_but_set_variable]
   pfit_skycoupling = 1.0;
 
   for(unsigned int kite = 0; kite < niter; kite++) {
@@ -2517,8 +2517,8 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
                                    spwId_filter,
                                    pfit_skycoupling * skycoupling,
                                    tspill);
-    f1 = sigma_TEBBfit_.get("K");
-    // cout << "pfit_skycoupling =" << pfit_skycoupling << "  f1=" << f1 << "  wh2o_user_=" << wh2o_user_.get("mm") << " mm" << endl;
+    f1 = sigma_TEBBfit_.get(Temperature::UnitKelvin);
+    // cout << "pfit_skycoupling =" << pfit_skycoupling << "  f1=" << f1 << "  wh2o_user_=" << wh2o_user_.get(Length::UnitMilliMeter) << " mm" << endl;
     psave = pfit_skycoupling;
     pfit_skycoupling = pfit_skycoupling + deltaa;
     mkWaterVaporRetrieval_fromTEBB(spwId,
@@ -2528,8 +2528,8 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
                                    spwId_filter,
                                    pfit_skycoupling * skycoupling,
                                    tspill);
-    f2 = sigma_TEBBfit_.get("K");
-    // cout << "pfit_skycoupling =" << pfit_skycoupling << "  f2=" << f2 << "  wh2o_user_=" << wh2o_user_.get("mm") << " mm" << endl;
+    f2 = sigma_TEBBfit_.get(Temperature::UnitKelvin);
+    // cout << "pfit_skycoupling =" << pfit_skycoupling << "  f2=" << f2 << "  wh2o_user_=" << wh2o_user_.get(Length::UnitMilliMeter) << " mm" << endl;
     deriv = (f2 - f1) / deltaa;
     pfit_skycoupling = psave;
     beta = beta - f1 * deriv;
@@ -2551,8 +2551,8 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
                                    spwId_filter,
                                    pfit_skycoupling_b * skycoupling,
                                    tspill);
-    res = sigma_TEBBfit_.get("K");
-    // cout << "pfit_skycoupling =" << pfit_skycoupling_b << "  res=" << res << "  wh2o_user_=" << wh2o_user_.get("mm") << " mm" << endl;
+    res = sigma_TEBBfit_.get(Temperature::UnitKelvin);
+    // cout << "pfit_skycoupling =" << pfit_skycoupling_b << "  res=" << res << "  wh2o_user_=" << wh2o_user_.get(Length::UnitMilliMeter) << " mm" << endl;
     chisqr = chisqr + res * res;
 
     if(fabs(chisq1 - chisqr) > 0.001) {
@@ -2589,11 +2589,11 @@ double SkyStatus::mkSkyCouplingRetrieval_fromTEBB(unsigned int spwId,
 		       const vector<double> &spwId_filter,
 		       const Percent &signalgain)
   {
-    
+
     double tebb_channel = 0.0;
     double rtr;
     double norm = 0.0;
-    
+
     for(unsigned int n = 0; n < v_numChan_[spwid]; n++) {
       if(spwId_filter[n] > 0) {
         norm = norm + spwId_filter[n];
@@ -2643,11 +2643,11 @@ double SkyStatus::RT(double pfit_wh2o,
   double h_div_k = 0.04799274551; /* plank=6.6262e-34,boltz=1.3806E-23 */
   double kv;
   double tau_layer;
-  double tbgr = skyBackgroundTemperature_.get("K");
+  double tbgr = skyBackgroundTemperature_.get(Temperature::UnitKelvin);
   double ratioWater = pfit_wh2o;
 
-  singlefreq = getChanFreq(spwid, nc).get("GHz");
-  // chanwidth = getChanWidth(spwid, nc).get("GHz"); // [-Wunused_but_set_variable]
+  singlefreq = getChanFreq(spwid, nc).get(Frequency::UnitGigaHertz);
+  // chanwidth = getChanWidth(spwid, nc).get(Frequency::UnitGigaHertz); // [-Wunused_but_set_variable]
   // cout << "Chan freq. =" << singlefreq << " GHz" << endl;
   // cout << "Chan width =" << chanwidth << " GHz" << endl;
 
@@ -2656,25 +2656,25 @@ double SkyStatus::RT(double pfit_wh2o,
   radiance = 0.0;
 
   for(unsigned int i = 0; i < getNumLayer(); i++) {
-    
+
     tau_layer = ((getAbsTotalWet(spwid, nc, i).get()) * ratioWater+ getAbsTotalDry(spwid, nc, i).get()) * getLayerThickness(i).get();
-    
+
     // cout << i << "  " <<  getAbsTotalWet(spwid, nc, i).get() << "  " << getAbsTotalDry(spwid, nc, i).get() << endl;
-      
+
     radiance = radiance + (1.0 / (exp(h_div_k * singlefreq/ getLayerTemperature(i).get()) - 1.0)) * exp(-kv * airm) * (1.0- exp(-airm * tau_layer));
-    
+
     kv = kv + tau_layer;
-      
+
   }
-    
+
   radiance = skycoupling * (radiance + (1.0 / (exp(h_div_k * singlefreq / tbgr)- 1.0)) * exp(-kv * airm)) + (1.0 / (exp(h_div_k * singlefreq / tspill)- 1.0)) * (1 - skycoupling);
-    
+
   tebb = h_div_k * singlefreq / log(1 + (1 / radiance));
-  // tebb = tebb+  h_div_k * singlefreq * radiance;  
+  // tebb = tebb+  h_div_k * singlefreq * radiance;
   // cout << "singlefreq = " << singlefreq <<  " total opacity = " << kv << " tebb = " << tebb << endl;
 
   return tebb;
-  
+
 }
 
 
@@ -2693,31 +2693,31 @@ double SkyStatus::RTRJ(double pfit_wh2o,
   double h_div_k = 0.04799274551; /* plank=6.6262e-34,boltz=1.3806E-23 */
   double kv;
   double tau_layer;
-  double tbgr = skyBackgroundTemperature_.get("K");
+  double tbgr = skyBackgroundTemperature_.get(Temperature::UnitKelvin);
   double ratioWater = pfit_wh2o;
 
-  singlefreq = getChanFreq(spwid, nc).get("GHz");
-  // chanwidth = getChanWidth(spwid, nc).get("GHz"); // [-Wunused_but_set_variable]
+  singlefreq = getChanFreq(spwid, nc).get(Frequency::UnitGigaHertz);
+  // chanwidth = getChanWidth(spwid, nc).get(Frequency::UnitGigaHertz); // [-Wunused_but_set_variable]
   trj=0.0;
   kv = 0.0;
   radiance = 0.0;
 
   for(unsigned int i = 0; i < getNumLayer(); i++) {
-    
+
     tau_layer = ((getAbsTotalWet(spwid, nc, i).get()) * ratioWater+ getAbsTotalDry(spwid, nc, i).get()) * getLayerThickness(i).get();
-    
+
     radiance = radiance + (1.0 / (exp(h_div_k * singlefreq/ getLayerTemperature(i).get()) - 1.0)) * exp(-kv * airm) * (1.0- exp(-airm * tau_layer));
-    
+
     kv = kv + tau_layer;
-      
+
   }
-    
+
   radiance = skycoupling * (radiance + (1.0 / (exp(h_div_k * singlefreq / tbgr)- 1.0)) * exp(-kv * airm)) + (1.0 / (exp(h_div_k * singlefreq / tspill)- 1.0)) * (1 - skycoupling);
-    
-  trj = h_div_k * singlefreq * radiance;  
+
+  trj = h_div_k * singlefreq * radiance;
 
   return trj;
-  
+
 }
 
 
@@ -2725,12 +2725,12 @@ double SkyStatus::RTRJ(double pfit_wh2o,
 void SkyStatus::iniSkyStatus()
 {
 
-  Length wh2o_default(1, "mm");
-  Length wh2o_default_neg(-999, "mm");
-  Temperature temp_default_neg(-999, "K");
+  Length wh2o_default(1, Length::UnitMilliMeter);
+  Length wh2o_default_neg(-999, Length::UnitMilliMeter);
+  Temperature temp_default_neg(-999, Temperature::UnitKelvin);
 
   if(wh2o_user_.get() <= 0.0 || wh2o_user_.get() > (getGroundWH2O().get())
-      * (200 / (getRelativeHumidity().get("%")))) {
+      * (200 / (getRelativeHumidity().get(Percent::UnitPercent)))) {
     wh2o_user_ = wh2o_default;
   }
 
@@ -2741,11 +2741,11 @@ double SkyStatus::getAverageNonDispersiveDryPathLength_GroundPressureDerivative(
   Pressure ref = getGroundPressure();
   Length a =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
-  setBasicAtmosphericParameters(ref + Pressure(1.0, "mb"));
+  setBasicAtmosphericParameters(ref + Pressure(1.0, Pressure::UnitMilliBar));
   Length b =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref);
-  return b.get("microns") - a.get("microns");
+  return b.get(Length::UnitMicrons) - a.get(Length::UnitMicrons);
 }
 
 double SkyStatus::getAverageNonDispersiveDryPathLength_GroundTemperatureDerivative(unsigned int spwid)
@@ -2755,13 +2755,13 @@ double SkyStatus::getAverageNonDispersiveDryPathLength_GroundTemperatureDerivati
   Length a =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
   double newLapseRate =
-      ((getTropopauseTemperature() - ref - Temperature(1.0, "K")).get("K"))
-          / ((getTropopauseAltitude() - getAltitude()).get("km"));
-  setBasicAtmosphericParameters(ref + Temperature(1.0, "K"), newLapseRate);
+      ((getTropopauseTemperature() - ref - Temperature(1.0, Temperature::UnitKelvin)).get(Temperature::UnitKelvin))
+          / ((getTropopauseAltitude() - getAltitude()).get(Length::UnitKiloMeter));
+  setBasicAtmosphericParameters(ref + Temperature(1.0, Temperature::UnitKelvin), newLapseRate);
   Length b =
       RefractiveIndexProfile::getAverageNonDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref, oldLapseRate);
-  return b.get("microns") - a.get("microns");
+  return b.get(Length::UnitMicrons) - a.get(Length::UnitMicrons);
 }
 
 double SkyStatus::getAverageDispersiveDryPathLength_GroundPressureDerivative(unsigned int spwid)
@@ -2769,10 +2769,10 @@ double SkyStatus::getAverageDispersiveDryPathLength_GroundPressureDerivative(uns
   Pressure ref = getGroundPressure();
   Length a = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   // scanf("%d",&e);
-  setBasicAtmosphericParameters(ref + Pressure(1.0, "mb"));
+  setBasicAtmosphericParameters(ref + Pressure(1.0, Pressure::UnitMilliBar));
   Length b = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref);
-  return b.get("microns") - a.get("microns");
+  return b.get(Length::UnitMicrons) - a.get(Length::UnitMicrons);
 }
 
 double SkyStatus::getAverageDispersiveDryPathLength_GroundTemperatureDerivative(unsigned int spwid)
@@ -2781,12 +2781,12 @@ double SkyStatus::getAverageDispersiveDryPathLength_GroundTemperatureDerivative(
   double oldLapseRate = getTropoLapseRate();
   Length a = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   double newLapseRate =
-      ((getTropopauseTemperature() - ref - Temperature(1.0, "K")).get("K"))
-          / ((getTropopauseAltitude() - getAltitude()).get("km"));
-  setBasicAtmosphericParameters(ref + Temperature(1.0, "K"), newLapseRate);
+      ((getTropopauseTemperature() - ref - Temperature(1.0, Temperature::UnitKelvin)).get(Temperature::UnitKelvin))
+          / ((getTropopauseAltitude() - getAltitude()).get(Length::UnitKiloMeter));
+  setBasicAtmosphericParameters(ref + Temperature(1.0, Temperature::UnitKelvin), newLapseRate);
   Length b = RefractiveIndexProfile::getAverageDispersiveDryPathLength(spwid);
   setBasicAtmosphericParameters(ref, oldLapseRate);
-  return b.get("microns") - a.get("microns");
+  return b.get(Length::UnitMicrons) - a.get(Length::UnitMicrons);
 }
 
 Temperature SkyStatus::getWVRAverageSigmaTskyFit(const vector<WVRMeasurement> &RadiometerData,
@@ -2797,12 +2797,12 @@ Temperature SkyStatus::getWVRAverageSigmaTskyFit(const vector<WVRMeasurement> &R
   double tr;
   Temperature sigmaT;
   if(m < n) {
-    return Temperature(-999, "K");
+    return Temperature(-999, Temperature::UnitKelvin);
   }
   for(unsigned int i = n; i < m; i++) {
-    tr = RadiometerData[i].getSigmaFit().get("K");
+    tr = RadiometerData[i].getSigmaFit().get(Temperature::UnitKelvin);
     if(tr < 0) {
-      return Temperature(-999, "K");
+      return Temperature(-999, Temperature::UnitKelvin);
     }
     sigma = sigma + tr * tr;
   }
@@ -2810,7 +2810,7 @@ Temperature SkyStatus::getWVRAverageSigmaTskyFit(const vector<WVRMeasurement> &R
     sigmaT = RadiometerData[n].getSigmaFit();
   } else {
     sigma = sqrt(sigma / (m - n));
-    sigmaT = Temperature(sigma, "K");
+    sigmaT = Temperature(sigma, Temperature::UnitKelvin);
   }
   return sigmaT;
 }
@@ -2823,15 +2823,15 @@ Temperature SkyStatus::getWVRSigmaChannelTskyFit(const vector<WVRMeasurement> &R
   double dtr;
   Temperature sigmaT;
   if(m <= n) {
-    return Temperature(-999, "K");
+    return Temperature(-999, Temperature::UnitKelvin);
   }
   for(unsigned int i = n; i < m; i++) {
-    dtr = RadiometerData[i].getmeasuredSkyBrightness()[ichan].get("K")
-      -RadiometerData[i].getfittedSkyBrightness()[ichan].get("K");
+    dtr = RadiometerData[i].getmeasuredSkyBrightness()[ichan].get(Temperature::UnitKelvin)
+      -RadiometerData[i].getfittedSkyBrightness()[ichan].get(Temperature::UnitKelvin);
     sigma = sigma + dtr * dtr;
   }
   sigma = sqrt(sigma / (m - n));
-  sigmaT = Temperature(sigma, "K");
+  sigmaT = Temperature(sigma, Temperature::UnitKelvin);
   return sigmaT;
 }
 
@@ -2842,14 +2842,14 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
                                                         const Temperature &spilloverTemperature,
                                                         const Angle &elevation)
 {
-  double tspill = spilloverTemperature.get("K");
+  double tspill = spilloverTemperature.get(Temperature::UnitKelvin);
   double pfit_wh2o;
   double deltaa = 0.02;
   double sig_fit = -999.0;
   double eps = 0.01;
   vector<double> tebb_fit;
   tebb_fit.reserve(measuredSkyBrightnessVector.size());
-  double airm = 1.0 / sin((3.1415926 * elevation.get("deg")) / 180.0);
+  double airm = 1.0 / sin((3.1415926 * elevation.get(Angle::UnitDegree)) / 180.0);
   unsigned int num;
   double flamda;
   unsigned int niter = 20;
@@ -2864,8 +2864,8 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
   double chisqr;
   double pfit_wh2o_b;
   double res;
-  Length wh2o_retrieved(-999.0, "mm");
-  Length werr(-888, "mm");
+  Length wh2o_retrieved(-999.0, Length::UnitMilliMeter);
+  Length werr(-888, Length::UnitMilliMeter);
   Temperature sigma_fit_temp0;
   Temperature t_astro;
   Length sigma_wh2o;
@@ -2874,7 +2874,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
 
   flamda = 0.001;
 
-  pfit_wh2o = (getUserWH2O().get("mm")) / (getGroundWH2O().get("mm"));
+  pfit_wh2o = (getUserWH2O().get(Length::UnitMilliMeter)) / (getGroundWH2O().get(Length::UnitMilliMeter));
 
   //    cout << "pfit_wh2o=" << pfit_wh2o << endl;
 
@@ -2907,7 +2907,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
               signalGain[i]);
       deriv = (f2 - f1) / deltaa;
       pfit_wh2o = psave;
-      beta = beta + (measuredSkyBrightnessVector[i].get("K") - tebb_fit[i])
+      beta = beta + (measuredSkyBrightnessVector[i].get(Temperature::UnitKelvin) - tebb_fit[i])
           * deriv;
 
       alpha = alpha + deriv * deriv;
@@ -2916,7 +2916,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
 
     chisq1 = 0;
     for(unsigned int i = 0; i < measuredSkyBrightnessVector.size(); i++) {
-      res = -tebb_fit[i] + measuredSkyBrightnessVector[i].get("K");
+      res = -tebb_fit[i] + measuredSkyBrightnessVector[i].get(Temperature::UnitKelvin);
       chisq1 = chisq1 + res * res;
     }
     if(measuredSkyBrightnessVector.size() > 1) {
@@ -2941,7 +2941,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
 
     chisqr = 0;
     for(unsigned int i = 0; i < IdChannels.size(); i++) {
-      res = -tebb_fit[i] + measuredSkyBrightnessVector[i].get("K");
+      res = -tebb_fit[i] + measuredSkyBrightnessVector[i].get(Temperature::UnitKelvin);
       chisqr = chisqr + res * res;
     }
     if(IdChannels.size() > 1) {
@@ -2959,13 +2959,13 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
     sig_fit = sqrt(chisqr);
     pfit_wh2o = pfit_wh2o_b;
     sigma_wh2o = Length(sqrt(array / alpha) * sig_fit * pfit_wh2o
-        * (getGroundWH2O().get("mm")), "mm");
+        * (getGroundWH2O().get(Length::UnitMilliMeter)), Length::UnitMilliMeter);
 
     if(fabs(sqrt(chisq1) - sqrt(chisqr)) < eps) {
 
-      sigma_fit_temp0 = Temperature(sig_fit, "K");
+      sigma_fit_temp0 = Temperature(sig_fit, Temperature::UnitKelvin);
 
-      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get("mm"), "mm");
+      wh2o_retrieved = Length(pfit_wh2o * getGroundWH2O().get(Length::UnitMilliMeter), Length::UnitMilliMeter);
 
       goto salir;
 
@@ -2974,7 +2974,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
   }
 
   wh2o_retrieved = werr; // Extra error code, fit not reached after 20 iterations
-  sigma_fit_temp0 = Temperature(sig_fit, "K"); // Extra error code, fit not reached after 20 iterations
+  sigma_fit_temp0 = Temperature(sig_fit, Temperature::UnitKelvin); // Extra error code, fit not reached after 20 iterations
   sigma_wh2o = werr; // Extra error code, fit not reached after 20 iterations
 
   salir:
@@ -2982,7 +2982,7 @@ WVRMeasurement SkyStatus::mkWaterVaporRetrieval_fromWVR(const vector<Temperature
   vector<Temperature> ttt;
 
   for(unsigned int i = 0; i < IdChannels.size(); i++) {
-    ttt.push_back(Temperature(tebb_fit[i], "K"));
+    ttt.push_back(Temperature(tebb_fit[i], Temperature::UnitKelvin));
   }
 
   if(wh2o_retrieved.get() > 0.0) {
@@ -3015,7 +3015,7 @@ void SkyStatus::WaterVaporRetrieval_fromWVR(WVRMeasurement &RadiometerData)
   WVRMeasurement RadiometerData_withRetrieval;
 
   //    cout << waterVaporRadiometer_.getIdChannels().size() << endl;
-  //    cout << RadiometerData.getmeasuredSkyBrightness()[0].get("K") << " K" << endl;
+  //    cout << RadiometerData.getmeasuredSkyBrightness()[0].get(Temperature::UnitKelvin) << " K" << endl;
   //    cout << waterVaporRadiometer_.getIdChannels()[1] << endl;
   //    cout << getAssocSpwIds(waterVaporRadiometer_.getIdChannels())[1] << endl;
 
@@ -3031,10 +3031,10 @@ void SkyStatus::WaterVaporRetrieval_fromWVR(WVRMeasurement &RadiometerData)
                                       RadiometerData.getElevation());
 
   // cout << "_fromWVR Sky Coupling = " <<  waterVaporRadiometer_.getSkyCoupling()[0] << endl;
-  // cout << "Signal Gain = " << waterVaporRadiometer_.getsignalGain()[0].get("%") << " %" <<  endl;
-  // cout << "Spillover Temp. = " << waterVaporRadiometer_.getSpilloverTemperature().get("K") << " K" << endl;
-  // cout << "Elevation = " << RadiometerData.getElevation().get("deg") << endl;
-  // cout << "PWV=" << RadiometerData_withRetrieval.getretrievedWaterVaporColumn().get("mm") << " mm" << endl;
+  // cout << "Signal Gain = " << waterVaporRadiometer_.getsignalGain()[0].get(Percent::UnitPercent) << " %" <<  endl;
+  // cout << "Spillover Temp. = " << waterVaporRadiometer_.getSpilloverTemperature().get(Temperature::UnitKelvin) << " K" << endl;
+  // cout << "Elevation = " << RadiometerData.getElevation().get(Angle::UnitDegree) << endl;
+  // cout << "PWV=" << RadiometerData_withRetrieval.getretrievedWaterVaporColumn().get(Length::UnitMilliMeter) << " mm" << endl;
 
   RadiometerData.setretrievedWaterVaporColumn(RadiometerData_withRetrieval.getretrievedWaterVaporColumn());
   RadiometerData.setfittedSkyBrightness(RadiometerData_withRetrieval.getfittedSkyBrightness());
@@ -3073,7 +3073,7 @@ void SkyStatus::updateSkyCoupling_fromWVR(vector<WVRMeasurement> &RadiometerData
 
   // Find the maximum of skycoupling on the WVR channels
   // This value is used to assure that the found skycoupling does not exceed 1
-  double maxCoupling =0.; 
+  double maxCoupling =0.;
   for (unsigned int i=0; i<waterVaporRadiometer_.getSkyCoupling().size(); i++)
     if (waterVaporRadiometer_.getSkyCoupling()[i]>maxCoupling)
       maxCoupling = waterVaporRadiometer_.getSkyCoupling()[i];
@@ -3116,7 +3116,7 @@ void SkyStatus::updateSkyCoupling_fromWVR(vector<WVRMeasurement> &RadiometerData
     }
     if (pfit_b*maxCoupling>1.5)
       pfit_b = 1;
-    
+
     res = sigmaSkyCouplingRetrieval_fromWVR(pfit_b,
                                             waterVaporRadiometer_,
                                             RadiometerData,
@@ -3220,7 +3220,7 @@ void SkyStatus::updateSkyCouplingChannel_fromWVR(vector<WVRMeasurement> &Radiome
     }
     if (pfit_b*maxCoupling>1)
       pfit_b = 1/maxCoupling;
-    
+
     res = sigmaSkyCouplingChannelRetrieval_fromWVR(pfit_b,
 						   waterVaporRadiometer_,
 						   RadiometerData,
@@ -3284,7 +3284,7 @@ double SkyStatus::sigmaSkyCouplingRetrieval_fromWVR(double par_fit,
 
   }
 
-  return getWVRAverageSigmaTskyFit(RadiometerData, n, m).get("K");
+  return getWVRAverageSigmaTskyFit(RadiometerData, n, m).get(Temperature::UnitKelvin);
 
 }
 
@@ -3320,8 +3320,8 @@ double SkyStatus::sigmaSkyCouplingChannelRetrieval_fromWVR(double par_fit,
 
   }
 
-  return getWVRAverageSigmaTskyFit(RadiometerData, n, m).get("K");
-  // return getWVRSigmaChannelTskyFit(RadiometerData, ichan, n, m).get("K");
+  return getWVRAverageSigmaTskyFit(RadiometerData, n, m).get(Temperature::UnitKelvin);
+  // return getWVRSigmaChannelTskyFit(RadiometerData, ichan, n, m).get(Temperature::UnitKelvin);
 
 }
 

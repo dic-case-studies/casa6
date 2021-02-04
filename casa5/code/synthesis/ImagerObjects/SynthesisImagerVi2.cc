@@ -1252,7 +1252,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   }
   
  void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
-				      const Bool savemodel) {
+				      const Record inpcontrol) {
 	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
 	if(dopsf){
 	  runCubeGridding(True);
@@ -1263,7 +1263,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  }
 	}
 	else
-		runCubeGridding(False, savemodel);
+		runCubeGridding(False, inpcontrol);
 	
 			  
 			  
@@ -1535,7 +1535,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 //////////////////////////////
  
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, Bool savemodel){
+
+  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, const Record inpcontrol){
+
+	LogIO logger(LogOrigin("SynthesisImagerVi2", "runCubeGridding", WHERE));
+
 	  //dummy for now as init is overloaded on this signature
         int argc=1;
         char **argv=nullptr;
@@ -1572,7 +1576,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		
 		/////END TESTOO
 		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
-		Record controlRecord;
+		Record controlRecord=inpcontrol;
 		//For now just field 0 but should loop over all
 		///This is to pass in explicit model, residual names etc
 		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
@@ -1580,8 +1584,9 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         // checking that psf,  residual and sumwt is allDone
         //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
 		if(!dopsf){
-			controlRecord.define("lastcycle",  savemodel);
-			controlRecord.define("nmajorcycles", nMajorCycles);
+		        
+		  //controlRecord.define("lastcycle",  savemodel);
+		  controlRecord.define("nmajorcycles", nMajorCycles);
 			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
 			for(uInt k=0; k < imparsVec_p.nelements(); ++k){
 				Int imageStoreId=k;
@@ -1717,12 +1722,17 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
                 retvals(indexofretval)=status;
 		if(dopsf)
 		  updateImageBeamSet(returnRec);
+		if(returnRec.isDefined("tempfilenames")){
+		  std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+		  tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+		}
+		  
                 ++indexofretval;
                 if ( status )
                   //cerr << k << " rank " << rank << " successful " << endl;
                   cerr << "" ;
                 else
-                    cerr << k << " rank " << rank << " failed " << endl;
+                    logger << k << " rank " << rank << " failed " << LogIO::SEVERE;
                 assigned = casa::applicator.nextAvailProcess ( cmc, rank );
 
             }
@@ -1757,13 +1767,17 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
             casa::applicator.get ( status );
 	    if(dopsf)
 	      updateImageBeamSet(returnRec);
+	    if(returnRec.isDefined("tempfilenames")){
+	      std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+	      tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+	    }
             retvals(indexofretval)=status;
             ++indexofretval;
             if ( status )
               //cerr << "remainder rank " << rank << " successful " << endl;
               cerr << "";
             else
-                cerr << "remainder rank " << rank << " failed " << endl;
+                logger << "remainder rank " << rank << " failed " << LogIO::SEVERE;
 
             rank = casa::applicator.nextProcessDone ( cmc, allDone );
 			if(casa::applicator.isSerial())
@@ -1771,7 +1785,10 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         }
         if(anyEQ(retvals, False)){
           //cerr << retvals << endl;
-          throw(AipsError("One or more  of the cube section failed in de/gridding"));  
+          ostringstream oss;
+          oss << "One or more  of the cube section failed in de/gridding. Return values for "
+              "the sections: " << retvals;
+          throw(AipsError(oss));
         }
         if(!dopsf){
           try{
@@ -3266,7 +3283,7 @@ void SynthesisImagerVi2::unlockMSs()
     ///////if tracking a moving source
     MDirection origMovingDir;
     MDirection newPhaseCenter;
-    Bool trackBeam=getMovingDirection(*vb, origMovingDir);
+    Bool trackBeam=getMovingDirection(*vb, origMovingDir, True);
     //////
     for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
       {
@@ -3299,10 +3316,15 @@ void SynthesisImagerVi2::unlockMSs()
     return True;
   }// end makePB
 
-  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir){
+  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir, const Bool useImageEpoch){
     MDirection movingDir;
     Bool trackBeam=False;
+      
     MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+    if(useImageEpoch){
+      mFrame.resetEpoch((itsMappers.imageStore(0))->getCSys().obsInfo().obsDate());
+
+    }
     if(movingSource_p != ""){
       MDirection::Types refType;
       trackBeam=True;
@@ -3323,7 +3345,7 @@ void SynthesisImagerVi2::unlockMSs()
       }
       else if(upcase(movingSource_p)=="TRACKFIELD"){
         VisBufferUtil vbU(vb);
-	movingDir=vbU.getEphemDir(vb, -1.0);
+	movingDir=vbU.getEphemDir(vb, MEpoch(mFrame.epoch()).get("s").getValue());
       }
       else{
 	throw(AipsError("Erroneous tracking direction set to make pb"));
@@ -3338,6 +3360,7 @@ void SynthesisImagerVi2::unlockMSs()
       trackBeam=False;
     }
       return trackBeam;
+
 
   }
   CountedPtr<vi::VisibilityIterator2> SynthesisImagerVi2::getVi(){

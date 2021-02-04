@@ -36,7 +36,7 @@ except ImportError:
 
 import sys
 import os
-import testhelper as th
+from casatestutils import testhelper as th
 import unittest
 import shutil
 import numpy as np
