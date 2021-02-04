@@ -7,27 +7,35 @@ import numpy as np
 import numpy.ma as ma
 import unittest
 
-from casatestutils import testhelper as th
-
 from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
 
 if is_CASA6:
     from casatools import ctsys, table
-    from casatasks import gencal
+    from casatasks import gencal, rmtables
     from casatasks.private import tec_maps    
 
     _tb= table()
 
     datapath=ctsys.resolve('/unittest/gencal/')
 else:
-    from tasks import gencal
+    from __main__ import default
+    from tasks import gencal, rmtables
     from taskinit import *
     from recipes import tec_maps
     
     _tb=tbtool()
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
+
+# input data
+evndata = 'n08c1.ms'
+vlbadata = 'ba123a.ms'
+vlbacal = os.path.join(datapath,'ba123a.gc')
+
+caltab = 'cal.A'
+evncopy = 'evn_copy.ms'
+vlbacopy = 'vlba_copy.ms'
 
 '''
 Unit tests for gencal 
@@ -426,14 +434,49 @@ class gencal_test_tec_vla(unittest.TestCase):
             # should catch case of internet access failure?
             raise
 
+class gencal_test(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
 
+    def setUp(self):
+        if not is_CASA6:
+            default(gencal)
+
+    def tearDown(self):
+        rmtables(caltab)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(evncopy)
+        shutil.rmtree(vlbacopy)
+
+    def test_gainCurve(self):
+        ''' Test calibration table produced when gencal is run on an MS with a GAIN_CURVE table '''
+
+        gencal(vis=vlbacopy, caltable=caltab, caltype='gc')
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, vlbacal, ['WEIGHT']))
+
+    def test_noGainCurve(self):
+        ''' Test that when gencal is run on an MS with no GAIN_CURVE table it creates no calibration table '''
+
+        try:
+            gencal(vis=evncopy, caltable=caltab, caltype='gc')
+        except:
+            pass
+
+        self.assertFalse(os.path.exists(caltab))
 
 
 def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma,
-            gencal_test_tec_vla]
+            gencal_test_tec_vla,
+            gencal_test]
 
 if is_CASA6:
     if __name__ == '__main__':

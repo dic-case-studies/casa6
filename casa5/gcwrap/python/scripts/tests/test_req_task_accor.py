@@ -36,7 +36,6 @@ import sys
 import os
 import unittest
 import shutil
-import filecmp
 import numpy
 
 ### DATA ###
@@ -46,18 +45,20 @@ if CASA6:
     libpath = casatools.ctsys.resolve('unittest/accor/testcallib.txt')
     vladata = casatools.ctsys.resolve('unittest/accor/ngc5921.ms/')
     VLBAdatapath = casatools.ctsys.resolve('unittest/accor/ba123a.ms')
-
+    cdfdata = casatools.ctsys.resolve('unittest/accor/n08c1.ms/')
 else:
     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/uid___X02_X3d737_X1_01_small.ms/'
     libpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/testcallib.txt'
     vladata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ngc5921.ms/'
     VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ba123a.ms/'
+    cdfdata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/n08c1.ms/'
 
 caltab = 'cal.A'
 cal_default = 'cal.default'
 datacopy = 'uid_copy.ms'
 vlacopy = 'vla_copy.ms'
 VLBAcopy = 'VLBA_copy.ms'
+cdfcopy = 'cdf_copy.ms'
 
 
 def cal_size(cal):
@@ -95,6 +96,8 @@ class accor_test(unittest.TestCase):
         rmtables(caltab)
         if os.path.exists('cal.B'):
             rmtables('cal.B')
+        if os.path.exists(cdfcopy):
+            shutil.rmtree(cdfcopy)
     
     @classmethod
     def tearDownClass(cls):
@@ -276,9 +279,7 @@ class accor_test(unittest.TestCase):
         accor(vlacopy, caltable='cal.A', gaintable=['cal.B'])
         accor(vlacopy, caltable='cal.C', gaintable=['cal.B'],  interp='nearest')
         
-        print(len(filecmp.dircmp('cal.A', 'cal.C').diff_files),(filecmp.dircmp('cal.A', 'cal.C').diff_files))
-        
-        self.assertTrue(len(filecmp.dircmp('cal.A', 'cal.C').diff_files) > 1)
+        self.assertFalse(numpy.isclose(getmean('cal.A')-getmean('cal.C'), 0))
         
         rmtables('cal.C')
         
@@ -292,6 +293,22 @@ class accor_test(unittest.TestCase):
         
         #self.assertTrue(numpy.isclose(datamean, 1.282986655279442+0j), msg=datamean)
         self.assertTrue(numpy.isclose(datamean, (1.0004748463630677+0j)), msg=datamean)
+
+    # CAS-13184
+    #@unittest.skipIf(sys.platform == "darwin", "Disabled for OSX")
+    @unittest.skip("Re-enable this in CAS-13184")
+    def test_corrdepflags(self):
+        ''' Test that adding corrdepflags=True finds more solutions '''
+
+        shutil.copytree(cdfdata, cdfcopy)
+
+        # Cross autocorrelations are flagged; no solutions should be found
+        accor(vis=cdfcopy, caltable=caltab)
+        self.assertFalse(os.path.exists(caltab))
+
+        # Cross autocorrelations are flagged; solutions should be found
+        accor(vis=cdfcopy, caltable=caltab, corrdepflags=True)
+        self.assertTrue(os.path.exists(caltab))
         
         
                 

@@ -258,6 +258,28 @@ returns true if initalization was performed; returns false if initialization was
 <returns type="bool"/>
 </method>
 
+<!-- ******************** functions to manage the CASAtools measures data ******************** -->
+<method type="function" name="rundata">
+  <description>path to the measures data</description>
+  <shortdescription>path to the measures data</shortdescription>
+  <returns type="string"/>
+</method>
+
+<method type="function" name="setrundata">
+<description>
+Set path to the measures data. Must be called during initalization
+before Measures module is initialized.
+</description>
+  <shortdescription>set path to the measures data</shortdescription>
+  <input>
+    <param type="string" name="path">
+      <description>path to IERS data</description>
+      <value/>
+    </param>
+  </input>
+  <returns/>
+</method>
+
 <!-- ******************** functions to manage the CASAtools path ******************** -->
 <method type="function" name="defaultpath">
 <shortdescription>returns the default data path</shortdescription>

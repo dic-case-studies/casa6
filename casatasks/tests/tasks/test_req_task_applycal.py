@@ -50,7 +50,6 @@ if CASA6:
 else:
     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/applycal/'
 
-
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
 
@@ -142,6 +141,8 @@ mmsdata = 'ngc5921.applycal.mms'
 mmsbcal = 'ngc5921.bcal'
 mmsgcal = 'ngc5921.gcal'
 mmsflux = 'ngc5921.fluxscale'
+vlbadata = 'ba123a.ms'
+vlbaGCCal = 'ba123a.gc'
 
 
 # Locally copied data files
@@ -155,10 +156,13 @@ mmsbcalcopy = 'mmsbcalcopy.cal'
 mmsgcalcopy = 'mmsgcalcopy.cal'
 mmsfluxcopy = 'mmsfluxcopy.cal'
 
+vlbacopy = 'vlbacopy.ms'
+
 class applycal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
         pass
 
     def setUp(self):
@@ -183,8 +187,10 @@ class applycal_test(unittest.TestCase):
             os.system('ln -s '+ datapath + altCal + ' .')
         if not os.path.exists(callibfile):
             os.system('ln -s '+ datapath + callibfile + ' .')
+        if not os.path.exists(vlbaGCCal):
+            os.system('ln -s '+ datapath + vlbaGCCal + ' .')
 
-    def tearDown(self):
+    def tearDown(self):            
         shutil.rmtree(datacopy)
         if os.path.exists('applycalcopy.ms.flagversions'):
             shutil.rmtree('applycalcopy.ms.flagversions')
@@ -221,13 +227,18 @@ class applycal_test(unittest.TestCase):
                 
         if os.path.exists('mmsapplycalcopy.mms.flagversions'):
             shutil.rmtree('mmsapplycalcopy.mms.flagversions')
-
+        
         
     @classmethod
     def tearDownClass(cls):
+        shutil.rmtree(vlbacopy)
         shutil.rmtree('cl_fldmap_test.ms', ignore_errors=True)
         shutil.rmtree('cl_fldmap_test.Gf0', ignore_errors=True)
         shutil.rmtree('cl_fldmap_test.Gf01', ignore_errors=True)
+        caldata = [tCal,gCal,altCal,callibfile,vlbaGCCal]
+        for ff in caldata:
+            if os.path.exists(ff):
+                os.unlink(ff)
         outlist = ['callib_f0.txt','callib_f01_m0.txt','callib_f01_s0.txt','callib_f01.txt','callib_f01_s01.txt','callib_f01_m01.txt']
         for f in outlist:
             if os.path.exists(f):
@@ -722,6 +733,15 @@ class applycal_test(unittest.TestCase):
         print(files)
         for ff in files:
             self.assertFalse(ff.__contains__('flagversions'))
+
+
+    def test_gaincurve(self):
+        applycal(vis=vlbacopy, gaintable=[vlbaGCCal], applymode='calonly')
+        datamean = np.mean(getparam(vlbacopy, 'DATA'))
+        correctedmean = np.mean(getparam(vlbacopy, 'CORRECTED_DATA'))
+
+        self.assertTrue(correctedmean != datamean)
+        self.assertTrue(np.isclose(correctedmean, 2.68767602411+4.91467419904e-06j))
 
 
 def suite():
