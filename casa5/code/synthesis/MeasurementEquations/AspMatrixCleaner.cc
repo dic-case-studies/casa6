@@ -127,7 +127,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0),
   itsPeakResidual(1000.0), // temp. should this be changed to MAX?
-  itsOrigDirty( )
+  itsOrigDirty( ),
+  itsFusedThreshold(0.0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -444,7 +445,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // GSL with der, Points ,with new norm this is not needed.
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.138) //GSL M100 channel 22
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23 & others
-      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
+      //if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
+      cout << "itsFusedThreshold " << itsFusedThreshold << endl;
+      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
       {
   	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
   	    //itsStrenThres = itsStrenThres/3.0; //box3

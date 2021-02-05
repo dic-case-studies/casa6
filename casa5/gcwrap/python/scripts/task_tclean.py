@@ -97,6 +97,7 @@ def tclean(
     scales,#=[],
     nterms,#=1,
     smallscalebias,#=0.0
+    fusedthreshold,
 
     ### restoration options
     restoration,

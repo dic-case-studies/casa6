@@ -61,12 +61,13 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-  SDAlgorithmAAspClean::SDAlgorithmAAspClean( Int stoppointmode ):
+  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, Int stoppointmode):
     SDAlgorithmBase(),
     itsMatPsf(), itsMatResidual(), itsMatModel(),
     itsCleaner(),
     itsStopPointMode(stoppointmode),
-    itsMCsetup(false)
+    itsMCsetup(false),
+    itsFusedThreshold(fusedThreshold)
   {
     itsAlgorithmName = String("asp");
   }
@@ -108,6 +109,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsCleaner.setOrigDirty( tempMat1 );
       //itsCleaner.setMaxPsfConvInitScales();
       //itsCleaner.testBFGS(tempMat);
+
+      if (itsFusedThreshold < 0)
+      {
+        os << LogIO::WARN << "Acceptable fusedthreshld values are >= 0. Changing fusedthreshold from " << itsFusedThreshold << " to 0." << LogIO::POST; 
+        itsFusedThreshold = 0.0;
+      } 
+      
+      itsCleaner.setFusedThreshold(itsFusedThreshold);
     }
 
     // Parts to be repeated at each minor cycle start....
@@ -158,7 +167,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setaspcontrol(cycleNiter, /*0.9*/0.8/*0.7*//*0.6*//*0.5*//*loopgain*/, thresh, Quantity(0.0, "%"));
+    itsCleaner.setaspcontrol(cycleNiter, /*0.9*//*0.8*//*0.7*//*0.6*//*0.5*/loopgain, thresh, Quantity(0.0, "%"));
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model

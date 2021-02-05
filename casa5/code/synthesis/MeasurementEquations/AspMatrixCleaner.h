@@ -99,6 +99,7 @@ public:
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
   void setMaxPsfConvInitScales();
   void testBFGS(const casacore::Matrix<casacore::Float>& psf);
+  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; } 
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
@@ -120,7 +121,7 @@ private:
   using MatrixCleaner::itsThreshold;
   using MatrixCleaner::itsMask;
   using MatrixCleaner::itsPositionPeakPsf;
-  using MatrixCleaner::itsSmallScaleBias;
+  //using MatrixCleaner::itsSmallScaleBias;
   //using MatrixCleaner::itsScaleMasks;
   //using MatrixCleaner::itsScaleXfrs;
   using MatrixCleaner::itsScalesValid;
@@ -190,6 +191,7 @@ private:
 
   const casacore::Int itsDefaultNorm = 1;
   casacore::Int itsNormMethod;
+  casacore::Float itsFusedThreshold;
 };
 
 } //# NAMESPACE CASA - END

@@ -3582,6 +3582,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 err+= "autoadjust must be a bool\n";
               }
           }
+        //param for the Asp-Clean to trigger Hogbom Clean
+        if (inrec.isDefined("fusedthreshold"))
+        {
+          if (inrec.dataType("fusedthreshold") == TpFloat || inrec.dataType("fusedthreshold") == TpDouble)
+            err += readVal(inrec, String("fusedthreshold"), fusedThreshold);
+          else 
+            err += "fusedthreshold must be a float or double";
+        }
         //params for the new automasking algorithm
         if( inrec.isDefined("sidelobethreshold"))
           {
@@ -3594,6 +3602,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 err+= "sidelobethreshold must be a float or double";
               }
           }
+
         if( inrec.isDefined("noisethreshold"))
           {
             if(inrec.dataType("noisethreshold")==TpFloat || inrec.dataType("noisethreshold")==TpDouble )
@@ -3850,6 +3859,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     nMask=0;
     interactive=false;
     autoAdjust=False;
+    fusedThreshold = 0.0;
   }
 
   Record SynthesisParamsDeconv::toRecord() const
@@ -3864,6 +3874,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("scales",scales);
     decpar.define("scalebias",scalebias);
     decpar.define("usemask",maskType);
+    decpar.define("fusedthreshold", fusedThreshold);
     if( maskList.nelements()==1 && maskList[0]=="") 
       {
         decpar.define("mask",maskString);

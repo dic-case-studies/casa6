@@ -52,7 +52,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   public:
 
     // Empty constructor
-    SDAlgorithmAAspClean(casacore::Int stoppointmode=-1);
+    SDAlgorithmAAspClean(casacore::Float fusedThreshold = 0.0, casacore::Int stoppointmode = -1);
     virtual  ~SDAlgorithmAAspClean();
 
   protected:
@@ -81,6 +81,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     AspMatrixCleaner itsCleaner;
     std::vector<casacore::Float> itsScaleSizes;
     casacore::Int itsStopPointMode;
+    casacore::Float itsFusedThreshold;
 
     /*
     casacore::IPosition itsMaxPos;

@@ -136,7 +136,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else if (decpars.algorithm==String("asp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmAAspClean());
+	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.fusedThreshold));
 	  }
 	else
 	  {
@@ -203,7 +203,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         itsMinPercentChange = decpars.minPercentChange;
         itsVerbose = decpars.verbose;
         itsFastNoise = decpars.fastnoise;
-	itsIsInteractive = decpars.interactive;
+	      itsIsInteractive = decpars.interactive;
         itsNsigma = decpars.nsigma;
       }
     catch(AipsError &x)
