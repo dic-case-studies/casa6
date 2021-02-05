@@ -2256,8 +2256,7 @@ return rstatus;
 
 ::casac::record* 
 table::statistics(const std::string& column, 
-                  const std::string& complex_value, 
-                  const bool /*useflags*/)
+                  const std::string& complex_value) 
 {
     *itsLog << LogOrigin(__func__, column);
     ::casac::record *retval(NULL);

@@ -72,13 +72,8 @@ except ImportError:
     from taskinit import *
 
 # If the test is being run in CASA6 use the new method to get the CASA path
-if CASA6:
-    ### for listing import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import listing as lt
 
-else:
-    import listing as lt
+from casatestutils import listing as lt
 
     # Generate the test data
 

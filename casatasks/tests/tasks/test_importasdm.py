@@ -37,12 +37,12 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, ms, table, measures, calibrater, agentflagger
-    from casatasks import importasdm, flagdata, flagcmd, exportasdm
+    from casatasks import importasdm, flagdata, flagcmd, exportasdm, casalog
     from casatasks.private import flaghelper as fh
     from casatasks.private import convertephem as ce
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
 
     # make local copies of the tools
     tblocal = table( )
@@ -57,7 +57,7 @@ else:
     from __main__ import default
     from tasks import importasdm, flagdata, exportasdm, flagcmd
     from taskinit import mstool, tbtool, cbtool, aftool, casalog
-    import testhelper as th
+    #import testhelper as th
     import flaghelper as fh
     import recipes.ephemerides.convertephem as ce
 
@@ -74,6 +74,7 @@ else:
         dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
         return os.path.join(dataPath,apath)
 
+from casatestutils import testhelper as th
 myname = 'test_importasdm'
 
 # default ASDM dataset name
@@ -3097,14 +3098,15 @@ class asdm_import7(test_base):
 
 class asdm_import8(test_base):
     # these are more like unit tests, difficult to test without invoking all of importasdm
-    # currently this is just tests on SDM_NUM_BIN
+    # currently included tests on SDM_NUM_BIN, test on verbose argument
     
     def setUp(self):
         self.setUp_numbin()
+        self.setUp_SD()
 
     def tearDown(self):
         pass
-        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
+        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4','uid___A002_X6218fb_X264']:
             os.system('rm -rf '+this_asdm_name+"*")
 
     def doNumTest(self, testName, asdm_name, ms_name, spWin_name, execBlock_name, expWinFunCol, expNumBinCol, expResCol):
@@ -3346,6 +3348,22 @@ class asdm_import8(test_base):
         retValue['error_msgs'] = res['error_msgs']
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
+
+    def test_verbose(self):
+        # check that the number of lines added to the log file by importasdm is more with verbose True than False
+        # any ASDM is fine
+
+        myasdmname = 'uid___A002_X6218fb_X264'
+        themsname = myasdmname+".ms"
+
+        # count log file lines at start
+        logLinesStart = countlines(casalog.logfile())
+        importasdm(myasdmname, vis=themsname, ocorr_mode="ao", bdfflags=True, applyflags=True, lazy=True, overwrite=True,verbose=False)
+        logLinesMiddle = countlines(casalog.logfile())
+        importasdm(myasdmname, vis=themsname, ocorr_mode="ao", bdfflags=True, applyflags=True, lazy=True, overwrite=True,verbose=True)
+        logLinesEnd = countlines(casalog.logfile())
+
+        self.assertTrue(((logLinesEnd-logLinesMiddle) > (logLinesMiddle-logLinesStart)), 'verbose test failed, did not produce more lines')
 
 def suite():
     return [asdm_import1, 

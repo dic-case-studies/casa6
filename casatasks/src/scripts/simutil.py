@@ -15,7 +15,7 @@ from collections import OrderedDict
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator, synthesisutils
+    from casatools import table, image, imagepol, regionmanager, calibrater, measures, quanta, coordsys, componentlist, simulator, synthesisutils, ctsys
     from casatasks import casalog, tclean
     from casatasks.private.cleanhelper import cleanhelper
     tb = table( )
@@ -1159,7 +1159,7 @@ class simutil:
             xx=glob.glob(tmpname+"*")
             for k in range(len(xx)):
                 if os.path.isdir(xx[k]):
-                    cu.removetable(xx[k])
+                    ctsys.removetable(xx[k])
                 else:
                     os.remove(xx[k])
  
@@ -1346,7 +1346,7 @@ class simutil:
             z=pl.where(flag[0][0]==False)[0]
             nunflagged=len(z)
 #            noiseperbase=1./(gain[0][0][0.5*nint*nant].real)**2
-            noiseperbase=1./(gain[0][0][z[nunflagged/2]].real)**2
+            noiseperbase=1./(gain[0][0][z[nunflagged//2]].real)**2
         else:
             noiseperbase=0.
 
@@ -1356,7 +1356,7 @@ class simutil:
             xx=glob.glob(tmpname+"*")
             for k in range(len(xx)):
                 if os.path.isdir(xx[k]):
-                    cu.removetable(xx[k])
+                    ctsys.removetable(xx[k])
                 else:
                     os.remove(xx[k])
 

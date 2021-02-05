@@ -32,6 +32,14 @@
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/Slice.h>
 #include <casa/Containers/Record.h>
+#include <tables/Tables/ScaColDesc.h>
+#include <tables/Tables/ArrColDesc.h>
+#include <tables/Tables/ScalarColumn.h>
+#include <tables/Tables/ArrayColumn.h>
+#include <tables/DataMan/StManAipsIO.h>
+#include <tables/DataMan/IncrementalStMan.h>
+#include <tables/DataMan/TiledShapeStMan.h>
+#include <tables/DataMan/StandardStMan.h>
 #include<msvis/MSVis/VisImagingWeight.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
@@ -49,13 +57,15 @@ using namespace casa::refim;
 using namespace casacore;
 using namespace casa::vi;
 
-  BriggsCubeWeightor::BriggsCubeWeightor(): grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), rmode_p(""), noise_p(0.0), robust_p(2), superUniformBox_p(0), multiField_p(False),initialized_p(False), refFreq_p(-1.0), freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour), fracBW_p(0.0)  {
+
+BriggsCubeWeightor::BriggsCubeWeightor(): grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), rmode_p(""), noise_p(0.0), robust_p(2), superUniformBox_p(0), multiField_p(False),initialized_p(False), refFreq_p(-1.0), freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour), fracBW_p(0.0), wgtTab_p(nullptr), imWgtColName_p("") {
+      
     multiFieldMap_p.clear();
-    
     
   }
   
-  BriggsCubeWeightor::BriggsCubeWeightor( const String& rmode, const Quantity& noise, const Double robust,  const Double& fracBW, const Int superUniformBox, const Bool multiField)  : grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), initialized_p(False), refFreq_p(-1.0),freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour) {
+
+BriggsCubeWeightor::BriggsCubeWeightor( const String& rmode, const Quantity& noise, const Double robust,  const Double& fracBW, const Int superUniformBox, const Bool multiField)  : grids_p(0), ft_p(0), f2_p(0), d2_p(0), uscale_p(0), vscale_p(0), uorigin_p(0),vorigin_p(0), nx_p(0), ny_p(0), initialized_p(False), refFreq_p(-1.0),freqInterpMethod_p(InterpolateArray1D<Double, Complex>::nearestNeighbour), wgtTab_p(nullptr), imWgtColName_p("") {
 
     rmode_p=rmode;
     noise_p=noise;
@@ -68,10 +78,10 @@ using namespace casa::vi;
 
 
   BriggsCubeWeightor::BriggsCubeWeightor(vi::VisibilityIterator2& vi,
-                       const String& rmode, const Quantity& noise,
-                       const Double robust,
+				       const String& rmode, const Quantity& noise,
+				       const Double robust,
                                          const ImageInterface<Complex>& templateimage, const RecordInterface& inrec, const Double& fracBW,
-                     const Int superUniformBox, const Bool multiField){
+					 const Int superUniformBox, const Bool multiField): wgtTab_p(nullptr){
     rmode_p=rmode;
     noise_p=noise;
     robust_p=robust;
@@ -87,7 +97,220 @@ using namespace casa::vi;
 
 
   }
-                       
+
+
+String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
+			       const ImageInterface<Complex>& templateimage, const RecordInterface& inRec){
+    CoordinateSystem cs=templateimage.coordinates();
+	if(initialized_p && nx_p==templateimage.shape()(0) && ny_p==templateimage.shape()(1)){
+		
+		Double freq=cs.toWorld(IPosition(4,0,0,0,0))[3];
+		if(freq==refFreq_p)
+		return imWgtColName_p;
+	}
+	  
+	visWgt_p=vi.getImagingWeightGenerator();
+    VisImagingWeight vWghtNat("natural");
+	vi.useImagingWeight(vWghtNat);
+	vi::VisBuffer2 *vb=vi.getVisBuffer();
+	std::vector<pair<Int, Int> > fieldsToUse;
+	rownr_t nrows=0;
+	vi.originChunks();
+	vi.origin();
+	Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
+	Double freqend=cs.toWorld(IPosition(4,0,0,0,templateimage.shape()[3]-1))[3];
+	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
+	  for (vi.origin(); vi.more(); vi.next()) {
+	    nrows+=vb->nRows();
+	if(multiField_p){
+		
+				pair<Int, Int> ms_field=make_pair(vb->msId(), vb->fieldId()[0]);
+				if (std::find(fieldsToUse.begin(), fieldsToUse.end(), ms_field) == fieldsToUse.end()) {
+					fieldsToUse.push_back(ms_field);
+				}
+				
+			}
+		}
+	}
+	wgtTab_p=nullptr;
+	ostringstream oss;
+	oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
+
+	//cerr << "STRING " << oss.str() << endl;;
+	imWgtColName_p=makeScratchImagingWeightTable(wgtTab_p, oss.str());
+	if(wgtTab_p->nrow()==nrows){
+	  //cerr << "REUSING " << endl;
+	  return imWgtColName_p;
+	}
+	else{
+	  wgtTab_p->removeRow(wgtTab_p->rowNumbers());
+
+	}
+	//cerr << "CREATING " << endl;
+	vbrowms2wgtrow_p.clear();
+	if(fieldsToUse.size()==0)
+		fieldsToUse.push_back(make_pair(Int(-1),Int(-1)));
+	//cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
+	for (uInt k=0; k < fieldsToUse.size(); ++k){
+		vi.originChunks();
+		vi.origin();
+		IPosition shp=templateimage.shape();
+		nx_p=shp[0];
+		ny_p=shp[1];
+		CoordinateSystem cs=templateimage.coordinates();
+		refFreq_p=cs.toWorld(IPosition(4,0,0,0,0))[3];
+		Vector<String> units = cs.worldAxisUnits();
+		units[0]="rad"; units[1]="rad";
+		cs.setWorldAxisUnits(units);
+		Vector<Double> incr=cs.increment();
+		uscale_p=(nx_p*incr[0]);
+		vscale_p=(ny_p*incr[1]);
+		uorigin_p=nx_p/2;
+		vorigin_p=ny_p/2;
+		////TESTOO
+		//IPosition shp=templateimage.shape();
+		shp[3]=shp[3]+4; //add two channel at begining and end;
+		Vector<Double> refpix=cs.referencePixel();
+		refpix[3]+=2;
+		cs.setReferencePixel(refpix);
+		TempImage<Complex> newTemplate(shp, cs);
+		Matrix<Double>  sumWgts;
+		  
+		initializeFTMachine(0, newTemplate, inRec);
+		Matrix<Float> dummy;
+    
+		ft_p[0]->initializeToSky(newTemplate, dummy, *vb);
+		Vector<Double> convFunc(2+superUniformBox_p, 1.0);
+		//cerr << "superuniform box " << superUniformBox_p << endl;
+		ft_p[0]->modifyConvFunc(convFunc, superUniformBox_p, 1);
+		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
+			for (vi.origin(); vi.more(); vi.next()) {
+	
+	//cerr << "key and index "<< key << "   " << index << "   " << multiFieldMap_p[key] << endl; 
+				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
+					ft_p[0]->put(*vb, -1, true, FTMachine::PSF);
+				}
+			
+			}
+		}
+		Array<Float> griddedWeight;
+		ft_p[0]->getGrid(griddedWeight);
+    //cerr << index << " griddedWeight Shape " << griddedWeight.shape() << endl;
+		//grids_p[index]->put(griddedWeight.reform(newTemplate.shape()));
+		sumWgts=ft_p[0]->getSumWeights();
+		//cerr << "sumweight " << sumWgts[index] << endl;
+		//clear the ftmachine
+		ft_p[0]->finalizeToSky();
+  
+		////Lets reset vi before returning 
+		vi.originChunks();
+		vi.origin();
+  
+		Int nchan=newTemplate.shape()(3);
+		//cerr << "rmode " << rmode_p << endl;
+    
+		for (uInt chan=0; chan < uInt(nchan); ++ chan){
+			IPosition start(4,0,0,0,chan);
+			IPosition end(4,nx_p-1,ny_p-1,0,chan);
+			Matrix<Float> gwt(griddedWeight(start, end).reform(IPosition(2, nx_p, ny_p)));
+			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) {
+			//os << "Normal robustness, robust = " << robust << LogIO::POST;
+				Double sumlocwt = 0.;
+				for(Int vgrid=0;vgrid<ny_p;vgrid++) {
+					for(Int ugrid=0;ugrid<nx_p;ugrid++) {
+						if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
+					}
+				}
+				f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts(0,chan));
+				d2_p[0][chan] = 1.0;
+
+			}
+			else if (rmode_p=="abs") {
+				//os << "Absolute robustness, robust = " << robust << ", noise = "
+				//   << noise.get("Jy").getValue() << "Jy" << LogIO::POST;
+				f2_p[0][chan] = square(robust_p);
+				d2_p[0][chan] = 2.0 * square(noise_p.get("Jy").getValue());
+	
+			}
+			else {
+				f2_p[0][chan] = 1.0;
+				d2_p[0][chan] = 0.0;
+			}
+      
+		}//chan
+		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
+			for (vi.origin(); vi.more(); vi.next()) {
+				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
+					Matrix<Float> imweight;	
+					getWeightUniform(griddedWeight, imweight, *vb);
+					rownr_t nRows=vb->nRows();
+					//Int nChans=vb->nChannels();
+					Vector<uInt> msId(nRows, uInt(vb->msId()));
+					RowNumbers rowidsnr=vb->rowIds();
+                                        Vector<uInt>rowids(rowidsnr.nelements());
+                                        convertArray(rowids, rowidsnr);
+					wgtTab_p->addRow(nRows, False);
+					rownr_t endrow=wgtTab_p->nrow()-1;
+					rownr_t beginrow=endrow-nRows+1;
+						//Slicer sl(IPosition(2,beginrow,0), IPosition(2,endrow,nChans-1), Slicer::endIsLast);
+					ArrayColumn<Float> col(*wgtTab_p, "IMAGING_WEIGHT");
+						//cerr << "sl length " << sl.length() << " array shape " << fakeweight.shape() << " col length " << col.nrow() << endl;
+					//col.putColumnRange(sl, fakeweight);
+					//cerr << "nrows " << nRows << " imweight.shape " << imweight.shape() << endl;
+					for (rownr_t row=0; row < nRows; ++row)
+						col.put(beginrow+row, imweight.column(row));
+					
+					Slicer sl2(IPosition(1, endrow-nRows+1), IPosition(1, endrow), Slicer::endIsLast);
+					ScalarColumn<uInt> col2(*wgtTab_p,"MSID");
+					col2.putColumnRange(sl2, msId);
+					ScalarColumn<uInt> col3(*wgtTab_p, "ROWID");
+                                        
+					col3.putColumnRange(sl2, rowids);
+				}
+			}
+		}
+		
+		
+		
+	}
+		
+	initialized_p=True;
+	return imWgtColName_p;
+	  
+}
+  
+  String BriggsCubeWeightor::makeScratchImagingWeightTable(CountedPtr<Table>& weightTable, const String& filetag){
+
+    //String wgtname=File::newUniqueName(".", "IMAGING_WEIGHT").absoluteName();
+    String wgtname=Path("IMAGING_WEIGHT_"+filetag).absoluteName();
+    if(Table::isReadable(wgtname)){
+      weightTable=new Table(wgtname, Table::Update);
+      if(weightTable->nrow() >0)
+	return wgtname;
+
+    }
+    
+	TableDesc td;
+	uInt cache_val=32768;
+    td.comment() = "Imaging_weight";
+	td.addColumn (ScalarColumnDesc<uInt>("MSID"));
+	td.addColumn (ScalarColumnDesc<uInt>("ROWID"));
+	td.addColumn (ArrayColumnDesc<Float>("IMAGING_WEIGHT", 1));
+	
+	td.defineHypercolumn("TiledImagingWeight", 2, stringToVector("IMAGING_WEIGHT"));
+	SetupNewTable newtab(wgtname, td, Table::New);
+	IncrementalStMan incrStMan("MS_ID",cache_val);
+	newtab.bindColumn("MSID", incrStMan);
+	StandardStMan aipsStMan("ROWID", cache_val/4);
+	newtab.bindColumn("ROWID", aipsStMan);
+	TiledShapeStMan tiledStMan("TiledImagingWeight",IPosition(2,50, 500));
+	newtab.bindColumn("IMAGING_WEIGHT",tiledStMan);
+	weightTable=new Table(newtab);
+	//weightTable->markForDelete();
+	return wgtname;
+ }
+
+
  void BriggsCubeWeightor::init(vi::VisibilityIterator2& vi,
                    const ImageInterface<Complex>& templateimage, const RecordInterface& inRec)
  {
@@ -235,22 +458,10 @@ using namespace casa::vi;
  }
 
 
-Double BriggsCubeWeightor::calcFractionalBandwidth(const Vector<Double>& freqs, int nvischan, const Matrix<Bool>& flag){
-    Double centerFreq, fracBW;
-    
-    Int chn_f1 = 0;
-    while((flag(chn_f1,0) == 1) && (chn_f1 < (nvischan-1))) chn_f1++;
-    
-    Int chn_f2 = nvischan-1;
-    while((flag(chn_f2,0) == 1) && (chn_f2 >= 0)) chn_f2--;
-
-    centerFreq = (freqs(chn_f1) + freqs(chn_f2))/2;
-    fracBW = abs((freqs(chn_f2) - freqs(chn_f1))/centerFreq);
-    return fracBW;
-}
-
 void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuffer2& vb){
-
+	if(!wgtTab_p.null())
+		return readWeightColumn(imweight, vb);
+    
     if(multiFieldMap_p.size()==0)
       throw(AipsError("BriggsCubeWeightor has not been initialized"));
     String key=String::toString(vb.msId())+"_"+String::toString(vb.fieldId()(0));
@@ -261,7 +472,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     if(max(chanMap)==-1)
       return;
     Int nvischan=vb.nChannels();
-    Int nRow=vb.nRows();
+    rownr_t nRow=vb.nRows();
     Matrix<Double> uvw=vb.uvw();
     imweight.resize(nvischan, nRow);
     imweight.set(0.0);
@@ -276,7 +487,6 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     Float u, v;
     Double fracBW, nCellsBW, uvDistanceFactor;
     IPosition pos(4,0);
-    
 
     fracBW = fracBW_p;
     if(rmode_p=="bwtaper")
@@ -289,7 +499,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     }
     
         
-    for (Int row=0; row<nRow; row++) {
+    for (rownr_t row=0; row<nRow; row++) {
     for (Int chn=0; chn<nvischan; chn++) {
       if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
         pos(3)=chanMap(chn);
@@ -334,7 +544,101 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     }
     
   }
+void BriggsCubeWeightor::readWeightColumn(casacore::Matrix<casacore::Float>& imweight, const vi::VisBuffer2& vb){
+	
+	if(vbrowms2wgtrow_p.size()==0){
+		Vector<uInt> msids=ScalarColumn<uInt>(*wgtTab_p, "MSID").getColumn();
+		Vector<rownr_t> msrowid(ScalarColumn<uInt>(*wgtTab_p,"ROWID").nrow());
+                convertArray(msrowid, ScalarColumn<uInt>(*wgtTab_p,"ROWID").getColumn());
+		for (uInt k=0; k < msids.nelements(); ++k){
+			vbrowms2wgtrow_p[make_pair(msids[k], msrowid[k])]=k;
+		}
+		//cerr << "Map size " << vbrowms2wgtrow_p.size() << " max size " << vbrowms2wgtrow_p.max_size() << endl;
+	}
+	imweight.resize(vb.nChannels(), vb.nRows());
+	uInt msidnow=vb.msId();
+	RowNumbers rowIds=vb.rowIds();
+	ArrayColumn<Float> imwgtcol(*wgtTab_p, "IMAGING_WEIGHT");
+	for (rownr_t k=0; k < (vb.nRows()); ++k){
+		rownr_t tabrow=vbrowms2wgtrow_p[make_pair(msidnow, rowIds[k])];
+		//cerr << imwgtcol.get(tabrow).shape() << "   " << imweight.column(k).shape() << endl; 
+		imweight.column(k)=imwgtcol.get(tabrow);
+		
+	
+	}
+	
+}
+void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix<Float>& imweight, const vi::VisBuffer2& vb){
 
+    Vector<Int> chanMap=ft_p[0]->channelMap(vb);
+    //cerr << "weightuniform chanmap " << chanMap << endl;
+    
+    Int nvischan=vb.nChannels();
+    rownr_t nRow=vb.nRows();
+    Matrix<Double> uvw=vb.uvw();
+    imweight.resize(nvischan, nRow);
+    imweight.set(0.0);
+    ///No matching channels
+    if(max(chanMap)==-1)
+      return;
+    Matrix<Float> weight;
+    VisImagingWeight::unPolChanWeight(weight, vb.weightSpectrum());
+    Matrix<Bool> flag;
+    cube2Matrix(vb.flagCube(), flag);
+
+    Int nChanWt=weight.shape()(0);
+    Double sumwt=0.0;
+    Float u, v;
+    IPosition pos(4,0);
+    for (rownr_t row=0; row<nRow; row++) {
+	for (Int chn=0; chn<nvischan; chn++) {
+	  if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
+	    pos(3)=chanMap(chn);
+	    Float f=vb.getFrequency(0,chn)/C::c;
+	    u=-uvw(0, row)*f;
+	    v=-uvw(1, row)*f;
+	    Int ucell=Int(std::round(uscale_p*u+uorigin_p));
+	    Int vcell=Int(std::round(vscale_p*v+vorigin_p));
+	    pos(0)=ucell; pos(1)=vcell;
+	    ////TESTOO
+	    //if(row==0){
+	     
+	    //  ofstream myfile;
+	    //  myfile.open ("briggsLoc.txt", ios::out | ios::app | ios::ate );
+	    //  myfile << vb.rowIds()(0) << " uv " << uvw.column(0) << " loc " << pos[0] << ", " << pos[1] << "\n"<< endl;
+	    //  myfile.close();
+  
+
+	    //}
+	    //////
+	    imweight(chn,row)=0.0;
+	    if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p)) {
+	      Float gwt=wgtDensity(pos);
+	      if(gwt >0){
+			imweight(chn,row)=weight(chn%nChanWt,row);
+			imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
+			sumwt+=imweight(chn,row);
+	      }
+	    }
+	    //else {
+	    // imweight(chn,row)=0.0;
+	      //ndrop++;
+	    //}
+	  }
+	  else{
+	    imweight(chn,row)=0.0;
+	  }
+    
+	}
+    }
+
+   
+    if(visWgt_p.doFilter()){
+      visWgt_p.filter (imweight, flag, uvw, vb.getFrequencies(0), imweight);
+
+    }
+    
+  }
 void BriggsCubeWeightor::initializeFTMachine(const uInt index, const ImageInterface<Complex>& templateimage, const RecordInterface& inRec){
   Int nchan=templateimage.shape()(3);
   if(ft_p.nelements() <= index){
