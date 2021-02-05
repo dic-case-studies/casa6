@@ -16,8 +16,8 @@ if is_CASA6:
         pass
 
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
+    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+    #import testhelper as th
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
     datapath=ctsys.resolve('regression/unittest/nrobeamaverage')
@@ -28,11 +28,13 @@ else:
     from taskinit import tbtool as table
 
     from __main__ import default
-    import testhelper as th
+    #import testhelper as th
     from sdutil import tbmanager
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/nrobeamaverage/"
+
+from casatestutils import testhelper as th
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""

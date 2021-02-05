@@ -8,12 +8,12 @@ import numpy.ma as ma
 import unittest
 
 from casatasks.private.casa_transition import is_CASA6
+from casatestutils import testhelper as th
+
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
     from casatools import ctsys, table
-    from casatasks import gencal
+    from casatasks import gencal, rmtables
 
     from casatasks.private import tec_maps
     
@@ -21,14 +21,35 @@ if is_CASA6:
 
     datapath=ctsys.resolve('regression/unittest/gencal')
 else:
-    import testhelper as th
-    from tasks import gencal
+    from __main__ import default
+    from tasks import gencal, rmtables
     from taskinit import *
     from recipes import tec_maps
     
     _tb=tbtool()
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
+
+### DATA ###
+
+if is_CASA6:
+    evndata = ctsys.resolve('visibilities/other/n08c1.ms/')
+    vlbadata = ctsys.resolve('visibilities/vlba/ba123a.ms/')
+    vlbacal = ctsys.resolve('caltables/ba123a.gc/')
+
+else:
+    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+        evndata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/n08c1.ms/'
+        vlbadata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
+        vlbacal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ba123a.gc/'
+    else:
+        evndata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/n08c1.ms/'
+        vlbadata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
+        vlbacal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ba123a.gc/'
+
+caltab = 'cal.A'
+evncopy = 'evn_copy.ms'
+vlbacopy = 'vlba_copy.ms'
 
 '''
 Unit tests for gencal 
@@ -428,14 +449,49 @@ class gencal_test_tec_vla(unittest.TestCase):
             # should catch case of internet access failure?
             raise
 
+class gencal_test(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(evndata, evncopy)
+        shutil.copytree(vlbadata, vlbacopy)
 
+    def setUp(self):
+        if not is_CASA6:
+            default(gencal)
+
+    def tearDown(self):
+        rmtables(caltab)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(evncopy)
+        shutil.rmtree(vlbacopy)
+
+    def test_gainCurve(self):
+        ''' Test calibration table produced when gencal is run on an MS with a GAIN_CURVE table '''
+
+        gencal(vis=vlbacopy, caltable=caltab, caltype='gc')
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, vlbacal, ['WEIGHT']))
+
+    def test_noGainCurve(self):
+        ''' Test that when gencal is run on an MS with no GAIN_CURVE table it creates no calibration table '''
+
+        try:
+            gencal(vis=evncopy, caltable=caltab, caltype='gc')
+        except:
+            pass
+
+        self.assertFalse(os.path.exists(caltab))
 
 
 def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma,
-            gencal_test_tec_vla]
+            gencal_test_tec_vla,
+            gencal_test]
 
 if is_CASA6:
     if __name__ == '__main__':
