@@ -34,7 +34,17 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
-    from casampi.MPIEnvironment import MPIEnvironment
+
+    casampi_imported = False
+    import importlib
+    _casampi_spec = importlib.util.find_spec('casampi')
+    if _casampi_spec:
+        # don't catch import error from casampi if it is found in the system modules
+        from casampi.MPIEnvironment import MPIEnvironment
+        casampi_imported = True
+    else:
+        casalog.post('casampi not available - not testing MPIEnvironment stuff', 'WARN')
+
     casa6 = True
 
 else:
@@ -46,6 +56,8 @@ else:
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
     from mpi4casa.MPIEnvironment import MPIEnvironment
+    casampi_imported = True
+
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
@@ -63,7 +75,10 @@ else:
 class TestHelpers:
 
     # For comparison with keywords added by tclean in its output images
-    num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    if casampi_imported:
+        num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    else:
+        num_mpi_procs = 1
 
     def delmodels(self,msname="",modcol='nochange'):
        TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
