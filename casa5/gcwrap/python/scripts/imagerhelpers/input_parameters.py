@@ -91,6 +91,8 @@ class ImagerParameters():
                  
                  pblimit=0.01,
                  normtype='flatnoise',
+                 
+                 psfcutoff=0.35,
 
                  outlierfile='',
                  restart=True,
@@ -219,7 +221,7 @@ class ImagerParameters():
         self.allnormpars = { self.defaultKey : {#'mtype': mtype,
                                  'pblimit': pblimit,'nterms':nterms,'facets':facets,
                                  'normtype':normtype, 'workdir':workdir,
-                                 'deconvolver':deconvolver, 'imagename': imagename, 'restoringbeam':restoringbeam}   }
+                                 'deconvolver':deconvolver, 'imagename': imagename, 'restoringbeam':restoringbeam, 'psfcutoff':psfcutoff}   }
 
 
         ######### Deconvolution

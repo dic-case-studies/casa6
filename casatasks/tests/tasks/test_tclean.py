@@ -208,6 +208,7 @@ class testref_base(unittest.TestCase):
 ##############################################
 ##############################################
 ##Task level tests : one field, 2chan.
+
 class test_onefield(testref_base):
      
      def test_onefield_defaults(self):
@@ -656,10 +657,41 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
           self.checkfinal(pstr=checkimage+report)
+          
+     def test_onefield_psf_fit(self):
+        """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+        
+        self.prepData('refim_point.ms')
+ 
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
+        
+        self.prepData('refim_point.ms')
+        
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
+        
+        self.prepData('refim_point.ms')
+        
+        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+        _ia.open(self.img+'.psf')
+        hdr = _ia.summary(list=False)
+        _ia.close()
+        beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+        _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
+        
+        self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
-
 ##Task level tests : iteration controls
 class test_iterbot(testref_base):
 
@@ -3588,7 +3620,6 @@ class test_hetarray_imaging(testref_base):
 #     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test till awproject works with CAS-9386")
      def test_het_pointing_offsets_awproject_cube(self):
-          
 #          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
 #          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy.
           
@@ -3694,7 +3725,6 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
      def test_het_pointing_offsets_awproject_mtmfs(self):
-          
 #          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
 #          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True).
           

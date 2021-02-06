@@ -44,6 +44,7 @@
 #include <lattices/LatticeMath/LatticeConvolver.h>
 #include <scimath/Fitting/NonLinearFitLM.h>
 #include <scimath/Functionals/Gaussian2D.h>
+#include <scimath/Mathematics/Interpolate2D.h>
 #include <casacore/casa/IO/ArrayIO.h>
 
 #include <ms/MeasurementSets/MSColumns.h>
@@ -67,11 +68,15 @@
 #include <casa/Logging/LogSink.h>
 #include <casa/Logging/LogMessage.h>
 
+#include <synthesis/TransformMachines2/Utils.h>
 
 #include <casa/iostream.h>
+#include <ctime>
 
 using namespace casacore;
 namespace casa {
+
+
 
 // <summary> 
 // </summary>
@@ -473,8 +478,8 @@ void StokesImageUtil::Constrain(ImageInterface<Float>& image) {
 }
 
 
-Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam){
-
+Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam, Float psfcutoff){
+  
   Bool retval=true;
   Int freqAx=CoordinateUtil::findSpectralAxis(psf.coordinates());
   Vector<Stokes::StokesTypes> whichPols;
@@ -495,7 +500,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& e
     Slicer slc(blc, trc, Slicer::endIsLast);
     SubImage<Float> subpsf(psf, slc, false);
     try{
-      fitted(k)=FitGaussianPSF(subpsf, tempBeam(k,0));
+      fitted(k)=FitGaussianPSF(subpsf, tempBeam(k,0), psfcutoff);
     }
     catch (AipsError x_error){
       Int ik=k;
@@ -557,11 +562,11 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& e
 }
 
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, 
-				     GaussianBeam& beam)
+				     GaussianBeam& beam, Float psfcutoff)
 {
 	Vector<Float> vbeam(3, 0.0);
   Bool status=true;
-  if(!FitGaussianPSF(psf, vbeam)) status=false;
+  if(!FitGaussianPSF(psf, vbeam, psfcutoff)) status=false;
   beam = GaussianBeam(
 		  Quantity(abs(vbeam[0]),"arcsec"),
 		  Quantity(abs(vbeam[1]),"arcsec"),
@@ -572,10 +577,181 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf,
 }
 
 
-Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam) {
+void StokesImageUtil::FindNpoints(Int& npoints, IPosition& blc,  IPosition& trc, Int nrow, Float amin, Int px, Int py, Vector<Double>& deltas, Matrix<Double>& x , Vector<Double>& y, Vector<Double>& sigma,  Matrix<Float>& lpsf){
+    
+    Int maxnpoints=(2*nrow+1)*(2*nrow+1);
+    Matrix<Double> ix(maxnpoints,2);
+    Vector<Double> iy(maxnpoints), isigma(maxnpoints);
+    ix=0.0; iy=0.0; isigma=0.0;
+    npoints = 0;
+    
+    //IPosition blc(2), trc(2);
+//blc = 0; trc = 0;
+    
+    blc(0) = lpsf.shape()(0)-1;
+    blc(1) = lpsf.shape()(1)-1;
+    trc(0) = 0;
+    trc(1) = 0;
+    
+    IPosition psf_shape = lpsf.shape();
+
+    //we sample the central part of a, 2*nrow+1 by 2*nrow+1
+    
+    Int iflip = 1;
+    Int jflip = 1;
+    // loop through rows. Include both above and below in case
+    // we are fitting an image feature
+    
+    for(Int jlo = 0;jlo<2;jlo++) {
+      jflip*=-1;
+      // loop from 0 to nrow then from 1 to nrow
+      for(Int j = jlo;j<=nrow;j++) {
+        // the current row under consideration
+        Int jrow = py + j*jflip;
+        // loop down row doing alternate halves. work our way
+        // out from the center until we cross threshold
+        // don't include any sidelobes!
+        for(Int ilo=0;ilo<2;ilo++) {
+      iflip*=-1;
+      // start at center row this may or may not be in the lobe,
+      // if it's narrow and the pa is near 45 degrees
+      
+      
+      if((jrow > (psf_shape(1)-1)) || (jrow < 0 ) ) break;
+      //cout << "11.** " << maxnpoints << ",*,"<< npoints << ",*," << px << ",*," << jrow << endl;
+      Bool inlobe = lpsf(px,jrow)>amin;
+    
+      //cout << "12.** " << maxnpoints << ",*,"<< npoints << ",*," << px << ",*," << jrow << endl;
+      for(Int i = ilo;i<=nrow;i++) {
+        if(npoints < maxnpoints){
+          Int irow = px + i*iflip;
+          // did we step out of the lobe?
+         
+          if((irow > (psf_shape(0)-1)) || (irow < 0 ) ) break;
+          //cout << "irow , jrow " << irow  << ",*," << jrow  << ",*," << lpsf.shape() << ",*," << px << ",*," << py << endl;
+          if (inlobe&&(lpsf(irow,jrow)<amin)) break;
+          if (lpsf(irow,jrow)>amin) {
+            //cout << "$%$irow , jrow " << lpsf.shape() << ",*,"<< irow << "," << jrow << ",*, "<< irow - px << ",*," << jrow - py << ",*, " << lpsf(irow,jrow) << ",*, " << inlobe << ",*, " << npoints <<  endl;
+            inlobe = true;
+            // the sign on the ra can cause problems.  we just fit
+            // for what the beam "looks" like here, and worry about
+            // it later.
+            ix(npoints,0) = (irow-px)*abs(deltas(0));
+            ix(npoints,1) = (jrow-py)*abs(deltas(1));
+            iy(npoints) = lpsf(irow,jrow);
+              //cout << "1.**" << endl;
+            
+              if(blc(0) > irow) blc(0) = irow;
+              if(blc(1) > jrow) blc(1) = jrow;
+              
+              if(trc(0) < irow) trc(0) = irow;
+              if(trc(1) < jrow) trc(1) = jrow;
+              //cout << "2.**" << endl;
+  
+            isigma(npoints) = 1.0;
+            ++npoints;
+             // cout << "3.** " << maxnpoints << ",*,"<< npoints << endl;
+            if(npoints > (maxnpoints-1)) {
+          inlobe=false;
+              //cout << "Over max points .** " << maxnpoints << ",*,"<< npoints << endl;
+          //break;
+                goto endSearch;
+            }
+             // cout << "5.** " << maxnpoints << ",*,"<< npoints << endl;
+          }
+        }
+      }
+        }
+      }
+    }
+    
+    endSearch:
+    
+    //cout << "2. blc, trc " << blc << ",*," << trc << endl;
+    //Vector<Double> y(npoints), sigma(npoints);
+    //Matrix<Double> x(npoints,2);
+    //cout << "hallo " << endl;
+    
+    y.resize(npoints);
+    x.resize(npoints,2);
+    sigma.resize(npoints);
+    
+    //cout << "2. findNPoints " << npoints << " " << amin << endl;
+    
+    for (Int ip=0;ip<npoints;ip++) {
+      x(ip,0)=ix(ip,0); x(ip,1)=ix(ip,1);
+      y(ip)=iy(ip);
+      sigma(ip)=isigma(ip);
+      if(!(isigma(ip)>0.0)) break;
+    }
+    
+    //Ensure that it is square
+    if(blc(0) > blc(1)){
+        blc(0) = blc(1);
+    }else{
+        blc(1) = blc(0);
+    }
+    
+    if(trc(0) > trc(1)){
+        trc(1) = trc(0);
+    }else{
+        trc(0) = trc(1);
+    }
+    
+    
+}
+
+void StokesImageUtil::ResamplePSF(Matrix<Float>& psf, Int& oversampling, Matrix<Float>& resampledPsf, String& InterpMethod)
+{
+    Int nx = psf.shape()(0);
+    Int ny = psf.shape()(1);
+    Int nxRe = nx*oversampling - oversampling + 1;
+    Int nyRe = ny*oversampling - oversampling + 1;
+    
+    Vector<Double> pos(2);
+    resampledPsf.resize(nxRe,nyRe);
+    
+    Interpolate2D::Method method;
+    if(InterpMethod == "NEAREST") method = Interpolate2D::NEAREST;
+    if(InterpMethod == "LINEAR") method = Interpolate2D::LINEAR;
+    if(InterpMethod == "CUBIC") method = Interpolate2D::CUBIC;
+    if(InterpMethod == "LANCZOS") method = Interpolate2D::LANCZOS;
+    
+    Interpolate2D resampleInterp(method);
+//Interpolate2D resampleInterp(Interpolate2D::CUBIC);
+    
+    Bool ok;
+    Float result;
+    
+    for (Int i=0; i < nxRe ; ++i){
+        for (Int j=0; j < nyRe ; ++j){
+            pos(0) = (Float) i/(Float) oversampling;
+            pos(1) = (Float) j/(Float) oversampling;
+            
+            ok = resampleInterp.interp(result, pos, psf);
+//cout << "pos is" << pos << " result " << result << " psf " << psf(i,j)<< endl;
+            resampledPsf(i,j) = result;
+        }
+    }
+    
+    
+}
+
+
+Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& beam, Float psfcutoff) {
+  
+  LogIO os(LogOrigin("StokesImageUtil", "FitGaussianPSF()",WHERE));
+  os << LogIO::DEBUG1 << "Psfcutoff is  " << psfcutoff << LogIO::POST;
+    
+  Float npix = 20;
+  Int expand_pixel = 5;
+  Int target_npoints = 3001;
+  String InterpMethod = "CUBIC";
+
+  //##########################################################
   
   Vector<Double> deltas;
-  deltas=psf.coordinates().increment(); 
+  deltas=psf.coordinates().increment();
   
   Vector<Int> map;
   AlwaysAssert(StokesMap(map, psf.coordinates()), AipsError);
@@ -599,7 +775,7 @@ Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, Vector<Float>& 
     throw(AipsError("Peak of psf is outside the inner quarter of defined image"));
   }
 
-  LogIO os(LogOrigin("StokesImageUtil", "FitGaussianPSF()",WHERE));
+ 
   if((bamp > 1.1) || (bamp < 0.9)) // No warning if 10% error in PSF peak
     os << LogIO::WARN << "Peak of PSF is " << bamp << LogIO::POST;
 
@@ -615,8 +791,10 @@ try{
     os << LogIO::WARN << "Could not find peak " << LogIO::POST;
     return false;
   }
+    
+
   
-  lpsf/=bamp;
+  lpsf/=bamp; //Normalize
 
   // The selection code attempts to avoid including any sidelobes, even
   // if they exceed the threshold, by starting from the center column and
@@ -626,85 +804,72 @@ try{
   // sharply ringing beams inclined at 45 degrees will confuse it, but 
   // that's even more pathological than most VLBI beams.
   
-  Float amin=0.35;
-  Int nrow=5;
+  Float amin=psfcutoff;
+  Int nrow=npix;
   
   //we sample the central part of a, 2*nrow+1 by 2*nrow+1
-  
-  Int npoints=0;
-  Int maxnpoints=(2*nrow+1)*(2*nrow+1);
-  Matrix<Double> ix(maxnpoints,2);
-  Vector<Double> iy(maxnpoints), isigma(maxnpoints);
-  ix=0.0; iy=0.0; isigma=0.0;
   Bool converg=false;
   Vector<Double> solution;
   Int kounter=0;
- while(amin >0.1 && !converg && (kounter < 50)){
-  amin*=bamp;
+    
+ while(amin > 0.009 && !converg && (kounter < 50)){
   kounter+=1;
-  Int iflip = 1;
-  Int jflip = 1;
-  // loop through rows. Include both above and below in case
-  // we are fitting an image feature
-  for(Int jlo = 0;jlo<2;jlo++) {
-    jflip*=-1;
-    // loop from 0 to nrow then from 1 to nrow
-    for(Int j = jlo;j<nrow;j++) { 
-      // the current row under consideration
-      Int jrow = py + j*jflip;
-      // loop down row doing alternate halves. work our way 
-      // out from the center until we cross threshold
-      // don't include any sidelobes!
-      for(Int ilo=0;ilo<2;ilo++) {
-	iflip*=-1;
-	// start at center row this may or may not be in the lobe,
-	// if it's narrow and the pa is near 45 degrees
-	Bool inlobe = lpsf(px,jrow)>amin;
-	for(Int i = ilo;i<nrow;i++) {
-	  if(npoints < maxnpoints){
-	    Int irow = px + i*iflip;
-	    // did we step out of the lobe?
-	    if (inlobe&&(lpsf(irow,jrow)<amin)) break;
-	    if (lpsf(irow,jrow)>amin) {
-	      inlobe = true;
-	      // the sign on the ra can cause problems.  we just fit 
-	      // for what the beam "looks" like here, and worry about 
-	      // it later.
-	      ix(npoints,0) = (irow-px)*abs(deltas(0));
-	      ix(npoints,1) = (jrow-py)*abs(deltas(1));
-	      iy(npoints) = lpsf(irow,jrow);
-	      isigma(npoints) = 1.0;
-	      ++npoints;
-	      if(npoints > (maxnpoints-1)) {
-		inlobe=false;
-		break;
-	      }
-	    }
-	  }
-	}
-      }
-    }
+  Int npoints=0;
+  Vector<Double> y, sigma;
+  Matrix<Double> x;
+  IPosition blc(2), trc(2);
+     
+  FindNpoints(npoints, blc, trc, nrow, amin, px, py, deltas, x , y, sigma, lpsf);
+  os << LogIO::DEBUG1 << "First FindNpoints is " << npoints << LogIO::POST;
+     
+  blc = blc-expand_pixel;
+  trc = trc+expand_pixel;
+     
+  if(blc(0) < 0) blc(0)=0;
+  if(blc(1) < 0) blc(1)=0;
+  if(trc(0) >= lpsf.shape()(0)) trc(0)=lpsf.shape()(0)-1;
+  if(trc(1) >= lpsf.shape()(1)) trc(1)=lpsf.shape()(1)-1;
+     
+  Matrix<Float> lpsfWindowed = lpsf(blc,trc);
+  os << LogIO::DEBUG1 << "The windowed Psf shape is " << lpsfWindowed.shape() << LogIO::POST;
+  Matrix<Float> resampledPsf;
+     
+  Int oversampling = (Int) sqrt(target_npoints/(lpsfWindowed.shape()(0)*lpsfWindowed.shape()(1)));
+   if(oversampling == 0){
+         oversampling = 1;
+   }
+   os << LogIO::DEBUG1 << "The oversampling is " << oversampling << LogIO::POST;
+     
+  ResamplePSF(lpsfWindowed, oversampling, resampledPsf,InterpMethod);
+  os << LogIO::DEBUG1 << "The resampled windowed Psf shape is " << lpsfWindowed.shape() << LogIO::POST;
+     
+  Float minVal, maxVal;
+  IPosition minPos(2);
+  IPosition maxPos(2);
+  minMax(minVal, maxVal, minPos, maxPos, resampledPsf);
+  resampledPsf = resampledPsf/maxVal;
+    
+  Vector<Double> resampledDeltas = deltas/ (Double) oversampling;
+     
+  Int minLen;
+  if((trc(0) - blc(0)) > (trc(1) - blc(1)) ){
+    minLen = trc(1) - blc(1) + 1;
+  }else{
+    minLen = trc(0) - blc(0) + 1;
   }
-  
+     
+  Int nrowRe = (Int) (oversampling*minLen - 1)/2;
+  FindNpoints(npoints, blc, trc, nrowRe, amin,  maxPos(0), maxPos(1), resampledDeltas, x , y, sigma, resampledPsf);
+  os << LogIO::DEBUG1 << "Second FindNpoints is " << npoints << LogIO::POST;
 
-  Vector<Double> y(npoints), sigma(npoints);
-  Matrix<Double> x(npoints,2);
-  
-  for (Int ip=0;ip<npoints;ip++) {
-    x(ip,0)=ix(ip,0); x(ip,1)=ix(ip,1);
-    y(ip)=iy(ip);
-    sigma(ip)=isigma(ip);
-    if(!(isigma(ip)>0.0)) break;
-  }
-  
-  // Construct the function to be fitted
   Gaussian2D<AutoDiff<Double> > gauss2d;
-  gauss2d[0] = 1.0;
-  gauss2d[1] = 0.0;
-  gauss2d[2] = 0.0;
+  gauss2d[0] = 1.0; //Height of Gaussian
+  gauss2d[1] = 0.0; //The center of the Gaussian in the x direction
+  gauss2d[2] = 0.0; //The center of the Gaussian in the y direction.
+  //gauss2d[3] = 2.5*abs(resampledDeltas(0)); //The width (FWHM) of the Gaussian on one axis.
   gauss2d[3] = 2.5*abs(deltas(0));
-  gauss2d[4] = 0.5;
-  gauss2d[5] = 1.0;
+  gauss2d[4] = 0.5; //A modified axial ratio.
+  gauss2d[5] = 1.0; //The position angle.
   
   // Fix height and center
   gauss2d.mask(0) = false;
@@ -723,6 +888,7 @@ try{
   
   // The current parameter values are used as the initial guess.
   solution = fitter.fit(x, y, sigma);
+
   converg=fitter.converged();
   if (!fitter.converged()) {
     beam(0)=2.5*abs(deltas(0))/C::arcsec;
@@ -731,6 +897,8 @@ try{
 
     //fit did not coverge...reduce the minimum i.e expand the field a bit
     amin/=1.5;
+    
+    os << LogIO::WARN << "The fit did not coverge; another atempt will be made with psfcutoff " << amin << LogIO::POST;
   }
   
  }
@@ -757,6 +925,7 @@ try{
      else if (beam(2) < -270.0) beam(2) +=360.0;
      else beam(2)+=180.0;
    }
+     
    return true;
  }
  else os << LogIO::WARN << "The fit did not coverge; check your PSF" <<
@@ -1996,3 +2165,5 @@ standardImageCoordinates(const CoordinateSystem& coords) {
 };
 
 } //#End casa namespace
+
+

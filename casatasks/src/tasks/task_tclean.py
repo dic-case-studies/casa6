@@ -169,6 +169,7 @@ def tclean(
 #    makeimages,#="auto"
     calcres,#=True,
     calcpsf,#=True,
+    psfcutoff,#=0.35
 
     ####### State parameters
     parallel):#=False):
