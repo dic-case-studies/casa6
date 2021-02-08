@@ -97,8 +97,6 @@ public:
 
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
-  void setMaxPsfConvInitScales();
-  void testBFGS(const casacore::Matrix<casacore::Float>& psf);
   void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; } 
 
   // setter/getter
@@ -180,7 +178,6 @@ private:
   std::vector<casacore::IPosition> itsGoodAspCenter; // center of aspens in active-set
   std::vector<casacore::Float> itsPrevAspActiveSet; // avtice-set of aspens (before lbfgs)
   std::vector<casacore::Float> itsPrevAspAmplitude; // amplitude of avtice-set of aspens (before lbfgs)
-  float itsStrenThres;
   casacore::Int itsOptimumScale;
   casacore::IPosition itsPositionOptimum;
   casacore::Float itsOptimumScaleSize;

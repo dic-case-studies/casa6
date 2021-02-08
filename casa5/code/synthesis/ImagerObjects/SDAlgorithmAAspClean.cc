@@ -87,18 +87,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages->psf()->get( itsMatPsf, true );
     itsImages->mask()->get( itsMatMask, true );
 
-    //// Initialize the AspMatrixCleaner.
-    ///  ----------- do once ----------
+    // Initialize the AspMatrixCleaner.
+    //  ----------- do once ----------
     if( itsMCsetup == false)
     {
       Matrix<Float> tempMat(itsMatPsf);
       itsCleaner.setPsf(tempMat);
-      // FFT of 0, 1.5, 5R, 10R of psf and masks is unchanged and only needs to be
-      // computed once. This calls getPsfGaussianWidth
-      // and sets the new itsInitScaleXfrs
+      // Initial scales and masks are unchanged and only need to be
+      // computed once
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
       itsCleaner.setInitScaleXfrs(width);
-      ////itsCleaner.setInitScalePsfs();////
       itsCleaner.setInitScaleMasks(itsMatMask);
 
       itsCleaner.stopPointMode( itsStopPointMode );
@@ -107,8 +105,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //for unit test
       Matrix<Float> tempMat1(itsMatResidual);
       itsCleaner.setOrigDirty( tempMat1 );
-      //itsCleaner.setMaxPsfConvInitScales();
-      //itsCleaner.testBFGS(tempMat);
 
       if (itsFusedThreshold < 0)
       {
@@ -127,33 +123,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // by itsScaleSizes = getActiveSetAspen which convolve
     // cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
     // and then find the peak, scale, and optimizes the obj function
-    // Convolve psf with the active set (using the above 4) and do the following
+    // Convolve psf with the active set (using the above 4) and do the followings
 
     Matrix<Float> tempMat1(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
 
     // InitScaleXfrs and InitScaleMasks should already be set
-    //itsScaleSizes.push_back(itsCleaner.getActiveSetAspen()); genie old
     itsScaleSizes.clear();
     itsScaleSizes = itsCleaner.getActiveSetAspen();
-    /*for (unsigned int scale=0; scale < itsScaleSizes.size(); scale++)
-      cout << "1. getActiveSetAspen[" << scale << "] " << itsScaleSizes[scale] << endl;*/
-    //cout << "# itsScaleSizes " << itsScaleSizes.size() << endl;
-    /*if (!itsCleaner.getterSwitchedHogbom() && itsScaleSizes.size() == 0) // hack to make nScalesToClean at least 3
-    {
-      itsScaleSizes.push_back(itsCleaner.getterPsfWidth() * 5); // put init scales
-      itsScaleSizes.push_back(itsCleaner.getterPsfWidth() * 10); // put init scales
-    }*/
+   
     itsScaleSizes.push_back(0.0); // put 0 scale
-    //Vector<Float> scaleSizes(itsScaleSizes);
-    //itsCleaner.defineAspScales(scaleSizes);
-    // try speed up here
     itsCleaner.defineAspScales(itsScaleSizes);
-    // now active-set itsScaleSizes is ready for cleanning
-    //itsCleaner.makePsfScales(); it doesn't seem I need this.
-    //itsCleaner.makeScaleMasks(); it doesn't seem I need this. Mask is used for InitScales only
-    //itsCleaner.makedirtyscales(); //it doesn't seem I need this.
-                                    //Asp is different from MS on Asp is substracting from dirty directly
+   
   }
 
 

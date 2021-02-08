@@ -116,14 +116,6 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsNumHogbomIter(0),
   itsNthHogbom(0),
   itsSwitchedToMS(false),
-  //itsStrenThres(0.19), //m31_gaussian_trynorm8
-  //itsStrenThres(0.4), //m31_gaussian_trynorm8
-  //itsStrenThres(0.0001), //m31norm_hog, 5k->10k
-  //itsStrenThres(0.003), //SNorm_hog
-  //itsStrenThres(0.0001), //SNorm_nohog
-  //itsStrenThres(0.00036), //SNorm_hog 5k->10k
-  //itsStrenThres(0.00003), //m31Norm_nohog
-  itsStrenThres(15.8), //GSL with der
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0),
   itsPeakResidual(1000.0), // temp. should this be changed to MAX?
@@ -447,13 +439,10 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23 & others
       //if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
       cout << "itsFusedThreshold " << itsFusedThreshold << endl;
-      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
+      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold 
+         || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold))) // GSL, CygA
       {
-  	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
-  	    //itsStrenThres = itsStrenThres/3.0; //box3
-  	    //itsStrenThres = itsStrenThres/1.5; //box4, sNorm, SNorm2
-  	    //itsStrenThres = itsStrenThres - 0.0005; //Snorm4, SNorm5
-
+  	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsFusedThreshold << endl;
   	    switchedToHogbom();
       }
       /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // GSL with der, Points ,with new norm this is not needed.
@@ -473,12 +462,6 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 	      itsNumIterNoGoodAspen.push_back(0);
     }
 
-
-    //itsStrengthOptimum /= scaleBias(optimumScale);
-    //itsStrengthOptimum /= (vecWork_p[optimumScale])(posMaximum[optimumScale]);
-
-    //AlwaysAssert(itsOptimumScale < itsNscales, AipsError);
-
     // Now add to the total flux
     totalFlux += (itsStrengthOptimum*itsGain);
     itsTotalFlux = totalFlux;
@@ -496,17 +479,17 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     // Various ways of stopping:
     //    1. stop if below threshold
-    /*if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 1e-7/*threshold()* /)
+    if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < (1e-6 * itsFusedThreshold))
     {
-    	cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
-      os << "Reached stopping threshold " << threshold() << " at iteration "<<
+    	cout << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<< ii << endl;
+      os << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<<
             ii << LogIO::POST;
       os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
       break;
-    }*/
+    }
     // with new norm this is not needed
-    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2e-4 /*&& abs(itsStrengthOptimum) < 1e-7*//*threshold()*/)
+    /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 2e-4 /*&& abs(itsStrengthOptimum) < 1e-7*//*threshold()* /)
     {
       cout << "Reached stopping threshold " << threshold() << " at iteration "<< ii << endl;
       os << "Reached stopping threshold " << threshold() << " at iteration "<<
@@ -514,7 +497,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
       break;
-    }
+    }*/
     //    2. negatives on largest scale?
     if ((itsNscales > 1) && itsStopAtLargeScaleNegative  &&
         //optimumScale == (itsNscales-1) &&
@@ -1954,18 +1937,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 // user will call make makePsfScales and makeDirtyScales like an adult in the know
 void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 {
-  /*if(itsScales.nelements()>0) {
-    destroyAspScales();
-  }
-
-  destroyMasks();*/ //genie do I need this? prob not
-
-  // try speed up here by removing duplicated scale sizes
-  /*itsNscales = scaleSizes.nelements();
-  itsScaleSizes.resize(itsNscales);
-  itsScaleSizes = scaleSizes;  // make a copy that we can call our own
-  GenSort<Float>::sort(itsScaleSizes);*/
-
   // this is good but needs to be reconsidered when we need to use itsGoodAspAmplitude
   sort(scaleSizes.begin(), scaleSizes.end());
   //scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end()); // remove the duplicated scales
@@ -1989,21 +1960,16 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   }
   // end Asp 2016
 
-  itsScalesValid = true;  //genie? It's false in MS clean
+  itsScalesValid = true; 
 }
 
 void AspMatrixCleaner::switchedToHogbom()
 {
 	itsSwitchedToHogbom = true;
-	//itsSwitchedToHogbom = false;
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
-  //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //zhang's formula
-  //itsNumHogbomIter = ceil(50 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
-  itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm1-3
-  //itsNumHogbomIter = ceil(65 + 200 * (exp(0.05*itsNthHogbom) - 1)); //genie's formula, SNorm4 5k
-  //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); //SNorm5
-  //itsNumHogbomIter = 1000000; //fake it for M31
+  //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); // zhang's formula
+  itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
   cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
 }
 
@@ -2012,176 +1978,5 @@ void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
   itsOrigDirty->assign(dirty);
 }
 
-
-void AspMatrixCleaner::setMaxPsfConvInitScales()
-{
-  itsPsfConvInitScales.resize(itsNInitScales, false);
-  FFTServer<Float,Complex> fft(psfShape_p);
-  Matrix<Complex> cWork;
-
-  for (Int scale=0; scale < itsNInitScales; scale++)
-  {
-    //cout << "Calculating convolutions of psf for initial scale size " << itsInitScaleSizes[scale] << endl;
-    //PSF * scale
-    itsPsfConvInitScales[scale] = Matrix<Float>(psfShape_p);
-    cWork=((*itsXfr)*(itsInitScaleXfrs[scale])*(itsInitScaleXfrs[scale]));
-    fft.fft0((itsPsfConvInitScales[scale]), cWork, false);
-    fft.flip(itsPsfConvInitScales[scale], false, false);
-  }
-
-  // Find the peaks of the convolved Psfs
-  maxPsfConvInitScales.resize(0);
-  maxPsfConvInitScales.resize(itsNInitScales);
-  Int naxes = psfShape_p.nelements();
-
-  for (int scale=0; scale < itsNInitScales; scale++)
-  {
-    IPosition positionPeakPsfConvInitScales(naxes, 0);
-
-    findMaxAbs(itsPsfConvInitScales[scale], maxPsfConvInitScales(scale),
-    positionPeakPsfConvInitScales);
-  }
-
-  for (int scale=0; scale < itsNInitScales; scale++)
-  {
-    if (maxPsfConvInitScales(scale) < 0.0)
-    {
-      cout << "As Peak of PSF is negative, you should change the initial scales with a smaller scale size"
-   << endl;
-      return;
-    }
-  }
-}
-
-void AspMatrixCleaner::testBFGS(const Matrix<Float>& psf)
-{
-  const int N = 512;
-  helper();
-  Matrix<Float> simpleDirty(N, N, 0.0);
-  Matrix<Float> target(N, N, 0.0);
-  Matrix<Float> simplePsf(N, N, 0.0);
-  Matrix<Complex> simplePsfFT;
-  const Float scaleSize = 20.0;
-  //IPosition simplePos(2, N/2, N/2);
-  IPosition simplePos(2, 261, 289);
-  vector<IPosition> simCenter;
-  Matrix<Float> msDirty(N, N, 0.0);
-  msDirty = *itsOrigDirty;
-
-  simplePsf(N/2, N/2) = 1.0;
-  FFTServer<Float,Complex> fft(simplePsf.shape());
-  fft.fft0(simplePsfFT, simplePsf);
-
-  Gaussian2D<Float> gbeam(1.0/(sqrt(2*M_PI)*scaleSize), N/2, N/2, scaleSize, 1, 0);
-
-  for (int j = 0; j < N; j++)
-  {
-    for (int i = 0; i < N; i++)
-    {
-      const int px = i;
-      const int py = j;
-      simpleDirty(i,j) = 3 * gbeam(px, py);
-      target(i,j) = 3 * (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-N/2,2) + pow(j-N/2,2))*0.5/pow(scaleSize,2));
-      //target(i,j) = 3 * (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-N/2,2) + pow(j-N/2,2))*0.5/pow(scaleSize,2));
-    }
-  }
-  // create complicated dirty
-  Matrix<Complex> DirtyFT;
-  FFTServer<Float,Complex> fftd(target.shape());
-  fftd.fft0(DirtyFT, target);
-  Matrix<Complex> cWork;
-  cWork = ((*itsXfr) * (DirtyFT));
-  Matrix<Float> compDirty(target.shape(), (Float)0.0);
-  fftd.fft0(compDirty, cWork, false);
-  fftd.flip(compDirty, false, false); //need this
-
-  /*gsl_multimin_function_fdf my_func;
-  gsl_multimin_fdfminimizer *s = NULL;*/ // fdf
-  gsl_multimin_function my_func;
-  gsl_multimin_fminimizer *s = NULL;
-
-  // this block should be equivalent of setupSolver
-  simCenter.push_back(simplePos);
-  //ParamObj optParam(compDirty, *itsXfr, simCenter);
-  ParamObj optParam(msDirty, *itsXfr, simCenter);
-  ParamObj *ptrParam;
-  ptrParam = &optParam;
-  /*const gsl_multimin_fdfminimizer_type *T;
-  T = gsl_multimin_fdfminimizer_vector_bfgs2;
-  s = gsl_multimin_fdfminimizer_alloc(T, 2);
-  my_func.n      = 2;
-  my_func.f      = my_f; //my_f
-  my_func.df     = my_df; //my_df
-  my_func.fdf    = my_fdf; // my_fdf
-  my_func.params = (void *)ptrParam;*/ //fdf
-  const gsl_multimin_fminimizer_type *T;
-  //T = gsl_multimin_fminimizer_nmsimplex2rand; //20.77, 31.63
-  T = gsl_multimin_fminimizer_nmsimplex2; //-1.72 313
-  s = gsl_multimin_fminimizer_alloc(T, 2);
-  my_func.n      = 2;
-  my_func.f      = my_f; //my_f
-  my_func.params = (void *)ptrParam;
-  cout << "msDirty " << msDirty(256,256) << endl;
-  cout << "*itsXfr " << (*itsXfr)(256,256) << endl;
-
-
-  /*setupSolver(&s,
-      gsl_multimin_fdfminimizer_vector_bfgs2,
-      &my_func,
-      1, // # aspen
-      par,
-      &compDirty,
-      &simplePsfFT);*/
-
-  // Set the initial guess
-  gsl_vector *x = NULL;
-  x = gsl_vector_alloc(2);
-  gsl_vector_set_zero(x);
-  //gsl_vector_set(x, 0, 1.0);
-  //gsl_vector_set(x, 1, 16.0);
-  gsl_vector_set(x, 0, 115.677);
-  gsl_vector_set(x, 1, 20.0);
-
-  /*const float InitStep = gsl_blas_dnrm2(x);
-  gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 1e-3);*/ //fdf
-  gsl_vector *ss = NULL;
-  ss = gsl_vector_alloc (2);
-  gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
-  gsl_multimin_fminimizer_set(s, &my_func, x, ss);
-
-  printf("\n---------- BFGS algorithm begin ----------\n");
-  //findComponent(10, s);
-  size_t iter = 0;
-  int status = 0;
-  double size;
-  do
-    {
-      iter++;
-      status = gsl_multimin_fminimizer_iterate(s);
-
-      if (status)
-        break;
-
-      size = gsl_multimin_fminimizer_size (s);
-      status = gsl_multimin_test_size (size, 1e-2);
-
-      if (status == GSL_SUCCESS)
-        {
-          printf ("converged to minimum at\n");
-        }
-
-      printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
-              iter,
-              gsl_vector_get (s->x, 0),
-              gsl_vector_get (s->x, 1),
-              s->fval, size);
-    }
-  while (status == GSL_CONTINUE && iter < 20);
-  printf("\n----------  BFGS algorithm end  ----------\n");
-
-  //gsl_multimin_fdfminimizer_free(s);
-  gsl_multimin_fminimizer_free(s);
-  gsl_vector_free(x);
-}
 
 } //# NAMESPACE CASA - END
