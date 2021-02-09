@@ -1623,6 +1623,10 @@ void FlagAgentDisplay :: getUserInput() {
 
     auto fut = gui_state->output.get_future();
     fut.get( );
+    {
+        std::lock_guard<std::mutex> lock(gui_state->set_values);
+        gui_state->input_received = false;
+    }
 }
 
 
