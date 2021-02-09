@@ -7,21 +7,13 @@ import numpy as np
 import numpy.ma as ma
 import unittest
 
-from casatestutils import testhelper as th
-
 from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
 
 if is_CASA6:
-<<<<<<< HEAD
-    from casatools import ctsys, table
-    from casatasks import gencal
-    from casatasks.private import tec_maps    
-=======
-    ### for testhelper import
     from casatools import ctsys, table
     from casatasks import gencal, rmtables
->>>>>>> master
+    from casatasks.private import tec_maps    
 
     _tb= table()
 
@@ -36,22 +28,10 @@ else:
     
     datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
 
-### DATA ###
-
-if is_CASA6:
-    evndata = ctsys.resolve('visibilities/other/n08c1.ms/')
-    vlbadata = ctsys.resolve('visibilities/vlba/ba123a.ms/')
-    vlbacal = ctsys.resolve('caltables/ba123a.gc/')
-
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        evndata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/n08c1.ms/'
-        vlbadata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
-        vlbacal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ba123a.gc/'
-    else:
-        evndata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/n08c1.ms/'
-        vlbadata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
-        vlbacal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ba123a.gc/'
+# input data
+evndata = 'n08c1.ms'
+vlbadata = 'ba123a.ms'
+vlbacal = os.path.join(datapath,'ba123a.gc')
 
 caltab = 'cal.A'
 evncopy = 'evn_copy.ms'
@@ -458,8 +438,8 @@ class gencal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        shutil.copytree(evndata, evncopy)
-        shutil.copytree(vlbadata, vlbacopy)
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
 
     def setUp(self):
         if not is_CASA6:
