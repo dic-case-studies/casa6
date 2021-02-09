@@ -116,25 +116,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     // Parts to be repeated at each minor cycle start....
-    itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before makeDirtyScales
-
-    // genie
-    // find peak to determine a scale and put the optimized scale in the active set
-    // by itsScaleSizes = getActiveSetAspen which convolve
-    // cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
-    // and then find the peak, scale, and optimizes the obj function
-    // Convolve psf with the active set (using the above 4) and do the followings
+    itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before the rest
 
     Matrix<Float> tempMat1(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
-
     // InitScaleXfrs and InitScaleMasks should already be set
     itsScaleSizes.clear();
-    itsScaleSizes = itsCleaner.getActiveSetAspen();
-   
+    itsScaleSizes = itsCleaner.getActiveSetAspen();   
     itsScaleSizes.push_back(0.0); // put 0 scale
-    itsCleaner.defineAspScales(itsScaleSizes);
-   
+    itsCleaner.defineAspScales(itsScaleSizes); 
   }
 
 
@@ -148,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
-    itsCleaner.setaspcontrol(cycleNiter, /*0.9*//*0.8*//*0.7*//*0.6*//*0.5*/loopgain, thresh, Quantity(0.0, "%"));
+    itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
     Matrix<Float> tempModel;
     tempModel.reference( itsMatModel );
     //save the previous model
@@ -171,11 +161,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( retval==-2 ) {os << LogIO::WARN << "AspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
     if( retval==-3 ) {os << LogIO::WARN << "AspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
-    //Matrix<Float> residual(itsCleaner.getterResidual());
-    // account for mask as well
-    //peakresidual = max(abs(residual*itsMatMask));
     peakresidual = itsCleaner.getterPeakResidual();
-    cout << "SDAlg: peakres " << peakresidual << endl;
+    //cout << "SDAlg: peakres " << peakresidual << endl;
     modelflux = sum( itsMatModel );
   }
 

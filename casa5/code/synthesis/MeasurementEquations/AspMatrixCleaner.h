@@ -49,13 +49,6 @@ public:
       const casacore::Float gain, const casacore::Quantity& aThreshold,
       const casacore::Quantity& fThreshold);
 
-  // Calculate the convolutions of the dirty image
-  // the concept is almost the same as MatrixCleaner::makeDirtyScales
-  // except this doesn't check itsCleanType
-  void makedirtyscales();
-
-  // Calculate the convolution of the dirty image with the optimum scale
-  void makedirtyscale();
 
   // Clean an image.
   //return value gives you a hint of what's happening
@@ -73,10 +66,7 @@ public:
   void makeInitScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
   void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize, const casacore::Float& amp, const casacore::IPosition& center);
 
-  // Make images of the Asp scales in the active-set
-  //void makeAspScales();
-
-  void setInitScaleXfrs(/*const casacore::Array<casacore::Float> arrpsf,*/ const casacore::Float width);
+  void setInitScaleXfrs(const casacore::Float width);
 
   // calculate the convolutions of the psf with the initial scales
   void setInitScalePsfs();
@@ -85,7 +75,6 @@ public:
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
-  //bool isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center, casacore::Float threshold);
   casacore::Float isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center);
 
   // returns the active-set aspen for cleaning
@@ -102,7 +91,7 @@ public:
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
   bool getterSwitchedHogbom() { return itsSwitchedToHogbom; }
-  casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
+  // casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
   float getterPeakResidual() { return itsPeakResidual; }
 
 
