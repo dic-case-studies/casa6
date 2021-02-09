@@ -141,18 +141,20 @@ datapath=[ "~/develop/casa/data/unittests" ]
 
 #### Run Available Tests
 
-A number of tests have been brought into CASAtools from CASA. Like the rest of CASAtools, the testing infrastructure is still in the process of being refined (and in need of some refactoring). However, with the proper setup it works for *some of the people, some of the time*. To run the tests, you need to check out the subset of the CASA data repository needed for CASAtools unit tests. This data repository will use about **14GB** of space. You can check out the necessary data repository like:
+A number of tests have been brought into CASAtools from CASA. To run the tests, you need to check out the CASA test data repository needed for CASAtools unit tests. The full data repository will use about **100GB** of space. You can check out the full data repository in the following way. Note that the ```--depth 1``` will avoid downloading the past history of the repository and save a few Gbytes of space:
+
 ```
--bash-4.2$ git clone --no-checkout https://open-bitbucket.nrao.edu/scm/casa/casa-data.git unittests
--bash-4.2$ cd unittests
--bash-4.2$ git show HEAD:casatools-unittests | bash
+-bash-4.2$ git clone --depth 1 https://open-bitbucket.nrao.edu/scm/casa/casatestdata.git
 ```
+
 After the checkout is complete, you must update your CASAtools RC file to indicate where the unit test data can be found. In my case it looks like:
+
 ```
 -bash-4.2$ cat ~/.casa/config.py
-datapath=[ "~/develop/casa/data/unittests" ]
+datapath=[ "~/develop/casa/casatestdata/" ]
 -bash-4.2$
 ```
+
 The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. After all of this is set, the full suite of tests can be run with:
 ```
 -bash-4.2$ ./setup.py test
@@ -240,7 +242,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     In [1]: from casatools import ctsys
     ```
 
-3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
+3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to a data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
 3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/config.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
 
