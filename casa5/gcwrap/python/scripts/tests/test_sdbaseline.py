@@ -4901,7 +4901,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
     to confirm if WEIGHT_SPECTRUM column is removed
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdcal')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'uid___A002_X6218fb_X264.ms'
     outroot = sdbaseline_unittest_base.taskname+'_updateweighttest'
     outfile = outroot + '.ms'
@@ -4957,7 +4957,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     test052 --- blmode='apply', spw to flag channels 4500-6499
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'analytic_order3_withoffset.ms'
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'

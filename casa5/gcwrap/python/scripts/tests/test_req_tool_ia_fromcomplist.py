@@ -29,7 +29,7 @@
 # </author>
 #
 # <summary>
-# Test suite for componentlistimage
+# Test suite for ia.fromcomplist
 # </summary>
 #
 # <reviewed reviwer="" date="" tests="" demos="">
@@ -41,11 +41,11 @@
 # </prerequisite>
 #
 # <etymology>
-# Test suite for componentlistimage
+# Test suite for ia.fromcomplist
 # </etymology>
 #
 # <synopsis>
-# Test suite for componentlistimage
+# Test suite for ia.fromcomplist
 # </synopsis> 
 #
 # <example>
@@ -53,26 +53,27 @@
 # This test runs as part of the CASA python unit test suite and can be run from
 # the command line via eg
 # 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_componentlistimage[test1,test2,...]
+# ./casa --nologger --log2term -c ./casatools/tests/tools/image/test_req_tool_ia_fromcomplist.py
 #
 # </example>
 #
 # <motivation>
-# To provide a test standard for componentlistimage support to ensure
+# To provide a test standard for ia.fromcomplist support to ensure
 # coding changes do not break the associated bits 
 # </motivation>
 #
 
 ###########################################################################
-from __main__ import *
+
+import sys
+import os
+import shutil
 import numpy
+import unittest
 
 CASA6 = False
 try:
     import casatools
-    # from casatasks import imhistory, casalog
-    import sys
-    import os
     myia = casatools.image()
     mycl = casatools.componentlist()
     csys = casatools.coordsys()
@@ -80,8 +81,6 @@ try:
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
     CASA6 = True
 except ImportError:
-    import sys
-    import os
     from __main__ import default
     from tasks import *
     from taskinit import *
@@ -90,19 +89,17 @@ except ImportError:
     csys = cstool()
     myqa = qatool()
 
-import unittest
-import shutil
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/componentlistimage/')
+    datapath = casatools.ctsys.resolve('unittest/ia_fromcomplist/')
     estimates_file = os.path.join(datapath,'2gauss_estimates.txt')
     climage = os.path.join(datapath, 'simple_cl.im')
 else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/componentlistimage/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_fromcomplist/'
     estimates_file = os.path.join(datapath, '2gauss_estimates.txt')
     climage = os.path.join(datapath, 'simple_cl.im')
 
-class componentlistimage_test(unittest.TestCase):
+class ia_fromcomplist_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = myia
@@ -112,8 +109,8 @@ class componentlistimage_test(unittest.TestCase):
         self._myia.done()
         self._mycl.done()
     
-    def test_fromcomponentlist(self):
-        """Test ia.fromcomponentlist() functionality"""
+    def test_ia_fromcomplist(self):
+        """Test ia.fromcomplist() functionality"""
         mycl = self._mycl
         myia = self._myia
         flux = [1, 2, 3, 4]
@@ -380,7 +377,7 @@ class componentlistimage_test(unittest.TestCase):
         self.assertTrue((bb == cc).all())
         
 def suite():
-    return [componentlistimage_test]
+    return [ia_fromcomplist_test]
 
 if __name__ == '__main__':
     unittest.main()
