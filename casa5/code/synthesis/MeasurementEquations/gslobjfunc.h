@@ -293,36 +293,6 @@ void my_fdf (const gsl_vector *v, void *params, double *f, gsl_vector *df)
   my_df(v, params, df);
 }
 
-/*void setupSolver(gsl_multimin_fdfminimizer **Solver,
-			   const gsl_multimin_fdfminimizer_type *MinimizerType,
-			   gsl_multimin_function_fdf *my_func,
-			   int NAspen,
-			   void *par[],
-			   casacore::Matrix<casacore::Float> *dirty,
-			   casacore::Matrix<casacore::Complex> *psfFT
-			   )
-{
-  const int NParams = 2 * NAspen;
-
-  if (*Solver)
-  	gsl_multimin_fdfminimizer_free(*Solver);
-
-  *Solver = gsl_multimin_fdfminimizer_alloc(MinimizerType, NParams);
-
-  bool ddel;
-  casacore::Float *dptr = dirty->getStorage(ddel);
-  par[0] = (void *) dptr;
-  bool ddel2;
-  casacore::Complex *dptr2 = psfFT->getStorage(ddel2);
-  par[1] = (void *) dptr2;
-
-  my_func->f      = &my_f;
-  my_func->df     = &my_df;
-  my_func->fdf    = &my_fdf;
-  my_func->n      = NParams;
-  my_func->params = par;
-}*/
-
 void debug_print(const gsl_multimin_fdfminimizer *s, const int k)
 {
     const gsl_vector   *x          = NULL;
@@ -330,16 +300,12 @@ void debug_print(const gsl_multimin_fdfminimizer *s, const int k)
 
     std::cout << "At iteration k = " << k << std::endl;
 
-    //const unsigned int len = x->size;
-    //std::cout << "x len " << len << std::endl;
-	//for (unsigned int i = 0; i < len; i+=2)
-	//{
-	    g = gsl_multimin_fdfminimizer_gradient(s);
-	    std::cout << "g = " << gsl_vector_get(g, 0) << " " << gsl_vector_get(g, 1) << std::endl;
+    g = gsl_multimin_fdfminimizer_gradient(s);
+    std::cout << "g = " << gsl_vector_get(g, 0) << " " << gsl_vector_get(g, 1) << std::endl;
 
-	    x = gsl_multimin_fdfminimizer_x(s);
-	    std::cout << "x = " << gsl_vector_get(x, 0) << " " << gsl_vector_get(x, 1) << std::endl;
-	//}
+    x = gsl_multimin_fdfminimizer_x(s);
+    std::cout << "x = " << gsl_vector_get(x, 0) << " " << gsl_vector_get(x, 1) << std::endl;
+
 
     std::cout << "f(x) = " << gsl_multimin_fdfminimizer_minimum(s) << std::endl;
 }
@@ -353,16 +319,14 @@ int findComponent(int NIter, gsl_multimin_fdfminimizer *s)
   {
 	// Make the move!
 	status = gsl_multimin_fdfminimizer_iterate(s);
-	//std::cout << "debug: gsl status " << status << std::endl;
+	
 	/*if (status == GSL_ENOPROG) // 27: not making progress towards solution
 		gsl_multimin_fdfminimizer_restart(s);*/
 	if (status)
         break;
 
-
 	status = gsl_multimin_test_gradient(s->gradient, 1E-3);
-	//std::cout << "debug: grad status " << status << std::endl;
-    debug_print(s, iter);
+    // debug_print(s, iter);
 
 	iter++;
   } while(status == GSL_CONTINUE && iter < NIter);

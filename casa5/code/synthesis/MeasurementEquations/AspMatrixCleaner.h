@@ -75,12 +75,9 @@ public:
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
-  casacore::Float isGoodAspen(casacore::Float amp, casacore::Float scale, casacore::IPosition center);
-
   // returns the active-set aspen for cleaning
   std::vector<casacore::Float> getActiveSetAspen();
 
-  //void defineAspScales(const casacore::Vector<casacore::Float>& scales);
   // Juat define the active-set aspen scales
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
@@ -98,30 +95,20 @@ public:
 //protected:
 private:
 
-  using MatrixCleaner::validatePsf;
-  using MatrixCleaner::makeScale;
   using MatrixCleaner::findMaxAbs;
   using MatrixCleaner::findMaxAbsMask;
-  using MatrixCleaner::makeBoxesSameSize;
   using MatrixCleaner::itsGain;
   using MatrixCleaner::itsMaxNiter;
   using MatrixCleaner::itsThreshold;
   using MatrixCleaner::itsMask;
-  using MatrixCleaner::itsPositionPeakPsf;
-  //using MatrixCleaner::itsSmallScaleBias;
-  //using MatrixCleaner::itsScaleMasks;
-  //using MatrixCleaner::itsScaleXfrs;
   using MatrixCleaner::itsScalesValid;
   using MatrixCleaner::itsNscales;
   using MatrixCleaner::itsMaskThreshold;
   using MatrixCleaner::itsDirty;
   using MatrixCleaner::itsXfr;
   using MatrixCleaner::itsScaleSizes;
-  //using MatrixCleaner::itsScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsInitScales;
   casacore::Block<casacore::Matrix<casacore::Complex> > itsInitScaleXfrs;
-  using MatrixCleaner::itsPsfConvScales;
-  using MatrixCleaner::itsDirtyConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvInitScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsInitScaleMasks;
   casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvInitScales;
@@ -147,33 +134,29 @@ private:
   using MatrixCleaner::psfShape_p;
   using MatrixCleaner::noClean_p;
 
-  // set to 0, 1.5*,5*,10*width for initial scales in Asp
+  // set to 0, 1*, 2*, 4*, and 8* width for initial scales in Asp
   std::vector<casacore::Float> itsInitScaleSizes;
-  std::vector<casacore::Float> itsAspScaleSizes; // permanent list for making model image
-  std::vector<casacore::Float> itsAspAmplitude;
-  std::vector<casacore::IPosition> itsAspCenter;
-  std::vector<bool> itsAspGood; // indicates if the aspen in the permanent list passes heuristic
+  //std::vector<casacore::Float> itsAspScaleSizes; // No longer needed. permanent list for making model image
+  //std::vector<casacore::Float> itsAspAmplitude;
+  //std::vector<casacore::IPosition> itsAspCenter;
   casacore::Int itsNInitScales;
-  double itsPrevLBFGSGrad; // for gradient clipping if LBFGS gradient explodes
   std::deque<int> itsNumIterNoGoodAspen;
   float itsPsfWidth;
   bool itsUseZhang;
   bool itsSwitchedToHogbom;
   unsigned int itsNumHogbomIter;
   unsigned int itsNthHogbom;
-  bool itsSwitchedToMS;
   std::vector<casacore::Float> itsGoodAspActiveSet; // avtice-set of aspens (updated)
   std::vector<casacore::Float> itsGoodAspAmplitude; // amplitude of avtice-set of aspens (updated)
   std::vector<casacore::IPosition> itsGoodAspCenter; // center of aspens in active-set
-  std::vector<casacore::Float> itsPrevAspActiveSet; // avtice-set of aspens (before lbfgs)
-  std::vector<casacore::Float> itsPrevAspAmplitude; // amplitude of avtice-set of aspens (before lbfgs)
+  //std::vector<casacore::Float> itsPrevAspActiveSet; // No longer needed. avtice-set of aspens (before bfgs)
+  //std::vector<casacore::Float> itsPrevAspAmplitude; // No longer needed. amplitude of avtice-set of aspens (before bfgs)
   casacore::Int itsOptimumScale;
   casacore::IPosition itsPositionOptimum;
   casacore::Float itsOptimumScaleSize;
   double itsUsedMemoryMB;
   float itsPeakResidual;
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsOrigDirty;
-  casacore::Vector<casacore::Float> maxPsfConvInitScales;
 
   const casacore::Int itsDefaultNorm = 1;
   casacore::Int itsNormMethod;

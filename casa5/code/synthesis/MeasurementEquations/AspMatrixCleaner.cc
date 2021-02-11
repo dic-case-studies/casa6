@@ -81,17 +81,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 AspMatrixCleaner::AspMatrixCleaner():
   MatrixCleaner(),
   itsInitScaleSizes(0),
-  itsAspScaleSizes(0),
-  itsAspAmplitude(0),
+  //itsAspScaleSizes(0),
+  //itsAspAmplitude(0),
   itsNInitScales(5),
-  itsPrevLBFGSGrad(0.0),
-  //itsNumIterNoGoodAspen(0),
   itsPsfWidth(0.0),
   itsUseZhang(false),
   itsSwitchedToHogbom(false),
   itsNumHogbomIter(0),
   itsNthHogbom(0),
-  itsSwitchedToMS(false),
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0),
   itsPeakResidual(1000.0), // temp. should this be changed to MAX?
@@ -104,15 +101,13 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsInitScaleMasks.resize(0);
   itsPsfConvInitScales.resize(0);
   itsNumIterNoGoodAspen.resize(0);
-  itsAspCenter.resize(0);
-  itsAspGood.resize(0);
+  //itsAspCenter.resize(0);
   itsGoodAspActiveSet.resize(0);
   itsGoodAspAmplitude.resize(0);
   itsGoodAspCenter.resize(0);
-  itsPrevAspActiveSet.resize(0);
-  itsPrevAspAmplitude.resize(0);
+  //itsPrevAspActiveSet.resize(0);
+  //itsPrevAspAmplitude.resize(0);
   itsUsedMemoryMB = double(HostInfo::memoryUsed()/2014);
-  maxPsfConvInitScales.resize(0);
   itsNormMethod = casa::refim::SynthesisUtils::getenv("ASP_NORM", itsDefaultNorm);
 }
 
@@ -120,7 +115,7 @@ AspMatrixCleaner::~AspMatrixCleaner()
 {
   destroyAspScales();
   destroyInitMasks();
-  //genie destroyInitScales here?
+  destroyInitScales();
   if(!itsMask.null())
     itsMask=0;
 }
@@ -275,7 +270,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     itsIteration++;
 
     // make single optimized scale image
-    os << "Asp-Clean: making scale " << itsOptimumScaleSize << LogIO::POST;
+    os << "Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
 
     if (itsSwitchedToHogbom)
     {
@@ -597,7 +592,6 @@ Bool AspMatrixCleaner::destroyInitScales()
   itsInitScales.resize(0, true);
   itsInitScaleXfrs.resize(0, true);
   itsPsfConvInitScales.resize(0, true);
-  maxPsfConvInitScales.resize(0);
 
   return true;
 }
@@ -615,35 +609,36 @@ Bool AspMatrixCleaner::destroyInitMasks()
 
 float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
 {
+	LogIO os( LogOrigin("AspMatrixCleaner","getPsfGaussianWidth",WHERE) );
+
   GaussianBeam beam;
   try
   {
       StokesImageUtil::FitGaussianPSF(psf, beam);
   }
   catch(AipsError &x)
-  {
-    LogIO os( LogOrigin("AspMatrixCleaner","getPsfGaussianWidth",WHERE) );
+  {  
     os << "Error in fitting a Gaussian to the PSF : " << x.getMesg() << LogIO::POST;
     throw( AipsError("Error in fitting a Gaussian to the PSF" + x.getMesg()) );
   }
 
   CoordinateSystem cs = psf.coordinates();
   String dirunit = cs.worldAxisUnits()(0);
-  Vector<String> unitas=cs.worldAxisUnits();
-  unitas(0)="arcsec";
-  unitas(1)="arcsec";
+  Vector<String> unitas = cs.worldAxisUnits();
+  unitas(0) = "arcsec";
+  unitas(1) = "arcsec";
   cs.setWorldAxisUnits(unitas);
 
-  cout << "major width " << beam.getMajor("arcsec") << " in " << cs.worldAxisUnits()(0) << endl;
-  cout << "minor width " << beam.getMinor("arcsec") << endl;
-  cout << " pixel sizes are " << abs(cs.increment()(0)) << " and ";
-  cout << abs(cs.increment()(1)) << endl;
+  os << "major width " << beam.getMajor("arcsec") << " in " << cs.worldAxisUnits()(0) << LogIO::POST;
+  os << "minor width " << beam.getMinor("arcsec") << LogIO::POST;
+  os << " pixel sizes are " << abs(cs.increment()(0)) << " and ";
+  os << abs(cs.increment()(1)) << LogIO::POST;
   const auto xpixels = beam.getMajor("arcsec") / abs(cs.increment()(0));
   const auto ypixels = beam.getMinor("arcsec") / abs(cs.increment()(1));
-  cout << "xpixels " << xpixels << " ypixels " << ypixels << endl;
-  cout << "init width " << float(ceil((xpixels + ypixels)/2)) << endl;
+  os << "xpixels " << xpixels << " ypixels " << ypixels << LogIO::POST;
 
   itsPsfWidth = float(ceil((xpixels + ypixels)/2));
+  os << "PSF width: " << itsPsfWidth << " pixels." << LogIO::POST;
 
   return itsPsfWidth;
 }
@@ -651,6 +646,7 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
 // Make a single initial scale size image by Gaussian
 void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& scaleSize)
 {
+  LogIO os( LogOrigin("AspMatrixCleaner","makeInitScaleImage",WHERE) );
 
   const Int nx = iscale.shape()(0);
   const Int ny = iscale.shape()(1);
@@ -669,7 +665,7 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
     const Int maxi = min(nx-1, (Int)(refi + scaleSize));
     const Int minj = max(0, (Int)(refj - scaleSize));
     const Int maxj = min(ny-1, (Int)(refj + scaleSize));*/
-    cout << "makeInitScaleImage: initscalesize " << scaleSize << endl;
+    os << "Initial scale size " << scaleSize << " pixels." << LogIO::POST;
 
     //Gaussian2D<Float> gbeam(1.0/(sqrt(2*M_PI)*scaleSize), 0, 0, scaleSize, 1, 0);
 
@@ -709,7 +705,7 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     const Int maxi = min(nx-1, (Int)(refi + scaleSize));
     const Int minj = max(0, (Int)(refj - scaleSize));
     const Int maxj = min(ny-1, (Int)(refj + scaleSize));*/
-    cout << "makeScaleImage: scalesize " << scaleSize << " center " << center << " amp " << amp << endl;
+    //cout << "makeScaleImage: scalesize " << scaleSize << " center " << center << " amp " << amp << endl;
 
     ////Gaussian2D<Float> gbeam(1.0 / (sqrt(2*M_PI)*scaleSize), center[0], center[1], scaleSize, 1, 0);
 
@@ -726,13 +722,13 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
       {
         const int px = i;
         const int py = j;
-        //iscale(i,j) = gbeam(px, py); // this is equivalent to the following with the above gbeam definition 
-        //this is for 1D, but represents Sanjay's and gives good init scale
+        // iscale(i,j) = gbeam(px, py); // this is equivalent to the following with the above gbeam definition 
+        // This is for 1D, but represents Sanjay's and gives good init scale
         // Note that "amp" is not used in the expression
         iscale(i,j) = (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
         
-        // this is for 2D, gives unit area but bad init scale (always picks 0)
-        //iscale(i,j) = (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
+        // This is for 2D, gives unit area but bad init scale (always picks 0)
+        // iscale(i,j) = (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
       }
     }
 
@@ -1014,91 +1010,19 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   if (optimumScale > 0)
   {
     //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
-    const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. Seems it can be in the loop as well.
+    const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. 
 
     // norm method 2 recovers the optimal strength and then normalize it to get the init guess
     if (itsNormMethod == 2)
       strengthOptimum *= sqrt(2 * M_PI *itsInitScaleSizes[optimumScale]); // this is needed if we also first normalize and then compare.
 
     strengthOptimum /= normalization;
-    cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
+    // cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
   } 
 
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
 
-// GSL
-Float AspMatrixCleaner::isGoodAspen(Float amp, Float scale, IPosition center)
-{
-    const int nX = itsDirty->shape()(0);
-    const int nY = itsDirty->shape()(1);
-    const int refi = nX/2;
-    const int refj = nY/2;
-    const double sigma5 = 5 * scale / 2;
-    const int minI = std::max(0, (int)(center[0] - sigma5));
-    const int maxI = std::min(nX-1, (int)(center[0] + sigma5));
-    const int minJ = std::max(0, (int)(center[1] - sigma5));
-    const int maxJ = std::min(nY-1, (int)(center[1] + sigma5));
-
-    casacore::Matrix<casacore::Float> Asp(nX, nY);
-    Asp = 0.0;
-    casacore::Matrix<casacore::Float> dAsp(nX, nY);
-    dAsp = 0.0;
-
-    for (int j = 0; j <= nY-1; j++)
-    {
-      for (int i = 0; i <= nX-1; i++)
-      {
-        const int px = i;
-        const int py = j;
-
-        Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scale,2));
-        dAsp(i,j)= Asp(i,j) * (((pow(i-center[0],2) + pow(j-center[1],2)) / pow(scale,2) - 1) / fabs(scale));
-      }
-    }
-
-    casacore::Matrix<casacore::Complex> AspFT;
-    casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsDirty->shape());
-    fft.fft0(AspFT, Asp);
-
-    casacore::Matrix<casacore::Complex> cWork;
-    cWork = AspFT * (*itsXfr);
-    casacore::Matrix<casacore::Float> AspConvPsf(itsDirty->shape(), (casacore::Float)0.0);
-    fft.fft0(AspConvPsf, cWork, false);
-    fft.flip(AspConvPsf, false, false); //need this
-
-    casacore::Matrix<casacore::Complex> dAspFT;
-    fft.fft0(dAspFT, dAsp);
-    casacore::Matrix<casacore::Complex> dcWork;
-    dcWork = dAspFT * (*itsXfr);
-    casacore::Matrix<casacore::Float> dAspConvPsf(itsDirty->shape(), (casacore::Float)0.0);
-    fft.fft0(dAspConvPsf, dcWork, false);
-    fft.flip(dAspConvPsf, false, false); //need this
-
-    casacore::Matrix<casacore::Float> GradAmp(itsDirty->shape(), (casacore::Float)0.0);
-    casacore::Matrix<casacore::Float> GradScale(itsDirty->shape(), (casacore::Float)0.0);
-
-    // calculate the length of the direvative vector
-    Float lenDirVec = 0.0;
-    /*for (int j = minJ; j <= maxJ; j++)
-    {
-      for (int i = minI; i <= maxI; i++)
-      {*/
-    for (int j = 0; j <= nY-1; j++)
-    {
-      for (int i = 0; i <= nX-1; i++)
-      {
-        // generate derivatives of amplitude
-        GradAmp(i,j) = (-2) * (*itsDirty)(i,j) * AspConvPsf(i,j);
-        // generate derivative of scale
-        GradScale(i,j) = (-2) * amp * (*itsDirty)(i,j) * dAspConvPsf(i,j);
-
-        lenDirVec += sqrt(pow(GradAmp(i,j), 2) + pow(GradScale(i,j), 2));
-      }
-    }
-
-    return lenDirVec;
-}
 
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
 {
@@ -1145,11 +1069,11 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   itsGoodAspActiveSet.resize(0);
   itsGoodAspAmplitude.resize(0);
   itsGoodAspCenter.resize(0);
-  itsPrevAspActiveSet.resize(0);
-  itsPrevAspAmplitude.resize(0);
+  //itsPrevAspActiveSet.resize(0);
+  //itsPrevAspAmplitude.resize(0);
 
   maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
-  os << "Initial maximum residual is " << strengthOptimum  << " and scale: " << optimumScale << LogIO::POST;
+  os << "Peak among the smoothed residual image is " << strengthOptimum  << " and initial scale: " << optimumScale << LogIO::POST;
   // cout << " its itsDirty is " << (*itsDirty)(positionOptimum);
   // cout << " at location " << positionOptimum[0] << " " << positionOptimum[1] << " " << positionOptimum[2];
 
@@ -1168,12 +1092,12 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     return {};
   else
   {
-    AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
-    AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
+    // AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
+    // AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
 
 
-    // heuristiclly determine active set for speed up
-    Float resArea = 0.0;
+    // No longer needed. heuristiclly determine active set for speed up
+    /*Float resArea = 0.0;
     Int nX = itsDirty->shape()(0);
     Int nY = itsDirty->shape()(1);
 
@@ -1190,7 +1114,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<IPosition> activeSetCenter;
 
     vector<pair<Float,int>> vp; //(LenDev, idx)
-   
 
     sort(vp.begin(),vp.end(), [](const pair<Float,int> &l, const pair<Float,int> &r) {return l.first > r.first;});
 
@@ -1198,36 +1121,33 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     vector<int> goodvp;
     for (unsigned int i = 0; i < vp.size(); i++)
     {
-      //if (i >= 5)
       if (i >= 20)
-      //if (i >= 400)
         break;
       goodvp.push_back(vp[i].second);
     }
     sort(goodvp.begin(), goodvp.end(), [](const int &l, const int &r) {return l > r;});
 
     for (unsigned int i = 0; i < goodvp.size(); i++)
-    {
+    { 
       tempx.push_back(itsAspAmplitude[goodvp[i]]);
       tempx.push_back(itsAspScaleSizes[goodvp[i]]);
       activeSetCenter.push_back(itsAspCenter[goodvp[i]]);
-      //cout << "temp erase aspen " << goodvp[i] << " AspScaleSize " << itsAspScaleSizes[goodvp[i]] << endl;
       itsAspAmplitude.erase(itsAspAmplitude.begin() + goodvp[i]);
       itsAspScaleSizes.erase(itsAspScaleSizes.begin() + goodvp[i]);
       itsAspCenter.erase(itsAspCenter.begin() + goodvp[i]);
       itsAspGood.erase(itsAspGood.begin() + goodvp[i]);
-    }
+    }*/
 
     // the new aspen is always added to the active-set
+    vector<Float> tempx;
+    vector<IPosition> activeSetCenter;
+
     tempx.push_back(strengthOptimum);
     tempx.push_back(itsInitScaleSizes[optimumScale]);
     activeSetCenter.push_back(positionOptimum);
 
-    unsigned int length = tempx.size();
-
-    //cout << "Before: x = " << x.transpose() << endl;
-
     // GSL: set the initial guess
+    unsigned int length = tempx.size();
     gsl_vector *x = NULL;
     x = gsl_vector_alloc(length);
     gsl_vector_set_zero(x);
@@ -1237,9 +1157,9 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       gsl_vector_set(x, i, tempx[i]);
       gsl_vector_set(x, i+1, tempx[i+1]);
 
-      // save aspen before optimization
-      itsPrevAspAmplitude.push_back(tempx[i]); // active-set amplitude before lbfgs
-      itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before lbfgs
+      // No longer needed. save aspen before optimization
+      // itsPrevAspAmplitude.push_back(tempx[i]); // active-set amplitude before bfgs
+      // itsPrevAspActiveSet.push_back(tempx[i+1]); // prev active-set before bfgs
     }
 
     // GSL optimization
@@ -1265,8 +1185,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     my_func.params = (void *)ptrParam;
     // f only
     /*const gsl_multimin_fminimizer_type *T;
-    T = gsl_multimin_fminimizer_nmsimplex2rand; //20.77, 31.63
-    //T = gsl_multimin_fminimizer_nmsimplex2; //-1.72 313 -->bad
+    T = gsl_multimin_fminimizer_nmsimplex2rand;
     s = gsl_multimin_fminimizer_alloc(T, length);
     my_func.n      = length;
     my_func.f      = my_f; //my_f
@@ -1281,7 +1200,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
     gsl_multimin_fminimizer_set(s, &my_func, x, ss);*/
 
-    printf("\n---------- BFGS algorithm begin ----------\n");
+    // ---------- BFGS algorithm begin ----------
     // fdf
     findComponent(5, s);
 
@@ -1312,39 +1231,37 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
                 s->fval, size);
       }
     while (status == GSL_CONTINUE && iter < 20);*/
-    printf("\n----------  BFGS algorithm end  ----------\n");
+    //----------  BFGS algorithm end  ----------
+
     // update x is needed here.
     gsl_vector *optx = NULL;
     optx = gsl_multimin_fdfminimizer_x(s); //fdf
     //optx = gsl_multimin_fminimizer_x(s); // f only
     // end GSL optimization
 
-    // put the updated x back to the class variables, itsAspAmp and itsAspScale
-    for (unsigned int i = 0; i < length; i+= 2)
-    {
-      double amp = gsl_vector_get(optx, i);
-      double scale = gsl_vector_get(optx, i+1);
+    // put the updated latest Aspen back to the active-set. Permanent list is no longer needed.
+    //for (unsigned int i = 0; i < length; i+= 2)
+    //{
+      double amp = gsl_vector_get(optx, 0); // i
+      double scale = gsl_vector_get(optx, 1); // i+1
       scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
-
-      itsAspAmplitude.push_back(amp);
-      itsAspScaleSizes.push_back(scale); // permanent list that doesn't get clear
       itsGoodAspAmplitude.push_back(amp); // active-set amplitude
       itsGoodAspActiveSet.push_back(scale); // active-set
-      itsAspCenter.push_back(activeSetCenter[i/2]);
-      if (scale < 0.4)
-        itsAspGood.push_back(false);
-      else
-        itsAspGood.push_back(true);
 
-      cout << "optx = " << amp << " " << scale << endl;
-    }
+      // No longer needed. permanent list that doesn't get clear
+      //itsAspAmplitude.push_back(amp); 
+      //itsAspScaleSizes.push_back(scale); 
+      //itsAspCenter.push_back(activeSetCenter[i/2]);
+    //}
 
-    itsStrengthOptimum = itsAspAmplitude[itsAspAmplitude.size() -1]; // the latest aspen is the last element of x
-    itsOptimumScaleSize = itsAspScaleSizes[itsAspScaleSizes.size() -1]; // the latest aspen is the last element of x
+    //itsStrengthOptimum = itsAspAmplitude[itsAspAmplitude.size() -1]; // the latest aspen is the last element of x
+    //itsOptimumScaleSize = itsAspScaleSizes[itsAspScaleSizes.size() -1]; // the latest aspen is the last element of x
+    itsStrengthOptimum = amp;
+    itsOptimumScaleSize = scale;
     itsGoodAspCenter = activeSetCenter;
 
     // debug
-    cout << "opt strengthOptimum " << itsStrengthOptimum << " opt size " << itsOptimumScaleSize << endl;
+    os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
 
     // free GSL stuff
     gsl_multimin_fdfminimizer_free(s); //fdf
@@ -1355,6 +1272,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   } // finish bfgs optimization
 
   AlwaysAssert(itsGoodAspCenter.size() == itsGoodAspActiveSet.size(), AipsError);
+  AlwaysAssert(itsGoodAspAmplitude.size() == itsGoodAspActiveSet.size(), AipsError);
 
   // debug info
   /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
@@ -1364,24 +1282,16 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
-  // test scale back genie
-  /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
-    itsAspAmplitude[i] = itsAspAmplitude[i] / 1e8;*/
-
-  //return itsAspScaleSizes; // this returns permanent list
+ 
   return itsGoodAspActiveSet; // return optimized scale
 }
 
 // Define the Asp scales without doing anything else
 void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 {
-  // this is good but needs to be reconsidered when we need to use itsGoodAspAmplitude
   sort(scaleSizes.begin(), scaleSizes.end());
-  //scaleSizes.erase(unique(scaleSizes.begin(), scaleSizes.end()), scaleSizes.end()); // remove the duplicated scales
-  scaleSizes.erase(unique(scaleSizes.begin(),scaleSizes.end(),[](Float l, Float r) { return abs(l - r) < 1e-3; }), scaleSizes.end());
-
-  for (unsigned int i = 0; i < scaleSizes.size(); i++)
-    cout << "defineAspScales scaleSizes[" << i << "] = " << scaleSizes[i] << endl;
+  // No longe needed since we only update with the latest Aspen. Remove the duplicated scales
+  // scaleSizes.erase(unique(scaleSizes.begin(),scaleSizes.end(),[](Float l, Float r) { return abs(l - r) < 1e-3; }), scaleSizes.end());
 
   itsNscales = Int(scaleSizes.size());
   itsScaleSizes.resize(itsNscales);
