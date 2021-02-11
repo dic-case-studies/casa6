@@ -66,11 +66,21 @@
 
 ###########################################################################
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+
+is_CASA6 = False
+try:
+    from casatools import image as iatool
+    from casatools import coordsys
+    from casatools import quanta
+    qa = quanta()
+    cs = coordsys()
+    is_CASA6 = True
+except:
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+    
 
 class ia_adddegaxes_test(unittest.TestCase):
     
@@ -79,9 +89,10 @@ class ia_adddegaxes_test(unittest.TestCase):
     
     def tearDown(self):
         self._myia.done()
-    
+
     def test_general(self):
         """general tests"""
+#        cs = coordsys( )
         myim = self._myia
         
         for t in ('f', 'c'):
@@ -155,9 +166,12 @@ class ia_adddegaxes_test(unittest.TestCase):
             self.assertTrue(myim2.done())
             self.assertTrue(mycs.done())
             self.assertTrue(myim.done())
-            
+        cs.done( )
+    
     def test_beams(self):
         """test hyperbeams get accounted for correctly"""
+#        qa = quanta( )
+#        cs = coordsys( )
         myia = self._myia
         myia.fromshape(shape=[10, 10, 10])
         major = "4arcsec"
@@ -176,7 +190,7 @@ class ia_adddegaxes_test(unittest.TestCase):
         self.assertTrue(beam["major"] == qa.quantity(major))
         self.assertTrue(beam["minor"] == qa.quantity(nminor))
         self.assertTrue(beam["positionangle"] == qa.quantity(pa))
-        
+        qa.done( )
         deg.done()
 
     def test_history(self):
@@ -192,3 +206,6 @@ class ia_adddegaxes_test(unittest.TestCase):
 
 def suite():
     return [ia_adddegaxes_test]
+
+if __name__ == '__main__':
+    unittest.main()

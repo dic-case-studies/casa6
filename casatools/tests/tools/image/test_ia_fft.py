@@ -78,10 +78,10 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
-datapath = ctsys_resolve('regression/unittest/ia_fft/')
+datapath = ctsys_resolve('unittest/ia_fft/')
 
 from casatools import image as iatool
 from casatools import table
@@ -150,7 +150,7 @@ class ia_fft_test(unittest.TestCase):
         """Was regression test in imagetest"""
 
         # Open test image (has sky coordinates)
-        testname = 'regression/unittest/ia_fft/test_image'
+        testname = 'unittest/ia_fft/test_image.im'
         myia = iatool()
         testim = iatool()
         testim.open(ctsys_resolve(testname))

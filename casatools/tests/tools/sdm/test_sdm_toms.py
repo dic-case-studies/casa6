@@ -13,6 +13,8 @@ import unittest
 
 myname = 'test_sdm_toms'
 
+datapath=ctsys.resolve('unittest/sdmtool/')
+
 # default ASDM dataset name
 myasdm_dataset_name = 'uid___X5f_X18951_X1'
 myms_dataset_name = 'M51.ms'
@@ -300,58 +302,47 @@ class test_base(unittest.TestCase):
         if(os.path.exists(myasdm_dataset_name)):
             shutil.rmtree(myasdm_dataset_name)
 
-        datapath=ctsys.resolve('regression/asdm-import/input')
         shutil.copytree(os.path.join(datapath,myasdm_dataset_name), myasdm_dataset_name)
-        datapath=ctsys.resolve('regression/exportasdm/input')
         shutil.copytree(os.path.join(datapath,myms_dataset_name), myms_dataset_name)
 
     def setUp_xosro(self):
         self.asdm = 'X_osro_013.55979.93803716435'
-        datapath=ctsys.resolve(os.path.join('regression/unittest/flagdata',self.asdm))
         if(not os.path.lexists(self.asdm)):
-            os.system('ln -s '+datapath+' '+self.asdm)
+            os.system('ln -s '+datapath+self.asdm)
 
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/importasdm/'
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+self.asdm +' '+self.asdm)
 
     def setUp_acaex(self):
         res = None
         myasdmname = 'uid___A002_X72bc38_X000' # ACA example ASDM with mixed pol/channelisation
-        datapath=ctsys.resolve(os.path.join('regression/asdm-import/input',myasdmname))
-        os.system('ln -sf '+datapath)
+        os.system('ln -sf '+datapath+myasdmname)
 
     def setUp_12mex(self):
         res = None
         myasdmname = 'uid___A002_X71e4ae_X317_short' # 12m example ASDM with mixed pol/channelisation
-
-        datapath=ctsys.resolve(os.path.join('regression/asdm-import/input',myasdmname))
-        os.system('ln -sf '+datapath)
+        os.system('ln -sf '+datapath+myasdmname)
 
     def setUp_eph(self):
         res = None
         myasdmname = 'uid___A002_X997a62_X8c-short' # 12m example ASDM with ephemerides
-        datapath=ctsys.resolve(os.path.join('regression/asdm-import/input',myasdmname))
-        os.system('ln -sf '+datapath)
+        os.system('ln -sf '+datapath+myasdmname)
 
     def setUp_flags(self):
         res = None
         myasdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
-        datapath=ctsys.resolve(os.path.join('regression/unittest/importasdm',myasdmname))
-        os.system('ln -sf '+datapath)
+        os.system('ln -sf '+datapath+myasdmname)
 
     def setUp_SD(self):
         res = None
         myasdmname = 'uid___A002_X6218fb_X264' # Single-dish ASDM
-        datapath=ctsys.resolve(os.path.join('regression/alma-sd/M100',myasdmname))
-        os.system('ln -sf '+datapath)
+        os.system('ln -sf '+datapath+myasdmname)
 
     def setUp_numbin(self):
         res = None
         # need full copies as this test involves renaming some xml files
-        datapath=ctsys.resolve('regression/asdm-import/input')
         for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
             if (os.path.exists(this_asdm_name)):
                 shutil.rmtree(this_asdm_name)
