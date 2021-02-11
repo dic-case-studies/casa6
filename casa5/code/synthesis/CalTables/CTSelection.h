@@ -159,21 +159,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Accessors for items selected:
 
-    // Accessor for the list of antenna-1 selected.
+    // Accessors for the list of antenna1 and antenna2 selected.
     // Antennas affected by the baseline negation operator have the
     // antenna IDs multiplied by -1.
-    // TBD: does this work with taql?
-    inline casacore::Vector<casacore::Int> getAntenna1List(
-            const casacore::MeasurementSet* ms=NULL) 
-    { return msSelection_p->getAntenna1List(ms); }
-    
-    // Accessor for the list of antenna-2 of the selected baselines.
-    // Antennas affected by the baseline negation operator have the
-    // antenna IDs multiplied by -1.
-    inline casacore::Vector<casacore::Int> getAntenna2List(
-            const casacore::MeasurementSet* ms=NULL) 
-    { return msSelection_p->getAntenna2List(ms); }
-    
+    // This does not work with taql selection, so mimic MSSelection behavior here:
+	// - Ensure toTableExprNode has been called
+	// - Return stored antenna lists
+    casacore::Vector<casacore::Int> getAntenna1List();
+    casacore::Vector<casacore::Int> getAntenna2List();
+
     // Accessor for the list of selected field IDs.
     inline casacore::Vector<casacore::Int> getFieldList(
             const casacore::MeasurementSet* ms=NULL) 
@@ -259,12 +253,22 @@ private:
     // Return antId list for selected and excluded antennas
     void setAntSelectExclude(const casacore::Vector<casacore::Int>& ant1list,
       const casacore::String& selection, casacore::MSSelectableTable* msLike,
-      casacore::String& ant1select, casacore::String& ant1exclude);
+      casacore::String& ant1select, casacore::String& ant1exclude,
+      casacore::Vector<casacore::Int>& antIds,
+      casacore::Vector<casacore::Int>& notAntIds);
     // Excluded IDs are -id; cannot tell with id 0
     bool zeroIsExcluded(const casacore::String& antennaExpr,
       casacore::MSSelectableTable* msLike);
+    // For setting antenna lists from included and excluded antennas
+    casacore::Vector<casacore::Int> appendAntennaLists(
+      const casacore::Vector<casacore::Int>& v1,
+      const casacore::Vector<casacore::Int>& v2);
 
     casacore::MSSelection* msSelection_p;
+
+    // antenna selection: cannot use msselection for antennas if taql is used
+    bool toTENCalled_p;
+    casacore::Vector<casacore::Int> antenna1List_p, antenna2List_p;
   };
 
 } //# NAMESPACE CASA - END

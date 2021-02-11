@@ -177,8 +177,8 @@ private:
 
     // Force appearance of new selection (even when not new)
     casacore::Int forceNew_;
-    casacore::Vector<int> selAnts1;
-    casacore::Vector<int> selAnts2;
+    casacore::Vector<int> selAnt1;
+    casacore::Vector<int> selAnt2;
     
     // Initializes the values to their defaults.
     void initDefaults();

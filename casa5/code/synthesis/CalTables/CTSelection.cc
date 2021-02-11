@@ -39,16 +39,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   };
 
   CTSelection::CTSelection(
-			const NewCalTable& ct,
-			const casacore::MSSelection::MSSMode& mode,
-			const casacore::String& timeExpr,
-			const casacore::String& antennaExpr,
-			const casacore::String& fieldExpr,
-			const casacore::String& spwExpr,
-			const casacore::String& taqlExpr,
-			const casacore::String& scanExpr,
-			const casacore::String& stateExpr,
-			const casacore::String& observationExpr) {
+      const NewCalTable& ct,
+      const casacore::MSSelection::MSSMode& mode,
+      const casacore::String& timeExpr,
+      const casacore::String& antennaExpr,
+      const casacore::String& fieldExpr,
+      const casacore::String& spwExpr,
+      const casacore::String& taqlExpr,
+      const casacore::String& scanExpr,
+      const casacore::String& stateExpr,
+      const casacore::String& observationExpr) : toTENCalled_p(false) {
     msSelection_p = new casacore::MSSelection();
     setTimeExpr(timeExpr);
     setAntennaExpr(antennaExpr);
@@ -65,7 +65,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
   }
   
-  CTSelection::CTSelection (const CTSelection& other) {
+  CTSelection::CTSelection (const CTSelection& other) : toTENCalled_p(false) {
     if (this != &other) {
         msSelection_p = other.msSelection_p;
     }
@@ -89,16 +89,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   //---------------------------------------------------------------------------
 
   void CTSelection::reset(casacore::MSSelectableTable& msLike,
-			  const casacore::MSSelection::MSSMode& mode,
-			  const casacore::String& timeExpr,
-			  const casacore::String& antennaExpr,
-			  const casacore::String& fieldExpr,
-			  const casacore::String& spwExpr,
-			  const casacore::String& taqlExpr,
-			  const casacore::String& scanExpr,
-			  const casacore::String& stateExpr,
-			  const casacore::String& observationExpr) {
+      const casacore::MSSelection::MSSMode& mode,
+      const casacore::String& timeExpr,
+      const casacore::String& antennaExpr,
+      const casacore::String& fieldExpr,
+      const casacore::String& spwExpr,
+      const casacore::String& taqlExpr,
+      const casacore::String& scanExpr,
+      const casacore::String& stateExpr,
+      const casacore::String& observationExpr) {
     clear();
+    antenna1List_p.resize();
+    antenna2List_p.resize();
+    toTENCalled_p = false;
+
     setTimeExpr(timeExpr);
     setAntennaExpr(antennaExpr);
     setFieldExpr(fieldExpr);
@@ -125,17 +129,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // Interpret all expressions and produce a consolidated TEN.  
     //
 
-    // Specialize antenna selection if necessary
+    // Specialize antenna selection for antenna-based tables
+    bool use_mssel_for_ant(true);
     casacore::String antExpr =
       msSelection_p->getExpr(casacore::MSSelection::ANTENNA_EXPR);
+
     if (!antExpr.empty()) {
+      // Set default  virtual test NewCalTable type, for testing
       casacore::MSSelectableTable::MSSDataType type = msLike->dataType();
+
       switch (type) {
-        case casacore::MSSelectableTable::PURE_ANTENNA_BASED:
+        case casacore::MSSelectableTable::PURE_ANTENNA_BASED: {
+          // Select antenna1 using TaQL
+          use_mssel_for_ant = false;
           doAntenna1Selection(antExpr, msLike);
+          }
           break;
-        case casacore::MSSelectableTable::REF_ANTENNA_BASED:
+        case casacore::MSSelectableTable::REF_ANTENNA_BASED: {
+          // Select antennas using TaQL
+          use_mssel_for_ant = false;
           doRefAntennaSelection(antExpr, msLike);
+          }
           break;
         case casacore::MSSelectableTable::BASELINE_BASED:
           // Use MSSelection antenna/baseline selection
@@ -143,7 +157,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     }
 
-    return msSelection_p->toTableExprNode(msLike);
+    casacore::TableExprNode node = msSelection_p->toTableExprNode(msLike);
+    toTENCalled_p = true;
+
+    if (use_mssel_for_ant) {
+      antenna1List_p.resize();
+      antenna2List_p.resize();
+      antenna1List_p = msSelection_p->getAntenna1List();
+      antenna2List_p = msSelection_p->getAntenna2List();
+    }
+
+    return node;
   }
 
   //---------------------------------------------------------------------------
@@ -156,6 +180,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // List of antennas to select or exclude
     casacore::String ant1(""), notAnt1("");
+    casacore::Vector<casacore::Int> ant1Ids, notAnt1Ids;
 
     for (auto& selection : selections) {
       // Check and strip "!" from selection
@@ -165,9 +190,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       casacore::String ant1ListStr = casacore::MSSelection::indexExprStr(ant1List);
 
       if (neg) {
+        // Add to String
         notAnt1 += (notAnt1.empty() ? "" : ",") + ant1ListStr;
+        // Add to Vector
+        ant1List *= -1;
+        notAnt1Ids = set_union(notAnt1Ids, ant1List);
       } else {
         ant1 += (ant1.empty() ? "" : ",") + ant1ListStr;
+        ant1Ids = set_union(ant1Ids, ant1List);
       }
     }
 
@@ -189,6 +219,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::String sep = (taqlExpr.empty() ? "" : " && ");
     taqlExpr += sep + antTaqlExpr;
     msSelection_p->setTaQLExpr(taqlExpr);
+
+    // Set antenna lists
+    antenna1List_p.resize();
+    antenna2List_p.resize();
+    antenna1List_p = appendAntennaLists(ant1Ids, notAnt1Ids);
   }
 
   bool CTSelection::isSelectionExcluded(casacore::String& selection) {
@@ -230,6 +265,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     NewCalTable nct = NewCalTable(*msLike->table());
     casacore::rownr_t nAnt = nct.antenna().nrow();
     casacore::Vector<casacore::Int> refAntlist = getRefAntIds(msLike);
+    casacore::Vector<casacore::Int> ant1Ids, notAnt1Ids;
+    casacore::Vector<casacore::Int> ant2Ids, notAnt2Ids;
 
     // Separate antenna selections
     casacore::Vector<casacore::String> selections;
@@ -239,7 +276,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       // antenna 1
       casacore::Vector<casacore::Int> ant1list = getAntennaList(selection, msLike);
       casacore::String ant1select, ant1exclude;
-      setAntSelectExclude(ant1list, selection, msLike, ant1select, ant1exclude);
+      setAntSelectExclude(ant1list, selection, msLike, ant1select, ant1exclude,
+        ant1Ids, notAnt1Ids);
 
       // antenna 2
       casacore::Vector<casacore::Int> ant2list = getAntennaList(selection, msLike, false);
@@ -251,7 +289,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
       }
       casacore::String ant2select, ant2exclude;
-      setAntSelectExclude(ant2list, selection, msLike, ant2select, ant2exclude);
+      setAntSelectExclude(ant2list, selection, msLike, ant2select, ant2exclude,
+        ant2Ids, notAnt2Ids);
 
       // TaQL for antenna1 and 2
       bool select(!ant1select.empty()), exclude(!ant1exclude.empty());
@@ -261,7 +300,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         selectTaql += " && ANTENNA2 IN [" + ant2select + "])";
         antTaql = (exclude ? "(" : "") + selectTaql;
       }
-      if (!ant1exclude.empty()) {
+      if (exclude) {
         // !(ANT1 & ANT2) == !ANT1 || !ANT2
         excludeTaql += "(ANTENNA1 NOT IN [" + ant1exclude + "]";
         excludeTaql += " || ANTENNA2 NOT IN [" + ant2exclude + "])";
@@ -278,6 +317,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::String taqlExpr = msSelection_p->getExpr(casacore::MSSelection::TAQL_EXPR);
     taqlExpr = (taqlExpr.empty() ? "" : " && ") + antTaqlExpr;
     msSelection_p->setTaQLExpr(taqlExpr);
+
+    // Set antenna lists
+    antenna1List_p.resize();
+    antenna2List_p.resize();
+    antenna1List_p = appendAntennaLists(ant1Ids, notAnt1Ids);
+    antenna2List_p = appendAntennaLists(ant2Ids, notAnt2Ids);
   }
 
   casacore::Vector<casacore::Int> CTSelection::getRefAntIds(
@@ -295,7 +340,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   void CTSelection::setAntSelectExclude(
     const casacore::Vector<casacore::Int>& antlist,
     const casacore::String& selection, casacore::MSSelectableTable* msLike,
-    casacore::String& antselect, casacore::String& antexclude) {
+    casacore::String& antselect, casacore::String& antexclude,
+    casacore::Vector<casacore::Int>& antIds,
+    casacore::Vector<casacore::Int>& notAntIds) {
     // Returns string list of selected and excluded antennas
     std::vector<casacore::Int> select, exclude;
 
@@ -312,8 +359,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         }
       }
     }
+
     antselect = casacore::MSSelection::indexExprStr(select);
     antexclude = casacore::MSSelection::indexExprStr(exclude);
+    antIds = set_union(antIds, select);
+    notAntIds = set_union(notAntIds, exclude);
   }
 
   bool CTSelection::zeroIsExcluded(const casacore::String& antennaExpr,
@@ -331,5 +381,35 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return antennaExpr.contains("0") || antennaExpr.contains(ant0name);
   }
 
-} //# NAMESPACE CASA - END
+  casacore::Vector<casacore::Int> CTSelection::appendAntennaLists(
+    const casacore::Vector<casacore::Int>& v1,
+    const casacore::Vector<casacore::Int>& v2) {
+    // Returns vector = v1.append(v2)
+    size_t v1size(v1.size()), v2size(v2.size());
+    casacore::Vector<casacore::Int> antvec(v1);
+    antvec.resize(v1size + v2size, true);
 
+    for (size_t i = 0; i < v2size; ++i) {
+        antvec(v1size + i) = v2(i);
+    }
+
+    return antvec;
+  }
+
+  casacore::Vector<casacore::Int> CTSelection::getAntenna1List() {
+    if (!toTENCalled_p) {
+      throw(casacore::MSSelectionError("CTSelection:toTableExprNode() has not been called"));
+    }
+
+    return antenna1List_p;
+  }
+
+  casacore::Vector<casacore::Int> CTSelection::getAntenna2List() {
+    if (!toTENCalled_p) {
+      throw(casacore::MSSelectionError("CTSelection:toTableExprNode() has not been called"));
+    }
+
+    return antenna2List_p;
+  }
+
+} //# NAMESPACE CASA - END
