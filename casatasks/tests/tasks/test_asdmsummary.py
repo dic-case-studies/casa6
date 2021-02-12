@@ -32,7 +32,7 @@ def logfileLen():
 
 def taskLogRange(startat):
     # return the start and end line numbers in the current logfile for "asdmsummary" task start and end after startat line
-    # task start is a line with "Being Task" and "asdmsummary" in it
+    # task start is a line with "Begin Task" and "asdmsummary" in it
     # task end is a line with "End Task" and "asdmsummary" in it
     # the first line matching each is returned
     # each value is -1 if no matching line is found
