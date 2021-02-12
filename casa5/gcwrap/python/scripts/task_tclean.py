@@ -212,6 +212,9 @@ def tclean(
         #return
       
 
+    if(facets>1 and parallel==True):
+        casalog.post("Facetted imaging currently works only in serial. Please choose pure W-projection instead.","WARN","task_tclean")
+
     #####################################################
     #### Construct ImagerParameters object
     #####################################################
@@ -446,15 +449,8 @@ def tclean(
                     imager.pbcorImages()
                     t1=time.time();
                     casalog.post("***Time for pb-correcting images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
-        ######### niter >=0  end if
+        ######### niter >=0  end if 
 
-    except Exception as e:
-    #    #print 'Exception : ' + str(e)
-    #    if(cppparallel):
-    #        ###release workers back to python mpi control
-    #        si=synthesisimager()
-    #        si.releasempi()
-        casalog.post('Exception from task_tclean : ' + str(e), "SEVERE", "task_tclean")
     finally:
         ##close tools
         # needs to deletools before concat or lock waits for ever

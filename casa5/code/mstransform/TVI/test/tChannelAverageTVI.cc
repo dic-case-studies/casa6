@@ -581,11 +581,6 @@ TEST_F(ChannelAverageTVISpwChannTest, CheckMSSelOutputSpwChannels)
     //and there are no rows with the second spectral window 
     visitIterator([&]() -> void {auto shape = vb_p->visCube().shape(); 
     
-    std::cout<<vb_p->spectralWindows()<<vb_p->nChannels()<<std::endl;
-    std::cout<<vb_p->antenna1()<<std::endl;
-    std::cout<<vb_p->dataDescriptionIds()<<std::endl;
-    std::cout<<shape<<std::endl;
-    
                                  if(allEQ(vb_p->spectralWindows(), 0)) //SPW0 
                                  {
                                      nRowsSpw0+=shape[2];

@@ -84,7 +84,7 @@ void processCorrelatorFlagsPerSlices( asdm::MainRow *mR_p, unsigned int iASDMInd
                                       CorrelationModeMod::CorrelationMode ocorrelationMode );
 
 public:
-const bool verbose = true;
+bool verbose = true;
 
 int sysPowerAntennaId(const asdm::SysPowerRow* row) const;
 int sysPowerSpectralWindowId(const asdm::SysPowerRow* row) const;

@@ -28,10 +28,10 @@ class initweights_common(unittest.TestCase):
     A base test class for initweights task
     """
     if is_CASA6:
-        datapath = ctsys.resolve('regression/unittest/initweights')
+        datapath = ctsys.resolve('unittest/initweights/')
     else:
         datapath = os.path.join(os.environ.get('CASAPATH').split()[0],
-                                'data/regression/unittest/initweights')
+                                'casatestdata/unittest/initweights/')
         
     # Pick up alternative data directory to run tests on MMSs
     testmms = False

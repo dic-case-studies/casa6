@@ -119,7 +119,7 @@ def recToList(rec):
 class rg_frombcs_test(unittest.TestCase):
     
     def setUp(self):
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/rg.frombcs/'
+        datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/rgtool/'
         for im in [image, image_nospec, image_dironly]:
             shutil.copy(datapath + im, im)
     
