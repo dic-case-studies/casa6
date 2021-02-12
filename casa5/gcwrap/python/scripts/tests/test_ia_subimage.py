@@ -74,7 +74,7 @@ from __main__ import *
 import unittest
 import numpy
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imsubimage/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/ia_subimage/'
 
 class ia_subimage_test(unittest.TestCase):
     

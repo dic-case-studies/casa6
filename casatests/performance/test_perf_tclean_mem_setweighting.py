@@ -65,6 +65,7 @@
 '''
 ####    Imports     ####
 import os
+import shutil
 import unittest
 import re
 
@@ -87,9 +88,9 @@ except ImportError:
 
  
 if CASA6:
-    dataroot = ctsys.resolve('visibilities/alma/')
+    dataroot = ctsys.resolve('performance/tclean_mem_setweighting/')
 else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/performance/tclean_mem_setweighting/'
 
 input_ms = 'uid___A002_Xb9dfa4_X4724_target_spw16.ms'
 datapath = dataroot + input_ms
