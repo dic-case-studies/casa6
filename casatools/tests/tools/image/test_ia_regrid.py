@@ -26,7 +26,7 @@ except:
     _rg = rgtool()
     _cs = cstool()
     _tb = tbtool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/')
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
@@ -34,7 +34,7 @@ except:
         return os.path.join(dataRoot,apath)
 
 sep = os.sep
-datapath = ctsys_resolve(os.path.join('regression','unittest','imregrid'))
+datapath = ctsys_resolve(os.path.join('unittest','imregrid'))
 
 IMAGE = 'image.im'
 gim = "gaussian_source.im"

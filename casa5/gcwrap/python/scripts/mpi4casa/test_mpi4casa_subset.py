@@ -55,7 +55,7 @@ def setUpFileCore(file,type_file):
 
     casalog.post("Copy %s file %s into the working area..." % (type_file,file),"INFO","test_mpi4casa")
     os.system('cp -RL ' + os.environ.get('CASAPATH').split()[0] + 
-              '/data/regression/unittest/simplecluster/' + file + ' ' + file)
+              '/casatestdata/unittest/casampi/' + file + ' ' + file)
 
 def setUpFile(file,type_file):
         

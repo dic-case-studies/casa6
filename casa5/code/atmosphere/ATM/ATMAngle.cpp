@@ -50,6 +50,17 @@ Angle::Angle(double angle, const std::string &units)
   }
 }
 
+Angle::Angle(double angle, Angle::Units units)
+{
+  if(units == Angle::UnitRadian) {
+    valueIS_ = angle;
+  } else if(units == Angle::UnitDegree) {
+    valueIS_ = (angle / 360.0) * 6.2831852;
+  } else {
+    valueIS_ = angle;
+  }
+}
+
 Angle::~Angle()
 {
 }
@@ -59,6 +70,17 @@ double Angle::get(const std::string &units) const
   if(units == "Rad" || units == "RAD" || units == "rad") {
     return valueIS_;
   } else if(units == "deg" || units == "DEG") {
+    return 360.0 * (valueIS_ / 6.2831852);
+  } else {
+    return valueIS_;
+  }
+}
+
+double Angle::get(Angle::Units units) const
+{
+  if(units == Angle::UnitRadian) {
+    return valueIS_;
+  } else if(units == Angle::UnitDegree) {
     return 360.0 * (valueIS_ / 6.2831852);
   } else {
     return valueIS_;

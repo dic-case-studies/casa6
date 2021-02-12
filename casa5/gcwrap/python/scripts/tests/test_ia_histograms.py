@@ -104,7 +104,7 @@ def alleqnum(x,num,tolerance=0):
         stop('unhandled array shape in alleq')
     return True
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/ia_histograms/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_histograms/'
 
 class ia_histograms_test(unittest.TestCase):
     

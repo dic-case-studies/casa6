@@ -183,7 +183,7 @@ class SynthesisImager
   casacore::CountedPtr<SIImageStore> imageStore(const casacore::Int id=0);
 
   //casacore::Record getMajorCycleControls();
-  void executeMajorCycle(const casacore::Record& controls);
+  Record executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
   void makePSF();
@@ -229,6 +229,7 @@ class SynthesisImager
   void normalizerinfo(const casacore::Record& normpars);
 
   virtual bool unlockImages();
+  virtual void cleanupTempFiles();
 protected:
  
   /////////////// Internal Functions
@@ -337,7 +338,7 @@ protected:
   // Do the major cycle
   virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   // Do the major cycle for cubes
-  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false){(void)dopsf; (void)savemodel;throw(AipsError("Not implemented"));};
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Record lala=casacore::Record()){(void)dopsf; (void)lala;throw(AipsError("Not implemented"));};
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
   virtual bool runCubePSFGridding(){throw(AipsError("Not implemented"));};
@@ -438,6 +439,7 @@ protected:
   casacore::Bool doingCubeGridding_p;
   
   casacore::Record normpars_p;
+  std::vector<casacore::String> tempFileNames_p;
 };
 
 

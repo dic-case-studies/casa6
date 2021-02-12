@@ -560,7 +560,7 @@ void SolvableVisCal::setApply(const Record& apply) {
 
   // Make the interpolation engine
   MeasurementSet ms(msName());
-  ci_ = new CTPatchedInterp(*ct_,matrixType(),nPar(),tInterpType(),fInterpType(),fieldtype,ms,spwMap(),cttifactoryptr());
+  ci_ = new CTPatchedInterp(*ct_,matrixType(),nPar(),tInterpType(),fInterpType(),fieldtype,ms,msmc(),spwMap(),cttifactoryptr());
 
   // Channel counting info 
   //  (soon will deprecate, I think, because there will be no need

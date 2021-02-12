@@ -12,8 +12,7 @@ from tasks import *
 from taskinit import *
 
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):
@@ -82,8 +81,8 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath, self.testms4),
-                self.ms4, symlinks=True)
+            shutil.copytree(os.path.join(datapath,self.testms4),
+                    self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
         self.assertTrue(os.path.isfile(plotfileName), "Plot was not created")
