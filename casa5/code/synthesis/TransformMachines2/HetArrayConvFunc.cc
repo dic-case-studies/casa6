@@ -417,7 +417,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
         return;
 
     }
-    actualConvIndex_p=convIndex(vb);
+    actualConvIndex_p=convIndex(vb, visFreq.nelements());
     //cerr << "actual conv index " << actualConvIndex_p << " doneMainconv " << doneMainConv_p << endl;
     if(doneMainConv_p.shape()[0] < (actualConvIndex_p+1)) {
         //cerr << "resizing DONEMAIN " <<   doneMainConv_p.shape()[0] << endl;
@@ -438,7 +438,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     if(doneMainConv_p[actualConvIndex_p]){
       if(nBeamChans != (*convFunctions_p[actualConvIndex_p]).shape()[3])
 	doneMainConv_p[actualConvIndex_p]=False;
-
+      
     }
 
 
