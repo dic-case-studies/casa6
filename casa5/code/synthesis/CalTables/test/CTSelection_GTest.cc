@@ -122,7 +122,7 @@ TEST( CTSelectionTest, CTRefAntSelection ) {
   // selected. Cannot use virtual table with no antenna subtable for this test.
   String casapath = getenv("CASAPATH");
   String datapath = casapath.substr(0,casapath.find(" "));
-  String caldata = "/data/regression/unittest/gaincal/ngc5921.ref2a.gcal";
+  String caldata = "/casatestdata/unittest/gaincal/ngc5921.ref2a.gcal";
   //std::cout << "Test refant-based caltable: " << datapath << caldata << endl; 
   NewCalTable tnct(datapath + caldata);
   uInt nTime(12); 
@@ -181,7 +181,7 @@ TEST( CTSelectionTest, CTPureAntSelection ) {
   // Cannot use virtual table with no antenna subtable for this test.
   String casapath = getenv("CASAPATH");
   String datapath = casapath.substr(0,casapath.find(" "));
-  String caldata = "/data/regression/unittest/gaincal/ngc5921.ref1a.gcal";
+  String caldata = "/casatestdata/unittest/gaincal/ngc5921.ref1a.gcal";
   //std::cout << "Test antenna-based caltable: " << datapath << caldata << endl;
   NewCalTable tnct(datapath + caldata);
   uInt nTime(7); 
@@ -241,7 +241,7 @@ TEST( CTSelectionTest, CTBaselineAntSelection ) {
   // Cannot use virtual table with no antenna subtable for this test.
   String casapath = getenv("CASAPATH");
   String datapath = casapath.substr(0,casapath.find(" "));
-  String caldata = "/data/regression/unittest/plotms/a_mueller.uvcont.tbl";
+  String caldata = "/casatestdata/unittest/plotms/a_mueller.uvcont.tbl";
   //std::cout << "Test antenna-based caltable: " << datapath << caldata << endl; 
   NewCalTable tnct(datapath + caldata);
 
