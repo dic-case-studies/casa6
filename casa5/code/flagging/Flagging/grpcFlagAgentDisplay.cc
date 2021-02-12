@@ -132,22 +132,10 @@ grpcFlagAgentState::grpcFlagAgentState( ) : userChoice_p("Continue"), userFixA1_
     // Manage check boxes from: Data Plot Window
     if ( req->name( ) == "FixAntenna1" ) {
         std::lock_guard<std::mutex> lock(state->set_values);
-        state->userChoice_p = "Continue";
         state->userFixA1_p = (req->state( ) == 0) ? "" : state->antenna1_p;
-        state->input_received = true;
-        if ( state->input_needed ) {
-            state->input_needed = false;		// prevent setting future twice
-            state->output.set_value(true);		// signal controlling thread that wait is over
-        }
     } else if ( req->name( ) == "FixAntenna2" ) {
         std::lock_guard<std::mutex> lock(state->set_values);
-        state->userChoice_p = "Continue";
         state->userFixA2_p = (req->state( ) == 0 ) ? "" : state->antenna2_p;
-        state->input_received = true;
-        if ( state->input_needed ) {
-            state->input_needed = false;		// prevent setting future twice
-            state->output.set_value(true);		// signal controlling thread that wait is over
-        }
     }
     return grpc::Status::OK;
 }
@@ -994,7 +982,7 @@ FlagAgentDisplay::iterateAntennaPairsInteractive(antennaPairMap *antennaPairMap_
 			{
 
 				// Wait for User Input
-				getUserInput(); // Fills in userChoice_p. userfix
+				getUserInput( ); // Fills in userChoice_p. userfix
 
 				// React to user-input
 				if(gui_state->userChoice_p=="Quit")
@@ -1595,7 +1583,7 @@ Bool FlagAgentDisplay::buildReportPlotWindow()
 
 
 
-void FlagAgentDisplay :: getUserInput() {
+void FlagAgentDisplay::getUserInput( ) {
 
     static const auto debug = getenv("GRPC_DEBUG");
     if ( debug ) {
