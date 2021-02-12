@@ -73,7 +73,7 @@ import numpy
 
 from casatools import msmetadata, table, ctsys, ms, measures, quanta
 
-datadir = ctsys.resolve('regression/unittest/MSMetaData')
+datadir = ctsys.resolve('unittest/msmetadata/')
 fixture = os.path.join(datadir,'MSMetaData.ms')
 writeable = os.path.join(datadir,'checker.ms')
 
@@ -1668,11 +1668,10 @@ class msmetadata_test(unittest.TestCase):
     def test_CAS7837(self):
         """Test corner case with no intents to make sure it doesn't segfault"""
         thismd = msmetadata()
-        thisDataDir = ctsys.resolve('regression/cvel/input')
         if os.path.exists('lala.ms'):
             shutil.rmtree('lala.ms')
         myms = ms()
-        myms.fromfits('lala.ms',os.path.join(thisDataDir,'W3OH_MC.UVFITS'))
+        myms.fromfits('lala.ms',os.path.join(datadir,'W3OH_MC.UVFITS'))
         myms.done()
         thismd.open('lala.ms')
         self.assertTrue((thismd.fieldsforintent('*') == numpy.array([0])).all())

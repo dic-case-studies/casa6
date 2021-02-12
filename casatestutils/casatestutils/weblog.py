@@ -1,7 +1,6 @@
 import os
 import logging
-import numpy
-import six
+
 try:
     # CASA 6
     logging.debug("Importing CASAtools")

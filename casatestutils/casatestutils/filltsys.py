@@ -24,14 +24,12 @@ import string
 
 try:
     # CASA 6
-    logging.debug("Importing CASAtools")
     import casatools
     _tb = casatools.table()
     casa6 = True
 
 except ImportError:
     # CASA 5
-    logging.debug("Import casa6 errors. Trying CASA5...")
     from taskinit import gentools
     _tb = gentools(['tb'])[0]
     casa5 = True

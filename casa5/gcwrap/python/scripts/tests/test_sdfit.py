@@ -17,10 +17,8 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
-
-    from testhelper import copytree_ignore_subversion
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils import selection_syntax
 
     tb = table()
 
@@ -36,24 +34,18 @@ else:
 
     from sdfit import sdfit
     from sdutil import tbmanager
-    
+
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
-        
-    try:
-        from . import testutils
-    except:
-        import tests.testutils as testutils
-    copytree_ignore_subversion = testutils.copytree_ignore_subversion
 
     # the global tb tool is used here
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
-    
+
 ### Utilities for reading blparam file
 class FileReader(object):
     def __init__(self, filename):
@@ -119,7 +111,7 @@ class BlparamFileParser(FileReader):
         self.parseCoeff()
         self.parseRms()
         return
-        
+
     def parseCoeff(self):
         self.__coeff = []
         nrow = self.nrow()
@@ -146,7 +138,7 @@ class BlparamFileParser(FileReader):
                 idx = self.index(self.__rtxt, idx)
                 self.__rms.append(self.__parseRms(idx))
             except:
-                break   
+                break
         return
 
     def __parseCoeff(self, idx):
@@ -161,7 +153,7 @@ def parseCoeff(txt):
     for c in clist:
         ret.append(float(c.split('=')[1]))
     return ret
-    
+
 def parseRms(txt):
     t = txt.lstrip().rstrip('\n')[6:]
     return float(t)
@@ -171,7 +163,7 @@ class sdfit_unittest_base(unittest.TestCase):
     Base class for sdfit unit test
     """
     # Data path of input/output
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     taskname = "sdfit"
     verboselog = False
 
@@ -253,13 +245,13 @@ class sdfit_unittest_base(unittest.TestCase):
         """
         Copy a list of files and directories from a directory (from_dir) to
         another (dest_dir) in the same name.
-        
+
         names : a list of files and directories to copy
         from_dir : a path to directory from which search and copy files
                    and directories (the default is the current path)
         to_dir   : a path to directory to which copy files and directories
                    (the default is the current path)
-        NOTE: it is not allowed to specify 
+        NOTE: it is not allowed to specify
         """
         # Check for paths
         if from_dir==None and dest_dir==None:
@@ -281,7 +273,7 @@ class sdfit_unittest_base(unittest.TestCase):
                     casalog.post("Copying '%s' FROM %s TO %s" % (name, from_path, to_path))
             else:
                 casalog.post("Could not find '%s'...skipping copy" % from_name, 'WARN')
-    
+
     def _getUniqList(self, val):
         """Accepts a python list and returns a list of unique values"""
         if not isinstance(val, list):
@@ -307,7 +299,7 @@ class sdfit_unittest_base(unittest.TestCase):
         else:
             raise Exception('_getListSelection: wrong value ' + str(val) + ' for selection.')
         return self._getUniqList(val_sel)
-    
+
     def _getListSelectedRowID(self, data_list, sel_list):
         """
         Returns IDs of data_list that contains values equal to one in
@@ -326,7 +318,7 @@ class sdfit_unittest_base(unittest.TestCase):
                 #idx = sel_list.index(data_list[i])
                 res.append(i)
         return self._getUniqList(res)
-    
+
     def _getEffective(self, spec, mask):
         """
         Returns an array made by selected elements in spec array.
@@ -352,7 +344,7 @@ class sdfit_unittest_base(unittest.TestCase):
         colname  : the name of data column (default: 'FLOAT_DATA')
         mask     : a mask list of the channel ranges to use. The format is
                    [[start_idx0, end_idx0], [start_idx1, end_idx1], ...]
-        
+
         The order of output list is in the ascending order of selected row IDs.
         The dictionary in output list has keys:
         'row' (row ID in MS), 'pol' (pol ID), 'rms', 'min', 'max', 'median',
@@ -387,7 +379,7 @@ class sdfit_unittest_base(unittest.TestCase):
                 res_elem = self._calc_stats_of_array(spec, mask=mask)
                 res_elem['row'] = irow
                 res_elem['pol'] = ipol
-                
+
                 res.append(res_elem)
 
         return res
@@ -407,7 +399,7 @@ class sdfit_unittest_base(unittest.TestCase):
         res_elem['median'] = numpy.median(spec)
         res_elem['stddev'] = numpy.std(spec)
         return res_elem
-        
+
 
     def _convert_statslist_to_dict(self, stat_list):
         """
@@ -458,7 +450,7 @@ class sdfit_unittest_base(unittest.TestCase):
         else:
             keylist = refstat.keys()
             #keylist = self.complist
-        
+
         for key in keylist:
             self.assertTrue(key in currstat,\
                             msg="%s is not defined in the current results."\
@@ -500,7 +492,7 @@ class sdfit_unittest_base(unittest.TestCase):
                                 msg="%s differs: %s" % (key, str(currval)))
             del currval, refval
 
-            
+
 #     def _isInAllowedRange(self, testval, refval, reltol=1.e-2):
 #         """
 #         Check if a test value is within permissive relative difference from refval.
@@ -539,7 +531,7 @@ class sdfit_unittest_base(unittest.TestCase):
         # TO DO: compare only "Fitter range" and "Baseline parameters"
         self._checkfile(out)
         self._checkfile(reference)
-        
+
         blparse_out = BlparamFileParser(out)
         blparse_out.parse()
         coeffs_out = blparse_out.coeff()
@@ -600,7 +592,7 @@ class sdfit_basicTest(sdfit_unittest_base):
          3    1     2        1         5       4100   100    0.1
       -------------------------------------------------------
 
-      the spectra of the row (irow=3) have two lines, while those 
+      the spectra of the row (irow=3) have two lines, while those
       of the other rows have single line.
       spw value is identical to irow, and number of channels is 8192.
     """
@@ -632,7 +624,7 @@ class sdfit_basicTest(sdfit_unittest_base):
         for i in range(len(answer['peak'])):
             for j in range(len(answer['peak'][i])):
                 answer['peak'][i][j] *= -1.0
-        
+
     def setUp(self):
         for infile in self.infiles:
             if os.path.exists(infile):
@@ -658,7 +650,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                 nrow = tb.nrows()
 
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -679,9 +671,9 @@ class sdfit_basicTest(sdfit_unittest_base):
             npol = 2
             nrow = len(spw.split(','))
             answer = self.answer012
-        
+
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -710,7 +702,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             answer = self.answer3
 
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -741,7 +733,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             answer = self.answer3
 
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -772,9 +764,9 @@ class sdfit_basicTest(sdfit_unittest_base):
             nrow = len(spw.split(','))
             answer = copy.deepcopy(self.answer012)
             self._generateAnswerForNegativeProfiles(answer)
-            
+
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -805,9 +797,9 @@ class sdfit_basicTest(sdfit_unittest_base):
             nrow = 1
             answer = copy.deepcopy(self.answer3)
             self._generateAnswerForNegativeProfiles(answer)
-            
+
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -840,9 +832,9 @@ class sdfit_basicTest(sdfit_unittest_base):
             nrow = 1
             answer = copy.deepcopy(self.answer3)
             self._generateAnswerForNegativeProfiles(answer)
-            
+
             for key in result.keys():
-                self.assertEqual(len(result[key]), nrow*npol, 
+                self.assertEqual(len(result[key]), nrow*npol,
                                  msg="The result data has wrong data length")
                 for i in range(len(result[key])):
                     if (key == "nfit"):
@@ -865,7 +857,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
         intent, antenna, field, spw, timerange, scan, and pol,
     in combination with datacolumn selection = {corrected | float_data}
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type1.fit.ms"
     common_param = dict(infile=infile, outfile='',
                         fitfunc='gaussian',nfit=[1],fitmode='list')
@@ -877,7 +869,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
                     scan=("0~8", [0]),
                     pol=("YY", [1]))
     verbose = False
- 
+
     reference = {'float_data': {'cent': [50, 50, 60, 60],
                                 'peak': [5, 10, 15, 20],
                                 'fwhm': [40, 30, 20, 10]},
@@ -933,7 +925,7 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
         inparams.update(self.common_param)
         fit_val = sdfit(datacolumn=datacolumn, **inparams)
         self._test_result(fit_val, sel_param, datacolumn)
-        
+
     def _test_result(self, fit_val, sel_param, dcol, atol=1.e-5, rtol=1.e-5):
         # Make sure output MS exists
         self.assertTrue(os.path.exists(self.infile), "Could not find input MS")
@@ -1021,7 +1013,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     """
     This class tests fitmode='auto'
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='',datacolumn='float_data',
                         fitfunc='gaussian',fitmode='auto')
@@ -1041,7 +1033,7 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
         default(sdfit)
 
     def tearDown(self):
-        self._remove([self.infile])
+        self._remove([self.infile, self.infile + '.flagversions'])
 
     def get_reference_from_base(self, is_center):
         ref_val = {}
@@ -1120,9 +1112,9 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
     """
     tests for time-averaging capability
 
-    Note: the input data 'sdfit_tave.ms' has 32 rows. Any combination of 
+    Note: the input data 'sdfit_tave.ms' has 32 rows. Any combination of
           SCAN_ID (8 and 9), STATE_ID (6 and 4) and FIELD_ID (4 and 5)
-          has 4 rows, where Gaussian profile has different amplitude and 
+          has 4 rows, where Gaussian profile has different amplitude and
           different weight:
           --------------------------------------
           irow scan state field weight amplitude
@@ -1158,9 +1150,9 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
           31   9    4     5     1.0    8*1.03
           --------------------------------------
           Averaging the first 4 rows, taking account of weight, gives
-          Gaussian with peak amplitude of 1. 
+          Gaussian with peak amplitude of 1.
     """
-    datapath = ctsys_resolve('regression/unittest/tsdfit')
+    datapath = ctsys_resolve('unittest/sdfit/')
     infile = "sdfit_tave.ms"
     outfile = "sdfit.out"
     common_param = dict(infile=infile, outfile=outfile, datacolumn='float_data',
@@ -1184,9 +1176,9 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
         for irow in range(len(fit_val['peak'])):
             out = fit_val['peak'][irow][0][0]
             ref = ref_val[irow]
-            self.assertTrue(numpy.allclose(out, ref, rtol=1.e2), 
+            self.assertTrue(numpy.allclose(out, ref, rtol=1.e2),
                             "result in row %d differs" % (irow))
-                
+
     def testTimebinNullString(self):
         """Test timebin='' : no averaging (default)"""
         ref = [0.94, 0.98, 1.01, 1.03]
@@ -1245,23 +1237,23 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
 class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
     """
     Test polarization averaging capability
-    
+
         test_polaverage_default   -- test default average mode (=stokes)
         test_polaverage_stokes    -- test stokes average mode
-        test_polaverage_geometric -- test geometric average mode 
-        --- The following tests are defined to verify fix for CAS-9778 --- 
-        test_polaverage_stokes_chunk -- test stokes average mode against different access pattern 
+        test_polaverage_geometric -- test geometric average mode
+        --- The following tests are defined to verify fix for CAS-9778 ---
+        test_polaverage_stokes_chunk -- test stokes average mode against different access pattern
         test_polaverage_geometric_chunk -- test geometric average mode against different access pattern
     """
     infile = "gaussian.ms"
-    
+
     # reference value from basicTest
     answer = sdfit_basicTest.answer012
-    
+
     def setUp(self):
-        copytree_ignore_subversion(self.datapath, self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
         self.edit_weight()
-    
+
     def tearDown(self):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
@@ -1284,10 +1276,10 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
                 mytb.putcell('WEIGHT', irow, weight)
         finally:
             mytb.close()
-            
+
     def edit_meta(self):
         """
-        Edit DATA_DESC_ID and TIME (TIME_CENTROID) so taht VI/VB2 takes more than 
+        Edit DATA_DESC_ID and TIME (TIME_CENTROID) so taht VI/VB2 takes more than
         one row in one (sub)chunk
         """
         tb.open(self.infile, nomodify=False)
@@ -1307,7 +1299,7 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             tb.putcol('TIME_CENTROID', time)
         finally:
             tb.close()
-            
+
     def scale_expected_peak(self, mode, peak):
         scaled = numpy.copy(peak)
         if mode == 'default' or mode == 'stokes':
@@ -1318,7 +1310,7 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
                 mytb = table()
             else:
                 (myms, mytb,) = gentools(['ms', 'tb'])
-                
+
             sel = myms.msseltoindex(vis=self.infile, spw='0')
             ddid = sel['dd'][0]
             mytb.open(self.infile)
@@ -1332,11 +1324,11 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             scaled *= weight / wsum
 
         return scaled
-            
+
     def verify(self, mode, result, where=[0,1]):
         print('mode=\'{}\''.format(mode))
         print('result=\'{}\''.format(result))
-        
+
         # number of fit results
         # number of fit results should be 1
         # (2 spectra are reduced into 1 by polarization averaging)
@@ -1346,12 +1338,12 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             return
         else:
             self.assertEqual(nresults, 1)
-        
+
         # verify nfit
         # nfit should be 2
         nfit = numpy.asarray(result['nfit'])
         self.assertTrue(numpy.all(nfit == 2))
-        
+
         # verify cent
         # cent should not be changed
         cent = numpy.asarray(result['cent'])
@@ -1360,13 +1352,13 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         cent_expected = numpy.asarray(self.answer['cent'])[where].squeeze()
         sort_index = numpy.argsort(cent_expected)
         cent_expected = cent_expected[sort_index]
-        print('cent (result)={}\ncent (expected)={}'.format(cent_result, 
-                                                            cent_expected)) 
+        print('cent (result)={}\ncent (expected)={}'.format(cent_result,
+                                                            cent_expected))
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(cent_expected[i], cent_result[i] + err_factor * cent_err[i])
             self.assertGreaterEqual(cent_expected[i], cent_result[i] - err_factor * cent_err[i])
-            
+
         # verify fwhm
         # fwhm should not be changed
         fwhm = numpy.asarray(result['fwhm'])
@@ -1374,13 +1366,13 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         fwhm_err = fwhm[0,:,1]
         fwhm_expected = numpy.asarray(self.answer['fwhm'])[where].squeeze()
         fwhm_expected = fwhm_expected[sort_index]
-        print('fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result, 
-                                                            fwhm_expected)) 
+        print('fwhm (result)={}\nfwhm (expected)={}'.format(fwhm_result,
+                                                            fwhm_expected))
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(fwhm_expected[i], fwhm_result[i] + err_factor * fwhm_err[i])
             self.assertGreaterEqual(fwhm_expected[i], fwhm_result[i] - err_factor * fwhm_err[i])
-        
+
         # verify peak
         # peak should depend on mode and weight value
         peak = numpy.asarray(result['peak'])
@@ -1389,26 +1381,26 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         peak_expected = numpy.asarray(self.answer['peak'])[where].squeeze()
         peak_expected_scaled = self.scale_expected_peak(mode, peak_expected)
         peak_expected_scaled = peak_expected_scaled[sort_index]
-        print('peak (result)={}\npeak (expected)={}'.format(peak_result, 
-                                                            peak_expected_scaled)) 
+        print('peak (result)={}\npeak (expected)={}'.format(peak_result,
+                                                            peak_expected_scaled))
         err_factor = 2.0
         for i in range(2):
             self.assertLessEqual(peak_expected_scaled[i], peak_result[i] + err_factor * peak_err[i])
             self.assertGreaterEqual(peak_expected_scaled[i], peak_result[i] - err_factor * peak_err[i])
-        
+
     def run_test(self, mode):
         # only spw 0 is processed
-        result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian', 
+        result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian',
                        nfit=[2], spw='0', fitmode='auto', polaverage=mode)
-        self.verify(mode, result)        
-    
+        self.verify(mode, result)
+
     def run_test2(self, mode):
         """
-        run_test2 is test function that should be used for tests including edit_meta 
+        run_test2 is test function that should be used for tests including edit_meta
         """
         # only spw 0 is processed
         # since edit_meta, effectively it corresponds to process both spw 0 and 1
-        result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian', 
+        result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian',
                        nfit=[2], spw='0', fitmode='auto', polaverage=mode)
         for i in range(len(result['nfit'])):
             subresult = {}
@@ -1416,34 +1408,34 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             subresult['cent'] = [result['cent'][i]]
             subresult['fwhm'] = [result['fwhm'][i]]
             subresult['peak'] = [result['peak'][i]]
-            self.verify(mode, subresult, where=[2*i, 2*i+1])        
-    
+            self.verify(mode, subresult, where=[2*i, 2*i+1])
+
     def test_polaverage_default(self):
         """ test_polaverage_default: test default case (no averaging) """
         self.run_test(mode='')
-    
+
     def test_polaverage_stokes(self):
         """ test_polaverage_stokes: test stokes average mode """
         self.run_test(mode='stokes')
-        
+
     def test_polaverage_geometric(self):
         """ test_polaverage_geometric: test geometric average mode """
         self.run_test(mode='geometric')
-        
+
     def test_polaverage_stokes_chunk(self):
         """ test_polaverage_stokes_chunk: test stokes average mode against different access pattern """
         self.edit_meta()
         self.run_test2(mode='stokes')
-        
+
     def test_polaverage_geometric_chunk(self):
         """ test_polaverage_geometric_chunk: test geometric average mode against different access pattern """
         self.edit_meta()
         self.run_test2(mode='geometric')
 
 def suite():
-    return [sdfit_basicTest, 
-            sdfit_selection, 
-            sdfit_auto, 
+    return [sdfit_basicTest,
+            sdfit_selection,
+            sdfit_auto,
             sdfit_timeaverage,
             sdfit_polaverage
            ]

@@ -181,7 +181,7 @@ def _momentTest_debug_msg( msgNum=0 ):
     print(str(msgNum)+":  "+debug_msgs[idx])
     return
 
-datapath = ctsys.resolve('regression/immoment')
+datapath = ctsys.resolve('unittest/immoments/')
 
 # input files
 list1=['n1333_both.image','n1333_both.image.rgn']

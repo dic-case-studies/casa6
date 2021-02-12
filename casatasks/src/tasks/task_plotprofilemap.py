@@ -17,9 +17,9 @@ qa = quanta()
 
 
 def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=None,
-                   pol=None, spectralaxis=None, restfreq=None, plotrange=None, title=None, 
+                   pol=None, spectralaxis=None, restfreq=None, plotrange=None, title=None,
                    linecolor=None, linestyle=None, linewidth=None,
-                   separatepanel=None, plotmasked=None, maskedcolor=None, 
+                   separatepanel=None, plotmasked=None, maskedcolor=None,
                    showaxislabel=None, showtick=None, showticklabel=None,
                    figsize=None, numpanels=None):
     casalog.origin('plotprofilemap')
@@ -88,7 +88,7 @@ def DDMMSSs(x, pos):
     (d, m, s) = Deg2DMS(x, 1 / 360000.0)
     #return '%+02dd%02dm%04.1fs' % (d, m, s)
     sint = int(s)
-    sstr = ('%3.1f'% ( s - int(s))).lstrip('0')
+    sstr = ('%3.1f' % (s - int(s))).lstrip('0')
     return '%+02d%s%02d\'%02d\"%s' % (d, dsyb, m, sint, sstr)
 
 
@@ -266,7 +266,7 @@ class ProfileMapAxesManager(object):
                         label_text = 'Intensity [%s]' % self.brightnessunit
                     else:
                         label_text = 'Intensity [1e%d x %s]' % (int(numpy.log10(self.normalization_factor)),
-                                                              self.brightnessunit)
+                                                                self.brightnessunit)
                     axes.yaxis.set_label_text(label_text,
                                               size=self.ticksize, rotation='vertical')
                 if self.showtick:
@@ -537,8 +537,8 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
 
 
 class SDProfileMapPlotter(object):
-    def __init__(self, nh, nv, xstep, ystep, brightnessunit, direction_label, direction_reference, 
-                 spectral_label, spectral_unit, title=None, separatepanel=True, 
+    def __init__(self, nh, nv, xstep, ystep, brightnessunit, direction_label, direction_reference,
+                 spectral_label, spectral_unit, title=None, separatepanel=True,
                  showaxislabel=False, showtick=False, showticklabel=False,
                  figsize=None,
                  clearpanel=True):
@@ -612,7 +612,7 @@ class SDProfileMapPlotter(object):
     def set_normalization_factor(self, factor):
         self.axes.set_normalization_factor(factor)
 
-    def plot(self, figfile, map_data, frequency, 
+    def plot(self, figfile, map_data, frequency,
              linecolor='b', linestyle='-', linewidth=0.2,
              plotmasked='none', maskedcolor='gray', transparent=False,
              user_xmin=None, user_xmax=None):
@@ -703,7 +703,7 @@ class SDProfileMapPlotter(object):
                         m = map_data[x][y] == NoDataThreshold
                         if not all(m):
                             ma = pl.ma.masked_array(map_data[x][y], m)
-                            pl.plot(frequency, ma, 
+                            pl.plot(frequency, ma,
                                     color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
 
                 pl.axis((xmin, xmax, ymin, ymax))
@@ -851,5 +851,5 @@ class SpectralImage(object):
         if _unit != unit:
             refval = qa.convert(qa.quantity(refval, _unit), unit)['value']
             increment = qa.convert(qa.quantity(increment, _unit), unit)['value']
-        #return numpy.array([refval+increment*(i-refpix) for i in xrange(self.nchan)])
+        #return numpy.array([refval+increment*(i-refpix) for i in range(self.nchan)])
         return (refpix, refval, increment)

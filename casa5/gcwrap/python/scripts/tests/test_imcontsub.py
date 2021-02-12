@@ -109,7 +109,7 @@ if is_CASA6:
 
     _ia = image( )
 
-    datapath = ctsys.resolve('regression/g192redux/reference')
+    datapath = ctsys.resolve('unittest/imcontsub/')
 else:
     import casac
     from tasks import *
@@ -117,10 +117,10 @@ else:
 
     _ia = iatool( )
     
-    datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
+    datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imcontsub/'
 
 # Input files
-list = ['g192_a2.image', 'g192_a2.image-2.rgn', 
+mylist = ['g192_a2.image', 'g192_a2.image-2.rgn', 
         'g192_a2.contfree', 'g192_a2.cont', 
         'g192_a2.contfree.order1', 'g192_a2.cont.order1', 
         'g192_a2.contfree.order2', 'g192_a2.cont.order2',
@@ -156,17 +156,17 @@ class imcontsub_test(unittest.TestCase):
         self.assertTrue(passes)
 
     def setUp(self):
-        if(os.path.exists(list[0])):
-            for file in list:
-                os.system('rm -rf ' +file)
+        if(os.path.exists(mylist[0])):
+            for f in mylist:
+                os.system('rm -rf ' +f)
         
-        for file in list:
-            os.system('cp -r '+os.path.join(datapath,file)+' '+file)
+        for f in mylist:
+            os.system('cp -RH '+os.path.join(datapath,f)+' '+f)
 
 
     def tearDown(self):
-        for file in list:
-            os.system('rm -rf ' +file)
+        for f in mylist:
+            os.system('rm -rf ' +f)
             os.system('rm -rf cont_*')
             os.system('rm -rf input_test*')
             os.system('rm -rf fit_test*')

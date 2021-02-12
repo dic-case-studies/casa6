@@ -319,7 +319,7 @@ public:
   // Extend baseline-dependent flags to all SDBs in the list
   //  This uniformizes the baseline-dependent flags
   //  NB: Cross-hands only, for now!
-  void extendBaselineFlags();
+  casacore::Int extendCrossHandBaselineFlags(casacore::String& message);
 
 private:
 

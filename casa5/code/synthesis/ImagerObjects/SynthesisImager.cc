@@ -107,7 +107,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   SynthesisImager::SynthesisImager() : itsMappers(SIMapperCollection()), writeAccess_p(True),
-				       gridpars_p(), impars_p(), movingSource_p("")
+				       gridpars_p(), impars_p(), movingSource_p(""), doingCubeGridding_p(True)
   {
 
      imwgt_p=VisImagingWeight("natural");
@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisImager","destructor",WHERE) );
     os << LogIO::DEBUG1 << "SynthesisImager destroyed" << LogIO::POST;
-
+    cleanupTempFiles();
     if(rvi_p) delete rvi_p;
     rvi_p=NULL;
     //    cerr << "IN DESTR"<< endl;
@@ -589,8 +589,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	if(!(ms_l.weather().isNull()))    ms_l.weather().unlock();
       }
   }
- 
+  ///////////////////////////////////
+bool SynthesisImager::unlockImages()
+  {
 
+    return itsMappers.releaseImageLocks();
+
+  }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Bool SynthesisImager::defineImage(const String& imagename, const Int nx, const Int ny,
@@ -832,8 +837,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
            LogIO os( LogOrigin("SynthesisImager","tuneSelectData",WHERE) );
 	   if(itsMappers.nMappers() < 1)
 		   ThrowCc("defineimage has to be run before tuneSelectData");
-
-	   if(impars_p.mode=="cubesource")
+	   if(impars_p.mode=="cubesource" || impars_p.mode=="cubedata")
 	     return dataSel_p;
 	   os << "Tuning frequency data selection to match image spectral coordinates" << LogIO::POST;
 
@@ -851,9 +855,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	   if(freqframe != MFrequency::REST &&  freqframe != MFrequency::Undefined)
 	     cs.setSpectralConversion("LSRK");
 	   Vector<Double> pix(4);
-	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-0.5;
+           //increase edge part a bit  vi/vb2 is making lots of grief for selecting properly if the channel are negative
+	   // specially...
+	   pix[0]=0; pix[1]=0; pix[2]=0; pix[3]=-1.5;
 	   Double freq1=cs.toWorld(pix)[3];
-	   pix[3]=Double(nchannel)-0.5;
+	   pix[3]=Double(nchannel)+0.5;
 	   Double freq2=cs.toWorld(pix)[3];
 	   String units=cs.worldAxisUnits()[3];
 	   if(freq2 < freq1){
@@ -956,13 +962,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  void SynthesisImager::executeMajorCycle(Record& controlRecord)
+  Record SynthesisImager::executeMajorCycle(const Record& controlRecord)
   {
     LogIO os( LogOrigin("SynthesisImager","executeMajorCycle",WHERE) );
 
     nMajorCycles++;
-
+    if(controlRecord.isDefined("nmajorcycles"))
+      controlRecord.get("nmajorcycles", nMajorCycles);
+    Record outRec=controlRecord;
     Bool lastcycle=false;
+
+    
     if( controlRecord.isDefined("lastcycle") )
       {
 	controlRecord.get( "lastcycle" , lastcycle );
@@ -975,13 +985,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os << "Major Cycle " << nMajorCycles << " -------------------------------------" << LogIO::POST;
 
     try
-      {    
-	if( itsDataLoopPerMapper == false )
-	  {	runMajorCycle(false, lastcycle);}
-	else
-	  {	runMajorCycle2(false, lastcycle);}
+      {
+	if( (itsMaxShape[3] > 1 || impars_p.mode.contains("cube"))&& doingCubeGridding_p ){/// and valid ftmachines
+		runMajorCycleCube(false, controlRecord);
+	}
+	else{
+	 if( itsDataLoopPerMapper == false )
+		{	runMajorCycle(false, lastcycle);}
+	 else
+		{	runMajorCycle2(false, lastcycle);}
 	
-	
+	}
+	if(lastcycle){
+	  String mess="";
+	  if(controlRecord.isDefined("usemask")  && controlRecord.asString("usemask").contains("auto")){
+	    mess="\nFor Automasking most  major cycles may appear wrongly as  the last one ";
+	  }
+
+	  std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
+	  outRec.define("tempfilenames", Vector<String>(tmpfiles));
+	}
 	itsMappers.releaseImageLocks();
 
       }
@@ -989,11 +1012,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       {
 	throw( AipsError("Error in running Major Cycle : "+x.getMesg()) );
       }    
-
+    return outRec;
   }// end of executeMajorCycle
   //////////////////////////////////////////////
   /////////////////////////////////////////////
+  void SynthesisImager::cleanupTempFiles(){
+    for (auto it = tempFileNames_p.begin(); it != tempFileNames_p.end(); ++it) {
+      //cerr <<"Trying to cleanup " << (*it) << endl;
+      if(Table::isReadable(*it)){
+	Table::deleteTable(*it);
 
+      }
+    }
+
+
+  }
   void SynthesisImager::makePSF()
     {
       LogIO os( LogOrigin("SynthesisImager","makePSF",WHERE) );
@@ -1002,11 +1035,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
       try
       {
-	if( itsDataLoopPerMapper == false )
+	if(  (itsMaxShape[3] >1 || impars_p.mode.contains("cube")) && doingCubeGridding_p){///and valid ftmachines
+		runMajorCycleCube(true);
+	}
+	else{
+	 if( itsDataLoopPerMapper == false )
 	  {runMajorCycle(true, false);}
 	else
 	  {runMajorCycle2(true, false);}
-
+	}
 	//	makeImage();
 
     	  itsMappers.releaseImageLocks();
@@ -1198,12 +1235,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os(LogOrigin("SynthesisImager", "getWeightDensity()", WHERE));
     try
       {
-	
+        //if 
+	if(imwgt_p.getType() != "uniform"){
+          return outname;
+        }
 	IPosition newshape;
 	Vector<Int> shpOfGrid=imwgt_p.shapeOfdensityGrid();
 	if(shpOfGrid(2) > 1){
 	  newshape=IPosition(5,shpOfGrid[0], shpOfGrid[1],1,1,shpOfGrid[2]);
 	}
+        else{
+          newshape=IPosition(4,shpOfGrid[0], shpOfGrid[1],1,1);
+        }
 	IPosition where=	IPosition(Vector<Int>((itsMappers.imageStore(0)->gridwt(newshape))->shape().nelements(),0));
 	if ( shpOfGrid[2] > 0 )
 	  {
@@ -2885,6 +2928,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
     return retval;
 
+  }
+  void SynthesisImager::normalizerinfo(const Record& normpars){
+    normpars_p=normpars;
   }
 } //# NAMESPACE CASA - END
 

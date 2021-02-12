@@ -17,9 +17,9 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
-    from testhelper import copytree_ignore_subversion, TableCacheValidator
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    from casatestutils import selection_syntax
+    from casatestutils.testhelper import TableCacheValidator
 
     # default isn't used in casatasks
     def default(atask):
@@ -28,8 +28,6 @@ if is_CASA6:
     ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
-    from tasks import *
-    from taskinit import *
     from taskinit import metool as measures
     from taskinit import qatool as quanta
     from taskinit import tbtool as table
@@ -39,19 +37,20 @@ else:
     from taskinit import msmdtool as msmetadata
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 
     try:
-        from . import testutils
+        from casatestutils.testhelper import TableCacheValidator
     except:
-        from tests.testutils import copytree_ignore_subversion, TableCacheValidator
+        from tests.testutils import TableCacheValidator
 
     from sdimaging import sdimaging
+    from flagdata import flagdata
     from sdutil import tbmanager, toolmanager, table_selector
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -61,6 +60,7 @@ me = measures()
 qa = quanta()
 tb = table()
 ms = mstool()
+
 
 #
 # Unit test of sdimaging task.
@@ -131,7 +131,7 @@ class sdimaging_unittest_base(unittest.TestCase):
 
     """
     taskname='sdimaging'
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
@@ -569,11 +569,12 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test015(self):
         """Test015: negative minweight"""
-        success = False
+        success = True
         try:
-            sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
-        except: success = True
-        self.assertTrue(success)
+            success = sdimaging(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        except:
+            success = False
+        self.assertFalse(success)
 
 
 ###
@@ -2538,7 +2539,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
     param_base = dict(infiles=infiles,outfile=outfile,intent="",
@@ -2697,7 +2698,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
     infiles_selection = 'selection_misc.ms'
@@ -2722,7 +2723,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2845,7 +2846,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('unittest/sdimaging/')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -2864,7 +2865,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def __copy_table(self, f):
         self.__remove_table(f)
-        copytree_ignore_subversion(self.datapath, f)
+        shutil.copytree(os.path.join(self.datapath, f), f)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3034,7 +3035,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         for infile in infiles:
             self.assertTrue(infile in self.data_list)
             self.assertFalse(os.path.exists(infile))
-            copytree_ignore_subversion(self.datapath, infile)
+            shutil.copytree(os.path.join(self.datapath, infile), infile)
 
         # image with clipping
         outfile = self.outfile
@@ -3412,7 +3413,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('visibilities/almasd')
+    datapath = ctsys_resolve('unittest/sdimaging/')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move.im'
 

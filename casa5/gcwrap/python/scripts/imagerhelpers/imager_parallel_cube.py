@@ -71,7 +71,7 @@ class PyParallelCubeSynthesisImager():
 
         # to define final image coordinates, run selecdata and definemage
         self.SItool = synthesisimager()
-        #print "allselpars=",allselpars
+        # casalog.post("allselpars="+allselpars)
         origspw={}
         for mss in sorted( allselpars.keys() ): 
 #            if(self.allimpars['0']['specmode']=='cubedata'):
@@ -99,15 +99,15 @@ class PyParallelCubeSynthesisImager():
         else:
            self.modifiedListOfNodes = self.listOfNodes[:]
 
-        #print "********************** ", alldataimpars.keys()
+        #casalog.post("********************** " + alldataimpars.keys())
         #for kk in alldataimpars.keys():
-        #    print "KEY : ", kk , " --->", alldataimpars[kk].keys()
+        #    casalog.post("KEY : ", kk , " --->", alldataimpars[kk].keys())
             
         # reorganize allselpars and allimpars for partitioned data        
         synu = synthesisutils()
         self.allselpars={}
         self.allimpars={}
-        ###print "self.listOfNodes=",self.listOfNodes
+        ### casalog.post("self.listOfNodes=",self.listOfNodes)
         # Repack the data/image parameters per node
         #  - internally it stores zero-based node ids
         #  
@@ -154,8 +154,8 @@ class PyParallelCubeSynthesisImager():
             self.allimpars.update(imparsPerNode)
 
 
-            #print "****** SELPARS in init **********", self.allselpars
-            #print "****** SELIMPARS in init **********", self.allimpars
+            #casalog.post("****** SELPARS in init **********" + self.allselpars)
+            #casalog.post("****** SELIMPARS in init **********" + self.allimpars)
         
         joblist=[]
         casa6_import_prefix = ''
@@ -305,7 +305,7 @@ class PyParallelCubeSynthesisImager():
             if self.exitflag[str(node)]==False:
                 rest = self.PH.pullval("maskchanged", node )
                 retval = retval or rest[node]
-                casalog.post("Node " + str(node) + " maskchanged : ", str(rest[node]) , "INFO")
+                casalog.post("Node " + str(node) + " maskchanged : " + str(rest[node]) , "INFO")
 
         return retval
 

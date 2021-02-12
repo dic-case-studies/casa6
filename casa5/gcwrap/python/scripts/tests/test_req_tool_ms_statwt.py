@@ -8,31 +8,32 @@ import numpy as np
 import numpy.ma as ma
 import numbers
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import testhelper as th
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+#import testhelper as th
+#from casatestutils import testhelper as th
 
-subdir = 'visibilities/vla/'
-if th.is_casa6():
+subdir = 'unittest/statwt/'
+is_casa6 = False
+try:
     from casatools import ctsys, table, ms
     datadir = ctsys.resolve(subdir)
     myms = ms()
     mytb = table()
-else:
+    is_casa6 = True
+
+except ImportError:
     from taskinit import *
     myms = mstool()
     mytb = tbtool()
-    datadir = (
-        os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/' + subdir
-    )
-    if not os.path.exists(datadir):
-        datadir = (
-            os.environ.get('CASAPATH').split()[0] + '/casa-data-req/' + subdir
-        )
+    datadir = os.environ.get('CASAPATH').split()[0] + '/casatestdata/' + subdir
 
 src = datadir + 'ngc5921_small.statwt.ms'
 vlass = os.path.join(datadir, 'test_vlass_subset.ms')
 if not os.path.exists(src):
     raise Exception('Cannot find ' + src)
+
+# Place for reference data used in the tests
+refdir = datadir + '/statwt_reference/'
 
 # rows and target_row are the row numbers from the subtable formed
 # by the baseline query
@@ -244,7 +245,7 @@ class statwt_test(unittest.TestCase):
             gtimes, gwt, gwtsp, gflag, gfrow, gdata, gsigma, gsisp
         ] = _get_table_cols(mytb)
         mytb.done()
-        ref = os.path.join(datadir, ref)
+        ref = os.path.join(refdir, ref)
         self.assertTrue(mytb.open(ref), "Table open failed for " + ref)
         [
             etimes, ewt, ewtsp, eflag, efrow, edata, esigma, esisp
@@ -278,7 +279,7 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
-                if th.is_casa6():
+                if is_casa6:
                     self.assertTrue(
                         shutil.copytree(src, dst),
                         "Unable to copy " + src + " to " + dst
@@ -357,9 +358,8 @@ class statwt_test(unittest.TestCase):
                         myms.statwt(chanbin=chanbin, combine=combine)
                         myms.done()
                     if combine == '':
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
-                    else:
-                        ref = datadir + 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
+                        ref = refdir + 'ngc5921_statwt_ref_test_chanbin_sep_corr.ms'
+                        ref = refdir + 'ngc5921_statwt_ref_test_chanbin_combine_corr.ms'
                     shutil.rmtree(dst)
 
     def test_minsamp(self):
@@ -935,3 +935,4 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+

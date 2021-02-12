@@ -158,17 +158,64 @@ template <class T> void compareCube(const casacore::Char* column,
                                     const casacore::Cube<T> &ref,
                                     casacore::Float tolerance = FLT_EPSILON);
 
+template <class T> void compareCubesVector(const casacore::Char* column,
+                                           const casacore::Vector<casacore::Cube<T>> &inp,
+                                           const casacore::Vector<casacore::Cube<T>> &ref,
+                                           casacore::Float tolerance = FLT_EPSILON);
+
+/*
+ * Compare two VisBuffers
+ * The components specified in columns will be compared using
+ * a float point tolerance of tolerance.
+ * If different data columns should be compared together (for instance
+ * if DATA in refVb should be compared to CORRECTED in testVb) then
+ * the datacolmap map can be used to define the map. The map keyword
+ * is the column in testVb and the map value is the column in refVb.
+ */
+void compareVisBuffers(VisBuffer2 &testVb,
+                       VisBuffer2 &refVb,
+                       VisBufferComponents2 &columns,
+                       casacore::Float tolerance = FLT_EPSILON,
+                       std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap = NULL);
+
+/*
+ * Compare two Vis iterators
+ * This will run the full iteration and for each iteration a comparison
+ * of the VisBuffers is done.
+ * The VisBuffer components specified in columns will be compared using
+ * a float point tolerance of tolerance.
+ * If different data columns should be compared together (for instance
+ * if DATA in refVb should be compared to CORRECTED in testVb) then
+ * the datacolmap map can be used to define the map. The map keyword
+ * is the column in testVb and the map value is the column in refVb.
+ */
 void compareVisibilityIterators(VisibilityIterator2 &testTVI,
                                 VisibilityIterator2 &refTVI,
                                 VisBufferComponents2 &columns,
                                 casacore::Float tolerance = FLT_EPSILON,
                                 std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap = NULL);
 
+/*
+ * Compare two Vis iterators
+ * This will run the full iteration and for each iteration the visitor
+ * function will be run.
+ * The visitor function can access variables testVb and refVb of type
+ * VisBuffer2 *, which will give full access to the contents of both
+ * VisBuffers for each iteration
+ */
+void compareVisibilityIterators(VisibilityIterator2 &testTVI,
+                                VisibilityIterator2 &refTVI,
+                                std::function<void(VisBuffer2* testVb, VisBuffer2* refVb)> visitor);
+
 void copyTestFile(casacore::String &path,casacore::String &filename,casacore::String &outfilename);
 
-const casacore::Cube<casacore::Complex> & getViscube(VisBuffer2 *vb,
-									casacore::MS::PredefinedColumns datacol,
-									std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
+const casacore::Cube<casacore::Complex> & getViscube(VisBuffer2 &vb,
+                                                     casacore::MS::PredefinedColumns datacol,
+                                                     std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
+
+const casacore::Vector<casacore::Cube<casacore::Complex>> & getViscubes(VisBuffer2 &vb,
+                                                                        casacore::MS::PredefinedColumns datacol,
+                                                                        std::map<casacore::MS::PredefinedColumns,casacore::MS::PredefinedColumns> *datacolmap);
 
 void flagEachOtherChannel(VisibilityIterator2 &vi, bool undoChanbin, int chanbin = 1);
 

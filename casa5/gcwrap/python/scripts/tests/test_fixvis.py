@@ -24,7 +24,7 @@ else:
     _qa = qa
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -37,6 +37,7 @@ Features tested:
 
 Note: The equinox_vis regression is a more general test of fixvis.
 '''
+datapath = ctsys_resolve('unittest/fixvis/')
 inpms = '0420+417.ms'
 outms = 'output.ms'
 inpms2 = 'twocenteredpointsources.ms'
@@ -46,9 +47,9 @@ class fixvis_test1(unittest.TestCase):
     def setUp(self):
         res = None
         if not os.path.exists(inpms):
-            shutil.copytree(ctsys_resolve(os.path.join('regression/0420+417',inpms)), inpms)
+            shutil.copytree(os.path.join(datapath,inpms),inpms)
         if not os.path.exists(inpms2):
-            shutil.copytree(ctsys_resolve(os.path.join('regression/unittest/fixvis',inpms2)), inpms2)
+            shutil.copytree(os.path.join(datapath,inpms2),inpms2)
         if not is_CASA6:
             default(fixvis)
         shutil.rmtree(outms, ignore_errors=True)

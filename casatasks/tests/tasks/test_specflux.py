@@ -75,14 +75,16 @@ if is_CASA6:
     from casatools import ctsys
     from casatasks import specflux
 
-    datapath = ctsys.resolve('regression/unittest/specflux')
+    datapath = ctsys.resolve('unittest/specflux/')
+    refpath = ctsys.resolve('unittest/specflux/specflux_reference/')
 else:
     import casac
     from tasks import *
     from taskinit import *
     from __main__ import *
 
-    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/specflux')
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/specflux/')
+    refpath = os.path.join(datapath,'specflux_reference/')
 
 im1 = os.path.join(datapath,"specflux1.im")
 im2 = os.path.join(datapath,"specflux2.im")
@@ -93,7 +95,10 @@ class specflux_test(unittest.TestCase):
         pass
     
     def tearDown(self):
-        pass
+        for i in range(1, 11):
+            f = 'log' + str(i)
+            if os.path.exists(f):
+                os.remove(f)
     
     def test_default(self):
         """Test default settings"""
@@ -122,8 +127,10 @@ class specflux_test(unittest.TestCase):
         )
         self._compare(logfile)
         logfile = "log6"
-        specflux(im2, box="10,10,19,19", chans="30~35",
-                 mask="'" + im2 + "'" + "<0", logfile=logfile)
+        specflux(
+            im2, box="10,10,19,19", chans="30~35",
+            mask="'" + im2 + "'" + "<0", logfile=logfile
+        )
         self._compare(logfile)
         
     def test_unit(self):
@@ -150,7 +157,7 @@ class specflux_test(unittest.TestCase):
             efile = gfile
         with open (gfile) as f:
             got = f.readlines()
-        with open (os.path.join(datapath,efile)) as f:
+        with open (os.path.join(refpath,efile)) as f:
             expec = f.readlines()
         self.assertTrue(len(got) == len(expec))
         # skip first element because paths will in general be different

@@ -104,7 +104,7 @@ try:
     from casatasks import casalog, sdintimaging, flagdata
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    sys.path.append(os.path.abspath(os.path.basename(__file__)))
+    #sys.path.append(os.path.abspath(os.path.basename(__file__)))
     #from testhelper_imager import TestHelpers
 
      #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
@@ -121,18 +121,13 @@ th = TestHelpers()
 
 if CASA6:
     #refdatapath = ctsys.resolve('regression/unittest/sdintimaging')
-    visdatapath = ctsys.resolve('visibilities/evla')
-    imdatapath = ctsys.resolve('image') 
-    maskdatapath = ctsys.resolve('text') 
+    visdatapath = ctsys.resolve('unittest/sdintimaging/')
+    imdatapath = ctsys.resolve('unittest/sdintimaging/')
+    maskdatapath = ctsys.resolve('unittest/sdintimaging/') 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/casa-data-req'):
-        visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-        imdatapath = os.environ.get('CASAPATH').split()[0] +'/casa-data-req/image/' 
-        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
-    else:
-        visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-        imdatapath = os.environ.get('CASAPATH').split()[0] +'/image/' 
-        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/text/'
+    visdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
+    imdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
+    maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
     
     #if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
     #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'
@@ -291,7 +286,6 @@ class test_singlepointing(testref_base):
         imname=self.img+'.sp_mfs_sdint'
         if self.niter==100:
             incycleniter=20 # overwrite the initial setup for niter=100 to make the test pass for 6.1 (need furhter investigation)
-        
 
         #ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)
         ret = sdintimaging(usedata='sdint', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='mfs', gridder='standard', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=incycleniter, mask=self.mask, interactive=0,pbmask=0.0,parallel=self.parallel)

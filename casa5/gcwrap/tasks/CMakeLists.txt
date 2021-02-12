@@ -86,6 +86,7 @@ impv.xml
 rerefant.xml
 rmfit.xml
 rmtables.xml
+sdatmcor.xml
 sdbaseline.xml
 sdcal.xml
 sdfit.xml
