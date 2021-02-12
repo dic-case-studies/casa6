@@ -28,12 +28,14 @@ else:
     _ms = ms
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+datapath = ctsys_resolve('unittest/cvel/')
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
-vis_b = 'test.ms'
+#vis_b = 'test.ms'
+vis_b = 'ARP299F_sma_2scans_24spws_negative_chanwidth.ms'
 vis_c = 'jupiter6cm.demo-thinned.ms'
 vis_d = 'g19_d2usb_targets_line-shortened-thinned.ms'
 vis_e = 'evla-highres-sample-thinned.ms'
@@ -85,23 +87,23 @@ class cvel_test(unittest.TestCase):
         
         if(forcereload or not os.path.exists(vis_a)):
             shutil.rmtree(vis_a, ignore_errors=True)
-            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
+            importuvfits(fitsfile=os.path.join(datapath,'ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
         if(forcereload or not os.path.exists(vis_b)):
             shutil.rmtree(vis_b, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
+            os.system('cp -RL '+ os.path.join(datapath,'ARP299F_sma_2scans_24spws_negative_chanwidth.ms')+' .') # 27 MB
         if(forcereload or not os.path.exists(vis_c)):
             shutil.rmtree(vis_c, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
+            os.system('cp -RL '+ os.path.join(datapath,'jupiter6cm.demo-thinned.ms')+' .') # 124 MB
         if(forcereload or not os.path.exists(vis_d)):
             shutil.rmtree(vis_d, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
+            os.system('cp -RL '+ os.path.join(datapath,'g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
         if(forcereload or not os.path.exists(vis_e)):
             shutil.rmtree(vis_e, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
+            os.system('cp -RL '+ os.path.join(datapath,'evla-highres-sample-thinned.ms')+' .') # 74 MB
         if(forcereload or not os.path.exists(vis_f)):
             shutil.rmtree(vis_f, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
+            os.system('cp -RL '+ os.path.join(datapath,'test_cvel1.ms')+' .') # 39 MB
         if(forcereload or not os.path.exists(vis_g)):
             # construct an MS with attached Jupiter ephemeris from vis_c
             shutil.rmtree(vis_g, ignore_errors=True)

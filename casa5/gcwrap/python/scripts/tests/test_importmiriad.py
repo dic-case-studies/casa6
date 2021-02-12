@@ -40,7 +40,7 @@ else:
     from taskinit import *
 
     def ctsys_resolve(apath):
-        dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata')
         return os.path.join(dataRoot,apath)
 
     # not local tools
@@ -110,7 +110,7 @@ class test_importmiriad(unittest.TestCase):
     def setUp(self):
         res = None
 
-        datapath='regression/unittest/importmiriad'
+        datapath='unittest/importmiriad/'
         for fname in my_dataset_names:
             if(os.path.exists(fname)):
                 shutil.rmtree(fname)

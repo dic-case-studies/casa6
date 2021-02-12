@@ -46,7 +46,6 @@
 #
 ###########################################################################
 from __future__ import absolute_import
-from __future__ import print_function
 
 CASA6 = False
 import string
@@ -78,35 +77,9 @@ from casatestutils import listing as lt
     # Generate the test data
 
 if CASA6:
-    mesSet = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
-    # Data for old test
-    msfile1Orig = casatools.ctsys.resolve('visibilities/vla/ngc5921_ut.ms')
-    msfile2Orig = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
-    nep = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms')
-    # datapath for ref files
-    datapath = casatools.ctsys.resolve('text/')
+    datapath = casatools.ctsys.resolve('unittest/listobs/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[
-                          0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'):
-        mesSet = os.environ.get('CASAPATH').split()[
-                     0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        # Data for old test
-        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921_ut.ms'
-        msfile2Orig = os.environ.get('CASAPATH').split()[
-                          0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/'
-    else:
-        mesSet = os.environ.get('CASAPATH').split()[
-                     0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        # Data for old test
-        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921_ut.ms'
-        msfile2Orig = os.environ.get('CASAPATH').split()[
-                          0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        nep = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listobs/'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -117,6 +90,17 @@ else:
 
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     validator_exc_type = RuntimeError
+
+# Input data
+mesSet = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+# Data for old test
+msfile1Orig = os.path.join(datapath,'ngc5921_ut.ms')
+msfile2Orig = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+nep = os.path.join(datapath,'nep2-shrunk.ms')
+msfile1 = 'ngc5921_ut.ms'
+msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
+msfile3 = os.path.join(datapath, 'CAS-6733.ms')
+
 
 outvis = 'genmms.mms'
 if not os.path.exists(outvis):
@@ -134,12 +118,9 @@ if not os.path.exists(outvis):
 timeavg_mms = outvis
 
 logpath = casalog.logfile()
-# Old test input and output names
-msfile1 = 'ngc5921_ut.ms'
-msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
 # nep = 'nep2-shrunk.ms'
 # Old reffiles
-reffile = os.path.join(datapath, 'reflistobs')
+reffile = os.path.join(datapath, 'listobs_reference/reflistobs')
 
 
 def _sha1it(filename):
@@ -924,14 +905,7 @@ class test_listobs(listobs_test_base):
 
     def test_CAS_6733(self):
         """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
-        if CASA6:
-            vis = casatools.ctsys.resolve('visibilities/evla/CAS-6733.ms')
-
-        elif os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            vis = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/CAS-6733.ms'
-        else:
-            vis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/CAS-6733.ms'
-
+        vis = msfile3
         try:
             listobs(vis=vis)
         except Exception:

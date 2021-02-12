@@ -181,7 +181,7 @@ def _momentTest_debug_msg( msgNum=0 ):
     print str(msgNum)+":  "+debug_msgs[idx]
     return
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/immoment/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/immoments/'
 
 
 # input files

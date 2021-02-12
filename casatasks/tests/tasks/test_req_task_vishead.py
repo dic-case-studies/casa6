@@ -56,12 +56,9 @@ def chmod_recursive(path, mode):
             os.chmod(os.path.join(root, f), mode)
 
 if CASA6:
-    casaimagepath = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
+    casaimagepath = casatools.ctsys.resolve('unittest/vishead/ngc5921.ms')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms'
-    else:
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms'
+    casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/vishead/ngc5921.ms'
 
 logpath = casalog.logfile()
 

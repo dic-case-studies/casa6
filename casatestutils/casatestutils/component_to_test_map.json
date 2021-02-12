@@ -1751,7 +1751,7 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_req_tool_componentlistimage",
+            "testScript":"test_req_tool_ia_fromcomplist",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
