@@ -94,10 +94,10 @@ CASA 6 currently includes:
 ### Debugging with GDB and Valgrind
 
 To build casatools with debugging symbols, run casatools/setup.py with either the debug or
-relwithdebinfonostrip flags. For example:
+relwithdebinfo flags. For example:
 ```
 -bash-4.2$ ./setup.py --debug bdist_wheel
--bash-4.2$ ./setup.py --relwithdebinfonostrip bdist_wheel
+-bash-4.2$ ./setup.py --relwithdebinfo bdist_wheel
 ```
 
 To run casa with gdb, start casa (interactively or from a script) and attach to it's

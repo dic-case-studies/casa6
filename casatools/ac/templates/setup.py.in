@@ -96,27 +96,26 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('--relwithdebinfo', help='Release build with debug and optimization flags', action='store_true')
-parser.add_argument('--relwithdebinfonostrip', help='Like relwithdebinfo, but don\'t strip out debug info', action='store_true')
+parser.add_argument('--stripsyms', help='Strip debug info out of the executable files from --relwithdebinfo. Used with release builds.', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
 _debug_build_ = args.debug
-_rel_with_deb_info_ = args.relwithdebinfo or args.relwithdebinfonostrip
-_rel_with_deb_info_no_strip_ = args.relwithdebinfonostrip
+_rel_with_deb_info_ = args.relwithdebinfo
+_strip_syms_ = args.stripsyms
 print("_debug_build_: " + str(_debug_build_))
 print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
-print("_rel_with_deb_info_no_strip_: " + str(_rel_with_deb_info_no_strip_))
+print("_strip_syms_: " + str(_strip_syms_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
-for arg in sys.argv:
-    if (arg.startswith("--version")):
-        sys.argv.remove(arg)
-    if (arg.startswith("--debug")):
-        sys.argv.remove(arg)
-    if (arg.startswith("--relwithdebinfo")):
-        sys.argv.remove(arg)
-    #if (arg.startswith("--relwithdebinfonostrip")): # caught by check for relwithdebinfo
-    #    sys.argv.remove(arg)
+if "--version" in sys.argv:
+    sys.argv.remove("--version")
+if "--debug" in sys.argv:
+    sys.argv.remove("--debug")
+if "--relwithdebinfo" in sys.argv:
+    sys.argv.remove("--relwithdebinfo")
+if "--stripsyms" in sys.argv:
+    sys.argv.remove("--stripsyms")
 
 
 module_name = 'casatools'
@@ -955,8 +954,8 @@ def debug_build():
 def relwithdebinfo_build():
     return _rel_with_deb_info_
 
-def relwithdebinfonostrip_build():
-    return _rel_with_deb_info_no_strip_
+def stripsyms_build():
+    return _strip_syms_
 
 def get_optimization_flags():
     if debug_build( ):
@@ -1316,9 +1315,7 @@ class casa_build_ext(build_ext):
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
         
-        if relwithdebinfo_build():
-            if relwithdebinfonostrip_build():
-                return
+        if relwithdebinfo_build() and stripsyms_build():
             print("Extracting debug symbols")
             if not os.path.exists('./debugsymbols'):
                 os.makedirs('./debugsymbols')
