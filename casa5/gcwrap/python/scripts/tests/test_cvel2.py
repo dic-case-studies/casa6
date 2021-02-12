@@ -17,7 +17,8 @@ if is_CASA6:
     mytb = table()
     myqa = quanta()
 
-    ctsys_resolve = ctsys.resolve
+    datapath = ctsys.resolve('unittest/cvel/')
+    ephedata = ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
 else:
     from __main__ import default
     from tasks import cvel2, cvel, partition, importuvfits, split
@@ -28,13 +29,8 @@ else:
     mytb = tbtool()
     myqa = qa
 
-    distroPath = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
-# Alternative path for data
-datapath = ctsys_resolve('unittest/cvel/')
+    datapath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/unittest/cvel/')
+    ephedata = os.path.join(os.environ['CASAPATH'].split()[0],'data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -172,8 +168,7 @@ class test_base(unittest.TestCase):
             mytb.putcol('TIME', a)
             mytb.close()
             myms.open(vis_g, nomodify=False)
-            myephemdata = os.path.join(distroPath,'ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
-            myms.addephemeris(0,myephemdata,'Jupiter_54708-55437dUTC', 0)
+            myms.addephemeris(0,ephedata,'Jupiter_54708-55437dUTC', 0)
             myms.close()
     
     def setUp_4ants(self):
