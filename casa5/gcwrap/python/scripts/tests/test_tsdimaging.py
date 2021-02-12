@@ -58,13 +58,9 @@ else:
     from tsdimaging import tsdimaging as sdimaging
     from sdutil import tbmanager, toolmanager, table_selector
 
-    casaRoot = os.environ.get('CASAPATH').split()[0]
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
-        subdir_hints = ['data', 'casa-data-req', 'data/casa-data-req']
-        for subdir in subdir_hints:
-            path = os.path.join(casaRoot, subdir, apath)
-            if os.path.exists(path):
-                return path
+        return os.path.join(dataRoot,apath)
 
     from task_tsdimaging import image_suffix
 
@@ -190,7 +186,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
     """
     taskname='sdimaging'
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/tsdimaging/')
     #rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
@@ -2615,7 +2611,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/tsdimaging/')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
     param_base = dict(infiles=infiles,outfile=outfile,intent="",
@@ -2782,7 +2778,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/tsdimaging/')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
     infiles_selection = 'selection_misc.ms'
@@ -2942,7 +2938,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                     datacolumn='float_data')
     """
 
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/tsdimaging/')
     infiles = 'ephemtest.spw18.ms'
     ephtab  = infiles + '/FIELD/EPHEM0_Sol_58327.6.tab'
     outfile = 'sdimaging_test_ephemeris.im'
@@ -3115,7 +3111,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -3259,7 +3255,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
     does work, while it should be hexagonal if linear interpolation, the old algorithm, is
     applied.
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     params = dict(infiles = ['pointing6.ms'],
                   outfile = "pointing6.out",
                   antenna = "0",
@@ -3774,7 +3770,7 @@ class sdimaging_test_output(sdimaging_unittest_base):
     """
     Tests to check if only appropriate images are output
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     params = dict(infiles = ['selection_misc.ms'],
                   outfile = "outmisc",
                   imsize = [80,80], # to suppress warning messages
@@ -3821,7 +3817,7 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('visibilities/almasd')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move'
 

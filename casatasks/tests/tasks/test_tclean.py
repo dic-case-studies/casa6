@@ -15,7 +15,7 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casapy :  
+# To run from within casa 5:  
 #
 #  runUnitTest.main(['test_tclean'])                                              # Run all tests
 #  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
@@ -24,14 +24,14 @@
 #
 # To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
-#  These tests need data stored in data/regression/unittest/clean/refimager
+#  These tests need data stored in casatestdata/unittest/tclean
+#  The datasets are symliked to the above directory. If using cp to copy them locally,
+#  Use cp -RH
 #
 #  For a developer build, to get the datasets locally 
 #
-#  --- Get the basic data repo :  svn co https://svn.cv.nrao.edu/svn/casa-data/distro data
-#  --- Make directories : mkdir -p data/regression/unittest/clean; cd data/regression/unittest/clean
-#  --- Get test datasets :  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/regression/unittest/clean/refimager
-#
+#  --- Get the test data repo :  svn co https://svn.cv.nrao.edu/svn/casatestdata casatestdata
+#  --- Add a link to casatestdata inside $CASAPATH
 # ########################################################################
 # SKIPPED TESTS 
 # More tests were added to skip (as of 2019,04,26)
@@ -112,7 +112,7 @@ if is_CASA6:
      _qa = quanta( )
      _me = measures( )
      
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+     refdatapath = ctsys.resolve('unittest/tclean/')
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 else:
@@ -130,10 +130,10 @@ else:
      _qa = qa
      _me = me
 
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-     
+ 
 ## List to be run
 def suite():
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
@@ -2110,6 +2110,51 @@ class test_cube(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report) 
+
+     def test_cube_twoMS_startfreq(self):
+          """ [cube] Test cube with list of two MSs with start in frequency specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          # start f is at chan4 (1.2GHz in TOPO) 
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image') )
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
+
+     def test_cube_twoMS_startvel(self):
+          """ [cube] Test cube with list of two MSs with start in velocity specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s', width='-11991.7km/s',imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image'))
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s',width='-11991.7km/s',  imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image'))
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
 
      def test_cube_flagged_mosaic_hogbom(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
@@ -4488,7 +4533,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_onefield_mfs_eph : single field (standard gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_sf_ephem_test.residual')
@@ -4578,7 +4623,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_multifield_mfs_eph : multifield (mosaic gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_mos_ephem_test.residual')

@@ -80,7 +80,7 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 def alleqnum(x,num,tolerance=0):
@@ -114,7 +114,7 @@ def alleqnum(x,num,tolerance=0):
         stop('unhandled array shape in alleq')
     return True
 
-datapath = ctsys_resolve('regression/unittest/ia_histograms/')
+datapath = ctsys_resolve('unittest/ia_histograms/')
 
 class ia_histograms_test(unittest.TestCase):
     

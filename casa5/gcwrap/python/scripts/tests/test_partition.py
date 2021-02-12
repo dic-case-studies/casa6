@@ -3,14 +3,12 @@ import shutil
 import time
 import unittest
 
+from casatestutils import testhelper as th
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
     from casatools import ctsys, msmetadata, ms, agentflagger, table
-    ### for testhelper import
-    import sys
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #import testhelper as th
     from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 
     msmdt_local = msmetadata()
@@ -19,16 +17,12 @@ if is_CASA6:
     aft_local = agentflagger()
     tbt_local = table()
 
-    datapath_gaincal = ctsys.resolve('regression/unittest/gaincal')
-    datapath_flagdata = ctsys.resolve('regression/unittest/flagdata')
-    datapath_mstransform = ctsys.resolve('regression/unittest/mstransform')
-    datapath_partition = ctsys.resolve('regression/unittest/partition')
+    datapath = ctsys.resolve('unittest/partition/')
 else:
     from tasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
     from taskinit import msmdtool, mstool, aftool, tbtool
 
     from parallel.parallel_task_helper import ParallelTaskHelper
-    #import testhelper as th
     import partitionhelper as ph
 
     msmdt_local = msmdtool()
@@ -37,17 +31,10 @@ else:
     aft_local = aftool()
     tbt_local = tbtool()
 
-    datapath_gaincal = os.environ.get('CASAPATH').split()[0] + \
-                       "/data/regression/unittest/gaincal/"
-    datapath_flagdata = os.environ.get('CASAPATH').split()[0] + \
-                    "/data/regression/unittest/flagdata/"
-    datapath_mstransform = os.environ.get('CASAPATH').split()[0] + \
-                           "/data/regression/unittest/mstransform/"
-    datapath_partition = os.environ.get('CASAPATH').split()[0] + \
-                         '/data/regression/unittest/partition/'
+    datapath = os.environ.get('CASAPATH').split()[0] + \
+                       "/casatestdata/unittest/partition/"
 
 from casatestutils import testhelper as th
-
 ''' Unit Tests for task partition'''
 
 # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
@@ -58,9 +45,7 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
 class test_base(unittest.TestCase):
     
     def setUp_ngc4826(self):
-        
-        datapath = datapath_gaincal
-                    
+                            
         # Input MS contain 4 obsID, 11 scans and 4 spws
         self.prefix = 'ngc4826'
         self.msfile = self.prefix + '.ms'  
@@ -79,9 +64,7 @@ class test_base(unittest.TestCase):
             print('MS is already around, no need to copy it.')
 
     def setUp_fourants(self):
-        
-        datapath = datapath_flagdata
-                    
+                            
         # Input MS contain 2 scans and 16 spws. It has all data columns
         self.prefix = 'Four_ants_3C286'
         self.msfile = self.prefix + '.ms'  
@@ -100,7 +83,6 @@ class test_base(unittest.TestCase):
             print('MS is already around, no need to copy it.')
 
     def setUp_floatcol(self):
-        datapath = datapath_flagdata
                     
         # 15 rows, 3 scans, 9 spw, mixed chans, XX,YY, FLOAT_DATA col
         self.prefix = "SDFloatColumn"
@@ -118,9 +100,6 @@ class test_base(unittest.TestCase):
         
     def setUp_sub_tables_evla(self):
         
-        # Define the root for the data files
-        datapath = datapath_mstransform
-
         self.vis = 'test-subtables-evla.ms'
         if os.path.exists(self.vis):
            self.cleanup()
@@ -129,9 +108,6 @@ class test_base(unittest.TestCase):
         
     def setUp_sub_tables_alma(self):
         
-        # Define the root for the data files
-        datapath = datapath_mstransform
-
         self.vis = 'test-subtables-alma.ms'
         if os.path.exists(self.vis):
            self.cleanup()
@@ -140,9 +116,6 @@ class test_base(unittest.TestCase):
         
     def setUp_3c84scan1(self):
         
-        # Define the root for the data files
-        datapath = datapath_mstransform
-
         self.vis = '3c84scan1.ms'
         if os.path.exists(self.vis):
            self.cleanup()
@@ -153,7 +126,6 @@ class test_base(unittest.TestCase):
         res = None
         # Single-dish ASDM with 3 antennas and 6 baselines in total
         self.vis = 'uid___A002_X85c183_X36f_small.ms' 
-        datapath = datapath_partition
         if not os.path.exists(self.vis):
             os.system('ln -sf {0} {1}'.format(os.path.join(datapath, self.vis), self.vis))
             
@@ -924,8 +896,6 @@ class test_partition_balanced(test_base):
 class test_partition_balanced_multiple_scan(test_base):
     ''' test file with multiple scan ids per ddi '''
     def setUp(self):
-        # Define the root for the data files
-        datapath = datapath_mstransform
 
         self.vis = 'CAS-5076.ms'
         if os.path.exists(self.vis):

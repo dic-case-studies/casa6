@@ -326,8 +326,11 @@ using namespace casa::vi;
         ///Darn vb.time()(0) may not be the earliest time due to sort issues...
         //so lets try to use the same
         ///time as SynthesisIUtilMethods::buildCoordinateSystemCore is using
-        mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
-        Double firstTime=romscol_p->time()(0);
+        //mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
+	mFrame_p.resetEpoch(coords.obsInfo().obsDate());
+	//Double firstTime=romscol_p->time()(0);
+									  
+	Double firstTime=coords.obsInfo().obsDate().get("s").getValue();
         //First convert to HA-DEC or AZEL for parallax correction
         MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
         MDirection tmphadec;

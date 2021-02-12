@@ -14,10 +14,7 @@ from taskinit import *
 
 
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
-calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
-overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):
@@ -33,7 +30,7 @@ class plotms_test_base(unittest.TestCase):
     testms2 = "ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testct1 = 'ngc5921.ref1a.gcal'
+    testct = 'ngc5921.ref1a.gcal'
     testct2 = 'ngc5921.ref2a.gcal'
     testct3 = 'a_mueller.uvcont.tbl'
     outputDir="/tmp/" + str(os.getpid()) + "/"
@@ -43,7 +40,7 @@ class plotms_test_base(unittest.TestCase):
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    ct = os.path.join(outputDir, testct1)
+    ct = os.path.join(outputDir, testct)
     ct2 = os.path.join(outputDir, testct2)
     ct3 = os.path.join(outputDir, testct3)
 
@@ -64,20 +61,20 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(altdatapath,self.testms2),
+            shutil.copytree(os.path.join(datapath,self.testms2),
                     self.ms2, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(calpath,self.testms2), 
+            shutil.copytree(os.path.join(datapath,self.testms2), 
                     self.ms2, symlinks=True)
         if not os.path.exists(self.ct):
-            shutil.copytree(os.path.join(calpath, self.testct1),
+            shutil.copytree(os.path.join(datapath, self.testct),
                     self.ct, symlinks=True)
         if not os.path.exists(self.ct2):
-            shutil.copytree(os.path.join(calpath, self.testct2),
+            shutil.copytree(os.path.join(datapath, self.testct2),
                     self.ct2, symlinks=True)
         if not os.path.exists(self.ct3):
             shutil.copytree(os.path.join(datapath, self.testct3),
@@ -90,7 +87,7 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
+            shutil.copytree(os.path.join(datapath,self.testms4),
                     self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
@@ -112,7 +109,7 @@ class plotms_test_base(unittest.TestCase):
                 for row in reader:
                     nrow += 1
                 assertEqual(nrow, 2) # vis, antenna sel headers only
-            else: 
+            else:
                 # skip 5 header lines:
                 # vis, antenna sel, plotindex, col names, col units
                 [next(reader, None) for line in range(5)]
@@ -739,8 +736,8 @@ class test_calibration(plotms_test_base):
         self.tearDownData()
 
     def test_calibration_callib(self):
-        '''test_calibration_callib: callib string parameter for OTF calibration'''
-        if os.path.exists(calpath):
+        '''test_calibration_callib: CAS-3034, CAS-7502 callib parameter for OTF calibration'''
+        if os.path.exists(datapath):
             self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
             self.removePlotfile()
 
