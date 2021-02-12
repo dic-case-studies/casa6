@@ -1,10 +1,12 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
 import unittest
 import os
 import math
 import sys
+
+from casatestutils import testhelper as th
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import nrobeamaverage
@@ -15,12 +17,9 @@ if is_CASA6:
     def default(atask):
         pass
 
-    ### for testhelper import
-    #sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    #import testhelper as th
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-    datapath=ctsys.resolve('regression/unittest/nrobeamaverage')
+    datapath=ctsys.resolve('unittest/nrobeamaverage/')
 
 else:
     from tasks import nrobeamaverage
@@ -28,11 +27,10 @@ else:
     from taskinit import tbtool as table
 
     from __main__ import default
-    #import testhelper as th
     from sdutil import tbmanager
 
     # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/nrobeamaverage/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/nrobeamaverage/"
 
 from casatestutils import testhelper as th
 
@@ -67,7 +65,7 @@ class test_nrobeamaverage(unittest.TestCase):
         default(nrobeamaverage)
 
         self.i_ms = "onon.ms"
-        os.system('cp -RL '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
+        os.system('cp -RH '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
         self.o_ms = "bave.ms"
         self.args = {'infile': self.i_ms, 'outfile': self.o_ms}
 

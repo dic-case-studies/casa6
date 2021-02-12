@@ -11,15 +11,13 @@ from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
 
 if is_CASA6:
-    ### for testhelper import
     from casatools import ctsys, table
     from casatasks import gencal, rmtables
+    from casatasks.private import tec_maps    
 
-    from casatasks.private import tec_maps
-    
     _tb= table()
 
-    datapath=ctsys.resolve('regression/unittest/gencal')
+    datapath=ctsys.resolve('/unittest/gencal/')
 else:
     from __main__ import default
     from tasks import gencal, rmtables
@@ -28,24 +26,12 @@ else:
     
     _tb=tbtool()
     
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
 
-### DATA ###
-
-if is_CASA6:
-    evndata = ctsys.resolve('visibilities/other/n08c1.ms/')
-    vlbadata = ctsys.resolve('visibilities/vlba/ba123a.ms/')
-    vlbacal = ctsys.resolve('caltables/ba123a.gc/')
-
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        evndata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/n08c1.ms/'
-        vlbadata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
-        vlbacal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ba123a.gc/'
-    else:
-        evndata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/n08c1.ms/'
-        vlbadata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
-        vlbacal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ba123a.gc/'
+# input data
+evndata = 'n08c1.ms'
+vlbadata = 'ba123a.ms'
+vlbacal = os.path.join(datapath,'ba123a.gc')
 
 caltab = 'cal.A'
 evncopy = 'evn_copy.ms'
@@ -84,9 +70,9 @@ class gencal_antpostest(unittest.TestCase):
 #    if testmms:
 #        msfile = 'tdem0003gencal.mms'
     caltable = 'anpos.cal'
-    reffile1 = os.path.join(datapath,'anpos.manual.cal')
-    reffile2 = os.path.join(datapath,'anpos.auto.cal')
-    reffile3 = os.path.join(datapath,'anpos.autoCAS13057.cal')
+    reffile1 = os.path.join(datapath+'evla_reference/','anpos.manual.cal')
+    reffile2 = os.path.join(datapath+'evla_reference/','anpos.auto.cal')
+    reffile3 = os.path.join(datapath+'evla_reference/','anpos.autoCAS13057.cal')
     res = False
 
     def setUp(self):
@@ -220,8 +206,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
         if (os.path.exists(self.ALMA_MS)):
             shutil.rmtree(self.ALMA_MS)
 
-        flagdata_datapath = os.path.join(datapath, '../flagdata/')
-        shutil.copytree(os.path.join(flagdata_datapath, self.ALMA_MS),
+        shutil.copytree(os.path.join(datapath, self.ALMA_MS),
                         self.ALMA_MS, symlinks=True)
 
     def tearDown(self):
@@ -453,8 +438,8 @@ class gencal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        shutil.copytree(evndata, evncopy)
-        shutil.copytree(vlbadata, vlbacopy)
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
 
     def setUp(self):
         if not is_CASA6:
