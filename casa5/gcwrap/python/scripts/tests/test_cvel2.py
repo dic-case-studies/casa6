@@ -28,14 +28,13 @@ else:
     mytb = tbtool()
     myqa = qa
 
+    distroPath = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 # Alternative path for data
 datapath = ctsys_resolve('unittest/cvel/')
-print('********************')
-print(datapath)
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -173,8 +172,8 @@ class test_base(unittest.TestCase):
             mytb.putcol('TIME', a)
             mytb.close()
             myms.open(vis_g, nomodify=False)
-            myms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                            'Jupiter_54708-55437dUTC', 0)
+            myephemdata = os.path.join(distroPath,'ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
+            myms.addephemeris(0,myephemdata,'Jupiter_54708-55437dUTC', 0)
             myms.close()
     
     def setUp_4ants(self):
