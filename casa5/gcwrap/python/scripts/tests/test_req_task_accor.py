@@ -36,32 +36,22 @@ import sys
 import os
 import unittest
 import shutil
-import filecmp
 import numpy
 
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
-    libpath = casatools.ctsys.resolve('text/testcallib.txt')
-    vladata = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
-    ### VLBA data for test ###
-    # visibilities/vla
-    VLBAdatapath = casatools.ctsys.resolve('visibilities/vlba/ba123a.ms')
-    cdfdata = casatools.ctsys.resolve('regression/evn/n08c1.ms/')
+    datapath = casatools.ctsys.resolve('unittest/accor/uid___X02_X3d737_X1_01_small.ms/')
+    libpath = casatools.ctsys.resolve('unittest/accor/testcallib.txt')
+    vladata = casatools.ctsys.resolve('unittest/accor/ngc5921.ms/')
+    VLBAdatapath = casatools.ctsys.resolve('unittest/accor/ba123a.ms')
+    cdfdata = casatools.ctsys.resolve('unittest/accor/n08c1.ms/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        libpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/testcallib.txt'
-        vladata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
-        VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        libpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/testcallib.txt'
-        vladata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
-    cdfdata = os.environ.get('CASAPATH').split()[0] + '/data/regression/evn/n08c1.ms/'
-
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/uid___X02_X3d737_X1_01_small.ms/'
+    libpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/testcallib.txt'
+    vladata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ngc5921.ms/'
+    VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ba123a.ms/'
+    cdfdata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/n08c1.ms/'
 
 caltab = 'cal.A'
 cal_default = 'cal.default'
@@ -289,9 +279,7 @@ class accor_test(unittest.TestCase):
         accor(vlacopy, caltable='cal.A', gaintable=['cal.B'])
         accor(vlacopy, caltable='cal.C', gaintable=['cal.B'],  interp='nearest')
         
-        print(len(filecmp.dircmp('cal.A', 'cal.C').diff_files),(filecmp.dircmp('cal.A', 'cal.C').diff_files))
-        
-        self.assertTrue(len(filecmp.dircmp('cal.A', 'cal.C').diff_files) > 1)
+        self.assertFalse(numpy.isclose(getmean('cal.A')-getmean('cal.C'), 0))
         
         rmtables('cal.C')
         

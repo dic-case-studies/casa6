@@ -406,7 +406,7 @@ class test_createmultims(unittest.TestCase):
 
         self.tb = table( )
         self.ms = ms( )
-        datapath='regression/unittest/concat/input/'
+        datapath='unittest/mstool/'
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("part*.ms"))
         os.chdir(ctsys.resolve(datapath))

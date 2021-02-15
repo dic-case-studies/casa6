@@ -23,8 +23,7 @@ Features tested:
   1. When that UVFITS file is read back in, is its data still correct?
 '''
 
-datapath = 'regression/unittest/uvfits/'
-datapath2 = 'regression/'
+datapath = ctsys.resolve('unittest/importuvfits/')
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -118,7 +117,7 @@ class importuvfits_test(unittest.TestCase):
     def test_receptor_angle(self):
         """CAS-7081: Test receptor angle is preserved"""
         myms = mstool()
-        msname = ctsys.resolve(datapath + "uvfits_test.ms")
+        msname = os.path.join(datapath, "uvfits_test.ms")
         self.assertTrue(myms.open(msname), "Input dataset not found")
         uvfits = "xyz.uvfits"
         self.assertTrue(myms.tofits(uvfits), "Failed to write uvfits")

@@ -47,15 +47,12 @@ import unittest
 import shutil
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('caltables/ggtau.1mm.amp.gcal')
-    datapath_visibilities = casatools.ctsys.resolve('visibilities/')
+    datapath = casatools.ctsys.resolve('unittest/calstat/ggtau.1mm.amp.gcal')
+    datapath_visibilities = casatools.ctsys.resolve('unittest/calstat/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/data/visibilities/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/calstat/ggtau.1mm.amp.gcal'
+    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/calstat/'
     #filepath = os.environ.get('CASAPATH').split()[0] + '/bin/nosedir/testlog.log'
         
 logpath = casalog.logfile()
@@ -154,9 +151,9 @@ class calstat_test(unittest.TestCase):
     # Test cases from test_calstat
     def data(self):
         if CASA6:
-            return map( lambda x: ctsys.resolve("regression/calstat/" + x), self.caltables )
+            return map( lambda x: ctsys.resolve('unittest/calstat/' + x), self.caltables )
         else:
-            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "regression/calstat/" + x, self.caltables )
+            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/calstat/" + x, self.caltables )
 
     def test_cs(self):
         expected = {'ggtau.3mm.ph.gcal0':

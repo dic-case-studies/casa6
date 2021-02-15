@@ -384,8 +384,12 @@ void CasacRegionManager::_setRegion(
     }
     // region name provided
     const static Regex image("(.+):(.+)");
+// OSX no longer seems to like this one
+//    const static Regex regionText(
+//        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
+//    );
     const static Regex regionText(
-        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\[(.*)+,(.*)+\\]"
+        "^[[:space:]]*[[:alpha:]]+[[:space:]]*\\["
     );
     File myFile(regionName);
     const CoordinateSystem csys = getcoordsys();

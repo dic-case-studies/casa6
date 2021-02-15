@@ -221,6 +221,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, VisSet& vs) {
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(vs);
   
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(vs);
+  
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
 
@@ -370,6 +373,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, String msname, Int MSnA
 
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(msname,MSnAnt,MSnSpw);
+  
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(msname,MSnAnt,MSnSpw);
   
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
@@ -531,6 +537,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, const MSMetaInfoForCal&
 
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(msmc);
+  
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(msmc);
   
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
@@ -715,6 +724,15 @@ Slice calParSliceByType(String caltype, String what, String pol)
         what=="IMAG") {
       if (pol=="")
         return Slice(0,8,1);
+    }
+  }
+  else if (caltype=="EPOWERCURVE") {
+    if (what=="AMP" ||
+        what=="PHASE" ||
+        what=="REAL" ||
+        what=="IMAG") {
+      if (pol=="")
+        return Slice(0,16,1);
     }
   }
   else

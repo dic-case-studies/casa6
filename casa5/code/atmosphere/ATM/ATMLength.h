@@ -44,12 +44,23 @@ ATM_NAMESPACE_BEGIN
 class Length
 {
 public:
+  enum Units {
+    UnitKiloMeter,
+    UnitMeter,
+    UnitMilliMeter,
+    UnitMicron,
+    UnitMicrons,
+    UnitNanoMeter,
+    NumLengthUnits
+  };
+
   /** Default constructor: Length value set to 0 m */
   Length();
   /** A full constructor: value in default units (m) */
   Length(double length);
   /** A full constructor: value + units. Valid units are:  km [KM], m [M], mm [MM], micron [MICRON], nm [NM]. */
   Length(double length, const std::string &units);
+  Length(double length, Units units);
   /** Copy constructor */
   Length(const Length &length);
 
@@ -61,6 +72,7 @@ public:
   /** Accessor to the length value in specified units. Implemented units are km [KM], m [M], mm [MM], micron [MICRON], nm [NM].
    *  If none of these implemented units is given, the SI value will be returned. */
   inline double get(const std::string &units) const { return sget(valueIS_, units); }
+  inline double get(const Units units) const { return sget(valueIS_, units); }
   /** Accessor to the length in specified units as a formatted std::string.
    *  Implemented units are km [KM], m [M], mm [MM], micron [MICRON], nm [NM].
    *  If none of these implemented units is given, the SI value will be returned. */
@@ -106,6 +118,8 @@ public:
 private:
   static double sget(double value, const std::string &units);
   static double sput(double value, const std::string &units);
+  static double sget(double value, Units units);
+  static double sput(double value, Units units);
 
 private:
   double valueIS_;
