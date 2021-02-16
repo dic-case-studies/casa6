@@ -52,7 +52,7 @@ class plotms_test_base(unittest.TestCase):
     display = os.environ.get("DISPLAY")
 
     testms  = "pm_ngc5921.ms"
-    testms2 = "sj_ngc5921.ms"
+    testms2 = "ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
     testct = 'ngc5921.ref1a.gcal'
@@ -783,7 +783,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot01.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -794,14 +794,14 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot02.jpg")
         self.removePlotfile()
         # gamp vs scan
-        res = plotms(vis=self.caltable, xaxis='scan',
+        res = plotms(vis=self.ct, xaxis='scan',
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.caltable, yaxis='phase',
+        res = plotms(vis=self.ct, yaxis='phase',
             xaxis='baseline', overwrite=True,
             plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
@@ -813,7 +813,7 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot03.jpg")
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, iteraxis='corr', exprange='all')
         self.assertTrue(res)
         fileCount = self.getFilecount(self.outputDir, "testCalPlot03_")
@@ -825,7 +825,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_selection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
@@ -835,7 +835,7 @@ class test_calplot(plotms_test_base):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
