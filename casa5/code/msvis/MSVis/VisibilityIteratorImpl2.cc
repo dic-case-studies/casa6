@@ -2357,6 +2357,12 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         if (rowBounds_p.subchunkEnd_p >= rowBounds_p.chunkNRows_p) {
             rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
         }
+        // This is needed because the determineChannelSelection()
+        // function will call the spectralWindow() which in turn needs to
+        // have rowBounds_p.subchunkRows_p properly initialized
+        rowBounds_p.subchunkRows_p =
+                RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
+
 
         // Scan the subchunk to see if the same channels are selected in each
         // row.  End the subchunk when a row using different channels is
@@ -2398,6 +2404,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
         rowBounds_p.subchunkNRows_p =
                 rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
+        // Reset this in case rowBounds_p.subchunkEnd_p has changed
         rowBounds_p.subchunkRows_p =
                 RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
         rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
