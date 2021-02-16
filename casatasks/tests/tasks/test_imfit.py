@@ -80,7 +80,7 @@ if is_CASA6:
     _tb = table( )
     _rg = regionmanager( )
 
-    datapath=ctsys.resolve('regression/unittest/imfit')
+    datapath=ctsys.resolve('unittest/imfit/')
 
     # CASAtasks doesn't use default
     def default(atask):
@@ -99,7 +99,7 @@ else:
     componentlist =  cltool
     functional = fntool
     
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imfit'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imfit/'
 
 noisy_image = "gaussian_model_with_noise.im"
 noisy_image_xx = "gaussian_model_with_noise_xx.im"

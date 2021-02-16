@@ -1207,8 +1207,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
-    cimageShape(2)=whichStokes.nelements();
-      
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
+    cimageShape(2)=whichStokes.nelements();      
     //cout << "Making forward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsForwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
     //if(image())
@@ -1235,6 +1235,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     //cout << "Making backward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsBackwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
@@ -2883,7 +2884,7 @@ Float SIImageStore::getPeakResidual()
     
     return maxresidual;
   }
-
+  
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
@@ -3332,7 +3333,7 @@ void SIImageStore::regridToModelImage( ImageInterface<Float> &inputimage, Int te
     LogIO logIO(LogOrigin("SIImageStore", "recreate"));
     ifstream inFile; inFile.open(fileName.c_str(),std::ofstream::out);
     if (!inFile) logIO << "Failed to open filed \"" << fileName << "\"" << LogIO::EXCEPTION;
-      
+
     String token;
     inFile >> token; if (token == "itsImageNameBase:") inFile >> itsImageName;
 

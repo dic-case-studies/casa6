@@ -104,7 +104,7 @@ try:
     from casatasks import casalog, sdintimaging, flagdata
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    sys.path.append(os.path.abspath(os.path.basename(__file__)))
+    #sys.path.append(os.path.abspath(os.path.basename(__file__)))
     #from testhelper_imager import TestHelpers
 
      #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
@@ -121,18 +121,13 @@ th = TestHelpers()
 
 if CASA6:
     #refdatapath = ctsys.resolve('regression/unittest/sdintimaging')
-    visdatapath = ctsys.resolve('visibilities/evla')
-    imdatapath = ctsys.resolve('image') 
-    maskdatapath = ctsys.resolve('text') 
+    visdatapath = ctsys.resolve('unittest/sdintimaging/')
+    imdatapath = ctsys.resolve('unittest/sdintimaging/')
+    maskdatapath = ctsys.resolve('unittest/sdintimaging/') 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/casa-data-req'):
-        visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-        imdatapath = os.environ.get('CASAPATH').split()[0] +'/casa-data-req/image/' 
-        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
-    else:
-        visdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-        imdatapath = os.environ.get('CASAPATH').split()[0] +'/image/' 
-        maskdatapath = os.environ.get('CASAPATH').split()[0] + '/text/'
+    visdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
+    imdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
+    maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
     
     #if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
     #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'

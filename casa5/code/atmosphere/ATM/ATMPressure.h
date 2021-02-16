@@ -43,6 +43,14 @@ ATM_NAMESPACE_BEGIN
 class Pressure
 {
 public:
+  enum Units {
+    UnitPascal,
+    UnitHectoPascal,
+    UnitBar,
+    UnitMilliBar,
+    UnitAtmosphere,
+    NumPressureUnits
+  };
 
   /** Default constructor */
   Pressure();
@@ -50,6 +58,7 @@ public:
   Pressure(double pressure);
   /** A full constructor: Pressure value + units. Valid units are hPa [HPA] [hpa], bar [BAR], mb [MB], mbar [MBAR], atm [ATM]. */
   Pressure(double pressure, const string &units);
+  Pressure(double pressure, Units units);
 
   /** Destructor */
   virtual ~Pressure();
@@ -59,6 +68,7 @@ public:
   /** Accessor to get the value in the following (implemented) units: hPa [HPA] [hpa], bar [BAR], mb [MB], mbar [MBAR], atm [ATM].
    * If none of these implemented units is given, the SI value will be returned. */
   double get(const string &units) const;
+  double get(Units units) const;
 
    Pressure& operator=(const Pressure &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
    Pressure& operator=(double rhs) { valueIS_ = rhs; return *this; }

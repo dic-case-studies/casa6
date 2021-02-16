@@ -124,9 +124,41 @@ private:
 
   // Effeciency samples
   casacore::Vector<casacore::Double> eff_;
-
 };
 
+class EPowerCurve : public EGainCurve {
+public:
+
+  // Constructor
+  EPowerCurve(VisSet& vs);
+  EPowerCurve(casacore::String msname,casacore::Int MSnAnt,casacore::Int MSnSpw);
+  EPowerCurve(const MSMetaInfoForCal& msmc);
+
+  virtual ~EPowerCurve();
+
+  // Return type name as string
+  virtual casacore::String typeName()     { return "EPowerCurve"; };
+  virtual casacore::String longTypeName() { return "EPowerCurve (Gain(elev) corrections)"; };
+
+  // Generate gain curves caltable via specify
+  void setSpecify(const casacore::Record& specify);
+  void specify(const casacore::Record& specify);
+
+protected:
+
+  // EPowerCurve has 16 casacore::Float pars per ant (8 per pol)
+  virtual casacore::Int nPar() { return 16; };
+
+  // Calculate the EPowerCurve matrix for all ants
+  virtual void calcAllJones();
+
+  casacore::String& gainCurveTabName() { return gainCurveTabName_; };
+
+private:
+
+  // Gain curve table name
+  casacore::String gainCurveTabName_;
+};
 
 } //# NAMESPACE CASA - END
 

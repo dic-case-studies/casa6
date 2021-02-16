@@ -683,6 +683,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsForwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsForwardGrids[term];
@@ -697,6 +698,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsBackwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsBackwardGrids[term];

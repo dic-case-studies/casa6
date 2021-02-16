@@ -80,7 +80,7 @@ class msview_test(unittest.TestCase):
         self.outfiles = { }
         for t in ['jpg', 'pdf', 'eps', 'ps', 'png', 'xbm', 'xpm', 'ppm']:
             self.outfiles[t] = "tms"+str(os.getpid())+"."+t
-        os.system('cp -R '+self.casaroot+'/data/regression/fits-import-export/input/test.ms '+self.testms)
+        os.system('cp -RH '+self.casaroot+'/casatestdata/unittest/msview/ngc4826_bima_7fields_7spw.ms '+self.testms)
 
     #@classmethod
     #def tearDownClass(self):

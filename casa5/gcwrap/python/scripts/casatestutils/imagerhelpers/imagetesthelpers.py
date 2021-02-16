@@ -35,6 +35,11 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+
+    def tclean_param_names():
+        from casatasks.tclean import _tclean_t
+        return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+
     casa6 = True
 
 else:
@@ -60,6 +65,12 @@ else:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
+
+    def tclean_param_names():
+        # alternatively could use from tasks import tclean; tclean.parameters
+        from task_tclean import tclean
+        return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+
     casa5 = True
 
 ############################################################################################
@@ -458,6 +469,94 @@ class TestHelpers:
         logging.info(pstr)
         return out, pstr
 
+    def check_list_vals(self, list1, list2, test, epsilon=None):
+        """ compares 2 lists and returns if they are equivalent (within error) 
+        """
+        report = ''
+        if len(list1) == len(list2):
+            exact = (epsilon is None)
+            i = 0
+            while i < len(list1):
+                result, pstr = self.check_val(list1[i], list2[i], \
+                    valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
+                if result == False:
+                    report = pstr
+                    break
+                i += 1
+        else:
+            result = False
+
+        return result, report
+
+    def check_dict_vals(self, exp_dict, act_dict, suffix, epsilon=0.01):
+        """ Compares expected dictionary with actual dictionary.
+
+            Parameters
+            ----------
+            exp_dict: dictionary
+                Expected values, as key:value pairs.
+                Values must be lists, where
+                val[0] is "True" for an exact match, or a float for a non-exact
+                epsilon for check_val(). Default is input epsilon.
+                val[1] is either a value to check_val() against or a list to
+                check_list_vals() against.
+            act_dict: dictionary
+                Actual values to compare to exp_dict (and just the values).
+                Keys must match between exp_dict and act_dict.
+            suffix: string
+                For use with summary print statements.
+
+            Notes
+            -----
+            Each exp_dict key:value pair does not need to match in
+            exactness or listedness. One value could be exact, and
+            the next relative to epsilon. One value could be a list,
+            and the next an integer.
+
+            Notes
+            -----
+            Example exp_dict
+            {
+                'end': [True, 2203765e5],
+                'start': [False, 220257e5], # uses default epsilon value
+                'start_delta': [0.01, 2202527e5],
+            }
+        """
+        report = ''
+        passed = True
+        chans = 0
+        for key in exp_dict:
+
+            # convert the expected value in exp_dict[key] to its own dictionary
+            exp_val = exp_dict[key]
+            v = {
+                'val': exp_val[1],
+                'exact': False,
+                'epsilon': epsilon,
+            }
+            if type(exp_val[0]) == bool:
+                v['exact'] = exp_val[0]
+            else:
+                v['epsilon'] = exp_val[0]
+            if v['val'] == 0.0: # special case for "0"
+                v['exact'] = True
+            if v['exact'] == True:
+                v['epsilon'] = None
+
+            # evaluate the expected value against the actual value
+            if type(v['val']) == list:
+                result, pstr = self.check_list_vals(act_dict[key], 
+                    v['val'], test=suffix+' '+key, epsilon=v['epsilon'])
+                report += self.check_val(result, True, \
+                    valname=suffix+' '+key, exact=True)[1]
+                report += pstr
+            else:
+                report += self.check_val(act_dict[key], \
+                    v['val'], exact=v['exact'], epsilon=v['epsilon'],
+                    valname=suffix+' '+key)[1]
+
+        return report
+
     def check_ims(self, imlist, truth, testname="check_ims"):
         pstr = ''
         imex = []
@@ -487,7 +586,8 @@ class TestHelpers:
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
-            pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+            pstr += ('All expected keywords in imageinfo, miscinfo, and coords found. '
+                     '({})\n'.format(testname, TestHelpers().verdict(False)))
         return pstr
 
     def check_im_keywords(self, imname, check_misc=True, check_extended=True):
@@ -550,6 +650,7 @@ class TestHelpers:
         mandatory_coords = ['telescope']
         pstr += TestHelpers().check_expected_entries(mandatory_coords, coords, keys)
         return pstr
+
     def check_expected_entries(self, entries, record, keys):
         pstr = ''
         for entry in entries:
@@ -566,6 +667,74 @@ class TestHelpers:
         for entry in entries:
             if entry in keys[record]:
                 pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+        return pstr
+
+    def check_history(self, imlist, testname="check_history"):
+        """
+        Checks presence of the logtable and rows with history information (task name,
+        CASA version, all task parameters, etc.).
+
+        :param imlist: names of the images produced by a test execution.
+        :param testname: name to use in the checks report string
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        """
+        pstr = ''
+        for imname in imlist:
+            if os.path.exists(imname):
+                issues = TestHelpers().check_im_history(imname)
+                if issues:
+                    pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+        if not pstr:
+            pstr += ('[{}] All expected history entries found. ({})\n'.
+                     format(testname, TestHelpers().verdict(True)))
+        return pstr
+
+    def check_im_history(self, imname):
+        """
+        Check the history records in an image, ensuring the taskname, CASA version, and
+        full list of parameters is found (all the same number of times).
+
+        :param imname: image name (output image from tclean)
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        Errors are marked with the tag '(Fail' as per self.verdict().
+        """
+        ia_open = False
+        try:
+            _ia.open(imname)
+            ia_open = True
+            history = _ia.history(list=False)
+        except RuntimeError as exc:
+            pstr = ('Cannot retrieve history subtable from image: {}. Error: {}'.
+                    format(imname, exc))
+            return pstr
+        finally:
+            if ia_open:
+                _ia.close()
+
+        pstr = ''
+        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        nversions = sum(line.startswith('version:') for line in history)
+        if ncalls < 1:
+            pstr += ('No calls to tclean were found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        if nversions < 1:
+            pstr += ('No CASA version was found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
+            pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
+                     'not match. ({})\n'.format(ncalls, nversions,
+                                                TestHelpers().verdict(False)))
+        for param in tclean_param_names():
+            nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                          line in history)
+            if nparval < 1:
+                pstr += ('No entries for tclean parameter {} found in history. ({})'
+                         '.'.format(param, TestHelpers().verdict(False)))
+            if nparval != ncalls:
+                pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                         "calls ({}) do not match ({}).".
+                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
         return pstr
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
@@ -638,6 +807,8 @@ class TestHelpers:
                 print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
                 print("pstr after check_keywords = {}".format(pstr))
+                pstr += TestHelpers().check_history(imgexist)
+                print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):
