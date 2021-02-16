@@ -39,12 +39,13 @@ else:
     import sdutil
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'data')
-        subdir_hints = ['', 'casa-data-req']
-        for subdir in subdir_hints:
-            path = os.path.join(dataPath, subdir, apath)
-            if os.path.exists(path):
-                return path
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/')
+        return os.path.join(dataPath, apath)
+#         subdir_hints = ['', 'casa-data-req']
+#         for subdir in subdir_hints:
+#             path = os.path.join(dataPath, subdir, apath)
+#             if os.path.exists(path):
+#                 return path
 
 
 def smart_remove(name):
@@ -96,7 +97,7 @@ def apply_gainfactor(name, spw, factor):
 
 
 class test_sdatmcor(unittest.TestCase):
-    datapath = ctsys_resolve('visibilities/almasd')
+    datapath = ctsys_resolve('measurementset/almasd')
     infile = 'X320b_sel2.ms'
     outfile = infile + '.atmcor'
     caltable = infile + '.k2jycal'

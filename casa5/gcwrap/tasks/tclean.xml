@@ -1820,6 +1820,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                        The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
                        to determine the threshold. 
 
+		       The parameter 'nsigma' may be an int, float, or a double.
+
 </description>
       <value type="double">0.0</value>
     </param>

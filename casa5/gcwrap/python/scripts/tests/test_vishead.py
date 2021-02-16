@@ -36,9 +36,9 @@ Unit tests for task vishead. It tests the following modes:
 '''
 
 if is_CASA6:
-    datapath=ctsys.resolve('regression/unittest/vishead')
+    datapath=ctsys.resolve('unittest/vishead/')
 else:
-    datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/vishead')
+    datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/vishead/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -107,7 +107,7 @@ class vishead_test(unittest.TestCase):
         if(os.path.exists(input_file)):
             os.system('rm -rf ' +input_file)
 
-        os.system('cp -RL ' +os.path.join(datapath,input_file) +' ' + input_file)
+        os.system('cp -RH ' +os.path.join(datapath,input_file) +' ' + input_file)
         if not is_CASA6:
             default('vishead')
 

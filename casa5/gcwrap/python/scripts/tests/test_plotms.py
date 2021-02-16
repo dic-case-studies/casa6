@@ -12,29 +12,29 @@ from tasks import *
 from taskinit import *
 
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
 # Include ms for BPOLY and GSPLINE
 testcaltables = {'a_mueller.uvcont.tbl': 250000,
+    'anpos.autoCAS13057.cal': 40000,
     'bandtypeBPOLY.B0': 70000,
-    'b_jones.cal': 100000,
-    'b_tsys.cal': 100000,
     'df_jones.cal': 120000,
     'egaincurve.cal': 40000,
     'f_jones.cal': 50000,
-    'fringe_jones.cal': 40000,
     'gaincaltest2.ms': 200000,
     'gaincaltest2.ms.T0': 40000,
     'gaintypek.G0': 40000,
     'gaintypeSpline.G0': 90000,
-    'g_elvaswpow.cal': 40000,
-    'g_jones.cal': 40000,
+    'g_evlaswpow.cal': 40000,
     'glinxphf_jones.cal': 30000,
-    'kantpos_jones.cal': 40000,
     'k_jones.cal': 40000,
     'm_mueller.cal': 40000,
+    'n08c1.sbdcal': 40000,
+    'ngc5921.ref1a.bcal': 100000,
+    'ngc5921.ref1a.gcal': 40000,
+    'ngc5921.ref2a.gcal': 40000,
     'topac.cal': 30000,
+    'tsysweight_ave.tsys.cal': 100000,
     'xf_jones.cal': 80000}
 
 # Pick up alternative data directory to run tests on MMSs
@@ -55,13 +55,13 @@ class plotms_test_base(unittest.TestCase):
     testms2 = "sj_ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testcaltable = 'g_jones.cal'
+    testct = 'ngc5921.ref1a.gcal'
 
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    caltable = os.path.join(outputDir, testcaltable)
+    ct = os.path.join(outputDir, testct)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -87,12 +87,11 @@ class plotms_test_base(unittest.TestCase):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(datapath,self.testms2),
-                    self.ms2, symlinks=True)
-        testcaltable = os.path.join(self.outputDir, self.caltable)
-        if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(datapath, self.testcaltable),
-                    self.caltable, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
+        if not os.path.exists(self.ct):
+            shutil.copytree(os.path.join(datapath, self.testct),
+                self.ct, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
@@ -108,7 +107,7 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
+            shutil.copytree(os.path.join(datapath,self.testms4),
                     self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
@@ -750,7 +749,7 @@ class test_calibration(plotms_test_base):
         '''test_calibration_callib: callib string parameter for OTF calibration'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
         self.removePlotfile()
-        callibStr = "caltable='" + self.caltable + "' calwt=True tinterp='nearest'"
+        callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
         res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
             ydatacolumn="corrected", xaxis="frequency",
             showgui=False, callib=callibStr, highres=True)

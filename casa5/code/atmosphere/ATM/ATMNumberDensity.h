@@ -45,6 +45,12 @@ ATM_NAMESPACE_BEGIN
 class NumberDensity
 {
  public:
+  enum Units {
+    UnitInverseCubicCentiMeter,
+    UnitInverseCubicMeter,
+    NumNumberDensityUnits
+  };
+
   /** Default constructor */
   NumberDensity();
   /** A full constructor: Number Density value assumed by default to be in m**-3 (International System) */
@@ -52,6 +58,7 @@ class NumberDensity
   /** A full constructor: Number Density value + unit. Valid units are m**-3 [M**-3], cm**-3 [CM**-3].
    *  If none of these implented units is given, the SI value will be returned. */
   NumberDensity(double numberdensity, const string &units);
+  NumberDensity(double numberdensity, Units units);
 
   /** Destructor */
   virtual ~NumberDensity();
@@ -60,6 +67,7 @@ class NumberDensity
   double get() const { return valueIS_; }
   /** Accessor to the numberdensity value in specified units. Valid units are K [k], mK [mk], and C [c] */
   double get(const string &units) const;
+  double get(const Units units) const;
 
   NumberDensity& operator=(const NumberDensity &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
   NumberDensity& operator=(const double &rhs) { valueIS_ = rhs; return *this; }

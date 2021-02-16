@@ -342,16 +342,19 @@ void RegriddingTVI::initialize()
 // -----------------------------------------------------------------------
 void RegriddingTVI::origin()
 {
-	// Drive underlying ViImplementation2
-	getVii()->origin();
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-	// Define output grid for this chunk (also defines shape)
-	initFrequencyGrid();
+    // Define output grid for this chunk (also defines shape)
+    initFrequencyGrid();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    // Define the shapes in the VB2
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
 }
 
 // -----------------------------------------------------------------------

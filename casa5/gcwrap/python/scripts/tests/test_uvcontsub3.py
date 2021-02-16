@@ -18,8 +18,7 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
-uvcdatadir = 'unittest/uvcontsub/' 
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvcontsub/'
 
 # eliminated dependence on test_split (TT)
 #class UVContChecker(SplitChecker):
@@ -59,9 +58,6 @@ class UVContsub3UnitTestBase(unittest.TestCase):
         initialize
         """
         self.inpms = inpms
-        if not os.path.exists('unittest/uvcontsub3'):
-            os.system('mkdir -p unittest/uvcontsub')
-
         if not os.path.exists(self.inpms):
             try:
                 shutil.copytree(datapath + inpms, inpms)
@@ -106,7 +102,7 @@ class zeroth(UVContsub3UnitTestBase):
     """Test zeroth order fit"""
 
     def setUp(self):
-        self.initialize(uvcdatadir+'known0.ms')
+        self.initialize('known0.ms')
 
     def tearDown(self):
         self.cleanup()
@@ -141,7 +137,7 @@ class fourth(UVContsub3UnitTestBase):
     """Test forth order fit"""
 
     def setUp(self):
-        self.initialize(uvcdatadir + 'known4.ms')
+        self.initialize('known4.ms')
     
     def tearDown(self):
         self.cleanup()
@@ -196,7 +192,7 @@ class fourth(UVContsub3UnitTestBase):
 class combspw(UVContsub3UnitTestBase):
     """Test combine spw"""
     def setUp(self):
-        self.initialize(uvcdatadir + 'combspw.ms')
+        self.initialize('combspw.ms')
 
     def tearDown(self):
         self.cleanup()
@@ -235,7 +231,7 @@ class knowncombspw(UVContsub3UnitTestBase):
 
     corrsels = [1]                    # fitorder, not corr selection.
     def setUp(self):
-        self.initialize(uvcdatadir + 'knowncombspw.ms')
+        self.initialize('knowncombspw.ms')
 
     def tearDown(self):
         self.cleanup()

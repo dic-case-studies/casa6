@@ -15,7 +15,7 @@ if is_CASA6:
     myms = ms( )
     _tb = table( )
 
-    datapath=ctsys.resolve('regression/unittest/importasap')
+    datapath=ctsys.resolve('unittest/importasap/')
 
     # default isn't needed for casatasks
     def default(atask):
@@ -30,7 +30,7 @@ else:
 
     myms, _tb = gentools(['ms','tb'])
 
-    datapath=os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/importasap'
+    datapath=os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/importasap/'
 
 class importasap_test(unittest.TestCase):
     """
