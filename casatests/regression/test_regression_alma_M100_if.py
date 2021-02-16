@@ -159,7 +159,7 @@ def timing(mystep, thesteps):
         casalog.post( '  '+str(thesteps[i])+'   '+str(steptime[i])+'  '+str(steptime[i]/totaltime*100.) +' ['+step_title[thesteps[i]]+']', 'WARN')
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('regression/alma-m100-analysis/input/')
+    datapath = casatools.ctsys.resolve('regression/alma_M100_if/')
 else:
     pass
 
