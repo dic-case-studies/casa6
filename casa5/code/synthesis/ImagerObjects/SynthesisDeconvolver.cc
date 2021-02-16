@@ -1215,6 +1215,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	outRec.define(*it, tmp(IPosition(2, 0, chanBeg), IPosition(2, tmp.shape()[0]-1, chanEnd)));     
       }
     }
+
+    // When itsImages->residual() is called, it (sometimes) creates a read-lock. Release that lock.
+    shared_ptr<ImageInterface<Float> > resimg = itsImages->residual();
+    itsImages->releaseImage( resimg );
+
     //cerr <<"chanbeg " << chanBeg << " chanend " << chanEnd << endl;
     //cerr << "GETSUB " << outRec << endl; 
     return outRec;
@@ -1244,6 +1249,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsRobustStats.define(*it, outvec);     
       }
     }
+
+    // When itsImages->residual() is called, it (sometimes) creates a read-lock. Release that lock.
+    shared_ptr<ImageInterface<Float> > resimg = itsImages->residual();
+    itsImages->releaseImage( resimg );
 
     //cerr << "SETT " << itsRobustStats << endl;
     //cerr << "SETT::ItsRobustStats " << Vector<Double>(itsRobustStats.asArrayDouble("min")) << endl;
