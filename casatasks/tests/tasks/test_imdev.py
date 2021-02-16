@@ -21,17 +21,18 @@ _rg = rgtool( )
 Unit tests for task ia.deviation().
 '''
 
-datapath = ctsys.resolve('regression/unittest/ia_deviation/')
+datapath = ctsys.resolve('unittest/imdev/')
+reference_path = datapath+'/imdev_reference/'
 
 input0 = datapath + "100x100x2.im"
-ref0 = datapath + "ref0.im"
-ref1 = datapath + "ref1.im"
-ref2 = datapath + "ref2.im"
-ref3 = datapath + "ref3.im"
-ref4 = datapath + "ref4.im"
-ref5 = datapath + "ref5.im"
-ref6 = datapath + "ref6.im"
-ref7 = datapath + "ref7.im"
+ref0 = reference_path + "ref0.im"
+ref1 = reference_path + "ref1.im"
+ref2 = reference_path + "ref2.im"
+ref3 = reference_path + "ref3.im"
+ref4 = reference_path + "ref4.im"
+ref5 = reference_path + "ref5.im"
+ref6 = reference_path + "ref6.im"
+ref7 = reference_path + "ref7.im"
 
 class imdev_test(unittest.TestCase):
 

@@ -70,9 +70,9 @@ class sdfixscan_unittest_base:
     """
     taskname='sdfixscan'
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/sdfixscan')
+        datapath=ctsys.resolve('unittest/sdfixscan/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdfixscan')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdfixscan/')
     
     def _checkfile( self, name ):
         isthere=os.path.exists(name)

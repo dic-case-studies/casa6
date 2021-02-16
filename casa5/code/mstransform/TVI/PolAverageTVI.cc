@@ -289,6 +289,9 @@ PolAverageTVI::~PolAverageTVI() {
 void PolAverageTVI::origin() {
   TransformingVi2::origin();
 
+  // Configure the correlations per shape
+  configureShapes();
+
   // Synchronize own VisBuffer
   configureNewSubchunk();
 
@@ -302,6 +305,9 @@ void PolAverageTVI::origin() {
 void PolAverageTVI::next() {
   TransformingVi2::next();
 
+  // Configure the correlations per shape
+  configureShapes();
+
   // Synchronize own VisBuffer
   configureNewSubchunk();
 
@@ -310,6 +316,13 @@ void PolAverageTVI::next() {
 
   // warn if current dd is inappropriate for polarization averaging
   warnIfNoTransform();
+}
+
+void PolAverageTVI::configureShapes() {
+    Vector <Int> corrs = getCorrelations ();
+    Int nCorrs = corrs.nelements();
+
+    nCorrelationsPerShape_ = casacore::Vector<casacore::Int> (1, nCorrs);
 }
 
 void PolAverageTVI::warnIfNoTransform() {
@@ -548,6 +561,11 @@ Vector<Stokes::StokesTypes> PolAverageTVI::getCorrelationTypesSelected() const {
   } else {
     return getVii()->getCorrelationTypesSelected();
   }
+}
+
+const casacore::Vector<casacore::Int>&
+PolAverageTVI::nCorrelationsPerShape() const {
+  return nCorrelationsPerShape_;
 }
 
 void PolAverageTVI::configurePolAverage() {

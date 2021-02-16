@@ -93,7 +93,6 @@ def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
         del sbsep
 
     except Exception, instance:
-        #print '***Error***',instance
         casalog.post( str(instance), priority = 'ERROR' )
         raise Exception, instance
         return

@@ -124,6 +124,9 @@ public:
   virtual casacore::Vector<casacore::Stokes::StokesTypes> getCorrelationTypesDefined() const;
   virtual casacore::Vector<casacore::Stokes::StokesTypes> getCorrelationTypesSelected() const;
 
+  // Override the number of correlations per shape. This TVI just generates one output shape
+  const casacore::Vector<casacore::Int>& nCorrelationsPerShape() const;
+
   // POLARIZATION table will have additional entry nPolarizationIds() should
   // return original number plus one
   // NB: nDataDescriptionIds() will not be affected
@@ -209,6 +212,8 @@ protected:
   virtual void transformWeight(casacore::Array<casacore::Float> const &weightIn,
   casacore::Array<casacore::Float> &weightOut) const = 0;
 
+  void configureShapes();
+
   // Flags (per ms, per data description) whether transformation must be executed or not
   // condition:
   //
@@ -224,6 +229,8 @@ protected:
 //  Vector<Vector<uInt> > polId0;
 //  Vector<Vector<uInt> > polId1;
   casacore::Vector<casacore::Int> polId0_;casacore::Vector<casacore::Int> polId1_;
+
+  casacore::Vector<casacore::Int> nCorrelationsPerShape_;
 
 private:
 

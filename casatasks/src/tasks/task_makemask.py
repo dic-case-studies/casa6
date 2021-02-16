@@ -56,7 +56,6 @@
 #      internal mask with different spectral grid
 ###################
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import numpy as np
@@ -101,7 +100,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
     _rg = regionmanager()
     _im = imager()
     casalog.origin('makemask')
-    #print "params(mode,inpimage,inpmask,output,overwrite)=",mode,inpimage,inpmask,output,overwrite
+    #casalog.post("params(mode,inpimage,inpmask,output,overwrite)=",mode,inpimage,inpmask,output,overwrite)
 
     try:
         # temp files
@@ -197,7 +196,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
         else:
            # PREPROCESS STAGE for mode='copy' and 'expand'
            #DEBUG
-           #print "mode=",mode
+           #casalog.post("mode=",mode)
            # copy can have multiple input masks, expand has only one.
            # check inpimage, inpmask, output, overwrite
            # 
@@ -291,17 +290,17 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                else:
                   outparentim=output
                
-           #print "param checks before branching out for mode=========="
-           #print "storeinmask = ",storeinmask
-           #print "output=",output, " is exist?=",os.path.isdir(output)
-           #print "outparentim=",outparentim, " is exist?=",os.path.isdir(outparentim)
+           #casalog.post("param checks before branching out for mode=========="))
+           #casalog.post("storeinmask = ",storeinmask)
+           #casalog.post("output=",output, " is exist?=",os.path.isdir(output))
+           #casalog.post("outparentim=",outparentim, " is exist?=",os.path.isdir(outparentim))
 
     # MAIN PROCESS for 'copy' or 'expand' mode
     # the following code is somewhat duplicated among the modes but keep separated from each mode
     # for now.... copy now handle merge as well
     # === old copy mode === NOW combined to 'merge mode'
 #        #if mode=='copy':
-#           #print "Copy mode"
+#           #casalog.post("Copy mode")
 #           needregrid=True
 #           #if outimage=='':
 #               #overwrite
@@ -322,7 +321,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
 #               #_ia.open(tmp_outmaskimage) 
 #               #_ia.calc('iif (%s>0.0 && %s<1.0,1,%s)'%(tmp_outmaskimage,tmp_outmaskimage,tmp_outmaskimage))
 #               #_ia.close()
-#               #print "Copying regrid output=",tmp_outmaskimage
+#               #casalog.post("Copying regrid output=",tmp_outmaskimage)
 #           else:
 #               shutil.copytree(tmp_maskimage,tmp_outmaskimage)
 #          if outmask!='':
@@ -354,7 +353,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 inmaskcsys = None
                 ocsys = None
 
-                #print "expand mode main processing blocks..."
+                #casalog.post("expand mode main processing blocks...")
                 # do not allow list in this mode (for inpimage and inpmask) - maybe this is redundant now
                 if type(inpmask)==list:
                     raise TypeError('A list for inpmask is not allowed for mode=expand')
@@ -364,11 +363,11 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 inshp = _ia.shape()
                 incsys = _ia.coordsys()
                 _ia.close() 
-                #print "inpimage=",inpimage," is exist?=",os.path.isdir(inpimage)
-                #print " inshp for inpimage=",inshp
+                #casalog.post("inpimage=",inpimage," is exist?=",os.path.isdir(inpimage))
+                #casalog.post(" inshp for inpimage=",inshp)
 
                 # prepare working input mask image (tmp_maskimage)
-                if debug: print("prepare working input image (tmp_maskimage)...")
+                if debug: casalog.post("prepare working input image (tmp_maskimage)...")
                 if inpmask!='': # inpmask is either image mask or T/F mask now
                   # need to extract the mask and put in tmp_maskimage
                   # Note: changed usemasked=F, so that True (unmasked) part to be used. CAS- 
@@ -379,8 +378,8 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         #_ia.open(tmp_maskimage)
                     else:
                         if debug: 
-                            print("parentimage=",parentimage, " exist?=",os.path.isdir(parentimage))
-                            print("tmp_maskimage=",tmp_maskimage, " exist?=",os.path.isdir(tmp_maskimage))
+                            casalog.post("parentimage=" + parentimage + " exist?=" + os.path.isdir(parentimage))
+                            casalog.post("tmp_maskimage=" + tmp_maskimage + " exist?=" + os.path.isdir(tmp_maskimage))
                         # copy of inpimage in tmp_maskimage
                         _ia.fromimage(outfile=tmp_maskimage, infile=parentimage)
                 else:
@@ -396,7 +395,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     # if inpimage == output, tmp_outmaskimage is already created... 
                     if not os.path.isdir(tmp_outmaskimage):
                        shutil.copytree(outparentim,tmp_outmaskimage)
-                if debug: print("done setting up the out image=", tmp_outmaskimage)     
+                if debug: casalog.post("done setting up the out image=" + tmp_outmaskimage)
                 # if inpfreq/outfreq are channel indices (int) then
                 # regrid in x y coords only and extract specified channel mask
                 # to specified output channels. (no regriding in spectral axis)
@@ -490,7 +489,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         
                         # do it for input mask image (not the template )
                         inpfreqlist = translatefreqrange(inpfreqs,inmaskcsys)
-                        #print "inpfreqlist=",inpfreqlist
+                        #casalog.post("inpfreqlist=",inpfreqlist)
                         # close input image
                         if _ia.isopen():
                             _ia.close()
@@ -500,7 +499,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                             #do not regrid, use input image
                             shutil.copytree(tmp_maskimage,tmp_regridim)
                         else:
-                            if debug: print("regrid the mask,tmp_maskimage=",tmp_maskimage," tmp_regridim=",tmp_regridim)
+                            if debug: casalog.post("regrid the mask,tmp_maskimage=" + tmp_maskimage + " tmp_regridim=" + tmp_regridim)
                             #shutil.copytree(tmp_maskimage,'before_regrid_tmp_maskimage')
                             regridmask(tmp_maskimage,inpimage,tmp_regridim,chanrange=inpfreqlist,method=regridmethod)
                             #regridmask(tmp_maskimage,inpimage,tmp_regridim,chanrange=inpfreqlist)
@@ -556,8 +555,8 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         else:
                             inpfreqchans=[indlo,indhi]
                         outfreqchans=list(range(int(round(p1)),int(round(p2))+1))
-                        #print "inpfreqchans=",inpfreqchans
-                        #print "outfreqchans=",outfreqchans
+                        #casalog.post("inpfreqchans=",inpfreqchans)
+                        #casalog.post("outfreqchans=",outfreqchans)
                         expandchanmask(tmp_regridim,inpfreqchans,tmp_outmaskimage,outfreqchans)
                         #shutil.copytree(tmp_regridim,'my_tmp_regrid') 
                         #shutil.copytree(tmp_outmaskimage,'my_tmp_outmaskimage') 
@@ -584,12 +583,12 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     _ia.open(tmp_maskimage)
                     #os.system('cp -r %s beforeregrid.im' % tmp_maskimage)
                     if os.path.isdir(tmp_outmaskimage):
-                        #print "Removing %s" % tmp_outmaskimage
+                        #casalog.post("Removing %s" % tmp_outmaskimage)
                         shutil.rmtree(tmp_outmaskimage)
                     #regridmask(tmp_maskimage,outparentim,tmp_outmaskimage)
                     regridmask(tmp_maskimage,inpimage,tmp_outmaskimage,method=regridmethod)
                     _ia.remove()
-                    #print "closing after regrid"
+                    #casalog.post("closing after regrid")
                     _ia.open(tmp_outmaskimage) # reopen output tmp image
                 
                 # for debugging
@@ -641,7 +640,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     _ia.done()
 
             except Exception as instance:
-                print("*** Error (1) *** %s" % instance)
+                casalog.post("*** Error (1) *** %s" % instance, 'ERROR')
                 if _ia.isopen():
                     _ia.close()
                 _ia.done()
@@ -721,7 +720,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     
                     # create an empty image with the coords from inpimage
                     makeEmptyimage(inpimage,sum_tmp_outfile)    
-                    #print "making an empty image from inpimage to sum_tmp_outfile"
+                    #casalog.post("making an empty image from inpimage to sum_tmp_outfile")
                 else:
                     #use output image(either the same as the input image or other existing image) 
                     #  - does not do zeroeing out, so output image is only modified *for outbmask!=''*    
@@ -758,7 +757,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                     #  will work in image(1/0) masks
                 
                     if debug: 
-                        print("imgfiles=",imgfiles)
+                        casalog.post(("imgfiles=" + imgfiles))
                         shutil.copytree(sum_tmp_outfile,sum_tmp_outfile+"_imagemaskCombined")
                        
                 if len(bmasks)>0:
@@ -802,11 +801,11 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         _ia.open(imname)
                         _ia.close()
                       
-                if debug: print("check rgfiles and rglist")
+                if debug: casalog.post("check rgfiles and rglist")
 
                 if len(rgfiles)>0 or len(rglist)>0:
                     # create an empty image with input image coords.
-                    #print "Using %s as a template for regions" % inpimage 
+                    #casalog.post("Using %s as a template for regions" % inpimage )
                     if _ia.isopen(): _ia.close()
                     _ia.open(inpimage)
                     tshp=_ia.shape()
@@ -835,10 +834,10 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                         _ia.open(tmp_rgmaskim)
                                         _ia.set(pixels=0.0)
                                         _ia.close()
-                                        #print "tshp=",tshp
-                                        #print "tcsys.torecord=",tcsys.torecord()
+                                        #casalog.post... "tshp=",tshp
+                                        #casalog.post... "tcsys.torecord=",tcsys.torecord()
                                         inrgn=_rg.fromtextfile(rgn, tshp, tcsys.torecord())
-                                        #print "inrgn=",inrgn
+                                        #casalog.post... "inrgn=",inrgn
                                         _im.regiontoimagemask(tmp_rgmaskim,region=inrgn)
                                         addimagemask(tmp_allrgmaskim,tmp_rgmaskim)
                                         #shutil.rmtree(tmp_rgmaskim)
@@ -850,9 +849,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                                 usedrgfiles.append(rgn)    
                         casalog.post("Converted %s regions from %s region files to image mask" % (nrgn,len(rgfiles)),"INFO")
                                                 
-                    if debug: print("processing rglist...")
+                    if debug: casalog.post("processing rglist...")
                     if len(rglist)>0:
-                        #print "Has rglist..."
+                        #casalog.post( "Has rglist...")
                         nrgn=0
                         for rgn in rglist:
                             # reset temp mask image
@@ -869,7 +868,7 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         casalog.post("Converted %s regions to image mask" % (nrgn),"INFO")
                 
                         
-                    if debug: print("Regirdding...")
+                    if debug: casalog.post("Regirdding...")
                     # regrid if necessary
                     regridded_mask='__tmp_regrid_allrgnmask_'+pid
                     regridmask(tmp_allrgmaskim, sum_tmp_outfile,regridded_mask)
@@ -909,9 +908,9 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                 # if outfile exists initially outfile is copied to sum_tmp_outfile
                 # if outfile does not exist initially sum_tmp_outfile is a copy of inpimage
                 # so rename it with overwrite=T all the cases
-                #print "open sum_tmp_outfile=",sum_tmp_outfile
+                #casalog.post("open sum_tmp_outfile=",sum_tmp_outfile)
                 if storeinmask:
-                    if debug: print("Storeinmask......")
+                    if debug: casalog.post("Storeinmask......")
                     # by a request in CAS-6912 no setting of 1 for copying mask to the 'in-mask'
                     # (i.e. copy the values of inpimage as well for this mode)
                     # Replace
@@ -931,14 +930,14 @@ def makemask(mode,inpimage, inpmask, output, overwrite, inpfreqs, outfreqs):
                         if outbmask in oldmasklist:
                           _ia.maskhandler('delete',outbmask)
                     if (maskexist and overwrite): 
-                      if debug: print("outbmask=",outbmask," exists... deleting it")
+                      if debug: casalog.post("outbmask=" + outbmask + " exists... deleting it")
                       _ia.maskhandler('delete',outbmask)    
                     _ia.maskhandler('copy',[sum_tmp_outfile+':'+outbmask, outbmask])    
                     _ia.maskhandler('set',outbmask)
                     _ia.done()
                     outputmsg="to create an output mask: %s in %s" % (outbmask,outparentim)
                 else:
-                    if debug: print("store as an image mask......")
+                    if debug: casalog.post("store as an image mask......")
                     if _ia.isopen(): _ia.close()
                     _ia.open(sum_tmp_outfile) 
                     _ia.rename(outparentim,overwrite=True) 
@@ -1015,8 +1014,8 @@ def regridmask(inputmask,template,outputmask,axes=[3,0,1],method='linear',chanra
     The default interpolation method is set to 'linear' (since 'nearest'
     sometime fails).
     '''
-    #print "Regrid.."
-    #print "inputmask=",inputmask," template=",template," outputmask=",outputmask
+    #casalog.post("Regrid..")
+    #casalog.post("inputmask=",inputmask," template=",template," outputmask=",outputmask)
     if not os.path.isdir(template):
         raise OSError("template image %s does not exist" % template)
     
@@ -1111,7 +1110,7 @@ def addimagemask(sumimage, imagetoadd, threshold=0.0):
     """
     _ia = image()
     try:
-        #print "addimagemask: sumimage=",sumimage," imagetoadd=",imagetoadd
+        #casalog.post("addimagemask: sumimage=",sumimage," imagetoadd=",imagetoadd)
         _ia.open(sumimage)
         _ia.calc('iif ("'+imagetoadd+'">'+str(threshold)+',("'+sumimage+'"+"'+imagetoadd+'")/("'+sumimage+'"+"'+imagetoadd+'"),"'+sumimage+'")',False)
         # actually should be AND?
@@ -1146,14 +1145,14 @@ def expandchanmask(inimage,inchans,outimage,outchans):
     inshp=_ia.shape()
     refchanst=inchans[0]
     refchanen=inchans[-1]
-    #print "refchanst=",refchanst," refchanen=",refchanen," inshp=",inshp," inchans=",inchans
+    #casalog.post("refchanst=",refchanst," refchanen=",refchanen," inshp=",inshp," inchans=",inchans)
     slst = [0,0,0,refchanst]
     slen = [inshp[0]-1,inshp[1]-1,0,refchanen]
     casalog.post("getting chunk at blc="+str(slst)+" trc="+str(slen),'DEBUG1')
     refchanchunk=_ia.getchunk(blc=slst,trc=slen)
     refchanchunk=refchanchunk.transpose()
     _ia.close()
-    #print "refchanchunk:shape=",refchanchunk.shape
+    #casalog.post("refchanchunk:shape=",refchanchunk.shape)
 
     _ia.open(outimage)
     # need find nearest inchan
@@ -1166,16 +1165,16 @@ def expandchanmask(inimage,inchans,outimage,outchans):
     for i in outchans:
         nearestch = findnearest(inchans,i)
         usechanims[i]=nearestch
-    #print "usechanims=",usechanims
+    #casalog.post("usechanims=",usechanims)
     casalog.post("Mapping of channels: usechanims="+str(usechanims),'DEBUG1')
     for j in outchans:
         pix = refchanchunk[usechanims[j]-refchanst]
-        #print "pix=",pix
-        #print "pix.shape=",pix.shape
-        #print "inshp=",inshp, ' j=',j
+        #casalog.post("pix=",pix)
+        #casalog.post("pix.shape=",pix.shape)
+        #casalog.post("inshp=",inshp, ' j=',j)
         #_ia.putchunk(pixels=pix,blc=[inshp[0]-1,inshp[1]-1,0,j])
         _ia.putchunk(pixels=pix.transpose(),blc=[0,0,0,j])
-        #print "DONE putchunk for j=", j
+        #casalog.post("DONE putchunk for j=", j)
     _ia.done()
 
 def translatefreqrange(freqrange,csys):

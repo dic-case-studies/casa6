@@ -43,7 +43,7 @@ public:
 
 	ChannelAverageTVI(ViImplementation2 * inputVii, const casacore::Record &configuration);
 	// Report the the ViImplementation type
-	virtual casacore::String ViiType() const { return casacore::String("ChannelAverage( ")+getVii()->ViiType()+" )"; };
+	virtual casacore::String ViiType() const override { return casacore::String("ChannelAverage( ")+getVii()->ViiType()+" )"; };
 
 #ifdef _OPENMP
   virtual void originChunks(casacore::Bool forceRewind) {  
@@ -62,16 +62,16 @@ public:
  #endif
 #endif
 
-    void flag(casacore::Cube<casacore::Bool>& flagCube) const;
-    void floatData (casacore::Cube<casacore::Float> & vis) const;
-    void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const;
-    void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const;
-    void visibilityModel (casacore::Cube<casacore::Complex> & vis) const;
-    void weightSpectrum(casacore::Cube<casacore::Float> &weightSp) const;
-    void sigmaSpectrum (casacore::Cube<casacore::Float> &sigmaSp) const;
+    void flag(casacore::Cube<casacore::Bool>& flagCube) const override;
+    void floatData (casacore::Cube<casacore::Float> & vis) const override;
+    void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const override;
+    void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const override;
+    void visibilityModel (casacore::Cube<casacore::Complex> & vis) const override;
+    void weightSpectrum(casacore::Cube<casacore::Float> &weightSp) const override;
+    void sigmaSpectrum (casacore::Cube<casacore::Float> &sigmaSp) const override;
 
-    casacore::Bool weightSpectrumExists () const {return true;}
-    casacore::Bool sigmaSpectrumExists () const {return true;}
+    casacore::Bool weightSpectrumExists () const override {return true;}
+    casacore::Bool sigmaSpectrumExists () const override {return true;}
     
     casacore::Vector<casacore::Double> getFrequencies (	casacore::Double time, casacore::Int frameOfReference,
     								casacore::Int spectralWindowId, casacore::Int msId) const;
