@@ -35,6 +35,11 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+
+    def tclean_param_names():
+        from casatasks.tclean import _tclean_t
+        return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+
     casa6 = True
 
 else:
@@ -60,6 +65,12 @@ else:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
+
+    def tclean_param_names():
+        # alternatively could use from tasks import tclean; tclean.parameters
+        from task_tclean import tclean
+        return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+
     casa5 = True
 
 ############################################################################################
@@ -575,7 +586,8 @@ class TestHelpers:
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
-            pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+            pstr += ('All expected keywords in imageinfo, miscinfo, and coords found. '
+                     '({})\n'.format(testname, TestHelpers().verdict(False)))
         return pstr
 
     def check_im_keywords(self, imname, check_misc=True, check_extended=True):
@@ -657,6 +669,74 @@ class TestHelpers:
                 pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
         return pstr
 
+    def check_history(self, imlist, testname="check_history"):
+        """
+        Checks presence of the logtable and rows with history information (task name,
+        CASA version, all task parameters, etc.).
+
+        :param imlist: names of the images produced by a test execution.
+        :param testname: name to use in the checks report string
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        """
+        pstr = ''
+        for imname in imlist:
+            if os.path.exists(imname):
+                issues = TestHelpers().check_im_history(imname)
+                if issues:
+                    pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+        if not pstr:
+            pstr += ('[{}] All expected history entries found. ({})\n'.
+                     format(testname, TestHelpers().verdict(True)))
+        return pstr
+
+    def check_im_history(self, imname):
+        """
+        Check the history records in an image, ensuring the taskname, CASA version, and
+        full list of parameters is found (all the same number of times).
+
+        :param imname: image name (output image from tclean)
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        Errors are marked with the tag '(Fail' as per self.verdict().
+        """
+        ia_open = False
+        try:
+            _ia.open(imname)
+            ia_open = True
+            history = _ia.history(list=False)
+        except RuntimeError as exc:
+            pstr = ('Cannot retrieve history subtable from image: {}. Error: {}'.
+                    format(imname, exc))
+            return pstr
+        finally:
+            if ia_open:
+                _ia.close()
+
+        pstr = ''
+        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        nversions = sum(line.startswith('version:') for line in history)
+        if ncalls < 1:
+            pstr += ('No calls to tclean were found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        if nversions < 1:
+            pstr += ('No CASA version was found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
+            pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
+                     'not match. ({})\n'.format(ncalls, nversions,
+                                                TestHelpers().verdict(False)))
+        for param in tclean_param_names():
+            nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                          line in history)
+            if nparval < 1:
+                pstr += ('No entries for tclean parameter {} found in history. ({})'
+                         '.'.format(param, TestHelpers().verdict(False)))
+            if nparval != ncalls:
+                pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                         "calls ({}) do not match ({}).".
+                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
+        return pstr
+
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
         pstr = ''
         readval = TestHelpers().get_pix(imname, thepos)
@@ -727,6 +807,8 @@ class TestHelpers:
                 print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
                 print("pstr after check_keywords = {}".format(pstr))
+                pstr += TestHelpers().check_history(imgexist)
+                print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):
