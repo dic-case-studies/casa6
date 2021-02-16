@@ -85,32 +85,31 @@ void FreqAxisTVI::initialize()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::formChanMap()
 {
-	// This triggers realization of the channel selection
-	inputVii_p->originChunks();
+    // This triggers realization of the channel selection
+    inputVii_p->originChunks();
 
-	// Refresh map
-	spwInpChanIdxMap_p.clear();
+    // Refresh map
+    spwInpChanIdxMap_p.clear();
 
-	for (Int ispw = 0; ispw < inputVii_p->nSpectralWindows(); ++ispw)
-	{
+    for (Int ispw = 0; ispw < inputVii_p->nSpectralWindows(); ++ispw)
+    {
+        // TBD trap unselected spws with a continue
 
-		// TBD trap unselected spws with a continue
+        Vector<Int> chansV;
+        chansV.reference(inputVii_p->getChannels(0.0, -1, ispw, 0));
 
-		Vector<Int> chansV;
-		chansV.reference(inputVii_p->getChannels(0.0, -1, ispw, 0));
+        Int nChan = chansV.nelements();
+        if (nChan > 0)
+        {
+            spwInpChanIdxMap_p[ispw].clear(); // creates ispw's map
+            for (Int ich = 0; ich < nChan; ++ich)
+            {
+                spwInpChanIdxMap_p[ispw].push_back(chansV[ich]); // accum into map
+            }
+        }
+    } // ispw
 
-		Int nChan = chansV.nelements();
-		if (nChan > 0)
-		{
-			spwInpChanIdxMap_p[ispw].clear(); // creates ispw's map
-			for (Int ich = 0; ich < nChan; ++ich)
-			{
-				spwInpChanIdxMap_p[ispw].push_back(chansV[ich]); // accum into map
-			}
-		}
-	} // ispw
-
-	return;
+    return;
 }
 
 // -----------------------------------------------------------------------
@@ -118,13 +117,15 @@ void FreqAxisTVI::formChanMap()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::origin()
 {
-	// Drive underlying ViImplementation2
-	getVii()->origin();
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
 }
 
 // -----------------------------------------------------------------------
@@ -132,13 +133,23 @@ void FreqAxisTVI::origin()
 // -----------------------------------------------------------------------
 void FreqAxisTVI::next()
 {
-	// Drive underlying ViImplementation2
-	getVii()->next();
+    // Drive underlying ViImplementation2
+    getVii()->next();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
+}
+
+void FreqAxisTVI::configureShapes()
+{
+    Vector<Int> spws;
+    spectralWindows(spws);
+    Vector<Int> channels = getChannels (0, 0, spws (0) , msId());
+    nChannPerShape_ = casacore::Vector<casacore::Int> (1, channels.nelements());
 }
 
 // -----------------------------------------------------------------------
@@ -184,6 +195,13 @@ Vector<Int> FreqAxisTVI::getChannels (Double,Int,Int spectralWindowId,Int) const
 
 	return ret;
 }
+
+const casacore::Vector<casacore::Int>&
+FreqAxisTVI::nChannelsPerShape () const
+{
+    return nChannPerShape_;
+}
+
 
 // -----------------------------------------------------------------------
 //

@@ -54,6 +54,22 @@ Temperature::Temperature(double temperature, const string &units)
   }
 }
 
+Temperature::Temperature(double temperature, const Temperature::Units units)
+{
+  if(units == Temperature::UnitMilliKelvin) {
+    valueIS_ = 1.0E-3 * temperature;
+  } else if(units == Temperature::UnitKelvin) {
+    valueIS_ = temperature;
+  } else if(units == Temperature::UnitCelsius) {
+    valueIS_ = temperature + 273.16;
+  } else if(units == Temperature::UnitFahrenheit) {
+    valueIS_ = (temperature-32.0)*(5./9.)+273.16;
+  } else {
+    // Exception: Unknown temperature unit. S.I. used (Kelvin)
+    valueIS_ = temperature;
+  }
+}
+
 double Temperature::get(const string &units) const
 {
   if(units == "mK") {
@@ -69,4 +85,21 @@ double Temperature::get(const string &units) const
     return valueIS_;
   }
 }
+
+double Temperature::get(Temperature::Units units) const
+{
+  if(units == Temperature::UnitMilliKelvin) {
+    return 1.0E3 * valueIS_;
+  } else if(units == Temperature::UnitKelvin) {
+    return valueIS_;
+  } else if(units == Temperature::UnitCelsius) {
+    return valueIS_ - 273.16;
+  } else if(units == Temperature::UnitFahrenheit) {
+    return (valueIS_ - 273.16)*(9./5.)+32.0;
+  } else {
+    // Exception: Unknown temperature unit. S.I. used (Kelvin)
+    return valueIS_;
+  }
+}
+
 ATM_NAMESPACE_END

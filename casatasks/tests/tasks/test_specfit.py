@@ -87,7 +87,7 @@ birdie = "birdie.im"
 
 nanvalue = 4.53345345
 
-datapath=ctsys.resolve('regression/unittest/specfit')
+datapath=ctsys.resolve('unittest/specfit/')
 
 _ia = image( )
 _rg = regionmanager( )

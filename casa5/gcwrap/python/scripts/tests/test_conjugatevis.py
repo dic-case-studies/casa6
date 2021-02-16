@@ -20,14 +20,14 @@ if is_CASA6:
 
     _tb = table( )
     _ms = ms( )
-    datapath=ctsys.resolve('regression/unittest/concat/input')
+    datapath=ctsys.resolve('unittest/conjugatevis/')
 else:
     from __main__ import default
     from tasks import *
     from taskinit import *
     _tb = tb
     _ms = ms
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/conjugatevis/'
 
 myname = 'test_conjugatevis'
 
@@ -91,7 +91,6 @@ class test_conjugatevis(unittest.TestCase):
     def setUp(self):
         res = None
 
-#        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         os.chdir(datapath)

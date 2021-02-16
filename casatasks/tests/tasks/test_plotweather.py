@@ -16,7 +16,7 @@ else:
     from taskinit import *
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -43,7 +43,7 @@ class plotweather_test(unittest.TestCase):
             default(plotweather)
         if (os.path.exists(self.msfile)):
             shutil.rmtree(self.msfile)
-        shutil.copytree(ctsys_resolve(os.path.join("regression/unittest/listobs",self.msfile)), self.msfile)
+        shutil.copytree(ctsys_resolve(os.path.join("unittest/plotweather",self.msfile)), self.msfile)
 
     def tearDown(self):
         if (os.path.exists(self.msfile)):
@@ -59,8 +59,8 @@ class plotweather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 plotweather()
         else:
-            opac = plotweather()
-            self.assertIsNone(opac)
+            with self.assertRaises(RuntimeError):
+                opac = plotweather()
 
     def test1(self):
         '''Test 1: Bad input file'''
@@ -69,15 +69,15 @@ class plotweather_test(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 plotweather(vis=badmsfile)
         else:
-            opac = plotweather(vis=badmsfile)
-            self.assertIsNone(opac)
+            with self.assertRaises(RuntimeError):
+                opac = plotweather(vis=badmsfile)
 
 #    @unittest.skipIf(is_CASA6,"failure, 0.005426051322080905 != 0.0054234724819465846 within 7 places")
     def test2(self):
         '''Test 2: ms with no weather, no plot '''
         if (os.path.exists(self.msNoWeatherfile)):
             shutil.rmtree(self.msNoWeatherfile)
-        shutil.copytree(ctsys_resolve(os.path.join("regression/unittest/listobs",self.msNoWeatherfile)), self.msNoWeatherfile)
+        shutil.copytree(ctsys_resolve(os.path.join("unittest/plotweather",self.msNoWeatherfile)), self.msNoWeatherfile)
 
         opac = plotweather(vis=self.msNoWeatherfile, plotName=self.fig)
         self.assertIsNotNone(opac)
@@ -152,3 +152,4 @@ def suite():
 if is_CASA6:
     if __name__ == '__main__':
         unittest.main()
+        

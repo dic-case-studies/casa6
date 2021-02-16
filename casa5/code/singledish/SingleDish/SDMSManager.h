@@ -55,8 +55,8 @@ public:
 
   // Set user defined casacore::Sort columns
   void setSortColumns(casacore::Block<casacore::Int> sortColumns,
-		      bool addDefaultSortCols=false,
-		      casacore::Double timebin=0.0);
+                      bool addDefaultSortCols=false,
+                      casacore::Double timebin=0.0);
 
   // Set/unset smoothing parameter
   void setSmoothing(string const &kernelType, float const &kernelWidth);
@@ -73,17 +73,14 @@ public:
   ~SDMSManager();
 
   void fillCubeToOutputMs(vi::VisBuffer2 *vb,
-			  casacore::Cube<casacore::Float> const &data_cube);
-
-  void fillCubeToOutputMs(vi::VisBuffer2 *vb,
-			  casacore::Cube<casacore::Float> const &data_cube,
-			  casacore::Cube<casacore::Bool> const *flag_cube);
+                          casacore::Cube<casacore::Float> const &data_cube,
+                          casacore::Cube<casacore::Bool> const *flag_cube=nullptr,
+                          casacore::Matrix<casacore::Float> const *weight_matrix=nullptr);
 
 protected:
-
   void fillCubeToDataCols(vi::VisBuffer2 *vb,casacore::RefRows &rowRef,
-			  casacore::Cube<casacore::Float> const &data_cube,
-			  casacore::Cube<casacore::Bool> const *flag_cube);
+                          casacore::Cube<casacore::Float> const &data_cube,
+                          casacore::Cube<casacore::Bool> const *flag_cube);
 
   void setIterationApproach();
 

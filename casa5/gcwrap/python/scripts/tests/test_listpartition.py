@@ -21,7 +21,7 @@ else:
     import partitionhelper as ph
     from tasks import listpartition
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
     
@@ -35,6 +35,7 @@ Unit tests for task listpartition. It tests the following parameters:
     
 '''
 
+datapath = ctsys_resolve('unittest/listpartition/')
 
 # Base class which defines setUp functions
 # for importing different data sets
@@ -47,7 +48,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+            os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
             
         default(listpartition)
 
@@ -59,7 +60,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+            os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         default(listpartition)
 
@@ -71,7 +72,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+            os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         default(listpartition)
 
@@ -83,7 +84,7 @@ class test_base(unittest.TestCase):
             pass
         else:
             print("Linking to data...")
-            os.system('ln -s ' + ctsys_resolve(os.path.join('regression/unittest/partition',self.vis)) + ' ' + self.vis)
+            os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         default(listpartition)
 

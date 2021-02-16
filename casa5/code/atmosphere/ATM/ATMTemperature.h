@@ -46,6 +46,14 @@ ATM_NAMESPACE_BEGIN
 class Temperature
 {
 public:
+  enum Units {
+    UnitKelvin,
+    UnitMilliKelvin,
+    UnitCelsius,
+    UnitFahrenheit,
+    NumTemperatureUnits
+  };
+
   /** Default constructor */
   Temperature();
   /** A full constructor: Temperature value assumed by default to be in K (International System) */
@@ -53,6 +61,7 @@ public:
   /** A full constructor: Temperature value + unit. Valid units are K [k], mK [mk], and C [c].
    *  If none of these implemented units is given, the SI value will be returned. */
   Temperature(double temperature, const string &units);
+  Temperature(double temperature, Units units);
 
   /** Destructor */
   virtual ~Temperature() {};
@@ -62,6 +71,7 @@ public:
   double get() const { return valueIS_; }
   /** Accessor to the temperature value in specified units. Valid units are K [k], mK [mk], and C [c] */
   double get(const string &units) const;
+  double get(Units units) const;
   //@}
 
   Temperature& operator=(const Temperature &rhs){ if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }

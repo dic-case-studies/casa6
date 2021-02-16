@@ -918,7 +918,6 @@ record* regionmanager::frombcs(
     		);
     		_regMan->setcoordsys(*coordsys);
     	}
-
     	String diagnostics;
     	uInt nSelectedChannels;
     	IPosition imShape(vector<int>(shape.begin(),shape.end()));
