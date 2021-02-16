@@ -31,7 +31,7 @@ else:
     aflocal = aftool()
 
     # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "casatestdata/unittest/flagcmd/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagcmd/"
 
 #
 # Test of flagcmd task. It uses flagdata to unflag and summary
