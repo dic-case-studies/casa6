@@ -59,6 +59,9 @@ if CASA6:
     mmsgcalpath = casatools.ctsys.resolve('caltables/ngc5921.gcal')
     mmsfluxpath = casatools.ctsys.resolve('caltables/ngc5921.fluxscale')
 
+    vlbadata = casatools.ctsys.resolve('visibilities/vlba/ba123a.ms/')
+    vlbaGCCal = casatools.ctsys.resolve('caltables/ba123a.gc/')
+
 else:
     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms/'
@@ -74,6 +77,9 @@ else:
         mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.gcal'
         mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.fluxscale'
 
+        vlbadata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vlba/ba123a.ms/'
+        vlbaGCCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ba123a.gc/'
+
     else:
         datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms/'
         tCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.T0'
@@ -87,6 +93,9 @@ else:
         mmsbcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.bcal'
         mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.gcal'
         mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.fluxscale'
+
+        vlbadata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vlba/ba123a.ms/'
+        vlbaGCCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ba123a.gc/'
 
 
 def getparam(caltable, colname='CPARAM'):
@@ -180,10 +189,13 @@ mmsbcalcopy = 'mmsbcalcopy.cal'
 mmsgcalcopy = 'mmsgcalcopy.cal'
 mmsfluxcopy = 'mmsfluxcopy.cal'
 
+vlbacopy = 'vlbacopy.ms'
+
 class applycal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        shutil.copytree(vlbadata, vlbacopy)
         pass
 
     def setUp(self):
@@ -240,6 +252,7 @@ class applycal_test(unittest.TestCase):
         
     @classmethod
     def tearDownClass(cls):
+        shutil.rmtree(vlbacopy)
         shutil.rmtree('cl_fldmap_test.ms')
         shutil.rmtree('cl_fldmap_test.Gf0')
         shutil.rmtree('cl_fldmap_test.Gf01')
@@ -739,6 +752,15 @@ class applycal_test(unittest.TestCase):
         print(files)
         for ff in files:
             self.assertFalse(ff.__contains__('flagversions'))
+
+
+    def test_gaincurve(self):
+        applycal(vis=vlbacopy, gaintable=[vlbaGCCal], applymode='calonly')
+        datamean = np.mean(getparam(vlbacopy, 'DATA'))
+        correctedmean = np.mean(getparam(vlbacopy, 'CORRECTED_DATA'))
+
+        self.assertTrue(correctedmean != datamean)
+        self.assertTrue(np.isclose(correctedmean, 2.68767602411+4.91467419904e-06j))
 
 
 def suite():

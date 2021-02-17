@@ -26,17 +26,26 @@ _casa5 = False
 _casa6 = False
 __bypass_parallel_processing = 0
 
+# https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
+try:
+    ModuleNotFoundError
+except NameError:
+    ModuleNotFoundError = ImportError
+
 try:
     # CASA 6
     logging.debug("Importing CASAtools")
     import casatools
     logging.debug("Importing CASAtasks")
-    import casatasks
-    from casatasks import casalog
+    try:
+        import casatasks
+        from casatasks import casalog
+    except (ImportError, ModuleNotFoundError):
+        pass
 
     _casa6 = True
 
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     # CASA 5
     logging.debug("Import casa6 errors. Trying casa5...")
     from __main__ import default

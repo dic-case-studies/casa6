@@ -720,6 +720,15 @@ class SDINT_helper:
             implane.fill(0.0)
             _ia.putchunk(implane, blc=[0,0,0,ch])
             _ia.modify(model=_cl.torecord(), subtract=False, region=_rg.box(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch]))
+            ## Now, normalize it.
+            implane = _ia.getchunk(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch])
+            pmax = np.max(implane)
+            #print(pmax)
+            if pmax>0.0:
+                implane = implane/pmax
+            else:
+                implane.fill(0.0)
+            _ia.putchunk(implane, blc=[0,0,0,ch])
 
         _ia.close()
             

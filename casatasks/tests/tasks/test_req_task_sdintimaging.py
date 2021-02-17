@@ -110,7 +110,7 @@ try:
     from casatasks import casalog, sdintimaging, flagdata, tclean
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    sys.path.append(os.path.abspath(os.path.basename(__file__)))
+    #sys.path.append(os.path.abspath(os.path.basename(__file__)))
     #from testhelper_imager import TestHelpers
 
      #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
