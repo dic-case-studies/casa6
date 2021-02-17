@@ -109,7 +109,7 @@ A non-exhaustive list of when **./setup.py genmake** followed by **make** will n
 * modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
 * changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
 
-The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, e.g.:
 ```
 -bash-4.2$ make -j8
 ```
