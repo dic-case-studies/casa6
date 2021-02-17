@@ -2417,7 +2417,6 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	// determine which axes need range set
 	double ymingLeft(DBL_MAX), ymaxgLeft(-DBL_MAX);   // global ymin/ymax for left axis
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
-	bool userRangeRight(false), userRangeLeft(false); // user set plotrange
 	bool hasOverlay(false), hasAtmCurve(false);
 
 	for (size_t plotindex=0; plotindex < plots.size(); ++plotindex) {

@@ -203,6 +203,13 @@ void PlotMSSelection::apply(NewCalTable& ct, NewCalTable& selCT) {
     } catch(AipsError& x) {
       throw(AipsError("Error selecting on caltable:\n" + x.getMesg()));
     }
+
+    selectedAnt1.resize();
+    selectedAnt2.resize();
+    if (antenna().length() > 0) {
+      selectedAnt1 = cts.getAntenna1List();
+      selectedAnt2 = cts.getAntenna2List();
+    }
   }
 }
 
@@ -217,20 +224,20 @@ void PlotMSSelection::apply(CalTable& ct, CalTable& selectedCT,
   selectedChan.resize();
 
   if (!isEmpty()) {
-	// do taql selection and check result
+    // do taql selection and check result
     String calselect(getTaql(ct));
     selectedCT = ct.select(calselect);
     if (selectedCT.nRowMain()==0) 
       throw(AipsError("NullSelection: The selected table has zero rows."));
 
-	// do channel selection to set chansel vector
-	String spwExpr(spw());
-	if (!spwExpr.empty() && spwExpr.contains(":")) {
+    // do channel selection to set chansel vector
+    String spwExpr(spw());
+    if (!spwExpr.empty() && spwExpr.contains(":")) {
       MSSelection mss;
       MeasurementSet ms(getMSName(ct)), selMS;
       mssSetData2(ms, selMS, chansel,corrsel, "", "", "", "", spwExpr,
         "", "", "", "", "", "", "", "", 1, &mss );
-	}
+    }
   }
 }
 
@@ -261,24 +268,25 @@ String PlotMSSelection::getTaql(CalTable& ct) {
           mss.setSpwExpr(spw()); // CAL_DESC table, not main
           mss.toTableExprNode(&ms);
           Vector<Int> spwlist = mss.getSpwList();
-		  Vector<Int> calDesclist;
+          Vector<Int> calDesclist;
           // Find cal desc id for each spw
-		  for (uInt ispw=0; ispw<spwlist.size(); ++ispw) {
-			for (Int cdrow=0; cdrow<ct.nRowDesc(); ++cdrow) {
-			  Record rec = ct.getRowDesc(cdrow);
-			  Vector<Int> spwsPerDesc = rec.asArrayInt("SPECTRAL_WINDOW_ID");
-			  for (uInt ispwd=0; ispwd<spwsPerDesc.size(); ++ispwd) {
-			    // Is spw in this row?
-			    if (spwsPerDesc(ispwd)==spwlist(ispw)) {
-				  uInt idsize = calDesclist.size();
-				  calDesclist.resize(idsize+1, True);
-			      calDesclist(idsize) = cdrow;
-			      break;
-			    }
-			  }
+          for (uInt ispw=0; ispw<spwlist.size(); ++ispw) {
+            for (Int cdrow=0; cdrow<ct.nRowDesc(); ++cdrow) {
+              Record rec = ct.getRowDesc(cdrow);
+              Vector<Int> spwsPerDesc = rec.asArrayInt("SPECTRAL_WINDOW_ID");
+              for (uInt ispwd=0; ispwd<spwsPerDesc.size(); ++ispwd) {
+                // Is spw in this row?
+                if (spwsPerDesc(ispwd)==spwlist(ispw)) {
+                  uInt idsize = calDesclist.size();
+                  calDesclist.resize(idsize+1, True);
+                  calDesclist(idsize) = cdrow;
+                  break;
+                }
+              }
             }
           }
-		  if (calDesclist.empty())
+
+          if (calDesclist.empty())
             throw(AipsError("Spw Expression: no CAL_DESC_ID match found."));
           // add taql
           if (!taqlExpr.empty()) taqlExpr += " && ";
@@ -310,9 +318,9 @@ String PlotMSSelection::getTaql(CalTable& ct) {
       }
       case ANTENNA: {
         if (!antenna().empty()) {
-          if (!taqlExpr.empty()) taqlExpr += " && ";
-		  taqlExpr += getAntTaql(mss, ms, antenna());
           // add taql
+          if (!taqlExpr.empty()) taqlExpr += " && ";
+          taqlExpr += getAntTaql(mss, ms, antenna());
         }
         break;
       }
@@ -388,27 +396,50 @@ String PlotMSSelection::getAntTaql(MSSelection& mss, MeasurementSet& ms, String 
   String taql;
   String beginAnt("ANTENNA1 IN ["), beginNotAnt("ANTENNA1 NOT IN [");
   String selAnt(""), selNotAnt("");
+  Vector<Int> selAntIds, selNotAntIds;
+
   Vector<String> selections;
   selections = split(antExpr, ';', selections);
+
   for (uInt expr=0; expr<selections.size(); ++expr) {
-	String subexpr = selections(expr);
-	bool notselected = subexpr.contains("!"); // needed for zero
+    String subexpr = selections(expr);
+    bool notselected = subexpr.contains("!"); // needed for zero
     mss.setAntennaExpr(subexpr);
     mss.toTableExprNode(&ms);
     Vector<Int> ant1list = mss.getAntenna1List();
-	selectedAnt1 = ant1list;
+
     if (notselected) {
       ant1list *= -1;
+
+      // Add to Vector
+      selNotAntIds = casacore::set_union(selNotAntIds, ant1list);
+      // Add to String
       if (!selNotAnt.empty()) selNotAnt += ",";
-	  selNotAnt += mss.indexExprStr(ant1list);
-    } else  {  // not 
+      selNotAnt += mss.indexExprStr(ant1list);
+    } else  {
+      // Add to Vector
+      selAntIds = casacore::set_union(selAntIds, ant1list);
+      // Add to String
       if (!selAnt.empty()) selAnt += ",";
-	  selAnt += mss.indexExprStr(ant1list);
-	}
+      selAnt += mss.indexExprStr(ant1list);
+    }
   }
+
+  // Set selected ant1
+  selectedAnt1.resize();
+  selectedAnt2.resize();
+  selectedAnt1 = selAntIds;
+  // Append de-selected ant1
+  size_t sel_size(selAntIds.size()), notsel_size(selNotAntIds.size());
+  selectedAnt1.resize(sel_size + notsel_size, true);
+  for (size_t i = 0; i < notsel_size; ++i) {
+    selectedAnt1(sel_size + i) = selNotAntIds(i);
+  } 
+
+  // Set and return taqlExpr
   taql = (selAnt.empty() ? "" : beginAnt + selAnt + "]");
   if (!taql.empty() && !selNotAnt.empty()) taql += " && ";
-  taql += (selNotAnt.empty() ? "" : beginNotAnt + selNotAnt + "]"); 
+  taql += (selNotAnt.empty() ? "" : beginNotAnt + selNotAnt + "]");
   return taql;
 }
 

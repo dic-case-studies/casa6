@@ -162,7 +162,9 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
 
   // Apply selection to get selected cal table
   NewCalTable* selct = new NewCalTable();
-  selection_.apply(*ct, *selct);
+  if (selct->nrow() == 0) {
+    throw(AipsError("Selection resulted in zero rows"));
+  }
 
   Bool readonly(True); // no write access for loading cache
   setUpCalIter(*selct, readonly);
