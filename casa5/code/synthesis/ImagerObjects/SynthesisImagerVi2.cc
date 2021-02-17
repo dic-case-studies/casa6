@@ -1044,15 +1044,15 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
          nSubCubeFitInMemory(fudge_factor, imshape, padding);
 
      // chanchunks auto-calculation block, for now still here for awproject (CAS-12204)
-     if(chanchunks<-1)
+     if(chanchunks<1)
 	{
-	  log_l << "Automatically calculate chanchunks";
+	  log_l << "Automatically calculated chanchunks";
 	  log_l << " using imshape : " << imshape << LogIO::POST;
 
 	  // Do calculation here.
 	  // This runs once per image field (for multi-field imaging)
 	  // This runs once per cube partition, and will see only its own partition's shape
-		chanchunks=1;
+		//chanchunks=1;
 
                 chanchunks = procInfo.chnchnks;
 
