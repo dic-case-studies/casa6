@@ -118,8 +118,10 @@ To run casa with valgrind + gdb, start with valgrind with PYTHONMALLOC=malloc, e
 the bin/casa perl script does, and attach gdb with the target command. For example, to start
 casa and look for memory mismanagement:
 ```
--bash-4.2$ LITHDIR="casalith/build-casalith/work/linux/output/casa-bbean-6.2.0-9"; EXTPATH="${LITHDIR}/lib/py/bin:${LITHDIR}/lib/casa/bin:${PATH}"
--bash-4.2$ PATH="$EXTPATH" PYTHONMALLOC=malloc valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes --log-file=valgrind.log ${LITHDIR}/lib/py/bin/python3 -m casashell --nogui --log2term -c test.py
+-bash-4.2$ LITHDIR="casalith/build-casalith/work/linux/output/casa-bbean-6.2.0-9"
+-bash-4.2$ EXTPATH="${LITHDIR}/lib/py/bin:${LITHDIR}/lib/casa/bin:${PATH}"
+-bash-4.2$ PATH="$EXTPATH" PYTHONMALLOC=malloc valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes \
+> --log-file=valgrind.log "${LITHDIR}/lib/py/bin/python3" -m casashell --nogui --log2term -c <yourpythonfile>.py
 ```
 Now in another terminal, attach gdb:
 ```
