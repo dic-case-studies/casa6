@@ -101,6 +101,9 @@ BriggsCubeWeightor::BriggsCubeWeightor( const String& rmode, const Quantity& noi
 
 String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 			       const ImageInterface<Complex>& templateimage, const RecordInterface& inRec){
+    
+    //cout << "BriggsCubeWeightor::initImgWeightCol " << endl;
+    
     CoordinateSystem cs=templateimage.coordinates();
 	if(initialized_p && nx_p==templateimage.shape()(0) && ny_p==templateimage.shape()(1)){
 		
@@ -314,6 +317,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
  void BriggsCubeWeightor::init(vi::VisibilityIterator2& vi,
                    const ImageInterface<Complex>& templateimage, const RecordInterface& inRec)
  {
+  //cout << "BriggsCubeWeightor::init " << endl;
   LogIO os(LogOrigin("BriggsCubeWeightor", "constructor", WHERE));
 
   //freqInterpMethod_p=interpMethod;
@@ -459,6 +463,9 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 
 
 void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuffer2& vb){
+    
+    //cout << "BriggsCubeWeightor::weightUniform" << endl;
+    
 	if(!wgtTab_p.null())
 		return readWeightColumn(imweight, vb);
     
@@ -569,7 +576,7 @@ void BriggsCubeWeightor::readWeightColumn(casacore::Matrix<casacore::Float>& imw
 	
 }
 void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix<Float>& imweight, const vi::VisBuffer2& vb){
-
+    //cout << "BriggsCubeWeightor::getWeightUniform" << endl;
     Vector<Int> chanMap=ft_p[0]->channelMap(vb);
     //cerr << "weightuniform chanmap " << chanMap << endl;
     
@@ -589,7 +596,21 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
     Int nChanWt=weight.shape()(0);
     Double sumwt=0.0;
     Float u, v;
+    Double fracBW, nCellsBW, uvDistanceFactor;
     IPosition pos(4,0);
+    
+    fracBW = fracBW_p;
+    if(rmode_p=="bwtaper")
+    {
+        //cout << "BriggsCubeWeightor::getWeightUniform bwtaper" << f2_p[0] << endl;
+        if(fracBW == 0.0)
+        {
+            throw(AipsError("BriggsCubeWeightor fractional bandwith is not a valid value, 0.0."));
+        }
+        //cout << "BriggsCubeWeightor::weightUniform fracBW " << fracBW << endl;
+    }
+    
+    
     for (rownr_t row=0; row<nRow; row++) {
 	for (Int chn=0; chn<nvischan; chn++) {
 	  if ((!flag(chn,row)) && (chanMap(chn) > -1)) {
@@ -616,7 +637,17 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
 	      Float gwt=wgtDensity(pos);
 	      if(gwt >0){
 			imweight(chn,row)=weight(chn%nChanWt,row);
-			imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
+              
+            if(rmode_p=="bwtaper"){
+                  nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
+                  uvDistanceFactor = nCellsBW + 0.5;
+                  if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
+                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]*2/uvDistanceFactor +d2_p[0][pos[3]];
+              }
+              else{
+                  imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
+              }
+              
 			sumwt+=imweight(chn,row);
 	      }
 	    }
@@ -638,7 +669,10 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
 
     }
     
+    
   }
+
+
 void BriggsCubeWeightor::initializeFTMachine(const uInt index, const ImageInterface<Complex>& templateimage, const RecordInterface& inRec){
   Int nchan=templateimage.shape()(3);
   if(ft_p.nelements() <= index){
