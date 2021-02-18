@@ -83,7 +83,7 @@ public:
     
     // Converts this object to/from a record.  The record keys are the values
     // of the Field enum in casacore::String form, and the values are the 
-	// casacore::String values.
+    // casacore::String values.
     // <group>
     void fromRecord(const casacore::RecordInterface& record);
     casacore::Record toRecord() const;
@@ -177,19 +177,19 @@ private:
 
     // Force appearance of new selection (even when not new)
     casacore::Int forceNew_;
-    casacore::Vector<int> selAnts1;
-    casacore::Vector<int> selAnts2;
+    casacore::Vector<int> selAnt1;
+    casacore::Vector<int> selAnt2;
     
     // Initializes the values to their defaults.
     void initDefaults();
 
     // CalTable::select uses taql string for selection
     casacore::String getTaql(CalTable& ct);
-	// handle negation
-	casacore::String getAntTaql(casacore::MSSelection& mss,
+    // handle negation
+    casacore::String getAntTaql(casacore::MSSelection& mss,
         casacore::MeasurementSet& ms, casacore::String antExpr);
-	// For MS + MSSelection
-	casacore::String getMSName(CalTable& ct);
+    // For MS + MSSelection
+    casacore::String getMSName(CalTable& ct);
 };
 
 }

@@ -172,6 +172,9 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   Vector<Vector<Slice> > chansel;
   Vector<Vector<Slice> > corrsel;
   selection_.apply(*ct, *selct, chansel, corrsel);
+  if (selct->nrow() == 0) {
+    throw(AipsError("Selection resulted in zero rows"));
+  }
 
   Bool readonly(True); // no write access for loading cache
   setUpCalIter(*selct, readonly);
