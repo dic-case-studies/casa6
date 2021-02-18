@@ -45,6 +45,11 @@ InverseLength::InverseLength(double inverseLength, const std::string &units)
   valueIS_ = sput(inverseLength, units);
 }
 
+InverseLength::InverseLength(double inverseLength, InverseLength::Units units)
+{
+  valueIS_ = sput(inverseLength, units);
+}
+
 InverseLength::InverseLength(const InverseLength &inverseLength) :
   valueIS_(inverseLength.valueIS_)
 {
@@ -82,6 +87,40 @@ double InverseLength::sput(double value, const std::string &units)
   } else if(units == "micron-1" || units == "MICRON-1") {
     return 1.0E+6 * value;
   } else if(units == "nm-1" || units == "NM-1") {
+    return 1.0E+9 * value;
+  } else {
+    return value;
+  }
+}
+
+double InverseLength::sget(double value, InverseLength::Units units)
+{
+  if(units == InverseLength::UnitInverseKiloMeter) {
+    return 1.0E+3 * value;
+  } else if(units == InverseLength::UnitInverseMeter) {
+    return value;
+  } else if(units == InverseLength::UnitInverseMilliMeter) {
+    return 1.0E-3 * value;
+  } else if(units == InverseLength::UnitInverseMicron) {
+    return 1.0E-6 * value;
+  } else if(units == InverseLength::UnitInverseNanoMeter) {
+    return 1.0E-9 * value;
+  } else {
+    return value;
+  }
+}
+
+double InverseLength::sput(double value, InverseLength::Units units)
+{
+  if(units == InverseLength::UnitInverseKiloMeter) {
+    return 1.0E-3 * value;
+  } else if(units == InverseLength::UnitInverseMeter) {
+    return value;
+  } else if(units == InverseLength::UnitInverseMilliMeter) {
+    return 1.0E+3 * value;
+  } else if(units == InverseLength::UnitInverseMicron) {
+    return 1.0E+6 * value;
+  } else if(units == InverseLength::UnitInverseNanoMeter) {
     return 1.0E+9 * value;
   } else {
     return value;

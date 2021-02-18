@@ -21,20 +21,24 @@
 
 #include <synthesis/ImagerObjects/SynthesisImager.h>
 #include <synthesis/ImagerObjects/SynthesisImagerVi2.h>
-
+#include <synthesis/Parallel/Applicator.h>
 
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 
 #include <synthesisimager_cmpt.h>
 
+
 using namespace std;
 using namespace casacore;
 using namespace casa;
-
+namespace casa{
+           extern Applicator applicator;
+};
      
 using namespace casacore;
 namespace casac {
 
+  
   // Method used for creating the SynthesisImager object.  By default,
   // this will look at itsImager and decide if a new instance needs to
   // be constructed.  The second argument determines if
@@ -119,7 +123,7 @@ synthesisimager::selectdata(const casac::record& selpars)
 
       //if( ! itsImager ) itsImager = new SynthesisImagerVi2();
       itsImager = makeSI();
-      std::unique_ptr<casacore::Record> recpars(toRecord( selpars ));
+      const std::unique_ptr<const casacore::Record> recpars(toRecord( selpars ));
       SynthesisParamsSelect pars;
       pars.fromRecord( *recpars );
 
@@ -201,7 +205,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
     
     //if( ! itsImager ) itsImager = new SynthesisImager();
     itsImager = makeSI();
-    std::unique_ptr<casacore::Record> irecpars(toRecord( impars ));
+    const std::unique_ptr<casacore::Record> irecpars(toRecord( impars ));
     ////Temporary fix till we get the checking for phasecenter in fromRecord 
     ////to deal with this
     //////////////
@@ -234,7 +238,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
     ipars.fromRecord( *irecpars );
     
       
-    std::unique_ptr<casacore::Record> grecpars (toRecord( gridpars ));
+    const std::unique_ptr<const casacore::Record> grecpars (toRecord( gridpars ));
     SynthesisParamsGrid gpars;
     gpars.fromRecord( *grecpars );
     ipars.trackSource=False;
@@ -306,7 +310,7 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
 			    const bool wbawp,//      = true,
 			    const std::string& cfcache,//  = "",
 			    const bool usepointing,// = false,
-			    const ::casac::variant& pointingoffsetsigdev,//=10.0,
+			    const ::casac::variant& /* pointingoffsetsigdev*/,//=10.0, //unused!
 			    const bool dopbcorr,//   = true,
 			    const bool conjbeams,//  = false,
 			    const float computepastep,         //=360.0
@@ -418,6 +422,29 @@ bool synthesisimager::defineimage(const casac::record& impars, const casac::reco
   return rstat;
 }
 
+bool synthesisimager::normalizerinfo(const casac::record& normpars)
+{
+  Bool rstat(false);
+  *itsLog << casacore::LogOrigin("synthesisimager", __func__);
+  try 
+    {
+    
+    //if( ! itsImager ) itsImager = new SynthesisImager();
+    itsImager = makeSI();
+    const std::unique_ptr<const casacore::Record> normrecpars(toRecord( normpars ));
+      
+   
+    itsImager->normalizerinfo( *normrecpars );
+    
+    rstat=true;
+    
+  
+
+  } catch  (AipsError x) {
+    RETHROW(x);
+  }
+  return rstat;
+}
 
 
 bool synthesisimager::setweighting(const std::string& type,
@@ -579,7 +606,7 @@ bool synthesisimager::executemajorcycle(const casac::record& controls)
 
     //if( ! itsImager ) itsImager = new SynthesisImager();
     itsImager = makeSI();
-    std::unique_ptr<casacore::Record> recpars(toRecord( controls ));
+    const std::unique_ptr<const casacore::Record> recpars(toRecord( controls ));
     itsImager->executeMajorCycle( *recpars );
 
   } catch  (AipsError x) {
@@ -750,6 +777,51 @@ long synthesisimager::updatenchan()
     return rstat;
   }
 
+bool
+synthesisimager::initmpi()
+{
+  Bool rstat(false);
+
+  try 
+    {
+      //cerr << "is applicator initialized " << applicator.initialized() << endl;
+      //if(!applicator.initialized()){
+
+      {int argc=1;
+          char * *argv=nullptr;
+          casa::applicator.init ( argc, argv );
+          //cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+        rstat=true;
+	}
+      //else{
+      //  rstat=false;
+      //  cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+      // }
+      
+    } 
+  catch  (AipsError x) 
+    {
+      RETHROW(x);
+    }
+  
+  return rstat;
+}
+
+bool synthesisimager::releasempi(){
+  try{
+  cerr <<"master "<< applicator.isController() << " init "<< applicator.initialized() << endl;
+      if(applicator.initialized() &&  applicator.isController()){
+
+        applicator.destroyThreads();
+      }
+ } 
+  catch  (AipsError x) 
+    {
+      RETHROW(x);
+    }
+  
+      return true;
+}
 
 bool
 synthesisimager::done()
@@ -758,6 +830,7 @@ synthesisimager::done()
 
   try 
     {
+    
       if (itsImager)
 	{
 	  delete itsImager;

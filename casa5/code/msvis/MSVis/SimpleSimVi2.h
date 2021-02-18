@@ -82,24 +82,33 @@ public:
   SimpleSimVi2Parameters();
 
   // Simple, shape-oriented ctor
-  SimpleSimVi2Parameters(casacore::Int nField,casacore::Int nScan, casacore::Int nSpw, casacore::Int nAnt, casacore::Int nCorr,
-			 const casacore::Vector<casacore::Int>& nTimePerField, const casacore::Vector<casacore::Int>& nChan,
-			 casacore::Complex c0=casacore::Complex(0.0f),
-			 casacore::String polBasis="circ",
-			 casacore::Bool autoPol=false,casacore::Bool doParang=false,casacore::Bool doAC=false);
+  SimpleSimVi2Parameters(casacore::Int nField,casacore::Int nScan,
+                         casacore::Int nSpw, casacore::Int nAnt, casacore::Int nCorr,
+                         const casacore::Vector<casacore::Int>& nTimePerField,
+                         const casacore::Vector<casacore::Int>& nChan,
+                         casacore::Complex c0=casacore::Complex(0.0f),
+                         casacore::String polBasis="circ",
+                         casacore::Bool autoPol=false,casacore::Bool doParang=false,
+                         casacore::Bool doAC=false);
 
   // Full control
-  SimpleSimVi2Parameters(casacore::Int nField,casacore::Int nScan,casacore::Int nSpw,casacore::Int nAnt,casacore::Int nCorr,
-			 const casacore::Vector<casacore::Int>& nTimePerField, const casacore::Vector<casacore::Int>& nChan,
-			 casacore::String date0, casacore::Double dt, 
-			 const casacore::Vector<casacore::Double>& refFreq, const casacore::Vector<casacore::Double>& df,
-			 const casacore::Matrix<casacore::Float>& stokes, 
-			 casacore::Bool doNoise,
-			 const casacore::Matrix<casacore::Float>& gain, const casacore::Matrix<casacore::Float>& tsys, 
-			 casacore::Bool doNorm=true,
-			 casacore::String polBasis="circ", casacore::Bool doAC=false,
-			 casacore::Complex c0 = casacore::Complex(0.0f),
-			 casacore::Bool doParang=false);
+  SimpleSimVi2Parameters(casacore::Int nField,casacore::Int nScan,casacore::Int nSpw,
+                         casacore::Int nAnt,casacore::Int nCorr,
+                         const casacore::Vector<casacore::Int>& nTimePerField,
+                         const casacore::Vector<casacore::Int>& nChan,
+                         casacore::String date0, casacore::Double dt,
+                         const casacore::Vector<casacore::Double>& refFreq,
+                         const casacore::Vector<casacore::Double>& df,
+                         const casacore::Matrix<casacore::Float>& stokes,
+                         casacore::Bool doNoise,
+                         const casacore::Matrix<casacore::Float>& gain,
+                         const casacore::Matrix<casacore::Float>& tsys,
+                         casacore::Bool doNorm=true,
+                         casacore::String polBasis="circ", casacore::Bool doAC=false,
+                         casacore::Complex c0 = casacore::Complex(0.0f),
+                         casacore::Bool doParang=false,
+                         MetadataScope spwScope = ChunkScope,
+                         MetadataScope antennaScope = RowScope);
   
   SimpleSimVi2Parameters(const SimpleSimVi2Parameters& other);
   SimpleSimVi2Parameters& operator=(const SimpleSimVi2Parameters& other);
@@ -122,6 +131,8 @@ public:
   casacore::Complex c0_;
   casacore::Bool autoPol_;   // set non-trivial linear polarization 
   casacore::Bool doParang_;  // Simple linear-in-time, for now
+  MetadataScope spwScope_; // is SPW constant on each chunk, subchunk or row?
+  MetadataScope antennaScope_; // are ANTENNA1, ANTENNA2 constant on each subchunk or row? (chunk scope not supported for the time being)
 
   // Return frequencies for specified spw
   casacore::Vector<casacore::Double> freqs(casacore::Int spw) const;
@@ -201,9 +212,20 @@ public:
   virtual casacore::Bool isNewSpectralWindow () const override { return thisSpw_!=lastSpw_; };
 
   // Return the number of rows in the current iteration
-
-  virtual casacore::rownr_t nRows () const override { return nBsln_; };
+  virtual casacore::rownr_t nRows () const override;
   
+  // Return the number of distinct cube/array shapes in the current iteration
+  virtual casacore::rownr_t nShapes () const override;
+  
+  // Return the number of rows for each distinct array/cube shapes in the current iteration
+  virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const override;
+
+  // Return the number of channels for each distinct array/cube shapes in the current iteration
+  virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const override;
+
+  // Return the number of correlations for each distinct array/cube shapes in the current iteration
+  virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const override;
+
   // Return the row ids as from the original root table. This is useful
   // to find correspondance between a given row in this iteration to the
   // original ms row
@@ -233,6 +255,7 @@ public:
   virtual casacore::String fieldName () const override;
 
   virtual void flag (casacore::Cube<casacore::Bool> & flags) const override;
+  virtual void flag (casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
   virtual void flag (casacore::Matrix<casacore::Bool> &) const override { SSVi2NotPossible() };
   virtual casacore::Bool flagCategoryExists () const override { return false; };
   virtual void flagCategory (casacore::Array<casacore::Bool> &) const override { SSVi2NotPossible() };
@@ -246,25 +269,33 @@ public:
   virtual void jonesC (casacore::Vector<casacore::SquareMatrix<casacore::Complex, 2> > &) const override { SSVi2NotPossible() };
   virtual casacore::Int polFrame () const override;
   virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
-  virtual casacore::Int spectralWindow () const override;
+  virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
   virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
+  virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const override;
   virtual void time (casacore::Vector<casacore::Double> & t) const override;
   virtual void timeCentroid (casacore::Vector<casacore::Double> & t) const override;
   virtual void timeInterval (casacore::Vector<casacore::Double> & ti) const override;
   virtual void uvw (casacore::Matrix<casacore::Double> & uvwmat) const override;
 
   virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
   virtual void floatData (casacore::Cube<casacore::Float> & fcube) const override;
+  virtual void floatData (casacore::Vector<casacore::Cube<casacore::Float>> & fcubes) const override;
 
   virtual casacore::IPosition visibilityShape () const override;
 
   virtual void weight (casacore::Matrix<casacore::Float> & wtmat) const override;
+  virtual void weight (casacore::Vector<casacore::Matrix<casacore::Float>> & wtmat) const override;
   virtual casacore::Bool weightSpectrumExists () const override;
   virtual casacore::Bool sigmaSpectrumExists () const override;
   virtual void weightSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+  virtual void weightSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
   virtual void sigmaSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+  virtual void sigmaSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
 
   virtual void setWeightScaling (casacore::CountedPtr<WeightScaling>) override { SSVi2NotPossible() };
   virtual casacore::Bool hasWeightScaling () const override { return false; };
@@ -431,10 +462,10 @@ private:
   void configureNewSubchunk();
 
   // Generate noise on data
-  void addNoise(casacore::Cube<casacore::Complex>& vis) const;
+  void addNoise(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Corrupt by (ad hoc) parang factors
-  void corruptByParang(casacore::Cube<casacore::Complex>& vis) const;
+  void corruptByParang(casacore::Cube<casacore::Complex>& vis, casacore::rownr_t vbRowOffset) const;
 
   // Generate the antenna, spw and DD subtables
   void generateSubtables();
@@ -453,7 +484,8 @@ private:
   */
 
   // Derived parameters
-  casacore::Int  nChunk_, nBsln_;
+  casacore::Int nChunk_, nBsln_;
+  casacore::rownr_t  nSubchunk_;
   casacore::Complex c0_;
   casacore::Double t0_;
   casacore::Vector<casacore::Float> wt0_;
@@ -461,14 +493,21 @@ private:
 
 
   // Counters
-  casacore::Int iChunk_,iSubChunk_,iRow0_;
+  casacore::Int iChunk_;
+  casacore::rownr_t iSubChunk_;
+  casacore::Int iRow0_;
   casacore::Int iScan_;
   casacore::Double iChunkTime0_;
 
-  // Meta-info
-  casacore::Int thisScan_, thisField_, thisSpw_;
+  // Meta-info for current iteration
+  casacore::Int thisScan_, thisField_, thisSpw_, thisAntenna1_, thisAntenna2_;
   casacore::Int lastScan_, lastField_, lastSpw_;
   casacore::Double thisTime_;
+  casacore::rownr_t nRows_;
+  casacore::rownr_t nShapes_;
+  casacore::Vector<casacore::rownr_t> nRowsPerShape_;
+  casacore::Vector<casacore::Int> nChannPerShape_;
+  casacore::Vector<casacore::Int> nCorrsPerShape_;
 
   // Correlation stuff
   casacore::Vector<casacore::Stokes::StokesTypes> corrdef_;

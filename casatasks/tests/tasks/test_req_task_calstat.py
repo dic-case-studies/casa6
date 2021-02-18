@@ -32,6 +32,7 @@ CASA6 = False
 try:
     import casatools
     from casatasks import casalog, calstat
+    from casatools import table, ctsys
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -40,36 +41,49 @@ except ImportError:
 
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
 import sys
 import os
 import unittest
 import shutil
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('caltables/ggtau.1mm.amp.gcal')
-    datapath_visibilities = casatools.ctsys.resolve('visibilities/')
+    datapath = casatools.ctsys.resolve('unittest/calstat/ggtau.1mm.amp.gcal')
+    datapath_visibilities = casatools.ctsys.resolve('unittest/calstat/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ggtau.1mm.amp.gcal'
-    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/data/visibilities/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/calstat/ggtau.1mm.amp.gcal'
+    datapath_visibilities = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/calstat/'
     #filepath = os.environ.get('CASAPATH').split()[0] + '/bin/nosedir/testlog.log'
         
 logpath = casalog.logfile()
 contained = ['max', 'mean', 'medabsdevmed', 'median', 'min', 'npts', 'quartile', 'rms', 'stddev', 'sum', 'sumsq', 'var']
+epsilon = 0.0001
 
 class calstat_test(unittest.TestCase):
      
     def setUp(self):
         if not CASA6:
             default(calstat)
+            self.tb = tb
+        else:
+            self.tb = table()
+
+        self.epsilon = 0.0001
+        self.caltables = ['ggtau.1mm.amp.gcal',
+                          'ggtau.1mm.bpoly',
+                          'ggtau.1mm.ph.gcal',
+                          'ggtau.1mm.ph.gcal0',
+                          'ggtau.3mm.amp.gcal',
+                          'ggtau.3mm.bpoly',
+                          'ggtau.3mm.ph.gcal',
+                          'ggtau.3mm.ph.gcal0',
+                          'ggtau.co.bpoly',
+                          'ggtau.hco.bpoly']
      
     def tearDown(self):
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
+        self.tb.done()
      
     def test_logreturn(self):
         '''logreturn test: Test that a logfile is written and populated with the expected information'''
@@ -90,7 +104,7 @@ class calstat_test(unittest.TestCase):
     def test_takescal(self):
         '''takes cal test: Test that calstat only takes cal tables'''
         self.assertTrue(calstat(datapath), msg='calstat fails to take a caltable')
-        ### Needs work. try and produce some fake cal tables to test with
+
         # No type checking for CASA 6, but some for CASA 5
         if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError, msg='Fails to recognize non-caltable'):
@@ -133,6 +147,131 @@ class calstat_test(unittest.TestCase):
         # These columns are not present for the current cal table
         #self.assertTrue(calstat(datapath, axis='amp', datacolumn='corrected'))
         #self.assertTrue(calstat(datapath, axis='amp', datacolumn='model'))
+
+    # Test cases from test_calstat
+    def data(self):
+        if CASA6:
+            return map( lambda x: ctsys.resolve('unittest/calstat/' + x), self.caltables )
+        else:
+            return map( lambda x: os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/calstat/" + x, self.caltables )
+
+    def test_cs(self):
+        expected = {'ggtau.3mm.ph.gcal0':
+                        {'SPLINE_KNOTS_PHASE': {'rms': 4362063360.0,
+                                                'medabsdevmed': 13056.0,
+                                                'min': 4362050048.0,
+                                                'max': 4362076160.0,
+                                                'sum': 872412620800.0,
+                                                'quartile': 26112.0,
+                                                'median': 4362063104.0,
+                                                'sumsq': 3.80551890468e+21,
+                                                'stddev': 11866.4301499,
+                                                'var': 140812164.503,
+                                                'npts': 200,
+                                                'mean': 4362063104.0}},
+                    'ggtau.1mm.ph.gcal0':
+                        {'SPLINE_KNOTS_PHASE': {'rms': 4362063360.0,
+                                                'medabsdevmed': 13056.0,
+                                                'min': 4362050048.0,
+                                                'max': 4362076160.0,
+                                                'sum': 872412620800.0,
+                                                'quartile': 26112.0,
+                                                'median': 4362063104.0,
+                                                'sumsq': 3.80551890468e+21,
+                                                'stddev': 11866.4301499,
+                                                'var': 140812164.503,
+                                                'npts': 200,
+                                                'mean': 4362063104.0}}}
+
+        for caltable in self.data():
+
+            print("Testing with data", caltable, "...")
+            name = os.path.basename(caltable)
+            if name in expected:
+
+                axis = 'spline_knots_phase'
+                s = calstat(caltable=caltable, axis=axis)
+
+                if s.keys() != expected[name].keys():
+                    raise Exception("Wrong dictionary keys. Expected %s, got %s" % \
+                                    (expected[name], s))
+
+                print("Expected =", expected[name])
+                print("Got = ", s)
+                if not 'SPLINE_KNOTS_PHASE' in s:
+                    raise Exception("Dictionary returned from calstat does not have key SPLINE_KNOTS_PHASE")
+
+                for e in expected[name]['SPLINE_KNOTS_PHASE'].keys():
+                    print("Checking %s: %s vs %s" % \
+                          (e, expected[name]['SPLINE_KNOTS_PHASE'][e], s['SPLINE_KNOTS_PHASE'][e]))
+                    failed = False
+                    if expected[name]['SPLINE_KNOTS_PHASE'][e] == 0:
+                        if s['SPLINE_KNOTS_PHASE'][e] != 0:
+                            failed = True
+                    else:
+                        if abs((expected[name]['SPLINE_KNOTS_PHASE'][e] - s['SPLINE_KNOTS_PHASE'][e]) /
+                               expected[name]['SPLINE_KNOTS_PHASE'][e]) > epsilon:
+                            failed = True
+
+                    # Remove these 3 lines of code, once CAS-1671 is solved
+                    if failed == True and e in ['var', 'stddev']:
+                        print("Ignoring this known problem on 64bit!")
+                        failed = False
+
+                    if failed:
+                        print("test failed...")
+                        raise Exception("Numbers differ, expected %s, got %s" % \
+                                        (str(expected[name]['SPLINE_KNOTS_PHASE'][e]), str(s['SPLINE_KNOTS_PHASE'][e])))
+
+            self.tb.open(caltable)
+            cols = self.tb.colnames()
+            self.tb.close()
+
+            cplx = ['amp', 'amplitude', 'phase', 'imag', 'imaginary', 'real']
+            for x in cplx:
+                cols.append(x)
+            print(cols)
+            # remove complex columns
+            cols.remove('GAIN')
+            if 'SCALE_FACTOR' in cols: cols.remove('SCALE_FACTOR')
+            if 'SIDEBAND_REF' in cols: cols.remove('SIDEBAND_REF')
+            # don't try string columns
+            cols.remove('FREQ_GROUP_NAME')
+            cols.remove('FIELD_NAME')
+            cols.remove('FIELD_CODE')
+            cols.remove('SOURCE_NAME')
+            cols.remove('SOURCE_CODE')
+            if 'POLY_TYPE' in cols: cols.remove('POLY_TYPE')
+            if 'POLY_MODE' in cols: cols.remove('POLY_MODE')
+            if 'PHASE_UNITS' in cols: cols.remove('PHASE_UNITS')
+
+            # empty column:
+            if 'VALID_DOMAIN' in cols: cols.remove('VALID_DOMAIN')
+
+            cols = [x.lower() for x in cols]
+
+            print("Trying these column names", cols)
+
+            for col in cols:
+                data_cols = ['']
+                if col in cplx:
+                    data_cols = ['gain', 'scale_factor']
+
+                for dc in data_cols:
+                    print("Call with caltable =", caltable, "; axis =", col, "; datacolumn =", dc)
+                    if dc != '':
+                        s = calstat(caltable=caltable, axis=col, datacolumn=dc)
+                    else:
+                        s = calstat(caltable=caltable, axis=col)
+                    if col.upper() == "FLAG_CATEGORY":
+                        # The MSs used have no data in FLAG_CATEGORY, therefore
+                        # calstat() should fail
+                        if s != None:
+                            raise Exception("Error! " + str(s))
+                    elif not type(s) is dict:
+                        raise Exception("Error! Return value " + str(s) + " is not a dictionary")
+
+            self.assertTrue(True)
         
 
 def suite():

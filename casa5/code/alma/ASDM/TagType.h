@@ -321,6 +321,8 @@ class TagType {
 
 	
 
+	
+
  
 
  private:
@@ -520,6 +522,8 @@ class TagType {
 
 	
 	if (TagType:: SwitchCycle) { delete TagType::SwitchCycle; TagType::SwitchCycle = 0; }
+	
+
 	
 
 	

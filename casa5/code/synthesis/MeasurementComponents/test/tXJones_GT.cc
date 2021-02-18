@@ -590,7 +590,7 @@ TEST_F(XfparangJonesCIRCTest, XfparangJonesTest){
   Cube<Float> soldiff=amplitude(soln-x);
   cerr << "maxDiff = " << max(soldiff)  << endl;
   
-  ASSERT_TRUE(allNearAbs(soldiff,0.0f,1e-6)); 
+  ASSERT_TRUE(allNearAbs(soldiff,0.0f,2e-6)); 
 
   XYsol.keepNCT();
   XYsol.globalPostSolveTinker();  // writes QU to header

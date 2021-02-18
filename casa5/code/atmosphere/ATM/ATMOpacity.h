@@ -44,12 +44,19 @@ ATM_NAMESPACE_BEGIN
 class Opacity
 {
 public:
+  enum Units {
+    UnitDeciBel,
+    UnitNeper,
+    NumOpacityUnits
+  };
+
   /** Default constructor: Opacity value set to 0 np */
   Opacity();
   /** A full constructor: value in default units (np) */
   Opacity(double opacity);
   /** A full constructor: value + units. Valid units are:  np [neper] [NP] [NEPER], db [DB]. */
   Opacity(double opacity, const std::string &units);
+  Opacity(double opacity, Units units);
   /** Copy constructor */
   Opacity (const Opacity &opacity);
 
@@ -61,6 +68,7 @@ public:
   /** Accessor to the opacity value in specified units. Implemented units are np [neper] [NP] [NEPER], db [DB].
    *  If none of these implemented units is given, the value in neper will be returned. */
   inline double get(const std::string &units) const { return sget(valueIS_, units); }
+  inline double get(Units units) const { return sget(valueIS_, units); }
 
   /** Operator "equal to a Opacity" */
   inline Opacity& operator=(const Opacity &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
@@ -102,6 +110,8 @@ public:
 private:
   static double sget(double value, const std::string &units);
   static double sput(double value, const std::string &units);
+  static double sget(double value, Units units);
+  static double sput(double value, Units units);
 
 private:
   double valueIS_;

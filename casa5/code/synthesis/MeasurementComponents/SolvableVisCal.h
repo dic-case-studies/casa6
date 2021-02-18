@@ -72,7 +72,6 @@ class VisEquation;
 class SolveDataBuffer;
 class SDBList;
 
-
 class SolNorm {
 
 public:
@@ -569,6 +568,7 @@ protected:
   inline casacore::Bool& simOnTheFly() { 
     //    cout << "simOTF=" << onthefly_ << endl;
     return onthefly_; };
+    
 
 
 
