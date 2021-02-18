@@ -132,8 +132,8 @@ using namespace casa::vi;
 		}
 	}
 	wgtTab_p=nullptr;
-	//ostringstream oss;
-	//oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
+	ostringstream oss;
+	oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
 
 	//cerr << "STRING " << oss.str() << endl;;
 	imWgtColName_p=makeScratchImagingWeightTable(wgtTab_p, oss.str());
