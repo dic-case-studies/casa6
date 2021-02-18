@@ -17,7 +17,7 @@ def accor(vis=None,caltable=None,
           field=None,spw=None,intent=None,
           selectdata=None,timerange=None,antenna=None,scan=None,
           observation=None, msselect=None,
-          solint=None,combine=None,append=None,
+          solint=None,combine=None,corrdepflags=None,append=None,
           docallib=None,callib=None,
           gaintable=None,gainfield=None,interp=None,spwmap=None):
 
@@ -53,6 +53,10 @@ def accor(vis=None,caltable=None,
                         mycb.selectvis(time='',spw=spw,scan='',field=field,intent=intent,
                                      observation='', baseline='', uvrange='',
                                      chanmode='none', msselect='ANTENNA1==ANTENNA2')
+
+                # signal use of correlation-dependent flags, if requested
+                if corrdepflags:
+                        mycb.setcorrdepflags(True)
 
                 # Arrange applies....
 
