@@ -1777,7 +1777,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     
     Bool savemodelcolumn = !readOnly_p && useScratch_p;
     Bool savevirtualmodel = !readOnly_p && !useScratch_p;
-
+    //os<<"PREDICTMODEL: readOnly_p=="<<readOnly_p<<" useScratch_p=="<<useScratch_p<<LogIO::POST;
     if( savemodelcolumn ) os << "Saving model column" << LogIO::POST;
     if( savevirtualmodel ) os << "Saving virtual model" << LogIO::POST;
 

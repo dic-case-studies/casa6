@@ -272,11 +272,14 @@ class ImagerParameters():
            #respectively. So this needs to be undone before calling predictModel.
            self.iterpars['savemodel']=self.inpars['savemodel'] 
            if self.inpars['savemodel']=='modelcolumn':
-              self.allselpars['ms0']['readonly']=False
-              self.allselpars['ms0']['usescratch']=True
+               for key in self.allselpars:  # for all MSes
+                   self.allselpars[key]['readonly']=False
+                   self.allselpars[key]['usescratch']=True
+              
            elif self.inpars['savemodel']=='virtual':
-              self.allselpars['ms0']['readonly']=False
-              self.allselpars['ms0']['usescratch']=False
+               for key in self.allselpars:  # for all MSes
+                      self.allselpars[key]['readonly']=False
+                      self.allselpars[key]['usescratch']=False
 
     def getAllPars(self):
         """Return the state of all parameters"""

@@ -438,6 +438,9 @@ def tclean(
                 
                 if savemodel!='none' and (interactive==True or usemask=='auto-multithresh' or nsigma>0.0):
                     paramList.resetParameters()
+                    if parallel and specmode=='mfs':
+                        # For parallel mfs, also needs to reset the parameters for each node
+                        imager.resetSaveModelParams(paramList)
                     imager.initializeImagers()
                     imager.predictModel()
 
