@@ -42,6 +42,7 @@
 #include<msvis/MSVis/VisImagingWeight.h>
 #include <msvis/MSVis/VisBuffer2.h>
 #include <msvis/MSVis/VisibilityIterator2.h>
+#include <msvis/MSVis/MSUtil.h>
 #include<synthesis/TransformMachines2/FTMachine.h>
 #include<synthesis/TransformMachines2/BriggsCubeWeightor.h>
 
@@ -109,10 +110,14 @@ using namespace casa::vi;
 	vi::VisBuffer2 *vb=vi.getVisBuffer();
 	std::vector<pair<Int, Int> > fieldsToUse;
 	rownr_t nrows=0;
-	vi.originChunks();
-	vi.origin();
+	String ephemtab("");
+	if(inRec.isDefined("ephemeristable")){
+	  inRec.get("ephemeristable", ephemtab);
+	}
 	Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	Double freqend=cs.toWorld(IPosition(4,0,0,0,templateimage.shape()[3]-1))[3];
+	uInt swingpad=estimateSwingChanPad(vi, cs, templateimage.shape()[3],
+					   ephemtab);
 	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	  for (vi.origin(); vi.more(); vi.next()) {
 	    nrows+=vb->nRows();
@@ -127,8 +132,8 @@ using namespace casa::vi;
 		}
 	}
 	wgtTab_p=nullptr;
-	ostringstream oss;
-	oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
+	//ostringstream oss;
+	//oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
 
 	//cerr << "STRING " << oss.str() << endl;;
 	imWgtColName_p=makeScratchImagingWeightTable(wgtTab_p, oss.str());
@@ -137,6 +142,7 @@ using namespace casa::vi;
 	  return imWgtColName_p;
 	}
 	else{
+	  wgtTab_p->lock(True,100);
 	  wgtTab_p->removeRow(wgtTab_p->rowNumbers());
 
 	}
@@ -148,6 +154,7 @@ using namespace casa::vi;
 	for (uInt k=0; k < fieldsToUse.size(); ++k){
 		vi.originChunks();
 		vi.origin();
+		//cerr << "####nchannels " << vb->nChannels() << " swingpad " << swingpad << endl; 
 		IPosition shp=templateimage.shape();
 		nx_p=shp[0];
 		ny_p=shp[1];
@@ -163,9 +170,9 @@ using namespace casa::vi;
 		vorigin_p=ny_p/2;
 		////TESTOO
 		//IPosition shp=templateimage.shape();
-		shp[3]=shp[3]+4; //add two channel at begining and end;
+		shp[3]=shp[3]+swingpad; //add two channel at begining and end;
 		Vector<Double> refpix=cs.referencePixel();
-		refpix[3]+=2;
+		refpix[3]+=swingpad/2;
 		cs.setReferencePixel(refpix);
 		TempImage<Complex> newTemplate(shp, cs);
 		Matrix<Double>  sumWgts;
@@ -232,10 +239,22 @@ using namespace casa::vi;
 			}
       
 		}//chan
+
+
+		//std::ofstream myfile;
+		//myfile.open (wgtTab_p->tableName()+".txt");
+		
+		
 		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 			for (vi.origin(); vi.more(); vi.next()) {
 				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
-					Matrix<Float> imweight;	
+					Matrix<Float> imweight;
+					/*///////////
+					std::vector<Int> cmap=(ft_p[0]->channelMap(*vb)).tovector();
+					int n=0;
+					std::for_each(cmap.begin(), cmap.end(), [&n, &myfile](int &val){if(val > -1)myfile << " " << n; n++; });
+					myfile << "----msid " << vb->msId() << endl;
+					/////////////////////////////*/
 					getWeightUniform(griddedWeight, imweight, *vb);
 					rownr_t nRows=vb->nRows();
 					//Int nChans=vb->nChannels();
@@ -263,15 +282,96 @@ using namespace casa::vi;
 				}
 			}
 		}
-		
+		//myfile.close();
 		
 		
 	}
 		
 	initialized_p=True;
+	wgtTab_p->unlock();
 	return imWgtColName_p;
 	  
 }
+
+  Int BriggsCubeWeightor::estimateSwingChanPad(vi::VisibilityIterator2& vi, const CoordinateSystem& cs, const Int imNChan, const String& ephemtab){
+
+    vi::VisBuffer2 *vb=vi.getVisBuffer();
+    vi.originChunks();
+    vi.origin();
+    Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
+	Double freqend=cs.toWorld(IPosition(4,0,0,0,imNChan-1))[3];
+	Double freqincr=fabs(cs.increment()[3]);
+	SpectralCoordinate spCoord=cs.spectralCoordinate(cs.findCoordinate(Coordinate::SPECTRAL));
+	MFrequency::Types freqframe=spCoord.frequencySystem(True);
+	uInt swingpad=16;
+	Double swingFreq=0.0;
+	Double minFreq=1e99;
+	std::vector<Double> localminfreq, firstchanfreq;
+	Int msID=-1;
+	Int fieldID=-1;
+	Int spwID=-1;
+	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
+	  for (vi.origin(); vi.more(); vi.next()) {
+	    if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
+	      msID=vb->msId();
+	      fieldID = vb->fieldId()(0);
+	      spwID = vb->spectralWindows()(0);
+	      Double localBeg, localEnd;
+	      Double localNchan=imNChan >1 ? Double(imNChan-1) : 1.0;
+	      Double localStep=abs(freqend-freqbeg)/localNchan;
+	      if(freqbeg < freqend){
+		localBeg=freqbeg;
+		localEnd=freqend;
+	      }
+	      else{
+		localBeg=freqend;
+		localEnd=freqbeg;
+	      }
+	      Vector<Int> spw, start, nchan;
+	      if(ephemtab.size() != 0){
+		MSUtil::getSpwInSourceFreqRange( spw,start,nchan,vb->ms(), 
+						 localBeg,localEnd, localStep,
+						 ephemtab,fieldID);
+	      }
+	      else{
+		MSUtil::getSpwInFreqRange(spw, start,nchan,
+					  vb->ms(), localBeg, localEnd,
+					  localStep,freqframe, 
+					  fieldID);
+		
+	      }
+		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
+		    if(spw[spwk]==vb->spectralWindows()(0)){
+		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
+		      localminfreq.push_back(mschanfreq[start[spwk]]);
+		      firstchanfreq.push_back(min(mschanfreq));
+		      if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
+			localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
+		      if(minFreq > localminfreq[localminfreq.size()-1])
+			minFreq=localminfreq[localminfreq.size()-1];
+		  
+		    }
+		  
+		  }
+		}
+		
+	      }
+	    }
+	
+	auto itf=firstchanfreq.begin();
+	Double firstchanshift=0.0;
+	Double minfirstchan=min(Vector<Double>(firstchanfreq));
+	for (auto itm=localminfreq.begin(); itm != localminfreq.end(); ++itm, ++itf){
+	  if(swingFreq < abs(*itm -minFreq))
+	    swingFreq=abs(*itm -minFreq);
+	  if(firstchanshift < abs(*itf-minfirstchan))
+	    firstchanshift=abs(*itf-minfirstchan);
+	}
+	swingpad=2*(Int((swingFreq+firstchanshift)/freqincr)+4);
+	////////////////
+	return swingpad;
+
+  }
   
   String BriggsCubeWeightor::makeScratchImagingWeightTable(CountedPtr<Table>& weightTable, const String& filetag){
 
@@ -445,7 +545,6 @@ using namespace casa::vi;
     
     
   }
-
   initialized_p=True;
  }
 
@@ -553,7 +652,11 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
 
     Vector<Int> chanMap=ft_p[0]->channelMap(vb);
     //cerr << "weightuniform chanmap " << chanMap << endl;
-    
+    ////
+    //std::vector<Int> cmap=chanMap.tovector();
+    //int n=0;
+    //std::for_each(cmap.begin(), cmap.end(), [&n](int &val){if(val > -1)cerr << " " << n; n++; });
+    //cerr << "----msid " << vb.msId() << endl;
     Int nvischan=vb.nChannels();
     rownr_t nRow=vb.nRows();
     Matrix<Double> uvw=vb.uvw();
