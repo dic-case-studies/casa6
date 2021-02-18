@@ -37,6 +37,7 @@ class plotms_test_base(unittest.TestCase):
     testct = 'ngc5921.ref1a.gcal'
     testct2 = 'ngc5921.ref2a.gcal'
     testct3 = 'a_mueller.uvcont.tbl'
+    testct4 = 'ngc5921.ref1a.bcal'
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
@@ -44,6 +45,7 @@ class plotms_test_base(unittest.TestCase):
     ct = os.path.join(outputDir, testct)
     ct2 = os.path.join(outputDir, testct2)
     ct3 = os.path.join(outputDir, testct3)
+    ct4 = os.path.join(outputDir, testct4)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -80,6 +82,9 @@ class plotms_test_base(unittest.TestCase):
         if not os.path.exists(self.ct3):
             shutil.copytree(os.path.join(datapath, self.testct3),
                 self.ct3, symlinks=True)
+        if not os.path.exists(self.ct4):
+            shutil.copytree(os.path.join(datapath, self.testct4),
+                self.ct4, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
@@ -870,13 +875,13 @@ class test_calplot(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
         self.removePlotfile()
         # No selection (only one spw)
-        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, spw='0')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 100000)
         self.removePlotfile()
         # Smaller plot with chan selection
-        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, spw='0:0~10')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
