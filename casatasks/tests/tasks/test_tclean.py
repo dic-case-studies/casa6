@@ -102,6 +102,7 @@ if is_CASA6:
      from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+     from casatasks import impbcor
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -2205,6 +2206,7 @@ class test_cube(testref_base):
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
+     @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
