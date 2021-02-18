@@ -1,6 +1,8 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 <task category="simulation" name="simalma" type="function">
+<needs>simanalyze</needs>
+<needs>simobserve</needs>
 <shortdescription>Simulation task for ALMA </shortdescription>
 <description>
 This task simulates ALMA observation including 12-m, ACA 7-m and total

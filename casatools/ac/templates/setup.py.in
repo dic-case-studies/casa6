@@ -117,7 +117,7 @@ for arg in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.56.jar'
+xml_jar_file = 'xml-casa-assembly-1.60.jar'
 real_gnu = None
 gxx_version_number = 0
 
@@ -2308,7 +2308,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.56.jar"
+        assembly_jar = "xml-casa-assembly-1.60.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
