@@ -26,11 +26,15 @@
 
 #include <synthesis/MeasurementComponents/EJones.h>
 
+#include <synthesis/MeasurementComponents/MSMetaInfoForCal.h>
+
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/VisBuffAccumulator.h>
 #include <ms/MeasurementSets/MSColumns.h>
 #include <synthesis/MeasurementEquations/VisEquation.h>
 
+#include <tables/Tables/Table.h>
+#include <tables/Tables/TableIter.h>
 #include <tables/TaQL/ExprNode.h>
 
 #include <casa/Arrays/ArrayMath.h>
@@ -41,6 +45,7 @@
 #include <casa/System/Aipsrc.h>
 #include <scimath/Functionals/ScalarSampledFunctional.h>
 #include <scimath/Functionals/Interpolate1D.h>
+#include <scimath/Mathematics/Combinatorics.h>
 
 #include <casa/sstream.h>
 
@@ -537,5 +542,223 @@ void EGainCurve::calcAllJones() {
   
 }
 
+
+EPowerCurve::EPowerCurve(VisSet& vs) :
+  VisCal(vs), 
+  VisMueller(vs),
+  EGainCurve(vs),
+  gainCurveTabName_("")
+{
+  if (prtlev()>2) cout << "EPowerCurve::EPowerCurve(vs)" << endl;
+}
+
+EPowerCurve::EPowerCurve(String msname,Int MSnAnt,Int MSnSpw) :
+  VisCal(msname,MSnAnt,MSnSpw), 
+  VisMueller(msname,MSnAnt,MSnSpw),
+  EGainCurve(msname,MSnAnt,MSnSpw),
+  gainCurveTabName_("")
+{
+  if (prtlev()>2) cout << "EPowerCurve::EPowerCurve(msname,MSnAnt,MSnSpw)" << endl;
+
+  // Temporary MS to get some info
+  MeasurementSet ms(msname);
+
+  // The relevant subtable names (there must be a better way...)
+  gainCurveTabName_ = ms.rwKeywordSet().asTable("GAIN_CURVE").tableName();
+}
+
+EPowerCurve::EPowerCurve(const MSMetaInfoForCal& msmc) :
+  VisCal(msmc), 
+  VisMueller(msmc),
+  EGainCurve(msmc),
+  gainCurveTabName_("")
+{
+  if (prtlev()>2) cout << "EPowerCurve::EPowerCurve(msmc)" << endl;
+
+  // Temporary MS to get some info
+  MeasurementSet ms(this->msmc().msname());
+
+  // The relevant subtable names (there must be a better way...)
+  gainCurveTabName_ = ms.rwKeywordSet().asTable("GAIN_CURVE").tableName();
+}
+
+EPowerCurve::~EPowerCurve() {
+  if (prtlev()>2) cout << "EPowerCurve::~EPowerCurve()" << endl;
+}
+
+void EPowerCurve::setSpecify(const Record& specify) {
+
+  // Neither applying nor solving in specify context
+  setSolved(false);
+  setApplied(false);
+
+  // Collect Cal table parameters
+  if (specify.isDefined("caltable")) {
+    calTableName()=specify.asString("caltable");
+
+    if (Table::isReadable(calTableName()))
+      logSink() << "FYI: We are going to overwrite an existing CalTable: "
+                << calTableName()
+                << LogIO::POST;
+  }
+
+  // Create a new caltable to fill
+  createMemCalTable();
+
+  // Setup shape of solveAllRPar
+  initSolvePar();
+}
+
+void EPowerCurve::specify(const Record& specify) {
+
+  // Escape if GAIN_CURVE table absent
+  if (!Table::isReadable(gainCurveTabName()))
+    throw(AipsError("The GAIN_CURVE subtable is not present in the specified MS. Gain curves unavailable."));
+
+  // Construct matrix for EL to ZA conversion of polynomials.
+  Matrix<Float> m_el(nPar(), nPar(), 0.0);
+  for (Int i = 0; i < nPar()/2; i++) {
+    for (Int j = 0; j < nPar()/2; j++) {
+      if (i > j)
+	continue;
+      m_el(i, j) = Combinatorics::choose(j, i) *
+	pow(-1.0, j) * pow(-90.0, (j - i));
+      m_el(nPar()/2 + i, nPar()/2 + j) = m_el(i, j);
+    }
+  }
+
+  Table gainCurveTab(gainCurveTabName(),Table::Old);
+
+  for (Int ispw=0; ispw<nSpw(); ispw++) {
+    Table itab = gainCurveTab(gainCurveTab.col("SPECTRAL_WINDOW_ID")==ispw);
+
+    ScalarColumn<Double> timeCol(itab, "TIME");
+    ScalarColumn<Double> intervalCol(itab, "INTERVAL");
+    ScalarColumn<Int> antCol(itab,"ANTENNA_ID");
+    ScalarColumn<Int> spwCol(itab,"SPECTRAL_WINDOW_ID");
+    ScalarColumn<String> typeCol(itab,"TYPE");
+    ScalarColumn<Int> numPolyCol(itab, "NUM_POLY");
+    ArrayColumn<Float> gainCol(itab, "GAIN");
+    ArrayColumn<Float> sensCol(itab, "SENSITIVITY");
+
+    for (Int irow=0; irow<itab.nrow(); irow++) {
+      Int iant=antCol(irow);
+      currSpw()=ispw;
+
+      Matrix<Float> m;
+      if (typeCol(irow) == "POWER(ZA)" || typeCol(irow) == "VOLTAGE(ZA)")
+	m = Matrix<Float>::identity(nPar());
+      else if (typeCol(irow) == "POWER(EL)" || typeCol(irow) == "VOLTAGE(EL)")
+	m = m_el;
+      else
+	throw(AipsError("The " + typeCol(irow) + "gain curve type is not supported. Gain curves unavailable."));
+
+      // Initialize solveAllParOK, etc.
+      solveAllParOK()=true;  // Assume all ok
+      solveAllParErr()=0.0;  // what should we use here?
+      solveAllParSNR()=1.0;
+
+      Double begin = timeCol(irow) - intervalCol(irow) / 2;
+      Double end = timeCol(irow) + intervalCol(irow) / 2;
+
+      // Warn if we need to truncate the polynomial?
+      Int npoly = min(numPolyCol(irow), nPar()/2);
+
+      Vector<Float> gain(nPar(), 0.0);
+      for (Int i = 0; i < npoly; i++) {
+	gain(i) = gainCol(irow)(IPosition(2, 0, i));
+	gain(nPar()/2 + i) = gainCol(irow)(IPosition(2, 1, i));
+      }
+
+      // Convert to ZA polynomial
+      gain = product(m, gain);
+
+      // Square voltage to get power.
+      if (typeCol(irow).startsWith("VOLTAGE")) {
+	Vector<Float> v(nPar(), 0.0);
+	for (Int i = 0; i < nPar()/2; i++) {
+	  for (Int j = 0; j < nPar()/2; j++) {
+	    if (i + j < nPar()/2)
+	      v(i + j) += gain(i) * gain(j);
+	  }
+	}
+	gain = v;
+      }
+
+      for (Int i = 0; i < nPar()/2; i++) {
+	gain(i) *= sensCol(irow)(IPosition(1, 0));
+	gain(nPar()/2 + i) *= sensCol(irow)(IPosition(1, 1));
+      }
+
+      ct_->addRow(1);
+
+      CTMainColumns ncmc(*ct_);
+
+      // We are adding to the most-recently added row
+      Int row=ct_->nrow()-1;
+
+      // Meta-info
+      ncmc.time().put(row, (begin + end) / 2);
+      ncmc.fieldId().put(row, currField());
+      ncmc.spwId().put(row, currSpw());
+      ncmc.scanNo().put(row, currScan());
+      ncmc.obsId().put(row, currObs());
+      ncmc.interval().put(row, (end - begin) / 2);
+      ncmc.antenna1().put(row, iant);
+      ncmc.antenna2().put(row, -1);
+
+      // Params
+      ncmc.fparam().put(row,gain);
+
+      // Stats
+      ncmc.paramerr().put(row,solveAllParErr().xyPlane(iant));
+      ncmc.snr().put(row,solveAllParErr().xyPlane(iant));
+      ncmc.flag().put(row,!solveAllParOK().xyPlane(iant));
+    }
+
+    // This spw now has some solutions in it
+    spwOK_(currSpw())=True;
+  }
+}
+
+void EPowerCurve::calcAllJones() {
+
+  if (prtlev()>6) cout << "       EPowerCurve::calcAllJones()" << endl;
+
+  // Nominally no gain curve effect
+  currJElem()=Complex(1.0);
+  currJElemOK()=false;
+
+  /*
+  cout << "currSpw() = " << currSpw() << endl;
+  cout << "   spwMap() = " << spwMap() << endl;
+  cout << "   currRPar().shape() = " << currRPar().shape() << endl;
+  cout << "   currRPar() = " << currRPar() << endl;
+  */
+
+  Complex* J=currJElem().data();
+  Bool*    JOk=currJElemOK().data();
+  Float*  c=currRPar().data();
+  Double* a=za().data();
+
+  Double loss, ang;
+  for (Int iant=0; iant<nAnt(); ++iant,++a)
+    for (Int ipol=0;ipol<2;++ipol,++J,++JOk) {
+      loss=Double(*c);
+      ++c;
+      ang=1.0;
+      for (Int ipar=1;ipar<nPar()/2;++ipar,++c) {
+	ang*=(*a);
+	loss+=((*c)*ang);
+      }
+      if (loss >= 0) {
+	(*J) = Complex(sqrt(loss));
+	(*JOk) = true;
+      } else {
+	(*J) = 0.0;
+	(*JOk) = false;
+      }
+    }
+}
 
 } //# NAMESPACE CASA - END

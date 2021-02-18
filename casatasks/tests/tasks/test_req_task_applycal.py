@@ -46,48 +46,9 @@ import numpy as np
 
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms')
-    tCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.T0')
-    gCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.G0')
-
-    altdata = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
-    altCal = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
-    callibfile = casatools.ctsys.resolve('text/refcallib.txt')
-    #Data from merged task test
-    mmspath = casatools.ctsys.resolve('visibilities/vla/ngc5921.applycal.mms')
-    mmsbcalpath = casatools.ctsys.resolve('caltables/ngc5921.bcal')
-    mmsgcalpath = casatools.ctsys.resolve('caltables/ngc5921.gcal')
-    mmsfluxpath = casatools.ctsys.resolve('caltables/ngc5921.fluxscale')
-
+    datapath = casatools.ctsys.resolve('unittest/applycal/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms/'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.T0'
-        gCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.G0'
-
-        altdata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
-        altCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal/'
-        callibfile = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/refcallib.txt'
-        #Data from merged task test
-        mmspath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.applycal.mms'
-        mmsbcalpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.bcal'
-        mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.gcal'
-        mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.fluxscale'
-
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms/'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.T0'
-        gCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.G0'
-
-        altdata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        altCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal/'
-        callibfile = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/refcallib.txt'
-        #Data from merged task test
-        mmspath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.applycal.mms'
-        mmsbcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.bcal'
-        mmsgcalpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.gcal'
-        mmsfluxpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.fluxscale'
-
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/applycal/'
 
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
@@ -169,7 +130,22 @@ def drop_solution_for_antenna(caltable, antenna):
     finally:
         tb.close()
 
+# Input data files
+msdata = 'gaincaltest2.ms'
+altdata = 'ngc5921.ms'
+tCal = 'gaincaltest2.ms.T0'
+gCal = 'gaincaltest2.ms.G0'
+altCal = 'ngc5921.ref1a.gcal'
+callibfile = 'refcallib.txt'
+mmsdata = 'ngc5921.applycal.mms'
+mmsbcal = 'ngc5921.bcal'
+mmsgcal = 'ngc5921.gcal'
+mmsflux = 'ngc5921.fluxscale'
+vlbadata = 'ba123a.ms'
+vlbaGCCal = 'ba123a.gc'
 
+
+# Locally copied data files
 datacopy = 'applycalcopy.ms'
 dataref = 'referencedata.ms'
 altcopy = 'altcopy.ms'
@@ -180,26 +156,41 @@ mmsbcalcopy = 'mmsbcalcopy.cal'
 mmsgcalcopy = 'mmsgcalcopy.cal'
 mmsfluxcopy = 'mmsfluxcopy.cal'
 
+vlbacopy = 'vlbacopy.ms'
+
 class applycal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
         pass
 
     def setUp(self):
-        shutil.copytree(datapath, datacopy)
-        shutil.copytree(datapath, dataref)
-        shutil.copytree(mmspath, mmscopy)
+        shutil.copytree(os.path.join(datapath, msdata), datacopy)
+        shutil.copytree(os.path.join(datapath, msdata), dataref)
+        shutil.copytree(os.path.join(datapath, mmsdata), mmscopy)
 
-        shutil.copytree(mmsbcalpath, mmsbcalcopy)
-        shutil.copytree(mmsgcalpath, mmsgcalcopy)
-        shutil.copytree(mmsfluxpath, mmsfluxcopy)
+        shutil.copytree(os.path.join(datapath, mmsbcal), mmsbcalcopy)
+        shutil.copytree(os.path.join(datapath, mmsgcal), mmsgcalcopy)
+        shutil.copytree(os.path.join(datapath, mmsflux), mmsfluxcopy)
 
         change_perms(mmsbcalcopy)
         change_perms(mmsgcalcopy)
         change_perms(mmsfluxcopy)
+        
+        # Link  cal tables to local directory
+        if not os.path.exists(tCal):
+            os.system('ln -s '+ datapath + tCal + ' .')
+        if not os.path.exists(gCal):
+            os.system('ln -s '+ datapath + gCal + ' .')
+        if not os.path.exists(altCal):
+            os.system('ln -s '+ datapath + altCal + ' .')
+        if not os.path.exists(callibfile):
+            os.system('ln -s '+ datapath + callibfile + ' .')
+        if not os.path.exists(vlbaGCCal):
+            os.system('ln -s '+ datapath + vlbaGCCal + ' .')
 
-    def tearDown(self):
+    def tearDown(self):            
         shutil.rmtree(datacopy)
         if os.path.exists('applycalcopy.ms.flagversions'):
             shutil.rmtree('applycalcopy.ms.flagversions')
@@ -236,20 +227,23 @@ class applycal_test(unittest.TestCase):
                 
         if os.path.exists('mmsapplycalcopy.mms.flagversions'):
             shutil.rmtree('mmsapplycalcopy.mms.flagversions')
-
+        
         
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree('cl_fldmap_test.ms')
-        shutil.rmtree('cl_fldmap_test.Gf0')
-        shutil.rmtree('cl_fldmap_test.Gf01')
-        os.remove('callib_f0.txt')
-        os.remove('callib_f01_m0.txt')
-        os.remove('callib_f01_s0.txt')
-        os.remove('callib_f01.txt')
-        os.remove('callib_f01_s01.txt')
-        os.remove('callib_f01_m01.txt')
-
+        shutil.rmtree(vlbacopy)
+        shutil.rmtree('cl_fldmap_test.ms', ignore_errors=True)
+        shutil.rmtree('cl_fldmap_test.Gf0', ignore_errors=True)
+        shutil.rmtree('cl_fldmap_test.Gf01', ignore_errors=True)
+        caldata = [tCal,gCal,altCal,callibfile,vlbaGCCal]
+        for ff in caldata:
+            if os.path.exists(ff):
+                os.unlink(ff)
+        outlist = ['callib_f0.txt','callib_f01_m0.txt','callib_f01_s0.txt','callib_f01.txt','callib_f01_s01.txt','callib_f01_m01.txt']
+        for f in outlist:
+            if os.path.exists(f):
+                os.remove(f)
+ 
     def test_corrected(self):
         '''
             test_corrected
@@ -739,6 +733,15 @@ class applycal_test(unittest.TestCase):
         print(files)
         for ff in files:
             self.assertFalse(ff.__contains__('flagversions'))
+
+
+    def test_gaincurve(self):
+        applycal(vis=vlbacopy, gaintable=[vlbaGCCal], applymode='calonly')
+        datamean = np.mean(getparam(vlbacopy, 'DATA'))
+        correctedmean = np.mean(getparam(vlbacopy, 'CORRECTED_DATA'))
+
+        self.assertTrue(correctedmean != datamean)
+        self.assertTrue(np.isclose(correctedmean, 2.68767602411+4.91467419904e-06j))
 
 
 def suite():

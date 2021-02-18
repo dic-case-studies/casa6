@@ -44,9 +44,9 @@ class smoothcal_test(unittest.TestCase):
         if not is_CASA6:
             default(smoothcal)
         if is_CASA6:
-            datapath = ctsys.resolve('regression/unittest/smoothcal')
+            datapath = ctsys.resolve('unittest/smoothcal/')
         else:
-            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/smoothcal')
+            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/smoothcal/')
 
         shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
         shutil.copytree(os.path.join(datapath,self.gcal), self.gcal)

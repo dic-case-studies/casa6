@@ -2898,6 +2898,11 @@ Tester::doTest (const Environment & environment, const Arguments & arguments)
                  Test::getName().c_str(), e.what());
 
     }
+    catch (std::exception & e){
+
+        fprintf (stderr, "*** std::exception while executing test %s:\n-->%s\n",
+                 "", e.what());
+    }
     catch (...){
 
         fprintf (stderr, "\n*** Unknown exception while executing test %s\n***\n*** Exiting ***\n\n",
@@ -2968,6 +2973,11 @@ Tester::doTests (Int nArgs, char * args [])
         fprintf (stderr, "*** AipsError while executing test %s:\n-->%s\n",
                  "", e.what());
 
+    }
+    catch (std::exception & e){
+
+        fprintf (stderr, "*** std::exception while executing test %s:\n-->%s\n",
+                 "", e.what());
     }
     catch (...){
 
