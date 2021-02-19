@@ -134,26 +134,28 @@ void PlotMSSelection::apply(MeasurementSet& ms, MeasurementSet& selMS,
             throw(AipsError(errormsg));
         }
 
-        selAnt1.resize();
-        selAnt2.resize();
+        selectedAnt1.resize();
+        selectedAnt2.resize();
         if ( antenna().length() > 0 ){
-            selAnt1 = mss.getAntenna1List();
-            selAnt2 = mss.getAntenna2List();
+            selectedAnt1 = mss.getAntenna1List();
+            selectedAnt2 = mss.getAntenna2List();
         }
     }
 }
 
-Vector<int> PlotMSSelection::getSelectedAntennas1(){
-    return selAnt1;
+Vector<int> PlotMSSelection::getSelectedAntennas1() {
+    return selectedAnt1;
 }
 
-Vector<int> PlotMSSelection::getSelectedAntennas2(){
-    return selAnt2;
+Vector<int> PlotMSSelection::getSelectedAntennas2() {
+    return selectedAnt2;
 }
 
-void PlotMSSelection::apply(NewCalTable& ct, NewCalTable& selCT,
-    Vector<Vector<Slice> >& /*chansel*/,
-    Vector<Vector<Slice> >& /*corrsel*/) {
+Matrix<int> PlotMSSelection::getSelectedChannels() {
+    return selectedChan;
+}
+
+void PlotMSSelection::apply(NewCalTable& ct, NewCalTable& selCT) {
   // Trap unsupported selections
   if (uvrange().length()>0)
     throw(AipsError("Selection by uvrange not supported for NewCalTable"));
@@ -184,15 +186,29 @@ void PlotMSSelection::apply(NewCalTable& ct, NewCalTable& selCT,
 
     try {
       selCT = ct(ten);
+
+      // Store antenna selection
+      selectedAnt1.resize();
+      selectedAnt2.resize();
+      if (antenna().length() > 0) {
+        selectedAnt1 = cts.getAntenna1List();
+        selectedAnt2 = cts.getAntenna2List();
+      }
+
+      // Store channel selection
+      selectedChan.resize();
+      if (spw().length() > 0) {
+          selectedChan = cts.getChanList();
+      }
     } catch(AipsError& x) {
       throw(AipsError("Error selecting on caltable:\n" + x.getMesg()));
     }
 
-    selAnt1.resize();
-    selAnt2.resize();
-    if (antenna().length() > 0){
-      selAnt1 = cts.getAntenna1List();
-      selAnt2 = cts.getAntenna2List();
+    selectedAnt1.resize();
+    selectedAnt2.resize();
+    if (antenna().length() > 0) {
+      selectedAnt1 = cts.getAntenna1List();
+      selectedAnt2 = cts.getAntenna2List();
     }
   }
 }
@@ -203,10 +219,9 @@ void PlotMSSelection::apply(CalTable& ct, CalTable& selectedCT,
   // Set the selected CalTable to be the same initially 
   // as the input CalTable
   selectedCT = ct;
-
-  // selAnt1 set in getAntTaql; selAnt2 not applicable
-  selAnt1.resize();
-  selAnt2.resize();
+  selectedAnt1.resize(); // set in getAntTaql if selected
+  selectedAnt2.resize(); // not applicable
+  selectedChan.resize();
 
   if (!isEmpty()) {
     // do taql selection and check result
@@ -382,8 +397,10 @@ String PlotMSSelection::getAntTaql(MSSelection& mss, MeasurementSet& ms, String 
   String beginAnt("ANTENNA1 IN ["), beginNotAnt("ANTENNA1 NOT IN [");
   String selAnt(""), selNotAnt("");
   Vector<Int> selAntIds, selNotAntIds;
+
   Vector<String> selections;
   selections = split(antExpr, ';', selections);
+
   for (uInt expr=0; expr<selections.size(); ++expr) {
     String subexpr = selections(expr);
     bool notselected = subexpr.contains("!"); // needed for zero
@@ -409,13 +426,14 @@ String PlotMSSelection::getAntTaql(MSSelection& mss, MeasurementSet& ms, String 
   }
 
   // Set selected ant1
-  selAnt1.resize();
-  selAnt2.resize();
-  selAnt1 = selAntIds;
+  selectedAnt1.resize();
+  selectedAnt2.resize();
+  selectedAnt1 = selAntIds;
+  // Append de-selected ant1
   size_t sel_size(selAntIds.size()), notsel_size(selNotAntIds.size());
-  selAnt1.resize(sel_size + notsel_size, true);
+  selectedAnt1.resize(sel_size + notsel_size, true);
   for (size_t i = 0; i < notsel_size; ++i) {
-    selAnt1(sel_size + i) = selNotAntIds(i);
+    selectedAnt1(sel_size + i) = selNotAntIds(i);
   } 
 
   // Set and return taqlExpr
