@@ -355,7 +355,7 @@ calls to the other CASA tasks.
 
     <param subparam="true" name="imsize" type="intArray"><shortdescription>output image size in pixels (x,y) or 0 to match model</shortdescription><description>output image size in pixels (x,y) or 0 to match model</description>
       
-      <value type="vector"><value>128</value><value>128</value></value>
+      <value><value>128</value><value>128</value></value>
     </param>
 
     <param subparam="true" name="imdirection" type="string"><shortdescription>set output image direction, (otherwise center on the model)</shortdescription><description>set output image direction, (otherwise center on the model)</description>
@@ -472,7 +472,7 @@ calls to the other CASA tasks.
   <equals value="True" type="bool">
 
     <default param="imsize">
-      <value>0</value>
+      <value><value>0</value></value>
     </default>
     <default param="imdirection">
       <value type="string"/>
