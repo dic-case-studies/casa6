@@ -377,6 +377,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     convFuncChanMap.resize(vb.nChannels());
     Vector<Double> beamFreqs;
     findUsefulChannels(convFuncChanMap, beamFreqs, vb, visFreq);
+    //cerr << "SPW " << vb.spectralWindow() << "   beamFreqs "<< beamFreqs <<  " chamMap " << convFuncChanMap << endl;
     Int nBeamChans=beamFreqs.nelements();
     /////For now not doing beam rotation or squints but to be enabled easily
     convFuncPolMap.resize(vb.nCorrelations());
@@ -417,7 +418,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
         return;
 
     }
-    actualConvIndex_p=convIndex(vb, visFreq.nelements());
+    actualConvIndex_p=convIndex(vb);
     //cerr << "actual conv index " << actualConvIndex_p << " doneMainconv " << doneMainConv_p << endl;
     if(doneMainConv_p.shape()[0] < (actualConvIndex_p+1)) {
         //cerr << "resizing DONEMAIN " <<   doneMainConv_p.shape()[0] << endl;
@@ -434,16 +435,6 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
         //cerr << "invalidating doneMainConv " <<  convFunctions_p[actualConvIndex_p]->shape()[3] << " =? " << nBeamChans << " convsupp " << convSupport_p.nelements() << endl;
     }
 
-    ////Trap for cases when the selection seem to have changed
-    if(doneMainConv_p[actualConvIndex_p]){
-      if(nBeamChans != (*convFunctions_p[actualConvIndex_p]).shape()[3])
-	doneMainConv_p[actualConvIndex_p]=False;
-      
-    }
-
-
-
-    
     // Get the coordinate system
     CoordinateSystem coords(iimage.coordinates());
     Int directionIndex=coords.findCoordinate(Coordinate::DIRECTION);
@@ -488,7 +479,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     pixFieldDir(0)=-pixFieldDir(0)*2.0*C::pi/Double(nx)/Double(convSamp);
     pixFieldDir(1)=-pixFieldDir(1)*2.0*C::pi/Double(ny)/Double(convSamp);
 
-  
+
     if(!doneMainConv_p[actualConvIndex_p]) {
       //cerr << "doneMainConv_p " << actualConvIndex_p << endl;
 
@@ -759,9 +750,9 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
 
         doneMainConv_p[actualConvIndex_p]=true;
-	convFunctions_p.resize(actualConvIndex_p+1);
-	convWeights_p.resize(actualConvIndex_p+1);
-	convSupportBlock_p.resize(actualConvIndex_p+1);
+        convFunctions_p.resize(actualConvIndex_p+1);
+        convWeights_p.resize(actualConvIndex_p+1);
+        convSupportBlock_p.resize(actualConvIndex_p+1);
 	//Using conjugate change support to be larger of either
 	if((nchan_p == 1) && getConjConvFunc) {
 	  Int conjsupp=conjSupport(beamFreqs) ;
@@ -848,7 +839,7 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
     ///vb
     ndishpair=max(convFuncRowMap)+1;
 
-    //convSupportBlock_p.resize(actualConvIndex_p+1);
+    convSupportBlock_p.resize(actualConvIndex_p+1);
     convSizes_p.resize(actualConvIndex_p+1);
     //convSupportBlock_p[actualConvIndex_p]=new Vector<Int>(ndishpair);
     //(*convSupportBlock_p[actualConvIndex_p])=convSupport_p;
@@ -879,10 +870,6 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
 
     // cerr << "convfunc shapes " <<  convFunc_p.shape() <<  "   " << weightConvFunc_p.shape() << "  " << convSize_p << " pol " << nBeamPols << "  chan " << nBeamChans << " ndishpair " << ndishpair << endl;
-     /////Due to a bug in buildCoordSysCore...sometimes an image bigger
-    ///than the spw selection chosen  is made
-     if(nBeamChans > convFunc_p.shape()[3])
-       nBeamChans = convFunc_p.shape()[3];
     //convSupport_p.resize();
     //convSupport_p=(*convSupportBlock_p[actualConvIndex_p]);
     Bool delc;
@@ -895,7 +882,6 @@ void HetArrayConvFunc::findConvFunction(const ImageInterface<Complex>& iimage,
 
     #pragma omp parallel default(none) firstprivate(convstor, weightstor, dirX, dirY, elconvsize, ndishpair, nBeamChans, nBeamPols)
     {
-      
         #pragma omp for
         for(Int iy=0; iy<elconvsize; ++iy) {
             applyGradientToYLine(iy,  convstor, weightstor, dirX, dirY, elconvsize, ndishpair, nBeamChans, nBeamPols);
