@@ -99,10 +99,8 @@ public:
         casacore::Vector<casacore::Vector<casacore::Slice> >& corrsel);
         
     // Applies this selection to a NewCalTable
-    void apply(NewCalTable& ct, NewCalTable& selectedCT,
-        casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
-        casacore::Vector<casacore::Vector<casacore::Slice> >& corrsel);
-        
+    void apply(NewCalTable& ct, NewCalTable& selectedCT);
+
     // Applies this selection to a Table
     void apply(CalTable& ct, CalTable& selectedCT,
         casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
@@ -168,6 +166,10 @@ public:
     casacore::Vector<int> getSelectedAntennas1();
     casacore::Vector<int> getSelectedAntennas2();
 
+    // Return lists of channels that have been selected.
+	// Each row is [spw, start, stop, step]
+    casacore::Matrix<int> getSelectedChannels();
+
     //Returns whether or not any selections have been made.
     bool isEmpty() const;
 
@@ -177,8 +179,9 @@ private:
 
     // Force appearance of new selection (even when not new)
     casacore::Int forceNew_;
-    casacore::Vector<int> selAnt1;
-    casacore::Vector<int> selAnt2;
+    casacore::Vector<int> selectedAnt1;
+    casacore::Vector<int> selectedAnt2;
+    casacore::Matrix<casacore::Int> selectedChan;
     
     // Initializes the values to their defaults.
     void initDefaults();

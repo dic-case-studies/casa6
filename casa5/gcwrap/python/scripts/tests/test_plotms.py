@@ -26,6 +26,10 @@ print('plotms tests will use data from '+ datapath)
 
 class plotms_test_base(unittest.TestCase):
 
+    outputDir="/tmp/" + str(os.getpid()) + "/"
+    plotfile_jpg = "/tmp/myplot.jpg"
+    display = os.environ.get("DISPLAY")
+
     testms  = "pm_ngc5921.ms"
     testms2 = "ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
@@ -33,9 +37,7 @@ class plotms_test_base(unittest.TestCase):
     testct = 'ngc5921.ref1a.gcal'
     testct2 = 'ngc5921.ref2a.gcal'
     testct3 = 'a_mueller.uvcont.tbl'
-    outputDir="/tmp/" + str(os.getpid()) + "/"
-    plotfile_jpg = "/tmp/myplot.jpg"
-    display = os.environ.get("DISPLAY")
+    testct4 = 'ngc5921.ref1a.bcal'
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
@@ -43,6 +45,7 @@ class plotms_test_base(unittest.TestCase):
     ct = os.path.join(outputDir, testct)
     ct2 = os.path.join(outputDir, testct2)
     ct3 = os.path.join(outputDir, testct3)
+    ct4 = os.path.join(outputDir, testct4)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -52,8 +55,8 @@ class plotms_test_base(unittest.TestCase):
         res = None
         default(plotms)
         if not os.path.exists(self.ms):
-            shutil.copytree(os.path.join(datapath,self.testms), 
-                    self.ms, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms),
+                self.ms, symlinks=True)
 
     def tearDownData(self):
         self.cleanUp()
@@ -61,29 +64,32 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(datapath,self.testms2),
-                    self.ms2, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(datapath,self.testms2), 
-                    self.ms2, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
         if not os.path.exists(self.ct):
             shutil.copytree(os.path.join(datapath, self.testct),
-                    self.ct, symlinks=True)
+                self.ct, symlinks=True)
         if not os.path.exists(self.ct2):
             shutil.copytree(os.path.join(datapath, self.testct2),
-                    self.ct2, symlinks=True)
+                self.ct2, symlinks=True)
         if not os.path.exists(self.ct3):
             shutil.copytree(os.path.join(datapath, self.testct3),
-                    self.ct3, symlinks=True)
+                self.ct3, symlinks=True)
+        if not os.path.exists(self.ct4):
+            shutil.copytree(os.path.join(datapath, self.testct4),
+                self.ct4, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
-            shutil.copytree(os.path.join(datapath,self.testms3),
-                    self.ms3, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms3),
+                self.ms3, symlinks=True)
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
@@ -269,6 +275,16 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
 
+    def test_basic_pngExport(self):
+        '''test_basic_pngExport: Export plot in png format'''
+        plotfile_png = os.path.join(self.outputDir, "testBasic07.png")
+        self.removePlotfile(plotfile_png)
+        res = plotms(vis=self.ms, plotfile=plotfile_png,
+               showgui=False, highres=False)
+        self.assertTrue(res)
+        self.checkPlotfile(plotfile_png, 20000)
+        self.removePlotfile(plotfile_png)
+
     def xtest_basic_pdfExport(self):
         '''test_basic_pdfExport: Export plot in pdf format'''
         plotfile_pdf = os.path.join(self.outputDir, "testBasic08.pdf")
@@ -278,6 +294,34 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(plotfile_pdf, 30000)
 
+    def xtest_basic_psExport(self):
+        '''test_basic_psExport: Export plot in ps format'''
+        plotfile_ps = os.path.join(self.outputDir, "testBasic9.ps")
+        self.removePlotfile(plotfile_ps)
+        plotms(vis=self.ms, plotfile=plotfile_ps, expformat='ps',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_ps, 1500000)
+        self.removePlotfile(plotfile_ps)
+
+    def xtest_basic_txtExport(self):
+        '''test_basic_txtExport: Export plot in txt format'''
+        plotfile_txt = os.path.join(self.outputDir, "testBasic10.txt")
+        self.removePlotfile(plotfile_txt)
+        # Verbose text export (default) - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=True,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 4000)
+        self.removePlotfile(plotfile_txt)
+        # Exclude metadata in text export - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=False,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 700)
+        self.removePlotfile(plotfile_txt)
+
 # ------------------------------------------------------------------------------
 
 class test_overplot(plotms_test_base):
@@ -286,7 +330,6 @@ class test_overplot(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        # alternate data needed for plotting two different MSes
         self.setUpAltData()
 
     def tearDown(self):
@@ -447,7 +490,7 @@ class test_axis(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        self.setUpAltData() # for other datacolumns
+        self.setUpAltData()
         self.setUpPointingData()
         
     def tearDown(self):
@@ -721,7 +764,6 @@ class test_axis(plotms_test_base):
             xaxis='u', yaxis='v', showgui=False, plotrange=plotrange3)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 180000)
-        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
@@ -736,20 +778,15 @@ class test_calibration(plotms_test_base):
         self.tearDownData()
 
     def test_calibration_callib(self):
-        '''test_calibration_callib: CAS-3034, CAS-7502 callib parameter for OTF calibration'''
-        if os.path.exists(datapath):
-            self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
-            self.removePlotfile()
-
-            # callib is a string not a filename
-            callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
-            res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
-                ydatacolumn="corrected", xaxis="frequency",
-                showgui=False, callib=callibStr, highres=True)
-            self.assertTrue(res)
-            self.checkPlotfile(self.plotfile_jpg, 240000)
-        else:
-            print("Skipping test, no path to calibration tables")
+        '''test_calibration_callib: callib string parameter for OTF calibration'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
+        self.removePlotfile()
+        callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
+        res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
+            ydatacolumn="corrected", xaxis="frequency",
+            showgui=False, callib=callibStr, highres=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 160000)
 
     def test_calibration_badcallib(self):
         '''test_calibration_badcallib: callib file does not exist'''
@@ -763,7 +800,7 @@ class test_calibration(plotms_test_base):
 
 # ------------------------------------------------------------------------------
  
-class test_calplots(plotms_test_base):
+class test_calplot(plotms_test_base):
     ''' Test plotting cal tables '''
 
     def setUp(self):
@@ -815,8 +852,8 @@ class test_calplots(plotms_test_base):
         self.checkPlotfile(plotfile1, 30000)
         self.removeFiles(self.outputDir, "testCalPlot03_")
 
-    def test_calplot_selection(self):
-        '''test_calplot_selection: caltable with polarization selection'''
+    def test_calplot_polselection(self):
+        '''test_calplot_polselection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
         res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
@@ -832,6 +869,22 @@ class test_calplots(plotms_test_base):
             showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
+
+    def test_calplot_chanselection(self):
+        '''test_calplot_chanselection: caltable with spw/chan selections'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
+        self.removePlotfile()
+        # No selection (only one spw)
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 100000)
+        self.removePlotfile()
+        # Smaller plot with chan selection
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0:0~10')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
 
     def test_calplot_antselection(self):
         '''test_calplot_antselection: CAS-13297 caltable antenna selection'''
@@ -1731,7 +1784,7 @@ def suite():
             test_averaging,
             test_axis,
             test_calibration,
-            test_calplots,
+            test_calplot,
             test_display,
             test_grid,
             test_iteration,

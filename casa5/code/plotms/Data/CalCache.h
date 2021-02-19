@@ -102,11 +102,36 @@ private:
   void loadCalChunks(ROCTIter& ci, const std::vector<PMS::Axis> loadAxes,
       ThreadCommunication* thread);
   void loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
-      casacore::String pol);
+      casacore::String& pol, std::vector<casacore::Slice>& chansel);
   virtual void flagToDisk(const PlotMSFlagging& flagging,
       casacore::Vector<casacore::Int>& chunks, 
       casacore::Vector<casacore::Int>& relids,
       casacore::Bool flag, PlotMSIndexer* indexer, int index);
+
+  // Concat array1 and array2, result in array1. For channel selections.
+  template<typename T>
+  void ConcatArrays(casacore::Array<T>& array1, casacore::Array<T>& array2) {
+    if (array1.empty()) {
+        array1 = array2;
+    } else {
+        size_t ndim(array1.shape().size());
+        if (ndim == 3) {
+            // must have matching shapes except last axis; swap last two
+            casacore::IPosition new_order(3, 0, 2, 1);
+            casacore::Array<T> reorderArray1 = reorderArray(array1, new_order);
+            casacore::Array<T> reorderArray2 = reorderArray(array2, new_order);
+            casacore::Array<T> concatArray = concatenateArray(reorderArray1, reorderArray2);
+
+            // swap concat axes back and assign to array1
+            array1.resize();
+            array1 = reorderArray(concatArray, new_order);
+        } else {
+            casacore::Array<T> concatArray = concatenateArray(array1, array2);
+            array1.resize();
+            array1 = concatArray;
+        }
+    }
+  }
 
   // CalTable:
   void countChunks(casacore::Int nrowMain, std::vector<PMS::Axis>& loadAxes,
@@ -122,26 +147,26 @@ private:
       std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
   void loadCalChunks(ROBJonesPolyMCol& mcol, ROCalDescColumns& dcol,
       casacore::Int nrow, const std::vector<PMS::Axis> loadAxes,
-	  casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
-	  ThreadCommunication* thread);
+      casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
+      ThreadCommunication* thread);
   void loadCalAxis(ROSolvableVisJonesMCol& mcol, ROCalDescColumns& dcol,
       casacore::Int chunk, PMS::Axis axis);
   void getChanFreqsFromMS(casacore::Vector< casacore::Vector<casacore::Double> >& mschanfreqs);
   void getSelFreqsForSpw(casacore::Vector<casacore::Slice>& chansel,
-	  casacore::Vector<casacore::Double>& chanFreqs,
+      casacore::Vector<casacore::Double>& chanFreqs,
       casacore::Vector<casacore::Int>& chanNums);
   // cube selected by channel:
   template<class T>
   void getSelectedCube(const casacore::Cube<T>& inputCube,
-	const casacore::Vector<casacore::Slice>& chanSlices,
-	casacore::Cube<T>& outputCube);
+    const casacore::Vector<casacore::Slice>& chanSlices,
+    casacore::Cube<T>& outputCube);
 
   // GSPLINE CalTable:
   void loadGSpline(std::vector<PMS::Axis>& loadAxes,
       std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
   void loadCalChunks(ROGJonesSplineMCol& mcol, ROCalDescColumns& dcol,
       casacore::Int nsample, const std::vector<PMS::Axis> loadAxes,
-	  casacore::Vector<int>& selectedAnts, ThreadCommunication* thread);
+      casacore::Vector<int>& selectedAnts, ThreadCommunication* thread);
   void checkAxes(const std::vector<PMS::Axis>& loadAxes);
   // cube selected by antenna1:
   template<class T>
