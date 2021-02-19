@@ -44,37 +44,18 @@ import numbers
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/orion_tfeather.im')
-    datapath2 = casatools.ctsys.resolve('image/ngc5921.clean.image')
-    stokespath = casatools.ctsys.resolve('image/image_input_processor.im/')
-    interppath = casatools.ctsys.resolve('image/f2h_quantile.im')
-    #old test data
-    oldPath = casatools.ctsys.resolve('image/')
-    input0 = oldPath + "100x100x2.im"
-    ref0 = oldPath + "ref0.im"
+    dataroot = casatools.ctsys.resolve('unittest/imdev/')
 
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
-
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imdev/'
+ 
+datapath = os.path.join(dataroot, 'orion_tfeather.im')
+datapath2 = os.path.join(dataroot, 'ngc5921.clean.image')
+stokespath = os.path.join(dataroot, 'image_input_processor.im')
+interppath = os.path.join(dataroot, 'f2h_quantile.im')
+input0 = dataroot + "100x100x2.im"
+ref0 = dataroot + "imdev_reference/ref0.im"
         
 
 def imArray(image):

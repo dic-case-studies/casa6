@@ -124,8 +124,8 @@ class SIImageStore
   ///This returns a temporary image of same size/coordinates ...it stays alive as long as this object stays up
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > tempworkimage(casacore::uInt term=0);
 
-  virtual void setModelImageOne( casacore::String modelname, casacore::Int nterm=-1 );
-  virtual void setModelImage( casacore::Vector<casacore::String> modelnames );
+  virtual void setModelImageOne( const casacore::String &modelname, casacore::Int nterm=-1 );
+  virtual void setModelImage( const casacore::Vector<casacore::String> &modelnames );
   virtual casacore::Vector<casacore::String> getModelImageName();
   virtual void setWeightDensity( std::shared_ptr<SIImageStore> imagetoset );
   virtual casacore::Bool doesImageExist(casacore::String imagename);

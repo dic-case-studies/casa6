@@ -29,7 +29,7 @@ class plotants_test(unittest.TestCase):
 
         # It is not necessary to copy it for all tests
         if (not os.path.exists(self.msfile)):
-            datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/ic2233/'
+            datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotants/'
             shutil.copytree(datapath+self.msfile, self.msfile)
 
     def tearDown(self):

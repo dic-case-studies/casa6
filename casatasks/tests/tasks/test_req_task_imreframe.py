@@ -42,12 +42,9 @@ import filecmp
 ### DATA ###
 
 if CASA6:
-    imfile = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    imfile = casatools.ctsys.resolve('unittest/imreframe/ngc5921.clean.image/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        imfile = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        imfile = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
+    imfile = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imreframe/ngc5921.clean.image/'
     
 outfile = 'test.im'
 outfile2 = 'test2.im'
