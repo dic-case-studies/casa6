@@ -28,6 +28,19 @@ else:
     from imregrid import imregrid
     from parallel.parallel_task_helper import ParallelTaskHelper
 
+try:
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi import MPIInterface
+        from casatools import synthesisimager
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa import MPIInterface
+        synthesisimager=casac.synthesisimager # TODO test this import
+    mpi_available = True
+except ImportError:
+    mpi_available = False
+
 def check_requiredmask_exists(usemask, mask):
     if usemask != "user":        # don't use the mask parameter
         return
@@ -151,10 +164,7 @@ def deconvolve(
     Most of this code is copied directly from tclean.
     """
 
-    # check to make sure we're running in a valid environment
-    if ParallelTaskHelper.isMPIEnabled():
-        raise RuntimeError("Runtime Error: task Deconvolve cannot be executed in parallel (mpi) mode!")
-    
+    cppparallel=False
     decon=None
     try:
 
@@ -188,6 +198,23 @@ def deconvolve(
         ## assign values to the ones passed to deconvolve and if not defined yet in deconvolve...
         ## assign them the default value of the constructor
         bparm={k:  inp[k] if k in inp else defparm[k]  for k in defparm.keys()}
+
+        #=========================================================
+        ####set the children to load c++ libraries and applicator
+        ### make workers ready for c++ based mpicommands
+        if mpi_available and MPIEnvironment.is_mpi_enabled:
+            mint=MPIInterface.MPIInterface()
+            cl=mint.getCluster()
+            if(is_CASA6):
+                cl._cluster.pgc("from casatools import synthesisimager", False)
+                cl._cluster.pgc("si=synthesisimager()", False)
+            else:
+                cl._cluster.pgc("from casac import casac", False)
+                cl._cluster.pgc("si=casac.synthesisimager()", False) 
+            cl._cluster.pgc("si.initmpi()", False)
+            cppparallel=True
+            ###ignore chanchunk
+            bparm['chanchunks']=1
 
         ## create the parameters list help object
         paramList=ImagerParameters(**bparm)
@@ -268,5 +295,9 @@ def deconvolve(
     finally:
         if decon != None:
             decon.deleteTools()
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
 
     return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }
