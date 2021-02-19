@@ -270,20 +270,14 @@ void CalCache::loadCalChunks(ROCTIter& ci,
       // Discern npol/nchan shape
       IPosition pshape(ci.flag().shape());
 
-      // Determine data axis for determining param slice for npol
+      // Determine data axis for param slice for npol
       String pol = selection_.corr();
-      if (pol=="" || pol=="RL" || pol=="XY") { // no selection
-        nPol = pshape[0];
-        // half the data for EVLASWP table is swp, half is tsys
-        if (calType_.contains("EVLASWP")) nPol = pshape[0]/2;
-        pol = "";
-      } else { // poln selection using calParSlice
-        String paramAxis = toVisCalAxis(PMS::AMP);
-        if (polnRatio_) {  // pick one!
+      String paramAxis = toVisCalAxis(PMS::AMP);
+      size_t nPol;
+      if (polnRatio_) {  // length is for 1 poln, pick first one
           nPol = getParSlice(paramAxis, "R").length();
-        } else {
+      } else {
           nPol = getParSlice(paramAxis, pol).length();
-        }
       }
 
       size_t nChan(pshape[1]);
@@ -1210,7 +1204,7 @@ void CalCache::loadBPoly(vector<PMS::Axis>& loadAxes,
   NewCalTable* selct = new NewCalTable();
   Vector<Vector<Slice> > chansel;
   Vector<Vector<Slice> > corrsel;
-  selection_.apply(*nct, *selct, chansel, corrsel);
+  selection_.apply(*nct, *selct);
 
   // Use NewCalTable implementation
   setUpCalIter(*selct, true);
