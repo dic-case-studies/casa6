@@ -154,52 +154,54 @@ def deconvolve(
     # check to make sure we're running in a valid environment
     if ParallelTaskHelper.isMPIEnabled():
         raise RuntimeError("Runtime Error: task Deconvolve cannot be executed in parallel (mpi) mode!")
-
-    # discard empty start model strings
-    if type(startmodel) is list:
-        startmodel = list(filter(lambda v: len(v) > 0, startmodel))
-
-    # clean input
-    inp=locals().copy()
-    inp['msname']      = '' # -> no 'vis' parameter for minor cycle only
-    inp['cycleniter']  = inp['niter']
-    inp['loopgain']    = inp.pop('gain')
-    inp['scalebias']   = inp.pop('smallscalebias')
-
-    #####################################################
-    #### Construct ImagerParameters and Imager objects
-    #####################################################
     
-    # make a list of parameters with defaults from tclean
-    if is_python3:
-        defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
-    else:
-        defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
-
-    ## assign values to the ones passed to deconvolve and if not defined yet in deconvolve...
-    ## assign them the default value of the constructor
-    bparm={k:  inp[k] if k in inp else defparm[k]  for k in defparm.keys()}
-
-    ## create the parameters list help object
-    paramList=ImagerParameters(**bparm)
-
-    # Make sure that we have all the necessary images and that the startmodel is valid.
-    # Note: cpp code should check that .residual and .psf exist, but current tests indicate that it doesn't do that.
-    check_requiredmask_exists(usemask, mask)
-    check_requiredimgs_exist(imagename, deconvolver, nterms)
-    check_starmodel_model_collisions(startmodel, imagename, deconvolver)
-
-    #####################################################
-    #### Run the minor cycle
-    #####################################################
-
-    ## Setup Imager object
-    decon = PyDeconvolver(params=paramList)
-
-    iterrec = False
-    isit = 0
-    retrec = ''
+    decon=None
     try:
+
+        # discard empty start model strings
+        if type(startmodel) is list:
+            startmodel = list(filter(lambda v: len(v) > 0, startmodel))
+
+        # clean input
+        inp=locals().copy()
+        inp['msname']      = '' # -> no 'vis' parameter for minor cycle only
+        inp['cycleniter']  = inp['niter']
+        inp['loopgain']    = inp.pop('gain')
+        inp['scalebias']   = inp.pop('smallscalebias')
+
+        #####################################################
+        #### Construct ImagerParameters
+        #####################################################
+
+        # Make sure that we have all the necessary images and that the startmodel is valid.
+        # Note: cpp code should check that .residual and .psf exist, but current tests indicate that it doesn't do that.
+        check_requiredmask_exists(usemask, mask)
+        check_requiredimgs_exist(imagename, deconvolver, nterms)
+        check_starmodel_model_collisions(startmodel, imagename, deconvolver)
+        
+        # make a list of parameters with defaults from tclean
+        if is_python3:
+            defparm=dict(list(zip(ImagerParameters.__init__.__code__.co_varnames[1:], ImagerParameters.__init__.__defaults__)))
+        else:
+            defparm=dict(zip(ImagerParameters.__init__.__func__.__code__.co_varnames[1:], ImagerParameters.__init__.func_defaults))
+
+        ## assign values to the ones passed to deconvolve and if not defined yet in deconvolve...
+        ## assign them the default value of the constructor
+        bparm={k:  inp[k] if k in inp else defparm[k]  for k in defparm.keys()}
+
+        ## create the parameters list help object
+        paramList=ImagerParameters(**bparm)
+
+        #####################################################
+        #### Run the minor cycle
+        #####################################################
+
+        iterrec = False
+        isit = 0
+        retrec = ''
+
+        ## Setup Imager object
+        decon = PyDeconvolver(params=paramList)
 
         #################################################
         #### Setup
@@ -258,12 +260,13 @@ def deconvolve(
 
     except Exception as e:
         casalog.post('Exception from deconvolve : ' + str(e), "SEVERE", "deconvolve")
-        if decon != None:
-            decon.deleteTools() 
-
         larg = list(e.args)
         larg[0] = 'Exception from deconvolve : ' + str(larg[0])
         e.args = tuple(larg)
         raise
+
+    finally:
+        if decon != None:
+            decon.deleteTools()
 
     return { 'iterrec': iterrec, 'isit': isit, 'retrec': retrec }
