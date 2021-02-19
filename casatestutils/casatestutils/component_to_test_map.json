@@ -2077,7 +2077,7 @@
             "maintainerEmail":"scastro@eso.org",
             "testOptions":["mpi"],
             "testGroup":["stakeholder"],
-            "timeout":14400,
+            "timeout":20000,
             "comment":""
         },
         {
@@ -2107,7 +2107,7 @@
             "maintainerEmail":"kgolap@nrao.edu",
             "testOptions":["mpi"],
             "testGroup":["Imaging","tclean"],
-            "timeout":0,
+            "timeout":20000,
             "comment":""
         },
         {
