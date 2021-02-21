@@ -1,4 +1,4 @@
-//# VisCalGlobals.h: Implementation of VisCalGlobals
+//# VisCalGlobals.cc: Implementation of VisCalGlobals
 //# Copyright (C) 1996,1997,2000,2001,2002,2003
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -615,7 +615,6 @@ Slice calParSliceByType(String caltype, String what, String pol)
   caltype.upcase();
   what.upcase();
   pol.upcase();
-
   Int s(0),n(0),i(1);
 
   if (caltype=="B TSYS") {
@@ -700,7 +699,20 @@ Slice calParSliceByType(String caltype, String what, String pol)
     }
   }
   else if (caltype[0]=='F') {
-    if (what=="TEC") {
+    if (caltype.contains("FRINGE")) {
+      i = 4;
+      if (what=="PHASE") {
+        s = 0;
+      } else if (what=="DELAY") {
+        s = 1;
+      } else if (what=="RATE") {
+        s = 2;
+      } else if (what=="DISP") {
+        s = 3;
+      } else { 
+        throw(AipsError("Unsupported value type: "+what));
+      }
+    } else if (what=="TEC") {
       if (pol=="")
         return Slice(0,1,1); // trivial
       else
@@ -750,8 +762,9 @@ Slice calParSliceByType(String caltype, String what, String pol)
   else if (pol=="" || pol=="RL" || pol=="XY") {
     n=2;  // both pols
   }
-  else
+  else {
     throw(AipsError("Unsupported pol: "+pol));
+  }
 
   return Slice(s,n,i);
 
