@@ -2077,7 +2077,7 @@
             "maintainerEmail":"scastro@eso.org",
             "testOptions":["mpi"],
             "testGroup":["stakeholder"],
-            "timeout":20000,
+            "timeout":8000,
             "comment":""
         },
         {
