@@ -125,7 +125,7 @@ namespace casa {
 	    void emit_closing( bool );
 
 	    void zoom( int x=-1 );
-#ifdef QWT6
+#if QWT_VERSION >= 0x060000
 	    void zoomed( const QRectF & );
 #else
 	    void zoomed( const QwtDoubleRect & );
