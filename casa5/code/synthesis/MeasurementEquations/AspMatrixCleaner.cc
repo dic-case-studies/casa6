@@ -300,10 +300,10 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       //if (!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
       
       if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold 
-         || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold))) // GSL, CygA. 
+         || abs(itsStrengthOptimum) < (5e-3 * itsFusedThreshold))) // GSL, CygA. 
       	// 5e-4 is a experimental number here assuming under that threshold itsStrengthOptimum is too small to take affect.  
       {
-  	    cout << "Switch to hogbom b/c optimum strength is small enough: " << itsFusedThreshold << endl;
+  	    os << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
   	    switchedToHogbom();
       }
       /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // Points 
@@ -1313,12 +1313,14 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
 
 void AspMatrixCleaner::switchedToHogbom()
 {
+	LogIO os(LogOrigin("AspMatrixCleaner", "switchedToHogbom", WHERE));
+
 	itsSwitchedToHogbom = true;
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); // zhang's formula
   itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
-  cout << "Run hogbom for " << itsNumHogbomIter << " iterations." << endl;
+  os << "Run hogbom for " << itsNumHogbomIter << " iterations." << LogIO::POST;
 }
 
 void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
