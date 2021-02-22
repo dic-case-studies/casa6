@@ -1485,7 +1485,9 @@ def simalma(
                 # Need to manipulate TP image here
                 outimage0 = fileroot+"/" + combimage+"0"
                 outimage = fileroot+"/" + combimage
-                pbcov = highimage0.rstrip("image") + "flux.pbcoverage"
+                # CAS-13369 -- imclean call in simanalyze is now imtclean
+                #pbcov = highimage0.rstrip("image") + "flux.pbcoverage"
+                pbcov = highimage0.rstrip("image") + "pb"
                 regridimg = fileroot + "/" + imagename_tp + ".regrid"
                 scaledimg = fileroot + "/" + imagename_tp + ".pbscaled"
                 lowimage = scaledimg
