@@ -22,7 +22,7 @@ changequote([, ])
 PATH_save="$PATH"
 PATH="$PATH:/opt/casa/03/bin:/opt/casa/02/bin:/opt/local/bin:/usr/local/bin"
 
-AC_PATH_PROG(SWIG,swig)
+AC_PATH_PROGS(SWIG,swig3 swig)
 
 if test -n "$SWIG";
 then

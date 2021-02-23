@@ -149,27 +149,15 @@ private:
   void loadBPoly(std::vector<PMS::Axis>& loadAxes,
     std::vector<PMS::DataColumn>& loadData,
     ThreadCommunication* thread = nullptr);
-  void loadCalChunks(ROBJonesPolyMCol& mcol, ROCalDescColumns& dcol,
-    casacore::Int nrow, const std::vector<PMS::Axis> loadAxes,
-    casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
-    ThreadCommunication* thread);
-  void loadCalAxis(ROSolvableVisJonesMCol& mcol, ROCalDescColumns& dcol,
-    casacore::Int chunk, PMS::Axis axis);
+  NewCalTable* virtualBPoly(BJonesPolyTable& polyTable);
   void getChanFreqsFromMS(
     casacore::Vector<casacore::Vector<casacore::Double>>& mschanfreqs);
-  void getSelFreqsForSpw(casacore::Vector<casacore::Slice>& chansel,
-    casacore::Vector<casacore::Double>& chanFreqs,
-    casacore::Vector<casacore::Int>& chanNums);
-  // cube selected by channel:
-  template<class T>
-  void getSelectedCube(const casacore::Cube<T>& inputCube,
-    const casacore::Vector<casacore::Slice>& chanSlices,
-    casacore::Cube<T>& outputCube);
+  Double getChebVal(const Vector<Double>& coeff, const Double& xinit,
+    const Double& xfinal, const Double& x);
 
   // GSPLINE CalTable:
   void loadGSpline(std::vector<PMS::Axis>& loadAxes,
-    std::vector<PMS::DataColumn>& loadData,
-    ThreadCommunication* thread = nullptr);
+    std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
   void loadCalChunks(ROGJonesSplineMCol& mcol, ROCalDescColumns& dcol,
     casacore::Int nsample, const std::vector<PMS::Axis> loadAxes,
     casacore::Vector<int>& selectedAnts, ThreadCommunication* thread);
@@ -177,7 +165,7 @@ private:
   // cube selected by antenna1:
   template<class T>
   void getSelectedCube(casacore::Cube<T>& inputcube,
-    const casacore::Vector<casacore::Int> selectedRows);
+    const casacore::Vector<casacore::Int>& selectedRows);
 
   // Utilities for all cal tables:
   // Get axis string for VisCal Slice code

@@ -16,6 +16,29 @@ from taskinit import *
 # Paths for data
 datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
+# Include ms for BPOLY and GSPLINE
+testcaltables = {'a_mueller.uvcont.tbl': 250000,
+    'anpos.autoCAS13057.cal': 40000,
+    'bandtypeBPOLY.B0': 70000,
+    'df_jones.cal': 120000,
+    'egaincurve.cal': 40000,
+    'f_jones.cal': 50000,
+    'gaincaltest2.ms': 200000,
+    'gaincaltest2.ms.T0': 40000,
+    'gaintypek.G0': 40000,
+    'gaintypeSpline.G0': 90000,
+    'g_evlaswpow.cal': 40000,
+    'glinxphf_jones.cal': 30000,
+    'k_jones.cal': 40000,
+    'm_mueller.cal': 40000,
+    'n08c1.sbdcal': 40000,
+    'ngc5921.ref1a.bcal': 100000,
+    'ngc5921.ref1a.gcal': 40000,
+    'ngc5921.ref2a.gcal': 40000,
+    'topac.cal': 30000,
+    'tsysweight_ave.tsys.cal': 100000,
+    'xf_jones.cal': 80000}
+
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):
     DATADIR = str(os.environ.get('TEST_DATADIR'))+'/plotms/'
@@ -68,7 +91,7 @@ class plotms_test_base(unittest.TestCase):
             shutil.copytree(os.path.join(datapath, self.testms2),
                 self.ms2, symlinks=True)
 
-    def setUpCalData(self):
+    def setUpCallibData(self):
         res = None
         default(plotms)
         if not os.path.exists(self.ms2):
@@ -77,20 +100,18 @@ class plotms_test_base(unittest.TestCase):
         if not os.path.exists(self.ct):
             shutil.copytree(os.path.join(datapath, self.testct),
                 self.ct, symlinks=True)
-        if not os.path.exists(self.ct2):
-            shutil.copytree(os.path.join(datapath, self.testct2),
-                self.ct2, symlinks=True)
-        if not os.path.exists(self.ct3):
-            shutil.copytree(os.path.join(datapath, self.testct3),
-                self.ct3, symlinks=True)
-        if not os.path.exists(self.ct4):
-            shutil.copytree(os.path.join(datapath, self.testct4),
-                self.ct4, symlinks=True)
 
     def setUpPointingData(self):
         if not os.path.exists(self.ms3):
             shutil.copytree(os.path.join(datapath, self.testms3),
                 self.ms3, symlinks=True)
+
+    def setUpCalData(self):
+        for caltable in testcaltables.keys():
+            testtable = os.path.join(self.outputDir, caltable)
+            if not os.path.exists(testtable):
+                shutil.copytree(os.path.join(datapath, caltable), testtable,
+                    symlinks=True)
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
@@ -671,6 +692,32 @@ class test_axis(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 40000)
 
+    # tests for axes with special requirements/settings
+
+    def test_axis_overlays(self):
+        '''test_axis_overlays: showatm and showtsky overplots'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testAxis13.jpg")
+        self.removePlotfile()
+        # basic plot with showatm, xaxis chan
+        res = plotms(vis=self.ms, xaxis='chan', plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, showatm=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 80000)
+        self.removePlotfile()
+
+        # basic plot with showtsky, xaxis freq
+        res = plotms(vis=self.ms, xaxis='freq', plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, showtsky=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 80000)
+        self.removePlotfile()
+
+        # bad xaxis: must be chan or freq
+        # so ignores showatm/tsky and plots amp vs time
+        plotms(vis=self.ms, plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, showatm=True)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
+
     def test_axis_radec_params(self,debug=False):
         '''test_axis_radec_params: Test ant-ra/ant-dec parameters'''
         yx_axes = [('ant-ra','time'),
@@ -773,8 +820,8 @@ class test_calibration(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpCalData()
-        
+        self.setUpCallibData()
+
     def tearDown(self):
         self.tearDownData()
 
@@ -917,6 +964,20 @@ class test_calplot(plotms_test_base):
                 self.checkNoPlotfile(plotfile_txt)
 
         self.removePlotfile(plotfile_txt)
+
+    def test_calplot_types(self):
+        '''test_calplot_types: plot supported caltable types'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
+        self.removePlotfile()
+        for table in testcaltables.keys():
+            if os.path.splitext(table)[1] == '.ms':
+                continue
+            testtable = os.path.join(self.outputDir, table)
+            res = plotms(vis=testtable, plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, overwrite=True)
+            self.assertTrue(res)
+            self.checkPlotfile(self.plotfile_jpg, testcaltables[table])
+            self.removePlotfile()
 
     def test_calplot_averaging(self):
         '''test_calplot_averaging: caltable with time and channel averaging'''
@@ -1602,7 +1663,6 @@ class test_overlays(plotms_test_base):
             showgui=False, highres=True, showatm=True, showimage=True)   
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 190000)
-        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
