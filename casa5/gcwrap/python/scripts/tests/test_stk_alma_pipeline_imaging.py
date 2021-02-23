@@ -863,7 +863,7 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[209.03000552deg, 5.25503742deg], [16.2902arcsec, 10.3226arcsec], 90.00000000deg]')
 
-        exp_im_stats = {'com_bmaj': [False, 18.0536975861],
+        exp_im_stats = {'com_bmaj': [False, 17.8415584564209],
             'com_bmin': [False, 10.3130340576],
             'com_pa': [False, 86.4390563965],
             'npts': [True, 6400],
@@ -906,7 +906,7 @@ class Test_standard(test_tclean_base):
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'mask_pix': [True, 334],
+            'mask_pix': [True, 330],
             'mask_regns': [True, 1],
             'npts_real': [True, 6400]}
 
@@ -1126,7 +1126,7 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image.tt0', fit_region = \
             'ellipse[[209.03000552deg, 5.25503742deg], [16.2902arcsec, 10.3226arcsec], 90.00000000deg]')
 
-        exp_im_stats = {'com_bmaj': [False, 18.0536975861],
+        exp_im_stats = {'com_bmaj': [False, 17.8415584564209],
             'com_bmin': [False, 10.3130340576],
             'com_pa': [False, 86.4390563965],
             'npts': [True, 6400],
@@ -1170,7 +1170,7 @@ class Test_standard(test_tclean_base):
             'start_delta': [False, 1.0784e+11],
             'end_delta': [False, 1.0784e+11],
             'nchan': [True, 1],
-            'mask_pix': [True, 332],
+            'mask_pix': [True, 330],
             'mask_regns': [True, 1],
             'npts_real': [True, 6400]}
 
@@ -1305,7 +1305,7 @@ class Test_standard(test_tclean_base):
         im1_stats_dict = self.image_stats(img+'.image.tt1', fit_region = \
             'ellipse[[209.03000552deg, 5.25503742deg], [16.2902arcsec, 10.3226arcsec], 90.00000000deg]')
 
-        exp_im1_stats = {'com_bmaj': [False, 18.0536975861],
+        exp_im1_stats = {'com_bmaj': [False, 17.8415584564209],
             'com_bmin': [False, 10.3130340576],
             'com_pa': [False, 86.4390563965],
             'npts': [True, 6400],
@@ -2370,8 +2370,8 @@ class Test_standard(test_tclean_base):
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
             'ellipse[[344.52480945deg, -27.97253944deg], [12.1076arcsec, 6.2463arcsec], 90.00000000deg]')
 
-        exp_im_stats = {'com_bmaj': [False, 9.98569583893],
-            'com_bmin': [False, 4.62464284897],
+        exp_im_stats = {'com_bmaj': [False, 9.626538276672363],
+            'com_bmin': [False, 4.673975467681885],
             'com_pa': [False, -86.3871307373],
             'npts': [True, 8100],
             'npts_unmasked': [True, 5041.0],
@@ -2385,11 +2385,11 @@ class Test_standard(test_tclean_base):
             'max_val_pos': [True, [45, 45, 0, 0]],
             'min_val': [False, -0.0115236453712],
             'min_val_pos': [True, [50, 16, 0, 0]],
-            'im_rms': [False, 0.203889562304],
-            'im_sum': [False, 172.68969442],
-            'regn_sum': [False, 171.573849684],
+            'im_rms': [False, 0.2012872201556086],
+            'im_sum': [False, 168.25755220036578],
+            'regn_sum': [False, 167.478445882909],
             'npts_real': [True, 8100],
-            'fit': [False, [2.40974849537, 9.96002749264, 4.61946099469]],
+            'fit': [False, [2.40974849537, 9.60566422443952, 4.61946099469]],
             'fit_loc_chan': [True, 0],
             'fit_loc_freq': [1e-10, 220.30076542192973],
             'fit_pix': [False, [45.000405766, 45.0014155577]]}
@@ -2413,7 +2413,7 @@ class Test_standard(test_tclean_base):
             'start_delta': [False, 2.20301e+11],
             'end_delta': [False, 2.20301e+11],
             'nchan': [True, 1],
-            'mask_pix': [True, 407],
+            'mask_pix': [True, 400],
             'mask_regns': [True, 1],
             'npts_real': [True, 8100]}
 
@@ -3290,7 +3290,7 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.0019364656182],
             'min_val_pos': [True, [91, 52, 0, 0]],
             'im_rms': [False, 0.00202865566602],
-            'im_sum': [False, 1.51295999996],
+            'im_sum': [False, 1.4970276115098295],
             'regn_sum': [False, 1.58850853646],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0043183333329864697, 0.0035324567542234214, 0.0033643881411162453, 0.0034484378708067886, 0.0035013779149007367, 0.0033359473616749375, 0.0035589233954835845]],
@@ -3603,7 +3603,7 @@ class Test_mosaic(test_tclean_base):
             'min_val': [False, -0.00258040963672],
             'min_val_pos': [True, [70, 97, 0, 0]],
             'im_rms': [False, 0.00207815358165],
-            'im_sum': [False, 1.47797251044],
+            'im_sum': [False, 1.4601284610577565],
             'regn_sum': [False, 1.58228409861],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0043714750541124468, 0.003595955649075896, 0.003430812546940405, 0.0034721618952933994, 0.0035884838221589368, 0.0033594003986614097, 0.0036156061407187608]],
@@ -3836,7 +3836,7 @@ class Test_mosaic(test_tclean_base):
             #'im_sum': [False, -0.99675725757],
             #'regn_sum': [False, 0.144841228408],
             'im_sum': [False, -1.05556125437],
-            'regn_sum': [False, 0.124542561069],
+            'regn_sum': [False, 0.12572287418879569],
             'npts_real': [True, 15876],
             'rms_per_field': [False, [0.0118926721315, 0.0131530097001, 0.0123432407276, 0.0117928565232, 0.0110465636431, 0.0122420920176, 0.012233014507]]}
 
