@@ -52,14 +52,11 @@
 #
 # <example>
 #
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-#
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_msmetadata[test1,test2,...]
-#
 # </example>
 #
 # <motivation>
+# To provide a test standard for the msmetadata tool to ensure
+# coding changes do not break the associated bits
 # </motivation>
 #
 
@@ -67,15 +64,35 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import shutil
-import os
 import unittest
 import numpy
 
-from casatools import msmetadata, table, ctsys, ms, measures, quanta
-
-datadir = ctsys.resolve('unittest/msmetadata/')
-fixture = os.path.join(datadir,'MSMetaData.ms')
-writeable = os.path.join(datadir,'checker.ms')
+is_CASA6 = False
+try:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+    _md = msmdtool()
+    _tb = tbtool()
+    _me = metool()
+    _qa = qatool()
+    _ms = mstool()
+    datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
+    fixture = datadir + 'MSMetaData.ms'
+    writeable = datadir + 'checker.ms'
+except ImportError:
+    import os
+    from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
+    _md = msmetadata()
+    _tb = table()
+    _me = measures()
+    _qa = quanta()
+    _ms = ms()
+    is_CASA6 = True
+    datadir = ctsys.resolve('unittest/msmetadata/')
+    fixture = os.path.join(datadir,'MSMetaData.ms')
+    writeable = os.path.join(datadir,'checker.ms')
 
 def near(a, b, epsilon):
     return abs((a-b)/max(a,b)) <= epsilon
@@ -83,15 +100,12 @@ def near(a, b, epsilon):
 class msmetadata_test(unittest.TestCase):
 
     def setUp(self):
-        self.md = msmetadata()
-        self.tb = table()
-        self.me = measures()
-        self.qa = quanta()
+        self.md = _md
         self.md.open(fixture)
 
     def tearDown(self):
         self.md.done()
-        self.assertTrue(len(self.tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_antennanames_and_antennaids(self):
         """Test antennanames() and antennaids()"""
@@ -123,11 +137,11 @@ class msmetadata_test(unittest.TestCase):
         expec =  [ 8, 0,  1,  7,  9, 10, 11, 12, 13, 14]
         self.assertTrue((got == expec).all())
 
-        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", self.qa.quantity(15,"m"))
+        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", _qa.quantity(15,"m"))
         expec =  [ 8, 0,  1,  7,  9, 10, 11, 12, 13, 14]
         self.assertTrue((got == expec).all())
 
-        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", self.qa.quantity(2,"m"))
+        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", _qa.quantity(2,"m"))
         self.assertTrue(len(got) == 0)
 
         got = self.md.antennaids([], mindiameter="25m")
@@ -147,13 +161,13 @@ class msmetadata_test(unittest.TestCase):
         # no DDID for spwid=0, polid=0
         self.assertRaises(Exception,self.md.exposuretime, scan=30, spwid=0, polid=0)
         got = self.md.exposuretime(scan=30, spwid=0, polid=1)
-        self.assertTrue(got == self.qa.quantity("1.152s"))
+        self.assertTrue(got == _qa.quantity("1.152s"))
         got = self.md.exposuretime(scan=30, spwid=0)
-        self.assertTrue(got == self.qa.quantity("1.152s"))
+        self.assertTrue(got == _qa.quantity("1.152s"))
         got = self.md.exposuretime(scan=17, spwid=10, polid=0)
-        self.assertTrue(got == self.qa.quantity("1.008s"))
+        self.assertTrue(got == _qa.quantity("1.008s"))
         got = self.md.exposuretime(scan=17, spwid=10)
-        self.assertTrue(got == self.qa.quantity("1.008s"))
+        self.assertTrue(got == _qa.quantity("1.008s"))
 
     def test_fdmspws(self):
         """Test fdmspws()"""
@@ -481,7 +495,6 @@ class msmetadata_test(unittest.TestCase):
             self.assertTrue(got == [names[i]])
         self.assertTrue(self.md.namesforfields() == names)
         got = self.md.namesforfields([4, 0, 2])
-        print("*** got " + str(got))
         self.assertTrue(got == ["V866 Sco", "3C279", "Titan"])
 
     def test_nantennas(self):
@@ -659,7 +672,6 @@ class msmetadata_test(unittest.TestCase):
         """Test spwsforbasebands()"""
         for mode in ("i", "e", "o"):
             got = self.md.spwsforbaseband(sqldmode=mode)
-            print("*** got " + str(got))
             self.assertTrue(len(got) == 5)
             if mode == "o":
                 self.assertTrue(len(got['0']) == 0)
@@ -1083,7 +1095,7 @@ class msmetadata_test(unittest.TestCase):
         expec = []
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(wvr=True, complement=True)
-        expec = range(0, 40)
+        expec = list(range(0, 40))
         self.assertTrue((got == expec).all())
 
     def test_bandwidths(self):
@@ -1341,13 +1353,13 @@ class msmetadata_test(unittest.TestCase):
         timer = self.md.timerangeforobs(0)
         self.assertTrue(
             near(
-                self.qa.convert(self.me.getvalue(timer['begin'])['m0'],"s")['value'],
+                _qa.convert(_me.getvalue(timer['begin'])['m0'],"s")['value'],
                 4842824633.472, 1e-10
             )
         )
         self.assertTrue(
             near(
-                self.qa.convert(self.me.getvalue(timer['end'])['m0'],"s")['value'],
+                _qa.convert(_me.getvalue(timer['end'])['m0'],"s")['value'],
                 4842830031.632, 1e-10
             )
         )
@@ -1373,10 +1385,10 @@ class msmetadata_test(unittest.TestCase):
                 ]
         for i in range(nspw):
             freq = self.md.reffreq(i)
-            self.assertTrue(self.me.getref(freq) == 'TOPO')
-            v = self.me.getvalue(freq)['m0']
-            self.assertTrue(self.qa.getunit(v) == "Hz")
-            got = self.qa.getvalue(v)
+            self.assertTrue(_me.getref(freq) == 'TOPO')
+            v = _me.getvalue(freq)['m0']
+            self.assertTrue(_qa.getunit(v) == "Hz")
+            got = _qa.getvalue(v)
             self.assertTrue(abs((got - expec[i])/expec[i]) < 1e-8)
 
     def test_antennadiamter(self):
@@ -1384,8 +1396,8 @@ class msmetadata_test(unittest.TestCase):
         nants = self.md.nantennas()
         for i in range(nants):
             diam = self.md.antennadiameter(i)
-            self.assertTrue(self.qa.getvalue(diam) == 12)
-            self.assertTrue(self.qa.getunit(diam) == 'm')
+            self.assertTrue(_qa.getvalue(diam) == 12)
+            self.assertTrue(_qa.getunit(diam) == 'm')
 
     def test_spwfordatadesc(self):
         """Test msmetadata.spwfordatadesc()"""
@@ -1419,7 +1431,6 @@ class msmetadata_test(unittest.TestCase):
             self.assertTrue(ncorr == expec)
         ncorrs = self.md.ncorrforpol(-1)
         self.assertTrue(len(ncorrs) == 2)
-        print("ncorrs", ncorrs)
         self.assertTrue(ncorrs[0] == 2 and ncorrs[1] == 1)
 
     def test_corrtypesforpol(self):
@@ -1442,7 +1453,6 @@ class msmetadata_test(unittest.TestCase):
                 self.assertRaises(Exception, self.md.corrprodsforpol, i)
             elif i == 0:
                 ct = self.md.corrprodsforpol(i)
-                print("got", ct)
                 self.assertTrue(ct.size == 4)
                 self.assertTrue(ct[0][0] == 0 and ct[1][1] == 1)
                 self.assertTrue(ct[0][1] == 1 and ct[1][0] == 0)
@@ -1616,14 +1626,14 @@ class msmetadata_test(unittest.TestCase):
         n = len(dirs.keys())
         for i in range(n):
             d = dirs[str(i)]
-            self.assertTrue(self.me.getref(d) == "J2000")
-            v = self.me.getvalue(d)
+            self.assertTrue(_me.getref(d) == "J2000")
+            v = _me.getvalue(d)
             ra = v['m0']
             dec = v['m1']
-            self.assertTrue(self.qa.getunit(ra) == "rad")
-            self.assertTrue(self.qa.getunit(dec) == "rad")
-            self.assertTrue(near(self.qa.getvalue(ra), elong[i], 1e-7))
-            self.assertTrue(near(self.qa.getvalue(dec), elat[i], 1e-7))
+            self.assertTrue(_qa.getunit(ra) == "rad")
+            self.assertTrue(_qa.getunit(dec) == "rad")
+            self.assertTrue(near(_qa.getvalue(ra), elong[i], 1e-7))
+            self.assertTrue(near(_qa.getvalue(dec), elat[i], 1e-7))
 
     def test_propermotions(self):
         """Test msmetadata.propermotions()"""
@@ -1633,10 +1643,10 @@ class msmetadata_test(unittest.TestCase):
             mymu = mu[str(i)]
             lon = mymu['longitude']
             lat = mymu['latitude']
-            self.assertTrue(self.qa.getvalue(lon) == 0)
-            self.assertTrue(self.qa.getunit(lon) == "rad/s")
-            self.assertTrue(self.qa.getvalue(lat) == 0)
-            self.assertTrue(self.qa.getunit(lat) == "rad/s")
+            self.assertTrue(_qa.getvalue(lon) == 0)
+            self.assertTrue(_qa.getunit(lon) == "rad/s")
+            self.assertTrue(_qa.getvalue(lat) == 0)
+            self.assertTrue(_qa.getunit(lat) == "rad/s")
 
     def test_nsources(self):
         self.assertTrue(self.md.nsources() == 6)
@@ -1667,17 +1677,16 @@ class msmetadata_test(unittest.TestCase):
 
     def test_CAS7837(self):
         """Test corner case with no intents to make sure it doesn't segfault"""
-        thismd = msmetadata()
-        if os.path.exists('lala.ms'):
-            shutil.rmtree('lala.ms')
-        myms = ms()
-        myms.fromfits('lala.ms',os.path.join(datadir,'W3OH_MC.UVFITS'))
-        myms.done()
-        thismd.open('lala.ms')
-        self.assertTrue((thismd.fieldsforintent('*') == numpy.array([0])).all())
-        thismd.done()
-        if os.path.exists('lala.ms'):
-            shutil.rmtree('lala.ms')
+        lala = 'lala.ms'
+        if os.path.exists(lala):
+            shutil.rmtree(lala)
+        _ms.fromfits(lala, os.path.join(datadir,'W3OH_MC.UVFITS'))
+        _ms.done()
+        self.md.open(lala)
+        self.assertTrue((_md.fieldsforintent('*') == numpy.array([0])).all())
+        _md.done()
+        if os.path.exists(lala):
+            shutil.rmtree(lala)
 
     def test_chaneffbws(self):
         """Test chaneffbws()"""
@@ -1766,35 +1775,32 @@ class msmetadata_test(unittest.TestCase):
 
     def test_CAS7986(self):
         """Verify datasets with referential integrity issues cause errors"""
-        myms = ms()
-        mymsmetadata = msmetadata()
-        mytb = table()
         vis = "cas7986.ms"
         def allgood():
             if (os.path.exists(vis)):
                 shutil.rmtree(vis)
             shutil.copytree(writeable, vis)
-            self.assertTrue(myms.open(vis))
-            self.assertTrue(myms.open(vis, check=True))
-            myms.done()
-            self.assertTrue(mymsmetadata.open(vis))
-            mymsmetadata.done()
+            self.assertTrue(_ms.open(vis))
+            self.assertTrue(_ms.open(vis, check=True))
+            _ms.done()
+            self.assertTrue(self.md.open(vis))
+            self.md.done()
 
         allgood()
 
         def dobad(colname):
-            mytb.open(vis, nomodify=False)
-            mytb.putcell(colname, 20, 9)
-            mytb.done()
-            self.assertTrue(myms.open(vis))
+            _tb.open(vis, nomodify=False)
+            _tb.putcell(colname, 20, 9)
+            _tb.done()
+            self.assertTrue(_ms.open(vis))
             self.assertRaises(
-                Exception, myms.open, vis, check=True
+                Exception, _ms.open, vis, check=True
             )
-            myms.done()
+            _ms.done()
             self.assertRaises(
-                Exception, mymsmetadata.open, vis
+                Exception, self.md.open, vis
             )
-            mymsmetadata.done()
+            self.md.done()
 
         # insert a bad antenna
         dobad("ANTENNA1")
@@ -1807,7 +1813,7 @@ class msmetadata_test(unittest.TestCase):
 
         # cleanup
         if (os.path.exists(vis)):
-            shutil.rmtree(vis)        
+            shutil.rmtree(vis) 
 
     def test_nbaselines(self):
         """Verify nbaselines()"""
