@@ -30,31 +30,62 @@
 #define QTDBUSPLOTSERVER_QO_H_
 
 #include <QObject>
-
+#include <memory>
+#if defined(CASATOOLS)
+#include <queue>
+#include <mutex>
+#endif
 
 namespace casa {
 
+#if defined(CASATOOLS)
+	class grpcPlotServerState;
+#else
     class QtDBusPlotSvrAdaptor;
+#endif
     class QtPlotSvrPanel;
 
     class QtPlotServer : public QObject {
     Q_OBJECT
 	public:
 
-	    QtPlotServer( const char *dbus_name=0 );
 	    ~QtPlotServer( );
-
+#if defined(CASATOOLS)
+	    QtPlotServer( const char *server_string, const char *event_sink, const char *logfile );
+#else
+	    QtPlotServer( const char *dbus_name=0 );
 	    // name used to initialize connection to dbus
 	    static const QString &name( );
+#endif
 
 	    QtPlotSvrPanel *panel( const QString &title, const QString &xlabel="", const QString &ylabel="", const QString &window_title="",
 				   const QList<int> &size=QList<int>( ), const QString &legend="bottom", const QString &zoom="bottom",
 				   QtPlotSvrPanel *with_panel=0, bool new_row=false  );
 
+#if defined(CASATOOLS)
+	public slots:
+		// Exits Qt loop.  (Note that the loop can be restarted (and is, in
+		// interactive clean, e.g.), with existing widgets intact.  This
+		// does not in itself delete objects or exit the process, although
+		// the driver program might do that).  Also, some of the panels may
+		// have WA_DeleteOnClose set, which would cause their deletion (see,
+		// e.g., createDPG()).
+		virtual void quit();
+
+		void grpc_handle_op( );
+
+	private:
+		std::shared_ptr<grpcPlotServerState> grpc_;
+
+	public:
+		std::mutex grpc_queue_mutex;
+		std::queue<std::function<void()>> grpc_queue;
+#else
 	private:
 	    static QString name_;
 	    QString dbus_name_;
 	    QtDBusPlotSvrAdaptor* dbus_;
+#endif
 
   };
 
