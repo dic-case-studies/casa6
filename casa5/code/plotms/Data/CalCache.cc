@@ -192,7 +192,7 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   }
 
   PlotMSAveraging pmsAveraging(averaging());
-  Bool readonly(True); // no write access for loading cache
+  casacore::Bool readonly(True);
   setUpCalIter(*selct, pmsAveraging, readonly);
   ci_p->reset();
   parshape_ = ci_p->flag().shape();
@@ -230,6 +230,7 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
 void CalCache::setUpCalIter(
   NewCalTable& selct, PlotMSAveraging& pmsAveraging, Bool readonly) {
   // Set up cal table iterator for counting and loading chunks
+  // Order of sort columns depends on averaging options
   Int nsortcol(3 + Int(!pmsAveraging.scan())), col(0);
   Block<String> columns(nsortcol);
   if (!pmsAveraging.scan()) {
@@ -1298,7 +1299,7 @@ void CalCache::flagToDisk(const PlotMSFlagging& flagging,
   NewCalTable* selct = new NewCalTable();
   selection_.apply(*ct, *selct);
 
-  Bool readonly(False); // write access for flagging
+  casacore::Bool readonly(False); // write access for flagging
   setUpCalIter(*selct, averaging(), readonly);
   ci_p->reset();
 
@@ -1583,7 +1584,8 @@ void CalCache::loadBPoly(vector<PMS::Axis>& loadAxes,
   selection_.apply(*nct, *selct);
 
   // Use NewCalTable implementation
-  setUpCalIter(*selct, true);
+  casacore::Bool readonly(True);
+  setUpCalIter(*selct, averaging(), readonly);
   countChunks(*ci_p, loadAxes, loadData, thread);
   loadCalChunks(*ci_p, loadAxes, thread);
 }

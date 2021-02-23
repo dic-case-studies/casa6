@@ -91,7 +91,7 @@ private:
     std::vector<PMS::DataColumn>& loadData,
     ThreadCommunication* thread = nullptr);
   void setUpCalIter(
-    NewCalTable& selct, PlotMSAveraging& pmsAveraging, Bool readonly);
+    NewCalTable& selct, PlotMSAveraging& pmsAveraging, casacore::Bool readonly);
   void countChunks(ROCTIter& ci, std::vector<PMS::Axis>& loadAxes,
     std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
   void countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
