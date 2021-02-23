@@ -99,8 +99,8 @@ double my_f (const gsl_vector *x, void *params)
 	  if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
 	    //std::cout << "nan? " << amp << " neg scale? " << scale << std::endl;
-	    
-	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
+	    // If scale is small (<0.4), make it 0 scale to utilize Hogbom and save time
+	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale; 
 	    //std::cout << "reset neg scale to " << scale << std::endl;
 	    
 	    if (scale <= 0)
@@ -214,7 +214,7 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
       if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
 	    //std::cout << "grad: nan? " << amp << " neg scale? " << scale << std::endl;
-	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
+	    scale = (scale = fabs(scale)) < 0.4 ? 0.4 : scale; // This cannot be 0 for df to work
 	    //std::cout << "reset neg scale to " << scale << std::endl;
 	  }
 

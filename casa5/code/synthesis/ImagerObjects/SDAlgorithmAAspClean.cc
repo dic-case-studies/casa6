@@ -145,7 +145,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Matrix<Float> prevModel;
     prevModel = itsMatModel;
 
-    cout << "AAspALMS,  matrix shape : " << tempModel.shape() << " array shape : " << itsMatModel.shape() << endl;
+    //cout << "AAspALMS,  matrix shape : " << tempModel.shape() << " array shape : " << itsMatModel.shape() << endl;
 
     // retval
     //  1 = converged

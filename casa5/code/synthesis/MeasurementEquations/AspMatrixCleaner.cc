@@ -300,7 +300,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       //if (!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
       
       if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold 
-         || abs(itsStrengthOptimum) < (5e-3 * itsFusedThreshold))) // GSL, CygA. 
+         || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold))) // GSL, CygA. 
       	// 5e-4 is a experimental number here assuming under that threshold itsStrengthOptimum is too small to take affect.  
       {
   	    os << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
