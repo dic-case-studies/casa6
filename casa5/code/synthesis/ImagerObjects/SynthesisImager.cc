@@ -1027,8 +1027,9 @@ bool SynthesisImager::unlockImages()
 
 
   }
-  void SynthesisImager::makePSF()
+  Record SynthesisImager::makePSF()
     {
+      Record outRec;
       LogIO os( LogOrigin("SynthesisImager","makePSF",WHERE) );
 
       os << "----------------------------------------------------------- Make PSF ---------------------------------------------" << LogIO::POST;
@@ -1046,6 +1047,9 @@ bool SynthesisImager::unlockImages()
 	}
 	//	makeImage();
 
+	String mess("");
+	std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
+	outRec.define("tempfilenames", Vector<String>(tmpfiles));
     	  itsMappers.releaseImageLocks();
 
       }

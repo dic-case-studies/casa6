@@ -186,7 +186,8 @@ class SynthesisImager
   Record executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
-  void makePSF();
+  // Returns a record which may contains names of temporary files to be deleted
+  casacore::Record makePSF();
 
   // Calculate apparent sensitivity (for _Visibility_ spectrum)
   //  _Image_ spectral grid TBD

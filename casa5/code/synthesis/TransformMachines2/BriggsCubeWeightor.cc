@@ -168,9 +168,8 @@ using namespace casa::vi;
 		vscale_p=(ny_p*incr[1]);
 		uorigin_p=nx_p/2;
 		vorigin_p=ny_p/2;
-		////TESTOO
 		//IPosition shp=templateimage.shape();
-		shp[3]=shp[3]+swingpad; //add two channel at begining and end;
+		shp[3]=shp[3]+swingpad; //add extra channels at begining and end;
 		Vector<Double> refpix=cs.referencePixel();
 		refpix[3]+=swingpad/2;
 		cs.setReferencePixel(refpix);
@@ -306,7 +305,8 @@ using namespace casa::vi;
 	uInt swingpad=16;
 	Double swingFreq=0.0;
 	Double minFreq=1e99;
-	std::vector<Double> localminfreq, firstchanfreq;
+	Double maxFreq=0.0;
+	std::vector<Double> localminfreq, localmaxfreq, firstchanfreq;
 	Int msID=-1;
 	Int fieldID=-1;
 	Int spwID=-1;
@@ -341,33 +341,49 @@ using namespace casa::vi;
 		
 	      }
 		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
-		    if(spw[spwk]==vb->spectralWindows()(0)){
+		    if(spw[spwk]==spwID){
+		      //cerr << "msID " << msID << " spw "<< spw[spwk] << " start " << start[spwk] << " nchan " << nchan[spwk] << endl;
 		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
+		      if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
 		      localminfreq.push_back(mschanfreq[start[spwk]]);
+		      localmaxfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
+		      }else{
+			localminfreq.push_back(mschanfreq[start[spwk]]+nchan[spwk]-1);
+			localmaxfreq.push_back(mschanfreq[start[spwk]]);
+
+		      }
 		      firstchanfreq.push_back(min(mschanfreq));
-		      if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
-			localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
+		      //if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
+		      //localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
 		      if(minFreq > localminfreq[localminfreq.size()-1])
 			minFreq=localminfreq[localminfreq.size()-1];
+		      if(maxFreq < localmaxfreq[localmaxfreq.size()-1])
+			maxFreq=localmaxfreq[localmaxfreq.size()-1];
 		  
 		    }
 		  
 		  }
-		}
+		  }
 		
-	      }
-	    }
+	  }
+	}
 	
 	auto itf=firstchanfreq.begin();
+	auto itmax=localmaxfreq.begin();
 	Double firstchanshift=0.0;
 	Double minfirstchan=min(Vector<Double>(firstchanfreq));
-	for (auto itm=localminfreq.begin(); itm != localminfreq.end(); ++itm, ++itf){
-	  if(swingFreq < abs(*itm -minFreq))
-	    swingFreq=abs(*itm -minFreq);
+	for (auto itmin=localminfreq.begin(); itmin != localminfreq.end(); ++itmin){
+	  if(swingFreq < abs(*itmin -minFreq))
+	    swingFreq=abs(*itmin -minFreq);
+	  if(swingFreq < abs(*itmax -maxFreq))
+	    swingFreq=abs(*itmax -maxFreq);
 	  if(firstchanshift < abs(*itf-minfirstchan))
 	    firstchanshift=abs(*itf-minfirstchan);
+	  itf++;
+	  itmax++;
 	}
 	swingpad=2*(Int((swingFreq+firstchanshift)/freqincr)+4);
+	//cerr <<"swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 
