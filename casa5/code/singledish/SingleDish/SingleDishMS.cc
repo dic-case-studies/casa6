@@ -186,6 +186,7 @@ void SingleDishMS::initialize() {
   in_column_ = MS::UNDEFINED_COLUMN;
   //  out_column_ = MS::UNDEFINED_COLUMN;
   doSmoothing_ = false;
+  doAtmCor_ = false;
   visCubeAccessor_ = GetCubeDefault;
 }
 
@@ -352,7 +353,7 @@ void SingleDishMS::setPolAverage(Record const &average, bool const verbose) {
   }
 }
 
-String SingleDishMS::get_field_as_casa_string(Record const &in_data, 
+String SingleDishMS::get_field_as_casa_string(Record const &in_data,
                                               string const &field_name) {
   Int ifield;
   ifield = in_data.fieldNumber(String(field_name));
@@ -401,7 +402,7 @@ bool SingleDishMS::prepare_for_process(string const &in_column_name,
   configure_param.merge(average_);
   // The other available keys
   // - buffermode, realmodelcol, usewtspectrum, tileshape,
-  // - chanaverage, chanbin, useweights, 
+  // - chanaverage, chanbin, useweights,
   // - combinespws, ddistart, hanning
   // - regridms, phasecenter, restfreq, outframe, interpolation, nspw,
   // - mode, nchan, start, width, veltype,
@@ -412,6 +413,10 @@ bool SingleDishMS::prepare_for_process(string const &in_column_name,
 
   // merge polarization averaging parameters
   configure_param.merge(pol_average_);
+
+  // offline ATM correction
+  configure_param.define("atmCor", doAtmCor_);
+  configure_param.merge(atmCorConfig_);
 
   // Generate SDMSManager
   sdh_ = new SDMSManager();
@@ -501,7 +506,7 @@ void SingleDishMS::format_selection(Record &selection) {
   selection.define("antenna", autoCorrSel);
 }
 
-void SingleDishMS::get_data_cube_float(vi::VisBuffer2 const &vb, 
+void SingleDishMS::get_data_cube_float(vi::VisBuffer2 const &vb,
                                        Cube<Float> &data_cube) {
 //  if (in_column_ == MS::FLOAT_DATA) {
 //    data_cube = vb.visCubeFloat();
@@ -1187,11 +1192,11 @@ void SingleDishMS::interpolate_constant(int const num_chan,
 
     if (masked_region) {
       // execute interpolation as the following criteria:
-      // (1) for a masked region inside the spectrum, replace the spectral 
-      //     values with the mean of those at the two channels just outside 
-      //     the both edges of the masked region. 
-      // (2) for a masked region at the spectral edge, replace the values 
-      //     with the one at the nearest non-masked channel. 
+      // (1) for a masked region inside the spectrum, replace the spectral
+      //     values with the mean of those at the two channels just outside
+      //     the both edges of the masked region.
+      // (2) for a masked region at the spectral edge, replace the values
+      //     with the one at the nearest non-masked channel.
       //     (ZOH, but bilateral)
       Float interp = 0.0;
       int idx_left_next = idx_left - 1;
@@ -1208,13 +1213,13 @@ void SingleDishMS::interpolate_constant(int const num_chan,
           interp = (interp + in_spec[idx_right_next]) / 2.0;
         }
       }
-      
+
       if ((0 <= idx_left) && (idx_left < num_chan) && (0 <= idx_right) && (idx_right < num_chan)) {
         for (int j = idx_left; j <= idx_right; ++j) {
           spec[j] = interp;
         }
       }
-      
+
       masked_region = false;
     }
   }
@@ -1246,7 +1251,7 @@ void SingleDishMS::merge_wavenumbers(std::vector<int> const &blparam_eff_base,
       }
     }
   }
-  
+
   if (1 < blparam_eff.size()) {
     sort(blparam_eff.begin(), blparam_eff.end());
     unique(blparam_eff.begin(), blparam_eff.end());
@@ -1255,7 +1260,7 @@ void SingleDishMS::merge_wavenumbers(std::vector<int> const &blparam_eff_base,
 
 template<typename Func0, typename Func1, typename Func2, typename Func3>
 void SingleDishMS::doSubtractBaseline(string const& in_column_name,
-                                      string const& out_ms_name, 
+                                      string const& out_ms_name,
                                       string const& out_bloutput_name,
                                       bool const& do_subtract,
                                       string const& in_spw,
@@ -1372,7 +1377,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
           blparam_max = blparam_eff_base[blparam_eff_base.size() - 1];
         }
         if ((bltype != BaselineType_kSinusoid) || (!applyfft) || wn_ulimit_by_rejwn()) {
-          get_baseline_context(bltype, 
+          get_baseline_context(bltype,
                                static_cast<uint16_t>(blparam_max),
                                num_chan, nchan, nchan_set,
                                ctx_indices, bl_contexts);
@@ -1420,7 +1425,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         std::vector<std::vector<double> > ffpar_mtx_tmp(num_pol);
         std::vector<std::vector<uInt> > masklist_mtx_tmp(num_pol);
         std::vector<std::vector<double> > coeff_mtx_tmp(num_pol);
-        
+
         Array<Float> rms_mtx(IPosition(2, num_pol, 1), (Float)0);
         Array<Float> cthres_mtx(IPosition(2, num_pol, 1), Array<Float>::uninitialized);
         Array<uInt> citer_mtx(IPosition(2, num_pol, 1), Array<uInt>::uninitialized);
@@ -1461,9 +1466,9 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
             findLineAndGetMask(num_chan, spec_data, mask_data, threshold,
                 avg_limit, minwidth, edge, true, mask_data);
           }
-          
+
           std::vector<size_t> blparam_eff;
-          
+
           size_t num_coeff;
           if (bltype == BaselineType_kSinusoid) {
             int nwave_ulimit = get_wavenumber_upperlimit();
@@ -1544,10 +1549,10 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
             for (size_t ifpar = 0; ifpar < num_fpar; ++ifpar) {
               fpar_mtx_tmp[ipol][ifpar] = blparam_eff[ifpar];
             }
-            
+
             //---set_array_for_bltable(ffpar_mtx_tmp)
             func1(ipol, ffpar_mtx_tmp, num_ffpar_max);
-            
+
             //set_array_for_bltable<double, Float>(ipol, num_coeff, coeff_data, coeff_mtx);
             coeff_mtx_tmp[ipol].resize(num_coeff);
             for (size_t icoeff = 0; icoeff < num_coeff; ++icoeff) {
@@ -1634,10 +1639,10 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
             if (apply_mtx2(ipol, 0) == false) continue;
 
             ofs_txt << "Scan" << '[' << (uInt)scans[irow] << ']' << ' '
-                    << "Beam" << '[' << (uInt)beams[irow] << ']' << ' ' 
-                    << "Spw"  << '[' << (uInt)data_spw[irow] << ']' << ' ' 
+                    << "Beam" << '[' << (uInt)beams[irow] << ']' << ' '
+                    << "Spw"  << '[' << (uInt)data_spw[irow] << ']' << ' '
                     << "Pol"  << '[' << ipol << ']' << ' '
-                    << "Time" << '[' << MVTime(times[irow]/ 24. / 3600.).string(MVTime::YMD, 8) << ']' 
+                    << "Time" << '[' << MVTime(times[irow]/ 24. / 3600.).string(MVTime::YMD, 8) << ']'
                     << endl;
             ofs_txt << endl;
             ofs_txt << "Fitter range = " << '[';
@@ -1702,7 +1707,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
               string c_s ="s";
               //if (blparam[0] == 0) {
               if (fpar_mtx3(ipol, wn) == 0) {
-                ofs_txt << "c" << fpar_mtx3(ipol, wn) << " = " <<setw(13)<<left<< setprecision(8) << coeff_mtx2(ipol, 0) << "  "; 
+                ofs_txt << "c" << fpar_mtx3(ipol, wn) << " = " <<setw(13)<<left<< setprecision(8) << coeff_mtx2(ipol, 0) << "  ";
                 wn = 1;
                 //for (size_t icoeff = 1; icoeff < num_coeff_max; ++icoeff) {
                 for (size_t icoeff = 1; icoeff < coeff_mtx_tmp[ipol].size(); ++icoeff) {
@@ -1742,7 +1747,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
         if (write_baseline_csv) {
           for (size_t ipol = 0; ipol < num_pol; ++ipol) {
             if (apply_mtx2(ipol, 0) == false) continue;
-              
+
             ofs_csv << (uInt)scans[irow] << ',' << (uInt)beams[irow] << ','
                     << (uInt)data_spw[irow] << ',' << ipol << ','
                     << setprecision(12) << times[irow] << ',';
@@ -1783,7 +1788,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
               ofs_csv << bltype_name.c_str() << ',' << fpar_mtx2(ipol, 0)
                       << ',';
             }
-            
+
             Matrix<Float> coeff_mtx2 = coeff_mtx;
             if (bltype_mtx2(0, 0) == (uInt)3) {
               for (size_t icoeff = 0; icoeff < coeff_mtx_tmp[ipol].size(); ++icoeff) {
@@ -1794,7 +1799,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
                 ofs_csv << setprecision(8) << coeff_mtx2(ipol, icoeff) << ',';
               }
             }
-            
+
             Matrix<Float> rms_mtx2 = rms_mtx;
             ofs_csv << setprecision(8) << rms_mtx2(ipol, 0) << ',';
             ofs_csv << final_mask2[ipol] - final_mask[ipol];
@@ -1835,7 +1840,7 @@ void SingleDishMS::doSubtractBaseline(string const& in_column_name,
 
 //Subtract baseline using normal or Chebyshev polynomials
 void SingleDishMS::subtractBaseline(string const& in_column_name,
-                                    string const& out_ms_name, 
+                                    string const& out_ms_name,
                                     string const& out_bloutput_name,
                                     bool const& do_subtract,
                                     string const& in_spw,
@@ -1934,7 +1939,7 @@ void SingleDishMS::subtractBaseline(string const& in_column_name,
 
 //Subtract baseline using natural cubic spline
 void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
-                                           string const& out_ms_name, 
+                                           string const& out_ms_name,
                                            string const& out_bloutput_name,
                                            bool const& do_subtract,
                                            string const& in_spw,
@@ -1959,7 +1964,7 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
   if (npiece <= 0) {
     throw(AipsError("npiece must be positive."));
   }
-  
+
   LIBSAKURA_SYMBOL(Status) status;
   LIBSAKURA_SYMBOL(LSQFitStatus) bl_status;
   std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> bl_contexts;
@@ -1990,7 +1995,7 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
                      avg_limit,
                      minwidth,
                      edge,
-                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context, 
+                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context,
                          size_t const num_chan, std::vector<size_t> const &/*nwave*/,
                          float *spec, bool *mask, size_t const /*num_coeff*/, double *coeff,
                          bool *mask2, float *rms) {
@@ -2012,14 +2017,14 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
                          ffpar_mtx_tmp[ipol][ipiece] = boundary_data[ipiece];
                        }
                      },
-                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context, 
+                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context,
                          size_t const num_chan, std::vector<size_t> const &/*nwave*/,
                          float *spec, size_t const /*num_coeff*/, double *coeff) {
                        status = LIBSAKURA_SYMBOL(SubtractCubicSplineFloat)(
                          context, num_chan, spec, npiece_vect[0],
                          reinterpret_cast<double (*)[4]>(coeff), boundary_data, spec);
                        check_sakura_status("sakura_SubtractCubicSplineFloat", status);},
-                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context, 
+                     [&](LIBSAKURA_SYMBOL(LSQFitContextFloat) const *context,
                          size_t const num_chan, std::vector<size_t> const &/*nwave*/,
                          size_t const /*num_coeff*/, float *spec, bool *mask, float *rms) {
                        status = LIBSAKURA_SYMBOL(LSQFitCubicSplineFloat)(
@@ -2037,7 +2042,7 @@ void SingleDishMS::subtractBaselineCspline(string const& in_column_name,
 
 
 void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
-                                            string const& out_ms_name, 
+                                            string const& out_ms_name,
                                             string const& out_bloutput_name,
                                             bool const& do_subtract,
                                             string const& in_spw,
@@ -2096,7 +2101,7 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
       context = nullptr;
     }
   };
-  
+
   doSubtractBaseline(in_column_name,
                      out_ms_name,
                      out_bloutput_name,
@@ -2152,7 +2157,7 @@ void SingleDishMS::subtractBaselineSinusoid(string const& in_column_name,
                          size_t const num_coeff, float *spec, bool *mask, float *rms) {
                        prepare_context(context0, num_chan, nwave);
                        status = LIBSAKURA_SYMBOL(LSQFitSinusoidFloat)(
-                         context, nwave.size(), &nwave[0], 
+                         context, nwave.size(), &nwave[0],
                          num_chan, spec, mask, clip_threshold_sigma, num_fitting_max,
                          num_coeff, nullptr, nullptr, spec, mask, rms, &bl_status);
                        check_sakura_status("sakura_LSQFitSinusoidFloat", status);
@@ -2710,7 +2715,7 @@ void SingleDishMS::fitLine(string const& in_column_name,
        << "Fitter did not converge on any fit components." << LogIO::POST;
   }
   else if (num_noline > 0) {
-    os << "No convergence for fitting to " << num_noline 
+    os << "No convergence for fitting to " << num_noline
        << " out of " << num_spec << " spectra" << LogIO::POST;
   }
 
@@ -2720,7 +2725,7 @@ void SingleDishMS::fitLine(string const& in_column_name,
 
 //Subtract baseline by per spectrum fitting parameters
 void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
-                                            string const& out_ms_name, 
+                                            string const& out_ms_name,
                                             string const& out_bloutput_name,
                                             bool const& do_subtract,
                                             string const& in_spw,
@@ -2794,7 +2799,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
       ++iter;
     }
   }
-  
+
   Vector<size_t> ctx_indices(recspw.size(), 0ul);
   //stores the number of channels of corresponding elements in contexts list.
   // WORKAROUND for absense of the way to get num_bases_data in context.
@@ -3048,7 +3053,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
                 context, fit_param.npiece,
                 num_chan, spec_data, mask_data,
                 fit_param.clip_threshold_sigma, fit_param.num_fitting_max,
-                reinterpret_cast<double (*)[4]>(coeff_data), nullptr, nullptr, 
+                reinterpret_cast<double (*)[4]>(coeff_data), nullptr, nullptr,
                 mask2_data, &rms, boundary_data, &bl_status);
 
               for (size_t i = 0; i < num_chan; ++i) {
@@ -3066,7 +3071,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
               throw(AipsError("Unsupported baseline type."));
             }
             check_sakura_status(get_coeff_funcname, status);
-            
+
             size_t num_ffpar = get_num_coeff_bloutput(fit_param.baseline_type, fit_param.npiece, num_ffpar_max);
             ffpar_mtx_tmp[ipol].clear();
             for (size_t ipiece = 0; ipiece < num_ffpar; ++ipiece) {
@@ -3077,7 +3082,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             for (size_t icoeff = 0; icoeff < num_coeff; ++icoeff) {
               coeff_mtx_tmp[ipol].push_back(coeff_data[icoeff]);
             }
-            
+
             Vector<uInt> masklist;
             get_masklist_from_mask(num_chan, mask2_data, masklist);
             if (masklist.size() > num_masklist_max) {
@@ -3160,7 +3165,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
 
         // output results of fitting
         if (num_apply_true == 0) continue;
-        
+
         Array<Float> ffpar_mtx(IPosition(2, num_pol, num_ffpar_max));
         set_matrix_for_bltable<double, Float>(num_pol, num_ffpar_max,
                                               ffpar_mtx_tmp, ffpar_mtx);
@@ -3172,7 +3177,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
                                               coeff_mtx_tmp, coeff_mtx);
         Matrix<uInt> masklist_mtx2 = masklist_mtx;
         Matrix<Bool> apply_mtx2 = apply_mtx;
-        
+
         if (write_baseline_table) {
           bt->appenddata((uInt)scans[irow], (uInt)beams[irow], (uInt)antennas[irow],
                          (uInt)data_spw[irow], 0, times[irow],
@@ -3267,7 +3272,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
                         << masklist_mtx2(ipol, 2 * imasklist + 1) << ']';
               }
             }
-            
+
             ofs_csv << ']' << ',';
             Matrix<uInt> bltype_mtx2 = bltype_mtx[0][ipol];
             string bltype_name;
@@ -3278,7 +3283,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
             } else if (bltype_mtx2(0, 0) == (uInt)2) {
               bltype_name = "cspline";
             }
-            
+
             Matrix<Int> fpar_mtx2 = fpar_mtx;
             Matrix<Float> coeff_mtx2 = coeff_mtx;
             ofs_csv << bltype_name.c_str() << ',' << fpar_mtx2(ipol, 0)
@@ -3312,7 +3317,7 @@ void SingleDishMS::subtractBaselineVariable(string const& in_column_name,
     bt->save(bloutputname_table);
     delete bt;
   }
-  
+
   finalize_process();
   // destroy baseline contexts
   map<size_t const, std::vector<LIBSAKURA_SYMBOL(LSQFitContextFloat) *> >::iterator ctxiter = context_reservoir.begin();
@@ -3431,6 +3436,43 @@ void SingleDishMS::smooth(string const &kernelType,
   // Finalization
   finalize_process();
 }
+
+void SingleDishMS::atmcor(Record const &config, string const &columnName, string const &outMSName) {
+  LogIO os(_ORIGIN);
+  os << "Input parameter summary:" << endl
+     << "   columnName = " << columnName << endl << "   outMSName = "
+     << outMSName << LogIO::POST;
+
+  // Initialization
+  doAtmCor_ = true;
+  atmCorConfig_ = config;
+  cout << "config summry:" << endl;
+  atmCorConfig_.print(cout, 25, "    ");
+  prepare_for_process(columnName, outMSName);
+
+  // get VI/VB2 access
+  vi::VisibilityIterator2 *visIter = sdh_->getVisIter();
+  // make sure only take single integration
+  visIter->setRowBlocking(0);
+  vi::VisBuffer2 *vb = visIter->getVisBuffer();
+
+  double startTime = gettimeofday_sec();
+
+  for (visIter->originChunks(); visIter->moreChunks(); visIter->nextChunk()) {
+    for (visIter->origin(); visIter->more(); visIter->next()) {
+      sdh_->fillOutputMs(vb);
+    }
+  }
+
+  double endTime = gettimeofday_sec();
+  os << LogIO::DEBUGGING
+     << "Elapsed time for VI/VB loop: " << endTime - startTime << " sec"
+     << LogIO::POST;
+
+  // Finalization
+  finalize_process();
+}
+
 
 bool SingleDishMS::importAsap(string const &infile, string const &outfile, bool const parallel) {
   bool status = true;
