@@ -3,6 +3,7 @@
 <task category="simulation" name="simalma" type="function">
 <needs>simanalyze</needs>
 <needs>simobserve</needs>
+<needs>feather</needs>
 <shortdescription>Simulation task for ALMA </shortdescription>
 <description>
 This task simulates ALMA observation including 12-m, ACA 7-m and total
