@@ -4102,12 +4102,23 @@ class test_mosaic_cube(testref_base):
           tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
           report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
+          _ia.open(self.img+'1.image')
+          nchan = _ia.shape()[3]
+          briggsbwtaper_beamarea = np.zeros(nchan)
+          for k in range(nchan):
+            briggsbwtaper_beamarea[k]= _ia.beamarea(k,0)['arcsec2']
+          _ia.close()
+          
+          _, report2 = self.th.check_val(briggsbwtaper_beamarea[0], 0.31155618 , valname='beam_area_chan_0', exact=False)
+          _, report3 = self.th.check_val(briggsbwtaper_beamarea[1], 0.30887386 , valname='beam_area_chan_1', exact=False)
+          _, report4 = self.th.check_val(briggsbwtaper_beamarea[2], 0.30639076 , valname='beam_area_chan_2', exact=False)
+ 
           tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True)
-          report2=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
+          report5=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
           
           self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
           
-          self.checkfinal(pstr = report1+report2)
+          self.checkfinal(pstr = report1+report2+report3+report4+report5)
 
 
      def test_cube_standard_onefield(self):

@@ -844,8 +844,8 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 			       const String& filtertype, const Quantity& filterbmaj,
 			       const Quantity& filterbmin, const Quantity& filterbpa, Double fracBW)
   {
-    
-      if(rmode=="bwtaper")
+      LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+      if(rmode=="bwtaper") //See CAS-13021 for bwtaper algorithm details
       {
           if(fracBW == 0.0)
           {
@@ -867,10 +867,7 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
                   
                   if((maxFreq != 0.0) || (minFreq != 0.0)) fracBW = 2*(maxFreq - minFreq)/(maxFreq + minFreq);
                   
-                  cout << "****************" << endl;
-                  cout << "SynthesisImagerVi2::weight itsMapper minFreq, maxFreq " << minFreq << ",*," << maxFreq << endl;
-                  cout << "SynthesisImagerVi2::weight fracBW " << fracBW << endl;
-                  cout << "****************" << endl;
+                  os << LogIO::NORMAL << " Fractional bandwidth used by briggsbwtaper " << fracBW << endl;  //<< LogIO::POST;
                   
               }
           }
@@ -878,7 +875,7 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
       
 	weightParams_p=SynthesisUtilMethods::fillWeightRecord(type, rmode,noise, robust,fieldofview,
 				 npixels, multiField, useCubeBriggs,filtertype, filterbmaj,filterbmin, filterbpa, fracBW);
-    LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+
        try {
     	//Int nx=itsMaxShape[0];
     	//Int ny=itsMaxShape[1];

@@ -477,7 +477,7 @@ void StokesImageUtil::Constrain(ImageInterface<Float>& image) {
   }
 }
 
-
+//See CAS-13022 for FitGaussianPSF algorithm details
 Bool StokesImageUtil::FitGaussianPSF(ImageInterface<Float>& psf, ImageBeamSet& elbeam, Float psfcutoff){
   
   Bool retval=true;
