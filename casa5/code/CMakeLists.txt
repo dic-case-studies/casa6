@@ -41,32 +41,6 @@ add_definitions(-DUSE_THREADS)                 # new casacore requirement:
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/install )
 
-execute_process( COMMAND svn info
-                   RESULT_VARIABLE SVNINFOSTATUS
-                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-message("SVNINFOSTATUS: ${SVNINFOSTATUS}")
-
-if(${SVNINFOSTATUS} STREQUAL "0")
-    message("Running svn scripts.")
-    set( CASA_svngen ${CMAKE_SOURCE_DIR}/install/generate-svninfo )
-    execute_process( COMMAND ${CASA_svngen} -revision url=${CMAKE_SOURCE_DIR}
-                   OUTPUT_VARIABLE SVNREVISION
-                   OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    execute_process( COMMAND ${CASA_svngen} -date url=${CMAKE_SOURCE_DIR}
-                   OUTPUT_VARIABLE SVNDATE
-                   OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    execute_process( COMMAND ${CASA_svngen} -url url=${CMAKE_SOURCE_DIR}
-                   OUTPUT_VARIABLE CASASRCURL
-                   OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-else ()
-    message("Couldn't detect svn. Not running svn scripts.")
-endif ()
-
-
 include( config )
 include( ui )
 include( target )
@@ -81,38 +55,20 @@ set( CASA_VERSION_DESC    "" )
 set( CASA_VARIANT  "" )
 
 if( CASA_VERSION_FEATURE STREQUAL "0" )
-    execute_process( COMMAND svn info
-                     RESULT_VARIABLE SVNINFOSTATUS
-                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
-
-    ### hash-bound git will need another solution
-    if ( ${SVNINFOSTATUS} STREQUAL "0" )
-        execute_process(    COMMAND svnversion
-                            OUTPUT_VARIABLE SUBVERSION_REVISION
-                            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                            OUTPUT_STRIP_TRAILING_WHITESPACE )
-
-        execute_process(    COMMAND curl --silent https://svn.cv.nrao.edu/cgi-bin/casa-version-match?rev=${SUBVERSION_REVISION}
-                            COMMAND perl -pe "s|^\\d+\\.\\d+\\.(\\d+)\\s+\\d+\n*$|$1|"
-                            OUTPUT_VARIABLE CASA_VERSION_FEATURE
-                            OUTPUT_STRIP_TRAILING_WHITESPACE )
-
-    else( )
-        execute_process( COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install/resolvegitrevision.pl
-                         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                         OUTPUT_VARIABLE CASA_VERSION_FEATURE_AND_BRANCH_TAG # Getting a list
-                         OUTPUT_STRIP_TRAILING_WHITESPACE )
-        message("resolvegitrevision: ${CASA_VERSION_FEATURE_AND_BRANCH_TAG}")
-        list(LENGTH CASA_VERSION_FEATURE_AND_BRANCH_TAG len)
-        message(STATUS "len = ${len}")
-        list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 0 CASA_VERSION_FEATURE)
-        list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 1 BRANCH_TAG)
-        list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 2 CASA_VARIANT)
-        message("CASA_VERSION_FEATURE: ${CASA_VERSION_FEATURE}")
-        message("CASA_VERSION_DESC: ${BRANCH_TAG}")
-        message("CASA_VARIANT: ${CASA_VARIANT}")
-        set(CASA_VERSION_DESC " ${BRANCH_TAG}")
-    endif( )
+    execute_process( COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install/resolvegitrevision.pl
+                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                     OUTPUT_VARIABLE CASA_VERSION_FEATURE_AND_BRANCH_TAG # Getting a list
+                     OUTPUT_STRIP_TRAILING_WHITESPACE )
+    message("resolvegitrevision: ${CASA_VERSION_FEATURE_AND_BRANCH_TAG}")
+    list(LENGTH CASA_VERSION_FEATURE_AND_BRANCH_TAG len)
+    message(STATUS "len = ${len}")
+    list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 0 CASA_VERSION_FEATURE)
+    list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 1 BRANCH_TAG)
+    list ( GET CASA_VERSION_FEATURE_AND_BRANCH_TAG 2 CASA_VARIANT)
+    message("CASA_VERSION_FEATURE: ${CASA_VERSION_FEATURE}")
+    message("CASA_VERSION_DESC: ${BRANCH_TAG}")
+    message("CASA_VARIANT: ${CASA_VARIANT}")
+    set(CASA_VERSION_DESC " ${BRANCH_TAG}")
 endif( )
 
 set( CASA_API_VERSION "${CASA_VERSION_MAJOR}.${CASA_VERSION_MINOR}.${CASA_VERSION_PATCH}-${CASA_VERSION_FEATURE}" )
@@ -1111,11 +1067,13 @@ if( CMAKE_SYSTEM_NAME STREQUAL Linux )
     )
 endif()
 
-option(USE_MPI "Use MPI compiler" NO)
+option(USE_MPI "Use MPI compiler" YES)
 set( CASAMPI "" )
 if (USE_MPI)
-  find_package(MPI)
+  message("Looking for MPI...")
+  find_package(MPI REQUIRED)
   if( MPI_CXX_FOUND )
+    message("Found MPI.")
     set( CASACORE_DEFINITIONS ${CASACORE_DEFINITIONS}
       -DHAVE_MPI
       )
@@ -1468,49 +1426,6 @@ casa_add_module( singledish CASACORE casa_sakura singledishfiller msvis mstransf
 casa_add_module( bnmin1 Boost GSL GSLCBLAS CASACORE )
 casa_add_module( air_casawvr CASACORE bnmin1 Boost synthesis WCSLIB CFITSIO LAPACK )
 casa_add_module( crash )
-
-#
-# ASAP's build depends on something called a makedefs file. Fake one of those.
-#
-
-# Get library paths from the first of the rpfits/cfitsio library full paths.
-list( GET RPFITS_LIBRARIES 0 rpfits_lib )
-get_filename_component(rpfitslibd ${rpfits_lib} PATH)
-
-list( GET CFITSIO_LIBRARIES 0 cfitsio_lib )
-get_filename_component(cfitsiolibd ${cfitsio_lib} PATH)
-
-set( _cc "" )
-foreach( _c ${CASACORE_LIBRARIES} )
-  if( _c MATCHES Framework )
-    # skip
-  else()
-    set( _cc "${_cc} ${_c}" )
-  endif()
-endforeach()
-
-get_property( MYDEFINES DIRECTORY PROPERTY COMPILE_DEFINITIONS )
-# convert semicolons to -Dmydefine...
-set( _dd "" )
-foreach( _d ${MYDEFINES} )
-  set( _dd "${_dd} -D${_d}" )
-endforeach()
-
-file( WRITE ${CMAKE_INSTALL_PREFIX}/makedefs
-  "# This file exists only for ASAP\n"
-  CXXFLAGS = \"${CMAKE_CXX_FLAGS}\"\n
-  COPTFLAGS = \"${_dd}\"\n
-  LD_FLAGS = \"${CMAKE_SHARED_LINKER_FLAGS}\"\n
-  COREINCD = ${CASACORE_casa/aips.h}\n
-  CORELIB = ${_cc}\n
-  WCSLIBLIB = ${WCSLIB_wcs}\n
-  WCSLIBLIBD = .\n
-  RPFITSLIBD = ${rpfitslibd}\n
-  CFITSIOLIBD = ${cfitsiolibd}\n
-  CFITSIOINCD =  ${CFITSIO_INCLUDE_DIRS}\n
-  eval_vars :\n
-  \t@\ echo\ \"$(foreach\ V,$(VARS),$V=\\\"$($V)\\\")\ \;\ export\ $(VARS)\"\n
-)
 
 add_subdirectory( doc/userman )
 

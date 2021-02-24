@@ -296,6 +296,7 @@ casa_add_library( synthesis
  MeasurementComponents/VisCalSolver.cc
  MeasurementComponents/VisCalSolver2.cc
  MeasurementComponents/VisVector.cc
+ MeasurementComponents/WriteMSAlgorithm.cc
  MeasurementComponents/FiltrationTVI.cc
  MeasurementComponents/SDDoubleCircleFilter.cc
  TransformMachines/VisibilityResamplerBase.cc
@@ -356,8 +357,12 @@ casa_add_library( synthesis
  fortran/leakantso.f
  ImagerObjects/SynthesisImager.cc
  ImagerObjects/SynthesisImagerVi2.cc
+ ImagerObjects/CubeMajorCycleAlgorithm.cc
+ ImagerObjects/CubeMinorCycleAlgorithm.cc
+ ImagerObjects/CubeMakeImageAlgorithm.cc
  ImagerObjects/SIImageStore.cc
  ImagerObjects/SIImageStoreMultiTerm.cc
+ ImagerObjects/SimpleSIImageStore.cc
  ImagerObjects/SIMapperCollection.cc
  ImagerObjects/SIMapper.cc
  ImagerObjects/SIMapperImageMosaic.cc
@@ -573,6 +578,7 @@ install (FILES
 	MeasurementComponents/WBCleanImageSkyModel.h
 	MeasurementComponents/WFCleanImageSkyModel.h
 	MeasurementComponents/WOnlyProjectFT.h
+        MeasurementComponents/WriteMSAlgorithm.h
 	MeasurementComponents/XCorr.h
 	MeasurementComponents/nPBWProjectFT.h
 	MeasurementComponents/rGridFT.h
@@ -634,8 +640,12 @@ install (FILES
 install (FILES
 	ImagerObjects/SynthesisImager.h
 	ImagerObjects/SynthesisImagerVi2.h
+        ImagerObjects/CubeMajorCycleAlgorithm.h
+	ImagerObjects/CubeMinorCycleAlgorithm.h
+        ImagerObjects/CubeMakeImageAlgorithm.h
 	ImagerObjects/SIImageStore.h
 	ImagerObjects/SIImageStoreMultiTerm.h
+        ImagerObjects/SimpleSIImageStore.h
 	ImagerObjects/SIMapperCollection.h
 	ImagerObjects/SIMapper.h
 	ImagerObjects/SIMapperImageMosaic.h
@@ -680,8 +690,10 @@ install (FILES
 	Parallel/Algorithm.h
 	Parallel/Applicator.h
 	Parallel/MPIError.h
-	Parallel/PTransport.h
 	Parallel/PabloIO.h
+	Parallel/MPITransport.h
+	Parallel/PTransport.h
+	Parallel/SerialTransport.h
 	DESTINATION include/casacode/synthesis/Parallel
 	)
 install (FILES 
@@ -828,6 +840,9 @@ install (FILES
 	)
 casa_add_executable( synthesis casasplit apps/casasplit/casasplit.cc )
 casa_add_executable( synthesis imageconcat apps/utils/imageconcat.cc )
+casa_add_demo( synthesis ImagerObjects/test/dMPICubeImager.cc TransformMachines2/test/MakeMS.cc )
+casa_add_demo( synthesis ImagerObjects/test/dMPICubeDeconvolver.cc )
+casa_add_demo( synthesis ImagerObjects/test/dMPIMakeCube.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_assay( synthesis ImagerObjects/test/tSIIterBot.cc )
 casa_add_assay( synthesis ImagerObjects/test/tSynthesisUtils.cc )
 casa_add_assay( synthesis TransformMachines2/test/tVisModelDataRefim.cc )
@@ -850,6 +865,7 @@ casa_add_assay( synthesis MeasurementComponents/test/tKJones.cc )
 casa_add_assay( synthesis MeasurementComponents/test/tPBMath.cc )
 casa_add_assay( synthesis MeasurementComponents/test/tPBMath2D.cc )
 casa_add_assay( synthesis MeasurementComponents/test/tPBTable.cc )
+casa_add_assay( synthesis MeasurementComponents/test/tWriteParallel.cc )
 #casa_add_assay( synthesis MeasurementComponents/test/tTrVI2.cc )
 casa_add_assay( synthesis MeasurementComponents/test/tVPSkyJones.cc )
 casa_add_demo ( synthesis MeasurementEquations/test/dCEMemModel.cc )
@@ -863,7 +879,6 @@ casa_add_assay( synthesis MeasurementEquations/test/tImager.cc )
 casa_add_assay( synthesis MeasurementEquations/test/tIncCEMemModel.cc )
 casa_add_assay( synthesis MeasurementEquations/test/tLatConvEquation.cc )
 casa_add_assay( synthesis MeasurementEquations/test/tStokesUtil.cc )
-casa_add_assay( synthesis Parallel/test/tApplicator.cc )
 casa_add_assay( synthesis CalTables/test/tCalInterpolation.cc )
 casa_add_assay( synthesis CalTables/test/tCalIntpMatch.cc )
 casa_add_assay( synthesis CalTables/test/tNewCalTable.cc )
@@ -881,11 +896,14 @@ casa_add_test( synthesis CalLibrary/test/tCalLibraryParse.cc )
 casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tAntennaResponses.cc ) 
 casa_add_unit_test( MODULES synthesis SOURCES MeasurementEquations/test/tPredictComp.cc TransformMachines2/test/MakeMS.cc ) 
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tAWPFTM.cc TransformMachines2/test/MakeMS.cc ) 
-casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tFTMachine.cc TransformMachines2/test/MakeMS.cc ) 
+casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tFTMachine.cc TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES TransformMachines2/test/tCubeBriggsWeightor.cc TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tGridFT.cc TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES TransformMachines/test/tPBMath1DEVLA.cc  ) 
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImager.cc  TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES Parallel/test/tApplicator.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSynthesisImagerVi2.cc  TransformMachines2/test/MakeMS.cc )
+casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tSIMakeImage.cc  TransformMachines2/test/MakeMS.cc )
 casa_add_unit_test( MODULES synthesis SOURCES Utilities/test/tFFT2D.cc  ) 
 casa_add_unit_test( MODULES synthesis SOURCES CalTables/test/tCTPatchedInterp.cc )
 casa_add_unit_test( MODULES synthesis SOURCES ImagerObjects/test/tLabelandFindRegions.cc )

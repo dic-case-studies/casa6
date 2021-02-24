@@ -77,6 +77,6 @@ casacore::String polnExpr_p;
 casacore::String chanselExpr_p;
 casacore::Vector<casacore::Int> wantedpol_p;
 casacore::Vector<casacore::Int> ifrnumbers_p;
-std::vector<int> chansel_p; // nchan, start, width, inc
+std::vector<long> chansel_p; // nchan, start, width, inc
 
 void addephemcol(const casacore::MeasurementSet& appendedMS);

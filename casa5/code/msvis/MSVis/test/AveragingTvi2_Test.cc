@@ -2898,6 +2898,11 @@ Tester::doTest (const Environment & environment, const Arguments & arguments)
                  Test::getName().c_str(), e.what());
 
     }
+    catch (std::exception & e){
+
+        fprintf (stderr, "*** std::exception while executing test %s:\n-->%s\n",
+                 "", e.what());
+    }
     catch (...){
 
         fprintf (stderr, "\n*** Unknown exception while executing test %s\n***\n*** Exiting ***\n\n",
@@ -2968,6 +2973,11 @@ Tester::doTests (Int nArgs, char * args [])
         fprintf (stderr, "*** AipsError while executing test %s:\n-->%s\n",
                  "", e.what());
 
+    }
+    catch (std::exception & e){
+
+        fprintf (stderr, "*** std::exception while executing test %s:\n-->%s\n",
+                 "", e.what());
     }
     catch (...){
 
@@ -3084,7 +3094,7 @@ void
 Tester::checkCubes (VisBuffer2 * vb, VisibilityIterator2 * vi, Int subchunk,
                     Int firstRow)
 {
-    for (Int row = 0; row < vb->nRows(); row ++){
+    for (rownr_t row = 0; row < vb->nRows(); row ++){
 
         for (Int channel = 0; channel < vb->nChannels(); channel ++){
 
@@ -3126,7 +3136,7 @@ void
 Tester::checkRows (VisBuffer2 * vb, VisibilityIterator2 * vi, Int subchunk,
                    Int firstRow)
 {
-    for (Int row = 0; row < vb->nRows(); row ++){
+    for (rownr_t row = 0; row < vb->nRows(); row ++){
 
         for (RowCheckers::iterator rc = rowCheckers_p.begin();
              rc != rowCheckers_p.end();

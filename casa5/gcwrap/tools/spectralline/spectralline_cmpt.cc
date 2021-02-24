@@ -280,7 +280,7 @@ record* spectralline::chemnames(const bool verbose, const string& logfile, const
 	}
 }
 
-int spectralline::nrows() {
+long spectralline::nrows() {
 	if (_detached()) {
 		return 0;
 	}

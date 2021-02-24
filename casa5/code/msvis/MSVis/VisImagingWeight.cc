@@ -470,11 +470,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  VisImagingWeight::VisImagingWeight(ImageInterface<Float>& im) : doFilter_p(false), robust_p(0.0), rmode_p(""), noise_p(Quantity(0.0, "Jy")) {
+  VisImagingWeight::VisImagingWeight(ImageInterface<Float>& im) :  robust_p(0.0), rmode_p(""), noise_p(Quantity(0.0, "Jy")) {
 
       LogIO os(LogOrigin("VisSetUtil", "VisImagingWeight()", WHERE));
 
-
+      doFilter_p=False;
 
       wgtType_p="uniform";
       nx_p=im.shape()(0);
@@ -518,11 +518,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	f2_p.resize();
 	rec.get("f2", f2_p);
 	multiFieldMap_p.clear();
-	for(Int k=0; k < nplanes; ++k){
+        Int mapsize;
+        rec.get("multimapsize", mapsize);
+	for(Int k=0; k < mapsize; ++k){
 	  String key;
 	  Int val;
 	  rec.get("key"+String::toString(k), key);
 	  rec.get("val"+String::toString(k), val);
+          //cerr << "key and id " << key << "   "<< val << endl;
 	  multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(key, val));
 	}
 	
@@ -530,9 +533,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
       activeFieldIndex_p=0;
       gwt_p[0]->get(a_gwt_p);
+      if(rec.isDefined("dofilter")){
+        rec.get("dofilter", doFilter_p);
+        rec.get("rbmaj", rbmaj_p);
+        rec.get("rbmin", rbmin_p);
+        rec.get("cospa", cospa_p);
+        rec.get("sinpa", sinpa_p);
+      }
 
       
- }
+  }
 
   
   VisImagingWeight::~VisImagingWeight(){
@@ -576,6 +586,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	rec.define("key"+String::toString(keycount), iter->first);
 	rec.define("val"+String::toString(keycount), iter->second);
       }
+      rec.define("multimapsize",keycount);
+      if(doFilter_p){
+        rec.define("dofilter", doFilter_p);
+        rec.define("rbmaj", rbmaj_p);
+        rec.define("rbmin", rbmin_p);
+        rec.define("cospa", cospa_p);
+        rec.define("sinpa", sinpa_p);
+      }
+
+      
       im.setMiscInfo(rec);
 
     }
@@ -673,7 +693,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //cout << " WEIG " << nx_p << "  " << ny_p << "   " << gwt_p[0].shape() << endl;
       //cout << "f2 " << f2_p[0] << " d2 " << d2_p[0] << " uscale " << uscale_p << " vscal " << vscale_p << " origs " << uorigin_p << "  " << vorigin_p << endl; 
       String mapid=String::toString(msId)+String("_")+String::toString(fieldId);
-      //cout << "min max gwt " << min(gwt_p[0]) << "    " << max(gwt_p[0]) << " mapid " << mapid <<endl; 
+      //cout << "min max gwt " << min(gwt_p[0]) << "    " << max(gwt_p[0]) << " mapid " << mapid <<endl;
+
       if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) )
 	throw(AipsError("Imaging weight calculation is requested for a data that was not selected"));
       

@@ -6,7 +6,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="calstat" category="calibration">
+<task type="function" name="calstat" category="information, calibration">
 <shortdescription>Displays statistical information on a calibration table</shortdescription>
   <description>
 This task returns statistical information about a column in a
@@ -50,21 +50,6 @@ square.
                      Default: 'gain'
 </description>
       <value type="string">gain</value>
-    </param>
-
-    <param type="bool" name="useflags">
-<shortdescription>Take flagging into account? (not implemented)</shortdescription>
-<description>Take flagging into account? (not implemented, this
-parameter  has no effect!)
-                     Default: False
-                    
-                     If useflags=False, flagged values are included in
-                     the statistics. 
-                     If useflags=True, any flagged values are not used
-                     in the statistics.
-</description>
-        <value>True</value>
-        <example>useflags=True</example>
     </param>
 
     <constraints>

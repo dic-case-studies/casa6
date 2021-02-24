@@ -55,8 +55,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  class SIIterBot;
  class VisImagingWeight;
 
-// <summary> Class that contains functions needed for imager </summary>
+ /**
+ * Holds technical processing info related to parallelization and memory use, as introduced
+ * in CAS-12204. This is meant to go into the image meta-info, such as the 'miscinfo' record.
+ * The TcleanProcessingInfo holds: number of subcubes (chanchunks), number of MPI
+ * processors used for these calculations, memory available, estimated required memory.
+ */
+struct TcleanProcessingInfo
+{
+  unsigned int mpiprocs = 0;
+  unsigned int chnchnks = 0;
+  float memavail = -.1;
+  float memreq = -.1;
+};
 
+// <summary> Class that contains functions needed for imager </summary>
 class SynthesisImager 
 {
  public:
@@ -136,6 +149,10 @@ class SynthesisImager
   virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> imstor, 
 			   const casacore::String& ftmachine);
 
+  //Define image via a predefine SIImageStore object and ftmachines
+  virtual casacore::Bool defineImage(casacore::CountedPtr<SIImageStore> , 
+                                     const casacore::Record& , const casacore::Record& ){return false;}; /*not implemented here*/
+
   casacore::Record getcsys() {return itsCsysRec;};
   casacore::Int updateNchan() {return itsNchan;};
 
@@ -164,6 +181,7 @@ class SynthesisImager
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
 
+  virtual casacore::Bool weight(const Record&){ return false;}; /*not implemented here */
   //Stores the weight density in an image. Returns the image name 
   casacore::String getWeightDensity();
   //set the weight density to the visibility iterator
@@ -178,7 +196,7 @@ class SynthesisImager
   casacore::CountedPtr<SIImageStore> imageStore(const casacore::Int id=0);
 
   //casacore::Record getMajorCycleControls();
-  void executeMajorCycle(casacore::Record& controls);
+  Record executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
   void makePSF();
@@ -216,7 +234,15 @@ class SynthesisImager
   void setMovingSource(const casacore::String& movsource);
   ///return an estimate of memory it is going to use in kB
   virtual casacore::Long estimateRAM();
+  ///set and get if using cube gridding
+  virtual void setCubeGridding(const casacore::Bool val){doingCubeGridding_p=val;};
+  virtual casacore::Bool getCubeGridding(){return doingCubeGridding_p;};
+  //this set the normalizer info record so as we can construct
+  //a SynthesisNormalizer in C++ rather than run it from python
+  void normalizerinfo(const casacore::Record& normpars);
 
+  virtual bool unlockImages();
+  virtual void cleanupTempFiles();
 protected:
  
   /////////////// Internal Functions
@@ -271,9 +297,10 @@ protected:
 					 casacore::String mappertype="default", 
 					 casacore::uInt ntaylorterms=1,
 					 casacore::Quantity distance=casacore::Quantity(0.0, "m"),
+					 const TcleanProcessingInfo &procInfo = TcleanProcessingInfo(),
 					 casacore::uInt facets=1,
 					 casacore::Bool useweightimage=false,
-					 casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+					 const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
   
   // Choose between different types of Mappers (single term, multiterm, imagemosaic, faceted)
   casacore::CountedPtr<SIMapper> createSIMapper(casacore::String mappertype,  
@@ -324,9 +351,13 @@ protected:
 
   // Do the major cycle
   virtual void runMajorCycle(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
-
+  // Do the major cycle for cubes
+  virtual void runMajorCycleCube(const casacore::Bool dopsf=false, const casacore::Record lala=casacore::Record()){(void)dopsf; (void)lala;throw(AipsError("Not implemented"));};
   // Version of major cycle code with mappers in a loop outside vi/vb.
   virtual void runMajorCycle2(const casacore::Bool dopsf=false, const casacore::Bool savemodel=false);
+  virtual bool runCubePSFGridding(){throw(AipsError("Not implemented"));};
+  
+  virtual bool runCubeResidualGridding(casacore::Bool savemodel=false){(void)savemodel; throw(AipsError("Not implemented"));};
 
   /////This function should be called at every define image
   /////It associated the ftmachine with a given field
@@ -334,7 +365,6 @@ protected:
   //// Only one facetted image allowed
   //  void appendToMapperList(casacore::String imagename, casacore::CoordinateSystem& csys, casacore::String ftmachine,
   //		  	  casacore::Quantity distance=casacore::Quantity(0.0, "m"), casacore::Int facets=1, const casacore::Bool overwrite=false);
-
   void appendToMapperList(casacore::String imagename, 
 			  casacore::CoordinateSystem& csys, 
 			  casacore::IPosition imshape,
@@ -347,7 +377,7 @@ protected:
 			  casacore::String mappertype=casacore::String("default"),
 			  float padding=1.0,
 			  casacore::uInt ntaylorterms=1,
-			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+			  const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
 
   virtual void unlockMSs();
 
@@ -420,8 +450,10 @@ protected:
   SynthesisParamsGrid gridpars_p;
   SynthesisParamsImage impars_p;
   String movingSource_p;
-
-
+  casacore::Bool doingCubeGridding_p;
+  
+  casacore::Record normpars_p;
+  std::vector<casacore::String> tempFileNames_p;
 };
 
 

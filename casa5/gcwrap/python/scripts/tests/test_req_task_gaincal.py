@@ -36,74 +36,37 @@ except ImportError:
 
 import sys
 import os
-import testhelper as th
 import unittest
 import shutil
 import numpy as np
 import pylab as pl
 
+from casatestutils import testhelper as th
+
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms')
-    compCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.G0')
-    tCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.T0')
-    # Reference Cals
-    combinedRef = casatools.ctsys.resolve('caltables/genDataCombine.G0')
-    preTRef = casatools.ctsys.resolve('caltables/genDataPreT.G0')
-    preGRef = casatools.ctsys.resolve('caltables/genDataPreG.T0')
-    calModeP = casatools.ctsys.resolve('caltables/calModeTest.G0')
-    calModeA = casatools.ctsys.resolve('caltables/calModeTest.G1')
-    typeCalK = casatools.ctsys.resolve('caltables/gaintypek.G0')
-    typeCalSpline = casatools.ctsys.resolve('caltables/gaintypeSpline.G0')
-    spwMapCal = casatools.ctsys.resolve('caltables/spwMap.G0')
-    # From merged test
-    merged_dataset1 = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
-    merged_refcal1 = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
-    merged_refcal2 = casatools.ctsys.resolve('caltables/ngc5921.ref2a.gcal')
-    merged_dataset2 = casatools.ctsys.resolve('visibilities/vla/ngc4826.ms')
-    merged_refcal3 = casatools.ctsys.resolve('caltables/ngc4826.ref1b.gcal')
-    
+    rootpath = casatools.ctsys.resolve('unittest/gaincal/')
     
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms'
-        compCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.G0'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.T0'
-        
-        combinedRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataCombine.G0'
-        preTRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataPreT.G0'
-        preGRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataPreG.T0'
-        calModeP = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/calModeTest.G0'
-        calModeA = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/calModeTest.G1'
-        typeCalK = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypek.G0'
-        typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypeSpline.G0'
-        spwMapCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/spwMap.G0'
-        # From merged test
-        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms'
-        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref2a.gcal'
-        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc4826.ms'
-        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc4826.ref1b.gcal'
-        
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms'
-        compCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.G0'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.T0'
-        
-        combinedRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataCombine.G0'
-        preTRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataPreT.G0'
-        preGRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataPreG.T0'
-        calModeP = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/calModeTest.G0'
-        calModeA = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/calModeTest.G1'
-        typeCalK = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypek.G0'
-        typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypeSpline.G0'
-        spwMapCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/spwMap.G0'
-        # From merged test
-        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref2a.gcal'
-        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc4826.ms'
-        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc4826.ref1b.gcal'
+    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/gaincal/'
+
+datapath = rootpath + 'gaincaltest2.ms'
+compCal = rootpath + 'gaincaltest2.ms.G0'
+tCal = rootpath + 'gaincaltest2.ms.T0'
+# Reference Cals
+combinedRef = rootpath + 'genDataCombine.G0'
+preTRef = rootpath + 'genDataPreT.G0'
+preGRef = rootpath + 'genDataPreG.T0'
+calModeP = rootpath + 'calModeTest.G0'
+calModeA = rootpath + 'calModeTest.G1'
+typeCalK = rootpath + 'gaintypek.G0'
+typeCalSpline = rootpath + 'gaintypeSpline.G0'
+spwMapCal = rootpath + 'spwMap.G0'
+# From merged test
+merged_dataset1 = rootpath + 'ngc5921.ms'
+merged_refcal1 = rootpath + 'ngc5921.ref1a.gcal'
+merged_refcal2 = rootpath + 'ngc5921.ref2a.gcal'
+merged_dataset2 = rootpath + 'ngc4826.ms'
+merged_refcal3 = rootpath + 'ngc4826.ref1b.gcal'
         
         
 fullRangeCal = 'testgaincal.cal'
@@ -712,14 +675,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(flT[0,0,20:30][2])       # spw 2, antenna 2, pol=X
         self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
         # (spw 3 tested above)
-
-
-
-
-
-
-
-
 
 def suite():
     return[gaincal_test]

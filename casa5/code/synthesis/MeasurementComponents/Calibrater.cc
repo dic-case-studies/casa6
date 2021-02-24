@@ -1676,7 +1676,7 @@ Bool Calibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 
 				Int spw = vb->spectralWindows()(0);
 
-				Int nrow = vb->nRows();
+				auto nrow = vb->nRows();
 				Int nchan = vb->nChannels();
 				Int ncor = vb->nCorrelations();
 
@@ -1993,7 +1993,7 @@ Bool Calibrater::initWeights(String wtmode, Bool dowtsp) {
 
 	Int spw = vb->spectralWindows()(0);
 
-	Int nrow=vb->nRows();
+	auto nrow=vb->nRows();
 	Int nchan=vb->nChannels();
 	Int ncor=vb->nCorrelations();
 
@@ -2214,7 +2214,7 @@ Bool Calibrater::initWeights(Bool doBT, Bool dowtsp) {
 
 	Int spw = vb->spectralWindows()(0);
 
-	Int nrow=vb->nRows();
+	auto nrow=vb->nRows();
 	Int nchan=vb->nChannels();
 	Int ncor=vb->nCorrelations();
 
@@ -2649,6 +2649,8 @@ void Calibrater::specifycal(const String& type,
       cal_ = createSolvableVisCal("EVLASWP",*msmc_p);
     else if (utype.contains("OPAC"))
       cal_ = createSolvableVisCal("TOPAC",*msmc_p);
+    else if (utype.contains("GC") && ms_p && ms_p->keywordSet().isDefined("GAIN_CURVE"))
+      cal_ = createSolvableVisCal("POWERCURVE",*msmc_p);
     else if (utype.contains("GC") || utype.contains("EFF"))
       cal_ = createSolvableVisCal("GAINCURVE",*msmc_p);
     else if (utype.contains("TEC"))
@@ -4495,7 +4497,7 @@ Bool OldCalibrater::initWeightsWithTsys(String wtmode, Bool dowtsp,
 
 				Int spw = vb->spectralWindows()(0);
 
-				Int nrow = vb->nRows();
+				auto nrow = vb->nRows();
 				Int nchan = vb->nChannels();
 				Int ncor = vb->nCorrelations();
 

@@ -2,13 +2,13 @@
  * Framework independent implementation file for atmosphere...
  *
  * Implement the atmosphere component here.
- * 
+ *
  * // Interface to the ALMA TELCAL C++ API for Juan Padro's FORTRAN
  * // Atmospheric Model library atmlib.
  * // Implemented 12 Oct 2006, Raymond Rusk
  *
  * @author
- * @version 
+ * @version
  ***/
 
 #include <string>
@@ -31,22 +31,22 @@ namespace casac {
 
 ///// helper functions /////
 // Assert ATM type is in permissive range of enum, typeAtm_t
-inline void atmosphere::check_atmtype_enum(int atmtype) {
+inline void atmosphere::check_atmtype_enum(long atmtype) {
   typeAtm_t typeEnd = typeATM_end;
   ThrowIf((atmtype<1 || atmtype>=typeEnd), "atmType not in permissive range.");
 }
 // Assert int value is positive or zero.
-inline void atmosphere::assert_unsigned_int(int value)
+inline void atmosphere::assert_unsigned_int(long value)
 {
   AlwaysAssert(value>=0, casacore::AipsError);
 }
 // Assert Spw ID and channel ID are in proper range
-inline void atmosphere::assert_spwid(int spwid) {
+inline void atmosphere::assert_spwid(long spwid) {
   ThrowIf(pSpectralGrid == 0, "Spectral window is not defined yet");
   ThrowIf(spwid < 0 || static_cast<unsigned int>(spwid) >= pSpectralGrid->getNumSpectralWindow(),
 	  "Spw ID out of range.");
 }
-inline void atmosphere::assert_spwid_and_channel(int spwid, int chan) {
+inline void atmosphere::assert_spwid_and_channel(long spwid, long chan) {
   ThrowIf(pSpectralGrid == 0, "Spectral window is not defined yet");
   assert_spwid(spwid);
   ThrowIf(chan < 0 || static_cast<unsigned int>(chan) >= pSpectralGrid->getNumChan(static_cast<unsigned int>(spwid)),
@@ -141,7 +141,7 @@ atmosphere::listAtmosphereTypes()
   }
   return rtn;
 }
-  
+
 std::string
 atmosphere::initAtmProfile(const Quantity& altitude,
 			   const Quantity& temperature,
@@ -149,7 +149,7 @@ atmosphere::initAtmProfile(const Quantity& altitude,
 			   const Quantity& maxAltitude,
 			   const double humidity, const Quantity& dTem_dh,
 			   const Quantity& dP, const double dPm,
-			   const Quantity& h0, int atmtype,
+			   const Quantity& h0, long atmtype,
 			   const std::vector<double> &layerBoundaries,
 			   const std::vector<double> &layerTemperature)
 {
@@ -157,15 +157,15 @@ atmosphere::initAtmProfile(const Quantity& altitude,
 
   try {
     check_atmtype_enum(atmtype);
-    Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
-    Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
-    Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
+    Length       Alt((casaQuantity(altitude)).getValue("m"),Length::UnitMeter);
+    Pressure       P((casaQuantity(pressure)).getValue("mbar"),Pressure::UnitMilliBar);
+    Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
-    Humidity       H(humidity, "%");
-    Length       WVL((casaQuantity(h0)).getValue("km"),"km");
-    Pressure   Pstep((casaQuantity(dP)).getValue("mbar"), "mb");
+    Humidity       H(humidity, Percent::UnitPercent);
+    Length       WVL((casaQuantity(h0)).getValue("km"),Length::UnitKiloMeter);
+    Pressure   Pstep((casaQuantity(dP)).getValue("mbar"), Pressure::UnitMilliBar);
     double PstepFact(dPm);
-    Length    topAtm((casaQuantity(maxAltitude)).getValue("m"), "m");
+    Length    topAtm((casaQuantity(maxAltitude)).getValue("m"), Length::UnitMeter);
     unsigned int atmType = (unsigned int)atmtype;
 
     ThrowIf(layerBoundaries.size() != layerTemperature.size(),
@@ -175,13 +175,13 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     ostringstream oss;
     oss<<"BASIC ATMOSPHERIC PARAMETERS TO GENERATE REFERENCE ATMOSPHERIC PROFILE"<<endl;
     oss<<"  "<<endl;
-    oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
-    oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
-    oss<<"Relative humidity rh:         " << H.get("%")      << " %"    <<endl;
-    oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
-    oss<<"Pressure step dp:             " << Pstep.get("mb") << " mb"   <<endl;
-    oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
-    oss<<"Attitude top atm profile:     " << topAtm.get("km")<< " km"   <<endl;
+    oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
+    oss<<"Ground pressure P:            " << P.get(Pressure::UnitMilliBar)     << " mb"   <<endl;
+    oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
+    oss<<"Scale height h0:              " << WVL.get(Length::UnitKiloMeter)   << " km"   <<endl;
+    oss<<"Pressure step dp:             " << Pstep.get(Pressure::UnitMilliBar) << " mb"   <<endl;
+    oss<<"Altitude alti:                " << Alt.get(Length::UnitMeter)    << " m"    <<endl;
+    oss<<"Attitude top atm profile:     " << topAtm.get(Length::UnitKiloMeter)<< " km"   <<endl;
     oss<<"Pressure step factor:         " << PstepFact          << " "    <<endl;
     oss<<"Tropospheric lapse rate:      " << TLR                << " K/km" <<endl;
 
@@ -205,8 +205,8 @@ atmosphere::initAtmProfile(const Quantity& altitude,
     	vector<Length> layerAlt(num_user_layer);
     	vector<Temperature> layerTemp(num_user_layer);
     	for (size_t i = 0 ; i < num_user_layer ; ++i) {
-    		layerAlt[i] = Length(layerBoundaries[i], "m");
-    		layerTemp[i] = Temperature(layerTemperature[i], "K");
+    		layerAlt[i] = Length(layerBoundaries[i], Length::UnitMeter);
+    		layerTemp[i] = Temperature(layerTemperature[i], Temperature::UnitKelvin);
     	}
         pAtmProfile = new AtmProfile( Alt, P, T, TLR, H, WVL, Pstep, PstepFact,
     					  topAtm, atmType, layerAlt, layerTemp );
@@ -237,12 +237,12 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
 {
   string rtn;
   try {
-    Length       Alt((casaQuantity(altitude)).getValue("m"),"m");
-    Pressure       P((casaQuantity(pressure)).getValue("mbar"),"mb");
-    Temperature    T((casaQuantity(temperature)).getValue("K"),"K");
+    Length       Alt((casaQuantity(altitude)).getValue("m"),Length::UnitMeter);
+    Pressure       P((casaQuantity(pressure)).getValue("mbar"),Pressure::UnitMilliBar);
+    Temperature    T((casaQuantity(temperature)).getValue("K"),Temperature::UnitKelvin);
     double       TLR((casaQuantity(dTem_dh)).getValue("K/km"));
-    Humidity       H(humidity, "%");
-    Length       WVL((casaQuantity(h0)).getValue("km"),"km");
+    Humidity       H(humidity, Percent::UnitPercent);
+    Length       WVL((casaQuantity(h0)).getValue("km"),Length::UnitKiloMeter);
     if (pAtmProfile) {
       if (! pAtmProfile->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	*itsLog << LogIO::WARN
@@ -251,14 +251,14 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
       if (pRefractiveIndexProfile) {
 	if (! pRefractiveIndexProfile->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	  *itsLog << LogIO::WARN
-		  << "Refractive index profile update failed!" 
+		  << "Refractive index profile update failed!"
 		  << LogIO::POST;
 	}
       }
       if (pSkyStatus) {
 	if (! pSkyStatus->setBasicAtmosphericParameters(Alt,P,T,TLR,H,WVL) ) {
 	  *itsLog << LogIO::WARN
-		  << "Skystatus update failed!" 
+		  << "Skystatus update failed!"
 		  << LogIO::POST;
 	}
 	// WORK AROUND to set the 1st guess water column as a coefficient
@@ -273,11 +273,11 @@ atmosphere::updateAtmProfile(const Quantity& altitude,
     ostringstream oss;
     oss<<"UPDATED BASIC ATMOSPHERIC PARAMETERS TO GENERATE REFERENCE ATMOSPHERIC PROFILE"<<endl;
     oss<<"  "<<endl;
-    oss<<"Ground temperature T:         " << T.get("K")      << " K"    <<endl;
-    oss<<"Ground pressure P:            " << P.get("mb")     << " mb"   <<endl;
-    oss<<"Relative humidity rh:         " << H.get("%")      << " %"    <<endl;
-    oss<<"Scale height h0:              " << WVL.get("km")   << " km"   <<endl;
-    oss<<"Altitude alti:                " << Alt.get("m")    << " m"    <<endl;
+    oss<<"Ground temperature T:         " << T.get(Temperature::UnitKelvin)      << " K"    <<endl;
+    oss<<"Ground pressure P:            " << P.get(Pressure::UnitMilliBar)     << " mb"   <<endl;
+    oss<<"Relative humidity rh:         " << H.get(Percent::UnitPercent)      << " %"    <<endl;
+    oss<<"Scale height h0:              " << WVL.get(Length::UnitKiloMeter)   << " km"   <<endl;
+    oss<<"Altitude alti:                " << Alt.get(Length::UnitMeter)    << " m"    <<endl;
     oss<<"Tropospheric lapse rate:      " << TLR                << " K/km" <<endl;
     oss<<endl;
     rtn = oss.str();
@@ -307,23 +307,23 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
       dP.value.resize(1);
       h0.value.resize(1);
       Length Alt = pAtmProfile->getAltitude();
-      altitude.value[0] = Alt.get("m"); altitude.units = "m";
+      altitude.value[0] = Alt.get(Length::UnitMeter); altitude.units = "m";
       Temperature T = pAtmProfile->getGroundTemperature();
-      temperature.value[0] = T.get("K"); temperature.units = "K";
+      temperature.value[0] = T.get(Temperature::UnitKelvin); temperature.units = "K";
       Pressure P = pAtmProfile->getGroundPressure();
-      pressure.value[0] = P.get("mb"); pressure.units = "mbar";
+      pressure.value[0] = P.get(Pressure::UnitMilliBar); pressure.units = "mbar";
       Length topAtm = pAtmProfile->getTopAtmProfile();
-      maxAltitude.value[0] = topAtm.get("km"); maxAltitude.units = "km";
+      maxAltitude.value[0] = topAtm.get(Length::UnitKiloMeter); maxAltitude.units = "km";
       Humidity H = pAtmProfile->getRelativeHumidity();
-      humidity = H.get("%");
+      humidity = H.get(Percent::UnitPercent);
       double TLR = pAtmProfile->getTropoLapseRate();
       dTem_dh.value[0] = TLR; dTem_dh.units ="K/km";
       Pressure Pstep = pAtmProfile->getPressureStep();
-      dP.value[0] = Pstep.get("mb");dP.units = "mbar";
+      dP.value[0] = Pstep.get(Pressure::UnitMilliBar);dP.units = "mbar";
       Pressure PstepFact = pAtmProfile->getPressureStepFactor();
-      dPm = PstepFact.get("Pa");
+      dPm = PstepFact.get(Pressure::UnitPascal);
       Length WVL = pAtmProfile->getWvScaleHeight();
-      h0.value[0] = WVL.get("km"); h0.units = "km";
+      h0.value[0] = WVL.get(Length::UnitKiloMeter); h0.units = "km";
       atmType = pAtmProfile->getAtmosphereType();
 
       ostringstream oss;
@@ -355,7 +355,7 @@ atmosphere::getBasicAtmParms(Quantity& altitude, Quantity& temperature,
   return rtn;
 }
 
-int
+long
 atmosphere::getNumLayers()
 {
   int rtn(-1);
@@ -412,7 +412,7 @@ atmosphere::getGroundWH2O()
     if (pAtmProfile) {
       atm::Length gw = pAtmProfile->getGroundWH2O();
       std::vector<double> qvalue(1);
-      qvalue[0] = gw.get("mm");
+      qvalue[0] = gw.get(Length::UnitMilliMeter);
       q.value = qvalue;
       q.units = "mm";
     } else {
@@ -488,8 +488,8 @@ atmosphere::getProfile(Quantity& thickness, Quantity& temperature,
   return rtn;
 }
 
-int
-atmosphere::initSpectralWindow(int nbands, const Quantity& fCenter,
+long
+atmosphere::initSpectralWindow(long nbands, const Quantity& fCenter,
 		       const Quantity& fWidth, const Quantity& fRes)
 {
   int rstat(-1);
@@ -555,7 +555,7 @@ atmosphere::initSpectralWindow(int nbands, const Quantity& fCenter,
   return rstat;
 }
 
-int
+long
 atmosphere::addSpectralWindow(const Quantity& fCenter,
 		       const Quantity& fWidth, const Quantity& fRes)
 {
@@ -569,7 +569,7 @@ atmosphere::addSpectralWindow(const Quantity& fCenter,
       if (fRes.value[0] == 0) {
 	*itsLog << LogIO::WARN << "Resolution of band cannot be 0,0 GHz!" << LogIO::POST;
 	return rstat;
-      }	
+      }
       int numChan = (int)ceil((casacore::Quantity(fWidth.value[0],ufW).getValue(ufR) / fRes.value[0]));
       int refChan = (numChan - 1)/2;
       Frequency refFreq = Frequency(fCenter.value[0],fCenter.units);
@@ -599,7 +599,7 @@ atmosphere::addSpectralWindow(const Quantity& fCenter,
   return rstat;
 }
 
-int
+long
 atmosphere::getNumSpectralWindows()
 {
   int rstat(-1);
@@ -619,22 +619,22 @@ atmosphere::getNumSpectralWindows()
   return rstat;
 }
 
-int
-atmosphere::getNumChan(int spwid)
+long
+atmosphere::getNumChan(long spwid)
 {
   auto myfunc = (unsigned int(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getNumChan;
   return DoSpGridSingleIdFuncInt(myfunc, spwid);
 }
 
-int
-atmosphere::getRefChan(int spwid)
+long
+atmosphere::getRefChan(long spwid)
 {
   auto myfunc = (unsigned int(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getRefChan;
   return DoSpGridSingleIdFuncInt(myfunc, spwid);
 }
 
 /// a private helper function
-int atmosphere::DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, int spwid)
+long atmosphere::DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, long spwid)
 {
 	 int rstat(-1);
 	  try {
@@ -655,55 +655,55 @@ int atmosphere::DoSpGridSingleIdFuncInt(SpGridSingleIdFuncInt func, int spwid)
 }
 
 Quantity
-atmosphere::getRefFreq(int spwid)
+atmosphere::getRefFreq(long spwid)
 {
   std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getRefFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 
 Quantity
-atmosphere::getChanSep(int spwid)
+atmosphere::getChanSep(long spwid)
 {
   std::string qunits("MHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getChanSep;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitMegaHertz);
 }
 
 Quantity
-atmosphere::getBandwidth(int spwid)
+atmosphere::getBandwidth(long spwid)
 {
   std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getBandwidth;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 Quantity
-atmosphere::getMinFreq(int spwid)
+atmosphere::getMinFreq(long spwid)
 {
   std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getMinFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 Quantity
-atmosphere::getMaxFreq(int spwid)
+atmosphere::getMaxFreq(long spwid)
 {
   std::string qunits("GHz");
   auto myfunc = (Frequency(SpectralGrid::*)(unsigned int) const)&SpectralGrid::getMaxFreq;
-  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits);
+  return DoSpGridSingleIdFuncQuantum(myfunc, spwid, qunits, Frequency::UnitGigaHertz);
 }
 
 /// a private helper function
-Quantity atmosphere::DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, int spwid, string qunits)
+Quantity atmosphere::DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, long spwid, string const &qunits, Frequency::Units units)
 {
   ::casac::Quantity q;
   try {
     if (pSpectralGrid) {
       assert_spwid(spwid);
       std::vector<double> qvalue(1);
-      qvalue[0] = (pSpectralGrid->*func)(static_cast<unsigned int>(spwid)).get(qunits);
+      qvalue[0] = (pSpectralGrid->*func)(static_cast<unsigned int>(spwid)).get(units);
       q.value = qvalue;
       q.units = qunits;
     } else {
@@ -721,9 +721,9 @@ Quantity atmosphere::DoSpGridSingleIdFuncQuantum(SpGridSingleIdFuncFreq func, in
 
 // This can't be merged now since SpectralGrid::getSpectralWindow returns vector
 Quantity
-atmosphere::getSpectralWindow(int spwid)
+atmosphere::getSpectralWindow(long spwid)
 {
-  std::string qunits("Hz");
+  // std::string qunits("Hz");
 
   Quantity q;
   try {
@@ -745,7 +745,7 @@ atmosphere::getSpectralWindow(int spwid)
 }
 
 double
-atmosphere::getChanNum(const Quantity& freq, int spwid)
+atmosphere::getChanNum(const Quantity& freq, long spwid)
 {
   double rstat(-1.0);
   try {
@@ -767,18 +767,18 @@ atmosphere::getChanNum(const Quantity& freq, int spwid)
 }
 
 Quantity
-atmosphere::getChanFreq(int chanNum, int spwid)
+atmosphere::getChanFreq(long chanNum, long spwid)
 {
   ::casac::Quantity q;
   try {
     if (pSpectralGrid) {
       assert_spwid_and_channel(spwid, chanNum);
       std::vector<double> qvalue(1);
-      std::string qunits("GHz");
+      // std::string qunits("GHz");
       qvalue[0] = pSpectralGrid->getChanFreq(static_cast<unsigned int>(spwid),
-					     static_cast<unsigned int>(chanNum)).get(qunits);
+					     static_cast<unsigned int>(chanNum)).get(Frequency::UnitGigaHertz);
       q.value = qvalue;
-      q.units = qunits;
+      q.units = "GHz";
     } else {
       *itsLog << LogIO::WARN
 	      << "Please set spectral window(s) with initSpectralWindow."
@@ -796,7 +796,7 @@ atmosphere::getChanFreq(int chanNum, int spwid)
 // a helper function to invoke ATM functions in RefractiveIndexProfile and SkyStatus classes
 // for atmosphere functions which take two integer ids as paramters
 template<typename Func, typename ClassType>
-double atmosphere::doTwoIdATMFuncDouble(Func func, ClassType obj, int nc, int spwid)
+double atmosphere::doTwoIdATMFuncDouble(Func func, ClassType obj, long nc, long spwid)
 {
   double out_data(-1.0);
   try {
@@ -810,7 +810,7 @@ double atmosphere::doTwoIdATMFuncDouble(Func func, ClassType obj, int nc, int sp
       } else {
 	chan = static_cast<unsigned int>(nc);
       }
-      out_data = func(obj, spw,chan).get("neper");
+      out_data = func(obj, spw,chan).get(Opacity::UnitNeper);
     } else {
       *itsLog << LogIO::WARN
 	      << "Please set spectral window(s) with initSpectralWindow first."
@@ -826,8 +826,8 @@ double atmosphere::doTwoIdATMFuncDouble(Func func, ClassType obj, int nc, int sp
 
 // a helper function to invoke ATM functions in RefractiveIndexProfile and SkyStatus classes
 // for atmosphere functions which take two integer ids as paramters
-template<typename Func, typename ClassType>
-Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, int nc, int spwid, string units)
+template<typename Func, typename ClassType, typename UnitType>
+Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, long nc, long spwid, string const &qunits, UnitType units)
 {
   ::casac::Quantity rtn;
   try {
@@ -842,8 +842,8 @@ Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, int nc, int
 	chan = static_cast<unsigned int>(nc);
       }
       rtn.value.resize(1);
-      rtn.units = units;
-      rtn.value[0] = func(obj,spw,chan).get(rtn.units);
+      rtn.units = qunits;
+      rtn.value[0] = func(obj,spw,chan).get(units);
     } else {
       *itsLog << LogIO::WARN
 	      << "Please set spectral window(s) with initSpectralWindow first."
@@ -858,7 +858,7 @@ Quantity atmosphere::doTwoIdATMFuncQuantum(Func func, ClassType obj, int nc, int
 }
 
 double
-atmosphere::getDryOpacity(int nc, int spwid)
+atmosphere::getDryOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDryOpacity(spw_idx, chan_idx);
@@ -867,7 +867,7 @@ atmosphere::getDryOpacity(int nc, int spwid)
 }
 
 double
-atmosphere::getDryContOpacity(int nc, int spwid)
+atmosphere::getDryContOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDryContOpacity(spw_idx, chan_idx);
@@ -876,7 +876,7 @@ atmosphere::getDryContOpacity(int nc, int spwid)
 }
 
 double
-atmosphere::getO2LinesOpacity(int nc, int spwid)
+atmosphere::getO2LinesOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO2LinesOpacity(spw_idx, chan_idx);
@@ -885,7 +885,7 @@ atmosphere::getO2LinesOpacity(int nc, int spwid)
 }
 
 double
-atmosphere::getCOLinesOpacity(int nc, int spwid)
+atmosphere::getCOLinesOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getCOLinesOpacity(spw_idx, chan_idx);
@@ -894,7 +894,7 @@ atmosphere::getCOLinesOpacity(int nc, int spwid)
 }
 
 double
-atmosphere::getO3LinesOpacity(int nc, int spwid)
+atmosphere::getO3LinesOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO3LinesOpacity(spw_idx, chan_idx);
@@ -903,7 +903,7 @@ atmosphere::getO3LinesOpacity(int nc, int spwid)
 }
 
 double
-atmosphere::getN2OLinesOpacity(int nc, int spwid)
+atmosphere::getN2OLinesOpacity(long nc, long spwid)
 {
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getN2OLinesOpacity(spw_idx, chan_idx);
@@ -912,17 +912,17 @@ atmosphere::getN2OLinesOpacity(int nc, int spwid)
 }
 
 Quantity
-atmosphere::getWetOpacity(int nc, int spwid)
+atmosphere::getWetOpacity(long nc, long spwid)
 {
   std::string units("neper");
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getWetOpacity(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Opacity::UnitNeper);
 }
 
 double
-atmosphere::getH2OLinesOpacity(int nc, int spwid)
+atmosphere::getH2OLinesOpacity(long nc, long spwid)
 {
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getH2OLinesOpacity(spw_idx, chan_idx);
@@ -932,7 +932,7 @@ atmosphere::getH2OLinesOpacity(int nc, int spwid)
 
 
 double
-atmosphere::getH2OContOpacity(int nc, int spwid)
+atmosphere::getH2OContOpacity(long nc, long spwid)
 {
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getH2OContOpacity(spw_idx, chan_idx);
@@ -940,8 +940,8 @@ atmosphere::getH2OContOpacity(int nc, int spwid)
   return doTwoIdATMFuncDouble(myfunc, pSkyStatus, nc, spwid);
 }
 
-int
-atmosphere::getDryOpacitySpec(int spwid, std::vector<double>& dryOpacity)
+long
+atmosphere::getDryOpacitySpec(long spwid, std::vector<double>& dryOpacity)
 {
   int nchan(-1);
   try {
@@ -953,7 +953,7 @@ atmosphere::getDryOpacitySpec(int spwid, std::vector<double>& dryOpacity)
       unsigned int spw = static_cast<unsigned int>(spwid);
       for (unsigned int i = 0; i < num_chan; i++) {
 	dryOpacity[i] =
-	  pRefractiveIndexProfile->getDryOpacity(spw,i).get("neper");
+	  pRefractiveIndexProfile->getDryOpacity(spw,i).get(Opacity::UnitNeper);
       }
     } else {
       *itsLog << LogIO::WARN
@@ -968,8 +968,8 @@ atmosphere::getDryOpacitySpec(int spwid, std::vector<double>& dryOpacity)
   return nchan;
 }
 
-int
-atmosphere::getWetOpacitySpec(int spwid, Quantity& wetOpacity)
+long
+atmosphere::getWetOpacitySpec(long spwid, Quantity& wetOpacity)
 {
   int nchan(-1);
   try {
@@ -978,11 +978,11 @@ atmosphere::getWetOpacitySpec(int spwid, Quantity& wetOpacity)
       unsigned int num_chan = pSpectralGrid->getNumChan(spwid);
       nchan = static_cast<int>(num_chan);
       (wetOpacity.value).resize(num_chan);
-      wetOpacity.units="mm-1";
+      wetOpacity.units="neper";
       unsigned int spw = static_cast<unsigned int>(spwid);
       for (int i = 0; i < nchan; i++) {
 	(wetOpacity.value)[i] =
-          pSkyStatus->getWetOpacity(spw,i).get(wetOpacity.units);
+          pSkyStatus->getWetOpacity(spw,i).get(Opacity::UnitNeper);
       }
     } else {
       *itsLog << LogIO::WARN
@@ -998,250 +998,250 @@ atmosphere::getWetOpacitySpec(int spwid, Quantity& wetOpacity)
 }
 
 Quantity
-atmosphere::getDispersivePhaseDelay(int nc, int spwid)
+atmosphere::getDispersivePhaseDelay(long nc, long spwid)
 {
   std::string units("deg");
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getDispersiveH2OPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
-atmosphere::getDispersiveWetPhaseDelay(int nc, int spwid)
+atmosphere::getDispersiveWetPhaseDelay(long nc, long spwid)
 {
   std::string units("deg");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDispersiveH2OPhaseDelay(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
-atmosphere::getNonDispersiveWetPhaseDelay(int nc, int spwid)
+atmosphere::getNonDispersiveWetPhaseDelay(long nc, long spwid)
 {
   std::string units("deg");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveH2OPhaseDelay(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
-atmosphere::getNonDispersiveDryPhaseDelay(int nc, int spwid)
+atmosphere::getNonDispersiveDryPhaseDelay(long nc, long spwid)
 {
   std::string units("deg");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveDryPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
-atmosphere::getDispersiveWetPathLength(int nc, int spwid)
+atmosphere::getDispersiveWetPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getDispersiveH2OPathLength(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getNonDispersiveWetPathLength(int nc, int spwid)
+atmosphere::getNonDispersiveWetPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveH2OPathLength(RIP->getGroundWH2O(), spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getNonDispersiveDryPathLength(int nc, int spwid)
+atmosphere::getNonDispersiveDryPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getNonDispersiveDryPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getO2LinesPathLength(int nc, int spwid)
+atmosphere::getO2LinesPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO2LinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getO3LinesPathLength(int nc, int spwid)
+atmosphere::getO3LinesPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getO3LinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getCOLinesPathLength(int nc, int spwid)
+atmosphere::getCOLinesPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getCOLinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getN2OLinesPathLength(int nc, int spwid)
+atmosphere::getN2OLinesPathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx) {
     return RIP->getN2OLinesPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pRefractiveIndexProfile, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getNonDispersivePhaseDelay(int nc, int spwid)
+atmosphere::getNonDispersivePhaseDelay(long nc, long spwid)
 {
   std::string units("deg");
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getNonDispersiveH2OPhaseDelay(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Angle::UnitDegree);
 }
 
 Quantity
-atmosphere::getDispersivePathLength(int nc, int spwid)
+atmosphere::getDispersivePathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getDispersiveH2OPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Length::UnitMeter);
 }
 
 Quantity
-atmosphere::getNonDispersivePathLength(int nc, int spwid)
+atmosphere::getNonDispersivePathLength(long nc, long spwid)
 {
   std::string units("m");
   auto myfunc = [](SkyStatus *SS, unsigned int spw_idx, unsigned int chan_idx) {
     return SS->getNonDispersiveH2OPathLength(spw_idx, chan_idx);
   };
-  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units);
+  return doTwoIdATMFuncQuantum(myfunc, pSkyStatus, nc, spwid, units, Length::UnitMeter);
 }
 
 
 Quantity
-atmosphere::getAbsH2OLines(int nl, int nf, int spwid)
+atmosphere::getAbsH2OLines(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsH2OLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
-  
+
 Quantity
-atmosphere::getAbsH2OCont(int nl, int nf, int spwid)
+atmosphere::getAbsH2OCont(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsH2OCont(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
-  
+
 Quantity
-atmosphere::getAbsO2Lines(int nl, int nf, int spwid)
+atmosphere::getAbsO2Lines(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsO2Lines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
-atmosphere::getAbsDryCont(int nl, int nf, int spwid)
+atmosphere::getAbsDryCont(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsDryCont(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
-  
+
 Quantity
-atmosphere::getAbsO3Lines(int nl, int nf, int spwid)
+atmosphere::getAbsO3Lines(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsO3Lines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
-  
+
 Quantity
-atmosphere::getAbsCOLines(int nl, int nf, int spwid)
+atmosphere::getAbsCOLines(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsCOLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
-  
+
 Quantity
-atmosphere::getAbsN2OLines(int nl, int nf, int spwid)
+atmosphere::getAbsN2OLines(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsN2OLines(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 Quantity
-atmosphere::getAbsTotalDry(int nl, int nf, int spwid)
+atmosphere::getAbsTotalDry(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsTotalDry(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
- 
+
 Quantity
-atmosphere::getAbsTotalWet(int nl, int nf, int spwid)
+atmosphere::getAbsTotalWet(long nl, long nf, long spwid)
 {
   std::string units = "m-1";
   auto myfunc = [](RefractiveIndexProfile *RIP, unsigned int spw_idx, unsigned int chan_idx, unsigned int layer_idx) {
     return RIP->getAbsTotalWet(spw_idx, chan_idx, layer_idx);
   };
-  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units);
+  return doRIPThreeIdFuncQuantum(myfunc, nl, nf, spwid, units, InverseLength::UnitInverseMeter);
 }
 
 // a helper function
 template<typename Func>
-Quantity atmosphere::doRIPThreeIdFuncQuantum(Func func, int nl, int nf, int spwid, string units)
+Quantity atmosphere::doRIPThreeIdFuncQuantum(Func func, long nl, long nf, long spwid, string const &qunits, InverseLength::Units units)
 {
   Quantity rtn(std::vector<double> (1,-1.0), "");
   try {
     assert_unsigned_int(nl);
     assert_spwid_and_channel(spwid, nf);
     if (pRefractiveIndexProfile) {
-      rtn.units = units;
+      rtn.units = qunits;
       (rtn.value)[0] = func(pRefractiveIndexProfile,
 			    static_cast<unsigned int>(spwid),
 			    static_cast<unsigned int>(nf),
-			    static_cast<unsigned int>(nl)).get(rtn.units);
+			    static_cast<unsigned int>(nl)).get(units);
     } else {
       *itsLog << LogIO::WARN
 	      << "Please set spectral window(s) with initSpectralWindow first."
@@ -1388,7 +1388,7 @@ atmosphere::getSkyBackgroundTemperature()
 }
 
 Quantity
-atmosphere::getAverageTebbSky(int spwid, const Quantity& wh2o)
+atmosphere::getAverageTebbSky(long spwid, const Quantity& wh2o)
 {
   ::casac::Quantity q;
   try {
@@ -1418,7 +1418,7 @@ atmosphere::getAverageTebbSky(int spwid, const Quantity& wh2o)
 }
 
 Quantity
-atmosphere::getTebbSky(int nc, int spwid, const Quantity& wh2o)
+atmosphere::getTebbSky(long nc, long spwid, const Quantity& wh2o)
 {
   ::casac::Quantity q;
   try {
@@ -1454,8 +1454,8 @@ atmosphere::getTebbSky(int nc, int spwid, const Quantity& wh2o)
   return q;
 }
 
-int
-atmosphere::getTebbSkySpec(const int spwid, const Quantity& wh2o, Quantity& tebbSky)
+long
+atmosphere::getTebbSkySpec(const long spwid, const Quantity& wh2o, Quantity& tebbSky)
 {
   int nchan(0);
   try {
@@ -1495,7 +1495,7 @@ atmosphere::getTebbSkySpec(const int spwid, const Quantity& wh2o, Quantity& tebb
 }
 
 Quantity
-atmosphere::getAverageTrjSky(int spwid, const Quantity& wh2o)
+atmosphere::getAverageTrjSky(long spwid, const Quantity& wh2o)
 {
   ::casac::Quantity q;
   try {
@@ -1525,7 +1525,7 @@ atmosphere::getAverageTrjSky(int spwid, const Quantity& wh2o)
 }
 
 Quantity
-atmosphere::getTrjSky(int nc, int spwid, const Quantity& wh2o)
+atmosphere::getTrjSky(long nc, long spwid, const Quantity& wh2o)
 {
   ::casac::Quantity q;
   try {
@@ -1561,8 +1561,8 @@ atmosphere::getTrjSky(int nc, int spwid, const Quantity& wh2o)
   return q;
 }
 
-int
-atmosphere::getTrjSkySpec(const int spwid, const Quantity& wh2o, Quantity& trjSky)
+long
+atmosphere::getTrjSkySpec(const long spwid, const Quantity& wh2o, Quantity& trjSky)
 {
   int nchan(0);
   try {

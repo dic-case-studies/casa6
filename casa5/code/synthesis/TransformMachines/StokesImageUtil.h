@@ -72,7 +72,8 @@ public:
  
   enum PolRep {
     CIRCULAR=0,
-    LINEAR
+    LINEAR,
+    UNKNOWN=-1
   };
 
   static const casacore::String & toString(PolRep polRep) {

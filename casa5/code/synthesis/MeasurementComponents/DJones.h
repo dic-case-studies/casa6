@@ -85,6 +85,7 @@ public:
   // Hazard a guess at parameters
   virtual void guessPar(VisBuffer& vb);
   virtual void guessPar(SDBList& sdbs);
+  virtual void guessPar(SDBList&,const casacore::Bool&);  // VI2
 
   // Update the parameters from solving
   //  (in linear approx, we always set the source update to zero, for now!)

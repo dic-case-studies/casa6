@@ -69,6 +69,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				  const casacore::Double freqEnd,
 				  const casacore::Double freqStep,
 			    const casacore::MFrequency::Types freqframe= casacore::MFrequency::LSRK);
+     //Get SPW selection in MS that match freqs  in SOURCE frame for a moving source defined by ephemeris table or TRACKFIELD or DE-200 source name
+     static void getSpwInSourceFreqRange(
+		 casacore::Vector<casacore::Int>& spw,
+		 casacore::Vector<casacore::Int>& start,
+		 casacore::Vector<casacore::Int>& nchan,
+		 const casacore::MeasurementSet& ms, 
+		 const casacore::Double freqStart,
+		 const casacore::Double freqEnd,
+		 const casacore::Double freqStep,
+		 const casacore::String& ephemtabOrSourceName,
+		 const casacore::Int fieldId);
+     
     // The following wil provide the range of frequency convered in the frame requested by the spw, channel selection 
  
      static casacore::Bool getFreqRangeInSpw( casacore::Double& freqStart,
@@ -98,6 +110,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			      const casacore::MeasurementSet& ms, 
 			      const casacore::MFrequency::Types freqframe,
 					      const casacore::Vector<casacore::Int>& fieldId, const casacore::Bool edge=true, const casacore::Bool useFieldsInMS=false );
+     
      //This version gets the range of frequency in SOURCE frame for an ephem source
      //either trackDIr should be a known planet or ephemPath should not be an
      //empty string. Also return a systemic velocity w.r.t TOPO  at the closest time in
@@ -122,7 +135,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     static void getIndexCombination(const casacore::MSColumns& mscol, casacore::Matrix<casacore::Int>& retval);
   private:
     static void rejectConsecutive(const casacore::Vector<casacore::Double>& t, casacore::Vector<casacore::Double>& retval, casacore::Vector<casacore::Int>& indx);
-
+    static void setupSourceObsVelSystem(const casacore::String& ephemTable, const casacore::MeasurementSet& ms,   const casacore::Int& fieldid, casacore::MDoppler& toSource, casacore::MDoppler& toObs, casacore::MeasFrame& mFrame);
+    
   };
 } //# NAMESPACE CASA - END
 #endif

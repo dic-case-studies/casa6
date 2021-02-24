@@ -7,15 +7,13 @@
 # Original code based on readscans.py, courtesy S. Meyers
 
 from __future__ import absolute_import
-from __future__ import print_function
 import numpy as np
 
 try:
     from xml.dom import minidom
-    _setup_successful = True
-except ImportError as e:
-    print("Warning, listsdm task not available: %s" % e)
-    _setup_successful = False
+except ImportError as exc:
+    raise ImportError("task listsdm requires minidom but there was an import error: {}".
+                      format(exc))
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -33,10 +31,6 @@ else:
     str_split = string.split
     
 def listsdm(sdm=None):
-
-    if not _setup_successful:
-        return {}
-
     # read Scan.xml
     xmlscans = minidom.parse(sdm+'/Scan.xml')
     scandict = {}

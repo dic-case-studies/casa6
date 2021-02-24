@@ -35,7 +35,9 @@
 #include <flagging/Flagging/FlagAgentShadow.h>
 #include <flagging/Flagging/FlagAgentExtension.h>
 #include <flagging/Flagging/FlagAgentRFlag.h>
-#if ! defined(CASATOOLS)
+#if defined(CASATOOLS)
+#include <flagging/Flagging/grpcFlagAgentDisplay.h>
+#else
 #include <flagging/Flagging/FlagAgentDisplay.h>
 #endif
 #include <flagging/Flagging/FlagAgentAntennaIntegrations.h>
@@ -314,14 +316,12 @@ FlagAgentBase::create (FlagDataHandler *dh,Record config)
 		FlagAgentAntennaIntegrations* agent = new FlagAgentAntennaIntegrations(dh,config,writePrivateFlags, true);
 		return agent;
 	}
-#if ! defined(CASATOOLS)
 	// Display
 	else if (mode.compare("display")==0)
 	{
 		FlagAgentDisplay* agent = new FlagAgentDisplay(dh,config,writePrivateFlags);
 		return agent;
 	}
-#endif
 	else
 	{
 		cerr << "FlagAgentFactory::" << __FUNCTION__ << " Mode " << mode << " not supported" << endl;
@@ -1961,15 +1961,12 @@ FlagAgentBase::chunkSummary()
 	if (chunkFlags_p > 0)
 	{
 		tableFlags_p +=  chunkFlags_p;
-		if (flag_p)
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data flagged so far " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
+		std::string flagStr = "unflagged";
+		if (flag_p) {
+		   flagStr = "flagged";
 		}
-		else
-		{
-			*logger_p << LogIO::NORMAL << "=> "  << "Data unflagged so far: " <<  100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
-		}
-
+		*logger_p << LogIO::NORMAL << "=> "  << "Data " << flagStr << " so far " <<
+		   100.0*chunkFlags_p/flagDataHandler_p->progressCounts_p<< "%" << LogIO::POST;
 	}
 
 	// Only the clipping agent is capable of detecting this, and besides in general

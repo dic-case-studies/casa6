@@ -103,18 +103,6 @@ TransformingVi2::azel0 (Double time)  const
 void
 TransformingVi2::configureNewSubchunk (){
 
-
-    // Configure the VisBuffer for the new subchunk.  Most information comes from
-    // the Transforming VI2 superclass which in turn gets it from its VI implementation
-    // object.  The main addition is the need to provide the name of the MS output and
-    // the MS index which is always zero since we only support a single output MS.
-
-    Vector<Int> channels = getChannels (0, 0, spectralWindow (), msId()); // args are ignored
-    Int nChannels = channels.nelements();
-
-    Vector<Int> corrs = getCorrelations ();
-    Int nCorrs = corrs.nelements();
-
     configureNewSubchunk (msId(), // always the first MS
                           msName(),
                           isNewMs(),
@@ -122,9 +110,9 @@ TransformingVi2::configureNewSubchunk (){
                           isNewFieldId (),
                           isNewSpectralWindow (),
                           getSubchunkId (),
-                          nRows(),
-                          nChannels,
-                          nCorrs,
+                          nRowsPerShape(),
+                          nChannelsPerShape(),
+                          nCorrelationsPerShape(),
                           getCorrelations(),
                           getCorrelationTypesDefined(),
                           getCorrelationTypesSelected(),
@@ -135,7 +123,9 @@ void
 TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isNewMs,
                                        Bool isNewArrayId, Bool isNewFieldId,
                                        Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       Int nRows, Int nChannels, Int nCorrelations,
+                                       const casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                                       const casacore::Vector<casacore::Int>& nChannelsPerShape,
+                                       const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                        const Vector<Int> & correlations,
                                        const Vector<Stokes::StokesTypes> & correlationsDefined,
                                        const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -148,9 +138,9 @@ TransformingVi2::configureNewSubchunk (Int msId, const String & msName, Bool isN
                                           isNewFieldId,
                                           isNewSpectralWindow,
                                           subchunk,
-                                          nRows,
-                                          nChannels,
-                                          nCorrelations,
+                                          nRowsPerShape,
+                                          nChannelsPerShape,
+                                          nCorrelationsPerShape,
                                           correlations,
                                           correlationsDefined,
                                           correlationsSelected,
@@ -226,6 +216,12 @@ TransformingVi2::flag (Cube<Bool> & flags)  const
 }
 
 void
+TransformingVi2::flag (Vector<Cube<Bool>> & flags)  const
+{
+     getVii()->flag (flags);
+}
+
+void
 TransformingVi2::flag (Matrix<Bool> & flags)  const
 {
      getVii()->flag (flags);
@@ -251,6 +247,12 @@ TransformingVi2::flagRow (Vector<Bool> & rowflags)  const
 
 void
 TransformingVi2::floatData (Cube<Float> & fcube)  const
+{
+     getVii()->floatData (fcube);
+}
+
+void
+TransformingVi2::floatData (Vector<Cube<Float>> & fcube)  const
 {
      getVii()->floatData (fcube);
 }
@@ -470,19 +472,43 @@ TransformingVi2::nPolarizationIds ()  const
     return getVii()->nPolarizationIds ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRows ()  const
 {
     return getVii()->nRows ();
 }
 
-Int
+rownr_t
+TransformingVi2::nShapes ()  const
+{
+    return getVii()->nShapes ();
+}
+
+const casacore::Vector<casacore::rownr_t>&
+TransformingVi2::nRowsPerShape () const
+{
+    return getVii()->nRowsPerShape ();
+}
+
+const casacore::Vector<casacore::Int>&
+TransformingVi2::nChannelsPerShape () const
+{
+    return getVii()->nChannelsPerShape ();
+}
+
+const casacore::Vector<casacore::Int>&
+TransformingVi2::nCorrelationsPerShape () const
+{
+    return getVii()->nCorrelationsPerShape ();
+}
+
+rownr_t
 TransformingVi2::nRowsInChunk ()  const
 {
     return getVii()->nRowsInChunk ();
 }
 
-Int
+rownr_t
 TransformingVi2::nRowsViWillSweep ()  const
 {
     return getVii()->nRowsViWillSweep ();
@@ -589,7 +615,7 @@ TransformingVi2::setReportingFrameOfReference (Int frame)
 }
 
 void
-TransformingVi2::setRowBlocking (Int nRows)
+TransformingVi2::setRowBlocking (rownr_t nRows)
 {
      getVii()->setRowBlocking (nRows);
 }
@@ -602,9 +628,14 @@ TransformingVi2::setVisBuffer (VisBuffer2 * vb)
     vb_p = vb;
 }
 
-
 void
 TransformingVi2::sigma (Matrix<Float> & sig)  const
+{
+     getVii()->sigma (sig);
+}
+
+void
+TransformingVi2::sigma (Vector<Matrix<Float>> & sig)  const
 {
      getVii()->sigma (sig);
 }
@@ -621,18 +652,17 @@ TransformingVi2::sourceName ()  const
     return getVii()->sourceName ();
 }
 
-Int
-TransformingVi2::spectralWindow ()  const
-{
-    return getVii()->spectralWindow ();
-}
-
 void
 TransformingVi2::spectralWindows (Vector<Int> & spws) const
 {
     getVii()->spectralWindows (spws);
 }
 
+void
+TransformingVi2::polarizationIds (Vector<Int> & spws) const
+{
+    getVii()->polarizationIds (spws);
+}
 
 void
 TransformingVi2::stateId (Vector<Int> & stateids)  const
@@ -673,44 +703,44 @@ TransformingVi2::useImagingWeight (const VisImagingWeight & imWgt)
 void
 TransformingVi2::uvw (Matrix<Double> & uvwmat)  const
 {
-     getVii()->uvw (uvwmat);
+    getVii()->uvw (uvwmat);
 }
 
 void
 TransformingVi2::visibilityCorrected (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityCorrected (vis);
+    getVii()->visibilityCorrected (vis);
 }
 
-//void
-//TransformingVi2::visibilityCorrected (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityCorrected (vis);
-//}
+void
+TransformingVi2::visibilityCorrected (Vector<Cube<Complex>> & vis) const
+{
+    getVii()->visibilityCorrected (vis);
+}
 
 void
 TransformingVi2::visibilityModel (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityModel (vis);
+    getVii()->visibilityModel (vis);
 }
 
-//void
-//TransformingVi2::visibilityModel (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityModel (vis);
-//}
+void
+TransformingVi2::visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
+{
+    getVii()->visibilityModel (vis);
+}
 
 void
 TransformingVi2::visibilityObserved (Cube<Complex> & vis)  const
 {
-     getVii()->visibilityObserved (vis);
+    getVii()->visibilityObserved (vis);
 }
 
-//void
-//TransformingVi2::visibilityObserved (Matrix<CStokesVector> & vis)  const
-//{
-//     getVii()->visibilityObserved (vis);
-//}
+void
+TransformingVi2::visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const
+{
+    getVii()->visibilityObserved (vis);
+}
 
 IPosition
 TransformingVi2::visibilityShape ()  const
@@ -725,13 +755,31 @@ TransformingVi2::weight (Matrix<Float> & wt)  const
 }
 
 void
+TransformingVi2::weight (Vector<Matrix<Float>> & wt)  const
+{
+     getVii()->weight (wt);
+}
+
+void
 TransformingVi2::weightSpectrum (Cube<Float> & wtsp)  const
 {
      getVii()->weightSpectrum (wtsp);
 }
 
 void
+TransformingVi2::weightSpectrum (Vector<Cube<Float>> & wtsp)  const
+{
+     getVii()->weightSpectrum (wtsp);
+}
+
+void
 TransformingVi2::sigmaSpectrum (Cube<Float> & sigsp)  const
+{
+     getVii()->sigmaSpectrum (sigsp);
+}
+
+void
+TransformingVi2::sigmaSpectrum (Vector<Cube<Float>> & sigsp)  const
 {
      getVii()->sigmaSpectrum (sigsp);
 }

@@ -119,7 +119,7 @@ def recToList(rec):
 class rg_frombcs_test(unittest.TestCase):
     
     def setUp(self):
-        datapath='regression/unittest/rg.frombcs/'
+        datapath='unittest/rgtool/'
         for im in [image, image_nospec, image_dironly]:
             shutil.copy(ctsys.resolve(datapath + im), im)
     

@@ -86,23 +86,23 @@ void waitUntilIdle();
 
 // Helper method for setting the casacore::MS selection.
 void setPlotMSSelection_(const casa::PlotMSSelection& selection,
-        const bool updateImmediately, const int plotIndex);
+        const bool updateImmediately, const long plotIndex);
 
 // Helper method for setting the casacore::MS averaging.
 void setPlotMSAveraging_(const casa::PlotMSAveraging& averaging,
-        const bool updateImmediately, const int plotIndex);
+        const bool updateImmediately, const long plotIndex);
 
 // Helper method for setting the casacore::MS transformations.
 void setPlotMSTransformations_(const casa::PlotMSTransformations& trans,
-        const bool updateImmediately, const int plotIndex);
+        const bool updateImmediately, const long plotIndex);
 
 // Helper method for setting the casacore::MS calibration.
 void setPlotMSCalibration_(const casa::PlotMSCalibration& calib,
-        const bool updateImmediately, const int plotIndex);
+        const bool updateImmediately, const long plotIndex);
 
 // Helper method for setting the iteration parameters
 void setPlotMSIterate_(const casa::PlotMSIterParam& iter,
-        const bool updateImmediately, const int plotIndex);
+        const bool updateImmediately, const long plotIndex);
 
 // Helper method for setting the flag extension.
 void setFlagging_(const casa::PlotMSFlagging& flagging);
