@@ -77,7 +77,7 @@ from casatools import table
 
 myim = "center_0.fits"
 
-datapath='regression/unittest/coordsys/'
+datapath='unittest/coordsys/'
 
 class coordsys_test(unittest.TestCase):
     

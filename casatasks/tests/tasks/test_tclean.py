@@ -15,7 +15,7 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casapy :  
+# To run from within casa 5:  
 #
 #  runUnitTest.main(['test_tclean'])                                              # Run all tests
 #  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
@@ -24,14 +24,14 @@
 #
 # To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
-#  These tests need data stored in data/regression/unittest/clean/refimager
+#  These tests need data stored in casatestdata/unittest/tclean
+#  The datasets are symliked to the above directory. If using cp to copy them locally,
+#  Use cp -RH
 #
 #  For a developer build, to get the datasets locally 
 #
-#  --- Get the basic data repo :  svn co https://svn.cv.nrao.edu/svn/casa-data/distro data
-#  --- Make directories : mkdir -p data/regression/unittest/clean; cd data/regression/unittest/clean
-#  --- Get test datasets :  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/regression/unittest/clean/refimager
-#
+#  --- Get the test data repo :  svn co https://svn.cv.nrao.edu/svn/casatestdata casatestdata
+#  --- Add a link to casatestdata inside $CASAPATH
 # ########################################################################
 # SKIPPED TESTS 
 # More tests were added to skip (as of 2019,04,26)
@@ -113,7 +113,7 @@ if is_CASA6:
      _qa = quanta( )
      _me = measures( )
      
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+     refdatapath = ctsys.resolve('unittest/tclean/')
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 else:
@@ -131,10 +131,10 @@ else:
      _qa = qa
      _me = me
 
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-     
+ 
 ## List to be run
 def suite():
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]

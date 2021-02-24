@@ -126,7 +126,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   //  virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > gridwt(casacore::uInt term=0);
 
-  void setModelImage( casacore::Vector<casacore::String> modelnames );
+  void setModelImage(const casacore::Vector<casacore::String> &modelnames );
   casacore::Vector<casacore::String> getModelImageName();
 
   casacore::Bool doesImageExist(casacore::String imagename);

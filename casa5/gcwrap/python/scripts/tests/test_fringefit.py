@@ -24,7 +24,7 @@ else:
     from tasks import *
     from taskinit import tbtool
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata')
     tblocal = tbtool()
 
     def ctsys_resolve(apath):
@@ -38,7 +38,7 @@ else:
 #    import testhelper as th
 from casatestutils import testhelper as th
 
-datapath = ctsys_resolve('regression/evn')
+datapath = ctsys_resolve('unittest/fringefit/')
 
 class Fringefit_tests(unittest.TestCase):
     prefix = 'n08c1'

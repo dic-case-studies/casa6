@@ -41,8 +41,8 @@ from casatools import calibrater as cbtool
 from casatools import ms as mstool
 from casatools import ctsys
 
-datadir = 'regression/'
-datafile = os.path.join(datadir, "unittest/listobs/ngc5921_ut.ms")
+datadir = 'unittest/mstool/'
+datafile = os.path.join(datadir, "ngc5921_ut.ms")
 print('ms tool tests will use data from '+ datafile)
 
 class mstool_test_base(unittest.TestCase):
@@ -61,12 +61,12 @@ class mstool_test_base(unittest.TestCase):
         self.ms.open(self.testms, nomodify)
 
     def setUpMs2(self):
-        ms2 = os.path.join(datadir, 'unittest/clean/ngc7538_ut.ms')
+        ms2 = os.path.join(datadir, 'ngc7538_ut.ms')
         if not os.path.exists(self.testms2):
             shutil.copytree(ctsys.resolve(ms2), self.testms2, symlinks=True)
     
     def setUpFits(self):
-        fitsfile = os.path.join(datadir, 'ngc5921/ngc5921.fits')
+        fitsfile = os.path.join(datadir, 'ngc5921.fits')
         if not os.path.exists(self.testfits):
             shutil.copyfile(ctsys.resolve(fitsfile), self.testfits)
 

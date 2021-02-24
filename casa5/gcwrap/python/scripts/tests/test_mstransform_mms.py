@@ -19,7 +19,7 @@ from mpi4casa.MPIEnvironment import MPIEnvironment
 
 
 # Define the root for the data files
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/mstransform/"
 
 aflocal = aftool()
 
@@ -1227,15 +1227,15 @@ class test_otf_calibration(test_base_compare):
         super(test_otf_calibration,self).setUp()
         
         if os.path.exists('ngc5921_regression'): os.system('rm -rf ' + 'ngc5921_regression')
-        os.system('cp -RL '+ datapath + 'ngc5921_regression .')
+        os.system('cp -RH '+ datapath + 'mstransform_reference .')
         
-        self.previs = 'ngc5921_regression/ngc5921.ms'
+        self.previs = 'mstransform_reference/ngc5921.ms'
         self.vis = 'ngc5921.mms'
         self.outvis = 'mst_otf_calibration.mms'
         self.refvis = 'mst_otf_calibration.ms'
         self.outvis_sorted = 'mst_otf_calibration_sorted.mms'
         self.refvis_sorted = 'mst_otf_calibration_sorted.ms'
-        self.auxfile = 'ngc5921_regression/ngc5921_callib.txt'
+        self.auxfile = 'mstransform_reference/ngc5921_callib.txt'
         
         default(mstransform) 
         
@@ -1259,7 +1259,7 @@ class test_otf_calibration(test_base_compare):
     def tearDown(self):
         
         super(test_otf_calibration,self).tearDown()
-        os.system('rm -rf '+ 'ngc5921_regression')
+        os.system('rm -rf '+ 'mstransform_reference')
         os.system('rm -rf '+ self.outvis)
         
     #@unittest.skip('Skip until CAS-8051:Problems with cal library in selected MS contexts is fixed.')        

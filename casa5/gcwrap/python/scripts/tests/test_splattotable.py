@@ -83,8 +83,8 @@ else:
     from taskinit import tbtool as table
     from __main__ import *
 
-good_list = "list1.txt"
-bad_list = "list2.txt"
+good_list = "splattotable_list1.txt"
+bad_list = "splattotable_list2.txt"
 
 def run_sttmethod(list, tab):
     mysl = spectralline()
@@ -105,9 +105,9 @@ class splattotable_test(unittest.TestCase):
     def setUp(self):
         self._tb = table()
         if is_CASA6:
-            datapath=ctsys.resolve('regression/unittest/splattotable')
+            datapath=ctsys.resolve('unittest/splattotable/')
         else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/splattotable')
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/splattotable/')
 
         shutil.copy(os.path.join(datapath,good_list), good_list)
         shutil.copy(os.path.join(datapath,bad_list), bad_list)
@@ -145,21 +145,21 @@ class splattotable_test(unittest.TestCase):
         # CASA6 throws exceptions here, CASA5 does not
         # blank output table name
         try:
-            testit("list1.txt", "")
+            testit(good_list, "")
         except:
             casalog.post("Failure in test_exceptions testing blank output table name",'SEVERE')
             raise
         
         # bad list
         try:
-            testit("list2.txt", "myout");
+            testit(bad_list, "myout");
         except:
             casalog.post("Failure in test_exceptions testing bad list",'SEVERE')
             raise
         
         # unwritable table
         try:
-            testit("list1.txt", "foo/bar/myout");
+            testit(good_list, "foo/bar/myout");
         except:
             casalog.post("Failure in test_exceptions testing unwritable table",'SEVERE')
             raise
@@ -182,7 +182,7 @@ class splattotable_test(unittest.TestCase):
                 self.assertTrue(mytb.open(tab))
             mytb.done()
                     
-        testit("list1.txt", "good_table")
+        testit(good_list, "good_table")
       
 
 def suite():

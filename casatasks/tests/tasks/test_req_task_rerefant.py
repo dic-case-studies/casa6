@@ -43,23 +43,17 @@ import numpy as np
 ## DATA ## 
 
 if CASA6:
-    casavis = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
-    casacal = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
+    casavis = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ms/')
+    casacal = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ref1a.gcal')
     # old test path
     #datadir = casatools.ctsys.resolve('/data/regression/evn/')
-    src = casatools.ctsys.resolve('visibilities/other/n08c1.ms')
+    src = casatools.ctsys.resolve('unittest/rerefant/n08c1.ms')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casavis = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
-        casacal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        # old test path
-        src = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/n08c1.ms'
-    else:
-        casavis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        casacal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        # old test path
-        src = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/n08c1.ms'
+    casavis = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/ngc5921.ms/'
+    casacal = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/ngc5921.ref1a.gcal'
+    # old test path
+    src = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/n08c1.ms'
         
 copyvis = 'vis.ms'
 copycal = 'copycal.gcal'
