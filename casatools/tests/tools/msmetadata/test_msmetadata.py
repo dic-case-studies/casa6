@@ -81,6 +81,7 @@ try:
     datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
     fixture = datadir + 'MSMetaData.ms'
     writeable = datadir + 'checker.ms'
+    tdm2fdm = datadir + 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms'
 except ImportError:
     import os
     from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
@@ -93,6 +94,7 @@ except ImportError:
     datadir = ctsys.resolve('unittest/msmetadata/')
     fixture = os.path.join(datadir,'MSMetaData.ms')
     writeable = os.path.join(datadir,'checker.ms')
+    tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
 
 def near(a, b, epsilon):
     return abs((a-b)/max(a,b)) <= epsilon
@@ -1866,6 +1868,15 @@ class msmetadata_test(unittest.TestCase):
         )
         got = self.md.timesforspws(1)
         self.assertTrue(numpy.all(numpy.isclose(got, expectimes, 0, 1e-6)), "Wrong times")
+
+    def test_tdm_fdm(self):
+        """Verify change to algorithm used for FDM and TDM windows CAS-13362"""
+        self.md.open(tdm2fdm)
+        self.assertTrue(
+            (self.md.almaspws(fdm=True) == [0, 1, 2, 3]).all(),
+            'Incorrect FDM windows'
+        )
+        self.md.done()
 
 def suite():
     return [msmetadata_test]
