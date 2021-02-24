@@ -270,7 +270,7 @@ void CubeMajorCycleAlgorithm::task(){
             
           }
           else{
-            Record outrec=subImgr.makePSF();
+            Record&& outrec=subImgr.makePSF();
 	    if(outrec.isDefined("tempfilenames")){
 	      returnRec_p.define("tempfilenames", outrec.asArrayString("tempfilenames"));
 	    }

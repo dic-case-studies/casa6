@@ -997,7 +997,7 @@ bool SynthesisImager::unlockImages()
 	
 	}
 	if(lastcycle){
-	  String mess="";
+	  String mess="In Major Cycle";
 	  if(controlRecord.isDefined("usemask")  && controlRecord.asString("usemask").contains("auto")){
 	    mess="\nFor Automasking most  major cycles may appear wrongly as  the last one ";
 	  }
@@ -1017,19 +1017,26 @@ bool SynthesisImager::unlockImages()
   //////////////////////////////////////////////
   /////////////////////////////////////////////
   void SynthesisImager::cleanupTempFiles(){
+    LogIO os( LogOrigin("SynthesisImager","cleanupTempFiles",WHERE) );
     for (auto it = tempFileNames_p.begin(); it != tempFileNames_p.end(); ++it) {
       //cerr <<"Trying to cleanup " << (*it) << endl;
       if(Table::isReadable(*it)){
-	Table::deleteTable(*it);
-
+	try{
+	  Table::deleteTable(*it);
+	 }
+	 catch(AipsError &x){
+	   os << LogIO::WARN<< "YOU may have to delete the temporary file " << *it << " because " << x.getMesg()  << LogIO::POST;
+	 }
       }
+
+      
     }
 
 
   }
   Record SynthesisImager::makePSF()
     {
-      Record outRec;
+      Record outRec=Record();
       LogIO os( LogOrigin("SynthesisImager","makePSF",WHERE) );
 
       os << "----------------------------------------------------------- Make PSF ---------------------------------------------" << LogIO::POST;
@@ -1047,7 +1054,7 @@ bool SynthesisImager::unlockImages()
 	}
 	//	makeImage();
 
-	String mess("");
+	String mess("PSF wieghting scheme");
 	std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
 	outRec.define("tempfilenames", Vector<String>(tmpfiles));
     	  itsMappers.releaseImageLocks();
@@ -1057,7 +1064,7 @@ bool SynthesisImager::unlockImages()
       {
     	  throw( AipsError("Error in making PSF : "+x.getMesg()) );
       }
-
+      return outRec;
     }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
