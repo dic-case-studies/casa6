@@ -27,6 +27,10 @@
 # tesst_cacheIMG: Checks that opening then removing an Image clears it from cache
 #
 ##########################################################################
+import os
+import unittest
+import shutil
+
 CASA6 = False
 try:
     print("Importing CASAtools")
@@ -39,23 +43,18 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-import os
-import unittest
-import shutil
 
 if CASA6:
-    mesSet = casatools.ctsys.resolve('visibilities/vla/ngc7538_ut.ms')
-    calTab = casatools.ctsys.resolve('caltables/anpos.manual.cal')
-    imfile = casatools.ctsys.resolve('image/ngc5921.clean.image')
+    datapath = casatools.ctsys.resolve('unittest/rmtables/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/'
-    mesSet = datapath + 'visibilities/vla/ngc7538_ut.ms'
-    calTab = datapath + 'caltables/anpos.manual.cal/'
-    imfile = datapath + 'image/ngc5921.clean.image/'
-    
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmtables'
+
+# Input data
+mesSet = os.path.join(datapath,'ngc7538_ut.ms')
+calTab = os.path.join(datapath,'anpos.manual.cal')
+imfile = os.path.join(datapath,'ngc5921.clean.image')
+
+# Copy data    
 mesCopy = 'ngc7538_ut.ms'
 calCopy = 'anpos.manual.cal'
 imCopy = 'ngc5921.clean.image'
@@ -89,11 +88,7 @@ class rmtables_test(unittest.TestCase):
         
         # self.assertTrue(len(tb.showcache()) == 0, msg='The cache was not empty to start with')
         # Copy the MS over and make sure it is removed
-        
-        if CASA6:
-            shutil.copytree(mesSet, mesCopy)
-        else:
-            shutil.copytree(mesSet, mesCopy)
+        shutil.copytree(mesSet, mesCopy)
         
         file_copy(mesCopy, 493)
         rmtables(mesCopy)
@@ -117,10 +112,7 @@ class rmtables_test(unittest.TestCase):
         #self.assertTrue(len(tb.showcache()) == 0, msg='The cache was not empty to start with')
         
         # Copy the Cal table and make sure it is removed
-        if CASA6:
-            shutil.copytree(calTab, calCopy)
-        else:
-            shutil.copytree(calTab, calCopy)
+        shutil.copytree(calTab, calCopy)
             
         file_copy(calCopy, 493)
         rmtables(calCopy)
@@ -144,10 +136,7 @@ class rmtables_test(unittest.TestCase):
        #self.assertTrue(len(tb.showcache()) == 0, msg='The cache is not empty to start with')
         
         # Copy the image and make sure it is removed
-        if CASA6:
-            shutil.copytree(imfile, imCopy)
-        else:
-            shutil.copytree(imfile, imCopy)
+        shutil.copytree(imfile, imCopy)
             
         file_copy(imCopy, 493)
         rmtables(imCopy)
@@ -165,10 +154,7 @@ class rmtables_test(unittest.TestCase):
             
             The first assert checks that the copy of the MS is removed and the second checks that the cache is empty
         '''
-        if CASA6:
-            shutil.copytree(mesSet, mesCopy)
-        else:
-            shutil.copytree(mesSet, mesCopy)
+        shutil.copytree(mesSet, mesCopy)
             
         file_copy(mesCopy, 493)
         
@@ -191,11 +177,8 @@ class rmtables_test(unittest.TestCase):
             
             The first assert checks that the copy of the CAL table is removed and the second checks that the cache is empty
         '''
-        if CASA6:
-            shutil.copytree(calTab, calCopy)
-        else:
-            shutil.copytree(calTab, calCopy)
-        
+        shutil.copytree(calTab, calCopy)
+         
         file_copy(calCopy, 493)
         
         # Make sure cache is occupied when open
@@ -217,11 +200,8 @@ class rmtables_test(unittest.TestCase):
             
             The first assert checks that the copy of the image is removed and the second checks that the cache is empty
         '''
-        if CASA6:
-            shutil.copytree(imfile, imCopy)
-        else:
-            shutil.copytree(imfile,imCopy)
-        
+        shutil.copytree(imfile, imCopy)
+         
         file_copy(imCopy, 493)
         
         # Make sure cache is occupied when open

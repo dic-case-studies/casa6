@@ -41,10 +41,7 @@ except ImportError:
     mypo = potool()
     myia = iatool()
     def ctsys_resolve(data):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
-        else:
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+        return os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata', data)
 
 import sys
 import os
@@ -55,9 +52,9 @@ from filecmp import dircmp
 import math
 
 ## DATA ## 
-casaim = ctsys_resolve('image/ngc5921.clean.image/')
-eq_beams = ctsys_resolve('fits/pol_eq_beams.fits')
-neq_beams = ctsys_resolve('fits/pol_neq_beams.fits')
+casaim = ctsys_resolve('unittest/rmfit/ngc5921.clean.image')
+eq_beams = ctsys_resolve('unittest/rmfit/pol_eq_beams.fits')
+neq_beams = ctsys_resolve('unittest/rmfit/pol_neq_beams.fits')
 outfile = 'out.im'
 
 def table_comp(im1, im2):

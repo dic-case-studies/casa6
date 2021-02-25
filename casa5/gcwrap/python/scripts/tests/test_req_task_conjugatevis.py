@@ -52,25 +52,29 @@ import time
 
 # Define paths to sample data files used for tests.
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms')
+    datapath = casatools.ctsys.resolve('unittest/conjugatevis/')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms'
+#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+#        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms'
+#    else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/conjugatevis/'
 
 logpath = casalog.logfile()
+msfile = 'gaincaltest2.ms'
 
 class conjugatevis_test(unittest.TestCase):
 
     def setUp(self):
+        if not os.path.exists(msfile):
+            shutil.copytree(os.path.join(datapath, msfile),msfile)
         if not CASA6:
             default(conjugatevis)
 
     # Remove files created during tests
     def tearDown(self):
         casalog.setlogfile(logpath)
+        shutil.rmtree(msfile, ignore_errors=True)
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
         if os.path.exists('gaincal2-conj.ms'):
@@ -84,7 +88,7 @@ class conjugatevis_test(unittest.TestCase):
 
     def test_takesMeasurementSet(self):
         ''' 1. test_takesMeasurementSet: Check that conjugatevis opens a MeasurementSet file'''
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         # Check that conjugatevis created an output file.
         self.assertTrue('gaincal2-conj.ms' in os.listdir('.'))
 
@@ -92,12 +96,12 @@ class conjugatevis_test(unittest.TestCase):
         ''' 2. test_changeSignOnSpectralWindow: Check that conjugatevis changed the phase sign for a single spectral window'''
 
         # Open the original MS file and get the column of phase information for the data
-        tb.open(datapath)
+        tb.open(msfile)
         originalData = tb.getcol('DATA')
         originalPhase = numpy.imag(originalData[:,:,0][0][:])
         tb.close()
 
-        conjugatevis(vis=datapath, spwlist = 0, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, spwlist = 0, outputvis='gaincal2-conj.ms', overwrite=True)
 
         # Open the conjugated version of the data to obtain the phase information for the data
         tb.open('gaincal2-conj.ms')
@@ -112,13 +116,13 @@ class conjugatevis_test(unittest.TestCase):
         ''' 3. test_changeMultipleSpectralWindows: Check that conjugatevis changed the phase sign for multiple spectral windows'''
 
         # Open the original MS file to get phase information for the data
-        tb.open(datapath)
+        tb.open(msfile)
         originalData = tb.getcol('DATA')
         originalPhase = numpy.imag(originalData[:,:,0][0][:])
         tb.close()
 
         # Open the conjugated version of the data to obtain phase information for data '''
-        conjugatevis(vis=datapath, spwlist = [0,1], outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, spwlist = [0,1], outputvis='gaincal2-conj.ms', overwrite=True)
         tb.open('gaincal2-conj.ms')
         conjData = tb.getcol('DATA')
         conjPhase = numpy.imag(conjData[:,:,0][0][:])
@@ -131,13 +135,13 @@ class conjugatevis_test(unittest.TestCase):
         ''' 4. test_defaultSpectralWindows: Check that conjugatevis changes phase sign for all spectral windows for default spwlist'''
         
         # Open the original MS file to get the phase information
-        tb.open(datapath)
+        tb.open(msfile)
         originalData = tb.getcol('DATA')
         originalPhase = numpy.imag(originalData[:,:,0][0][:])
         tb.close()
         
         # Open the conjugated version of the data to get phase information
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         tb.open('gaincal2-conj.ms')
         conjData = tb.getcol('DATA')
         conjPhase = numpy.imag(conjData[:,:,0][0][:])
@@ -148,14 +152,14 @@ class conjugatevis_test(unittest.TestCase):
 
     def test_specifiedOutputFileName(self):
         ''' 5. test_specifiedOutputFileName: Check that conjugatevis writes the output ms file with the specified file name'''
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         self.assertTrue('gaincal2-conj.ms' in os.listdir('.'))
 
     def test_defaultOutputFileName(self):
         ''' 6. test_defaultOutputFileName: Check that conjugatevis writes the output ms file as 'conjugated_'+vis'''
         
         # Copy the original file to the working directory '''
-        shutil.copytree(datapath, 'copygaincal2.ms')
+        shutil.copytree(msfile, 'copygaincal2.ms')
 
         # Run conjugatevis on the copied file, which is necessary because otherwise it will attempt to name the output file with the full path of the sample file
         conjugatevis(vis='copygaincal2.ms')
@@ -171,13 +175,13 @@ class conjugatevis_test(unittest.TestCase):
         ''' 7. test_overwriteTrue: Check that conjugatevis will overwrite an existing file if overwrite=True'''
 
         # Run conjugatevis to make sure gaincal2-conj.ms exists
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
 
         # Get modification time for this file
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
         
         # Run conjugatevis again to overwrite the file
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
 
         # Get modifcation time for new version
         afterModificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
@@ -190,19 +194,19 @@ class conjugatevis_test(unittest.TestCase):
         ''' 8. test_overwriteFalse: Check that conjugatevis will not overwrite an existing file if overwrite=False'''
         
         # Run conjugatevis to make sure gaincal2-conj.ms 
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
         
         if CASA6 or casa_stack_rethrow:
             # Run again and expect an exception to be raised
             try:
-                conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)
+                conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
                 self.fail()
             except Exception:
                 self.assertTrue(True)
         else:
             # Run conjugatevis without overwriting
-            conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)
+            conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
             afterModificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
 
             # Since gaincal2-conj.ms was not overwritten, the modification times should be the same.
@@ -213,19 +217,19 @@ class conjugatevis_test(unittest.TestCase):
         ''' 9. test_overwriteDefault: Check that the default setting of overwrite is False '''
 
         # Run conjugatevis to make sure gaincal2-conj.ms exists
-        conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=True)
+        conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
 
         if CASA6 or casa_stack_rethrow:
             # Run again and expect an exception to be raised
             try:
-                conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)
+                conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
                 self.fail()
             except Exception:
                 self.assertTrue(True)
         else:
             # Run conjugatevis without overwriting
-            conjugatevis(vis=datapath, outputvis='gaincal2-conj.ms', overwrite=False)
+            conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
             afterModificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
 
             # Since gaincal2-conj.ms was not overwritten, the modification times should be the same.

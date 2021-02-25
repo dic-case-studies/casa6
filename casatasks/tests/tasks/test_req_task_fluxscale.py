@@ -41,22 +41,24 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/CalMSwithModel.ms')
-    datapath2 = casatools.ctsys.resolve('visibilities/vla/nepModel.ms')
-    gCal = casatools.ctsys.resolve('caltables/ModelGcal.G0')
-    nepCal = casatools.ctsys.resolve('caltables/nepModel.G0')
+    datapath = casatools.ctsys.resolve('unittest/fluxscale/')
+#     datapath = casatools.ctsys.resolve('visibilities/vla/CalMSwithModel.ms')
+#     datapath2 = casatools.ctsys.resolve('visibilities/vla/nepModel.ms')
+#     gCal = casatools.ctsys.resolve('caltables/ModelGcal.G0')
+#     nepCal = casatools.ctsys.resolve('caltables/nepModel.G0')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/CalMSwithModel.ms/'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/nepModel.ms/'
-        gCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ModelGcal.G0/'
-        nepCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/nepModel.G0/'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/CalMSwithModel.ms/'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/nepModel.ms/'
-        gCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ModelGcal.G0/'
-        nepCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/nepModel.G0/'
+#     if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
+#         datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/CalMSwithModel.ms/'
+#         datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/nepModel.ms/'
+#         gCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ModelGcal.G0/'
+#         nepCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/nepModel.G0/'
+#         
+#     else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/fluxscale/'
+#     datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/CalMSwithModel.ms/'
+#     datapath2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/nepModel.ms/'
+#     gCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ModelGcal.G0/'
+#     nepCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/nepModel.G0/'
         
 def getParam(data):
     tb.open(data)
@@ -64,7 +66,15 @@ def getParam(data):
     tb.close()
     
     return datamean
-    
+
+
+# Input data
+msfile1 = 'CalMSwithModel.ms'
+msfile2 = 'nepModel.ms'
+gCal = 'ModelGcal.G0'
+nepCal = 'nepModel.G0'
+
+
 datacopy = 'fluxScaleData.ms'
 datacopy2 = 'fluxScaleData2.ms'
     
@@ -77,8 +87,11 @@ class fluxscale_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        shutil.copytree(datapath, datacopy)
-        shutil.copytree(datapath2, datacopy2)
+        shutil.copytree(os.path.join(datapath, msfile1), datacopy)
+        shutil.copytree(os.path.join(datapath, msfile2), datacopy2)
+        shutil.copytree(os.path.join(datapath, gCal), gCal)
+        shutil.copytree(os.path.join(datapath, nepCal), nepCal)
+
         
     def setUp(self):
         
@@ -101,6 +114,8 @@ class fluxscale_test(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(datacopy)
         shutil.rmtree(datacopy2)
+        shutil.rmtree(gCal)
+        shutil.rmtree(nepCal)
         
     
     def test_vis(self):

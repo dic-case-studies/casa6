@@ -20,7 +20,7 @@ if is_CASA6:
         pass
 
     # Path for data
-    datapath = ctsys.resolve('regression/unittest/hanningsmooth')
+    datapath = ctsys.resolve('unittest/hanningsmooth/')
 else:
     from __main__ import default
     from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
@@ -29,7 +29,7 @@ else:
     from parallel.parallel_data_helper import ParallelDataHelper
 
     # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/hanningsmooth/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/hanningsmooth/'
 
 from casatestutils import testhelper as th
 

@@ -10,15 +10,20 @@ if is_CASA6:
     from casatools import ctsys
     from casatasks import listvis
     
-    datapath = ctsys.resolve('regression/unittest/listvis')
+    ctsys_resolve = ctsys.resolve
 else:
     from __main__ import default
     from tasks import *
     from taskinit import *
     
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listvis/'
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
+    def ctsys_resolve(apath):
+        return os.path.join(dataRoot,apath)
 
 from casatestutils import listing as lt
+
+datapath = ctsys_resolve('unittest/listvis')
+refpath = ctsys_resolve('unittest/listvis/listvis_reference/')
 
 '''
 Unit tests for task listvis. It tests the following parameters:
@@ -44,7 +49,7 @@ if 'TEST_DATADIR' in os.environ:
 print('listvis tests will use data from %s' % datapath)         
 
 # Reference files
-reffile = os.path.join(datapath,'reflistvis')
+reffile = os.path.join(refpath,'reflistvis')
 
 # Input and output names
 msfile1 = 'ngc5921_ut.ms'
