@@ -43,6 +43,7 @@
 
 #include <casacore/measures/Measures/Stokes.h>
 #include <casacore/casa/Containers/Record.h>
+#include <casacore/ms/MeasurementSets/MSStateColumns.h>
 #include <casacore/scimath/Functionals/Interpolate1D.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -169,6 +170,14 @@ private:
   void readAsdmAsIsTables(casacore::String const &msName);
 
   // check if transformation is necessary
+  bool isOnSourceChunk() const {
+    casacore::Vector<casacore::Int> stateIdList;
+    stateId(stateIdList);
+    static std::string const startstr("OBSERVE_TARGET#ON_SOURCE");
+    casacore::String s = stateSubtablecols().obsMode().get(stateIdList[0]);
+    std::cout << "state ID = " << stateIdList << " OBSMODE \"" << s << "\" match " << s.startsWith(startstr) << std::endl;
+    return s.startsWith(startstr);
+  }
   bool doTransform() const {return (atmSkyStatusPtr_ != nullptr);}
 
   // user inputs
