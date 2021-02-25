@@ -555,6 +555,10 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     thread->setAllowedOperations(false,false,true);
   }
 
+  // TBD: channel selection, for now select all
+  std::vector<casacore::Slice> chansel;
+  chansel.push_back(Slice());
+
   // Access to header info and subtables when loading axes
   String partype = parsAreComplex_ ? "Complex" : "Float";
   CTDesc caltabdesc(partype, msname_, calType_, basis_);
@@ -567,15 +571,6 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   String polsel(selection_.corr()); // for slicing axis data
   Int lastscan(0), thisscan(0);     // print atm stats once per scan
   Int lastspw(-1), thisspw(0);      // print atm warning once per spw
-
-  casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
-  std::vector<casacore::Slice> chansel;
-  if (selectedChans.empty()) {
-    chansel.push_back(Slice());
-  } else {
-    // Should have already been caught
-    throw AipsError("Averaging not supported with channel selection for calibration tables");
-  }
 
   double progress;
   ci.reset();
