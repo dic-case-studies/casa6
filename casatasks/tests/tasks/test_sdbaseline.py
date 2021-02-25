@@ -37,7 +37,7 @@ else:
     except:
         import tests.selection_syntax as selection_syntax
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -197,7 +197,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
     Base class for sdbaseline unit test
     """
     # Data path of input/output
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     taskname = "sdbaseline"
     verboselog = False
 
@@ -4663,7 +4663,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 class sdbaseline_selection(unittest.TestCase):
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
     bloutfile = infile + "_blparam.txt"
@@ -4901,7 +4901,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
     to confirm if WEIGHT_SPECTRUM column is removed
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdcal')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'uid___A002_X6218fb_X264.ms'
     outroot = sdbaseline_unittest_base.taskname+'_updateweighttest'
     outfile = outroot + '.ms'
@@ -4957,7 +4957,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     test052 --- blmode='apply', spw to flag channels 4500-6499
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'analytic_order3_withoffset.ms'
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'

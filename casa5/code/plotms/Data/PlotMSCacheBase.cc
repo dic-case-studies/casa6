@@ -330,7 +330,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 
 	// Trap ratio plots, only for cal tables
 	if ((selection.corr()=='/') && (cacheType()==PlotMSCacheBase::MS)) {
-		throw(AipsError("Polarization ratio plots not supported for measurement sets."));
+		throw(AipsError("Polarization ratio plots not supported for MeasurementSet."));
 	}
 
 	// Maintain access to this msname, selection, & averager, because we'll
@@ -380,6 +380,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 	bool canPlotImageSideband(true);
 	bool changedImageSbAxis(true);
 	bool changedImageSbXAxis(true);
+
 	// Remember the axes that we will load for plotting:
 	for (size_t i = 0; i < dataCount; i++) {
 		// set up atmospheric overlays
@@ -391,7 +392,7 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 			if (plotmsAtm_ == nullptr) {
 				plotmsAtm_ = new PlotMSAtm(filename_, selection_, showatm, isMS, xIsChan, this);
 			} else {
-			    changedImageSbAxis = (showatm != plotmsAtm_->showatm()); // changed atm/tsky
+				changedImageSbAxis = (showatm != plotmsAtm_->showatm()); // changed atm/tsky
 				changedImageSbXAxis = (xIsChan != plotmsAtm_->xAxisIsChan()); // changed chan/freq
 				plotmsAtm_->setShowAtm(showatm);
 				plotmsAtm_->setXAxisIsChan(xIsChan);
@@ -947,10 +948,13 @@ void PlotMSCacheBase::release(const vector<PMS::Axis>& axes) {
 			case PMS::PARANG: PMSC_DELETE(parang_)
 				break;
 			case PMS::DELAY:
+			case PMS::DELAY_RATE:
+			case PMS::DISP_DELAY:
 			case PMS::SWP:
 			case PMS::TSYS:
-			case PMS::OPAC:
-			case PMS::TEC: PMSC_DELETE(par_)
+			case PMS::OPAC: PMSC_DELETE(par_)
+				break;
+			case PMS::TEC: PMSC_DELETE(tec_)
 				break;
 			case PMS::SNR: PMSC_DELETE(snr_)
 				break;
@@ -1755,22 +1759,18 @@ void PlotMSCacheBase::setCache(Int newnChunk,
                 addVectors(parang_, increaseCache);
                 break;
             case PMS::DELAY:
-                addArrays(par_, increaseCache);
-                break;
+            case PMS::DELAY_RATE:
+            case PMS::DISP_DELAY:
             case PMS::SWP:
-                addArrays(par_, increaseCache);
-                break;
             case PMS::TSYS:
-                addArrays(par_, increaseCache);
-                break;
             case PMS::OPAC:
                 addArrays(par_, increaseCache);
                 break;
+            case PMS::TEC:
+                addArrays(tec_, increaseCache);
+                break;
             case PMS::SNR:
                 addArrays(snr_, increaseCache);
-                break;
-            case PMS::TEC:
-                addArrays(par_, increaseCache);
                 break;
             case PMS::ANTPOS:
                 addArrays(antpos_, increaseCache);
@@ -1876,6 +1876,8 @@ void PlotMSCacheBase::setAxesMask(PMS::Axis axis,Vector<Bool>& axismask) {
 	case PMS::GREAL:
 	case PMS::GIMAG:
 	case PMS::DELAY:
+	case PMS::DELAY_RATE:
+	case PMS::DISP_DELAY:
 	case PMS::SWP:
 	case PMS::TSYS:
 	case PMS::OPAC:

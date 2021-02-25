@@ -216,7 +216,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 			IPosition start(4,0,0,0,chan);
 			IPosition end(4,nx_p-1,ny_p-1,0,chan);
 			Matrix<Float> gwt(griddedWeight(start, end).reform(IPosition(2, nx_p, ny_p)));
-			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) {
+			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) { //See CAS-13021 for bwtaper algorithm details
 			//os << "Normal robustness, robust = " << robust << LogIO::POST;
 				Double sumlocwt = 0.;
 				for(Int vgrid=0;vgrid<ny_p;vgrid++) {
@@ -426,7 +426,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
       Array<Float> arr;
       grids_p[index]->getSlice(arr, start, shape, True);
       Matrix<Float> gwt(arr);
-      if ((rmode_p=="norm" || rmode_p=="bwtaper" ) && (sumWgts[index](0,chan)> 0.0)) {
+      if ((rmode_p=="norm" || rmode_p=="bwtaper" ) && (sumWgts[index](0,chan)> 0.0)) { //See CAS-13021 for bwtaper algorithm details
     //os << "Normal robustness, robust = " << robust << LogIO::POST;
     Double sumlocwt = 0.;
     for(Int vgrid=0;vgrid<ny_p;vgrid++) {
@@ -496,7 +496,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
     IPosition pos(4,0);
 
     fracBW = fracBW_p;
-    if(rmode_p=="bwtaper")
+    if(rmode_p=="bwtaper") //See CAS-13021 for bwtaper algorithm details
     {
         if(fracBW == 0.0)
         {
@@ -523,7 +523,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
           if(gwt >0){
               imweight(chn,row)=weight(chn%nChanWt,row);
               
-              if(rmode_p=="bwtaper"){
+              if(rmode_p=="bwtaper"){ //See CAS-13021 for bwtaper algorithm details
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
@@ -600,7 +600,7 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
     IPosition pos(4,0);
     
     fracBW = fracBW_p;
-    if(rmode_p=="bwtaper")
+    if(rmode_p=="bwtaper") //See CAS-13021 for bwtaper algorithm details
     {
         //cout << "BriggsCubeWeightor::getWeightUniform bwtaper" << f2_p[0] << endl;
         if(fracBW == 0.0)
@@ -638,7 +638,7 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
 	      if(gwt >0){
 			imweight(chn,row)=weight(chn%nChanWt,row);
               
-            if(rmode_p=="bwtaper"){
+            if(rmode_p=="bwtaper"){  //See CAS-13021 for bwtaper algorithm details
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);

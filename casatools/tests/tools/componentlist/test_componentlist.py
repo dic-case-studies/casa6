@@ -72,7 +72,15 @@
 ###########################################################################
 import unittest
 
-from casatools import componentlist as cltool
+is_CASA6 = False
+try:
+    from casatools import componentlist as cltool
+    is_CASA6 = True
+except:
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
 
 class componentlist_test(unittest.TestCase):
     

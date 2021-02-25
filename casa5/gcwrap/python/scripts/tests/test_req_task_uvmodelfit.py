@@ -41,17 +41,12 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/Itziar.ms/')
-    spwpath = casatools.ctsys.resolve('visibilities/vla/ngc7538_ut.ms/')
+    datapath = casatools.ctsys.resolve('unittest/uvmodelfit/Itziar.ms/')
+    spwpath = casatools.ctsys.resolve('unittest/uvmodelfit/ngc7538_ut.ms/')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms/'
-        spwpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc7538_ut.ms/'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms/'
-        spwpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc7538_ut.ms/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvmodelfit/Itziar.ms/'
+    spwpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvmodelfit/ngc7538_ut.ms/'
         
 datacopy = 'test.ms'
 spwcopy = 'testspw.ms'

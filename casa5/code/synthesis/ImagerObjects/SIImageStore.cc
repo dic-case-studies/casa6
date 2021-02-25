@@ -902,11 +902,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //right now this is estimated at 2MB for the 2 complex lattices;
     return Long(2000);
   }
-  void SIImageStore::setModelImage( Vector<String> modelnames)
+  void SIImageStore::setModelImage( const Vector<String> &modelnames)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImage",WHERE) );
 
-    if( modelnames.nelements() > 1 ) 
+    if( modelnames.nelements() > 1 )
       {throw( AipsError("Multiple starting model images are currently not supported. Please merge them before supplying as input to startmodel"));
 	/// If needed, THIS is the place to add code to support lists of model images... perhaps regrid separately and add them up or some such thing.
       }
@@ -916,7 +916,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 
-  void SIImageStore::setModelImageOne( String modelname , Int nterm)
+  void SIImageStore::setModelImageOne( const String &modelname , Int nterm)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImageOne",WHERE) );
 
