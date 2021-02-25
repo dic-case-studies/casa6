@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import shutil
-import testhelper as th
+#import testhelper as th
+from casatestutils import testhelper as th
 import numpy as np
 import unittest
 
@@ -15,7 +16,7 @@ if is_CASA6:
     def default(atask):
         pass
 
-    datapath = ctsys.resolve('regression/unittest/fluxscale')
+    datapath = ctsys.resolve('unittest/fluxscale/')
 else:
     from __main__ import default
     from tasks import fluxscale
@@ -24,7 +25,7 @@ else:
     table = tbtool
     
     datapath = os.environ.get('CASAPATH').split()[0] +\
-        '/data/regression/unittest/fluxscale/'
+        '/casatestdata/unittest/fluxscale/'
 
 ''' Python unit tests for the fluxscale task
 

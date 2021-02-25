@@ -78,12 +78,12 @@ except ImportError:
     regionmanager = rgtool
     table = tbtool
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
-datapath = ctsys_resolve('regression/unittest/imcollapse/')
+datapath = ctsys_resolve('unittest/ia_collapse/')
 
 def run_collapse(
     imagename, function, axes, outfile, region, box, chans,

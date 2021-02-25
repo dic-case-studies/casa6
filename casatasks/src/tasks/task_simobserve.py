@@ -1236,7 +1236,7 @@ def simobserve(
                               interpolation='bilinear',
                               cmap=pl.cm.jet,
                               extent=xextent+yextent,
-                              origin="bottom")
+                              origin="lower")
                     pl.title(project+".quick.psf",fontsize="x-small")
                     b = qa.convert(beam[1],'arcsec')['value']
                     pl.xlim([-3*b,3*b])
