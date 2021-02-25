@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <functional>
+#include <iomanip>
 #include <vector>
 
 #include <casacore/casa/Arrays/Cube.h>
@@ -38,6 +39,8 @@
 #include <casacore/casa/Utilities/Sort.h>
 #include <casacore/casa/Utilities/BinarySearch.h>
 #include <casacore/measures/Measures/Stokes.h>
+#include <casacore/scimath/Functionals/Interpolate1D.h>
+#include <casacore/scimath/Functionals/ScalarSampledFunctional.h>
 #include <casacore/ms/MeasurementSets/MSDataDescColumns.h>
 #include <casacore/ms/MeasurementSets/MSPolColumns.h>
 #include <casacore/ms/MSOper/MSMetaData.h>
@@ -67,21 +70,59 @@ class ScopeGuard {
     std::function<void()> func_;
 };
 
-inline uInt sortTime(Vector<Double> &timeData, Vector<uInt> &uniqueVector, Vector<uInt> indexVector) {
+inline void sortTime(Vector<Double> &timeData, Vector<uInt> &indexVector) {
   Bool b = false;
-  Double *p = timeData.getStorage(b);
+  Double const *p = timeData.getStorage(b);
   ScopeGuard guard([&]() {
-    timeData.putStorage(p, b);
+    timeData.freeStorage(p, b);
   });
+  LogIO os;
+  // std::unique_ptr<Double[]> p(new Double[timeData.nelements()]);
+  // for (uInt i = 0; i < timeData.nelements(); ++i) {
+  //   p[i] = timeData[i];
+  // }
+  // indexVector.resize(timeData.nelements());
+  // indgen(indexVector);
   Sort sort(p, timeData.nelements());
-  return sort.unique(uniqueVector, indexVector);
+  sort.sort(indexVector, timeData.nelements());
+  os << "indexVector = " << indexVector << endl;
+  // uInt r = sort.unique(uniqueVector, indexVector);
+  os << "indexVector (after) = " << indexVector << endl;
+  // os << "uniqueVector = " << uniqueVector << endl;
+  os.output() << std::setprecision(16);
+  os << "timeData = " << timeData << endl;
+  // os << "return value = " << r << endl;
+  os << LogIO::POST;
+  // timeData.freeStorage(p, b);
+  // return r;
+}
+
+inline uInt makeUnique(Vector<Double> const &data, Vector<uInt> const &sortIndex, Vector<uInt> &uniqueIndex) {
+  uniqueIndex.resize(data.nelements());
+  assert(data.nelements() == sortIndex.nelements());
+  uInt n = 0;
+  uniqueIndex[n++] = sortIndex[0];
+  Double prev = data[sortIndex[0]];
+  for (uInt i = 0; i < data.nelements(); ++i) {
+    uInt j = sortIndex[i];
+    Double current = data[j];
+    if (current != prev) {
+      uniqueIndex[n++] = j;
+    }
+    prev = current;
+  }
+  cout << "uniqueIndex = " << uniqueIndex << endl;
+  cout << "found " << n << " unique entries" << endl;
+  uniqueIndex.resize(n, True);
+  return n;
 }
 
 inline Vector<Double> getMedianDataPerTime(uInt const n, Vector<uInt> const &uniqueVector,
-  Vector<uInt> const &indexVector, Vector<Double> &data) {
-  data.resize(n);
+  Vector<uInt> const &indexVector, Vector<Double> const &data) {
+  Vector<Double> out(n);
   assert(n > 0);
   for (uInt i = 0; i < n - 1; ++i) {
+    cout << "loop " << i << endl;
     uInt const iStart = uniqueVector[i];
     uInt const iEnd = uniqueVector[i + 1];
     uInt const nElem = iEnd - iStart;
@@ -89,50 +130,63 @@ inline Vector<Double> getMedianDataPerTime(uInt const n, Vector<uInt> const &uni
     for (uInt j = 0; j < nElem; ++j) {
       tmp[j] = data[indexVector[j + iStart]];
     }
-    data[i] = median(tmp);
+    out[i] = median(tmp, False, True, True);
   }
+  cout << "finalize loop " << endl;
   uInt const iStart = uniqueVector[n - 1];
   uInt const iEnd = indexVector.nelements();
   uInt const nElem = iEnd - iStart;
+  cout << "start " << iStart << " end " << iEnd << " nElem " << nElem << endl;
   Vector<Double> tmp(nElem);
   for (uInt j = 0; j < nElem; ++j) {
     tmp[j] = data[indexVector[j + iStart]];
   }
-  data[n - 1] = median(tmp);
-  return data;
+  out[n - 1] = median(tmp);
+  return out;
+}
+
+inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double const target) {
+  Bool found = false;
+  // data is sorted in ascending order
+  Vector<Double> diff(data.nelements());
+  for (uInt i = 0; i < diff.nelements(); ++i) {
+    diff[i] = data[i] - data[0];
+  }
+  cout << "diff " << diff << endl;
+  cout << "target offset " << target - data[0] << endl;
+  Int index = binarySearch(found, data, target, data.nelements());
+  cout << "binary search result: found " << found << " index " << index << endl;
+  // if (!found) {
+  //   throw AipsError("error in findNearest");
+  // }
+  Int prev = -1;
+  Int next = -1;
+  if (found) {
+    prev = index;
+    next = index;
+  } else if (index > 0) {
+    prev = index - 1;
+    next = index;
+  } else {
+    throw AipsError("error in findNearest");
+  }
+  return std::make_pair(prev, next);
 }
 
 inline std::pair<Double, Double> findNearest(Vector<Double> const &data, Double const target) {
-  Bool found = false;
-  // data is sorted in ascending order
-  Int index = binarySearch(found, data, target, data.nelements());
-  if (!found) {
-    throw AipsError("error in findNearest");
-  }
-  Double prev = kValueUnset;
-  Double next = kValueUnset;
-  if (data[index] == target) {
-    prev = target;
-    next = target;
-  } else {
-    if (index == 0 || index == static_cast<Int>(data.nelements() - 1)) {
-      throw AipsError("error in findNearest");
-    }
-    prev = data[index - 1];
-    next = data[index];
-  }
-  return std::make_pair(prev, next);
+  std::pair<uInt, uInt> idx = findNearestIndex(data, target);
+  return std::make_pair(data[idx.first], data[idx.second]);
 }
 
 inline Double interpolateDataLinear(Vector<Double> const &xin, Vector<Double> const &yin, Double const xout) {
   Bool found = false;
   // data is sorted in ascending order
   Int index = binarySearch(found, xin, xout, xin.nelements());
-  if (!found) {
-    throw AipsError("error in interpolateData");
-  }
+  // if (!found) {
+  //   throw AipsError("error in interpolateData");
+  // }
   Double yout = kValueUnset;
-  if (index == 0 || xin[index] == xout) {
+  if (index == 0 || found) {
     yout = yin[index];
   } else {
     yout = ((xin[index] - xout) * yin[index - 1] * (xout - xin[index - 1]) * yin[index]) / (xin[index] - xin[index - 1]);
@@ -161,7 +215,7 @@ inline Vector<Double> getTauSpec(atm::SkyStatus *skyStatus, unsigned int const n
 
 inline Vector<Double> getCorrectionFactor(
   Vector<Double> const &tSkyOn, Vector<Double> const &tSkyOff, Vector<Double> const &tauOff) {
-  Vector<Double> factor;
+  Vector<Double> factor(tSkyOn.nelements());
   // TODO: OMP/SIMD parallelization
   for (size_t i = 0; i < tSkyOn.nelements(); ++i) {
     factor[i] = (tSkyOn[i] - tSkyOff[i]) * std::exp(tauOff[i]);
@@ -170,8 +224,10 @@ inline Vector<Double> getCorrectionFactor(
 }
 
 template<class T>
-inline void transformData(Vector<Double> const gainFactor, Cube<T> const &in, Cube<T> &out) {
+inline void transformData(Vector<Double> const &gainFactor, Cube<T> const &in, Cube<T> &out) {
   // TODO: OMP/SIMD parallelization
+  cout << "gainfactor (" << gainFactor.shape() << ") = " << gainFactor[0] << endl;
+  cout << "input array shape = " << in.shape() << endl;
   if (allEQ(gainFactor, 1.0)) {
     out.reference(in);
   } else {
@@ -228,7 +284,10 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
   initializeAtmosphereCorrection(configuration);
 
   // Initialize attached VisBuffer
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "setVisBuffer start" << LogIO::POST;
   setVisBuffer(createAttachedVisBuffer(VbRekeyable));
+  os << "setVisBuffer end" << LogIO::POST;
 }
 
 SDAtmosphereCorrectionTVI::~SDAtmosphereCorrectionTVI() {
@@ -339,6 +398,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
        << LogIO::EXCEPTION;
   }
   processSpwList_ = configuration.asArrayInt("processspw");
+  os << "processspw = " << processSpwList_ << LogIO::POST;
 
   // gain factor
   if (!configuration.isDefined("gainfactor")) {
@@ -346,6 +406,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
        << LogIO::EXCEPTION;
   }
   gainFactorList_ = configuration.asArrayDouble("gainfactor");
+  os << "gainfactor = " << gainFactorList_ << LogIO::POST;
 
   // refefence antenna ID
   if (!configuration.isDefined("refant")) {
@@ -353,6 +414,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
        << LogIO::EXCEPTION;
   }
   Int const referenceAntenna = configuration.asInt("refant");
+  os << "reference antenna ID = " << referenceAntenna << LogIO::POST;
 
   // raw MS name must be given
   if (!configuration.isDefined("inputms")) {
@@ -361,6 +423,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
 
   }
   String const rawMs = configuration.asString("inputms");
+  os << "input MS = \"" << rawMs << "\"" << LogIO::POST;
 
   // read MAIN table (OFF_SOURCE time)
   readMain(rawMs);
@@ -388,17 +451,20 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
        << LogIO::EXCEPTION;
   }
   atm::Length altitude(configuration.asDouble("siteAltitude"), atm::Length::UnitMeter);
+  os << "site altitude = " << altitude.get() << LogIO::POST;
 
   // pressure (mbar)
   double defaultPressureValue = kValueUnset;
   if (configuration.isDefined("pressure")) {
     userPressureValue_ = configuration.asDouble("pressure");
     defaultPressureValue = userPressureValue_;
+    os << "user pressure = " << userPressureValue_ << LogIO::POST;
   } else {
     userPressureValue_ = kValueUnset;
     if (atmPressureData_.nelements() > 0) {
       defaultPressureValue = atmPressureData_[0];
     }
+    os << "default pressure value = " << defaultPressureValue << LogIO::POST;
   }
 
   if (isValueUnset(defaultPressureValue)) {
@@ -413,11 +479,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   if (configuration.isDefined("temperature")) {
     userTemperatureValue_ = configuration.asDouble("temperature");
     defaultTemperatureValue = userTemperatureValue_;
+    os << "user temperature = " << userTemperatureValue_ << LogIO::POST;
   } else {
     userTemperatureValue_ = kValueUnset;
     if (atmTemperatureData_.nelements() > 0) {
       defaultTemperatureValue = atmTemperatureData_[0];
     }
+    os << "default temperature value = " << defaultTemperatureValue << LogIO::POST;
   }
 
   if (isValueUnset(defaultTemperatureValue)) {
@@ -436,11 +504,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   if (configuration.isDefined("humidity")) {
     userRelHumidityValue_ = configuration.asDouble("humidity");
     defaultRelHumidityValue = userRelHumidityValue_;
+    os << "user humidity = " << userRelHumidityValue_ << LogIO::POST;
   } else {
     userRelHumidityValue_ = kValueUnset;
     if (atmRelHumidityData_.nelements() > 0) {
       defaultRelHumidityValue = atmRelHumidityData_[0];
     }
+    os << "default humidity value = " << defaultRelHumidityValue << LogIO::POST;
   }
 
   if (isValueUnset(defaultRelHumidityValue)) {
@@ -455,11 +525,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   if (configuration.isDefined("pwv")) {
     userPwvValue_ = configuration.asDouble("pwv");
     defaultPwvValue = userPwvValue_;
+    os << "user pwv = " << userPwvValue_ << LogIO::POST;
   } else {
     userPwvValue_ = kValueUnset;
     if (pwvData_.nelements() > 0) {
       defaultPwvValue = pwvData_[0];
     }
+    os << "default pwv value = " << defaultPwvValue << LogIO::POST;
   }
 
   if (isValueUnset(defaultPwvValue)) {
@@ -471,24 +543,29 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   Double scaleHeightValue = (configuration.isDefined("scaleHeight")) ?
     configuration.asDouble("scaleHeight") : 2.0;
   atm::Length wvScaleHeight(scaleHeightValue, atm::Length::UnitKiloMeter);
+  os << "scale height = " << wvScaleHeight.get() << LogIO::POST;
 
   // pressure step (mbar)
   Double pressureStepValue = (configuration.isDefined("pressureStep")) ?
     configuration.asDouble("pressureStep") : 10.0;
   atm::Pressure pressureStep(pressureStepValue, atm::Pressure::UnitMilliBar);
+  os << "pressure step = " << pressureStep.get() << LogIO::POST;
 
   // pressure step factor
   double pressureStepFactor = (configuration.isDefined("pressureStepFactor")) ?
     configuration.asDouble("pressureStepFactor") : 1.2;
+  os << "pressure step factor = " << pressureStepFactor << LogIO::POST;
 
   // maximum altitude (km)
   double maxAltitude = (configuration.isDefined("maxAltitude")) ?
     configuration.asDouble("maxAltitude") : 120.0;
   atm::Length topAtmProfile(maxAltitude, atm::Length::UnitKiloMeter);
+  os << "max ATM altitude = " << topAtmProfile.get() << LogIO::POST;
 
   // ATM type
   unsigned int atmType = (configuration.isDefined("atmType")) ?
     configuration.asuInt("atmType") : 2;
+  os << "ATM type = " << atmType << LogIO::POST;
 
   // layerBoundaries and layerTemperatures
   std::vector<atm::Length> layerBoundaries;
@@ -555,6 +632,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       chansep /= 5.0;
       nchan *= 5u;
     }
+    os << "SpectralGrid channel for spw " << spw << ": " << nchan << LogIO::POST;
     atmSpectralGridPerSpw_[spw].reset(
       new atm::SpectralGrid(nchan, 0u, cf[0], chansep)
     );
@@ -563,30 +641,43 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   // SkyStatus
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
+    os << "Initializing SkyStatus for SPW " << spw << LogIO::POST;
     atm::RefractiveIndexProfile profile(*atmSpectralGridPerSpw_[spw].get(), *atmProfile_.get());
     atm::SkyStatus *skyStatus = new atm::SkyStatus(profile);
     skyStatus->setUserWH2O(atm::Length(defaultPwvValue, atm::Length::UnitMilliMeter));
     atmSkyStatusPerSpw_[spw].reset(skyStatus);
   }
+  os << "DONE Initializing SkyStatus" << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
   // TODO: implement all the configuration steps here
   // current spw
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
   bool isProcessingSpw = anyEQ(processSpwList_, currentSpw);
   Vector<Double> currentTime;
   time(currentTime);
+  Vector<Int> currentStateId;
+  stateId(currentStateId);
+  bool isOnSource = isOnSourceChunk();
   bool isPrecedingOffSourceScanExist = min(offSourceTime_) <= currentTime[0];
   bool isSubsequentOffSourceScanExist = currentTime[0] <= max(offSourceTime_);
+  cout << std::setprecision(16) << offSourceTime_ << endl;
+  cout << std::setprecision(16) << currentTime[0] << " state ID" << currentStateId[0] << endl;
+  os << "SPW " << currentSpw << ": processingSpw " << isProcessingSpw
+     << " OFF_SOURCE availability before " << isPrecedingOffSourceScanExist
+     << " after " << isSubsequentOffSourceScanExist
+     << " ON_SOURCE? " << isOnSource << LogIO::POST;
   atmSkyStatusPtr_ = nullptr;
-  if (isProcessingSpw && isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist) {
+  if (isProcessingSpw && isOnSource && isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist) {
     // gain factor for current spw
     if (currentSpw < 0 || static_cast<SpwId>(gainFactorList_.nelements()) <= currentSpw) {
       gainFactor_ = 1.0;
     } else {
       gainFactor_ = gainFactorList_[currentSpw];
     }
+    os << "gainfactor for SPW " << currentSpw << " = " << gainFactor_ << LogIO::POST;
 
     // SkyStatus for current spw
     auto finder = atmSkyStatusPerSpw_.find(currentSpw);
@@ -607,7 +698,10 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus *p) {
 
   // TODO: configure appropriate index from time stamp
   // TODO: if no valid time stamp exists, make
-  size_t timeIndex = 0;
+  Vector<Double> currentTime;
+  time(currentTime);
+  std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime[0]);
+  Int timeIndex = pair.first;
   if (isValueUnset(userTemperatureValue_)) {
     Double temperatureValue = atmTemperatureData_[timeIndex];
     p->setBasicAtmosphericParameters(atm::Temperature(temperatureValue, atm::Temperature::UnitKelvin));
@@ -624,7 +718,8 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus *p) {
   }
 
   // TODO: configure appropriate index from time stamp
-  timeIndex = 0;
+  pair = findNearestIndex(pwvTime_, currentTime[0]);
+  timeIndex = pair.first;
   if (isValueUnset(userPwvValue_)) {
     Double pwvValue = pwvData_[timeIndex];
     p->setUserWH2O(atm::Length(pwvValue, atm::Length::UnitMilliMeter));
@@ -645,34 +740,64 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
   Vector<Double> currentTimeList;
   time(currentTimeList);
   Double const currentTime = currentTimeList[0];
+  cout << "offSourceTime_ (size " << offSourceTime_.nelements() << ") = " << offSourceTime_ << endl;
+  cout << "currentTime = " << currentTime << endl;
   std::pair<Double, Double> nearest = findNearest(offSourceTime_, currentTime);
   Double const offSourceTimePrev = nearest.first;
   Double const offSourceTimeNext = nearest.second;
+  cout << "nearest: " << std::setprecision(16) << offSourceTimePrev << "~" << offSourceTimeNext << endl;
 
   // elevation
+  cout << "interpolated elevation" << endl;
   Double const elevationOffPrev = interpolateDataLinear(elevationTime_, elevationData_, offSourceTimePrev);
+  cout << "prev: " << elevationOffPrev << endl;
   Double const elevationOn = interpolateDataLinear(elevationTime_, elevationData_, currentTime);
+  cout << "ON: " << elevationOn << endl;
   Double const elevationOffNext = interpolateDataLinear(elevationTime_, elevationData_, offSourceTimeNext);
+  cout << "next: " << elevationOffNext << endl;
   Double const elevationOff =
     ((offSourceTimeNext - currentTime) * elevationOffPrev +
      (currentTime - offSourceTimePrev) * elevationOffNext) /
     (offSourceTimeNext - offSourceTimePrev);
+  cout << "OFF: " << elevationOffPrev << endl;
 
   // opacity
+  cout << "opacity calculation" << endl;
   unsigned int const nchan = atmSpectralGridPtr_->getNumChan();
+  cout << "nchan = " << nchan << endl;
   Double const airMassOn = 1.0 / cos(C::pi_2 - elevationOn);
   atmSkyStatusPtr_->setAirMass(airMassOn);
   Vector<Double> trjSkySpecOn = getTrjSkySpec(atmSkyStatusPtr_, nchan);
+  cout << "trjSkySpecOn = " << trjSkySpecOn[0] << endl;
   Double const airMassOff = 1.0 / cos(C::pi_2 - elevationOff);
   atmSkyStatusPtr_->setAirMass(airMassOff);
   Vector<Double> trjSkySpecOff = getTrjSkySpec(atmSkyStatusPtr_, nchan);
+  cout << "trjSkySpecOff = " << trjSkySpecOff[0] << endl;
   Vector<Double> tauSpecOff = getTauSpec(atmSkyStatusPtr_, nchan) * airMassOff;
+  cout << "tauSpecOff = " << tauSpecOff[0] << endl;
   Vector<Double> correctionFactor = getCorrectionFactor(trjSkySpecOn, trjSkySpecOff, tauSpecOff);
+  cout << "correctionFactor = " << correctionFactor[0] << endl;
+  cout << "done calculating correction factor" << endl;
 
   // current spw
   SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
   if (isTdmSpw_[currentSpw]) {
+    // TODO: convolve with hanning window
     // TODO: interpolation to native freq
+    unsigned int numAtmChan = atmSpectralGridPtr_->getNumChan();
+    unsigned int refAtmChan = atmSpectralGridPtr_->getRefChan();
+    double refAtmFreq = atmSpectralGridPtr_->getRefFreq().get();
+    double sepAtmFreq = atmSpectralGridPtr_->getChanSep().get();
+    Vector<Double> atmFreq(numAtmChan);
+    indgen(atmFreq, refAtmFreq - sepAtmFreq * refAtmChan, sepAtmFreq);
+    Vector<Double> const &nativeFreq = channelFreqsPerSpw_[currentSpw];
+    correctionFactor_.resize(nativeFreq.nelements());
+    Interpolate1D<Double, Double> interpolator(
+      ScalarSampledFunctional<Double>(atmFreq),
+      ScalarSampledFunctional<Double>(correctionFactor), True, True);
+    for (uInt i = 0; i < nativeFreq.nelements(); ++i) {
+      correctionFactor_[i] = interpolator(nativeFreq[i]);
+    }
   } else if (doSmooth_[currentSpw]) {
     // TODO: smoothing
   } else {
@@ -688,7 +813,7 @@ void SDAtmosphereCorrectionTVI::updateAtmosphereModel() {
 }
 
 void SDAtmosphereCorrectionTVI::warnIfNoTransform() {
-  if (!doTransform_[dataDescriptionId()]) {
+  if (!doTransform()) {
     Int const spw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
     LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
     os << LogIO::WARN << "Spectral Window " << spw
@@ -701,27 +826,38 @@ void SDAtmosphereCorrectionTVI::readMain(String const &msName) {
   MeasurementSet msObj(msName);
   Float const noCache = -1;
   MSMetaData meta(&msObj, noCache);
-  std::set<Double> timeOffSource = meta.getTimesForIntent("OBSERVE_TARGET#OFF_SOURCE");
-  // midpoint of OFF_SOURCE scan
+  std::set<Double> timeOffSourceSet = meta.getTimesForIntent("OBSERVE_TARGET#OFF_SOURCE");
+  std::vector<Double> timeOffSource(timeOffSourceSet.begin(), timeOffSourceSet.end());
   size_t numBoundaries = 0;
-  Vector<Double> boundaries(timeOffSource.size());
-  auto iter = timeOffSource.begin();
-  boundaries[numBoundaries++] = *iter;
-  Double cache = *iter;
-  for (auto i = iter; i != timeOffSource.end(); ++i) {
-    Double diff = *i - cache;
+  Vector<uInt> idx1(timeOffSource.size());
+  Double cache = timeOffSource[0];
+  uInt ix = 0;
+  idx1[numBoundaries++] = 0;
+  for (uInt i = 0; i < timeOffSource.size(); ++i) {
+    Double diff = timeOffSource[i] - cache;
     // threshold (1s) is taken from original script by T. Sawada
     if (diff > 1.0) {
-      boundaries[numBoundaries++] = *i;
+      cout << "boundaries = " << ix << endl;
+      idx1[numBoundaries++] = i;
     }
-    cache = *i;
+    cache = timeOffSource[i];
   }
-  boundaries[numBoundaries++] = cache;
-
-  offSourceTime_.resize(numBoundaries - 1);
-  for (size_t i = 0; i < numBoundaries - 1; ++i) {
-    offSourceTime_[i] = (boundaries[i] + boundaries[i + 1]) / 2.0;
+  Vector<uInt> idx2(numBoundaries);
+  for (uInt i = 0; i < numBoundaries - 1; ++i) {
+    idx2[i] = idx1[i + 1] - 1;
   }
+  idx2[numBoundaries - 1] = timeOffSource.size() - 1;
+  cout << "idx1 = " << idx1 << endl;
+  cout << "idx2 = " << idx2 << endl;
+  offSourceTime_.resize(numBoundaries);
+  for (size_t i = 0; i < numBoundaries; ++i) {
+    offSourceTime_[i] = (timeOffSource[idx1[i]] + timeOffSource[idx2[i]]) / 2.0;
+  }
+  Vector<Double> tmp(numBoundaries);
+  for (auto i = 0u; i < numBoundaries; ++i) {
+    tmp[i] = offSourceTime_[i] - offSourceTime_[0];
+  }
+  cout << "diff = " << tmp << endl;
 }
 
 void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
@@ -737,6 +873,12 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
     size_t const nchan = channelFreqsPerSpw_[spw].nelements();
     isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
   }
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "TDM flag:" << endl;
+  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
+    os << "    spw " << i->first << " " << i->second << endl;
+  }
+  os << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const referenceAntenna) {
@@ -747,13 +889,21 @@ void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const ref
     os << "ERROR: reference antenna " << referenceAntenna << " is invalid." << LogIO::EXCEPTION;
   }
 
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "readPointing" << LogIO::POST;
   Table const pointingTable = ms.pointing();
+  // TODO: abort if direction reference is not AZEL
   Table selected = pointingTable(pointingTable.col("ANTENNA_ID") == referenceAntenna);
   elevationTime_ = ScalarColumn<Double>(selected, "TIME").getColumn();
-  Array<Double> elevationArray = ArrayColumn<Double>(selected, "DIRECTION")
-    .getColumn()(IPosition(3, 1, 0, 0), IPosition(3, 1, 0, elevationTime_.nelements()));
+  Array<Double> directionArray = ArrayColumn<Double>(selected, "DIRECTION").getColumn();
+  os << "directionArray shape = " << directionArray.shape() << LogIO::POST;
+  Array<Double> elevationArray = Cube<Double>(directionArray).yzPlane(1);
+  //(IPosition(3, 1, 0, 0), IPosition(3, 1, 0, elevationTime_.nelements() - 1));
+  os << "elevationArray shape = " << elevationArray.shape() << LogIO::POST;
   elevationArray.removeDegenerate();
+  os << "elevationArray remove degenerate axes = " << elevationArray.shape() << LogIO::POST;
   elevationData_.reference(elevationArray);
+  os << "elevationData_.shape = " << elevationData_.shape() << LogIO::POST;
   // elevationInterpolator_ = Interpolate1D<Double, Double>(elevationTime_, elevationData_, True, True);
   // elevationInterpolator_.setMethod(Interpolate1D<Double, Double>::linear);
 }
@@ -767,47 +917,95 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
   Vector<Double> atmRelHumidityDataLocal;
 
   File const calWvrTableName(msName + "/ASDM_CALWVR");
-
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "CALWVR table \"" << calWvrTableName.path().absoluteName() << "\"" << LogIO::POST;
   if (calWvrTableName.exists()) {
     Table const calWvrTable(calWvrTableName.path().absoluteName());
     pwvTimeLocal.reference(ScalarColumn<Double>(calWvrTable, "startValidTime").getColumn());
     pwvDataLocal.reference(ScalarColumn<Double>(calWvrTable, "water").getColumn());
+    os << "pwvTimeLocal size " << pwvTimeLocal.nelements() << LogIO::POST;
   }
 
   File const calAtmosphereTableName(msName + "/ASDM_CALATMOSPHERE");
+  os << "CALATM table \"" << calAtmosphereTableName.path().absoluteName() << "\"" << LogIO::POST;
   if (calAtmosphereTableName.exists()) {
     Table const calAtmosphereTable(calAtmosphereTableName.path().absoluteName());
     atmTimeLocal.reference(ScalarColumn<Double>(calAtmosphereTable, "startValidTime").getColumn());
     atmTemperatureDataLocal.reference(ScalarColumn<Double>(calAtmosphereTable, "groundTemperature").getColumn());
     atmPressureDataLocal.reference(ScalarColumn<Double>(calAtmosphereTable, "groundPressure").getColumn());
     atmRelHumidityDataLocal.reference(ScalarColumn<Double>(calAtmosphereTable, "groundRelHumidity").getColumn());
+    os << "atmTimeLocal size " << atmTimeLocal.nelements() << LogIO::POST;
   }
 
+  Vector<uInt> uniqueVectorPwv;
+  Vector<uInt> indexVectorPwv;
   if (pwvTimeLocal.nelements() > 0) {
-    Vector<uInt> uniqueVector;
-    Vector<uInt> indexVector;
-    uInt n = sortTime(pwvTimeLocal, uniqueVector, indexVector);
+    sortTime(pwvTimeLocal, indexVectorPwv);
+    uInt n = makeUnique(pwvTimeLocal, indexVectorPwv, uniqueVectorPwv);
+    os << "makeUnique returned " << n << LogIO::POST;
+    os << "indexVector = " << indexVectorPwv << LogIO::POST;
     pwvTime_.resize(n);
     for (uInt i = 0; i < n; ++i) {
-      pwvTime_[i] = pwvTimeLocal[indexVector[uniqueVector[i]]];
+      os << "loop " << i << " index " << uniqueVectorPwv[i] << LogIO::POST;
+      os << "loop " << i << " index2 " << indexVectorPwv[uniqueVectorPwv[i]] << LogIO::POST;
+      pwvTime_[i] = pwvTimeLocal[indexVectorPwv[uniqueVectorPwv[i]]];
     }
+    os << "uniqueVector (shape " << uniqueVectorPwv.shape() << ") " << uniqueVectorPwv << LogIO::POST;
+    os << "indexVector (shape " << indexVectorPwv.shape() << ") " << indexVectorPwv << LogIO::POST;
+    os.output() << std::setprecision(16);
+    os << "pwvTime_ = " << pwvTime_ << LogIO::POST;
     // m -> mm
-    pwvData_ = getMedianDataPerTime(n, uniqueVector, indexVector, pwvDataLocal) * 1000.0;
+    os << "getMedianDataPerTime for pwv start" << LogIO::POST;
+    // pwvData_ = getMedianDataPerTime(n, uniqueVectorPwv, indexVectorPwv, pwvDataLocal) * 1000.0;
+    // os << "pwvData_ = " << pwvData_ << LogIO::POST;
+    os << "getMedianDataPerTime for pwv end" << LogIO::POST;
   }
 
   if (atmTimeLocal.nelements() > 0) {
     Vector<uInt> uniqueVector;
     Vector<uInt> indexVector;
-    uInt n = sortTime(atmTimeLocal, uniqueVector, indexVector);
+    sortTime(atmTimeLocal, indexVector);
+    uInt n = makeUnique(atmTimeLocal, indexVector, uniqueVector);
     atmTime_.resize(n);
     for (uInt i = 0; i < n; ++i) {
       atmTime_[i] = atmTimeLocal[indexVector[uniqueVector[i]]];
     }
+    os.output() << std::setprecision(16) << std::endl;
+    os << "atmTime_ = " << atmTime_ << LogIO::POST;
+    os << "getMedianDataPerTime for temp start" << LogIO::POST;
     atmTemperatureData_ = getMedianDataPerTime(n, uniqueVector, indexVector, atmTemperatureDataLocal);
+    os << "Temperature = " << atmTemperatureData_ << LogIO::POST;
+    os << "getMedianDataPerTime for temp end" << LogIO::POST;
     // Pa -> mbar (=hPa)
     atmPressureData_ = getMedianDataPerTime(n, uniqueVector, indexVector, atmPressureDataLocal) / 100.0;
+    os << "Pressure = " << atmPressureData_ << LogIO::POST;
     atmRelHumidityData_ = getMedianDataPerTime(n, uniqueVector, indexVector, atmRelHumidityDataLocal);
+    os << "Humidity = " << atmRelHumidityData_ << LogIO::POST;
+
+    // same PWV handling with original script
+    Vector<uInt> uniqueVectorPwv2(n);
+    for (uInt i = 0; i < n; ++i) {
+      Vector<Double> diff = abs(pwvTime_ - atmTime_[i]);
+      Double minDiff = min(diff);
+      Double cache = max(diff);
+      uInt const m = pwvTime_.nelements();
+      uInt idx = m;
+      for (uInt j = 0; j < m; ++j) {
+        if (diff[j] == minDiff) {
+          idx = j;
+          break;
+        }
+      }
+      if (idx < m) {
+        uniqueVectorPwv2[i] = uniqueVectorPwv[idx];
+      } else {
+        throw AipsError("ERROR in readAsdmAsIsTable");
+      }
+    }
+    pwvData_ = getMedianDataPerTime(n, uniqueVectorPwv2, indexVectorPwv, pwvDataLocal) * 1000.0;
+    os << "PWV = " << pwvData_ << LogIO::POST;
   }
+  os << "DONE readAsdmAsIsTable" << LogIO::POST;
 }
 
 //////////
