@@ -115,6 +115,7 @@ $hdr_dir = "binding/include";
                'miriadfiller' => 'casa-source/gcwrap/tools/miriad/miriadfiller.xml',
                'synthesismaskhandler' => 'casa-source/gcwrap/tools/synthesis/synthesismaskhandler.xml',
                'sidebandseparator' => 'casa-source/gcwrap/tools/synthesis/sidebandseparator.xml',
+               'linearmosaic' => 'casa-source/gcwrap/tools/synthesis/linearmosaic.xml',
              );
 %src_files = ( 'utils' => [ 'casa-source/gcwrap/tools/utils/utils_cmpt.cc',
                             'casa-source/gcwrap/tools/utils/utils_private.h',
@@ -264,7 +265,10 @@ $hdr_dir = "binding/include";
                                            'casa-source/gcwrap/tools/synthesis/synthesismaskhandler_private.h', ],
                'sidebandseparator' => [ 'casa-source/gcwrap/tools/synthesis/sidebandseparator_cmpt.cc',
                                         'casa-source/gcwrap/tools/synthesis/sidebandseparator_forward.h',
-                                        'casa-source/gcwrap/tools/synthesis/sidebandseparator_private.h'],
+                                        'casa-source/gcwrap/tools/synthesis/sidebandseparator_private.h', ],
+               'linearmosaic' => [ 'casa-source/gcwrap/tools/synthesis/linearmosaic_cmpt.cc',
+                                   'casa-source/gcwrap/tools/synthesis/linearmosaic_forward.h',
+                                   'casa-source/gcwrap/tools/synthesis/linearmosaic_private.h', ],
              );
 
 print "configuring CASAtools... this may take a little while...\n";
