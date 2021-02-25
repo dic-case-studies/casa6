@@ -236,7 +236,7 @@ inline void transformData(Vector<Double> const &gainFactor, Cube<T> const &in, C
     for (ssize_t ir = 0; ir < shape[2]; ++ir) {
       for (ssize_t ic = 0; ic < shape[1]; ++ic) {
         for (ssize_t ip = 0; ip < shape[0]; ++ip) {
-          out(ip, ic, ir) = gainFactor[ic] * in(ip, ic, ir);
+          out(ip, ic, ir) = in(ip, ic, ir) - gainFactor[ic];
         }
       }
     }
@@ -264,7 +264,7 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     offSourceTime_(),
     elevationTime_(),
     elevationData_(),
-    //elevationInterpolator_(),
+    elevationInterpolator_(),
     pwvTime_(),
     pwvData_(),
     atmTime_(),
@@ -300,6 +300,7 @@ void SDAtmosphereCorrectionTVI::origin() {
   configureNewSubchunk();
 
   // configure atmospheric correction
+  // point appropriate SkyStatus object
   configureAtmosphereCorrection();
 
   // warn if current spw is not requested to transform
@@ -313,6 +314,7 @@ void SDAtmosphereCorrectionTVI::next() {
   configureNewSubchunk();
 
   // configure atmospheric correction if necessary
+  // point appropriate SkyStatus object
   configureAtmosphereCorrection();
 
   // warn if current spw is not requested to transform
@@ -322,6 +324,8 @@ void SDAtmosphereCorrectionTVI::next() {
 void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   TransformingVi2::originChunks();
 
+  // update SkyStatus with the closest weather measurement
+  // re-calculate correction factor (dTa)
   updateAtmosphereModel();
 }
 
@@ -749,17 +753,18 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
 
   // elevation
   cout << "interpolated elevation" << endl;
-  Double const elevationOffPrev = interpolateDataLinear(elevationTime_, elevationData_, offSourceTimePrev);
+  Double const elevationOffPrev = elevationInterpolator_(offSourceTimePrev);//interpolateDataLinear(elevationTime_, elevationData_, offSourceTimePrev);
   cout << "prev: " << elevationOffPrev << endl;
-  Double const elevationOn = interpolateDataLinear(elevationTime_, elevationData_, currentTime);
+  Double const elevationOn = elevationInterpolator_(currentTime);//interpolateDataLinear(elevationTime_, elevationData_, currentTime);
   cout << "ON: " << elevationOn << endl;
-  Double const elevationOffNext = interpolateDataLinear(elevationTime_, elevationData_, offSourceTimeNext);
+  Double const elevationOffNext = elevationInterpolator_(offSourceTimeNext);//interpolateDataLinear(elevationTime_, elevationData_, offSourceTimeNext);
   cout << "next: " << elevationOffNext << endl;
   Double const elevationOff =
     ((offSourceTimeNext - currentTime) * elevationOffPrev +
      (currentTime - offSourceTimePrev) * elevationOffNext) /
     (offSourceTimeNext - offSourceTimePrev);
   cout << "OFF: " << elevationOffPrev << endl;
+  cout << "time " << std::setprecision(16) << currentTime << " elON " << elevationOn << " elOFF " << elevationOff << endl;
 
   // opacity
   cout << "opacity calculation" << endl;
@@ -803,6 +808,10 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
   } else {
     correctionFactor_.reference(correctionFactor);
   }
+
+  // apply gain factor
+  cout << "Applying gain factor " << gainFactorList_[currentSpw] << " to correction term" << endl;
+  correctionFactor_ *= gainFactorList_[currentSpw];
 }
 
 void SDAtmosphereCorrectionTVI::updateAtmosphereModel() {
@@ -904,8 +913,13 @@ void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const ref
   os << "elevationArray remove degenerate axes = " << elevationArray.shape() << LogIO::POST;
   elevationData_.reference(elevationArray);
   os << "elevationData_.shape = " << elevationData_.shape() << LogIO::POST;
-  // elevationInterpolator_ = Interpolate1D<Double, Double>(elevationTime_, elevationData_, True, True);
-  // elevationInterpolator_.setMethod(Interpolate1D<Double, Double>::linear);
+  elevationInterpolator_ = Interpolate1D<Double, Double>(
+    ScalarSampledFunctional<Double>(elevationTime_),
+    ScalarSampledFunctional<Double>(elevationData_), True, True);
+  elevationInterpolator_.setMethod(Interpolate1D<Double, Double>::linear);
+  os.output() << std::setprecision(16);
+  // os << "elevationTime_ = " << elevationTime_ << LogIO::POST;
+  // os << "elevationData_ = " << elevationData_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
