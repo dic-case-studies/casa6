@@ -2368,7 +2368,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                 - Create a new sub-matrix from blc and trc.
                 - Interpolate matrix to a target number of points (3001) using CUBIC spline.
                 - All the non-sidelobe points, in the interpolated matrix, that are above the psfcutoff are used to fit a Gaussian.
-                    A Levenberg–Marquardt algorithm is used.
+                    A Levenberg-Marquardt algorithm is used.
                 - If the fitting fails the algorithm is repeated with the psfcutoff decreased (psfcutoff=psfcutoff/1.5).
                     A message in the log will apear if the fitting fails along with the new value of psfcutoff.
                     This will be done up to 50 times if fitting fails.
@@ -2378,7 +2378,7 @@ to use the correct direction in which the antenna is pointing with respect to th
             This parameter should rarely be changed.
             
             (This is not the support size for clark clean.)
-      </description>
+        </description>
         <value type="double">0.35</value>
         <allowed kind="range">
           <value range="min">0.01</value>
