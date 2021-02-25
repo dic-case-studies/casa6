@@ -310,6 +310,11 @@ using namespace casa::vi;
 	Int msID=-1;
 	Int fieldID=-1;
 	Int spwID=-1;
+	////TESTOO
+	//int my_cpu_id;
+        //MPI_Comm_rank(MPI_COMM_WORLD, &my_cpu_id);
+	///////////////////
+	///////
 	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	  for (vi.origin(); vi.more(); vi.next()) {
 	    if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
@@ -342,16 +347,16 @@ using namespace casa::vi;
 	      }
 		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
 		    if(spw[spwk]==spwID){
-		      //cerr << "msID " << msID << " spw "<< spw[spwk] << " start " << start[spwk] << " nchan " << nchan[spwk] << endl;
 		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
 		      if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
-		      localminfreq.push_back(mschanfreq[start[spwk]]);
-		      localmaxfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
+			localminfreq.push_back(mschanfreq[start[spwk]]);
+			localmaxfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
 		      }else{
-			localminfreq.push_back(mschanfreq[start[spwk]]+nchan[spwk]-1);
+			localminfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
 			localmaxfreq.push_back(mschanfreq[start[spwk]]);
 
 		      }
+
 		      firstchanfreq.push_back(min(mschanfreq));
 		      //if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
 		      //localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
@@ -382,8 +387,8 @@ using namespace casa::vi;
 	  itf++;
 	  itmax++;
 	}
-	swingpad=2*(Int((swingFreq+firstchanshift)/freqincr)+4);
-	//cerr <<"swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
+	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+4);
+	//cerr << "CPUID " << my_cpu_id <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 
