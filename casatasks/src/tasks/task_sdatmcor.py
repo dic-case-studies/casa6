@@ -387,13 +387,13 @@ def sdatmcor(
             user_default='',
             task_default=qa.quantity(default_params['dp'], 'mbar')
         )
-        config['pressureStep'] = qa.convert(pressure_step, 'mbar')
+        config['pressureStep'] = qa.convert(pressure_step, 'mbar')['value']
         pressure_factor, _ = parse_atm_params(
             user_param=dpm,
             user_default=-1,
             task_default=default_params['dpm']
         )
-        config['pressureStepFactor'] = pressure_factor
+        config['pressureStepFactor'] = pressure_factor['value']
         config['atmType'] = atmtype
         config['maxAltitude'] = float(default_params['maxalt'])
         if atmdetail:
@@ -444,7 +444,7 @@ def sdatmcor(
             if is_user_param:
                 config['layerTemperatures'] = user_layertemperature
         else:
-            config['altitude'] = default_altitude
+            config['siteAltitude'] = default_altitude
 
         sdms.atmcor(config=config, datacolumn=datacolumn, outfile=outfile)
 
