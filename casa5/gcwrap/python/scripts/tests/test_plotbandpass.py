@@ -75,7 +75,7 @@ else:
 
 figdir= os.getcwd() + '/'
 delete_artifacts = True
-
+print(datapath)
 class plotbandpass_1_test(unittest.TestCase):
 
     @classmethod
@@ -86,9 +86,11 @@ class plotbandpass_1_test(unittest.TestCase):
         if not CASA6:
             default(plotbandpass)
         os.symlink(datapath+'Band7multi_april22.ms', os.getcwd() + '/Band7multi_april22.ms')
+        os.symlink(datapath+'bandpass.bcal', os.getcwd() + '/bandpass.bcal')
             
     def tearDown(self):
         os.unlink(os.getcwd() + '/Band7multi_april22.ms')
+        os.unlink(os.getcwd() + '/bandpass.bcal')
         if delete_artifacts:
             artifacts = os.listdir(figdir)
             for artifact in artifacts:
@@ -1409,4 +1411,5 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
+
 
