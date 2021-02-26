@@ -28,11 +28,11 @@ class listfits_test(unittest.TestCase):
             os.system('rm -rf ' + self.fitsfile)
 
         if is_CASA6:
-            shutil.copyfile(ctsys.resolve(os.path.join('regression/ngc5921',self.fitsfile)), self.fitsfile)
+            shutil.copyfile(ctsys.resolve(os.path.join('unittest/listfits/',self.fitsfile)), self.fitsfile)
         else:
             default(listfits)
             shutil.copyfile(os.environ.get('CASAPATH').split()[0] +\
-                            '/data/regression/ngc5921/'+self.fitsfile, self.fitsfile)
+                            '/casatestdata/unittest/listfits/'+self.fitsfile, self.fitsfile)
     
     def tearDown(self):
         if (os.path.exists(self.fitsfile)):

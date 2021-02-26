@@ -19,7 +19,6 @@ import six
 
 casa5 = False
 casa6 = False
-__bypass_parallel_processing = 0
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -35,6 +34,21 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+
+    casampi_imported = False
+    import importlib
+    _casampi_spec = importlib.util.find_spec('casampi')
+    if _casampi_spec:
+        # don't catch import error from casampi if it is found in the system modules
+        from casampi.MPIEnvironment import MPIEnvironment
+        casampi_imported = True
+    else:
+        casalog.post('casampi not available - not testing MPIEnvironment stuff', 'WARN')
+
+    def tclean_param_names():
+        from casatasks.tclean import _tclean_t
+        return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+
     casa6 = True
 
 else:
@@ -45,12 +59,9 @@ else:
     from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
+    from mpi4casa.MPIEnvironment import MPIEnvironment
+    casampi_imported = True
+
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
@@ -60,12 +71,24 @@ else:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
+
+    def tclean_param_names():
+        # alternatively could use from tasks import tclean; tclean.parameters
+        from task_tclean import tclean
+        return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+
     casa5 = True
 
 ############################################################################################
 ##################################       imagerhelpers       ###############################
 ############################################################################################
 class TestHelpers:
+
+    # For comparison with keywords added by tclean in its output images
+    if casampi_imported:
+        num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    else:
+        num_mpi_procs = 1
 
     def delmodels(self,msname="",modcol='nochange'):
        TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
@@ -575,7 +598,8 @@ class TestHelpers:
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
-            pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+            pstr += ('All expected keywords in imageinfo, miscinfo, and coords found. '
+                     '({})\n'.format(testname, TestHelpers().verdict(False)))
         return pstr
 
     def check_im_keywords(self, imname, check_misc=True, check_extended=True):
@@ -631,7 +655,9 @@ class TestHelpers:
         pstr += TestHelpers().check_expected_entries(mandatory_imageinfo, imageinfo, keys)
         if check_misc:
             if check_extended:
-                mandatory_miscinfo = ['INSTRUME', 'distance']
+                # basic miscinfo and 'TcleanProcessingInfo' as per CAS-12204
+                mandatory_miscinfo = ['INSTRUME', 'distance',
+                                      'mpiprocs', 'chnchnks', 'memreq', 'memavail']
                 pstr += TestHelpers().check_expected_entries(mandatory_miscinfo, miscinfo, keys)
             forbidden_miscinfo = ['OBJECT', 'TELESCOP']
             pstr += TestHelpers().check_forbidden_entries(forbidden_miscinfo, miscinfo, keys)
@@ -648,6 +674,13 @@ class TestHelpers:
                 # TODO: many tests leave 'distance' empty. Assume that's acceptable...
                 if entry != 'distance' and not keys[record][entry]:
                     pstr += ('entry {0} is found in record {1} but it is empty ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+
+                # ensure mpiprocs is correct. Other keywords added in CAS-12204 have more
+                # variable values (memavail, memreq, etc.) and cannot be compared here.
+                if entry == 'mpiprocs':
+                    if keys[record][entry] != self.num_mpi_procs:
+                        pstr += ('mpiprocs is not as expected. It is {} but it should be {}, ({})'.
+                                 format(keys[record][entry], self.num_mpi_procs, TestHelpers().verdict(False)))
         return pstr
 
     def check_forbidden_entries(self, entries, record, keys):
@@ -655,6 +688,74 @@ class TestHelpers:
         for entry in entries:
             if entry in keys[record]:
                 pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+        return pstr
+
+    def check_history(self, imlist, testname="check_history"):
+        """
+        Checks presence of the logtable and rows with history information (task name,
+        CASA version, all task parameters, etc.).
+
+        :param imlist: names of the images produced by a test execution.
+        :param testname: name to use in the checks report string
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        """
+        pstr = ''
+        for imname in imlist:
+            if os.path.exists(imname):
+                issues = TestHelpers().check_im_history(imname)
+                if issues:
+                    pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+        if not pstr:
+            pstr += ('[{}] All expected history entries found. ({})\n'.
+                     format(testname, TestHelpers().verdict(True)))
+        return pstr
+
+    def check_im_history(self, imname):
+        """
+        Check the history records in an image, ensuring the taskname, CASA version, and
+        full list of parameters is found (all the same number of times).
+
+        :param imname: image name (output image from tclean)
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        Errors are marked with the tag '(Fail' as per self.verdict().
+        """
+        ia_open = False
+        try:
+            _ia.open(imname)
+            ia_open = True
+            history = _ia.history(list=False)
+        except RuntimeError as exc:
+            pstr = ('Cannot retrieve history subtable from image: {}. Error: {}'.
+                    format(imname, exc))
+            return pstr
+        finally:
+            if ia_open:
+                _ia.close()
+
+        pstr = ''
+        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        nversions = sum(line.startswith('version:') for line in history)
+        if ncalls < 1:
+            pstr += ('No calls to tclean were found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        if nversions < 1:
+            pstr += ('No CASA version was found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
+            pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
+                     'not match. ({})\n'.format(ncalls, nversions,
+                                                TestHelpers().verdict(False)))
+        for param in tclean_param_names():
+            nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                          line in history)
+            if nparval < 1:
+                pstr += ('No entries for tclean parameter {} found in history. ({})'
+                         '.'.format(param, TestHelpers().verdict(False)))
+            if nparval != ncalls:
+                pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                         "calls ({}) do not match ({}).".
+                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
         return pstr
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
@@ -727,6 +828,8 @@ class TestHelpers:
                 print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
                 print("pstr after check_keywords = {}".format(pstr))
+                pstr += TestHelpers().check_history(imgexist)
+                print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):

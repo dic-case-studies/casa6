@@ -83,7 +83,7 @@ public:
     
     // Converts this object to/from a record.  The record keys are the values
     // of the Field enum in casacore::String form, and the values are the 
-	// casacore::String values.
+    // casacore::String values.
     // <group>
     void fromRecord(const casacore::RecordInterface& record);
     casacore::Record toRecord() const;
@@ -99,10 +99,8 @@ public:
         casacore::Vector<casacore::Vector<casacore::Slice> >& corrsel);
         
     // Applies this selection to a NewCalTable
-    void apply(NewCalTable& ct, NewCalTable& selectedCT,
-        casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
-        casacore::Vector<casacore::Vector<casacore::Slice> >& corrsel);
-        
+    void apply(NewCalTable& ct, NewCalTable& selectedCT);
+
     // Applies this selection to a Table
     void apply(CalTable& ct, CalTable& selectedCT,
         casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
@@ -168,6 +166,10 @@ public:
     casacore::Vector<int> getSelectedAntennas1();
     casacore::Vector<int> getSelectedAntennas2();
 
+    // Return lists of channels that have been selected.
+	// Each row is [spw, start, stop, step]
+    casacore::Matrix<int> getSelectedChannels();
+
     //Returns whether or not any selections have been made.
     bool isEmpty() const;
 
@@ -177,19 +179,20 @@ private:
 
     // Force appearance of new selection (even when not new)
     casacore::Int forceNew_;
-    casacore::Vector<int> selAnts1;
-    casacore::Vector<int> selAnts2;
+    casacore::Vector<int> selectedAnt1;
+    casacore::Vector<int> selectedAnt2;
+    casacore::Matrix<casacore::Int> selectedChan;
     
     // Initializes the values to their defaults.
     void initDefaults();
 
     // CalTable::select uses taql string for selection
     casacore::String getTaql(CalTable& ct);
-	// handle negation
-	casacore::String getAntTaql(casacore::MSSelection& mss,
+    // handle negation
+    casacore::String getAntTaql(casacore::MSSelection& mss,
         casacore::MeasurementSet& ms, casacore::String antExpr);
-	// For MS + MSSelection
-	casacore::String getMSName(CalTable& ct);
+    // For MS + MSSelection
+    casacore::String getMSName(CalTable& ct);
 };
 
 }

@@ -96,6 +96,13 @@ sub scan_syms {
     mkdir ($symbols_dir);
     foreach ( @executables ) {
         print("$_\n");
+        if ( $osname eq "linux" ) {
+          `readelf -S $_ | grep "no sections in this file"`;
+          if ($? == 0) {
+            print("$_ does not have sections. This will crash dump_syms Skipping...\n");
+            next;
+          }
+        }
         $fileheader = `$dump_syms $_ | head -n1`;
         chomp($fileheader);
         print "fileheader: $fileheader\n";

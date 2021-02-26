@@ -37,7 +37,7 @@ else:
     #import testhelper as th
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 from casatestutils import testhelper as th
@@ -75,7 +75,7 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = ctsys_resolve("regression/unittest/flagdata")
+datapath = ctsys_resolve("unittest/flagdata/")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -392,7 +392,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -407,7 +407,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
@@ -423,7 +423,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -432,7 +432,6 @@ class test_base(unittest.TestCase):
         
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
-        datapath = ctsys_resolve("regression/unittest/mstransform")
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
@@ -449,7 +448,6 @@ class test_base(unittest.TestCase):
         
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
-        datapath = ctsys_resolve("regression/unittest/flagdata")
         
         self.vis = 'uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms'
         if os.path.exists(self.vis):
@@ -1134,7 +1132,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
+        os.system('cp -RH '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
