@@ -156,10 +156,10 @@ private:
 
   // sync with the current chunk/subchunk
   void configureAtmosphereCorrection();
-  void resetSkyStatus(atm::AtmProfile const &profile, double const pwv);
   void updateSkyStatus();
   void updateCorrectionFactor();
   void updateAtmosphereModel();
+  void updateCache();
 
   // emit warning if no transform is applied to the current chunk
   void warnIfNoTransform();
@@ -189,6 +189,7 @@ private:
   casacore::Double userTemperatureValue_;
   casacore::Double userRelHumidityValue_;
   casacore::Double userPwvValue_;
+  casacore::Record configuration_;
 
   // measurements recorded in MS
   casacore::Vector<casacore::Double> offSourceTime_;
@@ -214,6 +215,11 @@ private:
   std::map<SpwId, bool> doSmooth_;
   std::map<SpwId, casacore::Vector<casacore::Double> > channelFreqsPerSpw_;
   std::map<SpwId, casacore::Vector<casacore::Double> > channelWidthsPerSpw_;
+
+  // current iterator status
+  casacore::Double currentTime_;
+  casacore::Int currentTimeIndex_;
+  SpwId currentSpwId_;
 
   // ATM
   unsigned int atmType_;
