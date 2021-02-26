@@ -156,8 +156,9 @@ private:
 
   // sync with the current chunk/subchunk
   void configureAtmosphereCorrection();
-  void updateSkyStatus(atm::SkyStatus *p);
-  void updateCorrectionFactor(atm::SkyStatus *p);
+  void resetSkyStatus(atm::AtmProfile const &profile, double const pwv);
+  void updateSkyStatus();
+  void updateCorrectionFactor();
   void updateAtmosphereModel();
 
   // emit warning if no transform is applied to the current chunk
@@ -215,6 +216,7 @@ private:
   std::map<SpwId, casacore::Vector<casacore::Double> > channelWidthsPerSpw_;
 
   // ATM
+  unsigned int atmType_;
   std::unique_ptr<atm::AtmProfile> atmProfile_;
   std::map<SpwId, std::unique_ptr<atm::SpectralGrid> > atmSpectralGridPerSpw_;
   atm::SpectralGrid *atmSpectralGridPtr_;

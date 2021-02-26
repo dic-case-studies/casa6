@@ -203,12 +203,13 @@ inline Vector<Double> getTrjSkySpec(atm::SkyStatus *skyStatus, unsigned int cons
   return trj;
 }
 
-inline Vector<Double> getTauSpec(atm::SkyStatus *skyStatus, unsigned int const nchan) {
+inline Vector<Double> getTauSpec(atm::SkyStatus *skyStatus, unsigned int const nchan, Double const airMass) {
   // TODO: OMP parallelization
   Vector<Double> tau(nchan);
   for(unsigned int i = 0; i < nchan; ++i) {
-    tau[i] = skyStatus->getDryOpacity(i).get(atm::Opacity::UnitNeper) +
-             skyStatus->getWetOpacity(i).get(atm::Opacity::UnitNeper);
+    tau[i] = (skyStatus->getDryOpacity(i).get(atm::Opacity::UnitNeper) +
+              skyStatus->getWetOpacity(i).get(atm::Opacity::UnitNeper))
+             * airMass;
   }
   return tau;
 }
@@ -276,6 +277,7 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     doSmooth_(),
     channelFreqsPerSpw_(),
     channelWidthsPerSpw_(),
+    atmType_(2),
     atmProfile_(),
     atmSpectralGridPerSpw_(),
     atmSkyStatusPerSpw_(),
@@ -302,6 +304,7 @@ void SDAtmosphereCorrectionTVI::origin() {
   // configure atmospheric correction
   // point appropriate SkyStatus object
   configureAtmosphereCorrection();
+  updateAtmosphereModel();
 
   // warn if current spw is not requested to transform
   warnIfNoTransform();
@@ -316,6 +319,7 @@ void SDAtmosphereCorrectionTVI::next() {
   // configure atmospheric correction if necessary
   // point appropriate SkyStatus object
   configureAtmosphereCorrection();
+  updateAtmosphereModel();
 
   // warn if current spw is not requested to transform
   warnIfNoTransform();
@@ -567,9 +571,9 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   os << "max ATM altitude = " << topAtmProfile.get() << LogIO::POST;
 
   // ATM type
-  unsigned int atmType = (configuration.isDefined("atmType")) ?
+  atmType_ = (configuration.isDefined("atmType")) ?
     configuration.asuInt("atmType") : 2;
-  os << "ATM type = " << atmType << LogIO::POST;
+  os << "ATM type = " << atmType_ << LogIO::POST;
 
   // layerBoundaries and layerTemperatures
   std::vector<atm::Length> layerBoundaries;
@@ -594,7 +598,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     }
   }
 
-  if (!layerBoundaries.empty() && !layerTemperatures.empty()) {
+  // if (!layerBoundaries.empty() && !layerTemperatures.empty()) {
     atmProfile_.reset(new atm::AtmProfile(
       altitude,
       defaultPressure,
@@ -605,52 +609,59 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       pressureStep,
       pressureStepFactor,
       topAtmProfile,
-      atmType,
+      atmType_,
       layerBoundaries,
       layerTemperatures
     ));
-  } else {
-    atmProfile_.reset(new atm::AtmProfile(
-      altitude,
-      defaultPressure,
-      defaultTemperature,
-      tropoLapseRate,
-      defaultRelHumidity,
-      wvScaleHeight,
-      pressureStep,
-      pressureStepFactor,
-      topAtmProfile,
-      atmType
-    ));
-  }
+    atmProfile_->setBasicAtmosphericParameterThresholds(
+      atm::Length(0.0, atm::Length::UnitMeter),
+      atm::Pressure(0.0, atm::Pressure::UnitMilliBar),
+      atm::Temperature(0.0, atm::Temperature::UnitKelvin),
+      0.0,
+      atm::Humidity(0.0, atm::Humidity::UnitPercent),
+      atm::Length(0.0, atm::Length::UnitMeter)
+    );
+  // } else {
+  //   atmProfile_.reset(new atm::AtmProfile(
+  //     altitude,
+  //     defaultPressure,
+  //     defaultTemperature,
+  //     tropoLapseRate,
+  //     defaultRelHumidity,
+  //     wvScaleHeight,
+  //     pressureStep,
+  //     pressureStepFactor,
+  //     topAtmProfile,
+  //     atmType
+  //   ));
+  // }
 
   // SpectralGrid
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
     Vector<Double> cf = channelFreqsPerSpw_[spw];
     Vector<Double> cw = channelWidthsPerSpw_[spw];
-    size_t nchan = cf.nelements();
-    Double chansep = (nchan == 1u) ? cw[0] : (cf[nchan - 1] - cf[0]) / static_cast<Double>(nchan - 1);
+    // this is the same definition with Python implementation
+    unsigned int nchan = cf.nelements();
+    unsigned int refChan = (nchan - 1) / 2;
+    double centerFreq = (nchan % 2 == 1) ? cf[nchan / 2] : 0.5 * (cf[nchan / 2 - 1] + cf[nchan / 2]);
+    Double chanSep = (nchan == 1u) ? cw[0] : (cf[nchan - 1] - cf[0]) / static_cast<Double>(nchan - 1);
     if (isTdmSpw_[spw]) {
       // configure 5x finer spectral grid than native one
-      chansep /= 5.0;
+      chanSep /= 5.0;
       nchan *= 5u;
     }
-    os << "SpectralGrid channel for spw " << spw << ": " << nchan << LogIO::POST;
+    os.output() << std::setprecision(16);
+    os << "SpectralGrid for spw " << spw << ": nchan " << nchan
+       << " refchan " << refChan << " center freq "
+       << centerFreq << " chan sep " << chanSep << LogIO::POST;
     atmSpectralGridPerSpw_[spw].reset(
-      new atm::SpectralGrid(nchan, 0u, cf[0], chansep)
+      new atm::SpectralGrid(nchan, refChan, centerFreq, chanSep)
     );
   }
 
   // SkyStatus
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
-    os << "Initializing SkyStatus for SPW " << spw << LogIO::POST;
-    atm::RefractiveIndexProfile profile(*atmSpectralGridPerSpw_[spw].get(), *atmProfile_.get());
-    atm::SkyStatus *skyStatus = new atm::SkyStatus(profile);
-    skyStatus->setUserWH2O(atm::Length(defaultPwvValue, atm::Length::UnitMilliMeter));
-    atmSkyStatusPerSpw_[spw].reset(skyStatus);
-  }
+  resetSkyStatus(*atmProfile_.get(), defaultPwvValue);
   os << "DONE Initializing SkyStatus" << LogIO::POST;
 }
 
@@ -664,9 +675,10 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
   time(currentTime);
   Vector<Int> currentStateId;
   stateId(currentStateId);
-  bool isOnSource = isOnSourceChunk();
+  bool isOnSource = true; //isOnSourceChunk();
   bool isPrecedingOffSourceScanExist = min(offSourceTime_) <= currentTime[0];
   bool isSubsequentOffSourceScanExist = currentTime[0] <= max(offSourceTime_);
+  bool isPrecedingAtmScanExist = min(atmTime_) <= currentTime[0];
   cout << std::setprecision(16) << offSourceTime_ << endl;
   cout << std::setprecision(16) << currentTime[0] << " state ID" << currentStateId[0] << endl;
   os << "SPW " << currentSpw << ": processingSpw " << isProcessingSpw
@@ -674,7 +686,9 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
      << " after " << isSubsequentOffSourceScanExist
      << " ON_SOURCE? " << isOnSource << LogIO::POST;
   atmSkyStatusPtr_ = nullptr;
-  if (isProcessingSpw && isOnSource && isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist) {
+  if (isProcessingSpw && isOnSource &&
+      isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist &&
+      isPrecedingAtmScanExist) {
     // gain factor for current spw
     if (currentSpw < 0 || static_cast<SpwId>(gainFactorList_.nelements()) <= currentSpw) {
       gainFactor_ = 1.0;
@@ -690,49 +704,119 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
       atmSpectralGridPtr_ = atmSpectralGridPerSpw_[currentSpw].get();
     }
   }
-
-  updateAtmosphereModel();
 }
 
-void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus *p) {
+void SDAtmosphereCorrectionTVI::updateSkyStatus() {
   // do nothing if nullptr is given
-  if (!p) {
+  if (!atmSkyStatusPtr_) {
     return;
   }
 
-  // TODO: configure appropriate index from time stamp
-  // TODO: if no valid time stamp exists, make
+  atm::SkyStatus const * const p = atmSkyStatusPtr_;
   Vector<Double> currentTime;
   time(currentTime);
   std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime[0]);
   Int timeIndex = pair.first;
+  bool isSkyStatusOutdated = false;
   if (isValueUnset(userTemperatureValue_)) {
-    Double temperatureValue = atmTemperatureData_[timeIndex];
-    p->setBasicAtmosphericParameters(atm::Temperature(temperatureValue, atm::Temperature::UnitKelvin));
+    Double val = atmTemperatureData_[timeIndex];
+    Double val2 = p->getGroundTemperature().get(atm::Temperature::UnitKelvin);
+    if (val != val2) {
+      cout << "Temperature is different " << val << " vs " << val2 << endl;
+      isSkyStatusOutdated = true;
+    }
+    atmSkyStatusPtr_->setBasicAtmosphericParameters(atm::Temperature(val, atm::Temperature::UnitKelvin));
   }
+  cout << "time " << std::setprecision(16) << currentTime[0]
+       << " atmTime " << atmTime_[timeIndex]
+       << " atmIndex " << timeIndex << endl;
 
   if (isValueUnset(userPressureValue_)) {
-    Double pressureValue = atmPressureData_[timeIndex];
-    p->setBasicAtmosphericParameters(atm::Pressure(pressureValue, atm::Pressure::UnitMilliBar));
+    Double val = atmPressureData_[timeIndex];
+    Double val2 = p->getGroundPressure().get(atm::Pressure::UnitMilliBar);
+    if (val != val2) {
+      cout << "Pressure is different " << val << " vs " << val2 << endl;
+      isSkyStatusOutdated = true;
+    }
+    atmSkyStatusPtr_->setBasicAtmosphericParameters(atm::Pressure(val, atm::Pressure::UnitMilliBar));
   }
 
   if (isValueUnset(userRelHumidityValue_)) {
-    Double relHumidityValue = atmRelHumidityData_[timeIndex];
-    p->setBasicAtmosphericParameters(atm::Humidity(relHumidityValue, atm::Humidity::UnitPercent));
+    Double val = atmRelHumidityData_[timeIndex];
+    Double val2 = p->getRelativeHumidity().get(atm::Humidity::UnitPercent);
+    if (val != val2) {
+      cout << "Humidity is different " << val << " vs " << val2 << endl;
+      isSkyStatusOutdated = true;
+    }
+    atmSkyStatusPtr_->setBasicAtmosphericParameters(atm::Humidity(val, atm::Humidity::UnitPercent));
   }
 
-  // TODO: configure appropriate index from time stamp
-  pair = findNearestIndex(pwvTime_, currentTime[0]);
-  timeIndex = pair.first;
+  // share time information with CalAtmosphere table
+  Double pwvValue = userPwvValue_;
   if (isValueUnset(userPwvValue_)) {
-    Double pwvValue = pwvData_[timeIndex];
-    p->setUserWH2O(atm::Length(pwvValue, atm::Length::UnitMilliMeter));
+    Double val = pwvData_[timeIndex];
+    Double val2 = p->getUserWH2O().get(atm::Length::UnitMilliMeter);
+    if (val != val2) {
+      cout << "PWV is different " << val << " vs " << val2 << endl;
+      isSkyStatusOutdated = true;
+    }
+    pwvValue = val;
+    atmSkyStatusPtr_->setUserWH2O(atm::Length(pwvValue, atm::Length::UnitMilliMeter));
+  }
+
+  isSkyStatusOutdated = false;
+  if (isSkyStatusOutdated) {
+    // reset SkyStatus
+    atm::AtmProfile atmProfile(
+      p->getAltitude(),
+      p->getGroundPressure(),
+      p->getGroundTemperature(),
+      // atm::Pressure(atmPressureData_[timeIndex], atm::Pressure::UnitMilliBar),
+      // atm::Temperature(atmTemperatureData_[timeIndex], atm::Temperature::UnitKelvin),
+      p->getTropoLapseRate(),
+      p->getRelativeHumidity(),
+      // atm::Humidity(atmRelHumidityData_[timeIndex], atm::Humidity::UnitPercent),
+      p->getWvScaleHeight(),
+      p->getPressureStep(),
+      p->getPressureStepFactor().get(),
+      p->getTopAtmProfile(),
+      atmType_,
+      p->getThicknessProfile(),
+      p->getTemperatureProfile()
+    );
+    SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
+    // atm::RefractiveIndexProfile profile(
+    //   *atmSpectralGridPerSpw_[currentSpw].get(),
+    //   atmProfile
+    // );
+    // atmSkyStatusPerSpw_[currentSpw].reset(
+    //   new atm::SkyStatus(profile)
+    // );
+    pwvValue = p->getUserWH2O().get(atm::Length::UnitMilliMeter);
+    resetSkyStatus(atmProfile, pwvValue);
+    atmSkyStatusPtr_ = atmSkyStatusPerSpw_[currentSpw].get();
+  }
+
+  // pair = findNearestIndex(pwvTime_, currentTime[0]);
+  // timeIndex = pair.first;
+  cout << "time " << currentTime[0]
+       << " Temperature " << atmTemperatureData_[timeIndex] << "K "
+       << " Pressure " << atmPressureData_[timeIndex] << "mbar "
+       << " Humidity " << atmRelHumidityData_[timeIndex] << "%" << endl;
+}
+
+void SDAtmosphereCorrectionTVI::resetSkyStatus(atm::AtmProfile const &atmProfile, double const pwv) {
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    atm::RefractiveIndexProfile profile(*atmSpectralGridPerSpw_[spw].get(), atmProfile);
+    atmSkyStatusPerSpw_[spw].reset(new atm::SkyStatus(profile));
+    atmSkyStatusPerSpw_[spw]->setUserWH2O(atm::Length(pwv, atm::Length::UnitMilliMeter));
   }
 }
 
-void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
+void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
   // discard correction factor if nullptr is given
-  if (!p) {
+  if (!atmSkyStatusPtr_) {
     correctionFactor_.resize();
     return;
   }
@@ -767,22 +851,24 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
   cout << "time " << std::setprecision(16) << currentTime << " elON " << elevationOn << " elOFF " << elevationOff << endl;
 
   // opacity
-  cout << "opacity calculation" << endl;
   unsigned int const nchan = atmSpectralGridPtr_->getNumChan();
-  cout << "nchan = " << nchan << endl;
   Double const airMassOn = 1.0 / cos(C::pi_2 - elevationOn);
   atmSkyStatusPtr_->setAirMass(airMassOn);
   Vector<Double> trjSkySpecOn = getTrjSkySpec(atmSkyStatusPtr_, nchan);
-  cout << "trjSkySpecOn = " << trjSkySpecOn[0] << endl;
   Double const airMassOff = 1.0 / cos(C::pi_2 - elevationOff);
   atmSkyStatusPtr_->setAirMass(airMassOff);
   Vector<Double> trjSkySpecOff = getTrjSkySpec(atmSkyStatusPtr_, nchan);
-  cout << "trjSkySpecOff = " << trjSkySpecOff[0] << endl;
-  Vector<Double> tauSpecOff = getTauSpec(atmSkyStatusPtr_, nchan) * airMassOff;
-  cout << "tauSpecOff = " << tauSpecOff[0] << endl;
+  Vector<Double> tauSpecOff = getTauSpec(atmSkyStatusPtr_, nchan, airMassOff);
   Vector<Double> correctionFactor = getCorrectionFactor(trjSkySpecOn, trjSkySpecOff, tauSpecOff);
-  cout << "correctionFactor = " << correctionFactor[0] << endl;
-  cout << "done calculating correction factor" << endl;
+
+  constexpr size_t ic = 0;
+  cout << std::setprecision(16)
+       << "time = " << currentTime
+       << " TrjON = " << trjSkySpecOn[ic]
+       << " TrjOFF = " << trjSkySpecOff[ic]
+       << " tauOFF = " << tauSpecOff[ic]
+       << " factor = " << correctionFactor[ic] << " (without gain factor)"
+       << endl;
 
   // current spw
   SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
@@ -816,8 +902,8 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus *p) {
 
 void SDAtmosphereCorrectionTVI::updateAtmosphereModel() {
   if (atmSkyStatusPtr_) {
-    updateSkyStatus(atmSkyStatusPtr_);
-    updateCorrectionFactor(atmSkyStatusPtr_);
+    updateSkyStatus();
+    updateCorrectionFactor();
   }
 }
 
@@ -1001,7 +1087,6 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
     for (uInt i = 0; i < n; ++i) {
       Vector<Double> diff = abs(pwvTime_ - atmTime_[i]);
       Double minDiff = min(diff);
-      Double cache = max(diff);
       uInt const m = pwvTime_.nelements();
       uInt idx = m;
       for (uInt j = 0; j < m; ++j) {
