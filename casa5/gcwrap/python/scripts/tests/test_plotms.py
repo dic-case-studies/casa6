@@ -959,13 +959,13 @@ class test_calplot(plotms_test_base):
         res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, avgtime='6000', avgscan=True)   
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 50000)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
         self.removePlotfile()
         # Channel averaging for B Jones table
         res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, avgchannel='6000', avgscan=True)   
+            showgui=False, highres=True, avgchannel='6000')
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 40000)
+        self.checkPlotfile(self.plotfile_jpg, 90000)
 
     def test_calplot_avg_bpoly(self):
         '''test_calplot_avg_bpoly: BPOLY averaging fails'''
