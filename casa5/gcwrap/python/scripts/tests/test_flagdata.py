@@ -467,6 +467,16 @@ class test_base(unittest.TestCase):
         self.unflag_ms()        
         default(flagdata)
         
+    def setUp_evla_15A_397(self):
+        '''EVLA example MS wich has decreasing number of rows per chunk when traversed with VI/VB2'''        
+
+        self.vis = 'evla_15A-397_spw1_7_scan_4_6.ms'
+        if os.path.exists(self.vis):
+            print("The MS is already around, just unflag")
+        else:
+            print("Moving data...")
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
+
     def unflag_ms(self):
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -962,6 +972,21 @@ class test_rflag(test_base):
         # This test is mischievous, manipulates the model column. Don't leave a messed up MS.
         os.system('rm -rf {0}'.format(self.vis))
        
+class test_rflag_evla(test_base):
+    """flagdata:: Test of mode = 'rflag'"""
+
+    def setUp(self):
+        self.setUp_evla_15A_397()
+
+    def test_rflag_CAS_13360(self):
+        '''flagdata:: rflag in a MS which has decreasing number of rows in subsequent chunks'''
+        
+        flagdata(vis='evla_15A-397_spw1_7_scan_4_6.ms', mode='rflag', \
+                 datacolumn='data', ntime='scan', combinescans=False, \
+                 extendflags=False, winsize=3, timedev='', freqdev='',\
+                 timedevscale=5.0, freqdevscale=5.0, spectralmax=1000000.0, \
+                 spectralmin=0.0, flagbackup=False)
+
 class test_shadow(test_base):
     def setUp(self):
         self.setUp_shadowdata2()
@@ -4191,6 +4216,7 @@ def suite():
     return [test_dict_consolidation,
             test_antint,
             test_rflag,
+            test_rflag_evla,
             test_tfcrop,
             test_shadow,
             test_selections,
