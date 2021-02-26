@@ -71,7 +71,8 @@ public:
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"),
+          casacore::Double fracBW=0.0);
   //set the weight from a Record generated from SynthesisUtils::fillWeightRecord
   virtual casacore::Bool weight(const Record& inrec);
   //set the weight density to the visibility iterator
