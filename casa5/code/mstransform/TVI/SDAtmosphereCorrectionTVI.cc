@@ -21,6 +21,7 @@
 //# $Id: $
 #include <mstransform/TVI/SDAtmosphereCorrectionTVI.h>
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <iomanip>
@@ -42,6 +43,7 @@
 #include <casacore/scimath/Functionals/Interpolate1D.h>
 #include <casacore/scimath/Functionals/ScalarSampledFunctional.h>
 #include <casacore/ms/MeasurementSets/MSDataDescColumns.h>
+#include <casacore/ms/MeasurementSets/MSSpWindowColumns.h>
 #include <casacore/ms/MeasurementSets/MSPolColumns.h>
 #include <casacore/ms/MSOper/MSMetaData.h>
 #include <casacore/tables/TaQL/ExprNode.h>
@@ -332,6 +334,7 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     doTransform_(),
     isTdmSpw_(),
     doSmooth_(),
+    nchanBBPerSpw_(),
     channelFreqsPerSpw_(),
     channelWidthsPerSpw_(),
     currentTime_(kValueUnset),
@@ -725,8 +728,9 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     // smoothing control
     Int polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
     Int numPol = polarizationSubtablecols().numCorr().get(polId);
-    Int numChanPerBB = nchan * numPol;
-    doSmooth_[spw] = (numChanPerBB == 256 || numChanPerBB == 8192);
+    uInt numChanPerBB = nchanBBPerSpw_[spw];
+    Int numChanPol = numChanPerBB * numPol;
+    doSmooth_[spw] = (numChanPol == 256 || numChanPol == 8192);
 
     unsigned int refChan = (nchan - 1) / 2;
     double centerFreq = cf[refChan];
@@ -1035,14 +1039,14 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
   MeasurementSet const ms(msName);
 
   Table const spwTable = ms.spectralWindow();
-  ArrayColumn<Double> chanFreqColumn(spwTable, "CHAN_FREQ");
-  ArrayColumn<Double> chanWidthColumn(spwTable, "CHAN_WIDTH");
+  auto const chanFreqColumn = spectralWindowSubtablecols().chanFreq();
+  auto const chanWidthColumn = spectralWindowSubtablecols().chanWidth();
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
     channelFreqsPerSpw_[spw] = chanFreqColumn(spw);
     channelWidthsPerSpw_[spw] = chanWidthColumn(spw);
-    size_t const nchan = channelFreqsPerSpw_[spw].nelements();
-    isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
+    // size_t const nchan = channelFreqsPerSpw_[spw].nelements();
+    // isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
   }
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   os << "TDM flag:" << endl;
@@ -1050,6 +1054,63 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
     os << "    spw " << i->first << " " << i->second << endl;
   }
   os << LogIO::POST;
+
+  // number of channels per baseband
+  Float const noCache = -1;
+  MSMetaData meta(&ms, noCache);
+  std::set<uInt> fdmSpws = meta.getFDMSpw();
+  std::set<uInt> tdmSpws = meta.getTDMSpw();
+  std::set<uInt> onSourceSpws = meta.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");
+  std::set<uInt> fdmTdmSpws;
+  std::set_union(
+    fdmSpws.begin(), fdmSpws.end(),
+    tdmSpws.begin(), tdmSpws.end(),
+    std::inserter(fdmTdmSpws, fdmTdmSpws.end())
+  );
+  std::set<uInt> scienceSpws;
+  std::set_intersection(
+    onSourceSpws.begin(), onSourceSpws.end(),
+    fdmTdmSpws.begin(), fdmTdmSpws.end(),
+    std::inserter(scienceSpws, scienceSpws.end())
+  );
+  std::map<Int, uInt> nchanPerBB;
+  std::map<SpwId, Int> spwBBMap;
+  auto const nchanColumn = spectralWindowSubtablecols().numChan();
+  auto const nameColumn = spectralWindowSubtablecols().name();
+  for (auto i = scienceSpws.begin(); i != scienceSpws.end(); ++i) {
+    SpwId const spw = *i;
+    String const name = nameColumn(spw);
+    Int nchan = nchanColumn(spw);
+    auto const pos = name.find("#BB_");
+    auto const pos2 = name.find("#", pos + 1);
+    if (pos != String::npos && pos + 4 < name.size()) {
+      Int bb = String::toInt(name.substr(pos + 4, pos2 - pos - 4));
+      cout << "SPW " << spw << ": name \"" << name
+           << "\" substr " << name.substr(pos + 4, pos2 - pos - 4)
+           << " pos " << pos + 4 << " pos2 " << pos2
+           << " bb " << bb << endl;
+      spwBBMap[spw] = bb;
+      auto j = nchanPerBB.find(bb);
+      if (j == nchanPerBB.end()) {
+        nchanPerBB[bb] = nchan;
+      } else {
+        nchanPerBB[bb] += nchan;
+      }
+    }
+  }
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    auto j = spwBBMap.find(spw);
+    if (j == spwBBMap.end()) {
+      nchanBBPerSpw_[spw] = 0u;
+    } else {
+      nchanBBPerSpw_[spw] = nchanPerBB[j->second];
+    }
+    auto const nchan = nchanBBPerSpw_[spw];
+    cout << "nchan per BB for SPW " << spw << " is " << nchan << endl;
+    isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
+    cout << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << endl;
+  }
 }
 
 void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const referenceAntenna) {
