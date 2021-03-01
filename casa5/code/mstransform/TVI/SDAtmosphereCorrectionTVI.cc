@@ -194,6 +194,62 @@ inline Double interpolateDataLinear(Vector<Double> const &xin, Vector<Double> co
   return yout;
 }
 
+// implementation of np.convolve(mode='same')
+inline Vector<Double> convolve1DTriangle(Vector<Double> const &in) {
+  // constexpr unsigned int kNumKernel = 3u;
+  constexpr Double kKernelTriangle[] = {0.25, 0.5, 0.25};
+  unsigned int const n = in.nelements();
+  assert(n >= kNumKernel);
+  Vector<Double> out(n, 0.0);
+  // symmetric kernel
+  out[0] = kKernelTriangle[0] * in[1] + kKernelTriangle[1] + in[0];
+  for (unsigned int i = 1; i < n - 1; ++i) {
+    out[i] = kKernelTriangle[0] * (in[i - 1] + in[i + 1]) + kKernelTriangle[1] + in[i];
+  }
+  out[n - 1] = kKernelTriangle[0] * in[n - 2] + kKernelTriangle[1] * in[n - 1];
+  return out;
+}
+
+inline Vector<Double> convolve1DHanning(Vector<Double> const &in) {
+  // normalized spectral response for Hanning window, FWHM=10
+  constexpr unsigned int kNumKernel = 29u;
+  constexpr unsigned int kIndexKernelCenter = kNumKernel / 2u;
+  constexpr Double kKernelHanning[] = {
+    -0.00098041, -0.00202866, -0.00265951, -0.00222265,
+    0.00000000, 0.00465696, 0.01217214, 0.02260546, 0.03556241,
+    0.05017949, 0.06519771, 0.07911911, 0.09042184, 0.09779662,
+    0.10035898, 0.09779662, 0.09042184, 0.07911911, 0.06519771,
+    0.05017949, 0.03556241, 0.02260546, 0.01217214, 0.00465696,
+    0.00000000, -0.00222265, -0.00265951, -0.00202866, -0.00098041
+  };
+  unsigned int const n = in.nelements();
+  assert(n >= kNumKernel);
+  Vector<Double> out(n, 0.0);
+  // symmetric kernel
+  for (unsigned int i = 0u; i < kIndexKernelCenter; ++i) {
+    out[i] = 0.0;
+    for (unsigned int j = 0u; j < kIndexKernelCenter + i + 1; ++j) {
+      unsigned int k = kIndexKernelCenter - i + j;
+      out[i] += in[j] * kKernelHanning[k];
+    }
+  }
+  for (unsigned int i = kIndexKernelCenter; i < n - kIndexKernelCenter; ++i) {
+    out[i] = 0.0;
+    for (unsigned int k = 0u; k < kNumKernel; ++k) {
+      unsigned int j = i - kIndexKernelCenter + k;
+      out[i] += in[j] * kKernelHanning[k];
+    }
+  }
+  for (unsigned int i = n - kIndexKernelCenter; i < n; ++i) {
+    out[i] = 0.0;
+    for (unsigned int j = i - kIndexKernelCenter; j < n; ++j) {
+      unsigned int k = j - (i - kIndexKernelCenter);
+      out[i] += in[j] * kKernelHanning[k];
+    }
+  }
+  return out;
+}
+
 inline Vector<Double> getTrjSkySpec(atm::SkyStatus *skyStatus, unsigned int const nchan) {
   // TODO: OMP parallelization
   Vector<Double> trj(nchan);
@@ -665,6 +721,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     Vector<Double> cf = channelFreqsPerSpw_[spw];
     Vector<Double> cw = channelWidthsPerSpw_[spw];
     unsigned int nchan = cf.nelements();
+
+    // smoothing control
+    Int polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
+    Int numPol = polarizationSubtablecols().numCorr().get(polId);
+    Int numChanPerBB = nchan * numPol;
+    doSmooth_[spw] = (numChanPerBB == 256 || numChanPerBB == 8192);
+
     unsigned int refChan = (nchan - 1) / 2;
     double centerFreq = cf[refChan];
     Double chanSep = (nchan == 1u) ? cw[0] : (cf[nchan - 1] - cf[0]) / static_cast<Double>(nchan - 1);
@@ -672,7 +735,9 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       // configure 5x finer spectral grid than native one
       chanSep /= 5.0;
       nchan *= 5u;
+      refChan = refChan * 5 + 2u;
     }
+
     os.output() << std::setprecision(16);
     os << "SpectralGrid for spw " << spw << ": nchan " << nchan
        << " refchan " << refChan << " center freq "
@@ -685,11 +750,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   // SkyStatus
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
+    os << "initializing SkyStatus for " << spw << LogIO::POST;
     atm::RefractiveIndexProfile profile(*atmSpectralGridPerSpw_[spw].get(), *atmProfile_.get());
     atmSkyStatusPerSpw_[spw].reset(new atm::SkyStatus(profile));
     atmSkyStatusPerSpw_[spw]->setUserWH2O(atm::Length(defaultPwvValue, atm::Length::UnitMilliMeter));
   }
   os << "DONE Initializing SkyStatus" << LogIO::POST;
+
 }
 
 void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
@@ -869,6 +936,7 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
   // current spw
   // SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
   if (isTdmSpw_[currentSpwId_]) {
+    cout << "SPW " << currentSpwId_ << " is TDM " << endl;
     // TODO: convolve with hanning window
     // TODO: interpolation to native freq
     unsigned int numAtmChan = atmSpectralGridPtr_->getNumChan();
@@ -879,14 +947,16 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
     indgen(atmFreq, refAtmFreq - sepAtmFreq * refAtmChan, sepAtmFreq);
     Vector<Double> const &nativeFreq = channelFreqsPerSpw_[currentSpwId_];
     correctionFactor_.resize(nativeFreq.nelements());
+    Vector<Double> smoothedCorrectionFactor = convolve1DHanning(correctionFactor);
     Interpolate1D<Double, Double> interpolator(
       ScalarSampledFunctional<Double>(atmFreq),
-      ScalarSampledFunctional<Double>(correctionFactor), True, True);
+      ScalarSampledFunctional<Double>(smoothedCorrectionFactor), True, True);
     for (uInt i = 0; i < nativeFreq.nelements(); ++i) {
       correctionFactor_[i] = interpolator(nativeFreq[i]);
     }
   } else if (doSmooth_[currentSpwId_]) {
-    // TODO: smoothing
+    cout << "SPW " << currentSpwId_ << " requires smoothing " << endl;
+    correctionFactor_ = convolve1DTriangle(correctionFactor);
   } else {
     correctionFactor_.reference(correctionFactor);
   }
