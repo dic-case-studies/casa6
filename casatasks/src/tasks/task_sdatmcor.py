@@ -404,9 +404,9 @@ def sdatmcor(
             site_altitude, is_user_param = parse_atm_params(
                 user_param=altitude,
                 user_default='',
-                task_default=default_altitude
+                task_default=qa.quantity(default_altitude, 'm')
             )
-            config['siteAltitude'] = site_altitude
+            config['siteAltitude'] = qa.convert(site_altitude, 'm')['value']
             user_pressure, is_user_param = parse_atm_params(
                 user_param=pressure,
                 user_default='',
