@@ -176,7 +176,6 @@ private:
     stateId(stateIdList);
     static std::string const startstr("OBSERVE_TARGET#ON_SOURCE");
     casacore::String s = stateSubtablecols().obsMode().get(stateIdList[0]);
-    std::cout << "state ID = " << stateIdList << " OBSMODE \"" << s << "\" match " << s.startsWith(startstr) << std::endl;
     return s.startsWith(startstr);
   }
   bool doTransform() const {return (atmSkyStatusPtr_ != nullptr);}
