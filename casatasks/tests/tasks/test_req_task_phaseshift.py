@@ -46,26 +46,18 @@ import numpy
 
 ### Data ###
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/refim_twopoints_twochan.ms')
-    datapath_Itziar = casatools.ctsys.resolve('visibilities/alma/Itziar.ms')
-    datapath_ngc = casatools.ctsys.resolve('visibilities/vla/ngc7538_ut.ms')
-    datapath_nep = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms')
-    datapath_mms = casatools.ctsys.resolve('visibilities/alma/uid_mms.mms')
+    datapath = casatools.ctsys.resolve('unittest/phaseshift/refim_twopoints_twochan.ms')
+    datapath_Itziar = casatools.ctsys.resolve('unittest/phaseshift/Itziar.ms')
+    datapath_ngc = casatools.ctsys.resolve('unittest/phaseshift/ngc7538_ut.ms')
+    datapath_nep = casatools.ctsys.resolve('unittest/phaseshift/nep2-shrunk.ms')
+    datapath_mms = casatools.ctsys.resolve('unittest/phaseshift/uid___X02_X3d737_X1_01_small.mms')
     
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/refim_twopoints_twochan.ms'
-        datapath_Itziar = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms'
-        datapath_ngc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc7538_ut.ms'
-        datapath_nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        datapath_mms = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid_mms.mms'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/refim_twopoints_twochan.ms'
-        datapath_Itziar = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
-        datapath_ngc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc7538_ut.ms'
-        datapath_nep = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        datapath_mms = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid_mms.mms'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/refim_twopoints_twochan.ms'
+    datapath_Itziar = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/Itziar.ms'
+    datapath_ngc = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/ngc7538_ut.ms'
+    datapath_nep = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/nep2-shrunk.ms'
+    datapath_mms = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/uid___X02_X3d737_X1_01_small.mms'
     
 def change_perms(path):
     os.chmod(path, 0o777)
@@ -203,7 +195,6 @@ class phaseshift_test(unittest.TestCase):
     def test_shiftAndCompare(self):
         ''' Check that changing the phasecenter with phaseshift and reverting with tclean results in the correct flux values at selected pixel locations '''
         ### Run fixvis to shift the MS phasecenter to a new location.
-
         post_vis = ''
         post_vis = 'post_phaseshift.ms'
         os.system('rm -rf ' + post_vis)
