@@ -360,8 +360,45 @@ SDAtmosphereCorrectionTVI::~SDAtmosphereCorrectionTVI() {
 void SDAtmosphereCorrectionTVI::origin() {
   TransformingVi2::origin();
 
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "origin()" << LogIO::POST;
+
   // Synchronize own VisBuffer
   configureNewSubchunk();
+
+  updateCache();
+
+  // update SkyStatus with the closest weather measurement
+  // re-calculate correction factor (dTa)
+  configureAtmosphereCorrection();
+  updateAtmosphereModel();
+}
+
+void SDAtmosphereCorrectionTVI::next() {
+  TransformingVi2::next();
+
+  // Synchronize own VisBuffer
+  configureNewSubchunk();
+
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "next()" << LogIO::POST;
+
+  cout << "next" << endl;
+
+  updateCache();
+
+  // update SkyStatus with the closest weather measurement
+  // re-calculate correction factor (dTa)
+  configureAtmosphereCorrection();
+  updateAtmosphereModel();
+}
+
+void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
+  TransformingVi2::originChunks(forceRewind);
+
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "originChunks()" << LogIO::POST;
+  cout << "originChunks" << endl;
 
   // initialization
   cout << "initializeAtmCorre" << endl;
@@ -384,13 +421,13 @@ void SDAtmosphereCorrectionTVI::origin() {
   warnIfNoTransform();
 }
 
-void SDAtmosphereCorrectionTVI::next() {
-  TransformingVi2::next();
+void SDAtmosphereCorrectionTVI::nextChunk() {
+  TransformingVi2::nextChunk();
 
-  // Synchronize own VisBuffer
-  configureNewSubchunk();
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "nextChunk()" << LogIO::POST;
 
-cout << "next()" << endl;
+cout << "nextChunk" << endl;
   // setup some cache values
   updateCache();
   currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
@@ -402,29 +439,6 @@ cout << "next()" << endl;
 
   // warn if current spw is not requested to transform
   warnIfNoTransform();
-}
-
-void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
-  TransformingVi2::originChunks();
-
-  cout << "originChunks" << endl;
-  updateCache();
-
-  // update SkyStatus with the closest weather measurement
-  // re-calculate correction factor (dTa)
-  updateAtmosphereModel();
-}
-
-void SDAtmosphereCorrectionTVI::nextChunk() {
-  TransformingVi2::nextChunk();
-
-  cout << "nextChunk" << endl;
-
-  updateCache();
-
-  // update SkyStatus with the closest weather measurement
-  // re-calculate correction factor (dTa)
-  updateAtmosphereModel();
 }
 
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
@@ -1002,6 +1016,7 @@ void SDAtmosphereCorrectionTVI::updateCache() {
   // non rowBlocking mode - time should be single value
   Vector<Double> timeData;
   time(timeData);
+  cout << "number of rows: " << timeData.size() << endl;
   currentTime_ = timeData[0];
   cout << "updateCache: atmTime_ = " << atmTime_ << endl;
   if (atmTime_.nelements() > 0) {
@@ -1070,11 +1085,6 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
     // isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
   }
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  os << "TDM flag:" << endl;
-  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
-    os << "    spw " << i->first << " " << i->second << endl;
-  }
-  os << LogIO::POST;
 
   // number of channels per baseband
   Float const noCache = -1;
@@ -1132,6 +1142,12 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
     isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
     cout << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << endl;
   }
+
+  os << "TDM flag:" << endl;
+  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
+    os << "    spw " << i->first << " " << i->second << endl;
+  }
+  os << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const referenceAntenna) {
