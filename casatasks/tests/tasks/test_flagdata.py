@@ -477,6 +477,10 @@ class test_base(unittest.TestCase):
             print("Moving data...")
             os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
 
+        os.system('rm -rf ' + self.vis + '.flagversions')
+        self.unflag_ms()
+        default(flagdata)
+
     def unflag_ms(self):
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -986,6 +990,10 @@ class test_rflag_evla(test_base):
                  extendflags=False, winsize=3, timedev='', freqdev='',\
                  timedevscale=5.0, freqdevscale=5.0, spectralmax=1000000.0, \
                  spectralmin=0.0, flagbackup=False)
+
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 3185281)
+
 
 class test_shadow(test_base):
     def setUp(self):
