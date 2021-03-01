@@ -459,8 +459,9 @@ class test_sdatmcor(unittest.TestCase):
         """Test default antenna determination for empty FLAG_CMD table"""
         # check if the task can handle empty FLAG_CMD table
         with sdutil.tbmanager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
-            tb.removerows(np.fromiter(range(tb.nrows()), dtype=int))
-            self.assertEqual(tb.nrows(), 0)
+            for i in range(tb.nrows()):
+                tb.putcell('REASON', i, 'NO_REASON')
+            tb.flush()
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
