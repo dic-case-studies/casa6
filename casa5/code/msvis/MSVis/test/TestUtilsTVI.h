@@ -101,7 +101,8 @@ public:
     /*
      * Create the TVI stack to access the MS. 
      */
-    void instantiateVI(std::vector<ViiLayerFactory*>& factories);
+    void instantiateVI(std::vector<ViiLayerFactory*>& factories,
+                       casacore::Int nRowBlocking_p = -1);
 
     /*
      * Iterate the whole MS calling a user provided function.
