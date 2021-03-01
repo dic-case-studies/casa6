@@ -57,6 +57,7 @@ using namespace casacore;
 
 namespace {
 
+constexpr float kNoCache = -1.0f;
 constexpr double kValueUnset = std::nan("");
 inline bool isValueUnset(double const v) {return std::isnan(v);}
 
@@ -376,9 +377,6 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   // point appropriate SkyStatus object
   configureAtmosphereCorrection();
   updateAtmosphereModel();
-
-  // warn if current spw is not requested to transform
-  warnIfNoTransform();
 }
 
 void SDAtmosphereCorrectionTVI::nextChunk() {
@@ -392,9 +390,6 @@ void SDAtmosphereCorrectionTVI::nextChunk() {
   // point appropriate SkyStatus object
   configureAtmosphereCorrection();
   updateAtmosphereModel();
-
-  // warn if current spw is not requested to transform
-  warnIfNoTransform();
 }
 
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
@@ -490,6 +485,23 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
   }
   String const rawMs = configuration.asString("inputms");
   os << "input MS = \"" << rawMs << "\"" << LogIO::POST;
+
+  MSMetaData msmd(&ms(), kNoCache);
+  std::set<uInt> allSpwIds = msmd.getSpwIDs();
+  std::vector<uInt> nonProcessingSpws;
+  nonProcessingSpws.reserve(allSpwIds.size());
+  for (auto i = allSpwIds.begin(); i != allSpwIds.end(); ++i) {
+    if (allNE(processSpwList_, static_cast<Int>(*i))) {
+      nonProcessingSpws.push_back(*i);
+    }
+  }
+  if (nonProcessingSpws.size() > 0) {
+    os << LogIO::WARN << "SPWs ";
+    for (auto i = nonProcessingSpws.begin(); i != nonProcessingSpws.end(); ++i) {
+      os << *i << " ";
+    }
+    os << "are output but not corrected" << LogIO::POST;
+  }
 
   // read MAIN table (OFF_SOURCE time)
   readMain(rawMs);
@@ -917,12 +929,8 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
     Vector<Double> const &nativeFreq = channelFreqsPerSpw_[currentSpwId_];
     correctionFactor_.resize(nativeFreq.nelements());
     Vector<Double> smoothedCorrectionFactor = convolve1DHanning(correctionFactor);
-    // TODO: replace interpolation with simple index manip
-    Interpolate1D<Double, Double> interpolator(
-      ScalarSampledFunctional<Double>(atmFreq),
-      ScalarSampledFunctional<Double>(smoothedCorrectionFactor), True, True);
     for (uInt i = 0; i < nativeFreq.nelements(); ++i) {
-      correctionFactor_[i] = interpolator(nativeFreq[i]);
+      correctionFactor_[i] = smoothedCorrectionFactor[2 + i * 5];
     }
   } else if (doSmooth_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " requires smoothing " << endl;
@@ -958,20 +966,9 @@ void SDAtmosphereCorrectionTVI::updateCache() {
   }
 }
 
-void SDAtmosphereCorrectionTVI::warnIfNoTransform() {
-  if (!doTransform()) {
-    // Int const spw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
-    LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-    os << LogIO::WARN << "Spectral Window " << currentSpwId_
-       << " (data description " << dataDescriptionId()
-       << ") is output but not corrected." << LogIO::POST;
-  }
-}
-
 void SDAtmosphereCorrectionTVI::readMain(String const &msName) {
   MeasurementSet msObj(msName);
-  Float const noCache = -1;
-  MSMetaData meta(&msObj, noCache);
+  MSMetaData meta(&msObj, kNoCache);
   std::set<Double> timeOffSourceSet = meta.getTimesForIntent("OBSERVE_TARGET#OFF_SOURCE");
   std::vector<Double> timeOffSource(timeOffSourceSet.begin(), timeOffSourceSet.end());
   size_t numBoundaries = 0;
@@ -1016,8 +1013,7 @@ void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
 
   // number of channels per baseband
-  Float const noCache = -1;
-  MSMetaData meta(&ms, noCache);
+  MSMetaData meta(&ms, kNoCache);
   std::set<uInt> fdmSpws = meta.getFDMSpw();
   std::set<uInt> tdmSpws = meta.getTDMSpw();
   std::set<uInt> onSourceSpws = meta.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");

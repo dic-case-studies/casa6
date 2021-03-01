@@ -161,9 +161,6 @@ private:
   void updateAtmosphereModel();
   void updateCache();
 
-  // emit warning if no transform is applied to the current chunk
-  void warnIfNoTransform();
-
   // read necessary data from MS
   void readMain(casacore::String const &msName);
   void readSpectralWindow(casacore::String const &msName);
