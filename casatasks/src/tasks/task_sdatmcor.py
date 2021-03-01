@@ -129,7 +129,7 @@ def gaindict2list(msname, gaindict):
         nspw = tb.nrows()
 
     gainlist = np.ones(nspw, dtype=float)
-    if isinstance(gaindict, collections.defaultdict):
+    if isinstance(gaindict, collections.defaultdict) and len(gaindict.keys()) == 0:
         gainlist[:] = gaindict[0]
     else:
         for k, v in gaindict.items():
@@ -186,11 +186,14 @@ def get_mount_off_source_commands(msname):
         np.ndarray: list of flag commands
     """
     with open_table(os.path.join(msname, 'FLAG_CMD')) as tb:
-        tsel = tb.query('REASON=="Mount_is_off_source"')
-        try:
-            commands = tsel.getcol('COMMAND')
-        finally:
-            tsel.close()
+        if tb.nrows() > 0:
+            tsel = tb.query('REASON=="Mount_is_off_source"')
+            try:
+                commands = tsel.getcol('COMMAND')
+            finally:
+                tsel.close()
+        else:
+            commands = []
     return commands
 
 
