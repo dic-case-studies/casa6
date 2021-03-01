@@ -675,8 +675,12 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       configuration.isDefined("layerTemperatures")) {
     Vector<Double> layerBoundariesData = configuration.asArrayDouble("layerBoundaries");
     Vector<Double> layerTemperaturesData = configuration.asArrayDouble("layerTemperatures");
-    size_t const numLayer = std::min(layerBoundariesData.nelements(),
-                                     layerTemperaturesData.nelements());
+    // size_t const numLayer = std::min(layerBoundariesData.nelements(),
+    //                                  layerTemperaturesData.nelements());
+    if (layerBoundariesData.size() != layerTemperaturesData.size()) {
+      os << "ERROR: list length of layerboundaries and layertemperature should be the same." << LogIO::EXCEPTION;
+    }
+    size_t const numLayer = layerBoundariesData.size();
     layerBoundaries.resize(numLayer);
     layerTemperatures.resize(numLayer);
     for (size_t i = 0; i < numLayer; ++i) {
@@ -690,6 +694,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       );
     }
   }
+  os << "user-defined layer:" << endl;
+  for (size_t i = 0; i < layerBoundaries.size(); ++i) {
+    os << "  Height " << layerBoundaries[i].get(atm::Length::UnitKiloMeter)
+       << " Temperature " << layerTemperatures[i].get(atm::Temperature::UnitKelvin)
+       << endl;
+  }
+  os << LogIO::POST;
 
   atmProfile_.reset(new atm::AtmProfile(
     altitude,
@@ -805,6 +816,9 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
 }
 
 void SDAtmosphereCorrectionTVI::updateSkyStatus() {
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
+
   // do nothing if nullptr is given
   if (!atmSkyStatusPtr_) {
     return;
@@ -879,9 +893,14 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus() {
        << " Temperature " << atmTemperatureData_[timeIndex] << "K "
        << " Pressure " << atmPressureData_[timeIndex] << "mbar "
        << " Humidity " << atmRelHumidityData_[timeIndex] << "%" << endl;
+
+  os << "DONE updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  os << "updateCorrectionFactor for SPW " << currentSpwId_ << LogIO::POST;
+
   // discard correction factor if nullptr is given
   if (!atmSkyStatusPtr_) {
     correctionFactor_.resize();
@@ -968,6 +987,8 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
   // apply gain factor
   cout << "Applying gain factor " << gainFactorList_[currentSpwId_] << " to correction term" << endl;
   correctionFactor_ *= gainFactorList_[currentSpwId_];
+
+  os << "DONE updateCorrectionFactor for SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::updateAtmosphereModel() {
