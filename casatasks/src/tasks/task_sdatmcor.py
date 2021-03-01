@@ -123,15 +123,19 @@ def parse_gainfactor(gainfactor):
         gaindict = collections.defaultdict(lambda: v)
     return gaindict
 
+
 def gaindict2list(msname, gaindict):
     with open_table(os.path.join(msname, 'SPECTRAL_WINDOW')) as tb:
         nspw = tb.nrows()
 
     gainlist = np.ones(nspw, dtype=float)
-    for k, v in gaindict.items():
-        spw = int(k)
-        if 0 <= spw and spw < nspw:
-            gainlist[spw] = v
+    if isinstance(gaindict, collections.defaultdict):
+        gainlist[:] = gaindict[0]
+    else:
+        for k, v in gaindict.items():
+            spw = int(k)
+            if 0 <= spw and spw < nspw:
+                gainlist[spw] = v
 
     return gainlist
 
