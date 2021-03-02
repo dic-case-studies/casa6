@@ -12,17 +12,20 @@ if is_CASA6:
     from casatools import quanta, table, msmetadata
     from casatools import atmosphere
     from casatools import ms as mstool
+    from casatools import singledishms
     from casatasks import mstransform
     import casatasks.private.simutil as simutil
 
     ut = simutil.simutil()
     qa = quanta()
     at = atmosphere()
+    sdms = singledishms()
 
 else:
     from taskinit import tbtool as table
     from taskinit import mstool, casalog, qa
     from taskinit import msmdtool as msmetadata
+    from taskinit import gentools
     from casac import casac
     from tasks import mstransform
     from simutil import simutil
@@ -30,6 +33,7 @@ else:
 
     ut = simutil()
     at = casac.atmosphere()
+    (sdms,) = gentools(['sdms'])
 
 # Task name
 origin = 'sdatmcor'
@@ -120,6 +124,22 @@ def parse_gainfactor(gainfactor):
     return gaindict
 
 
+def gaindict2list(msname, gaindict):
+    with open_table(os.path.join(msname, 'SPECTRAL_WINDOW')) as tb:
+        nspw = tb.nrows()
+
+    gainlist = np.ones(nspw, dtype=float)
+    if isinstance(gaindict, collections.defaultdict) and len(gaindict.keys()) == 0:
+        gainlist[:] = gaindict[0]
+    else:
+        for k, v in gaindict.items():
+            spw = int(k)
+            if 0 <= spw and spw < nspw:
+                gainlist[spw] = v
+
+    return gainlist
+
+
 def parse_spw(msname, spw=''):
     """Parse spw selection into list of spw ids
 
@@ -166,11 +186,14 @@ def get_mount_off_source_commands(msname):
         np.ndarray: list of flag commands
     """
     with open_table(os.path.join(msname, 'FLAG_CMD')) as tb:
-        tsel = tb.query('REASON=="Mount_is_off_source"')
-        try:
-            commands = tsel.getcol('COMMAND')
-        finally:
-            tsel.close()
+        if tb.nrows() > 0:
+            tsel = tb.query('REASON=="Mount_is_off_source"')
+            try:
+                commands = tsel.getcol('COMMAND')
+            finally:
+                tsel.close()
+        else:
+            commands = []
     return commands
 
 
@@ -318,56 +341,158 @@ def sdatmcor(
 
         # generate gain factor dictionary
         gaindict = parse_gainfactor(gainfactor)
+        gainlist = gaindict2list(infile, gaindict)
 
         # Data Selection Section
         _msg("Calling mstransform for Data Selection. Output file = %s " % outfile)
 
         # datacolumn check (by XML definition)
-        datacolumn = datacolumn.upper()
-        if datacolumn not in ['DATA', 'CORRECTED', 'FLOAT_DATA']:
+        datacolumn_upper = datacolumn.upper()
+        if datacolumn_upper not in ['DATA', 'CORRECTED', 'FLOAT_DATA']:
             errmsg = "Specified column name (%s) Unacceptable." % datacolumn
             raise Exception(errmsg)
 
         # tweak antenna selection string to include autocorr data
         antenna_autocorr = sdutil.get_antenna_selection_include_autocorr(infile, antenna)
 
-        mstransform(
-            vis=infile,
-            outputvis=outfile,
-            datacolumn=datacolumn,
-            field=field,
-            spw=outputspw,   # Use 'outputspw' for Data Selection.
-            scan=scan,
-            antenna=antenna_autocorr,
-            correlation=correlation,
-            timerange=timerange,
-            intent=intent,
-            observation=observation,
-            feed=feed,
-            taql=msselect,
-            reindex=False)   # Must be False
+        # C++ re-implementation
+        sdms.open(infile)
+        sdms.set_selection(spw=outputspw, field=field,
+                           antenna=antenna_autocorr,
+                           timerange=timerange, scan=scan,
+                           polarization=correlation, intent=intent,
+                           observation=observation, feed=feed,
+                           taql=msselect,
+                           reindex=False)
+        config = {}
+        # requested list of output spws and processing spws
+        # processing spws are the intersection of these
+        outputspws_param = parse_spw(infile, outputspw)
+        spws_param = parse_spw(infile, spw)
+        all_processing_spws = np.asarray(list(set(spws_param).intersection(set(outputspws_param))))
+        print('processing spws: {}'.format(all_processing_spws))
+        config['processspw'] = all_processing_spws
+        config['gainfactor'] = gainlist
+        reference_antenna = get_default_antenna(infile)  # default antenna_id
+        default_altitude = get_default_altitude(infile, reference_antenna)  # default altitude
+        config['refant'] = int(reference_antenna)
+        default_params = get_default_params()
+        lapserate, _ = parse_atm_params(
+            user_param=dtem_dh,
+            user_default='',
+            task_default=qa.quantity(default_params['lapserate'], 'K/km')
+        )
+        config['lapseRate'] = qa.convert(lapserate, 'K/km')['value']
+        scale_height, _ = parse_atm_params(
+            user_param=h0,
+            user_default='',
+            task_default=qa.quantity(default_params['scaleht'], 'km')
+        )
+        config['scaleHeight'] = qa.convert(scale_height, 'km')['value']
+        pressure_step, _ = parse_atm_params(
+            user_param=dp,
+            user_default='',
+            task_default=qa.quantity(default_params['dp'], 'mbar')
+        )
+        config['pressureStep'] = qa.convert(pressure_step, 'mbar')['value']
+        pressure_factor, _ = parse_atm_params(
+            user_param=dpm,
+            user_default=-1,
+            task_default=default_params['dpm']
+        )
+        config['pressureStepFactor'] = pressure_factor['value']
+        config['atmType'] = atmtype
+        config['maxAltitude'] = float(default_params['maxalt'])
+        if atmdetail:
+            site_altitude, is_user_param = parse_atm_params(
+                user_param=altitude,
+                user_default='',
+                task_default=qa.quantity(default_altitude, 'm')
+            )
+            config['siteAltitude'] = qa.convert(site_altitude, 'm')['value']
+            user_pressure, is_user_param = parse_atm_params(
+                user_param=pressure,
+                user_default='',
+                task_default=qa.quantity(0, 'mbar'))
+            if is_user_param:
+                config['pressure'] = qa.convert(pressure, 'mbar')['value']
+            user_temperature, is_user_param = parse_atm_params(
+                user_param=temperature,
+                user_default='',
+                task_default=qa.quantity(0, 'K'))
+            if is_user_param:
+                config['temperature'] = qa.convert(temperature, 'K')['value']
+            user_humidity, is_user_param = parse_atm_params(
+                user_param=humidity,
+                user_default='',
+                task_default=qa.quantity(0, '%'))
+            if is_user_param:
+                config['humidity'] = qa.convert(humidity, '%')['value']
+            user_pwv, is_user_param = parse_atm_params(
+                user_param=pwv,
+                user_default='',
+                task_default=qa.quantity(0, 'mm'))
+            if is_user_param:
+                config['pwv'] = qa.convert(pwv, 'mm')['value']
+            user_layerboundaries, is_user_param = parse_atm_list_params(
+                user_param=layerboundaries,
+                user_default='',
+                task_default=[],
+                element_unit='m'
+            )
+            if is_user_param:
+                config['layerBoundaries'] = user_layerboundaries
+            user_layertemperature, is_user_param = parse_atm_list_params(
+                user_param=layertemperature,
+                user_default='',
+                task_default=[],
+                element_unit='K'
+            )
+            if is_user_param:
+                config['layerTemperatures'] = user_layertemperature
+        else:
+            config['siteAltitude'] = default_altitude
 
-        # resume 'origin'. A strange behavior in casalog/CASA6
-        casalog.origin(origin)
+        sdms.atmcor(config=config, datacolumn=datacolumn, outfile=outfile)
 
-        # result check if output was generated
-        if not _file_exist(outfile):
-            errmsg = "No outfile was generated by mstransform."
-            raise Exception(errmsg)
 
-        # data column name is always 'DATA' after mstransform whatever datacolumn input MS has
-        datacolumn_name = 'DATA'
+    #     mstransform(
+    #         vis=infile,
+    #         outputvis=outfile,
+    #         datacolumn=datacolumn,
+    #         field=field,
+    #         spw=outputspw,   # Use 'outputspw' for Data Selection.
+    #         scan=scan,
+    #         antenna=antenna_autocorr,
+    #         correlation=correlation,
+    #         timerange=timerange,
+    #         intent=intent,
+    #         observation=observation,
+    #         feed=feed,
+    #         taql=msselect,
+    #         reindex=False)   # Must be False
 
-        # Call main body Function
-        calc_sdatmcor(
-            infile, datacolumn_name, outfile,
-            spw,
-            gaindict,
-            dtem_dh, h0, atmtype_int,
-            atmdetail,
-            altitude, temperature, pressure, humidity_float, pwv, dp, dpm,
-            layerboundaries,
-            layertemperature)
+    #     # resume 'origin'. A strange behavior in casalog/CASA6
+    #     casalog.origin(origin)
+
+    #     # result check if output was generated
+    #     if not _file_exist(outfile):
+    #         errmsg = "No outfile was generated by mstransform."
+    #         raise Exception(errmsg)
+
+    #     # data column name is always 'DATA' after mstransform whatever datacolumn input MS has
+    #     datacolumn_name = 'DATA'
+
+    #     # Call main body Function
+    #     calc_sdatmcor(
+    #         infile, datacolumn_name, outfile,
+    #         spw,
+    #         gaindict,
+    #         dtem_dh, h0, atmtype_int,
+    #         atmdetail,
+    #         altitude, temperature, pressure, humidity_float, pwv, dp, dpm,
+    #         layerboundaries,
+    #         layertemperature)
 
     except Exception as err:
         casalog.post('%s' % err, 'SEVERE')
@@ -571,6 +696,18 @@ def get_default_altitude(msname, antid):
 
     return geodetic_elevation
 
+def get_default_params():
+    # Default constant
+    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
+    maxalt = 120        ### maxAltitude parameter for at (km)
+    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
+    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
+
+    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
+    # set to True if spectral averaging was not employed for the spw
+    dp = 10.0   ### initATMProfile DEFAULT ###
+    dpm = 1.2   ### initATMProfile DEFAULT ###
+    return locals()
 
 #
 # show ATM Profile
