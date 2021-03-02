@@ -665,12 +665,16 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     }
   }
   os << "user-defined layer:" << endl;
-  for (size_t i = 0; i < layerBoundaries.size(); ++i) {
-    os << "  Height " << layerBoundaries[i].get(atm::Length::UnitKiloMeter)
-       << " Temperature " << layerTemperatures[i].get(atm::Temperature::UnitKelvin)
-       << endl;
+  if (layerBoundaries.size() > 0) {
+    for (size_t i = 0; i < layerBoundaries.size(); ++i) {
+      os << "  Height " << layerBoundaries[i].get(atm::Length::UnitKiloMeter)
+         << " Temperature " << layerTemperatures[i].get(atm::Temperature::UnitKelvin)
+         << endl;
+    }
+    os << LogIO::POST;
+  } else {
+    os << "NONE" << LogIO::POST;
   }
-  os << LogIO::POST;
 
   atm::AtmProfile atmProfile(
     altitude,
