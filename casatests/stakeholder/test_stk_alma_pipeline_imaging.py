@@ -452,7 +452,7 @@ class test_tclean_base(unittest.TestCase):
             ret += '\n' + msg
         return ret
 
-    def modify_dict(self, output=None, parallel=None):
+    def modify_dict(self, output=None, testname=None, parallel=None):
         ''' Modified test_dict costructed by casatestutils add_to_dict to include only 
             the task commands executed and also add self.parallel value to the dictionary.
             The cube imaging cases usually have if-else conditional based on parallel mode is on or not
@@ -462,16 +462,15 @@ class test_tclean_base(unittest.TestCase):
             each relevante test(cube) and so in test_dict['taskcall'], 1st(iter0) and 2nd and 3rd commands
             are the ones acutually executed and should remove 4th (self.parallel=False) case.
         '''
-        for key in output: 
-            if 'taskcall' in output[key] and len(output[key]['taskcall']): 
+        if testname in output:
+            if 'taskcall' in output[testname] and len(output[testname]['taskcall'])==4: 
                 if parallel:
                     # 0,1,2th in the list are used pop last one
-                    output[key]['taskcall'].pop()
+                    output[testname]['taskcall'].pop()
                 else:
-                    output[key]['taskcall'].pop(1)
-                    output[key]['taskcall'].pop(1)
-
-        output[key]['self.parallel']=parallel
+                    output[testname]['taskcall'].pop(1)
+                    output[testname]['taskcall'].pop(1)
+            output[testname]['self.parallel']=parallel
 
     def save_dict_to_disk(self, indict, outfilename):
         """ function that will save input Python dictionary to file (json) """
@@ -799,7 +798,7 @@ class Test_standard(test_tclean_base):
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        self.modify_dict(test_dict, self.parallel)
+        self.modify_dict(test_dict, 'test_standard_cube', self.parallel)
 
         test_dict['test_standard_cube']['report'] = report
         test_dict['test_standard_cube']['images'] = []
@@ -3203,7 +3202,7 @@ class Test_mosaic(test_tclean_base):
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        self.modify_dict(test_dict, self.parallel)
+        self.modify_dict(test_dict, 'test_mosaic_cube', self.parallel)
 
         test_dict['test_mosaic_cube']['report'] = report
         test_dict['test_mosaic_cube']['images'] = []
