@@ -202,6 +202,9 @@ void PhaseShiftingTVI::origin()
 	// CAS-12706 Add support for shifting across large offset/angles
 	if (wideFieldMode_p) shiftUVWPhases();
 
+    // Define the shapes in the VB2, patch provided by cgarcia in CAS-12706
+    configureShapes();
+
 	// Synchronize own VisBuffer
 	configureNewSubchunk();
 
@@ -218,6 +221,9 @@ void PhaseShiftingTVI::next()
 
 	// CAS-12706 Add support for shifting across large offset/angles
 	if (wideFieldMode_p) shiftUVWPhases();
+
+    // Define the shapes in the VB2, patch provided by cgarcia in CAS-12706
+    configureShapes();
 
 	// Synchronize own VisBuffer
 	configureNewSubchunk();
