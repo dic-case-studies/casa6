@@ -309,7 +309,7 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     channelFreqsPerSpw_(),
     channelWidthsPerSpw_(),
     currentTime_(kValueUnset),
-    currentTimeIndex_(-1),
+    currentAtmTimeIndex_(-1),
     currentSpwId_(-1),
     atmType_(2),
     atmSkyStatusPerSpw_(),
@@ -533,7 +533,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   } else {
     userPressureValue_ = kValueUnset;
     if (atmPressureData_.nelements() > 0) {
-      defaultPressureValue = atmPressureData_[currentTimeIndex_];
+      defaultPressureValue = atmPressureData_[currentAtmTimeIndex_];
     }
     os << "default pressure value = " << defaultPressureValue << LogIO::POST;
   }
@@ -554,7 +554,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   } else {
     userTemperatureValue_ = kValueUnset;
     if (atmTemperatureData_.nelements() > 0) {
-      defaultTemperatureValue = atmTemperatureData_[currentTimeIndex_];
+      defaultTemperatureValue = atmTemperatureData_[currentAtmTimeIndex_];
     }
     os << "default temperature value = " << defaultTemperatureValue << LogIO::POST;
   }
@@ -579,7 +579,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   } else {
     userRelHumidityValue_ = kValueUnset;
     if (atmRelHumidityData_.nelements() > 0) {
-      defaultRelHumidityValue = atmRelHumidityData_[currentTimeIndex_];
+      defaultRelHumidityValue = atmRelHumidityData_[currentAtmTimeIndex_];
     }
     os << "default humidity value = " << defaultRelHumidityValue << LogIO::POST;
   }
@@ -600,7 +600,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   } else {
     userPwvValue_ = kValueUnset;
     if (pwvData_.nelements() > 0) {
-      defaultPwvValue = pwvData_[currentTimeIndex_];
+      defaultPwvValue = pwvData_[currentAtmTimeIndex_];
     }
     os << "default pwv value = " << defaultPwvValue << LogIO::POST;
   }
@@ -785,7 +785,7 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus() {
     return;
   }
 
-  Int timeIndex = currentTimeIndex_;
+  Int timeIndex = currentAtmTimeIndex_;
 
   bool isSkyStatusOutdated = false;
   Double currentTemperatureValue = userTemperatureValue_;
@@ -952,9 +952,9 @@ void SDAtmosphereCorrectionTVI::updateCache() {
   currentTime_ = timeData[0];
   if (atmTime_.nelements() > 0) {
     std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime_);
-    currentTimeIndex_ = pair.first;
+    currentAtmTimeIndex_ = pair.first;
     // cout << "updateCache: time " << std::setprecision(16) << currentTime_
-    //      << " index " << currentTimeIndex_ << endl;
+    //      << " index " << currentAtmTimeIndex_ << endl;
   }
 }
 

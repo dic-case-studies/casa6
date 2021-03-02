@@ -211,7 +211,7 @@ private:
 
   // current iterator status
   casacore::Double currentTime_;
-  casacore::Int currentTimeIndex_;
+  casacore::Int currentAtmTimeIndex_;
   SpwId currentSpwId_;
 
   // ATM
