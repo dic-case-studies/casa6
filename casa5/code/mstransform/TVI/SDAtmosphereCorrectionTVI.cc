@@ -886,7 +886,7 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
   // cout << "time " << std::setprecision(16) << currentTime_ << " elON " << elevationOn << " elOFF " << elevationOff << endl;
 
   // opacity
-  unsigned int const nchan = atmSpectralGridPtr_->getNumChan();
+  unsigned int const nchan = atmSkyStatusPtr_->getNumChan();
   Double const airMassOn = 1.0 / cos(C::pi_2 - elevationOn);
   atmSkyStatusPtr_->setAirMass(airMassOn);
   Vector<Double> trjSkySpecOn = getTrjSkySpec(atmSkyStatusPtr_, nchan);
