@@ -36,6 +36,7 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    ia = iatool()
 import sys
 import os
 import unittest
@@ -231,7 +232,6 @@ class phaseshift_test(unittest.TestCase):
         ### Both (2) and (3) show the offset error when viewed in world coordinates. Open in the viewer as an image stack, and step through.
         ###  For comparisons with (1), pick the result from (3) because when this works correctly the sources should appear at the same
         ###  pixel location as in (1).  This test is encoded below. 
-
 
         ia.open('im2_pre.image')
         src1_pre = ia.pixelvalue([ 1024, 1024, 0, 0 ] )['value']
