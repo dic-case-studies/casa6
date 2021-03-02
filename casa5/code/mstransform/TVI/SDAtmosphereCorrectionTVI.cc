@@ -25,6 +25,7 @@
 #include <cmath>
 #include <functional>
 #include <iomanip>
+#include <limits>
 #include <vector>
 
 #include <casacore/casa/Arrays/Cube.h>
@@ -58,7 +59,7 @@ using namespace casacore;
 namespace {
 
 constexpr float kNoCache = -1.0f;
-constexpr double kValueUnset = std::nan("");
+constexpr double kValueUnset = std::numeric_limits<double>::quiet_NaN();
 inline bool isValueUnset(double const v) {return std::isnan(v);}
 
 class ScopeGuard {
@@ -302,7 +303,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     atmTemperatureData_(),
     atmPressureData_(),
     atmRelHumidityData_(),
-    doTransform_(),
     isTdmSpw_(),
     doSmooth_(),
     nchanBBPerSpw_(),
@@ -312,8 +312,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     currentTimeIndex_(-1),
     currentSpwId_(-1),
     atmType_(2),
-    atmProfile_(),
-    atmSpectralGridPerSpw_(),
     atmSkyStatusPerSpw_(),
     atmSkyStatusPtr_(nullptr),
     correctionFactor_() {
@@ -330,9 +328,6 @@ SDAtmosphereCorrectionTVI::~SDAtmosphereCorrectionTVI() {
 
 void SDAtmosphereCorrectionTVI::origin() {
   TransformingVi2::origin();
-
-  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  os << "origin()" << LogIO::POST;
 
   // Synchronize own VisBuffer
   configureNewSubchunk();
@@ -677,7 +672,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   }
   os << LogIO::POST;
 
-  atmProfile_.reset(new atm::AtmProfile(
+  atm::AtmProfile atmProfile(
     altitude,
     defaultPressure,
     defaultTemperature,
@@ -690,12 +685,12 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     atmType_,
     layerBoundaries,
     layerTemperatures
-  ));
+  );
 
   // disable threshold so that any subtle changes in
   // temperature/pressure/humidity/pwv cause to udpate
   // the model
-  atmProfile_->setBasicAtmosphericParameterThresholds(
+  atmProfile.setBasicAtmosphericParameterThresholds(
     atm::Length(0.0, atm::Length::UnitMeter),
     atm::Pressure(0.0, atm::Pressure::UnitMilliBar),
     atm::Temperature(0.0, atm::Temperature::UnitKelvin),
@@ -704,7 +699,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     atm::Length(0.0, atm::Length::UnitMeter)
   );
 
-  // SpectralGrid
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
     Vector<Double> cf = channelFreqsPerSpw_[spw];
@@ -728,20 +722,16 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       refChan = refChan * 5 + 2u;
     }
 
+    // SpectralGrid
     os.output() << std::setprecision(16);
     os << "SpectralGrid for spw " << spw << ": nchan " << nchan
        << " refchan " << refChan << " center freq "
        << centerFreq << " chan sep " << chanSep << LogIO::POST;
-    atmSpectralGridPerSpw_[spw].reset(
-      new atm::SpectralGrid(nchan, refChan, centerFreq, chanSep)
-    );
-  }
+    atm::SpectralGrid spectralGrid(nchan, refChan, centerFreq, chanSep);
 
-  // SkyStatus
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
+    // SkyStatus
     os << "initializing SkyStatus for " << spw << LogIO::POST;
-    atm::RefractiveIndexProfile profile(*atmSpectralGridPerSpw_[spw].get(), *atmProfile_.get());
+    atm::RefractiveIndexProfile profile(spectralGrid, atmProfile);
     atmSkyStatusPerSpw_[spw].reset(new atm::SkyStatus(profile));
     atmSkyStatusPerSpw_[spw]->setUserWH2O(atm::Length(defaultPwvValue, atm::Length::UnitMilliMeter));
   }
@@ -760,10 +750,10 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
   bool isPrecedingAtmScanExist = min(atmTime_) <= currentTime_;
   // cout << std::setprecision(16) << offSourceTime_ << endl;
   // cout << std::setprecision(16) << currentTime_ << " state ID" << currentStateId[0] << endl;
-  os << "SPW " << currentSpwId_ << ": processingSpw " << isProcessingSpw
-     << " OFF_SOURCE availability before " << isPrecedingOffSourceScanExist
-     << " after " << isSubsequentOffSourceScanExist
-     << " ON_SOURCE? " << isOnSource << LogIO::POST;
+  // os << "SPW " << currentSpwId_ << ": processingSpw " << isProcessingSpw
+  //    << " OFF_SOURCE availability before " << isPrecedingOffSourceScanExist
+  //    << " after " << isSubsequentOffSourceScanExist
+  //    << " ON_SOURCE? " << isOnSource << LogIO::POST;
   atmSkyStatusPtr_ = nullptr;
   if (isProcessingSpw && isOnSource &&
       isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist &&
@@ -774,13 +764,12 @@ void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
     } else {
       gainFactor_ = gainFactorList_[currentSpwId_];
     }
-    os << "gainfactor for SPW " << currentSpwId_<< " = " << gainFactor_ << LogIO::POST;
+    // os << "gainfactor for SPW " << currentSpwId_<< " = " << gainFactor_ << LogIO::POST;
 
     // SkyStatus for current spw
     auto finder = atmSkyStatusPerSpw_.find(currentSpwId_);
     if (finder != atmSkyStatusPerSpw_.end()) {
       atmSkyStatusPtr_ = finder->second.get();
-      atmSpectralGridPtr_ = atmSpectralGridPerSpw_[currentSpwId_].get();
     }
   }
 }
@@ -920,15 +909,16 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactor() {
   // SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
   if (isTdmSpw_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " is TDM " << endl;
-    unsigned int numAtmChan = atmSpectralGridPtr_->getNumChan();
-    unsigned int refAtmChan = atmSpectralGridPtr_->getRefChan();
-    double refAtmFreq = atmSpectralGridPtr_->getRefFreq().get();
-    double sepAtmFreq = atmSpectralGridPtr_->getChanSep().get();
+    unsigned int numAtmChan = atmSkyStatusPtr_->getNumChan();
+    unsigned int refAtmChan = atmSkyStatusPtr_->getRefChan();
+    double refAtmFreq = atmSkyStatusPtr_->getRefFreq().get();
+    double sepAtmFreq = atmSkyStatusPtr_->getChanSep().get();
     Vector<Double> atmFreq(numAtmChan);
     indgen(atmFreq, refAtmFreq - sepAtmFreq * refAtmChan, sepAtmFreq);
     Vector<Double> const &nativeFreq = channelFreqsPerSpw_[currentSpwId_];
-    correctionFactor_.resize(nativeFreq.nelements());
     Vector<Double> smoothedCorrectionFactor = convolve1DHanning(correctionFactor);
+    // atm frequency grid is 5x finer than native frequency grid
+    correctionFactor_.resize(nativeFreq.nelements());
     for (uInt i = 0; i < nativeFreq.nelements(); ++i) {
       correctionFactor_[i] = smoothedCorrectionFactor[2 + i * 5];
     }

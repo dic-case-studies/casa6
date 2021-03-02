@@ -3448,7 +3448,13 @@ void SingleDishMS::atmcor(Record const &config, string const &columnName, string
   atmCorConfig_ = config;
   cout << "config summry:" << endl;
   atmCorConfig_.print(cout, 25, "    ");
-  prepare_for_process(columnName, outMSName);
+  Block<Int> sortCols(5);
+  sortCols[0] = MS::OBSERVATION_ID;
+  sortCols[1] = MS::ARRAY_ID;
+  sortCols[2] = MS::FEED1;
+  sortCols[3] = MS::DATA_DESC_ID;
+  sortCols[4] = MS::TIME;
+  prepare_for_process(columnName, outMSName, sortCols, False);
 
   // get VI/VB2 access
   vi::VisibilityIterator2 *visIter = sdh_->getVisIter();

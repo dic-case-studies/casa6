@@ -202,10 +202,6 @@ private:
   casacore::Vector<casacore::Double> atmPressureData_;
   casacore::Vector<casacore::Double> atmRelHumidityData_;
 
-  // Per data description flags whether transformation (i.e. atmospheric correction)
-  // must be executed or not
-  casacore::Vector<casacore::Bool> doTransform_;
-
   // spw related
   std::map<SpwId, bool> isTdmSpw_;
   std::map<SpwId, bool> doSmooth_;
@@ -220,9 +216,6 @@ private:
 
   // ATM
   unsigned int atmType_;
-  std::unique_ptr<atm::AtmProfile> atmProfile_;
-  std::map<SpwId, std::unique_ptr<atm::SpectralGrid> > atmSpectralGridPerSpw_;
-  atm::SpectralGrid *atmSpectralGridPtr_;
   std::map<SpwId, std::unique_ptr<atm::SkyStatus> > atmSkyStatusPerSpw_;
   atm::SkyStatus *atmSkyStatusPtr_;
   casacore::Vector<casacore::Double> correctionFactor_;
