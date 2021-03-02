@@ -42,9 +42,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 class FlagAgentSummary;
 class FlagDataHandler;
 
-#if ! defined(CASATOOLS)
 class FlagAgentDisplay;
-#endif
 
 // <summary>
 // AgentFlagger: high-performance automated flagging
@@ -247,9 +245,7 @@ protected:
 	casacore::Bool mixed_p;
 
 	// Display agent parameters
-#if ! defined(CASATOOLS)
-        casa::FlagAgentDisplay *displayAgent_p;
-#endif
+    casa::FlagAgentDisplay *displayAgent_p;
 
 	// variables for initAgents
 	FlagDataHandler *fdh_p;

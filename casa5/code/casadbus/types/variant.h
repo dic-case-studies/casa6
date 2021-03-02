@@ -155,33 +155,33 @@ namespace casa {
 
 //      Const
 //      ---------------------------------------------------
-	    bool getBool( ) const throw(error);
-	    int getInt( ) const  throw(error);
-	    double getDouble( ) const throw(error);
-	    const std::complex<double> &getComplex( ) const throw(error);
-	    const std::string &getString( ) const throw(error);
-	    const std::vector<int> &getIntVec( ) const throw(error);
-	    const std::vector<bool> &getBoolVec( ) const throw(error);
-	    const std::vector<double> &getDoubleVec( ) const throw(error);
-	    const std::vector<std::complex<double> > &getComplexVec( ) const throw(error);
-	    const std::vector<std::string> &getStringVec( ) const throw(error);
-	    const record &getRecord( ) const throw(error);
+	    bool getBool( ) const;
+	    int getInt( ) const;
+	    double getDouble( ) const;
+	    const std::complex<double> &getComplex( ) const;
+	    const std::string &getString( ) const;
+	    const std::vector<int> &getIntVec( ) const;
+	    const std::vector<bool> &getBoolVec( ) const;
+	    const std::vector<double> &getDoubleVec( ) const;
+	    const std::vector<std::complex<double> > &getComplexVec( ) const;
+	    const std::vector<std::string> &getStringVec( ) const;
+	    const record &getRecord( ) const;
 	    const std::vector<int> &shape() const;
 	    const std::vector<int> &arrayshape() const {return shape();}
 
 //	Modify
 //      ---------------------------------------------------
-	    bool &getBoolMod( ) throw(error);
-	    int &getIntMod( ) throw(error);
-	    double &getDoubleMod( ) throw(error);
-	    std::complex<double> &getComplexMod( ) throw(error);
-	    std::string &getStringMod( ) throw(error);
-	    std::vector<int> &getIntVecMod( ) throw(error);
-	    std::vector<bool> &getBoolVecMod( ) throw(error);
-	    std::vector<double> &getDoubleVecMod( ) throw(error);
-	    std::vector<std::complex<double> > &getComplexVecMod( ) throw(error);
-	    std::vector<std::string> &getStringVecMod( ) throw(error);
-	    record &getRecordMod( ) throw(error);
+	    bool &getBoolMod( );
+	    int &getIntMod( );
+	    double &getDoubleMod( );
+	    std::complex<double> &getComplexMod( );
+	    std::string &getStringMod( );
+	    std::vector<int> &getIntVecMod( );
+	    std::vector<bool> &getBoolVecMod( );
+	    std::vector<double> &getDoubleVecMod( );
+	    std::vector<std::complex<double> > &getComplexVecMod( );
+	    std::vector<std::string> &getStringVecMod( );
+	    record &getRecordMod( );
 	    std::vector<int> &shape();
 	    std::vector<int> &arrayshape() {return shape();}
 

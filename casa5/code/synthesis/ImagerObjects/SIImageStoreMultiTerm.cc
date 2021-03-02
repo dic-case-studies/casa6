@@ -559,7 +559,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mods;
   }
 
-  void SIImageStoreMultiTerm::setModelImage( Vector<String> modelnames )
+  void SIImageStoreMultiTerm::setModelImage( const Vector<String> &modelnames )
   {
     LogIO os( LogOrigin("SIImageStoreMultiTerm","setModelImage",WHERE) );
 
@@ -687,6 +687,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsForwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsForwardGrids[term];
@@ -701,6 +702,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsBackwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsBackwardGrids[term];
@@ -1008,14 +1010,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/)
+  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/, Float psfcutoff)
   {
 
     LogIO os( LogOrigin("SIImageStoreMultiTerm","restore",WHERE) );
 
     for(uInt tix=0; tix<itsNTerms; tix++)
       {
-	SIImageStore::restore(rbeam, usebeam, tix);
+	SIImageStore::restore(rbeam, usebeam, tix, psfcutoff);
       }	
    
     calculateAlphaBeta("image");

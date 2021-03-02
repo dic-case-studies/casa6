@@ -1,0 +1,51 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "plotserver.proto";
+
+package rpc.gui;
+
+service plotserver_events {
+    rpc button(ButtonEvent) returns (google.protobuf.Empty);
+    rpc check(CheckEvent) returns (google.protobuf.Empty);
+    rpc radio(RadioEvent) returns (google.protobuf.Empty);
+    rpc linetext(LineTextEvent) returns (google.protobuf.Empty);
+    rpc slidevalue(SlideValueEvent) returns (google.protobuf.Empty);
+    rpc exiting(google.protobuf.Empty) returns (google.protobuf.Empty);
+    rpc closing(ClosingEvent) returns (google.protobuf.Empty);
+}
+
+
+message ButtonEvent {
+    Id panel = 1;
+    string name = 2;
+}
+
+message CheckEvent {
+    Id panel = 1;
+    string name = 2;
+    int32 state = 3;
+}
+
+message RadioEvent {
+    Id panel = 1;
+    string name = 2;
+    bool state = 3;
+}
+
+message LineTextEvent {
+    Id panel = 1;
+    string name = 2;
+    string text = 3;
+}
+
+message SlideValueEvent {
+    Id panel = 1;
+    string name = 2;
+    int32 value = 3;
+}
+
+message ClosingEvent {
+    Id panel = 1;
+    bool gone = 2;
+}

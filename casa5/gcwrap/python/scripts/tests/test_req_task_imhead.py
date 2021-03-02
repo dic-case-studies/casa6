@@ -40,10 +40,8 @@ except ImportError:
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     def ctsys_resolve(data):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
-        else:
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
+        return os.path.join(dataroot, data)
 
     is_CASA6 = False
 
@@ -54,7 +52,10 @@ import shutil
 import numpy as np
 import re
 
-datapath = ctsys_resolve('image/ngc5921.clean.image')
+
+datapath = ctsys_resolve('unittest/imhead/')
+impath = os.path.join(datapath,'ngc5921.clean.imhead.image')
+
 logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'
@@ -62,7 +63,7 @@ newlog = 'casa_new.log'
 cas4355 = 'cas4355.im'
 cas6352 = 'CAS-6352.im'
 cas5901 = 'CAS-5901.im'
-ncpim = os.path.join('image', 'ncp_proj.im')
+ncpim = 'ncp_proj.im'
 cas6727 = 'CAS-6727.im'
 cas8095 = 'CAS-8095.im'
 myfits = "reorder_in.fits"
@@ -87,7 +88,7 @@ class imhead_test(unittest.TestCase):
     def setUp(self):
         if not is_CASA6:
             default(imhead)
-        shutil.copytree(datapath, datacopy)
+        shutil.copytree(impath, datacopy)
         os.chmod(datacopy, 493)
         for root, dirs, files in os.walk(datacopy):
             for d in dirs:
@@ -605,7 +606,7 @@ class imhead_test(unittest.TestCase):
 
     def test_ncp(self):
         """Test NCP projection is reported, CAS-6568"""
-        imagename = ctsys_resolve(ncpim)
+        imagename = os.path.join(datapath,ncpim)
         res = imhead(imagename, mode="list")
         proj = res['projection']
         self.assertTrue(proj.count("NCP") == 1, 'Failed to get NCP projection')
@@ -652,7 +653,7 @@ class imhead_test(unittest.TestCase):
 
     def test_open_fits(self):
         """Verify running on fits file works"""
-        shutil.copy(ctsys_resolve(os.path.join('image', myfits)), myfits)
+        shutil.copy(os.path.join(datapath,myfits), myfits)
         self.assertTrue(imhead(myfits, mode='list'))
 
     def test_masked(self):

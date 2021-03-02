@@ -23,7 +23,7 @@ else:
     from taskinit import tbtool
     from taskinit import qatool
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],"data")
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],"casatestdata/")
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -109,7 +109,7 @@ def rmMS(msPath):
 class importvla_test_1(unittest.TestCase):
 
     # these tests all use the 3C129 regression data
-    datapath = 'regression/3C129'
+    datapath = 'unittest/importvla/'
     msfile = "impvla_3c129_test.ms"
 
     def setUp(self):
@@ -267,7 +267,7 @@ class importvla_test_1(unittest.TestCase):
 class importvla_test_2(unittest.TestCase):
 
     # these tests all use the ATST1/G192 regression data
-    datapath = 'regression/ATST1/G192'
+    datapath = 'unittest/importvla/'
     msfile = "impvla_g192_test.ms"
 
     def setUp(self):

@@ -44,21 +44,15 @@ from filecmp import dircmp
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/ngc5921.clean.image')
+    datapath = casatools.ctsys.resolve('unittest/impv/ngc5921.clean.image')
     qa = casatools.quanta()
     mytb = casatools.table()
     myia = casatools.image()
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        myia = ia
-        mytb = tb
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        myia = ia
-        mytb = tb
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impv/ngc5921.clean.image'
+    myia = ia
+    mytb = tb
         
 testfile = 'testing.im'
 testfile2 = 'testing2.im'
