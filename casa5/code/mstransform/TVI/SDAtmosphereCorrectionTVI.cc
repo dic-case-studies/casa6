@@ -744,8 +744,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
 }
 
 void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
-  // TODO: implement all the configuration steps here
-  // current spw
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   bool isProcessingSpw = anyEQ(processSpwList_, currentSpwId_);
   bool isOnSource = isOnSourceChunk();
