@@ -1544,11 +1544,12 @@ def simalma(
                     impbcor(regridimg, pbcov, outfile=scaledimg,mode='multiply')
 
                 # de-pbcor the INT image
-                highimage = fileroot+"/"+imagename_int+".pbscaled"
+                # not needed now that imtclean is used and .image from tclean is flat sky by default, see CAS-13370
+                #highimage = fileroot+"/"+imagename_int+".pbscaled"
                 #immath(imagename=[highimage0, pbcov],
                 #       expr='IM1/IM0',outfile=highimage)     
-                msg(" ",priority="info")
-                msg("Multiply interferometric image by sensitivity map (un-pbcor):",priority="info")
+#                msg(" ",priority="info")
+#                msg("Multiply interferometric image by sensitivity map (un-pbcor):",priority="info")
 #                msg("immath(imagename=['"+highimage0+"','"+pbcov+"'],expr='IM1*IM0',outfile='"+highimage+"')",priority="info")
 #                msg("Restore interferometric beam and brightness unit:",priority="info")
 #                msg("ia.open('"+highimage0+"')",priority="info")
@@ -1572,10 +1573,10 @@ def simalma(
 #                    ia.setrestoringbeam(beam=beam_int)
 #                    ia.setbrightnessunit(bunit_int)
 #                    ia.close()
-
-                msg("impbcor('"+highimage0+"', '"+pbcov+"', outfile='"+highimage+"',mode='multiply')",priority="info")
-                if not dryrun:
-                    impbcor(highimage0, pbcov, outfile=highimage,mode='multiply')
+#
+#                msg("impbcor('"+highimage0+"', '"+pbcov+"', outfile='"+highimage+"',mode='multiply')",priority="info")
+#                if not dryrun:
+#                    impbcor(highimage0, pbcov, outfile=highimage,mode='multiply')
 
 
 
@@ -1584,7 +1585,7 @@ def simalma(
                 # Feathering
                 task_param = {}
                 task_param['imagename'] = outimage0
-                task_param['highres'] = highimage
+                task_param['highres'] = highimage0
                 task_param['lowres'] = lowimage
 
                 msg(" ",priority="info")
