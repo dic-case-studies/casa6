@@ -187,7 +187,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       const Quantity& fieldofview,
 				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
 			       const String& filtertype, const Quantity& filterbmaj,
-                                                const Quantity& filterbmin, const Quantity& filterbpa){
+                                                const Quantity& filterbmin, const Quantity& filterbpa, const Double& fracBW){
 
     Record outRec;
     outRec.define("type", type);
@@ -208,7 +208,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     outRec.defineRecord("filterbmin", quantRec);
     QuantumHolder(filterbpa).toRecord(quantRec);
     outRec.defineRecord("filterbpa", quantRec);
-
+    outRec.define("fracBW", fracBW);
 
     return outRec;
   }
@@ -217,7 +217,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       Quantity& fieldofview,
 				Int& npixels, Bool& multiField, Bool& useCubeBriggs,
 			       String& filtertype, Quantity& filterbmaj,
-                                                 Quantity& filterbmin, Quantity& filterbpa, const Record& inRec){
+                                                 Quantity& filterbmin, Quantity& filterbpa, Double& fracBW, const Record& inRec){
     QuantumHolder qh;
     String err;
     if(!inRec.isDefined("type"))
@@ -244,6 +244,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(!qh.fromRecord(err, inRec.asRecord("filterbpa")))
       throw(AipsError("Error in reading filterbpa param"));
     filterbpa=qh.asQuantity();
+    inRec.get("fracBW", fracBW);
 
 
 
