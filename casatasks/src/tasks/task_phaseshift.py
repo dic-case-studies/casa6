@@ -181,6 +181,7 @@ def phaseshift(vis=None,
             tblocal.done()
             tblocal = None
         if mslocal:
+            mslocal.done()
             mslocal = None
         if mtlocal:
             mtlocal.done()
