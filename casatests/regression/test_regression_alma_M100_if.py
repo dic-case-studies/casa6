@@ -6,7 +6,7 @@
 # using observation of M100 from September 2011                             # 
 #                                                                           # 
 # Rationale for Inclusion:                                                  #
-#    Need test of complete ALMA analysis chain                              #
+#    complete ALMA analysis chain                                           #
 #                                                                           # 
 # Input data:                                                               #
 #     two ASDMs                                                             #
@@ -51,6 +51,44 @@ step_title = { 0 : 'Data import',
                30: 'Verification of the regression results'
                }
 
+############    Imports    #################
+import os
+import shutil
+import unittest
+import traceback
+import time
+
+CASA6 = False
+has_mpi = False
+
+try:
+    import casatools
+    from casatasks import casalog, tclean, split, virtualconcat, imstat, applycal, fluxscale, flagdata
+    from casatasks import setjy, bandpass, flagmanager, gaincal, gencal, importasdm, fixplanets, uvcontsub, immoments
+    from almatasks import wvrgcal
+    # imview, plotcal
+    CASA6 = True
+except ImportError:
+    from __main__ import *
+    from tasks import *
+    from taskinit import *
+    from mpi4casa.MPICommandClient import MPICommandClient, MPIEnvironment
+    
+if CASA6:
+    try:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi.MPICommandClient import MPICommandClient
+        has_mpi = True
+    except:
+        casalog.post('casampi is not available. Will continue in serial', 'WARN')
+
+# Parallelization control
+if CASA6 and has_mpi:
+    if MPIEnvironment.is_mpi_enabled:
+        casalog.post('MPI environment detected')
+        mms = True
+        parallelImaging = True
+
 # global defs
 basename=['X54','X220']
 makeplots=False
@@ -59,35 +97,6 @@ therefant = 'DV01'
 mynumsubmss = 4
 mms = False
 parallelImaging = False
-
-############    Imports    #################
-CASA6 = False
-try:
-    import casatools
-    from casatasks import casalog, tclean, split, virtualconcat, imstat, applycal, fluxscale, flagdata, setjy, bandpass, flagmanager, gaincal, gencal, importasdm, fixplanets, uvcontsub, immoments
-    from almatasks import wvrgcal
-    # imview, plotcal
-    CASA6 = True
-    from casampi.MPIEnvironment import MPIEnvironment
-    from casampi.MPICommandClient import MPICommandClient
-except ImportError:
-    from __main__ import *
-    from tasks import *
-    from taskinit import *
-    from mpi4casa.MPICommandClient import MPICommandClient, MPIEnvironment
-
-# Parallelization control
-if MPIEnvironment.is_mpi_enabled:
-    casalog.post('MPI environment detected')
-    mms = True
-    parallelImaging = True
-
-import os
-import shutil
-import unittest
-import traceback
-import time
-
 
 # clean - tclean options
 withtclean = True
@@ -115,13 +124,13 @@ try:
     print('List of steps to be executed: {}'.format(mysteps))
     thesteps = mysteps
 except:
-    print('global variable mysteps not set.')
+    print('Global variable mysteps not set.')
 if (thesteps==[]):
     thesteps = range(0,len(step_title))
-    print('mysteps empty. Executing all steps: {}'.format(thesteps))
+    print('Variable mysteps is empty. Executing all steps: {}'.format(thesteps))
 
 # The Python variable 'mysteps' will control which steps
-# are executed when you start the script using
+# are executed when you start the script using interactive CASA
 #   execfile('alma-m100-analysis-hpc-regression.py')
 # e.g. setting
 #   mysteps = [2,3,4]
@@ -172,8 +181,10 @@ class regression_alma_m100_test(unittest.TestCase):
         mask2 = "M100line-orig.mask"
         mask3 = "test-M100line-orig.mask"
 
-        shutil.copytree(datapath+myasdm_dataset_name, myasdm_dataset_name, symlinks=True)
-        shutil.copytree(datapath+myasdm_dataset2_name, myasdm_dataset2_name, symlinks=True)
+#        shutil.copytree(datapath+myasdm_dataset_name, myasdm_dataset_name, symlinks=True)
+#        shutil.copytree(datapath+myasdm_dataset2_name, myasdm_dataset2_name, symlinks=True)
+        os.symlink(datapath+myasdm_dataset_name, myasdm_dataset_name)
+        os.symlink(datapath+myasdm_dataset2_name, myasdm_dataset2_name)
 
         shutil.copytree(datapath+mask1, mask1, symlinks=True)
         shutil.copytree(datapath+mask2, mask2, symlinks=True)
@@ -188,7 +199,10 @@ class regression_alma_m100_test(unittest.TestCase):
         os.system("rm -rf test-X220*")
         os.system("rm -rf X54*")
         os.system("rm -rf X220*")
-        os.system("rm -rf uid___A002_X2a5c2f_*")
+        os.unlink("uid___A002_X2a5c2f_X54")
+        os.unlink("uid___A002_X2a5c2f_X220")
+
+#        os.system("rm -rf uid___A002_X2a5c2f_*")
 
 
     def test_regression(self):
@@ -199,7 +213,7 @@ class regression_alma_m100_test(unittest.TestCase):
             
             if(mystep in thesteps):
                 
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 importasdm(asdm='uid___A002_X2a5c2f_X54',vis='X54.ms',asis='Stati* Anten*', overwrite=True,
                         lazy=True, createmms=mms, numsubms='auto')
@@ -217,7 +231,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Antenna positions
             mystep = 1
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-antpos_'+name)
@@ -241,7 +255,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Tsys table generation
             mystep = 2
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-tsys_'+name+'.fdm')
@@ -263,7 +277,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # correct Titan position
             mystep = 3
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
                 
                 for name in basename:
                     fixplanets(vis=name+'.ms', field='Titan', fixuvw=True, refant=therefant)
@@ -274,7 +288,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Apriori flagging
             mystep = 4
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 # Create flagcmd input list
                 myflagcmd = ["mode='manual' antenna='CM01'",
@@ -300,7 +314,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # WVR cal table generation
             mystep = 5
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-wvr_'+name)
@@ -316,7 +330,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # delay calibration table generation
             mystep = 6
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-delay_'+name+'.K')
@@ -333,7 +347,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # applycal
             mystep = 7
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 print("Using linear interpolation for Tsys in applycal ...")
                 tsysinterp='linear'
@@ -357,7 +371,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Split and save flags
             mystep = 8
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf '+name+'-line.ms*')
@@ -376,7 +390,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # flagging
             mystep = 9
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 # Create flagcmd input list (could also call flagdata twice alternatively)
                 myflagcmd = ["mode='manual' field='' spw='0~3:0~10;3800~3839'",
@@ -410,7 +424,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Bin it up to lower spectral resolution to about 10 km/s
             mystep = 10
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf '+name+'-line-vs.ms*')
@@ -429,7 +443,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Fast phase-only gaincal for bandpass
             mystep = 11
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-BPint.Gp')
@@ -457,7 +471,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Bandpass
             mystep = 12
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-'+name+'.B1')
@@ -494,7 +508,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Noisy for uvdistances less than 40 klambda
             mystep = 13
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     flagmanager(vis=name+'-line-vs.ms', mode='restore', versionname='apriori')
@@ -523,7 +537,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Fast phase-only gaincal 
             mystep = 14
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-int.Gp')
@@ -554,7 +568,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Slow phase-only gaincal 
             mystep = 15
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-scan.Gp')
@@ -586,7 +600,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Slow amplitude and phase gaincal 
             mystep = 16
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-scan.Gap')
@@ -617,7 +631,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Fluxscale
             mystep = 17
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     fluxscale(vis=name+'-line-vs.ms',caltable='cal-'+name+'-scan.Gap',
@@ -633,7 +647,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Applycal
             mystep = 18
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     # to the bandpass cal
@@ -685,7 +699,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Test image of the secondary phase cal
             mystep = 19
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf test-'+name+'-sec_phasecal*')
@@ -728,7 +742,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Test image of the primary phase cal
             mystep = 20
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf test-'+name+'-prim_phasecal*')
@@ -777,7 +791,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Test image of Titan
             mystep = 21
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf test-'+name+'-Titan*')
@@ -808,7 +822,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Split off the calibrated data on M100
             mystep = 22
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 for name in basename:
                     os.system('rm -rf '+name+'-calibrated.ms*')
@@ -824,7 +838,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Concat
             mystep = 23
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf M100all.ms*')
                 virtualconcat(vis=['X54-calibrated.ms', 'X220-calibrated.ms'],
@@ -839,7 +853,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # rebin the data
             mystep = 24
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf M100all_lores.ms*')
                 split(vis='M100all.ms', outputvis='M100all_lores.ms',
@@ -854,7 +868,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Continuum image
             mystep = 25
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf M100cont.*')
                 
@@ -896,7 +910,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # uvcontsub2
             mystep = 26
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
                 
                 os.system('rm -rf M100all_lores.ms.c*')
                 uvcontsub(vis='M100all_lores.ms',field='',fitspw='0:10~205;260~440',
@@ -908,7 +922,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Test image of central field
             mystep = 27
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf test-M100line.*')
                 
@@ -952,7 +966,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # pclean line cube mosaic
             mystep = 28
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf M100line.*')
                 
@@ -1004,7 +1018,7 @@ class regression_alma_m100_test(unittest.TestCase):
             # Moments
             mystep = 29
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
             
                 os.system('rm -rf M100-CO.mom?')
                 immoments(imagename='M100line.image',
@@ -1050,7 +1064,7 @@ class regression_alma_m100_test(unittest.TestCase):
             
             mystep = 30
             if(mystep in thesteps):
-                print('Step {}:{}'.format(mystep, step_title[mystep]))
+                print('Step {}: {}'.format(mystep, step_title[mystep]))
 
                 resrms = []
                 respeak = []
@@ -1207,8 +1221,8 @@ class regression_alma_m100_test(unittest.TestCase):
 def suite():
     return [regression_alma_m100_test]
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
+
+if CASA6:
     if __name__ == '__main__':
         unittest.main()
 
