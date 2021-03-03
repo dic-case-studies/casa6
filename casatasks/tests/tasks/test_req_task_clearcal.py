@@ -49,15 +49,15 @@ import shutil
 
 # DATA #
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms/')
-    workingdir = casatools.ctsys.resolve('nep2-shrunk.ms')
+    datapath = casatools.ctsys.resolve('unittest/clearcal/nep2-shrunk.ms')
+ #   workingdir = casatools.ctsys.resolve('nep2-shrunk.ms')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listobs/nep2-shrunk.ms'
-    workingdir = 'nep2-shrunk.ms'
+#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'):
+#        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
+#    else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata//unittest/clearcal/nep2-shrunk.ms'
+#    workingdir = 'nep2-shrunk.ms'
     filepath = 'testlog.log'
 
 # This is for test that check what the parameter validator does when parameters are

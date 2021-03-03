@@ -50,13 +50,9 @@ else:
     from flagdata import flagdata
     from sdutil import tbmanager, toolmanager, table_selector
 
-    casaRoot = os.environ.get('CASAPATH').split()[0]
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
-        subdir_hints = ['data', 'casa-data-req', 'data/casa-data-req']
-        for subdir in subdir_hints:
-            path = os.path.join(casaRoot, subdir, apath)
-            if os.path.exists(path):
-                return path
+        return os.path.join(dataRoot,apath)
 
 _ia = image()
 _rg = regionmanager()
@@ -135,7 +131,7 @@ class sdimaging_unittest_base(unittest.TestCase):
 
     """
     taskname='sdimaging'
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
@@ -2543,7 +2539,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
     param_base = dict(infiles=infiles,outfile=outfile,intent="",
@@ -2702,7 +2698,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
-    datapath=ctsys_resolve('regression/unittest/sdimaging')
+    datapath=ctsys_resolve('unittest/sdimaging/')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
     infiles_selection = 'selection_misc.ms'
@@ -2850,7 +2846,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
-    datapath = ctsys_resolve('regression/unittest/sdimaging')
+    datapath = ctsys_resolve('unittest/sdimaging/')
     params = dict(antenna = "0",
                   intent  = "*ON_SOURCE*",
                   gridfunction = "SF",
@@ -3417,7 +3413,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
-    datapath = ctsys_resolve('visibilities/almasd')
+    datapath = ctsys_resolve('unittest/sdimaging/')
     infiles = ['PM04_A108.ms', 'PM04_T704.ms']
     outfile = 'antenna_move.im'
 

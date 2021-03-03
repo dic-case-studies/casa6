@@ -48,17 +48,8 @@ except ImportError:
     _qa = qatool()
     _imd = imdtool()
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)    
-
-    # scastro (25nov2020) suggests putting new files in data-req, so we are now splitting files
-    # across two data repos
-    def ctsys_resolve2(apath):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
-        else:
-            datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
-        return os.path.join(datapath, apath)    
 
 image = "imregion.fits"
 text1 = "goodfile1.txt"
@@ -74,9 +65,7 @@ cas_12980i = 'Cir_X-1_sci.spw37.mfs.I.manual.fits'
 cas_12980t = 'mynewregion.crtf' 
 cas_12980c = 'cas_12980c.im'
 
-datapath = ctsys_resolve('regression/unittest/rg.fromtextfile/')
-datapath2 = ctsys_resolve2('image/')
-datapath3 = ctsys_resolve2('text/')
+datapath = ctsys_resolve('unittest/rgtool/')
 
 def deep_equality(a, b):
     if (type(a) != type(b)):
@@ -125,8 +114,8 @@ class rg_fromtextfile_test(unittest.TestCase):
     def setUp(self):
         for im in self._fixtures:
             shutil.copy(datapath + im, im)
-        shutil.copy(datapath2 + cas_12980i, cas_12980i)
-        shutil.copy(datapath3 + cas_12980t, cas_12980t)
+        shutil.copy(datapath + cas_12980i, cas_12980i)
+        shutil.copy(datapath + cas_12980t, cas_12980t)
         self.ia = iatool()
         self.rg = rgtool()
     
