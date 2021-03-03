@@ -108,8 +108,9 @@ class phaseshift_test(unittest.TestCase):
     def test_takesVis(self):
         ''' Check that the task requires a valid input MS '''
         result = phaseshift(datacopy, outputvis=output, phasecenter='J2000 19h53m50 40d06m00')
-        
-        self.assertTrue(result)
+        # Completion without throwing an exception indicates success in CASA 6
+        if not CASA6:
+            self.assertTrue(result)
         
     def test_outvis(self):
         ''' Check that the outvis parameter specifies the name of the output '''
@@ -146,25 +147,49 @@ class phaseshift_test(unittest.TestCase):
         
     def test_arraySelect(self):
         ''' Check the array selection parameter '''
-        out_of_range = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', array='1')
+        msg = "specified array incorrectly found"
+        if CASA6:
+            with self.assertRaises(RuntimeError, msg=msg):
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    array='1'
+                )
+        else:
+            self.assertFalse(
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    array='1'
+                ), msg=msg
+            )
         phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', array='0')
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
         
-        self.assertFalse(out_of_range)
-        self.assertTrue(data_selected == 6270)
+        self.assertTrue(data_selected == 6270, "Incorrect number of rows found")
         
     def test_observationSelect(self):
         ''' Check the observation selection parameter '''
-        out_of_range = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', observation='1')
+        msg = "Observation not out of range"
+        if CASA6:
+            with self.assertRaises(RuntimeError, msg=msg):
+                phaseshift(
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35', observation='1'
+                )
+        else:
+            self.assertFalse(
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    observation='1'
+                ), msg=msg
+            )
         phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', observation='0')
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
         
-        self.assertFalse(out_of_range)
-        self.assertTrue(data_selected == 6270)
+        self.assertTrue(data_selected == 6270, "Incorrect number of rows found")
         
     def test_keepsMMS(self):
         ''' Test the keepmms paramter creates the output as an MMS if the input is one as well '''
@@ -177,11 +202,31 @@ class phaseshift_test(unittest.TestCase):
         
     def test_datacolumn(self):
         ''' Check that this parameter selects which datacolumns to write to the output MS '''
-        model_fail = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='MODEL')
-        data_pass = phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='DATA')
-        
-        self.assertFalse(model_fail)
-        self.assertTrue(data_pass)
+        msg = "Data column incorrectly present"
+        if CASA6:
+            with self.assertRaises(RuntimeError, msg=msg):
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacolumn='MODEL'
+                )
+            # running to completion indicates success in CASA 6
+            phaseshift(
+                datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                datacolumn='DATA'
+            )
+        else:
+            self.assertFalse(
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacolumn='MODEL'
+                ), msg=msg
+            )
+            self.assertTrue(
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacolumn='DATA'
+                ), msg="phaseshift unexpectedly failed"
+            )        
         
     def test_phasecenter(self):
         ''' Check that this parameter sets the sky coordinates of the new phasecenter '''
