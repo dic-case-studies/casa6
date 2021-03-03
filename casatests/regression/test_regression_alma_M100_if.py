@@ -3,11 +3,11 @@
 # Test Name:                                                                #
 # test_regression_alma_M100_if.py                                           #
 # An ALMA Science Verification Data Analysis Regression                     #
-# using observation of M100 from September 2011                             # 
-#                                                                           # 
+# using observation of M100 from September 2011                             #
+#                                                                           #
 # Rationale for Inclusion:                                                  #
 #    complete ALMA analysis chain                                           #
-#                                                                           # 
+#                                                                           #
 # Input data:                                                               #
 #     two ASDMs                                                             #
 #     the clean masks                                                       #
@@ -75,7 +75,7 @@ except ImportError:
     from tasks import *
     from taskinit import *
     from mpi4casa.MPICommandClient import MPICommandClient, MPIEnvironment
-    
+
 if CASA6:
     try:
         from casampi.MPIEnvironment import MPIEnvironment
@@ -178,8 +178,6 @@ class regression_alma_m100_test(unittest.TestCase):
         mask2 = "M100line-orig.mask"
         mask3 = "test-M100line-orig.mask"
 
-#        shutil.copytree(datapath+myasdm_dataset_name, myasdm_dataset_name, symlinks=True)
-#        shutil.copytree(datapath+myasdm_dataset2_name, myasdm_dataset2_name, symlinks=True)
         os.symlink(datapath+myasdm_dataset_name, myasdm_dataset_name)
         os.symlink(datapath+myasdm_dataset2_name, myasdm_dataset2_name)
 
@@ -199,40 +197,38 @@ class regression_alma_m100_test(unittest.TestCase):
         os.unlink("uid___A002_X2a5c2f_X54")
         os.unlink("uid___A002_X2a5c2f_X220")
 
-#        os.system("rm -rf uid___A002_X2a5c2f_*")
-
 
     def test_regression(self):
         passed = False
         try:
             # data import and partitioning
             mystep = 0
-            
+
             if(mystep in thesteps):
-                
+
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 importasdm(asdm='uid___A002_X2a5c2f_X54',vis='X54.ms',asis='Stati* Anten*', overwrite=True,
                         lazy=True, createmms=mms, numsubms='auto')
                 importasdm(asdm='uid___A002_X2a5c2f_X220',vis='X220.ms',asis='Stati* Anten*', overwrite=True,
                         lazy=True, createmms=mms, numsubms='auto')
-            
+
                 if(makeplots):
                     for name in basename:
                         os.system('rm -rf plotants-'+name+'.png')
                         plotants(name+'.ms', figfile='plotants-'+name+'.png')
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Antenna positions
             mystep = 1
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-antpos_'+name)
-            
+
                 gencal(vis = 'X54.ms',
                    caltable = 'cal-antpos_X54',
                    caltype = 'antpos',
@@ -245,21 +241,21 @@ class regression_alma_m100_test(unittest.TestCase):
                    antenna = 'CM01,PM02,PM04,DV08,DV06,DV13,DV03,DV14',
                    parameter = [-0.000379055076246,0.000910912511392,-0.000226045671848,7.8790821135e-05,0.000363811850548,-0.000224065035582,-0.000315962965482,0.000397399838991,-0.000581170175089,-6.35427422822e-05,0.00129573699087,-0.000625061802566,-0.000167516991496,0.000174060463905,-0.000417742878199,-0.00010875146836,0.000319179147482,-0.000588130671531,0.000142965465784,0.000455257482827,0.000168651808053,-0.00150847900659,0.00357818510383,0.000811365433037]
                    )
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Tsys table generation
             mystep = 2
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-tsys_'+name+'.fdm')
                     gencal(vis=name+'.ms',
-                        caltype='tsys', 
+                        caltype='tsys',
                         caltable='cal-tsys_'+name+'.fdm')
-            
+
                 if(makeplots):
                     for spw in ['9','11','13','15']:
                         for name in basename:
@@ -267,109 +263,109 @@ class regression_alma_m100_test(unittest.TestCase):
                                     spw=spw, subplot=721, overplot=False,
                                     iteration='antenna', plotrange=[0, 0, 40, 180], plotsymbol='.',
                                     figfile='cal-tsys_per_spw_'+spw+'_'+name+'.png')
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # correct Titan position
             mystep = 3
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-                
+
                 for name in basename:
                     fixplanets(vis=name+'.ms', field='Titan', fixuvw=True, refant=therefant)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Apriori flagging
             mystep = 4
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 # Create flagcmd input list
                 myflagcmd = ["mode='manual' antenna='CM01'",
                            "mode='manual' intent='*POINTING*'",
                            "mode='manual' intent='*ATMOSPHERE*'",
                            "mode='shadow'",
                            "mode='manual' autocorr=True" # do not flag the WVR data
-                           ] 
-                              
+                           ]
+
                 for name in basename:
-                    flagmanager(vis=name+'.ms', mode='restore', versionname='Original')        
-                    flagdata(vis=name + '.ms', mode='list', inpfile=myflagcmd, flagbackup=False)        
-                    
+                    flagmanager(vis=name+'.ms', mode='restore', versionname='Original')
+                    flagdata(vis=name + '.ms', mode='list', inpfile=myflagcmd, flagbackup=False)
+
                     if(makeplots):
                         # Plot amplitude vs time
                         plotms(vis=name+'.ms', xaxis='time', yaxis='amp', spw='1',
                            averagedata=True, avgchannel='4000', coloraxis='field',
                            iteraxis='spw', plotfile=name+'-amp-vs-time.png', overwrite=True)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # WVR cal table generation
             mystep = 5
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-wvr_'+name)
-            
-                wvrgcal(vis="X54.ms", caltable='cal-wvr_X54', toffset=-1, wvrflag=['CM01'], segsource=True, tie=["1224+213 Phase,M100"], 
+
+                wvrgcal(vis="X54.ms", caltable='cal-wvr_X54', toffset=-1, wvrflag=['CM01'], segsource=True, tie=["1224+213 Phase,M100"],
                         statsource="1224+213 Phase",spw=[1,3,5,7], wvrspw=[0])
-                wvrgcal(vis='X220.ms', caltable='cal-wvr_X220', toffset=-1, wvrflag=['CM01'], segsource=True, tie=["1224+213 Phase,M100"], 
+                wvrgcal(vis='X220.ms', caltable='cal-wvr_X220', toffset=-1, wvrflag=['CM01'], segsource=True, tie=["1224+213 Phase,M100"],
                         statsource="1224+213 Phase",spw=[1,3,5,7], wvrspw=[0])
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # delay calibration table generation
             mystep = 6
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-delay_'+name+'.K')
-                    
+
                     gaincal(vis=name+'.ms',caltable='cal-delay_'+name+'.K',
                     field='*Phase*',spw='1,3,5,7',
                     solint='inf',combine='scan',refant=therefant,
                     gaintable='cal-antpos_'+name,
                     gaintype='K')
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # applycal
             mystep = 7
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 print("Using linear interpolation for Tsys in applycal ...")
                 tsysinterp='linear'
                 tsysspwmap=[0,9,0,11,0,13,0,15]
-            
+
                 for myfield in ['3c273 - Bandpass','Titan','3c273 - Phase','1224+213 Phase','M100']:
                     print("Field: {}".format(myfield))
                     for name in basename:
-                        applycal(vis=name+'.ms', 
+                        applycal(vis=name+'.ms',
                                  spw='1,3,5,7',
                                  field=myfield, gainfield=[myfield,myfield,'',''],
                                  interp=['nearest',tsysinterp,'nearest','nearest'],
                                  spwmap=[[],tsysspwmap,[],[]],
                                  gaintable=['cal-wvr_'+name,'cal-tsys_'+name+'.fdm','cal-delay_'+name+'.K','cal-antpos_'+name],
                                  flagbackup=False)
-            
-            
+
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Split and save flags
             mystep = 8
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf '+name+'-line.ms*')
                     split(vis=name+'.ms',
@@ -377,52 +373,52 @@ class regression_alma_m100_test(unittest.TestCase):
                           spw='1,3,5,7',
                           datacolumn='corrected',
                           keepmms=True)
-                    
+
                     flagmanager(vis = name+'-line.ms',
                                 mode = 'save',
                                 versionname = 'apriori')
                 timing(mystep, thesteps)
-            
-                        
+
+
             # flagging
             mystep = 9
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 # Create flagcmd input list (could also call flagdata twice alternatively)
                 myflagcmd = ["mode='manual' field='' spw='0~3:0~10;3800~3839'",
                           "mode='manual' field='' spw='0~3:239;447~448;720~721;2847~2848'"]
-                          
+
                 for name in basename:
-            
+
                     flagmanager(vis=name + '-line.ms', mode='restore',
                                 versionname='apriori')
-                    
+
                     flagdata(vis=name + '-line.ms', mode='list', inpfile=myflagcmd, flagbackup=False)
-            
+
                 # some integrations are off
                 flagdata(vis='X220-line.ms', mode='manual',
                           timerange='19:52:55~19:53:04', flagbackup=False)
-            
+
                 flagdata(vis='X54-line.ms',
                           antenna='PM01',
                           timerange='19:03:35~19:03:42',
                           mode='manual',
                           flagbackup=False)
-            
+
                 flagdata(vis='X54-line.ms',
                           antenna='DV04',
                           timerange='19:38:45~19:38:55',
                           mode='manual',
                           flagbackup=False)
-            
+
                 timing(mystep, thesteps)
-            
+
             # Bin it up to lower spectral resolution to about 10 km/s
             mystep = 10
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf '+name+'-line-vs.ms*')
                     split(vis=name+'-line.ms',
@@ -431,228 +427,228 @@ class regression_alma_m100_test(unittest.TestCase):
                           width='8',
                           keepmms=True
                           )
-            
+
                     flagmanager(vis=name+'-line-vs.ms', mode='save', versionname='apriori')
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Fast phase-only gaincal for bandpass
             mystep = 11
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-BPint.Gp')
-                    gaincal(vis=name+'-line-vs.ms', 
-                            caltable='cal-'+name+'-BPint.Gp', 
+                    gaincal(vis=name+'-line-vs.ms',
+                            caltable='cal-'+name+'-BPint.Gp',
                             spw='*:190~310',
                             field='*Bandpass*',
                             selectdata=False, solint='int', refant=therefant, calmode='p')
-            
+
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-BPint.Gp', 
+                        plotcal(caltable='cal-'+name+'-BPint.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180], 
+                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
                                 iteration = 'spw',
                                 figfile='cal-'+name+'-phase_vs_time_XX.BPint.Gp.png', subplot = 221)
-                    
-                        plotcal(caltable='cal-'+name+'-BPint.Gp', 
+
+                        plotcal(caltable='cal-'+name+'-BPint.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180], 
+                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
                                 iteration = 'spw',
                                 figfile='cal-'+name+'-phase_vs_time_YY.BPint.Gp.png', subplot = 221)
-            
+
                 timing(mystep, thesteps)
-            
+
             # Bandpass
             mystep = 12
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-'+name+'.B1')
-                    
-                    bandpass(vis=name+'-line-vs.ms', 
-                             caltable='cal-'+name+'.B1', 
+
+                    bandpass(vis=name+'-line-vs.ms',
+                             caltable='cal-'+name+'.B1',
                              field='*Bandpass*',
                              bandtype='B', fillgaps=10, solnorm =True, combine='',
                              selectdata=False,
                              solint='inf',
                              refant=therefant,
                              gaintable='cal-'+name+'-BPint.Gp')
-                
+
                     if(makeplots):
                         for spw in ['0','1','2','3']:
-                            plotcal(caltable = 'cal-'+name+'.B1', 
+                            plotcal(caltable = 'cal-'+name+'.B1',
                                     xaxis='freq', yaxis='phase', spw=spw, antenna='',
                                     iteration='antenna',
                                     subplot=431, overplot=False, plotrange = [0,0,-70,70],
                                     plotsymbol='.', timerange='',
                                     figfile='cal-'+name+'-phase.spw'+spw+'.B1.png')
-            
-                            plotcal(caltable = 'cal-'+name+'.B1', 
+
+                            plotcal(caltable = 'cal-'+name+'.B1',
                                     xaxis='freq', yaxis='amp', spw=spw,
                                     iteration='antenna',
                                     subplot=431, overplot=False,
                                     plotsymbol='.', timerange='',
                                     figfile='cal-'+name+'-amplitude.spw'+spw+'.B1.png')
                 timing(mystep, thesteps)
-                
-            
+
+
             # Setjy
             # Strong line for Titan is obvious
             # Noisy for uvdistances less than 40 klambda
             mystep = 13
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     flagmanager(vis=name+'-line-vs.ms', mode='restore', versionname='apriori')
-            
+
                     flagdata(vis=name + '-line-vs.ms',
                               field='Titan',
                               mode='manual',
                               uvrange='0~40',
                               spw='',
                               flagbackup=False)
-                    
+
                     flagdata(vis=name + '-line-vs.ms',
                               field='Titan',
                               mode='manual',
                               uvrange='',
                               spw='0:200~479',
                               flagbackup=False)
-             
+
                     setjy(vis=name+'-line-vs.ms',
                           field='Titan',
-                          standard='Butler-JPL-Horizons 2012', 
+                          standard='Butler-JPL-Horizons 2012',
                           scalebychan=False, spw='0,1,2,3')
-            
+
                 timing(mystep, thesteps)
-            
-            # Fast phase-only gaincal 
+
+            # Fast phase-only gaincal
             mystep = 14
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-int.Gp')
-                    gaincal(vis=name+'-line-vs.ms', 
-                    caltable='cal-'+name+'-int.Gp', 
-                    spw='*:25~455', 
+                    gaincal(vis=name+'-line-vs.ms',
+                    caltable='cal-'+name+'-int.Gp',
+                    spw='*:25~455',
                     field='*Phase*,*Band*,Titan',
                     gaintable='cal-'+name+'.B1',
-                    selectdata=False, solint='int', 
+                    selectdata=False, solint='int',
                     refant=therefant, calmode='p')
-                    
+
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-int.Gp', 
+                        plotcal(caltable='cal-'+name+'-int.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180], 
+                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
                                 iteration = 'spw',
                                 figfile='cal-'+name+'-phase_vs_time_XX.int.Gp.png', subplot = 221)
-            
-                        plotcal(caltable='cal-'+name+'-int.Gp', 
+
+                        plotcal(caltable='cal-'+name+'-int.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180], 
+                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
                                 iteration = 'spw',
                                 figfile='cal-'+name+'-phase_vs_time_YY.int.Gp.png', subplot = 221)
-            
+
                 timing(mystep, thesteps)
-            
-            
-            # Slow phase-only gaincal 
+
+
+            # Slow phase-only gaincal
             mystep = 15
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-scan.Gp')
-                    
-                    gaincal(vis=name+'-line-vs.ms', 
-                    caltable='cal-'+name+'-scan.Gp', 
-                    spw='*:25~455', 
+
+                    gaincal(vis=name+'-line-vs.ms',
+                    caltable='cal-'+name+'-scan.Gp',
+                    spw='*:25~455',
                     field='*Phase*,*Band*,Titan',
                     gaintable='cal-'+name+'.B1',
-                    selectdata=False, solint='inf', 
+                    selectdata=False, solint='inf',
                     refant=therefant, calmode='p')
-                    
+
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-scan.Gp', 
+                        plotcal(caltable='cal-'+name+'-scan.Gp',
                             xaxis = 'time', yaxis = 'phase',
-                         poln='X', plotsymbol='o', plotrange = [0,0,-180,180], 
+                         poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
                          iteration = 'spw',
                          figfile='cal-'+name+'-phase_vs_time_XX.scan.Gp.png', subplot = 221)
-            
-                        plotcal(caltable='cal-'+name+'-scan.Gp', 
+
+                        plotcal(caltable='cal-'+name+'-scan.Gp',
                             xaxis = 'time', yaxis = 'phase',
-                         poln='Y', plotsymbol='o', plotrange = [0,0,-180,180], 
+                         poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
                          iteration = 'spw',
                          figfile='cal-'+name+'-phase_vs_time_YY.scan.Gp.png', subplot = 221)
-            
+
                 timing(mystep, thesteps)
-            
-            
-            # Slow amplitude and phase gaincal 
+
+
+            # Slow amplitude and phase gaincal
             mystep = 16
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf cal-'+name+'-scan.Gap')
-                    
-                    gaincal(vis=name+'-line-vs.ms', 
-                    caltable='cal-'+name+'-scan.Gap', 
-                    spw='*:25~455', 
+
+                    gaincal(vis=name+'-line-vs.ms',
+                    caltable='cal-'+name+'-scan.Gap',
+                    spw='*:25~455',
                     field='*Phase*,*Band*,Titan',
                     gaintable=['cal-'+name+'.B1','cal-'+name+'-int.Gp'],
-                    selectdata=False, solint='inf', 
+                    selectdata=False, solint='inf',
                     refant=therefant, calmode='ap')
-                    
+
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-scan.Gap', 
+                        plotcal(caltable='cal-'+name+'-scan.Gap',
                         xaxis = 'time', yaxis = 'amp',
-                        poln='X', plotsymbol='o', 
+                        poln='X', plotsymbol='o',
                         iteration = 'spw',
                         figfile='cal-'+name+'-amp_vs_time_XX.scan.Gap.png', subplot = 221)
-                        
-                        plotcal(caltable='cal-'+name+'-scan.Gap', 
+
+                        plotcal(caltable='cal-'+name+'-scan.Gap',
                         xaxis = 'time', yaxis = 'amp',
-                        poln='Y', plotsymbol='o', 
+                        poln='Y', plotsymbol='o',
                         iteration = 'spw',
                         figfile='cal-'+name+'-amp_vs_time_YY.scan.Gap.png', subplot = 221)
-            
+
                 timing(mystep, thesteps)
-            
+
             # Fluxscale
             mystep = 17
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     fluxscale(vis=name+'-line-vs.ms',caltable='cal-'+name+'-scan.Gap',
                     fluxtable='cal-'+name+'.flux',reference='Titan',transfer='*Phase*,*Band*')
-            
+
             # Restore flags on calibrators?
             #for name in basename:
                 # flagmanager(vis=name+'-line-vs.ms',mode='restore',versionname='apriori')
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Applycal
             mystep = 18
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     # to the bandpass cal
                     applycal(vis=name+'-line-vs.ms',field='*Band*',
                         gaintable=['cal-'+name+'.B1','cal-'+name+'-int.Gp','cal-'+name+'.flux'],
                         interp=['nearest','nearest','nearest'],
                         gainfield=['*Band*','*Band*','*Band*'],calwt=False,flagbackup=True)
-            
+
                     # to the secondary phase cal
                     applycal(vis=name+'-line-vs.ms',field='3c273 - Phase',
                         gaintable=['cal-'+name+'.B1','cal-'+name+'-scan.Gp','cal-'+name+'.flux'],
@@ -660,7 +656,7 @@ class regression_alma_m100_test(unittest.TestCase):
                             gainfield=['*Band*','1224*','1224*'],
                     calwt=False,
                     flagbackup=True)
-            
+
                     # to the primary phase cal
                     applycal(vis=name+'-line-vs.ms',field='1224*',
                         gaintable=['cal-'+name+'.B1','cal-'+name+'-int.Gp','cal-'+name+'.flux'],
@@ -668,7 +664,7 @@ class regression_alma_m100_test(unittest.TestCase):
                         gainfield=['*Band*','1224*','1224*'],
                     calwt=False,
                     flagbackup=True)
-            
+
                     # to Titan
                     applycal(vis=name+'-line-vs.ms',field='Titan',
                              gaintable=['cal-'+name+'.B1','cal-'+name+'-int.Gp','cal-'+name+'.flux'],
@@ -676,7 +672,7 @@ class regression_alma_m100_test(unittest.TestCase):
                              gainfield=['*Band*','Titan','Titan'],
                              calwt=False,
                              flagbackup=True)
-            
+
                     # to M100
                     applycal(vis=name+'-line-vs.ms',field='M100',
                         gaintable=['cal-'+name+'.B1','cal-'+name+'-scan.Gp','cal-'+name+'.flux'],
@@ -684,26 +680,26 @@ class regression_alma_m100_test(unittest.TestCase):
                         gainfield=['*Band*','1224*','1224*'],
                     calwt=False,
                     flagbackup=True)
-            
-            
+
+
             # For X146 the calibrated fluxes for the secondary phase cal are different for the different pols. What
-            # is going on? 
-            
+            # is going on?
+
                 timing(mystep, thesteps)
-            
+
             # Always produce imaging plots (for science verification)
-            
+
             # Test image of the secondary phase cal
             mystep = 19
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf test-'+name+'-sec_phasecal*')
-                    
-                imview_input = ''
-                imview_input = 'test-'+name+'-sec_phasecal.image'
-                tclean(vis=name+'-line-vs.ms',
+
+                    imview_input = ''
+                    imview_input = 'test-'+name+'-sec_phasecal.image'
+                    tclean(vis=name+'-line-vs.ms',
                     imagename='test-'+name+'-sec_phasecal',
                     field='3c*Ph*',spw='0~3',
                     nterms=2,
@@ -714,24 +710,24 @@ class regression_alma_m100_test(unittest.TestCase):
                     deconvolver=tclean_deconvolver,
                     parallel=parallelImaging,
                     savemodel=tclean_savemodel)
-                        
+
                 if makeplots:
                     for name in basename:
                         imview(raster={'file': imview_input, 'colorwedge':True,
                                        'range':[-0.02, 8.0], 'scaling':-1.5, 'colormap':'Rainbow 2'},
                                out='test-'+name+'-sec_phasecal.png', zoom=1)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Test image of the primary phase cal
             mystep = 20
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf test-'+name+'-prim_phasecal*')
-                    
+
                     imview_input = ''
                     imview_input = 'test-'+name+'-prim_phasecal.image'
                     tclean(vis=name+'-line-vs.ms',
@@ -745,7 +741,7 @@ class regression_alma_m100_test(unittest.TestCase):
                         deconvolver=tclean_deconvolver,
                         parallel=parallelImaging,
                         savemodel=tclean_savemodel)
-            
+
                 if makeplots:
                     for name in basename:
                         imview(raster={'file': imview_input, 'colorwedge':True,
@@ -758,17 +754,17 @@ class regression_alma_m100_test(unittest.TestCase):
                         peak=(calstat['max'][0])
                         print('>> Peak in phase calibrator image: '+str(peak))
                         print('>> Dynamic range in phase calibrator image: '+str(peak/rms))
-            
+
                 timing(mystep, thesteps)
-            
+
             # Test image of Titan
             mystep = 21
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf test-'+name+'-Titan*')
-                    
+
                     tclean(vis=name+'-line-vs.ms',
                     imagename='test-'+name+'-Titan',
                     field='Titan',spw='0~3',
@@ -778,15 +774,15 @@ class regression_alma_m100_test(unittest.TestCase):
                     imsize=200,cell='0.5arcsec',
                     deconvolver=tclean_deconvolver,
                     parallel=parallelImaging)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Split off the calibrated data on M100
             mystep = 22
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 for name in basename:
                     os.system('rm -rf '+name+'-calibrated.ms*')
                     split(vis=name+'-line-vs.ms',field='M100',
@@ -795,46 +791,46 @@ class regression_alma_m100_test(unittest.TestCase):
                       keepflags=False,
                       keepmms=parallelImaging
                           )
-            
+
                 timing(mystep, thesteps)
-            
+
             # Concat
             mystep = 23
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf M100all.ms*')
                 virtualconcat(vis=['X54-calibrated.ms', 'X220-calibrated.ms'],
                               concatvis='M100all.ms',
                               copypointing=False,
                               keepcopy=False # set this to True to keep a copy of the input (takes time)
                               )
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # rebin the data
             mystep = 24
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf M100all_lores.ms*')
                 split(vis='M100all.ms', outputvis='M100all_lores.ms',
                       datacolumn='data',
                       timebin='60s',
-                      keepmms=parallelImaging 
+                      keepmms=parallelImaging
                       )
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Continuum image
             mystep = 25
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf M100cont.*')
-                
+
                 tclean(vis = 'M100all_lores.ms',
                 imagename = 'M100cont',
                 field='2~47',
@@ -849,31 +845,31 @@ class regression_alma_m100_test(unittest.TestCase):
                 gridder = 'mosaic',
                 deconvolver=tclean_deconvolver,
                 parallel=parallelImaging)
-            
+
             # Continuum peak is 0.5 mJy. Too weak for self-cal...
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # uvcontsub2
             mystep = 26
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-                
+
                 os.system('rm -rf M100all_lores.ms.c*')
                 uvcontsub(vis='M100all_lores.ms',field='',fitspw='0:10~205;260~440',
                           combine='',solint='inf',fitorder=1,spw='0',want_cont=False)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # Test image of central field
             mystep = 27
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf test-M100line.*')
-                
+
                 tclean(vis='M100all_lores.ms.contsub',
                 imagename='test-M100line',
                 field='26',
@@ -889,17 +885,17 @@ class regression_alma_m100_test(unittest.TestCase):
                 weighting='briggs',robust=0.5,cycleniter=100,cyclefactor=1.5,
                 deconvolver=tclean_deconvolver,
                 parallel=parallelImaging)
-            
+
                 timing(mystep, thesteps)
-            
-            
+
+
             # pclean line cube mosaic
             mystep = 28
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf M100line.*')
-                
+
                 tclean(vis='M100all_lores.ms.contsub',imagename='M100line',
                 field='2~47',
                 spw='0:220~259',
@@ -919,15 +915,15 @@ class regression_alma_m100_test(unittest.TestCase):
                 gridder='mosaic',
                 deconvolver=tclean_deconvolver,
                 parallel=parallelImaging)
-            
-            
+
+
                 timing(mystep, thesteps)
-            
+
             # Moments
             mystep = 29
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
-            
+
                 os.system('rm -rf M100-CO.mom?')
                 immoments(imagename='M100line.image',
                           moments=[0],
@@ -937,7 +933,7 @@ class regression_alma_m100_test(unittest.TestCase):
                           mask='',
                           outfile='M100-CO.mom0',
                           includepix=[0.03, 1000000])
-            
+
                 immoments(imagename='M100line.image',
                           moments=[1],
                           axis='spectral',
@@ -946,30 +942,30 @@ class regression_alma_m100_test(unittest.TestCase):
                           mask='',
                           outfile='M100-CO.mom1',
                           includepix=[0.035, 1000000])
-            
+
                 if makeplots:
                     os.system('rm -rf M100-CO_velfield.png')
-                    imview(contour={'file': 'M100-CO.mom0','levels': 
-                                    [1,2,5,10,20,40,80,160],'base':0,'unit':1}, 
+                    imview(contour={'file': 'M100-CO.mom0','levels':
+                                    [1,2,5,10,20,40,80,160],'base':0,'unit':1},
                            raster={'file': 'M100-CO.mom1','range': [1440,1700],
                                    'colorwedge':True, 'colormap': 'Rainbow 2'}, out='M100-CO_velfield.png')
                     os.system('rm -rf M100-CO_map.png')
-                    imview(contour={'file': 'M100-CO.mom1','levels': 
-                                    [1430,1460,1490,1520,1550,1580,1610,1640,1670,1700],'base':0,'unit':1}, 
+                    imview(contour={'file': 'M100-CO.mom1','levels':
+                                    [1430,1460,1490,1520,1550,1580,1610,1640,1670,1700],'base':0,'unit':1},
                            raster={'file': 'M100-CO.mom0', 'colorwedge':True,
-                                   'colormap': 'Rainbow 2','scaling':-1.8,'range': [0.5,20]}, 
+                                   'colormap': 'Rainbow 2','scaling':-1.8,'range': [0.5,20]},
                            out='M100-CO_map.png')
-            
+
                     os.system('rm -rf M100-CO_contmap.png')
-                    imview(contour={'file': 'M100cont.image','levels': 
-                                    [0.00025,0.0004],'base':0,'unit':1}, 
+                    imview(contour={'file': 'M100cont.image','levels':
+                                    [0.00025,0.0004],'base':0,'unit':1},
                            zoom=3,
                            raster={'file': 'M100-CO.mom0', 'colorwedge':True,
-                                   'colormap': 'Rainbow 2','scaling':0,'range': [0.8,40]}, 
+                                   'colormap': 'Rainbow 2','scaling':0,'range': [0.8,40]},
                            out='M100-CO_contmap.png')
-            
+
                 timing(mystep, thesteps)
-            
+
             mystep = 30
             if(mystep in thesteps):
                 print('Step {}: {}'.format(mystep, step_title[mystep]))
@@ -1033,7 +1029,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 # exppeakm_201209 = 0.164736732841
                 # exprmsm_201209 = 0.00830688327551
                 # expectation values set 17 April 2013 based on analysis using CASA active r23890
-                exppeakm = 0.180228888988 
+                exppeakm = 0.180228888988
                 exprmsm = 0.00912253372371
                 # tclean expectation values set 11 Abril 2013 based on analysis using CASA trunk r36680
                 # As of r37595 the parallel and sequential versions of tclean produce the same result with a precision better than 1%
@@ -1068,7 +1064,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 for i in [0,1]:
                     casalog.post( basename[i]+","+ str(respeak[i])+ "("+str(exppeak[i])+","+ str(exppeak33[i])+"),"
                                   + str(resrms[i])+ "("+str(exprms[i])+","+str(exprms33[i])+")")
-                    
+
                 casalog.post( "------------------------------------------------------------------------------------------")
 
                 casalog.post( "\n***** Peak and RMS of the image of the central field of the M100 mosaic  *****")
@@ -1086,39 +1082,39 @@ class regression_alma_m100_test(unittest.TestCase):
                     if (peakdev > err_tolerance):
                         casalog.post( 'ERROR: Peak in primary phase calibrator image '+str(i)+' deviates from expectation by '+str(peakdev)+' percent.', 'WARN')
                         passed = False
-            
+
                     rmsdev = abs(resrms[i]-exprms[i])/exprms[i]*100.
                     if (rmsdev > err_tolerance):
                         casalog.post( 'ERROR: RMS in primary phase calibrator image '+str(i)+' deviates from expectation by '+str(rmsdev)+' percent.','WARN')
                         passed = False
-            
+
                 peakmdev = abs(respeakm-exppeakm)/exppeakm*100.
                 if (peakmdev > err_tolerance):
                     casalog.post( 'ERROR: Peak in M100 central field image '+str(i)+' deviates from expectation by '+str(peakmdev)+' percent.','WARN')
                     passed = False
-            
+
                 rmsmdev = abs(resrmsm-exprmsm)/exprmsm*100.
                 if (rmsmdev > err_tolerance):
                     casalog.post( 'ERROR: RMS in M100 central field image '+str(i)+' deviates from expectation by '+str(rmsmdev)+' percent.','WARN')
                     passed = False
-            
+
                 if not os.path.exists('M100-CO.mom0'):
                     casalog.post( 'ERROR: M100 line cube moment 0 map was not created!','WARN')
                     passed = False
-                    
+
                 if not os.path.exists('M100-CO.mom1'):
                     casalog.post( 'ERROR: M100 line cube moment 1 map was not created!','WARN')
                     passed = False
-                    
+
                 if not passed:
                     raise Exception('Results are different from expectations by more than {0} percent.'.format(err_tolerance))
-            
+
                 casalog.post( "\nAll peak and RMS values are within the expectation.")
             self.assertTrue(passed)
-                
+
         except:
             formatted_traceback = traceback.format_exc()
-            casalog.post("Exception running regression: %s" % str(formatted_traceback),"WARN") 
+            casalog.post("Exception running regression: %s" % str(formatted_traceback),"WARN")
             self.assertTrue(False, msg="Exception running regression: %s" % str(formatted_traceback))
 
 def suite():
@@ -1128,4 +1124,3 @@ def suite():
 if CASA6:
     if __name__ == '__main__':
         unittest.main()
-
