@@ -60,6 +60,8 @@ import time
 
 CASA6 = False
 has_mpi = False
+mms = False
+parallelImaging = False
 
 try:
     import casatools
@@ -95,15 +97,10 @@ makeplots=False
 print("Make plots?: {}".format(makeplots))
 therefant = 'DV01'
 mynumsubmss = 4
-mms = False
-parallelImaging = False
 
-# clean - tclean options
-withtclean = True
+# tclean options
 tclean_deconvolver = 'clark'
 tclean_savemodel = 'modelcolumn'
-clean_psfmode = 'clark'
-clean_imager = ''
 
 #############################
 
@@ -705,30 +702,18 @@ class regression_alma_m100_test(unittest.TestCase):
                     os.system('rm -rf test-'+name+'-sec_phasecal*')
                     
                 imview_input = ''
-                if withtclean:
-                    imview_input = 'test-'+name+'-sec_phasecal.image'
-                    tclean(vis=name+'-line-vs.ms',
-                        imagename='test-'+name+'-sec_phasecal',
-                        field='3c*Ph*',spw='0~3',
-                        nterms=2,
-                        specmode='mfs',niter=100,
-                        interactive=False,
-                        mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
-                        imsize=200,cell='0.5arcsec',
-                        deconvolver=tclean_deconvolver,
-                        parallel=parallelImaging,
-                        savemodel=tclean_savemodel)
-                else:
-                    imview_input = 'test-'+name+'-sec_phasecal.image.tt0'
-                    clean(vis=name+'-line-vs.ms',
-                        imagename='test-'+name+'-sec_phasecal',
-                        field='3c*Ph*',spw='0~3',
-                        nterms=2,
-                        mode='mfs',niter=100,
-                        interactive=False,
-                        imager=clean_imager,
-                        psfmode=clean_psfmode,
-                        mask=[96, 96, 104, 104],imsize=200,cell='0.5arcsec')
+                imview_input = 'test-'+name+'-sec_phasecal.image'
+                tclean(vis=name+'-line-vs.ms',
+                    imagename='test-'+name+'-sec_phasecal',
+                    field='3c*Ph*',spw='0~3',
+                    nterms=2,
+                    specmode='mfs',niter=100,
+                    interactive=False,
+                    mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
+                    imsize=200,cell='0.5arcsec',
+                    deconvolver=tclean_deconvolver,
+                    parallel=parallelImaging,
+                    savemodel=tclean_savemodel)
                         
                 if makeplots:
                     for name in basename:
@@ -748,30 +733,18 @@ class regression_alma_m100_test(unittest.TestCase):
                     os.system('rm -rf test-'+name+'-prim_phasecal*')
                     
                     imview_input = ''
-                    if withtclean:
-                        imview_input = 'test-'+name+'-prim_phasecal.image'
-                        tclean(vis=name+'-line-vs.ms',
-                            imagename='test-'+name+'-prim_phasecal',
-                            field='1224*',spw='0~3',
-                            nterms=2,
-                            specmode='mfs',niter=100,
-                            interactive=False,
-                            mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
-                            imsize=200,cell='0.5arcsec',
-                            deconvolver=tclean_deconvolver,
-                            parallel=parallelImaging,
-                            savemodel=tclean_savemodel)
-                    else:
-                        imview_input = 'test-'+name+'-prim_phasecal.image.tt0'
-                        clean(vis=name+'-line-vs.ms',
-                            imagename='test-'+name+'-prim_phasecal',
-                            field='1224*',spw='0~3',
-                            nterms=2,
-                            mode='mfs',niter=100,
-                            interactive=False,
-                            imager=clean_imager,
-                            psfmode=clean_psfmode,
-                            mask=[96, 96, 104, 104],imsize=200,cell='0.5arcsec')            
+                    imview_input = 'test-'+name+'-prim_phasecal.image'
+                    tclean(vis=name+'-line-vs.ms',
+                        imagename='test-'+name+'-prim_phasecal',
+                        field='1224*',spw='0~3',
+                        nterms=2,
+                        specmode='mfs',niter=100,
+                        interactive=False,
+                        mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
+                        imsize=200,cell='0.5arcsec',
+                        deconvolver=tclean_deconvolver,
+                        parallel=parallelImaging,
+                        savemodel=tclean_savemodel)
             
                 if makeplots:
                     for name in basename:
@@ -796,25 +769,15 @@ class regression_alma_m100_test(unittest.TestCase):
                 for name in basename:
                     os.system('rm -rf test-'+name+'-Titan*')
                     
-                    if withtclean:
-                        tclean(vis=name+'-line-vs.ms',
-                        imagename='test-'+name+'-Titan',
-                        field='Titan',spw='0~3',
-                        specmode='mfs',niter=100,
-                        interactive=False,
-                        mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
-                        imsize=200,cell='0.5arcsec',
-                        deconvolver=tclean_deconvolver,
-                        parallel=parallelImaging)
-                    else:
-                        clean(vis=name+'-line-vs.ms',
-                        imagename='test-'+name+'-Titan',
-                        field='Titan',spw='0~3',
-                        mode='mfs',niter=100,
-                        interactive=False,
-                        imager=clean_imager,
-                        psfmode=clean_psfmode,
-                        mask=[96, 96, 104, 104],imsize=200,cell='0.5arcsec')            
+                    tclean(vis=name+'-line-vs.ms',
+                    imagename='test-'+name+'-Titan',
+                    field='Titan',spw='0~3',
+                    specmode='mfs',niter=100,
+                    interactive=False,
+                    mask='box [ [ 96pix , 96pix] , [104pix, 104pix ] ]',
+                    imsize=200,cell='0.5arcsec',
+                    deconvolver=tclean_deconvolver,
+                    parallel=parallelImaging)
             
                 timing(mystep, thesteps)
             
@@ -872,35 +835,20 @@ class regression_alma_m100_test(unittest.TestCase):
             
                 os.system('rm -rf M100cont.*')
                 
-                if withtclean:
-                    tclean(vis = 'M100all_lores.ms',
-                     imagename = 'M100cont',
-                     field='2~47',
-                    spw='0:10~210;256~440,1~3:10~460',
-                     specmode = 'mfs',
-                     niter = 1000,
-                     mask='M100cont-orig.mask',
-                     interactive =False,
-                     imsize = 200,
-                     cell = '0.5arcsec',
-                     phasecenter='J2000 12h22m54.9 +15d49m15',
-                    gridder = 'mosaic',
-                    deconvolver=tclean_deconvolver,
-                     parallel=parallelImaging)
-                else:
-                    clean(vis = 'M100all_lores.ms',
-                     imagename = 'M100cont',
-                     field='2~47',
-                     spw='0:10~210;256~440,1~3:10~460',
-                     mode = 'mfs',
-                     niter = 1000,
-                     mask='M100cont-orig.mask',
-                     interactive =False,
-                     imsize = 200,
-                    cell = '0.5arcsec',
-                    imagermode = 'mosaic',
-                    psfmode=clean_psfmode,
-                    phasecenter='J2000 12h22m54.9 +15d49m15')        
+                tclean(vis = 'M100all_lores.ms',
+                imagename = 'M100cont',
+                field='2~47',
+                spw='0:10~210;256~440,1~3:10~460',
+                specmode = 'mfs',
+                niter = 1000,
+                mask='M100cont-orig.mask',
+                interactive =False,
+                imsize = 200,
+                cell = '0.5arcsec',
+                phasecenter='J2000 12h22m54.9 +15d49m15',
+                gridder = 'mosaic',
+                deconvolver=tclean_deconvolver,
+                parallel=parallelImaging)
             
             # Continuum peak is 0.5 mJy. Too weak for self-cal...
             
@@ -926,39 +874,21 @@ class regression_alma_m100_test(unittest.TestCase):
             
                 os.system('rm -rf test-M100line.*')
                 
-                if withtclean:
-                    tclean(vis='M100all_lores.ms.contsub',
-                     imagename='test-M100line',
-                     field='26',
-                     spw='0:231~248',
-                     specmode='mfs',
-                     niter=500,gain=0.1,threshold='0.0mJy',
-                     interactive=False,
-                     mask='test-M100line-orig.mask',
-                     outframe='',veltype='radio',
-                     imsize=200,cell='0.5arcsec',
-                     phasecenter='',
-                     stokes='I',
-                     weighting='briggs',robust=0.5,cycleniter=100,cyclefactor=1.5,
-                    deconvolver=tclean_deconvolver,
-                     parallel=parallelImaging)
-                else:
-                    clean(vis='M100all_lores.ms.contsub',
-                    imagename='test-M100line',
-                    field='26',
-                    spw='0:231~248',
-                    mode='mfs',
-                    niter=500,gain=0.1,threshold='0.0mJy',
-                    interactive=False,
-                    mask='test-M100line-orig.mask',
-                    outframe='',veltype='radio',
-                    imsize=200,cell='0.5arcsec',
-                    phasecenter='',
-                    stokes='I',
-                    weighting='briggs',robust=0.5,
-                    imagermode='csclean',
-                    psfmode=clean_psfmode,
-                    npercycle=100,cyclefactor=1.5,cyclespeedup=-1)        
+                tclean(vis='M100all_lores.ms.contsub',
+                imagename='test-M100line',
+                field='26',
+                spw='0:231~248',
+                specmode='mfs',
+                niter=500,gain=0.1,threshold='0.0mJy',
+                interactive=False,
+                mask='test-M100line-orig.mask',
+                outframe='',veltype='radio',
+                imsize=200,cell='0.5arcsec',
+                phasecenter='',
+                stokes='I',
+                weighting='briggs',robust=0.5,cycleniter=100,cyclefactor=1.5,
+                deconvolver=tclean_deconvolver,
+                parallel=parallelImaging)
             
                 timing(mystep, thesteps)
             
@@ -970,47 +900,25 @@ class regression_alma_m100_test(unittest.TestCase):
             
                 os.system('rm -rf M100line.*')
                 
-                if withtclean:
-                    tclean(vis='M100all_lores.ms.contsub',imagename='M100line',
-                     field='2~47',
-                     spw='0:220~259',
-                     specmode='cube',
-                     niter=1000,gain=0.1,threshold='0.0mJy',
-                     interactive=False,
-                     mask='M100line-orig.mask',
-                     nchan=40,start=220,
-                     width=1,
-                     outframe='',veltype='radio',
-                     imsize=600,cell='0.5arcsec',
-                     phasecenter='J2000 12h22m54.9 +15d49m10',
-                     restfreq='115.271201800GHz',stokes='I',
-                     weighting='briggs',robust=0.5,
-                     pblimit=0.2,
-                     cyclefactor=1.5,
-                    gridder='mosaic',
-                    deconvolver=tclean_deconvolver,
-                     parallel=parallelImaging)
-                else:
-                    clean(vis='M100all_lores.ms.contsub',imagename='M100line',
-                     field='2~47',
-                     spw='0:220~259',
-                    mode='channel',
-                     niter=1000,gain=0.1,threshold='0.0mJy',
-                     ftmachine='mosaic',mosweight=False,
-                     scaletype='SAULT',
-                     interactive=False,
-                     mask='M100line-orig.mask',
-                     nchan=40,start=220,
-                     width=1,
-                     outframe='',veltype='radio',
-                     imsize=600,cell='0.5arcsec',
-                     phasecenter='J2000 12h22m54.9 +15d49m10',
-                     restfreq='115.271201800GHz',stokes='I',
-                     weighting='briggs',robust=0.5,
-                     pbcor=False,minpb=0.2,
-                    imagermode='mosaic',
-                    psfmode=clean_psfmode,
-                     npercycle=100,cyclefactor=1.5,cyclespeedup=-1)        
+                tclean(vis='M100all_lores.ms.contsub',imagename='M100line',
+                field='2~47',
+                spw='0:220~259',
+                specmode='cube',
+                niter=1000,gain=0.1,threshold='0.0mJy',
+                interactive=False,
+                mask='M100line-orig.mask',
+                nchan=40,start=220,
+                width=1,
+                outframe='',veltype='radio',
+                imsize=600,cell='0.5arcsec',
+                phasecenter='J2000 12h22m54.9 +15d49m10',
+                restfreq='115.271201800GHz',stokes='I',
+                weighting='briggs',robust=0.5,
+                pblimit=0.2,
+                cyclefactor=1.5,
+                gridder='mosaic',
+                deconvolver=tclean_deconvolver,
+                parallel=parallelImaging)
             
             
                 timing(mystep, thesteps)
@@ -1084,24 +992,20 @@ class regression_alma_m100_test(unittest.TestCase):
                 exppeak = [1.18009662628,1.15104115009]
                 exprms = [0.000589906820096, 0.000633491261397]
                 # tclean expectation values set 11 Abril 2013 based on analysis using CASA trunk r36680
-                if (withtclean):
-                    exppeak = [1.18952155113,1.16193449497]
-                    exprms = [0.000674300128594,0.000708947714884]
-                    # expectation values  set 8 Dec 2016 based on CASA Version 5.0.0-80 Compiled on: Wed 2016/12/07 04:31:44 UTC
-                    # ( change due to new cyclethreshold because of more accurate psf sidelobe level calc : CAS-9070 )
-                    exppeak = [1.18951940536,1.16193413734]
-                    # exprms = [0.000674192491959,0.000708995265435]
-                    # Update for 5.1.0, values have shifted slightly and the tolerance has been
-                    # reduced back to 1%. The results differred by approx. 1.08%. CAS-10464.
-                    exprms = [0.000672137, 0.000701346]
+                exppeak = [1.18952155113,1.16193449497]
+                exprms = [0.000674300128594,0.000708947714884]
+                # expectation values  set 8 Dec 2016 based on CASA Version 5.0.0-80 Compiled on: Wed 2016/12/07 04:31:44 UTC
+                # ( change due to new cyclethreshold because of more accurate psf sidelobe level calc : CAS-9070 )
+                exppeak = [1.18951940536,1.16193413734]
+                # exprms = [0.000674192491959,0.000708995265435]
+                # Update for 5.1.0, values have shifted slightly and the tolerance has been
+                # reduced back to 1%. The results differred by approx. 1.08%. CAS-10464.
+                exprms = [0.000672137, 0.000701346]
 
                 for name in basename:
 
                     image_name = ''
-                    if withtclean:
-                            image_name = 'test-'+name+'-prim_phasecal.image'
-                    else:
-                            image_name = 'test-'+name+'-prim_phasecal.image.tt0'
+                    image_name = 'test-'+name+'-prim_phasecal.image'
 
                     calstat=imstat(imagename=image_name, region='', box='30,30,170,80')
                     rms=(calstat['rms'][0])
@@ -1132,18 +1036,17 @@ class regression_alma_m100_test(unittest.TestCase):
                 exppeakm = 0.180228888988 
                 exprmsm = 0.00912253372371
                 # tclean expectation values set 11 Abril 2013 based on analysis using CASA trunk r36680
-                if (withtclean):
-                    # As of r37595 the parallel and sequential versions of tclean produce the same result with a precision better than 1%
-                    # exppeakm_r37595 = 0.189118593931
-                    # exprmsm_r37595 = 0.0094265351072
-                    # expectation values  set 8 Dec 2016 based on CASA Version 5.0.0-80 Compiled on: Wed 2016/12/07 04:31:44 UTC
-                    # ( change due to new cyclethreshold because of more accurate psf sidelobe level calc : CAS-9070 )
-                    # exppeakm = 0.189606815577
-                    # exprmsm = 0.0095296749288
-                    # Updated peak position and rms for CASA prerelease-5.1.0, 20170811. New changes in tclean
-                    # cycles. More changes could happen in the near future. See CAS-10464.
-                    exppeakm = 0.189293
-                    exprmsm = 0.00939898
+                # As of r37595 the parallel and sequential versions of tclean produce the same result with a precision better than 1%
+                # exppeakm_r37595 = 0.189118593931
+                # exprmsm_r37595 = 0.0094265351072
+                # expectation values  set 8 Dec 2016 based on CASA Version 5.0.0-80 Compiled on: Wed 2016/12/07 04:31:44 UTC
+                # ( change due to new cyclethreshold because of more accurate psf sidelobe level calc : CAS-9070 )
+                # exppeakm = 0.189606815577
+                # exprmsm = 0.0095296749288
+                # Updated peak position and rms for CASA prerelease-5.1.0, 20170811. New changes in tclean
+                # cycles. More changes could happen in the near future. See CAS-10464.
+                exppeakm = 0.189293
+                exprmsm = 0.00939898
 
                 calstat=imstat(imagename='test-M100line.image', region='', box='42,115,65,134')
                 resrmsm=(calstat['rms'][0])
