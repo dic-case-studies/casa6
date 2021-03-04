@@ -800,8 +800,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     channelWidthsPerSpw[spw] = spectralWindowSubtablecols().chanWidth().get(spw);
   }
 
-  omp_set_num_threads(processSpwList_.size());
-  #pragma omp parallel for
+  #pragma omp parallel for num_threads(processSpwList_.size()) if(processSpwList_.size() > 1)
   for (unsigned int i = 0; i < processSpwList_.size(); ++i) {
     SpwId const spw = processSpwList_[i];
     #pragma omp critical (logging)
@@ -1091,7 +1090,7 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     std::vector<unsigned int> timeIndexList = iter->second;
     updateSkyStatus(atmTimeIndex);
     atm::SkyStatus ss(*atmSkyStatusPtr_);
-    #pragma omp parallel for firstprivate(ss)
+    #pragma omp parallel for firstprivate(ss) if(timeIndexList.size() > 1)
     for (unsigned int i = 0; i < timeIndexList.size(); ++i) {
       Double const t = timeListForCorrection[timeIndexList[i]];
       Vector<Double> correctionFactor = updateCorrectionFactor(ss, t);
