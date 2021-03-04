@@ -273,6 +273,11 @@ inline void transformData(
   inout.putStorage(p, b1);
 }
 
+bool isCloseDouble(Double const a, Double const b, Double const tolerance=1.0e-15) {
+  Double const relativeDiff = (abs(a) < tolerance) ? abs(b - a) : abs((b - a) / a);
+  return relativeDiff < tolerance;
+}
+
 } // anonymous namespace
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -835,9 +840,9 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
   bool isSkyStatusOutdated = false;
   Double currentTemperatureValue = userTemperatureValue_;
   if (isValueUnset(currentTemperatureValue)) {
-    Double val = atmTemperatureData_[atmTimeIndex];
-    Double val2 = skyStatus.getGroundTemperature().get(atm::Temperature::UnitKelvin);
-    if (val != val2) {
+    Double const val = atmTemperatureData_[atmTimeIndex];
+    Double const val2 = skyStatus.getGroundTemperature().get(atm::Temperature::UnitKelvin);
+    if (!isCloseDouble(val, val2)) {
       // cout << "Temperature is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
@@ -846,9 +851,9 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
 
   Double currentPressureValue = userPressureValue_;
   if (isValueUnset(currentPressureValue)) {
-    Double val = atmPressureData_[atmTimeIndex];
-    Double val2 = skyStatus.getGroundPressure().get(atm::Pressure::UnitMilliBar);
-    if (val != val2) {
+    Double const val = atmPressureData_[atmTimeIndex];
+    Double const val2 = skyStatus.getGroundPressure().get(atm::Pressure::UnitMilliBar);
+    if (!isCloseDouble(val, val2)) {
       // cout << "Pressure is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
@@ -857,9 +862,9 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
 
   Double currentRelHumidityValue = userRelHumidityValue_;
   if (isValueUnset(currentRelHumidityValue)) {
-    Double val = atmRelHumidityData_[atmTimeIndex];
-    Double val2 = skyStatus.getRelativeHumidity().get(atm::Humidity::UnitPercent);
-    if (val != val2) {
+    Double const val = atmRelHumidityData_[atmTimeIndex];
+    Double const val2 = skyStatus.getRelativeHumidity().get(atm::Humidity::UnitPercent);
+    if (!isCloseDouble(val, val2)) {
       // cout << "Humidity is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
@@ -881,11 +886,13 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
   // PYTHON IMPLEMENTATION
   // share time information with CalAtmosphere table
   if (isValueUnset(userPwvValue_)) {
-    Double val = pwvData_[atmTimeIndex];
-    Double val2 = skyStatus.getUserWH2O().get(atm::Length::UnitMilliMeter);
-    if (val != val2) {
+    Double const val = pwvData_[atmTimeIndex];
+    Double const val2 = skyStatus.getUserWH2O().get(atm::Length::UnitMilliMeter);
+    if (!isCloseDouble(val, val2)) {
       // cout << "PWV is different " << val << " vs " << val2 << endl;
-      os << "updaging PWV value for SPW " << currentSpwId_ << LogIO::POST;
+      // os.output() << std::setprecision(16);
+      // os << "PWV val = " << val << " val2 = " << val2 << LogIO::POST;
+      os << "updating PWV value for SPW " << currentSpwId_ << LogIO::POST;
       skyStatus.setUserWH2O(atm::Length(val, atm::Length::UnitMilliMeter));
     }
   }
