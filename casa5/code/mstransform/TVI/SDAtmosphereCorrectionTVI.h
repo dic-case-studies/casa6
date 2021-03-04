@@ -198,7 +198,6 @@ private:
   // ATM
   unsigned int atmType_;
   std::map<SpwId, std::unique_ptr<atm::SkyStatus> > atmSkyStatusPerSpw_;
-  atm::SkyStatus *atmSkyStatusPtr_;
   std::vector<casacore::Vector<casacore::Double> > correctionFactorList_;
   std::vector<casacore::Int> indexForCorrection_;
 

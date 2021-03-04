@@ -307,7 +307,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     transformSubchunk_(false),
     atmType_(2),
     atmSkyStatusPerSpw_(),
-    atmSkyStatusPtr_(nullptr),
     correctionFactorList_(),
     indexForCorrection_()
 {
@@ -836,11 +835,6 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   // os << "updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
 
-  // do nothing if nullptr is given
-  if (!atmSkyStatusPtr_) {
-    return;
-  }
-
   bool isSkyStatusOutdated = false;
   Double currentTemperatureValue = userTemperatureValue_;
   if (isValueUnset(currentTemperatureValue)) {
@@ -1017,7 +1011,6 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
 
   if (allNE(processSpwList_, currentSpwId_)) {
     os << LogIO::DEBUGGING << "SPW " << currentSpwId_ << " is not in the processing SPW list" << LogIO::POST;
-    atmSkyStatusPtr_ = nullptr;
     return;
   }
 
@@ -1058,12 +1051,8 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
      << "timestamps in the current subchunk" << LogIO::POST;
 
   if (timeListForCorrection.size() == 0) {
-    atmSkyStatusPtr_ = nullptr;
     return;
   }
-
-  atmSkyStatusPtr_ = atmSkyStatusPerSpw_[currentSpwId_].get();
-  atm::SkyStatus &skyStatus = *(atmSkyStatusPerSpw_[currentSpwId_].get());
 
   correctionFactorList_.resize(timeListForCorrection.size());
 
@@ -1078,6 +1067,7 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     groupByAtmTimeIndex[currentAtmTimeIndex].push_back(i);
   }
 
+  atm::SkyStatus &skyStatus = *(atmSkyStatusPerSpw_[currentSpwId_].get());
   for (auto iter = groupByAtmTimeIndex.begin(); iter != groupByAtmTimeIndex.end(); ++iter) {
     Int const atmTimeIndex = iter->first;
     std::vector<unsigned int> timeIndexList = iter->second;
