@@ -243,6 +243,7 @@ inline Vector<Double> getCorrectionFactor(
   return factor;
 }
 
+// TODO: add target_clones attribute?
 template<class T>
 inline void transformData(
   std::vector<Vector<Double> > const &correctionFactorList,
@@ -253,6 +254,7 @@ inline void transformData(
   assert(shape[2] == static_cast<Int>(indexForCorrection.size()));
   Bool b1;
   T *p = inout.getStorage(b1);
+  // TODO: optimize condition for multi-threading
   #pragma omp parallel for if((shape[2] > 10 && shape[1] > 500))
   for (ssize_t ir = 0; ir < shape[2]; ++ir) {
     Int const index = indexForCorrection[ir];
