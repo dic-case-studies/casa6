@@ -1024,13 +1024,15 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
 void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
 
-  os << "Updating correction factor for SPW " << currentSpwId_ << LogIO::POST;
-
   if (allNE(processSpwList_, currentSpwId_)) {
-    os << "SPW " << currentSpwId_ << " is not in the processing SPW list" << LogIO::POST;
+    os << LogIO::DEBUGGING << "SPW " << currentSpwId_ << " is not in the processing SPW list" << LogIO::POST;
     atmSkyStatusPtr_ = nullptr;
     return;
   }
+
+  auto const subchunkId = getSubchunkId();
+  os << LogIO::DEBUGGING << "Updating correction factor for SPW " << currentSpwId_
+     << " subchunk " << subchunkId.first << "-" << subchunkId.second << LogIO::POST;
 
   Vector<Double> timeData;
   Vector<uInt> indexVector;
@@ -1042,8 +1044,11 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   stateId(stateIdData);
   std::vector<Double> timeListForCorrection;
   timeListForCorrection.reserve(uniqueIndex.size());
-  os << "Number of subchunk rows is " << timeData.size() << LogIO::POST;
-  os << "There are " << uniqueIndex.size() << " unique timestamps in the current subchunk" << LogIO::POST;
+  os << LogIO::DEBUGGING
+     << "Number of subchunk rows is " << timeData.size() << LogIO::POST;
+  os << LogIO::DEBUGGING
+     << "There are " << uniqueIndex.size()
+     << " unique timestamps in the current subchunk" << LogIO::POST;
   for (uInt i = 0; i < uniqueIndex.size(); ++i) {
     uInt j = uniqueIndex[i];
     Int const sid = stateIdData[j];
@@ -1053,11 +1058,12 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     bool isPrecedingAtmDataExists = (atmTime_[0] <= timeData[j]);
     if (isOnSource && isPrecedingAtmDataExists) {
       os.output() << std::setprecision(16);
-      os << "adding " << timeData[j] << LogIO::POST;
+      os << LogIO::DEBUGGING << "adding " << timeData[j] << LogIO::POST;
       timeListForCorrection.push_back(timeData[j]);
     }
   }
-  os << "There are " << timeListForCorrection.size() << " ON_SOURCE "
+  os << LogIO::DEBUGGING
+     << "There are " << timeListForCorrection.size() << " ON_SOURCE "
      << "timestamps in the current subchunk" << LogIO::POST;
 
   if (timeListForCorrection.size() == 0) {
@@ -1072,16 +1078,12 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   std::map<Int, std::vector<unsigned int> > groupByAtmTimeIndex;
   for (unsigned int i = 0; i < timeListForCorrection.size(); ++i) {
     Double const currentTime = timeListForCorrection[i];
-    os.output() << std::setprecision(16);
-    os << "trying time " << currentTime << LogIO::POST;
     std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime);
     Int const currentAtmTimeIndex = pair.first;
     if (currentAtmTimeIndex < 0 || atmTime_.nelements() <= static_cast<uInt>(currentAtmTimeIndex)) {
       os << "Internal Error: wrong ON_SOURCE time." << LogIO::EXCEPTION;
     }
     groupByAtmTimeIndex[currentAtmTimeIndex].push_back(i);
-    os.output() << std::setprecision(16);
-    os << "time " << currentTime << " atmTimeIndex " << currentAtmTimeIndex << LogIO::POST;
   }
 
   for (auto iter = groupByAtmTimeIndex.begin(); iter != groupByAtmTimeIndex.end(); ++iter) {
