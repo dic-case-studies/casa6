@@ -104,12 +104,23 @@ class regression_components_skymodel_test(unittest.TestCase):
         #             'rms': 1.9e-04,
         #             'sigma': 1.4e-04 }
         # r38847
-        refstats = { 'flux': 0.036714,
-                    'max': 0.00061958,
-                    'min': -0.0001894,
-                    'rms': 0.0001925,
-                    'sigma': 0.00013576 }
-
+        # refstats = { 'flux': 0.036714,
+        #            'max': 0.00061958,
+        #            'min': -0.0001894,
+        #            'rms': 0.0001925,
+        #            'sigma': 0.00013576 }
+        # CAS-13086 : 6.2
+        refstats = { 'flux': 0.037241,
+                     'max': 0.00063924,
+                     'min': -0.00018817,
+                     'rms': 0.0001964,
+                     'sigma': 0.00013989 }
+        # CAS-13086 : 5.8
+        #refstats = { 'flux': 0.037245,
+        #             'max': 0.00063979,
+        #             'min': -0.00019047,
+        #             'rms': 0.00019654,
+        #             'sigma': 0.00014007 }
 
         reftol   = {'flux':  0.01,
                     'max':   0.02,
