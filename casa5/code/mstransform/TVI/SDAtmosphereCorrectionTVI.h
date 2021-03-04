@@ -113,7 +113,7 @@ public:
 
   // Destructor
 
-  virtual ~SDAtmosphereCorrectionTVI();
+  virtual ~SDAtmosphereCorrectionTVI() = default;
 
   // Report the the ViImplementation type
   //  (should be specialized in child classes)
@@ -129,23 +129,21 @@ public:
   virtual void nextChunk() override;
 
   // Return the visibilities as found in the casacore::MS, casacore::Cube (npol,nchan,nrow).
-
-  virtual void visibilityCorrected(
-  casacore::Cube<casacore::Complex> & vis) const;
+  virtual void visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const;
   virtual void visibilityModel(casacore::Cube<casacore::Complex> & vis) const;
-  virtual void visibilityObserved(
-  casacore::Cube<casacore::Complex> & vis) const;
+  virtual void visibilityObserved(casacore::Cube<casacore::Complex> & vis) const;
 
   // Return FLOAT_DATA as a casacore::Cube (npol, nchan, nrow) if found in the MS.
-
   virtual void floatData(casacore::Cube<casacore::Float> & fcube) const;
 
 protected:
 
   // Constructor
-
   SDAtmosphereCorrectionTVI(ViImplementation2 * inputVi,
     casacore::Record const &configuration);
+  SDAtmosphereCorrectionTVI() = delete;
+  SDAtmosphereCorrectionTVI(SDAtmosphereCorrectionTVI const &other) = delete;
+  SDAtmosphereCorrectionTVI &operator=(SDAtmosphereCorrectionTVI const &other) = delete;
 
 private:
   // initial configuratin of the correction
@@ -206,7 +204,7 @@ private:
 
 
 // <summary>
-// A factory for generating ViImplementation2 for polarization averaging.
+// A factory for generating ViImplementation2 for offline ATM correction.
 // </summary>
 //
 // <use visibility=export>
@@ -242,7 +240,7 @@ public:
     casacore::Double timeInterval, casacore::Bool isWritable);
 
   // Destructor
-  ~SDAtmosphereCorrectionVi2Factory();
+  virtual ~SDAtmosphereCorrectionVi2Factory() = default;
 
   ViImplementation2 * createVi() const;
 
@@ -255,9 +253,7 @@ class SDAtmosphereCorrectionTVILayerFactory final : public ViiLayerFactory {
 
 public:
   SDAtmosphereCorrectionTVILayerFactory(casacore::Record const &configuration);
-  virtual ~SDAtmosphereCorrectionTVILayerFactory() {
-  }
-  ;
+  virtual ~SDAtmosphereCorrectionTVILayerFactory() = default;
 
 protected:
 

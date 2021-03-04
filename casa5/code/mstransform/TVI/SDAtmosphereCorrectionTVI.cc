@@ -316,9 +316,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
   setVisBuffer(createAttachedVisBuffer(VbRekeyable));
 }
 
-SDAtmosphereCorrectionTVI::~SDAtmosphereCorrectionTVI() {
-}
-
 void SDAtmosphereCorrectionTVI::origin() {
   TransformingVi2::origin();
 
@@ -1265,9 +1262,6 @@ SDAtmosphereCorrectionVi2Factory::SDAtmosphereCorrectionVi2Factory(Record const 
     configuration_p(configuration) {
   inputVII_p = new VisibilityIteratorImpl2(Block<MeasurementSet const *>(1, ms),
       sortColumns, timeInterval, isWritable);
-}
-
-SDAtmosphereCorrectionVi2Factory::~SDAtmosphereCorrectionVi2Factory() {
 }
 
 ViImplementation2 * SDAtmosphereCorrectionVi2Factory::createVi() const {
