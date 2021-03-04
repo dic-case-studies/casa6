@@ -21,7 +21,9 @@
 //# $Id: $
 #include <mstransform/TVI/SDAtmosphereCorrectionTVI.h>
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -357,10 +359,13 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   // initialize Atmosphere Transmission Model
   initializeAtmosphereModel(configuration_);
 
+#ifdef _OPENMP
+  // TODO: optimize number of threads
   // setup number of threads for OpenMP
   constexpr int kNumThreads = 8;
   int const numProcessors = omp_get_num_procs();
   omp_set_num_threads(min(kNumThreads, numProcessors));
+#endif
 
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   auto const subchunkId = getSubchunkId();
