@@ -2370,12 +2370,9 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                 rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
         channelSelectors_p.clear();
         channelSelectorsNrows_p.clear();
+
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
             -1, polarizationId(), msId()));
-
-        Vector<Int> spws;
-        spectralWindows(spws);
-        auto polId = getPolarizationId(spws[0], msId());
 
         for (Int i = rowBounds_p.subchunkBegin_p + 1;
                 i <= rowBounds_p.subchunkEnd_p;
@@ -2391,7 +2388,8 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             // with the previous row's channel selector.
 
             std::shared_ptr<ChannelSelector> newSelector =
-                    determineChannelSelection(rowTime, spws[0], polId, msId());
+                    determineChannelSelection(rowTime, msIter_p->spectralWindowId(),
+                                              msIter_p->polarizationId(), msId());
 
             if (newSelector.get() != channelSelectors_p[0].get()) {
 
