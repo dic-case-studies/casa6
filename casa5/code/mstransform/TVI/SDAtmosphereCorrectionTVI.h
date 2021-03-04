@@ -117,7 +117,7 @@ public:
 
   // Report the the ViImplementation type
   //  (should be specialized in child classes)
-  virtual casacore::String ViiType() const {
+  virtual casacore::String ViiType() const override {
     return casacore::String("SDAtmosphereCorrection( ") + getVii()->ViiType() + " )";
   }
 
@@ -129,12 +129,12 @@ public:
   virtual void nextChunk() override;
 
   // Return the visibilities as found in the casacore::MS, casacore::Cube (npol,nchan,nrow).
-  virtual void visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const;
-  virtual void visibilityModel(casacore::Cube<casacore::Complex> & vis) const;
-  virtual void visibilityObserved(casacore::Cube<casacore::Complex> & vis) const;
+  virtual void visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityModel(casacore::Cube<casacore::Complex> & vis) const override;
+  virtual void visibilityObserved(casacore::Cube<casacore::Complex> & vis) const override;
 
   // Return FLOAT_DATA as a casacore::Cube (npol, nchan, nrow) if found in the MS.
-  virtual void floatData(casacore::Cube<casacore::Float> & fcube) const;
+  virtual void floatData(casacore::Cube<casacore::Float> & fcube) const override;
 
 protected:
 
