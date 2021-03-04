@@ -19,6 +19,7 @@
 #include <gsl/gsl_blas.h>
 
 #include <Eigen/Core>
+#include <chrono>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -31,7 +32,10 @@ private:
   casacore::Matrix<casacore::Float> itsMatDirty;
   casacore::Matrix<casacore::Complex> itsPsfFT;
   std::vector<casacore::IPosition> center;
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual;
+  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual;
+  casacore::Matrix<casacore::Float> newResidual;
+  casacore::Matrix<casacore::Float> AspConvPsf; // genie
+  casacore::Matrix<casacore::Float> dAspConvPsf; // genie
 
 public:
   ParamObj(const casacore::Matrix<casacore::Float>& dirty,
@@ -39,12 +43,16 @@ public:
     const std::vector<casacore::IPosition>& positionOptimum) :
     itsMatDirty(dirty),
     itsPsfFT(psf),
-    center(positionOptimum)
+    center(positionOptimum)/*,
+    newResidual(dirty)*/
   {
     nX = itsMatDirty.shape()(0);
     nY = itsMatDirty.shape()(1);
     AspLen = center.size();
-    newResidual = Eigen::MatrixXf::Zero(nX, nY);
+    //newResidual = Eigen::MatrixXf::Zero(nX, nY);
+    newResidual.resize(nX, nY);
+    AspConvPsf.resize(nX, nY); //genie
+    dAspConvPsf.resize(nX, nY); //genie
   }
 
   ~ParamObj() = default;
@@ -55,9 +63,12 @@ public:
   unsigned int getterAspLen() { return AspLen; }
   int getterNX() { return nX; }
   int getterNY() { return nY; }
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> getterRes() { return newResidual; }
-  void setterRes(const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>& res) { newResidual = res; }
-
+  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> getterRes() { return newResidual; }
+  //void setterRes(const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>& res) { newResidual = res; }
+  casacore::Matrix<casacore::Float>  getterRes() { return newResidual; }
+  void setterRes(const casacore::Matrix<casacore::Float>& res) { newResidual = res; }
+  casacore::Matrix<casacore::Float>  getterAspConvPsf() { return AspConvPsf; } //genie
+  casacore::Matrix<casacore::Float>  getterDAspConvPsf() { return dAspConvPsf; } //genie
 };
 
 } // end namespace casa
@@ -70,17 +81,22 @@ double my_f (const gsl_vector *x, void *params)
 {
     // retrieve params for GSL bfgs optimization
     casa::ParamObj *MyP = (casa::ParamObj *) params; //re-cast back to ParamObj to retrieve images
-    casacore::Matrix<casacore::Float> itsMatDirty(MyP->getterDirty());
+
+	casacore::Matrix<casacore::Float> itsMatDirty(MyP->getterDirty());
     casacore::Matrix<casacore::Complex> itsPsfFT(MyP->getterPsfFT());
     std::vector<casacore::IPosition> center = MyP->getterCenter();
     const unsigned int AspLen = MyP->getterAspLen();
     const int nX = MyP->getterNX();
     const int nY = MyP->getterNY();
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
-
+    //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
+    casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
 	double fx = 0.0;
 
-	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> AmpAspConvPsfSum = Eigen::MatrixXf::Zero(nX, nY);
+	//Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> AmpAspConvPsfSum = Eigen::MatrixXf::Zero(nX, nY);
+
+
+	casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf()); // genie
+    double amp = 1;
 
 	const int refi = nX/2;
 	const int refj = nY/2;
@@ -93,16 +109,17 @@ double my_f (const gsl_vector *x, void *params)
 	// First, get the amp * AspenConvPsf for each Aspen to update the residual
 	for (unsigned int k = 0; k < AspLen; k ++)
 	{
-      double amp = gsl_vector_get(x, 2*k);
+      amp = gsl_vector_get(x, 2*k);
       double scale = gsl_vector_get(x, 2*k+1);
+      //std::cout << "f: amp " << amp << " scale " << scale << std::endl;
 
 	  if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
 	    //std::cout << "nan? " << amp << " neg scale? " << scale << std::endl;
 	    // If scale is small (<0.4), make it 0 scale to utilize Hogbom and save time
-	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale; 
+	    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
 	    //std::cout << "reset neg scale to " << scale << std::endl;
-	    
+
 	    if (scale <= 0)
 	      return fx;
 	  }
@@ -114,7 +131,8 @@ double my_f (const gsl_vector *x, void *params)
 	  casacore::Matrix<casacore::Float> Asp(nX, nY);
 	  Asp = 0.0;
 
-	  const double sigma5 = 5 * scale / 2;
+	  //const double sigma5 = 5 * scale / 2;
+	  const double sigma5 = 3 * scale;
 	  const int minI = std::max(0, (int)(center[k][0] - sigma5));
 	  const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
 	  const int minJ = std::max(0, (int)(center[k][1] - sigma5));
@@ -128,6 +146,7 @@ double my_f (const gsl_vector *x, void *params)
 	    minY = minJ;
 	  if (maxJ > maxY)
 	    maxY = maxJ;
+	  //std::cout << "minI " << minI << " minJ " << minJ << " minX " << minX << " minY " << minY << std::endl;
 
 	  for (int j = minJ; j <= maxJ; j++)
 	  {
@@ -139,7 +158,6 @@ double my_f (const gsl_vector *x, void *params)
 	      Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
 	    }
 	  }
-	  //std::cout << " amp " << amp << " scale " << scale << std::endl;
 
 	  casacore::Matrix<casacore::Complex> AspFT;
 	  casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
@@ -147,32 +165,45 @@ double my_f (const gsl_vector *x, void *params)
 
 	  casacore::Matrix<casacore::Complex> cWork;
 	  cWork = AspFT * itsPsfFT;
-	  casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+	  ////casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+
+	  /*
+      start = std::chrono::high_resolution_clock::now();
+	  casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), AspConvPsfPtr, casacore::TAKE_OVER);
+	  stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start) ;
+      std::cout << "BFGS AspConvPsf takeover runtime " << duration.count() << " us" << std::endl;*/
+
 	  fft.fft0(AspConvPsf, cWork, false);
 	  fft.flip(AspConvPsf, false, false); //need this
 
-	  casacore::Bool ddelc;
+	  /*casacore::Bool ddelc;
 	  const casacore::Float *dptrc = AspConvPsf.getStorage(ddelc);
 	  float *ddptrc = const_cast<float*>(dptrc);
 	  Eigen::MatrixXf MAspConvPsf = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>(ddptrc, nX, nY);
 
 	  AmpAspConvPsfSum = AmpAspConvPsfSum + amp * MAspConvPsf; //optimumstrength*PsfConvAspen
-
-	  AspConvPsf.freeStorage(dptrc, ddelc);
+	  AspConvPsf.freeStorage(dptrc, ddelc);*/
+	  // correct way is to do it here, but since we only have one aspen, it doesn't matter.
+	  /*for (int j = minJ; j < maxJ; ++j)
+	  {
+		for(int i = minI; i < maxI; ++i)
+		{
+		  AmpAspConvPsfSum(i, j) += amp * AspConvPsf(i, j);
+		}
+	  }*/
 	} // end get amp * AspenConvPsf
 
-	// Update the residual using the current residual image and the latest Aspen. 
+	// Update the residual using the current residual image and the latest Aspen.
 	// Sanjay used, Res = OrigDirty - active-set aspen * Psf, in 2004, instead.
 	// Both works but the current approach is simpler and performs well too.
-	casacore::Bool ddel;
+	/*casacore::Bool ddel;
 	const casacore::Float *dptr = itsMatDirty.getStorage(ddel);
 	float *ddptr = const_cast<float*>(dptr);
 	Eigen::MatrixXf Mdirty = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>(ddptr, nX, nY);
 	newResidual = Mdirty - AmpAspConvPsfSum;
 	itsMatDirty.freeStorage(dptr, ddel);
 
-    // update newResidual back to the ParamObj
-    MyP->setterRes(newResidual);
 
 	// generate ChiSq
 	// returns the objective function value
@@ -182,8 +213,23 @@ double my_f (const gsl_vector *x, void *params)
 	  {
 	    fx = fx + double(pow(newResidual(i, j), 2));
 	  }
+	}*/
+
+    //genie
+    for (int j = minY; j < maxY; ++j)
+	{
+	  for(int i = minX; i < maxX; ++i)
+	  {
+	  	newResidual(i, j) = itsMatDirty(i, j) - amp * AspConvPsf(i, j);
+	    fx = fx + double(pow(newResidual(i, j), 2));
+	  }
 	}
+    //genie
+
 	//std::cout << "after fx " << fx << std::endl;
+
+    // update newResidual back to the ParamObj
+    MyP->setterRes(newResidual);
 
 	return fx;
 }
@@ -198,7 +244,10 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
     const unsigned int AspLen = MyP->getterAspLen();
     const int nX = MyP->getterNX();
     const int nY = MyP->getterNY();
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
+    //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
+    casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
+    casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf()); // genie
+    casacore::Matrix<casacore::Float> dAspConvPsf(MyP->getterDAspConvPsf()); // genie
 
     // gradient. 0: amplitude; 1: scale
 	// returns the gradient evaluated on x
@@ -210,6 +259,7 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	  dAsp = 0.0;
 	  double amp = gsl_vector_get(x, 2*k);
       double scale = gsl_vector_get(x, 2*k+1);
+      //std::cout << "grad: amp " << amp << " scale " << scale << std::endl;
 
       if (isnan(amp) || scale < 0.4) // GSL scale < 0
 	  {
@@ -218,7 +268,8 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	    //std::cout << "reset neg scale to " << scale << std::endl;
 	  }
 
-	  const double sigma5 = 5 * scale / 2;
+	  //const double sigma5 = 5 * scale / 2;
+	  const double sigma5 = 3 * scale;
 	  const int minI = std::max(0, (int)(center[k][0] - sigma5));
 	  const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
 	  const int minJ = std::max(0, (int)(center[k][1] - sigma5));
@@ -242,42 +293,58 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 
 	  casacore::Matrix<casacore::Complex> cWork;
 	  cWork = AspFT * itsPsfFT;
-	  casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+	  //casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
 	  fft.fft0(AspConvPsf, cWork, false);
 	  fft.flip(AspConvPsf, false, false); //need this
 
 	  casacore::Matrix<casacore::Complex> dAspFT;
 	  fft.fft0(dAspFT, dAsp);
 	  casacore::Matrix<casacore::Complex> dcWork;
+
+	  /*start = std::chrono::high_resolution_clock::now();
+      double **array1;
+      array1 = static_cast<double **>(calloc(nX * nY, sizeof(double *)));
+      stop = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+      std::cout << "array " << array1[1] << " BFGS calloc runtime " << duration.count() << " ms" << std::endl;*/
+
 	  dcWork = dAspFT * itsPsfFT;
-	  casacore::Matrix<casacore::Float> dAspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
+	  //casacore::Matrix<casacore::Float> dAspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
 	  fft.fft0(dAspConvPsf, dcWork, false);
 	  fft.flip(dAspConvPsf, false, false); //need this
 
-	  casacore::Matrix<casacore::Float> GradAmp(itsMatDirty.shape(), (casacore::Float)0.0);
-	  casacore::Matrix<casacore::Float> GradScale(itsMatDirty.shape(), (casacore::Float)0.0);
+	  //casacore::Matrix<casacore::Float> GradAmp(itsMatDirty.shape(), (casacore::Float)0.0);
+	  //casacore::Matrix<casacore::Float> GradScale(itsMatDirty.shape(), (casacore::Float)0.0);
 
 	  // reset grad to 0. This is important to get the correct optimization.
 	  double dA = 0.0;
       double dS = 0.0;
 	  //std::cout << "before grad " << 2*k << ": " << gsl_vector_get(grad, 2*k) << std::endl;
 	  //std::cout << "before grad " << 2*k+1 << ": " << gsl_vector_get(grad, 2*k+1) << std::endl;
+
 	  for (int j = minJ; j <= maxJ; j++)
 	  {
 	    for (int i = minI; i <= maxI; i++)
 	    {
+          /*
 	      // generate derivatives of amplitude
 	      GradAmp(i,j) = (-2) * newResidual(i,j) * AspConvPsf(i,j);
 	      // generate derivative of scale
 	      GradScale(i,j) = (-2) * amp * newResidual(i,j) * dAspConvPsf(i,j);
 
 	      dA += double(GradAmp(i,j));
-	      dS += double(GradScale(i,j));
+	      dS += double(GradScale(i,j));*/
+
+          // derivatives of amplitude
+	      dA += double((-2) * newResidual(i,j) * AspConvPsf(i,j));
+	      // derivative of scale
+	      dS += double((-2) * amp * newResidual(i,j) * dAspConvPsf(i,j));
 	    }
 	  }
 
-	  gsl_vector_set(grad, 2*k, dA); 
-	  gsl_vector_set(grad, 2*k+1, dS); 
+	  gsl_vector_set(grad, 2*k, dA);
+	  gsl_vector_set(grad, 2*k+1, dS);
+
 	  // the following scale up doesn't seem necessary since after opt scale is back to initial guess
 	  //gsl_vector_set(grad, 2*k, dA * 1e2); //G55 test scale up
 	  //gsl_vector_set(grad, 2*k+1, dS * 1e6); //G55 test scale up
@@ -289,8 +356,17 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 
 void my_fdf (const gsl_vector *v, void *params, double *f, gsl_vector *df)
 {
+  auto start = std::chrono::high_resolution_clock::now();
   *f = my_f(v, params); // has to be double in GSL
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "BFGS my_f runtime " << duration.count() << " us" << std::endl;
+
+  start = std::chrono::high_resolution_clock::now();
   my_df(v, params, df);
+  stop = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "BFGS my_df runtime " << duration.count() << " us" << std::endl;
 }
 
 void debug_print(const gsl_multimin_fdfminimizer *s, const int k)
@@ -319,7 +395,7 @@ int findComponent(int NIter, gsl_multimin_fdfminimizer *s)
   {
 	// Make the move!
 	status = gsl_multimin_fdfminimizer_iterate(s);
-	
+
 	/*if (status == GSL_ENOPROG) // 27: not making progress towards solution
 		gsl_multimin_fdfminimizer_restart(s);*/
 	if (status)
