@@ -155,20 +155,18 @@ private:
   void initializeAtmosphereModel(casacore::Record const &configuration);
 
   // sync with the current chunk/subchunk
-  void updateSkyStatus(casacore::Int atmTimeIndex);
-  casacore::Vector<casacore::Double> updateCorrectionFactor(atm::SkyStatus &p, casacore::Double const currentTime);
+  void updateSkyStatus(atm::SkyStatus &skyStatus, casacore::Int atmTimeIndex);
+  casacore::Vector<casacore::Double> updateCorrectionFactor(atm::SkyStatus &skyStatus, casacore::Double const currentTime);
   void updateCorrectionFactorInAdvance();
 
   // read necessary data from MS
   void readMain(casacore::String const &msName);
-  void readSpectralWindow(casacore::String const &msName);
   void readPointing(casacore::String const &msName, casacore::Int const referenceAntenna);
   void readAsdmAsIsTables(casacore::String const &msName);
 
   // user inputs
   casacore::Vector<SpwId> processSpwList_;
   casacore::Vector<casacore::Double> gainFactorList_;
-  casacore::Double gainFactor_;
   casacore::Double userPressureValue_;
   casacore::Double userTemperatureValue_;
   casacore::Double userRelHumidityValue_;
@@ -177,9 +175,6 @@ private:
 
   // measurements recorded in MS
   casacore::Vector<casacore::Double> offSourceTime_;
-
-  casacore::Vector<casacore::Double> elevationTime_;
-  casacore::Vector<casacore::Double> elevationData_;
   casacore::Interpolate1D<casacore::Double, casacore::Double> elevationInterpolator_;
 
   casacore::Vector<casacore::Double> pwvTime_;
@@ -198,6 +193,7 @@ private:
 
   // current iterator status
   SpwId currentSpwId_;
+  bool transformSubchunk_;
 
   // ATM
   unsigned int atmType_;

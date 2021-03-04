@@ -61,6 +61,7 @@ using namespace casacore;
 namespace {
 
 constexpr float kNoCache = -1.0f;
+constexpr int kInvalidIndex = -1;
 constexpr double kValueUnset = std::numeric_limits<double>::quiet_NaN();
 inline bool isValueUnset(double const v) {return std::isnan(v);}
 
@@ -138,8 +139,8 @@ inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double c
     diff[i] = data[i] - data[0];
   }
   Int index = binarySearch(found, data, target, data.nelements());
-  Int prev = -1;
-  Int next = -1;
+  Int prev = kInvalidIndex;
+  Int next = kInvalidIndex;
   if (found) {
     prev = index;
     next = index;
@@ -285,15 +286,12 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     TransformingVi2(inputVII),
     processSpwList_(),
     gainFactorList_(),
-    gainFactor_(1.0),
     userPressureValue_(kValueUnset),
     userTemperatureValue_(kValueUnset),
     userRelHumidityValue_(kValueUnset),
     userPwvValue_(kValueUnset),
     configuration_(configuration),
     offSourceTime_(),
-    elevationTime_(),
-    elevationData_(),
     elevationInterpolator_(),
     pwvTime_(),
     pwvData_(),
@@ -305,10 +303,13 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     doSmooth_(),
     nchanBBPerSpw_(),
     nchanPerSpw_(),
-    currentSpwId_(-1),
+    currentSpwId_(kInvalidIndex),
+    transformSubchunk_(false),
     atmType_(2),
     atmSkyStatusPerSpw_(),
-    atmSkyStatusPtr_(nullptr)
+    atmSkyStatusPtr_(nullptr),
+    correctionFactorList_(),
+    indexForCorrection_()
 {
 
   // Initialize attached VisBuffer
@@ -369,11 +370,7 @@ void SDAtmosphereCorrectionTVI::nextChunk() {
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityCorrected)) {
     getVii()->visibilityCorrected(vis);
-    bool doTransform = atmSkyStatusPtr_ != nullptr &&
-      anyEQ(processSpwList_, currentSpwId_) &&
-      std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
-                  [](Int x) {return x != -1;});
-    if (doTransform) {
+    if (transformSubchunk_) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
     }
   } else {
@@ -384,11 +381,7 @@ void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::visibilityModel(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityModel)) {
     getVii()->visibilityModel(vis);
-    bool doTransform = atmSkyStatusPtr_ != nullptr &&
-      anyEQ(processSpwList_, currentSpwId_) &&
-      std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
-                  [](Int x) {return x != -1;});
-    if (doTransform) {
+    if (transformSubchunk_) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
     }
   } else {
@@ -399,11 +392,7 @@ void SDAtmosphereCorrectionTVI::visibilityModel(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::visibilityObserved(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityObserved)) {
     getVii()->visibilityObserved(vis);
-    bool doTransform = atmSkyStatusPtr_ != nullptr &&
-      anyEQ(processSpwList_, currentSpwId_) &&
-      std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
-                  [](Int x) {return x != -1;});
-    if (doTransform) {
+    if (transformSubchunk_) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
     }
   } else {
@@ -414,11 +403,7 @@ void SDAtmosphereCorrectionTVI::visibilityObserved(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::floatData(casacore::Cube<casacore::Float> & fcube) const {
   if (getVii()->existsColumn(VisBufferComponent2::FloatData)) {
     getVii()->floatData(fcube);
-    bool doTransform = atmSkyStatusPtr_ != nullptr &&
-      anyEQ(processSpwList_, currentSpwId_) &&
-      std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
-                  [](Int x) {return x != -1;});
-    if (doTransform) {
+    if (transformSubchunk_) {
       transformData(correctionFactorList_, indexForCorrection_, fcube);
     }
   } else {
@@ -523,6 +508,12 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
       }
     }
   }
+
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    nchanPerSpw_[spw] = nchanColumn(spw);
+  }
+
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
     auto j = spwBBMap.find(spw);
@@ -561,9 +552,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
 
   // read MAIN table (OFF_SOURCE time)
   readMain(rawMs);
-
-  // read SPECTRAL_WINDOW table
-  readSpectralWindow(rawMs);
 
   // read POINTING table
   readPointing(rawMs, referenceAntenna);
@@ -753,7 +741,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     os << "NONE" << LogIO::POST;
   }
 
-  os << "creating ATMProfile start " << LogIO::POST;
+  os << LogIO::DEBUGGING << "creating ATMProfile start " << LogIO::POST;
   atm::AtmProfile atmProfile(
     altitude,
     defaultPressure,
@@ -768,13 +756,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     layerBoundaries,
     layerTemperatures
   );
-  os << "creating ATMProfile end " << LogIO::POST;
+  os << LogIO::DEBUGGING << "creating ATMProfile end " << LogIO::POST;
 
 
   // disable threshold so that any subtle changes in
   // temperature/pressure/humidity/pwv cause to udpate
   // the model
-  os << "disabling thresholds start " << LogIO::POST;
+  os << LogIO::DEBUGGING << "disabling thresholds start " << LogIO::POST;
   atmProfile.setBasicAtmosphericParameterThresholds(
     atm::Length(0.0, atm::Length::UnitMeter),
     atm::Pressure(0.0, atm::Pressure::UnitMilliBar),
@@ -783,7 +771,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     atm::Humidity(0.0, atm::Humidity::UnitPercent),
     atm::Length(0.0, atm::Length::UnitMeter)
   );
-  os << "disabling thresholds end " << LogIO::POST;
+  os << LogIO::DEBUGGING << "disabling thresholds end " << LogIO::POST;
 
   std::map<SpwId, Vector<Double> > channelFreqsPerSpw;
   std::map<SpwId, Vector<Double> > channelWidthsPerSpw;
@@ -844,7 +832,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
 
 }
 
-void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
+void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int atmTimeIndex) {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   // os << "updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
 
@@ -857,7 +845,7 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
   Double currentTemperatureValue = userTemperatureValue_;
   if (isValueUnset(currentTemperatureValue)) {
     Double val = atmTemperatureData_[atmTimeIndex];
-    Double val2 = atmSkyStatusPtr_->getGroundTemperature().get(atm::Temperature::UnitKelvin);
+    Double val2 = skyStatus.getGroundTemperature().get(atm::Temperature::UnitKelvin);
     if (val != val2) {
       // cout << "Temperature is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
@@ -868,7 +856,7 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
   Double currentPressureValue = userPressureValue_;
   if (isValueUnset(currentPressureValue)) {
     Double val = atmPressureData_[atmTimeIndex];
-    Double val2 = atmSkyStatusPtr_->getGroundPressure().get(atm::Pressure::UnitMilliBar);
+    Double val2 = skyStatus.getGroundPressure().get(atm::Pressure::UnitMilliBar);
     if (val != val2) {
       // cout << "Pressure is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
@@ -879,7 +867,7 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
   Double currentRelHumidityValue = userRelHumidityValue_;
   if (isValueUnset(currentRelHumidityValue)) {
     Double val = atmRelHumidityData_[atmTimeIndex];
-    Double val2 = atmSkyStatusPtr_->getRelativeHumidity().get(atm::Humidity::UnitPercent);
+    Double val2 = skyStatus.getRelativeHumidity().get(atm::Humidity::UnitPercent);
     if (val != val2) {
       // cout << "Humidity is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
@@ -889,13 +877,13 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
 
   if (isSkyStatusOutdated) {
     os << "updating SkyStatus for SPW " << currentSpwId_ << LogIO::POST;
-    atmSkyStatusPtr_->setBasicAtmosphericParameters(
-      atmSkyStatusPtr_->getAltitude(),
+    skyStatus.setBasicAtmosphericParameters(
+      skyStatus.getAltitude(),
       atm::Pressure(currentPressureValue, atm::Pressure::UnitMilliBar),
       atm::Temperature(currentTemperatureValue, atm::Temperature::UnitKelvin),
-      atmSkyStatusPtr_->getTropoLapseRate(),
+      skyStatus.getTropoLapseRate(),
       atm::Humidity(currentRelHumidityValue, atm::Humidity::UnitPercent),
-      atmSkyStatusPtr_->getWvScaleHeight()
+      skyStatus.getWvScaleHeight()
     );
   }
 
@@ -903,11 +891,11 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
   // share time information with CalAtmosphere table
   if (isValueUnset(userPwvValue_)) {
     Double val = pwvData_[atmTimeIndex];
-    Double val2 = atmSkyStatusPtr_->getUserWH2O().get(atm::Length::UnitMilliMeter);
+    Double val2 = skyStatus.getUserWH2O().get(atm::Length::UnitMilliMeter);
     if (val != val2) {
       // cout << "PWV is different " << val << " vs " << val2 << endl;
       os << "updaging PWV value for SPW " << currentSpwId_ << LogIO::POST;
-      atmSkyStatusPtr_->setUserWH2O(atm::Length(val, atm::Length::UnitMilliMeter));
+      skyStatus.setUserWH2O(atm::Length(val, atm::Length::UnitMilliMeter));
     }
   }
 
@@ -1024,6 +1012,9 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
 void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
 
+  // no transform by default
+  transformSubchunk_ = false;
+
   if (allNE(processSpwList_, currentSpwId_)) {
     os << LogIO::DEBUGGING << "SPW " << currentSpwId_ << " is not in the processing SPW list" << LogIO::POST;
     atmSkyStatusPtr_ = nullptr;
@@ -1072,6 +1063,7 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   }
 
   atmSkyStatusPtr_ = atmSkyStatusPerSpw_[currentSpwId_].get();
+  atm::SkyStatus &skyStatus = *(atmSkyStatusPerSpw_[currentSpwId_].get());
 
   correctionFactorList_.resize(timeListForCorrection.size());
 
@@ -1089,8 +1081,8 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   for (auto iter = groupByAtmTimeIndex.begin(); iter != groupByAtmTimeIndex.end(); ++iter) {
     Int const atmTimeIndex = iter->first;
     std::vector<unsigned int> timeIndexList = iter->second;
-    updateSkyStatus(atmTimeIndex);
-    atm::SkyStatus ss(*atmSkyStatusPtr_);
+    updateSkyStatus(skyStatus, atmTimeIndex);
+    atm::SkyStatus ss(skyStatus);
     #pragma omp parallel for firstprivate(ss) if(timeIndexList.size() > 1)
     for (unsigned int i = 0; i < timeIndexList.size(); ++i) {
       Double const t = timeListForCorrection[timeIndexList[i]];
@@ -1111,11 +1103,17 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     Double const t = timeData[i];
     auto const pos = std::find(timeListForCorrection.begin(), timeListForCorrection.end(), t);
     if (pos == timeListForCorrection.end()) {
-      indexForCorrection_[i] = -1;
+      indexForCorrection_[i] = kInvalidIndex;
     } else {
       indexForCorrection_[i] = std::distance(timeListForCorrection.begin(), pos);
     }
     // os << "time " << t << " index for correction " << indexForCorrection_[i] << LogIO::POST;
+  }
+
+  // turn on transformation if any rows require correction
+  if (std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
+                  [](casacore::Int x) {return x != kInvalidIndex;})) {
+    transformSubchunk_ = true;
   }
 }
 
@@ -1152,16 +1150,6 @@ void SDAtmosphereCorrectionTVI::readMain(String const &msName) {
   }
 }
 
-void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
-  MeasurementSet const ms(msName);
-
-  auto const nchanColumn = spectralWindowSubtablecols().numChan();
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
-    nchanPerSpw_[spw] = nchanColumn(spw);
-  }
-}
-
 void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const referenceAntenna) {
   MeasurementSet const ms(msName);
   uInt numAntennas = ms.antenna().nrow();
@@ -1174,18 +1162,17 @@ void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const ref
   Table const pointingTable = ms.pointing();
   // TODO: abort if direction reference is not AZEL
   Table selected = pointingTable(pointingTable.col("ANTENNA_ID") == referenceAntenna);
-  elevationTime_ = ScalarColumn<Double>(selected, "TIME").getColumn();
+  Vector<Double> const elevationTime = ScalarColumn<Double>(selected, "TIME").getColumn();
   Array<Double> directionArray = ArrayColumn<Double>(selected, "DIRECTION").getColumn();
   Array<Double> elevationArray = Cube<Double>(directionArray).yzPlane(1);
-  elevationArray.removeDegenerate();
-  elevationData_.reference(elevationArray);
+  Vector<Double> const elevationData(elevationArray);
   elevationInterpolator_ = Interpolate1D<Double, Double>(
-    ScalarSampledFunctional<Double>(elevationTime_),
-    ScalarSampledFunctional<Double>(elevationData_), True, True);
+    ScalarSampledFunctional<Double>(elevationTime),
+    ScalarSampledFunctional<Double>(elevationData), True, True);
   elevationInterpolator_.setMethod(Interpolate1D<Double, Double>::linear);
   // os.output() << std::setprecision(16);
-  // os << "elevationTime_ = " << elevationTime_ << LogIO::POST;
-  // os << "elevationData_ = " << elevationData_ << LogIO::POST;
+  // os << "elevationTime = " << elevationTime << LogIO::POST;
+  // os << "elevationData = " << elevationData << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
@@ -1235,7 +1222,6 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
     for (uInt i = 0; i < n; ++i) {
       atmTime_[i] = atmTimeLocal[indexVector[uniqueVector[i]]];
     }
-    os.output() << std::setprecision(16) << std::endl;
     atmTemperatureData_ = getMedianDataPerTime(n, uniqueVector, indexVector, atmTemperatureDataLocal);
     // Pa -> mbar (=hPa)
     atmPressureData_ = getMedianDataPerTime(n, uniqueVector, indexVector, atmPressureDataLocal) / 100.0;
