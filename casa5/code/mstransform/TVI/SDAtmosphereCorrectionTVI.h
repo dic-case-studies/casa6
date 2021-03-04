@@ -142,8 +142,6 @@ protected:
   SDAtmosphereCorrectionTVI(ViImplementation2 * inputVi,
     casacore::Record const &configuration);
   SDAtmosphereCorrectionTVI() = delete;
-  SDAtmosphereCorrectionTVI(SDAtmosphereCorrectionTVI const &other) = delete;
-  SDAtmosphereCorrectionTVI &operator=(SDAtmosphereCorrectionTVI const &other) = delete;
 
 private:
   // initial configuratin of the correction
