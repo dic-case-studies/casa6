@@ -2361,9 +2361,6 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         // have rowBounds_p.subchunkRows_p properly initialized
         rowBounds_p.subchunkRows_p =
                 RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
-        Vector<Int> spws, polIds;
-        spectralWindows(spws);
-        polarizationIds(polIds);
 
 
         // Scan the subchunk to see if the same channels are selected in each
@@ -2375,6 +2372,10 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         channelSelectorsNrows_p.clear();
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
             -1, polarizationId(), msId()));
+
+        Vector<Int> spws;
+        spectralWindows(spws);
+        auto polId = getPolarizationId(spws[0], msId());
 
         for (Int i = rowBounds_p.subchunkBegin_p + 1;
                 i <= rowBounds_p.subchunkEnd_p;
@@ -2390,7 +2391,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             // with the previous row's channel selector.
 
             std::shared_ptr<ChannelSelector> newSelector =
-                    determineChannelSelection(rowTime, spws[i], polIds[i], msId());
+                    determineChannelSelection(rowTime, spws[0], polId, msId());
 
             if (newSelector.get() != channelSelectors_p[0].get()) {
 
