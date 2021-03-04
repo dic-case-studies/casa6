@@ -159,19 +159,6 @@ inline std::pair<Double, Double> findNearest(Vector<Double> const &data, Double 
   return std::make_pair(firstValue, secondValue);
 }
 
-// inline Double interpolateDataLinear(Vector<Double> const &xin, Vector<Double> const &yin, Double const xout) {
-//   Bool found = false;
-//   // data is sorted in ascending order
-//   Int index = binarySearch(found, xin, xout, xin.nelements());
-//   Double yout = kValueUnset;
-//   if (index == 0 || found) {
-//     yout = yin[index];
-//   } else {
-//     yout = ((xin[index] - xout) * yin[index - 1] * (xout - xin[index - 1]) * yin[index]) / (xin[index] - xin[index - 1]);
-//   }
-//   return yout;
-// }
-
 // implementation of np.convolve(mode='same')
 inline Vector<Double> convolve1DTriangle(Vector<Double> const &in) {
   // constexpr unsigned int kNumKernel = 3u;
@@ -272,48 +259,24 @@ inline void transformData(
   assert(shape[2] == static_cast<Int>(indexForCorrection.size()));
   Bool b1;
   T *p = inout.getStorage(b1);
+  #pragma omp parallel for if((shape[2] > 10 && shape[1] > 500))
   for (ssize_t ir = 0; ir < shape[2]; ++ir) {
-    // cout << "processing row " << ir << endl;
     Int const index = indexForCorrection[ir];
     if (index >= 0) {
-      // cout << "index for correction: " << index << endl;
       Vector<Double> const &correctionFactor = correctionFactorList[index];
-      // cout << "size of correction factor " << correctionFactor.size() << " data shape " << shape << endl;
       Bool b2;
       Double const *cp = correctionFactor.getStorage(b2);
       ssize_t const offset = shape[0] * shape[1] * ir;
       for (ssize_t ic = 0; ic < shape[1]; ++ic) {
         ssize_t idx = offset + shape[0] * ic;
         for (ssize_t ip = 0; ip < shape[0]; ++ip) {
-          // inout(ip, ic, ir) = inout(ip, ic, ir) - correctionFactor[ic];
           p[idx + ip] = p[idx + ip] - cp[ic];
         }
       }
       correctionFactor.freeStorage(cp, b2);
     }
-    // cout << "done row " << ir << endl;
   }
   inout.putStorage(p, b1);
-}
-
-template<class T>
-inline void transformData(Vector<Double> const &gainFactor, Cube<T> const &in, Cube<T> &out) {
-  // TODO: OMP/SIMD parallelization
-  // cout << "gainfactor (" << gainFactor.shape() << ") = " << gainFactor[0] << endl;
-  // cout << "input array shape = " << in.shape() << endl;
-  if (allEQ(gainFactor, 1.0)) {
-    out.reference(in);
-  } else {
-    IPosition const shape = in.shape();
-    out.resize(shape);
-    for (ssize_t ir = 0; ir < shape[2]; ++ir) {
-      for (ssize_t ic = 0; ic < shape[1]; ++ic) {
-        for (ssize_t ip = 0; ip < shape[0]; ++ip) {
-          out(ip, ic, ir) = in(ip, ic, ir) - gainFactor[ic];
-        }
-      }
-    }
-  }
 }
 
 } // anonymous namespace
@@ -348,21 +311,16 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     isTdmSpw_(),
     doSmooth_(),
     nchanBBPerSpw_(),
-    channelFreqsPerSpw_(),
-    channelWidthsPerSpw_(),
-    // currentTime_(kValueUnset),
-    // currentAtmTimeIndex_(-1),
+    nchanPerSpw_(),
     currentSpwId_(-1),
     atmType_(2),
     atmSkyStatusPerSpw_(),
-    atmSkyStatusPtr_(nullptr),
-    correctionFactor_() {
+    atmSkyStatusPtr_(nullptr)
+{
 
   // Initialize attached VisBuffer
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  os << "setVisBuffer start" << LogIO::POST;
   setVisBuffer(createAttachedVisBuffer(VbRekeyable));
-  os << "setVisBuffer end" << LogIO::POST;
 }
 
 SDAtmosphereCorrectionTVI::~SDAtmosphereCorrectionTVI() {
@@ -374,16 +332,9 @@ void SDAtmosphereCorrectionTVI::origin() {
   // Synchronize own VisBuffer
   configureNewSubchunk();
 
-  // updateCache();
-
   // new logic:
   // compute all correction factors for subchunk at once
   updateCorrectionFactorInAdvance();
-
-  // update SkyStatus with the closest weather measurement
-  // re-calculate correction factor (dTa)
-  // configureAtmosphereCorrection();
-  // updateAtmosphereModel();
 }
 
 void SDAtmosphereCorrectionTVI::next() {
@@ -395,13 +346,6 @@ void SDAtmosphereCorrectionTVI::next() {
   // new logic:
   // compute all correction factors for subchunk at once
   updateCorrectionFactorInAdvance();
-
-  // updateCache();
-
-  // update SkyStatus with the closest weather measurement
-  // re-calculate correction factor (dTa)
-  // configureAtmosphereCorrection();
-  // updateAtmosphereModel();
 }
 
 void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
@@ -411,50 +355,33 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   initializeAtmosphereCorrection(configuration_);
 
   // setup some cache values
-  // updateCache();
   currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
 
   // initialize Atmosphere Transmission Model
   initializeAtmosphereModel(configuration_);
 
-  // new logic:
-  // compute all correction factors for subchunk at once
-  // updateCorrectionFactorInAdvance();
-
-  // configure atmospheric correction
-  // point appropriate SkyStatus object
-  // configureAtmosphereCorrection();
-  // updateAtmosphereModel();
+  // setup number of threads for OpenMP
+  constexpr int kNumThreads = 8;
+  int const numProcessors = omp_get_num_procs();
+  omp_set_num_threads(min(kNumThreads, numProcessors));
 }
 
 void SDAtmosphereCorrectionTVI::nextChunk() {
   TransformingVi2::nextChunk();
 
   // setup some cache values
-  // updateCache();
   currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
-
-  // new logic:
-  // compute all correction factors for subchunk at once
-  // updateCorrectionFactorInAdvance();
-
-  // configure atmospheric correction if necessary
-  // point appropriate SkyStatus object
-  // configureAtmosphereCorrection();
-  // updateAtmosphereModel();
 }
 
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityCorrected)) {
     getVii()->visibilityCorrected(vis);
-    // if (doTransform()) {
     bool doTransform = atmSkyStatusPtr_ != nullptr &&
       anyEQ(processSpwList_, currentSpwId_) &&
       std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
                   [](Int x) {return x != -1;});
     if (doTransform) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
-      // transformData(correctionFactor_, dataCube, vis);
     }
   } else {
     vis.resize();
@@ -464,14 +391,12 @@ void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::visibilityModel(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityModel)) {
     getVii()->visibilityModel(vis);
-    // if (doTransform()) {
     bool doTransform = atmSkyStatusPtr_ != nullptr &&
       anyEQ(processSpwList_, currentSpwId_) &&
       std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
                   [](Int x) {return x != -1;});
     if (doTransform) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
-      // transformData(correctionFactor_, dataCube, vis);
     }
   } else {
     vis.resize();
@@ -481,15 +406,12 @@ void SDAtmosphereCorrectionTVI::visibilityModel(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::visibilityObserved(Cube<Complex> & vis) const {
   if (getVii()->existsColumn(VisBufferComponent2::VisibilityObserved)) {
     getVii()->visibilityObserved(vis);
-    // if (doTransform()) {
-      // cout << "visibilityObserved!" << endl;
     bool doTransform = atmSkyStatusPtr_ != nullptr &&
       anyEQ(processSpwList_, currentSpwId_) &&
       std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
                   [](Int x) {return x != -1;});
     if (doTransform) {
       transformData(correctionFactorList_, indexForCorrection_, vis);
-      // transformData(correctionFactor_, dataCube, vis);
     }
   } else {
     vis.resize();
@@ -499,14 +421,12 @@ void SDAtmosphereCorrectionTVI::visibilityObserved(Cube<Complex> & vis) const {
 void SDAtmosphereCorrectionTVI::floatData(casacore::Cube<casacore::Float> & fcube) const {
   if (getVii()->existsColumn(VisBufferComponent2::FloatData)) {
     getVii()->floatData(fcube);
-    // if (doTransform()) {
     bool doTransform = atmSkyStatusPtr_ != nullptr &&
       anyEQ(processSpwList_, currentSpwId_) &&
       std::any_of(indexForCorrection_.begin(), indexForCorrection_.end(),
                   [](Int x) {return x != -1;});
     if (doTransform) {
       transformData(correctionFactorList_, indexForCorrection_, fcube);
-      // transformData(correctionFactor_, dataCube, vis);
     }
   } else {
     fcube.resize();
@@ -811,8 +731,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
       configuration.isDefined("layerTemperatures")) {
     Vector<Double> layerBoundariesData = configuration.asArrayDouble("layerBoundaries");
     Vector<Double> layerTemperaturesData = configuration.asArrayDouble("layerTemperatures");
-    // size_t const numLayer = std::min(layerBoundariesData.nelements(),
-    //                                  layerTemperaturesData.nelements());
     if (layerBoundariesData.size() != layerTemperaturesData.size()) {
       os << "ERROR: list length of layerboundaries and layertemperature should be the same." << LogIO::EXCEPTION;
     }
@@ -874,6 +792,14 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   );
   os << "disabling thresholds end " << LogIO::POST;
 
+  std::map<SpwId, Vector<Double> > channelFreqsPerSpw;
+  std::map<SpwId, Vector<Double> > channelWidthsPerSpw;
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    channelFreqsPerSpw[spw] = spectralWindowSubtablecols().chanFreq().get(spw);
+    channelWidthsPerSpw[spw] = spectralWindowSubtablecols().chanWidth().get(spw);
+  }
+
   omp_set_num_threads(processSpwList_.size());
   #pragma omp parallel for
   for (unsigned int i = 0; i < processSpwList_.size(); ++i) {
@@ -882,13 +808,13 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     {
       os << "creating SkyStatus for spw " << spw << LogIO::POST;
     }
-    Vector<Double> cf = channelFreqsPerSpw_[spw];
-    Vector<Double> cw = channelWidthsPerSpw_[spw];
+    Vector<Double> cf = channelFreqsPerSpw[spw];
+    Vector<Double> cw = channelWidthsPerSpw[spw];
     unsigned int nchan = cf.nelements();
 
     // smoothing control
-    Int polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
-    Int numPol = polarizationSubtablecols().numCorr().get(polId);
+    Int const polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
+    Int const numPol = polarizationSubtablecols().numCorr().get(polId);
     uInt numChanPerBB = nchanBBPerSpw_[spw];
     Int numChanPol = numChanPerBB * numPol;
     doSmooth_[spw] = (numChanPol == 256 || numChanPol == 8192);
@@ -925,39 +851,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   os << "DONE Initializing SkyStatus" << LogIO::POST;
 
 }
-
-// void SDAtmosphereCorrectionTVI::configureAtmosphereCorrection() {
-//   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-//   bool isProcessingSpw = anyEQ(processSpwList_, currentSpwId_);
-//   bool isOnSource = isOnSourceChunk();
-//   bool isPrecedingOffSourceScanExist = min(offSourceTime_) <= currentTime_;
-//   bool isSubsequentOffSourceScanExist = currentTime_ <= max(offSourceTime_);
-//   bool isPrecedingAtmScanExist = min(atmTime_) <= currentTime_;
-//   // cout << std::setprecision(16) << offSourceTime_ << endl;
-//   // cout << std::setprecision(16) << currentTime_ << " state ID" << currentStateId[0] << endl;
-//   // os << "SPW " << currentSpwId_ << ": processingSpw " << isProcessingSpw
-//   //    << " OFF_SOURCE availability before " << isPrecedingOffSourceScanExist
-//   //    << " after " << isSubsequentOffSourceScanExist
-//   //    << " ON_SOURCE? " << isOnSource << LogIO::POST;
-//   atmSkyStatusPtr_ = nullptr;
-//   if (isProcessingSpw && isOnSource &&
-//       isPrecedingOffSourceScanExist && isSubsequentOffSourceScanExist &&
-//       isPrecedingAtmScanExist) {
-//     // gain factor for current spw
-//     if (currentSpwId_ < 0 || static_cast<SpwId>(gainFactorList_.nelements()) <= currentSpwId_) {
-//       gainFactor_ = 1.0;
-//     } else {
-//       gainFactor_ = gainFactorList_[currentSpwId_];
-//     }
-//     // os << "gainfactor for SPW " << currentSpwId_<< " = " << gainFactor_ << LogIO::POST;
-
-//     // SkyStatus for current spw
-//     auto finder = atmSkyStatusPerSpw_.find(currentSpwId_);
-//     if (finder != atmSkyStatusPerSpw_.end()) {
-//       atmSkyStatusPtr_ = finder->second.get();
-//     }
-//   }
-// }
 
 void SDAtmosphereCorrectionTVI::updateSkyStatus(Int atmTimeIndex) {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
@@ -1099,7 +992,6 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   //      << endl;
 
   // current spw
-  // SpwId const currentSpw = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
   Vector<Double> returnValue;
   if (isTdmSpw_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " is TDM " << endl;
@@ -1109,11 +1001,11 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
     double sepAtmFreq = p.getChanSep().get();
     Vector<Double> atmFreq(numAtmChan);
     indgen(atmFreq, refAtmFreq - sepAtmFreq * refAtmChan, sepAtmFreq);
-    Vector<Double> const &nativeFreq = channelFreqsPerSpw_[currentSpwId_];
     Vector<Double> smoothedCorrectionFactor = convolve1DHanning(correctionFactor);
     // atm frequency grid is 5x finer than native frequency grid
-    returnValue.resize(nativeFreq.nelements());
-    for (uInt i = 0; i < nativeFreq.nelements(); ++i) {
+    uInt const nativeNumChan = nchanPerSpw_[currentSpwId_];
+    returnValue.resize(nativeNumChan);
+    for (uInt i = 0; i < nativeNumChan; ++i) {
       returnValue[i] = smoothedCorrectionFactor[2 + i * 5];
     }
   } else if (doSmooth_[currentSpwId_]) {
@@ -1131,28 +1023,10 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   return returnValue;
 }
 
-void SDAtmosphereCorrectionTVI::updateAtmosphereModel() {
-  // if (atmSkyStatusPtr_) {
-  //   updateSkyStatus();
-  //   updateCorrectionFactor();
-  // }
-}
-
-// void SDAtmosphereCorrectionTVI::updateCache() {
-//   // non rowBlocking mode - time should be single value
-//   Vector<Double> timeData;
-//   time(timeData);
-//   currentTime_ = timeData[0];
-//   if (atmTime_.nelements() > 0) {
-//     std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime_);
-//     currentAtmTimeIndex_ = pair.first;
-//     // cout << "updateCache: time " << std::setprecision(16) << currentTime_
-//     //      << " index " << currentAtmTimeIndex_ << endl;
-//   }
-// }
-
 void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+
+  os << "Updating correction factor for SPW " << currentSpwId_ << LogIO::POST;
 
   if (allNE(processSpwList_, currentSpwId_)) {
     os << "SPW " << currentSpwId_ << " is not in the processing SPW list" << LogIO::POST;
@@ -1168,8 +1042,9 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   makeUnique(timeData, indexVector, uniqueIndex);
   Vector<Int> stateIdData;
   stateId(stateIdData);
-  timeListForCorrection_.resize(0);
-  timeListForCorrection_.reserve(uniqueIndex.size());
+  std::vector<Double> timeListForCorrection;
+  timeListForCorrection.reserve(uniqueIndex.size());
+  os << "Number of subchunk rows is " << timeData.size() << LogIO::POST;
   os << "There are " << uniqueIndex.size() << " unique timestamps in the current subchunk" << LogIO::POST;
   for (uInt i = 0; i < uniqueIndex.size(); ++i) {
     uInt j = uniqueIndex[i];
@@ -1184,21 +1059,23 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
       timeListForCorrection.push_back(timeData[j]);
     }
   }
-  os << "There are " << timeListForCorrection_.size() << " ON_SOURCE "
+  os << "There are " << timeListForCorrection.size() << " ON_SOURCE "
      << "timestamps in the current subchunk" << LogIO::POST;
 
-  if (timeListForCorrection_.size() == 0) {
+  if (timeListForCorrection.size() == 0) {
     atmSkyStatusPtr_ = nullptr;
     return;
   }
 
   atmSkyStatusPtr_ = atmSkyStatusPerSpw_[currentSpwId_].get();
 
-  correctionFactorList_.resize(timeListForCorrection_.size());
+  correctionFactorList_.resize(timeListForCorrection.size());
 
   std::map<Int, std::vector<unsigned int> > groupByAtmTimeIndex;
-  for (unsigned int i = 0; i < timeListForCorrection_.size(); ++i) {
-    Double const currentTime = timeListForCorrection_[i];
+  for (unsigned int i = 0; i < timeListForCorrection.size(); ++i) {
+    Double const currentTime = timeListForCorrection[i];
+    os.output() << std::setprecision(16);
+    os << "trying time " << currentTime << LogIO::POST;
     std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime);
     Int const currentAtmTimeIndex = pair.first;
     if (currentAtmTimeIndex < 0 || atmTime_.nelements() <= static_cast<uInt>(currentAtmTimeIndex)) {
@@ -1214,35 +1091,31 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     std::vector<unsigned int> timeIndexList = iter->second;
     updateSkyStatus(atmTimeIndex);
     atm::SkyStatus ss(*atmSkyStatusPtr_);
-    // int numLoop = timeIndexList.size();
-    // int numThreads = min(10, numLoop / 20 + 1);
-    int numThreads = 8;
-    omp_set_num_threads(numThreads);
     #pragma omp parallel for firstprivate(ss)
     for (unsigned int i = 0; i < timeIndexList.size(); ++i) {
-      Double const t = timeListForCorrection_[timeIndexList[i]];
+      Double const t = timeListForCorrection[timeIndexList[i]];
       Vector<Double> correctionFactor = updateCorrectionFactor(ss, t);
       correctionFactorList_[timeIndexList[i]].assign(correctionFactor);
-      #pragma omp critical (logging)
-      {
-        os << "THREAD " << omp_get_thread_num() << ": ";
-        os.output() << std::setprecision(16);
-        os << "time " << t << " index " << i
-           << " correctionFactor[0] " << correctionFactor[0] << LogIO::POST;
-      }
+      // #pragma omp critical (logging)
+      // {
+      //   os << "THREAD " << omp_get_thread_num() << ": ";
+      //   os.output() << std::setprecision(16);
+      //   os << "time " << t << " index " << i
+      //      << " correctionFactor[0] " << correctionFactor[0] << LogIO::POST;
+      // }
     }
   }
 
   indexForCorrection_.resize(timeData.size());
   for (unsigned int i = 0; i < timeData.size(); ++i) {
     Double const t = timeData[i];
-    auto const pos = std::find(timeListForCorrection_.begin(), timeListForCorrection_.end(), t);
-    if (pos == timeListForCorrection_.end()) {
+    auto const pos = std::find(timeListForCorrection.begin(), timeListForCorrection.end(), t);
+    if (pos == timeListForCorrection.end()) {
       indexForCorrection_[i] = -1;
     } else {
-      indexForCorrection_[i] = std::distance(timeListForCorrection_.begin(), pos);
+      indexForCorrection_[i] = std::distance(timeListForCorrection.begin(), pos);
     }
-    os << "time " << t << " index for correction " << indexForCorrection_[i] << LogIO::POST;
+    // os << "time " << t << " index for correction " << indexForCorrection_[i] << LogIO::POST;
   }
 }
 

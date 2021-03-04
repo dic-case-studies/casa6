@@ -155,11 +155,8 @@ private:
   void initializeAtmosphereModel(casacore::Record const &configuration);
 
   // sync with the current chunk/subchunk
-  // void configureAtmosphereCorrection();
   void updateSkyStatus(casacore::Int atmTimeIndex);
   casacore::Vector<casacore::Double> updateCorrectionFactor(atm::SkyStatus &p, casacore::Double const currentTime);
-  void updateAtmosphereModel();
-  // void updateCache();
   void updateCorrectionFactorInAdvance();
 
   // read necessary data from MS
@@ -207,21 +204,16 @@ private:
   std::map<SpwId, bool> isTdmSpw_;
   std::map<SpwId, bool> doSmooth_;
   std::map<SpwId, casacore::uInt> nchanBBPerSpw_;
-  std::map<SpwId, casacore::Vector<casacore::Double> > channelFreqsPerSpw_;
-  std::map<SpwId, casacore::Vector<casacore::Double> > channelWidthsPerSpw_;
+  std::map<SpwId, casacore::uInt> nchanPerSpw_;
 
   // current iterator status
-  // casacore::Double currentTime_;
-  // casacore::Int currentAtmTimeIndex_;
   SpwId currentSpwId_;
 
   // ATM
   unsigned int atmType_;
   std::map<SpwId, std::unique_ptr<atm::SkyStatus> > atmSkyStatusPerSpw_;
   atm::SkyStatus *atmSkyStatusPtr_;
-  casacore::Vector<casacore::Double> correctionFactor_;
   std::vector<casacore::Vector<casacore::Double> > correctionFactorList_;
-  std::vector<casacore::Double> timeListForCorrection_;
   std::vector<casacore::Int> indexForCorrection_;
 
   friend SDAtmosphereCorrectionVi2Factory;
