@@ -152,13 +152,6 @@ inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double c
   return std::make_pair(prev, next);
 }
 
-inline std::pair<Double, Double> findNearest(Vector<Double> const &data, Double const target) {
-  std::pair<uInt, uInt> idx = findNearestIndex(data, target);
-  Double firstValue = (0 <= idx.first && idx.first < data.size()) ? data[idx.first] : kValueUnset;
-  Double secondValue = (0 <= idx.second && idx.second < data.size()) ? data[idx.second] : kValueUnset;
-  return std::make_pair(firstValue, secondValue);
-}
-
 // implementation of np.convolve(mode='same')
 inline Vector<Double> convolve1DTriangle(Vector<Double> const &in) {
   // constexpr unsigned int kNumKernel = 3u;
@@ -936,9 +929,15 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   // os << "updateCorrectionFactor for SPW " << currentSpwId_ << LogIO::POST;
 
   // find OFF_SOURCE time stamps that brackets current time stamp
-  std::pair<Double, Double> nearest = findNearest(offSourceTime_, currentTime);
-  Double const offSourceTimePrev = nearest.first;
-  Double const offSourceTimeNext = nearest.second;
+  std::pair<Int, Int> nearestIndex = findNearestIndex(offSourceTime_, currentTime);
+  Int const i0 = nearestIndex.first;
+  Int const i1 = nearestIndex.second;
+  Double const offSourceTimePrev =
+    (0 <= i0 && static_cast<uInt>(i0) < offSourceTime_.size()) ?
+    offSourceTime_[i0] : kValueUnset;
+  Double const offSourceTimeNext =
+    (0 <= i1 && static_cast<uInt>(i1) < offSourceTime_.size()) ?
+    offSourceTime_[i1] : kValueUnset;
   // cout << "nearest: " << std::setprecision(16) << offSourceTimePrev << "~" << offSourceTimeNext << endl;
 
   // elevation
