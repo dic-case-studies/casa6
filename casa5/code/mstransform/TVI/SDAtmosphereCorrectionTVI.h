@@ -165,16 +165,6 @@ private:
   void readPointing(casacore::String const &msName, casacore::Int const referenceAntenna);
   void readAsdmAsIsTables(casacore::String const &msName);
 
-  // check if transformation is necessary
-  bool isOnSourceChunk() const {
-    casacore::Vector<casacore::Int> stateIdList;
-    stateId(stateIdList);
-    static std::string const startstr("OBSERVE_TARGET#ON_SOURCE");
-    casacore::String s = stateSubtablecols().obsMode().get(stateIdList[0]);
-    return s.startsWith(startstr);
-  }
-  bool doTransform() const {return (atmSkyStatusPtr_ != nullptr);}
-
   // user inputs
   casacore::Vector<SpwId> processSpwList_;
   casacore::Vector<casacore::Double> gainFactorList_;
