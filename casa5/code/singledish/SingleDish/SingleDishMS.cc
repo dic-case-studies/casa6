@@ -3449,12 +3449,13 @@ void SingleDishMS::atmcor(Record const &config, string const &columnName, string
   atmCorConfig_ = config;
   cout << "config summry:" << endl;
   atmCorConfig_.print(cout, 25, "    ");
-  Block<Int> sortCols(4);
+  // TODO: exclude MS::TIME from sortCols when CAS-13360 is fixed
+  Block<Int> sortCols(5);
   sortCols[0] = MS::OBSERVATION_ID;
   sortCols[1] = MS::ARRAY_ID;
   sortCols[2] = MS::FEED1;
   sortCols[3] = MS::DATA_DESC_ID;
-  // sortCols[4] = MS::TIME;
+  sortCols[4] = MS::TIME;
   prepare_for_process(columnName, outMSName, sortCols, False);
 
   // get VI/VB2 access
@@ -3465,7 +3466,9 @@ void SingleDishMS::atmcor(Record const &config, string const &columnName, string
   std::sort(antenna1.begin(), antenna1.end());
   auto const result = std::unique(antenna1.begin(), antenna1.end());
   Int const nAntennas = std::distance(antenna1.begin(), result);
-  visIter->setRowBlocking(kNrowBlocking * nAntennas);
+  // TODO: turn on row blocking mode when CAS-13360 is fixed
+  // visIter->setRowBlocking(kNrowBlocking * nAntennas);
+  visIter->setRowBlocking(0);
   os << "There are " << nAntennas << " antennas in MAIN table. "
      << "Set row-blocking size " << kNrowBlocking * nAntennas
      << LogIO::POST;
