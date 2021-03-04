@@ -595,7 +595,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     os << " atmTime_[" << i << "] = " << atmTime_[i] << " (current Time " << timeData[0] << ")" << LogIO::POST;
   }
 
-  std::pair<Int, Int> pair = findNearest(atmTime_, timeData[0]);
+  std::pair<Int, Int> pair = findNearestIndex(atmTime_, timeData[0]);
   currentAtmTimeIndex = (0 <= pair.first) ? pair.first : pair.second;
   if (currentAtmTimeIndex < 0 || atmTime_.size() <= static_cast<uInt>(currentAtmTimeIndex)) {
     os << "Failed to obtain valid time index for atmosphere measurement."
