@@ -143,7 +143,7 @@ inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double c
   if (found) {
     prev = index;
     next = index;
-  } else if (index > 0) {
+  } else if (index >= 0) {
     prev = index - 1;
     next = index;
   } else {
@@ -154,7 +154,9 @@ inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double c
 
 inline std::pair<Double, Double> findNearest(Vector<Double> const &data, Double const target) {
   std::pair<uInt, uInt> idx = findNearestIndex(data, target);
-  return std::make_pair(data[idx.first], data[idx.second]);
+  Double firstValue = (0 <= idx.first && idx.first < data.size()) ? data[idx.first] : kValueUnset;
+  Double secondValue = (0 <= idx.second && idx.second < data.size()) ? data[idx.second] : kValueUnset;
+  return std::make_pair(firstValue, secondValue);
 }
 
 // inline Double interpolateDataLinear(Vector<Double> const &xin, Vector<Double> const &yin, Double const xout) {
@@ -522,7 +524,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
        << LogIO::EXCEPTION;
   }
   processSpwList_ = configuration.asArrayInt("processspw");
-  os << "processspw = " << processSpwList_ << LogIO::POST;
+  os << "processspw (input) = " << processSpwList_ << LogIO::POST;
 
   // gain factor
   if (!configuration.isDefined("gainfactor")) {
@@ -550,6 +552,84 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
   os << "input MS = \"" << rawMs << "\"" << LogIO::POST;
 
   MSMetaData msmd(&ms(), kNoCache);
+  std::set<uInt> fdmSpws = msmd.getFDMSpw();
+  std::set<uInt> tdmSpws = msmd.getTDMSpw();
+  std::set<uInt> onSourceSpws = msmd.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");
+  std::set<uInt> fdmTdmSpws;
+  std::set_union(
+    fdmSpws.begin(), fdmSpws.end(),
+    tdmSpws.begin(), tdmSpws.end(),
+    std::inserter(fdmTdmSpws, fdmTdmSpws.end())
+  );
+  std::set<uInt> scienceSpws;
+  std::set_intersection(
+    onSourceSpws.begin(), onSourceSpws.end(),
+    fdmTdmSpws.begin(), fdmTdmSpws.end(),
+    std::inserter(scienceSpws, scienceSpws.end())
+  );
+
+  // udpate processSpwList_: exclude non-science spws
+  std::vector<uInt> v(processSpwList_.nelements());
+  for (unsigned int i = 0; i < processSpwList_.nelements(); ++i) {
+    v[i] = processSpwList_[i];
+  }
+  std::set<uInt> updated;
+  std::set_intersection(
+    scienceSpws.begin(), scienceSpws.end(),
+    v.begin(), v.end(),
+    std::inserter(updated, updated.end())
+  );
+  processSpwList_.resize(updated.size());
+  unsigned int index = 0;
+  for (auto i = updated.begin(); i != updated.end(); ++i) {
+    processSpwList_[index++] = *i;
+  }
+
+  std::map<Int, uInt> nchanPerBB;
+  std::map<SpwId, Int> spwBBMap;
+  auto const nameColumn = spectralWindowSubtablecols().name();
+  auto const nchanColumn = spectralWindowSubtablecols().numChan();
+  for (auto i = scienceSpws.begin(); i != scienceSpws.end(); ++i) {
+    SpwId const spw = *i;
+    String const name = nameColumn(spw);
+    Int nchan = nchanColumn(spw);
+    auto const pos = name.find("#BB_");
+    auto const pos2 = name.find("#", pos + 1);
+    if (pos != String::npos && pos + 4 < name.size()) {
+      Int bb = String::toInt(name.substr(pos + 4, pos2 - pos - 4));
+      // cout << "SPW " << spw << ": name \"" << name
+      //      << "\" substr " << name.substr(pos + 4, pos2 - pos - 4)
+      //      << " pos " << pos + 4 << " pos2 " << pos2
+      //      << " bb " << bb << endl;
+      spwBBMap[spw] = bb;
+      auto j = nchanPerBB.find(bb);
+      if (j == nchanPerBB.end()) {
+        nchanPerBB[bb] = nchan;
+      } else {
+        nchanPerBB[bb] += nchan;
+      }
+    }
+  }
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    auto j = spwBBMap.find(spw);
+    if (j == spwBBMap.end()) {
+      nchanBBPerSpw_[spw] = 0u;
+    } else {
+      nchanBBPerSpw_[spw] = nchanPerBB[j->second];
+    }
+    auto const nchan = nchanBBPerSpw_[spw];
+    os << "nchan per BB for SPW " << spw << " is " << nchan << LogIO::POST;
+    isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
+    os << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << LogIO::POST;
+  }
+
+  os << "TDM flag:" << endl;
+  os.output() << std::boolalpha;
+  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
+    os << "    spw " << i->first << " " << i->second << endl;
+  }
+  os << LogIO::POST;
   std::set<uInt> allSpwIds = msmd.getSpwIDs();
   std::vector<uInt> nonProcessingSpws;
   nonProcessingSpws.reserve(allSpwIds.size());
@@ -589,11 +669,17 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   Vector<Double> timeData;
   time(timeData);
   Int currentAtmTimeIndex = 0;
-  if (atmTime_.nelements() > 0) {
-    std::pair<Int, Int> pair = findNearestIndex(atmTime_, timeData[0]);
-    currentAtmTimeIndex = pair.first;
-    // cout << "updateCache: time " << std::setprecision(16) << timeData[0]
-    //      << " index " << currentAtmTimeIndex << endl;
+  os << "atmTime_ size " << atmTime_.size() << LogIO::POST;
+  for (uInt i = 0; i < atmTime_.size(); ++i) {
+    os.output() << std::setprecision(16);
+    os << " atmTime_[" << i << "] = " << atmTime_[i] << " (current Time " << timeData[0] << ")" << LogIO::POST;
+  }
+
+  std::pair<Int, Int> pair = findNearest(atmTime_, timeData[0]);
+  currentAtmTimeIndex = (0 <= pair.first) ? pair.first : pair.second;
+  if (currentAtmTimeIndex < 0 || atmTime_.size() <= static_cast<uInt>(currentAtmTimeIndex)) {
+    os << "Failed to obtain valid time index for atmosphere measurement."
+       << LogIO::EXCEPTION;
   }
 
   // altitude
@@ -964,17 +1050,31 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   // cout << "nearest: " << std::setprecision(16) << offSourceTimePrev << "~" << offSourceTimeNext << endl;
 
   // elevation
-  // cout << "interpolated elevation" << endl;
-  Double const elevationOffPrev = elevationInterpolator_(offSourceTimePrev);
-  // cout << "prev: " << elevationOffPrev << endl;
   Double const elevationOn = elevationInterpolator_(currentTime);
+
+  // cout << "interpolated elevation" << endl;
+  Double elevationOff = kValueUnset;
+  if (isValueUnset(offSourceTimePrev) && isValueUnset(offSourceTimeNext)) {
+    #pragma omp critical
+    {
+      LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+      os << "No valid OFF_SOURCE observaton." << LogIO::EXCEPTION;
+    }
+  } else if (isValueUnset(offSourceTimePrev)) {
+    elevationOff = elevationInterpolator_(offSourceTimeNext);
+  } else if (isValueUnset(offSourceTimeNext)) {
+    elevationOff = elevationInterpolator_(offSourceTimePrev);
+  } else {
+    Double const elevationOffPrev = elevationInterpolator_(offSourceTimePrev);
+    // cout << "prev: " << elevationOffPrev << endl;
+    Double const elevationOffNext = elevationInterpolator_(offSourceTimeNext);
+    // cout << "next: " << elevationOffNext << endl;
+    elevationOff =
+      ((offSourceTimeNext - currentTime) * elevationOffPrev +
+       (currentTime - offSourceTimePrev) * elevationOffNext) /
+      (offSourceTimeNext - offSourceTimePrev);
+  }
   // cout << "ON: " << elevationOn << endl;
-  Double const elevationOffNext = elevationInterpolator_(offSourceTimeNext);
-  // cout << "next: " << elevationOffNext << endl;
-  Double const elevationOff =
-    ((offSourceTimeNext - currentTime) * elevationOffPrev +
-     (currentTime - offSourceTimePrev) * elevationOffNext) /
-    (offSourceTimeNext - offSourceTimePrev);
   // cout << "OFF: " << elevationOffPrev << endl;
   // cout << "time " << std::setprecision(16) << currentTime << " elON " << elevationOn << " elOFF " << elevationOff << endl;
 
@@ -1077,8 +1177,11 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     static std::string const startstr("OBSERVE_TARGET#ON_SOURCE");
     casacore::String s = stateSubtablecols().obsMode().get(sid);
     bool isOnSource = s.startsWith(startstr);
-    if (isOnSource) {
-      timeListForCorrection_.push_back(timeData[j]);
+    bool isPrecedingAtmDataExists = (atmTime_[0] <= timeData[j]);
+    if (isOnSource && isPrecedingAtmDataExists) {
+      os.output() << std::setprecision(16);
+      os << "adding " << timeData[j] << LogIO::POST;
+      timeListForCorrection.push_back(timeData[j]);
     }
   }
   os << "There are " << timeListForCorrection_.size() << " ON_SOURCE "
@@ -1098,6 +1201,9 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
     Double const currentTime = timeListForCorrection_[i];
     std::pair<Int, Int> pair = findNearestIndex(atmTime_, currentTime);
     Int const currentAtmTimeIndex = pair.first;
+    if (currentAtmTimeIndex < 0 || atmTime_.nelements() <= static_cast<uInt>(currentAtmTimeIndex)) {
+      os << "Internal Error: wrong ON_SOURCE time." << LogIO::EXCEPTION;
+    }
     groupByAtmTimeIndex[currentAtmTimeIndex].push_back(i);
     os.output() << std::setprecision(16);
     os << "time " << currentTime << " atmTimeIndex " << currentAtmTimeIndex << LogIO::POST;
@@ -1176,78 +1282,11 @@ void SDAtmosphereCorrectionTVI::readMain(String const &msName) {
 void SDAtmosphereCorrectionTVI::readSpectralWindow(String const &msName) {
   MeasurementSet const ms(msName);
 
-  Table const spwTable = ms.spectralWindow();
-  auto const chanFreqColumn = spectralWindowSubtablecols().chanFreq();
-  auto const chanWidthColumn = spectralWindowSubtablecols().chanWidth();
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
-    channelFreqsPerSpw_[spw] = chanFreqColumn(spw);
-    channelWidthsPerSpw_[spw] = chanWidthColumn(spw);
-  }
-  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-
-  // number of channels per baseband
-  MSMetaData meta(&ms, kNoCache);
-  std::set<uInt> fdmSpws = meta.getFDMSpw();
-  std::set<uInt> tdmSpws = meta.getTDMSpw();
-  std::set<uInt> onSourceSpws = meta.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");
-  std::set<uInt> fdmTdmSpws;
-  std::set_union(
-    fdmSpws.begin(), fdmSpws.end(),
-    tdmSpws.begin(), tdmSpws.end(),
-    std::inserter(fdmTdmSpws, fdmTdmSpws.end())
-  );
-  std::set<uInt> scienceSpws;
-  std::set_intersection(
-    onSourceSpws.begin(), onSourceSpws.end(),
-    fdmTdmSpws.begin(), fdmTdmSpws.end(),
-    std::inserter(scienceSpws, scienceSpws.end())
-  );
-  std::map<Int, uInt> nchanPerBB;
-  std::map<SpwId, Int> spwBBMap;
   auto const nchanColumn = spectralWindowSubtablecols().numChan();
-  auto const nameColumn = spectralWindowSubtablecols().name();
-  for (auto i = scienceSpws.begin(); i != scienceSpws.end(); ++i) {
-    SpwId const spw = *i;
-    String const name = nameColumn(spw);
-    Int nchan = nchanColumn(spw);
-    auto const pos = name.find("#BB_");
-    auto const pos2 = name.find("#", pos + 1);
-    if (pos != String::npos && pos + 4 < name.size()) {
-      Int bb = String::toInt(name.substr(pos + 4, pos2 - pos - 4));
-      // cout << "SPW " << spw << ": name \"" << name
-      //      << "\" substr " << name.substr(pos + 4, pos2 - pos - 4)
-      //      << " pos " << pos + 4 << " pos2 " << pos2
-      //      << " bb " << bb << endl;
-      spwBBMap[spw] = bb;
-      auto j = nchanPerBB.find(bb);
-      if (j == nchanPerBB.end()) {
-        nchanPerBB[bb] = nchan;
-      } else {
-        nchanPerBB[bb] += nchan;
-      }
-    }
-  }
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
-    auto j = spwBBMap.find(spw);
-    if (j == spwBBMap.end()) {
-      nchanBBPerSpw_[spw] = 0u;
-    } else {
-      nchanBBPerSpw_[spw] = nchanPerBB[j->second];
-    }
-    auto const nchan = nchanBBPerSpw_[spw];
-    os << "nchan per BB for SPW " << spw << " is " << nchan << LogIO::POST;
-    isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
-    os << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << LogIO::POST;
+    nchanPerSpw_[spw] = nchanColumn(spw);
   }
-
-  os << "TDM flag:" << endl;
-  os.output() << std::boolalpha;
-  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
-    os << "    spw " << i->first << " " << i->second << endl;
-  }
-  os << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const referenceAntenna) {
@@ -1346,11 +1385,16 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
       if (idx < m) {
         uniqueVectorPwv2[i] = uniqueVectorPwv[idx];
       } else {
-        throw AipsError("ERROR in readAsdmAsIsTable");
+        os << "ERROR in readAsdmAsIsTable" << LogIO::EXCEPTION;
       }
     }
     // m -> mm
     pwvData_ = getMedianDataPerTime(n, uniqueVectorPwv2, indexVectorPwv, pwvDataLocal) * 1000.0;
+  }
+
+  if (atmTime_.nelements() == 0) {
+    os << "No Atmosphere measurements. Unable to apply offline ATM correction."
+       << LogIO::EXCEPTION;
   }
 }
 
