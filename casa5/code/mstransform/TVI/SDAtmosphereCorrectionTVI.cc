@@ -359,6 +359,11 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   constexpr int kNumThreads = 8;
   int const numProcessors = omp_get_num_procs();
   omp_set_num_threads(min(kNumThreads, numProcessors));
+
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  auto const subchunkId = getSubchunkId();
+  os << "Process chunk " << subchunkId.first
+     << " SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::nextChunk() {
@@ -366,6 +371,11 @@ void SDAtmosphereCorrectionTVI::nextChunk() {
 
   // setup some cache values
   currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
+
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  auto const subchunkId = getSubchunkId();
+  os << "Process chunk " << subchunkId.first
+     << " SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
