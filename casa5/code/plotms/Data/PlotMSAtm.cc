@@ -259,8 +259,7 @@ void PlotMSAtm::applyMSSelection(PlotMSSelection& selection,
 
 void PlotMSAtm::applyCalSelection(PlotMSSelection& selection,
         NewCalTable& selct) {
-    Vector<Vector<Slice> > chansel, corrsel;
-    selection.apply(*caltable_, selct, chansel, corrsel);
+    selection.apply(*caltable_, selct);
 }
 
 void PlotMSAtm::calcAtmTskyCurve(casacore::Vector<casacore::Double>& curve,

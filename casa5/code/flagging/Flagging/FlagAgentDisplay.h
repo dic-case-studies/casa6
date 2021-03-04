@@ -41,7 +41,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   public:
     
     FlagAgentDisplay(FlagDataHandler *dh, casacore::Record config, casacore::Bool writePrivateFlagCube = false);
-    ~FlagAgentDisplay();
+    ~FlagAgentDisplay( );
 
     // Make plots and either display or write to a file
     casacore::Bool displayReports(FlagReport &combinedReport);

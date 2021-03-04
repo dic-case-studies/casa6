@@ -1,6 +1,6 @@
-
+ 
 ## CASAtools
-
+ 
 If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in gestation.
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. This module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
@@ -72,7 +72,7 @@ With the CASA build environment set up, the CASAtools module can be built like:
 Linux:
 ```
 -bash-4.2$ cd casa6/casatools
--bash-4.2$ scripts/gcw-pick 
+-bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
@@ -109,7 +109,7 @@ A non-exhaustive list of when **./setup.py genmake** followed by **make** will n
 * modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
 * changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
 
-The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, e.g.:
 ```
 -bash-4.2$ make -j8
 ```
@@ -176,9 +176,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.56.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.59.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.56.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.59.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
