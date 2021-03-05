@@ -402,7 +402,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     	  //fselections_p->add(channelSelector);
 
       }
-    }
+    }//End of channel selection
+          
     writeAccess_p=writeAccess_p && !selpars.readonly;
     createVisSet(writeAccess_p);
 
@@ -826,13 +827,13 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
  Bool SynthesisImagerVi2::weight(const Record& inrec){
 	String type, rmode, filtertype;
 	Quantity noise, fieldofview,filterbmaj,filterbmin, filterbpa;  
-	Double robust;
+	Double robust, fracBW;
 	Int npixels;
 	Bool multiField, useCubeBriggs;
 	SynthesisUtilMethods::getFromWeightRecord(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
-				  filtertype, filterbmaj,filterbmin, filterbpa, inrec);
+				  filtertype, filterbmaj,filterbmin, filterbpa, fracBW, inrec);
 	return weight(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
-				  filtertype, filterbmaj,filterbmin, filterbpa );
+				  filtertype, filterbmaj,filterbmin, filterbpa, fracBW );
 				
 	 
  }
@@ -841,11 +842,40 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 			       const Quantity& fieldofview,
 				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
 			       const String& filtertype, const Quantity& filterbmaj,
-			       const Quantity& filterbmin, const Quantity& filterbpa   )
+			       const Quantity& filterbmin, const Quantity& filterbpa, Double fracBW)
   {
+      LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+      if(rmode=="bwtaper") //See CAS-13021 for bwtaper algorithm details
+      {
+          if(fracBW == 0.0)
+          {
+              Double minFreq = 0.0;
+              Double maxFreq = 0.0;
+              
+              if(itsMaxShape(3) < 1) {
+                cout << "SynthesisImagerVi2::weight Only one channel in image " << endl;
+              }
+              else{
+                  minFreq=abs(SpectralImageUtil::worldFreq(itsMaxCoordSys, 0.0));
+                  maxFreq=abs(SpectralImageUtil::worldFreq(itsMaxCoordSys,itsMaxShape(3)-1));
+
+                  if(maxFreq < minFreq){
+                    Double tmp=minFreq;
+                    minFreq=maxFreq;
+                    maxFreq=tmp;
+                  }
+                  
+                  if((maxFreq != 0.0) || (minFreq != 0.0)) fracBW = 2*(maxFreq - minFreq)/(maxFreq + minFreq);
+                  
+                  os << LogIO::NORMAL << " Fractional bandwidth used by briggsbwtaper " << fracBW << endl;  //<< LogIO::POST;
+                  
+              }
+          }
+      }
+      
 	weightParams_p=SynthesisUtilMethods::fillWeightRecord(type, rmode,noise, robust,fieldofview,
-				 npixels, multiField, useCubeBriggs,filtertype, filterbmaj,filterbmin, filterbpa);  
-    LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+				 npixels, multiField, useCubeBriggs,filtertype, filterbmaj,filterbmin, filterbpa, fracBW);
+
        try {
     	//Int nx=itsMaxShape[0];
     	//Int ny=itsMaxShape[1];
@@ -950,11 +980,13 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 		    //vi_p->useImagingWeight(nat);
 		    if(rmode=="abs" && robust==0.0 && noise.getValue()==0.0)
 		      throw(AipsError("Absolute Briggs formula does not allow for robust 0 and estimated noise per visibility 0"));
-		    CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust, npixels, multiField);
-		    for (Int k=0; k < itsMappers.nMappers(); ++k){
-		      itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
-
-		    }
+                
+            CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust,fracBW, npixels, multiField);
+            for (Int k=0; k < itsMappers.nMappers(); ++k){
+                      itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
+                    }
+              
+              
 		  }
 		  else
 		  {

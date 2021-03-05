@@ -538,6 +538,40 @@ class mstool_test_select(mstool_test_base):
 
 # ------------------------------------------------------------------------------
 
+class mstool_test_getdata(mstool_test_base):
+
+    def setUp(self):
+        self.setUpTest()
+
+    def tearDown(self):
+        self.tearDownTest()
+
+    def test_getweights(self): 
+        """test ms.getdata, weight"""
+        self.assertEqual(len(self.ms.getdata(['weight'])['weight'][0]), self.ms.nrow())
+        print
+
+    def test_getsigma(self): 
+        """test ms.getdata, sigma"""
+        self.assertEqual(len(self.ms.getdata(['sigma'])['sigma'][0]), self.ms.nrow())
+        print
+
+    def test_getweights_channavg(self): 
+        """test ms.getdata, weight, channavg"""
+        # Average all channels together
+        self.ms.selectchannel(1, 0, 63, 1)
+        self.assertEqual(len(self.ms.getdata(['weight'])['weight'][0]), self.ms.nrow())
+        print
+
+    def test_getsigma_channavg(self): 
+        """test ms.getdata, sigma channavg"""
+        # Average all channels together
+        self.ms.selectchannel(1, 0, 63, 1)
+        self.assertEqual(len(self.ms.getdata(['sigma'])['sigma'][0]), self.ms.nrow())
+        print
+
+# ------------------------------------------------------------------------------
+
 class mstool_test_transform(mstool_test_base):
 
     def setUp(self):
@@ -1173,6 +1207,7 @@ def suite():
             mstool_test_concat,
             mstool_test_summary,
             mstool_test_select,
+            mstool_test_getdata,
             mstool_test_transform,
             mstool_test_dataIO,
             mstool_test_iter,

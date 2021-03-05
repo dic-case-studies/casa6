@@ -203,18 +203,34 @@ void CTMainRecord::defineScanNo (const Int& scanNo)
 
 //----------------------------------------------------------------------------
 
-void CTMainRecord::defineParam (const Array<Complex>& param)
+void CTMainRecord::defineCParam (const Array<Complex>& param)
 {
-// Define the PARAM field value
+// Define the CPARAM field value
 // Input:
 //    param           const Array<Complex>&    cal solution param values
 // Output to private data:
 //    itsRecord        Record                Underlying record object
 //
   Record newRec;
-  newRec.define ("PARAM", param);
+  newRec.define ("CPARAM", param);
   addRec (newRec);
 };
+
+//----------------------------------------------------------------------------
+
+void CTMainRecord::defineFParam (const Array<Float>& param)
+{
+// Define the FPARAM field value
+// Input:
+//    param           const Array<Float>&    cal solution param values
+// Output to private data:
+//    itsRecord        Record                Underlying record object
+//
+  Record newRec;
+  newRec.define ("FPARAM", param);
+  addRec (newRec);
+};
+
 
 //----------------------------------------------------------------------------
 
