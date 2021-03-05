@@ -123,6 +123,7 @@ class test_tclean_base(unittest.TestCase):
             self.parallel = True
 
     def tearDown(self):
+        #print("TEST_DICT=",test_dict)
         generate_weblog("tclean_ALMA_pipeline",test_dict)
         print("Closing ia tool")
         self._myia.done()
@@ -489,6 +490,26 @@ class test_tclean_base(unittest.TestCase):
         else:
             print("no saving with format:", outformat)
 
+    def modify_dict(self, output=None, testname=None, parallel=None):
+        ''' Modified test_dict costructed by casatestutils add_to_dict to include only 
+            the task commands executed and also add self.parallel value to the dictionary.
+            The cube imaging cases usually have if-else conditional based on parallel mode is on or not
+            to trigger different set of tclean commands.
+            Assumption: self.parallel is used to trigger different tclean commands at iter1 step.
+            For self.parallel=True, iter1 has two tclean commands (2nd and 3rd tclean commands within
+            each relevante test(cube) and so in test_dict['taskcall'], 1st(iter0) and 2nd and 3rd commands
+            are the ones acutually executed and should remove 4th (self.parallel=False) case.
+        '''
+        if testname in output:
+            if 'taskcall' in output[testname] and len(output[testname]['taskcall'])==4: 
+                if parallel:
+                    # 0,1,2th in the list are used pop last one
+                    output[testname]['taskcall'].pop()
+                else:
+                    output[testname]['taskcall'].pop(1)
+                    output[testname]['taskcall'].pop(1)
+            output[testname]['self.parallel']=parallel
+
 
 
 ##############################################
@@ -820,7 +841,8 @@ class Test_standard(test_tclean_base):
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        test_dict['test_standard_cube']['self.parallel'] = self.parallel
+        self.modify_dict(test_dict, 'test_standard_cube', self.parallel)
+
         test_dict['test_standard_cube']['report'] = report
         test_dict['test_standard_cube']['images'] = []
 
@@ -1179,7 +1201,8 @@ class Test_standard(test_tclean_base):
         add_to_dict(self, output = test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        test_dict['test_standard_cube_briggsbwtaper']['self.parallel'] = self.parallel
+        self.modify_dict(test_dict, 'test_standard_cube_briggsbwtaper', self.parallel)
+
         test_dict['test_standard_cube_briggsbwtaper']['report'] = report
         test_dict['test_standard_cube_briggsbwtaper']['images'] = []
 
@@ -3902,7 +3925,8 @@ class Test_mosaic(test_tclean_base):
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        test_dict['test_mosaic_cube']['self.parallel'] = self.parallel
+        self.modify_dict(test_dict, 'test_mosaic_cube', self.parallel)
+
         test_dict['test_mosaic_cube']['report'] = report
         test_dict['test_mosaic_cube']['images'] = []
 
@@ -4279,7 +4303,8 @@ class Test_mosaic(test_tclean_base):
         add_to_dict(self, output=test_dict, dataset = \
             "E2E6.1.00034.S_tclean.ms")
 
-        test_dict['test_mosaic_cube_briggsbwtaper']['self.parallel'] = self.parallel
+        self.modify_dict(test_dict, 'test_mosaic_cube_briggsbwtaper', self.parallel)
+
         test_dict['test_mosaic_cube_briggsbwtaper']['report'] = report
         test_dict['test_mosaic_cube_briggsbwtaper']['images'] = []
 
