@@ -62,6 +62,9 @@ using namespace casacore;
 
 namespace {
 
+// for TDM spw: resolve 1 channel into 5 subchannels for ATM model
+constexpr unsigned int kNumResolveTDM = 5u;
+
 constexpr float kNoCache = -1.0f;
 constexpr int kInvalidIndex = -1;
 constexpr double kValueUnset = std::numeric_limits<double>::quiet_NaN();
@@ -291,13 +294,11 @@ inline Vector<Int> getScienceSpw(MeasurementSet const &ms) {
   std::set_union(fdmSpws.begin(), fdmSpws.end(),
                  tdmSpws.begin(), tdmSpws.end(),
                  std::inserter(fdmTdmSpws, fdmTdmSpws.end()));
-  std::vector<uInt> ss;
+  std::vector<Int> ss;
   std::set_intersection(onSourceSpws.begin(), onSourceSpws.end(),
                         fdmTdmSpws.begin(), fdmTdmSpws.end(),
                         std::back_inserter(ss));
-  Vector<Int> scienceSpws(ss.size());
-  convertArray(scienceSpws, Vector<uInt>(ss));
-  return scienceSpws;
+  return Vector<Int>(ss);
 }
 
 } // anonymous namespace
@@ -328,7 +329,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     atmRelHumidityData_(),
     isTdmSpw_(),
     doSmooth_(),
-    nchanBBPerSpw_(),
     nchanPerSpw_(),
     currentSpwId_(kInvalidIndex),
     transformSubchunk_(false),
@@ -500,12 +500,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
   auto const nameColumn = spectralWindowSubtablecols().name();
   auto const nchanColumn = spectralWindowSubtablecols().numChan();
 
-  // number of channels per processing spw
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
-    nchanPerSpw_[spw] = nchanColumn(spw);
-  }
-
   // number of channels per baseband
   std::map<Int, uInt> nchanPerBB;
   std::map<SpwId, Int> spwBBMap;
@@ -533,34 +527,41 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
 
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
+
+    // number of channels for processing spw
+    nchanPerSpw_[spw] = nchanColumn(spw);
+
+    // number of total channels for baseband associated with processing spw
     auto j = spwBBMap.find(spw);
-    if (j == spwBBMap.end()) {
-      nchanBBPerSpw_[spw] = 0u;
-    } else {
-      nchanBBPerSpw_[spw] = nchanPerBB[j->second];
-    }
-    auto const nchan = nchanBBPerSpw_[spw];
-    os << "nchan per BB for SPW " << spw << " is " << nchan << LogIO::POST;
-    isTdmSpw_[spw] = (nchan == 128u || nchan == 256u);
+    auto const nchanBB = (j == spwBBMap.end()) ? 0u : nchanPerBB[j->second];
+
+    // check if spw is TDM
+    os << "nchan per BB for SPW " << spw << " is " << nchanBB << LogIO::POST;
+    isTdmSpw_[spw] = (nchanBB == 128u || nchanBB == 256u);
     os << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << LogIO::POST;
+
+    // smoothing control
+    Int const polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
+    Int const numPol = polarizationSubtablecols().numCorr().get(polId);
+    uInt numChanPol = nchanBB * numPol;
+    doSmooth_[spw] = (numChanPol == 256u || numChanPol == 8192u);
   }
 
   // notification on non-processing spw
-  Vector<SpwId> allSpwIds(ms().spectralWindow().nrow());
-  indgen(allSpwIds);
-  std::vector<uInt> nonProcessingSpws;
-  nonProcessingSpws.reserve(allSpwIds.size());
-  for (auto i = allSpwIds.begin(); i != allSpwIds.end(); ++i) {
-    if (allNE(processSpwList_, static_cast<Int>(*i))) {
-      nonProcessingSpws.push_back(*i);
-    }
-  }
+  MSMetaData msmd(&ms(), kNoCache);
+  std::set<uInt> allSpwIds = msmd.getSpwIDs();
+  std::set<uInt> nonProcessingSpws;
+  std::set_difference(allSpwIds.begin(), allSpwIds.end(),
+                      processSpwList_.begin(), processSpwList_.end(),
+                      std::inserter(nonProcessingSpws, nonProcessingSpws.begin()));
   if (nonProcessingSpws.size() > 0) {
-    os << LogIO::WARN << "SPWs ";
+    os << LogIO::WARN << "SPW"
+       << ((nonProcessingSpws.size() == 1u) ? " " : "s ");
     for (auto i = nonProcessingSpws.begin(); i != nonProcessingSpws.end(); ++i) {
       os << *i << " ";
     }
-    os << "are output but not corrected" << LogIO::POST;
+    os << ((nonProcessingSpws.size() == 1u) ? "is" : "are")
+       << " output but not corrected" << LogIO::POST;
   }
 
   // read MAIN table (OFF_SOURCE time)
@@ -805,21 +806,14 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     Vector<Double> cw = channelWidthsPerSpw[spw];
     unsigned int nchan = cf.nelements();
 
-    // smoothing control
-    Int const polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
-    Int const numPol = polarizationSubtablecols().numCorr().get(polId);
-    uInt numChanPerBB = nchanBBPerSpw_[spw];
-    Int numChanPol = numChanPerBB * numPol;
-    doSmooth_[spw] = (numChanPol == 256 || numChanPol == 8192);
-
     unsigned int refChan = (nchan - 1) / 2;
     double centerFreq = cf[refChan];
     Double chanSep = (nchan == 1u) ? cw[0] : (cf[nchan - 1] - cf[0]) / static_cast<Double>(nchan - 1);
     if (isTdmSpw_[spw]) {
       // configure 5x finer spectral grid than native one
-      chanSep /= 5.0;
-      nchan *= 5u;
-      refChan = refChan * 5 + 2u;
+      chanSep /= static_cast<Double>(kNumResolveTDM);
+      nchan *= kNumResolveTDM;
+      refChan = refChan * kNumResolveTDM + (kNumResolveTDM - 1) / 2u;
     }
 
     // SpectralGrid
@@ -1002,7 +996,7 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
     uInt const nativeNumChan = nchanPerSpw_[currentSpwId_];
     returnValue.resize(nativeNumChan);
     for (uInt i = 0; i < nativeNumChan; ++i) {
-      returnValue[i] = smoothedCorrectionFactor[2 + i * 5];
+      returnValue[i] = smoothedCorrectionFactor[(kNumResolveTDM - 1) / 2 + i * kNumResolveTDM];
     }
   } else if (doSmooth_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " requires smoothing " << endl;

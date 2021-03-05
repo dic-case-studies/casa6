@@ -184,7 +184,6 @@ private:
   // spw related
   std::map<SpwId, bool> isTdmSpw_;
   std::map<SpwId, bool> doSmooth_;
-  std::map<SpwId, casacore::uInt> nchanBBPerSpw_;
   std::map<SpwId, casacore::uInt> nchanPerSpw_;
 
   // current iterator status
