@@ -32,10 +32,14 @@ private:
   casacore::Matrix<casacore::Float> itsMatDirty;
   casacore::Matrix<casacore::Complex> itsPsfFT;
   std::vector<casacore::IPosition> center;
+  //genie
   //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual;
   casacore::Matrix<casacore::Float> newResidual;
-  casacore::Matrix<casacore::Float> AspConvPsf; // genie
-  casacore::Matrix<casacore::Float> dAspConvPsf; // genie
+  casacore::Matrix<casacore::Float> AspConvPsf;
+  casacore::Matrix<casacore::Float> dAspConvPsf;
+  casacore::FFTServer<casacore::Float,casacore::Complex> fft;
+  casacore::Matrix<casacore::Float> Asp;
+  casacore::Matrix<casacore::Float> dAsp;
 
 public:
   ParamObj(const casacore::Matrix<casacore::Float>& dirty,
@@ -49,10 +53,14 @@ public:
     nX = itsMatDirty.shape()(0);
     nY = itsMatDirty.shape()(1);
     AspLen = center.size();
+    //genie
     //newResidual = Eigen::MatrixXf::Zero(nX, nY);
     newResidual.resize(nX, nY);
-    AspConvPsf.resize(nX, nY); //genie
-    dAspConvPsf.resize(nX, nY); //genie
+    AspConvPsf.resize(nX, nY);
+    dAspConvPsf.resize(nX, nY);
+    fft = casacore::FFTServer<casacore::Float,casacore::Complex>(itsMatDirty.shape());
+    Asp.resize(nX, nY);
+    dAsp.resize(nX, nY);
   }
 
   ~ParamObj() = default;
@@ -63,12 +71,18 @@ public:
   unsigned int getterAspLen() { return AspLen; }
   int getterNX() { return nX; }
   int getterNY() { return nY; }
+  // genie
   //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> getterRes() { return newResidual; }
   //void setterRes(const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>& res) { newResidual = res; }
   casacore::Matrix<casacore::Float>  getterRes() { return newResidual; }
   void setterRes(const casacore::Matrix<casacore::Float>& res) { newResidual = res; }
-  casacore::Matrix<casacore::Float>  getterAspConvPsf() { return AspConvPsf; } //genie
-  casacore::Matrix<casacore::Float>  getterDAspConvPsf() { return dAspConvPsf; } //genie
+  casacore::Matrix<casacore::Float>  getterAspConvPsf() { return AspConvPsf; }
+  void setterAspConvPsf(const casacore::Matrix<casacore::Float>& m) { AspConvPsf = m; }
+  casacore::Matrix<casacore::Float>  getterDAspConvPsf() { return dAspConvPsf; }
+  casacore::FFTServer<casacore::Float,casacore::Complex> getterFFTServer() { return fft; }
+  casacore::Matrix<casacore::Float>  getterAsp() { return Asp; }
+  void setterAsp(const casacore::Matrix<casacore::Float>& m) { Asp = m; }
+  casacore::Matrix<casacore::Float>  getterDAsp() { return dAsp; }
 };
 
 } // end namespace casa
@@ -88,14 +102,15 @@ double my_f (const gsl_vector *x, void *params)
     const unsigned int AspLen = MyP->getterAspLen();
     const int nX = MyP->getterNX();
     const int nY = MyP->getterNY();
+    //genie
     //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
     casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
-	double fx = 0.0;
+    casacore::FFTServer<casacore::Float,casacore::Complex> fft = MyP->getterFFTServer();
+    casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf());
+    casacore::Matrix<casacore::Float> Asp(MyP->getterAsp());
 
 	//Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> AmpAspConvPsfSum = Eigen::MatrixXf::Zero(nX, nY);
-
-
-	casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf()); // genie
+    double fx = 0.0;
     double amp = 1;
 
 	const int refi = nX/2;
@@ -128,7 +143,7 @@ double my_f (const gsl_vector *x, void *params)
 	  // x[0]: Amplitude0,       x[1]: scale0
 	  // x[2]: Amplitude1,       x[3]: scale1
 	  // x[2k]: Amplitude(k), x[2k+1]: scale(k+1)
-	  casacore::Matrix<casacore::Float> Asp(nX, nY);
+	  //casacore::Matrix<casacore::Float> Asp(nX, nY);
 	  Asp = 0.0;
 
 	  //const double sigma5 = 5 * scale / 2;
@@ -160,7 +175,7 @@ double my_f (const gsl_vector *x, void *params)
 	  }
 
 	  casacore::Matrix<casacore::Complex> AspFT;
-	  casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
+	  //casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
 	  fft.fft0(AspFT, Asp);
 
 	  casacore::Matrix<casacore::Complex> cWork;
@@ -192,6 +207,10 @@ double my_f (const gsl_vector *x, void *params)
 		  AmpAspConvPsfSum(i, j) += amp * AspConvPsf(i, j);
 		}
 	  }*/
+
+	  // save this for my_df
+	  MyP->setterAsp(Asp);
+	  MyP->setterAspConvPsf(AspConvPsf);
 	} // end get amp * AspenConvPsf
 
 	// Update the residual using the current residual image and the latest Aspen.
@@ -244,18 +263,22 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
     const unsigned int AspLen = MyP->getterAspLen();
     const int nX = MyP->getterNX();
     const int nY = MyP->getterNY();
+    //genie
     //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual = MyP->getterRes();
     casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
-    casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf()); // genie
-    casacore::Matrix<casacore::Float> dAspConvPsf(MyP->getterDAspConvPsf()); // genie
+    casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf());
+    casacore::Matrix<casacore::Float> dAspConvPsf(MyP->getterDAspConvPsf());
+    casacore::FFTServer<casacore::Float,casacore::Complex> fft = MyP->getterFFTServer();
+    casacore::Matrix<casacore::Float> Asp(MyP->getterAsp());
+    casacore::Matrix<casacore::Float> dAsp(MyP->getterDAsp());
 
     // gradient. 0: amplitude; 1: scale
 	// returns the gradient evaluated on x
 	for (unsigned int k = 0; k < AspLen; k ++)
 	{
-	  casacore::Matrix<casacore::Float> Asp(nX, nY);
-	  Asp = 0.0;
-	  casacore::Matrix<casacore::Float> dAsp(nX, nY);
+	  //casacore::Matrix<casacore::Float> Asp(nX, nY);
+	  //Asp = 0.0;
+	  //casacore::Matrix<casacore::Float> dAsp(nX, nY);
 	  dAsp = 0.0;
 	  double amp = gsl_vector_get(x, 2*k);
       double scale = gsl_vector_get(x, 2*k+1);
@@ -282,21 +305,19 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	      const int px = i;
 	      const int py = j;
 
-	      Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
+	      //Asp(i,j) = (1.0/(sqrt(2*M_PI)*fabs(scale)))*exp(-(pow(i-center[k][0],2) + pow(j-center[k][1],2))*0.5/pow(scale,2));
 	      dAsp(i,j)= Asp(i,j) * (((pow(i-center[k][0],2) + pow(j-center[k][1],2)) / pow(scale,2) - 1) / fabs(scale)); // verified by python
 	    }
 	  }
 
-	  casacore::Matrix<casacore::Complex> AspFT;
-	  casacore::FFTServer<casacore::Float,casacore::Complex> fft(itsMatDirty.shape());
+	  /*casacore::Matrix<casacore::Complex> AspFT;
 	  fft.fft0(AspFT, Asp);
-
 	  casacore::Matrix<casacore::Complex> cWork;
 	  cWork = AspFT * itsPsfFT;
 	  //casacore::Matrix<casacore::Float> AspConvPsf(itsMatDirty.shape(), (casacore::Float)0.0);
 	  fft.fft0(AspConvPsf, cWork, false);
 	  fft.flip(AspConvPsf, false, false); //need this
-
+      */
 	  casacore::Matrix<casacore::Complex> dAspFT;
 	  fft.fft0(dAspFT, dAsp);
 	  casacore::Matrix<casacore::Complex> dcWork;
