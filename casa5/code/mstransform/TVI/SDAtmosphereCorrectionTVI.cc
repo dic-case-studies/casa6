@@ -724,23 +724,14 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   std::vector<atm::Temperature> layerTemperatures;
   if (configuration.isDefined("layerBoundaries") &&
       configuration.isDefined("layerTemperatures")) {
-    Vector<Double> layerBoundariesData = configuration.asArrayDouble("layerBoundaries");
-    Vector<Double> layerTemperaturesData = configuration.asArrayDouble("layerTemperatures");
-    if (layerBoundariesData.size() != layerTemperaturesData.size()) {
+    Vector<Double> lB = configuration.asArrayDouble("layerBoundaries");
+    Vector<Double> lT = configuration.asArrayDouble("layerTemperatures");
+    std::transform(lB.begin(), lB.end(), std::back_inserter(layerBoundaries),
+      [](Double x) {return atm::Length(x, atm::Length::UnitKiloMeter);});
+    std::transform(lT.begin(), lT.end(), std::back_inserter(layerTemperatures),
+      [](Double x) {return atm::Temperature(x, atm::Temperature::UnitKelvin);});
+    if (layerBoundaries.size() != layerTemperatures.size()) {
       os << "ERROR: list length of layerboundaries and layertemperature should be the same." << LogIO::EXCEPTION;
-    }
-    size_t const numLayer = layerBoundariesData.size();
-    layerBoundaries.resize(numLayer);
-    layerTemperatures.resize(numLayer);
-    for (size_t i = 0; i < numLayer; ++i) {
-      layerBoundaries[i] = atm::Length(
-        layerBoundariesData[i],
-        atm::Length::UnitKiloMeter
-      );
-      layerTemperatures[i] = atm::Temperature(
-        layerTemperaturesData[i],
-        atm::Temperature::UnitKelvin
-      );
     }
   }
   os << "user-defined layer:" << endl;
