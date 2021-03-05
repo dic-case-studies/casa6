@@ -282,6 +282,24 @@ bool isCloseDouble(Double const a, Double const b, Double const tolerance=1.0e-1
   return relativeDiff < tolerance;
 }
 
+inline Vector<Int> getScienceSpw(MeasurementSet const &ms) {
+  MSMetaData msmd(&ms, kNoCache);
+  std::set<uInt> fdmSpws = msmd.getFDMSpw();
+  std::set<uInt> tdmSpws = msmd.getTDMSpw();
+  std::set<uInt> onSourceSpws = msmd.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");
+  std::set<uInt> fdmTdmSpws;
+  std::set_union(fdmSpws.begin(), fdmSpws.end(),
+                 tdmSpws.begin(), tdmSpws.end(),
+                 std::inserter(fdmTdmSpws, fdmTdmSpws.end()));
+  std::vector<uInt> ss;
+  std::set_intersection(onSourceSpws.begin(), onSourceSpws.end(),
+                        fdmTdmSpws.begin(), fdmTdmSpws.end(),
+                        std::back_inserter(ss));
+  Vector<Int> scienceSpws(ss.size());
+  convertArray(scienceSpws, Vector<uInt>(ss));
+  return scienceSpws;
+}
+
 } // anonymous namespace
 
 namespace casa { //# NAMESPACE CASA - BEGIN
@@ -467,44 +485,30 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
   String const rawMs = configuration.asString("inputms");
   os << "input MS = \"" << rawMs << "\"" << LogIO::POST;
 
-  MSMetaData msmd(&ms(), kNoCache);
-  std::set<uInt> fdmSpws = msmd.getFDMSpw();
-  std::set<uInt> tdmSpws = msmd.getTDMSpw();
-  std::set<uInt> onSourceSpws = msmd.getSpwsForIntent("OBSERVE_TARGET#ON_SOURCE");
-  std::set<uInt> fdmTdmSpws;
-  std::set_union(
-    fdmSpws.begin(), fdmSpws.end(),
-    tdmSpws.begin(), tdmSpws.end(),
-    std::inserter(fdmTdmSpws, fdmTdmSpws.end())
-  );
-  std::set<uInt> scienceSpws;
-  std::set_intersection(
-    onSourceSpws.begin(), onSourceSpws.end(),
-    fdmTdmSpws.begin(), fdmTdmSpws.end(),
-    std::inserter(scienceSpws, scienceSpws.end())
-  );
+  Vector<SpwId> scienceSpws = getScienceSpw(ms());
 
   // udpate processSpwList_: exclude non-science spws
-  std::vector<uInt> v(processSpwList_.nelements());
-  for (unsigned int i = 0; i < processSpwList_.nelements(); ++i) {
-    v[i] = processSpwList_[i];
+  std::vector<SpwId> updated;
+  updated.reserve(processSpwList_.nelements());
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    if (anyEQ(scienceSpws, *i)) {
+      updated.push_back(*i);
+    }
   }
-  std::set<uInt> updated;
-  std::set_intersection(
-    scienceSpws.begin(), scienceSpws.end(),
-    v.begin(), v.end(),
-    std::inserter(updated, updated.end())
-  );
-  processSpwList_.resize(updated.size());
-  unsigned int index = 0;
-  for (auto i = updated.begin(); i != updated.end(); ++i) {
-    processSpwList_[index++] = *i;
-  }
+  processSpwList_.assign(Vector<SpwId>(updated));
 
-  std::map<Int, uInt> nchanPerBB;
-  std::map<SpwId, Int> spwBBMap;
   auto const nameColumn = spectralWindowSubtablecols().name();
   auto const nchanColumn = spectralWindowSubtablecols().numChan();
+
+  // number of channels per processing spw
+  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
+    SpwId const spw = *i;
+    nchanPerSpw_[spw] = nchanColumn(spw);
+  }
+
+  // number of channels per baseband
+  std::map<Int, uInt> nchanPerBB;
+  std::map<SpwId, Int> spwBBMap;
   for (auto i = scienceSpws.begin(); i != scienceSpws.end(); ++i) {
     SpwId const spw = *i;
     String const name = nameColumn(spw);
@@ -529,11 +533,6 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
 
   for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
     SpwId const spw = *i;
-    nchanPerSpw_[spw] = nchanColumn(spw);
-  }
-
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    SpwId const spw = *i;
     auto j = spwBBMap.find(spw);
     if (j == spwBBMap.end()) {
       nchanBBPerSpw_[spw] = 0u;
@@ -546,13 +545,9 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
     os << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << LogIO::POST;
   }
 
-  os << "TDM flag:" << endl;
-  os.output() << std::boolalpha;
-  for (auto i = isTdmSpw_.begin(); i != isTdmSpw_.end(); ++i) {
-    os << "    spw " << i->first << " " << i->second << endl;
-  }
-  os << LogIO::POST;
-  std::set<uInt> allSpwIds = msmd.getSpwIDs();
+  // notification on non-processing spw
+  Vector<SpwId> allSpwIds(ms().spectralWindow().nrow());
+  indgen(allSpwIds);
   std::vector<uInt> nonProcessingSpws;
   nonProcessingSpws.reserve(allSpwIds.size());
   for (auto i = allSpwIds.begin(); i != allSpwIds.end(); ++i) {
