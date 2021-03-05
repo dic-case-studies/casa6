@@ -17,27 +17,27 @@ from taskinit import *
 datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
 
 # Include ms for BPOLY and GSPLINE
-testcaltables = {'a_mueller.uvcont.tbl': 250000,
-    'anpos.autoCAS13057.cal': 40000,
-    'bandtypeBPOLY.B0': 70000,
-    'df_jones.cal': 120000,
-    'egaincurve.cal': 40000,
-    'f_jones.cal': 50000,
-    'gaincaltest2.ms': 200000,
-    'gaincaltest2.ms.T0': 40000,
-    'gaintypek.G0': 40000,
-    'gaintypeSpline.G0': 90000,
-    'g_evlaswpow.cal': 40000,
-    'glinxphf_jones.cal': 30000,
-    'k_jones.cal': 40000,
-    'm_mueller.cal': 40000,
-    'n08c1.sbdcal': 40000,
-    'ngc5921.ref1a.bcal': 100000,
-    'ngc5921.ref1a.gcal': 40000,
-    'ngc5921.ref2a.gcal': 40000,
-    'topac.cal': 30000,
-    'tsysweight_ave.tsys.cal': 100000,
-    'xf_jones.cal': 80000}
+testcaltables = {'a_mueller.uvcont.tbl': (250000, 'time', 'gamp'),
+    'anpos.autoCAS13057.cal': (40000, 'antenna1', 'antpos'),
+    'bandtypeBPOLY.B0': (70000, 'freq', 'gamp'),
+    'df_jones.cal': (120000, 'antenna1', 'gamp'),
+    'egaincurve.cal': (40000, 'time', 'gamp'),
+    'f_jones.cal': (50000, 'time', 'tec'),
+    'gaincaltest2.ms': (200000, 'time', 'amp'),
+    'gaincaltest2.ms.T0': (40000, 'time', 'gamp'), 
+    'gaintypek.G0': (40000, 'antenna1', 'delay'),
+    'gaintypeSpline.G0': (90000, 'time', 'gamp'),
+    'g_evlaswpow.cal': (40000,  'time', 'spgain'),
+    'glinxphf_jones.cal': (30000, 'time', 'gamp'),
+    'k_jones.cal': (40000, 'antenna1', 'delay'),
+    'm_mueller.cal': (40000, 'time', 'gamp'),
+    'n08c1.sbdcal': (40000, 'time', 'delay'),
+    'ngc5921.ref1a.bcal': (100000, 'chan', 'gamp'),
+    'ngc5921.ref1a.gcal': (40000, 'time', 'gamp'),
+    'ngc5921.ref2a.gcal': (40000, 'time', 'gamp'),
+    'topac.cal': (30000, 'time', 'opac'),
+    'tsysweight_ave.tsys.cal': (100000, 'chan', 'tsys'),
+    'xf_jones.cal': (80000, 'chan', 'gphase')}
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):
@@ -831,7 +831,7 @@ class test_calplot(plotms_test_base):
         self.setUpCalData()
         
     def tearDown(self):
-        self.tearDownData
+        self.tearDownData()
 
     def test_calplot_basic(self):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
@@ -937,19 +937,72 @@ class test_calplot(plotms_test_base):
             showgui=False, highres=True, spw='0:0~10')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
-    def test_calplot_types(self):
-        '''test_calplot_types: plot supported caltable types'''
+
+    def test_calplot_default_axes(self):
+        '''test_calplot_default_axes: plot supported caltables with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
         self.removePlotfile()
+
+        for table in testcaltables.keys():
+            if os.path.splitext(table)[1] == '.ms':
+                continue
+            print('Test caltable ' + table)
+            testtable = os.path.join(self.outputDir, table)
+            (plotsize, xaxis, yaxis) = testcaltables[table]
+            res = plotms(vis=testtable, plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, overwrite=True)
+            self.assertTrue(res)
+            self.checkPlotfile(self.plotfile_jpg, plotsize)
+            self.removePlotfile()
+
+    def test_calplot_cal_axes(self):
+        '''test_calplot_cal_axes: plot supported caltable types with cal yaxis'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot07.jpg")
+        self.removePlotfile()
+
         for table in testcaltables.keys():
             if os.path.splitext(table)[1] == '.ms':
                 continue
             testtable = os.path.join(self.outputDir, table)
-            res = plotms(vis=testtable, plotfile=self.plotfile_jpg,
-               showgui=False, highres=True, overwrite=True)
+            (plotsize, xaxis, yaxis) = testcaltables[table]
+            print('Test caltable ' + table + ' with ' + yaxis)
+            res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis=xaxis,
+               yaxis=yaxis, showgui=False, highres=True, overwrite=True)
             self.assertTrue(res)
-            self.checkPlotfile(self.plotfile_jpg, testcaltables[table])
+            self.checkPlotfile(self.plotfile_jpg, plotsize)
             self.removePlotfile()
+
+        # test other cal axes
+        testtable = os.path.join(self.outputDir, 'ngc5921.ref1a.gcal')
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='gphase', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 100000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='greal', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 60000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='gimag', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 60000)
+        self.removePlotfile()
+
+        testtable = os.path.join(self.outputDir, 'n08c1.sbdcal')
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='rate', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='disp', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
 
     def test_calplot_averaging(self):
         '''test_calplot_averaging: caltable with time and channel averaging'''
@@ -957,7 +1010,7 @@ class test_calplot(plotms_test_base):
         self.removePlotfile()
         # Time averaging for G Jones table
         res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, avgtime='6000', avgscan=True)   
+            showgui=False, highres=True, avgtime='6000', avgscan=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 40000)
         self.removePlotfile()
