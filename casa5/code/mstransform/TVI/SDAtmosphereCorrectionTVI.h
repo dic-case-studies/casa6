@@ -150,6 +150,9 @@ private:
   // initialize AtmosphereModel
   void initializeAtmosphereModel(casacore::Record const &configuration);
 
+  // prologue function for each chunk
+  void initializeChunk();
+
   // sync with the current chunk/subchunk
   void updateSkyStatus(atm::SkyStatus &skyStatus, casacore::Int atmTimeIndex);
   casacore::Vector<casacore::Double> updateCorrectionFactor(atm::SkyStatus &skyStatus, casacore::Double const currentTime);

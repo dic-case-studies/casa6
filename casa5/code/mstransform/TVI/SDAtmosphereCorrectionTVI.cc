@@ -349,7 +349,6 @@ void SDAtmosphereCorrectionTVI::origin() {
   // Synchronize own VisBuffer
   configureNewSubchunk();
 
-  // new logic:
   // compute all correction factors for subchunk at once
   updateCorrectionFactorInAdvance();
 }
@@ -360,9 +359,18 @@ void SDAtmosphereCorrectionTVI::next() {
   // Synchronize own VisBuffer
   configureNewSubchunk();
 
-  // new logic:
   // compute all correction factors for subchunk at once
   updateCorrectionFactorInAdvance();
+}
+
+void SDAtmosphereCorrectionTVI::initializeChunk() {
+  // setup some cache values
+  currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
+
+  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+  auto const subchunkId = getSubchunkId();
+  os << "Process chunk " << subchunkId.first << "-" << subchunkId.second
+     << " SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
@@ -371,8 +379,7 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   // initialization
   initializeAtmosphereCorrection(configuration_);
 
-  // setup some cache values
-  currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
+  initializeChunk();
 
   // initialize Atmosphere Transmission Model
   initializeAtmosphereModel(configuration_);
@@ -384,23 +391,12 @@ void SDAtmosphereCorrectionTVI::originChunks(Bool forceRewind) {
   int const numProcessors = omp_get_num_procs();
   omp_set_num_threads(min(kNumThreads, numProcessors));
 #endif
-
-  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  auto const subchunkId = getSubchunkId();
-  os << "Process chunk " << subchunkId.first
-     << " SPW " << currentSpwId_ << LogIO::POST;
 }
 
 void SDAtmosphereCorrectionTVI::nextChunk() {
   TransformingVi2::nextChunk();
 
-  // setup some cache values
-  currentSpwId_ = dataDescriptionSubtablecols().spectralWindowId().get(dataDescriptionId());
-
-  LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  auto const subchunkId = getSubchunkId();
-  os << "Process chunk " << subchunkId.first
-     << " SPW " << currentSpwId_ << LogIO::POST;
+  initializeChunk();
 }
 
 void SDAtmosphereCorrectionTVI::visibilityCorrected(Cube<Complex> & vis) const {
@@ -447,9 +443,8 @@ void SDAtmosphereCorrectionTVI::floatData(casacore::Cube<casacore::Float> & fcub
   }
 }
 
-void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
-  Record const &configuration
-) {
+void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(Record const &configuration)
+{
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
 
   // processing spws
