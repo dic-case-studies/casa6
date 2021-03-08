@@ -489,12 +489,10 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(
 
   // udpate processSpwList_: exclude non-science spws
   std::vector<SpwId> updated;
-  updated.reserve(processSpwList_.nelements());
-  for (auto i = processSpwList_.begin(); i != processSpwList_.end(); ++i) {
-    if (anyEQ(scienceSpws, *i)) {
-      updated.push_back(*i);
-    }
-  }
+  std::copy_if(processSpwList_.begin(), processSpwList_.end(),
+    std::back_inserter(updated),
+    [&](SpwId x) -> bool {return anyEQ(scienceSpws, x);}
+  );
   processSpwList_.assign(Vector<SpwId>(updated));
 
   auto const nameColumn = spectralWindowSubtablecols().name();
