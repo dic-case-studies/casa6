@@ -38,7 +38,8 @@ def pngWidthHeight(filename):
     """
     if (os.path.exists(filename) == False):
         print("Cannot find file = ", filename)
-        return
+        return Exception("{} not Found".format(filename)), False
+
     f = open(filename, 'rb')
     data = f.read()
     f.close()
@@ -74,8 +75,10 @@ else:
 
 
 figdir= os.getcwd() + '/'
+
+# Set to False to Leave PNGs and PDFs
 delete_artifacts = True
-print(datapath)
+
 class plotbandpass_1_test(unittest.TestCase):
 
     @classmethod
@@ -127,6 +130,9 @@ class plotbandpass_1_test(unittest.TestCase):
 
         plotbandpass(datapath+'bandpass.bcal',showtsky=False,xaxis='freq',yaxis='amp',overlay='baseband',spw='',field='3c279', interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(1),debug=False)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression01.DV04.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 2
     def test_createImage_regression02(self):
         #regression02.pdf
@@ -137,6 +143,9 @@ class plotbandpass_1_test(unittest.TestCase):
         plotbandpass(datapath+'bandpass.bcal',showtsky=False,xaxis='freq',yaxis='ampdb',overlay='antenna',spw='',
              field='!Titan,!TW Hya,!J1147-382=QSO',
              interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(2),debug=False)
+
+        width,height = pngWidthHeight(os.getcwd()+'/regression02.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
 
     # 3
     def test_createImage_regression03(self):
@@ -194,6 +203,9 @@ class plotbandpass_1_test(unittest.TestCase):
         plotbandpass(datapath+'bandpass.bcal',showtsky=False,xaxis='freq',yaxis='both',phase=[-180,180],plotrange=[0,0,0,2],
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(3),debug=False)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression03.DV04.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 4
     def test_createImage_regression04(self):
         #regression04.pdf
@@ -205,25 +217,40 @@ class plotbandpass_1_test(unittest.TestCase):
              chanrange='1200~2000',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(4),
              debug=False, chanrangeSetXrange=True)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression04.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 5
     def test_createImage_regression05(self):
         plotbandpass(datapath+'bandpass.bcal',showatm=True,xaxis='chan',yaxis='amp',overlay='antenna',spw='',field='',
                   plotrange=[1200,2000,0,0],interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(5),debug=False)
+
+        width,height = pngWidthHeight(os.getcwd()+'/regression05.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
 
     # 6
     def test_createImage_regression06(self):
         plotbandpass(datapath+'bandpass.bcal',showatm=True,xaxis='chan',yaxis='amp',spw='',field='',plotrange=[1200,3840,0,0],
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(6),debug=False)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression06.DV04.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 7
     def test_createImage_regression07(self):
         plotbandpass(datapath+'bandpass.bcal',showtsky=False,xaxis='chan',yaxis='amp',overlay='antenna',spw='',field='',showatm=True,
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(7),debug=False)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression07.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 8
     def test_createImage_regression08(self):
         plotbandpass(datapath+'bandpass.bcal',showtsky=False,xaxis='freq',yaxis='phase',overlay='antenna',spw='',field='',
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(8),debug=False)
+
+        width,height = pngWidthHeight(os.getcwd()+'/regression08.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
 
     # 9
     def test_createImage_regression09(self):
@@ -231,10 +258,16 @@ class plotbandpass_1_test(unittest.TestCase):
              chanrange='1200~1800',interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(9),
              debug=False, chanrangeSetXrange=True)
 
+        width,height = pngWidthHeight(os.getcwd()+'/regression09.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
+
     # 10
     def test_createImage_regression10(self):
         plotbandpass(datapath+'bandpass.bcal',overlay='antenna',yaxis='amp',field='0~1,4',xaxis='freq',showtsky=True,
                   interactive=False,buildpdf=True,figfile=figdir+'regression%02d'%(10),debug=False)
+
+        width,height = pngWidthHeight(os.getcwd()+'/regression10.spw00.t00.png')
+        self.assertTrue(width == 864,"Observed: {}, Expected: {}".format(width, 864) )
 
 class plotbandpass_2_test(unittest.TestCase):
 
@@ -1036,8 +1069,8 @@ class plotbandpass_CAS_6147_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-6147/uid___A002_X71a45c_X1d24.ms.split', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
-        os.symlink(datapath+'CAS-6147/uid___A002_X71a45c_X1d24.ms.split.bandpass', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
+        os.symlink(datapath+'uid___A002_X71a45c_X1d24.ms.split', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
+        os.symlink(datapath+'uid___A002_X71a45c_X1d24.ms.split.bandpass', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
@@ -1057,8 +1090,8 @@ class plotbandpass_CAS_6111_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-6111/uid___A002_X5e971a_X124.ms', os.getcwd() + '/uid___A002_X5e971a_X124.ms')
-        os.symlink(datapath+'CAS-6111/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl', os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
+        os.symlink(datapath+'uid___A002_X5e971a_X124.ms', os.getcwd() + '/uid___A002_X5e971a_X124.ms')
+        os.symlink(datapath+'uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl', os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms')
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
@@ -1078,8 +1111,8 @@ class plotbandpass_CAS_6356_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-6356/uid___A002_X7b13df_X68f.ms', os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
-        os.symlink(datapath+'CAS-6356/uid___A002_X7b13df_X68f.ms.tsys', os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
+        os.symlink(datapath+'uid___A002_X7b13df_X68f.ms', os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
+        os.symlink(datapath+'uid___A002_X7b13df_X68f.ms.tsys', os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
@@ -1099,7 +1132,7 @@ class plotbandpass_CAS_7368_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-7368/finalBPcal.b', os.getcwd() + '/finalBPcal.b')
+        os.symlink(datapath+'finalBPcal.b', os.getcwd() + '/finalBPcal.b')
 
     def tearDown(self):
         os.unlink(os.getcwd() + '/finalBPcal.b')
@@ -1131,7 +1164,7 @@ class plotbandpass_CAS_7965_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-7965/uid___A002_X99c183_X25b6.ms.split.bandpass', os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
+        os.symlink(datapath+'uid___A002_X99c183_X25b6.ms.split.bandpass', os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
         if delete_artifacts:
@@ -1151,10 +1184,10 @@ class plotbandpass_CAS_7715_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-7715/uid___A002_Xa1f062_X37e3.ms', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms')
-        os.symlink(datapath+'CAS-7715/uid___A002_Xa1f062_X37e3.ms.tsys', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms.tsys')
-        os.symlink(datapath+'CAS-7715/uid___A002_Xa2ce2e_X54b.ms', os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms')
-        os.symlink(datapath+'CAS-7715/uid___A002_Xa2ce2e_X54b.ms.tsys', os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms.tsys')
+        os.symlink(datapath+'uid___A002_Xa1f062_X37e3.ms', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms')
+        os.symlink(datapath+'uid___A002_Xa1f062_X37e3.ms.tsys', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms.tsys')
+        os.symlink(datapath+'uid___A002_Xa2ce2e_X54b.ms', os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms')
+        os.symlink(datapath+'uid___A002_Xa2ce2e_X54b.ms.tsys', os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms.tsys')
 
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms')
@@ -1186,8 +1219,8 @@ class plotbandpass_CAS_8261_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-8261/uid___A002_Xaf2188_X213a.ms', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
-        os.symlink(datapath+'CAS-8261/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+        os.symlink(datapath+'uid___A002_Xaf2188_X213a.ms', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
+        os.symlink(datapath+'uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
@@ -1209,8 +1242,8 @@ class plotbandpass_CAS_8489_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-8489/uid___A002_X85c183_X60b.skycal.spw23.tbl', os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
-        os.symlink(datapath+'CAS-8489/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl', os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
+        os.symlink(datapath+'uid___A002_X85c183_X60b.skycal.spw23.tbl', os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
+        os.symlink(datapath+'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl', os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
         os.unlink(os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
@@ -1247,7 +1280,7 @@ class plotbandpass_CAS_8655_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-8655/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+        os.symlink(datapath+'uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
         if delete_artifacts:
@@ -1277,8 +1310,8 @@ class plotbandpass_CAS_9474_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'CAS-9474/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
-        os.symlink(datapath+'CAS-9474/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
+        os.symlink(datapath+'16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
+        os.symlink(datapath+'16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
     def tearDown(self):
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
@@ -1299,8 +1332,8 @@ class plotbandpass_SCOPS_4877_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(plotbandpass)
-        os.symlink(datapath+'SCOPS-4877/uid___A002_Xbf792a_X26ec.ms', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
-        os.symlink(datapath+'SCOPS-4877/uid___A002_Xbf792a_X26ec.ms.tsys', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
+        os.symlink(datapath+'uid___A002_Xbf792a_X26ec.ms', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
+        os.symlink(datapath+'uid___A002_Xbf792a_X26ec.ms.tsys', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
