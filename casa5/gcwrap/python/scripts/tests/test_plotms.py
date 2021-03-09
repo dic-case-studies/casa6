@@ -977,7 +977,7 @@ class test_calplot(plotms_test_base):
         res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
             yaxis='gphase', showgui=False, highres=True, overwrite=True)
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 100000)
+        self.checkPlotfile(self.plotfile_jpg, 90000)
         self.removePlotfile()
 
         res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
