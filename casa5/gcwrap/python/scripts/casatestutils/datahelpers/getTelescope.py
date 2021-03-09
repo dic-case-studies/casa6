@@ -2,6 +2,7 @@ from casatasks import listobs
 import casatools
 import sys
 import os
+import argparse
 
 def get_observation_name(data):
     listobs(vis=data, listfile="getTelescope.out")
