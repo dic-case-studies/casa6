@@ -409,6 +409,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     
     IPosition blc(itsPositionOptimum - support/2);
     IPosition trc(itsPositionOptimum + support/2 - 1);
+    // try 2.5 sigma
+   /*Int sigma5 = (Int)(5 * itsOptimumScaleSize / 2); 
+    IPosition blc(itsPositionOptimum - sigma5);
+    IPosition trc(itsPositionOptimum + sigma5 -1);*/
+
     LCBox::verify(blc, trc, inc, model.shape());
     IPosition blcPsf(blc);
     IPosition trcPsf(trc);
@@ -1202,7 +1207,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
     // ---------- BFGS algorithm begin ----------
     // fdf
-    findComponent(5, s);
+    findComponent(5, s); // has to be > =5
 
     // f only
     /*size_t iter = 0;

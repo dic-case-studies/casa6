@@ -146,8 +146,7 @@ double my_f (const gsl_vector *x, void *params)
 	  //casacore::Matrix<casacore::Float> Asp(nX, nY);
 	  Asp = 0.0;
 
-	  //const double sigma5 = 5 * scale / 2;
-	  const double sigma5 = 3 * scale;
+	  const double sigma5 = 5 * scale / 2;
 	  const int minI = std::max(0, (int)(center[k][0] - sigma5));
 	  const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
 	  const int minJ = std::max(0, (int)(center[k][1] - sigma5));
@@ -291,8 +290,7 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 	    //std::cout << "reset neg scale to " << scale << std::endl;
 	  }
 
-	  //const double sigma5 = 5 * scale / 2;
-	  const double sigma5 = 3 * scale;
+	  const double sigma5 = 5 * scale / 2;
 	  const int minI = std::max(0, (int)(center[k][0] - sigma5));
 	  const int maxI = std::min(nX-1, (int)(center[k][0] + sigma5));
 	  const int minJ = std::max(0, (int)(center[k][1] - sigma5));
@@ -377,17 +375,13 @@ void my_df (const gsl_vector *x, void *params, gsl_vector *grad)
 
 void my_fdf (const gsl_vector *v, void *params, double *f, gsl_vector *df)
 {
-  auto start = std::chrono::high_resolution_clock::now();
+  //auto start = std::chrono::high_resolution_clock::now();
   *f = my_f(v, params); // has to be double in GSL
-  auto stop = std::chrono::high_resolution_clock::now();
+  /*auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  std::cout << "BFGS my_f runtime " << duration.count() << " us" << std::endl;
+  std::cout << "BFGS my_f runtime " << duration.count() << " us" << std::endl;*/
 
-  start = std::chrono::high_resolution_clock::now();
   my_df(v, params, df);
-  stop = std::chrono::high_resolution_clock::now();
-  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  std::cout << "BFGS my_df runtime " << duration.count() << " us" << std::endl;
 }
 
 void debug_print(const gsl_multimin_fdfminimizer *s, const int k)
