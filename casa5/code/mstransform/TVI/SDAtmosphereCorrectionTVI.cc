@@ -968,12 +968,6 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   Vector<Double> returnValue;
   if (isTdmSpw_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " is TDM " << endl;
-    unsigned int numAtmChan = p.getNumChan();
-    unsigned int refAtmChan = p.getRefChan();
-    double refAtmFreq = p.getRefFreq().get();
-    double sepAtmFreq = p.getChanSep().get();
-    Vector<Double> atmFreq(numAtmChan);
-    indgen(atmFreq, refAtmFreq - sepAtmFreq * refAtmChan, sepAtmFreq);
     Vector<Double> smoothedCorrectionFactor = convolve1DHanning(correctionFactor);
     // atm frequency grid is 5x finer than native frequency grid
     uInt const nativeNumChan = nchanPerSpw_[currentSpwId_];
