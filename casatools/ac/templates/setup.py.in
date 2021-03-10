@@ -2503,7 +2503,10 @@ if __name__ == '__main__':
     grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
                                    os.path.join('casa-source','code','casatools','protos','shutdown.proto'),
                                    os.path.join('casa-source','code','casatools','protos','ping.proto'),
-                                   os.path.join('casa-source','code','display','protos','img.proto') ] )
+                                   os.path.join('casa-source','code','display','protos','img.proto'),
+                                   os.path.join('casa-source','code','casaqt','protos','plotserver.proto'),
+                                   os.path.join('casa-source','code','casaqt','protos','plotserver_events.proto')
+                               ] )
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],

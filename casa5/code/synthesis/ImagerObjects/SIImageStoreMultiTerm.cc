@@ -559,7 +559,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mods;
   }
 
-  void SIImageStoreMultiTerm::setModelImage( Vector<String> modelnames )
+  void SIImageStoreMultiTerm::setModelImage( const Vector<String> &modelnames )
   {
     LogIO os( LogOrigin("SIImageStoreMultiTerm","setModelImage",WHERE) );
 
@@ -1010,14 +1010,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/)
+  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/, Float psfcutoff)
   {
 
     LogIO os( LogOrigin("SIImageStoreMultiTerm","restore",WHERE) );
 
     for(uInt tix=0; tix<itsNTerms; tix++)
       {
-	SIImageStore::restore(rbeam, usebeam, tix);
+	SIImageStore::restore(rbeam, usebeam, tix, psfcutoff);
       }	
    
     calculateAlphaBeta("image");
