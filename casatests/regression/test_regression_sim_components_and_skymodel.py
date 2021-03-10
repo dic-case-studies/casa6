@@ -1,10 +1,10 @@
 #############################################################################
 # $Id:$                                                                     #
-# Test Name: test_regression_sim_components_and_skymodel.py                           #
+# Test Name: test_regression_sim_components_and_skymodel.py                 #
 #    Regression Test Script for simobserve/simanalyze                       #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
-#                                                                           #                                                                       #
+#                                                                           #
 #                                                                           #
 # Input data:                                                               #
 #    protoplanetary disks                                                   #
@@ -12,13 +12,14 @@
 #############################################################################
 
 import os
+import time
 import shutil
 import unittest
 
 CASA6 = False
 try:
     from casatools import ctsys, image, componentlist
-    from casatasks import simobserve, simanalyze
+    from casatasks import simobserve, simanalyze, casalog
     CASA6 = True
     
     _cl = componentlist()
@@ -27,14 +28,13 @@ try:
         pass
 except ImportError:
     from tasks import simobserve, simanalyze
-    from taskinit import cltool, iatool
+    from taskinit import cltool, iatool, casalog
     from __main__ import default
     
     _cl = cltool()
     _ia = iatool()
 
 if CASA6:
-    ctsys_resolve = ctsys.resolve
     datadir = ctsys.resolve('regression/simdata/')
     cfgdir = ctsys.resolve('alma/simmos/')
 
@@ -43,7 +43,11 @@ else:
     datadir = repodir + 'regression/simdata/'
     cfgdir = repodir + 'alma/simmos/'
 
-print ('--Running simdata of input672GHz_50pc.image--')
+def logprint(msg):
+    print(msg)
+    casalog.post(msg,origin='test_regression_sim_components_and_skymodel')
+
+logprint ('--Running simdata of input672GHz_50pc.image--')
 
 #projname = "psim2"
 #my_modelimage="diskmodel.im2"
@@ -70,25 +74,34 @@ class regression_components_skymodel_test(unittest.TestCase):
 
  
     def tearDown(self):
-        pass
- #       shutil.rmtree(projname)
- #       shutil.rmtree(self.modelname)
+        if os.path.exists(self.projname):
+            shutil.rmtree(self.projname)
+        if os.path.exists(self.complist):
+            shutil.rmtree(self.complist)
 
     def test_regression(self):
         '''Test components and skymodel...'''
+
+        startTime = time.time()
+        startProc = time.clock()
         
         # Check if modelimage and antennalist are being read from original repository
+        # ground must be set here to use appropriate defaults for "tsys-atm" when run without casalith sub-parameter defaults
+        # tsys-atm -> t_ground = 269.0, usr_pwv=0.5, seed=11111 : seed already defaults to that value
         simobserve(project=self.projname, skymodel=self.modelimage, direction=self.direction, complist=self.complist,
                    setpointings=True, mapsize="0.76arcsec", pointingspacing="0.5arcsec", integration="10s", obsmode="int",
                    antennalist=self.antennalist, refdate="2012/06/21/03:25:00", totaltime="1200s",
-                   thermalnoise="tsys-atm", user_pwv=0.5, maptype="ALMA2012",  graphics="file", verbose=True)
+                   thermalnoise="tsys-atm", user_pwv=0.5, t_ground=269.0, maptype="ALMA2012",  graphics="file", verbose=True)
 
         # Analyze and clean  results of project created above
         default(simanalyze)
-        simanalyze(project=self.projname, skymodel=self.modelimage, image=True, cell="", niter=1000, 
+        # skymodel is NOT set in log for ppdisk2_regression, which I don't understand, it doesn't matter as it picks up the correct one in psim2
+        simanalyze(project=self.projname, skymodel="", image=True, cell="", niter=1000, 
                    threshold="1e-7Jy", imsize=[192, 192], stokes="I", weighting="natural", analyze=True, interactive=False,
                    graphics="file", verbose=True)
 
+        endTime = time.time()
+        endProc = time.clock()
 
         # Regression
 
@@ -109,18 +122,12 @@ class regression_components_skymodel_test(unittest.TestCase):
         #            'min': -0.0001894,
         #            'rms': 0.0001925,
         #            'sigma': 0.00013576 }
-        # CAS-13086 : 6.2
-        refstats = { 'flux': 0.037241,
-                     'max': 0.00063924,
-                     'min': -0.00018817,
-                     'rms': 0.0001964,
-                     'sigma': 0.00013989 }
         # CAS-13086 : 5.8
-        #refstats = { 'flux': 0.037245,
-        #             'max': 0.00063979,
-        #             'min': -0.00019047,
-        #             'rms': 0.00019654,
-        #             'sigma': 0.00014007 }
+        refstats = { 'flux': 0.037245,
+                     'max': 0.00063979,
+                     'min': -0.00019047,
+                     'rms': 0.00019654,
+                     'sigma': 0.00014007 }
 
         reftol   = {'flux':  0.01,
                     'max':   0.02,
@@ -146,28 +153,29 @@ class regression_components_skymodel_test(unittest.TestCase):
         for ke in rskes:
             adiff=abs(ppdso_stats[ke][0] - refstats[ke])/abs(refstats[ke])
             if adiff < reftol[ke]:
-                print("* Passed %-5s test, got % -11.5g , expected % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
+                logprint("* Passed %-5s test, got % -11.5g , expected % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
             else:
-                print("* FAILED %-5s test, got % -11.5g instead of % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
+                logprint("* FAILED %-5s test, got % -11.5g instead of % -11.5g." % (ke, ppdso_stats[ke][0], refstats[ke]))
                 regstate = False
         
-        print ('---')
+        logprint ('---')
         if regstate:
-            print ('Passed')
-            print ('')
-            print ('Regression PASSED')
-            print ('')
+            logprint ('Regression PASSED')
         else:
-            print ('FAILED')
-            print ('')
-            print ('Regression FAILED')
-            print ('')
+            logprint ('Regression FAILED')
         
-        print ('---')
-        print ('*********************************')
-            
+        logprint ('---')
+        logprint ('*********************************')
         
-        print ('--Finished simdata of input672GHz_50pc.image regression--')
+        logprint('')
+        logprint('********** Benchmarking **************')
+        logprint('')
+        logprint('Total wall clock time was: %8.3f s.' % (endTime - startTime))
+        logprint('Total CPU        time was: %8.3f s.' % (endProc - startProc))
+        logprint('Wall processing  rate was: %8.3f MB/s.' % (17896.0 /
+                                                             (endTime - startTime)))
+        
+        logprint ('--Finished simdata of input672GHz_50pc.image regression--')
         self.assertTrue(regstate)
         
 def suite():
