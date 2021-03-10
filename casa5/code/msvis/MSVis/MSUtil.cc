@@ -176,8 +176,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       obsPos=msc.antenna().positionMeas()(0);
     }
     //////
-    Int oldDD=ddId(0);
-    Int newDD=oldDD;
+    // Int oldDD=ddId(0); // unused/commented out below in the oldDD!=newDD if
+    // Int newDD=oldDD;   // unused/commented out below in the oldDD!=newDD if
     //For now we will assume that the field is not moving very far from polynome 0
     MDirection dir =fieldCol.phaseDirMeas(fieldId);
     MFrequency::Types obsMFreqType= (MFrequency::Types) (spwCol.measFreqRef()(ddCol.spectralWindowId()(ddId(0))));
@@ -196,7 +196,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     for (uInt j=0; j< nTimes; ++j){
       if(fldId(uniqIndx[j]) ==fieldId){
 	timeCol.get(uniqIndx[j], ep);
-	newDD=ddId(uniqIndx[j]);
+	// newDD=ddId(uniqIndx[j]);  // unused below
 	/*if(oldDD != newDD){
 	  oldDD=newDD;
 	  if(spwCol.measFreqRef()(ddCol.spectralWindowId()(newDD)) != obsMFreqType){

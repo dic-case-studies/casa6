@@ -19,7 +19,6 @@ import six
 
 casa5 = False
 casa6 = False
-__bypass_parallel_processing = 0
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -36,6 +35,16 @@ if is_CASA6:
     _cb = casatools.calibrater()
     from casatasks import casalog
 
+    casampi_imported = False
+    import importlib
+    _casampi_spec = importlib.util.find_spec('casampi')
+    if _casampi_spec:
+        # don't catch import error from casampi if it is found in the system modules
+        from casampi.MPIEnvironment import MPIEnvironment
+        casampi_imported = True
+    else:
+        casalog.post('casampi not available - not testing MPIEnvironment stuff', 'WARN')
+
     def tclean_param_names():
         from casatasks.tclean import _tclean_t
         return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
@@ -50,12 +59,9 @@ else:
     from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
+    from mpi4casa.MPIEnvironment import MPIEnvironment
+    casampi_imported = True
+
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
@@ -77,6 +83,12 @@ else:
 ##################################       imagerhelpers       ###############################
 ############################################################################################
 class TestHelpers:
+
+    # For comparison with keywords added by tclean in its output images
+    if casampi_imported:
+        num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    else:
+        num_mpi_procs = 1
 
     def delmodels(self,msname="",modcol='nochange'):
        TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
@@ -480,8 +492,9 @@ class TestHelpers:
                 result, pstr = self.check_val(list1[i], list2[i], \
                     valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
                 if result == False:
-                    report = pstr
-                    break
+                    report += pstr
+                    #report = pstr
+                    #break
                 i += 1
         else:
             result = False
@@ -643,7 +656,9 @@ class TestHelpers:
         pstr += TestHelpers().check_expected_entries(mandatory_imageinfo, imageinfo, keys)
         if check_misc:
             if check_extended:
-                mandatory_miscinfo = ['INSTRUME', 'distance']
+                # basic miscinfo and 'TcleanProcessingInfo' as per CAS-12204
+                mandatory_miscinfo = ['INSTRUME', 'distance',
+                                      'mpiprocs', 'chnchnks', 'memreq', 'memavail']
                 pstr += TestHelpers().check_expected_entries(mandatory_miscinfo, miscinfo, keys)
             forbidden_miscinfo = ['OBJECT', 'TELESCOP']
             pstr += TestHelpers().check_forbidden_entries(forbidden_miscinfo, miscinfo, keys)
@@ -660,6 +675,13 @@ class TestHelpers:
                 # TODO: many tests leave 'distance' empty. Assume that's acceptable...
                 if entry != 'distance' and not keys[record][entry]:
                     pstr += ('entry {0} is found in record {1} but it is empty ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+
+                # ensure mpiprocs is correct. Other keywords added in CAS-12204 have more
+                # variable values (memavail, memreq, etc.) and cannot be compared here.
+                if entry == 'mpiprocs':
+                    if keys[record][entry] != self.num_mpi_procs:
+                        pstr += ('mpiprocs is not as expected. It is {} but it should be {}, ({})'.
+                                 format(keys[record][entry], self.num_mpi_procs, TestHelpers().verdict(False)))
         return pstr
 
     def check_forbidden_entries(self, entries, record, keys):
