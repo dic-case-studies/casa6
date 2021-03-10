@@ -114,25 +114,20 @@ inline uInt makeUnique(Vector<Double> const &data, Vector<uInt> const &sortIndex
 inline Vector<Double> getMedianDataPerTime(uInt const n, Vector<uInt> const &uniqueVector,
   Vector<uInt> const &indexVector, Vector<Double> const &data) {
   Vector<Double> out(n);
+  Bool const sorted = False;
+  Bool const takeEvenMean = True;
+  Bool const inPlace = True;
   assert(n > 0);
-  for (uInt i = 0; i < n - 1; ++i) {
+  for (uInt i = 0; i < n; ++i) {
     uInt const iStart = uniqueVector[i];
-    uInt const iEnd = uniqueVector[i + 1];
+    uInt const iEnd = (i < n - 1) ? uniqueVector[i + 1] : indexVector.nelements();
     uInt const nElem = iEnd - iStart;
     Vector<Double> tmp(nElem);
     for (uInt j = 0; j < nElem; ++j) {
       tmp[j] = data[indexVector[j + iStart]];
     }
-    out[i] = median(tmp, False, True, True);
+    out[i] = median(tmp, sorted, takeEvenMean, inPlace);
   }
-  uInt const iStart = uniqueVector[n - 1];
-  uInt const iEnd = indexVector.nelements();
-  uInt const nElem = iEnd - iStart;
-  Vector<Double> tmp(nElem);
-  for (uInt j = 0; j < nElem; ++j) {
-    tmp[j] = data[indexVector[j + iStart]];
-  }
-  out[n - 1] = median(tmp, False, True, True);
   return out;
 }
 
