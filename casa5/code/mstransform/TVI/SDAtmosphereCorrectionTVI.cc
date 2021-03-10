@@ -538,6 +538,9 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(Record const &con
     Int const numPol = polarizationSubtablecols().numCorr().get(polId);
     uInt numChanPol = nchanBB * numPol;
     doSmooth_[spw] = (numChanPol == 256u || numChanPol == 8192u);
+    if (doSmooth_[spw]) {
+      os << "SPW " << spw << " requires smoothing" << LogIO::POST;
+    }
   }
 
   // notification on non-processing spw
