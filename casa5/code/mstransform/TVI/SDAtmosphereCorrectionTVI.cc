@@ -160,15 +160,15 @@ inline std::pair<Int, Int> findNearestIndex(Vector<Double> const &data, Double c
 
 // implementation of np.convolve(mode='same')
 inline Vector<Double> convolve1DTriangle(Vector<Double> const &in) {
-  // constexpr unsigned int kNumKernel = 3u;
+  constexpr unsigned int kNumKernel = 3u;
   constexpr Double kKernelTriangle[] = {0.25, 0.5, 0.25};
   unsigned int const n = in.nelements();
   assert(n >= kNumKernel);
   Vector<Double> out(n, 0.0);
   // symmetric kernel
-  out[0] = kKernelTriangle[0] * in[1] + kKernelTriangle[1] + in[0];
+  out[0] = kKernelTriangle[0] * in[1] + kKernelTriangle[1] * in[0];
   for (unsigned int i = 1; i < n - 1; ++i) {
-    out[i] = kKernelTriangle[0] * (in[i - 1] + in[i + 1]) + kKernelTriangle[1] + in[i];
+    out[i] = kKernelTriangle[0] * (in[i - 1] + in[i + 1]) + kKernelTriangle[1] * in[i];
   }
   out[n - 1] = kKernelTriangle[0] * in[n - 2] + kKernelTriangle[1] * in[n - 1];
   return out;
