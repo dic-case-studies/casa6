@@ -480,7 +480,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(Record const &con
   String const rawMs = configuration.asString("inputms");
   os << "input MS = \"" << rawMs << "\"" << LogIO::POST;
 
-  Vector<SpwId> scienceSpws = getScienceSpw(ms());
+  Vector<SpwId> scienceSpws = getScienceSpw(MeasurementSet(rawMs));
 
   // udpate processSpwList_: exclude non-science spws
   std::vector<SpwId> updated;
