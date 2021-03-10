@@ -88,7 +88,6 @@ inline void sortTime(Vector<Double> &timeData, Vector<uInt> &indexVector) {
   ScopeGuard guard([&]() {
     timeData.freeStorage(p, b);
   });
-  LogIO os;
   Sort sort(p, timeData.nelements());
   sort.sort(indexVector, timeData.nelements());
 }
@@ -793,9 +792,11 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     Double chanSep = (nchan == 1u) ? cw[0] : (cf[nchan - 1] - cf[0]) / static_cast<Double>(nchan - 1);
     if (isTdmSpw_[spw]) {
       // configure 5x finer spectral grid than native one
+      // align frequency for channel 0
       chanSep /= static_cast<Double>(kNumResolveTDM);
       nchan *= kNumResolveTDM;
       refChan = refChan * kNumResolveTDM + (kNumResolveTDM - 1) / 2u;
+      centerFreq += static_cast<Double>(((kNumResolveTDM - 1) / 2u)) * chanSep;
     }
 
     // SpectralGrid
@@ -978,7 +979,7 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
     uInt const nativeNumChan = nchanPerSpw_[currentSpwId_];
     returnValue.resize(nativeNumChan);
     for (uInt i = 0; i < nativeNumChan; ++i) {
-      returnValue[i] = smoothedCorrectionFactor[(kNumResolveTDM - 1) / 2 + i * kNumResolveTDM];
+      returnValue[i] = smoothedCorrectionFactor[i * kNumResolveTDM];
     }
   } else if (doSmooth_[currentSpwId_]) {
     // cout << "SPW " << currentSpwId_ << " requires smoothing " << endl;
