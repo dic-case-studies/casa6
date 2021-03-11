@@ -492,8 +492,9 @@ class TestHelpers:
                 result, pstr = self.check_val(list1[i], list2[i], \
                     valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
                 if result == False:
-                    report = pstr
-                    break
+                    report += pstr
+                    #report = pstr
+                    #break
                 i += 1
         else:
             result = False

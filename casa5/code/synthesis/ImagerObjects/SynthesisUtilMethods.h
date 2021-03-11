@@ -290,7 +290,7 @@ public:
 		 const casacore::MFrequency::Types& dataFrame, const casacore::Quantity& qrestfreq, 
 		 const casacore::Double& freqmin, const casacore::Double& freqmax,
 		 const casacore::MDirection& phaseCenter );
-  
+  casacore::Double getCubeImageStartFreq();
   casacore::String findSpecMode(const casacore::String& mode) const;
   casacore::String MDopToVelString(casacore::Record &rec);
   casacore::Record getcsys() const;
