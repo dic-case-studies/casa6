@@ -349,6 +349,15 @@ void PlotMSCacheBase::load(const vector<PMS::Axis>& axes,
 	transformations_ = transformations;
 	calibration_ = calibration;
 
+	// only use scalarAve if other averaging enabled
+	bool useScalarAve = averaging_.scalarAve() && (averaging_.time() ||
+		averaging_.baseline() || averaging_.antenna() ||  averaging_.spw());
+	if (averaging_.scalarAve() && !useScalarAve) {
+		logWarn(PMS::LOG_ORIGIN_LOAD_CACHE,
+			"Scalar averaging ignored: no other averaging is enabled.");
+	}
+	averaging_.setScalarAve(useScalarAve);
+
 	//log settings
 	casacore::Path fullpath(filename);
 	logLoad("Plotting table " + fullpath.baseName()); // filename only
