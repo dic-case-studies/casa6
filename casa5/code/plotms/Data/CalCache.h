@@ -68,11 +68,6 @@ public:
   // Is the underlying table complex?
   inline casacore::Bool parsAreComplex() { return parsAreComplex_; };
 
-  // ...not yet CAL-specific... (or ever?)
-  // Set up indexing for the plot
-  //  void setUpIndexer(PMS::Axis iteraxis=PMS::SCAN,
-  //    casacore::Bool globalXRange=false, casacore::Bool globalYRange=false);
-
   // Convert poln index->name and name->index
   virtual casacore::String polname(casacore::Int ipol);
 
@@ -83,8 +78,8 @@ protected:
 
   // CAL-specific loadIt method
   virtual void loadIt(std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData,
-      ThreadCommunication* thread = nullptr);
+    std::vector<PMS::DataColumn>& loadData,
+    ThreadCommunication* thread = nullptr);
 
 private:
     
@@ -93,20 +88,27 @@ private:
 
   // NewCalTable:
   void loadNewCalTable(std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
-  void setUpCalIter(NewCalTable& selct, casacore::Bool readonly=True);
-  void countChunks(ROCTIter& ci,
-      std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData,
-      ThreadCommunication* thread);
+    std::vector<PMS::DataColumn>& loadData,
+    ThreadCommunication* thread = nullptr);
+  void setUpCalIter(
+    NewCalTable& selct, PlotMSAveraging& pmsAveraging, casacore::Bool readonly);
+  void countChunks(ROCTIter& ci, std::vector<PMS::Axis>& loadAxes,
+    std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
+  void countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
+    casacore::Vector<int>& nIterPerAve, std::vector<PMS::Axis>& loadAxes,
+    std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
   void loadCalChunks(ROCTIter& ci, const std::vector<PMS::Axis> loadAxes,
-      ThreadCommunication* thread);
+    ThreadCommunication* thread);
+  void loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
+    const casacore::Vector<int>& nIterPerAve,
+    const std::vector<PMS::Axis> loadAxes, ThreadCommunication* thread);
   void loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
       casacore::String& pol, std::vector<casacore::Slice>& chansel);
+
   virtual void flagToDisk(const PlotMSFlagging& flagging,
-      casacore::Vector<casacore::Int>& chunks, 
-      casacore::Vector<casacore::Int>& relids,
-      casacore::Bool flag, PlotMSIndexer* indexer, int index);
+    casacore::Vector<casacore::Int>& chunks,
+    casacore::Vector<casacore::Int>& relids, casacore::Bool flag,
+    PlotMSIndexer* indexer, int index);
 
   // Concat array1 and array2, result in array1. For channel selections.
   template<typename T>
@@ -135,43 +137,35 @@ private:
 
   // CalTable:
   void countChunks(casacore::Int nrowMain, std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
+    std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
   void setMSname(casacore::String msname); // set msname_; adds path to name
-  void getNamesFromMS();    // for locate
+  void getNamesFromMS();                   // for locate
   void setUpLoad(ThreadCommunication* thread, casacore::Slice& parSlice);
-  void getCalDataAxis(PMS::Axis axis, casacore::Cube<casacore::Complex>& viscube,
-      casacore::Int chunk);  // get axes derived from raw viscube
+  // get type-specific axis for raw viscube data
+  void getCalDataAxis(PMS::Axis axis,
+    casacore::Cube<casacore::Complex>& viscube, casacore::Int chunk);
 
   // BPOLY CalTable:
   void loadBPoly(std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
-  void loadCalChunks(ROBJonesPolyMCol& mcol, ROCalDescColumns& dcol,
-      casacore::Int nrow, const std::vector<PMS::Axis> loadAxes,
-      casacore::Vector<casacore::Vector<casacore::Slice> >& chansel,
-      ThreadCommunication* thread);
-  void loadCalAxis(ROSolvableVisJonesMCol& mcol, ROCalDescColumns& dcol,
-      casacore::Int chunk, PMS::Axis axis);
-  void getChanFreqsFromMS(casacore::Vector< casacore::Vector<casacore::Double> >& mschanfreqs);
-  void getSelFreqsForSpw(casacore::Vector<casacore::Slice>& chansel,
-      casacore::Vector<casacore::Double>& chanFreqs,
-      casacore::Vector<casacore::Int>& chanNums);
-  // cube selected by channel:
-  template<class T>
-  void getSelectedCube(const casacore::Cube<T>& inputCube,
-    const casacore::Vector<casacore::Slice>& chanSlices,
-    casacore::Cube<T>& outputCube);
+    std::vector<PMS::DataColumn>& loadData,
+    ThreadCommunication* thread = nullptr);
+  NewCalTable* virtualBPoly(BJonesPolyTable& polyTable);
+  void getChanFreqsFromMS(
+    casacore::Vector<casacore::Vector<casacore::Double>>& mschanfreqs);
+  Double getChebVal(const Vector<Double>& coeff, const Double& xinit,
+    const Double& xfinal, const Double& x);
 
   // GSPLINE CalTable:
   void loadGSpline(std::vector<PMS::Axis>& loadAxes,
-      std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
+    std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread = nullptr);
   void loadCalChunks(ROGJonesSplineMCol& mcol, ROCalDescColumns& dcol,
-      casacore::Int nsample, const std::vector<PMS::Axis> loadAxes,
-      casacore::Vector<int>& selectedAnts, ThreadCommunication* thread);
+    casacore::Int nsample, const std::vector<PMS::Axis> loadAxes,
+    casacore::Vector<int>& selectedAnts, ThreadCommunication* thread);
   void checkAxes(const std::vector<PMS::Axis>& loadAxes);
   // cube selected by antenna1:
   template<class T>
   void getSelectedCube(casacore::Cube<T>& inputcube,
-      const casacore::Vector<casacore::Int> selectedRows);
+    const casacore::Vector<casacore::Int>& selectedRows);
 
   // Utilities for all cal tables:
   // Get axis string for VisCal Slice code
@@ -180,24 +174,22 @@ private:
   casacore::Slice getParSlice(casacore::String axis, casacore::String polnSel);
   // Check for divide-by-zero (=inf); set to 1.0 and flag it
   void checkRatioArray(casacore::Array<float>& array, int chunk);
-  // Trap attempt to use to much memory (too many points)
-  //  void trapExcessVolume(map<PMS::Axis,casacore::Bool> pendingLoadAxes);
-
-  // All
   // Check divide-by-zero in ratio plot (checkRatioArray)
   bool divZero_;
-  // Volume meter for volume calculation
-  //  PMSCacheVolMeter vm_;
 
-  // NewCalTable iterator pointers
+  // NewCalTable iterator pointers and sort columns
   ROCTIter* ci_p;
   CTIter* wci_p;
+  casacore::Block<casacore::String> sortColumns_;
+
   // The polarization basis
   casacore::String basis_;
+
   // Is parameter column complex?
   casacore::Bool parsAreComplex_;
+  casacore::IPosition parshape_;
 
-  // CalTable (cannot plot BPOLY or GSPLINE without MS)
+  // For CalTable (cannot plot BPOLY or GSPLINE without MS)
   casacore::String msname_;
 };
 typedef casacore::CountedPtr<CalCache> CalCachePtr;
