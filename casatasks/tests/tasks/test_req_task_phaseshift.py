@@ -21,6 +21,11 @@
 #
 #
 ##########################################################################
+import sys
+import os
+import unittest
+import shutil
+import numpy
 
 CASA6 = False
 try:
@@ -37,28 +42,37 @@ except ImportError:
     from tasks import *
     from taskinit import *
     ia = iatool()
-import sys
-import os
-import unittest
-import copy
-import shutil
-import numpy
 
 
-### Data ###
+# Data ###
 if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/phaseshift/refim_twopoints_twochan.ms')
-    datapath_Itziar = casatools.ctsys.resolve('unittest/phaseshift/Itziar.ms')
-    datapath_ngc = casatools.ctsys.resolve('unittest/phaseshift/ngc7538_ut.ms')
-    datapath_nep = casatools.ctsys.resolve('unittest/phaseshift/nep2-shrunk.ms')
-    datapath_mms = casatools.ctsys.resolve('unittest/phaseshift/uid___X02_X3d737_X1_01_small.mms')
-
+    d = os.path.join('unittest', 'phaseshift')
+    datapath = casatools.ctsys.resolve(
+        os.path.join(d, 'refim_twopoints_twochan.ms')
+    )
+    datapath_Itziar = casatools.ctsys.resolve(
+        os.path.join(d, 'Itziar.ms')
+    )
+    datapath_ngc = casatools.ctsys.resolve(
+        os.path.join(d, 'ngc7538_ut.ms')
+    )
+    datapath_nep = casatools.ctsys.resolve(
+        os.path.join(d, 'nep2-shrunk.ms')
+    )
+    datapath_mms = casatools.ctsys.resolve(
+        os.path.join(d, 'uid___X02_X3d737_X1_01_small.mms')
+    )
 else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/refim_twopoints_twochan.ms'
-    datapath_Itziar = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/Itziar.ms'
-    datapath_ngc = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/ngc7538_ut.ms'
-    datapath_nep = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/nep2-shrunk.ms'
-    datapath_mms = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/phaseshift/uid___X02_X3d737_X1_01_small.mms'
+    d = os.path.join(
+        os.environ.get('CASAPATH').split()[0], 'casatestdata',
+        'unittest', 'phaseshift'
+    )
+    datapath = os.path.join(d, 'refim_twopoints_twochan.ms')
+    datapath_Itziar = os.path.join(d, 'Itziar.ms')
+    datapath_ngc = os.path.join(d, 'ngc7538_ut.ms')
+    datapath_nep = os.path.join(d, '/nep2-shrunk.ms')
+    datapath_mms = os.path.join(d, '/uid___X02_X3d737_X1_01_small.mms')
+
 
 def change_perms(path):
     os.chmod(path, 0o777)
@@ -67,7 +81,8 @@ def change_perms(path):
             os.chmod(os.path.join(root,d), 0o777)
         for f in files:
             os.chmod(os.path.join(root,f), 0o777)
-    
+
+
 datacopy = 'datacopy.ms'
 datacopy_Itziar = 'Itziar_copy.ms'
 datacopy_ngc = 'ngc_copy.ms'
@@ -270,7 +285,7 @@ class phaseshift_test(unittest.TestCase):
             gridder='wproject', wprojplanes=128, pblimit=-0.1
         )
 
-        # (3) Imaging on fixvis'd dataset, but with the imaging phasecenter
+        # (3) Imaging on phaseshifted dataset, but with the imaging phasecenter
         # set. If this is working correctly, it should shift back to the same
         # source positions as the previous tclean result.
         post_image = 'im2_post_phaseshift_tclean_phasecenter'
