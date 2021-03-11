@@ -5,8 +5,6 @@ CASA uses binary tables which are updated regularly. These tables contain inform
 
 A subset of this runtime data is updated regularly because things like the earth's orientation changes as time progresses. After a couple of months, this data is sufficiently out of date to begin affecting the images which CASA produces.
 
-## quick start
-
 If you came here after getting an error like:
 ```
 >>> import casatools
@@ -23,9 +21,13 @@ the easiest solution is to run:
 ```
 This will install CASA's runtime data in ~/.casa/data, and the next time you import casatools you should not encounter this error.
 
-## initial setup
+## Installing Runtime Data
 
-There are two paths to getting CASA's runtime data. One is by installing a Python package that is only available from NRAO's PyPI repository. It is not possible to put the data on standard Python package servers because of the data size and the frequency of the updates.
+There are three options for installing CASA's runtime data:
+
+  * use an copy of data maintained by your site or institution
+  * fetch your own copy using the casatools package
+  * install a copy using [pip](https://pypi.org/project/pip/)
 
 ### Use Existing Data
 
@@ -33,10 +35,11 @@ If you already have a CASA data repository that contains CASA's runtime data, yo
 ```
 rundata = '/home/casa/data/trunk'
 ```
+All [ALMA Regional Centers (ARC)](https://www.almaobservatory.org/en/about-alma-at-first-glance/global-collaboration/) and all NRAO sites have a copy of the runtime data used by casatools. For users at these locations, using the local copy of the runtime data is the best option because it is kept up to date by each location.
 
 ### user data installation
 
-You can install your own copy of CASA's runtime data using casatools with:
+As described above, you can install your own copy of CASA's runtime data using casatools with:
 ```
 -bash-4.2$ python3 -m casatools --update-user-data
 ```

@@ -135,7 +135,7 @@ except ImportError:
     from parallel.parallel_task_helper import ParallelTaskHelper
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 from casatestutils.imagerhelpers import TestHelpers
@@ -146,7 +146,7 @@ from casatestutils import stats_dict
 
 # Path to data
 #data_path = '/lustre/rurvashi/StakeholderTests/VLASS/DATA_FOR_CAS12427/'
-data_path = ctsys_resolve('stakeholders/vlass/')
+data_path = ctsys_resolve('stakeholder/vlass/')
 
 ##############################################################
 ############# Test settings #######################

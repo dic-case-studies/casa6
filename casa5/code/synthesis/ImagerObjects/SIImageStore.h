@@ -124,8 +124,8 @@ class SIImageStore
   ///This returns a temporary image of same size/coordinates ...it stays alive as long as this object stays up
   virtual std::shared_ptr<casacore::ImageInterface<casacore::Float> > tempworkimage(casacore::uInt term=0);
 
-  virtual void setModelImageOne( casacore::String modelname, casacore::Int nterm=-1 );
-  virtual void setModelImage( casacore::Vector<casacore::String> modelnames );
+  virtual void setModelImageOne( const casacore::String &modelname, casacore::Int nterm=-1 );
+  virtual void setModelImage( const casacore::Vector<casacore::String> &modelnames );
   virtual casacore::Vector<casacore::String> getModelImageName();
   virtual void setWeightDensity( std::shared_ptr<SIImageStore> imagetoset );
   virtual casacore::Bool doesImageExist(casacore::String imagename);
@@ -151,21 +151,22 @@ class SIImageStore
   void releaseImage( std::shared_ptr<casacore::ImageInterface<casacore::Complex> > &im );
   virtual casacore::Double getReferenceFrequency(){return 0.0;}
   virtual casacore::uInt getNTaylorTerms(casacore::Bool dopsf=casacore::False); //{return 1;};
-  casacore::GaussianBeam getPSFGaussian();
+  casacore::GaussianBeam getPSFGaussian(casacore::Float psfcutoff=0.35);
   //  virtual casacore::GaussianBeam restorePlane();
-  virtual void restore(casacore::GaussianBeam& rbeam, casacore::String& usebeam,casacore::uInt term=0 );
+  virtual void restore(casacore::GaussianBeam& rbeam, casacore::String& usebeam,casacore::uInt term=0, casacore::Float psfcutoff=0.35 );
   virtual void pbcor(casacore::uInt term);
   virtual void pbcor(){pbcor(0);}
 
 
   ////////// Restoring Beams
-  virtual void makeImageBeamSet();
-  virtual casacore::ImageBeamSet getBeamSet();
+  virtual void makeImageBeamSet(casacore::Float psfcutoff);
+  casacore::ImageBeamSet getBeamSet(casacore::Float psfcutoff=0.35);
   virtual void setBeamSet(const casacore::ImageBeamSet& bs);
   //get the beamSet of a given channel only
   virtual casacore::ImageBeamSet getChannelBeamSet(const casacore::Int chan);
   //get the beamSet for a range of channel begining and end inclusive
   virtual casacore::ImageBeamSet getChannelSliceBeamSet(const casacore::Int begChan, const casacore::Int endChan);
+    
   virtual void printBeamSet(casacore::Bool verbose=casacore::False);
   casacore::GaussianBeam findGoodBeam();
   void lineFit(casacore::Vector<casacore::Float> &data, casacore::Vector<casacore::Bool> &flag, casacore::Vector<casacore::Float> &fit, casacore::uInt lim1, casacore::uInt lim2);
@@ -324,6 +325,8 @@ private:
   std::shared_ptr<casacore::ImageInterface<casacore::Complex> > itsForwardGrid, itsBackwardGrid;
 
   std::shared_ptr<casacore::ImageInterface<casacore::Float> > itsParentPsf, itsParentModel, itsParentResidual, itsParentWeight, itsParentImage, itsParentSumWt, itsParentGridWt, itsParentPB, itsParentImagePBcor;
+    
+
 
   std::shared_ptr<casacore::LatticeLocker> itsReadLock;
 

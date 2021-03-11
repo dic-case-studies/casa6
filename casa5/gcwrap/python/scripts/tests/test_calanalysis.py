@@ -7,13 +7,13 @@ try:
     # CASA 6
     from casatools import calanalysis, ctsys
     ca = calanalysis()
-    ca_datapath = ctsys.resolve('regression/unittest/calanalysis')
+    ca_datapath = ctsys.resolve('unittest/calanalysis/')
 except ImportError:
     # CASA 5
     import casac
     ca = casac.casac.calanalysis()
     ca_datapath = os.environ.get('CASAPATH').split()[0]
-    ca_datapath = os.path.join(ca_datapath, 'data/regression/unittest/calanalysis/')
+    ca_datapath = os.path.join(ca_datapath, 'casatestdata/unittest/calanalysis/')
 
 
 class calanalysis_tsys1_base(unittest.TestCase):
@@ -67,7 +67,7 @@ class calanalysis_tsys1_base(unittest.TestCase):
     numTime = len(time)
 
     def setUp(self):
-        os.system('cp -RL {0} {1}'.format(os.path.join(ca_datapath, self.calName),
+        os.system('cp -RH {0} {1}'.format(os.path.join(ca_datapath, self.calName),
                                           self.calName))
 
         return ca.open(self.calName)

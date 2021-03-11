@@ -54,7 +54,7 @@ else:
 
     componentlist = cltool
     image = iatool
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
 
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
@@ -66,6 +66,7 @@ else:
     _tb = tb
     _qa = qa
 
+datapath = ctsys_resolve('unittest/imsmooth/')
 targetres_im = "imsmooth_targetres.fits"
 tiny = "tiny.im"
 image_names=['g192_a2.image', 'g192_a2.image-2.rgn']
@@ -110,15 +111,13 @@ class imsmooth_test(unittest.TestCase):
             for file in image_names:
                 os.system('rm -rf ' +file)
         
-        datapath = 'regression/g192redux/reference'
         for file in image_names:
-            os.system('cp -r '+ctsys_resolve(os.path.join(datapath,file))+' ' + file)
+            os.system('cp -RH '+ os.path.join(datapath,file)+' ' + file)
         self.ia = image()
-        self.datapath = 'regression/imsmooth'
         for f in [targetres_im, tiny]:
             if(os.path.exists(f)):
                 os.system('rm -rf ' +f)
-            os.system('cp -r '+ctsys_resolve(os.path.join(self.datapath,f))+' ' + f)
+            os.system('cp -RH '+ os.path.join(datapath,f)+' ' + f)
 
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
@@ -748,7 +747,7 @@ class imsmooth_test(unittest.TestCase):
 #               #     original test seemed to intend
 #               #     more thought should be given here to what test is appropriate
                 if ( not (value>(0.125-allowedError) and value<(0.125+allowedError)) and
-                     not (value>-3.37407147e-09 and value<3.37407147e-09) ):
+                     not (value>-3.65746967e-09 and value<3.65746967e-09) ):
                     retValue['success']=False
                     retValue['error_msgs']=retValue['error_msgs']\
                         +"\nError: Values in the smoothed box are not all 0.125"\
@@ -1003,7 +1002,7 @@ class imsmooth_test(unittest.TestCase):
         """Test per plane beams"""
         myia = self.ia
         imname = "test_image2dconvolver_multibeam.im"
-        shutil.copytree(ctsys_resolve(os.path.join(self.datapath, imname)), imname)
+        shutil.copytree(os.path.join(datapath, imname), imname)
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
@@ -1357,8 +1356,8 @@ class imsmooth_test(unittest.TestCase):
         
     def test_image_kernel(self):
         """Test image as kernel, CAS-5844"""
-        imagename = ctsys_resolve(os.path.join(self.datapath,"point.im"))
-        kimage = ctsys_resolve(os.path.join(self.datapath,"bessel.im"))
+        imagename = os.path.join(datapath,"point.im")
+        kimage = os.path.join(datapath,"bessel.im")
         outfile = "point_c_bessel.im"
         imsmooth(
             imagename=imagename, kernel="i",

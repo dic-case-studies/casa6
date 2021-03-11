@@ -73,7 +73,7 @@ from __main__ import *
 import unittest
 import numpy
 
-datapath = os.environ.get('CASAPATH').split()[0]+ '/data/regression/unittest/ia_rotate/'
+datapath = os.environ.get('CASAPATH').split()[0]+ '/casatestdata/unittest/ia_rotate/'
 
 class ia_rotate_test(unittest.TestCase):
     

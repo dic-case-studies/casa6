@@ -30,7 +30,7 @@ try:
     from casatasks import impbcor
     _ia = image()
     _tb = table()
-    datapath = ctsys.resolve('image')
+    datapath = ctsys.resolve('unittest/impbcor/')
     is_CASA6 = True
 except ImportError:
     import casac
@@ -43,10 +43,7 @@ except ImportError:
     image = iatool
     _ia = iatool()
     _tb = tbtool()
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impbcor/'
     is_CASA6 = False
 
 im1 = "pbtest1_im.fits"
@@ -84,19 +81,16 @@ class impbcor_test(unittest.TestCase):
     
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        # Only delete the files created by the tests (avoid cleaning the full local directory!!)
+        for f in data:
+            if os.path.isdir(f):
+                shutil.rmtree(f)
+            if os.path.isfile(f):
+                os.remove(f)
+        
+        os.system('rm -rf jj.im mm.im pp.im /bogusplace/bogusimage qq.im rr.im ss.im mypb.im blahblah maskim mult_pb.im pb_out.im t_in.im'\
+                    't_out.im t_pb_in.im zz.im')
+         
 
     def checkImage(self, gotImage, expectedName, epsilon):
         expected = image()                                
