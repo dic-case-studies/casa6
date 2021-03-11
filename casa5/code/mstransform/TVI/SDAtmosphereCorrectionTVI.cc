@@ -320,7 +320,6 @@ SDAtmosphereCorrectionTVI::SDAtmosphereCorrectionTVI(ViImplementation2 *inputVII
     configuration_(configuration),
     offSourceTime_(),
     elevationInterpolator_(),
-    pwvTime_(),
     pwvData_(),
     atmTime_(),
     atmTemperatureData_(),
@@ -1184,17 +1183,6 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
     atmRelHumidityDataLocal.reference(ScalarColumn<Double>(calAtmosphereTable, "groundRelHumidity").getColumn());
   }
 
-  Vector<uInt> uniqueVectorPwv;
-  Vector<uInt> indexVectorPwv;
-  if (pwvTimeLocal.nelements() > 0) {
-    sortTime(pwvTimeLocal, indexVectorPwv);
-    uInt n = makeUnique(pwvTimeLocal, indexVectorPwv, uniqueVectorPwv);
-    pwvTime_.resize(n);
-    for (uInt i = 0; i < n; ++i) {
-      pwvTime_[i] = pwvTimeLocal[indexVectorPwv[uniqueVectorPwv[i]]];
-    }
-  }
-
   if (atmTimeLocal.nelements() > 0) {
     Vector<uInt> uniqueVector;
     Vector<uInt> indexVector;
@@ -1211,26 +1199,24 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
 
     // PYTHON IMPLEMENTATION
     // use time stamp in CALATMOSPHERE table
-    Vector<uInt> uniqueVectorPwv2(n);
+    std::vector<uInt> ivec;
+    std::vector<uInt> uvec;
     for (uInt i = 0; i < n; ++i) {
-      Vector<Double> diff = abs(pwvTime_ - atmTime_[i]);
+      Vector<Double> diff = abs(pwvTimeLocal - atmTime_[i]);
       Double minDiff = min(diff);
-      uInt const m = pwvTime_.nelements();
-      uInt idx = m;
-      for (uInt j = 0; j < m; ++j) {
+      uvec.push_back(ivec.size());
+      for (uInt j = 0; j < pwvTimeLocal.nelements(); ++j) {
         if (diff[j] == minDiff) {
-          idx = j;
-          break;
+          ivec.push_back(j);
         }
       }
-      if (idx < m) {
-        uniqueVectorPwv2[i] = uniqueVectorPwv[idx];
-      } else {
-        os << "ERROR in readAsdmAsIsTable" << LogIO::EXCEPTION;
-      }
     }
+    Vector<uInt> indexVectorPwv(ivec);
+    Vector<uInt> uniqueVectorPwv(uvec);
+    os << LogIO::DEBUGGING << "ivec = " << indexVectorPwv << LogIO::POST;
+    os << LogIO::DEBUGGING << "uvec = " << uniqueVectorPwv << LogIO::POST;
     // m -> mm
-    pwvData_ = getMedianDataPerTime(n, uniqueVectorPwv2, indexVectorPwv, pwvDataLocal) * 1000.0;
+    pwvData_ = getMedianDataPerTime(n, uniqueVectorPwv, indexVectorPwv, pwvDataLocal) * 1000.0;
   }
 
   if (atmTime_.nelements() == 0) {

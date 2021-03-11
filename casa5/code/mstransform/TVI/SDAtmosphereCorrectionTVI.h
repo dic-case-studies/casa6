@@ -176,7 +176,6 @@ private:
   casacore::Vector<casacore::Double> offSourceTime_;
   casacore::Interpolate1D<casacore::Double, casacore::Double> elevationInterpolator_;
 
-  casacore::Vector<casacore::Double> pwvTime_;
   casacore::Vector<casacore::Double> pwvData_;
 
   casacore::Vector<casacore::Double> atmTime_;
