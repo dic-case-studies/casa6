@@ -4,10 +4,12 @@
 #    Regression Test Script for simobserve/simanalyze                       #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
-#                                                                           #
+#    Original regression in casa 5 was ppdisk2_regression.py                #
 #                                                                           #
 # Input data:                                                               #
-#    protoplanetary disks                                                   #
+#    input50pc_672GHz.fits : protoplanetary disks                           #
+#                                                                           #
+# CAS-13086 JIRA                                                            #
 #                                                                           #
 #############################################################################
 
@@ -35,12 +37,12 @@ except ImportError:
     _ia = iatool()
 
 if CASA6:
-    datadir = ctsys.resolve('regression/simdata/')
+    datadir = ctsys.resolve('regression/sim_components_and_skymodel/')
     cfgdir = ctsys.resolve('alma/simmos/')
 
 else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    datadir = repodir + 'regression/simdata/'
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+    datadir = repodir + 'regression/sim_components_and_skymodel/'
     cfgdir = repodir + 'alma/simmos/'
 
 def logprint(msg):

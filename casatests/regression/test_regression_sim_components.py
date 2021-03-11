@@ -4,16 +4,19 @@
 #    Regression Test Script for simobserve/simanalyze                       #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
-#                                                                           #
+#  Original regression in casa 5 was testcompsim.py                         #
 #                                                                           #
 # Input data:                                                               #
-#  6334.cl component list                                                   #
+#  sim_complist_6334.cl component list                                      #
+#                                                                           #
+# CAS-13086 JIRA                                                            #
 #                                                                           #
 #############################################################################
 
 import shutil
 import unittest
 import os
+from lib2to3.tests.pytree_idempotency import diff
 
 CASA6 = False
 try:
@@ -29,12 +32,12 @@ except ImportError:
     from __main__ import default
 
 if CASA6:
-    datadir = ctsys.resolve('regression/simdata/')
-    regdir = ctsys.resolve('regression/sim_testcomp/reference/')
+    datadir = ctsys.resolve('regression/sim_components/')
+    refdir = ctsys.resolve('regression/sim_components/sim_reference/')
 else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    datadir = repodir + 'regression/simdata/'
-    regdir = repodir + 'regression/sim_testcomp/reference/'
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+    datadir = repodir + 'regression/sim_components/'
+    refdir = repodir + 'regression/sim_components/sim_reference/'
 
 from casatestutils import testhelper as th
 
@@ -47,14 +50,15 @@ def logprint(msg):
 class regression_sim_components_test(unittest.TestCase):
 
     def setUp(self):
-        if os.path.exists("6334.cl"):
-            shutil.rmtree("6334.cl")
+        self.complist = 'sim_complist_6334.cl'
+        if os.path.exists(self.complist):
+            shutil.rmtree(self.complist)
 
-        shutil.copytree(datadir+"6334.cl","6334.cl")
+        shutil.copytree(datadir+self.complist, self.complist)
 
     def tearDown(self):
-        if os.path.exists("6334.cl"):
-            shutil.rmtree("6334.cl")
+        if os.path.exists(self.complist):
+            shutil.rmtree(self.complist)
 
         if os.path.exists(projname):
             shutil.rmtree(projname)
@@ -62,7 +66,7 @@ class regression_sim_components_test(unittest.TestCase):
     def test_regression(self):
 
         default("simobserve")
-        simobserve(project=projname, complist="6334.cl", compwidth="1.875GHz", setpointings=True, integration="10s",
+        simobserve(project=projname, complist=self.complist, compwidth="1.875GHz", setpointings=True, integration="10s",
                    direction="J2000 17h20m53.2s -35d47m00s", mapsize="13arcsec",maptype="ALMA", pointingspacing ="",
                    obsmode="int", refdate="2014/01/01", hourangle="transit",totaltime="7200s", antennalist="alma.cycle0.extended.cfg",
                    thermalnoise="",graphics='file', verbose=True, overwrite=True)
@@ -77,19 +81,22 @@ class regression_sim_components_test(unittest.TestCase):
         regstate=True
         verbose=True
         
-        newImage=projname+"/"+projname + '.alma.cycle0.extended.image'
+        img_suffix = projname+ '.alma.cycle0.extended.image'
+        newImage=projname+"/" + img_suffix
         if verbose: logprint(newImage)
-        templateImage = regdir + newImage
+        templateImage = refdir + img_suffix
         regstate=regstate and th.compImages(newImage,templateImage,verbose=verbose)
         
-        newImage = projname+"/"+projname+".alma.cycle0.extended.diff"
+        diff_suffix = projname+ '.alma.cycle0.extended.diff'        
+        newImage=projname+"/" + diff_suffix
         if verbose: logprint(newImage)
-        templateImage = regdir + newImage
+        templateImage = refdir + diff_suffix
         regstate=regstate and th.compImages(newImage,templateImage,verbose=verbose)
 
-        newMS = projname+"/"+projname+".alma.cycle0.extended.ms"
+        ms_suffix = projname+ '.alma.cycle0.extended.ms'
+        newMS = projname+"/"+ ms_suffix
         if verbose: logprint(newMS)
-        templateMS = regdir + newMS
+        templateMS = refdir + ms_suffix
         regstate = regstate and th.compMS(newMS,templateMS,verbose=verbose)
 
         logprint('')

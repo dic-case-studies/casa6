@@ -4,10 +4,13 @@
 #    Regression Test Script for simobserve                                  #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
-#                                                                           #
+#  Original regression in casa 5 was testcube2_regression.py                #
 #                                                                           #
 # Input data:                                                               #
-#  testcube.fits : fits skymodel image                                      #
+#  sim_alma_3dcube_128x128x10.fits : fits skymodel image                    #
+#  sim_alma_3dcube_128x128x10.txt : ptg file                                #
+#                                                                           #
+# CAS-13086 JIRA                                                            #
 #                                                                           #
 #############################################################################
 
@@ -36,12 +39,12 @@ except ImportError:
     _ms = mstool()
 
 if CASA6:
-    datadir = ctsys.resolve("regression/simdata/")
+    datadir = ctsys.resolve("regression/sim_cube/")
     cfgdir = ctsys.resolve("alma/simmos/")
 
 else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    datadir = repodir + 'regression/simdata/'
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+    datadir = repodir + 'regression/sim_cube/'
     cfgdir = repodir + 'alma/simmos/'
 
 projname = "tc2"
@@ -56,7 +59,7 @@ class regression_sim_cube_test(unittest.TestCase):
     def setUp(self):
         if os.path.exists("testcube2"):
             shutil.rmtree("testcube2")
-        importfits(fitsimage=datadir+'testcube.fits',imagename="testcube2")
+        importfits(fitsimage=datadir+'sim_alma_3dcube_128x128x10.fits',imagename="testcube2")
 
     def tearDown(self):
         if os.path.exists("testcube2"):
@@ -74,7 +77,7 @@ class regression_sim_cube_test(unittest.TestCase):
 
         default("simobserve")
         simobserve(project=projname, skymodel="testcube2",inbright=".1",indirection="J2000 19h00m00s -40d00m00s",
-                   incell="0.2arcsec",incenter="350GHz",inwidth="0.5MHz",setpointings=False,ptgfile=datadir+"testcube.ptg.txt",
+                   incell="0.2arcsec",incenter="350GHz",inwidth="0.5MHz",setpointings=False,ptgfile=datadir+"sim_alma_3dcube_128x128x10.txt",
                    obsmode="int",antennalist=cfgdir+"alma.out01.cfg",refdate="2012/06/21/03:25:00",
                    totaltime="7200s",thermalnoise="",graphics="file",verbose=True,overwrite=True)
 

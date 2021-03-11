@@ -6,11 +6,13 @@
 # Rationale for Inclusion:                                                  #
 #    Test the use of simobserve and simanalyze on simdata of a 2d image     #
 #    Exercise simobserve of total power simdata                             #
-#                                                                           #
+#    Original regression in casa 5 was m51_tpsim_regression.py               #
 #                                                                           #
 #                                                                           #
 # Input data:                                                               #
 #    simdata of M51 (ALMA-12m INT + ACA-7m INT + 12m TP)                    #
+#                                                                           #
+# CAS-13086 JIRA                                                            #
 #                                                                           #
 #############################################################################
 
@@ -40,12 +42,12 @@ except ImportError:
     _ms = mstool()
 
 if CASA6:
-    datadir = ctsys.resolve('regression/simdata/')
+    datadir = ctsys.resolve('regression/sim_TP/')
     cfgdir = ctsys.resolve('alma/simmos/')
 
 else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    datadir = repodir + 'regression/simdata/'
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+    datadir = repodir + 'regression/sim_TP/'
     cfgdir = repodir + 'alma/simmos/'
 
 projname = "m51sd_co32"
@@ -68,7 +70,7 @@ class regression_sim_TP_test(unittest.TestCase):
         shutil.rmtree(self.modelname)
 
     def test_regression(self):
-        '''test total power'''
+        '''test total power simulations '''
 
         logprint('sd total power simobserve of M51')
 

@@ -6,11 +6,14 @@
 # Rationale for Inclusion:                                                  #
 #    Test the use of simobserve and simanalyze on simdata of a 2d image     #
 #    Exercise simobserve of IF, TP and ACA simdata                          #
-#                                                                           #
-#                                                                           #
+#    Original regression in casa 5 was m51_3sim_regression.py               #
 #                                                                           #
 # Input data:                                                               #
-#    simdata of M51 (ALMA-12m INT + ACA-7m INT + 12m TP)                    #
+#    m51ha.model : model for simdata of                                     #
+#                  M51 (ALMA-12m INT + ACA-7m INT + 12m TP)                 #
+#                                                                           #
+# CAS-13086 JIRA                                                            #
+#                                                                           #
 #                                                                           #
 #############################################################################
  
@@ -33,15 +36,15 @@ except ImportError:
     from __main__ import default
 
 if CASA6:
-    datadir = ctsys.resolve('regression/simdata/')
+    datadir = ctsys.resolve('regression/sim_multi_arrays_and_TP/')
     cfgdir = ctsys.resolve('alma/simmos/')
-    regdir = ctsys.resolve('regression/sim_m51c/reference/m51c/')
+    refdir = ctsys.resolve('regression/sim_multi_arrays_and_TP/m51c_reference/')
 
 else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'data/')
-    datadir = repodir + 'regression/simdata/'
+    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+    datadir = repodir + 'regression/sim_multi_arrays_and_TP/'
     cfgdir = repodir + 'alma/simmos/'
-    regdir = repodir + 'regression/sim_m51c/reference/m51c/'
+    refdir = repodir + 'regression/sim_multi_arrays_and_TP/m51c_reference/'
 
 from casatestutils import testhelper as th
 
@@ -161,34 +164,32 @@ class regression_sim_multiarrays_test(unittest.TestCase):
         # Compare  newMS with templateMS
         newMS=project+"/"+project+".aca.tp.sd.ms"
         if my_verbose: logprint (newMS)
-        # templateMS is /casa-data/regression/sim_m51c/reference/m51c/m51c.aca.tp.sd.ms
-        templateMS = regdir + project + ".aca.tp.sd.ms"        
+        templateMS = refdir + project + ".aca.tp.sd.ms"
         regstate=regstate and th.compMS(newMS,templateMS,verbose=my_verbose)
         
         # Compare newImage with templateImage
         newImage=project+"/"+project + '.sd.image'
         if my_verbose: logprint (newImage)
-        # templateImage is /casa-data/regression/sim_m51c/reference/m51c/m51c.sd.image
-        templateImage = regdir + project + ".sd.image"
+        templateImage = refdir + project + ".sd.image"
         regstate=regstate and th.compImages(newImage,templateImage,verbose=my_verbose)
         
         # then INT
         # Compare  newMS with templateMS
         newMS=project+"/"+project+".alma_0.5arcsec.ms"
         if my_verbose: logprint (newMS)
-        templateMS = regdir + project + ".alma_0.5arcsec.ms"
+        templateMS = refdir + project + ".alma_0.5arcsec.ms"
         regstate=regstate and th.compMS(newMS,templateMS,verbose=my_verbose)
         
         # Compare newImage with tempateImage
         newImage=project+"/"+project + '.alma_0.5arcsec.image'
         if my_verbose: logprint (newImage)
-        templateImage = regdir + project + ".alma_0.5arcsec.image"
+        templateImage = refdir + project + ".alma_0.5arcsec.image"
         regstate=regstate and th.compImages(newImage,templateImage,verbose=my_verbose)
         
         # Compare newImage with templateImage
         newImage=project+"/"+project + '.alma_0.5arcsec.diff'
         if my_verbose: logprint (newImage)
-        templateImage = regdir + project + '.alma_0.5arcsec.diff'
+        templateImage = refdir + project + '.alma_0.5arcsec.diff'
         regstate=regstate and th.compImages(newImage,templateImage,verbose=my_verbose)
 
 
