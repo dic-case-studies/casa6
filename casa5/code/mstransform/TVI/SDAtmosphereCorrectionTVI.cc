@@ -524,21 +524,25 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(Record const &con
 
     // number of total channels for baseband associated with processing spw
     auto j = spwBBMap.find(spw);
-    auto const nchanBB = (j == spwBBMap.end()) ? 0u : nchanPerBB[j->second];
+    auto const baseband = (j == spwBBMap.end()) ? 999u : j->second;
+    auto const nchanBB = (j == spwBBMap.end()) ? 0u : nchanPerBB[baseband];
 
     // check if spw is TDM
-    os << "nchan per BB for SPW " << spw << " is " << nchanBB << LogIO::POST;
     isTdmSpw_[spw] = (nchanBB == 128u || nchanBB == 256u);
-    os << "SPW " << spw << " is " << ((isTdmSpw_[spw]) ? "TDM" : "FDM") << " like" << LogIO::POST;
 
     // smoothing control
     Int const polId = dataDescriptionSubtablecols().polarizationId().get(dataDescriptionId());
     Int const numPol = polarizationSubtablecols().numCorr().get(polId);
     uInt numChanPol = nchanBB * numPol;
     doSmooth_[spw] = (numChanPol == 256u || numChanPol == 8192u);
-    if (doSmooth_[spw]) {
-      os << "SPW " << spw << " requires smoothing" << LogIO::POST;
+    if (isTdmSpw_[spw]) {
+      os << "Spw " << spw << " seems to be TDM-like. "
+         << "More accurate Hanning smoothing is applied.  istdm=True" << LogIO::POST;
     }
+    os << "Spw " << spw << " in BB_" << baseband << " "
+       << "(total Nchan within BB is " << numChanPol << ", "
+       << " sp avg likely " << ((doSmooth_[spw]) ? "not" : "") << " applied). "
+       << "dosmooth=" << ((doSmooth_[spw]) ? "True" : "False") << LogIO::POST;
   }
 
   // notification on non-processing spw
@@ -826,7 +830,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
 
 }
 
-void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int atmTimeIndex) {
+Bool SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int atmTimeIndex) {
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   // os << "updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
 
@@ -836,7 +840,6 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
     Double const val = atmTemperatureData_[atmTimeIndex];
     Double const val2 = skyStatus.getGroundTemperature().get(atm::Temperature::UnitKelvin);
     if (!isCloseDouble(val, val2)) {
-      // cout << "Temperature is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
     currentTemperatureValue = val;
@@ -847,7 +850,6 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
     Double const val = atmPressureData_[atmTimeIndex];
     Double const val2 = skyStatus.getGroundPressure().get(atm::Pressure::UnitMilliBar);
     if (!isCloseDouble(val, val2)) {
-      // cout << "Pressure is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
     currentPressureValue = val;
@@ -858,14 +860,13 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
     Double const val = atmRelHumidityData_[atmTimeIndex];
     Double const val2 = skyStatus.getRelativeHumidity().get(atm::Humidity::UnitPercent);
     if (!isCloseDouble(val, val2)) {
-      // cout << "Humidity is different " << val << " vs " << val2 << endl;
       isSkyStatusOutdated = true;
     }
     currentRelHumidityValue = val;
   }
 
   if (isSkyStatusOutdated) {
-    os << "updating SkyStatus for SPW " << currentSpwId_ << LogIO::POST;
+    // os << "updating SkyStatus for SPW " << currentSpwId_ << LogIO::POST;
     skyStatus.setBasicAtmosphericParameters(
       skyStatus.getAltitude(),
       atm::Pressure(currentPressureValue, atm::Pressure::UnitMilliBar),
@@ -878,6 +879,7 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
 
   // PYTHON IMPLEMENTATION
   // share time information with CalAtmosphere table
+  Bool isPwvOutdated = False;
   if (isValueUnset(userPwvValue_)) {
     Double const val = pwvData_[atmTimeIndex];
     Double const val2 = skyStatus.getUserWH2O().get(atm::Length::UnitMilliMeter);
@@ -885,7 +887,8 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
       // cout << "PWV is different " << val << " vs " << val2 << endl;
       // os.output() << std::setprecision(16);
       // os << "PWV val = " << val << " val2 = " << val2 << LogIO::POST;
-      os << "updating PWV value for SPW " << currentSpwId_ << LogIO::POST;
+      isPwvOutdated = True;
+      // os << "updating PWV value for SPW " << currentSpwId_ << LogIO::POST;
       skyStatus.setUserWH2O(atm::Length(val, atm::Length::UnitMilliMeter));
     }
   }
@@ -896,6 +899,8 @@ void SDAtmosphereCorrectionTVI::updateSkyStatus(atm::SkyStatus &skyStatus, Int a
   //      << " Humidity " << atmRelHumidityData_[atmTimeIndex] << "%" << endl;
 
   // os << "DONE updateSkyStatus for SPW " << currentSpwId_ << LogIO::POST;
+
+    return (isSkyStatusOutdated || isPwvOutdated);
 }
 
 Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus &p, Double const currentTime) {
@@ -1062,7 +1067,13 @@ void SDAtmosphereCorrectionTVI::updateCorrectionFactorInAdvance() {
   for (auto iter = groupByAtmTimeIndex.begin(); iter != groupByAtmTimeIndex.end(); ++iter) {
     Int const atmTimeIndex = iter->first;
     std::vector<unsigned int> timeIndexList = iter->second;
-    updateSkyStatus(skyStatus, atmTimeIndex);
+    Bool const isSkyStatusUpdated = updateSkyStatus(skyStatus, atmTimeIndex);
+    if (isSkyStatusUpdated) {
+    os << "Initializing ATM profile. SPW " << currentSpwId_
+       << " Data timestamp " << timeToString(timeListForCorrection[timeIndexList[0]])
+       << " weather data timestamp " << timeToString(atmTime_[atmTimeIndex])
+       << LogIO::POST;
+    }
     atm::SkyStatus ss(skyStatus);
     #pragma omp parallel for firstprivate(ss) if(timeIndexList.size() > 1)
     for (unsigned int i = 0; i < timeIndexList.size(); ++i) {

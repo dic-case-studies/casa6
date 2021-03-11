@@ -154,7 +154,7 @@ private:
   void initializeChunk();
 
   // sync with the current chunk/subchunk
-  void updateSkyStatus(atm::SkyStatus &skyStatus, casacore::Int atmTimeIndex);
+  casacore::Bool updateSkyStatus(atm::SkyStatus &skyStatus, casacore::Int atmTimeIndex);
   casacore::Vector<casacore::Double> updateCorrectionFactor(atm::SkyStatus &skyStatus, casacore::Double const currentTime);
   void updateCorrectionFactorInAdvance();
 
