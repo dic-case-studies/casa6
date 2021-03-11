@@ -3440,15 +3440,17 @@ void SingleDishMS::smooth(string const &kernelType,
 
 void SingleDishMS::atmcor(Record const &config, string const &columnName, string const &outMSName) {
   LogIO os(_ORIGIN);
-  os << "Input parameter summary:" << endl
+  os << LogIO::DEBUGGING
+     << "Input parameter summary:" << endl
      << "   columnName = " << columnName << endl << "   outMSName = "
      << outMSName << LogIO::POST;
 
   // Initialization
   doAtmCor_ = true;
   atmCorConfig_ = config;
-  cout << "config summry:" << endl;
-  atmCorConfig_.print(cout, 25, "    ");
+  os << LogIO::DEBUGGING << "config summry:";
+  atmCorConfig_.print(os.output(), 25, "    ");
+  os << LogIO::POST;
   // TODO: exclude MS::TIME from sortCols when CAS-13360 is fixed
   Block<Int> sortCols(5);
   sortCols[0] = MS::OBSERVATION_ID;
