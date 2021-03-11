@@ -2263,6 +2263,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	Vector<Int> spwids0;
 	Int j=0;
         Int minfmsid=0;
+	//for cube mode ,for a list of MSs, check ms to send to buildCoordSysCore contains start freq/vel
+	Double imStartFreq=getCubeImageStartFreq();
+        std::vector<Int> sourceMsWithStartFreq;
+
+	
 	for (auto forMS0=chansel.begin(); forMS0 !=chansel.end(); ++forMS0, ++j){
     //auto forMS0=chansel.find(0);
 	  map<Int, Vector<Int> > spwsels=forMS0->second;
@@ -2337,46 +2342,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    //cerr << "after " << freqmin << "   " << freqmax << endl;
 	  }
 
-          //for cube mode ,for a list of MSs, check ms to send to buildCoordSysCore contains start freq/vel
-          String checkspecmode("");
-          if(mode.contains("cube")) {
-            checkspecmode = findSpecMode(mode);
-          } 
-          Double dataFrameStartFreq;
-          Double inStartFreq;
-          MFrequency mstartfreq;
-          if(checkspecmode!="") {
-            MFrequency::Types mfreqframe = frame!="" ? MFrequency::typeFromString(frame):MFrequency::LSRK;
-            if(checkspecmode=="channel") {
-              dataFrameStartFreq = 0;  
-            }
-            else {
-              if(checkspecmode=="frequency") {
-                inStartFreq = freqStart.get("Hz").getValue();  
-              }
-              else if(checkspecmode=="velocity") {
-                MDoppler::Types DopType;
-                MDoppler::getType(DopType, veltype);
-                MDoppler mdop(velStart,DopType);
-                Quantity qrestfreq = restFreq.nelements() >0 ? restFreq[0]: Quantity(0.0, "Hz");
-                inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq.getValue(Unit("Hz")), mfreqframe).getValue(); 
-              }
-              if (mfreqframe != dataFrame){
-                MDirection obsdir = MSColumns(*mss[j]).field().phaseDirMeas(fld);
-                String telescopename = MSColumns(*mss[j]).observation().telescopeName()(0);
-                MPosition obsloc; 
-                MeasTable::Observatory(obsloc, telescopename);
-	        MEpoch epoch = MSColumns(*mss[j]).timeMeas()(0);
-                MFrequency::Ref fromRef = MFrequency::Ref(mfreqframe, MeasFrame(obsdir, obsloc, epoch));
-                MFrequency::Ref toRef = MFrequency::Ref(dataFrame, MeasFrame(obsdir, obsloc, epoch));
-                MFrequency::Convert freqinDataFrame(Unit("Hz"), fromRef, toRef);
-                dataFrameStartFreq = freqinDataFrame(inStartFreq).get("Hz").getValue();
-              }
-              else {
-                dataFrameStartFreq = inStartFreq;
-              }
-            }
-          }
+	  
+          
+          
 	  if(freqmin < gfreqmin) gfreqmin=freqmin;
 	  if(freqmax > gfreqmax) gfreqmax=freqmax;
 	  if(datafstart < gdatafstart) gdatafstart=datafstart;
@@ -2386,9 +2354,31 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           // of the ms (with channel selection applied).
           // startfreq is converted to the data frame freq based on Measure ref (for the direction, epech, location)
           // of that ms.
-          if (datafstart < dataFrameStartFreq && datafend > dataFrameStartFreq && minfmsid==0) minfmsid=j; 
+	  if(imStartFreq > 0.0 && imStartFreq >= freqmin && imStartFreq <= freqmax){
+            if(mode != "cubesource"){
+              minfmsid=j;
+              spwids0=spwids;
+              vi2.originChunks();
+              vi2.origin();
+              while(vb->msId() != j && vi2.moreChunks() ){
+                vi2.nextChunk();
+                vi2.origin();
+              }
+              fld=vb->fieldId()(0);
+             
+            }
+            else{
+              sourceMsWithStartFreq.push_back(j);
+            }
+	  }
+           
         }
-    //cerr << "freqmin " <<freqmin << " max " <<freqmax << endl;
+        if(sourceMsWithStartFreq.size() > 1){
+          auto result = std::find(std::begin(sourceMsWithStartFreq), std::end(sourceMsWithStartFreq), 0);
+          if(result == std::end(sourceMsWithStartFreq)){
+            throw(AipsError("Reorder the input list of MSs so that MS "+String::toString( sourceMsWithStartFreq[0])+ "is first to match startfreq you provided"));
+          }
+        }
     MeasurementSet msobj = *mss[minfmsid];
    // return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
     return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
@@ -3294,6 +3284,35 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return true;
 
   }//getImFreq
+  /////////////////////////
+  Double SynthesisParamsImage::getCubeImageStartFreq(){
+    Double inStartFreq=-1.0;
+    String checkspecmode("");
+    if(mode.contains("cube")) {
+      checkspecmode = findSpecMode(mode);
+    } 
+    if(checkspecmode!="") {
+      MFrequency::Types mfreqframe = frame!="" ? MFrequency::typeFromString(frame):MFrequency::LSRK;
+      if(checkspecmode=="channel") {
+	inStartFreq=-1.0;  
+      }
+      else {
+	if(checkspecmode=="frequency") {
+	  inStartFreq = freqStart.get("Hz").getValue();  
+	}
+	else if(checkspecmode=="velocity") {
+	  MDoppler::Types DopType;
+	  MDoppler::getType(DopType, veltype);
+	  MDoppler mdop(velStart,DopType);
+	  Quantity qrestfreq = restFreq.nelements() >0 ? restFreq[0]: Quantity(0.0, "Hz");
+	  inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq.getValue(Unit("Hz")), mfreqframe).getValue(); 
+	}
+      }
+    }
+
+    return inStartFreq;
+
+  }
 
   String SynthesisParamsImage::findSpecMode(const String& mode) const
   {
