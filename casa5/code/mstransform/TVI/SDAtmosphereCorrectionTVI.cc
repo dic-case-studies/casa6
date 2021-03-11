@@ -42,6 +42,7 @@
 #include <casacore/casa/Exceptions/Error.h>
 #include <casacore/casa/Arrays/ArrayIter.h>
 #include <casacore/casa/OS/File.h>
+#include <casacore/casa/Quanta/MVTime.h>
 #include <casacore/casa/Utilities/Sort.h>
 #include <casacore/casa/Utilities/BinarySearch.h>
 #include <casacore/measures/Measures/Stokes.h>
@@ -81,6 +82,10 @@ class ScopeGuard {
   private:
     std::function<void()> func_;
 };
+
+inline String timeToString(Double timeInSec) {
+  return MVTime(Quantity(timeInSec, "s")).string(MVTime::FITS);
+}
 
 inline void sortTime(Vector<Double> &timeData, Vector<uInt> &indexVector) {
   Bool b = false;
@@ -1231,6 +1236,14 @@ void SDAtmosphereCorrectionTVI::readAsdmAsIsTables(String const &msName) {
   if (atmTime_.nelements() == 0) {
     os << "No Atmosphere measurements. Unable to apply offline ATM correction."
        << LogIO::EXCEPTION;
+  } else {
+    for (uInt i = 0; i < atmTime_.nelements(); ++i) {
+      os << "PWV = " << pwvData_[i] << "mm, "
+         << "T = " << atmTemperatureData_[i] << "K, "
+         << "P = " << atmPressureData_[i] << "hPa, "
+         << "H = " << atmRelHumidityData_[i] << "% "
+         << "at " << timeToString(atmTime_[i]) << LogIO::POST;
+    }
   }
 }
 
