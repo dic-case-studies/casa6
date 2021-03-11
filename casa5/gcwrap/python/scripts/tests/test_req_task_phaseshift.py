@@ -21,7 +21,6 @@
 #
 #
 ##########################################################################
-import sys
 import os
 import unittest
 import shutil
@@ -39,12 +38,14 @@ try:
 
 except ImportError:
     from __main__ import default
-    from tasks import *
-    from taskinit import *
+    from tasks import phaseshift, tclean
+    from taskinit import iatool, tbtool, mstool
     ia = iatool()
+    tb = tbtool()
+    ms = mstool()
 
 
-# Data ###
+# Data
 if CASA6:
     d = os.path.join('unittest', 'phaseshift')
     datapath = casatools.ctsys.resolve(
@@ -70,17 +71,17 @@ else:
     datapath = os.path.join(d, 'refim_twopoints_twochan.ms')
     datapath_Itziar = os.path.join(d, 'Itziar.ms')
     datapath_ngc = os.path.join(d, 'ngc7538_ut.ms')
-    datapath_nep = os.path.join(d, '/nep2-shrunk.ms')
-    datapath_mms = os.path.join(d, '/uid___X02_X3d737_X1_01_small.mms')
+    datapath_nep = os.path.join(d, 'nep2-shrunk.ms')
+    datapath_mms = os.path.join(d, 'uid___X02_X3d737_X1_01_small.mms')
 
 
 def change_perms(path):
     os.chmod(path, 0o777)
     for root, dirs, files in os.walk(path):
         for d in dirs:
-            os.chmod(os.path.join(root,d), 0o777)
+            os.chmod(os.path.join(root, d), 0o777)
         for f in files:
-            os.chmod(os.path.join(root,f), 0o777)
+            os.chmod(os.path.join(root, f), 0o777)
 
 
 datacopy = 'datacopy.ms'
@@ -89,6 +90,7 @@ datacopy_ngc = 'ngc_copy.ms'
 datacopy_nep = 'nep_copy.ms'
 datacopy_mms = 'mms_copy.mms'
 output = 'phaseshiftout.ms'
+
 
 class phaseshift_test(unittest.TestCase):
 
@@ -100,89 +102,109 @@ class phaseshift_test(unittest.TestCase):
         shutil.copytree(datapath_ngc, datacopy_ngc)
         shutil.copytree(datapath_nep, datacopy_nep)
         shutil.copytree(datapath_mms, datacopy_mms)
-        
+
         change_perms(datacopy)
         change_perms(datacopy_Itziar)
         change_perms(datacopy_ngc)
         change_perms(datacopy_nep)
         change_perms(datacopy_mms)
-        
+
     def tearDown(self):
         shutil.rmtree(datacopy)
         shutil.rmtree(datacopy_Itziar)
         shutil.rmtree(datacopy_ngc)
         shutil.rmtree(datacopy_nep)
         shutil.rmtree(datacopy_mms)
-        
+
         if os.path.exists('post_phaseshift.ms'):
             shutil.rmtree('post_phaseshift.ms')
-        
+
         if os.path.exists(output):
             shutil.rmtree(output)
-            
+
     def test_takesVis(self):
         ''' Check that the task requires a valid input MS '''
-        result = phaseshift(datacopy, outputvis=output, phasecenter='J2000 19h53m50 40d06m00')
+        result = phaseshift(
+            datacopy, outputvis=output,
+            phasecenter='J2000 19h53m50 40d06m00'
+        )
         # Completion without throwing an exception indicates success in CASA 6
         if not CASA6:
             self.assertTrue(result)
-        
+
     def test_outvis(self):
         ''' Check that the outvis parameter specifies the name of the output '''
-        phaseshift(datacopy, outputvis=output, phasecenter='J2000 19h53m50 40d06m00')
-        
+        phaseshift(
+            datacopy, outputvis=output,
+            phasecenter='J2000 19h53m50 40d06m00'
+        )
+
         self.assertTrue(os.path.exists(output))
-        
+
     def test_fieldSelect(self):
         ''' Check the field selection parameter '''
-        phaseshift(datacopy_Itziar, outputvis=output, phasecenter='J2000 00h00m01 -29d55m40', field='2')
+        phaseshift(
+            datacopy_Itziar, outputvis=output,
+            phasecenter='J2000 00h00m01 -29d55m40', field='2'
+        )
         tb.open(output)
         data_selected = len(tb.getcol('FIELD_ID'))
         tb.close()
-        
+
         self.assertTrue(data_selected == 6125)
-        
+
     def test_spwSelect(self):
         ''' Check the spw selection parameter '''
         phaseshift(datacopy_ngc, outputvis=output, phasecenter='B1950_VLA 23h11m54 61d10m54', spw='1')
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
-        
+
         self.assertTrue(data_selected == 13338, msg=data_selected)
-        
+
     def test_intentSelect(self):
         ''' Check the intent selection parameter '''
-        phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', intent='*FLUX*')
+        phaseshift(
+            datacopy_nep, outputvis=output,
+            phasecenter='ICRS 00h06m14 -06d23m35', intent='*FLUX*'
+        )
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
-        
+
         self.assertTrue(data_selected == 570)
-        
+
     def test_arraySelect(self):
         ''' Check the array selection parameter '''
         msg = "specified array incorrectly found"
         if CASA6:
             with self.assertRaises(RuntimeError, msg=msg):
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35',
                     array='1'
                 )
         else:
             self.assertFalse(
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35',
                     array='1'
                 ), msg=msg
             )
-        phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', array='0')
+        phaseshift(
+            datacopy_nep, outputvis=output,
+            phasecenter='ICRS 00h06m14 -06d23m35', array='0'
+        )
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
-        
-        self.assertTrue(data_selected == 6270, "Incorrect number of rows found")
-        
+
+        self.assertTrue(
+            data_selected == 6270,
+            "Incorrect number of rows found"
+        )
+
     def test_observationSelect(self):
         ''' Check the observation selection parameter '''
         msg = "Observation not out of range"
@@ -199,22 +221,33 @@ class phaseshift_test(unittest.TestCase):
                     observation='1'
                 ), msg=msg
             )
-        phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35', observation='0')
+        phaseshift(
+            datacopy_nep, outputvis=output,
+            phasecenter='ICRS 00h06m14 -06d23m35', observation='0'
+        )
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
-        
-        self.assertTrue(data_selected == 6270, "Incorrect number of rows found")
-        
+
+        self.assertTrue(
+            data_selected == 6270, "Incorrect number of rows found"
+        )
+
     def test_keepsMMS(self):
-        ''' Test the keepmms paramter creates the output as an MMS if the input is one as well '''
-        phaseshift(datacopy_mms, outputvis=output, phasecenter='J2000 05h30m48 13d31m48', keepmms=False)
+        '''
+            Test the keepmms paramter creates the output as an MMS
+            if the input is one as well
+        '''
+        phaseshift(
+            datacopy_mms, outputvis=output,
+            phasecenter='J2000 05h30m48 13d31m48', keepmms=False
+        )
         ms.open(output)
         is_mms = ms.ismultims()
         ms.close()
-        
+
         self.assertFalse(is_mms)
-        
+
     def test_datacolumn(self):
         ''' Check that this parameter selects which datacolumns to write to the output MS '''
         msg = "Data column incorrectly present"
@@ -226,14 +259,14 @@ class phaseshift_test(unittest.TestCase):
                 )
             # running to completion indicates success in CASA 6
             phaseshift(
-                datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
-                datacolumn='DATA'
+                datacopy_nep, outputvis=output,
+                phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='DATA'
             )
         else:
             self.assertFalse(
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
-                    datacolumn='MODEL'
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='MODEL'
                 ), msg=msg
             )
             self.assertTrue(
@@ -241,8 +274,8 @@ class phaseshift_test(unittest.TestCase):
                     datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
                     datacolumn='DATA'
                 ), msg="phaseshift unexpectedly failed"
-            )        
-        
+            )
+
     def test_phasecenter(self):
         ''' Check that this parameter sets the sky coordinates of the new phasecenter '''
         phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -08d23m35')
