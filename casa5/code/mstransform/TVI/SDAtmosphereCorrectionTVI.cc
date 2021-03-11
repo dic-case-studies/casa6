@@ -910,7 +910,6 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
   //        << "time " << currentTime << " thread " << omp_get_thread_num() << endl;
   // }
   // LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
-  // os << "updateCorrectionFactor for SPW " << currentSpwId_ << LogIO::POST;
 
   // find OFF_SOURCE time stamps that brackets current time stamp
   std::pair<Int, Int> nearestIndex = findNearestIndex(offSourceTime_, currentTime);
@@ -985,17 +984,14 @@ Vector<Double> SDAtmosphereCorrectionTVI::updateCorrectionFactor(atm::SkyStatus 
       returnValue[i] = smoothedCorrectionFactor[i * kNumResolveTDM];
     }
   } else if (doSmooth_[currentSpwId_]) {
-    // cout << "SPW " << currentSpwId_ << " requires smoothing " << endl;
     returnValue = convolve1DTriangle(correctionFactor);
   } else {
     returnValue.reference(correctionFactor);
   }
 
   // apply gain factor
-  // cout << "Applying gain factor " << gainFactorList_[currentSpwId_] << " to correction term" << endl;
   returnValue *= gainFactorList_[currentSpwId_];
 
-  // os << "DONE updateCorrectionFactor for SPW " << currentSpwId_ << LogIO::POST;
   return returnValue;
 }
 
@@ -1152,10 +1148,17 @@ void SDAtmosphereCorrectionTVI::readPointing(String const &msName, Int const ref
 
   LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
   Table const pointingTable = ms.pointing();
-  // TODO: abort if direction reference is not AZEL
   Table selected = pointingTable(pointingTable.col("ANTENNA_ID") == referenceAntenna);
   Vector<Double> const elevationTime = ScalarColumn<Double>(selected, "TIME").getColumn();
-  Array<Double> directionArray = ArrayColumn<Double>(selected, "DIRECTION").getColumn();
+  ArrayColumn<Double> directionColumn(selected, "DIRECTION");
+  auto const columnKeywords = directionColumn.keywordSet();
+  String const directionRef = columnKeywords.asRecord("MEASINFO").asString("Ref");
+  if (!directionRef.startsWith("AZEL")) {
+    LogIO os(LogOrigin("SDAtmosphereCorrectionTVI", __func__, WHERE));
+    os << "Direction reference " << directionRef << " is not supported. "
+       << "Reference should be AZEL-like." << LogIO::EXCEPTION;
+  }
+  Array<Double> directionArray = directionColumn.getColumn();
   Array<Double> elevationArray = Cube<Double>(directionArray).yzPlane(1);
   Vector<Double> const elevationData(elevationArray);
   elevationInterpolator_ = Interpolate1D<Double, Double>(
