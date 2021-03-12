@@ -171,6 +171,7 @@ def tclean(
 #    makeimages,#="auto"
     calcres,#=True,
     calcpsf,#=True,
+    psfcutoff,#=0.35
 
     ####### State parameters
     parallel):#=False):
@@ -210,7 +211,18 @@ def tclean(
     if((specmode=='cube' or specmode=='cubedata') and gridder=='awproject') and (parallel):
         casalog.post( "The awproject gridder still uses the old form python mpi parallelism pre CAS-9386.\n", "WARN", "task_tclean" )
         #return
-      
+        
+    if(perchanweightdensity==False and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with perchanweightdensity=False.", "WARN", "task_tclean" )
+        return
+        
+    if((specmode=='mfs' or specmode=='cont') and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with specmode='mfs' or 'cont'.", "WARN", "task_tclean" )
+        return
+        
+    if(npixels != 0 and weighting=='briggsbwtaper'):
+        casalog.post( "The briggsbwtaper weighting scheme is not compatable with npixels != 0.", "WARN", "task_tclean" )
+        return
 
     if(facets>1 and parallel==True):
         casalog.post("Facetted imaging currently works only in serial. Please choose pure W-projection instead.","WARN","task_tclean")

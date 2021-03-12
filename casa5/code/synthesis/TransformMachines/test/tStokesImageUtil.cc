@@ -42,7 +42,7 @@ int main() {
 		FITSImage gaussianModel(datadir + "gaussian_model.fits");
 		Vector<Float> beam(3, 0);
 		AlwaysAssert(
-			StokesImageUtil::FitGaussianPSF(gaussianModel, beam),
+			StokesImageUtil::FitGaussianPSF(gaussianModel, beam, 0.35),
 			AipsError
 		);
 		AlwaysAssert(beam[0] == 2.5, AipsError);
@@ -51,7 +51,7 @@ int main() {
 
 		GaussianBeam gbeam;
 		AlwaysAssert(
-			StokesImageUtil::FitGaussianPSF(gaussianModel, gbeam),
+			StokesImageUtil::FitGaussianPSF(gaussianModel, gbeam, 0.35),
 			AipsError
 		);
 		AlwaysAssert(gbeam.getMajor("arcsec") == 2.5, AipsError);

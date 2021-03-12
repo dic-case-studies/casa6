@@ -105,8 +105,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  SIImageStore::SIImageStore() 
+  SIImageStore::SIImageStore()
   {
+      
     itsPsf.reset( );
     itsModel.reset( );
     itsResidual.reset( );
@@ -136,6 +137,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsMiscInfo=Record();
     init();
     
+    
     //    validate();
 
   }
@@ -152,6 +154,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // TODO : Add parameter to indicate weight image shape. 
   {
     LogIO os( LogOrigin("SIImageStore","Open new Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -191,6 +194,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets)
   {
     LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -331,6 +335,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const Int pol, const Int npolchunks,
 			     const Bool useweightimage)
   {
+      
 
     itsPsf=psfim;
     itsModel=modelim;
@@ -1999,16 +2004,15 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       }
   }
   
-  GaussianBeam SIImageStore::getPSFGaussian()
+  GaussianBeam SIImageStore::getPSFGaussian(Float psfcutoff)
   {
-
     GaussianBeam beam;
     try
       {
 	if( psf()->ndim() > 0 )
 	  {
-            LatticeLocker lock2 (*(psf()), FileLocker::Read);
-	    StokesImageUtil::FitGaussianPSF( *(psf()), beam );
+          LatticeLocker lock2 (*(psf()), FileLocker::Read);
+          StokesImageUtil::FitGaussianPSF( *(psf()), beam, psfcutoff);
 	  }
       }
     catch(AipsError &x)
@@ -2021,8 +2025,10 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     return beam;
   }
 
-  void SIImageStore::makeImageBeamSet(const Bool forcefit)
+  void SIImageStore::makeImageBeamSet(Float psfcutoff, const Bool forcefit)
   {
+    clock_t begin = clock();
+      
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
     AlwaysAssert( itsImageShape.nelements() == 4, AipsError );
@@ -2060,7 +2066,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	  {
 	    try
 	      {
-		StokesImageUtil::FitGaussianPSF( subPsf, beam );
+		StokesImageUtil::FitGaussianPSF( subPsf, beam,psfcutoff );
 		itsPSFBeams.setBeam( chanid, polid, beam );
 		itsRestoredBeams.setBeam(chanid, polid, beam);
 	      }
@@ -2135,15 +2141,16 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       psf()->setImageInfo(ii);
       psf()->unlock();
     }
+    clock_t end = clock();
+    os << LogIO::NORMAL << "Time to fit Gaussian to PSF " << double(end - begin) / CLOCKS_PER_SEC << LogIO::POST;
   }// end of make beam set
 
 
   ImageBeamSet SIImageStore::getChannelBeamSet(const Int channel){
 
     return getChannelSliceBeamSet(channel, channel);
-
-
   }
+
 
   ImageBeamSet SIImageStore::getChannelSliceBeamSet(const Int begChan, const Int endChan){
      ImageBeamSet bs=getBeamSet();
@@ -2165,11 +2172,11 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     itsPSFBeams=bs;
   }
   
-  ImageBeamSet SIImageStore::getBeamSet()
-  { 
+  ImageBeamSet SIImageStore::getBeamSet(Float psfcutoff)
+  {
     IPosition beamshp = itsPSFBeams.shape();
     AlwaysAssert( beamshp.nelements()==2 , AipsError );
-    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet();}
+    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet(psfcutoff);}
     return itsPSFBeams; 
   }
 
@@ -2229,9 +2236,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   
   /////////////////////////////// Restore all planes.
 
-  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term)
+  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term, Float psfcutoff)
   {
-
     LogIO os( LogOrigin("SIImageStore","restore",WHERE) );
     //     << ". Optionally, PB-correct too." << LogIO::POST;
 
@@ -2266,7 +2272,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	  {
 	    // Make new beams.
 	    os << LogIO::WARN << "Couldn't find pre-computed restoring beams. Re-fitting." << LogIO::POST;
-	    makeImageBeamSet();
+	    makeImageBeamSet(psfcutoff);
 	  }
       }
 
