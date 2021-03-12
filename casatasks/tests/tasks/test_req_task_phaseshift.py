@@ -21,49 +21,60 @@
 #
 #
 ##########################################################################
-import os
-import unittest
-import shutil
+import glob
 import numpy as np
+import os
+import shutil
+import unittest
 
 CASA6 = False
 try:
-    import casatools
-    from casatasks import phaseshift, tclean
+    from casatools import (
+        componentlist, ctsys, image, measures, ms, quanta, regionmanager,
+        simulator, table
+    )
+    from casatasks import flagdata, phaseshift, tclean
+    from casatasks.private import simutil
     CASA6 = True
-
-    tb = casatools.table()
-    ia = casatools.image()
-    ms = casatools.ms()
-
-except ImportError:
-    from __main__ import default
-    from tasks import phaseshift, tclean
-    from taskinit import iatool, tbtool, mstool
-    ia = iatool()
-    tb = tbtool()
-    ms = mstool()
-
-
-# Data
-if CASA6:
+    cl = componentlist()
+    ia = image()
+    me = measures()
+    ms = ms()
+    qa = quanta()
+    rg = regionmanager()
+    sm = simulator()
+    tb = table()
     d = os.path.join('unittest', 'phaseshift')
-    datapath = casatools.ctsys.resolve(
+    datapath = ctsys.resolve(
         os.path.join(d, 'refim_twopoints_twochan.ms')
     )
-    datapath_Itziar = casatools.ctsys.resolve(
+    datapath_Itziar = ctsys.resolve(
         os.path.join(d, 'Itziar.ms')
     )
-    datapath_ngc = casatools.ctsys.resolve(
+    datapath_ngc = ctsys.resolve(
         os.path.join(d, 'ngc7538_ut.ms')
     )
-    datapath_nep = casatools.ctsys.resolve(
+    datapath_nep = ctsys.resolve(
         os.path.join(d, 'nep2-shrunk.ms')
     )
-    datapath_mms = casatools.ctsys.resolve(
+    datapath_mms = ctsys.resolve(
         os.path.join(d, 'uid___X02_X3d737_X1_01_small.mms')
     )
-else:
+except ImportError:
+    from __main__ import default
+    from tasks import flagdata, phaseshift, tclean
+    from taskinit import (
+        cltool, iatool, metool, mstool, qatool, rgtool, smtool, tbtool
+    )
+    import simutil
+    cl = cltool()
+    ia = iatool()
+    me = metool()
+    ms = mstool()
+    qa = qatool()
+    rg = rgtool()
+    sm = smtool()
+    tb = tbtool()
     d = os.path.join(
         os.environ.get('CASAPATH').split()[0], 'casatestdata',
         'unittest', 'phaseshift'
@@ -385,8 +396,213 @@ class phaseshift_test(unittest.TestCase):
         )
 
 
+class reference_frame_tests(unittest.TestCase):
+    # much of this code is adapted from that of rurvashi
+    # https://gitlab.nrao.edu/rurvashi/simulation-in-casa-6/-/blob/master/Simulation_Script_Demo.ipynb
+
+    comp_list = 'sim_onepoint.cl'
+    orig_ms = 'sim_data.ms'
+    orig_im = 'im_orig'
+    pshift_ms = 'sim_data_pshift.ms'
+    pshift_im = 'im_post_phaseshift'
+    pshift_shiftback_im = 'im_post_phaseshift_tclean_shiftback'
+    exp_flux = 5
+
+    def __delete_data(self):
+        for myms in (self.orig_ms, self.pshift_ms, self.comp_list):
+            if os.path.exists(myms):
+                shutil.rmtree(myms)
+        for im in (self.orig_im, self.pshift_im, self.pshift_shiftback_im):
+            for path in glob.glob(im + '*'):
+                shutil.rmtree(path)
+
+    def setUp(self):
+        self.__delete_data()
+
+    def tearDown(self):
+        self.__delete_data()
+
+    def __phase_center_string(self, ra, dec, frame):
+        return ' '.join([frame, ra, dec])
+
+    def __makeMSFrame(self, radir, decdir, dirframe):
+        """
+        Construct an empty Measurement Set that has the desired
+        observation setup.
+        """
+        # Open the simulator
+        sm.open(ms=self.orig_ms)
+
+        # Read/create an antenna configuration.
+        # Canned antenna config text files are located at
+        # /home/casa/data/trunk/alma/simmos/*cfg
+        if CASA6:
+            antennalist = os.path.join(
+                ctsys.resolve("alma/simmos"), "vla.d.cfg"
+            )
+        else:
+            antennalist = os.path.join(
+                '/home', 'casa', 'data', 'trunk', 'alma', 'simmos', "vla.d.cfg"
+            )
+
+        # Fictitious telescopes can be simulated by specifying x, y, z, d,
+        # an, telname, antpos.
+        # x,y,z are locations in meters in ITRF (Earth centered)
+        # coordinates.
+        # d, an are lists of antenna diameter and name.
+        # telname and obspos are the name and coordinates of the
+        # observatory.
+        (x, y, z, d, an, an2, telname, obspos) = (
+            simutil.simutil().readantenna(antennalist)
+        )
+
+        # Set the antenna configuration
+        sm.setconfig(
+            telescopename=telname, x=x, y=y, z=z, dishdiameter=d,
+            mount=['alt-az'], antname=an, coordsystem='global',
+            referencelocation=me.observatory(telname)
+        )
+
+        # Set the polarization mode (this goes to the FEED subtable)
+        sm.setfeed(mode='perfect R L', pol=[''])
+
+        # Set the spectral window and polarization (one
+        # data-description-id).
+        # Call multiple times with different names for multiple SPWs or
+        # pol setups.
+        sm.setspwindow(
+            spwname="LBand", freq='1.0GHz', deltafreq='0.1GHz',
+            freqresolution='0.2GHz', nchannels=10, stokes='RR LL'
+        )
+
+        # Setup source/field information (i.e. where the observation phase
+        # center is) Call multiple times for different pointings or source
+        # locations.
+        sm.setfield(
+            sourcename="fake", sourcedirection=me.direction(
+                rf=dirframe, v0=radir, v1=decdir
+            )
+        )
+
+        # Set shadow/elevation limits (if you care). These set flags.
+        sm.setlimits(shadowlimit=0.01, elevationlimit='1deg')
+
+        # Leave autocorrelations out of the MS.
+        sm.setauto(autocorrwt=0.0)
+
+        # Set the integration time, and the convention to use for timerange
+        # specification
+        # Note : It is convenient to pick the hourangle mode as all times
+        #   specified in sm.observe() will be relative to when the source
+        #   transits.
+        sm.settimes(
+            integrationtime='2000s', usehourangle=True,
+            referencetime=me.epoch('UTC', '2019/10/4/00:00:00')
+        )
+
+        # Construct MS metadata and UVW values for one scan and ddid
+        # Call multiple times for multiple scans.
+        # Call this with different sourcenames (fields) and spw/pol
+        # settings as defined above.
+        # Timesteps will be defined in intervals of 'integrationtime',
+        # between starttime and stoptime.
+        sm.observe(
+            sourcename="fake", spwname='LBand', starttime='-5.0h',
+            stoptime='+5.0h'
+        )
+        # Close the simulator
+        sm.close()
+        # Unflag everything (unless you care about elevation/shadow flags)
+        flagdata(vis=self.orig_ms, mode='unflag')
+
+    def __makeCompList(self, ra, dec, frame):
+        # Add sources, one at a time.
+        # Call multiple times to add multiple sources.
+        # ( Change the 'dir', obviously )
+        cl.addcomponent(
+            dir=self.__phase_center_string(ra, dec, frame),
+            flux=self.exp_flux,     # For a gaussian, this is the
+                                    # integrated area.
+            fluxunit='Jy', freq='1.5GHz', shape='point',
+            spectrumtype="constant"
+        )
+        # Save the file
+        cl.rename(filename=self.comp_list)
+        cl.done()
+
+    def __predictSimFromComplist(self):
+        sm.openfromms(self.orig_ms)
+        # Predict from a component list
+        sm.predict(complist=self.comp_list, incremental=False)
+        sm.close()
+
+    def __createImage(self, msname, imagename, phasecenter):
+        for path in glob.glob(imagename + '*'):
+            shutil.rmtree(path)
+        tclean(
+            vis=msname, imagename=imagename, datacolumn='data',
+            imsize=2048, cell='8.0arcsec',
+            gridder='wproject', niter=50, gain=0.3,
+            wprojplanes=128, pblimit=-0.1, phasecenter=phasecenter
+        )
+
+    def __compare(self, imagename, radir, decdir, dirframe):
+        ia.open('.'.join([imagename, 'image']))
+        stats = ia.statistics()
+        maxpos = stats['maxpos']
+        (xc, yc) = maxpos[0:2]
+        blc = [xc-10, yc-10, 0, 0]
+        trc = [xc+10, yc+10, 0, 0]
+        fit = ia.fitcomponents(region=rg.box(blc=blc, trc=trc))
+        ia.done()
+        cl.fromrecord(fit['deconvolved'])
+        pos = cl.getrefdir(0)
+        flux = cl.getfluxvalue(0)
+        cl.done()
+        expec = me.direction(dirframe, radir, decdir)
+        diff = me.separation(pos, expec)
+        print(qa.convert(diff, 'arcsec'))
+        print(flux[0]-self.exp_flux)
+
+    def test_J2000(self):
+        radir = '19:59:28.5'
+        decdir = '+40.44.01.5'
+        dirframe = 'J2000'
+        orig_pcenter = self.__phase_center_string(radir, decdir, dirframe)
+        pra = '19h53m50'
+        pdec = '40d06m00'
+        pframe = 'J2000'
+
+        shifted_pcenter = ' '.join([pframe, pra, pdec])
+
+        # make the MS
+        self.__makeMSFrame(radir, decdir, dirframe)
+        # Make the component list
+        self.__makeCompList(radir, decdir, dirframe)
+        # Predict Visibilities
+        self.__predictSimFromComplist()
+        # image simulated MS
+        self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
+        # run phaseshift
+        phaseshift(
+            vis=self.orig_ms, outputvis=self.pshift_ms,
+            phasecenter=shifted_pcenter
+        )
+        # create image from phaseshifted MS
+        self.__createImage(self.pshift_ms, self.pshift_im, "")
+        # create image from phaseshifted MS, using tclean to shift
+        # phase center back to original position
+        self.__createImage(
+            self.pshift_ms, self.pshift_shiftback_im, orig_pcenter
+        )
+
+        self.__compare(self.orig_im, radir, decdir, dirframe)
+        self.__compare(self.pshift_im, radir, decdir, dirframe)
+        self.__compare(self.pshift_shiftback_im, radir, decdir, dirframe)
+
+
 def suite():
-    return[phaseshift_test]
+    return[phaseshift_test, reference_frame_tests]
 
 
 if __name__ == '__main__':
