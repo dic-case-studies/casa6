@@ -3451,26 +3451,23 @@ void SingleDishMS::atmcor(Record const &config, string const &columnName, string
   os << LogIO::DEBUGGING << "config summry:";
   atmCorConfig_.print(os.output(), 25, "    ");
   os << LogIO::POST;
-  // TODO: exclude MS::TIME from sortCols when CAS-13360 is fixed
-  Block<Int> sortCols(5);
+  Block<Int> sortCols(4);
   sortCols[0] = MS::OBSERVATION_ID;
   sortCols[1] = MS::ARRAY_ID;
   sortCols[2] = MS::FEED1;
   sortCols[3] = MS::DATA_DESC_ID;
-  sortCols[4] = MS::TIME;
   prepare_for_process(columnName, outMSName, sortCols, False);
 
   // get VI/VB2 access
   vi::VisibilityIterator2 *visIter = sdh_->getVisIter();
-  // experimental: set row blocking (common multiple of 3 and 4)
+  // for parallel processing: set row blocking (common multiple of 3 and 4)
+  // TODO: optimize row blocking size
   constexpr rownr_t kNrowBlocking = 360u;
   std::vector<Int> antenna1 = ScalarColumn<Int>(visIter->ms(), "ANTENNA1").getColumn().tovector();
   std::sort(antenna1.begin(), antenna1.end());
   auto const result = std::unique(antenna1.begin(), antenna1.end());
   Int const nAntennas = std::distance(antenna1.begin(), result);
-  // TODO: turn on row blocking mode when CAS-13360 is fixed
-  // visIter->setRowBlocking(kNrowBlocking * nAntennas);
-  visIter->setRowBlocking(0);
+  visIter->setRowBlocking(kNrowBlocking * nAntennas);
   os << "There are " << nAntennas << " antennas in MAIN table. "
      << "Set row-blocking size " << kNrowBlocking * nAntennas
      << LogIO::POST;
