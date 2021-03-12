@@ -561,8 +561,16 @@ class reference_frame_tests(unittest.TestCase):
         cl.done()
         expec = me.direction(dirframe, radir, decdir)
         diff = me.separation(pos, expec)
-        print(qa.convert(diff, 'arcsec'))
-        print(flux[0]-self.exp_flux)
+        self.assertTrue(
+            qa.lt(diff, qa.quantity('0.2arcsec')),
+            'position difference is too large: '
+            + qa.tos(qa.convert(diff, 'arcsec'))
+        )
+        self.assertAlmostEqual(
+            flux[0], self.exp_flux,
+            msg='flux differs by too much: got: ' + str(flux[0])
+            + ' expected: ' + str(self.exp_flux), delta=0.02
+        )
 
     def test_J2000(self):
         radir = '19:59:28.5'
@@ -572,9 +580,7 @@ class reference_frame_tests(unittest.TestCase):
         pra = '19h53m50'
         pdec = '40d06m00'
         pframe = 'J2000'
-
         shifted_pcenter = ' '.join([pframe, pra, pdec])
-
         # make the MS
         self.__makeMSFrame(radir, decdir, dirframe)
         # Make the component list
