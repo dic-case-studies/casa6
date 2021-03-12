@@ -37,7 +37,7 @@ testcaltables = {'a_mueller.uvcont.tbl': (250000, 'time', 'gamp'),
     'ngc5921.ref2a.gcal': (40000, 'time', 'gamp'),
     'topac.cal': (30000, 'time', 'opac'),
     'tsysweight_ave.tsys.cal': (100000, 'chan', 'tsys'),
-    'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl': (80000, 'time', 'greal'),
+    'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl': (70000, 'time', 'greal'),
     'xf_jones.cal': (80000, 'chan', 'gphase')}
 
 # Pick up alternative data directory to run tests on MMSs
