@@ -16,7 +16,6 @@
 import shutil
 import unittest
 import os
-from lib2to3.tests.pytree_idempotency import diff
 
 CASA6 = False
 try:
