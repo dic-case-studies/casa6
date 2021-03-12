@@ -24,7 +24,7 @@
 import os
 import unittest
 import shutil
-import numpy
+import numpy as np
 
 CASA6 = False
 try:
@@ -133,7 +133,9 @@ class phaseshift_test(unittest.TestCase):
             self.assertTrue(result)
 
     def test_outvis(self):
-        ''' Check that the outvis parameter specifies the name of the output '''
+        '''
+        Check that the outvis parameter specifies the name of the output
+        '''
         phaseshift(
             datacopy, outputvis=output,
             phasecenter='J2000 19h53m50 40d06m00'
@@ -155,7 +157,10 @@ class phaseshift_test(unittest.TestCase):
 
     def test_spwSelect(self):
         ''' Check the spw selection parameter '''
-        phaseshift(datacopy_ngc, outputvis=output, phasecenter='B1950_VLA 23h11m54 61d10m54', spw='1')
+        phaseshift(
+            datacopy_ngc, outputvis=output,
+            phasecenter='B1950_VLA 23h11m54 61d10m54', spw='1'
+        )
         tb.open(output)
         data_selected = len(tb.getcol('TIME'))
         tb.close()
@@ -217,7 +222,8 @@ class phaseshift_test(unittest.TestCase):
         else:
             self.assertFalse(
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35',
                     observation='1'
                 ), msg=msg
             )
@@ -235,8 +241,8 @@ class phaseshift_test(unittest.TestCase):
 
     def test_keepsMMS(self):
         '''
-            Test the keepmms paramter creates the output as an MMS
-            if the input is one as well
+        Test the keepmms paramter creates the output as an MMS
+        if the input is one as well
         '''
         phaseshift(
             datacopy_mms, outputvis=output,
@@ -249,12 +255,16 @@ class phaseshift_test(unittest.TestCase):
         self.assertFalse(is_mms)
 
     def test_datacolumn(self):
-        ''' Check that this parameter selects which datacolumns to write to the output MS '''
+        '''
+        Check that this parameter selects which datacolumns to write
+        to the output MS
+        '''
         msg = "Data column incorrectly present"
         if CASA6:
             with self.assertRaises(RuntimeError, msg=msg):
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35',
                     datacolumn='MODEL'
                 )
             # running to completion indicates success in CASA 6
@@ -271,25 +281,34 @@ class phaseshift_test(unittest.TestCase):
             )
             self.assertTrue(
                 phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -06d23m35',
+                    datacopy_nep, outputvis=output,
+                    phasecenter='ICRS 00h06m14 -06d23m35',
                     datacolumn='DATA'
                 ), msg="phaseshift unexpectedly failed"
             )
 
     def test_phasecenter(self):
-        ''' Check that this parameter sets the sky coordinates of the new phasecenter '''
-        phaseshift(datacopy_nep, outputvis=output, phasecenter='ICRS 00h06m14 -08d23m35')
+        '''
+        Check that this parameter sets the sky coordinates of the new
+        phasecenter
+        '''
+        phaseshift(
+            datacopy_nep, outputvis=output,
+            phasecenter='ICRS 00h06m14 -08d23m35'
+        )
         tb.open(output)
-        data_mean = numpy.mean(tb.getcol('DATA'))
+        data_mean = np.mean(tb.getcol('DATA'))
         tb.close()
 
-        self.assertTrue(numpy.isclose(data_mean, -0.00968202886279957-0.004072808512879953j))
+        self.assertTrue(np.isclose(
+            data_mean, -0.00968202886279957-0.004072808512879953j)
+        )
 
     def test_shiftAndCompare(self):
         '''
-            Check that changing the phasecenter with phaseshift and
-            reverting with tclean results in the correct flux values at
-            selected pixel locations
+        Check that changing the phasecenter with phaseshift and
+        reverting with tclean results in the correct flux values at
+        selected pixel locations
         '''
         # Run phaseshift to shift the MS phasecenter to a new location.
         post_vis = 'post_phaseshift.ms'
@@ -301,10 +320,12 @@ class phaseshift_test(unittest.TestCase):
 
         # (1) Imaging on the original dataset
         os.system('rm -rf im2_pre*')
-        tclean(vis=datacopy, imagename='im2_pre',
-               imsize=2048,cell='5arcsec',niter=0,
-               gridder='wproject', wprojplanes=128,pblimit=-0.1, 
-               phasecenter='J2000 19h59m28.449 40d44m01.199')
+        tclean(
+            vis=datacopy, imagename='im2_pre',
+            imsize=2048, cell='5arcsec', niter=0,
+            gridder='wproject', wprojplanes=128, pblimit=-0.1,
+            phasecenter='J2000 19h59m28.449 40d44m01.199'
+        )
 
         # (2) Image the phaseshifted dataset at it's new phasecenter as
         # image center.
@@ -328,7 +349,7 @@ class phaseshift_test(unittest.TestCase):
             vis=post_vis, imagename=post_image,
             imsize=2048, cell='5arcsec', niter=0, gridder='wproject',
             wprojplanes=128, pblimit=-0.1,
-            phasecenter='J2000 19h59m28.449 40d44m01.199' 
+            phasecenter='J2000 19h59m28.449 40d44m01.199'
         )
 
         # In the above 3 images, (1) has the correct locations.
@@ -340,12 +361,12 @@ class phaseshift_test(unittest.TestCase):
         # pixel location as in (1).  This test is encoded below.
 
         ia.open('im2_pre.image')
-        src1_pre = ia.pixelvalue([1024, 1024, 0, 0] )['value']
-        src2_pre = ia.pixelvalue([1132, 1168, 0, 0] )['value']
+        src1_pre = ia.pixelvalue([1024, 1024, 0, 0])['value']
+        src2_pre = ia.pixelvalue([1132, 1168, 0, 0])['value']
         ia.close()
         ia.open(post_image+'.image')
-        src1_post = ia.pixelvalue([1024, 1024, 0, 0] )['value']
-        src2_post = ia.pixelvalue([1132, 1168, 0, 0] )['value']
+        src1_post = ia.pixelvalue([1024, 1024, 0, 0])['value']
+        src2_post = ia.pixelvalue([1132, 1168, 0, 0])['value']
         ia.close()
 
         print("Image value at source locations")
@@ -356,8 +377,12 @@ class phaseshift_test(unittest.TestCase):
         os.system('rm -rf im2_post_phaseshift*')
         os.system('rm -rf im2_post_phaseshift_tclean_phasecenter*')
 
-        self.assertTrue(numpy.isclose(src1_pre['value'], src1_post['value'], rtol=0.01))
-        self.assertTrue(numpy.isclose(src2_pre['value'], src2_post['value'], rtol=0.01))
+        self.assertTrue(
+            np.isclose(src1_pre['value'], src1_post['value'], rtol=0.01)
+        )
+        self.assertTrue(
+            np.isclose(src2_pre['value'], src2_post['value'], rtol=0.01)
+        )
 
 
 def suite():
