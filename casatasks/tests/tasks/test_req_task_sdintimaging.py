@@ -314,7 +314,7 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image.tt0', 1.187, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 0.262, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -0.954, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.174, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.alpha', 0.195, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -549,7 +549,7 @@ class test_singlepointing(testref_base):
                                    (outimg+'.image.tt0', 1.144, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 0.371, [300,400,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -1.29, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.11, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.alpha', 0.101, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -727,7 +727,7 @@ class test_mosaic(testref_base):
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 1.0, [750,750,0,0]),
                                    (outimg+'.image.tt0', 1.05, [700,783,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.14, [650,720,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 0.147, [650,720,0,0]),        # extended emission with alpha=0
                                    (outimg+'.alpha', -1.016, [700,783,0,0]),    # point source with alpha=-1
                                    (outimg+'.alpha', -0.78, [650,720,0,0]) ])      # extended emission with alpha=0 (steep with intonly)
         self.checkfinal(pstr=report)
