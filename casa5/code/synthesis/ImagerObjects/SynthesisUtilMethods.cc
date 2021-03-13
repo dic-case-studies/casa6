@@ -187,7 +187,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   Bool SynthesisUtilMethods::fitPsfBeam(const String& imagename, const Int nterms, const Float psfcutoff)
   {
-    
+    LogIO os(LogOrigin("SynthesisUtilMethods", "fitPsfBeam"));
+
+    if (psfcutoff >=1.0 || psfcutoff<=0.0)
+      {
+	os << "psfcutoff must be >0 and <1" << LogIO::WARN;
+	return false;
+      }
+
     std::shared_ptr<SIImageStore> imstore;
     if( nterms>1 )
       { imstore = std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, nterms, true ));   }
@@ -195,7 +202,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { imstore = std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true ));   }
   
 
-    LogIO os(LogOrigin("SynthesisUtilMethods", "fitPsfBeam"));
     os << "Fitting PSF beam for Imagestore : " << imstore->getName() << LogIO::POST;
 
     imstore->makeImageBeamSet(psfcutoff, true);
