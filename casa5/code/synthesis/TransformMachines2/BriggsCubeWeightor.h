@@ -50,13 +50,13 @@ class BriggsCubeWeightor{
    BriggsCubeWeightor(vi::VisibilityIterator2& vi, const casacore::String& rmode,
 		       const casacore::Quantity& noise, const casacore::Double robust,
 		       const casacore::ImageInterface<casacore::Complex>& templateimage,
-                      const casacore::RecordInterface& inrec,
+                      const casacore::RecordInterface& inrec, const casacore::Double& fracBW,
 		       const casacore::Int superUniformBox=0,
 		      const casacore::Bool multiField=false);
    //This constructor will require that init be called at a later stage
    BriggsCubeWeightor(const casacore::String& rmode,
 		       const casacore::Quantity& noise,
-		      const casacore::Double robust,const
+		      const casacore::Double robust, const casacore::Double& fracBW, const
 		      casacore::Int superUniformBox=0,
 		      const casacore::Bool multiField=false);
     
@@ -70,10 +70,12 @@ class BriggsCubeWeightor{
   private:
     void initializeFTMachine(const casacore::uInt index, const casacore::ImageInterface<casacore::Complex>& templateimage, const casacore::RecordInterface& inrec);
     void cube2Matrix(const casacore::Cube<casacore::Bool>& fcube, casacore::Matrix<casacore::Bool>& fMat);
+
     casacore::String makeScratchImagingWeightTable(casacore::CountedPtr<casacore::Table>& weightTable, const casacore::String& postfix);
 	void getWeightUniform(const casacore::Array<casacore::Float>& wgtDensity, casacore::Matrix<casacore::Float>& imweight, const vi::VisBuffer2& vb);
 	void readWeightColumn(casacore::Matrix<casacore::Float>& imweight, const vi::VisBuffer2& vb);
-	casacore::Int estimateSwingChanPad(vi::VisibilityIterator2& vi, const casacore::CoordinateSystem& cs, const casacore::Int imNChan, const casacore::String& ephemtab="");
+  casacore::Int estimateSwingChanPad(vi::VisibilityIterator2& vi, const casacore::CoordinateSystem& cs, const casacore::Int imNChan, const casacore::String& ephemtab="");
+
     casacore::Block<casacore::CountedPtr<casacore::ImageInterface<casacore::Float> > > grids_p;
     
     casacore::Block<casacore::CountedPtr<refim::GridFT> >  ft_p;
@@ -92,6 +94,8 @@ class BriggsCubeWeightor{
     casacore::InterpolateArray1D<casacore::Double,casacore::Complex>::InterpolationMethod freqInterpMethod_p;
     casacore::Bool freqFrameValid_p;
     VisImagingWeight visWgt_p;
+    
+    casacore::Double fracBW_p;
     casacore::CountedPtr<casacore::Table> wgtTab_p;
     std::map<std::pair<casacore::uInt, casacore::rownr_t>, casacore::rownr_t> vbrowms2wgtrow_p;
     casacore::String imWgtColName_p;

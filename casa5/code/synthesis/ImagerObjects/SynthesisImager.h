@@ -179,7 +179,7 @@ class SynthesisImager
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"), casacore::Double fracBW=0.0);
 
   virtual casacore::Bool weight(const Record&){ return false;}; /*not implemented here */
   //Stores the weight density in an image. Returns the image name 
@@ -454,7 +454,9 @@ protected:
   casacore::Bool doingCubeGridding_p;
   
   casacore::Record normpars_p;
+  casacore::CoordinateSystem csys_p;
   std::vector<casacore::String> tempFileNames_p;
+
 };
 
 
