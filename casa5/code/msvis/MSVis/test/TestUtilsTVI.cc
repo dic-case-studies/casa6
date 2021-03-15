@@ -155,10 +155,14 @@ void MsFactoryTVITester::createMS()
     ms_p.reset(p.first); //MsFactory has given up ownership
 }
 
-void MsFactoryTVITester::instantiateVI(std::vector<ViiLayerFactory*>& factories)
+void MsFactoryTVITester::instantiateVI(std::vector<ViiLayerFactory*>& factories,
+                                       casacore::Int nRowBlocking_p)
 {
     //Create the top VI using the factories provided
     vi_p.reset(new VisibilityIterator2(factories));
+
+    if(nRowBlocking_p > 1)
+        vi_p->setRowBlocking(nRowBlocking_p);
 
     vb_p = vi_p->getVisBuffer();
 }
