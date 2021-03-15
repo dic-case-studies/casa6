@@ -279,9 +279,10 @@ inline void transformData(
   inout.putStorage(p, b1);
 }
 
-bool isCloseDouble(Double const a, Double const b, Double const tolerance=1.0e-15) {
-  Double const relativeDiff = (abs(a) < tolerance) ? abs(b - a) : abs((b - a) / a);
-  return relativeDiff < tolerance;
+bool isCloseDouble(Double const a, Double const b) {
+  constexpr Double kToleranceDouble = std::numeric_limits<double>::epsilon();
+  Double const relativeDiff = (abs(a) < kToleranceDouble) ? abs(b - a) : abs((b - a) / a);
+  return relativeDiff < kToleranceDouble;
 }
 
 inline Vector<Int> getScienceSpw(MeasurementSet const &ms) {
