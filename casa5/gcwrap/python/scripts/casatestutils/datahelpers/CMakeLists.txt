@@ -18,19 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-casa_add_python ( tools tools_casatestutils_python lib/python${PYTHONV}/casatestutils
+casa_add_python ( tools tools_casatestutils_datahelpers_python lib/python${PYTHONV}/casatestutils/datahelpers
   __init__.py
-  check.py
-  compare.py
-  component_to_test_map.json
-  extractcasascript.py
-  filltsys.py
-  listing.py 
-  restfreqtool.py
-  selection_syntax.py
-  testhelper.py
-  weblog.py
-)
+  getTelescope.py
+  selectTaql.py
 
-add_subdirectory ( imagerhelpers )
-add_subdirectory ( datahelpers )
+)
