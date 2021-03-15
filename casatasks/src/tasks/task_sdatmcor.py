@@ -394,25 +394,25 @@ def sdatmcor(
                 user_default='',
                 task_default=qa.quantity(0, 'mbar'))
             if is_user_param:
-                config['pressure'] = qa.convert(pressure, 'mbar')['value']
+                config['pressure'] = qa.convert(user_pressure, 'mbar')['value']
             user_temperature, is_user_param = parse_atm_params(
                 user_param=temperature,
                 user_default='',
                 task_default=qa.quantity(0, 'K'))
             if is_user_param:
-                config['temperature'] = qa.convert(temperature, 'K')['value']
+                config['temperature'] = qa.convert(user_temperature, 'K')['value']
             user_humidity, is_user_param = parse_atm_params(
                 user_param=humidity,
                 user_default='',
                 task_default=qa.quantity(0, '%'))
             if is_user_param:
-                config['humidity'] = qa.convert(humidity, '%')['value']
+                config['humidity'] = qa.convert(user_humidity, '%')['value']
             user_pwv, is_user_param = parse_atm_params(
                 user_param=pwv,
                 user_default='',
                 task_default=qa.quantity(0, 'mm'))
             if is_user_param:
-                config['pwv'] = qa.convert(pwv, 'mm')['value']
+                config['pwv'] = qa.convert(user_pwv, 'mm')['value']
             user_layerboundaries, is_user_param = parse_atm_list_params(
                 user_param=layerboundaries,
                 user_default='',

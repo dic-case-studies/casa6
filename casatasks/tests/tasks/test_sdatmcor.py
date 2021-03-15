@@ -477,6 +477,18 @@ class test_sdatmcor(unittest.TestCase):
         )
         self.check_result({19: True, 23: True})
 
+    def test_custom_atm_params_nounit(self):
+        """Test customized ATM parameters (no unit)"""
+        sdatmcor(
+            infile=self.infile, outfile=self.outfile, datacolumn='data',
+            dtem_dh=-5.7, h0=2.01,
+            atmdetail=True,
+            altitude=5100., temperature=290., pressure=700.,
+            humidity=30, pwv=10., dp=10., dpm=1.2,
+            layerboundaries=[800.,1500.], layertemperature=[250.,200.]
+        )
+        self.check_result({19: True, 23: True})
+
     def test_custom_atm_params_non_conform_list_input(self):
         """Test customized ATM parameters: non-conform layerboundaries and layertemperature"""
         with self.assertRaises(Exception):
