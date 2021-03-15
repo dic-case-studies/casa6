@@ -71,9 +71,11 @@
 
 //for gsl bfgs
 #include <synthesis/MeasurementEquations/gslobjfunc.h>
-
 // for gsl
 using Eigen::VectorXd;
+
+// for gpu lbfgs
+#include <synthesis/MeasurementEquations/cudaobjfunc.h>
 
 using namespace casacore;
 using namespace std::chrono;
@@ -1028,7 +1030,135 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
 
+// cuda lbfgs
+vector<Float> AspMatrixCleaner::getActiveSetAspen()
+{
+  LogIO os(LogOrigin("AspMatrixCleaner", "getActiveSetAspen()", WHERE));
 
+  if(int(itsInitScaleXfrs.nelements()) == 0)
+    throw(AipsError("Initial scales for Asp are not defined"));
+
+  if (!itsSwitchedToHogbom &&
+  	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
+  {
+  	os << "Switched to hogbom because of frequent small components." << LogIO::POST;
+    switchedToHogbom();
+  }
+
+  if (itsSwitchedToHogbom)
+  	itsNInitScales = 1;
+  else
+  	itsNInitScales = itsInitScaleSizes.size();
+
+  // Dirty * initial scales
+  Matrix<Complex> dirtyFT;
+  FFTServer<Float,Complex> fft(itsDirty->shape());
+  fft.fft0(dirtyFT, *itsDirty);
+  itsDirtyConvInitScales.resize(0);
+  itsDirtyConvInitScales.resize(itsNInitScales); // 0, 1width, 2width, 4width and 8width
+
+  for (int scale=0; scale < itsNInitScales; scale++)
+  {
+    Matrix<Complex> cWork;
+
+    itsDirtyConvInitScales[scale] = Matrix<Float>(itsDirty->shape());
+    cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
+    fft.fft0((itsDirtyConvInitScales[scale]), cWork, false);
+    fft.flip((itsDirtyConvInitScales[scale]), false, false);
+
+    // cout << "remake itsDirtyConvInitScales " << scale << " max itsInitScales[" << scale << "] = " << max(fabs(itsInitScales[scale])) << endl;
+    // cout << " max itsInitScaleXfrs[" << scale << "] = " << max(fabs(itsInitScaleXfrs[scale])) << endl;
+  }
+
+  float strengthOptimum = 0.0;
+  int optimumScale = 0;
+  IPosition positionOptimum(itsDirty->shape().nelements(), 0);
+  itsGoodAspActiveSet.resize(0);
+  itsGoodAspAmplitude.resize(0);
+  itsGoodAspCenter.resize(0);
+
+  maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
+  os << "Peak among the smoothed residual image is " << strengthOptimum  << " and initial scale: " << optimumScale << LogIO::POST;
+  // cout << " its itsDirty is " << (*itsDirty)(positionOptimum);
+  // cout << " at location " << positionOptimum[0] << " " << positionOptimum[1] << " " << positionOptimum[2];
+
+  // memory used
+  //itsUsedMemoryMB = double(HostInfo::memoryUsed()/1024);
+  //cout << "Memory allocated in getActiveSetAspen " << itsUsedMemoryMB << " MB." << endl;
+
+  itsStrengthOptimum = strengthOptimum;
+  itsPositionOptimum = positionOptimum;
+  itsOptimumScale = optimumScale;
+  itsOptimumScaleSize = itsInitScaleSizes[optimumScale];
+
+  // initial scale size = 0 gives the peak res, so we don't
+  // need to do the LBFGS optimization for it
+  if (itsOptimumScale == 0)
+    return {};
+  else
+  {
+    // the new aspen is always added to the active-set
+    vector<Float> tempx;
+    vector<IPosition> activeSetCenter;
+
+    tempx.push_back(strengthOptimum);
+    tempx.push_back(itsInitScaleSizes[optimumScale]);
+    activeSetCenter.push_back(positionOptimum);
+
+    // CUDA BFGS: set the initial guess
+    unsigned int length = tempx.size();
+    cpu_objfunc aspobj(*itsDirty, *itsXfr, activeSetCenter);
+	  lbfgs minimizer1(aspobj);
+	  minimizer1.setGradientEpsilon(1e-3f);
+	  minimizer1.setMaxIterations(5);
+
+	  float x[length];
+	 
+    for (unsigned int i = 0; i < length; i+=2)
+    {
+      x[i] = tempx[i];
+      x[i+1] = tempx[i+1];
+    }
+
+    // CUDA optimization
+    lbfgs::status stat = minimizer1.cpu_lbfgs(x);
+
+	  cout << "cuda bfgs optx: " << x[0] << " " << x[1] << endl;
+	  cout << minimizer1.statusToString(stat).c_str() << endl;
+    // end cuda bfgsoptimization
+
+    double amp = x[0]; // i
+    double scale = x[1]; // i+1
+    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
+    itsGoodAspAmplitude.push_back(amp); // active-set amplitude
+    itsGoodAspActiveSet.push_back(scale); // active-set
+
+    itsStrengthOptimum = amp;
+    itsOptimumScaleSize = scale;
+    itsGoodAspCenter = activeSetCenter;
+
+    // debug
+    os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
+
+  } // finish bfgs optimization
+
+  AlwaysAssert(itsGoodAspCenter.size() == itsGoodAspActiveSet.size(), AipsError);
+  AlwaysAssert(itsGoodAspAmplitude.size() == itsGoodAspActiveSet.size(), AipsError);
+
+  // debug info
+  /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+  {
+    //cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
+    //cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
+    //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
+    cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
+  }*/
+ 
+  return itsGoodAspActiveSet; // return optimized scale
+}
+
+// gsl lbfgs
+/*
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
 {
   LogIO os(LogOrigin("AspMatrixCleaner", "getActiveSetAspen()", WHERE));
@@ -1141,7 +1271,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsAspScaleSizes.erase(itsAspScaleSizes.begin() + goodvp[i]);
       itsAspCenter.erase(itsAspCenter.begin() + goodvp[i]);
       itsAspGood.erase(itsAspGood.begin() + goodvp[i]);
-    }*/
+    }* /
 
     // the new aspen is always added to the active-set
     vector<Float> tempx;
@@ -1173,7 +1303,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     gsl_multimin_fdfminimizer *s = NULL;
     // f only
     /*gsl_multimin_function my_func;
-    gsl_multimin_fminimizer *s = NULL;*/
+    gsl_multimin_fminimizer *s = NULL;* /
 
     // setupSolver
     ParamObj optParam(*itsDirty, *itsXfr, activeSetCenter);
@@ -1194,16 +1324,16 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     s = gsl_multimin_fminimizer_alloc(T, length);
     my_func.n      = length;
     my_func.f      = my_f; //my_f
-    my_func.params = (void *)ptrParam;*/
+    my_func.params = (void *)ptrParam;* /
 
     // fdf
     const float InitStep = gsl_blas_dnrm2(x);
-    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/*1e-3*/);
+    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/*1e-3* /);
     // f only
     /*gsl_vector *ss = NULL;
     ss = gsl_vector_alloc (length);
     gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
-    gsl_multimin_fminimizer_set(s, &my_func, x, ss);*/
+    gsl_multimin_fminimizer_set(s, &my_func, x, ss);* /
 
     // ---------- BFGS algorithm begin ----------
     // fdf
@@ -1235,7 +1365,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
                 gsl_vector_get (s->x, 1),
                 s->fval, size);
       }
-    while (status == GSL_CONTINUE && iter < 20);*/
+    while (status == GSL_CONTINUE && iter < 20);* /
     //----------  BFGS algorithm end  ----------
 
     // update x is needed here.
@@ -1286,10 +1416,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
-  }*/
+  }* /
  
   return itsGoodAspActiveSet; // return optimized scale
-}
+}*/
 
 // Define the Asp scales without doing anything else
 void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)

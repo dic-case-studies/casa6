@@ -19,11 +19,14 @@
 #
 
 
+
+
 BISON_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.yy ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.ycc COMPILE_FLAGS "-y -p CalLibraryGram --output-file=CalLibraryGram.ycc")
 FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.lcc COMPILE_FLAGS "-PCalLibraryGram")
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR}
-                     "/usr/include/eigen3")
+                     "/usr/include/eigen3"
+                    "/home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc
@@ -610,6 +613,7 @@ install (FILES
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/gslobjfunc.h
+  MeasurementEquations/cudaobjfunc.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h
