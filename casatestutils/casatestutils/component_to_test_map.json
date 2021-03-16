@@ -1191,6 +1191,16 @@
             "comment":"DEFAULT"
         },
         {
+            "testScript":"test_plotbandpass",
+            "testType":"casatasks",
+            "maintainer":"Jorge Lopez",
+            "maintainerEmail":"jalopez@nrao.edu",
+            "testOptions":[],
+            "testGroup":["plotbandpass","Visualization"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_plotcal",
             "testType":"casatasks",
             "maintainer":"Pam Ford",
