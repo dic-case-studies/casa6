@@ -152,12 +152,18 @@ void PhaseShiftingTVI::shiftUVWPhases()
 	// Get input VisBuffer
 	VisBuffer2 *vb = getVii()->getVisBuffer();
 
+	auto convertedPhaseCenter = phaseCenter_p;
+	if (phaseCenter_p.getRefString() != vb->phaseCenter().getRefString()) {
+		MDirection::Types mdtype;
+		MDirection::getType(mdtype, vb->phaseCenter().getRefString());
+		convertedPhaseCenter = MDirection::Convert(phaseCenter_p, mdtype)();
+	}
+
 	// Initialize epoch corresponding to current buffer
 	// with time reference to the first row in the MS
 	MEpoch epoch(Quantity(vb->time()(0),referenceTimeUnits_p),referenceTime_p.getRef());
 	MeasFrame refFrame(epoch,observatoryPosition_p);
-	UVWMachine uvwMachine(phaseCenter_p, vb->phaseCenter(), refFrame,false,false);
-
+	UVWMachine uvwMachine(convertedPhaseCenter, vb->phaseCenter(), refFrame,false,false);
 	// Initialize phase array and uvw matrix
 	phaseShift_p.resize(vb->nRows(),false);
 	newUVW_p.resize(vb->uvw().shape(),false);
@@ -183,11 +189,9 @@ void PhaseShiftingTVI::shiftUVWPhases()
 		dummy(0) = -1*dummy(0);
 		dummy(1) = -1*dummy(1);
 		newUVW_p.column(row) = dummy;
-
 		// Convert phase shift to radian/Hz
 		phaseShift_p(row) = phase2radPerHz*phaseShift_p(row);
 	}
-
 	return;
 }
 
