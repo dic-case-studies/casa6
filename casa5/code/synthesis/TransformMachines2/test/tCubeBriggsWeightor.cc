@@ -116,8 +116,8 @@ Int main(/*int argc, char **argv*/){
 	  Record ftmRec;
 	  ftm->toRecord(err, ftmRec);
       refim::SimpleComponentFTMachine cft;
-	  BriggsCubeWeightor brwgt("norm", Quantity(0.0, "Jy"), 0.0);
-	  BriggsCubeWeightor brwgt2("norm", Quantity(0.0, "Jy"), 0.0);
+	  BriggsCubeWeightor brwgt("norm", Quantity(0.0, "Jy"), 0.0, 0.0);
+	  BriggsCubeWeightor brwgt2("norm", Quantity(0.0, "Jy"), 0.0, 0.0);
 	  brwgt.init(vi2, im, ftmRec);
 	  brwgt2.initImgWeightCol(vi2, im, ftmRec);
 	  Matrix<Float> wgt1;

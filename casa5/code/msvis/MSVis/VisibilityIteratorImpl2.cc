@@ -2357,6 +2357,11 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         if (rowBounds_p.subchunkEnd_p >= rowBounds_p.chunkNRows_p) {
             rowBounds_p.subchunkEnd_p = rowBounds_p.chunkNRows_p - 1;
         }
+        // This is needed because the call to spectralWindows() needs to
+        // have rowBounds_p.subchunkRows_p properly initialized
+        rowBounds_p.subchunkRows_p =
+                RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
+
 
         // Scan the subchunk to see if the same channels are selected in each
         // row.  End the subchunk when a row using different channels is
@@ -2365,6 +2370,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
                 rowBounds_p.times_p(rowBounds_p.subchunkBegin_p);
         channelSelectors_p.clear();
         channelSelectorsNrows_p.clear();
+
         channelSelectors_p.push_back(determineChannelSelection(previousRowTime,
             -1, polarizationId(), msId()));
 
@@ -2382,7 +2388,8 @@ VisibilityIteratorImpl2::configureNewSubchunk()
             // with the previous row's channel selector.
 
             std::shared_ptr<ChannelSelector> newSelector =
-                    determineChannelSelection(rowTime);
+                    determineChannelSelection(rowTime, msIter_p->spectralWindowId(),
+                                              msIter_p->polarizationId(), msId());
 
             if (newSelector.get() != channelSelectors_p[0].get()) {
 
@@ -2398,6 +2405,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
 
         rowBounds_p.subchunkNRows_p =
                 rowBounds_p.subchunkEnd_p - rowBounds_p.subchunkBegin_p + 1;
+        // Reset this in case rowBounds_p.subchunkEnd_p has changed
         rowBounds_p.subchunkRows_p =
                 RefRows(rowBounds_p.subchunkBegin_p, rowBounds_p.subchunkEnd_p);
         rowBounds_p.subchunkEqChanSelRows_p.push_back(rowBounds_p.subchunkRows_p);
