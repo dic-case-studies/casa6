@@ -382,7 +382,7 @@ class phaseshift_test(unittest.TestCase):
 
         print("Image value at source locations")
         print("Original MS : "+str(src1_pre) + " and " + str(src2_pre))
-        print("Fixvis'd MS : "+str(src1_post) + " and " + str(src2_post))
+        print("Phase shifted MS : "+str(src1_post) + " and " + str(src2_post))
 
         os.system('rm -rf im2_pre*')
         os.system('rm -rf im2_post_phaseshift*')
@@ -408,19 +408,27 @@ class reference_frame_tests(unittest.TestCase):
     pshift_shiftback_im = 'im_post_phaseshift_tclean_shiftback'
     exp_flux = 5
 
-    def __delete_data(self):
-        for myms in (self.orig_ms, self.pshift_ms, self.comp_list):
-            if os.path.exists(myms):
-                shutil.rmtree(myms)
-        for im in (self.orig_im, self.pshift_im, self.pshift_shiftback_im):
+    def __delete_intermediate_products(self):
+        if os.path.exists(self.pshift_ms):
+            shutil.rmtree(self.pshift_ms)
+        for im in (self.pshift_im, self.pshift_shiftback_im):
             for path in glob.glob(im + '*'):
                 shutil.rmtree(path)
+
+    def __delete_data(self):
+        self.__delete_intermediate_products()
+        for x in (self.orig_ms, self.comp_list):
+            if os.path.exists(x):
+                shutil.rmtree(x)
+        for path in glob.glob(self.orig_im + '*'):
+            shutil.rmtree(path)
 
     def setUp(self):
         self.__delete_data()
 
     def tearDown(self):
-        self.__delete_data()
+        # self.__delete_data()
+        pass
 
     def __phase_center_string(self, ra, dec, frame):
         return ' '.join([frame, ra, dec])
@@ -563,8 +571,8 @@ class reference_frame_tests(unittest.TestCase):
         diff = me.separation(pos, expec)
         self.assertTrue(
             qa.lt(diff, qa.quantity('0.2arcsec')),
-            'position difference is too large: '
-            + qa.tos(qa.convert(diff, 'arcsec'))
+            'position difference is too large for ' + str(pos)
+            + ': ' + qa.tos(qa.convert(diff, 'arcsec'))
         )
         self.assertAlmostEqual(
             flux[0], self.exp_flux,
@@ -572,15 +580,43 @@ class reference_frame_tests(unittest.TestCase):
             + ' expected: ' + str(self.exp_flux), delta=0.02
         )
 
-    def test_J2000(self):
+    def __run_direction_test(
+        self, p, radir, decdir, dirframe
+    ):
+        pr = [p['lon'], qa.time(p['lon'])[0]]
+        pd = [p['lat'], qa.time(p['lat'])[0]]
+        for unit in ['deg', 'rad']:
+            pr.append(qa.tos(qa.convert(qa.toangle(p['lon']), unit)))
+            pd.append(qa.tos(qa.convert(qa.toangle(p['lat']), unit)))
+        for lon in pr:
+            for lat in pd:
+                shifted_pcenter = self.__phase_center_string(
+                    lon, lat, p['frame']
+                )
+                # run phaseshift
+                phaseshift(
+                    vis=self.orig_ms, outputvis=self.pshift_ms,
+                    phasecenter=shifted_pcenter
+                )
+                # create image from phaseshifted MS
+                self.__createImage(self.pshift_ms, self.pshift_im, "")
+                # create image from phaseshifted MS, using tclean to shift
+                # phase center back to original position
+                # self.__createImage(
+                #    self.pshift_ms, self.pshift_shiftback_im, orig_pcenter
+                # )
+                print(shifted_pcenter)
+                self.__compare(self.pshift_im, radir, decdir, dirframe)
+                # self.__compare(
+                #    self.pshift_shiftback_im, radir, decdir, dirframe
+                # )
+                self.__delete_intermediate_products()
+
+    def test_frames(self):
         radir = '19:59:28.5'
         decdir = '+40.44.01.5'
         dirframe = 'J2000'
         orig_pcenter = self.__phase_center_string(radir, decdir, dirframe)
-        pra = '19h53m50'
-        pdec = '40d06m00'
-        pframe = 'J2000'
-        shifted_pcenter = ' '.join([pframe, pra, pdec])
         # make the MS
         self.__makeMSFrame(radir, decdir, dirframe)
         # Make the component list
@@ -589,22 +625,25 @@ class reference_frame_tests(unittest.TestCase):
         self.__predictSimFromComplist()
         # image simulated MS
         self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
-        # run phaseshift
-        phaseshift(
-            vis=self.orig_ms, outputvis=self.pshift_ms,
-            phasecenter=shifted_pcenter
-        )
-        # create image from phaseshifted MS
-        self.__createImage(self.pshift_ms, self.pshift_im, "")
-        # create image from phaseshifted MS, using tclean to shift
-        # phase center back to original position
-        self.__createImage(
-            self.pshift_ms, self.pshift_shiftback_im, orig_pcenter
-        )
-
         self.__compare(self.orig_im, radir, decdir, dirframe)
-        self.__compare(self.pshift_im, radir, decdir, dirframe)
-        self.__compare(self.pshift_shiftback_im, radir, decdir, dirframe)
+
+        # J2000
+        j2000 = {'lon': '19h53m50', 'lat': '40d06m00', 'frame': 'J2000'}
+        # self.__run_direction_test(plon, plat, pframe, radir, decdir,
+        # dirframe)
+        # ICRS coordinates of the above
+        icrs = {'lon': '19h53m49.9980', 'lat': '40d06m0.0019', 'frame': 'ICRS'}
+        # self.__run_direction_test(plon, plat, pframe, radir, decdir,
+        #  dirframe)
+        # GALACTIC coordinates of the above
+        galactic = {
+            'lon': '05h00m21.5326', 'lat': '+006.21.09.7433',
+            'frame': 'GALACTIC'
+        }
+        for p in (j2000, icrs, galactic):
+            self.__run_direction_test(p, radir, decdir, dirframe)
+
+        self.__delete_data()
 
 
 def suite():

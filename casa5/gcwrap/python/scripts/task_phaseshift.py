@@ -156,6 +156,9 @@ def phaseshift(vis=None,
             dirstr = phasecenter.split(' ')
             try:
                 thedir = melocal.direction(dirstr[0], dirstr[1], dirstr[2])
+                if dirstr[0] != 'J2000':
+                     # Convert to J2000
+                     thedir = melocal.measure(thedir, 'J2000')
                 thenewra_rad = thedir['m0']['value']
                 thenewdec_rad = thedir['m1']['value']
             except Exception as instance:
