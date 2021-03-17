@@ -270,7 +270,10 @@ void CubeMajorCycleAlgorithm::task(){
             
           }
           else{
-            subImgr.makePSF();
+            Record&& outrec=subImgr.makePSF();
+	    if(outrec.isDefined("tempfilenames")){
+	      returnRec_p.define("tempfilenames", outrec.asArrayString("tempfilenames"));
+	    }
 	    ////tclean expects a PB to be always there...
 	    //so for standard make it
 	    subImgr.makePB();

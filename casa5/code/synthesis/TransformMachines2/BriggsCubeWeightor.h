@@ -74,7 +74,8 @@ class BriggsCubeWeightor{
     casacore::String makeScratchImagingWeightTable(casacore::CountedPtr<casacore::Table>& weightTable, const casacore::String& postfix);
 	void getWeightUniform(const casacore::Array<casacore::Float>& wgtDensity, casacore::Matrix<casacore::Float>& imweight, const vi::VisBuffer2& vb);
 	void readWeightColumn(casacore::Matrix<casacore::Float>& imweight, const vi::VisBuffer2& vb);
-    
+  casacore::Int estimateSwingChanPad(vi::VisibilityIterator2& vi, const casacore::CoordinateSystem& cs, const casacore::Int imNChan, const casacore::String& ephemtab="");
+
     casacore::Block<casacore::CountedPtr<casacore::ImageInterface<casacore::Float> > > grids_p;
     
     casacore::Block<casacore::CountedPtr<refim::GridFT> >  ft_p;
