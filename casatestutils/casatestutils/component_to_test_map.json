@@ -1110,16 +1110,6 @@
             "timeout":0,
             "comment":""
         },
-#        {
-#            "testScript":"test_msview",
-#            "testType":"casatasks",
-#            "maintainer":"Darrell Schiebel",
-#            "maintainerEmail":"drs@nrao.edu",
-#            "testOptions":[],
-#            "testGroup":["msview", "Visualization","default"],
-#            "timeout":0,
-#            "comment":"DEFAULT"
-#        },
         {
             "testScript":"test_nrobeamaverage",
             "testType":"casatasks",
@@ -2220,16 +2210,6 @@
             "timeout":0,
             "comment":""
         },
-#        {
-#            "testScript":"test_uvcontsub3",
-#            "testType":"None",
-#            "maintainer":"Takahiro Tsutsumi",
-#            "maintainerEmail":"ttsutsum@nrao.edu",
-#            "testOptions":[],
-#            "testGroup":["uvconstsub3"],
-#            "timeout":0,
-#            "comment":""
-#        },
         {
             "testScript":"test_uvfits",
             "testType":"casatools",
