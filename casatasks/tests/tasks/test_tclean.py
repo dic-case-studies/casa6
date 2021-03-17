@@ -83,7 +83,6 @@
 #  refim_point_stokes.ms : RR=1.0, LL=0.8, RL and LR are zero. Stokes I=0.9, V=0.1, U,Q=0.0
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
 #  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
-#  refim_alma_mosaic.ms : simulated ALMA 3-point mosaic with 4 point sources (2 Jy, 1 Jy, 1.5 Jy, 2 Jy)
 #
 ##########################################################################
 
@@ -207,8 +206,8 @@ class testref_base(unittest.TestCase):
 
 ##############################################
 ##############################################
-##Task level tests : one field, 2chan.
 
+##Task level tests : one field, 2chan.
 class test_onefield(testref_base):
      
      def test_onefield_defaults(self):
@@ -659,39 +658,40 @@ class test_onefield(testref_base):
           self.checkfinal(pstr=checkimage+report)
           
      def test_onefield_psf_fit(self):
-        """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
-        
-        self.prepData('refim_point.ms')
- 
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
-        
-        self.prepData('refim_point.ms')
-        
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
-        
-        self.prepData('refim_point.ms')
-        
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
-        
-        self.checkfinal(report1+report2+report3)
+          """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
+
+          self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
+
 ##Task level tests : iteration controls
 class test_iterbot(testref_base):
 
@@ -3639,9 +3639,10 @@ class test_hetarray_imaging(testref_base):
 #     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test till awproject works with CAS-9386")
      def test_het_pointing_offsets_awproject_cube(self):
-#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
-#          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy.
-          
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
+          '''
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
@@ -3744,9 +3745,10 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
      def test_het_pointing_offsets_awproject_mtmfs(self):
-#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
-#          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True).
-          
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
+          '''
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
@@ -4118,7 +4120,7 @@ class test_mosaic_cube(testref_base):
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
-          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,psfcutoff=0.35)
           report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
           _ia.open(self.img+'1.image')
