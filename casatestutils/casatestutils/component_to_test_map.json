@@ -875,8 +875,8 @@
             "testType":"None",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":["importasdm"],
-            "testGroup":[],
+            "testOptions":["mpi"],
+            "testGroup":["importasdm","HPC"],
             "timeout":0,
             "comment":""
         },
@@ -1116,7 +1116,7 @@
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
             "testOptions":[],
-            "testGroup":["mstransform"],
+            "testGroup":["mstransform", "HPC"],
             "timeout":0,
             "comment":""
         },
@@ -1125,8 +1125,8 @@
             "testType":"None",
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
-            "testOptions":[],
-            "testGroup":["mstransform"],
+            "testOptions":["mpi"],
+            "testGroup":["mstransform","HPC"],
             "timeout":0,
             "comment":""
         },
@@ -1191,6 +1191,16 @@
             "comment":"DEFAULT"
         },
         {
+            "testScript":"test_plotbandpass",
+            "testType":"casatasks",
+            "maintainer":"Jorge Lopez",
+            "maintainerEmail":"jalopez@nrao.edu",
+            "testOptions":[],
+            "testGroup":["plotbandpass","Visualization"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_plotcal",
             "testType":"casatasks",
             "maintainer":"Pam Ford",
@@ -1215,8 +1225,8 @@
             "testType":"casatasks",
             "maintainer":"Takeshi Nakazato",
             "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
-            "testOptions":["plotprofilemap"],
-            "testGroup":[],
+            "testOptions":[],
+            "testGroup":["plotprofilemap"],
             "timeout":0,
             "comment":""
         },
@@ -1915,8 +1925,8 @@
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":["casatools","default"],
-            "testGroup":[],
+            "testOptions":[],
+            "testGroup":["casatools","default"],
             "timeout":0,
             "comment":"DEFAULT"
         },
