@@ -408,38 +408,45 @@ class reference_frame_tests(unittest.TestCase):
     pshift_shiftback_im = 'im_post_phaseshift_tclean_shiftback'
     exp_flux = 5
 
-    def __delete_intermediate_products(self):
-        if os.path.exists(self.pshift_ms):
-            shutil.rmtree(self.pshift_ms)
-        for im in (self.pshift_im, self.pshift_shiftback_im):
+    @classmethod
+    def __delete_intermediate_products(cls):
+        if os.path.exists(cls.pshift_ms):
+            shutil.rmtree(cls.pshift_ms)
+        for im in (cls.pshift_im, cls.pshift_shiftback_im):
             for path in glob.glob(im + '*'):
                 shutil.rmtree(path)
 
-    def __delete_data(self):
-        self.__delete_intermediate_products()
-        for x in (self.orig_ms, self.comp_list):
+    @classmethod
+    def __delete_data(cls):
+        cls.__delete_intermediate_products()
+        for x in (cls.orig_ms, cls.comp_list):
             if os.path.exists(x):
                 shutil.rmtree(x)
-        for path in glob.glob(self.orig_im + '*'):
+        for path in glob.glob(cls.orig_im + '*'):
             shutil.rmtree(path)
 
     def setUp(self):
         self.__delete_data()
 
     def tearDown(self):
-        # self.__delete_data()
-        pass
+        self.__delete_data()
 
-    def __phase_center_string(self, ra, dec, frame):
+    @classmethod
+    def tearDownClass(cls):
+        cls.__delete_data()
+
+    @classmethod
+    def __phase_center_string(cls, ra, dec, frame):
         return ' '.join([frame, ra, dec])
 
-    def __makeMSFrame(self, radir, decdir, dirframe):
+    @classmethod
+    def __makeMSFrame(cls, radir, decdir, dirframe):
         """
         Construct an empty Measurement Set that has the desired
         observation setup.
         """
         # Open the simulator
-        sm.open(ms=self.orig_ms)
+        sm.open(ms=cls.orig_ms)
 
         # Read/create an antenna configuration.
         # Canned antenna config text files are located at
@@ -480,7 +487,7 @@ class reference_frame_tests(unittest.TestCase):
         # pol setups.
         sm.setspwindow(
             spwname="LBand", freq='1.0GHz', deltafreq='0.1GHz',
-            freqresolution='0.2GHz', nchannels=10, stokes='RR LL'
+            freqresolution='0.2GHz', nchannels=1, stokes='RR LL'
         )
 
         # Setup source/field information (i.e. where the observation phase
@@ -521,37 +528,40 @@ class reference_frame_tests(unittest.TestCase):
         # Close the simulator
         sm.close()
         # Unflag everything (unless you care about elevation/shadow flags)
-        flagdata(vis=self.orig_ms, mode='unflag')
+        flagdata(vis=cls.orig_ms, mode='unflag')
 
-    def __makeCompList(self, ra, dec, frame):
+    @classmethod
+    def __makeCompList(cls, ra, dec, frame):
         # Add sources, one at a time.
         # Call multiple times to add multiple sources.
         # ( Change the 'dir', obviously )
         cl.addcomponent(
-            dir=self.__phase_center_string(ra, dec, frame),
-            flux=self.exp_flux,     # For a gaussian, this is the
+            dir=cls.__phase_center_string(ra, dec, frame),
+            flux=cls.exp_flux,      # For a gaussian, this is the
                                     # integrated area.
             fluxunit='Jy', freq='1.5GHz', shape='point',
             spectrumtype="constant"
         )
         # Save the file
-        cl.rename(filename=self.comp_list)
+        cl.rename(filename=cls.comp_list)
         cl.done()
 
-    def __predictSimFromComplist(self):
-        sm.openfromms(self.orig_ms)
+    @classmethod
+    def __predictSimFromComplist(cls):
+        sm.openfromms(cls.orig_ms)
         # Predict from a component list
-        sm.predict(complist=self.comp_list, incremental=False)
+        sm.predict(complist=cls.comp_list, incremental=False)
         sm.close()
 
-    def __createImage(self, msname, imagename, phasecenter):
+    @classmethod
+    def __createImage(cls, msname, imagename, phasecenter):
         for path in glob.glob(imagename + '*'):
             shutil.rmtree(path)
         tclean(
             vis=msname, imagename=imagename, datacolumn='data',
-            imsize=2048, cell='8.0arcsec',
-            gridder='wproject', niter=50, gain=0.3,
-            wprojplanes=128, pblimit=-0.1, phasecenter=phasecenter
+            imsize=2048, cell='8.0arcsec', gridder='wproject',
+            niter=20, gain=0.3, wprojplanes=128, pblimit=-0.1,
+            phasecenter=phasecenter
         )
 
     def __compare(self, imagename, radir, decdir, dirframe):
@@ -570,7 +580,7 @@ class reference_frame_tests(unittest.TestCase):
         expec = me.direction(dirframe, radir, decdir)
         diff = me.separation(pos, expec)
         self.assertTrue(
-            qa.lt(diff, qa.quantity('0.2arcsec')),
+            qa.lt(diff, qa.quantity('0.25arcsec')),
             'position difference is too large for ' + str(pos)
             + ': ' + qa.tos(qa.convert(diff, 'arcsec'))
         )
@@ -580,9 +590,7 @@ class reference_frame_tests(unittest.TestCase):
             + ' expected: ' + str(self.exp_flux), delta=0.02
         )
 
-    def __run_direction_test(
-        self, p, radir, decdir, dirframe
-    ):
+    def __run_direction_test(self, p, radir, decdir, dirframe):
         pr = [p['lon'], qa.time(p['lon'])[0]]
         pd = [p['lat'], qa.time(p['lat'])[0]]
         for unit in ['deg', 'rad']:
@@ -605,7 +613,6 @@ class reference_frame_tests(unittest.TestCase):
                 # self.__createImage(
                 #    self.pshift_ms, self.pshift_shiftback_im, orig_pcenter
                 # )
-                print(shifted_pcenter)
                 self.__compare(self.pshift_im, radir, decdir, dirframe)
                 # self.__compare(
                 #    self.pshift_shiftback_im, radir, decdir, dirframe
@@ -626,23 +633,21 @@ class reference_frame_tests(unittest.TestCase):
         # image simulated MS
         self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
         self.__compare(self.orig_im, radir, decdir, dirframe)
-
         # J2000
         j2000 = {'lon': '19h53m50', 'lat': '40d06m00', 'frame': 'J2000'}
-        # self.__run_direction_test(plon, plat, pframe, radir, decdir,
-        # dirframe)
         # ICRS coordinates of the above
         icrs = {'lon': '19h53m49.9980', 'lat': '40d06m0.0019', 'frame': 'ICRS'}
-        # self.__run_direction_test(plon, plat, pframe, radir, decdir,
-        #  dirframe)
         # GALACTIC coordinates of the above
         galactic = {
-            'lon': '05h00m21.5326', 'lat': '+006.21.09.7433',
+            'lon': '05h00m21.5326', 'lat': '+006d21m09.7433',
             'frame': 'GALACTIC'
         }
-        for p in (j2000, icrs, galactic):
+        # B1950_VLA coordinates of the above
+        b1950_vla = {
+            'lon': '19h52m05.65239', 'lat': '40d06m00', 'frame': 'B1950_VLA'
+        }
+        for p in (j2000, icrs, galactic, b1950_vla):
             self.__run_direction_test(p, radir, decdir, dirframe)
-
         self.__delete_data()
 
 
