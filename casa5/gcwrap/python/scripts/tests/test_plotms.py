@@ -37,6 +37,7 @@ testcaltables = {'a_mueller.uvcont.tbl': (250000, 'time', 'gamp'),
     'ngc5921.ref2a.gcal': (40000, 'time', 'gamp'),
     'topac.cal': (30000, 'time', 'opac'),
     'tsysweight_ave.tsys.cal': (100000, 'chan', 'tsys'),
+    'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl': (70000, 'time', 'greal'),
     'xf_jones.cal': (80000, 'chan', 'gphase')}
 
 # Pick up alternative data directory to run tests on MMSs
@@ -61,6 +62,7 @@ class plotms_test_base(unittest.TestCase):
     testct2 = 'ngc5921.ref2a.gcal'
     testct3 = 'a_mueller.uvcont.tbl'
     testct4 = 'ngc5921.ref1a.bcal'
+    testct5 = 'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl'
 
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
@@ -70,6 +72,7 @@ class plotms_test_base(unittest.TestCase):
     ct2 = os.path.join(outputDir, testct2)
     ct3 = os.path.join(outputDir, testct3)
     ct4 = os.path.join(outputDir, testct4)
+    ct5 = os.path.join(outputDir, testct5)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -128,7 +131,8 @@ class plotms_test_base(unittest.TestCase):
         if maxSize:
             self.assertLess(plotSize, maxSize)
 
-    def checkTextfileAnts(self, plotfile_txt, exp_ant1, exp_ant2, exp_nrow, baseline=False):
+    def checkTextfileAnts(self, plotfile_txt, exp_ant1, exp_ant2, exp_nrow,
+        nheaders, baseline=False):
         # Read in exported text file and check antenna values
         self.assertTrue(os.path.isfile(plotfile_txt), "Plot was not created")
         with open(plotfile_txt) as textfile:
@@ -138,11 +142,10 @@ class plotms_test_base(unittest.TestCase):
                 nrow = 0
                 for row in reader:
                     nrow += 1
-                assertEqual(nrow, 2) # vis, antenna sel headers only
+                assertEqual(nrow, 2) # headers only
             else:
-                # skip 5 header lines:
-                # vis, antenna sel, plotindex, col names, col units
-                [next(reader, None) for line in range(5)]
+                # skip header lines
+                [next(reader, None) for line in range(nheaders)]
 
                 # read rows and check ant1, ant2
                 nrow = 0
@@ -893,33 +896,54 @@ class test_calplot(plotms_test_base):
         '''test_calplot_antselection: caltable with antenna selection'''
         # cal tables are small enough to export to text
         plotfile_txt = os.path.join(self.outputDir, "testCalPlot06.txt")
+
+        # antenna selections
         ant1 = '1'
         cross_ant = "1&0"
-        anttests = [(self.ct, '-1', 14, False, '-1', 14), # pure ant-based
-            (self.ct2, '1', 24, False, '0', 0),           # refant-based, ref=1
-            (self.ct3, '*', 41408, True, '0', 3104)]      # baseline-based
+        nHeaderRows = 5
 
-        for (testct, ant2, nrow, bslnbased, crossant2, crossnrow) in anttests:
+        # (testct, baseline-based, ant2, nrow, crossant2, crossnrow):
+        # testct, baseline-based, ant2, nrow for ant1 selection test
+        # testct, baseline-based, crossant2, crossnrow for cross_ant selection test
+        anttests = [(self.ct, False, '-1', 14, '-1', 14), # pure ant-based
+            (self.ct2, False, '1', 24, '0', 0),           # refant-based, ref=1
+            (self.ct3, True, '*', 41408, '0', 3104)]      # baseline-based
+
+        for (testct, bslnbased, ant2, nrow, crossant2, crossnrow) in anttests:
             self.removePlotfile(plotfile_txt)
 
             # ANT1 test - select ant1
             res = plotms(vis=testct, plotfile=plotfile_txt,
                 showgui=False, highres=True, antenna=ant1)
             self.assertTrue(res)
-            self.checkTextfileAnts(plotfile_txt, ant1, ant2, nrow, bslnbased)
+            self.checkTextfileAnts(plotfile_txt, ant1, ant2, nrow, nHeaderRows, bslnbased)
+            self.removePlotfile(plotfile_txt)
 
             # ANT1 & ANT2 test - select cross_ant
-            self.removePlotfile(plotfile_txt)
             res = plotms(vis=testct, plotfile=plotfile_txt,
                 showgui=False, highres=True, antenna=cross_ant)
             if (crossnrow > 0):
                 self.assertTrue(res)
                 self.checkTextfileAnts(
-                    plotfile_txt, ant1, crossant2, crossnrow, bslnbased)
+                    plotfile_txt, ant1, crossant2, crossnrow, nHeaderRows, bslnbased)
             else:
                 self.assertFalse(res)
                 self.checkNoPlotfile(plotfile_txt)
 
+        self.removePlotfile(plotfile_txt)
+
+        # test SD cal table, treated as pure ant-based
+        nHeaderRows = 6 # add spw selection for fewer points in text export
+        res = plotms(vis=self.ct5, plotfile=plotfile_txt,
+            showgui=False, highres=True, spw='23', antenna=ant1)
+        self.assertTrue(res)
+        self.checkTextfileAnts(plotfile_txt, '1', '1', 6000, nHeaderRows, False)
+        self.removePlotfile(plotfile_txt)
+        # With cross_ant '1&0': selection ignores the '&0'
+        res = plotms(vis=self.ct5, plotfile=plotfile_txt,
+            showgui=False, highres=True, spw='23', antenna=cross_ant)
+        self.assertTrue(res)
+        self.checkTextfileAnts(plotfile_txt, '1', '1', 6000, nHeaderRows, False)
         self.removePlotfile(plotfile_txt)
 
     def test_calplot_chanselection(self):
