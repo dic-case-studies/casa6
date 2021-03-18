@@ -1387,7 +1387,7 @@
             "maintainerEmail":"scastro@eso.org",
             "testOptions":["mpi"],
             "testGroup":["regression"],
-            "timeout":0,
+            "timeout":14400,
             "comment":""
         },
         {
