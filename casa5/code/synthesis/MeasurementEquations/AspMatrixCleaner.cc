@@ -74,8 +74,12 @@
 // for gsl
 using Eigen::VectorXd;
 
+// for cuLBFGSB
+#include <synthesis/MeasurementEquations/objfunc_cpu.h>
+#include <synthesis/MeasurementEquations/objfunc_cpu_bk.h>
+
 // for gpu lbfgs
-#include <synthesis/MeasurementEquations/cudaobjfunc.h>
+//#include <synthesis/MeasurementEquations/cudaobjfunc.h>
 
 using namespace casacore;
 using namespace std::chrono;
@@ -1030,8 +1034,186 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
 
-// cuda lbfgs
+//cuLBFGSB
 vector<Float> AspMatrixCleaner::getActiveSetAspen()
+{
+  LogIO os(LogOrigin("AspMatrixCleaner", "getActiveSetAspen()", WHERE));
+
+  if(int(itsInitScaleXfrs.nelements()) == 0)
+    throw(AipsError("Initial scales for Asp are not defined"));
+
+  if (!itsSwitchedToHogbom &&
+  	  accumulate(itsNumIterNoGoodAspen.begin(), itsNumIterNoGoodAspen.end(), 0) >= 5)
+  {
+  	os << "Switched to hogbom because of frequent small components." << LogIO::POST;
+    switchedToHogbom();
+  }
+
+  if (itsSwitchedToHogbom)
+  	itsNInitScales = 1;
+  else
+  	itsNInitScales = itsInitScaleSizes.size();
+
+  // Dirty * initial scales
+  Matrix<Complex> dirtyFT;
+  FFTServer<Float,Complex> fft(itsDirty->shape());
+  fft.fft0(dirtyFT, *itsDirty);
+  itsDirtyConvInitScales.resize(0);
+  itsDirtyConvInitScales.resize(itsNInitScales); // 0, 1width, 2width, 4width and 8width
+
+  for (int scale=0; scale < itsNInitScales; scale++)
+  {
+    Matrix<Complex> cWork;
+
+    itsDirtyConvInitScales[scale] = Matrix<Float>(itsDirty->shape());
+    cWork=((dirtyFT)*(itsInitScaleXfrs[scale]));
+    fft.fft0((itsDirtyConvInitScales[scale]), cWork, false);
+    fft.flip((itsDirtyConvInitScales[scale]), false, false);
+
+    // cout << "remake itsDirtyConvInitScales " << scale << " max itsInitScales[" << scale << "] = " << max(fabs(itsInitScales[scale])) << endl;
+    // cout << " max itsInitScaleXfrs[" << scale << "] = " << max(fabs(itsInitScaleXfrs[scale])) << endl;
+  }
+
+  float strengthOptimum = 0.0;
+  int optimumScale = 0;
+  IPosition positionOptimum(itsDirty->shape().nelements(), 0);
+  itsGoodAspActiveSet.resize(0);
+  itsGoodAspAmplitude.resize(0);
+  itsGoodAspCenter.resize(0);
+
+  maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
+  os << "Peak among the smoothed residual image is " << strengthOptimum  << " and initial scale: " << optimumScale << LogIO::POST;
+  // cout << " its itsDirty is " << (*itsDirty)(positionOptimum);
+  // cout << " at location " << positionOptimum[0] << " " << positionOptimum[1] << " " << positionOptimum[2];
+
+
+  itsStrengthOptimum = strengthOptimum;
+  itsPositionOptimum = positionOptimum;
+  itsOptimumScale = optimumScale;
+  itsOptimumScaleSize = itsInitScaleSizes[optimumScale];
+
+  // initial scale size = 0 gives the peak res, so we don't
+  // need to do the LBFGS optimization for it
+  if (itsOptimumScale == 0)
+    return {};
+  else
+  {
+    // the new aspen is always added to the active-set
+    vector<Float> tempx;
+    vector<IPosition> activeSetCenter;
+
+    tempx.push_back(strengthOptimum);
+    tempx.push_back(itsInitScaleSizes[optimumScale]);
+    activeSetCenter.push_back(positionOptimum);
+
+    // initialize LBFGSB option
+     cout << "enter LBFGSB trial" << endl;         
+  double min_f_cpu_dbl = test_dsscfg_cpu(*itsDirty, *itsXfr, activeSetCenter);
+  //double min_f_cpu_dbl = test_objfunc_cpu(*itsDirty, *itsXfr, activeSetCenter);
+  /*LBFGSB_CUDA_OPTION<double> lbfgsb_options;
+
+  lbfgsbcuda::lbfgsbdefaultoption<double>(lbfgsb_options);
+  lbfgsb_options.mode = LCM_NO_ACCELERATION;
+  lbfgsb_options.eps_f = static_cast<double>(1e-3);
+  lbfgsb_options.eps_g = static_cast<double>(1e-3);
+  lbfgsb_options.eps_x = static_cast<double>(1e-3);
+  lbfgsb_options.max_iteration = 5;
+
+  // initialize LBFGSB state
+  LBFGSB_CUDA_STATE<double> state;
+  memset(&state, 0, sizeof(state));
+  double* assist_buffer_cpu = nullptr;
+
+  double minimal_f = std::numeric_limits<double>::max();
+  // setup callback function that evaluate function value and its gradient
+  state.m_funcgrad_callback = [this, &activeSetCenter, &assist_buffer_cpu, &minimal_f]( 
+                                  double* x, double& f, double* g,
+                                  const cudaStream_t& stream,
+                                  const LBFGSB_CUDA_SUMMARY<double>& summary) 
+  {
+  	cout << "I'm called " << endl;
+    objfunc_cpu(*itsDirty, *itsXfr, activeSetCenter, x, f, g, &assist_buffer_cpu);
+
+    cout << "CPU iteration " << summary.num_iteration << " F: " << f
+                << " x " << x[0] << " " << x[1] << endl;   
+
+    minimal_f = fmin(minimal_f, f);
+    return 0;
+  };
+
+
+  // initialize CPU buffers
+  unsigned int length = tempx.size();
+  double* x = new double[length];
+  double* g = new double[length];
+
+  double* xl = new double[length];
+  double* xu = new double[length];
+
+  // in this example, we don't have boundaries
+  memset(xl, 0, length * sizeof(xl[0]));
+  memset(xu, 0, length * sizeof(xu[0]));
+
+  // initialize starting point
+  for (unsigned int i = 0; i < length; i+=2)
+  {
+      x[i] = tempx[i];
+      x[i+1] = tempx[i+1];
+  }
+
+  // initialize number of bounds (0 for this example)
+  int* nbd = new int[length];
+  memset(nbd, 0, length * sizeof(nbd[0]));
+
+  LBFGSB_CUDA_SUMMARY<double> summary;
+  memset(&summary, 0, sizeof(summary));
+
+  // call optimization
+  lbfgsbcuda::lbfgsbminimize<double>(length, state, lbfgsb_options, x, nbd,
+                                   xl, xu, summary);*/
+  // end cuda bfgsoptimization
+
+    double amp = 1000.0;//x[0]; // i
+    double scale = 15.0;//x[1]; // i+1
+    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
+    itsGoodAspAmplitude.push_back(amp); // active-set amplitude
+    itsGoodAspActiveSet.push_back(scale); // active-set
+
+    itsStrengthOptimum = amp;
+    itsOptimumScaleSize = scale;
+    itsGoodAspCenter = activeSetCenter;
+
+    // debug
+    os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
+    cout << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << endl;
+
+    // release allocated memory
+	  /*delete[] x;
+	  delete[] g;
+	  delete[] xl;
+	  delete[] xu;
+	  delete[] nbd;
+	  delete[] assist_buffer_cpu;*/
+  } // finish bfgs optimization
+
+  AlwaysAssert(itsGoodAspCenter.size() == itsGoodAspActiveSet.size(), AipsError);
+  AlwaysAssert(itsGoodAspAmplitude.size() == itsGoodAspActiveSet.size(), AipsError);
+
+  // debug info
+  /*for (unsigned int i = 0; i < itsAspAmplitude.size(); i++)
+  {
+    //cout << "After opt AspApm[" << i << "] = " << itsAspAmplitude[i] << endl;
+    //cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
+    //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
+    cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
+  }*/
+ 
+  return itsGoodAspActiveSet; // return optimized scale
+}
+
+
+// cuda lbfgs
+/*vector<Float> AspMatrixCleaner::getActiveSetAspen()
 {
   LogIO os(LogOrigin("AspMatrixCleaner", "getActiveSetAspen()", WHERE));
 
@@ -1152,10 +1334,10 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspScale[" << i << "] = " << itsAspScaleSizes[i] << endl;
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
-  }*/
+  }* /
  
   return itsGoodAspActiveSet; // return optimized scale
-}
+}*/
 
 // gsl lbfgs
 /*
@@ -1461,6 +1643,14 @@ void AspMatrixCleaner::switchedToHogbom()
 void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
   itsOrigDirty=new Matrix<Float>(dirty.shape());
   itsOrigDirty->assign(dirty);
+
+  // test cuLBFGSB CPU
+  cout << "enter setOrigDirty" << endl;
+  cout << "Begin testing DSSCFG on the CPU (double precision)"
+            << endl;
+  vector<IPosition> center;
+  center.push_back(IPosition(2,1));          
+  double min_f_cpu_dbl = test_dsscfg_cpu(dirty, *itsXfr, center);
 }
 
 

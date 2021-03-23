@@ -26,7 +26,8 @@ FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR}
                      "/usr/include/eigen3"
-                    "/home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS")
+                     "/home/tesla/mhsieh/work/dev/lbfgsb-gpu-master")
+                    #"/home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc
@@ -613,7 +614,9 @@ install (FILES
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/gslobjfunc.h
-  MeasurementEquations/cudaobjfunc.h
+  #MeasurementEquations/cudaobjfunc.h #CUDA BFGS
+  MeasurementEquations/objfunc_cpu.h #CuLBFGSB
+  MeasurementEquations/objfunc_cpu_bk.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h
