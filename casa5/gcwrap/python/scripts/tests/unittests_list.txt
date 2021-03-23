@@ -28,7 +28,6 @@ test_flagcmd                    scastro@eso.org
 test_flagdata                   scastro@eso.org
 test_flaghelper                 scastro@eso.org
 test_flagmanager                scastro@eso.org
-test_fluxscale                  ttsutsum@nrao.edu
 test_fringefit			kettenis@jive.eu
 test_gencal                     ttsutsum@nrao.edu
 test_getchunk                   dmehring@nrao.edu
