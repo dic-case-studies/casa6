@@ -1,3 +1,4 @@
+import csv
 import fnmatch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,11 +12,33 @@ from __main__ import default
 from tasks import *
 from taskinit import *
 
+
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/plotms/"
-altdatapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/setjy/"
-calpath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/gaincal/"
-overlaypath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/mstransform/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotms/"
+
+# Include ms for BPOLY and GSPLINE
+testcaltables = {'a_mueller.uvcont.tbl': (250000, 'time', 'gamp'),
+    'anpos.autoCAS13057.cal': (40000, 'antenna1', 'antpos'),
+    'bandtypeBPOLY.B0': (70000, 'freq', 'gamp'),
+    'df_jones.cal': (120000, 'antenna1', 'gamp'),
+    'egaincurve.cal': (40000, 'time', 'gamp'),
+    'f_jones.cal': (50000, 'time', 'tec'),
+    'gaincaltest2.ms': (200000, 'time', 'amp'),
+    'gaincaltest2.ms.T0': (40000, 'time', 'gamp'), 
+    'gaintypek.G0': (40000, 'antenna1', 'delay'),
+    'gaintypeSpline.G0': (90000, 'time', 'gamp'),
+    'g_evlaswpow.cal': (40000,  'time', 'spgain'),
+    'glinxphf_jones.cal': (30000, 'time', 'gamp'),
+    'k_jones.cal': (40000, 'antenna1', 'delay'),
+    'm_mueller.cal': (40000, 'time', 'gamp'),
+    'n08c1.sbdcal': (40000, 'time', 'delay'),
+    'ngc5921.ref1a.bcal': (100000, 'chan', 'gamp'),
+    'ngc5921.ref1a.gcal': (40000, 'time', 'gamp'),
+    'ngc5921.ref2a.gcal': (40000, 'time', 'gamp'),
+    'topac.cal': (30000, 'time', 'opac'),
+    'tsysweight_ave.tsys.cal': (100000, 'chan', 'tsys'),
+    'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl': (70000, 'time', 'greal'),
+    'xf_jones.cal': (80000, 'chan', 'gphase')}
 
 # Pick up alternative data directory to run tests on MMSs
 if os.environ.has_key('TEST_DATADIR'):
@@ -27,19 +50,29 @@ print('plotms tests will use data from '+ datapath)
 
 class plotms_test_base(unittest.TestCase):
 
+    outputDir="/tmp/" + str(os.getpid()) + "/"
+    plotfile_jpg = "/tmp/myplot.jpg"
+    display = os.environ.get("DISPLAY")
+
     testms  = "pm_ngc5921.ms"
     testms2 = "ngc5921.ms"
     testms3 = "sun.subset.pentagon.ms"
     testms4 = "split_ddid_mixedpol_CAS-12283.ms"
-    testcaltable = 'ngc5921.ref1a.gcal'
-    outputDir="/tmp/" + str(os.getpid()) + "/"
-    plotfile_jpg = "/tmp/myplot.jpg"
-    display = os.environ.get("DISPLAY")
+    testct = 'ngc5921.ref1a.gcal'
+    testct2 = 'ngc5921.ref2a.gcal'
+    testct3 = 'a_mueller.uvcont.tbl'
+    testct4 = 'ngc5921.ref1a.bcal'
+    testct5 = 'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl'
+
     ms = os.path.join(outputDir, testms)
     ms2 = os.path.join(outputDir, testms2)
     ms3 = os.path.join(outputDir, testms3)
     ms4 = os.path.join(outputDir, testms4)
-    caltable = os.path.join(outputDir, testcaltable)
+    ct = os.path.join(outputDir, testct)
+    ct2 = os.path.join(outputDir, testct2)
+    ct3 = os.path.join(outputDir, testct3)
+    ct4 = os.path.join(outputDir, testct4)
+    ct5 = os.path.join(outputDir, testct5)
 
     def cleanUp(self):
         if os.path.exists(self.outputDir):
@@ -49,8 +82,8 @@ class plotms_test_base(unittest.TestCase):
         res = None
         default(plotms)
         if not os.path.exists(self.ms):
-            shutil.copytree(os.path.join(datapath,self.testms), 
-                    self.ms, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms),
+                self.ms, symlinks=True)
 
     def tearDownData(self):
         self.cleanUp()
@@ -58,29 +91,37 @@ class plotms_test_base(unittest.TestCase):
 
     def setUpAltData(self):
         if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(altdatapath,self.testms2),
-                    self.ms2, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
+
+    def setUpCallibData(self):
+        res = None
+        default(plotms)
+        if not os.path.exists(self.ms2):
+            shutil.copytree(os.path.join(datapath, self.testms2),
+                self.ms2, symlinks=True)
+        if not os.path.exists(self.ct):
+            shutil.copytree(os.path.join(datapath, self.testct),
+                self.ct, symlinks=True)
+
+    def setUpPointingData(self):
+        if not os.path.exists(self.ms3):
+            shutil.copytree(os.path.join(datapath, self.testms3),
+                self.ms3, symlinks=True)
 
     def setUpCalData(self):
         res = None
         default(plotms)
-        if not os.path.exists(self.ms2):
-            shutil.copytree(os.path.join(calpath,self.testms2), 
-                    self.ms2, symlinks=True)
-        testcaltable = os.path.join(self.outputDir, self.caltable)
-        if not os.path.exists(self.caltable):
-            shutil.copytree(os.path.join(calpath, self.testcaltable),
-                    self.caltable, symlinks=True)
-
-    def setUpPointingData(self):
-        if not os.path.exists(self.ms3):
-            shutil.copytree(os.path.join(datapath,self.testms3),
-                    self.ms3, symlinks=True)
+        for caltable in testcaltables.keys():
+            testtable = os.path.join(self.outputDir, caltable)
+            if not os.path.exists(testtable):
+                shutil.copytree(os.path.join(datapath, caltable), testtable,
+                    symlinks=True)
 
     def setUpOverlayData(self):
         if not os.path.exists(self.ms4):
-            shutil.copytree(os.path.join(overlaypath,self.testms4),
-                    self.ms4, symlinks=True)
+            shutil.copytree(os.path.join(datapath, self.testms4),
+                self.ms4, symlinks=True)
 
     def checkPlotfile(self, plotfileName, minSize, maxSize=None):
         self.assertTrue(os.path.isfile(plotfileName), "Plot was not created")
@@ -89,7 +130,43 @@ class plotms_test_base(unittest.TestCase):
         self.assertGreater(plotSize, minSize)
         if maxSize:
             self.assertLess(plotSize, maxSize)
-    
+
+    def checkTextfileAnts(self, plotfile_txt, exp_ant1, exp_ant2, exp_nrow,
+        nheaders, baseline=False):
+        # Read in exported text file and check antenna values
+        self.assertTrue(os.path.isfile(plotfile_txt), "Plot was not created")
+        with open(plotfile_txt) as textfile:
+            reader = csv.reader(textfile, delimiter=' ')
+
+            if (exp_nrow == 0): # selection yields zero rows
+                nrow = 0
+                for row in reader:
+                    nrow += 1
+                assertEqual(nrow, 2) # headers only
+            else:
+                # skip header lines
+                [next(reader, None) for line in range(nheaders)]
+
+                # read rows and check ant1, ant2
+                nrow = 0
+                for row in reader:
+                    if baseline:
+                        if (exp_ant2 == "*"):
+                            # cross correlations of ANT1: *&ANT1 or ANT1&*
+                            self.assertTrue(row[5] == exp_ant1 or row[6] == exp_ant1)
+                            self.assertTrue(row[5] != row[6])
+                        else:
+                            # cross correlations of ANT1 & ANT2: ANT1&ANT2 or ANT2&ANT1
+                            self.assertTrue((row[5] == exp_ant1 and row[6] == exp_ant2)
+                                or (row[5] == exp_ant2 and row[6] == exp_ant1))
+                    else:
+                        # ANT1 & ANT2 baselines
+                        self.assertTrue(row[5] == exp_ant1 and row[6] == exp_ant2)
+                    nrow += 1
+
+                # check nrow (number of points)
+                self.assertEqual(nrow, exp_nrow)
+
     # plotms can return True if it catches an error, but makes no plot file
     def checkNoPlotfile(self, plotfileName):
         self.assertFalse(os.path.isfile(plotfileName), "Plot was created")
@@ -214,8 +291,6 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 45000)
 
-    # The following tests are not run: not working or for demo only (to save time)
-
     def xtest_basic_screenExport(self):
         '''test_basic_screenExport: Export plot in screen resolution'''
         # not working yet...
@@ -226,6 +301,16 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
 
+    def test_basic_pngExport(self):
+        '''test_basic_pngExport: Export plot in png format'''
+        plotfile_png = os.path.join(self.outputDir, "testBasic07.png")
+        self.removePlotfile(plotfile_png)
+        res = plotms(vis=self.ms, plotfile=plotfile_png,
+               showgui=False, highres=False)
+        self.assertTrue(res)
+        self.checkPlotfile(plotfile_png, 20000)
+        self.removePlotfile(plotfile_png)
+
     def xtest_basic_pdfExport(self):
         '''test_basic_pdfExport: Export plot in pdf format'''
         plotfile_pdf = os.path.join(self.outputDir, "testBasic08.pdf")
@@ -235,6 +320,34 @@ class test_basic(plotms_test_base):
         self.assertTrue(res)
         self.checkPlotfile(plotfile_pdf, 30000)
 
+    def xtest_basic_psExport(self):
+        '''test_basic_psExport: Export plot in ps format'''
+        plotfile_ps = os.path.join(self.outputDir, "testBasic9.ps")
+        self.removePlotfile(plotfile_ps)
+        plotms(vis=self.ms, plotfile=plotfile_ps, expformat='ps',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_ps, 1500000)
+        self.removePlotfile(plotfile_ps)
+
+    def xtest_basic_txtExport(self):
+        '''test_basic_txtExport: Export plot in txt format'''
+        plotfile_txt = os.path.join(self.outputDir, "testBasic10.txt")
+        self.removePlotfile(plotfile_txt)
+        # Verbose text export (default) - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=True,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 4000)
+        self.removePlotfile(plotfile_txt)
+        # Exclude metadata in text export - use selection for small plot
+        plotms(vis=self.ms, xaxis='chan',
+               plotfile=plotfile_txt, expformat='txt', verbose=False,
+               spw='0:20', antenna='0', scan='4', correlation='LL',
+               showgui=False, highres=False)
+        self.checkPlotfile(plotfile_txt, 700)
+        self.removePlotfile(plotfile_txt)
+
 # ------------------------------------------------------------------------------
 
 class test_overplot(plotms_test_base):
@@ -243,7 +356,6 @@ class test_overplot(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        # alternate data needed for plotting two different MSes
         self.setUpAltData()
 
     def tearDown(self):
@@ -404,7 +516,7 @@ class test_axis(plotms_test_base):
     def setUp(self):
         self.checkDisplay()
         self.setUpData()
-        self.setUpAltData() # for other datacolumns
+        self.setUpAltData()
         self.setUpPointingData()
         
     def tearDown(self):
@@ -678,7 +790,6 @@ class test_axis(plotms_test_base):
             xaxis='u', yaxis='v', showgui=False, plotrange=plotrange3)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 180000)
-        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
@@ -687,24 +798,21 @@ class test_calibration(plotms_test_base):
 
     def setUp(self):
         self.checkDisplay()
-        self.setUpCalData()
-        
+        self.setUpCallibData()
+
     def tearDown(self):
         self.tearDownData()
 
     def test_calibration_callib(self):
         '''test_calibration_callib: callib string parameter for OTF calibration'''
-        if os.path.exists(calpath):
-            self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
-            self.removePlotfile()
-            callibStr = "caltable='" + self.caltable + "' calwt=True tinterp='nearest'"
-            res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
-                ydatacolumn="corrected", xaxis="frequency",
-                showgui=False, callib=callibStr, highres=True)
-            self.assertTrue(res)
-            self.checkPlotfile(self.plotfile_jpg, 240000)
-        else:
-            print("Skipping test, no path to calibration tables")
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalibration01.jpg")
+        self.removePlotfile()
+        callibStr = "caltable='" + self.ct + "' calwt=True tinterp='nearest'"
+        res = plotms(vis=self.ms2, plotfile = self.plotfile_jpg,
+            ydatacolumn="corrected", xaxis="frequency",
+            showgui=False, callib=callibStr, highres=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 160000)
 
     def test_calibration_badcallib(self):
         '''test_calibration_badcallib: callib file does not exist'''
@@ -718,43 +826,38 @@ class test_calibration(plotms_test_base):
 
 # ------------------------------------------------------------------------------
  
-class test_calplots(plotms_test_base):
+class test_calplot(plotms_test_base):
     ''' Test plotting cal tables '''
 
     def setUp(self):
         self.checkDisplay()
-        # cal table for plotting
         self.setUpCalData()
         
     def tearDown(self):
-        self.tearDownData
+        self.tearDownData()
 
     def test_calplot_basic(self):
         '''test_calplot_basic: Basic plot of caltable with default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot01.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
-        self.removePlotfile()
  
     def test_calplot_axes(self):
         '''test_calplot_axes: Basic plot of caltable with non-default axes'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot02.jpg")
         self.removePlotfile()
         # gamp vs scan
-        res = plotms(vis=self.caltable, xaxis='scan',
-            plotfile=self.plotfile_jpg,
+        res = plotms(vis=self.ct, xaxis='scan', plotfile=self.plotfile_jpg,
             showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 20000)
         self.removePlotfile()
         # gphase vs baseline
-        res = plotms(vis=self.caltable, yaxis='phase',
-            xaxis='baseline', overwrite=True,
-            plotfile=self.plotfile_jpg,
-            showgui=False, highres=True)
+        res = plotms(vis=self.ct, yaxis='phase', xaxis='baseline',
+            plotfile=self.plotfile_jpg, showgui=False, highres=True)
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 60000)
 
@@ -763,34 +866,231 @@ class test_calplots(plotms_test_base):
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot03.jpg")
         plotfile1 = os.path.join(self.outputDir, "testCalPlot03_Poln1_2.jpg")
         self.removeFiles(self.outputDir, "testCalPlot03_")
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, iteraxis='corr', exprange='all',
-            overwrite=True)
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, iteraxis='corr', exprange='all')
         self.assertTrue(res)
         fileCount = self.getFilecount(self.outputDir, "testCalPlot03_")
         self.assertEqual(fileCount, 2)
         self.checkPlotfile(plotfile1, 30000)
         self.removeFiles(self.outputDir, "testCalPlot03_")
 
-    def test_calplot_selection(self):
-        '''test_calplot_selection: caltable with polarization selection'''
+    def test_calplot_polselection(self):
+        '''test_calplot_polselection: caltable with polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot04.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='R', overwrite=True)   
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, correlation='R')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 30000)
-        self.removePlotfile()
 
     def test_calplot_ratioplot(self):
         '''test_calplot_ratioplot: caltable with ratio polarization selection'''
         self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot05.jpg")
         self.removePlotfile()
-        res = plotms(vis=self.caltable, plotfile=self.plotfile_jpg,
-            showgui=False, highres=True, correlation='/', overwrite=True)   
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, correlation='/')
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 50000)
+
+    def test_calplot_antselection(self):
+        '''test_calplot_antselection: caltable with antenna selection'''
+        # cal tables are small enough to export to text
+        plotfile_txt = os.path.join(self.outputDir, "testCalPlot06.txt")
+
+        # antenna selections
+        ant1 = '1'
+        cross_ant = "1&0"
+        nHeaderRows = 5
+
+        # (testct, baseline-based, ant2, nrow, crossant2, crossnrow):
+        # testct, baseline-based, ant2, nrow for ant1 selection test
+        # testct, baseline-based, crossant2, crossnrow for cross_ant selection test
+        anttests = [(self.ct, False, '-1', 14, '-1', 14), # pure ant-based
+            (self.ct2, False, '1', 24, '0', 0),           # refant-based, ref=1
+            (self.ct3, True, '*', 41408, '0', 3104)]      # baseline-based
+
+        for (testct, bslnbased, ant2, nrow, crossant2, crossnrow) in anttests:
+            self.removePlotfile(plotfile_txt)
+
+            # ANT1 test - select ant1
+            res = plotms(vis=testct, plotfile=plotfile_txt,
+                showgui=False, highres=True, antenna=ant1)
+            self.assertTrue(res)
+            self.checkTextfileAnts(plotfile_txt, ant1, ant2, nrow, nHeaderRows, bslnbased)
+            self.removePlotfile(plotfile_txt)
+
+            # ANT1 & ANT2 test - select cross_ant
+            res = plotms(vis=testct, plotfile=plotfile_txt,
+                showgui=False, highres=True, antenna=cross_ant)
+            if (crossnrow > 0):
+                self.assertTrue(res)
+                self.checkTextfileAnts(
+                    plotfile_txt, ant1, crossant2, crossnrow, nHeaderRows, bslnbased)
+            else:
+                self.assertFalse(res)
+                self.checkNoPlotfile(plotfile_txt)
+
+        self.removePlotfile(plotfile_txt)
+
+        # test SD cal table, treated as pure ant-based
+        nHeaderRows = 6 # add spw selection for fewer points in text export
+        res = plotms(vis=self.ct5, plotfile=plotfile_txt,
+            showgui=False, highres=True, spw='23', antenna=ant1)
+        self.assertTrue(res)
+        self.checkTextfileAnts(plotfile_txt, '1', '1', 6000, nHeaderRows, False)
+        self.removePlotfile(plotfile_txt)
+        # With cross_ant '1&0': selection ignores the '&0'
+        res = plotms(vis=self.ct5, plotfile=plotfile_txt,
+            showgui=False, highres=True, spw='23', antenna=cross_ant)
+        self.assertTrue(res)
+        self.checkTextfileAnts(plotfile_txt, '1', '1', 6000, nHeaderRows, False)
+        self.removePlotfile(plotfile_txt)
+
+    def test_calplot_chanselection(self):
+        '''test_calplot_chanselection: caltable with spw:chan selections'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
         self.removePlotfile()
+        # No selection (only one spw)
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 100000)
+        self.removePlotfile()
+        # Smaller plot with chan selection
+        res = plotms(vis=self.ct4, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, spw='0:0~10')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 45000, 80000)
+
+    def test_calplot_default_axes(self):
+        '''test_calplot_default_axes: plot supported caltables with default axes'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
+        self.removePlotfile()
+
+        for table in testcaltables.keys():
+            if os.path.splitext(table)[1] == '.ms':
+                continue
+            print('Test caltable ' + table)
+            testtable = os.path.join(self.outputDir, table)
+            (plotsize, xaxis, yaxis) = testcaltables[table]
+            res = plotms(vis=testtable, plotfile=self.plotfile_jpg,
+               showgui=False, highres=True, overwrite=True)
+            self.assertTrue(res)
+            self.checkPlotfile(self.plotfile_jpg, plotsize)
+            self.removePlotfile()
+
+    def test_calplot_cal_axes(self):
+        '''test_calplot_cal_axes: plot supported caltable types with cal yaxis'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot07.jpg")
+        self.removePlotfile()
+
+        for table in testcaltables.keys():
+            if os.path.splitext(table)[1] == '.ms':
+                continue
+            testtable = os.path.join(self.outputDir, table)
+            (plotsize, xaxis, yaxis) = testcaltables[table]
+            print('Test caltable ' + table + ' with ' + yaxis)
+            res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis=xaxis,
+               yaxis=yaxis, showgui=False, highres=True, overwrite=True)
+            self.assertTrue(res)
+            self.checkPlotfile(self.plotfile_jpg, plotsize)
+            self.removePlotfile()
+
+        # test other cal axes
+        testtable = os.path.join(self.outputDir, 'ngc5921.ref1a.gcal')
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='gphase', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 90000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='greal', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 60000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='gimag', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 60000)
+        self.removePlotfile()
+
+        testtable = os.path.join(self.outputDir, 'n08c1.sbdcal')
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='rate', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
+        self.removePlotfile()
+
+        res = plotms(vis=testtable, plotfile=self.plotfile_jpg, xaxis='time',
+            yaxis='disp', showgui=False, highres=True, overwrite=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
+
+    def test_calplot_averaging(self):
+        '''test_calplot_averaging: caltable with time and channel averaging'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot06.jpg")
+        self.removePlotfile()
+        # Time averaging for G Jones table
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='6000', avgscan=True)
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 40000)
+        self.removePlotfile()
+        # Channel averaging for B Jones table
+        res = plotms(vis=self.ct2, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgchannel='6000')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 90000)
+
+    def test_calplot_avg_bpoly(self):
+        '''test_calplot_avg_bpoly: BPOLY averaging fails'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot07.jpg")
+        self.removePlotfile()
+        # BPOLY fails with channel averaging
+        bpoly = os.path.join(self.outputDir, "bandtypeBPOLY.B0")
+        res = plotms(vis=bpoly, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, xaxis='chan', avgchannel='8')
+        self.assertFalse(res)
+
+    def test_calplot_avg_gspline(self):
+        '''test_calplot_avg_gspline: GSPLINE averaging fails'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot08.jpg")
+        self.removePlotfile()
+        # GSPLINE fails with time averaging
+        gspline = os.path.join(self.outputDir, "gaintypeSpline.G0")
+        res = plotms(vis=gspline, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='600')
+        self.assertFalse(res)
+
+    def test_calplot_avg_sel(self):
+        '''test_calplot_avg_sel: caltable with averaging and selection combined'''
+        self.plotfile_jpg = os.path.join(self.outputDir, "testCalPlot09.jpg")
+        self.removePlotfile()
+
+        # Time averaging with field selection
+        print("Time averaging with field selection")
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='6000', field='1')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 70000)
+        self.removePlotfile()
+
+        # Time averaging with spw selection (only 1 spw in ct)
+        print("Time averaging with spw selection")
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='6000', field='1', spw='0')
+        self.assertTrue(res)
+        self.checkPlotfile(self.plotfile_jpg, 70000)
+        self.removePlotfile()
+
+        # Time averaging with spw:channel selection fails 
+        print("Time averaging with channel selection fails")
+        res = plotms(vis=self.ct, plotfile=self.plotfile_jpg,
+            showgui=False, highres=True, avgtime='6000',
+            field='1', spw='0:0~7')
+        self.assertFalse(res)
 
 # ------------------------------------------------------------------------------
 
@@ -1122,8 +1422,7 @@ class test_iteration(plotms_test_base):
         plotfile_jpg = os.path.join(self.outputDir, "testIteration02.jpg")
         # Create the plot and check that there are 27 iterations
         res = plotms(vis=self.ms, plotfile = plotfile_jpg, exprange='all',
-            showgui=False, iteraxis='antenna', overwrite=True,
-            highres=True)
+            showgui=False, iteraxis='antenna', highres=True)
         self.assertTrue(res)
         fileCount = self.getFilecount(self.outputDir, "testIteration02_")
         # no Antenna23
@@ -1439,8 +1738,7 @@ class test_overlays(plotms_test_base):
         res = plotms(vis=self.ms, plotfile=self.plotfile_jpg,
             showgui=False, highres=True, showatm=True)   
         self.assertTrue(res)
-        self.checkPlotfile(self.plotfile_jpg, 190000)
-        self.removePlotfile()
+        self.checkPlotfile(self.plotfile_jpg, 180000)
 
     def test_image_overlay(self):
         '''test_image_overlay: atm and image overplots'''
@@ -1461,7 +1759,6 @@ class test_overlays(plotms_test_base):
             showgui=False, highres=True, showatm=True, showimage=True)   
         self.assertTrue(res)
         self.checkPlotfile(self.plotfile_jpg, 190000)
-        self.removePlotfile()
 
 # ------------------------------------------------------------------------------
 
@@ -1658,7 +1955,7 @@ def suite():
             test_averaging,
             test_axis,
             test_calibration,
-            test_calplots,
+            test_calplot,
             test_display,
             test_grid,
             test_iteration,

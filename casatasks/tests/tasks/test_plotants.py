@@ -15,7 +15,7 @@ else:
     #from taskinit import *
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -35,7 +35,7 @@ class plotants_test(unittest.TestCase):
 
         # It is not necessary to copy it for all tests
         if (not os.path.exists(self.msfile)):
-            datapath = ctsys_resolve('regression/ic2233')
+            datapath = ctsys_resolve('unittest/plotants/')
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
 
     def tearDown(self):

@@ -130,11 +130,12 @@ else:
 
     _ia = image( )
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
 # Input files
+datapath = ctsys_resolve('unittest/imval/')
 image_file = 'n4826_bima.im'
 good_rgn_file   =  'n4826_bima_test.rgn'
 
@@ -193,9 +194,8 @@ class imval_test(unittest.TestCase):
         if (os.path.exists(image_file)):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
             
-        datapath = 'regression/ATST3/NGC4826'
-        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,image_file))+' ' + image_file)
-        os.system('cp -r '+ctsys_resolve(os.path.join(datapath,good_rgn_file))+' ' + good_rgn_file)
+        os.system('cp -RH '+ os.path.join(datapath,image_file)+' ' + image_file)
+        os.system('cp -RH '+ os.path.join(datapath,good_rgn_file)+' ' + good_rgn_file)
 
     def tearDown(self):
             os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)

@@ -56,32 +56,22 @@ epsilon = 0.0001
 
 ### Data ###
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/other/outlier_ut.ms/')
-    mms_data = casatools.ctsys.resolve('visibilities/other/outlier_mms.mms/')
-    selectiondata = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
-    mms_select = casatools.ctsys.resolve('visibilities/alma/uid_mms.mms')
-    singledish = casatools.ctsys.resolve('visibilities/other/analytic_spectra_tsys.ms')
+    datapath = casatools.ctsys.resolve('unittest/visstat/outlier_ut.ms/')
+    mms_data = casatools.ctsys.resolve('unittest/visstat/outlier_mms.mms/')
+    selectiondata = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.ms/')
+    mms_select = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.mms')
+    singledish = casatools.ctsys.resolve('unittest/visstat/analytic_spectra_tsys.ms')
     # Data for merged test
-    merged_data_path = casatools.ctsys.resolve('regression/unittest/visstat2')
+    merged_data_path = casatools.ctsys.resolve('unittest/visstat/')
     
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_ut.ms/'
-        mms_data = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_mms.mms/'
-        selectiondata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        mms_select = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid_mms.mms'
-        singledish = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
-        # Data from merged test
-        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_ut.ms/'
-        mms_data = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_mms.mms/'
-        selectiondata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        mms_select = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid_mms.mms'
-        singledish = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
-        # Data from merged test
-        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_ut.ms/'
+    mms_data = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_mms.mms/'
+    selectiondata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.ms/'
+    mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.mms'
+    singledish = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/analytic_spectra_tsys.ms'
+    # Data from merged test
+    merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat/')
     
 axislist = ['flag', 'antenna1', 'antenna2', 'feed1', 'feed2', 'field_id', 'array_id', 'data_desc_id', 'flag_row', 'interval', 'scan', 'scan_number', 'time', 'weight_spectrum', 'amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary', 'uvrange']
  

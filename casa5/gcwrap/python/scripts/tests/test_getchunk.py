@@ -74,14 +74,14 @@ import numpy
 
 image = "gauss_no_pol.fits"
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/getchunk/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/getchunk/'
 
 myia = iatool()
 
 class getchunk_test(unittest.TestCase):
     
     def setUp(self):
-        os.system('cp -r ' +datapath + image + ' ' + image)
+        os.system('cp -RH ' +datapath + image + ' ' + image)
 
     def tearDown(self):
         os.system('rm -rf ' + image)

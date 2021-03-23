@@ -1,6 +1,6 @@
-
+ 
 ## CASAtools
-
+ 
 If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in gestation.
 
 CASAtools is a self-contained python module that provides the tools from the [CASA](http://casa.nrao.edu/) project. This module only contains the non-GUI tools which are the [SWIG](http://swig.org) bound C++ functionality from CASA.
@@ -109,7 +109,7 @@ A non-exhaustive list of when **./setup.py genmake** followed by **make** will n
 * modification of cerberus files. These are copied by **./setup.py genmake**; **make** does not deal with them
 * changes in tool dependencies when modifying *&lt;tool&gt;.xml* files. If one does not change tool dependencies when modifying *&lt;tool&gt;.xml* files, they need only rerun **make**. However, if a new tool dependency is introduced or an existing dependency removed (eg via a function return value), one will have to start by rerunning **./setup.py genmake** so the new dependency can propagate to the the *makefile*.
 
-The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, eg
+The **debug** parameter of **make** is optional. If provided, the resulting build is configured to use the -g option when compiling C and C++ code. Otherwise, the build is configured to be optimized using the -O2 option when compiling C and C++ files. The **make** command optionally takes the **-j** option with the number of parallel threads to use while building which can significantly improve build times on multi-core machines, e.g.:
 ```
 -bash-4.2$ make -j8
 ```
@@ -141,18 +141,20 @@ datapath=[ "~/develop/casa/data/unittests" ]
 
 #### Run Available Tests
 
-A number of tests have been brought into CASAtools from CASA. Like the rest of CASAtools, the testing infrastructure is still in the process of being refined (and in need of some refactoring). However, with the proper setup it works for *some of the people, some of the time*. To run the tests, you need to check out the subset of the CASA data repository needed for CASAtools unit tests. This data repository will use about **14GB** of space. You can check out the necessary data repository like:
+A number of tests have been brought into CASAtools from CASA. To run the tests, you need to check out the CASA test data repository needed for CASAtools unit tests. The full data repository will use about **100GB** of space. You can check out the full data repository in the following way. Note that the ```--depth 1``` will avoid downloading the past history of the repository and save a few Gbytes of space:
+
 ```
--bash-4.2$ git clone --no-checkout https://open-bitbucket.nrao.edu/scm/casa/casa-data.git unittests
--bash-4.2$ cd unittests
--bash-4.2$ git show HEAD:casatools-unittests | bash
+-bash-4.2$ git clone --depth 1 https://open-bitbucket.nrao.edu/scm/casa/casatestdata.git
 ```
+
 After the checkout is complete, you must update your CASAtools RC file to indicate where the unit test data can be found. In my case it looks like:
+
 ```
 -bash-4.2$ cat ~/.casa/config.py
-datapath=[ "~/develop/casa/data/unittests" ]
+datapath=[ "~/develop/casa/casatestdata/" ]
 -bash-4.2$
 ```
+
 The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. After all of this is set, the full suite of tests can be run with:
 ```
 -bash-4.2$ ./setup.py test
@@ -174,9 +176,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.56.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.60.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.56.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.60.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
@@ -240,7 +242,7 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     In [1]: from casatools import ctsys
     ```
 
-3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to an data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
+3. __ctsys.resolve( )__ --- a new member function was added to resolve the path to a data file based upon **CASADATA** path (as is done for `<type mustexist="true">path</type>`)
 
 3. __rc file__ --- the rc file, which is evaluated at startup to configure CASAtools, is `~/.casa/config.py`; if this file is not found, then an attempt is mad to import the RC values from casatoolrc (i.e. `from casatoolrc import *`)
 

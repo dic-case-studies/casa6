@@ -1345,7 +1345,7 @@ class simutil:
             z=pl.where(flag[0][0]==False)[0]
             nunflagged=len(z)
 #            noiseperbase=1./(gain[0][0][0.5*nint*nant].real)**2
-            noiseperbase=1./(gain[0][0][z[nunflagged/2]].real)**2
+            noiseperbase=1./(gain[0][0][z[nunflagged//2]].real)**2
         else:
             noiseperbase=0.
 
