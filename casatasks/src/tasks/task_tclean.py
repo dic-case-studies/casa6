@@ -250,10 +250,8 @@ def tclean(
     ###expecting it to be true
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
-        
-    if specmode=='mfs':
-        bparm['perchanweightdensity'] = False
 
+    
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
         casalog.post(usemask+" is deprecated, will be removed in CASA 5.4.  It is recommended to use auto-multithresh instead", "WARN") 

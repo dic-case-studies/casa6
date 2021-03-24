@@ -973,7 +973,7 @@ Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor,
 		  //timer.mark();
 		  //Construct imwgt_p with old vi for now if old vi is in use as constructing with vi2 is slower
 		  //Determine if any image is cube
-		  if(useCubeBriggs){
+		  if(isSpectralCube() && useCubeBriggs){
 		    String outstr=String("Doing spectral cube Briggs weighting formula --  " + rmode + (rmode=="abs" ? " with estimated noise "+ String::toString(noise.getValue())+noise.getUnit()  : "")); 
 		    os << outstr << LogIO::POST;
 		    //VisImagingWeight nat("natural");
