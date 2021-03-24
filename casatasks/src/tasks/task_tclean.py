@@ -251,6 +251,8 @@ def tclean(
     if(bparm['mosweight']==True and bparm['gridder'].find("mosaic") == -1):
         bparm['mosweight']=False
 
+    if specmode=='mfs':
+        bparm['perchanweightdensity'] = False
     
     # deprecation message
     if usemask=='auto-thresh' or usemask=='auto-thresh2':
