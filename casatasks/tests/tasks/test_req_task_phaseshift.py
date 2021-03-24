@@ -559,8 +559,8 @@ class reference_frame_tests(unittest.TestCase):
             shutil.rmtree(path)
         tclean(
             vis=msname, imagename=imagename, datacolumn='data',
-            imsize=2048, cell='8.0arcsec', gridder='wproject',
-            niter=20, gain=0.3, wprojplanes=128, pblimit=-0.1,
+            imsize=256, cell='8.0arcsec', gridder='standard',
+            niter=20, gain=0.3, pblimit=-0.1,
             phasecenter=phasecenter
         )
 
@@ -580,14 +580,14 @@ class reference_frame_tests(unittest.TestCase):
         expec = me.direction(dirframe, radir, decdir)
         diff = me.separation(pos, expec)
         self.assertTrue(
-            qa.lt(diff, qa.quantity('0.25arcsec')),
+            qa.lt(diff, qa.quantity('0.15arcsec')),
             'position difference is too large for ' + str(pos)
             + ': ' + qa.tos(qa.convert(diff, 'arcsec'))
         )
         self.assertAlmostEqual(
             flux[0], self.exp_flux,
             msg='flux differs by too much: got: ' + str(flux[0])
-            + ' expected: ' + str(self.exp_flux), delta=0.02
+            + ' expected: ' + str(self.exp_flux), delta=0.01
         )
 
     def __run_direction_test(self, p, radir, decdir, dirframe):
@@ -620,18 +620,28 @@ class reference_frame_tests(unittest.TestCase):
                 self.__delete_intermediate_products()
 
     def test_frames(self):
-        radir = '19:59:28.5'
-        decdir = '+40.44.01.5'
+        # This is the source position
+        radir = '19h53m50'
+        decdir = '40d06m00'
         dirframe = 'J2000'
-        orig_pcenter = self.__phase_center_string(radir, decdir, dirframe)
         # make the MS
         self.__makeMSFrame(radir, decdir, dirframe)
         # Make the component list
         self.__makeCompList(radir, decdir, dirframe)
         # Predict Visibilities
         self.__predictSimFromComplist()
-        # image simulated MS
-        self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
+        # image simulated MS, the source is offset from the phase center
+        # of the image
+        orig_pcenter = self.__phase_center_string(
+            '19:59:28.5', '+40.40.01.5', 'J2000'
+        )
+        tclean(
+            vis=self.orig_ms, imagename=self.orig_im, datacolumn='data',
+            imsize=2048, cell='8.0arcsec', gridder='wproject',
+            niter=20, gain=0.3, wprojplanes=128, pblimit=-0.1,
+            phasecenter=orig_pcenter
+        )
+        # self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
         self.__compare(self.orig_im, radir, decdir, dirframe)
         # J2000
         j2000 = {'lon': '19h53m50', 'lat': '40d06m00', 'frame': 'J2000'}
