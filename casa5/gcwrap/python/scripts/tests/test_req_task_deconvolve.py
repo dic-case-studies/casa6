@@ -572,7 +572,7 @@ if is_CASA6:
     _qa = quanta( )
     _me = measures( )
 
-    refdatapath = ctsys.resolve('unittest/tclean/')
+    refdatapath = ctsys.resolve('unittest/deconvolve/')
 else:
     from __main__ import default
     from tasks import *
@@ -587,7 +587,7 @@ else:
     _qa = qa
     _me = me
 
-    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
+    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/deconvolve/'
 
 th = TestHelpers()
 
