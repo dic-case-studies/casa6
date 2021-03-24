@@ -1094,6 +1094,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
 
                     ConcatArrays<casacore::Float>(selectedSwPow, swpowSlice);
                 }
+                *par_[chunk] = selectedSwPow;
             } else {
                 throw(AipsError("SwPower has no meaning for this table"));
             }
@@ -1155,7 +1156,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
                     ConcatArrays<casacore::Float>(selectedTec, tecSlice);
                 }
 
-                *par_[chunk] = selectedTec / 1e+16;
+                *tec_[chunk] = selectedTec / 1e+16;
             } else
                 throw(AipsError( "TEC has no meaning for this table"));
             break;
