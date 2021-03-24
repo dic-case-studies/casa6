@@ -4120,7 +4120,7 @@ class test_mosaic_cube(testref_base):
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
-          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,psfcutoff=0.35)
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,psfcutoff=0.35,parallel=self.parallel)
           report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
           _ia.open(self.img+'1.image')
@@ -4134,7 +4134,7 @@ class test_mosaic_cube(testref_base):
           _, report3 = self.th.check_val(briggsbwtaper_beamarea[1], 0.30887386 , valname='beam_area_chan_1', exact=False)
           _, report4 = self.th.check_val(briggsbwtaper_beamarea[2], 0.30639076 , valname='beam_area_chan_2', exact=False)
  
-          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True)
+          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
           report5=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
           
           self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
