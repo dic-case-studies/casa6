@@ -33,7 +33,7 @@ try:
         componentlist, ctsys, image, measures, ms, quanta, regionmanager,
         simulator, table
     )
-    from casatasks import flagdata, phaseshift, tclean
+    from casatasks import flagdata, imstat, phaseshift, tclean
     from casatasks.private import simutil
     CASA6 = True
     cl = componentlist()
@@ -547,6 +547,116 @@ class reference_frame_tests(unittest.TestCase):
         cl.done()
 
     @classmethod
+    def __sim2fields(cls, radir, decdir, dirframe):
+        """
+        Construct an empty Measurement Set with two fieldsthat has
+        the desired observation setup.
+        """
+        # Open the simulator
+        sm.open(ms=cls.orig_ms)
+
+        # Read/create an antenna configuration.
+        # Canned antenna config text files are located at
+        # /home/casa/data/trunk/alma/simmos/*cfg
+        if CASA6:
+            antennalist = os.path.join(
+                ctsys.resolve("alma/simmos"), "vla.d.cfg"
+            )
+        else:
+            antennalist = os.path.join(
+                '/home', 'casa', 'data', 'trunk', 'alma', 'simmos', "vla.d.cfg"
+            )
+
+        # Fictitious telescopes can be simulated by specifying x, y, z, d,
+        # an, telname, antpos.
+        # x,y,z are locations in meters in ITRF (Earth centered)
+        # coordinates.
+        # d, an are lists of antenna diameter and name.
+        # telname and obspos are the name and coordinates of the
+        # observatory.
+        (x, y, z, d, an, an2, telname, obspos) = (
+            simutil.simutil().readantenna(antennalist)
+        )
+
+        # Set the antenna configuration
+        sm.setconfig(
+            telescopename=telname, x=x, y=y, z=z, dishdiameter=d,
+            mount=['alt-az'], antname=an, coordsystem='global',
+            referencelocation=me.observatory(telname)
+        )
+
+        # Set the polarization mode (this goes to the FEED subtable)
+        sm.setfeed(mode='perfect R L', pol=[''])
+
+        # Set the spectral window and polarization (one
+        # data-description-id).
+        # Call multiple times with different names for multiple SPWs or
+        # pol setups.
+        sm.setspwindow(
+            spwname="LBand", freq='1.0GHz', deltafreq='0.1GHz',
+            freqresolution='0.2GHz', nchannels=1, stokes='RR LL'
+        )
+
+        # Setup source/field information (i.e. where the observation phase
+        # center is) Call multiple times for different pointings or source
+        # locations.
+        sm.setfield(
+            sourcename="fake", sourcedirection=me.direction(
+                rf=dirframe, v0=radir, v1=decdir
+            )
+        )
+        sm.setfield(
+            sourcename="pretend", sourcedirection=me.direction(
+                rf=dirframe, v0=radir, v1=qa.tos(
+                    qa.add(qa.quantity(decdir), qa.quantity('10deg'))
+                )
+            )
+        )
+        # Set shadow/elevation limits (if you care). These set flags.
+        sm.setlimits(shadowlimit=0.01, elevationlimit='1deg')
+
+        # Leave autocorrelations out of the MS.
+        sm.setauto(autocorrwt=0.0)
+
+        # Set the integration time, and the convention to use for timerange
+        # specification
+        # Note : It is convenient to pick the hourangle mode as all times
+        #   specified in sm.observe() will be relative to when the source
+        #   transits.
+        sm.settimes(
+            integrationtime='2000s', usehourangle=True,
+            referencetime=me.epoch('UTC', '2019/10/4/00:00:00')
+        )
+
+        # Construct MS metadata and UVW values for one scan and ddid
+        # Call multiple times for multiple scans.
+        # Call this with different sourcenames (fields) and spw/pol
+        # settings as defined above.
+        # Timesteps will be defined in intervals of 'integrationtime',
+        # between starttime and stoptime.
+        sm.observe(
+            sourcename="fake", spwname='LBand', starttime='-5.0h',
+            stoptime='-2.5h'
+        )
+        sm.observe(
+            sourcename="pretend", spwname='LBand', starttime='-2.5h',
+            stoptime='0h'
+        )
+        sm.observe(
+            sourcename="fake", spwname='LBand', starttime='0h',
+            stoptime='2.5h'
+        )
+        sm.observe(
+            sourcename="pretend", spwname='LBand', starttime='2.5h',
+            stoptime='5h'
+        )
+
+        # Close the simulator
+        sm.close()
+        # Unflag everything (unless you care about elevation/shadow flags)
+        flagdata(vis=cls.orig_ms, mode='unflag')
+
+    @classmethod
     def __predictSimFromComplist(cls):
         sm.openfromms(cls.orig_ms)
         # Predict from a component list
@@ -591,8 +701,8 @@ class reference_frame_tests(unittest.TestCase):
         )
 
     def __run_direction_test(self, p, radir, decdir, dirframe):
-        pr = [p['lon'], qa.time(p['lon'])[0]]
-        pd = [p['lat'], qa.time(p['lat'])[0]]
+        pr = [p['lon'], qa.time(p['lon'], 10)[0]]
+        pd = [p['lat'], qa.time(p['lat'], 10)[0]]
         for unit in ['deg', 'rad']:
             pr.append(qa.tos(qa.convert(qa.toangle(p['lon']), unit)))
             pd.append(qa.tos(qa.convert(qa.toangle(p['lat']), unit)))
@@ -608,15 +718,16 @@ class reference_frame_tests(unittest.TestCase):
                 )
                 # create image from phaseshifted MS
                 self.__createImage(self.pshift_ms, self.pshift_im, "")
-                # create image from phaseshifted MS, using tclean to shift
-                # phase center back to original position
-                # self.__createImage(
-                #    self.pshift_ms, self.pshift_shiftback_im, orig_pcenter
-                # )
                 self.__compare(self.pshift_im, radir, decdir, dirframe)
-                # self.__compare(
-                #    self.pshift_shiftback_im, radir, decdir, dirframe
-                # )
+                x = imstat(self.pshift_im + '.image')
+                # source should be at image center after phase shift
+                self.assertTrue(
+                    (
+                        x['maxpos'][0] == 128
+                        and x['maxpos'][1] == 128
+                    ), msg='Source stats' + str(x) + ' for '
+                    + str(p)
+                )
                 self.__delete_intermediate_products()
 
     def test_frames(self):
@@ -624,23 +735,25 @@ class reference_frame_tests(unittest.TestCase):
         radir = '19h53m50'
         decdir = '40d06m00'
         dirframe = 'J2000'
+        # this is the field center
+        fra = '19h59m28.5'
+        fdec = '+40.40.01.5'
+        fframe = 'J2000'
         # make the MS
-        self.__makeMSFrame(radir, decdir, dirframe)
+        self.__makeMSFrame(fra, fdec, fframe)
         # Make the component list
         self.__makeCompList(radir, decdir, dirframe)
         # Predict Visibilities
         self.__predictSimFromComplist()
         # image simulated MS, the source is offset from the phase center
         # of the image
-        orig_pcenter = self.__phase_center_string(
-            '19:59:28.5', '+40.40.01.5', 'J2000'
-        )
         tclean(
             vis=self.orig_ms, imagename=self.orig_im, datacolumn='data',
             imsize=2048, cell='8.0arcsec', gridder='wproject',
-            niter=20, gain=0.3, wprojplanes=128, pblimit=-0.1,
-            phasecenter=orig_pcenter
+            niter=20, gain=0.3, wprojplanes=128, pblimit=-0.1
         )
+        x = imstat(self.orig_im + '.image')
+        self.assertTrue((x['maxpos'] == [1509, 773, 0, 0]).all())
         # self.__createImage(self.orig_ms, self.orig_im, orig_pcenter)
         self.__compare(self.orig_im, radir, decdir, dirframe)
         # J2000
@@ -654,11 +767,36 @@ class reference_frame_tests(unittest.TestCase):
         }
         # B1950_VLA coordinates of the above
         b1950_vla = {
-            'lon': '19h52m05.65239', 'lat': '40d06m00', 'frame': 'B1950_VLA'
+            'lon': '19h52m05.65239', 'lat': '39d58m05.8512',
+            'frame': 'B1950_VLA'
         }
         for p in (j2000, icrs, galactic, b1950_vla):
             self.__run_direction_test(p, radir, decdir, dirframe)
         self.__delete_data()
+
+    def __test_field(self):
+        """Test that a field is correctly chosen in a multi-field MS"""
+        # This is the source position
+        radir = '19h53m50'
+        decdir = '40d06m00'
+        dirframe = 'J2000'
+        # make the MS
+        self.__sim2fields(radir, decdir, dirframe)
+        # Make the component list
+        self.__makeCompList(radir, decdir, dirframe)
+        # Predict Visibilities
+        self.__predictSimFromComplist()
+        """
+        j2000 = {'lon': '19h53m50', 'lat': '40d06m00', 'frame': 'J2000'}
+        shifted_pcenter = self.__phase_center_string(
+                    lon, lat, p['frame']
+                )
+                # run phaseshift
+                phaseshift(
+                    vis=self.orig_ms, outputvis=self.pshift_ms,
+                    phasecenter=shifted_pcenter
+                )
+        """
 
 
 def suite():
