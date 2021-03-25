@@ -244,11 +244,13 @@ class testref_base(unittest.TestCase):
 
 
     def checkfinal(self,pstr=""):
-          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_sdintimaging["+ inspect.stack()[1][3] +"]'])"
-          casalog.post(pstr,'INFO')
-          if( pstr.count("( Fail") > 0 ):
-              print(pstr)
-              self.fail("\n"+pstr)
+        th.check_final(pstr)
+
+#          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_sdintimaging["+ inspect.stack()[1][3] +"]'])"
+#          casalog.post(pstr,'INFO')
+#          if( pstr.count("( Fail") > 0 ):
+#              print(pstr)
+#              self.fail("\n"+pstr)
 
 ### functional tests for sdintimaging start here ####
 
