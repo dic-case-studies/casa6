@@ -344,6 +344,19 @@ casa_add_library( synthesis
  MeasurementEquations/StokesUtil2.cc
  MeasurementEquations/VisEquation.cc
  MeasurementEquations/VPManager.cc
+ MeasurementEquations/lbfgs/alglibinternal.cpp
+ MeasurementEquations/lbfgs/alglibmisc.cpp
+ MeasurementEquations/lbfgs/ap.cpp
+ MeasurementEquations/lbfgs/dataanalysis.cpp
+ MeasurementEquations/lbfgs/diffequations.cpp
+ MeasurementEquations/lbfgs/fasttransforms.cpp
+ MeasurementEquations/lbfgs/integration.cpp
+ MeasurementEquations/lbfgs/interpolation.cpp
+ MeasurementEquations/lbfgs/linalg.cpp
+ MeasurementEquations/lbfgs/optimization.cpp
+ MeasurementEquations/lbfgs/solvers.cpp
+ MeasurementEquations/lbfgs/specialfunctions.cpp
+ MeasurementEquations/lbfgs/statistics.cpp
  TransformMachines/ALMAAperture.cc
  TransformMachines/ALMABeamCalcParams.cc
  TransformMachines/ALMACalcIlluminationConvFunc.cc
@@ -615,8 +628,8 @@ install (FILES
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/gslobjfunc.h
   #MeasurementEquations/cudaobjfunc.h #CUDA BFGS
-  MeasurementEquations/objfunc_cpu.h #CuLBFGSB
-  MeasurementEquations/objfunc_cpu_bk.h
+  #MeasurementEquations/objfunc_cpu.h #CuLBFGSB
+  #MeasurementEquations/objfunc_cpu_bk.h
 	MeasurementEquations/LinearEquation.h
 	MeasurementEquations/LinearModel.h
 	MeasurementEquations/LinearMosaic.h
@@ -640,6 +653,20 @@ install (FILES
 	MeasurementEquations/MaskedHogbomCleanModel.tcc
 	MeasurementEquations/ResidualEquation.tcc
 	MeasurementEquations/StokesUtil.tcc
+  MeasurementEquations/lbfgs/alglibinternal.h
+  MeasurementEquations/lbfgs/alglibmisc.h
+  MeasurementEquations/lbfgs/ap.h
+  MeasurementEquations/lbfgs/dataanalysis.h
+  MeasurementEquations/lbfgs/diffequations.h
+  MeasurementEquations/lbfgs/fasttransforms.h
+  MeasurementEquations/lbfgs/integration.h
+  MeasurementEquations/lbfgs/interpolation.h
+  MeasurementEquations/lbfgs/linalg.h
+  MeasurementEquations/lbfgs/optimization.h
+  MeasurementEquations/lbfgs/solvers.h
+  MeasurementEquations/lbfgs/specialfunctions.h
+  MeasurementEquations/lbfgs/statistics.h
+  MeasurementEquations/lbfgs/stdafx.h
 	DESTINATION include/casacode/synthesis/MeasurementEquations
 	)
 install (FILES

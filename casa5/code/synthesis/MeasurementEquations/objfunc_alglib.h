@@ -1,5 +1,5 @@
-#ifndef SYNTHESIS_OBJFUNCCPU_H
-#define SYNTHESIS_OBJFUNCCPU_H
+#ifndef SYNTHESIS_OBJFUNCALGLIB_H
+#define SYNTHESIS_OBJFUNCALGLIB_H
 
 #include <ms/MeasurementSets/MeasurementSet.h>
 #include <casa/Arrays/Matrix.h>
@@ -11,8 +11,7 @@
 #include <scimath/Mathematics/FFTServer.h>
 #include <scimath/Functionals/Gaussian2D.h>
 
-#include <cuda_runtime.h>
-#include "culbfgsb/culbfgsb.h"
+#include "lbfgs/optimization.h"
 
 #ifndef isnan
 #define isnan(x) std::isnan(x)
@@ -20,38 +19,88 @@
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-void objfunc_cpu(const casacore::Matrix<casacore::Float>& itsMatDirty,
-    const casacore::Matrix<casacore::Complex>& itsPsfFT,
-    const std::vector<casacore::IPosition>& center, 
-    double* x, double& f, 
-    double* fgrad, double** assist_buffer) 
+class ParamAlglibObj
 {
-
+private:
   int nX;
   int nY;
   unsigned int AspLen;
+  casacore::Matrix<casacore::Float> itsMatDirty;
+  casacore::Matrix<casacore::Complex> itsPsfFT;
+  std::vector<casacore::IPosition> center;
+  //genie
+  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual;
   casacore::Matrix<casacore::Float> newResidual;
   casacore::Matrix<casacore::Float> AspConvPsf;
   casacore::Matrix<casacore::Float> dAspConvPsf;
   casacore::FFTServer<casacore::Float,casacore::Complex> fft;
   casacore::Matrix<casacore::Float> Asp;
   casacore::Matrix<casacore::Float> dAsp;
-  *assist_buffer = new double[nX * nY];
 
-  nX = itsMatDirty.shape()(0);
-  nY = itsMatDirty.shape()(1);
-  AspLen = center.size();
-  newResidual.resize(nX, nY);
-  AspConvPsf.resize(nX, nY);
-  dAspConvPsf.resize(nX, nY);
-  fft = casacore::FFTServer<casacore::Float,casacore::Complex>(itsMatDirty.shape());
-  Asp.resize(nX, nY);
-  dAsp.resize(nX, nY);
+public:
+  ParamAlglibObj(const casacore::Matrix<casacore::Float>& dirty,
+    const casacore::Matrix<casacore::Complex>& psf,
+    const std::vector<casacore::IPosition>& positionOptimum) :
+    itsMatDirty(dirty),
+    itsPsfFT(psf),
+    center(positionOptimum)
+  {
+    nX = itsMatDirty.shape()(0);
+    nY = itsMatDirty.shape()(1);
+    AspLen = center.size();
+    newResidual.resize(nX, nY);
+    AspConvPsf.resize(nX, nY);
+    dAspConvPsf.resize(nX, nY);
+    fft = casacore::FFTServer<casacore::Float,casacore::Complex>(itsMatDirty.shape());
+    Asp.resize(nX, nY);
+    dAsp.resize(nX, nY);
+  }
 
-  f = 0;
-  memset(fgrad, 0, 2 * sizeof(double));
+  ~ParamAlglibObj() = default;
 
+  casacore::Matrix<casacore::Float>  getterDirty() { return itsMatDirty; }
+  casacore::Matrix<casacore::Complex> getterPsfFT() { return itsPsfFT; }
+  std::vector<casacore::IPosition> getterCenter() {return center;}
+  unsigned int getterAspLen() { return AspLen; }
+  int getterNX() { return nX; }
+  int getterNY() { return nY; }
+  casacore::Matrix<casacore::Float>  getterRes() { return newResidual; }
+  void setterRes(const casacore::Matrix<casacore::Float>& res) { newResidual = res; }
+  casacore::Matrix<casacore::Float>  getterAspConvPsf() { return AspConvPsf; }
+  void setterAspConvPsf(const casacore::Matrix<casacore::Float>& m) { AspConvPsf = m; }
+  casacore::Matrix<casacore::Float>  getterDAspConvPsf() { return dAspConvPsf; }
+  casacore::FFTServer<casacore::Float,casacore::Complex> getterFFTServer() { return fft; }
+  casacore::Matrix<casacore::Float>  getterAsp() { return Asp; }
+  void setterAsp(const casacore::Matrix<casacore::Float>& m) { Asp = m; }
+  casacore::Matrix<casacore::Float>  getterDAsp() { return dAsp; }
+};
 
+void function1_grad(const alglib::real_1d_array &x, double &func, alglib::real_1d_array &grad, void *ptr)
+{
+  func = 100*pow(x[0]+3, 4) + pow(x[1]-3, 4);
+  grad[0] = 400*pow(x[0]+3, 3);
+  grad[1] = 4*pow(x[1]-3, 3);
+}
+
+void objfunc_alglib(const alglib::real_1d_array &x, double &func, alglib::real_1d_array &grad, void *ptr) 
+{
+    // retrieve params for GSL bfgs optimization
+    casa::ParamAlglibObj *MyP = (casa::ParamAlglibObj *) ptr; //re-cast back to ParamAlglibObj to retrieve images
+
+    casacore::Matrix<casacore::Float> itsMatDirty(MyP->getterDirty());
+    casacore::Matrix<casacore::Complex> itsPsfFT(MyP->getterPsfFT());
+    std::vector<casacore::IPosition> center = MyP->getterCenter();
+    const unsigned int AspLen = MyP->getterAspLen();
+    const int nX = MyP->getterNX();
+    const int nY = MyP->getterNY();
+    casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
+    casacore::FFTServer<casacore::Float,casacore::Complex> fft = MyP->getterFFTServer();
+    casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf());
+    casacore::Matrix<casacore::Float> Asp(MyP->getterAsp());
+    casacore::Matrix<casacore::Float> dAspConvPsf(MyP->getterDAspConvPsf());
+    casacore::Matrix<casacore::Float> dAsp(MyP->getterDAsp());
+
+    func = 0;
     double amp = 1;
 
     const int refi = nX/2;
@@ -67,7 +116,7 @@ void objfunc_cpu(const casacore::Matrix<casacore::Float>& itsMatDirty,
     {
         amp = x[2*k];
         double scale = x[2*k+1];
-        std::cout << "f: amp " << amp << " scale " << scale << std::endl;
+        //std::cout << "f: amp " << amp << " scale " << scale << std::endl;
 
       if (isnan(amp) || scale < 0.4) // GSL scale < 0
       {
@@ -144,7 +193,7 @@ void objfunc_cpu(const casacore::Matrix<casacore::Float>& itsMatDirty,
       for(int i = minX; i < maxX; ++i)
       {
         newResidual(i, j) = itsMatDirty(i, j) - amp * AspConvPsf(i, j);
-        f = f + double(pow(newResidual(i, j), 2));
+        func = func + double(pow(newResidual(i, j), 2));
 
         // derivatives of amplitude
         dA += double((-2) * newResidual(i,j) * AspConvPsf(i,j));
@@ -152,90 +201,14 @@ void objfunc_cpu(const casacore::Matrix<casacore::Float>& itsMatDirty,
         dS += double((-2) * amp * newResidual(i,j) * dAspConvPsf(i,j));
       }
     }
-    std::cout << "after f " << f << std::endl;
+    //std::cout << "after f " << func << std::endl;
 
-    fgrad[0] = dA;
-    fgrad[1] = dS; 
+    grad[0] = dA;
+    grad[1] = dS; 
 }
 
 
-
-// test CPU mode
-//template <typename real>
-double test_objfunc_cpu(const casacore::Matrix<casacore::Float>& itsMatDirty,
-    const casacore::Matrix<casacore::Complex>& itsPsfFT,
-    const std::vector<casacore::IPosition>& center) {
-
-  // initialize LBFGSB option
-  LBFGSB_CUDA_OPTION<double> lbfgsb_options;
-
-  lbfgsbcuda::lbfgsbdefaultoption<double>(lbfgsb_options);
-  lbfgsb_options.mode = LCM_NO_ACCELERATION;
-  lbfgsb_options.eps_f = static_cast<double>(1e-3);
-  lbfgsb_options.eps_g = static_cast<double>(1e-3);
-  lbfgsb_options.eps_x = static_cast<double>(1e-3);
-  lbfgsb_options.max_iteration = 5;
-
-  // initialize LBFGSB state
-  LBFGSB_CUDA_STATE<double> state;
-  memset(&state, 0, sizeof(state));
-  double* assist_buffer_cpu = nullptr;
-
-  double minimal_f = std::numeric_limits<double>::max();
-  std::cout << "I'm called1" << std::endl;
-  // setup callback function that evaluate function value and its gradient
-  state.m_funcgrad_callback = [&itsMatDirty,&itsPsfFT, &center, &assist_buffer_cpu, &minimal_f](
-                                  double* x, double& f, double* g,
-                                  const cudaStream_t& stream,
-                                  const LBFGSB_CUDA_SUMMARY<double>& summary) {
-    std::cout << "I'm called2" << std::endl;
-    objfunc_cpu(itsMatDirty, itsPsfFT, center, x, f, g, &assist_buffer_cpu); 
-
-    minimal_f = fmin(minimal_f, f);
-    return 0;
-  };
-
-  // initialize CPU buffers
-  int N_elements = 2;
-
-  double* x = new double[N_elements];
-  double* g = new double[N_elements];
-
-  double* xl = new double[N_elements];
-  double* xu = new double[N_elements];
-
-  // in this example, we don't have boundaries
-  memset(xl, 0, N_elements * sizeof(xl[0]));
-  memset(xu, 0, N_elements * sizeof(xu[0]));
-
-  // initialize starting point
-  x[0] = 1000.0;
-  x[1] = 15.0;
-  //double f_init = std::numeric_limits<double>::max();
-  //dsscfg_cpu(itsMatDirty, itsPsfFT, center, g_nx, g_ny, x, f_init, nullptr, &assist_buffer_cpu, 'XS');
-
-  // initialize number of bounds (0 for this example)
-  int* nbd = new int[N_elements];
-  memset(nbd, 0, N_elements * sizeof(nbd[0]));
-
-  LBFGSB_CUDA_SUMMARY<double> summary;
-  memset(&summary, 0, sizeof(summary));
-
-  // call optimization
-  lbfgsbcuda::lbfgsbminimize<double>(N_elements, state, lbfgsb_options, x, nbd,
-                                   xl, xu, summary);
-
-  // release allocated memory
-  delete[] x;
-  delete[] g;
-  delete[] xl;
-  delete[] xu;
-  delete[] nbd;
-  delete[] assist_buffer_cpu;
-
-  return minimal_f;
-}
 
 } // end namespace casa
 
-#endif // SYNTHESIS_OBJFUNCCPU_H
+#endif // SYNTHESIS_OBJFUNCALGLIB_H
