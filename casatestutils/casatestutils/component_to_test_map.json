@@ -1521,6 +1521,16 @@
             "comment":""
         },
         {
+            "testScript":"test_req_task_deconvolve",
+            "testType":"casatasks",
+            "maintainer":"Benjamin Bean",
+            "maintainerEmail":"bbean@nrao.edu",
+            "testOptions":[],
+            "testGroup":["Imaging","tclean","deconvolve"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_req_task_delmod",
             "testType":"casatasks",
             "maintainer":"Neal Schweighart",
