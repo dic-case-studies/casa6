@@ -418,7 +418,7 @@ public:
 
   // This is the freq-dep version of J
   //   (this is the ONLY fundamental difference from J)
-  virtual casacore::Bool freqDepMat() { return true; };
+  virtual casacore::Bool freqDepPar() { return true; };
 
 protected:
 
