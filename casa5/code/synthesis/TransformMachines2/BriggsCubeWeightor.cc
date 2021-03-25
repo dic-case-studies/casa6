@@ -309,6 +309,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
     Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	Double freqend=cs.toWorld(IPosition(4,0,0,0,imNChan-1))[3];
 	Double freqincr=fabs(cs.increment()[3]);
+        
 	SpectralCoordinate spCoord=cs.spectralCoordinate(cs.findCoordinate(Coordinate::SPECTRAL));
 	MFrequency::Types freqframe=spCoord.frequencySystem(True);
 	uInt swingpad=16;
@@ -332,7 +333,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	      spwID = vb->spectralWindows()(0);
 	      Double localBeg, localEnd;
 	      Double localNchan=imNChan >1 ? Double(imNChan-1) : 1.0;
-	      Double localStep=abs(freqend-freqbeg)/localNchan;
+	      
 	      if(freqbeg < freqend){
 		localBeg=freqbeg;
 		localEnd=freqend;
@@ -341,6 +342,9 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		localBeg=freqend;
 		localEnd=freqbeg;
 	      }
+              localBeg-=freqincr/2.0;
+              localEnd+=freqincr/2.0;
+              Double localStep=fabs(localEnd-localBeg)/localNchan;
 	      Vector<Int> spw, start, nchan;
 	      if(ephemtab.size() != 0){
 		MSUtil::getSpwInSourceFreqRange( spw,start,nchan,vb->ms(), 
@@ -354,7 +358,8 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 					  fieldID);
 		
 	      }
-		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
+              //if(spw.nelements()==0 || start.nelements()
+              for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
 		    if(spw[spwk]==spwID){
 		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
 		      if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
@@ -376,12 +381,16 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		  
 		    }
 		  
-		  }
-		  }
+              }
+            }
 		
 	  }
 	}
-	
+
+        if(firstchanfreq.size()==0){
+          return 16;
+        }
+          
 	auto itf=firstchanfreq.begin();
 	auto itmax=localmaxfreq.begin();
 	Double firstchanshift=0.0;
@@ -397,7 +406,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  itmax++;
 	}
 	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+4);
-	//cerr << "CPUID " << my_cpu_id <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
+	//cerr <<"swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 

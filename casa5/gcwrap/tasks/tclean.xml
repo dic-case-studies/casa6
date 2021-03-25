@@ -2380,19 +2380,15 @@ to use the correct direction in which the antenna is pointing with respect to th
             (This is not the support size for clark clean.)
         </description>
         <value type="double">0.35</value>
-        <allowed kind="range">
+<!--       <allowed kind="range">
           <value range="min">0.01</value>
           <value range="max">0.99</value>
-        </allowed>
+          </allowed>
+-->
     </param>
     
     
-    <when param="calcpsf">
-           <equals value="True" type="bool">
-             <default param="psfcutoff"><value>0.35</value></default>
-           </equals>
-    </when>
-    
+  
 
     <param name="parallel" type="bool">
       <shortdescription>Run major cycles in parallel</shortdescription>
@@ -2438,7 +2434,12 @@ to use the correct direction in which the antenna is pointing with respect to th
 
    <constraints>
 
-
+     <when param="calcpsf">
+           <equals value="True" type="bool">
+             <default param="psfcutoff"><value>0.35</value></default>
+           </equals>
+    </when>
+    
 
      <when param="selectdata">
       <equals value="True" type="bool">
