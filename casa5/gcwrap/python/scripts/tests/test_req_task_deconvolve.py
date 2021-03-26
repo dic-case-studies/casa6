@@ -593,7 +593,7 @@ th = TestHelpers()
 
 ## List to be run
 def suite():
-    return [test_onefield, test_iterbot, test_multifield, test_stokes, test_cube, test_mask, test_multirun, test_imgval, test_mtmfsimgval, test_residual_update, test_restoration]
+    return [test_onefield]#, test_iterbot, test_multifield, test_stokes, test_cube, test_mask, test_multirun, test_imgval, test_mtmfsimgval, test_residual_update, test_restoration]
 
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
@@ -2858,7 +2858,7 @@ class test_restoration(testref_base):
 class test_niterparms(testref_base):
 
     def helper_deconvolve_check_iterdone(self, param_name, param_val, expected_iter, extra_params=None):
-        casalog.post(f"Executing deconvolve with {param_name}={param_val}, expected iterations: {expected_iter}", "WARN")
+        casalog.post("Executing deconvolve with {}={}, expected iterations: {}".format(param_name, param_val, expected_iter), "WARN")
 
         # prepare arguments dicts
         ta = {'imsize':100, 'cell':'8.0arcsec', 'deconvolver':'clark', 'threshold':'1mJy', 'gain':0.1}
