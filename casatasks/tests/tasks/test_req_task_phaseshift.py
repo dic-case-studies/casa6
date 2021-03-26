@@ -547,7 +547,7 @@ class reference_frame_tests(unittest.TestCase):
         cl.done()
 
     @classmethod
-    def __sim2fields(cls, radir, decdir, dirframe):
+    def __sim2fields(cls, radir, decdir, dirframe, offset):
         """
         Construct an empty Measurement Set with two fieldsthat has
         the desired observation setup.
@@ -605,10 +605,12 @@ class reference_frame_tests(unittest.TestCase):
                 rf=dirframe, v0=radir, v1=decdir
             )
         )
+        # the second field is 10deg north of the first, so should be
+        # emission free
         sm.setfield(
             sourcename="pretend", sourcedirection=me.direction(
                 rf=dirframe, v0=radir, v1=qa.tos(
-                    qa.add(qa.quantity(decdir), qa.quantity('10deg'))
+                    qa.add(qa.quantity(decdir), qa.quantity(offset))
                 )
             )
         )
@@ -774,29 +776,71 @@ class reference_frame_tests(unittest.TestCase):
             self.__run_direction_test(p, radir, decdir, dirframe)
         self.__delete_data()
 
-    def __test_field(self):
+    def test_field(self):
         """Test that a field is correctly chosen in a multi-field MS"""
         # This is the source position
         radir = '19h53m50'
         decdir = '40d06m00'
         dirframe = 'J2000'
+        offset = '10deg'
         # make the MS
-        self.__sim2fields(radir, decdir, dirframe)
+        self.__sim2fields(radir, decdir, dirframe, offset)
         # Make the component list
         self.__makeCompList(radir, decdir, dirframe)
         # Predict Visibilities
         self.__predictSimFromComplist()
-        """
-        j2000 = {'lon': '19h53m50', 'lat': '40d06m00', 'frame': 'J2000'}
-        shifted_pcenter = self.__phase_center_string(
-                    lon, lat, p['frame']
+        # shift first field by 4 pixels north of source
+        pcenter = self.__phase_center_string(
+            radir,
+            qa.tos(qa.add(qa.quantity(decdir), qa.quantity("32arcsec"))),
+            dirframe
+        )
+        phaseshift(
+            vis=self.orig_ms, outputvis=self.pshift_ms,
+            phasecenter=pcenter, field="0"
+        )
+        tclean(
+            vis=self.pshift_ms, imagename=self.pshift_im, datacolumn='data',
+            imsize=256, cell='8.0arcsec', gridder='standard',
+            niter=20, gain=0.3, pblimit=-0.1
+        )
+        x = imstat(self.pshift_im + '.image')
+        self.assertTrue(
+            (x['maxpos'] == [128, 124, 0, 0]).all(),
+            msg='maxpos is incorrect'
+        )
+        self.assertTrue(
+            np.isclose(x['max'][0], self.exp_flux, 1e-6),
+            msg='max is incorrect, expected ' + str(self.exp_flux) + ' got '
+            + str(x['max'][0])
+        )
+        self.__delete_intermediate_products()
+        # 4 pixel shift of second field, which contains no signal
+        pcenter = self.__phase_center_string(
+            radir,
+            qa.tos(
+                qa.add(
+                    qa.add(qa.quantity(decdir), qa.quantity("32arcsec")),
+                    qa.quantity(offset)
                 )
-                # run phaseshift
-                phaseshift(
-                    vis=self.orig_ms, outputvis=self.pshift_ms,
-                    phasecenter=shifted_pcenter
-                )
-        """
+            ),
+            dirframe
+        )
+        phaseshift(
+            vis=self.orig_ms, outputvis=self.pshift_ms,
+            phasecenter=pcenter, field="1"
+        )
+        tclean(
+            vis=self.pshift_ms, imagename=self.pshift_im, datacolumn='data',
+            imsize=256, cell='8.0arcsec', gridder='standard',
+            niter=20, gain=0.3, pblimit=-0.1
+        )
+        x = imstat(self.pshift_im + '.image')
+        self.assertTrue(
+            x['max'][0]/x['rms'][0] < 5,
+            msg='Incorrectly found signal in empty field, got S/N of '
+            + str(x['max'][0]/x['rms'][0])
+        )
 
 
 def suite():
