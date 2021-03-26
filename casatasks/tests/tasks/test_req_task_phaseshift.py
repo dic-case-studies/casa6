@@ -30,14 +30,15 @@ import unittest
 CASA6 = False
 try:
     from casatools import (
-        componentlist, ctsys, image, measures, ms, quanta, regionmanager,
-        simulator, table
+        componentlist, ctsys, image, measures, ms, msmetadata, quanta,
+        regionmanager, simulator, table
     )
     from casatasks import flagdata, imstat, phaseshift, tclean
     from casatasks.private import simutil
     CASA6 = True
     cl = componentlist()
     ia = image()
+    md = msmetadata()
     me = measures()
     ms = ms()
     qa = quanta()
@@ -64,11 +65,13 @@ except ImportError:
     from __main__ import default
     from tasks import flagdata, phaseshift, tclean
     from taskinit import (
-        cltool, iatool, metool, mstool, qatool, rgtool, smtool, tbtool
+        cltool, iatool, metool, msmdtool, mstool, qatool, rgtool, smtool,
+        tbtool
     )
     import simutil
     cl = cltool()
     ia = iatool()
+    md = msmdtool()
     me = metool()
     ms = mstool()
     qa = qatool()
@@ -778,6 +781,32 @@ class reference_frame_tests(unittest.TestCase):
 
     def test_field(self):
         """Test that a field is correctly chosen in a multi-field MS"""
+        def shift_and_clean(myfield, expdir):
+            phaseshift(
+                vis=self.orig_ms, outputvis=self.pshift_ms,
+                phasecenter=pcenter, field=myfield
+            )
+            md.open(self.pshift_ms)
+            self.assertEqual(
+                md.nfields(), 1,
+                msg='Wrong number of fields for field ' + myfield
+            )
+            sep = me.separation(md.refdir(), expdir)
+            md.done()
+            self.assertEqual(
+                qa.getvalue(sep), 0,
+                msg='Ref direction is wrong for field ' + myfield
+                + ' separation is ' + qa.tos(qa.convert(sep, 'arcsec'))
+            )
+            # note that for noiseless datasets, the shift will
+            # always result in the same image no matter what field is used,
+            # so the image checks are sanity checks more than anything else
+            tclean(
+                vis=self.pshift_ms, imagename=self.pshift_im,
+                datacolumn='data', imsize=256, cell='8.0arcsec',
+                gridder='standard', niter=20, gain=0.3, pblimit=-0.1
+            )
+
         # This is the source position
         radir = '19h53m50'
         decdir = '40d06m00'
@@ -795,52 +824,34 @@ class reference_frame_tests(unittest.TestCase):
             qa.tos(qa.add(qa.quantity(decdir), qa.quantity("32arcsec"))),
             dirframe
         )
-        phaseshift(
-            vis=self.orig_ms, outputvis=self.pshift_ms,
-            phasecenter=pcenter, field="0"
-        )
-        tclean(
-            vis=self.pshift_ms, imagename=self.pshift_im, datacolumn='data',
-            imsize=256, cell='8.0arcsec', gridder='standard',
-            niter=20, gain=0.3, pblimit=-0.1
-        )
-        x = imstat(self.pshift_im + '.image')
-        self.assertTrue(
-            (x['maxpos'] == [128, 124, 0, 0]).all(),
-            msg='maxpos is incorrect'
-        )
-        self.assertTrue(
-            np.isclose(x['max'][0], self.exp_flux, 1e-6),
-            msg='max is incorrect, expected ' + str(self.exp_flux) + ' got '
-            + str(x['max'][0])
-        )
-        self.__delete_intermediate_products()
+        expdir = me.direction(dirframe, radir, decdir)
+        for myfield in ('0', 'fake'):
+            shift_and_clean(myfield, expdir)
+            x = imstat(self.pshift_im + '.image')
+            self.assertTrue(
+                (x['maxpos'] == [128, 124, 0, 0]).all(),
+                msg='maxpos is incorrect'
+            )
+            self.assertTrue(
+                np.isclose(x['max'][0], self.exp_flux, 1e-6),
+                msg='max is incorrect, expected ' + str(self.exp_flux)
+                + ' got ' + str(x['max'][0])
+            )
+            self.__delete_intermediate_products()
         # 4 pixel shift of second field, which contains no signal
-        pcenter = self.__phase_center_string(
-            radir,
-            qa.tos(
-                qa.add(
-                    qa.add(qa.quantity(decdir), qa.quantity("32arcsec")),
-                    qa.quantity(offset)
-                )
-            ),
-            dirframe
-        )
-        phaseshift(
-            vis=self.orig_ms, outputvis=self.pshift_ms,
-            phasecenter=pcenter, field="1"
-        )
-        tclean(
-            vis=self.pshift_ms, imagename=self.pshift_im, datacolumn='data',
-            imsize=256, cell='8.0arcsec', gridder='standard',
-            niter=20, gain=0.3, pblimit=-0.1
-        )
-        x = imstat(self.pshift_im + '.image')
-        self.assertTrue(
-            x['max'][0]/x['rms'][0] < 5,
-            msg='Incorrectly found signal in empty field, got S/N of '
-            + str(x['max'][0]/x['rms'][0])
-        )
+        decref = qa.add(qa.quantity(decdir), qa.quantity(offset))
+        decdir = qa.tos(qa.add(decref, qa.quantity("32arcsec")))
+        pcenter = self.__phase_center_string(radir, decdir, dirframe)
+        expdir = me.direction(dirframe, radir, decref)
+        for myfield in ('1', 'pretend'):
+            shift_and_clean(myfield, expdir)
+            x = imstat(self.pshift_im + '.image')
+            self.assertTrue(
+                x['max'][0]/x['rms'][0] < 5,
+                msg='Incorrectly found signal in empty field, got S/N of '
+                + str(x['max'][0]/x['rms'][0])
+            )
+            self.__delete_intermediate_products()
 
 
 def suite():
