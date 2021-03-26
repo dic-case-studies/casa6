@@ -3561,6 +3561,44 @@ def get_func_params(func, loc_vars):
     params = [(name, loc_vars[name]) for name in param_names]
     return params
 
+def write_task_history(images, tname, params, clog):
+    """
+    Update image/logtable with the taskname, CASA version and all task parameters
+    CASR-571. Replicates the same format as mstools.write_history.
+
+    :param images: list of images to write the history to
+    :param tname: task name to use as origin of the history
+    :param params: list of task parameters as a tuple (name, value)
+    :param clog: casa log object
+    """
+    iat = iatool()
+
+    history = ['taskname={0}'.format(tname)]
+    history.append(_casa_version_string())
+    # Add all task arguments.
+    for name, val in params:#range(len(param_names)):
+        msg = "%-11s = " % name
+        if type(val) == str:
+            msg += '"'
+        msg += str(val)
+        if type(val) == str:
+            msg += '"'
+        history.append(msg)
+
+    for img in images:
+        iat_open = False
+        try:
+            iat.open(img)
+            iat_open = True
+            iat.sethistory(origin=tname, history=history)
+        except RuntimeError:
+            clog.post('Could not open this directory as an image to write history: {}'.
+                      format(img), 'DEBUG')
+        finally:
+            if iat_open:
+                iat.close()
+    iat.done()
+
 def write_tclean_history(imagename, tname, params, clog):
         """
         Update image/logtable with the taskname, CASA version and all task parameters
@@ -3598,34 +3636,7 @@ def write_tclean_history(imagename, tname, params, clog):
                     accept.append(img)
             return accept
 
-        iat = iatool()
-
         img_exts = glob.glob(imagename + '*.*')
         img_exts = filter_img_names(img_exts)
         clog.post("Writing history into these images: {}".format(img_exts))
-
-        history = ['taskname={0}'.format(tname)]
-        history.append(_casa_version_string())
-        # Add all task arguments.
-        for name, val in params:#range(len(param_names)):
-            msg = "%-11s = " % name
-            if type(val) == str:
-                msg += '"'
-            msg += str(val)
-            if type(val) == str:
-                msg += '"'
-            history.append(msg)
-
-        for img in img_exts:
-            iat_open = False
-            try:
-                iat.open(img)
-                iat_open = True
-                iat.sethistory(origin=tname, history=history)
-            except RuntimeError:
-                clog.post('Could not open this directory as an image to write history: {}'.
-                          format(img), 'DEBUG')
-            finally:
-                if iat_open:
-                    iat.close()
-        iat.done()
+        write_task_history(img_exts, tname, params, clog)
