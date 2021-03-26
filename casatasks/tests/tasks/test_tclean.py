@@ -83,7 +83,6 @@
 #  refim_point_stokes.ms : RR=1.0, LL=0.8, RL and LR are zero. Stokes I=0.9, V=0.1, U,Q=0.0
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
 #  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
-#  refim_alma_mosaic.ms : simulated ALMA 3-point mosaic with 4 point sources (2 Jy, 1 Jy, 1.5 Jy, 2 Jy)
 #
 ##########################################################################
 
@@ -202,13 +201,13 @@ class testref_base(unittest.TestCase):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
           pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
-          if( pstr.count("(Fail") > 0 ):
+          if( pstr.count("(Fail") > 0 ): ## or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
 
 ##############################################
 ##############################################
-##Task level tests : one field, 2chan.
 
+##Task level tests : one field, 2chan.
 class test_onefield(testref_base):
      
      def test_onefield_defaults(self):
@@ -659,39 +658,40 @@ class test_onefield(testref_base):
           self.checkfinal(pstr=checkimage+report)
           
      def test_onefield_psf_fit(self):
-        """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
-        
-        self.prepData('refim_point.ms')
- 
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
-        
-        self.prepData('refim_point.ms')
-        
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
-        
-        self.prepData('refim_point.ms')
-        
-        ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
-        _ia.open(self.img+'.psf')
-        hdr = _ia.summary(list=False)
-        _ia.close()
-        beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
-        _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
-        
-        self.checkfinal(report1+report2+report3)
+          """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
+
+          self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
+
 ##Task level tests : iteration controls
 class test_iterbot(testref_base):
 
@@ -832,7 +832,7 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
 
      def test_iterbot_mfs_deconvolvers(self):
-          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? No ! """
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
           # clark and hogbom reach niter first, but multiscale gets to cyclethreshold first. Check peakres and iterdone.
           self.prepData('refim_twochan.ms')
           ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='clark',parallel=self.parallel)
@@ -844,6 +844,24 @@ class test_iterbot(testref_base):
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel,smallscalebias=0.6)
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
+
+          self.checkfinal(report1+report2+report3)
+
+     def test_iterbot_cube_deconvolvers(self):
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Let's see ! """
+          # clark, hogbom and multiscale reach niter. Check peakres and iterdone
+          self.prepData('refim_eptwochan.ms')
+          ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='clark',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report1=self.th.checkall(ret=ret1, iterdone=114, nmajordone=2,imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image'],
+                                   imgval=[(self.img+'1.image',0.935,[100,100,0,0]), (self.img+'1.image',0.282,[100,100,0,2])  ])
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='hogbom',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report2=self.th.checkall(ret=ret2, iterdone=116, nmajordone=2,imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image'],
+                                   imgval=[(self.img+'2.image',0.939,[100,100,0,0]), (self.img+'2.image',0.282,[100,100,0,2])  ])
+
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='multiscale',specmode='cube',interpolation='nearest',parallel=self.parallel,smallscalebias=0.6,scales=[0,6,10,20,40])
+          report3=self.th.checkall(ret=ret3, iterdone=100, nmajordone=3,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'], 
+                                   imgval=[(self.img+'3.image',0.888,[100,100,0,0]), (self.img+'3.image',0.1601,[100,100,0,2])  ])
 
           self.checkfinal(report1+report2+report3)
 
@@ -2220,6 +2238,7 @@ class test_cube(testref_base):
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
+     @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
@@ -3620,9 +3639,10 @@ class test_hetarray_imaging(testref_base):
 #     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test till awproject works with CAS-9386")
      def test_het_pointing_offsets_awproject_cube(self):
-#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
-#          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy.
-          
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          Cube imaging with awproject :  For all three channels, check that the source and PB are the same such that pbcorrected intensity is 1.0 Jy. 
+          '''
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'
@@ -3725,9 +3745,10 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
      def test_het_pointing_offsets_awproject_mtmfs(self):
-#          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter).
-#          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True).
-          
+          '''
+          This dataset has two groups of antennas and two timesteps, with pointing centers forming the corners of a square around the source (and MS phasecenter). 
+          MTMFS imaging with awproject : Check that source and PB are the same. Check that alpha is 0.0 (with conjbeams=True). 
+          '''
           self.prepData('refim_heterogeneous_pointings.ms')
           msname = self.msfile
           #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/PointingCorrection/simulation_pointing/sim_data.ms'

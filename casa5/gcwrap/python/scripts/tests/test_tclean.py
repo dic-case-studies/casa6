@@ -201,7 +201,7 @@ class testref_base(unittest.TestCase):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
           pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
-          if( pstr.count("(Fail") > 0 ):
+          if( pstr.count("(Fail") > 0 ): ## or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
 
 ##############################################
@@ -832,7 +832,7 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
 
      def test_iterbot_mfs_deconvolvers(self):
-          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? No ! """
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
           # clark and hogbom reach niter first, but multiscale gets to cyclethreshold first. Check peakres and iterdone.
           self.prepData('refim_twochan.ms')
           ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='clark',parallel=self.parallel)
@@ -844,6 +844,24 @@ class test_iterbot(testref_base):
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel,smallscalebias=0.6)
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
+
+          self.checkfinal(report1+report2+report3)
+
+     def test_iterbot_cube_deconvolvers(self):
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Let's see ! """
+          # clark, hogbom and multiscale reach niter. Check peakres and iterdone
+          self.prepData('refim_eptwochan.ms')
+          ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='clark',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report1=self.th.checkall(ret=ret1, iterdone=114, nmajordone=2,imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image'],
+                                   imgval=[(self.img+'1.image',0.935,[100,100,0,0]), (self.img+'1.image',0.282,[100,100,0,2])  ])
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='hogbom',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report2=self.th.checkall(ret=ret2, iterdone=116, nmajordone=2,imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image'],
+                                   imgval=[(self.img+'2.image',0.939,[100,100,0,0]), (self.img+'2.image',0.282,[100,100,0,2])  ])
+
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='multiscale',specmode='cube',interpolation='nearest',parallel=self.parallel,smallscalebias=0.6,scales=[0,6,10,20,40])
+          report3=self.th.checkall(ret=ret3, iterdone=100, nmajordone=3,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'], 
+                                   imgval=[(self.img+'3.image',0.888,[100,100,0,0]), (self.img+'3.image',0.1601,[100,100,0,2])  ])
 
           self.checkfinal(report1+report2+report3)
 
@@ -2220,6 +2238,7 @@ class test_cube(testref_base):
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
+     @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
