@@ -67,31 +67,46 @@
 	useDoubleGrid_p=false;
 	//convertArray(tmpFloat, real(griddedData2));
       }
+
+
       tmpFloat.set(0.0);
       shp=tmpFloat.shape();
-      //cerr << "getgrid "  << sum(griddedData) << endl;
+      Int end_indx = 0;
+      cerr << "getgrid "  << sum(griddedData) << endl;
       casacore::IPosition in(4, 0, 0, 0, 0);
       casacore::IPosition out(4, 0,0,0,0);
+
+      tmpFloat = real(griddedData);
+      cerr << "tmpFloat "  << sum(tmpFloat) << endl;
       for (casacore::Int cc=0; cc< shp[3]; ++cc){
 	in[3]=cc;
 	out[3]=cc;
 	for(casacore::Int pp=0; pp< shp[2]; ++pp){
 	  in[2]=pp;
 	  out[2]=pp;
-	  for (casacore::Int yy=0; yy< shp[1]/2; ++yy){
-	    in[1]=yy+shp[1]/2;
-	    out[1]=-yy+shp[1]/2;
-	    for(casacore::Int xx=-shp[0]/2+1; xx< shp[0]/2; ++xx){
-	      in[0]=xx+shp[0]/2;
-	      out[0]=-xx+shp[0]/2;
-	      tmpFloat(in)+=real(griddedData(out))+real(griddedData(in));
-	      tmpFloat(out)+=tmpFloat(in); 
+
+	  for (casacore::Int yy=-shp[1]/2; yy< shp[1]-shp[1]/2; ++yy){
+
+	    for(casacore::Int xx=-shp[0]/2; xx< shp[0]-shp[0]/2; ++xx){
+	      in[0]=xx + shp[0]/2;
+	      in[1]=yy + shp[1]/2;
+	      out[0]=-xx + shp[0]/2;
+	      out[1]=-yy + shp[1]/2;
+	      
+	      if((out[0] < shp[0]) && (out[1] < shp[1])) 
+		{
+		  tmpFloat(in)+=real(griddedData(out));
+		}
 	    }
+
 	  }
 	}
       }
-      //cerr << "tmpFloat " << sum(tmpFloat) << endl;
+       cerr << "getgrid "  << sum(griddedData) << endl;
+      //tmpFloat = real(griddedData);
+      cerr << "tmpFloat " << sum(tmpFloat) << endl;
       ptr=tmpFloat.getStorage(del);
+      //ptr=griddedData.getStorage(del);
     }
     else if(((whatType(&thegrid)==casacore::TpArrayDouble))){
        if(useDoubleGrid_p){

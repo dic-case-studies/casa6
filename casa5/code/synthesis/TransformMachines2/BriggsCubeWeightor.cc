@@ -223,6 +223,16 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 			IPosition end(4,nx_p-1,ny_p-1,0,chan);
 			Matrix<Float> gwt(griddedWeight(start, end).reform(IPosition(2, nx_p, ny_p)));
 			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) { //See CAS-13021 for bwtaper algorithm details
+                
+                ///TESTOO
+                {
+                   CoordinateSystem cstemp=CoordinateUtil::makeCoordinateSystem(gwt.shape(), True);
+                   PagedImage<Float> gulu(gwt.shape(), cstemp, "BWweightdensity_v3"+String::toString(chan));
+                   gulu.put(gwt);
+                }
+
+                
+                
 			//os << "Normal robustness, robust = " << robust << LogIO::POST;
 				Double sumlocwt = 0.;
 				for(Int vgrid=0;vgrid<ny_p;vgrid++) {
@@ -230,8 +240,12 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 						if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
 					}
 				}
-				f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts(0,chan));
+				f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts(0,chan)));
 				d2_p[0][chan] = 1.0;
+                
+                //cout << "sumlocwt " << sumlocwt << endl;
+                //cout << "sumWgts "  << sumWgts << endl;
+                //cout << "f2_p[0]" << f2_p[0] << endl;
 
 			}
 			else if (rmode_p=="abs") {
@@ -564,7 +578,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
         if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
       }
     }
-    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts[index](0,chan));
+    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts[index](0,chan)));
     d2_p[index][chan] = 1.0;
 
       }
