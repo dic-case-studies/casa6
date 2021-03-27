@@ -4099,8 +4099,8 @@ class test_mosaic_cube(testref_base):
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
-          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
-          report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])],parallel=self.parallel)
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
+          report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
           _ia.open(self.img+'1.image')
           nchan = _ia.shape()[3]
