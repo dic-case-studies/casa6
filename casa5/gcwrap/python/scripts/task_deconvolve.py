@@ -22,6 +22,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from .cleanhelper import write_task_history, get_func_params
+    from casatools import synthesisimager
     ia = image( )
 else:
     from taskinit import *
@@ -31,17 +32,16 @@ else:
     from imregrid import imregrid
     from parallel.parallel_task_helper import ParallelTaskHelper
     from cleanhelper import write_task_history, get_func_params
+    synthesisimager=casac.synthesisimager
     ia = iatool( )
 
 try:
     if is_CASA6:
         from casampi.MPIEnvironment import MPIEnvironment
         from casampi import MPIInterface
-        from casatools import synthesisimager
     else:
         from mpi4casa.MPIEnvironment import MPIEnvironment
         from mpi4casa import MPIInterface
-        synthesisimager=casac.synthesisimager
     mpi_available = True
 except ImportError:
     mpi_available = False
