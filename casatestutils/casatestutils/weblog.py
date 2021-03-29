@@ -243,7 +243,7 @@ class Weblog():
         with open("test_{}_weblog.html".format(self.taskname.lower()), 'a+') as self.html:
             self.html.write('<ul>' + '\n')
             for item in array:
-                self.html.write('<li>{}</li>'.format(item) + '\n')
+                self.html.write('<li>{}</li>'.format(item.replace('\\,','\n')) + '\n')
                 if str(item).endswith(".png"):
                     self.html.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>'+ '\n')
                     self.html.write('<img  class="myImg" src="{}" alt="{}" height="300" width="300">'.format(item, item) + '\n')
