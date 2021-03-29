@@ -787,8 +787,9 @@ class reference_frame_tests(unittest.TestCase):
                 phasecenter=pcenter, field=myfield
             )
             md.open(self.pshift_ms)
+            exp_nfields = 2 if len(myfield) == 0 else 1
             self.assertEqual(
-                md.nfields(), 1,
+                md.nfields(), exp_nfields,
                 msg='Wrong number of fields for field ' + myfield
             )
             sep = me.separation(md.refdir(), expdir)
@@ -798,9 +799,40 @@ class reference_frame_tests(unittest.TestCase):
                 msg='Ref direction is wrong for field ' + myfield
                 + ' separation is ' + qa.tos(qa.convert(sep, 'arcsec'))
             )
-            # note that for noiseless datasets, the shift will
-            # always result in the same image no matter what field is used,
-            # so the image checks are sanity checks more than anything else
+            # check times and baselines
+            field_id = ''
+            if len(myfield) > 0:
+                try:
+                    field_id = int(myfield)
+                except ValueError:
+                    md.open(self.orig_ms)
+                    field_id = md.fieldsforname(myfield)[0]
+                    md.done()
+            tb.open(self.orig_ms)
+            myfilter = '' if len(myfield) == 0 else 'FIELD_ID=' + str(field_id)
+            x = tb.query(myfilter, columns='TIME, ANTENNA1, ANTENNA2')
+            exptime = x.getcol('TIME')
+            expant1 = x.getcol('ANTENNA1')
+            expant2 = x.getcol('ANTENNA2')
+            x.done()
+            tb.done()
+            tb.open(self.pshift_ms)
+            gottime = tb.getcol('TIME')
+            gotant1 = tb.getcol('ANTENNA1')
+            gotant2 = tb.getcol('ANTENNA2')
+            tb.done()
+            self.assertTrue(
+                (gottime == exptime).all(),
+                msg='Failed TIME column test for "' + myfield + '"'
+            )
+            self.assertTrue(
+                (gotant1 == expant1).all(),
+                msg='Failed ANTENNA1 column test for "' + myfield + '"'
+            )
+            self.assertTrue(
+                (gotant2 == expant2).all(),
+                msg='Failed ANTENNA2 column test for "' + myfield + '"'
+            )
             tclean(
                 vis=self.pshift_ms, imagename=self.pshift_im,
                 datacolumn='data', imsize=256, cell='8.0arcsec',
@@ -825,7 +857,9 @@ class reference_frame_tests(unittest.TestCase):
             dirframe
         )
         expdir = me.direction(dirframe, radir, decdir)
-        for myfield in ('0', 'fake'):
+        # test both incarnations of the first field as well as both
+        # fields together ('')
+        for myfield in ('0', 'fake', ''):
             shift_and_clean(myfield, expdir)
             x = imstat(self.pshift_im + '.image')
             self.assertTrue(
