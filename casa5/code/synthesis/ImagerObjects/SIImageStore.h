@@ -159,7 +159,7 @@ class SIImageStore
 
 
   ////////// Restoring Beams
-  virtual void makeImageBeamSet(casacore::Float psfcutoff);
+  virtual void makeImageBeamSet(casacore::Float psfcutoff=0.35, const casacore::Bool forcefit=false);
   casacore::ImageBeamSet getBeamSet(casacore::Float psfcutoff=0.35);
   virtual void setBeamSet(const casacore::ImageBeamSet& bs);
   //get the beamSet of a given channel only

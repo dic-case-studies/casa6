@@ -1785,7 +1785,7 @@
             "testType":"casatasks",
             "maintainer":"Urvashi Rau",
             "maintainerEmail":"rurvashi@aoc.nrao.edu",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":["sdintimaging","Imaging"],
             "timeout":0,
             "comment":""

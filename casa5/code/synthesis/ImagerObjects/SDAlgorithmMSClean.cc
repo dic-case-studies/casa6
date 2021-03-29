@@ -74,8 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsScaleSizes(scalesizes),
     itsSmallScaleBias(smallscalebias),
     //    itsStopLargeNegatives(stoplargenegatives),
-    itsStopPointMode(stoppointmode),
-    itsMCsetup(false)
+    itsStopPointMode(stoppointmode)
  {
    itsAlgorithmName=String("multiscale");
    if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
@@ -129,7 +128,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
     //// Initialize the MatrixCleaner.
     ///  ----------- do once ----------
-    if( itsMCsetup == false)
       {
 	itsCleaner.defineScales( itsScaleSizes );
 	
@@ -156,7 +154,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsCleaner.setPsf(  tempMat );
 	itsCleaner.makePsfScales();
 
-	itsMCsetup=true;
       }
     /// -----------------------------------------
 
@@ -215,10 +212,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Retrieve residual to be saved to the .residual file in finalizeDeconvolver.
     ////This is going to be wrong if there is no 0 scale;
-    //isMatResidual = itsCleaner.residual(tempModel-prevModel);
+    ///Matrix<Float> residual(itsCleaner.residual());
+    //Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //    cout << "Max tempModel : " << max(abs(tempModel)) << "  Max prevModel  : " << max(abs(prevModel)) << endl;
     itsMatResidual = itsCleaner.residual(tempModel-prevModel);
-    // Get the peak residual and model flux.
+
     // account for mask as well
+    //peakresidual = max(abs(residual*itsMatMask));
     peakresidual = max(abs(itsMatResidual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
   }	    
