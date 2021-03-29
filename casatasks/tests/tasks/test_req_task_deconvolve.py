@@ -593,7 +593,7 @@ th = TestHelpers()
 
 ## List to be run
 def suite():
-    return [test_onefield]#, test_iterbot, test_multifield, test_stokes, test_cube, test_mask, test_multirun, test_imgval, test_mtmfsimgval, test_residual_update, test_restoration]
+    return [test_onefield, test_iterbot, test_multifield, test_stokes, test_cube, test_mask, test_multirun, test_imgval, test_mtmfsimgval, test_residual_update, test_restoration]
 
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
