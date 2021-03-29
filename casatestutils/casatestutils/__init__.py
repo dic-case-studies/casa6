@@ -104,7 +104,7 @@ def getNumberOfServers( __bypass_parallel_processing ):
     Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
     """
     if (__bypass_parallel_processing == 0):
-        return len(MPIEnvironment.mpi_server_rank_list()) + 1
+        return len(MPIEnvironment.mpi_server_rank_list()) 
     else:
         return None
 
@@ -194,7 +194,7 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     output[test_case]['rerun'] = rerun
     output[test_case]['description'] = unittest.TestCase.shortDescription(self)
     output[test_case]['images'] = [ ]
-    output[test_case]['Number of Processors Used : Max Number of processors'] = "{} : {}".format("Serial" if getNumberOfServers(__bypass_parallel_processing) == None else str(getNumberOfServers(__bypass_parallel_processing)) , str(multiprocessing.cpu_count()))
+    output[test_case]['Number of Processors Used : Max Number of processors'] = "{} : {}".format("1" if getNumberOfServers(__bypass_parallel_processing) == None else str(str(getNumberOfServers(__bypass_parallel_processing)) + " Servers + 1 Host") , str(multiprocessing.cpu_count()))
     #print("Test Case: {}".format(test_case))
     #print("{} : {}".format(test_case,output[test_case]))
 
