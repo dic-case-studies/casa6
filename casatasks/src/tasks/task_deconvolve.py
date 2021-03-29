@@ -17,10 +17,13 @@ except:
 if is_CASA6:
     from casatasks import casalog
 
+    from casatools import image
     from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     from .cleanhelper import write_task_history, get_func_params
+    from casatools import synthesisimager
+    ia = image( )
 else:
     from taskinit import *
 
@@ -29,16 +32,16 @@ else:
     from imregrid import imregrid
     from parallel.parallel_task_helper import ParallelTaskHelper
     from cleanhelper import write_task_history, get_func_params
+    synthesisimager=casac.synthesisimager
+    ia = iatool( )
 
 try:
     if is_CASA6:
         from casampi.MPIEnvironment import MPIEnvironment
         from casampi import MPIInterface
-        from casatools import synthesisimager
     else:
         from mpi4casa.MPIEnvironment import MPIEnvironment
         from mpi4casa import MPIInterface
-        synthesisimager=casac.synthesisimager # TODO test this import
     mpi_available = True
 except ImportError:
     mpi_available = False
@@ -260,19 +263,23 @@ def deconvolve(
         #=========================================================
         ####set the children to load c++ libraries and applicator
         ### make workers ready for c++ based mpicommands
-        if mpi_available and MPIEnvironment.is_mpi_enabled:
-            mint=MPIInterface.MPIInterface()
-            cl=mint.getCluster()
-            if(is_CASA6):
-                cl._cluster.pgc("from casatools import synthesisimager", False)
-                cl._cluster.pgc("si=synthesisimager()", False)
-            else:
-                cl._cluster.pgc("from casac import casac", False)
-                cl._cluster.pgc("si=casac.synthesisimager()", False) 
-            cl._cluster.pgc("si.initmpi()", False)
-            cppparallel=True
-            ###ignore chanchunk
-            bparm['chanchunks']=1
+        if deconvolver != 'mtmfs': # mtmfs isn't currently parallelized
+            ia.open(imagename+'.psf')
+            isCube=ia.shape()[3] >1 # SynthesisDeconvolver::executeMinorCycle doesn't start mpi without more than one channel
+            ia.done()
+            if mpi_available and MPIEnvironment.is_mpi_enabled and isCube:
+                mint=MPIInterface.MPIInterface()
+                cl=mint.getCluster()
+                if(is_CASA6):
+                    cl._cluster.pgc("from casatools import synthesisimager", False)
+                    cl._cluster.pgc("si=synthesisimager()", False)
+                else:
+                    cl._cluster.pgc("from casac import casac", False)
+                    cl._cluster.pgc("si=casac.synthesisimager()", False) 
+                cl._cluster.pgc("si.initmpi()", False)
+                cppparallel=True
+                ###ignore chanchunk
+                bparm['chanchunks']=1
 
         ## create the parameters list help object
         paramList=ImagerParameters(**bparm)

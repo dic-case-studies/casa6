@@ -1525,8 +1525,8 @@
             "testType":"casatasks",
             "maintainer":"Benjamin Bean",
             "maintainerEmail":"bbean@nrao.edu",
-            "testOptions":[],
-            "testGroup":["Imaging","tclean","deconvolve"],
+            "testOptions":["mpi"],
+            "testGroup":["Imaging","deconvolve"],
             "timeout":0,
             "comment":""
         },
