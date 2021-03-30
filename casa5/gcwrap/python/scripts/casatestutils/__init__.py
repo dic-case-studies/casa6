@@ -24,6 +24,7 @@ import six
 
 _casa5 = False
 _casa6 = False
+_importmpi = False
 __bypass_parallel_processing = 0
 
 # https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
@@ -45,6 +46,7 @@ try:
 
     try:
         from casampi.MPIEnvironment import MPIEnvironment
+        _importmpi = True
         if not MPIEnvironment.is_mpi_enabled:
             __bypass_parallel_processing = 1
     except ImportError:
@@ -62,6 +64,7 @@ except (ImportError, ModuleNotFoundError):
 
     try:
         from mpi4casa.MPIEnvironment import MPIEnvironment
+        _importmpi = True
         if not MPIEnvironment.is_mpi_enabled:
             __bypass_parallel_processing = 1
     except ImportError:
@@ -103,7 +106,7 @@ def getNumberOfServers( __bypass_parallel_processing ):
     """
     Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
     """
-    if (__bypass_parallel_processing == 0):
+    if (__bypass_parallel_processing == 0) and (_importmpi):
         return len(MPIEnvironment.mpi_server_rank_list()) 
     else:
         return None
@@ -158,13 +161,13 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                     if "{}(".format(task) in line:
                         #print(line)
                         taskname = line.split("(")[0]
-                        # Attempt to Get Dataset from casa task call
+                        ## Optional: Can print first index of casa function call but does not print the string name if it's an assigned object
+                        ## Attempt to Get Dataset from casa task call
                         if dataset== "TestData":
                             import re
                             dataset = re.search('(?<=\().+?(?=\,)',line).group()
                             if len(dataset) == 0 or dataset is None:
                                 dataset = "TestData"
-
                         params = line.split(',')[1::]
                         #print(params)
                         while ')' not in list(line):
