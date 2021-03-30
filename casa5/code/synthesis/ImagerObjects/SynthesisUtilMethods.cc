@@ -109,7 +109,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     return M;
   }
-  // Get the next largest even composite of 2,3,5,7.
+  // Get the next largest even composite of 2,3,5.
   // This is to ensure a 'good' image size for FFTW.
   // Translated from gcwrap/scripts/cleanhelper.py : getOptimumSize
   Int SynthesisUtilMethods::getOptimumSize(const Int npix)
@@ -122,17 +122,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int val, newlarge;
     for( uInt k=0; k< fac.nelements(); k++ )
       {
-	if( fac[k]>7 )
+	if( fac[k]>5 )
 	  {
 	    val = fac[k];
-	    while( max( primeFactors(val) ) > 7 ){ val+=1;}
+	    while( max( primeFactors(val) ) > 5 ){ val+=1;}
 	    fac[k] = val;
 	  }
       }
     newlarge=product(fac);
     for( Int k=n; k<newlarge; k+=2 )
       {
-	if( max( primeFactors(k) ) < 8 ) {return k;}
+	if( max( primeFactors(k) ) < 6 ) {return k;}
       }
     return newlarge;
   }
