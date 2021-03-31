@@ -627,6 +627,7 @@ install (FILES
 	MeasurementEquations/LatConvEquation.h
 	MeasurementEquations/LatticeModel.h
   MeasurementEquations/gslobjfunc.h
+  MeasurementEquations/objfunc_alglib.h
   #MeasurementEquations/cudaobjfunc.h #CUDA BFGS
   #MeasurementEquations/objfunc_cpu.h #CuLBFGSB
   #MeasurementEquations/objfunc_cpu_bk.h

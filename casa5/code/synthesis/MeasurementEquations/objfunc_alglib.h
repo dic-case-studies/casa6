@@ -28,16 +28,15 @@ private:
   casacore::Matrix<casacore::Float> itsMatDirty;
   casacore::Matrix<casacore::Complex> itsPsfFT;
   std::vector<casacore::IPosition> center;
-  //genie
-  //Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> newResidual;
   casacore::Matrix<casacore::Float> newResidual;
   casacore::Matrix<casacore::Float> AspConvPsf;
   casacore::Matrix<casacore::Float> dAspConvPsf;
-  casacore::FFTServer<casacore::Float,casacore::Complex> fft;
   casacore::Matrix<casacore::Float> Asp;
   casacore::Matrix<casacore::Float> dAsp;
 
 public:
+  casacore::FFTServer<casacore::Float,casacore::Complex> fft;
+
   ParamAlglibObj(const casacore::Matrix<casacore::Float>& dirty,
     const casacore::Matrix<casacore::Complex>& psf,
     const std::vector<casacore::IPosition>& positionOptimum) :
@@ -69,7 +68,6 @@ public:
   casacore::Matrix<casacore::Float>  getterAspConvPsf() { return AspConvPsf; }
   void setterAspConvPsf(const casacore::Matrix<casacore::Float>& m) { AspConvPsf = m; }
   casacore::Matrix<casacore::Float>  getterDAspConvPsf() { return dAspConvPsf; }
-  casacore::FFTServer<casacore::Float,casacore::Complex> getterFFTServer() { return fft; }
   casacore::Matrix<casacore::Float>  getterAsp() { return Asp; }
   void setterAsp(const casacore::Matrix<casacore::Float>& m) { Asp = m; }
   casacore::Matrix<casacore::Float>  getterDAsp() { return dAsp; }
@@ -94,7 +92,6 @@ void objfunc_alglib(const alglib::real_1d_array &x, double &func, alglib::real_1
     const int nX = MyP->getterNX();
     const int nY = MyP->getterNY();
     casacore::Matrix<casacore::Float> newResidual(MyP->getterRes());
-    casacore::FFTServer<casacore::Float,casacore::Complex> fft = MyP->getterFFTServer();
     casacore::Matrix<casacore::Float> AspConvPsf(MyP->getterAspConvPsf());
     casacore::Matrix<casacore::Float> Asp(MyP->getterAsp());
     casacore::Matrix<casacore::Float> dAspConvPsf(MyP->getterDAspConvPsf());
@@ -165,20 +162,20 @@ void objfunc_alglib(const alglib::real_1d_array &x, double &func, alglib::real_1
       }
 
       casacore::Matrix<casacore::Complex> AspFT;
-      fft.fft0(AspFT, Asp);
+      MyP->fft.fft0(AspFT, Asp);
       casacore::Matrix<casacore::Complex> cWork;
       cWork = AspFT * itsPsfFT;
-      fft.fft0(AspConvPsf, cWork, false);
-      fft.flip(AspConvPsf, false, false); //need this
+      MyP->fft.fft0(AspConvPsf, cWork, false);
+      MyP->fft.flip(AspConvPsf, false, false); //need this
 
       // gradient. 0: amplitude; 1: scale
       // returns the gradient evaluated on x
       casacore::Matrix<casacore::Complex> dAspFT;
-      fft.fft0(dAspFT, dAsp);
+      MyP->fft.fft0(dAspFT, dAsp);
       casacore::Matrix<casacore::Complex> dcWork;
       dcWork = dAspFT * itsPsfFT;
-      fft.fft0(dAspConvPsf, dcWork, false);
-      fft.flip(dAspConvPsf, false, false); //need this
+      MyP->fft.fft0(dAspConvPsf, dcWork, false);
+      MyP->fft.flip(dAspConvPsf, false, false); //need this
     } // end get amp * AspenConvPsf
 
     // reset grad to 0. This is important to get the correct optimization.
