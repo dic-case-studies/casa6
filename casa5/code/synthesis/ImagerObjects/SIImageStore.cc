@@ -286,7 +286,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else
 	  {
-	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    //throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    std::shared_ptr<ImageInterface<Float> > imptr;
+	    //imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
+	    if( doesImageExist(itsImageName+String(".residual") ) )
+	      { buildImage( imptr, (itsImageName+String(".residual")) ); }
+	      else
+	      { buildImage( imptr, (itsImageName+String(".psf")) ); }
+
+	    itsNFacets=1;
+	    itsFacetId=0;
+	    itsUseWeight=0;
+	    itsPBScaleFactor=1.0;
+	    itsCoordSys = imptr->coordinates();
+	    itsMiscInfo=imptr->miscInfo();
 	  }
 	
       }// if psf or residual exist...
@@ -2012,7 +2025,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     return beam;
   }
 
-  void SIImageStore::makeImageBeamSet(Float psfcutoff)
+  void SIImageStore::makeImageBeamSet(Float psfcutoff, const Bool forcefit)
   {
     clock_t begin = clock();
       
@@ -2025,7 +2038,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     uInt nchan = itsImageShape[3];
     ImageInfo ii = psf()->imageInfo();
     ImageBeamSet iibeamset=ii.getBeamSet();
-    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol){
+    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol && forcefit==False){
       itsPSFBeams=iibeamset;
       itsRestoredBeams=iibeamset;
       return;
@@ -2987,6 +3000,8 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 
 		if( minval < allmin ) allmin = minval;
 		if( maxval > allmax ) allmax = maxval;
+
+		//cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
 		
 	      }//chan
 	  }//pol
