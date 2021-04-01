@@ -72,12 +72,12 @@
       tmpFloat.set(0.0);
       shp=tmpFloat.shape();
       Int end_indx = 0;
-      cerr << "getgrid "  << sum(griddedData) << endl;
+      //cerr << "getgrid "  << sum(griddedData) << endl;
       casacore::IPosition in(4, 0, 0, 0, 0);
       casacore::IPosition out(4, 0,0,0,0);
 
       tmpFloat = real(griddedData);
-      cerr << "tmpFloat "  << sum(tmpFloat) << endl;
+      //cerr << "tmpFloat "  << sum(tmpFloat) << endl;
       for (casacore::Int cc=0; cc< shp[3]; ++cc){
 	in[3]=cc;
 	out[3]=cc;
@@ -102,9 +102,9 @@
 	  }
 	}
       }
-       cerr << "getgrid "  << sum(griddedData) << endl;
+       //cerr << "getgrid "  << sum(griddedData) << endl;
       //tmpFloat = real(griddedData);
-      cerr << "tmpFloat " << sum(tmpFloat) << endl;
+      //cerr << "tmpFloat " << sum(tmpFloat) << endl;
       ptr=tmpFloat.getStorage(del);
       //ptr=griddedData.getStorage(del);
     }

@@ -224,12 +224,12 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 			Matrix<Float> gwt(griddedWeight(start, end).reform(IPosition(2, nx_p, ny_p)));
 			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) { //See CAS-13021 for bwtaper algorithm details
                 
-                ///TESTOO
-                {
-                   CoordinateSystem cstemp=CoordinateUtil::makeCoordinateSystem(gwt.shape(), True);
-                   PagedImage<Float> gulu(gwt.shape(), cstemp, "BWweightdensity_v3"+String::toString(chan));
-                   gulu.put(gwt);
-                }
+//                ///TESTOO
+//                {
+//                   CoordinateSystem cstemp=CoordinateUtil::makeCoordinateSystem(gwt.shape(), True);
+//                   PagedImage<Float> gulu(gwt.shape(), cstemp, "BWweightdensity_v3"+String::toString(chan));
+//                   gulu.put(gwt);
+//                }
 
                 
                 
@@ -670,7 +670,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]*2/uvDistanceFactor +d2_p[index][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]/uvDistanceFactor +d2_p[index][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
@@ -789,7 +789,7 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]*2/uvDistanceFactor +d2_p[0][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]/uvDistanceFactor +d2_p[0][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
