@@ -1527,7 +1527,7 @@
             "maintainerEmail":"bbean@nrao.edu",
             "testOptions":["mpi"],
             "testGroup":["Imaging","deconvolve"],
-            "timeout":0,
+            "timeout":3600,
             "comment":""
         },
         {

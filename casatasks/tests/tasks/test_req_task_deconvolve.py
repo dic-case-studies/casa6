@@ -2012,7 +2012,7 @@ class test_imgval(testref_base):
         os.system("mv {0} {1}".format(fn1, fn2))
 
         imtrans(imagename=self.img+"_bak"+ext, outfile=self.img+ext, order="3012")
-        strcheck = "There is a shape mismatch between existing images"
+        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, **deconvolve_args)
 
