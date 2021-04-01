@@ -1,29 +1,33 @@
+import collections
+import contextlib
+import numpy as np
 import os
 import shutil
-import contextlib
-import collections
-import numpy as np
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
     from casatasks.private import sdutil
-    from casatools import quanta, table, msmetadata
+    from casatasks.private import simutil
+    from casatools import quanta
     from casatools import ms as mstool
+    from casatools import msmetadata
     from casatools import singledishms
-    import casatasks.private.simutil as simutil
+    from casatools import table
 
     ut = simutil.simutil()
     qa = quanta()
     sdms = singledishms()
 
 else:
-    from taskinit import tbtool as table
-    from taskinit import mstool, casalog, qa
-    from taskinit import msmdtool as msmetadata
-    from taskinit import gentools
-    from simutil import simutil
     import sdutil
+    from simutil import simutil
+    from taskinit import casalog
+    from taskinit import gentools
+    from taskinit import qa
+    from taskinit import msmdtool as msmetadata
+    from taskinit import mstool
+    from taskinit import tbtool as table
 
     ut = simutil()
     (sdms,) = gentools(['sdms'])
