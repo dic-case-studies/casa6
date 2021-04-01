@@ -9,9 +9,9 @@ if is_CASA6:
     from casatasks import casalog
     from casatasks.private import sdutil
     from casatasks.private import simutil
-    from casatools import quanta
     from casatools import ms as mstool
     from casatools import msmetadata
+    from casatools import quanta
     from casatools import singledishms
     from casatools import table
 
@@ -24,9 +24,9 @@ else:
     from simutil import simutil
     from taskinit import casalog
     from taskinit import gentools
-    from taskinit import qa
     from taskinit import msmdtool as msmetadata
     from taskinit import mstool
+    from taskinit import qa
     from taskinit import tbtool as table
 
     ut = simutil()
