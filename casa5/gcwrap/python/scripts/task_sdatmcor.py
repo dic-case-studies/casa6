@@ -1,8 +1,9 @@
 import collections
 import contextlib
-import numpy as np
 import os
 import shutil
+
+import numpy as np
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
