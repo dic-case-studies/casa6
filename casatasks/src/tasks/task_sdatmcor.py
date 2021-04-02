@@ -36,6 +36,17 @@ else:
 # Task name
 origin = 'sdatmcor'
 
+# namedtuple to hold ATM model parameters
+AtmModelParameters = collections.namedtuple(
+    'AtmModelParameters',
+    [
+        'temperature_gradient', 'water_scale_height', 'atmtype',
+        'atmdetail', 'site_altitude', 'ambient_temperature',
+        'ambient_pressure', 'relative_humidity', 'zenith_pwv',
+        'pressure_step', 'pressure_factor',
+        'layer_boundaries', 'layer_temperatures'
+    ]
+)
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
@@ -265,6 +276,120 @@ def inspect_flag_cmd(msname):
     return cmd_counts, time_counts
 
 
+def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, atmparam):
+    config = {}
+
+    # requested list of output spws and processing spws
+    # processing spws are the intersection of these
+    outputspws_param = parse_spw(infile, outputspw)
+    spws_param = parse_spw(infile, spw)
+    all_processing_spws = np.asarray(list(set(spws_param).intersection(set(outputspws_param))))
+    config['processspw'] = all_processing_spws
+
+    # generate gain factor dictionary
+    gaindict = parse_gainfactor(gainfactor)
+    gainlist = gaindict2list(infile, gaindict)
+    config['gainfactor'] = gainlist
+
+    # default parameter values (from Tsuyoshi's original script)
+    default_params = get_default_params()
+
+    reference_antenna = get_default_antenna(infile)  # default antenna_id
+    config['refant'] = int(reference_antenna)
+
+    lapserate, _ = parse_atm_params(
+        user_param=atmparam.temperature_gradient,
+        user_default='',
+        task_default=qa.quantity(default_params['lapserate'], 'K/km')
+    )
+    config['lapseRate'] = qa.convert(lapserate, 'K/km')['value']
+
+    scale_height, _ = parse_atm_params(
+        user_param=atmparam.water_scale_height,
+        user_default='',
+        task_default=qa.quantity(default_params['scaleht'], 'km')
+    )
+    config['scaleHeight'] = qa.convert(scale_height, 'km')['value']
+
+    pressure_step, _ = parse_atm_params(
+        user_param=atmparam.pressure_step,
+        user_default='',
+        task_default=qa.quantity(default_params['dp'], 'mbar')
+    )
+    config['pressureStep'] = qa.convert(pressure_step, 'mbar')['value']
+
+    pressure_factor, _ = parse_atm_params(
+        user_param=atmparam.pressure_factor,
+        user_default=-1,
+        task_default=default_params['dpm']
+    )
+    config['pressureStepFactor'] = pressure_factor['value']
+
+    config['atmType'] = atmparam.atmtype
+
+    config['maxAltitude'] = float(default_params['maxalt'])
+
+    # siteAltitude may be overwritten when atmparam.atmdetail is True
+    default_altitude = get_default_altitude(infile, reference_antenna)
+    config['siteAltitude'] = default_altitude
+
+    if atmparam.atmdetail:
+        site_altitude, is_user_param = parse_atm_params(
+            user_param=atmparam.site_altitude,
+            user_default='',
+            task_default=qa.quantity(default_altitude, 'm')
+        )
+        config['siteAltitude'] = qa.convert(site_altitude, 'm')['value']
+
+        user_pressure, is_user_param = parse_atm_params(
+            user_param=atmparam.ambient_pressure,
+            user_default='',
+            task_default=qa.quantity(0, 'mbar'))
+        if is_user_param:
+            config['pressure'] = qa.convert(user_pressure, 'mbar')['value']
+
+        user_temperature, is_user_param = parse_atm_params(
+            user_param=atmparam.ambient_temperature,
+            user_default='',
+            task_default=qa.quantity(0, 'K'))
+        if is_user_param:
+            config['temperature'] = qa.convert(user_temperature, 'K')['value']
+
+        user_humidity, is_user_param = parse_atm_params(
+            user_param=atmparam.relative_humidity,
+            user_default='',
+            task_default=qa.quantity(0, '%'))
+        if is_user_param:
+            config['humidity'] = qa.convert(user_humidity, '%')['value']
+
+        user_pwv, is_user_param = parse_atm_params(
+            user_param=atmparam.zenith_pwv,
+            user_default='',
+            task_default=qa.quantity(0, 'mm'))
+        if is_user_param:
+            config['pwv'] = qa.convert(user_pwv, 'mm')['value']
+
+        user_layerboundaries, is_user_param = parse_atm_list_params(
+            user_param=atmparam.layer_boundaries,
+            user_default='',
+            task_default=[],
+            element_unit='m'
+        )
+        if is_user_param:
+            config['layerBoundaries'] = user_layerboundaries
+
+        user_layertemperature, is_user_param = parse_atm_list_params(
+            user_param=atmparam.layer_temperatures,
+            user_default='',
+            task_default=[],
+            element_unit='K'
+        )
+        if is_user_param:
+            config['layerTemperatures'] = user_layertemperature
+
+    return config
+
+
 def sdatmcor(
         infile=None, datacolumn=None, outfile=None, overwrite=None,
         field=None, spw=None, scan=None, antenna=None,
@@ -327,10 +452,6 @@ def sdatmcor(
             errmsg = "humidity (=%s) should be in range 0~100" % humidity
             raise Exception(errmsg)
 
-        # generate gain factor dictionary
-        gaindict = parse_gainfactor(gainfactor)
-        gainlist = gaindict2list(infile, gaindict)
-
         # datacolumn check (by XML definition)
         datacolumn_upper = datacolumn.upper()
         if datacolumn_upper not in ['DATA', 'CORRECTED', 'FLOAT_DATA']:
@@ -349,93 +470,29 @@ def sdatmcor(
                            observation=observation, feed=feed,
                            taql=msselect,
                            reindex=False)
-        config = {}
-        # requested list of output spws and processing spws
-        # processing spws are the intersection of these
-        outputspws_param = parse_spw(infile, outputspw)
-        spws_param = parse_spw(infile, spw)
-        all_processing_spws = np.asarray(list(set(spws_param).intersection(set(outputspws_param))))
-        config['processspw'] = all_processing_spws
-        config['gainfactor'] = gainlist
-        reference_antenna = get_default_antenna(infile)  # default antenna_id
-        default_altitude = get_default_altitude(infile, reference_antenna)  # default altitude
-        config['refant'] = int(reference_antenna)
-        default_params = get_default_params()
-        lapserate, _ = parse_atm_params(
-            user_param=dtem_dh,
-            user_default='',
-            task_default=qa.quantity(default_params['lapserate'], 'K/km')
+
+        atmparam = AtmModelParameters(
+            temperature_gradient=dtem_dh,
+            water_scale_height=h0,
+            atmtype=atmtype,
+            atmdetail=atmdetail,
+            site_altitude=altitude,
+            ambient_temperature=temperature,
+            ambient_pressure=pressure,
+            relative_humidity=humidity,
+            zenith_pwv=pwv,
+            pressure_step=dp,
+            pressure_factor=dpm,
+            layer_boundaries=layerboundaries,
+            layer_temperatures=layertemperature
         )
-        config['lapseRate'] = qa.convert(lapserate, 'K/km')['value']
-        scale_height, _ = parse_atm_params(
-            user_param=h0,
-            user_default='',
-            task_default=qa.quantity(default_params['scaleht'], 'km')
+        config = get_configuration_for_atmcor(
+            infile=infile,
+            spw=spw,
+            outputspw=outputspw,
+            gainfactor=gainfactor,
+            atmparam=atmparam
         )
-        config['scaleHeight'] = qa.convert(scale_height, 'km')['value']
-        pressure_step, _ = parse_atm_params(
-            user_param=dp,
-            user_default='',
-            task_default=qa.quantity(default_params['dp'], 'mbar')
-        )
-        config['pressureStep'] = qa.convert(pressure_step, 'mbar')['value']
-        pressure_factor, _ = parse_atm_params(
-            user_param=dpm,
-            user_default=-1,
-            task_default=default_params['dpm']
-        )
-        config['pressureStepFactor'] = pressure_factor['value']
-        config['atmType'] = atmtype
-        config['maxAltitude'] = float(default_params['maxalt'])
-        if atmdetail:
-            site_altitude, is_user_param = parse_atm_params(
-                user_param=altitude,
-                user_default='',
-                task_default=qa.quantity(default_altitude, 'm')
-            )
-            config['siteAltitude'] = qa.convert(site_altitude, 'm')['value']
-            user_pressure, is_user_param = parse_atm_params(
-                user_param=pressure,
-                user_default='',
-                task_default=qa.quantity(0, 'mbar'))
-            if is_user_param:
-                config['pressure'] = qa.convert(user_pressure, 'mbar')['value']
-            user_temperature, is_user_param = parse_atm_params(
-                user_param=temperature,
-                user_default='',
-                task_default=qa.quantity(0, 'K'))
-            if is_user_param:
-                config['temperature'] = qa.convert(user_temperature, 'K')['value']
-            user_humidity, is_user_param = parse_atm_params(
-                user_param=humidity,
-                user_default='',
-                task_default=qa.quantity(0, '%'))
-            if is_user_param:
-                config['humidity'] = qa.convert(user_humidity, '%')['value']
-            user_pwv, is_user_param = parse_atm_params(
-                user_param=pwv,
-                user_default='',
-                task_default=qa.quantity(0, 'mm'))
-            if is_user_param:
-                config['pwv'] = qa.convert(user_pwv, 'mm')['value']
-            user_layerboundaries, is_user_param = parse_atm_list_params(
-                user_param=layerboundaries,
-                user_default='',
-                task_default=[],
-                element_unit='m'
-            )
-            if is_user_param:
-                config['layerBoundaries'] = user_layerboundaries
-            user_layertemperature, is_user_param = parse_atm_list_params(
-                user_param=layertemperature,
-                user_default='',
-                task_default=[],
-                element_unit='K'
-            )
-            if is_user_param:
-                config['layerTemperatures'] = user_layertemperature
-        else:
-            config['siteAltitude'] = default_altitude
 
         sdms.atmcor(config=config, datacolumn=datacolumn, outfile=outfile)
 
