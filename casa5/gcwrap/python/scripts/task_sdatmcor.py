@@ -164,6 +164,50 @@ def gaindict2list(msname, gaindict):
     return gainlist
 
 
+def get_all_spws_from_main(msname):
+    """
+    Extract all spectral window ids that have any
+    associated data in MS MAIN table.
+
+    Args:
+        msname (str): name of MS
+
+    Returns:
+        list: list of available spectral window ids
+    """
+    with open_table(msname) as tb:
+        ddids = np.unique(tb.getcol('DATA_DESC_ID'))
+    with open_msmd(msname) as msmd:
+        spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
+    return spws_all
+
+
+def get_selected_spws(msname, spw):
+    """
+    Get selected spectral window ids.
+
+    Args:
+        msname (str): name of MS
+        spw (str): spectral window selection
+
+    Raises:
+        TypeError: spw is not string
+
+    Returns:
+        list: list of selected spectral window ids
+    """
+    if not isinstance(spw, str):
+        raise TypeError('spw selection must be string')
+    elif len(spw) == 0:
+        # '' indicates all spws, which is equivalent to '*'
+        spwsel = '*'
+    else:
+        spwsel = spw
+    ms = mstool()
+    sel = ms.msseltoindex(msname, spw=spwsel)
+    return sel['spw']
+
+
 def parse_spw(msname, spw=''):
     """Parse spw selection into list of spw ids
 
@@ -181,22 +225,9 @@ def parse_spw(msname, spw=''):
     Returns:
         list: list of selected spw ids
     """
-    if not isinstance(spw, str):
-        raise TypeError('spw selection must be string')
-
-    with open_table(msname) as tb:
-        ddids = np.unique(tb.getcol('DATA_DESC_ID'))
-    with open_msmd(msname) as msmd:
-        spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
-
-    if len(spw) == 0:
-        # '' indicates all spws, which is equivalent to '*'
-        spwsel = '*'
-    else:
-        spwsel = spw
-    ms = mstool()
-    sel = ms.msseltoindex(msname, spw=spwsel)
-    spws = set(spws_all).intersection(set(sel['spw']))
+    spws_all = get_all_spws_from_main(msname)
+    spws_sel = get_selected_spws(msname, spw)
+    spws = set(spws_all).intersection(set(spws_sel))
     return list(spws)
 
 
