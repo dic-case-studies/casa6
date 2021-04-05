@@ -1,5 +1,6 @@
 import collections
 import contextlib
+import itertools
 import os
 import shutil
 
@@ -20,6 +21,14 @@ if is_CASA6:
     qa = quanta()
     sdms = singledishms()
 
+    class ATMParameterConfigurator(collections.abc.Iterator):
+        def __init__(self, key, value, do_config=True):
+            data = [(key, value)] if do_config else []
+            self._iter = iter(data)
+
+        def __next__(self):
+            return next(self._iter)
+
 else:
     import sdutil
     from simutil import simutil
@@ -33,20 +42,17 @@ else:
     ut = simutil()
     (sdms,) = gentools(['sdms'])
 
+    class ATMParameterConfigurator(collections.Iterator):
+        def __init__(self, key, value, do_config=True):
+            data = [(key, value)] if do_config else []
+            self._iter = iter(data)
+
+        def next(self):
+            return next(self._iter)
+
 # Task name
 origin = 'sdatmcor'
 
-# namedtuple to hold ATM model parameters
-AtmModelParameters = collections.namedtuple(
-    'AtmModelParameters',
-    [
-        'temperature_gradient', 'water_scale_height', 'atmtype',
-        'atmdetail', 'site_altitude', 'ambient_temperature',
-        'ambient_pressure', 'relative_humidity', 'zenith_pwv',
-        'pressure_step', 'pressure_factor',
-        'layer_boundaries', 'layer_temperatures'
-    ]
-)
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
@@ -276,116 +282,100 @@ def inspect_flag_cmd(msname):
     return cmd_counts, time_counts
 
 
-def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, atmparam):
-    config = {}
+class ATMScalarParameterConfigurator(ATMParameterConfigurator):
+    def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
+        value, is_customized = parse_atm_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
+        do_config = is_mandatory or (is_effective and is_customized)
+        super().__init__(key=key, value=value, do_config=do_config)
 
+
+class ATMListParameterConfigurator(ATMParameterConfigurator):
+    def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
+        value, is_customized = parse_atm_list_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
+        do_config = is_mandatory or (is_effective and is_customized)
+        super().__init__(key=key, value=value, do_config=do_config)
+
+
+def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs):
     # requested list of output spws and processing spws
     # processing spws are the intersection of these
     outputspws_param = parse_spw(infile, outputspw)
     spws_param = parse_spw(infile, spw)
     all_processing_spws = np.asarray(list(set(spws_param).intersection(set(outputspws_param))))
-    config['processspw'] = all_processing_spws
 
     # generate gain factor dictionary
     gaindict = parse_gainfactor(gainfactor)
     gainlist = gaindict2list(infile, gaindict)
-    config['gainfactor'] = gainlist
 
     # default parameter values (from Tsuyoshi's original script)
     default_params = get_default_params()
 
-    reference_antenna = get_default_antenna(infile)  # default antenna_id
-    config['refant'] = int(reference_antenna)
+    # reference antenna_id to calculate Azimuth/Elevation
+    reference_antenna = int(get_default_antenna(infile))
 
-    lapserate, _ = parse_atm_params(
-        user_param=atmparam.temperature_gradient,
-        user_default='',
-        task_default=qa.quantity(default_params['lapserate'], 'K/km')
-    )
-    config['lapseRate'] = qa.convert(lapserate, 'K/km')['value']
-
-    scale_height, _ = parse_atm_params(
-        user_param=atmparam.water_scale_height,
-        user_default='',
-        task_default=qa.quantity(default_params['scaleht'], 'km')
-    )
-    config['scaleHeight'] = qa.convert(scale_height, 'km')['value']
-
-    pressure_step, _ = parse_atm_params(
-        user_param=atmparam.pressure_step,
-        user_default='',
-        task_default=qa.quantity(default_params['dp'], 'mbar')
-    )
-    config['pressureStep'] = qa.convert(pressure_step, 'mbar')['value']
-
-    pressure_factor, _ = parse_atm_params(
-        user_param=atmparam.pressure_factor,
-        user_default=-1,
-        task_default=default_params['dpm']
-    )
-    config['pressureStepFactor'] = pressure_factor['value']
-
-    config['atmType'] = atmparam.atmtype
-
-    config['maxAltitude'] = float(default_params['maxalt'])
-
-    # siteAltitude may be overwritten when atmparam.atmdetail is True
+    # altitude of reference antenna
     default_altitude = get_default_altitude(infile, reference_antenna)
-    config['siteAltitude'] = default_altitude
 
-    if atmparam.atmdetail:
-        site_altitude, is_user_param = parse_atm_params(
-            user_param=atmparam.site_altitude,
-            user_default='',
-            task_default=qa.quantity(default_altitude, 'm')
+    parameters = [
+        ATMParameterConfigurator(key='processspw', value=all_processing_spws),
+        ATMParameterConfigurator(key='gainfactor', value=gainlist),
+        ATMParameterConfigurator(key='refant', value=reference_antenna),
+        ATMParameterConfigurator(key='atmType', value=user_inputs['atmtype']),
+        ATMParameterConfigurator(key='maxAltitude', value=float(default_params['maxalt'])),
+        ATMScalarParameterConfigurator(
+            key='lapseRate', user_input=user_inputs['dtem_dh'],
+            impl_default=default_params['lapserate'], default_unit='K/km',
+        ),
+        ATMScalarParameterConfigurator(
+            key='scaleHeight', user_input=user_inputs['h0'],
+            impl_default=default_params['scaleht'], default_unit='km',
+        ),
+        ATMScalarParameterConfigurator(
+            key='pressureStep', user_input=user_inputs['dp'],
+            impl_default=default_params['dp'], default_unit='mbar'
+        ),
+        ATMScalarParameterConfigurator(
+            key='pressureStepFactor', user_input=user_inputs['dpm'],
+            impl_default=default_params['dpm'], default_unit='', api_default=-1
+        ),
+        ATMScalarParameterConfigurator(
+            key='siteAltitude', user_input=user_inputs['altitude'],
+            impl_default=default_altitude, default_unit='m',
+            is_mandatory=True, is_effective=user_inputs['atmdetail']
+        ),
+        ATMScalarParameterConfigurator(
+            key='pressure', user_input=user_inputs['pressure'],
+            impl_default=0, default_unit='mbar',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
+        ),
+        ATMScalarParameterConfigurator(
+            key='temperature', user_input=user_inputs['temperature'],
+            impl_default=0, default_unit='K',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
+        ),
+        ATMScalarParameterConfigurator(
+            key='humidity', user_input=user_inputs['humidity'],
+            impl_default=0, default_unit='%',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
+        ),
+        ATMScalarParameterConfigurator(
+            key='pwv', user_input=user_inputs['pwv'],
+            impl_default=0, default_unit='mm',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
+        ),
+        ATMListParameterConfigurator(
+            key='layerBoundaries', user_input=user_inputs['layerboundaries'],
+            impl_default=[], default_unit='m',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
+        ),
+        ATMListParameterConfigurator(
+            key='layerTemperatures', user_input=user_inputs['layertemperature'],
+            impl_default=[], default_unit='K',
+            is_mandatory=False, is_effective=user_inputs['atmdetail']
         )
-        config['siteAltitude'] = qa.convert(site_altitude, 'm')['value']
+    ]
 
-        user_pressure, is_user_param = parse_atm_params(
-            user_param=atmparam.ambient_pressure,
-            user_default='',
-            task_default=qa.quantity(0, 'mbar'))
-        if is_user_param:
-            config['pressure'] = qa.convert(user_pressure, 'mbar')['value']
-
-        user_temperature, is_user_param = parse_atm_params(
-            user_param=atmparam.ambient_temperature,
-            user_default='',
-            task_default=qa.quantity(0, 'K'))
-        if is_user_param:
-            config['temperature'] = qa.convert(user_temperature, 'K')['value']
-
-        user_humidity, is_user_param = parse_atm_params(
-            user_param=atmparam.relative_humidity,
-            user_default='',
-            task_default=qa.quantity(0, '%'))
-        if is_user_param:
-            config['humidity'] = qa.convert(user_humidity, '%')['value']
-
-        user_pwv, is_user_param = parse_atm_params(
-            user_param=atmparam.zenith_pwv,
-            user_default='',
-            task_default=qa.quantity(0, 'mm'))
-        if is_user_param:
-            config['pwv'] = qa.convert(user_pwv, 'mm')['value']
-
-        user_layerboundaries, is_user_param = parse_atm_list_params(
-            user_param=atmparam.layer_boundaries,
-            user_default='',
-            task_default=[],
-            element_unit='m'
-        )
-        if is_user_param:
-            config['layerBoundaries'] = user_layerboundaries
-
-        user_layertemperature, is_user_param = parse_atm_list_params(
-            user_param=atmparam.layer_temperatures,
-            user_default='',
-            task_default=[],
-            element_unit='K'
-        )
-        if is_user_param:
-            config['layerTemperatures'] = user_layertemperature
+    config = dict(itertools.chain(*parameters))
 
     return config
 
@@ -471,27 +461,12 @@ def sdatmcor(
                            taql=msselect,
                            reindex=False)
 
-        atmparam = AtmModelParameters(
-            temperature_gradient=dtem_dh,
-            water_scale_height=h0,
-            atmtype=atmtype,
-            atmdetail=atmdetail,
-            site_altitude=altitude,
-            ambient_temperature=temperature,
-            ambient_pressure=pressure,
-            relative_humidity=humidity,
-            zenith_pwv=pwv,
-            pressure_step=dp,
-            pressure_factor=dpm,
-            layer_boundaries=layerboundaries,
-            layer_temperatures=layertemperature
-        )
         config = get_configuration_for_atmcor(
             infile=infile,
             spw=spw,
             outputspw=outputspw,
             gainfactor=gainfactor,
-            atmparam=atmparam
+            user_inputs=locals()
         )
 
         sdms.atmcor(config=config, datacolumn=datacolumn, outfile=outfile)
@@ -509,15 +484,15 @@ def _ms_remove(path):
             os.remove(path)
 
 
-
 # Argument parameter handling
-def parse_atm_params(user_param, user_default, task_default):
+def parse_atm_params(user_param, user_default, task_default, default_unit=''):
     """Parse ATM parameters.
 
     Args:
         user_param (str,int,float): User input.
         user_default (str,int,float): User default.
         task_default (str,int,float): Task default.
+        default_unit (str): Default unit.
 
     Raises:
         ValueError: user_param is invalid.
@@ -529,14 +504,16 @@ def parse_atm_params(user_param, user_default, task_default):
     is_customized = user_param != user_default and user_param is not None
 
     try:
-        task_default_quanta = qa.quantity(task_default)
-        default_unit = task_default_quanta['unit']
+        if qa.isquantity(task_default):
+            task_default_quanta = qa.quantity(task_default)
+        else:
+            task_default_quanta = qa.quantity(task_default, default_unit)
     except Exception as e:
         casalog.post('INTERNAL ERROR: {}'.format(e), priority='SEVERE')
         raise
 
     if not is_customized:
-        param = task_default_quanta
+        param = task_default_quanta['value']
     else:
         user_param_quanta = qa.quantity(user_param)
         if user_param_quanta['unit'] == '':
@@ -551,7 +528,7 @@ def parse_atm_params(user_param, user_default, task_default):
             )
         is_compatible = qa.compare(user_param_quanta, task_default_quanta)
         if is_compatible:
-            param = user_param_quanta
+            param = user_param_quanta['value']
         else:
             raise ValueError('User input "{}" should have the unit compatible with "{}"'.format(
                 user_param,
@@ -561,14 +538,14 @@ def parse_atm_params(user_param, user_default, task_default):
     return param, is_customized
 
 
-def parse_atm_list_params(user_param, user_default='', task_default=[], element_unit=''):
+def parse_atm_list_params(user_param, user_default='', task_default=[], default_unit=''):
     """Parse ATM parameters.
 
     Args:
         user_param (str,list): User input.
         user_default (str): User default.
         task_default (list): Task default.
-        element_unit (str): Unit for output values.
+        default_unit (str): Unit for output values.
 
     Raises:
         ValueError: user_param is invalid.
@@ -584,8 +561,8 @@ def parse_atm_list_params(user_param, user_default='', task_default=[], element_
 
     if isinstance(user_param, (list, np.ndarray)):
         try:
-            param = [parse_atm_params(p, user_default, qa.quantity(0, element_unit))[0] for p in user_param]
-            param = [qa.convert(p, element_unit)['value'] for p in param]
+            param = [parse_atm_params(p, user_default, 0, default_unit=default_unit)[0] for p in user_param]
+            param = [qa.convert(p, default_unit)['value'] for p in param]
         except Exception as e:
             casalog.post('ERROR during handling list input: {}'.format(e))
             raise ValueError('list input "{}" is invalid.'.format(user_param))
@@ -593,7 +570,7 @@ def parse_atm_list_params(user_param, user_default='', task_default=[], element_
     elif isinstance(user_param, str):
         try:
             split_param = user_param.split(',')
-            param, _ = parse_atm_list_params(split_param, user_default, task_default, element_unit)
+            param, _ = parse_atm_list_params(split_param, user_default, task_default, default_unit)
         except Exception as e:
             casalog.post('ERROR during handling comma-separated str input: {}'.format(e))
             raise ValueError('str input "{}" is invalid.'.format(user_param))
@@ -694,6 +671,7 @@ def get_default_altitude(msname, antid):
     casalog.post("   Altitude (geodetic elevation):  %f" % geodetic_elevation)
 
     return geodetic_elevation
+
 
 def get_default_params():
     # Default constant: taken from atmcor_20200807.py (CSV-3320)
