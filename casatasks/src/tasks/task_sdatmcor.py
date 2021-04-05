@@ -50,9 +50,6 @@ else:
         def next(self):
             return next(self._iter)
 
-# Task name
-origin = 'sdatmcor'
-
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
@@ -394,7 +391,7 @@ def sdatmcor(
         layerboundaries=None, layertemperature=None):
 
     # task name
-    casalog.origin(origin)
+    casalog.origin('sdatmcor')
 
     try:
         # Input/Output error check and internal set up.
