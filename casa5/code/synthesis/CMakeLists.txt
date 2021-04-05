@@ -25,9 +25,7 @@ BISON_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.yy ${CMAKE_CURRENT_BINARY
 FLEX_TARGET (CalLibraryGram CalLibrary/CalLibraryGram.ll ${CMAKE_CURRENT_BINARY_DIR}/CalLibraryGram.lcc COMPILE_FLAGS "-PCalLibraryGram")
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR}
-                     "/usr/include/eigen3"
-                     "/home/tesla/mhsieh/work/dev/lbfgsb-gpu-master")
-                    #"/home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS")
+                     "/usr/include/eigen3")
 
 casa_add_library( synthesis
  TransformMachines2/Utils.cc

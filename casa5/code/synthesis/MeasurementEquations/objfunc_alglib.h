@@ -39,10 +39,12 @@ public:
 
   ParamAlglibObj(const casacore::Matrix<casacore::Float>& dirty,
     const casacore::Matrix<casacore::Complex>& psf,
-    const std::vector<casacore::IPosition>& positionOptimum) :
+    const std::vector<casacore::IPosition>& positionOptimum,
+    const casacore::FFTServer<casacore::Float,casacore::Complex>& fftin) :
     itsMatDirty(dirty),
     itsPsfFT(psf),
-    center(positionOptimum)
+    center(positionOptimum),
+    fft(fftin)
   {
     nX = itsMatDirty.shape()(0);
     nY = itsMatDirty.shape()(1);
@@ -50,7 +52,6 @@ public:
     newResidual.resize(nX, nY);
     AspConvPsf.resize(nX, nY);
     dAspConvPsf.resize(nX, nY);
-    fft = casacore::FFTServer<casacore::Float,casacore::Complex>(itsMatDirty.shape());
     Asp.resize(nX, nY);
     dAsp.resize(nX, nY);
   }
@@ -72,13 +73,6 @@ public:
   void setterAsp(const casacore::Matrix<casacore::Float>& m) { Asp = m; }
   casacore::Matrix<casacore::Float>  getterDAsp() { return dAsp; }
 };
-
-void function1_grad(const alglib::real_1d_array &x, double &func, alglib::real_1d_array &grad, void *ptr)
-{
-  func = 100*pow(x[0]+3, 4) + pow(x[1]-3, 4);
-  grad[0] = 400*pow(x[0]+3, 3);
-  grad[1] = 4*pow(x[1]-3, 3);
-}
 
 void objfunc_alglib(const alglib::real_1d_array &x, double &func, alglib::real_1d_array &grad, void *ptr) 
 {

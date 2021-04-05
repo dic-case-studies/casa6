@@ -134,6 +134,9 @@ private:
   using MatrixCleaner::psfShape_p;
   using MatrixCleaner::noClean_p;
 
+  // FFTServer
+  casacore::FFTServer<casacore::Float,casacore::Complex> fft;
+
   // set to 0, 1*, 2*, 4*, and 8* width for initial scales in Asp
   std::vector<casacore::Float> itsInitScaleSizes;
   //std::vector<casacore::Float> itsAspScaleSizes; // No longer needed. permanent list for making model image
