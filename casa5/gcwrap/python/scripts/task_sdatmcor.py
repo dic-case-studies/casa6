@@ -71,6 +71,28 @@ def open_msmd(path):
         msmd.close()
 
 
+def _ms_remove(path):
+    if (os.path.exists(path)):
+        if (os.path.isdir(path)):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+
+def get_default_params():
+    # Default constant: taken from atmcor_20200807.py (CSV-3320)
+    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
+    maxalt = 120        ### maxAltitude parameter for at (km)
+    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
+    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
+
+    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
+    # set to True if spectral averaging was not employed for the spw
+    dp = 10.0   ### initATMProfile DEFAULT ###
+    dpm = 1.2   ### initATMProfile DEFAULT ###
+    return locals()
+
+
 def parse_gainfactor(gainfactor):
     """Parse gainfactor parameter
 
@@ -279,6 +301,195 @@ def inspect_flag_cmd(msname):
     return cmd_counts, time_counts
 
 
+# Argument parameter handling
+def parse_atm_params(user_param, user_default, task_default, default_unit=''):
+    """Parse ATM parameters.
+
+    Args:
+        user_param (str,int,float): User input.
+        user_default (str,int,float): User default.
+        task_default (str,int,float): Task default.
+        default_unit (str): Default unit.
+
+    Raises:
+        ValueError: user_param is invalid.
+
+    Returns:
+        Tuple: Two-tuple, resulting value as quantity and boolean
+               value indicating if the value is equal to user_default.
+    """
+    is_customized = user_param != user_default and user_param is not None
+
+    try:
+        if qa.isquantity(task_default):
+            task_default_quanta = qa.quantity(task_default)
+        else:
+            task_default_quanta = qa.quantity(task_default, default_unit)
+    except Exception as e:
+        casalog.post('INTERNAL ERROR: {}'.format(e), priority='SEVERE')
+        raise
+
+    if not is_customized:
+        param = task_default_quanta['value']
+    else:
+        user_param_quanta = qa.quantity(user_param)
+        if user_param_quanta['unit'] == '':
+            user_param_quanta = qa.quantity(
+                user_param_quanta['value'],
+                default_unit
+            )
+        else:
+            user_param_quanta = qa.convert(
+                user_param_quanta,
+                default_unit
+            )
+        is_compatible = qa.compare(user_param_quanta, task_default_quanta)
+        if is_compatible:
+            param = user_param_quanta['value']
+        else:
+            raise ValueError('User input "{}" should have the unit compatible with "{}"'.format(
+                user_param,
+                default_unit
+            ))
+
+    return param, is_customized
+
+
+def parse_atm_list_params(user_param, user_default='', task_default=[], default_unit=''):
+    """Parse ATM parameters.
+
+    Args:
+        user_param (str,list): User input.
+        user_default (str): User default.
+        task_default (list): Task default.
+        default_unit (str): Unit for output values.
+
+    Raises:
+        ValueError: user_param is invalid.
+
+    Returns:
+        Tuple: Two-tuple, resulting value as quantity and boolean
+               value indicating if the value is equal to user_default.
+    """
+    is_customized = user_param != user_default and user_param is not None
+
+    if not is_customized:
+        return task_default, is_customized
+
+    if isinstance(user_param, (list, np.ndarray)):
+        try:
+            param = [parse_atm_params(p, user_default, 0, default_unit=default_unit)[0] for p in user_param]
+            param = [qa.convert(p, default_unit)['value'] for p in param]
+        except Exception as e:
+            casalog.post('ERROR during handling list input: {}'.format(e))
+            raise ValueError('list input "{}" is invalid.'.format(user_param))
+        return param, is_customized
+    elif isinstance(user_param, str):
+        try:
+            split_param = user_param.split(',')
+            param, _ = parse_atm_list_params(split_param, user_default, task_default, default_unit)
+        except Exception as e:
+            casalog.post('ERROR during handling comma-separated str input: {}'.format(e))
+            raise ValueError('str input "{}" is invalid.'.format(user_param))
+        return param, is_customized
+    else:
+        raise ValueError('user_param for parse_atm_list_params should be either list or str.')
+
+
+def get_default_antenna(msname):
+    """Determine default antenna id based on the FLAG_CMD table.
+
+    Procedure is as follows.
+
+      (1) extract flag commands whose reason is "Mount_is_off_source".
+      (2) compile the commands into a number of commands and flagged
+          time durations for each antenna.
+      (3) select antenna with the shortest flagged duration.
+      (4) if multiple antennas match in (3), select antenna with
+          the least number of commands among them.
+      (5) if multiple antennas match in (4), select the first
+          antenna among them.
+
+    Args:
+        msname (str): name of MS
+
+    Raises:
+        Exception: no antenna was found in the MAIN table
+
+    Returns:
+        int: default antenna id
+    """
+    # get list of antenna Ids from MAIN table
+    with open_table(msname) as tb:
+        ant_list = np.unique(tb.getcol('ANTENNA1'))
+
+    # No Available antenna
+    if len(ant_list) == 0:
+        raise Exception("No Antenna was found.")
+
+    # get antenna names list by antenna Id
+    with open_msmd(msname) as msmd:
+        ant_name = [msmd.antennanames(i)[0] for i in ant_list]
+
+    # dictionary to map antenna name to antenna Id
+    ant_dict = dict((k, v) for k, v in zip(ant_name, ant_list))
+
+    # determine default antenna id
+    cmd_counts, flagged_durations = inspect_flag_cmd(msname)
+
+    if len(cmd_counts) == 0:
+        # No flag command exists. All the antennas should be healthy
+        # so just pick up the first antenna.
+        default_id = ant_list[0]
+        default_name = ant_name[0]
+    else:
+        flagged_durations_filtered = dict((k, flagged_durations[k]) for k in ant_dict.keys())
+        min_duration = min(flagged_durations_filtered.values())
+        candidate_antennas = [k for k, v in flagged_durations_filtered.items() if v == min_duration]
+
+        if len(candidate_antennas) == 1:
+            default_name = candidate_antennas[0]
+            default_id = ant_dict[default_name]
+        else:
+            _counts = [cmd_counts[a] for a in candidate_antennas]
+            min_count = min(_counts)
+            candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
+            default_name = candidate_antennas2[0]
+            default_id = ant_dict[default_name]
+    casalog.post('Select {} (ID {}) as a default antenna'.format(default_name, default_id))
+    return default_id
+
+
+def get_default_altitude(msname, antid):
+    """ Get default altitude of the antenna
+    decide default value of 'Altitude' for Atm Correction.
+    This requires to calculate Elevation from Antenna Position Information.
+    """
+    with open_table(os.path.join(msname, 'ANTENNA')) as tb:
+        # obtain the antenna Position (Earth Center) specified by antid
+        X, Y, Z = (float(i) for i in tb.getcell('POSITION', antid))
+
+        #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
+        #
+        #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point,
+        #  this method returns geodetic latitude and longitude [radians] and elevation [m].
+        #  Elevation is measured relative to the closest point to the (latitude, longitude)
+        #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
+
+        P = ut.xyz2long(X, Y, Z, 'WGS84')   # [0]:longitude, [1]:latitude, [2]:elevation (geodetic elevation)
+        geodetic_elevation = P[2]
+
+        ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
+
+    casalog.post("Default Altitude")
+    casalog.post(" - Antenna ID: %d. " % antid)
+    casalog.post(" - Ref = %s. " % ref)
+    casalog.post(" - Position: (%s, %s, %s)." % (X, Y, Z))
+    casalog.post("   Altitude (geodetic elevation):  %f" % geodetic_elevation)
+
+    return geodetic_elevation
+
+
 class ATMScalarParameterConfigurator(ATMParameterConfigurator):
     def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
         value, is_customized = parse_atm_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
@@ -471,215 +682,3 @@ def sdatmcor(
     except Exception as err:
         casalog.post('%s' % err, priority='SEVERE')
         raise
-
-
-def _ms_remove(path):
-    if (os.path.exists(path)):
-        if (os.path.isdir(path)):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
-
-
-# Argument parameter handling
-def parse_atm_params(user_param, user_default, task_default, default_unit=''):
-    """Parse ATM parameters.
-
-    Args:
-        user_param (str,int,float): User input.
-        user_default (str,int,float): User default.
-        task_default (str,int,float): Task default.
-        default_unit (str): Default unit.
-
-    Raises:
-        ValueError: user_param is invalid.
-
-    Returns:
-        Tuple: Two-tuple, resulting value as quantity and boolean
-               value indicating if the value is equal to user_default.
-    """
-    is_customized = user_param != user_default and user_param is not None
-
-    try:
-        if qa.isquantity(task_default):
-            task_default_quanta = qa.quantity(task_default)
-        else:
-            task_default_quanta = qa.quantity(task_default, default_unit)
-    except Exception as e:
-        casalog.post('INTERNAL ERROR: {}'.format(e), priority='SEVERE')
-        raise
-
-    if not is_customized:
-        param = task_default_quanta['value']
-    else:
-        user_param_quanta = qa.quantity(user_param)
-        if user_param_quanta['unit'] == '':
-            user_param_quanta = qa.quantity(
-                user_param_quanta['value'],
-                default_unit
-            )
-        else:
-            user_param_quanta = qa.convert(
-                user_param_quanta,
-                default_unit
-            )
-        is_compatible = qa.compare(user_param_quanta, task_default_quanta)
-        if is_compatible:
-            param = user_param_quanta['value']
-        else:
-            raise ValueError('User input "{}" should have the unit compatible with "{}"'.format(
-                user_param,
-                default_unit
-            ))
-
-    return param, is_customized
-
-
-def parse_atm_list_params(user_param, user_default='', task_default=[], default_unit=''):
-    """Parse ATM parameters.
-
-    Args:
-        user_param (str,list): User input.
-        user_default (str): User default.
-        task_default (list): Task default.
-        default_unit (str): Unit for output values.
-
-    Raises:
-        ValueError: user_param is invalid.
-
-    Returns:
-        Tuple: Two-tuple, resulting value as quantity and boolean
-               value indicating if the value is equal to user_default.
-    """
-    is_customized = user_param != user_default and user_param is not None
-
-    if not is_customized:
-        return task_default, is_customized
-
-    if isinstance(user_param, (list, np.ndarray)):
-        try:
-            param = [parse_atm_params(p, user_default, 0, default_unit=default_unit)[0] for p in user_param]
-            param = [qa.convert(p, default_unit)['value'] for p in param]
-        except Exception as e:
-            casalog.post('ERROR during handling list input: {}'.format(e))
-            raise ValueError('list input "{}" is invalid.'.format(user_param))
-        return param, is_customized
-    elif isinstance(user_param, str):
-        try:
-            split_param = user_param.split(',')
-            param, _ = parse_atm_list_params(split_param, user_default, task_default, default_unit)
-        except Exception as e:
-            casalog.post('ERROR during handling comma-separated str input: {}'.format(e))
-            raise ValueError('str input "{}" is invalid.'.format(user_param))
-        return param, is_customized
-    else:
-        raise ValueError('user_param for parse_atm_list_params should be either list or str.')
-
-
-def get_default_antenna(msname):
-    """Determine default antenna id based on the FLAG_CMD table.
-
-    Procedure is as follows.
-
-      (1) extract flag commands whose reason is "Mount_is_off_source".
-      (2) compile the commands into a number of commands and flagged
-          time durations for each antenna.
-      (3) select antenna with the shortest flagged duration.
-      (4) if multiple antennas match in (3), select antenna with
-          the least number of commands among them.
-      (5) if multiple antennas match in (4), select the first
-          antenna among them.
-
-    Args:
-        msname (str): name of MS
-
-    Raises:
-        Exception: no antenna was found in the MAIN table
-
-    Returns:
-        int: default antenna id
-    """
-    # get list of antenna Ids from MAIN table
-    with open_table(msname) as tb:
-        ant_list = np.unique(tb.getcol('ANTENNA1'))
-
-    # No Available antenna
-    if len(ant_list) == 0:
-        raise Exception("No Antenna was found.")
-
-    # get antenna names list by antenna Id
-    with open_msmd(msname) as msmd:
-        ant_name = [msmd.antennanames(i)[0] for i in ant_list]
-
-    # dictionary to map antenna name to antenna Id
-    ant_dict = dict((k, v) for k, v in zip(ant_name, ant_list))
-
-    # determine default antenna id
-    cmd_counts, flagged_durations = inspect_flag_cmd(msname)
-
-    if len(cmd_counts) == 0:
-        # No flag command exists. All the antennas should be healthy
-        # so just pick up the first antenna.
-        default_id = ant_list[0]
-        default_name = ant_name[0]
-    else:
-        flagged_durations_filtered = dict((k, flagged_durations[k]) for k in ant_dict.keys())
-        min_duration = min(flagged_durations_filtered.values())
-        candidate_antennas = [k for k, v in flagged_durations_filtered.items() if v == min_duration]
-
-        if len(candidate_antennas) == 1:
-            default_name = candidate_antennas[0]
-            default_id = ant_dict[default_name]
-        else:
-            _counts = [cmd_counts[a] for a in candidate_antennas]
-            min_count = min(_counts)
-            candidate_antennas2 = [a for i, a in enumerate(candidate_antennas) if _counts[i] == min_count]
-            default_name = candidate_antennas2[0]
-            default_id = ant_dict[default_name]
-    casalog.post('Select {} (ID {}) as a default antenna'.format(default_name, default_id))
-    return default_id
-
-
-def get_default_altitude(msname, antid):
-    """ Get default altitude of the antenna
-    decide default value of 'Altitude' for Atm Correction.
-    This requires to calculate Elevation from Antenna Position Information.
-    """
-    with open_table(os.path.join(msname, 'ANTENNA')) as tb:
-        # obtain the antenna Position (Earth Center) specified by antid
-        X, Y, Z = (float(i) for i in tb.getcell('POSITION', antid))
-
-        #  xyz2long()   -- https://casa.nrao.edu/casadocs/casa-5.6.0/simulation/simutil
-        #
-        #  When given ITRF Earth-centered (X, Y, Z, using the parameters x, y, and z) coordinates [m] for a point,
-        #  this method returns geodetic latitude and longitude [radians] and elevation [m].
-        #  Elevation is measured relative to the closest point to the (latitude, longitude)
-        #  on the WGS84 (World Geodetic System 1984) reference ellipsoid.
-
-        P = ut.xyz2long(X, Y, Z, 'WGS84')   # [0]:longitude, [1]:latitude, [2]:elevation (geodetic elevation)
-        geodetic_elevation = P[2]
-
-        ref = tb.getcolkeyword('POSITION', 'MEASINFO')['Ref']
-
-    casalog.post("Default Altitude")
-    casalog.post(" - Antenna ID: %d. " % antid)
-    casalog.post(" - Ref = %s. " % ref)
-    casalog.post(" - Position: (%s, %s, %s)." % (X, Y, Z))
-    casalog.post("   Altitude (geodetic elevation):  %f" % geodetic_elevation)
-
-    return geodetic_elevation
-
-
-def get_default_params():
-    # Default constant: taken from atmcor_20200807.py (CSV-3320)
-    atmtype = 2         ### atmType parameter for at (1: tropical, 2: mid lat summer, 3: mid lat winter, etc)
-    maxalt = 120        ### maxAltitude parameter for at (km)
-    lapserate = -5.6    ### dTem_dh parameter for at (lapse rate; K/km)
-    scaleht = 2.0       ### h0 parameter for at (water scale height; km)
-
-    dosmooth = False    ### convolve dTa* spectra with [0.25, 0.5, 0.25] to mimic Hanning spectral response;
-    # set to True if spectral averaging was not employed for the spw
-    dp = 10.0   ### initATMProfile DEFAULT ###
-    dpm = 1.2   ### initATMProfile DEFAULT ###
-    return locals()
-
