@@ -1,7 +1,5 @@
-from .weblog import Weblog
-from .check import Check
-from .compare import *
-from .testhelper import *
+#from .compare import *
+#from .testhelper import *
 #from .extractcasascript import main
 #from .testhelpers import TestHelpers
 #import imagehelpers.imagetesthelpers
@@ -32,39 +30,39 @@ try:
 except NameError:
     ModuleNotFoundError = ImportError
 
-try:
-    # CASA 6
-    logging.debug("Importing CASAtools")
-    import casatools
-    logging.debug("Importing CASAtasks")
+def import_casamods():
     try:
-        import casatasks
-        from casatasks import casalog
+        # CASA 6
+        logging.debug("Importing CASAtools")
+        import casatools
+        logging.debug("Importing CASAtasks")
+        try:
+            import casatasks
+            from casatasks import casalog
+        except (ImportError, ModuleNotFoundError):
+            pass
+
+        _casa6 = True
+
     except (ImportError, ModuleNotFoundError):
-        pass
+        # CASA 5
+        logging.debug("Import casa6 errors. Trying casa5...")
+        from __main__ import default
+        from taskinit import tbtool, mstool, iatool
+        from casa_stack_manip import stack_find, find_casa
+        try:
+            from mpi4casa.MPIEnvironment import MPIEnvironment
+            if not MPIEnvironment.is_mpi_enabled:
+                __bypass_parallel_processing = 1
+        except ImportError:
+            print("MPIEnvironment not Enabled")
 
-    _casa6 = True
-
-except (ImportError, ModuleNotFoundError):
-    # CASA 5
-    logging.debug("Import casa6 errors. Trying casa5...")
-    from __main__ import default
-    from taskinit import tbtool, mstool, iatool
-    from taskinit import *
-    from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
-
-    casa = find_casa()
-    if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
-        casaglobals=True
-        casac = stack_find("casac")
-        casalog = stack_find("casalog")
-    _casa5 = True
+        casa = find_casa()
+        if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
+            casaglobals=True
+            casac = stack_find("casac")
+            casalog = stack_find("casalog")
+        _casa5 = True
 
 _casa6tools = set([
     "agentflagger", "atcafiller", "atmosphere", "calanalysis", "calibrater", "coercetype", "componentlist", "config", "constants", "coordsys", "ctuser", "functional", "image",
@@ -95,6 +93,7 @@ def getNumberOfServers( __bypass_parallel_processing ):
     """
     Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
     """
+    import_casamods()
     if _casa5:
         if (__bypass_parallel_processing == 0):
             return len(MPIEnvironment.mpi_server_rank_list()) + 1
@@ -202,7 +201,8 @@ def generate_weblog(task,dictionary,show_passed = True):
     Example:
         generate_weblog("taskname", dictionary, show_passed)
     """
-
+    import_casamods()
+    from .weblog import Weblog
     Weblog(task, dictionary).generate_weblog(show_passed = show_passed)
 
 ############################################################################################
@@ -243,6 +243,7 @@ def skipIfMissingModule(required_module, strict=False):
 #import casatestutils
 #@casatestutils.time_execution
 def time_execution(out_dict):
+    import_casamods()
     def time_decorator(function):
         '''
         Decorator: time execution of test

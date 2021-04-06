@@ -506,9 +506,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 # Python Version
 PYVER = str(sys.version_info[0]) + "." + str(sys.version_info[1])
 
-# CASA Directory
-CASA_DIR = os.environ["CASAPATH"].split()[0]
-
 # mem mode variables
 HAVE_MEMTEST=True
 MEM = 0
@@ -555,21 +552,13 @@ HAVE_CASA6 = False
 JIRA_BRANCH = None
 
 try:
-    import casatools
-    import casatasks
-    CASA6 = True
-    IS_CASA6 = True
-    HAVE_CASA6 = True
-    
-except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-
-if not IS_CASA6:
-    import testwrapper
-    from testwrapper import UnitTest
-    
+except ImportError:
+    CASA6 = True
+    IS_CASA6 = True
+    HAVE_CASA6 = True
 
 # Use Nose attribute Functionality
 RUN_SUBTEST = False
