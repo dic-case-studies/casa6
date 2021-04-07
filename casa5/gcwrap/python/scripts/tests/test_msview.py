@@ -75,7 +75,7 @@ else:
     from tasks import msview
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 class msview_test(unittest.TestCase):
@@ -87,7 +87,7 @@ class msview_test(unittest.TestCase):
         self.outfiles = { }
         for t in ['jpg', 'pdf', 'eps', 'ps', 'png', 'xbm', 'xpm', 'ppm']:
             self.outfiles[t] = "tms"+str(os.getpid())+"."+t
-        os.system('cp -R %s %s' % (ctsys_resolve('regression/fits-import-export/input/test.ms'),self.testms))
+        os.system('cp -RH %s %s' % (ctsys_resolve('unittest/msview/ngc4826_bima_7fields_7spw.ms'),self.testms))
 
     @classmethod
     def tearDownClass(self):
