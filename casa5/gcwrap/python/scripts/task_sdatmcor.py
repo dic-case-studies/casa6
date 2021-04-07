@@ -525,6 +525,7 @@ class ATMScalarParameterConfigurator(ATMParameterConfigurator):
     def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
         value, is_customized = parse_atm_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
+        # TODO: remove arguments for super, i.e. just super().__init__(...) once we completely get rid of CASA5
         super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
 
 
@@ -532,6 +533,7 @@ class ATMListParameterConfigurator(ATMParameterConfigurator):
     def __init__(self, key, user_input, impl_default, default_unit, api_default='', is_mandatory=True, is_effective=True):
         value, is_customized = parse_atm_list_params(user_param=user_input, user_default=api_default, task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
+        # TODO: remove arguments for super, i.e. just super().__init__(...) once we completely get rid of CASA5
         super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
 
 
