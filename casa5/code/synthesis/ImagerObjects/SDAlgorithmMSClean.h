@@ -79,7 +79,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Int itsStopPointMode;
 
   private:
-    casacore::Bool itsMCsetup; 
+    //casacore::Bool itsMCsetup; 
 
   };
 

@@ -44,6 +44,13 @@ ATM_NAMESPACE_BEGIN
 class MassDensity
 {
 public:
+  enum Units {
+    UnitGramPerCubicCentiMeter,
+    UnitGramPerCubicMeter,
+    UnitKiloGramPerCubicMeter,
+    NumMassDensityUnits
+  };
+
   /** Default constructor */
   MassDensity();
   /** A full constructor: Mass Density value assumed by default to be in kgm**-3 (International System) */
@@ -52,6 +59,7 @@ public:
    *  Valid units are kgm**-3 [kg m**-3, KGM**-3, KG M**-3], gcm**-3 [g cm**-3, GCM**-3, G CM**-3].
    *  If none of these implemented units is given, the SI value will be returned. */
   MassDensity(double massdensity, const string &units);
+  MassDensity(double massdensity, Units units);
 
   /** Destructor */
   virtual ~MassDensity();
@@ -61,6 +69,7 @@ public:
   /** Accessor to the massdensity value in specified units.
    *  Valid units are kgm**-3 [kg m**-3, KGM**-3, KG M**-3], gcm**-3 [g cm**-3, GCM**-3, G CM**-3]. */
   double get(const string &units) const;
+  double get(const Units units) const;
 
   MassDensity& operator=(const MassDensity &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
   MassDensity& operator=(double rhs) { valueIS_ = rhs; return *this; }

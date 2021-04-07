@@ -78,10 +78,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   SDAlgorithmMSMFS::~SDAlgorithmMSMFS()
   {
-   
+
   }
 
- 
+
   //  void SDAlgorithmMSMFS::initializeDeconvolver( Float &peakresidual, Float &modelflux )
   void SDAlgorithmMSMFS::initializeDeconvolver()
   {
@@ -115,24 +115,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     	//cout << "Setting up the MT Cleaner once" << endl;
     	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
     	itsMTCleaner.setscales( itsScaleSizes );
-    	
+
     	if(itsSmallScaleBias > 1)
     	{
-    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST; 
+    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to 1." << LogIO::POST;
     	  itsSmallScaleBias = 1;
     	}
-    	
+
     	if(itsSmallScaleBias < -1)
     	{
-    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST; 
+    	  os << LogIO::WARN << "Acceptable smallscalebias values are [-1,1].Changing smallscalebias from " << itsSmallScaleBias <<" to -1." << LogIO::POST;
     	  itsSmallScaleBias = -1;
     	}
-    	
-    	
+
+
     	itsMTCleaner.setSmallScaleBias(itsSmallScaleBias);
     	itsMTCleaner.setntaylorterms( itsNTerms );
     	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
-    	
+
     	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
     	{
         Matrix<Float> tempMat;
@@ -186,21 +186,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     else
       return 0;
       //throw(AipsError("Deconvolver cannot estimate the memory usage at this point"));
-    
-      // psf patches in the Hessian    
+
+      // psf patches in the Hessian
     Long nscales=itsScaleSizes.nelements();
     Long n4d = (nscales * (nscales+1) / 2.0) * (itsNTerms * (itsNTerms+1) / 2);
-      
+
       Long nsupport = Long(Float(100.0/Float(shp(0)))* Float(100.0/Float(shp(1))* Float(n4d + nscales)));
-      
+
       Long nfull = 2 + 2 + 3 * nscales + 3 * itsNTerms + (2 * itsNTerms - 1) + 2 * itsNTerms * nscales;
       Long nfftserver = 1 + 2*2 ; /// 1 float and 2 complex
-      
+
       Long mystery = 1 + 1;  /// TODO
 
       Long ntotal = nsupport + nfull + nfftserver + mystery;
       mem=sizeof(Float)*(shp(0))*(shp(1))*ntotal/1024;
-    
+
     return mem;
   }
 
@@ -219,7 +219,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     	itsMTCleaner.getmodel( tix, tempMat ); //itsMatModels[tix] );
     }
- 
+
     /////////////////
     //findMaxAbs( itsMatResiduals[0], itsPeakResidual, itsMaxPos );
     //peakresidual = itsPeakResidual;
@@ -227,21 +227,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     peakresidual = itsMTCleaner.getpeakresidual();
 
     modelflux = sum( itsMatModels[0] ); // Performance hog ?
-  }	    
+  }
 
   void SDAlgorithmMSMFS::finalizeDeconvolver()
   {
     //    itsResidual.put( itsMatResidual );
     //    itsModel.put( itsMatModel );
 
-    // Why is this needed ?  If the matrices are by reference, then why do we need this ? 
+    // Why is this needed ?  If the matrices are by reference, then why do we need this ?
     for(uInt tix=0; tix<itsNTerms; tix++)
     {
     	(itsImages->residual(tix))->put( itsMatResiduals[tix] );
     	(itsImages->model(tix))->put( itsMatModels[tix] );
     }
   }
-  
+
   void SDAlgorithmMSMFS::restore(std::shared_ptr<SIImageStore> imagestore )
   {
 
@@ -250,80 +250,96 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( ! imagestore->hasResidualImage() ) return;
 
     // Compute principal solution ( if it hasn't already been done to this ImageStore......  )
-    //////  Put some image misc info in here, to say if it has been done or not. 
+    //////  Put some image misc info in here, to say if it has been done or not.
 
     // Loop over polarization planes here, as MTC knows only about Matrices.
     Int nSubChans, nSubPols;
     queryDesiredShape(nSubChans, nSubPols, imagestore->getShape());
     for( Int chanid=0; chanid<nSubChans;chanid++) // redundant since only 1 chan
     {
-      for( Int polid=0; polid<nSubPols;polid++) // one pol plane at a time
+
+   	for( Int polid=0; polid<nSubPols;polid++) // one pol plane at a time
       {
-    	  itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
+	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
 
-        ///  ----------- do once if trying to 'only restore' without model ----------
-        if( itsMTCsetup == false)
-        {
-        	itsMatPsfs.resize( 2*itsNTerms-1 );
-        	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-        	{
-        	  (itsImages->psf(tix))->get( itsMatPsfs[tix], True );
-        	}
+	    //cout << "Units for chan " << chanid << " and pol " << polid << " are " << itsImages->image()->units().getName() << endl;
 
-        	//cout << "Setting up the MT Cleaner once" << endl;
-        	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
-        	itsMTCleaner.setscales( itsScaleSizes );
-        	itsMTCleaner.setntaylorterms( itsNTerms );
-        	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
-        	
-        	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
-          {
-            Matrix<Float> tempMat;
-            tempMat.reference( itsMatPsfs[tix] );
-            itsMTCleaner.setpsf( tix, tempMat );
-            ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
-          }
-        	itsMTCsetup=true;
-        }
-        /// -----------------------------------------
+    ///  ----------- do once if trying to 'only restore' without model ----------
+    if( itsMTCsetup == false)
+      {
+
+	itsMatPsfs.resize( 2*itsNTerms-1 );
+	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
+	  {
+	    (itsImages->psf(tix))->get( itsMatPsfs[tix], True );
+	  }
+
+	//cout << "Setting up the MT Cleaner once" << endl;
+	//Vector<Float> scalesizes(1); scalesizes[0]=0.0;
+	itsMTCleaner.setscales( itsScaleSizes );
+	itsMTCleaner.setntaylorterms( itsNTerms );
+	itsMTCleaner.initialise( itsImages->getShape()[0], itsImages->getShape()[1] );
+
+	for(uInt tix=0; tix<2*itsNTerms-1; tix++)
+	  {
+	    Matrix<Float> tempMat;
+	    tempMat.reference( itsMatPsfs[tix] );
+	    itsMTCleaner.setpsf( tix, tempMat );
+	    ///	itsMTCleaner.setpsf( tix, itsMatPsfs[tix] );
+	  }
+	itsMTCsetup=true;
+      }
+    /// -----------------------------------------
 
 
-        Vector<TempImage<Float> > tempResOrig(itsNTerms);
+    Vector<TempImage<Float> > tempResOrig(itsNTerms);
 
-        // Set residual images into mtcleaner
-        for(uInt tix=0; tix<itsNTerms; tix++)
-        {
-        	Array<Float> tempArr;
-        	(itsImages->residual(tix))->get( tempArr, True );	
-        	Matrix<Float> tempMat;
-        	tempMat.reference( tempArr );
-        	itsMTCleaner.setresidual( tix, tempMat );
+    // Set residual images into mtcleaner
+    for(uInt tix=0; tix<itsNTerms; tix++)
+      {
+	Array<Float> tempArr;
+	(itsImages->residual(tix))->get( tempArr, True );
+	Matrix<Float> tempMat;
+	tempMat.reference( tempArr );
+	itsMTCleaner.setresidual( tix, tempMat );
 
-        	// Also save them temporarily (copies)
-        	tempResOrig[tix] = TempImage<Float>(itsImages->getShape(), itsImages->residual(tix)->coordinates()); 
-        	tempResOrig[tix].copyData( LatticeExpr<Float>(* ( itsImages->residual(tix) ) ) );
-        }
+	// Also save them temporarily (copies)
+	tempResOrig[tix] = TempImage<Float>(itsImages->getShape(), itsImages->residual(tix)->coordinates());
+	tempResOrig[tix].copyData( LatticeExpr<Float>(* ( itsImages->residual(tix) ) ) );
+      }
 
-        // Modify the original in place
-        itsMTCleaner.computeprincipalsolution();
+    // Modify the original in place
+    itsMTCleaner.computeprincipalsolution();
 
-        for(uInt tix=0; tix<itsNTerms; tix++)
-        {
-        	Matrix<Float> tempRes;
-        	itsMTCleaner.getresidual(tix,tempRes);
-        	(itsImages->residual(tix))->put( tempRes );
-        }
-        
-        // Calculate restored image and alpha using modified residuals
-        SDAlgorithmBase::restore( itsImages );
+    for(uInt tix=0; tix<itsNTerms; tix++)
+      {
+	Matrix<Float> tempRes;
+	itsMTCleaner.getresidual(tix,tempRes);
+	(itsImages->residual(tix))->put( tempRes );
+      }
 
-        // Put back original unmodified residuals.o
-        for(uInt tix=0; tix<itsNTerms; tix++)
-    	    (itsImages->residual(tix))->copyData( LatticeExpr<Float>( tempResOrig(tix) ) );
-        
+    // Calculate restored image and alpha using modified residuals
+    SDAlgorithmBase::restore( itsImages );
+
+    // Put back original unmodified residuals.o
+    for(uInt tix=0; tix<itsNTerms; tix++)
+      {
+	(itsImages->residual(tix))->copyData( LatticeExpr<Float>( tempResOrig(tix) ) );
+      }
+
       } // for polid loop
     }// for chanid loop
 
+    // This log message is important. This call of imagestore->image(...) is the first call if there is
+    // a multi-channel or multi-pol image. This is what will set the units correctly. Ref. CAS-13153
+    os << LogIO::POST << "Restored images : ";
+    for(uInt tix=0; tix<itsNTerms; tix++)
+      {
+	os << LogIO::POST << imagestore->image(tix)->name() << "  (model=" << imagestore->model(tix)->name() << ") " ;
+      }
+    os << LogIO::POST << endl;
+
+    //cout << "Units for  " << imagestore->image()->name() << "  aaaaaare " << imagestore->image()->units().getName() << endl;
   }// ::restore
 
 
@@ -338,11 +354,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	// Fit a Gaussian to the PSF.
 	GaussianBeam beam = itsImages->getPSFGaussian();
 
-	os << "Restore with beam : " 
-	   << beam.getMajor(Unit("arcmin")) << " arcmin, " 
-	   << beam.getMinor(Unit("arcmin"))<< " arcmin, " 
-	   << beam.getPA(Unit("deg")) << " deg" << LogIO::POST; 
-	
+	os << "Restore with beam : "
+	   << beam.getMajor(Unit("arcmin")) << " arcmin, "
+	   << beam.getMinor(Unit("arcmin"))<< " arcmin, "
+	   << beam.getPA(Unit("deg")) << " deg" << LogIO::POST;
+
 	// Compute principal solution ( if it hasn't already been done to this ImageStore......  )
 	itsMTCleaner.computeprincipalsolution();
 	for(uInt tix=0; tix<itsNTerms; tix++)
@@ -364,12 +380,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    (itsImages->image(tix))->copyData( LatticeExpr<Float>
 					       ( *(itsImages->model(tix)) + *(itsImages->residual(tix)) )   );
 	    itsImages->image()->setImageInfo(ii);
-	  }	
-	
+	  }
+
 	// Calculate alpha and beta
 	LatticeExprNode leMaxRes = max( *( itsImages->residual(0) ) );
 	Float maxres = leMaxRes.getFloat();
-	Float specthreshold = maxres/5.0;  //////////// do something better here..... 
+	Float specthreshold = maxres/5.0;  //////////// do something better here.....
 
       os << "Calculating spectral parameters for  Intensity > peakresidual/5 = " << specthreshold << " Jy/beam" << LogIO::POST;
       LatticeExpr<Float> mask1(iif(((*(itsImages->image(0))))>(specthreshold),1.0,0.0));

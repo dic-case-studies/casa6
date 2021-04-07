@@ -122,8 +122,8 @@ def update_spw(spw, spwmap=None):
     # Store final [spw, chan] pair.
     store_spwchan(spwgrp, chagrp)
 
-    # print "spwchans =", spwchans
-    # print "spws =", spws
+    # casalog.post("spwchans ={}".format(spwchans))
+    # casalog.post("spws ={}".format(spws))
         
     # Update spw (+ fitspw)
     if make_spwmap:
@@ -219,7 +219,7 @@ def spwchan_to_sets(vis, spw):
         # spw includes channels that aren't in vis, so it needs to be trimmed
         # down to make _ms.msseltoindex happy.
         allrec = _ms.msseltoindex(vis, spw='*')
-        #print "Trimming", spw
+        # casalog.post("Trimming {}".format(spw))
         spwd = spw_to_dict(spw, {}, False)
         for s in spwd:
             if s in allrec['spw']:

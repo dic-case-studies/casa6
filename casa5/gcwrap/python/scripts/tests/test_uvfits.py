@@ -18,8 +18,7 @@ Features tested:
   1. When that UVFITS file is read back in, is its data still correct?
 '''
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/uvfits/'
-datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/regression/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvfits/'
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -144,7 +143,7 @@ class uvfits_test(unittest.TestCase):
     def test_diameters(self):
         """CAS-5818: Verify bogus dish diameters in AN table are not used but normal algorithm is used instead"""
         myms = mstool()
-        fitsname = datapath + "CTR_CHI_TR2.RWYCP.2"
+        fitsname = datapath + "CTR_CHI_TR2.RWYCP-10rows-ANT-DIAMTER-0"
         msname = "CAS-5818.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()
@@ -159,7 +158,7 @@ class uvfits_test(unittest.TestCase):
     def test_filename_extensions(self):
         """CAS-7696: Verify we turn off fits filename extension support when necessary"""
         myms = mstool()
-        fitsname = datapath + "name+000"
+        fitsname = datapath + "name10rows+000"
         msname = "CAS-7696.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()
@@ -184,7 +183,7 @@ class uvfits_test(unittest.TestCase):
     def test_badscan(self):
         """CAS-10054: Tests intermittent incorrect scan number in last row of single-scan dataset"""
         myms = mstool()
-        fitsname = datapath2 + "ngc4826/fitsfiles/3c273.fits7"
+        fitsname = datapath + "3c273.fits7"
         msname = "ngc4826.tutorial.3c273.7.ms"
         self.assertTrue(myms.fromfits(msname, fitsname), "Failed to import uvfits file")
         myms.done()

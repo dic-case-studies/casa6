@@ -73,7 +73,6 @@ test_ia_twopointcorrelation     dmehring@nrao.edu
 test_imcollapse                 dmehring@nrao.edu
 test_imcontsub                  dmehring@nrao.edu
 test_imfit                      dmehring@nrao.edu
-test_imhead                     dmehring@nrao.edu
 test_immath                     dmehring@nrao.edu
 test_immoments                  dmehring@nrao.edu
 test_impbcor                    dmehring@nrao.edu
@@ -177,6 +176,7 @@ test_req_task_listsdm           nschweig@nrao.edu
 test_req_task_rmfit             nschweig@nrao.edu
 test_req_task_gaincal           nschweig@nrao.edu
 test_req_task_impv              nschweig@nrao.edu
+test_req_task_imdev             nschweig@nrao.edu
 test_req_task_polcal            gmoellen@nrao.edu
 test_req_task_sdintimaging      ttsutsum@nrao.edu
 test_req_task_statwt            dmehring@nrao.edu

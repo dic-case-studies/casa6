@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 import datetime
 import re
 import unittest
@@ -12,13 +15,13 @@ if is_CASA6:
     def default(atask):
         pass
     # for testhelper import
-    sys.path.append(
-        os.path.dirname(
-            os.path.abspath(
-                os.path.dirname(__file__))))
+    #sys.path.append(
+    #    os.path.dirname(
+    #        os.path.abspath(
+    #            os.path.dirname(__file__))))
     from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/sdimaging')
+    datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
 else:
     from tasks import sdtimeaverage
@@ -27,7 +30,7 @@ else:
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split(
-    )[0] + "/data/regression/unittest/sdimaging/"
+    )[0] + "/casatestdata/unittest/sdtimeaverage/"
 """
 sdtimeaverage begins
 """
@@ -149,7 +152,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
 # private function #
     def _copy_remote_file(self, infile, outfile):
-        os.system('cp -RL ' + os.path.join(datapath, infile) + ' ' + outfile)
+        os.system('cp -RH ' + os.path.join(datapath, infile) + ' ' + outfile)
 
     def _if_exist(self, msname):
         _filePath = os.path.join("./", msname)
@@ -198,7 +201,7 @@ class test_sdtimeaverage(unittest.TestCase):
         #  if success, returns True
         #  if any error, returns False.
         try:
-            return sdtimeaverage(**self.args)
+            sdtimeaverage(**self.args)
         except Exception as exc:
             print('Exception running sdtimeaverage: {}'.format(exc))
             raise
@@ -780,7 +783,7 @@ class test_sdtimeaverage(unittest.TestCase):
             self._run_task(prm)
 
     def test_param43E(self):
-        '''sdtimeaverage::42E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
+        '''sdtimeaverage::43E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
 
         prm = {'antenna': 'gBT&&&'}
         # Run Task and check
@@ -898,12 +901,12 @@ class test_sdtimeaverage(unittest.TestCase):
         self._checkOutputRec(defOutputMs, nRowOrg)
 
     def test_param116(self):
-        '''sdtimeagerage::115:: timebin='-1' (Error. Not acceptable)    '''
+        '''sdtimeagerage::116:: timebin='-1' (Error. Not acceptable)    '''
 
         # Run Task
         prm = {'timebin': '-1'}
         # Run Task and check
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self._run_task(prm)
 
 #

@@ -179,9 +179,9 @@ class slsearch_test(unittest.TestCase):
     
     def setUp(self):
         if is_CASA6:
-            datapath=ctsys.resolve('regression/unittest/slsearch')
+            datapath=ctsys.resolve('unittest/slsearch/')
         else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/slsearch')
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/slsearch/')
         shutil.copytree(os.path.join(datapath,good_table), good_table)
 
     def tearDown(self):

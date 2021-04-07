@@ -43,90 +43,153 @@ namespace casa {
 
 PlotAxisScale PMS::axisScale(Axis axis) {
     switch(axis) {
-    
-    case TIME: return DATE_MJ_SEC;
-    
-    case PMS::Axis::RA:
-    case PMS::Axis::DEC:
-    	return PlotAxisScale::ANGLE;
-
-    default: return NORMAL;
+        case TIME:
+            return DATE_MJ_SEC;
+        case PMS::Axis::RA:
+        case PMS::Axis::DEC:
+            return PlotAxisScale::ANGLE;
+        default:
+            return NORMAL;
     }
 }
 
 bool PMS::axisIsData(Axis axis) {
+    // from the *DATA (MS) or CPARAM/FPARAM (CT) column
     switch(axis) {
-    case AMP: case PHASE: case REAL: case IMAG: case WTxAMP: 
-    case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC:
-    case TEC: case ANTPOS: return true;
-    default: return false;
+      case AMP:
+      case PHASE:
+      case REAL:
+      case IMAG:
+      case WTxAMP: 
+      case GAMP:
+      case GPHASE:
+      case GREAL:
+      case GIMAG:
+      case DELAY:
+      case DELAY_RATE:
+      case DISP_DELAY:
+      case SWP:
+      case TSYS:
+      case OPAC:
+      case TEC:
+      case ANTPOS:
+          return true;
+      default:
+          return false;
     }
 }
 
 bool PMS::axisIsCalData(Axis axis) {
     switch(axis) {
-    case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC:
-    case TEC: case ANTPOS: return true;
-    default: return false;
+        case GAMP:
+        case GPHASE:
+        case GREAL:
+        case GIMAG:
+        case DELAY:
+        case DELAY_RATE:
+        case DISP_DELAY:
+        case SWP:
+        case TSYS:
+        case OPAC:
+        case TEC:
+        case ANTPOS:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisNeedsCalSlice(Axis axis) {
     switch(axis) {
-    case AMP: case PHASE: case REAL: case IMAG: 
-    case GAMP: case GPHASE: case GREAL: case GIMAG:
-    case DELAY: case SWP: case TSYS: case OPAC: case SNR: case TEC:
-    case ANTPOS: case FLAG:
-        return true;
-    default: return false;
+        case AMP:
+        case PHASE:
+        case REAL:
+        case IMAG: 
+        case GAMP:
+        case GPHASE:
+        case GREAL:
+        case GIMAG:
+        case DELAY:
+        case DELAY_RATE:
+        case DISP_DELAY:
+        case SWP:
+        case TSYS:
+        case OPAC:
+        case SNR:
+        case TEC:
+        case ANTPOS:
+        case FLAG:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisIsWeight(Axis axis) {
     switch(axis) {
-    case WT: case WTSP: case SIGMA: case SIGMASP: case WTxAMP: return true;
-    default: return false;
+        case WT:
+        case WTSP:
+        case SIGMA:
+        case SIGMASP:
+        case WTxAMP:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisIsUV(Axis axis) {
     switch(axis) {
-    case U: case V: case UWAVE: case VWAVE: return true;
-    default: return false;
+        case U:
+        case V:
+        case UWAVE:
+        case VWAVE:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisIsUVWave(Axis axis) {
     switch(axis) {
-    case UWAVE: case VWAVE: return true;
-    default: return false;
+        case UWAVE:
+        case VWAVE:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisIsOverlay(Axis axis) {
     switch(axis) {
-    case ATM: case TSKY: case IMAGESB: return true;
-    default: return false;
+        case ATM:
+        case TSKY:
+        case IMAGESB:
+            return true;
+        default:
+            return false;
     }
 }
 
 bool PMS::axisIsRaDec(Axis axis) {
     switch(axis) {
-    case RA: case DEC: return true;
-    default: return false;
+        case RA:
+        case DEC:
+            return true;
+        default:
+            return false;
     }
 }
 
 uInt PMS::axisScaleBase(Axis axis) {
     switch(axis) {
-    case RA:
-    case DEC:
-        // This is on order to get axis ticks values of
-        // minutes/seconds as multiple of 5 when possible
-        return 12;
-    default: return 10;
+        case RA:
+        case DEC:
+            // This is in order to get axis ticks values of
+            // minutes/seconds as multiple of 5 when possible
+            return 12;
+        default:
+            return 10;
     }
 }
 
@@ -167,63 +230,90 @@ const casacore::String & PMS::latitudeName(CoordSystem r) {
 }
 
 bool PMS::isDirectionComponent(Axis axis, DirectionComponent &dc){
-	switch (axis){
-	case PMS::RA :
-		dc = DirectionComponent::LONGITUDE;
-		return true;
-	case PMS::DEC :
-		dc = DirectionComponent::LATITUDE;
-		return true;
-	default:
-		return false;
-	}
+    switch (axis){
+      case PMS::RA :
+        dc = DirectionComponent::LONGITUDE;
+        return true;
+      case PMS::DEC :
+        dc = DirectionComponent::LATITUDE;
+        return true;
+      default:
+        return false;
+    }
 }
+
 AngleFormat PMS::angleFormat(CoordSystem ref, DirectionComponent dc){
-	AngleFormat angleFmt { AngleFormat::DECIMAL };
-	switch(ref){
-	case CoordSystem::ICRS:
-	case CoordSystem::J2000:
-	case CoordSystem::B1950:
-		angleFmt = ( dc == DirectionComponent::LONGITUDE ) ?
-				AngleFormat::HMS : AngleFormat::DMS;
-		break;
-	case CoordSystem::GALACTIC:
-	case CoordSystem::AZELGEO:
-		angleFmt=AngleFormat::DMS;
-	}
-	return angleFmt;
+    AngleFormat angleFmt { AngleFormat::DECIMAL };
+    switch(ref){
+    case CoordSystem::ICRS:
+    case CoordSystem::J2000:
+    case CoordSystem::B1950:
+        angleFmt = ( dc == DirectionComponent::LONGITUDE ) ?
+                AngleFormat::HMS : AngleFormat::DMS;
+        break;
+    case CoordSystem::GALACTIC:
+    case CoordSystem::AZELGEO:
+        angleFmt=AngleFormat::DMS;
+    }
+    return angleFmt;
 }
 
 AngleFormat PMS::angleFormat(Axis axis, CoordSystem ref){
-	DirectionComponent dc;
-	if (isDirectionComponent(axis,dc)) return angleFormat(ref,dc);
-	return AngleFormat::DECIMAL;
+    DirectionComponent dc;
+    if (isDirectionComponent(axis,dc)) {
+        return angleFormat(ref,dc);
+    }
+
+    return AngleFormat::DECIMAL;
 }
 
 PMS::AxisType PMS::axisType(Axis axis) {
     switch(axis) {
     case FLAG:
         return TBOOL;
-    
-    case FIELD: case SCAN: case SPW: case CHANNEL: case CORR:
-    case ANTENNA1: case ANTENNA2: case BASELINE: case OBSERVATION:
-    case INTENT: case FEED1: case FEED2:
+    case FIELD:
+    case SCAN:
+    case SPW:
+    case CHANNEL:
+    case CORR:
+    case ANTENNA1:
+    case ANTENNA2:
+    case BASELINE:
+    case OBSERVATION:
+    case INTENT:
+    case FEED1:
+    case FEED2:
         return TINT;
-    
-    case AMP: case PHASE: case REAL: case IMAG:
-      case PARANG: case SNR: case TEC:
+    case AMP:
+    case PHASE:
+    case REAL:
+    case IMAG:
+    case WTxAMP:
+    case WT:
+    case WTSP:
+    case SIGMA:
+    case SIGMASP:
+    case PARANG: 
+    case DELAY:
+    case DELAY_RATE:
+    case DISP_DELAY:
+    case SWP:
+    case TSYS:
+    case OPAC:
+    case SNR:
+    case TEC:
+    case ANTPOS:
         return TFLOAT;
-    
-    case TIME: case TIME_INTERVAL:
+    case TIME:
+    case TIME_INTERVAL:
         return TTIME;
-        
-    default: return TDOUBLE;
+    default:
+        return TDOUBLE;
     }
 }
 
 PMS::AxisUnit PMS::axisUnit(Axis axis) {
     switch(axis) {
-    
     case TIME:
         return UDATETIME;
     case TIME_INTERVAL:
@@ -261,6 +351,10 @@ PMS::AxisUnit PMS::axisUnit(Axis axis) {
         return KILOMETERS_PER_SECOND;
    case DELAY:
         return NANOSECONDS;
+   case DELAY_RATE:
+        return PSEC_PER_SECOND;
+   case DISP_DELAY:
+        return MTEC;
    case TSYS:
    case TSKY:
         return KELVIN;
@@ -285,33 +379,46 @@ PMS::AxisUnit PMS::axisUnit(Axis axis) {
 double PMS::dateDouble(unsigned int year, unsigned int mon, unsigned int day,
         unsigned int hour, unsigned int min, double sec, PlotAxisScale scale) {
     Time t(year, mon, day, hour, min, sec);
-    if(scale == DATE_MJ_SEC) return t.modifiedJulianDay() * 86400;
-    else                     return t.modifiedJulianDay();
+
+    if (scale == DATE_MJ_SEC) {
+        return t.modifiedJulianDay() * 86400;
+    } else {
+        return t.modifiedJulianDay();
+    }
 }
 
 void PMS::dateDouble(double value, unsigned int& year, unsigned int& mon,
         unsigned int& day, unsigned int& hour, unsigned int& min, double& sec,
         PlotAxisScale scale) {
-    if(scale == DATE_MJ_SEC) value /= 86400;
+    if (scale == DATE_MJ_SEC) {
+        value /= 86400;
+    }
     
     Time t(value + 2400000.5);
-
     year = t.year();
     mon = t.month();
     day = t.dayOfMonth();
     hour = t.hours();
     min = t.minutes();
-    
     sec = modf(value, &sec);
     sec += t.seconds();
 }
 
 bool PMS::strEq(const String& str1, const String& str2, bool ignoreCase) {
-    if(str1.size() != str2.size()) return false;
-    if(!ignoreCase) return str1 == str2;
-    for(unsigned int i = 0; i < str1.size(); i++)
-        if(tolower(str1[i]) != tolower(str2[i])) return false;
-    
+    if (str1.size() != str2.size()) {
+        return false;
+    }
+
+    if (!ignoreCase) {
+        return str1 == str2;
+    }
+
+    for (unsigned int i = 0; i < str1.size(); i++) {
+        if (tolower(str1[i]) != tolower(str2[i])) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -331,13 +438,17 @@ bool PMS::strEq(const String& str1, const String& str2, bool ignoreCase) {
         break; }
 
 bool PMS::recEq(const Record& rec1, const Record& rec2) {
-    if(rec1.nfields() != rec2.nfields()) return false;
+    if (rec1.nfields() != rec2.nfields()) {
+        return false;
+    }
 
     String name;
-    for(unsigned int i = 0; i < rec1.nfields(); i++) {
+    for (unsigned int i = 0; i < rec1.nfields(); i++) {
         name = rec1.name(i);
-        if(!rec2.isDefined(name) || rec1.dataType(name) != rec2.dataType(name))
+        if (!rec2.isDefined(name) ||
+            (rec1.dataType(name) != rec2.dataType(name))) {
             return false;
+        }
         
         switch(rec1.dataType(name)) {
         PMS_RE(TpBool, asBool)
@@ -365,11 +476,13 @@ bool PMS::recEq(const Record& rec1, const Record& rec2) {
         PMS_REA(TpArrayString, asArrayString, String)
         
         case TpRecord:
-            if(!recEq(rec1.asRecord(name), rec2.asRecord(name)))
+            if (!recEq(rec1.asRecord(name), rec2.asRecord(name))) {
                 return false;
+            }
             break;
 
-        default: break;
+        default:
+            break;
         }
     }
     

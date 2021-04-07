@@ -91,9 +91,9 @@ class test_virtualconcat(unittest.TestCase):
         res = None
 
         if is_CASA6:
-            datapath=ctsys.resolve('regression/unittest/concat/input')
+            datapath=ctsys.resolve('unittest/virtualconcat/')
         else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/concat/input')
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/virtualconcat/')
 
         # Pick up alternative data directory to run tests on MMSs
         testmms = False

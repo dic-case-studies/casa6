@@ -37,7 +37,7 @@ The recommended way to do this is using a virtual environment:
            #              >>> import casatasks as ct
            #              >>> help(ct)
            #              >>> exit()
-           #              -bash-4.2$ 
+           #              -bash-4.2$
 -bash-4.2$ deactivate
 ```
 However, users are free to install CASA's wheels as they like.
@@ -62,7 +62,7 @@ the bash command line if the casashell module has been installed:
 or from Python 3:
 ```
 -bash-4.2$ python3
-Python 3.6.7 (default, Aug 16 2019, 18:25:33) 
+Python 3.6.7 (default, Aug 16 2019, 18:25:33)
 [GCC 5.3.1 20160406 (Red Hat 5.3.1-6)] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 >>> from casashell import start_casa

@@ -567,7 +567,7 @@ def simalma(
                         msg("    Total power imaging when the source is this small is not necessary, and may fail with an error.",priority="warn")
                     del minsize
             else:
-                # print resolution for INT, and warn if model_cell too large
+                # casalog.post resolution for INT, and warn if model_cell too large
                 msg("    approximate synthesized beam FWHM = %f arcsec" % resols[i],priority="info")
                 msg("       (at zenith; the actual beam will depend on declination, hourangle, and uv coverage)",priority="info")
 
@@ -1153,7 +1153,7 @@ def simalma(
                     qhwhm = qa.mul(qptgspc_tp, kernelfac)  # hwhm of GJinc kernel
                     gwidth = qa.tos(qa.mul(qhwhm, convfac))
                     jwidth = qa.tos(qa.mul(jfac/gfac/pl.log(2.),gwidth))
-                    #print("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
+                    #casalog.post("Kernel parameter: [qhwhm, gwidth, jwidth] = [%s, %s, %s]" % (qa.tos(qhwhm), gwidth, jwidth))
                     # Parameters for sdimaging
                     task_param['gridfunction'] = 'gjinc'
                     task_param['gwidth'] = gwidth
@@ -1485,7 +1485,9 @@ def simalma(
                 # Need to manipulate TP image here
                 outimage0 = fileroot+"/" + combimage+"0"
                 outimage = fileroot+"/" + combimage
-                pbcov = highimage0.rstrip("image") + "flux.pbcoverage"
+                # CAS-13369 -- imclean call in simanalyze is now imtclean
+                #pbcov = highimage0.rstrip("image") + "flux.pbcoverage"
+                pbcov = highimage0.rstrip("image") + "pb"
                 regridimg = fileroot + "/" + imagename_tp + ".regrid"
                 scaledimg = fileroot + "/" + imagename_tp + ".pbscaled"
                 lowimage = scaledimg
@@ -1542,11 +1544,12 @@ def simalma(
                     impbcor(regridimg, pbcov, outfile=scaledimg,mode='multiply')
 
                 # de-pbcor the INT image
-                highimage = fileroot+"/"+imagename_int+".pbscaled"
+                # not needed now that imtclean is used and .image from tclean is flat sky by default, see CAS-13370
+                #highimage = fileroot+"/"+imagename_int+".pbscaled"
                 #immath(imagename=[highimage0, pbcov],
                 #       expr='IM1/IM0',outfile=highimage)     
-                msg(" ",priority="info")
-                msg("Multiply interferometric image by sensitivity map (un-pbcor):",priority="info")
+#                msg(" ",priority="info")
+#                msg("Multiply interferometric image by sensitivity map (un-pbcor):",priority="info")
 #                msg("immath(imagename=['"+highimage0+"','"+pbcov+"'],expr='IM1*IM0',outfile='"+highimage+"')",priority="info")
 #                msg("Restore interferometric beam and brightness unit:",priority="info")
 #                msg("ia.open('"+highimage0+"')",priority="info")
@@ -1570,10 +1573,10 @@ def simalma(
 #                    ia.setrestoringbeam(beam=beam_int)
 #                    ia.setbrightnessunit(bunit_int)
 #                    ia.close()
-
-                msg("impbcor('"+highimage0+"', '"+pbcov+"', outfile='"+highimage+"',mode='multiply')",priority="info")
-                if not dryrun:
-                    impbcor(highimage0, pbcov, outfile=highimage,mode='multiply')
+#
+#                msg("impbcor('"+highimage0+"', '"+pbcov+"', outfile='"+highimage+"',mode='multiply')",priority="info")
+#                if not dryrun:
+#                    impbcor(highimage0, pbcov, outfile=highimage,mode='multiply')
 
 
 
@@ -1582,7 +1585,7 @@ def simalma(
                 # Feathering
                 task_param = {}
                 task_param['imagename'] = outimage0
-                task_param['highres'] = highimage
+                task_param['highres'] = highimage0
                 task_param['lowres'] = lowimage
 
                 msg(" ",priority="info")
