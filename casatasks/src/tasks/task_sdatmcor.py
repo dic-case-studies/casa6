@@ -556,6 +556,7 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
 
     # altitude of reference antenna
     default_altitude = get_default_altitude(infile, reference_antenna)
+    user_altitude = user_inputs['altitude'] if user_inputs['atmdetail'] else ''
 
     parameters = [
         ATMParameterConfigurator(key='processspw', value=all_processing_spws),
@@ -580,8 +581,9 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
             impl_default=default_params['dpm'], default_unit='', api_default=-1
         ),
         ATMScalarParameterConfigurator(
-            key='siteAltitude', user_input=user_inputs['altitude'],
+            key='siteAltitude', user_input=user_altitude,
             impl_default=default_altitude, default_unit='m',
+            api_default='',
             is_mandatory=True, is_effective=user_inputs['atmdetail']
         ),
         ATMScalarParameterConfigurator(
