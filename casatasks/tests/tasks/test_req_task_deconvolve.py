@@ -2028,7 +2028,7 @@ class test_imgval(testref_base):
         os.system("mv {0}{1} {0}_bak{1}".format(self.img, ext))
 
         imrebin(imagename=self.img+"_bak"+ext, outfile=self.img+ext, factor=[50,50])
-        strcheck = "There is a shape mismatch between existing images"
+        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, **deconvolve_args)
 
@@ -2367,7 +2367,7 @@ class test_mtmfsimgval(testref_base):
         os.system("mv {0} {1}".format(fn1, fn2))
 
         imtrans(imagename=self.img+"_bak"+ext+ttn, outfile=self.img+ext+ttn, order="3012")
-        strcheck = "There is a shape mismatch between existing images"
+        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
@@ -2383,7 +2383,7 @@ class test_mtmfsimgval(testref_base):
         os.system("mv {0}{1}{2} {0}_bak{1}{2}".format(self.img, ext, ttn))
 
         imrebin(imagename=self.img+"_bak"+ext+ttn, outfile=self.img+ext+ttn, factor=[2,2])
-        strcheck = "There is a shape mismatch between existing images"
+        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
