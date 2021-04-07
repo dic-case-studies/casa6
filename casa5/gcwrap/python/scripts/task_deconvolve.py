@@ -21,7 +21,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_deconvolver import PyDeconvolver
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    from .cleanhelper import write_task_history, get_func_params
+    from .cleanhelper import write_tclean_history, get_func_params
     from casatools import synthesisimager
     ia = image( )
 else:
@@ -31,7 +31,7 @@ else:
     from imagerhelpers.input_parameters import ImagerParameters
     from imregrid import imregrid
     from parallel.parallel_task_helper import ParallelTaskHelper
-    from cleanhelper import write_task_history, get_func_params
+    from cleanhelper import write_tclean_history, get_func_params
     synthesisimager=casac.synthesisimager
     ia = iatool( )
 
@@ -121,62 +121,6 @@ def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
                                os.linesep+"\tEither unset startmodel or remove {0} to continue".format(modim))
 
     return sm_modim_map
-
-
-def write_deconvolve_history(imagename, tname, params, clog):
-    """
-    Update image/logtable with the taskname, CASA version and all task parameters
-    CASR-571. Replicates the same format as mstools.write_history.
-    Modified from cleanhelper.py/write_tclean_history for use by task deconvolve.
-
-    :param imagename: imagename prefix as used in deconvolve
-    :param tname: task name to use as origin of the history
-    :param params: list of task parameters as a tuple (name, value)
-    :param clog: casa log object
-    """
-    import glob
-    import re
-
-    def filter_img_names(img_exts):
-        """
-        Applies name (extension) exclusions to not try to open deconvolves output files
-        and/or leftovers that are not images (even if they share the same name as the
-        proper images).
-
-        Some of the files excluded here can cause spurious messages (image tool will
-        print a SEVERE error to the log when open fails) if for example while running
-        several test cases one of them fails or misbehaves leaving temporary files
-        behind.
-
-        :param img_exts: list of image names (different extensions)
-        :returns: list of image names after filtering out undesired ones
-        """
-        accept = []
-        # examples: imagename0_1.residual, imagename0.residual, imagename_1.residual, imagename.residual
-        regex = re.compile(imagename + '[0-9]*_?[0-9]*\..+')
-        # examples: *.psf, *.pb, *.psf.tt0, *.pb.tt0
-        #                       .psf/.pb    .ttN...maybe eol 
-        untouched = re.compile('(\.psf|\.pb)(\.tt[0-9]+)?$')
-        for img in img_exts:
-            if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
-                continue
-
-            # ensure only 'imgname' + optional integer + .*
-            res = re.match(regex, img)
-            if not res:
-                continue
-
-            # deconvolve doesn't modify psf or pb images
-            if untouched.search(img):
-                continue
-
-            accept.append(img)
-        return accept
-
-    img_exts = glob.glob(imagename + '*.*')
-    img_exts = filter_img_names(img_exts)
-    clog.post("Writing history into these images: {}".format(img_exts))
-    write_task_history(img_exts, tname, params, clog)
 
 def deconvolve(
     ####### Data Selection
@@ -370,7 +314,7 @@ def deconvolve(
     # Copied from tclean.
     try:
         params = get_func_params(deconvolve, locals())
-        write_deconvolve_history(imagename, 'deconvolve', params, casalog)
+        write_tclean_history(imagename, 'deconvolve', params, casalog)
     except Exception as exc:
         casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
 
