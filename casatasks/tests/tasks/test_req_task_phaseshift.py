@@ -45,22 +45,8 @@ try:
     rg = regionmanager()
     sm = simulator()
     tb = table()
-    d = os.path.join('unittest', 'phaseshift')
-    datapath = ctsys.resolve(
-        os.path.join(d, 'refim_twopoints_twochan.ms')
-    )
-    datapath_Itziar = ctsys.resolve(
-        os.path.join(d, 'Itziar.ms')
-    )
-    datapath_ngc = ctsys.resolve(
-        os.path.join(d, 'ngc7538_ut.ms')
-    )
-    datapath_nep = ctsys.resolve(
-        os.path.join(d, 'nep2-shrunk.ms')
-    )
-    datapath_mms = ctsys.resolve(
-        os.path.join(d, 'uid___X02_X3d737_X1_01_small.mms')
-    )
+    datadir = os.path.join('unittest', 'phaseshift')
+    ctsys_resolve = ctsys.resolve
 except ImportError:
     from __main__ import default
     from tasks import flagdata, phaseshift, tclean
@@ -78,15 +64,21 @@ except ImportError:
     rg = rgtool()
     sm = smtool()
     tb = tbtool()
-    d = os.path.join(
-        os.environ.get('CASAPATH').split()[0], 'casatestdata',
-        'unittest', 'phaseshift'
+    dataroot = os.path.join(
+        os.environ.get('CASAPATH').split()[0], 'casatestdata'
     )
-    datapath = os.path.join(d, 'refim_twopoints_twochan.ms')
-    datapath_Itziar = os.path.join(d, 'Itziar.ms')
-    datapath_ngc = os.path.join(d, 'ngc7538_ut.ms')
-    datapath_nep = os.path.join(d, 'nep2-shrunk.ms')
-    datapath_mms = os.path.join(d, 'uid___X02_X3d737_X1_01_small.mms')
+
+    def ctsys_reolve(mypath):
+        return os.join(dataroot, mypath)
+
+datadir = os.path.join('unittest', 'phaseshift')
+datapath = ctsys_resolve(os.path.join(datadir, 'refim_twopoints_twochan.ms'))
+datapath_Itziar = ctsys_resolve(os.path.join(datadir, 'Itziar.ms'))
+datapath_ngc = ctsys_resolve(os.path.join(datadir, 'ngc7538_ut.ms'))
+datapath_nep = ctsys_resolve(os.path.join(datadir, 'nep2-shrunk.ms'))
+datapath_mms = ctsys_resolve(
+    os.path.join(datadir, 'uid___X02_X3d737_X1_01_small.mms')
+)
 
 
 def change_perms(path):
@@ -705,6 +697,37 @@ class reference_frame_tests(unittest.TestCase):
             + ' expected: ' + str(self.exp_flux), delta=0.01
         )
 
+    def __compare_ms(self, dirframe):
+        tb.open(
+            ctsys_resolve(
+                os.path.join(
+                    datadir, 'phaseshift_test_frames_expected.ms'
+                )
+            )
+        )
+        expuvw = tb.getcol('UVW')
+        tb.done()
+        tb.open(self.pshift_ms)
+        gotuvw = tb.getcol('UVW')
+        gotdata = tb.getcol('DATA')
+        tb.done()
+        # absolute tolerance in meters
+        self.assertTrue(
+            np.allclose(gotuvw, expuvw, atol=3e-6),
+            'UVW do not match for ' + dirframe
+        )
+        # point source at phase center, so data should have
+        # const amplitude and zero phase
+        self.assertTrue(
+            np.allclose(np.abs(gotdata), self.exp_flux, rtol=1e-6),
+            'Amplitudes do not match for ' + dirframe
+        )
+        # phases in radians
+        self.assertTrue(
+            np.allclose(np.angle(gotdata), 0, atol=1e-4),
+            'Phases do not match for ' + dirframe
+        )
+
     def __run_direction_test(self, p, radir, decdir, dirframe):
         pr = [p['lon'], qa.time(p['lon'], 10)[0]]
         pd = [p['lat'], qa.time(p['lat'], 10)[0]]
@@ -721,17 +744,15 @@ class reference_frame_tests(unittest.TestCase):
                     vis=self.orig_ms, outputvis=self.pshift_ms,
                     phasecenter=shifted_pcenter
                 )
+                self.__compare_ms(p['frame'])
                 # create image from phaseshifted MS
                 self.__createImage(self.pshift_ms, self.pshift_im, "")
                 self.__compare(self.pshift_im, radir, decdir, dirframe)
                 x = imstat(self.pshift_im + '.image')
                 # source should be at image center after phase shift
                 self.assertTrue(
-                    (
-                        x['maxpos'][0] == 128
-                        and x['maxpos'][1] == 128
-                    ), msg='Source stats' + str(x) + ' for '
-                    + str(p)
+                    ((x['maxpos'] == [128, 128, 0, 0]).all()),
+                    msg='Source stats' + str(x) + ' for ' + str(p)
                 )
                 self.__delete_intermediate_products()
 
@@ -744,12 +765,25 @@ class reference_frame_tests(unittest.TestCase):
         fra = '19h59m28.5'
         fdec = '+40.40.01.5'
         fframe = 'J2000'
-        # make the MS
-        self.__makeMSFrame(fra, fdec, fframe)
-        # Make the component list
-        self.__makeCompList(radir, decdir, dirframe)
-        # Predict Visibilities
-        self.__predictSimFromComplist()
+
+        def create_input_ms():
+            # this is how self.orig_ms was created. Do not delete
+            # this or related code even if the data set is now
+            # stored in the data repos. The code is useful to have
+            # as a record.
+            # make the MS
+            self.__makeMSFrame(fra, fdec, fframe)
+            # Make the component list
+            self.__makeCompList(radir, decdir, dirframe)
+            # Predict Visibilities
+            self.__predictSimFromComplist()
+
+        # create_input_ms()
+        shutil.copytree(
+            ctsys_resolve(
+                os.path.join(datadir, 'phaseshift_test_frames_input.ms')
+            ), self.orig_ms
+        )
         # image simulated MS, the source is offset from the phase center
         # of the image
         tclean(
@@ -808,18 +842,42 @@ class reference_frame_tests(unittest.TestCase):
                     md.open(self.orig_ms)
                     field_id = md.fieldsforname(myfield)[0]
                     md.done()
-            tb.open(self.orig_ms)
-            myfilter = '' if len(myfield) == 0 else 'FIELD_ID=' + str(field_id)
-            x = tb.query(myfilter, columns='TIME, ANTENNA1, ANTENNA2')
-            exptime = x.getcol('TIME')
-            expant1 = x.getcol('ANTENNA1')
-            expant2 = x.getcol('ANTENNA2')
-            x.done()
+            print('field_id', field_id)
+            if field_id == 0:
+                exp_ms = ctsys_resolve(
+                    os.path.join(
+                        datadir, 'phaseshift_test_field_0_expected.ms'
+                    )
+                )
+            elif field_id == 1:
+                exp_ms = ctsys_resolve(
+                    os.path.join(
+                        datadir, 'phaseshift_test_field_1_expected.ms'
+                    )
+                )
+            elif len(field_id) == 0:
+                exp_ms = ctsys_resolve(
+                    os.path.join(
+                        datadir, 'phaseshift_test_field_0_1_expected.ms'
+                    )
+                )
+            tb.open(exp_ms)
+            # myfilter = '' if len(myfield) == 0 else 'FIELD_ID='
+            # + str(field_id)
+            # x = tb.query(myfilter, columns='TIME, ANTENNA1, ANTENNA2')
+            exptime = tb.getcol('TIME')
+            expant1 = tb.getcol('ANTENNA1')
+            expant2 = tb.getcol('ANTENNA2')
+            expuvw = tb.getcol('UVW')
+            expdata = tb.getcol('DATA')
+            # x.done()
             tb.done()
             tb.open(self.pshift_ms)
             gottime = tb.getcol('TIME')
             gotant1 = tb.getcol('ANTENNA1')
             gotant2 = tb.getcol('ANTENNA2')
+            gotuvw = tb.getcol('UVW')
+            gotdata = tb.getcol('DATA')
             tb.done()
             self.assertTrue(
                 (gottime == exptime).all(),
@@ -833,6 +891,14 @@ class reference_frame_tests(unittest.TestCase):
                 (gotant2 == expant2).all(),
                 msg='Failed ANTENNA2 column test for "' + myfield + '"'
             )
+            self.assertTrue(
+                (gotuvw == expuvw).all(),
+                msg='Failed UVW column test for "' + myfield + '"'
+            )
+            self.assertTrue(
+                (gotdata == expdata).all(),
+                msg='Failed DATA column test for "' + myfield + '"'
+            )
             tclean(
                 vis=self.pshift_ms, imagename=self.pshift_im,
                 datacolumn='data', imsize=256, cell='8.0arcsec',
@@ -844,12 +910,23 @@ class reference_frame_tests(unittest.TestCase):
         decdir = '40d06m00'
         dirframe = 'J2000'
         offset = '10deg'
-        # make the MS
-        self.__sim2fields(radir, decdir, dirframe, offset)
-        # Make the component list
-        self.__makeCompList(radir, decdir, dirframe)
-        # Predict Visibilities
-        self.__predictSimFromComplist()
+
+        def create_ms():
+            # do not delete this code, even if the MS is now in the data
+            # repos; the code is useful to have as a record and a guide.
+            # make the MS
+            self.__sim2fields(radir, decdir, dirframe, offset)
+            # Make the component list
+            self.__makeCompList(radir, decdir, dirframe)
+            # Predict Visibilities
+            self.__predictSimFromComplist()
+
+        # create_ms()
+        shutil.copytree(
+            ctsys_resolve(
+                os.path.join(datadir, 'phaseshift_test_field_input.ms')
+            ), self.orig_ms
+        )
         # shift first field by 4 pixels north of source
         pcenter = self.__phase_center_string(
             radir,
@@ -872,7 +949,8 @@ class reference_frame_tests(unittest.TestCase):
                 + ' got ' + str(x['max'][0])
             )
             self.__delete_intermediate_products()
-        # 4 pixel shift of second field, which contains no signal
+        # 4 pixel shift of second field, which contains no signal, but
+        # just sidelobes of source 10 degrees away
         decref = qa.add(qa.quantity(decdir), qa.quantity(offset))
         decdir = qa.tos(qa.add(decref, qa.quantity("32arcsec")))
         pcenter = self.__phase_center_string(radir, decdir, dirframe)
