@@ -100,11 +100,10 @@ values. See description below for details of gridfunction available.
             <value type="string">OBSERVE_TARGET#ON_SOURCE</value>
     </param>
     
-    <param name="timerange" type="any">
-            <shortdescription>select data by range(s) of time. infiles must be a single MS. (\'\'=all)</shortdescription>
+    <param name="timerange" type="string">
+            <shortdescription>select data by range of time. (\'\'=all)</shortdescription>
             
-            <any limittypes="string stringArray" type="variant"/>
-            <value type="string"/>
+            <value/>
     </param>
     
 <!-- Frequency Coordinate of Output Image -->

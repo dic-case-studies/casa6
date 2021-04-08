@@ -703,7 +703,7 @@ def get_brightness_unit_from_ms(msname):
 
 
 
-def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype,
+def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, timerange, mode, nchan, start, width, veltype,
                specmode, outframe,
                gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection,
                pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
@@ -730,7 +730,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             baseline = antenna_to_baseline(antenna)
         else:
             baseline = [antenna_to_baseline(a) for a in antenna]
-
 
         # handle overwrite parameter
         _outfile = outfile.rstrip('/')
@@ -791,6 +790,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             # data selection
             field=field,#'',
             spw=_spw,#'0',
+            timestr=timerange,
             antenna=baseline,
             scan=scan,
             state=intent,
