@@ -71,9 +71,14 @@ def applycal(
     try:
         mycb = calibrater( )
         if (type(vis) == str) & os.path.exists(vis):
-            # add CORRECTED_DATA column
-            mycb.open(filename=vis, compress=False, addcorr=True,
-                      addmodel=False)
+            # if applymode is flagonly don't add CORRECTED_DATA column
+            # otherwise add CORRECTED_DATA column
+            if applymode == 'flagonly':
+                mycb.open(filename=vis, compress=False, addcorr=False,
+                          addmodel=False)
+            else:
+                mycb.open(filename=vis, compress=False, addcorr=True,
+                          addmodel=False)
         else:
             raise ValueError( 'Visibility data set not found - please verify the name' )
 
