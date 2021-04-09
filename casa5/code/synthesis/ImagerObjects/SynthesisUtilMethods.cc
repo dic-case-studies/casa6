@@ -2678,6 +2678,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       MDoppler mdop(sysvelvalue, MDoppler::RELATIVISTIC);
       dataChanFreq=mdop.shiftFrequency(dataChanFreq);
       dataChanWidth=mdop.shiftFrequency(dataChanWidth);
+      if (std::isnan(dataChanFreq[0]) || std::isnan(dataChanWidth[0])) {
+	throw(AipsError("Doppler shifting of the data channel frequencies resulted in 'NaN' using the radial velocity = "+
+              String::toString(sysvelvalue)+". Typically this indicates a problem in the ephemeris data being used.")); 
+      }
     }
     
     if (!getImFreq(chanFreq, chanFreqStep, refPix, specmode, obsEpoch, 
