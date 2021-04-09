@@ -28,6 +28,7 @@
 #include <casa/Arrays/ArrayMath.h>
 #include <casa/OS/HostInfo.h>
 #include <synthesis/ImagerObjects/SDAlgorithmAAspClean.h>
+
 #include <components/ComponentModels/SkyComponent.h>
 #include <components/ComponentModels/ComponentList.h>
 #include <images/Images/TempImage.h>
@@ -45,7 +46,6 @@
 #include <casa/Utilities/Assert.h>
 #include <casa/OS/Directory.h>
 #include <tables/Tables/TableLock.h>
-#include <casa/Containers/Record.h>
 
 #include<synthesis/ImagerObjects/SIMinorCycleController.h>
 
@@ -58,92 +58,113 @@
 #include <casa/System/Choice.h>
 #include <msvis/MSVis/StokesVector.h>
 
-
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-  SDAlgorithmAAspClean::SDAlgorithmAAspClean():
-    SDAlgorithmBase(), hogbom_p()
+  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, Int stoppointmode):
+    SDAlgorithmBase(),
+    itsMatPsf(), itsMatResidual(), itsMatModel(),
+    itsCleaner(),
+    itsStopPointMode(stoppointmode),
+    itsMCsetup(false),
+    itsFusedThreshold(fusedThreshold)
   {
-    itsAlgorithmName=String("aasp");
-    cerr << "#### " << "AAsp constructed" << endl;
+    itsAlgorithmName = String("asp");
   }
 
   SDAlgorithmAAspClean::~SDAlgorithmAAspClean()
   {
-    
+
   }
 
-  //  void SDAlgorithmAAspClean::initializeDeconvolver( Float &peakresidual, Float &modelflux )
   void SDAlgorithmAAspClean::initializeDeconvolver()
   {
-    LogIO os( LogOrigin("SDAlgorithmAAspClean","initializeDeconvolver",WHERE) );
+    LogIO os(LogOrigin("SDAlgorithmAAspClean", "initializeDeconvolver", WHERE));
+    AlwaysAssert((bool)itsImages, AipsError);
 
     itsImages->residual()->get( itsMatResidual, true );
     itsImages->model()->get( itsMatModel, true );
     itsImages->psf()->get( itsMatPsf, true );
     itsImages->mask()->get( itsMatMask, true );
 
-    /*
-    /////////////////
-    findMaxAbsMask( itsMatResidual, itsMatMask, itsPeakResidual, itsMaxPos );
-    peakresidual = itsPeakResidual;
-    modelflux = sum( itsMatModel ); // Performance hog ?
-    */
+    // Initialize the AspMatrixCleaner.
+    //  ----------- do once ----------
+    if( itsMCsetup == false)
+    {
+      Matrix<Float> tempMat(itsMatPsf);
+      itsCleaner.setPsf(tempMat);
+      // Initial scales and masks are unchanged and only need to be
+      // computed once
+      const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
+      itsCleaner.setInitScaleXfrs(width);
+      itsCleaner.setInitScaleMasks(itsMatMask);
+
+      itsCleaner.stopPointMode( itsStopPointMode );
+      itsCleaner.ignoreCenterBox( true ); // Clean full image
+      itsMCsetup = true;
+      //for unit test
+      Matrix<Float> tempMat1(itsMatResidual);
+      itsCleaner.setOrigDirty( tempMat1 );
+
+      if (itsFusedThreshold < 0)
+      {
+        os << LogIO::WARN << "Acceptable fusedthreshld values are >= 0. Changing fusedthreshold from " << itsFusedThreshold << " to 0." << LogIO::POST; 
+        itsFusedThreshold = 0.0;
+      } 
+      
+      itsCleaner.setFusedThreshold(itsFusedThreshold);
+    }
+
+    // Parts to be repeated at each minor cycle start....
+    itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before the rest
+
+    Matrix<Float> tempMat1(itsMatResidual);
+    itsCleaner.setDirty( tempMat1 );
+    // InitScaleXfrs and InitScaleMasks should already be set
+    itsScaleSizes.clear();
+    itsScaleSizes = itsCleaner.getActiveSetAspen();   
+    itsScaleSizes.push_back(0.0); // put 0 scale
+    itsCleaner.defineAspScales(itsScaleSizes); 
   }
 
 
-  void SDAlgorithmAAspClean::takeOneStep( Float loopgain, 
-					  Int cycleNiter, 
-					  Float cycleThreshold, 
-					  Float &peakresidual, 
-					  Float &modelflux, 
+  void SDAlgorithmAAspClean::takeOneStep( Float loopgain,
+					  Int cycleNiter,
+					  Float cycleThreshold,
+					  Float &peakresidual,
+					  Float &modelflux,
 					  Int &iterdone)
   {
-    LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep") );
+    LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
-    os << "AAsp algorithms construction work in progress...." << LogIO::WARN << LogIO::POST;
-    
-    // Bool delete_iti, delete_its, delete_itp, delete_itm;
-    // const Float *lpsf_data, *lmask_data;
-    // Float *limage_data, *limageStep_data;
+    Quantity thresh(cycleThreshold, "Jy");
+    itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
+    Matrix<Float> tempModel;
+    tempModel.reference( itsMatModel );
+    //save the previous model
+    Matrix<Float> prevModel;
+    prevModel = itsMatModel;
 
-    // limage_data = itsMatModel.getStorage( delete_iti );
-    // limageStep_data = itsMatResidual.getStorage( delete_its );
-    // lpsf_data = itsMatPsf.getStorage( delete_itp );
-    // lmask_data = itsMatMask.getStorage( delete_itm );
+    //cout << "AAspALMS,  matrix shape : " << tempModel.shape() << " array shape : " << itsMatModel.shape() << endl;
 
-    Float loopGain_l=loopgain, cycleThreshold_l=cycleThreshold;
-    Int cycleNiter_l = cycleNiter;
-    {
-      Record lcRec;
-      SIMinorCycleController loopcontrols;
+    // retval
+    //  1 = converged
+    //  0 = not converged but behaving normally
+    // -1 = not converged and stopped on cleaning consecutive smallest scale
+    // -2 = not converged and either large scale hit negative or diverging
+    // -3 = clean is diverging rather than converging
+    itsCleaner.startingIteration( 0 );
+    Int retval = itsCleaner.aspclean( tempModel );
+    iterdone = itsCleaner.numberIterations();
 
-      lcRec.define("loopgain", loopGain_l);
-      lcRec.define("cycleniter", cycleNiter_l);
-      lcRec.define("cyclethreshold", cycleThreshold_l);
+    if( retval==-1 ) {os << LogIO::WARN << "AspClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }
+    if( retval==-2 ) {os << LogIO::WARN << "AspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
+    if( retval==-3 ) {os << LogIO::WARN << "AspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
-      loopcontrols.setCycleControls(lcRec);
-      hogbom_p.deconvolve(loopcontrols, itsImages,1);
-    }
-
-    
-    iterdone=cycleNiter;
-    itsImages->residual()->get( itsMatResidual, true );
-    itsImages->model()->get( itsMatModel, true );
-    
-    // itsMatModel.putStorage( limage_data, delete_iti );
-    // itsMatResidual.putStorage( limageStep_data, delete_its );
-    // itsMatPsf.freeStorage( lpsf_data, delete_itp );
-    // itsMatMask.freeStorage( lmask_data, delete_itm );
-    
-    
-    /////////////////
-    findMaxAbsMask( itsMatResidual, itsMatMask, itsPeakResidual, itsMaxPos );
-    peakresidual = itsPeakResidual;
-
-    modelflux = sum( itsMatModel ); // Performance hog ?
-  }	    
+    peakresidual = itsCleaner.getterPeakResidual();
+    //cout << "SDAlg: peakres " << peakresidual << endl;
+    modelflux = sum( itsMatModel );
+  }
 
   void SDAlgorithmAAspClean::finalizeDeconvolver()
   {
@@ -151,6 +172,4 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     (itsImages->model())->put( itsMatModel );
   }
 
-
 } //# NAMESPACE CASA - END
-

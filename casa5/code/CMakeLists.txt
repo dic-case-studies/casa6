@@ -1396,6 +1396,13 @@ else()
     casa_add_module( graphics CASACORE X11 WCSLIB )
   endif()
 endif()
+
+#find_package(CudaLBFGS REQUIRED)
+#SET(LBFGS_LIBRARIES /home/tesla/mhsieh/work/dev/bfgsGPU/build/liblbfgs.so)
+#SET(LBFGS_INCLUDES /home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS)
+#SET(cuLBFGSB_LIBRARIES /home/tesla/mhsieh/work/dev/lbfgsb-gpu-master/build/culbfgsb/libcuLBFGSB.so)
+#SET(cuLBFGSB_INCLUDE_DIRS /home/tesla/mhsieh/work/dev/lbfgsb-gpu-master)
+
 casa_add_module( atmosphere )
 casa_add_module( casatools CASACORE )
 casa_add_module( stdcasa CASACORE )

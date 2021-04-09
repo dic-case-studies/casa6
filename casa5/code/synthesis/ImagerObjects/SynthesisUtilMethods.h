@@ -453,6 +453,7 @@ public:
   casacore::Float nsigma;
   int nMask;
   bool autoAdjust;
+  casacore::Float fusedThreshold;
 
 
  
