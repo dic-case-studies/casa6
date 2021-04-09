@@ -118,6 +118,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	vi.useImagingWeight(vWghtNat);
 	vi::VisBuffer2 *vb=vi.getVisBuffer();
 	std::vector<pair<Int, Int> > fieldsToUse;
+        std::set<Int> msInUse;
 	rownr_t nrows=0;
 	String ephemtab("");
 	if(inRec.isDefined("ephemeristable")){
@@ -125,11 +126,11 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	}
 	Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	Double freqend=cs.toWorld(IPosition(4,0,0,0,templateimage.shape()[3]-1))[3];
-	uInt swingpad=estimateSwingChanPad(vi, cs, templateimage.shape()[3],
-					   ephemtab);
+
 	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	  for (vi.origin(); vi.more(); vi.next()) {
 	    nrows+=vb->nRows();
+            msInUse.insert(vb->msId());
 	if(multiField_p){
 		
 				pair<Int, Int> ms_field=make_pair(vb->msId(), vb->fieldId()[0]);
@@ -160,6 +161,11 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	if(fieldsToUse.size()==0)
 		fieldsToUse.push_back(make_pair(Int(-1),Int(-1)));
 	//cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
+
+        ///Lets process the ms independently as swingpad can become very large for MSs seperated by large epochs
+        for (auto msiter=msInUse.begin(); msiter != msInUse.end(); ++msiter){
+          uInt swingpad=estimateSwingChanPad(vi, *msiter, cs, templateimage.shape()[3],
+					   ephemtab);
 	for (uInt k=0; k < fieldsToUse.size(); ++k){
 		vi.originChunks();
 		vi.origin();
@@ -187,24 +193,23 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		  
 		initializeFTMachine(0, newTemplate, inRec);
 		Matrix<Float> dummy;
-    
+                //cerr << "new template shape " << newTemplate.shape() << endl;
 		ft_p[0]->initializeToSky(newTemplate, dummy, *vb);
 		Vector<Double> convFunc(2+superUniformBox_p, 1.0);
 		//cerr << "superuniform box " << superUniformBox_p << endl;
 		ft_p[0]->modifyConvFunc(convFunc, superUniformBox_p, 1);
 		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 			for (vi.origin(); vi.more(); vi.next()) {
-	
 	//cerr << "key and index "<< key << "   " << index << "   " << multiFieldMap_p[key] << endl; 
 				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
 					ft_p[0]->put(*vb, -1, true, FTMachine::PSF);
 				}
-			
+                          
 			}
 		}
 		Array<Float> griddedWeight;
 		ft_p[0]->getGrid(griddedWeight);
-    //cerr << index << " griddedWeight Shape " << griddedWeight.shape() << endl;
+                //cerr  << " griddedWeight Shape " << griddedWeight.shape() << endl;
 		//grids_p[index]->put(griddedWeight.reform(newTemplate.shape()));
 		sumWgts=ft_p[0]->getSumWeights();
 		//cerr << "sumweight " << sumWgts[index] << endl;
@@ -255,6 +260,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		
 		for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 			for (vi.origin(); vi.more(); vi.next()) {
+                          if((vb->msId()) == (*msiter)){
 				if((vb->fieldId()[0] == fieldsToUse[k].second &&  vb->msId()== fieldsToUse[k].first) || fieldsToUse[k].first==-1){
 					Matrix<Float> imweight;
 					/*///////////
@@ -288,12 +294,14 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
                                         
 					col3.putColumnRange(sl2, rowids);
 				}
+                          }
 			}
 		}
 		//myfile.close();
 		
 		
 	}
+        }
 		
 	initialized_p=True;
 	wgtTab_p->unlock();
@@ -301,7 +309,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  
 }
 
-  Int BriggsCubeWeightor::estimateSwingChanPad(vi::VisibilityIterator2& vi, const CoordinateSystem& cs, const Int imNChan, const String& ephemtab){
+  Int BriggsCubeWeightor::estimateSwingChanPad(vi::VisibilityIterator2& vi, const Int msid, const CoordinateSystem& cs, const Int imNChan, const String& ephemtab){
 
     vi::VisBuffer2 *vb=vi.getVisBuffer();
     vi.originChunks();
@@ -326,61 +334,64 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	///////
 	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	  for (vi.origin(); vi.more(); vi.next()) {
-	    if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
-	      msID=vb->msId();
-	      fieldID = vb->fieldId()(0);
-	      spwID = vb->spectralWindows()(0);
-	      Double localBeg, localEnd;
-	      Double localNchan=imNChan >1 ? Double(imNChan-1) : 1.0;
-	      Double localStep=abs(freqend-freqbeg)/localNchan;
-	      if(freqbeg < freqend){
-		localBeg=freqbeg;
-		localEnd=freqend;
-	      }
-	      else{
-		localBeg=freqend;
-		localEnd=freqbeg;
-	      }
-	      Vector<Int> spw, start, nchan;
-	      if(ephemtab.size() != 0){
-		MSUtil::getSpwInSourceFreqRange( spw,start,nchan,vb->ms(), 
-						 localBeg,localEnd, localStep,
-						 ephemtab,fieldID);
-	      }
-	      else{
-		MSUtil::getSpwInFreqRange(spw, start,nchan,
-					  vb->ms(), localBeg, localEnd,
-					  localStep,freqframe, 
-					  fieldID);
-		
-	      }
-		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
-		    if(spw[spwk]==spwID){
-		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
-		      if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
-			localminfreq.push_back(mschanfreq[start[spwk]]);
-			localmaxfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
-		      }else{
-			localminfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
-			localmaxfreq.push_back(mschanfreq[start[spwk]]);
-
-		      }
-
-		      firstchanfreq.push_back(min(mschanfreq));
-		      //if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
-		      //localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
-		      if(minFreq > localminfreq[localminfreq.size()-1])
-			minFreq=localminfreq[localminfreq.size()-1];
-		      if(maxFreq < localmaxfreq[localmaxfreq.size()-1])
-			maxFreq=localmaxfreq[localmaxfreq.size()-1];
+            //process for required msid
+            if(msid==vb->msId()){
+              if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
+                msID=vb->msId();
+                fieldID = vb->fieldId()(0);
+                spwID = vb->spectralWindows()(0);
+                Double localBeg, localEnd;
+                Double localNchan=imNChan >1 ? Double(imNChan-1) : 1.0;
+                Double localStep=abs(freqend-freqbeg)/localNchan;
+                if(freqbeg < freqend){
+                  localBeg=freqbeg;
+                  localEnd=freqend;
+                }
+                else{
+                  localBeg=freqend;
+                  localEnd=freqbeg;
+                }
+                Vector<Int> spw, start, nchan;
+                if(ephemtab.size() != 0){
+                  MSUtil::getSpwInSourceFreqRange( spw,start,nchan,vb->ms(), 
+                                                   localBeg,localEnd, localStep,
+                                                   ephemtab,fieldID);
+                }
+                else{
+                  MSUtil::getSpwInFreqRange(spw, start,nchan,
+                                            vb->ms(), localBeg, localEnd,
+                                            localStep,freqframe, 
+                                            fieldID);
+                  
+                }
+                for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
+                  if(spw[spwk]==spwID){
+                    Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
+                    if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
+                      localminfreq.push_back(mschanfreq[start[spwk]]);
+                      localmaxfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
+                    }else{
+                      localminfreq.push_back(mschanfreq[start[spwk]+nchan[spwk]-1]);
+                      localmaxfreq.push_back(mschanfreq[start[spwk]]);
+                      
+                    }
+                    
+                    firstchanfreq.push_back(min(mschanfreq));
+                    //if(mschanfreq[start[spwk]+nchan[spwk]-1] < localminfreq[localminfreq.size()-1])
+                    //localminfreq[localminfreq.size()-1]=mschanfreq[start[spwk]+nchan[spwk]-1];
+                    if(minFreq > localminfreq[localminfreq.size()-1])
+                      minFreq=localminfreq[localminfreq.size()-1];
+                    if(maxFreq < localmaxfreq[localmaxfreq.size()-1])
+                      maxFreq=localmaxfreq[localmaxfreq.size()-1];
+                    
+                  }
 		  
-		    }
-		  
-		  }
-		  }
+                }
+              }
 		
-	  }
-	}
+            }//input msid
+          }
+        }
 	
 	auto itf=firstchanfreq.begin();
 	auto itmax=localmaxfreq.begin();
@@ -396,7 +407,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  itf++;
 	  itmax++;
 	}
-	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+4);
+	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+8);
 	//cerr << "CPUID " << my_cpu_id <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
@@ -407,6 +418,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 
     //String wgtname=File::newUniqueName(".", "IMAGING_WEIGHT").absoluteName();
     String wgtname=Path("IMAGING_WEIGHT_"+filetag).absoluteName();
+    //cerr  << "NAME "  << wgtname  << endl;
     if(Table::isReadable(wgtname)){
       weightTable=new Table(wgtname, Table::Update);
       if(weightTable->nrow() >0)
