@@ -312,6 +312,30 @@ class test_onefield(testref_base):
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
           self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
+          
+     def test_onefield_pcwdT_and_pcwdF(self):
+     
+          self.prepData('refim_twochan.ms')
+          
+          ret = tclean(self.msfile , imagename=self.img+'1', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=True,specmode='cube',weighting='briggs',robust=0.5)
+	
+          ret = tclean(self.msfile , imagename=self.img+'2', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=False,specmode='cube',weighting='briggs',robust=0.5)
+          
+          _ia.open(self.img+'1.psf')
+          pcwdT_img = _ia.getchunk()
+          _ia.close()
+        
+          _ia.open(self.img+'2.psf')
+          pcwdF_img = _ia.getchunk()
+          _ia.close()
+      
+          abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
+          _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF"):
+
+          self.checkfinal(report1)   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -2220,6 +2244,7 @@ class test_cube(testref_base):
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
+     @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
@@ -4097,7 +4122,8 @@ class test_mosaic_mtmfs(testref_base):
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
-
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
