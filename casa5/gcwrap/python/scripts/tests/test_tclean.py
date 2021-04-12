@@ -330,7 +330,7 @@ class test_onefield(testref_base):
           _ia.close()
       
           abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
-          _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF"):
+          _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
 
           self.checkfinal(report1)   
      
